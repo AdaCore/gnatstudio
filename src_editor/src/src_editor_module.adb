@@ -3706,6 +3706,7 @@ package body Src_Editor_Module is
          Name2 : constant String := -"Files From Project";
          Name3 : constant String := -"Files...";
          Name4 : constant String := -"Open Files";
+
       begin
          Register_Search_Function
            (Kernel => Kernel,
@@ -3724,8 +3725,7 @@ package body Src_Editor_Module is
                Factory           => Files_From_Project_Factory'Access,
                Extra_Information => Gtk_Widget (Selector),
                Id                => null,
-               Mask              => All_Options
-                 and not Search_Backward));
+               Mask              => All_Options and not Search_Backward));
          Register_Search_Function
            (Kernel => Kernel,
             Data   =>
@@ -3734,8 +3734,7 @@ package body Src_Editor_Module is
                Factory           => Files_Factory'Access,
                Extra_Information => Gtk_Widget (Extra),
                Id                => null,
-               Mask              => All_Options
-                 and not Search_Backward));
+               Mask              => All_Options and not Search_Backward));
          Register_Search_Function
            (Kernel => Kernel,
             Data   =>
@@ -3744,8 +3743,7 @@ package body Src_Editor_Module is
                Factory           => Open_Files_Factory'Access,
                Extra_Information => Gtk_Widget (Selector),
                Id                => null,
-               Mask              => All_Options
-               and not Search_Backward));
+               Mask              => All_Options and not Search_Backward));
       end;
 
       --  Register the aliases special entities
@@ -3774,6 +3772,7 @@ package body Src_Editor_Module is
            (Get_Main_Window (Kernel), "map",
             Marsh => Widget_Callback.To_Marshaller (Map_Cb'Access),
             After => True);
+
       else
          Map_Cb (Get_Main_Window (Kernel));
       end if;

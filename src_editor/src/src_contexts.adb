@@ -922,8 +922,7 @@ package body Src_Contexts is
    function Current_File_Factory
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access
+      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
       Child    : MDI_Child;
@@ -934,11 +933,14 @@ package body Src_Contexts is
    begin
       --  If we are looking for all the occurrences, we simply reuse another
       --  context, instead of the interactive Current_File_Context
+
       if All_Occurrences then
          Child := Find_Current_Editor (Kernel);
+
          if Child = null then
             return null;
          end if;
+
          Editor := Get_Source_Box_From_MDI (Child);
 
          Context2 := new Files_Project_Context;
@@ -947,6 +949,7 @@ package body Src_Contexts is
          Set_File_List
            (Context2, new File_Array'(1 => Get_Filename (Editor)));
          return Search_Context_Access (Context2);
+
       else
          Context := new Current_File_Context;
          Context.All_Occurrences := False;
@@ -962,8 +965,7 @@ package body Src_Contexts is
    function Files_From_Project_Factory
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access
+      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : Files_Project_Context_Access := new Files_Project_Context;
@@ -980,8 +982,8 @@ package body Src_Contexts is
    --------------------------------
 
    function Files_From_Project_Factory
-     (Scope              : Search_Scope;
-      All_Occurrences    : Boolean) return Files_Project_Context_Access
+     (Scope           : Search_Scope;
+      All_Occurrences : Boolean) return Files_Project_Context_Access
    is
       Context : Files_Project_Context_Access := new Files_Project_Context;
    begin
@@ -1003,13 +1005,15 @@ package body Src_Contexts is
       Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : Open_Files_Context_Access := new Open_Files_Context;
       Open_File_List : VFS.File_Array_Access;
+
    begin
       --  Glide_Kernel.Open_Files returns a File_Array, but Set_File_List
       --  takes a File_Array_Access. Memory will be properly freed in
       --  Set_File_List
-      Open_File_List := new VFS.File_Array'(Open_Files (Kernel));
 
-      Context.Scope      := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+      Open_File_List          := new VFS.File_Array'(Open_Files (Kernel));
+      Context.Scope           :=
+        Search_Scope'Val (Get_Index_In_List (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
       Context.Begin_Line      := 0;
       Set_File_List (Context, Open_File_List);
@@ -1039,8 +1043,7 @@ package body Src_Contexts is
    function Files_Factory
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access
+      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       pragma Unreferenced (Kernel);
 
@@ -1069,6 +1072,7 @@ package body Src_Contexts is
 
       Trace (Me, "Files_Factory: no files pattern specified");
       return null;
+
    exception
       when Error_In_Regexp =>
          return null;
