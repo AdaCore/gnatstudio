@@ -4,7 +4,7 @@
 --                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -35,6 +35,7 @@ with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
@@ -68,18 +69,18 @@ package body Project_Properties is
      (Widget_Array, Widget_Array_Access);
 
    type Properties_Editor_Record is new Gtk.Dialog.Gtk_Dialog_Record with
-      record
-         Name        : Gtk.GEntry.Gtk_Entry;
-         Path        : Gtk.GEntry.Gtk_Entry;
-         Executables : Gtk_List_Store;
-         Tree_View   : Gtk_Tree_View;
-         Gnatls      : Gtk.GEntry.Gtk_Entry;
-         Compiler    : Gtk.GEntry.Gtk_Entry;
-         Debugger    : Gtk.GEntry.Gtk_Entry;
-         Convert     : Gtk.Check_Button.Gtk_Check_Button;
-         Compilers   : Widget_Array_Access;
-         Languages   : Widget_Array_Access;
-      end record;
+   record
+      Name        : Gtk.GEntry.Gtk_Entry;
+      Path        : Gtk.GEntry.Gtk_Entry;
+      Executables : Gtk_List_Store;
+      Tree_View   : Gtk_Tree_View;
+      Gnatls      : Gtk.GEntry.Gtk_Entry;
+      Compiler    : Gtk.GEntry.Gtk_Entry;
+      Debugger    : Gtk.GEntry.Gtk_Entry;
+      Convert     : Gtk.Check_Button.Gtk_Check_Button;
+      Compilers   : Widget_Array_Access;
+      Languages   : Widget_Array_Access;
+   end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
    procedure Gtk_New
@@ -183,33 +184,36 @@ package body Project_Properties is
       Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class)
    is
-      Button  : Gtk_Widget;
-      Button2 : Gtk_Button;
-      Label   : Gtk_Label;
-      Check   : Gtk_Check_Button;
+      Button       : Gtk_Widget;
+      Button2      : Gtk_Button;
+      Label        : Gtk_Label;
+      Check        : Gtk_Check_Button;
       Table, Lang  : Gtk_Table;
-      Languages : String_Array := Known_Languages
+      Languages    : String_Array := Known_Languages
         (Get_Language_Handler (Kernel));
-      Project_Languages : Argument_List :=  Get_Languages (Project_View);
-      Ent     : Gtk_GEntry;
-      Box     : Gtk_Box;
-      Bbox    : Gtk_Vbutton_Box;
-      Column : Gtk_Tree_View_Column;
-      Renderer : Gtk_Cell_Renderer_Text;
-      Col : Gint;
-      Scrolled : Gtk_Scrolled_Window;
+      Project_Languages : Argument_List := Get_Languages (Project_View);
+      Ent          : Gtk_GEntry;
+      Box          : Gtk_Box;
+      Bbox         : Gtk_Vbutton_Box;
+      Column       : Gtk_Tree_View_Column;
+      Renderer     : Gtk_Cell_Renderer_Text;
+      Col          : Gint;
+      Scrolled     : Gtk_Scrolled_Window;
+      Combo        : Gtk_Combo;
+      Items        : Gtk.Enums.String_List.Glist;
+
+      use Gtk.Enums.String_List;
 
    begin
       Gtk.Dialog.Initialize
         (Dialog => Editor,
-         Title  => -"Properties for "
-           & Project_Name (Project_View),
+         Title  => -"Properties for " & Project_Name (Project_View),
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
       Set_Policy (Editor,
-                  Allow_Shrink => True,
+                  Allow_Shrink => False,
                   Allow_Grow   => True,
-                  Auto_Shrink  => True);
+                  Auto_Shrink  => False);
 
       Widget_Callback.Connect
         (Editor, "destroy",
@@ -247,7 +251,6 @@ package body Project_Properties is
       Set_Active (Editor.Convert, True);
       Set_Text (Editor.Path, Dir_Name (Project_Path (Project_View)));
 
-
       Gtk_New (Label, -"Main files:");
       Set_Alignment (Label, 0.0, 0.0);
       Attach (Table, Label, 0, 1, 3, 4, Xoptions => Fill);
@@ -275,14 +278,14 @@ package body Project_Properties is
       Set_Layout (Bbox, Buttonbox_Start);
       Pack_Start (Box, Bbox, Expand => False, Fill => False);
 
-      Gtk_New (Button2, -"Add");
+      Gtk_New_From_Stock (Button2, Stock_Add);
       Pack_Start (Bbox, Button2);
       Widget_Callback.Object_Connect
         (Button2, "clicked",
          Widget_Callback.To_Marshaller (Add_Main_Unit'Access),
          Slot_Object => Editor);
 
-      Gtk_New (Button2, -"Remove");
+      Gtk_New_From_Stock (Button2, Stock_Remove);
       Pack_Start (Bbox, Button2);
       Widget_Callback.Object_Connect
         (Button2, "clicked",
@@ -297,27 +300,67 @@ package body Project_Properties is
          for M in Mains'Range loop
             Add_Main_File (Editor, Mains (M).all);
          end loop;
+
          Free (Mains);
       end;
 
       Gtk_New (Label, -"Gnatls:");
       Set_Alignment (Label, 0.0, 0.0);
       Attach (Table, Label, 0, 1, 4, 5, Xoptions => Fill, Yoptions => 0);
-      Gtk_New (Editor.Gnatls);
-      Attach (Table, Editor.Gnatls, 1, 3, 4, 5, Yoptions => 0);
+
+      Gtk_New (Combo);
+
+      --  ??? Would be nice to specify the list of available cross compilers
+      --  using a configuration file
+
+      Append (Items, "gnatls");
+      Append (Items, "powerpc-wrs-vxworks-gnatls");
+      Append (Items, "powerpc-wrs-vxworksae-gnatls");
+      Append (Items, "i386-wrs-vxworks-gnatls");
+      Append (Items, "m68k-wrs-vxworks-gnatls");
+      Append (Items, "mips-wrs-vxworks-gnatls");
+      Append (Items, "sparc-wrs-vxworks-gnatls");
+      Append (Items, "sparc64-wrs-vxworks-gnatls");
+      Append (Items, "strongarm-wrs-vxworks-gnatls");
+      Append (Items, "alpha-dec-vxworks-gnatls");
+      Append (Items, "powerpc-xcoff-lynxos-gnatls");
+      Append (Items, "gnaampls");
+      Append (Items, "jgnatls");
+      Set_Popdown_Strings (Combo, Items);
+      Free_String_List (Items);
+      Attach (Table, Combo, 1, 3, 4, 5, Yoptions => 0);
+      Editor.Gnatls := Get_Entry (Combo);
       Set_Text
         (Editor.Gnatls,
-         Get_Attribute_Value (Project_View, Gnatlist_Attribute, Ide_Package));
+         Get_Attribute_Value
+           (Project_View, Gnatlist_Attribute,
+            Ide_Package, Default => "gnatls"));
 
       Gtk_New (Label, -"Debugger:");
       Set_Alignment (Label, 0.0, 0.0);
       Attach (Table, Label, 0, 1, 5, 6, Xoptions => Fill, Yoptions => 0);
-      Gtk_New (Editor.Debugger);
-      Attach (Table, Editor.Debugger, 1, 3, 5, 6, Yoptions => 0);
+
+      Gtk_New (Combo);
+      Append (Items, "gdb");
+      Append (Items, "powerpc-wrs-vxworks-gdb");
+      Append (Items, "powerpc-wrs-vxworksae-gdb");
+      Append (Items, "i386-wrs-vxworks-gdb");
+      Append (Items, "m68k-wrs-vxworks-gdb");
+      Append (Items, "mips-wrs-vxworks-gdb");
+      Append (Items, "sparc-wrs-vxworks-gdb");
+      Append (Items, "sparc64-wrs-vxworks-gdb");
+      Append (Items, "strongarm-wrs-vxworks-gdb");
+      Append (Items, "alpha-dec-vxworks-gdb");
+      Append (Items, "powerpc-xcoff-lynxos-gdb");
+      Set_Popdown_Strings (Combo, Items);
+      Free_String_List (Items);
+      Attach (Table, Combo, 1, 3, 5, 6, Yoptions => 0);
+      Editor.Debugger := Get_Entry (Combo);
       Set_Text
         (Editor.Debugger,
          Get_Attribute_Value
-           (Project_View, Debugger_Command_Attribute, Ide_Package));
+           (Project_View, Debugger_Command_Attribute,
+            Ide_Package, Default => "gdb"));
 
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
@@ -334,21 +377,53 @@ package body Project_Properties is
 
       for L in Languages'Range loop
          Gtk_New (Check, Languages (L).all);
-         Attach (Lang, Check, 0, 1,
-                 Guint (L - Languages'First),
-                 Guint (L - Languages'First + 1),
-                 Xoptions => Fill);
+         Attach
+           (Lang, Check, 0, 1,
+            Guint (L - Languages'First),
+            Guint (L - Languages'First + 1),
+            Xoptions => Fill);
 
-         Gtk_New (Ent);
-         Set_Sensitive (Ent, False);
-         Attach (Lang, Ent, 1, 2,
-                 Guint (L - Languages'First),
-                 Guint (L - Languages'First + 1));
-         Set_Text (Ent,
-                   Get_Attribute_Value
-                     (Project_View, Compiler_Command_Attribute,
-                      Ide_Package, Default => "",
-                      Index => Languages (L).all));
+         if To_Lower (Languages (L).all) = "ada" then
+            Gtk_New (Combo);
+            Append (Items, "gnatmake");
+            Append (Items, "powerpc-wrs-vxworks-gnatmake");
+            Append (Items, "powerpc-wrs-vxworksae-gnatmake");
+            Append (Items, "i386-wrs-vxworks-gnatmake");
+            Append (Items, "m68k-wrs-vxworks-gnatmake");
+            Append (Items, "mips-wrs-vxworks-gnatmake");
+            Append (Items, "sparc-wrs-vxworks-gnatmake");
+            Append (Items, "sparc64-wrs-vxworks-gnatmake");
+            Append (Items, "strongarm-wrs-vxworks-gnatmake");
+            Append (Items, "alpha-dec-vxworks-gnatmake");
+            Append (Items, "powerpc-xcoff-lynxos-gnatmake");
+            Append (Items, "gnaampmake");
+            Append (Items, "jgnatmake");
+            Set_Popdown_Strings (Combo, Items);
+            Free_String_List (Items);
+            Attach (Lang, Combo, 1, 2,
+                    Guint (L - Languages'First),
+                    Guint (L - Languages'First + 1));
+            Ent := Get_Entry (Combo);
+            Set_Text
+              (Ent,
+               Get_Attribute_Value
+                 (Project_View, Compiler_Command_Attribute,
+                  Ide_Package, Default => "gnatmake",
+                  Index => Languages (L).all));
+
+         else
+            Gtk_New (Ent);
+            Set_Sensitive (Ent, False);
+            Attach (Lang, Ent, 1, 2,
+                    Guint (L - Languages'First),
+                    Guint (L - Languages'First + 1));
+            Set_Text
+              (Ent,
+               Get_Attribute_Value
+                 (Project_View, Compiler_Command_Attribute,
+                  Ide_Package, Default => "gcc",
+                  Index => Languages (L).all));
+         end if;
 
          Editor.Languages (L) := Gtk_Widget (Check);
          Editor.Compilers (L) := Gtk_Widget (Ent);
@@ -379,9 +454,11 @@ package body Project_Properties is
       File : constant String := Select_File
         (Title => -"Select the main unit to add");
       --  ??? Would be nice to allow the selection of multiple files from the
-      --  ??? same dialog.
+      --  same dialog.
    begin
-      Add_Main_File (Properties_Editor (Editor), Base_Name (File));
+      if File /= "" then
+         Add_Main_File (Properties_Editor (Editor), Base_Name (File));
+      end if;
    end Add_Main_Unit;
 
    ----------------------
