@@ -50,6 +50,7 @@ with Odd.Process;         use Odd.Process;
 with Odd_Intl;            use Odd_Intl;
 with Process_Proxies;     use Process_Proxies;
 with Odd.Strings;         use Odd.Strings;
+with Odd.Types;           use Odd.Types;
 
 with Unchecked_Deallocation;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -79,6 +80,9 @@ package body Odd.Code_Editors is
 
    File_Name_Bg_Color : constant String := "darkgrey";
    --  Color used for the background of the file name in the editor.
+
+   No_Breakpoint : Breakpoint_Array (1 .. 0);
+   --  Array used to reset the breakpoint list
 
    subtype Line_Number is String (1 .. Line_Numbers_Width);
    --  Type of strings used to display line numbers.
@@ -300,6 +304,7 @@ package body Odd.Code_Editors is
       Font_Size      : Gint;
       Default_Icon   : Chars_Ptr_Array;
       Current_Line_Icon : Chars_Ptr_Array;
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Comments_Color : String;
       Strings_Color  : String;
       Keywords_Color : String)
@@ -323,6 +328,12 @@ package body Odd.Code_Editors is
          Current_Line_Mask,
          White (Get_System),
          Current_Line_Icon);
+      Create_From_Xpm_D
+        (Editor.Stop_Pixmap,
+         Get_Window (Editor.Text),
+         Editor.Stop_Mask,
+         White (Get_System),
+         Stop_Icon);
 
       --  Create the current line icon, and make sure it is never destroyed.
       Gtk_New (Editor.Current_Line_Button,
@@ -628,6 +639,9 @@ package body Odd.Code_Editors is
    --------------------
 
    procedure Update_Buttons (Editor : access Code_Editor_Record'Class) is
+      use Gtk.Widget.Widget_List;
+      Tmp : Glist := Editor.Possible_Breakpoint_Buttons;
+
       Line_Height : constant Gint :=
         Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
       Index : Positive;
@@ -645,11 +659,19 @@ package body Odd.Code_Editors is
 
       Freeze (Editor.Buttons);
 
+      Hide_All (Editor.Buttons);
+
       if Get_Parent (Editor.Current_Line_Button) /= null then
          Hide (Editor.Current_Line_Button);
          Remove (Editor.Buttons, Editor.Current_Line_Button);
       end if;
-      Forall (Editor.Buttons, Gtk.Widget.Destroy_Cb'Access);
+
+      while Tmp /= Null_List loop
+         Destroy (Get_Data (Tmp));
+         Tmp := Next (Tmp);
+      end loop;
+      Free (Editor.Possible_Breakpoint_Buttons);
+      Editor.Possible_Breakpoint_Buttons := Null_List;
 
       --  Display the breakpoint icons
 
@@ -674,6 +696,8 @@ package body Odd.Code_Editors is
                   Put (Editor.Buttons, Pix,
                        X => 0,
                        Y => Gint (Line - 1) * Line_Height + 3);
+                  Prepend (Editor.Possible_Breakpoint_Buttons,
+                           Gtk_Widget (Pix));
                end if;
 
                Line := Line + 1;
@@ -685,6 +709,8 @@ package body Odd.Code_Editors is
       end if;
 
       Set_Line (Editor, Editor.Current_Line);
+      Show_All (Editor.Buttons);
+
       Thaw (Editor.Buttons);
    end Update_Buttons;
 
@@ -769,6 +795,7 @@ package body Odd.Code_Editors is
 
       Print_Buffer (Editor);
       Update_Buttons (Editor);
+      Update_Breakpoints (Editor, No_Breakpoint);
 
       --  For the buttons to become visible again, we have to hide the layout,
       --  and then show it again... Don't know why !
@@ -893,5 +920,50 @@ package body Odd.Code_Editors is
    begin
       return Editor.Show_Lines_With_Code;
    end Get_Show_Lines_With_Code;
+
+   ------------------------
+   -- Update_Breakpoints --
+   ------------------------
+
+   procedure Update_Breakpoints
+     (Editor    : access Code_Editor_Record;
+      Br        : Odd.Types.Breakpoint_Array)
+   is
+      use Gtk.Widget.Widget_List;
+      Tmp : Glist := Editor.Breakpoint_Buttons;
+      Pix : Gtk_Pixmap;
+      Line_Height : constant Gint :=
+        Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
+      Base_File : String := Base_File_Name (Editor.Current_File.all);
+   begin
+
+      Hide_All (Editor.Buttons);
+      Freeze (Editor.Buttons);
+
+      --  Remove all existing breakpoints
+
+      while Tmp /= Null_List loop
+         Destroy (Get_Data (Tmp));
+         Tmp := Next (Tmp);
+      end loop;
+      Free (Editor.Breakpoint_Buttons);
+      Editor.Breakpoint_Buttons := Null_List;
+
+      --  Add the new ones
+      for B in Br'Range loop
+         if Br (B).File /= null
+           and then Br (B).File.all = Base_File
+         then
+            Gtk_New (Pix, Editor.Stop_Pixmap, Editor.Stop_Mask);
+            Put (Editor.Buttons, Pix,
+                 X => 0,
+                 Y => Gint (Br (B).Line - 1) * Line_Height + 3);
+            Prepend (Editor.Breakpoint_Buttons, Gtk_Widget (Pix));
+         end if;
+      end loop;
+
+      Show_All (Editor.Buttons);
+      Thaw (Editor.Buttons);
+   end Update_Breakpoints;
 
 end Odd.Code_Editors;

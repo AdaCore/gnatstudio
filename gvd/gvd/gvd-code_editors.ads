@@ -38,8 +38,10 @@ with Gtk.Pixmap;
 with Gtk.Scrolled_Window;
 with Gtk.Text;
 with Gtk.Style;
+with Gtk.Widget;
 with Gtkada.Types;
 with Language;
+with Odd.Types;
 
 package Odd.Code_Editors is
 
@@ -66,6 +68,7 @@ package Odd.Code_Editors is
       Font_Size         : Glib.Gint;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Comments_Color    : String;
       Strings_Color     : String;
       Keywords_Color    : String);
@@ -129,6 +132,14 @@ package Odd.Code_Editors is
       Line      : Natural);
    --  Set the current line (and draw the button on the side).
 
+   procedure Update_Breakpoints
+     (Editor    : access Code_Editor_Record;
+      Br        : Odd.Types.Breakpoint_Array);
+   --  Change the list of breakpoints to highlight in the editor.
+   --  All the breakpoints that previously existed are removed from the screen,
+   --  and replaced by the new ones.
+   --  The breakpoints that do not apply to the current file are ignored.
+
 private
 
    type Color_Array is array (Language.Language_Entity'Range) of
@@ -149,6 +160,8 @@ private
       Font            : Gdk.Font.Gdk_Font;
       Default_Pixmap  : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
       Default_Mask    : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
+      Stop_Pixmap     : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
+      Stop_Mask       : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
       Colors          : Color_Array := (others => Gdk.Color.Null_Color);
       File_Name_Style : Gtk.Style.Gtk_Style;
 
@@ -159,6 +172,12 @@ private
       Show_Lines_With_Code : Boolean := True;
       --  Whether the lines where one can set a breakpoint have a small dot
       --  on the side.
+
+      Breakpoint_Buttons   : Gtk.Widget.Widget_List.Glist;
+      --  The pixmaps for each of the breakpoints
+
+      Possible_Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
+      --  The pixmaps for each of the possible breakpoints location
    end record;
 
 end Odd.Code_Editors;
