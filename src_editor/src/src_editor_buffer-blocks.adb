@@ -181,6 +181,7 @@ package body Src_Editor_Buffer.Blocks is
          Current := Current.Next;
       end loop;
 
+      Buffer_Information_Changed (Buffer);
       Free (Constructs);
    end Compute_Blocks;
 
