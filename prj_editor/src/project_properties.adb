@@ -20,6 +20,8 @@
 
 with GNAT.IO; use GNAT.IO;
 
+with Prj.Attr; use Prj, Prj.Attr;
+
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
@@ -79,6 +81,7 @@ with Languages_Lists;           use Languages_Lists;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with VFS;                       use VFS;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with String_Utils;              use String_Utils;
 with GUI_Utils;                 use GUI_Utils;
 
@@ -177,6 +180,11 @@ package body Project_Properties is
    type Attribute_Page_List is access Attribute_Page_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Attribute_Page_Array, Attribute_Page_List);
+
+   procedure Register_New_Attribute
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Attr      : Attribute_Description_Access);
+   --  Register a new attribute in the project parser.
 
    -----------------------
    -- Properties module --
@@ -886,6 +894,108 @@ package body Project_Properties is
       end if;
    end Parse_Attribute_Type;
 
+   ----------------------------
+   -- Register_New_Attribute --
+   ----------------------------
+
+   procedure Register_New_Attribute
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Attr      : Attribute_Description_Access)
+   is
+      Pkg_Id    : Package_Node_Id := Empty_Package;
+      Attr_Id   : Attribute_Node_Id;
+      Attr_Kind : Defined_Attribute_Kind;
+      Var_Kind  : Defined_Variable_Kind;
+      Index_Is_File_Name : Boolean := False;
+      Index_Attr : Attribute_Description_Access;
+   begin
+      if Attr.Pkg.all /= "" then
+         Pkg_Id := Package_Node_Id_Of (Get_String (Attr.Pkg.all));
+         if Pkg_Id = Empty_Package then
+            Trace (Me, "Register_New_Package (" & Attr.Pkg.all & ")");
+            Register_New_Package (Name  => Attr.Pkg.all, Id => Pkg_Id);
+         end if;
+      end if;
+
+      if Pkg_Id = Empty_Package then
+         Attr_Id := Attribute_Node_Id_Of
+           (Name        => Get_String (Attr.Name.all),
+            Starting_At => Prj.Attr.Attribute_First);
+      else
+         Attr_Id := Attribute_Node_Id_Of
+           (Name        => Get_String (Attr.Name.all),
+            Starting_At => First_Attribute_Of (Pkg_Id));
+      end if;
+
+      if Attr.Is_List then
+         Var_Kind := Prj.List;
+      else
+         Var_Kind := Prj.Single;
+      end if;
+
+      if Attr.Indexed then
+         if Attr_Id /= Empty_Attribute then
+            Attr_Kind := Attribute_Kind_Of (Attr_Id);
+            if Attr_Kind = Attribute_Kind'(Single) then
+               Attr_Kind := Prj.Attr.Associative_Array;
+            end if;
+         else
+            Attr_Kind := Prj.Attr.Case_Insensitive_Associative_Array;
+         end if;
+
+         Index_Attr := Get_Attribute_Type_From_Name
+           (Pkg  => Attr.Index_Package.all,
+            Name => Attr.Index_Attribute.all);
+         Index_Is_File_Name := Index_Attr /= null
+           and then Index_Attr.Non_Index_Type.Typ = Attribute_As_Filename;
+
+      else
+         Attr_Kind := Attribute_Kind'(Single);
+      end if;
+
+      if Attr_Id = Empty_Attribute then
+         if Attr.Pkg.all = "" then
+            Insert
+              (Kernel,
+               -("Project attributes " & Attr.Name.all
+                 & " cannot be added at the top level of project files,"
+                 & " only in packages"),
+               Mode => Error);
+         else
+            Trace (Me, "Register_New_Attribute (" & Attr.Name.all
+                   & ", " & Attr.Pkg.all & ", " & Attr_Kind'Img & ", "
+                   & Var_Kind'Img & ")");
+            Register_New_Attribute
+              (Name               => Attr.Name.all,
+               In_Package         => Pkg_Id,
+               Attr_Kind          => Attr_Kind,
+               Var_Kind           => Var_Kind,
+               Index_Is_File_Name => Index_Is_File_Name,
+               Opt_Index          => False);
+         end if;
+      else
+         if Attribute_Kind_Of (Attr_Id) /= Attr_Kind
+           or else Variable_Kind_Of (Attr_Id) /= Var_Kind
+         then
+            if Attr.Pkg.all = "" then
+               Insert
+                 (Kernel,
+                  -("Project attribute "
+                    & Attr.Name.all & " was already defined, but with a"
+                    & " different type"),
+                  Mode => Error);
+            else
+               Insert
+                 (Kernel,
+                  -("Project attribute " & Attr.Pkg.all & "'"
+                    & Attr.Name.all & " was already defined, but with a"
+                    & " different type"),
+                  Mode => Error);
+            end if;
+         end if;
+      end if;
+   end Register_New_Attribute;
+
    ---------------------------------
    -- Parse_Attribute_Description --
    ---------------------------------
@@ -984,8 +1094,10 @@ package body Project_Properties is
             if Child.Tag.all = "index" then
                A.Index_Attribute := new String'
                  (Get_Attribute (Child, "attribute"));
+               To_Lower (A.Index_Attribute.all);
                A.Index_Package := new String'
                  (Get_Attribute (Child, "package"));
+               To_Lower (A.Index_Package.all);
                Parse_Indexed_Type ("");
 
             elsif Child.Tag.all = "specialized_index" then
@@ -995,8 +1107,13 @@ package body Project_Properties is
             Child := Child.Next;
          end loop;
 
+         Register_New_Attribute (Kernel => Kernel, Attr => A);
+
       else
          Parse_Attribute_Type (Kernel, N.Child, A.Name.all, A.Non_Index_Type);
+         Register_New_Attribute
+           (Kernel    => Kernel,
+            Attr      => A);
       end if;
    end Parse_Attribute_Description;
 
@@ -1020,13 +1137,16 @@ package body Project_Properties is
                  (Get_Attribute (N, "editor_page", Default => "General"));
                Editor_Section : constant Natural := Find_Editor_Section_By_Name
                  (Editor_Page, Get_Attribute (N, "editor_section"));
-               Name    : constant String := Get_Attribute (N, "name");
-               Pkg     : constant String := Get_Attribute (N, "package");
+               Name    : String := Get_Attribute (N, "name");
+               Pkg     : String := Get_Attribute (N, "package");
                Indexed : constant Boolean := N.Child /= null
                  and then (N.Child.Tag.all = "index"
                            or else N.Child.Tag.all = "specialized_index");
                Attribute : Attribute_Description_Access;
             begin
+               To_Lower (Pkg);
+               To_Lower (Name);
+
                if Name = "" then
                   Insert
                     (Kernel,
@@ -2732,6 +2852,7 @@ package body Project_Properties is
       Gtk_New (Text);
 
       Gtk_New (Col);
+      Set_Resizable (Col, True);
       if Index.Label = null then
          Set_Title (Col, Index.Name.all);
       else
@@ -2744,7 +2865,12 @@ package body Project_Properties is
       Clicked (Col);
 
       Gtk_New (Col);
-      Set_Title (Col, Attr.Label.all & " (Click to edit)");
+      Set_Resizable (Col, True);
+      if Attr.Label /= null then
+         Set_Title (Col, Attr.Label.all & (-" (Click to edit)"));
+      else
+         Set_Title (Col, -"(Click to edit)");
+      end if;
       Col_Number := Append_Column (Ed.View, Col);
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "text", Attribute_Col);
@@ -3186,7 +3312,7 @@ package body Project_Properties is
 
          --  List of languages has changed
 
-         if Project = No_Project
+         if Project = Projects.No_Project
            or else not Is_Equal
            (New_Languages, Project_Languages, Case_Sensitive => False)
          then
@@ -3219,7 +3345,7 @@ package body Project_Properties is
 
                   if Ent /= null
                     and then
-                      (Project = No_Project
+                      (Project = Projects.No_Project
                        or else Get_Text (Ent) /= Get_Value (Project, Att))
                   then
                      Changed := True;
@@ -3249,7 +3375,7 @@ package body Project_Properties is
             end if;
          end loop;
 
-         if Project = No_Project
+         if Project = Projects.No_Project
            or else Get_Text (Editor.Debugger) /= Get_Attribute_Value
            (Project, Debugger_Command_Attribute, Default => "gdb")
          then
@@ -3262,7 +3388,7 @@ package body Project_Properties is
             Trace (Me, "debugger command changed");
          end if;
 
-         if Project = No_Project
+         if Project = Projects.No_Project
            or else Get_Text (Editor.Tools_Host) /= Get_Attribute_Value
            (Project, Remote_Host_Attribute, Default => "")
          then
@@ -3283,7 +3409,7 @@ package body Project_Properties is
             end if;
          end if;
 
-         if Project = No_Project
+         if Project = Projects.No_Project
            or else Get_Text (Editor.Program_Host) /= Get_Attribute_Value
            (Project, Program_Host_Attribute, Default => "")
          then
@@ -3304,7 +3430,7 @@ package body Project_Properties is
             end if;
          end if;
 
-         if Project = No_Project
+         if Project = Projects.No_Project
            or else Get_Text (Editor.Protocol) /= Get_Attribute_Value
            (Project, Protocol_Attribute, Default => "")
          then
@@ -3325,7 +3451,7 @@ package body Project_Properties is
             end if;
          end if;
 
-         if Project = No_Project
+         if Project = Projects.No_Project
            or else Get_Text (Editor.Global_Pragmas) /= Get_Attribute_Value
            (Project, Global_Pragmas_Attribute, Default => "")
          then
@@ -3346,7 +3472,7 @@ package body Project_Properties is
             end if;
          end if;
 
-         if Project = No_Project
+         if Project = Projects.No_Project
            or else Get_Text (Editor.Local_Pragmas) /= Get_Attribute_Value
            (Project, Local_Pragmas_Attribute, Default => "")
          then
@@ -3434,10 +3560,10 @@ package body Project_Properties is
                if (New_Name /= Project_Name (Project)
                    or else New_Path /= Project_Directory (Project))
                  and then Is_Regular_File
-                 (New_Path & New_File & Project_File_Extension)
+                 (New_Path & New_File & Projects.Project_File_Extension)
                then
                   Response2 := Message_Dialog
-                    (Msg => New_Path & New_File & Project_File_Extension
+                    (New_Path & New_File & Projects.Project_File_Extension
                      & (-" already exists. Do you want to overwrite ?"),
                      Buttons => Button_Yes or Button_No,
                      Dialog_Type => Error,
@@ -3462,7 +3588,7 @@ package body Project_Properties is
             Prj_Iter     : Project_Iterator := Start (Editor.Prj_Selector);
             Ed           : Project_Editor_Page;
          begin
-            while Current (Prj_Iter) /= No_Project loop
+            while Current (Prj_Iter) /= Projects.No_Project loop
                declare
                   Scenar_Iter : Scenario_Iterator := Start (Editor.Selector);
                begin
