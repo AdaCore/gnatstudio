@@ -258,6 +258,8 @@ package Csc_HTML_Widget is
 
    procedure Copy (HTML : access Csc_HTML_Record);
    --  Copy the current selection in HTML.
+   --  ??? This procedure does not work, you should use functions from
+   --  Gtk.Clipboard in cunjunction with Get_Selection, see above.
 
    procedure Paste (HTML : access Csc_HTML_Record);
    --  Paste the current selection in HTML.
