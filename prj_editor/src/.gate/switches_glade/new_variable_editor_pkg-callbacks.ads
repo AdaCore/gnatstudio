@@ -8,6 +8,9 @@ package New_Variable_Editor_Pkg.Callbacks is
    procedure On_Get_Environment_Toggled
      (Object : access Gtk_Widget_Record'Class);
 
+   procedure On_Env_Must_Be_Defined_Toggled
+     (Object : access Gtk_Widget_Record'Class);
+
    procedure On_Typed_Variable_Toggled
      (Object : access Gtk_Widget_Record'Class);
 

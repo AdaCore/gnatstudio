@@ -26,7 +26,7 @@ package New_Variable_Editor_Pkg is
       Get_Environment : Gtk_Check_Button;
       Alignment7 : Gtk_Alignment;
       Environment_Table : Gtk_Table;
-      Label56 : Gtk_Label;
+      Default_Value_Label : Gtk_Label;
       Default_Env_Variable : Gtk_Combo;
       Combo_Entry8 : Gtk_Entry;
       List_Env_Variables : Gtk_Combo;

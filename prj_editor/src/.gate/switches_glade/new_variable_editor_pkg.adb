@@ -73,12 +73,12 @@ begin
    Set_Col_Spacings (New_Variable_Editor.Environment_Table, 9);
    Add (New_Variable_Editor.Alignment7, New_Variable_Editor.Environment_Table);
 
-   Gtk_New (New_Variable_Editor.Label56, -("Default value:"));
-   Set_Alignment (New_Variable_Editor.Label56, 7.45058e-09, 0.5);
-   Set_Padding (New_Variable_Editor.Label56, 0, 0);
-   Set_Justify (New_Variable_Editor.Label56, Justify_Center);
-   Set_Line_Wrap (New_Variable_Editor.Label56, False);
-   Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.Label56, 0, 1, 2, 3,
+   Gtk_New (New_Variable_Editor.Default_Value_Label, -("Default value:"));
+   Set_Alignment (New_Variable_Editor.Default_Value_Label, 7.45058e-09, 0.5);
+   Set_Padding (New_Variable_Editor.Default_Value_Label, 0, 0);
+   Set_Justify (New_Variable_Editor.Default_Value_Label, Justify_Center);
+   Set_Line_Wrap (New_Variable_Editor.Default_Value_Label, False);
+   Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.Default_Value_Label, 0, 1, 2, 3,
      Shrink or Fill, 0,
      0, 0);
 
@@ -94,7 +94,7 @@ begin
      0, 0);
 
    New_Variable_Editor.Combo_Entry8 := Get_Entry (New_Variable_Editor.Default_Env_Variable);
-   Set_Editable (New_Variable_Editor.Combo_Entry8, True);
+   Set_Editable (New_Variable_Editor.Combo_Entry8, False);
    Set_Max_Length (New_Variable_Editor.Combo_Entry8, 0);
    Set_Text (New_Variable_Editor.Combo_Entry8, -"");
    Set_Visibility (New_Variable_Editor.Combo_Entry8, True);
@@ -130,6 +130,9 @@ begin
    Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.Env_Must_Be_Defined, 0, 2, 0, 1,
      Expand or Shrink or Fill, 0,
      0, 0);
+   Widget_Callback.Object_Connect
+     (New_Variable_Editor.Env_Must_Be_Defined, "toggled",
+      Widget_Callback.To_Marshaller (On_Env_Must_Be_Defined_Toggled'Access), New_Variable_Editor);
 
    Gtk_New (New_Variable_Editor.Frame34, -"Type and current value");
    Set_Border_Width (New_Variable_Editor.Frame34, 10);

@@ -34,6 +34,17 @@ package body New_Variable_Editor_Pkg.Callbacks is
       null;
    end On_Get_Environment_Toggled;
 
+   ------------------------------------
+   -- On_Env_Must_Be_Defined_Toggled --
+   ------------------------------------
+
+   procedure On_Env_Must_Be_Defined_Toggled
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Env_Must_Be_Defined_Toggled;
+
    -------------------------------
    -- On_Typed_Variable_Toggled --
    -------------------------------
