@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,10 +13,11 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -96,7 +97,7 @@ package body VCS_View_API is
    procedure On_Context_Changed
      (Object  : access Gtk_Widget_Record'Class;
       Args    : Gtk_Args);
-   --  ???
+   --  Called when the current context has changed.
 
    function Check_Handler
      (Kernel : Kernel_Handle;
@@ -546,7 +547,9 @@ package body VCS_View_API is
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
 
-         if Has_Directory_Information (File) then
+         if Has_Directory_Information (File)
+           and then not Has_File_Information (File)
+         then
             String_List.Append (Dirs, Directory_Information (File));
             Status :=  Local_Get_Status (Ref, Dirs);
             String_List.Free (Dirs);
