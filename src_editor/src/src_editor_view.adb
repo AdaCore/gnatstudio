@@ -38,7 +38,6 @@ with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
-with Src_Editor_Defaults;         use Src_Editor_Defaults;
 with String_Utils;                use String_Utils;
 
 package body Src_Editor_View is
@@ -133,6 +132,12 @@ package body Src_Editor_View is
       Left_Window : Gdk.Window.Gdk_Window;
       Area        : Gdk_Rectangle);
    --  Redraw the line numbers for Area of the given Left_Window.
+
+   procedure Set_Font
+     (View : access Source_View_Record'Class;
+      Font : Pango.Font.Pango_Font_Description);
+   --  Change the font used in the given Source_View. Note that this service
+   --  should not be used if the widget is not realized.
 
    ----------------
    -- Realize_Cb --
@@ -375,7 +380,7 @@ package body Src_Editor_View is
    procedure Gtk_New
      (View              : out Source_View;
       Buffer            : Src_Editor_Buffer.Source_Buffer := null;
-      Font              : Pango.Font.Pango_Font_Description := null;
+      Font              : Pango.Font.Pango_Font_Description;
       Show_Line_Numbers : Boolean := False) is
    begin
       View := new Source_View_Record;
@@ -403,11 +408,7 @@ package body Src_Editor_View is
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
       View.Saved_Insert_Mark := Create_Mark (Buffer, Where => Insert_Iter);
 
-      if Font = null then
-         View.Pango_Font := Pango.Font.From_String (Default_Font_Description);
-      else
-         View.Pango_Font := Font;
-      end if;
+      View.Pango_Font := Font;
 
       View.Font := Gdk.Font.From_Description (View.Pango_Font);
       View.Show_Line_Numbers := Show_Line_Numbers;
@@ -453,7 +454,7 @@ package body Src_Editor_View is
    --------------
 
    procedure Set_Font
-     (View : access Source_View_Record;
+     (View : access Source_View_Record'Class;
       Font : Pango.Font.Pango_Font_Description)
    is
    begin

@@ -43,7 +43,7 @@ package Src_Editor_View is
    procedure Gtk_New
      (View              : out Source_View;
       Buffer            : Src_Editor_Buffer.Source_Buffer := null;
-      Font              : Pango.Font.Pango_Font_Description := null;
+      Font              : Pango.Font.Pango_Font_Description;
       Show_Line_Numbers : Boolean := False);
    --  Create a new Source_View from the given parameters.
    --  If no Buffer is given, then a new one will be created. For tasks such
@@ -61,12 +61,6 @@ package Src_Editor_View is
       Show_Line_Numbers : Boolean);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
-
-   procedure Set_Font
-     (View : access Source_View_Record;
-      Font : Pango.Font.Pango_Font_Description);
-   --  Change the font used in the given Source_View. Note that this service
-   --  should not be used if the widget is not realized.
 
    procedure Set_Show_Line_Numbers
      (View         : access Source_View_Record;
