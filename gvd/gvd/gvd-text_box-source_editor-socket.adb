@@ -166,6 +166,10 @@ package body GVD.Text_Box.Source_Editor.Socket is
       null;
    end Preferences_Changed;
 
+   -------------------------
+   -- Print_File_Location --
+   -------------------------
+
    procedure Print_File_Location
      (File     : String;
       Line     : Natural;
@@ -204,4 +208,3 @@ package body GVD.Text_Box.Source_Editor.Socket is
    end Update_Breakpoints;
 
 end GVD.Text_Box.Source_Editor.Socket;
-
