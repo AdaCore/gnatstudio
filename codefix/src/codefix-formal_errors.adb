@@ -585,65 +585,65 @@ package body Codefix.Formal_Errors is
       Name         : String) return Solution_List
    is
 
---      function Add_Pragma return Extract;
+      function Add_Pragma return Add_Pragma_Cmd;
       --  Add a pragma after the declaration or, if there is no declaration,
       --  after the body.
 
---      function Add_Parameter_Pragma return Extract;
+      function Add_Parameter_Pragma return Add_Pragma_Cmd;
 
       ----------------
       -- Add_Pragma --
       ----------------
 
---      function Add_Pragma return Extract is
---         New_Extract  : Extract;
---         New_Position : File_Cursor;
---         Declaration  : Construct_Information;
---      begin
---         Declaration := Get_Unit (Current_Text, Cursor);
---         New_Position.Line := Declaration.Sloc_End.Line;
---         New_Position.Col  := Declaration.Sloc_End.Column;
---         Assign (New_Position.File_Name, Cursor.File_Name);
---         Add_Line (New_Extract, New_Position, "pragma Unreferenced (" &
---                     Name & ");");
---         Free (New_Position);
---         return New_Extract;
---      end Add_Pragma;
+      function Add_Pragma return Add_Pragma_Cmd is
+         New_Command  : Add_Pragma_Cmd;
+         New_Position : File_Cursor;
+         Declaration  : Construct_Information;
+      begin
+         Declaration := Get_Unit (Current_Text, Cursor);
+         New_Position.Line := Declaration.Sloc_End.Line;
+         New_Position.Col  := Declaration.Sloc_End.Column;
+         Assign (New_Position.File_Name, Cursor.File_Name);
+         Initialize
+           (New_Command, Current_Text, New_Position, "Unreferenced", Name);
+         Free (New_Position);
+         return New_Command;
+      end Add_Pragma;
 
       --------------------------
       -- Add_Parameter_Pragma --
       --------------------------
 
---      function Add_Parameter_Pragma return Extract is
---         New_Extract           : Extract;
---         New_Position, Garbage : File_Cursor;
---         Declaration           : Construct_Information;
+      function Add_Parameter_Pragma return Add_Pragma_Cmd is
+         New_Command           : Add_Pragma_Cmd;
+         New_Position, Garbage : File_Cursor;
+         Declaration           : Construct_Information;
 
---      begin
---         Declaration := Get_Unit
---           (Current_Text, Cursor, Before, Cat_Procedure, Cat_Function);
---         New_Position.Line := Declaration.Sloc_Entity.Line;
---         New_Position.Col  := Declaration.Sloc_Entity.Column;
---         Assign (New_Position.File_Name, Cursor.File_Name);
+      begin
+         Declaration := Get_Unit
+           (Current_Text, Cursor, Before, Cat_Procedure, Cat_Function);
+         New_Position.Line := Declaration.Sloc_Entity.Line;
+         New_Position.Col  := Declaration.Sloc_Entity.Column;
+         Assign (New_Position.File_Name, Cursor.File_Name);
 
---         Garbage := New_Position;
---         New_Position := File_Cursor
---           (Search_String (Current_Text, New_Position, ")"));
---         Free (Garbage);
+         Garbage := New_Position;
+         New_Position := File_Cursor
+           (Search_String (Current_Text, New_Position, ")"));
+         Free (Garbage);
 
---         Garbage := New_Position;
---         New_Position := File_Cursor
---           (Search_String (Current_Text, New_Position, "is"));
---         Free (Garbage);
+         Garbage := New_Position;
+         New_Position := File_Cursor
+           (Search_String (Current_Text, New_Position, "is"));
+         Free (Garbage);
 
---         Add_Line
---           (New_Extract,
---            New_Position, "pragma Unreferenced (" & Name & ");");
+         Initialize
+           (New_Command, Current_Text, New_Position, "Unreferenced", Name);
 
---         Free (New_Position);
 
---         return New_Extract;
---      end Add_Parameter_Pragma;
+         Free (New_Position);
+
+         return New_Command;
+      end Add_Parameter_Pragma;
 
       --  begin of Not_Referenced
 
@@ -670,45 +670,52 @@ package body Codefix.Formal_Errors is
 
             declare
                Delete_Command : Remove_Entity_Cmd;
+               Pragma_Command : Add_Pragma_Cmd;
             begin
                Initialize (Delete_Command, Current_Text, Cursor);
                Set_Caption
                  (Delete_Command,
                   "Delete subprogram """ & Name & """");
                Append (Result, Delete_Command);
-            end;
 
---            New_Extract := Add_Pragma;
---            Set_Caption
---              (New_Extract,
---               "Add pragma Unreferenced to subprogram """ & Name & """");
---            Append (New_Solutions, New_Extract);
+               Pragma_Command := Add_Pragma;
+               Set_Caption
+                 (Pragma_Command,
+                  "Add pragma Unreferenced to subprogram """ & Name & """");
+               Append (Result, Pragma_Command);
+            end;
 
          when Cat_Type =>
 
             declare
                Delete_Command : Remove_Entity_Cmd;
+               Pragma_Command : Add_Pragma_Cmd;
             begin
                Initialize (Delete_Command, Current_Text, Cursor);
                Set_Caption
                  (Delete_Command,
                   "Delete type """ & Name & """");
                Append (Result, Delete_Command);
+
+               Pragma_Command := Add_Pragma;
+               Set_Caption
+                 (Pragma_Command,
+                  "Add pragma Unreferenced to type """ & Name & """");
+               Append (Result, Pragma_Command);
             end;
 
---            New_Extract := Add_Pragma;
---            Set_Caption
---              (New_Extract,
---               "Add pragma Unreferenced to type """ & Name & """");
---            Append (New_Solutions, New_Extract);
+         when Cat_Local_Variable =>
 
---         when Cat_Local_Variable =>
-
---            New_Extract := Add_Parameter_Pragma;
---            Set_Caption
---              (New_Extract,
---             "Add pragma Unreferenced to formal parameter """ & Name & """");
---            Append (New_Solutions, New_Extract);
+            declare
+               New_Command : Add_Pragma_Cmd;
+            begin
+               New_Command := Add_Parameter_Pragma;
+               Set_Caption
+                 (New_Command,
+                  "Add pragma Unreferenced to formal parameter """
+                    & Name & """");
+               Append (Result, New_Command);
+            end;
 
          when Cat_With =>
 
@@ -773,42 +780,19 @@ package body Codefix.Formal_Errors is
       Cursor       : File_Cursor'Class;
       Name         : String) return Solution_List
    is
-      pragma Unreferenced (Current_Text, Cursor, Name);
-
---      New_Extract : Ada_List;
---      New_Instr   : Dynamic_String;
---      Col_Decl    : Natural;
-
+      New_Command : Make_Constant_Cmd;
+      Result      : Solution_List;
    begin
-      return Command_List.Null_List;
---      Get_Unit (Current_Text, Cursor, New_Extract);
 
---      if Get_Number_Of_Elements (New_Extract) = 1 then
---         Replace_Word
---           (New_Extract,
---            Search_String (New_Extract, ":"),
---            ": constant",
---            ":");
---      else
---         Cut_Off_Elements (New_Extract, New_Instr, Name);
+      Initialize (New_Command, Current_Text, Cursor, Name);
 
---         Col_Decl := New_Instr'First;
---         Skip_To_Char (New_Instr.all, Col_Decl, ':');
+      Set_Caption
+        (New_Command,
+         "Add ""constant"" to the declaration of """ & Name & """");
 
---         Assign
---           (New_Instr,
---            New_Instr (New_Instr'First .. Col_Decl) & " constant" &
---              New_Instr (Col_Decl + 1 .. New_Instr'Last));
+      Append (Result, New_Command);
 
---         Add_Line (New_Extract, Get_Stop (New_Extract), New_Instr.all);
---         Free (New_Instr);
---      end if;
-
---      Set_Caption
---        (New_Extract,
---         "Add ""constant"" to the declaration of """ & Name & """");
-
---      return New_Extract;
+      return Result;
    end Not_Modified;
 
    -----------------------
