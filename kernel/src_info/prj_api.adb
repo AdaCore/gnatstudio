@@ -41,6 +41,7 @@ with Csets;     use Csets;
 pragma Elaborate_All (Csets);
 with Stringt;   use Stringt;
 with Ada.Text_IO; use Ada.Text_IO;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Prj_API is
 
@@ -1137,6 +1138,77 @@ package body Prj_API is
       Set_Current_Term (First_Term (Expr), Node);
       return Expr;
    end Enclose_In_Expression;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Value : Variable_Value) return String is
+      Buffer     : String (1 .. 1024);
+      Current    : Prj.String_List_Id;
+      The_String : String_Element;
+      Index      : Natural := Buffer'First;
+
+   begin
+      case Value.Kind is
+         when Prj.Undefined =>
+            return "";
+
+         when Prj.Single =>
+            String_To_Name_Buffer (Value.Value);
+            return Name_Buffer (1 .. Name_Len);
+
+         when Prj.List =>
+            Current := Value.Values;
+
+            while Current /= Prj.Nil_String loop
+               The_String := String_Elements.Table (Current);
+               String_To_Name_Buffer (The_String.Value);
+
+               if Index /= Buffer'First then
+                  Buffer (Index) := ' ';
+                  Index := Index + 1;
+               end if;
+
+               Buffer (Index .. Index + Name_Len - 1) :=
+                 Name_Buffer (1 .. Name_Len);
+               Index := Index + Name_Len;
+
+               Current := The_String.Next;
+            end loop;
+
+            return Buffer (Buffer'First .. Index - 1);
+      end case;
+   end To_String;
+
+   ----------------------
+   -- To_Argument_List --
+   ----------------------
+
+   function To_Argument_List (Value : Variable_Value) return Argument_List is
+      S : Argument_List (1 .. Length (Value)) := (others => null);
+      V : String_List_Id;
+
+   begin
+      case Value.Kind is
+         when Undefined =>
+            null;
+
+         when Single =>
+            String_To_Name_Buffer (Value.Value);
+            S (1) := new String' (Name_Buffer (1 .. Name_Len));
+
+         when List =>
+            V := Value.Values;
+
+            for J in S'Range loop
+               String_To_Name_Buffer (String_Elements.Table (V).Value);
+               S (J) := new String' (Name_Buffer (1 .. Name_Len));
+               V := String_Elements.Table (V).Next;
+            end loop;
+      end case;
+      return S;
+   end To_Argument_List;
 
 begin
    Namet.Initialize;

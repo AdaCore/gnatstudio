@@ -37,6 +37,7 @@
 
 with Types;
 with Unchecked_Deallocation;
+with GNAT.OS_Lib;
 with Prj;        use Prj;
 with Prj.Tree;   use Prj.Tree;
 
@@ -195,6 +196,13 @@ package Prj_API is
 
    function Length (Value : Variable_Value) return Integer;
    --  Return the number of elements in Value (1 if Value is of kind Single)
+
+   function To_String (Value : Variable_Value) return String;
+   --  Convert a variable value to a string suitable for insertion in the list.
+
+   function To_Argument_List (Value : Variable_Value)
+      return GNAT.OS_Lib.Argument_List;
+   --  Convert a variable value to a list of arguments.
 
    -----------------
    -- Expressions --
