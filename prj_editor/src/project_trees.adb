@@ -51,7 +51,6 @@ with Stringt;              use Stringt;
 with Types;                use Types;
 
 with Prj_API;              use Prj_API;
-with Prj_Manager;          use Prj_Manager;
 with Pixmaps_IDE;          use Pixmaps_IDE;
 with Pixmaps_Prj;          use Pixmaps_Prj;
 with Language;             use Language;
