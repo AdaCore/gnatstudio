@@ -91,8 +91,8 @@ package body VCS_View_Pkg is
    -- Local packages --
    --------------------
 
-   package Boolean_Data is new Model_Data (Boolean);
-   package GObject_Data is new Model_Data (GObject);
+   function Boolean_Get is new Model_Data_Get (Boolean);
+   function GObject_Get is new Model_Data_Get (GObject);
 
    package Selection_Callback is
       new Gtk.Handlers.Callback (Gtk_Tree_Selection_Record);
@@ -110,49 +110,38 @@ package body VCS_View_Pkg is
    --  because Gdk.Pixbuf.Get_Type cannot be called before
    --  Gtk.Main.Init.
 
+   --  The following list must be synchronized with the array of types
+   --  in Columns_Types.
+
+   Selected_Column           : constant := 0;
+   Name_Column               : constant := 1;
+   Local_Rev_Column          : constant := 2;
+   Rep_Rev_Column            : constant := 3;
+   Status_Description_Column : constant := 4;
+   Status_Pixbuf_Column      : constant := 5;
+   Log_Column                : constant := 6;
+   Log_Editor_Column         : constant := 7;
+
+   -------------------
+   -- Columns_Types --
+   -------------------
+
    function Columns_Types return GType_Array is
    begin
-      return GType_Array' (GType_Boolean,
-                           --  Whether the file is selected or not.
-
-                           GType_String,
-                           --  The base file name of the file.
-
-                           GType_String,
-                           --  The local revision.
-
-                           GType_String,
-                           --  The repository revision.
-
-                           GType_String,
-                           --  The status description
-
-                           Gdk.Pixbuf.Get_Type,
-                           --  The status pixbuf
-
-                           GType_String,
-                           --  The Log for this file
-
-                           GType_Object
-                           --  The widget that edits the log.
-                           --  This should have a procedure which returns
-                           --  the log string given a filename.
-                           --  ??? This is a bit dirty, we are passing a
-                           --  GObject to the underlying C structure,
-                          );
+      return GType_Array'
+        (Selected_Column           => GType_Boolean,
+         Name_Column               => GType_String,
+         Local_Rev_Column          => GType_String,
+         Rep_Rev_Column            => GType_String,
+         Status_Description_Column => GType_String,
+         Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
+         Log_Column                => GType_String,
+         Log_Editor_Column         => GType_Object);
+      --  The Log_Editor_Column should contain a procedure which returns the
+      --  log string given a filename.
+      --  ??? This is a bit dirty, we are passing a GObject to the underlying C
+      --  structure,
    end Columns_Types;
-
-   --  The following list must be synchronized with the array of types
-   --  described above.
-
-   Selected_Column           : constant Gint := 0;
-   Name_Column               : constant Gint := 1;
-   Local_Rev_Column          : constant Gint := 2;
-   Rep_Rev_Column            : constant Gint := 3;
-   Status_Description_Column : constant Gint := 4;
-   Status_Pixbuf_Column      : constant Gint := 5;
-   Log_Column                : constant Gint := 6;
-   Log_Editor_Column         : constant Gint := 7;
 
    -----------------------
    -- Local subprograms --
@@ -393,10 +382,7 @@ package body VCS_View_Pkg is
       Iter          : Gtk_Tree_Iter;
       Status_Record : File_Status_Record;
       Selected      : Boolean := False;
-      Success       : out Boolean)
-   is
-      String_Value : GValue;
-      Bool_Value   : GValue;
+      Success       : out Boolean) is
    begin
       Success := True;
 
@@ -406,67 +392,51 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Init (Bool_Value, GType_Boolean);
-      Init (String_Value, GType_String);
-
-      Set_Boolean (Bool_Value, Selected);
-      Set_Value (Explorer.Model, Iter, Selected_Column, Bool_Value);
-
-      Set_String  (String_Value,
-                   Base_Name (Head (Status_Record.File_Name)));
-      Set_Value (Explorer.Model, Iter, Name_Column, String_Value);
+      Set (Explorer.Model, Iter, Selected_Column, Selected);
+      Set (Explorer.Model, Iter, Name_Column,
+           Base_Name (Head (Status_Record.File_Name)));
 
       if not Is_Empty (Status_Record.Working_Revision) then
-         Set_String  (String_Value,
-                      (Head (Status_Record.Working_Revision)));
+         Set (Explorer.Model, Iter, Local_Rev_Column,
+              Head (Status_Record.Working_Revision));
       else
-         Set_String  (String_Value, -"n/a");
+         Set (Explorer.Model, Iter, Local_Rev_Column, -"n/a");
       end if;
-
-      Set_Value (Explorer.Model, Iter, Local_Rev_Column, String_Value);
 
       if not Is_Empty (Status_Record.Repository_Revision) then
-         Set_String  (String_Value,
-                      (Head (Status_Record.Repository_Revision)));
+         Set (Explorer.Model, Iter, Rep_Rev_Column,
+              Head (Status_Record.Repository_Revision));
       else
-         Set_String  (String_Value, -"n/a");
+         Set (Explorer.Model, Iter, Rep_Rev_Column, -"n/a");
       end if;
-
-      Set_Value (Explorer.Model, Iter, Rep_Rev_Column, String_Value);
 
       case Status_Record.Status is
          when Unknown =>
-            Set_Value (Explorer.Model, Iter, Status_Pixbuf_Column,
-                       Status_Unknown_Pixbuf.all'Address);
+            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
+                 C_Proxy (Status_Unknown_Pixbuf));
          when Not_Registered =>
-            Set_Value (Explorer.Model, Iter, Status_Pixbuf_Column,
-                       Status_Not_Registered_Pixbuf.all'Address);
+            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
+                 C_Proxy (Status_Not_Registered_Pixbuf));
          when Up_To_Date =>
-            Set_Value (Explorer.Model, Iter, Status_Pixbuf_Column,
-                       Status_Up_To_Date_Pixbuf.all'Address);
+            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
+                 C_Proxy (Status_Up_To_Date_Pixbuf));
          when Removed =>
-            Set_Value (Explorer.Model, Iter, Status_Pixbuf_Column,
-                       Status_Removed_Pixbuf.all'Address);
+            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
+                 C_Proxy (Status_Removed_Pixbuf));
          when Modified =>
-            Set_Value (Explorer.Model, Iter, Status_Pixbuf_Column,
-                       Status_Modified_Pixbuf.all'Address);
+            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
+                 C_Proxy (Status_Modified_Pixbuf));
          when Needs_Merge =>
-            Set_Value (Explorer.Model, Iter, Status_Pixbuf_Column,
-                       Status_Needs_Merge_Pixbuf.all'Address);
+            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
+                 C_Proxy (Status_Needs_Merge_Pixbuf));
          when Needs_Update =>
-            Set_Value (Explorer.Model, Iter, Status_Pixbuf_Column,
-                       Status_Needs_Update_Pixbuf.all'Address);
+            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
+                 C_Proxy (Status_Needs_Update_Pixbuf));
       end case;
 
-      Set_String  (String_Value,
-                   File_Status'Image (Status_Record.Status));
-      Set_Value
-        (Explorer.Model, Iter, Status_Description_Column, String_Value);
-
-      Set_String (String_Value, "");
-      Set_Value (Explorer.Model, Iter, Log_Column, String_Value);
-
-      Set_Value (Explorer.Model, Iter, Log_Editor_Column, System.Null_Address);
+      Set (Explorer.Model, Iter, Status_Description_Column,
+           File_Status'Image (Status_Record.Status));
+      Set (Explorer.Model, Iter, Log_Editor_Column, System.Null_Address);
    end Fill_Info;
 
    ------------------------
@@ -512,7 +482,7 @@ package body VCS_View_Pkg is
       Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
-         Toggled := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
+         Toggled := Boolean_Get (Explorer.Model, Iter, Selected_Column);
 
          if Toggled then
             Action (Explorer, Iter);
@@ -542,7 +512,7 @@ package body VCS_View_Pkg is
       Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
-         Toggled := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
+         Toggled := Boolean_Get (Explorer.Model, Iter, Selected_Column);
 
          if Toggled then
             Append
@@ -636,22 +606,18 @@ package body VCS_View_Pkg is
    is
       Parameter : Explorer_And_Path := Explorer_And_Path (Object);
       Temp_Path : List := Parameter.Paths;
-      Value     : GValue;
       Iter      : Gtk_Tree_Iter;
       Success   : Boolean;
 
    begin
-      Init (Value, GType_String);
-
       while not Is_Empty (Temp_Path) loop
          Get_Iter_From_String
            (Parameter.Explorer.Model,
             Iter,
             Head (Temp_Path),
             Success);
-         Set_String (Value, Get_Text (Parameter.Log_Editor));
-         Set_Value (Parameter.Explorer.Model, Iter, Log_Column, Value);
-
+         Set (Parameter.Explorer.Model, Iter, Log_Column,
+              Get_Text (Parameter.Log_Editor));
          Temp_Path := Next (Temp_Path);
       end loop;
    end Log_Editor_Text_Changed;
@@ -679,7 +645,7 @@ package body VCS_View_Pkg is
             Head (Parameter.Paths),
             Success);
 
-         Set_Value
+         Set
            (Parameter.Explorer.Model,
             Iter,
             Log_Editor_Column,
@@ -723,7 +689,7 @@ package body VCS_View_Pkg is
          No_Files_Selected := False;
 
          Stored_Object :=
-           GObject_Data.Get (Explorer.Model, Iter, Log_Editor_Column);
+           GObject_Get (Explorer.Model, Iter, Log_Editor_Column);
 
          if Stored_Object = null then
             Gtk_New (Log_Editor);
@@ -742,10 +708,10 @@ package body VCS_View_Pkg is
             Add_File_Name (Log_Editor,
                            Get_String (Explorer.Model, Iter, Name_Column));
 
-            Set_Value (Explorer.Model,
-                       Iter,
-                       Log_Editor_Column,
-                       Get_Object (Log_Editor));
+            Set (Explorer.Model,
+                 Iter,
+                 Log_Editor_Column,
+                 Get_Object (Log_Editor));
 
             Set_Text (Log_Editor,
                       Get_String (Explorer.Model, Iter, Log_Column));
@@ -821,13 +787,13 @@ package body VCS_View_Pkg is
          No_Files_Selected := False;
 
          Stored_Object :=
-           GObject_Data.Get (Explorer.Model, Iter, Log_Editor_Column);
+           GObject_Get (Explorer.Model, Iter, Log_Editor_Column);
 
          if Stored_Object /= null then
             Log_Editor := Log_Editor_Window_Access
               (Get_User_Data (Stored_Object.all'Address, Stub));
             Destroy (Log_Editor);
-            Set_Value
+            Set
               (Explorer.Model, Iter, Log_Editor_Column, System.Null_Address);
          end if;
       end Clear_Launch_Log_Editor;
@@ -843,7 +809,7 @@ package body VCS_View_Pkg is
          Add_File_Name
            (Log_Editor, Get_String (Explorer.Model, Iter, Name_Column));
 
-         Set_Value
+         Set
            (Explorer.Model,
             Iter,
             Log_Editor_Column,
@@ -1342,7 +1308,7 @@ package body VCS_View_Pkg is
       Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
-         Toggled := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
+         Toggled := Boolean_Get (Explorer.Model, Iter, Selected_Column);
 
          if Toggled then
             Select_Iter (Selection, Iter);
@@ -1374,11 +1340,10 @@ package body VCS_View_Pkg is
    begin
       Gtk_New (Path, Path_String);
       Get_Iter (Explorer.Model, Iter, Path, Success);
-      Success := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
+      --  Success := Boolean_Get (Explorer.Model, Iter, Selected_Column);
       Set_Value (Explorer.Model, Iter, Log_Column, Text_Value);
 
-      Stored_Object :=
-        GObject_Data.Get (Explorer.Model, Iter, Log_Editor_Column);
+      Stored_Object := GObject_Get (Explorer.Model, Iter, Log_Editor_Column);
 
       if Stored_Object /= null then
          Log_Editor := Log_Editor_Window_Access
@@ -1400,15 +1365,12 @@ package body VCS_View_Pkg is
       Path_String : String := Get_String (Nth (Params, 1));
       Path        : Gtk_Tree_Path;
       Success     : Boolean;
-      Value       : GValue;
 
    begin
       Gtk_New (Path, Path_String);
       Get_Iter (Explorer.Model, Iter, Path, Success);
-      Success := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
-      Init (Value, GType_Boolean);
-      Set_Boolean (Value, not Success);
-      Set_Value (Explorer.Model, Iter, Selected_Column, Value);
+      Success := Boolean_Get (Explorer.Model, Iter, Selected_Column);
+      Set (Explorer.Model, Iter, Selected_Column, not Success);
       Explorer.All_Selected := False;
    end Toggled_Callback;
 
@@ -1423,15 +1385,13 @@ package body VCS_View_Pkg is
       Explorer   : constant VCS_View_Access := VCS_View_Access (Object);
       Iter       : Gtk_Tree_Iter;
       Success    : Boolean;
-      Bool_Value : GValue;
 
    begin
-      Init (Bool_Value, GType_Boolean);
-      Set_Boolean (Bool_Value, not Explorer.All_Selected);
       Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
-         Set_Value (Explorer.Model, Iter, Selected_Column, Bool_Value);
+         Set (Explorer.Model, Iter, Selected_Column,
+              not Explorer.All_Selected);
          Iter_Next (Explorer.Model, Iter, Success);
       end loop;
 
@@ -1545,7 +1505,6 @@ package body VCS_View_Pkg is
    is
       Explorer : constant VCS_View_Access :=
         VCS_View_Access (Get_Toplevel (Get_Tree_View (Object)));
-      Value    : GValue;
       Success  : Boolean;
       Iter     : Gtk_Tree_Iter;
 
@@ -1565,23 +1524,18 @@ package body VCS_View_Pkg is
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
          Data  : VCS_View_Access) is
       begin
-         Set_Value (Explorer.Model, Iter, Selected_Column, Value);
+         Set (Explorer.Model, Iter, Selected_Column, True);
       end Toggle;
 
    begin
       if not Explorer.Model_Sync then
-         Init (Value, GType_Boolean);
-         Set_Boolean (Value, False);
-
          --  Set all items to not selected.
          Get_Iter_Root (Explorer.Model, Iter, Success);
 
          while Success loop
-            Set_Value (Explorer.Model, Iter, Selected_Column, Value);
+            Set (Explorer.Model, Iter, Selected_Column, False);
             Iter_Next (Explorer.Model, Iter, Success);
          end loop;
-
-         Set_Boolean (Value, True);
 
          Toggle_Selected.Selected_Foreach
            (Object,
