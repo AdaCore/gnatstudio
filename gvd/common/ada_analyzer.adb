@@ -1125,7 +1125,8 @@ package body Ada_Analyzer is
             --  if ...
             --    and then ...
 
-            Do_Indent (Prec, Num_Spaces, Continuation => True);
+            Do_Indent
+              (Prec, Num_Spaces, Continuation => Top (Indents).all = None);
 
          elsif Reserved = Tok_Generic then
             --  Indent before a generic entity, e.g:
