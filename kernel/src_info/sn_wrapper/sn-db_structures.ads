@@ -81,6 +81,7 @@ package SN.DB_Structures is
       End_Position : Point;
       Attributes : SN_Attributes;
       Declared_Type : Segment;
+      Type_Start_Position : Point;
       Comments : Segment;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
@@ -196,6 +197,7 @@ package SN.DB_Structures is
       Attributes : SN_Attributes;
       Value_Type : Segment;
       Comments : Segment;
+      Type_Start_Position : Point;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Global variables
@@ -243,6 +245,8 @@ package SN.DB_Structures is
       Class : Segment;
       Value_Type : Segment;
       Arg_Types : Segment_Vector.Node_Access;
+      Comments : Segment;
+      Type_Start_Position : Point;
       Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Local variables

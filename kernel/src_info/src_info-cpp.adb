@@ -3291,7 +3291,7 @@ package body Src_Info.CPP is
                  (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last)),
                Desc.Parent_Point,
                File,
-               Sym.Start_Position,
+               Var.Type_Start_Position,
                Instantiation_Reference);
          else
             --  default reference kind
@@ -3299,7 +3299,7 @@ package body Src_Info.CPP is
               (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
                Desc.Parent_Point,
                File,
-               Sym.Start_Position);
+               Var.Type_Start_Position);
          end if;
 
       end if;
@@ -3913,7 +3913,7 @@ package body Src_Info.CPP is
                  (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last)),
                Desc.Parent_Point,
                File,
-               Sym.Start_Position,
+               Var.Type_Start_Position,
                Instantiation_Reference);
          else
             --  default reference kind
@@ -3921,7 +3921,7 @@ package body Src_Info.CPP is
               (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
                Desc.Parent_Point,
                File,
-               Sym.Start_Position);
+               Var.Type_Start_Position);
          end if;
       end if;
 
@@ -4578,7 +4578,7 @@ package body Src_Info.CPP is
                                        Var.Value_Type.Last)),
                         Desc.Parent_Point,
                         File,
-                        Var.Start_Position,
+                        Var.Type_Start_Position,
                         Instantiation_Reference);
                   else
                      Refer_Type
@@ -4586,7 +4586,7 @@ package body Src_Info.CPP is
                          (Var.Value_Type.First .. Var.Value_Type.Last),
                         Desc.Parent_Point,
                         File,
-                        Var.Start_Position);
+                        Var.Type_Start_Position);
                   end if;
                end if;
             end;

@@ -208,6 +208,7 @@ extern Boolean_t f_CompoundStatement( char *types, char *names, char* positions,
                        char pos[11];
                        char pos1[11];
                        char attrs[16];
+                       char comment[256];
                        LongStringInit (&key_value,0);
                        LongStringInit (&data_value,0);
 
@@ -219,13 +220,15 @@ extern Boolean_t f_CompoundStatement( char *types, char *names, char* positions,
                                filename_g,
                                NULL);
                        sprintf (attrs, "0x%X", PAF_ABSTRACT);
+                       sprintf (comment, "{type_beg=%d.%d}", arg_type_lineno_beg,
+                                       arg_type_charno_beg);
                        data_value.copystrings(&data_value,
                                pos,                                DB_FLDSEP_STR,
                                attrs,                              DB_FLDSEP_STR,
                                "{", scope_g, "}",                  DB_FLDSEP_STR,
                                "{", acType, "}",                   DB_FLDSEP_STR,
                                "{", arg_types_g, "}",              DB_FLDSEP_STR,
-                               "{}", /* comments */
+                               comment,
                                NULL);
                        db_insert_entry(PAF_LOCAL_VAR_DEF, key_value.buf,
                                        data_value.buf);

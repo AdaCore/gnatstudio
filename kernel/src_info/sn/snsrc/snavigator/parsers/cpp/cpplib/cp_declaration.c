@@ -1556,6 +1556,7 @@ static void _DeclarationProcess( Declaration_t Declaration, int record )
                 char pos[11];
                 char pos1[11];
                 char attrs[16];
+                char comment[256];
                 LongStringInit (&key_value,0);
                 LongStringInit (&data_value,0);
                 /*sprintf(pos, "%06d.%03d", Declaration->lineno,
@@ -1571,13 +1572,15 @@ static void _DeclarationProcess( Declaration_t Declaration, int record )
                                        filename_g,
                                        NULL);
                 sprintf (attrs, "0x%X", attr_from_declaration (Declaration));
+                sprintf (comment, "{type_beg=%d.%d}", Declaration->lineno,
+                          Declaration->charno);
                 data_value.copystrings(&data_value,
                     pos1,                               DB_FLDSEP_STR, /* FIXME */
                     attrs,                              DB_FLDSEP_STR,
                     "{", scope_g, "}",                  DB_FLDSEP_STR,
                     "{", acType, "}",                   DB_FLDSEP_STR,
                     "{", arg_types_g, "}",              DB_FLDSEP_STR,
-                    "{}", /* comments */
+                    comment,
                     NULL);
                 db_insert_entry(PAF_LOCAL_VAR_DEF, key_value.buf, data_value.buf);
                 key_value.free(&key_value);

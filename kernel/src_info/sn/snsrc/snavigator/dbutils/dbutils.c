@@ -657,6 +657,7 @@ int     high_end_colpos)
 		args = "%STRING%";
 	}
 
+   /*
 	if (comment_database && comment && *comment)
 	{
 		register char *p;
@@ -678,7 +679,7 @@ int     high_end_colpos)
 	}
 	else
 		comment = "";
-
+*/
 	switch (sym_type)
 	{
 	case	PAF_TYPE_DEF:
@@ -2351,8 +2352,6 @@ next:
 	}
 
 
-#undef BUG_TRACE
-#define BUG_TRACE 1
 static int
 search_for_symbol(char *global_class_name,char *local_class_name,
 	char *name,char *arg_types,int db_type,char *scope,char *ret_type,
@@ -2683,7 +2682,6 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 
 		pars.free(&pars);
 
-      printf ("sym_type = %s\n", sym_type);
 		if ( !strncmp (sym_type, SN_symbol_types[PAF_MBR_VAR_DEF], 2) )		/* "iv" ? */
 		{
 			RETURN_FROM_SEARCH(PAF_MBR_VAR_DEF);

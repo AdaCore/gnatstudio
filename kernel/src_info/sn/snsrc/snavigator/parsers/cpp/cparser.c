@@ -840,6 +840,8 @@ extern int obj_declaration( Declaration_t Declaration )
    niveau++;
 
    Declaration->type = DECLARATION_OBJECT;
+   Declaration->lineno_beg = f_lineno (0);
+   Declaration->charno_beg = f_charno (0);
 
    while( True )
    {
@@ -3959,6 +3961,7 @@ extern void variable( Declaration_t Declaration, Declarator_t Declarator )
 #endif   /* BETTER_TEST */
          {
             int paf;
+            char comment [256];
 
             if( Declarator->base_typ == 0 || Declarator->base_typ == ARRAY )
             {
@@ -3968,6 +3971,9 @@ extern void variable( Declaration_t Declaration, Declarator_t Declarator )
             {
                paf = PAF_GLOB_VAR_DEF;
             }
+
+            sprintf (comment, "type_beg=%d.%d",
+                Declaration->lineno_beg, Declaration->charno_beg);
 
             Put_symbol( paf
 /*                    , scope */
@@ -3983,7 +3989,8 @@ extern void variable( Declaration_t Declaration, Declarator_t Declarator )
 /*                    , (char *) 0 */
                       , scope                         /* 17.02.97 rigo */
                       , (char *) 0
-                      , get_comment( Declarator->lineno_end )
+                      , comment
+/*                      , get_comment( Declarator->lineno_end ) */
                       , Declarator->lineno_beg
                       , Declarator->charno_beg
                       , Declarator->lineno_end
@@ -4020,6 +4027,9 @@ extern void variable( Declaration_t Declaration, Declarator_t Declarator )
          else
 #endif /* BETTER_TEST*/
          {
+            char comment [256];
+            sprintf (comment, "type_beg=%d.%d",
+                Declaration->lineno_beg, Declaration->charno_beg);
             Put_symbol( PAF_GLOB_VAR_DEF
 /*                    , scope */
                       , NULL                          /* 17.02.97 rigo */
@@ -4034,7 +4044,8 @@ extern void variable( Declaration_t Declaration, Declarator_t Declarator )
 /*                    , (char *) 0 */
                       , scope                         /* 17.02.97 rigo */
                       , (char *) 0
-                      , get_comment( Declarator->lineno_end )
+/*                      , get_comment( Declarator->lineno_end ) */
+                      , comment
                       , Declarator->lineno_beg
                       , Declarator->charno_beg
                       , Declarator->lineno_end

@@ -20,6 +20,7 @@
 
 with SN.Symbols;  use SN.Symbols;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Ada.Strings.Fixed;
 
 package body SN.DB_Structures is
 
@@ -46,6 +47,13 @@ package body SN.DB_Structures is
       Vector_Root : out Segment_Vector.Node_Access);
    --  Parses string of tokens separated by comma and stores parsed
    --  values in vector
+
+   function Get_Position_From_Comment
+     (Comment  : Segment;
+      Buffer   : GNAT.OS_Lib.String_Access;
+      Name     : String) return Point;
+   --  Parses comment string to find Name=Value pair, then
+   --  parses value into point
 
    -------------------------------------------------------------------------
    --                   Parse_Pair function bodies                        --
@@ -229,6 +237,10 @@ package body SN.DB_Structures is
       tab.Comments.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
+      tab.Type_Start_Position := Get_Position_From_Comment
+        (tab.Comments,
+         tab.Buffer,
+         "type_beg");
       return tab;
    end Parse_Pair;
 
@@ -639,6 +651,10 @@ package body SN.DB_Structures is
       tab.Comments.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
+      tab.Type_Start_Position := Get_Position_From_Comment
+        (tab.Comments,
+         tab.Buffer,
+         "type_beg");
       return tab;
    end Parse_Pair;
 
@@ -806,7 +822,17 @@ package body SN.DB_Structures is
       Make_Vector_From_String (
             Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
             tab.Buffer, cur_pos, tab.Arg_Types);
+      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
+      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
+      tab.Comments.First := cur_pos;
+      tab.Comments.Last := cur_pos + Len - 1;
+      cur_pos := cur_pos + Len;
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
+      tab.Type_Start_Position := Get_Position_From_Comment
+        (tab.Comments,
+         tab.Buffer,
+         "type_beg");
       return tab;
    end Parse_Pair;
 
@@ -1326,7 +1352,7 @@ package body SN.DB_Structures is
       num1 := 0;
       num2 := 0;
       n := 1;
-      for i in reverse 1 .. Position_Str'Length loop
+      for i in reverse Position_Str'First .. Position_Str'Last loop
          c := Position_Str (i);
          if ((c < '0') or (c > '9')) and (c /= '.') then
             raise Bad_Input;
@@ -1421,4 +1447,32 @@ package body SN.DB_Structures is
       end loop;
    end Make_Vector_From_String;
 
+   -------------------------------
+   -- Get_Position_From_Comment --
+   -------------------------------
+
+   function Get_Position_From_Comment
+     (Comment  : Segment;
+      Buffer   : GNAT.OS_Lib.String_Access;
+      Name     : String) return Point
+   is
+      I, J     : Natural;
+      Pos      : Point := Invalid_Point;
+   begin
+      I := Ada.Strings.Fixed.Index
+         (Buffer (Comment.First .. Comment.Last),
+          Name & "=");
+      if I /= 0 then
+         I := I + Name'Length + 1;
+         J := I;
+         while J <= Comment.Last loop
+            exit when (('0' > Buffer (J) or Buffer (J) > '9')
+               and Buffer (J) /= '.');
+            J := J + 1;
+         end loop;
+
+         Parse_Position (Buffer (I .. J - 1), Pos);
+      end if;
+      return Pos;
+   end Get_Position_From_Comment;
 end SN.DB_Structures;
