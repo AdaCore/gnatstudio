@@ -614,7 +614,7 @@ package body GVD_Module is
 
    begin
       declare
-         S : constant String :=
+         S : constant Virtual_File :=
            Select_File
              (Title             => -"Select Module",
               Parent            => Gtk_Window (Top),
@@ -622,16 +622,18 @@ package body GVD_Module is
               Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
-         if S = "" then
+         if S = VFS.No_File then
             return;
          end if;
 
          if Process.Descriptor.Remote_Host /= null
-           or else GNAT.OS_Lib.Is_Regular_File (S)
+           or else Is_Regular_File (S)
          then
-            Add_Symbols (Process.Debugger, S, Mode => GVD.Types.Visible);
+            Add_Symbols
+              (Process.Debugger, Full_Name (S),
+               Mode => GVD.Types.Visible);
          else
-            Console.Insert (Kernel, (-"Could not find file: ") & S,
+            Console.Insert (Kernel, (-"Could not find file: ") & Full_Name (S),
                             Mode => Error);
          end if;
       end;
@@ -820,7 +822,7 @@ package body GVD_Module is
       Free (Ptr);
 
       declare
-         S : constant String :=
+         S : Virtual_File :=
            Select_File
              (Title             => -"Select File to Debug",
               File_Pattern      => "*" & Exec_Suffix,
@@ -830,32 +832,39 @@ package body GVD_Module is
               Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
-         if S = "" then
+         if S = VFS.No_File then
             return;
          end if;
 
-         Exec := Locate_Exec_On_Path (S);
+         if not Is_Regular_File (S) then
+            Exec := Locate_Exec_On_Path (Base_Name (S));
 
-         if Exec /= null then
-            Set_Executable (Process.Debugger, Exec.all, Mode => Hidden);
-            Change_Dir (Dir_Name (Exec.all));
-            Free (Exec);
+            if Exec /= null then
+               S := Create (Full_Filename => Exec.all);
 
-         elsif Process.Descriptor.Remote_Host'Length /= 0
-           or else GNAT.OS_Lib.Is_Regular_File (S)
-           or else GNAT.OS_Lib.Is_Regular_File (S & Exec_Suffix)
-         then
-            Set_Executable (Process.Debugger, S, Mode => Hidden);
+               if not Is_Regular_File (S) then
+                  S := Create (Full_Filename => Exec.all & Exec_Suffix);
+               end if;
+
+               Free (Exec);
+            else
+               Console.Insert
+                 (Kernel, (-"Could not find file: ") & Base_Name (S),
+                  Mode => Error);
+               S := VFS.No_File;
+            end if;
+         end if;
+
+         if S /= No_File then
+            Set_Executable (Process.Debugger, Full_Name (S), Mode => Hidden);
             Change_Dir (Dir_Name (S));
-         else
-            Console.Insert (Kernel, (-"Could not find file: ") & S,
-                            Mode => Error);
          end if;
 
       exception
          when Executable_Not_Found =>
-            Console.Insert (Kernel, (-"Could not find file: ") & S,
-                            Mode => Error);
+            Console.Insert
+              (Kernel, (-"Could not find file: ") & Full_Name (S),
+               Mode => Error);
       end;
 
    exception
@@ -880,7 +889,7 @@ package body GVD_Module is
 
    begin
       declare
-         S : constant String :=
+         S : constant Virtual_File :=
            Select_File
              (Title             => -"Select Core File",
               File_Pattern      => "core*",
@@ -891,17 +900,19 @@ package body GVD_Module is
               History           => Get_History (Kernel));
 
       begin
-         if S = "" then
+         if S = VFS.No_File then
             return;
          end if;
 
          if Process.Descriptor.Remote_Host /= null
-           or else GNAT.OS_Lib.Is_Regular_File (S)
+           or else Is_Regular_File (S)
          then
-            Load_Core_File (Process.Debugger, S, Mode => GVD.Types.Visible);
+            Load_Core_File (Process.Debugger, Full_Name (S),
+                            Mode => GVD.Types.Visible);
          else
-            Console.Insert (Kernel, (-"Could not find core file: ") & S,
-                            Mode => Error);
+            Console.Insert
+              (Kernel, (-"Could not find core file: ") & Full_Name (S),
+               Mode => Error);
          end if;
       end;
 
