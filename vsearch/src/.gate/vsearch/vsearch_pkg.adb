@@ -141,7 +141,7 @@ begin
    Set_Active (Vsearch.Whole_Word_Check, False);
    Pack_Start (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, True, True, 0);
 
-   Gtk_New (Vsearch.Regexp_Check, -"Regular expression");
+   Gtk_New (Vsearch.Regexp_Check, -"Regular Expression");
    Set_Active (Vsearch.Regexp_Check, False);
    Pack_Start (Vsearch.Options_Vbox, Vsearch.Regexp_Check, True, True, 0);
 

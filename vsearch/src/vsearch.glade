@@ -314,7 +314,7 @@
 	  <class>GtkCheckButton</class>
 	  <name>regexp_check</name>
 	  <can_focus>True</can_focus>
-	  <label>Regular expression</label>
+	  <label>Regular Expression</label>
 	  <active>False</active>
 	  <draw_indicator>True</draw_indicator>
 	  <child>
