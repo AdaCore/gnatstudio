@@ -542,10 +542,10 @@ package body Browsers.Dependency_Items is
       Interactive : Boolean := True;
       Recompute_Layout : Boolean := True)
    is
-      Data : Examine_Dependencies_Idle_Data;
+      Data          : Examine_Dependencies_Idle_Data;
       Browser       : Dependency_Browser;
       Child_Browser : MDI_Child;
-      Item : File_Item;
+      Item          : File_Item;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -692,8 +692,9 @@ package body Browsers.Dependency_Items is
    procedure On_Dependency_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Child : MDI_Child;
+      pragma Unreferenced (Widget, Child);
+
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin

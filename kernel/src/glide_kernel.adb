@@ -372,11 +372,11 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record;
       Force  : Boolean := False) return Boolean
    is
-      MDI    : constant MDI_Window := Get_MDI (Handle);
-      Iter   : Child_Iterator;
-      Child  : MDI_Child;
+      MDI       : constant MDI_Window := Get_MDI (Handle);
+      Iter      : Child_Iterator;
+      Child     : MDI_Child;
       Save_Type : Save_Return_Value;
-      F      : Boolean := Force;
+      F         : Boolean := Force;
 
    begin
       Iter := First_Child (MDI);
@@ -1409,6 +1409,8 @@ package body Glide_Kernel is
       Iter      : Entity_Declaration_Iterator;
       Candidate : Entity_Information;
       Button    : Gtk_Widget;
+      pragma Unreferenced (Button);
+
       Count     : Natural := 0;
 
       Label     : Gtk_Label;
@@ -1419,6 +1421,7 @@ package body Glide_Kernel is
       View      : Gtk_Tree_View;
       Col       : Gtk_Tree_View_Column;
       Col_Num   : Gint;
+      pragma Unreferenced (Col_Num);
 
    begin
       Iter := Find_All_Possible_Declarations
