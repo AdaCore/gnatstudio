@@ -920,7 +920,9 @@ private
 
       Line_Terminator : Line_Terminator_Style := Unknown;
 
-      Timeout_Id     : Gtk.Main.Timeout_Handler_Id := 0;
+      Timeout_Id         : Gtk.Main.Timeout_Handler_Id := 0;
+      Timeout_Registered : Boolean := False;
+      --  Whether Timeout corresponds to a registered timeout.
 
       Setting_Mark   : Boolean := False;
       --  Used to prevent recursion when creating text marks.
