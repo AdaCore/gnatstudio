@@ -30,6 +30,7 @@ with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
 with Odd_Intl;            use Odd_Intl;
 
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
 with Gdk.Pixmap;      use Gdk.Pixmap;
@@ -41,12 +42,11 @@ with Odd.Pixmaps;     use Odd.Pixmaps;
 with Display_Items;   use Display_Items;
 with Generic_Values;  use Generic_Values;
 with Debugger.Gdb;    use Debugger.Gdb;
+with Odd.Strings;     use Odd.Strings;
 
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
 
 with Unchecked_Conversion;
-
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Odd.Process is
 
@@ -241,14 +241,24 @@ package body Odd.Process is
 
       The_Type : Generic_Type_Access;
       Item   : Display_Item;
-      First  : constant Integer := Command'First;
+      Command2 : String := To_Lower (Command);
+      First  : Natural := Command2'First;
 
    begin
-      if Command'Length > 13
-        and then Command (First .. First + 12) = "graph display"
+      --  Command has been converted to lower-cases, but the new version
+      --  should be used only to compare with our standard list of commands.
+      --  We should pass the original string to the debugger, in case we are
+      --  in a case-sensitive language.
+
+      --  Ignore the blanks at the beginning of lines
+
+      Skip_Blanks (Command2, First);
+
+      if First + 12 <= Command2'Last
+        and then Command2 (First .. First + 12) = "graph display"
       then
          declare
-            Var : String := Command (First + 14 .. Command'Last);
+            Var : String := Command (First + 14 .. Command2'Last);
          begin
             The_Type := Parse_Type (Debugger.Debugger.all, Var);
 
@@ -261,11 +271,11 @@ package body Odd.Process is
             end if;
          end;
 
-      elsif Command'Length > 11
-        and then Command (First .. First + 10) = "graph print"
+      elsif First + 10 <= Command2'Length
+        and then Command2 (First .. First + 10) = "graph print"
       then
          declare
-            Var : String := Command (First + 12 .. Command'Last);
+            Var : String := Command (First + 12 .. Command2'Last);
          begin
             The_Type := Parse_Type (Debugger.Debugger.all, Var);
 
@@ -278,7 +288,7 @@ package body Odd.Process is
             end if;
          end;
 
-      elsif Command = "quit" then
+      elsif Command2 = "quit" then
          Main_Quit;
 
       else
