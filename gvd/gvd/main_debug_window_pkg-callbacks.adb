@@ -90,7 +90,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -- Session Handling --
    ----------------------
 
-   --  The format for session files is this :
+   --  The format for session files is as follows:
    --
    --  [Session_File Header]
    --  <number_of_processes>
