@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Main;                  use Gtk.Main;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -39,11 +38,7 @@ with Commands.External;         use Commands.External;
 
 package body VCS.CVS is
 
-   --  ??? Should we make commands customizable ?
-
    CVS_Reference : VCS_Access;
-   --  ??? Cannot be a global variable, since it has fields that depend on
-   --  the context.
 
    VCS_CVS_Module_Name : constant String := "CVS_Connectivity";
    VCS_CVS_Module_ID : Module_ID;
@@ -1101,7 +1096,7 @@ package body VCS.CVS is
    begin
       CVS_Reference := new CVS_Record;
       CVS_Reference.Kernel := Kernel_Handle (Kernel);
-      CVS_Reference.Queue  := Commands.New_Queue;
+      CVS_Reference.Queue  := New_Queue;
    end Initialize_Module;
 
    ---------------------
@@ -1119,32 +1114,5 @@ package body VCS.CVS is
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => null);
    end Register_Module;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (D : in String_List_And_Handler_Access) is
-      D_Copy : String_List_And_Handler_Access := D;
-   begin
-      String_List.Free (D_Copy.List);
-      String_List.Free (D_Copy.Head);
-      Free (D_Copy);
-   end Destroy;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (D : in out Command_Record) is
-      D_Copy : Command_Record := D;
-   begin
-      String_List.Free (D_Copy.Command);
-      String_List.Free (D_Copy.Dir);
-
-      --  We deliberately do not free D.Head here, since this list
-      --  is passed to the
-      --  String_List.Free (D.Head);
-   end Free;
 
 end VCS.CVS;
