@@ -89,6 +89,7 @@ with Config;                     use Config;
 with String_List_Utils;          use String_List_Utils;
 
 with GPS.Main_Window;            use GPS.Main_Window;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 
 package body GVD.Process is
@@ -1204,6 +1205,8 @@ package body GVD.Process is
         GPS_Window (Process.Window);
       Buttons       : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
+      WTX_Version   : Natural := 0;
+      Widget        : Gtk_Menu_Item;
 
    begin
       Set_Busy (Process, True);
@@ -1282,21 +1285,16 @@ package body GVD.Process is
 
       Initialize (Process.Debugger);
 
-      --  Hide or show gdb-AE specific capabilities according to the debugger
+      --  Hide or show AE653 specific capabilities according to the debugger
       --  we are using
 
-      declare
-         WTX_Version : Natural := 0;
-         Widget      : Gtk_Widget;
-      begin
-         Widget := Get_Widget
-           (Window.Factory, -"/Debug/Data/Protection Domains");
+      Widget := Find_Menu_Item
+        (Window.Kernel, -"/Debug/Data/Protection Domains");
 
-         if Widget /= null then
-            Info_WTX (Process.Debugger, WTX_Version);
-            Set_Sensitive (Widget, WTX_Version >= 3);
-         end if;
-      end;
+      if Widget /= null then
+         Info_WTX (Process.Debugger, WTX_Version);
+         Set_Sensitive (Widget, WTX_Version >= 3);
+      end if;
 
       if Get_Pref (GVD_Prefs, Execution_Window)
         and then Support_TTY (Process.Debugger)
