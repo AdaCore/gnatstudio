@@ -118,6 +118,9 @@ procedure GPS is
    procedure Help;
    --  Display help on the standard output.
 
+   procedure Ctrl_C_Handler;
+   --  Handler for Ctrl-C events.
+
    ---------------------------
    -- Display_Splash_Screen --
    ---------------------------
@@ -272,6 +275,17 @@ procedure GPS is
             Justification => Justify_Left);
       end if;
    end Help;
+
+   --------------------
+   -- Ctrl_C_Handler --
+   --------------------
+
+   procedure Ctrl_C_Handler is
+   begin
+      --  Ignore Ctrl-C events
+
+      null;
+   end Ctrl_C_Handler;
 
    ------------------
    -- Finish_Setup --
@@ -472,6 +486,8 @@ procedure GPS is
    end Finish_Setup;
 
 begin
+   OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
+
    Gtk.Main.Init;
 
    Init_Settings;
