@@ -92,6 +92,7 @@ with Basic_Types; use Basic_Types;
 with Commands; use Commands;
 
 with Unchecked_Conversion;
+with Unchecked_Deallocation;
 
 package Glide_Kernel.Modules is
 
@@ -371,6 +372,9 @@ package Glide_Kernel.Modules is
 
    type Line_Information_Data is access Line_Information_Array;
    for Line_Information_Data'Size use Standard'Address_Size;
+
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Line_Information_Array, Line_Information_Data);
 
    function To_Line_Information is new Unchecked_Conversion
      (System.Address, Line_Information_Data);
