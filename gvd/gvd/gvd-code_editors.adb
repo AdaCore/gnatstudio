@@ -79,6 +79,10 @@ package body GVD.Code_Editors is
    procedure Update_Editor_Frame (Editor : access Gtk_Widget_Record'Class);
    --  Updates the label on top of the source editor.
 
+   procedure Apply_Mode
+     (Data : Editor_Mode_Data);
+   --  Actually apply mode changes to the editor.
+
    -------------------------
    -- Update_Editor_Frame --
    -------------------------
@@ -384,16 +388,88 @@ package body GVD.Code_Editors is
       Set_Always_Show_Toggle (Radio, True);
    end Append_To_Contextual_Menu;
 
+   ----------------
+   -- Apply_Mode --
+   ----------------
+
+   procedure Apply_Mode
+     (Data : Editor_Mode_Data)
+   is
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Data.Editor.Process);
+   begin
+      case Data.Editor.Mode is
+         when Source_Only =>
+            Remove (Data.Editor.Editor_Container, Data.Editor.Source);
+         when Asm_Only =>
+            Remove (Data.Editor.Editor_Container, Data.Editor.Asm);
+         when Source_Asm =>
+            Remove (Data.Editor.Source_Asm_Pane, Data.Editor.Source);
+            Remove (Data.Editor.Source_Asm_Pane, Data.Editor.Asm);
+            Remove (Data.Editor.Editor_Container,
+                    Data.Editor.Source_Asm_Pane);
+      end case;
+
+      Data.Editor.Mode := Data.Mode;
+
+      case Data.Editor.Mode is
+         when Source_Only =>
+            Add (Data.Editor.Editor_Container, Data.Editor.Source);
+            Show_All (Data.Editor.Source);
+            Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
+                      Set_Current => True);
+            if Process.Breakpoints /= null then
+               Update_Breakpoints
+                 (Data.Editor.Source, Process.Breakpoints.all);
+            end if;
+
+         when Asm_Only =>
+            Add (Data.Editor.Editor_Container, Data.Editor.Asm);
+            Show_All (Data.Editor.Asm);
+
+            if Data.Editor.Asm_Address /= null then
+               Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
+            end if;
+
+            Highlight_Address_Range
+              (Data.Editor.Asm, Data.Editor.Source_Line);
+
+            if Process.Breakpoints /= null then
+               Update_Breakpoints
+                 (Data.Editor.Asm, Process.Breakpoints.all);
+            end if;
+
+         when Source_Asm =>
+            Add (Data.Editor.Editor_Container, Data.Editor.Source_Asm_Pane);
+            Add1 (Data.Editor.Source_Asm_Pane, Data.Editor.Source);
+            Add2 (Data.Editor.Source_Asm_Pane, Data.Editor.Asm);
+            Show_All (Data.Editor.Source_Asm_Pane);
+
+            if Data.Editor.Asm_Address /= null then
+               Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
+            end if;
+
+            Highlight_Address_Range
+              (Data.Editor.Asm, Data.Editor.Source_Line);
+            Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
+                      Set_Current => True);
+
+            if Process.Breakpoints /= null then
+               Update_Breakpoints
+                 (Data.Editor.Source, Process.Breakpoints.all);
+               Update_Breakpoints
+                 (Data.Editor.Asm, Process.Breakpoints.all);
+            end if;
+      end case;
+   end Apply_Mode;
+
    -----------------
    -- Change_Mode --
    -----------------
 
    procedure Change_Mode
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
-      Data : Editor_Mode_Data)
-   is
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Data.Editor.Process);
+      Data : Editor_Mode_Data) is
    begin
       if Get_Active (Item) and then Data.Editor.Mode /= Data.Mode then
          --  If we are currently processing a command, wait till the current
@@ -406,69 +482,7 @@ package body GVD.Code_Editors is
             return;
          end if;
 
-         case Data.Editor.Mode is
-            when Source_Only =>
-               Remove (Data.Editor.Editor_Container, Data.Editor.Source);
-            when Asm_Only =>
-               Remove (Data.Editor.Editor_Container, Data.Editor.Asm);
-            when Source_Asm =>
-               Remove (Data.Editor.Source_Asm_Pane, Data.Editor.Source);
-               Remove (Data.Editor.Source_Asm_Pane, Data.Editor.Asm);
-               Remove (Data.Editor.Editor_Container,
-                       Data.Editor.Source_Asm_Pane);
-         end case;
-
-         Data.Editor.Mode := Data.Mode;
-
-         case Data.Editor.Mode is
-            when Source_Only =>
-               Add (Data.Editor.Editor_Container, Data.Editor.Source);
-               Show_All (Data.Editor.Source);
-               Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
-                         Set_Current => True);
-               if Process.Breakpoints /= null then
-                  Update_Breakpoints
-                    (Data.Editor.Source, Process.Breakpoints.all);
-               end if;
-
-            when Asm_Only =>
-               Add (Data.Editor.Editor_Container, Data.Editor.Asm);
-               Show_All (Data.Editor.Asm);
-
-               if Data.Editor.Asm_Address /= null then
-                  Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
-               end if;
-
-               Highlight_Address_Range
-                 (Data.Editor.Asm, Data.Editor.Source_Line);
-
-               if Process.Breakpoints /= null then
-                  Update_Breakpoints
-                    (Data.Editor.Asm, Process.Breakpoints.all);
-               end if;
-
-            when Source_Asm =>
-               Add (Data.Editor.Editor_Container, Data.Editor.Source_Asm_Pane);
-               Add1 (Data.Editor.Source_Asm_Pane, Data.Editor.Source);
-               Add2 (Data.Editor.Source_Asm_Pane, Data.Editor.Asm);
-               Show_All (Data.Editor.Source_Asm_Pane);
-
-               if Data.Editor.Asm_Address /= null then
-                  Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
-               end if;
-
-               Highlight_Address_Range
-                 (Data.Editor.Asm, Data.Editor.Source_Line);
-               Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
-                         Set_Current => True);
-
-               if Process.Breakpoints /= null then
-                  Update_Breakpoints
-                    (Data.Editor.Source, Process.Breakpoints.all);
-                  Update_Breakpoints
-                    (Data.Editor.Asm, Process.Breakpoints.all);
-               end if;
-         end case;
+         Apply_Mode (Data);
       end if;
    end Change_Mode;
 
@@ -553,6 +567,11 @@ package body GVD.Code_Editors is
             Add (Edit, Edit.Editor_Container);
          end if;
       end if;
+
+      Apply_Mode (Editor_Mode_Data'
+                  (Editor => Edit,
+                   Mode   => View_Mode'Value (Get_Pref (Editor_Mode))));
+
    end Preferences_Changed;
 
    ---------------------
