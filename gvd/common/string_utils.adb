@@ -20,7 +20,6 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.OS_Lib;
-with GVD.Preferences;         use GVD.Preferences;
 
 package body GVD.Strings is
 
@@ -500,10 +499,12 @@ package body GVD.Strings is
    -- Do_Tab_Expansion --
    ----------------------
 
-   function Do_Tab_Expansion (Text : String) return String is
+   function Do_Tab_Expansion
+     (Text     : String;
+      Tab_Size : Integer) return String
+   is
       Num_Tabs   : Natural := 0;
       Col        : Integer := 1;
-      Tab_Size   : Integer := Integer (Get_Tab_Size);
 
    begin
       --  Count the number of tabs in the string

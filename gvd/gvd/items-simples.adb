@@ -20,16 +20,17 @@
 
 with GNAT.IO;  use GNAT.IO;
 
-with Glib;         use Glib;
-with Gdk.Font;     use Gdk.Font;
-with Gdk.Drawable; use Gdk.Drawable;
-with Gdk.Window;   use Gdk.Window;
-with Gdk.GC;       use Gdk.GC;
-with Gdk.Types;    use Gdk.Types;
-with Language;     use Language;
+with Glib;            use Glib;
+with Gdk.Font;        use Gdk.Font;
+with Gdk.Drawable;    use Gdk.Drawable;
+with Gdk.Window;      use Gdk.Window;
+with Gdk.GC;          use Gdk.GC;
+with Gdk.Types;       use Gdk.Types;
+with Language;        use Language;
 
-with GVD.Types;    use GVD.Types;
-with GVD.Strings;  use GVD.Strings;
+with GVD.Types;       use GVD.Types;
+with GVD.Strings;     use GVD.Strings;
+with GVD.Preferences; use GVD.Preferences;
 
 package body Items.Simples is
 
@@ -621,7 +622,8 @@ package body Items.Simples is
    ---------------
 
    procedure Set_Value (Item : in out Debugger_Output_Type; Value : String) is
-      S              : constant String := Do_Tab_Expansion (Value);
+      S              : constant String :=
+        Do_Tab_Expansion (Value, Integer (Get_Tab_Size));
       V              : String_Access := Item.Value;
 
       Index_New      : Positive := S'First;

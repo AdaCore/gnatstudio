@@ -18,36 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Bitmap;       use Gdk.Bitmap;
-with Gdk.Color;        use Gdk.Color;
-with Gdk.Font;         use Gdk.Font;
-with Gdk.Event;        use Gdk.Event;
-with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
-with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
-with Gdk.Pixmap;       use Gdk.Pixmap;
-with Gdk.Window;       use Gdk.Window;
-with Glib;             use Glib;
-with Gtk.Handlers;     use Gtk.Handlers;
-with Gtk.Layout;       use Gtk.Layout;
-with Gtk.Menu;         use Gtk.Menu;
-with Gtk.Menu_Item;    use Gtk.Menu_Item;
-with Gtk.Pixmap;       use Gtk.Pixmap;
-with Gtk.Widget;       use Gtk.Widget;
-with Gtk.Text;         use Gtk.Text;
-with Gtk.Adjustment;   use Gtk.Adjustment;
-with Gtkada.Types;     use Gtkada.Types;
+with Gdk.Bitmap;        use Gdk.Bitmap;
+with Gdk.Color;         use Gdk.Color;
+with Gdk.Font;          use Gdk.Font;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gtk.Extra.PsFont;  use Gtk.Extra.PsFont;
+with Gdk.Pixmap;        use Gdk.Pixmap;
+with Gdk.Window;        use Gdk.Window;
+with Glib;              use Glib;
+with Gtk.Handlers;      use Gtk.Handlers;
+with Gtk.Layout;        use Gtk.Layout;
+with Gtk.Menu;          use Gtk.Menu;
+with Gtk.Menu_Item;     use Gtk.Menu_Item;
+with Gtk.Pixmap;        use Gtk.Pixmap;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtk.Text;          use Gtk.Text;
+with Gtk.Adjustment;    use Gtk.Adjustment;
+with Gtkada.Types;      use Gtkada.Types;
 
-with Debugger;         use Debugger;
+with Debugger;          use Debugger;
 
-with GVD.Process;      use GVD.Process;
-with GVD.Code_Editors; use GVD.Code_Editors;
-with GVD.Preferences;  use GVD.Preferences;
-with GVD.Strings;      use GVD.Strings;
-with GVD.Text_Boxes;   use GVD.Text_Boxes;
-with GVD.Types;        use GVD.Types;
-with Odd_Intl;         use Odd_Intl;
+with GVD.Process;       use GVD.Process;
+with GVD.Code_Editors;  use GVD.Code_Editors;
+with GVD.Preferences;   use GVD.Preferences;
+with GVD.Strings;       use GVD.Strings;
+with GVD.Text_Boxes;    use GVD.Text_Boxes;
+with GVD.Types;         use GVD.Types;
+with Odd_Intl;          use Odd_Intl;
 
-with GNAT.Regpat;      use GNAT.Regpat;
+with GNAT.Regpat;       use GNAT.Regpat;
 
 package body GVD.Asm_Editors is
 
@@ -229,7 +229,9 @@ package body GVD.Asm_Editors is
 
          S2 := Editor.Current_Range.Data;
          Editor.Current_Range.Data :=
-           new String' (Do_Tab_Expansion (S.all) & ASCII.LF & S2.all);
+           new String'
+             (Do_Tab_Expansion (S.all, Integer (Get_Tab_Size)) &
+              ASCII.LF & S2.all);
          Free (S2);
 
       --  Should we append to the current buffer
@@ -255,7 +257,8 @@ package body GVD.Asm_Editors is
 
          S2 := Editor.Current_Range.Data;
          Editor.Current_Range.Data := new String'
-           (S2.all & ASCII.LF & Do_Tab_Expansion (S (S_First .. S'Last)));
+           (S2.all & ASCII.LF &
+            Do_Tab_Expansion (S (S_First .. S'Last), Integer (Get_Tab_Size)));
          Free (S2);
 
       --  Else get a whole new range (minimum size Assembly_Range_Size)
@@ -322,7 +325,8 @@ package body GVD.Asm_Editors is
             Editor.Cache := new Cache_Data'
               (Low  => Low_Range,
                High => High_Range,
-               Data => new String'(Do_Tab_Expansion (S.all)),
+               Data => new String'
+                 (Do_Tab_Expansion (S.all, Integer (Get_Tab_Size))),
                Next => Editor.Cache);
             Free (S);
             Editor.Current_Range := Editor.Cache;

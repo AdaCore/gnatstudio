@@ -812,7 +812,9 @@ package body GVD.Text_Boxes is
          declare
             S : constant String := Do_Tab_Expansion
               ((Box.Buffer (Integer (Box.Highlight_Start)
-                            .. Integer (Box.Highlight_End) - 1)));
+                            .. Integer (Box.Highlight_End) - 1)),
+               Integer (Get_Tab_Size));
+
          begin
             pragma Assert
               (S'Length = Box.Highlight_Index_End - Box.Highlight_Index);
@@ -833,7 +835,9 @@ package body GVD.Text_Boxes is
       if From /= 0 and then To /= 0 then
          declare
             S : constant String := Do_Tab_Expansion
-              (Box.Buffer (Integer (From) .. Integer (To) - 1));
+              (Box.Buffer (Integer (From) .. Integer (To) - 1),
+               Integer (Get_Tab_Size));
+
          begin
             Freeze (Box.Child);
             Box.Highlight_Start := From;
