@@ -550,7 +550,7 @@ package body Debugger is
 
             if Need_To_Strip_Control_M then
                return Strip_Control_M (S);
-            else  
+            else
                return S;
             end if;
          end;
