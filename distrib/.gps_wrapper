@@ -12,12 +12,15 @@ root=`dirname $root`
 LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
 
-if [ x"$GPS_DOC_PATH" = x ]; then
+if [ "$GPS_DOC_PATH" = "" ]; then
    GPS_DOC_PATH=$root/doc/gnat/html:$root/doc/gnat-cross/html:$root/doc/gps/html
 else
    GPS_DOC_PATH=$GPS_DOC_PATH:$root/doc/gnat/html:$root/doc/gnat-cross/html:$root/doc/gps/html
 fi
 
-export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH
-GDK_USE_XFT=False
+if [ "$PYTHONHOME" = "" ]; then
+   PYTHONHOME=$root
+fi
+
+export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH PYTHONHOME
 exec $root/bin/${prog}_exe "$@"
