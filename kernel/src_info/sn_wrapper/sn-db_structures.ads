@@ -327,6 +327,18 @@ package SN.DB_Structures is
       end record;
    --  Typedefs
 
+   type TA_Table is
+      record
+         Scope          : Segment;
+         Name           : Segment;
+         Start_Position : Point;
+         File_Name      : Segment;
+         Type_Position  : Point;
+         Attributes     : Integer;
+         Buffer   : GNAT.OS_Lib.String_Access;
+      end record;
+      --  Template arguments
+
    type TO_Table is
       record
          Class : Segment;
@@ -426,6 +438,9 @@ package SN.DB_Structures is
    function Parse_Pair (Key_Data_Pair : Pair) return T_Table;
    --  Function for parsing T_Table key-data pair
 
+   function Parse_Pair (Key_Data_Pair : Pair) return TA_Table;
+   --  Function for parsing TA_Table key-data pair
+
    function Parse_Pair (Key_Data_Pair : Pair) return TO_Table;
    --  Function for parsing TO_Table key-data pair
 
@@ -499,6 +514,9 @@ package SN.DB_Structures is
 
    procedure Free (target : in out T_Table);
    --  frees resources allocated by T_Table
+
+   procedure Free (target : in out TA_Table);
+   --  frees resources allocated by TA_Table
 
    procedure Free (target : in out TO_Table);
    --  frees resources allocated by TO_Table

@@ -25,7 +25,7 @@ package SN is
 
    type Table_Type is
       (BY, CL, COM, CON, COV, E, EC, F, FD, FIL, FR, FU, GV, SN_IN,
-       IU, IV, LV, MA, MD, MI, SN_REM, SU, T, TO, UN);
+       IU, IV, LV, MA, MD, MI, SN_REM, SU, T, TA, TO, UN);
    --  Source Navigator DB tables types
 
    type Symbol_Type is
@@ -49,6 +49,7 @@ package SN is
       MI,      --  method implementation
       SU,      --  subroutine (Fortran)
       T,       --  typedef
+      TA,      --  template argument
       UN       --  union
       );
 

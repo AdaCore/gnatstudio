@@ -1015,6 +1015,55 @@ package body SN.DB_Structures is
       return tab;
    end Parse_Pair;
 
+   function Parse_Pair (Key_Data_Pair : Pair) return TA_Table is
+      tab : TA_Table;
+      cur_pos : Integer;
+      Len : Integer := Get_Total_Length (Key_Data_Pair.Key)
+        + Get_Total_Length (Key_Data_Pair.Data);
+   begin
+      tab.Buffer := new String (1 .. Len);
+
+      --  Scope
+      cur_pos := tab.Buffer'First;
+      Len := Get_Field_Length (Key_Data_Pair.Key, 1);
+      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+         Get_Field (Key_Data_Pair.Key, 1);
+      tab.Scope.First := cur_pos;
+      tab.Scope.Last := cur_pos + Len - 1;
+      cur_pos := cur_pos + Len;
+
+      --  Name
+      cur_pos := tab.Buffer'First;
+      Len := Get_Field_Length (Key_Data_Pair.Key, 2);
+      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+         Get_Field (Key_Data_Pair.Key, 2);
+      tab.Name.First := cur_pos;
+      tab.Name.Last := cur_pos + Len - 1;
+      cur_pos := cur_pos + Len;
+
+      --  File_Name
+      Len := Get_Field_Length (Key_Data_Pair.Key, 4);
+      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+         Get_Field (Key_Data_Pair.Key, 4);
+      tab.File_Name.First := cur_pos;
+      tab.File_Name.Last := cur_pos + Len - 1;
+      cur_pos := cur_pos + Len;
+
+      --  Start_Position
+      Parse_Position (
+         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
+
+      --  Type_Position
+      Parse_Position (
+         Get_Field (Key_Data_Pair.Data, 1), tab.Type_Position);
+
+      --  Attributes
+      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
+      Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
+      return tab;
+   end Parse_Pair;
+
    function Parse_Pair (Key_Data_Pair : Pair) return TO_Table is
       tab : TO_Table;
       cur_pos : Integer;
@@ -1248,6 +1297,12 @@ package body SN.DB_Structures is
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
+   procedure Free (target : in out TA_Table) is
+   begin
+      Free (target.Buffer);
+      Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
+   end Free;
+
    procedure Free (target : in out TO_Table) is
    begin
       Free (target.Buffer);
@@ -1327,34 +1382,6 @@ package body SN.DB_Structures is
          String_With_Brackets (2 .. (String_With_Brackets'Length - 1));
       return result_str;
    end Remove_Brackets;
-
---    function Make_Array_From_String (input : String)
---          return Arg_String_Array is
---       n, j : Integer;
---       acc : String (1 .. STRING_MAX_SIZE);
---       acc_big : Arg_String_Array;
---    begin
---       n := 1;
---       j := 1;
---       for i in 1 .. acc'Length loop
---          acc (i) := ' ';
---       end loop;
---       for i in 1 .. input'Length loop
---          if input (i) = ',' then
---             acc_big (j) := To_Unbounded_String (acc (1 .. (n - 1)));
---             n := 1;
---             j := j + 1;
---          else
---             acc (n) := input (i);
---             if i = input'Length then
---                acc_big (j) := To_Unbounded_String (acc (1 .. n));
---             end if;
---             n := n + 1;
---          end if;
---       end loop;
---       acc_big (j + 1) := Null_Unbounded_String;
---       return acc_big;
---    end Make_Array_From_String;
 
    -----------------------------
    -- Make_Vector_From_String --
