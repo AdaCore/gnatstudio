@@ -80,6 +80,11 @@ package Browsers.Dependency_Items is
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
+   procedure Refresh
+     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Item    : access File_Item_Record);
+   --  Redraw the item to its double buffer
+
    ----------------------
    -- Dependency links --
    ----------------------
