@@ -34,6 +34,7 @@ with Items;            use Items;
 with GVD.Pixmaps;      use GVD.Pixmaps;
 with GVD.Dialogs;      use GVD.Dialogs;
 with GVD.Process;      use GVD.Process;
+with GVD.Memory_View;  use GVD.Memory_View;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Display_Items;    use Display_Items;
 with Process_Proxies;  use Process_Proxies;
@@ -44,6 +45,8 @@ with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Debugger;         use Debugger;
+
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
 package body GVD.Canvas is
@@ -115,6 +118,12 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
    --  Show all the subcomponents of the selected item.
+
+   procedure View_Into_Memory
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Bring up the memory view if needed, and view the memory at the address
+   --  corresponding to Item.
 
    procedure Update_Variable
      (Widget : access Gtk_Widget_Record'Class;
@@ -593,6 +602,17 @@ package body GVD.Canvas is
                       Mode           => Value));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
+      Gtk_New (Mitem, Label => -"View memory at address &" & Component_Name);
+      Item_Handler.Connect
+        (Mitem, "activate",
+         Item_Handler.To_Marshaller (View_Into_Memory'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value));
+      Append (Canvas.Item_Contextual_Menu, Mitem);
       --  Display a separator
 
       Gtk_New (Mitem);
@@ -756,6 +776,26 @@ package body GVD.Canvas is
       Set_Visibility (Item.Component, True, Recursive => True);
       Update_Resize_Display (Item.Item, True);
    end Show_All;
+
+   ----------------------
+   -- View_Into_Memory --
+   ----------------------
+
+   procedure View_Into_Memory
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record)
+   is
+      Top  : Main_Debug_Window_Access
+        := Main_Debug_Window_Access (Get_Toplevel (Item.Canvas));
+      View : GVD_Memory_View
+        := Top.Memory_View;
+   begin
+      if not Visible_Is_Set (View) then
+         Show_All (View);
+      end if;
+      Display_Memory (View, Item.Component_Name);
+      Gdk_Raise (Get_Window (View));
+   end View_Into_Memory;
 
    ---------------------
    -- Update_Variable --
