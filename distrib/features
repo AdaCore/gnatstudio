@@ -3,6 +3,11 @@ details, please see the documentation.
 
 New features in GPS 2.1.0
 
+- D625-008 AUnit integration has been enhanced. It is now possible to select
+  the directory in which the generated code is saved. The generated code is
+  now following the GNAT Style convention so it can be compiled with the
+  standard -gnaty switch.
+
 - DA13-006 New menu Help->GNAT Runtime
 
 - DA07-011 GPS.Locations.parse can now specify the highlighting colors to use
@@ -67,4 +72,3 @@ New features in GPS 2.1.0
 - Better error messages when parsing customization XML files.
 
 - Full support of XML features in XML customization files (entities,...)
-
