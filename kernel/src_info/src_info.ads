@@ -764,13 +764,14 @@ private
    --  The fields Line and Column are chosen so that this constant is different
    --  from Null_File_Location.
 
-   type Parent_Kind is (Pointed_Type, Parent_Type);
+   type Parent_Kind is (Pointed_Type, Parent_Type, Returned_Type);
    --  The type of an entity in Parent_Location:
    --     - Pointed_Type: for access types, this means that the location is
    --       in fact the designed type by the access. This is also the contents
    --       type for an array.
    --     - Parent_Type: for type and subtypes, this is one of the parent
    --       types. This also contains the type of objects.
+   --     - Returned_Type: for subprograms, the type of the returned data
    --  We need this to distinguish between the kinds, since for instance an
    --  access type might either have a pointed type, or be a subtype of another
    --  access type.
