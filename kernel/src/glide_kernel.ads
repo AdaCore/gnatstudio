@@ -89,7 +89,7 @@ package Glide_Kernel is
    --  Reload a saved desktop.
    --  Calls "Show_All" on Handle.Main_Window before loading the desktop.
    --  Return False if no desktop could be loaded (in which case the default
-   --  desktop is loaded).
+   --  desktop was loaded).
 
    function Get_MDI
      (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window;
@@ -497,6 +497,10 @@ package Glide_Kernel is
    --  If at any time the user answers "no", the function stops asking
    --  the children and returns False.
    --  Return True otherwise.
+
+   procedure Close_All_Children (Handle : access Kernel_Handle_Record);
+   --  Close all the MDI children. No confirmation is asked, call
+   --  Save_All_MDI_Children first if needed.
 
    ---------------------
    -- Signal emission --

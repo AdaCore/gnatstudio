@@ -408,6 +408,22 @@ package body Glide_Kernel is
       return True;
    end Save_All_MDI_Children;
 
+   ------------------------
+   -- Close_All_Children --
+   ------------------------
+
+   procedure Close_All_Children (Handle : access Kernel_Handle_Record) is
+      MDI   : constant MDI_Window := Get_MDI (Handle);
+      Iter  : Child_Iterator := First_Child (MDI);
+      Child : MDI_Child;
+   begin
+      while Get (Iter) /= null loop
+         Child := Get (Iter);
+         Next (Iter);
+         Close_Child (Child);
+      end loop;
+   end Close_All_Children;
+
    ----------------------
    -- Save_All_Editors --
    ----------------------
@@ -970,7 +986,6 @@ package body Glide_Kernel is
                  and then Get_Attribute (Child, "project") = Project_Name
                then
                   Desktop_Node := Child;
-                  Free (Handle.Default_Desktop);
 
                elsif Child.Tag.all = "GPS_Height" then
                   Height := Gint'Value (Child.Value.all);
