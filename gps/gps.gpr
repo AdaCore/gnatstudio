@@ -31,7 +31,7 @@ with "../socket/socket";
 project GPS is
 
    for Languages use ("Ada");
-   for Main use ("gps.adb");
+   for Main use ("gps-main.adb");
 
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
