@@ -22,6 +22,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib.Convert;              use Glib.Convert;
 with Gdk;                       use Gdk;
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
@@ -1162,7 +1163,18 @@ package body Src_Editor_Module is
                A := Read_File (File);
 
                if A /= null then
-                  Set_Return_Value (Data, A.all);
+                  declare
+                     Length        : constant Integer := A'Length;
+                     Result_String : String (1 .. Length * 2 + 1);
+                     Ignore, Bytes : Natural;
+                  begin
+                     Glib.Convert.Convert
+                       (A.all,
+                        "UTF-8", Get_Pref (Kernel, Default_Charset),
+                        Ignore, Bytes, Result => Result_String);
+                     Set_Return_Value (Data, Result_String (1 .. Bytes));
+                  end;
+
                   Free (A);
                else
                   Set_Error_Msg (Data, -"file not found");
