@@ -597,10 +597,11 @@ package body Src_Editor_Module is
             return -"goto_mark: missing parameter file_name";
          end if;
 
-      elsif Command = "get_chars" then
+      elsif Command = "get_chars" or else Command = "replace_text" then
          declare
             Before : Integer := -1;
             After  : Integer := -1;
+            Text   : Basic_Types.String_Access;
          begin
             Node := First (Args);
 
@@ -619,9 +620,17 @@ package body Src_Editor_Module is
 
                elsif Filename = null then
                   Filename := new String'(Data (Node));
+
+               elsif Text = null then
+                  declare
+                     T : constant String := Data (Node);
+                  begin
+                     Text := new String'(T (T'First + 1 .. T'Last - 1));
+                  end;
+
                else
+                  Free (Text);
                   Free (Filename);
-                  Free (Error_Message);
                   return Command & ": " & (-"too many parameters");
                end if;
 
@@ -631,6 +640,7 @@ package body Src_Editor_Module is
                   begin
                      Free (Filename);
                      Free (Error_Message);
+                     Free (Text);
                      return Message;
                   end;
                end if;
@@ -649,22 +659,56 @@ package body Src_Editor_Module is
                   then
                      Free (Filename);
 
-                     return
-                       Get_Chars
-                         (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                          Mark_Record.Mark,
-                          Before, After);
+                     if Command = "get_chars" then
+                        Free (Text);
+                        return
+                          Get_Chars
+                            (Source_Box
+                                 (Get_Widget (Mark_Record.Child)).Editor,
+                             Mark_Record.Mark,
+                             Before, After);
+                     else
+                        if Text = null then
+                           Text := new String'("");
+                        end if;
+
+                        Replace_Slice
+                          (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                           Mark_Record.Mark,
+                           Before, After,
+                           Text.all);
+
+                        Free (Text);
+                        return "";
+                     end if;
                   else
                      Child := Find_Editor (Kernel, Filename.all);
                      Free (Filename);
 
                      if Child /= null then
-                        return Get_Chars
-                          (Source_Box (Get_Widget (Child)).Editor,
-                           Line, Column,
-                           Before, After);
+                        if Command = "get_chars" then
+                           Free (Text);
+                           return Get_Chars
+                             (Source_Box (Get_Widget (Child)).Editor,
+                              Line, Column,
+                              Before, After);
+                        else
+                           if Text = null then
+                              Text := new String'("");
+                           end if;
+
+                           Replace_Slice_At_Position
+                             (Source_Box (Get_Widget (Child)).Editor,
+                              Line, Column,
+                              Before, After,
+                              Text.all);
+
+                           Free (Text);
+                           return "";
+                        end if;
                      end if;
 
+                     Free (Text);
                      return "Mark not found.";
                   end if;
                end;
@@ -2415,6 +2459,22 @@ package body Src_Editor_Module is
          & (-"Get the characters around a certain mark or position.")
          & ASCII.LF
          & (-"Returns string between <before> characters before the mark")
+         & ASCII.LF
+         & (-"and <after> characters after the position.") & ASCII.LF
+         & (-"If <before> or <after> is omitted, the bounds will be")
+         & ASCII.LF
+         & (-"at the beginning and/or the end of the line."),
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "replace_text",
+         Help    => -"Usage:" & ASCII.LF
+         & "  replace_text {mark_identifier | -l line -c col} "
+         & (-"[-b before] [-a after] ""text""") & ASCII.LF
+         & (-"Replace the characters around a certain mark or position.")
+         & ASCII.LF
+         & (-"Replace string between <before> characters before the mark")
          & ASCII.LF
          & (-"and <after> characters after the position.") & ASCII.LF
          & (-"If <before> or <after> is omitted, the bounds will be")
