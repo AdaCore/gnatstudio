@@ -6727,7 +6727,7 @@ into a single regular expression.
 The full grammar of the regular expression can be found in the spec of the
 file @file{g-regpat.ads} in the GNAT run time.
 
-@item Library
+@item Engine
 The name of a dynamic library providing one or several of the functions
 described below.
 
@@ -6737,7 +6737,7 @@ the @code{LD_LIBRARY_PATH} run time search path. You can also specify
 explicitly e.g. @code{libcustom.so} or @code{/usr/lib/libcustom.so}.
 
 For each of the following five items, GPS will look for the corresponding
-symbol in @code{Library} and if found, will call this symbol when needed.
+symbol in @code{Engine} and if found, will call this symbol when needed.
 Otherwise, it will default to the static behavior, as defined by the other
 language-related items describing a language.
 
@@ -6924,7 +6924,7 @@ Here is an example of a language definition for the GPS project files:
       </Category>
     </Categories>
 
-    <Library>gpr</Library>
+    <Engine>gpr</Engine>
     <Comment_Line>gpr_comment_line</Comment_Line>
     <Uncomment_Line>gpr_uncomment_line</Uncomment_Line>
   </Language>
@@ -8906,6 +8906,7 @@ copy of the code on your local machine).
 @appendix Python Commands
 @c --------------------------------------------------------------------
 
+@noindent
 This section lists all functions that GPS exports to python. This is
 the result of interactively running the following commands in the
 python interpreter:
@@ -8920,6 +8921,7 @@ python interpreter:
 
 @c Here is the list:
 
+@c ??? incomplete
 @c @example
 @c @end example
 
