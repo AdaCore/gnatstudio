@@ -347,9 +347,11 @@ package body Debugger.Jdb is
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      Send (Debugger, "stop in " & Debugger.Main_Class.all & '.' &
-        Debugger.Main_Class.all & ASCII.LF & "run " & Debugger.Main_Class.all,
-        Mode => Mode);
+      Send
+        (Debugger, "stop in " & Debugger.Main_Class.all & '.' &
+         Debugger.Main_Class.all,
+         Mode => Mode);
+      Send (Debugger, "run " & Debugger.Main_Class.all, Mode => Mode);
       Set_Is_Started (Debugger, True);
    end Start;
 
@@ -412,11 +414,9 @@ package body Debugger.Jdb is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt
-     (Debugger : access Jdb_Debugger;
-      Wait_For_Prompt : Boolean := False) is
+   procedure Interrupt (Debugger : access Jdb_Debugger) is
    begin
-      Send (Debugger, "suspend", Wait_For_Prompt => Wait_For_Prompt);
+      Send (Debugger, "suspend");
    end Interrupt;
 
    ------------------------
@@ -697,8 +697,8 @@ package body Debugger.Jdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      S       : constant String := Send
-        (Debugger, "threads", True, Mode => Internal);
+      S       : constant String :=
+        Send (Debugger, "threads", Mode => Internal);
       Matches : Match_Array (0 .. 0);
 
    begin
@@ -763,13 +763,11 @@ package body Debugger.Jdb is
    -- Display_Prompt --
    --------------------
 
-   procedure Display_Prompt
-     (Debugger        : access Jdb_Debugger;
-      Wait_For_Prompt : Boolean := True) is
+   procedure Display_Prompt (Debugger : access Jdb_Debugger) is
    begin
       Output_Text
         (Convert (Debugger.Window, Debugger),
-         Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt),
+         Send_Full (Debugger, "  "),
          Is_Command => True,
          Set_Position => True);
    end Display_Prompt;
@@ -876,12 +874,9 @@ package body Debugger.Jdb is
    function Send
      (Debugger        : access Jdb_Debugger;
       Cmd             : String;
-      Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True;
       Mode            : Invisible_Command := Hidden) return String
    is
-      S : constant String :=
-        Send_Full (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode);
+      S     : constant String := Send_Full (Debugger, Cmd, Mode);
       Index : Positive := S'Last;
    begin
       if S = "" then

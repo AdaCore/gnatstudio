@@ -57,9 +57,7 @@ package Debugger.Gdb is
    function Highlighting_Pattern
      (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher;
 
-   procedure Display_Prompt
-     (Debugger : access Gdb_Debugger;
-      Wait_For_Prompt : Boolean := True);
+   procedure Display_Prompt (Debugger : access Gdb_Debugger);
 
    procedure Change_Directory
      (Debugger    : access Gdb_Debugger;
@@ -164,9 +162,7 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Interrupt
-     (Debugger : access Gdb_Debugger;
-      Wait_For_Prompt : Boolean := False);
+   procedure Interrupt (Debugger : access Gdb_Debugger);
 
    function Is_Execution_Command
      (Debugger : access Gdb_Debugger;
@@ -335,8 +331,6 @@ private
    function Send
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
-      Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True;
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String;
 

@@ -56,9 +56,7 @@ package Debugger.Jdb is
    function Highlighting_Pattern
      (Debugger : access Jdb_Debugger) return GNAT.Regpat.Pattern_Matcher;
 
-   procedure Display_Prompt
-     (Debugger        : access Jdb_Debugger;
-      Wait_For_Prompt : Boolean := True);
+   procedure Display_Prompt (Debugger : access Jdb_Debugger);
 
    function Type_Of
      (Debugger : access Jdb_Debugger;
@@ -128,9 +126,7 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Interrupt
-     (Debugger : access Jdb_Debugger;
-      Wait_For_Prompt : Boolean := False);
+   procedure Interrupt (Debugger : access Jdb_Debugger);
 
    function Is_Execution_Command
      (Debugger : access Jdb_Debugger;
@@ -293,8 +289,6 @@ private
    function Send
      (Debugger        : access Jdb_Debugger;
       Cmd             : String;
-      Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True;
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String;
 
