@@ -1018,6 +1018,13 @@ package body Docgen is
             return True;
          end if;
 
+         if Full_Name (TSFL.Data (Source_File_Node).File_Name).all
+           > Full_Name (Name).all
+         then
+            --  The list is sorted, we can exit
+            return false;
+         end if;
+
          Source_File_Node := TSFL.Next (Source_File_Node);
       end loop;
 
