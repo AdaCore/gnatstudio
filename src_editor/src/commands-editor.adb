@@ -405,7 +405,7 @@ package body Commands.Editor is
       Editor := Get_Source_Box_From_MDI
         (Find_Current_Editor (Get_Kernel (Command.Buffer)));
 
-      if Command.Direction = Forward then
+      if Command.Force_End then
          Set_Cursor_Position
            (Command.Buffer,
             Gint (Command.End_Line_Before),
@@ -435,7 +435,7 @@ package body Commands.Editor is
       End_Line     : Integer;
       End_Column   : Integer;
       Text         : String;
-      Direction    : Direction_Type := Backward)
+      Force_End    : Boolean := False)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -445,6 +445,7 @@ package body Commands.Editor is
       Item.Start_Column := Start_Column;
       Item.End_Line_Before := End_Line;
       Item.End_Column_Before := End_Column;
+      Item.Force_End := Force_End;
 
       Item.Text_Before := new String'
         (Get_Slice
@@ -457,7 +458,6 @@ package body Commands.Editor is
 
       Get_Iter_At_Line_Offset
         (Buffer, Iter, Gint (Start_Line), Gint (Start_Column));
-      Item.Direction := Direction;
    end Create;
 
 end Commands.Editor;
