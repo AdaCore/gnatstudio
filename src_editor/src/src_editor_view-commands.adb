@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                       Copyright (C) 2003                          --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -144,7 +144,7 @@ package body Src_Editor_View.Commands is
       end if;
 
       Push_State (Command.Kernel, Busy);
-      Result := Do_Indentation (Buffer, Force => True);
+      Result := Do_Indentation (Buffer);
       Pop_State (Command.Kernel);
 
       if Result then
