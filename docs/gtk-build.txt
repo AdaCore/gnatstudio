@@ -227,7 +227,7 @@ cd gtk+-2.2.1
 # Under Solaris 2.5.1, plain Gtk+ will not compile because it uses X11R6
 # specific features. The following patch disables this feature which is only
 # used for XIM support:
-# patch -p0 < .../gtk+-2.0.5-solaris2.5.1.diff
+# patch -p0 < .../gtk+-2.2.1-solaris2.5.1.diff
 
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
