@@ -168,7 +168,7 @@ entering its name in the @i{Program File entry}, or by clicking on the
 the machine on which your underlying debugger (e.g GDB) will run. By default,
 the debugger will run on the current machine (the machine on which GVD is
 running), so you only need to specify a value for remote debugging.
-For more informatino, see @ref{Debugging a program remotely}.
+For more information, see @ref{Debugging a program remotely}.
 
 @b{Limitation}: under Windows systems, you can only have one debugger window
 at a time, so use this menu only after having closed the current debugger, and
@@ -807,10 +807,10 @@ The memory window allows you to dump contents of the memory given
 either an address, or a variable name.
 
 To dump the memory, enter the address with the C hexadecimal form: 0xabcd,
-or the name of a variable, e.g foo. In the latter case, GVD will compute its
-address automatically. then either press @i{Enter} or click on the @i{View}
-button. This will display the memory with the corresponding addresses in the
-bottom text area.
+or the name of a variable, e.g foo in the @i{Location} text entry. In the
+latter case, GVD will compute its address automatically. Then either press
+@i{Enter} or click on the @i{View} button. This will display the memory with
+the corresponding addresses in the bottom text area.
 
 You can also specify the unit size (@i{Byte}, @i{Halfword} or @i{Word}),
 the format (@i{Hexadecimal}, @i{Decimal}, @i{Octal} or @i{ASCII}), and you
