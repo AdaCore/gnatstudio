@@ -27,7 +27,6 @@ package Pixmaps_Prj is
    --  enough for our needs and avoid having to maintain this information here.
 
    logo_xpm               : aliased Chars_Ptr_Array (0 .. 0);
-   delete_var_xpm         : aliased Chars_Ptr_Array (0 .. 0);
    project_closed_xpm     : aliased Chars_Ptr_Array (0 .. 0);
    project_xpm            : aliased Chars_Ptr_Array (0 .. 0);
    project_imported_xpm   : aliased Chars_Ptr_Array (0 .. 0);
@@ -38,7 +37,6 @@ package Pixmaps_Prj is
 private
 
    pragma Import (C, logo_xpm);
-   pragma Import (C, delete_var_xpm);
    pragma Import (C, project_closed_xpm);
    pragma Import (C, project_xpm);
    pragma Import (C, project_imported_xpm);
