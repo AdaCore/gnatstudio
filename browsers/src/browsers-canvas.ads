@@ -104,6 +104,13 @@ package Browsers.Canvas is
    --  This is used when changing for instance the background color of items.
    --  By default, it only redraws the background color.
 
+   procedure Reset (Browser : access Glide_Browser_Record'Class;
+                    Item : access Glide_Browser_Item_Record);
+   --  Reset the internal state of the item, as if it had never been expanded,
+   --  analyzed,... This is called for instance after the item has been defined
+   --  as the root of the canvas (and thus all other items have been removed).
+   --  It doesn't need to redraw the item, however.
+
    -----------
    -- Links --
    -----------

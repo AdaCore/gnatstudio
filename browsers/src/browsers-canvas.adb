@@ -43,10 +43,13 @@ with Gtk.Style;           use Gtk.Style;
 with Gtk.Widget;          use Gtk.Widget;
 with Pango.Font;          use Pango.Font;
 
+with Ada.Exceptions;      use Ada.Exceptions;
+
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Layouts;                   use Layouts;
+with Traces;                    use Traces;
 
 package body Browsers.Canvas is
 
@@ -59,6 +62,8 @@ package body Browsers.Canvas is
 
    Zoom_Steps : constant := 7;
    --  Number of steps while zooming in or out.
+
+   Me : Debug_Handle := Create ("Browsers.Canvas");
 
    type Cb_Data is record
       Browser : Glide_Browser;
@@ -101,6 +106,10 @@ package body Browsers.Canvas is
      (Browser : access Gtk_Widget_Record'Class;
       Args    : Glib.Values.GValues);
    --  Make sure that the highlighted links are always drawn last.
+
+   procedure Set_Root
+     (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
+   --  Remove all items except the one described in Data from the canvas.
 
    ----------------
    -- Initialize --
@@ -280,6 +289,13 @@ package body Browsers.Canvas is
             Contextual_Cb.To_Marshaller (Toggle_Links'Access),
             (Browser => B, Item => Item, Zoom => 100));
 
+         Gtk_New (Mitem, Label => -"Remove all other items");
+         Append (Menu, Mitem);
+         Contextual_Cb.Connect
+           (Mitem, "activate",
+            Contextual_Cb.To_Marshaller (Set_Root'Access),
+            (Browser => B, Item => Item, Zoom => 100));
+
          Xsave := Get_X (Event);
          Ysave := Get_Y (Event);
          Set_X (Event, Get_X (Event) - Gdouble (Get_Coord (Item).X));
@@ -351,6 +367,63 @@ package body Browsers.Canvas is
 
       return Context;
    end Default_Browser_Context_Factory;
+
+   --------------
+   -- Set_Root --
+   --------------
+
+   procedure Set_Root
+     (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data)
+   is
+      pragma Unreferenced (Mitem);
+
+      function Remove_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  Remove Item from Canvas, unless it is the item described in Data.
+
+      -----------------
+      -- Remove_Item --
+      -----------------
+
+      function Remove_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean is
+      begin
+         if Canvas_Item (Item) /= Data.Item then
+            Remove (Canvas, Item);
+         end if;
+         return True;
+      end Remove_Item;
+
+   begin
+      Push_State (Get_Kernel (Data.Browser), Busy);
+
+      Set_Auto_Layout (Get_Canvas (Data.Browser), False);
+
+      For_Each_Item (Get_Canvas (Data.Browser),
+                     Remove_Item'Unrestricted_Access);
+      Reset (Data.Browser, Glide_Browser_Item (Data.Item));
+      Refresh (Data.Browser, Glide_Browser_Item (Data.Item));
+
+      Set_Auto_Layout (Get_Canvas (Data.Browser), True);
+      Layout
+        (Get_Canvas (Data.Browser),
+         Force => False,
+         Vertical_Layout =>
+           Get_Pref (Get_Kernel (Data.Browser), Browsers_Vertical_Layout));
+      Refresh_Canvas (Get_Canvas (Data.Browser));
+
+      Show_Item (Get_Canvas (Data.Browser), Data.Item);
+
+      Pop_State (Get_Kernel (Data.Browser));
+
+   exception
+      when E : others =>
+         Pop_State (Get_Kernel (Data.Browser));
+         Trace (Me, "Unexpected exception in Set_Root "
+                & Exception_Information (E));
+   end Set_Root;
 
    ------------------
    -- Toggle_Links --
@@ -622,5 +695,17 @@ package body Browsers.Canvas is
    begin
       return Browser.Kernel;
    end Get_Kernel;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Browser : access Glide_Browser_Record'Class;
+                    Item : access Glide_Browser_Item_Record)
+   is
+      pragma Unreferenced (Browser, Item);
+   begin
+      null;
+   end Reset;
 
 end Browsers.Canvas;
