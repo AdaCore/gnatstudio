@@ -844,9 +844,27 @@ package body VCS_View_API is
 
    procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
+      Context : Selection_Context_Access)
+   is
+      File     : File_Name_Selection_Context_Access;
+      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Files    : String_List.List;
    begin
-      Update (Widget, Get_Kernel (Context));
+      if Get_Creator (Context) = VCS_Module_ID then
+         Update (Widget, Kernel);
+
+      elsif Context.all in File_Name_Selection_Context'Class then
+         File := File_Name_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) then
+            String_List.Append (Files,
+                                Directory_Information (File)
+                                & File_Information (File));
+
+            Update (Get_Current_Ref (Kernel), Files);
+            String_List.Free (Files);
+         end if;
+      end if;
    end On_Menu_Update;
 
    ------------------------
@@ -860,6 +878,7 @@ package body VCS_View_API is
       File     : File_Name_Selection_Context_Access;
       Kernel   : Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
+
    begin
       Open_Explorer (Get_Kernel (Context));
 
@@ -1016,9 +1035,24 @@ package body VCS_View_API is
 
    procedure On_Menu_Diff
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
+      Context : Selection_Context_Access)
+   is
+      File     : File_Name_Selection_Context_Access;
+      Kernel   : Kernel_Handle := Get_Kernel (Context);
+
    begin
-      View_Diff (Widget, Get_Kernel (Context));
+      if Get_Creator (Context) = VCS_Module_ID then
+         View_Diff (Widget, Kernel);
+
+      elsif Context.all in File_Name_Selection_Context'Class then
+         File := File_Name_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) then
+            Diff (Get_Current_Ref (Kernel),
+                  Directory_Information (File)
+                  & File_Information (File));
+         end if;
+      end if;
    end On_Menu_Diff;
 
    ------------------------
@@ -1032,12 +1066,29 @@ package body VCS_View_API is
       use File_Status_List;
       pragma Unreferenced (Widget);
 
-      Files  : String_List.List := Get_Selected_Files (Get_Kernel (Context));
+      Files  : String_List.List;
+      File   : File_Name_Selection_Context_Access;
       Ref    : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
-      Status : File_Status_List.List := Local_Get_Status (Ref, Files);
-      Status_Temp : List_Node := First (Status);
+      Status : File_Status_List.List;
+      Status_Temp : List_Node;
 
    begin
+      if Get_Creator (Context) = VCS_Module_ID then
+         Files  := Get_Selected_Files (Get_Kernel (Context));
+
+      else
+         File := File_Name_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) then
+            String_List.Append (Files,
+                                Directory_Information (File)
+                                & File_Information (File));
+         end if;
+      end if;
+
+      Status := Local_Get_Status (Ref, Files);
+      Status_Temp := First (Status);
+
       while Status_Temp /= Null_Node loop
          if not String_List.Is_Empty (Data (Status_Temp).Working_Revision) then
             Diff (Ref,
