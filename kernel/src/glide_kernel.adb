@@ -839,26 +839,58 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record)
    is
       MDI  : constant MDI_Window := Get_MDI (Handle);
+      File_Name   : constant String :=
+        String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
+      Project_Name : constant String := Get_Project_File_Name (Handle);
       File : File_Type;
       N    : Node_Ptr;
       M    : Node_Ptr;
+      Old  : Node_Ptr;
 
    begin
-      Create
-        (File,
-         Mode => Out_File,
-         Name =>
-           String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop");
+      --  Read the previous contents of the file, to save the desktops for
+      --  other projects
+
+      if Is_Regular_File (File_Name) then
+         Old := Parse (File_Name);
+      end if;
+
+      Create (File, Mode => Out_File, Name => File_Name);
       Set_Output (File);
 
       N := new Node'
         (Tag => new String'("GPS_Desktop"),
-         Child => Glide_Kernel.Kernel_Desktop.Save_Desktop (MDI),
+         Child => null,
          Parent => null,
          Value  => null,
          Attributes => null,
          Next => null,
          Specific_Data => 0);
+
+      --  Merge the old contents of the file
+
+      if Old /= null then
+         M := Old.Child;
+
+         while M /= null loop
+            if M.Tag /= null
+              and then M.Tag.all = "MDI"
+              and then Get_Attribute (M, "project") /= Project_Name
+            then
+               Add_Child (N, M);
+            end if;
+
+            M := M.Next;
+         end loop;
+      end if;
+
+      --  Add the current content, indexed on the current project
+
+      M := Glide_Kernel.Kernel_Desktop.Save_Desktop (MDI);
+      Set_Attribute (M, "project", Project_Name);
+      Add_Child (N, M);
+
+      --  Add GPS-specific nodes
 
       M := new Node'
         (Tag => new String'("GPS_Width"),
@@ -918,6 +950,7 @@ package body Glide_Kernel is
       Node   : Node_Ptr;
       File   : constant String :=
         String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
+      Project_Name : constant String := Get_Project_File_Name (Handle);
       Child  : Node_Ptr;
       Desktop_Node : Node_Ptr;
       Width  : Gint := 640;
@@ -933,7 +966,9 @@ package body Glide_Kernel is
 
          while Child /= null loop
             if Child.Tag /= null then
-               if Child.Tag.all = "MDI" then
+               if Child.Tag.all = "MDI"
+                 and then Get_Attribute (Child, "project") = Project_Name
+               then
                   Desktop_Node := Child;
                   Free (Handle.Default_Desktop);
 
