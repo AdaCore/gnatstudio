@@ -25,7 +25,7 @@ package body Src_Menu is
 
    Prefs : constant String := "/Preferences";
    Prefs_Font : constant String := Prefs & '/' & "Font";
-   Prefs_Line_Num : constant String := Prefs & '/' & "Show Line Numbers";
+   Prefs_Line_Num : constant String := Prefs & '/' & "Toggle Line Numbers";
    Prefs_Debug_Mode : constant String := Prefs & '/' & "Debug Mode";
 
    Edit : constant String := "/Edit";
