@@ -472,6 +472,7 @@ package body Browsers.Call_Graph is
 
          Gtk_New (Child, Browser, Entity, May_Have_To_Dependencies);
          Put (Get_Canvas (Browser), Child);
+         Refresh (Browser, Child);
       end if;
 
       return Child;
@@ -532,7 +533,6 @@ package body Browsers.Call_Graph is
                             Src  => Item,
                             Dest => Child);
                end if;
-               Refresh (Browser, Child);
 
             --  For a label, do not insert it in the browser, but process
             --  its children
@@ -564,7 +564,6 @@ package body Browsers.Call_Graph is
 
       if Get_Right_Arrow (Item) then
          Set_Right_Arrow (Item, False);
-         Refresh (Browser, Item);
 
          --  If we have a renaming, add the entry for the renamed entity
          Renaming_Of (Kernel, Entity, Is_Renaming, Rename);
@@ -577,7 +576,6 @@ package body Browsers.Call_Graph is
                   Src => Item, Dest => Child, Arrow => Both_Arrow);
             end if;
             Destroy (Rename);
-            Refresh (Browser, Child);
 
          elsif Is_Renaming then
             Insert (Kernel,
@@ -672,7 +670,6 @@ package body Browsers.Call_Graph is
                      Src => Child, Dest => Data.Item,
                      Arrow => Both_Arrow);
                end if;
-               Refresh (Data.Browser, Child);
 
                --  An entity that calls our entity.
             else
@@ -694,7 +691,6 @@ package body Browsers.Call_Graph is
                        (Get_Canvas (Data.Browser), Link => Link,
                         Src => Child, Dest => Data.Item);
                   end if;
-                  Refresh (Data.Browser, Child);
                end if;
             end if;
          end if;
@@ -754,7 +750,6 @@ package body Browsers.Call_Graph is
       --  Look for an existing item corresponding to entity
       Item := Add_Entity_If_Not_Present (Browser, Entity);
       Set_Left_Arrow (Item, False);
-      Refresh (Browser, Item);
 
       --  For efficiency, do not recompute the layout for each item
       Set_Auto_Layout (Get_Canvas (Browser), False);
@@ -769,7 +764,6 @@ package body Browsers.Call_Graph is
               (Get_Canvas (Browser), Link => Link,
                Src => Item, Dest => Child, Arrow => Both_Arrow);
          end if;
-         Refresh (Browser, Child);
          Destroy (Rename);
 
       elsif Is_Renaming then
