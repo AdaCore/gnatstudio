@@ -33,7 +33,6 @@ with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
-with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gdk.Event;                    use Gdk.Event;
 with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
@@ -703,16 +702,15 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      File_Selector : File_Selector_Window_Access;
    begin
-      Gtk_New
-        (File_Selector, (1 => Directory_Separator),
-         Get_Current_Dir, -"Open HTML File");
-      Register_Filter (File_Selector, HTML_File_Filter);
-
       declare
-         Filename : constant String := Select_File (File_Selector);
+         Filename : constant String :=
+           Select_File
+             (-"Open HTML File",
+              File_Pattern      => "*.htm*",
+              Pattern_Name      => -"HTML files",
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+
       begin
          if Filename /= "" then
             Open_Html (Kernel, Filename);

@@ -1749,7 +1749,12 @@ package body Src_Editor_Box is
            or else Base_Name (File) = File
          then
             declare
-               Name : constant String := Select_File (-"Save File As");
+               Name : constant String :=
+                 Select_File
+                   (Title             => -"Save File As",
+                    Use_Native_Dialog =>
+                      Get_Pref (Editor.Kernel, Use_Native_Dialogs));
+
             begin
                if Name = "" then
                   Success := False;

@@ -318,7 +318,9 @@ package body Glide_Kernel.Console is
    begin
       declare
          File : constant String :=
-           Select_File (Title => -"Save messages window as");
+           Select_File
+             (Title             => -"Save messages window as",
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
       begin
          if File = "" then
             return;
@@ -353,7 +355,8 @@ package body Glide_Kernel.Console is
       declare
          File : constant String :=
            Select_File
-             (Title => -"Select file to load in the messages window");
+             (Title => -"Select file to load in the messages window",
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
 
       begin
          if File = "" then

@@ -67,7 +67,11 @@ package body Vdiff_Module is
       pragma Unreferenced (Widget);
       Vdiff  : Vdiff_Access;
       Result : Diff_Occurrence_Link;
-      File1  : constant String := Select_File (-"Select First File");
+      File1  : constant String :=
+        Select_File
+          (Title             => -"Select First File",
+           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+
       Child  : MDI_Child;
       Button : Message_Dialog_Buttons;
 
@@ -77,7 +81,10 @@ package body Vdiff_Module is
       end if;
 
       declare
-         File2 : constant String := Select_File (-"Select Second File");
+         File2 : constant String :=
+           Select_File
+             (Title             => -"Select Second File",
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
 
       begin
          if File2 = "" then

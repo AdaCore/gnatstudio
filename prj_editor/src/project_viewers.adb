@@ -54,7 +54,6 @@ with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
-with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 with Gtkada.Types;                 use Gtkada.Types;
 
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -420,6 +419,7 @@ package body Project_Viewers is
       Executables  : Gtk_List_Store;
       Tree_View    : Gtk_Tree_View;
       Project_View : Project_Id;
+      Kernel       : Kernel_Handle;
    end record;
    type Executables_Editor is access all Executables_Editor_Record'Class;
    --  An widget to edit the list of main files.
@@ -1306,20 +1306,22 @@ package body Project_Viewers is
 
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Selector : File_Selector_Window_Access;
       Prj : constant Project_Node_Id :=
         Get_Project_From_View (Project_Information (File));
       Dir : constant String := Get_String (Path_Name_Of (Prj));
+
    begin
       if Has_Project_Information (File) then
-         Gtk_New (Selector,
-                  Root => (1 => Directory_Separator),
-                  Initial_Directory => Dir_Name (Dir),
-                  Dialog_Title => -"Select project");
-         Register_Filter (Selector, Prj_File_Filter);
-
          declare
-            Name : constant String := Select_File (Selector);
+            Name : constant String :=
+              Select_File
+                (-"Select Project",
+                 Dir_Name (Dir),
+                 File_Pattern      => "*.gpr",
+                 Pattern_Name      => "Project files",
+                 Use_Native_Dialog =>
+                   Get_Pref (Get_Kernel (File), Use_Native_Dialogs));
+
          begin
             if Name /= "" then
                Add_Dependency_Internal (Get_Kernel (File), Prj, Name);
@@ -1568,9 +1570,14 @@ package body Project_Viewers is
             if Dirs'Length = 0 then
                declare
                   File : constant String := Select_File
-                    (Title          => -"Select the main file to add",
-                     Base_Directory => Dir_Name
-                       (Project_Path (Ed.Project_View)));
+                    (Title             => -"Select the main file to add",
+                     Base_Directory    => Dir_Name
+                       (Project_Path (Ed.Project_View)),
+                     File_Pattern      => "*.ad*",
+                     Pattern_Name      => "Ada source files",
+                     Use_Native_Dialog =>
+                       Get_Pref (Ed.Kernel, Use_Native_Dialogs));
+
                begin
                   if File /= "" then
                      Add_Main_File (Ed, Base_Name (File));
@@ -1579,8 +1586,10 @@ package body Project_Viewers is
             else
                declare
                   File : constant String := Select_File
-                    (Title          => -"Select the main file to add",
-                     Base_Directory => Get_String (Dirs (Dirs'First)));
+                    (Title             => -"Select the main file to add",
+                     Base_Directory    => Get_String (Dirs (Dirs'First)),
+                     Use_Native_Dialog =>
+                       Get_Pref (Ed.Kernel, Use_Native_Dialogs));
                begin
                   if File /= "" then
                      Add_Main_File (Ed, Base_Name (File));
@@ -1591,8 +1600,10 @@ package body Project_Viewers is
       else
          declare
             File : constant String := Select_File
-              (Title          => -"Select the main file to add",
-               Base_Directory => Get_Current_Dir);
+              (Title             => -"Select the main file to add",
+               Use_Native_Dialog =>
+                 Get_Pref (Ed.Kernel, Use_Native_Dialogs));
+
          begin
             if File /= "" then
                Add_Main_File (Ed, Base_Name (File));
@@ -1634,7 +1645,7 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
-      pragma Unreferenced (Page, Kernel, Full_Project);
+      pragma Unreferenced (Page, Full_Project);
       Box      : Executables_Editor;
       Hbox     : Gtk_Box;
       Label    : Gtk_Label;
@@ -1648,6 +1659,7 @@ package body Project_Viewers is
    begin
       Box := new Executables_Editor_Record;
       Box.Project_View := Project_View;
+      Box.Kernel := Kernel_Handle (Kernel);
       Initialize_Vbox (Box, Homogeneous => False);
 
       Gtk_New
