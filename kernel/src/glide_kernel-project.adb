@@ -396,7 +396,7 @@ package body Glide_Kernel.Project is
             return Concat
               (Current
                & "-X" & Name
-               & "=""" & Name_Buffer (Name_Buffer'First .. Name_Len) & """ ",
+               & "=" & Name_Buffer (Name_Buffer'First .. Name_Len) & " ",
                Index + 1);
          end;
       end Concat;
