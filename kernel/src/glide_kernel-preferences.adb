@@ -686,8 +686,91 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (CVS_Command), -"VCS:CVS");
 
+      -- MDI --
+
+      MDI_Opaque_Resize := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-Opaque-Resize",
+         Default => False,
+         Blurb   => -("If True, items will be resized opaquely when not"
+                      & " maximized"),
+         Nick    => -"Opaque resizing"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Opaque_Resize), -"General:MDI");
+
+      MDI_Opaque_Move := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-Opaque-Move",
+         Default => False,
+         Blurb   => -("If True, items will be moved opaquely when not"
+                      & " maximized"),
+         Nick    => -"Opaque moving"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Opaque_Move), -"General:MDI");
+
+      MDI_Opaque_Docks := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-Opaque-Docks",
+         Default => False,
+         Blurb   => -("If False, a line is drawn on the screen to show the"
+                      & " future position of the docks when they are resized"
+                      & " interactively. If True, they are resized"
+                      & " dynamically as the mouse moves"),
+         Nick    => -"Opaque docks"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Opaque_Docks), -"General:MDI");
+
+      MDI_Destroy_Floats := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-Destroy-Floats",
+         Default => False,
+         Blurb   => -("If False, closing the window associated with a floating"
+                      & " item will put the item back in the main GPS window,"
+                      & " but will not destroy it. If True, the item is"
+                      & " destroyed"),
+         Nick    => -"Destroy floats"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats), -"General:MDI");
+
+      MDI_Title_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "MDI-Title-Font",
+         Default => "Sans 8",
+         Blurb   => -"Font used in the title bar of the items",
+         Nick    => -"Title font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Title_Font), -"General:MDI");
+
+      MDI_Background_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "MDI-Background-Color",
+         Default => "#666666",
+         Blurb   => -"Color to use for the background of the MDI",
+         Nick    => -"Background color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Background_Color),
+         -"General:MDI");
+
+      MDI_Title_Bar_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "MDI-Title-Bar-Color",
+         Default => "#AAAAAA",
+         Blurb   => -"Color to use for the title bar of unselected items",
+         Nick    => -"Title bar color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Title_Bar_Color),
+         -"General:MDI");
+
+      MDI_Focus_Title_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "MDI-Focus-Title-Color",
+         Default => "#000088",
+         Blurb   => -"Color to use for the title bar of selected items",
+         Nick    => -"Selected title bar color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color),
+         -"General:MDI");
+
+      --------------
+      -- Debugger --
+      --------------
+
       GVD.Preferences.Register_Default_Preferences
         (Kernel.Preferences, -"Debugger" & ':', "Debugger-");
+
+
    end Register_Global_Preferences;
 
    ----------------------

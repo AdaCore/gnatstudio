@@ -141,6 +141,16 @@ package Glide_Kernel.Preferences is
 
    Indentation_Key           : Param_Spec_Key;
 
+   -- MDI --
+   MDI_Opaque_Resize     : Param_Spec_Boolean;
+   MDI_Opaque_Move       : Param_Spec_Boolean;
+   MDI_Opaque_Docks      : Param_Spec_Boolean;
+   MDI_Destroy_Floats    : Param_Spec_Boolean;
+   MDI_Title_Font        : Param_Spec_Font;
+   MDI_Background_Color  : Param_Spec_Color;
+   MDI_Title_Bar_Color   : Param_Spec_Color;
+   MDI_Focus_Title_Color : Param_Spec_Color;
+
    -- Languages --
    Ada_Automatic_Indentation : Param_Spec_Boolean;
    Ada_Use_Tabs              : Param_Spec_Boolean;
