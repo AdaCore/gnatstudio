@@ -38,7 +38,6 @@ with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Glide_Intl;             use Glide_Intl;
-with GUI_Utils;              use GUI_Utils;
 
 package body Gtkada.Entry_Completion is
 
