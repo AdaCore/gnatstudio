@@ -217,31 +217,32 @@ package body Glide_Menu is
       case Help_Context'Val (Action) is
          when Welcome_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/html/glide-welcome.html");
+              Top.Prefix_Directory.all &
+              "/doc/glide2/html/glide-welcome.html");
 
          when GVD_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/html/gvd.html");
+              Top.Prefix_Directory.all & "/doc/glide2/html/gvd.html");
 
          when GNAT_UG_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/html/gnat_ug.html");
+              Top.Prefix_Directory.all & "/doc/glide2/html/gnat_ug.html");
 
          when GNAT_RM_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/html/gnat_rm.html");
+              Top.Prefix_Directory.all & "/doc/glide2/html/gnat_rm.html");
 
          when ARM95_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/html/arm95.html");
+              Top.Prefix_Directory.all & "/doc/glide2/html/arm95.html");
 
          when GDB_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/html/gdb.html");
+              Top.Prefix_Directory.all & "/doc/glide2/html/gdb.html");
 
          when GCC_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/html/gcc.html");
+              Top.Prefix_Directory.all & "/doc/glide2/html/gcc.html");
       end case;
 
    exception
