@@ -1667,6 +1667,7 @@ package body Src_Editor_Buffer.Line_Information is
          Unhide_Block_Pixbuf);
 
       Buffer.Modifying_Real_Lines := False;
+      Register_Edit_Timeout (Buffer);
    end Hide_Lines;
 
    ------------------
@@ -1780,6 +1781,7 @@ package body Src_Editor_Buffer.Line_Information is
          Command_Access (Command),
          Hide_Block_Pixbuf);
       Buffer.Modifying_Real_Lines := False;
+      Register_Edit_Timeout (Buffer);
    end Unhide_Lines;
 
    --------------
