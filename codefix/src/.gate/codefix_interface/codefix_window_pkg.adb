@@ -28,8 +28,6 @@ begin
    Set_Position (Codefix_Window, Win_Pos_None);
    Set_Modal (Codefix_Window, False);
    Set_USize (Codefix_Window, 640, 480);
-   Return_Callback.Connect
-     (Codefix_Window, "delete_event", On_Codefix_Window_Delete_Event'Access);
 
    Gtk_New_Hbox (Codefix_Window.Hbox1, False, 0);
    Add (Codefix_Window, Codefix_Window.Hbox1);
@@ -37,7 +35,7 @@ begin
    Gtk_New_Vbox (Codefix_Window.Vbox6, False, 0);
    Pack_Start (Codefix_Window.Hbox1, Codefix_Window.Vbox6, True, True, 0);
 
-   Gtk_New (Codefix_Window.Error_Caption, -("Error_Caption"));
+   Gtk_New (Codefix_Window.Error_Caption);
    Set_Alignment (Codefix_Window.Error_Caption, 0.5, 0.5);
    Set_Padding (Codefix_Window.Error_Caption, 0, 0);
    Set_Justify (Codefix_Window.Error_Caption, Justify_Left);
@@ -81,91 +79,59 @@ begin
      (Codefix_Window.Fix_Entry, "changed",
       Widget_Callback.To_Marshaller (On_Fix_Entry_Changed'Access), Codefix_Window);
 
-   Gtk_New_Vbox (Codefix_Window.Vbox5, False, 0);
-   Pack_Start (Codefix_Window.Hbox1, Codefix_Window.Vbox5, False, True, 0);
-
    Gtk_New (Codefix_Window.Vbuttonbox1);
    Set_Spacing (Codefix_Window.Vbuttonbox1, 10);
    Set_Layout (Codefix_Window.Vbuttonbox1, Buttonbox_Start);
    Set_Child_Size (Codefix_Window.Vbuttonbox1, 85, 27);
    Set_Child_Ipadding (Codefix_Window.Vbuttonbox1, 7, 0);
-   Pack_Start (Codefix_Window.Vbox5, Codefix_Window.Vbuttonbox1, True, True, 5);
+   Pack_Start (Codefix_Window.Hbox1, Codefix_Window.Vbuttonbox1, False, True, 0);
 
-   Gtk_New
-     (Codefix_Window.Alignment1, 0.5, 0.5, 1.0, 
-      1.0);
-   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Alignment1);
-
-   Gtk_New (Codefix_Window.Skip_Correction, -"Skip");
-   Set_Flags (Codefix_Window.Skip_Correction, Can_Default);
+   Gtk_New (Codefix_Window.Prev, -"Prev");
+   Set_Relief (Codefix_Window.Prev, Relief_Normal);
+   Set_Flags (Codefix_Window.Prev, Can_Default);
    Gtk_New (Tooltips);
-   Set_Tip (Tooltips, Codefix_Window.Skip_Correction, -"Don't fix this error");
+   Set_Tip (Tooltips, Codefix_Window.Prev, -"Go to previous error");
    Widget_Callback.Object_Connect
-     (Codefix_Window.Skip_Correction, "clicked",
-      Widget_Callback.To_Marshaller (On_Skip_Correction_Clicked'Access), Codefix_Window);
-   Add (Codefix_Window.Alignment1, Codefix_Window.Skip_Correction);
+     (Codefix_Window.Prev, "clicked",
+      Widget_Callback.To_Marshaller (On_Prev_Clicked'Access), Codefix_Window);
+   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Prev);
 
-   Gtk_New (Codefix_Window.Accept_Correction);
+   Gtk_New (Codefix_Window.Next, -"Next");
+   Set_Relief (Codefix_Window.Next, Relief_Normal);
+   Set_Flags (Codefix_Window.Next, Can_Default);
+   Set_Tip (Tooltips, Codefix_Window.Next, -"Go to next error without fixing the current one");
+   Widget_Callback.Object_Connect
+     (Codefix_Window.Next, "clicked",
+      Widget_Callback.To_Marshaller (On_Next_Clicked'Access), Codefix_Window);
+   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Next);
+
+   Gtk_New (Codefix_Window.Accept_Correction, -"Apply");
+   Set_Relief (Codefix_Window.Accept_Correction, Relief_Normal);
    Set_Flags (Codefix_Window.Accept_Correction, Can_Default);
-   Set_Tip (Tooltips, Codefix_Window.Accept_Correction, -"Fix this error");
+   Grab_Default (Codefix_Window.Accept_Correction);
+   Set_Tip (Tooltips, Codefix_Window.Accept_Correction, -"Fix this error and go to next one");
    Widget_Callback.Object_Connect
      (Codefix_Window.Accept_Correction, "clicked",
-      Widget_Callback.To_Marshaller (On_Accept_Correction_Clicked'Access), Codefix_Window);
+      Widget_Callback.To_Marshaller (On_Apply_Clicked'Access), Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Accept_Correction);
 
-   Gtk_New (Codefix_Window.Skip_All_Corrections, -"Skip all");
-   Set_Flags (Codefix_Window.Skip_All_Corrections, Can_Default);
-   Set_Tip (Tooltips, Codefix_Window.Skip_All_Corrections, -"Don't fix any error of the same category than the current one");
-   Widget_Callback.Object_Connect
-     (Codefix_Window.Skip_All_Corrections, "clicked",
-      Widget_Callback.To_Marshaller (On_Skip_All_Corrections_Clicked'Access), Codefix_Window);
-   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Skip_All_Corrections);
-
-   Gtk_New (Codefix_Window.Accept_All_Corrections, -"Apply all");
-   Set_Flags (Codefix_Window.Accept_All_Corrections, Can_Default);
-   Set_Tip (Tooltips, Codefix_Window.Accept_All_Corrections, -"Fix each error of the same category than the current one");
-   Widget_Callback.Object_Connect
-     (Codefix_Window.Accept_All_Corrections, "clicked",
-      Widget_Callback.To_Marshaller (On_Accept_All_Corrections_Clicked'Access), Codefix_Window);
-   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Accept_All_Corrections);
-
-   Gtk_New (Codefix_Window.Undo);
+   Gtk_New (Codefix_Window.Undo, -"Undo");
+   Set_Relief (Codefix_Window.Undo, Relief_Normal);
    Set_Flags (Codefix_Window.Undo, Can_Default);
-   Set_Tip (Tooltips, Codefix_Window.Undo, -"Cancel previous changes");
+   Set_Tip (Tooltips, Codefix_Window.Undo, -"Undo previous change");
    Widget_Callback.Object_Connect
      (Codefix_Window.Undo, "clicked",
       Widget_Callback.To_Marshaller (On_Undo_Clicked'Access), Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Undo);
 
    Gtk_New (Codefix_Window.Refresh, -"Refresh");
+   Set_Relief (Codefix_Window.Refresh, Relief_Normal);
    Set_Flags (Codefix_Window.Refresh, Can_Default);
    Set_Tip (Tooltips, Codefix_Window.Refresh, -"Recompute fix with last user's changes");
    Widget_Callback.Object_Connect
      (Codefix_Window.Refresh, "clicked",
       Widget_Callback.To_Marshaller (On_Refresh_Clicked'Access), Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Refresh);
-
-   Gtk_New (Codefix_Window.Previous, -"Previous");
-   Set_Flags (Codefix_Window.Previous, Can_Default);
-   Widget_Callback.Object_Connect
-     (Codefix_Window.Previous, "clicked",
-      Widget_Callback.To_Marshaller (On_Previous_Clicked'Access), Codefix_Window);
-   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Previous);
-
-   Gtk_New (Codefix_Window.Vbuttonbox2);
-   Set_Spacing (Codefix_Window.Vbuttonbox2, 10);
-   Set_Layout (Codefix_Window.Vbuttonbox2, Buttonbox_End);
-   Set_Child_Size (Codefix_Window.Vbuttonbox2, 85, 27);
-   Set_Child_Ipadding (Codefix_Window.Vbuttonbox2, 7, 0);
-   Pack_Start (Codefix_Window.Vbox5, Codefix_Window.Vbuttonbox2, True, True, 5);
-
-   Gtk_New (Codefix_Window.Cancel_Changes);
-   Set_Flags (Codefix_Window.Cancel_Changes, Can_Default);
-   Set_Tip (Tooltips, Codefix_Window.Cancel_Changes, -"Cancel all changes");
-   Widget_Callback.Object_Connect
-     (Codefix_Window.Cancel_Changes, "clicked",
-      Widget_Callback.To_Marshaller (On_Cancel_Changes_Clicked'Access), Codefix_Window);
-   Add (Codefix_Window.Vbuttonbox2, Codefix_Window.Cancel_Changes);
 
 end Initialize;
 

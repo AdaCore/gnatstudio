@@ -12,19 +12,6 @@ package body Codefix_Window_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
-   ------------------------------------
-   -- On_Codefix_Window_Delete_Event --
-   ------------------------------------
-
-   function On_Codefix_Window_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
-   begin
-      return False;
-   end On_Codefix_Window_Delete_Event;
-
    --------------------------
    -- On_Fix_Entry_Changed --
    --------------------------
@@ -36,49 +23,38 @@ package body Codefix_Window_Pkg.Callbacks is
       null;
    end On_Fix_Entry_Changed;
 
-   --------------------------------
-   -- On_Skip_Correction_Clicked --
-   --------------------------------
+   ---------------------
+   -- On_Prev_Clicked --
+   ---------------------
 
-   procedure On_Skip_Correction_Clicked
+   procedure On_Prev_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Skip_Correction_Clicked;
+   end On_Prev_Clicked;
 
-   ----------------------------------
-   -- On_Accept_Correction_Clicked --
-   ----------------------------------
+   ---------------------
+   -- On_Next_Clicked --
+   ---------------------
 
-   procedure On_Accept_Correction_Clicked
+   procedure On_Next_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Accept_Correction_Clicked;
+   end On_Next_Clicked;
 
-   -------------------------------------
-   -- On_Skip_All_Corrections_Clicked --
-   -------------------------------------
+   ----------------------
+   -- On_Apply_Clicked --
+   ----------------------
 
-   procedure On_Skip_All_Corrections_Clicked
+   procedure On_Apply_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Skip_All_Corrections_Clicked;
-
-   ---------------------------------------
-   -- On_Accept_All_Corrections_Clicked --
-   ---------------------------------------
-
-   procedure On_Accept_All_Corrections_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Accept_All_Corrections_Clicked;
+   end On_Apply_Clicked;
 
    ---------------------
    -- On_Undo_Clicked --
@@ -101,27 +77,5 @@ package body Codefix_Window_Pkg.Callbacks is
    begin
       null;
    end On_Refresh_Clicked;
-
-   -------------------------
-   -- On_Previous_Clicked --
-   -------------------------
-
-   procedure On_Previous_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Previous_Clicked;
-
-   -------------------------------
-   -- On_Cancel_Changes_Clicked --
-   -------------------------------
-
-   procedure On_Cancel_Changes_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Cancel_Changes_Clicked;
 
 end Codefix_Window_Pkg.Callbacks;
