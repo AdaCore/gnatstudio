@@ -88,7 +88,8 @@ package body Glide_Kernel is
       4 => New_String (Variable_Changed_Signal),
       5 => New_String (Source_Lines_Revealed_Signal),
       6 => New_String (File_Edited_Signal),
-      7 => New_String (Preferences_Changed_Signal));
+      7 => New_String (Preferences_Changed_Signal),
+      8 => New_String (Search_Regexps_Changed_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -146,9 +147,9 @@ package body Glide_Kernel is
       Home_Dir    : String)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 .. 2 | 4 | 7 => (1 => GType_None),
-         3      | 5     => (1 => GType_Pointer),
-         6              => (1 => GType_String));
+        (1 .. 2 | 4 | 7 | 8 => (1 => GType_None),
+         3      | 5         => (1 => GType_Pointer),
+         6                  => (1 => GType_String));
       Handler : Glide_Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
@@ -405,6 +406,7 @@ package body Glide_Kernel is
       Entity       : Src_Info.Queries.Entity_Information;
       Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
       Project      : Prj.Project_Id := Prj.No_Project;
+      In_File      : String := "";
       LI_Once      : Boolean := False) is
    begin
       Find_All_References
@@ -412,6 +414,7 @@ package body Glide_Kernel is
          Get_Language_Handler (Kernel),
          Entity, Kernel.Source_Info_List,
          Iterator, Project, LI_Once,
+         In_File,
          Get_Predefined_Source_Path (Kernel),
          Get_Predefined_Object_Path (Kernel));
    end Find_All_References;
@@ -508,6 +511,15 @@ package body Glide_Kernel is
    begin
       Object_Callback.Emit_By_Name (Handle, Preferences_Changed_Signal);
    end Preferences_Changed;
+
+   ----------------------------
+   -- Search_Regexps_Changed --
+   ----------------------------
+
+   procedure Search_Regexps_Changed (Handle : access Kernel_Handle_Record) is
+   begin
+      Object_Callback.Emit_By_Name (Handle, Search_Regexps_Changed_Signal);
+   end Search_Regexps_Changed;
 
    ----------------------
    -- Variable_Changed --

@@ -194,6 +194,7 @@ package Glide_Kernel is
       Entity       : Src_Info.Queries.Entity_Information;
       Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
       Project      : Prj.Project_Id := Prj.No_Project;
+      In_File      : String := "";
       LI_Once      : Boolean := False);
    --  See Src_Info.Queries.
    --  This function needs to be in this package, since it requires access to
@@ -517,6 +518,9 @@ package Glide_Kernel is
    procedure Preferences_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "preferences_changed" signal.
 
+   procedure Search_Regexps_Changed (Handle : access Kernel_Handle_Record);
+   --  Emits the "search_regexps_changed" signal
+
    -------------
    -- Signals --
    -------------
@@ -564,19 +568,31 @@ package Glide_Kernel is
    --                       File       : String;
    --                       Start_Line : Natural;
    --                       End_Line   : Natural);
+   --
+   --    ???
+   --
    --  - "file_edited"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
    --                       File   : String);
    --
+   --    ????
+   --
+   --  - "search_regexps_changed"
+   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
+   --
+   --    Emitted when a new regexp has been added to the list of predefined
+   --    search patterns.
+   --
    --  </signals>
 
-   Project_Changed_Signal       : constant String := "project_changed";
-   Project_View_Changed_Signal  : constant String := "project_view_changed";
-   Context_Changed_Signal       : constant String := "context_changed";
-   Variable_Changed_Signal      : constant String := "variable_changed";
-   Source_Lines_Revealed_Signal : constant String := "source_lines_revealed";
-   File_Edited_Signal           : constant String := "file_edited";
-   Preferences_Changed_Signal   : constant String := "preferences_changed";
+   Project_Changed_Signal        : constant String := "project_changed";
+   Project_View_Changed_Signal   : constant String := "project_view_changed";
+   Context_Changed_Signal        : constant String := "context_changed";
+   Variable_Changed_Signal       : constant String := "variable_changed";
+   Source_Lines_Revealed_Signal  : constant String := "source_lines_revealed";
+   File_Edited_Signal            : constant String := "file_edited";
+   Preferences_Changed_Signal    : constant String := "preferences_changed";
+   Search_Regexps_Changed_Signal : constant String := "search_regexps_changed";
 
 private
 
