@@ -140,6 +140,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_reload_source1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:42:04 GMT</last_modification_time>
 	    </signal>
 	    <label>Reload Source</label>
@@ -300,6 +301,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_undo3_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:19:49 GMT</last_modification_time>
 	    </signal>
 	    <label>Undo</label>
@@ -318,6 +320,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_redo1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:25:13 GMT</last_modification_time>
 	    </signal>
 	    <label>Redo</label>
@@ -342,6 +345,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_cut1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:25:27 GMT</last_modification_time>
 	    </signal>
 	    <label>Cut</label>
@@ -360,6 +364,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_copy1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:25:37 GMT</last_modification_time>
 	    </signal>
 	    <label>Copy</label>
@@ -378,6 +383,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_paste1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:25:39 GMT</last_modification_time>
 	    </signal>
 	    <label>Paste</label>
@@ -396,6 +402,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_select_all1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:25:53 GMT</last_modification_time>
 	    </signal>
 	    <label>Select All</label>
