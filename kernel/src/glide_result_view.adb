@@ -305,8 +305,24 @@ package body Glide_Result_View is
       View  : constant Result_View := Result_View (Object);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
+      Path  : Gtk_Tree_Path;
+      Success : Boolean := True;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Path := Get_Path (View.Model, Iter);
+
+      while Success and then Get_Depth (Path) /= 3 loop
+         Success := Expand_Row (View.Tree, Path, True);
+         Down (Path);
+      end loop;
+
+      Iter := Get_Iter (View.Model, Path);
+      Path_Free (Path);
 
       if Iter = Null_Iter then
          return;
@@ -418,7 +434,7 @@ package body Glide_Result_View is
       File_Path     : Gtk_Tree_Path;
       Category_Path : Gtk_Tree_Path;
       Model         : Gtk_Tree_Model;
-      Success       : Boolean;
+      Success       : Boolean := True;
 
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
@@ -429,8 +445,17 @@ package body Glide_Result_View is
 
       Path := Get_Path (View.Model, Iter);
 
+      --  Expand to the next path corresponding to a location node.
+
+      while Success and then Get_Depth (Path) < 3 loop
+         Success := Expand_Row (View.Tree, Path, True);
+         Down (Path);
+         Select_Path (Get_Selection (View.Tree), Path);
+      end loop;
+
       if Get_Depth (Path) /= 3 then
          Path_Free (Path);
+
          return;
       end if;
 
