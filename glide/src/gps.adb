@@ -268,7 +268,7 @@ procedure GPS is
             (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
             (-"   --version           Show the GPS version and exit.") & LF &
-            LF & (-("Source files are searched everywhere on the project's " &
+            LF & (-("Source files are searched everywhere on the project's" &
                     " source path")),
             Information, Button_OK,
             Title => -"Help",
