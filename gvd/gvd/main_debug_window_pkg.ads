@@ -171,6 +171,7 @@ package Main_Debug_Window_Pkg is
       More_Status_Display1 : Gtk_Menu_Item;
       Separator27 : Gtk_Menu_Item;
       Refresh1 : Gtk_Menu_Item;
+      Show1 : Gtk_Menu_Item;
       Help1 : Gtk_Menu_Item;
       Help1_Menu : Gtk_Menu;
       Overview1 : Gtk_Menu_Item;

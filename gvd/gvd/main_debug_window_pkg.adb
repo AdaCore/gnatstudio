@@ -58,9 +58,6 @@ procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class)
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
    Initialize_Class_Record (Main_Debug_Window, Signals, Class_Record);
-
-   Return_Callback.Connect
-     (Main_Debug_Window, "delete_event", On_Main_Debug_Window_Delete_Event'Access);
    Set_Title (Main_Debug_Window, -"The GNU Visual Debugger");
    Set_Policy (Main_Debug_Window, False, True, False);
    Set_Position (Main_Debug_Window, Win_Pos_None);
@@ -588,6 +585,13 @@ begin
       Widget_Callback.To_Marshaller (On_Refresh1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Refresh1);
 
+   Gtk_New (Main_Debug_Window.Show1, -"Show");
+   Set_Right_Justify (Main_Debug_Window.Show1, False);
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Show1, "activate",
+      Widget_Callback.To_Marshaller (On_Show1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Show1);
+
    Gtk_New (Main_Debug_Window.Help1, -"Help");
    Set_Right_Justify (Main_Debug_Window.Help1, True);
    Add (Main_Debug_Window.Menubar1, Main_Debug_Window.Help1);
@@ -772,7 +776,7 @@ end Initialize;
    -----------------------------
 
    procedure Update_External_Dialogs
-     (Window : access Main_Debug_Window_Record'Class;
+     (Window   : access Main_Debug_Window_Record'Class;
       Debugger : Gtk.Widget.Gtk_Widget := null)
    is
       Tab : Debugger_Process_Tab := Debugger_Process_Tab (Debugger);

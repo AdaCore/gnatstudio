@@ -89,7 +89,6 @@ package General_Preferences_Pkg is
       Label85 : Gtk_Label;
       Label86 : Gtk_Label;
       Label87 : Gtk_Label;
-      Look_3d_Check : Gtk_Check_Button;
       Label88 : Gtk_Label;
       Label89 : Gtk_Label;
       Label90 : Gtk_Label;
@@ -105,6 +104,8 @@ package General_Preferences_Pkg is
       Thaw_Bg_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Title_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Freeze_Bg_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
+      Look_3d_Check : Gtk_Check_Button;
+      Separate_Data_Check : Gtk_Check_Button;
       Label_Data : Gtk_Label;
       Frame13 : Gtk_Frame;
       Table8 : Gtk_Table;
