@@ -67,6 +67,13 @@ package Codefix_Module is
 
    procedure Execute_Corrupted_Cb (Error_Message : String);
 
+   procedure Create_Pixmap (Error : Error_Id);
+   --  Add to the location box a pixmap that will fixes the error.
+
+   procedure Remove_Pixmap (Error : Error_Id);
+   --  Remove from the location box the pixmap of the error.
+
    Compilation_Category : constant String := "Builder Results";
+   Location_Button_Name : constant String := "Codefix";
 
 end Codefix_Module;
