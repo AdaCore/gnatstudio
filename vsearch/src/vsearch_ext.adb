@@ -350,24 +350,6 @@ package body Vsearch_Ext is
    begin
       Set_Resizable (Gtk_Dialog (Get_Toplevel (Vsearch)), True);
 
-
-      --  Add the "auto hide" checkbutton.
-      Gtk_New (Vsearch.Auto_Hide, -"Auto-hide");
-
-      Pack_Start
-        (Get_Action_Area (Gtk_Dialog (Get_Toplevel (Vsearch))),
-         Vsearch.Auto_Hide, True, True, 3);
-
-      Show_All (Vsearch.Auto_Hide);
-
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Vsearch.Kernel).all, Auto_Hide_Hist_Key, False);
-
-      Associate
-        (Get_History (Vsearch.Kernel).all,
-         Auto_Hide_Hist_Key,
-         Vsearch.Auto_Hide);
-
       --  Add the "Close" button.
       Close_Button := Gtk_Button
         (Add_Button (Gtk_Dialog (Get_Toplevel (Vsearch)),
@@ -1281,6 +1263,11 @@ package body Vsearch_Ext is
         (Get_History (Handle).all,
          "regexp_search",
          Vsearch.Regexp_Check);
+
+      Associate
+        (Get_History (Vsearch.Kernel).all,
+         Auto_Hide_Hist_Key,
+         Vsearch.Auto_Hide_Check);
 
       Add_Hook (Handle, Search_Reset_Hook, Set_First_Next_Mode_Cb'Access);
       Add_Hook (Handle, Search_Functions_Changed_Hook,
