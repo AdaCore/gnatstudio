@@ -428,8 +428,9 @@ so we're now going to remove this procedure.
 @c --------------------------------------------------------------------
 
 @noindent
-From @i{view}, select the contextual menu @code{Go to spec};
-then from the source editor (file @file{stack.ads}), select the contextual
+From @i{view}, click on the blue link: code{stack.ads:32}, this will open
+the file @file{stack.ads} at line 32.
+Then from the source editor (file @file{stack.ads}), select the contextual
 menu @code{References->Find all references to View}: this highlights the
 @code{Locations} tree which now contains all the references for @code{view},
 grouped by files (@file{stack.ads} and @file{stack.adb}).
@@ -521,19 +522,19 @@ the tutorial in another browser.
 Go to the menu @code{Project->New...}: this is a standard wizard, with various
 steps listed on the left area of the window.
 
-Type @i{sdc2} in the project name field.
-It is possible to create a multi-language project by selecting the C or C++
+Click on @code{Forward}: we are now on the language selection page.
+It is possible to create a multi-language project by e.g. selecting the C or C++
 check box.
 
 Click on @code{Forward}: we are now on the @code{VCS page}. @i{VCS} stands
 for @i{Version Control System}.
 GPS provides a generic framework for @i{VCS} which allows it to support
-new systems easily. Currently, GPS supports CVS and ClearCase. Select
+new systems easily. Systems supported by default are CVS and ClearCase. Select
 @code{CVS}.
 
 Click on @code{Forward}: this is the source directories selection,
-used to specify the project's sources. Click on
-@code{struct}, and add this directory by clicking on the down arrow.
+used to specify the project's sources. Click on the @code{Add} button,
+and select the @code{struct} directory, then click on @code{OK} to validate.
 
 Click on @code{Forward}: this is the @code{Build} and @code{Exec} directory
 selection, used to store object, ali files, ...
@@ -541,17 +542,17 @@ selection, used to store object, ali files, ...
 Click on @code{Browse}, then click on @code{obj}, and finally click on
 @code{OK}.
 
-Click on @code{Forward}: this is the naming scheme editor.
-GNAT is very flexible and can use any kind of naming scheme for Ada files.
-In particular, you can easily set the default file
-extensions (e.g by using one of the predefined schemes) and you
-can also specify exceptions that use non standard file names.
-
 Click on @code{Forward}: this is the main units selection, used mainly for
 building executables and debugging.
 
 Click on @code{Add}, open the @code{common} directory and select
 @code{sdc.adb}.
+
+Click on @code{Forward}: this is the naming scheme editor.
+GNAT is very flexible and can use any kind of naming scheme for Ada files.
+In particular, you can easily set the default file
+extensions (e.g by using one of the predefined schemes) and you
+can also specify exceptions that use non standard file names.
 
 Click on @code{Forward}: we're now in the switch selector.
 Select @code{Recompile if switches changed}.
