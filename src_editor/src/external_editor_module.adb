@@ -29,6 +29,7 @@ with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
 with Gtk.Main;                 use Gtk.Main;
@@ -38,6 +39,7 @@ with Traces;                   use Traces;
 with Unchecked_Deallocation;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Generic_Properties;  use Glib.Generic_Properties;
+with Prj_API;                  use Prj_API;
 
 package body External_Editor_Module is
 
@@ -78,6 +80,7 @@ package body External_Editor_Module is
       --     %c = column to display
       --     %f = file to display
       --     %e = extended lisp command
+      --     %p = project file name
       --     %% = percent sign ('%')
 
       Lisp_Command_Name : Constant_String_Access;
@@ -118,10 +121,19 @@ package body External_Editor_Module is
    Gnuclient_Command : aliased constant String := "gnuclient -q +%l %f";
    Gnuclient_Lisp    : aliased constant String := "gnudoit -q %e";
    Gnuclient_Server  : aliased constant String :=
-     "(progn (load-library ""gnuserv"") (gnuserv-start))";
+     "(progn (load-library ""gnuserv"") (gnuserv-start)"
+     & "(require 'ada-mode)(ada-reread-prj-file ""%p""))";
+   --  Load the project file right away. Doing it with gnuclient isn't doable,
+   --  and it would be less efficient to always gnudoit even for simply loading
+   --  a file.
 
    Emacsclient_Command : aliased constant String := "emacsclient -n +%l:%c %f";
-   Emacsclient_Server  : aliased constant String := "(server-start)";
+   Emacsclient_Server  : aliased constant String :=
+     "(progn (server-start) (require 'ada-mode)"
+     & "(ada-reread-prj-file ""%p""))";
+   --  Try to load the project file right away, since we won't be able to do
+   --  that later with emacsclient. This means that the server needs to be
+   --  restarted if the project file changes
 
    Emacs_Command       : aliased constant String := "emacs +%l %f";
 
@@ -226,7 +238,7 @@ package body External_Editor_Module is
    --  Lisp_Command_Name are found on the path.
 
    procedure Substitute
-     (Args : Argument_List_Access; F, C, L, E  : String := "");
+     (Args : Argument_List_Access; F, C, L, E, P  : String := "");
    --  Does all the substitutions in Args for %f, %c, %l, %e and %%.
 
    procedure External_Editor_Contextual
@@ -355,7 +367,7 @@ package body External_Editor_Module is
    ----------------
 
    procedure Substitute
-     (Args : Argument_List_Access; F, C, L, E  : String := "")
+     (Args : Argument_List_Access; F, C, L, E, P  : String := "")
    is
       function Str_Substitute (Str : String) return String;
       --  Substitute the parameters in Str (%f, %l,...).
@@ -372,19 +384,28 @@ package body External_Editor_Module is
             if Str (Index) = '%' then
                case Str (Index + 1) is
                   when 'f' =>
-                     return Str (Str'First .. Index - 1) & F
+                     return Str (Str'First .. Index - 1)
+                       & Str_Substitute (F)
                        & Str_Substitute (Str (Index + 2 .. Str'Last));
 
                   when 'c' =>
-                     return Str (Str'First .. Index - 1) & C
+                     return Str (Str'First .. Index - 1)
+                       & Str_Substitute (C)
                        & Str_Substitute (Str (Index + 2 .. Str'Last));
 
                   when 'l' =>
-                     return Str (Str'First .. Index - 1) & L
+                     return Str (Str'First .. Index - 1)
+                       & Str_Substitute (L)
                        & Str_Substitute (Str (Index + 2 .. Str'Last));
 
                   when 'e' =>
-                     return Str (Str'First .. Index - 1) & E
+                     return Str (Str'First .. Index - 1)
+                       & Str_Substitute (E)
+                       & Str_Substitute (Str (Index + 2 .. Str'Last));
+
+                  when 'p' =>
+                     return Str (Str'First .. Index - 1)
+                       & Str_Substitute (P)
                        & Str_Substitute (Str (Index + 2 .. Str'Last));
 
                   when '%' =>
@@ -488,6 +509,13 @@ package body External_Editor_Module is
       Old : Process_Descriptor_Array_Access;
       Process : Process_Descriptor;
    begin
+      if Active (Me) then
+         Trace (Me, "Spawning new process: " & Command);
+         for A in Args'Range loop
+            Trace (Me, "  arg(" & A'Img & ")=" & Args (A).all);
+         end loop;
+      end if;
+
       Non_Blocking_Spawn
         (Descriptor  => Process,
          Command     => Command,
@@ -555,8 +583,9 @@ package body External_Editor_Module is
          if Path /= null then
             Substitute
               (Args,
+               P => Project_Name (Get_Project_View (Kernel)),
                E => Clients (External_Editor_Module_Id.Client)
-                    .Server_Start_Command.all);
+               .Server_Start_Command.all);
 
             Spawn_New_Process
               (Kernel, Path.all, Args.all, Success);
@@ -642,6 +671,7 @@ package body External_Editor_Module is
       end if;
 
       Substitute (Args,
+                  P => Project_Name (Get_Project_View (Kernel)),
                   F => File,
                   C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
                   L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),
