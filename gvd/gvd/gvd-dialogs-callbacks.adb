@@ -25,7 +25,6 @@ with Gtk.Widget; use Gtk.Widget;
 with Odd.Process; use Odd.Process;
 with Debugger; use Debugger;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Process_Proxies; use Process_Proxies;
 with Gtk.Clist;       use Gtk.Clist;
 with Gtk.Enums;       use Gtk.Enums;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
@@ -71,22 +70,11 @@ package body Odd.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Bt       : Backtrace_Array (1 .. Max_Frame);
-      Len      : Natural;
       Dialog   : constant Backtrace_Dialog_Access :=
         Debugger_Process_Tab (Object).Window.Backtrace_Dialog;
-      Process  : Process_Proxy_Access;
-      Internal : Boolean;
-
    begin
       if Visible_Is_Set (Dialog) then
-         Process := Get_Process (Debugger_Process_Tab (Object).Debugger);
-         Internal := Is_Internal_Command (Process);
-         Push_Internal_Command_Status (Process, True);
-         Backtrace (Debugger_Process_Tab (Object).Debugger, Bt, Len);
-         Pop_Internal_Command_Status (Process);
-         Update (Dialog, Bt (1 .. Len));
-         Free  (Bt (1 .. Len));
+         Update (Dialog, Object);
       end if;
    end On_Backtrace_Process_Stopped;
 
@@ -128,24 +116,9 @@ package body Odd.Dialogs.Callbacks is
    is
       Dialog   : constant Task_Dialog_Access :=
         Debugger_Process_Tab (Object).Window.Task_Dialog;
-      Process  : Process_Proxy_Access;
-      Internal : Boolean;
-
    begin
       if Visible_Is_Set (Dialog) then
-         Process := Get_Process (Debugger_Process_Tab (Object).Debugger);
-         Internal := Is_Internal_Command (Process);
-         Push_Internal_Command_Status (Process, True);
-
-         declare
-            Info : Thread_Information_Array :=
-              Info_Threads (Debugger_Process_Tab (Object).Debugger);
-         begin
-            Update (Dialog, Info);
-            Free (Info);
-         end;
-
-         Pop_Internal_Command_Status (Process);
+         Update (Dialog, Object);
       end if;
    end On_Task_Process_Stopped;
 
