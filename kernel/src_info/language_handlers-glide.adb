@@ -24,14 +24,18 @@ with Basic_Types;               use Basic_Types;
 with Src_Info;                  use Src_Info;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Prj_API;                   use Prj_API;
 with Types;                     use Types;
 with Namet;                     use Namet;
-with Prj;                       use Prj;
+with Projects;                  use Projects;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Prj;
+with Projects.Registry;         use Projects.Registry;
+with Traces;                    use Traces;
 
 package body Language_Handlers.Glide is
+
+   Me : constant Debug_Handle := Create ("Language_Handlers");
 
    function Get_Index_From_Language
      (Handler       : access Glide_Language_Handler_Record'Class;
@@ -55,19 +59,20 @@ package body Language_Handlers.Glide is
 
    procedure Gtk_New (Handler : out Glide_Language_Handler) is
    begin
+      --  ??? Never freed, but the handler is never destroyed.
       Handler := new Glide_Language_Handler_Record;
    end Gtk_New;
 
-   ----------------------
-   -- Set_Project_View --
-   ----------------------
+   ------------------
+   -- Set_Registry --
+   ------------------
 
-   procedure Set_Project_View
-     (Handler : access Glide_Language_Handler_Record;
-      Project_View : Prj.Project_Id) is
+   procedure Set_Registry
+     (Handler  : access Glide_Language_Handler_Record;
+      Registry : access Projects.Abstract_Registry'Class) is
    begin
-      Handler.Project_View := Project_View;
-   end Set_Project_View;
+      Handler.Registry := Abstract_Registry_Access (Registry);
+   end Set_Registry;
 
    -----------------------------
    -- Get_Index_From_Language --
@@ -77,15 +82,15 @@ package body Language_Handlers.Glide is
      (Handler       : access Glide_Language_Handler_Record'Class;
       Language_Name : String) return Natural is
    begin
-      if Handler.Languages /= null then
-         for Index in Handler.Languages'Range loop
-            if To_Lower (Language_Name) =
-              To_Lower (Handler.Languages (Index).Language_Name.all)
-            then
-               return Index;
-            end if;
-         end loop;
-      end if;
+      Assert (Me, Handler.Languages /= null, "No registered language");
+
+      for Index in Handler.Languages'Range loop
+         if To_Lower (Language_Name) =
+           Handler.Languages (Index).Language_Name.all
+         then
+            return Index;
+         end if;
+      end loop;
       return 0;
    end Get_Index_From_Language;
 
@@ -95,14 +100,13 @@ package body Language_Handlers.Glide is
 
    function Get_Language_From_File
      (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String;
-      Project_View    : Prj.Project_Id) return Language.Language_Access
+      Source_Filename : String) return Language.Language_Access
    is
       Index : Natural;
    begin
       Index := Get_Index_From_Language
         (Handler,
-         Get_Language_From_File (Handler, Source_Filename, Project_View));
+         Get_Language_From_File (Handler, Source_Filename));
       if Index /= 0 then
          return Handler.Languages (Index).Lang;
       end if;
@@ -112,40 +116,12 @@ package body Language_Handlers.Glide is
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
-      Source_Filename : String) return Language.Language_Access is
-   begin
-      return Get_Language_From_File (Handler, Source_Filename, No_Project);
-   end Get_Language_From_File;
-
-   function Get_Language_From_File
-     (Handler : access Glide_Language_Handler_Record;
-      Source_Filename : String) return String is
-   begin
-      return Get_Language_From_File (Handler, Source_Filename, No_Project);
-   end Get_Language_From_File;
-
-   function Get_Language_From_File
-     (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String;
-      Project_View    : Prj.Project_Id) return String
+      Source_Filename : String) return String
    is
-      --  ??? Could be optimized, since both Get_Project_From_File and
-      --  Get_Language_Of traverse the project structure
-      Prj  : Project_Id := Project_View;
-      Lang : Name_Id;
-
+      Lang : constant Name_Id := Get_Language_From_File
+        (Project_Registry'Class (Handler.Registry.all),
+         Base_Name (Source_Filename));
    begin
-      if Prj = No_Project then
-         Prj := Get_Project_From_File (Handler.Project_View, Source_Filename);
-
-         if Prj = No_Project then
-            --  ??? Should use the default file extensions instead
-            Prj := Handler.Project_View;
-         end if;
-      end if;
-
-      Lang := Get_Language_Of (Prj, Base_Name (Source_Filename));
-
       if Lang = No_Name then
          return "";
       else
@@ -251,9 +227,10 @@ package body Language_Handlers.Glide is
    is
       Tmp : Language_Info_Access;
       Index : Natural;
+      N   : constant String := To_Lower (Name);
    begin
       if Handler.Languages /= null then
-         Index := Get_Index_From_Language (Handler, Name);
+         Index := Get_Index_From_Language (Handler, N);
          if Index /= 0 then
             Handler.Languages (Index).Lang := Lang;
             return;
@@ -269,7 +246,7 @@ package body Language_Handlers.Glide is
       end if;
 
       Handler.Languages (Handler.Languages'Last) :=
-        (Language_Name => new String'(Name),
+        (Language_Name => new String'(N),
          Handler       => null,
          Lang          => Lang);
    end Register_Language;
@@ -322,7 +299,7 @@ package body Language_Handlers.Glide is
          Handler.Languages (Index).Handler := LI;
 
          Name_Len := Language_Name'Length;
-         Name_Buffer (1 .. Name_Len) := Language_Name;
+         Name_Buffer (1 .. Name_Len) := To_Lower (Language_Name);
          Lang := Name_Find;
 
          Name_Len := Default_Spec_Suffix'Length;
@@ -333,7 +310,7 @@ package body Language_Handlers.Glide is
          Name_Buffer (1 .. Name_Len) := Default_Body_Suffix;
          Impl := Name_Find;
 
-         Register_Default_Naming_Scheme
+         Prj.Register_Default_Naming_Scheme
            (Language => Lang,
             Default_Spec_Suffix => Spec,
             Default_Impl_Suffix => Impl);
@@ -346,12 +323,11 @@ package body Language_Handlers.Glide is
 
    function Get_LI_Handler_From_File
      (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String;
-      Project         : Prj.Project_Id := Prj.No_Project)
+      Source_Filename : String)
       return Src_Info.LI_Handler
    is
       Lang : constant String :=
-        Get_Language_From_File (Handler, Source_Filename, Project);
+        Get_Language_From_File (Handler, Source_Filename);
       Index : constant Natural := Get_Index_From_Language (Handler, Lang);
    begin
       if Index /= 0
@@ -359,6 +335,11 @@ package body Language_Handlers.Glide is
       then
          return Handler.Languages (Index).Handler;
       else
+         if Index /= 0 then
+            Trace (Me, "No LI_Handler for language " & Source_Filename
+                   & " Index=" & Index'Img);
+         end if;
+
          raise Unsupported_Language;
          return null;
       end if;

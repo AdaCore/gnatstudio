@@ -36,7 +36,7 @@
 with Language;
 with Basic_Types;
 with Src_Info;
-with Prj;
+with Projects;
 with GNAT.OS_Lib;
 
 package Language_Handlers.Glide is
@@ -53,9 +53,9 @@ package Language_Handlers.Glide is
    --  Free the memory occupied by Handler, and removes all the registered LI
    --  handlers. They are destroyed individually.
 
-   procedure Set_Project_View
-     (Handler : access Glide_Language_Handler_Record;
-      Project_View : Prj.Project_Id);
+   procedure Set_Registry
+     (Handler  : access Glide_Language_Handler_Record;
+      Registry : access Projects.Abstract_Registry'Class);
    --  Set the top-level project for Handler.
 
    -----------------
@@ -87,8 +87,7 @@ package Language_Handlers.Glide is
 
    function Get_LI_Handler_From_File
      (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String;
-      Project         : Prj.Project_Id := Prj.No_Project)
+      Source_Filename : String)
       return Src_Info.LI_Handler;
    --  Return the LI handler to use for a specific file name.
    --  null is returned if the language is unknown
@@ -113,32 +112,15 @@ package Language_Handlers.Glide is
    ---------------
 
    function Get_Language_From_File
-     (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String;
-      Project_View    : Prj.Project_Id) return Language.Language_Access;
-   --  Find the language of a given file.
-   --  Return Unknown_Lang if no other language could be found.
-   --  Project_View should be the project to which Source_Filename belongs, or
-   --  No_Project if it should be computed automatically.
-
-   function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
       Source_Filename : String) return Language.Language_Access;
-   --  Same as above, but the project is always computed automatically.
-
-   function Get_Language_From_File
-     (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String;
-      Project_View    : Prj.Project_Id) return String;
-   --  Return "" if the language is unknown.
-   --  Project_View should be the project to which Source_Filename belongs, or
-   --  No_Project if it should be computed automatically.
+   --  Find the language of a given file.
+   --  Return Unknown_Lang if no other language could be found.
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
       Source_Filename : String) return String;
-   --  Same as above, but the project is always computed automatically. This
-   --  version is required to override the inherited abstract subprogram.
+   --  Return "" if the language is unknown.
 
    procedure Register_Language
      (Handler : access Glide_Language_Handler_Record;
@@ -191,9 +173,9 @@ private
 
    type Glide_Language_Handler_Record is new Language_Handler_Record
    with record
-      Languages    : Language_Info_Access;
-      Handlers     : Handler_Info_Access;
-      Project_View : Prj.Project_Id;
+      Languages : Language_Info_Access;
+      Handlers  : Handler_Info_Access;
+      Registry  : Projects.Abstract_Registry_Access;
    end record;
 
 end Language_Handlers.Glide;
