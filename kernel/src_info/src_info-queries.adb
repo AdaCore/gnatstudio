@@ -1,5 +1,12 @@
 package body Src_Info.Queries is
 
+   function Search_Is_Completed (Status : Query_Status) return Boolean;
+   --  Return False unless Status is equal to Entity_Not_Found. The idea
+   --  implemented behind this function is to have a single function to decide,
+   --  given an xref query, whether the results from a sub-query should be
+   --  presented to the end-user, or if some more search, when possible, should
+   --  be performed.
+
    function Location_Matches
      (Location  : File_Location;
       File_Name : String;
@@ -17,7 +24,8 @@ package body Src_Info.Queries is
       Start_Line      : out Positive;
       Start_Column    : out Positive;
       End_Line        : out Positive;
-      End_Column      : out Positive);
+      End_Column      : out Positive;
+      Status          : out Query_Status);
    --  Search for the body reference to the given declaration immediately
    --  following the given reference. If there is none then return the
    --  location of the declaration.
@@ -36,8 +44,35 @@ package body Src_Info.Queries is
       Start_Line      : out Positive;
       Start_Column    : out Positive;
       End_Line        : out Positive;
-      End_Column      : out Positive);
+      End_Column      : out Positive;
+      Status          : out Query_Status);
    --  ??? Document...
+
+   -------------------------
+   -- Search_Is_Completed --
+   -------------------------
+
+   function Search_Is_Completed (Status : Query_Status) return Boolean is
+   begin
+      case Status is
+         when Entity_Not_Found =>
+            return False;
+            --  We should continue the search if we can.
+         when Internal_Error =>
+            return True;
+            --  ??? We don't want to ignore internal errors at the moment,
+            --  ??? so we stop the query, and report and error to the end-user.
+            --  ??? we may want to change this at release time if we want
+            --  ??? to provide a better fault tolerant product (by changing
+            --  ??? the value returned to False, the net effect is to ignore
+            --  ??? the internal error while taking our chance by continuing
+            --  ??? the search).
+         when No_Body_Entity_Found |
+              Success =>
+            return True;
+            --  Obviously, we have completed our query.
+      end case;
+   end Search_Is_Completed;
 
    ----------------------
    -- Location_Matches --
@@ -66,7 +101,8 @@ package body Src_Info.Queries is
       Start_Line      : out Positive;
       Start_Column    : out Positive;
       End_Line        : out Positive;
-      End_Column      : out Positive)
+      End_Column      : out Positive;
+      Status          : out Query_Status)
    is
       Last_Body_Ref : E_Reference_List;
       Current_Ref   : E_Reference_List;
@@ -95,6 +131,7 @@ package body Src_Info.Queries is
          Start_Column := Decl.Declaration.Location.Column;
          End_Line := Start_Line;
          End_Column := Start_Column + Entity_Name'Length;
+         Status := Success;
 
       elsif Last_Body_Ref /= null then
          --  Case where we found a body entity reference. Return its location.
@@ -104,11 +141,13 @@ package body Src_Info.Queries is
          Start_Column := Last_Body_Ref.Value.Location.Column;
          End_Line     := Start_Line;
          End_Column   := Start_Column + Entity_Name'Length;
+         Status := Success;
 
       else
          --  Case where we are located at the declaration itself, and could
          --  not find any body reference. Return no location.
          File_Name_Found := null;
+         Status := No_Body_Entity_Found;
       end if;
    end Find_Next_Body_Ref;
 
@@ -126,11 +165,21 @@ package body Src_Info.Queries is
       Start_Line      : out Positive;
       Start_Column    : out Positive;
       End_Line        : out Positive;
-      End_Column      : out Positive)
+      End_Column      : out Positive;
+      Status          : out Query_Status)
    is
       Current_Decl : E_Declaration_Info_List := Decl;
       Current_Ref  : E_Reference_List;
    begin
+      --  Initialize the value of the returned parameters
+      File_Name_Found := null;
+      Start_Line := 1;
+      Start_Column := 1;
+      End_Line := 1;
+      End_Column := 1;
+      Status := Entity_Not_Found;
+
+      --  Search the entity in the list of declarations
       Decl_Loop :
       while Current_Decl /= null loop
 
@@ -146,7 +195,7 @@ package body Src_Info.Queries is
             then
                Find_Next_Body_Ref
                  (Current_Decl.Value, null, File_Name_Found,
-                  Start_Line, Start_Column, End_Line, End_Column);
+                  Start_Line, Start_Column, End_Line, End_Column, Status);
                exit Decl_Loop;
             end if;
 
@@ -163,7 +212,8 @@ package body Src_Info.Queries is
                   if Current_Ref.Value.Kind = Body_Entity then
                      Find_Next_Body_Ref
                        (Current_Decl.Value, Current_Ref, File_Name_Found,
-                        Start_Line, Start_Column, End_Line, End_Column);
+                        Start_Line, Start_Column, End_Line, End_Column,
+                        Status);
                   else
                      --  This is a non-body entity reference, so jump to the
                      --  declaration
@@ -176,6 +226,7 @@ package body Src_Info.Queries is
                        Current_Decl.Value.Declaration.Location.Column;
                      End_Line := Start_Line;
                      End_Column := Start_Column + Entity_Name'Length;
+                     Status := Success;
                   end if;
                   exit Decl_Loop;
                end if;
@@ -186,11 +237,6 @@ package body Src_Info.Queries is
          Current_Decl := Current_Decl.Next;
       end loop Decl_Loop;
 
-      --  Set the value of File_Name_Found if no matching entity has been
-      --  found.
-      if Current_Decl = null then
-         File_Name_Found := null;
-      end if;
    end Find_Spec_Or_Body;
 
    ------------------------------
@@ -207,7 +253,8 @@ package body Src_Info.Queries is
       Start_Line      : out Positive;
       Start_Column    : out Positive;
       End_Line        : out Positive;
-      End_Column      : out Positive)
+      End_Column      : out Positive;
+      Status          : out Query_Status)
    is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
@@ -226,9 +273,10 @@ package body Src_Info.Queries is
          Find_Spec_Or_Body
            (Lib_Info.Spec_Info.Declarations,
             File_Name, Entity_Name, Line, Column,
-            File_Name_Found, Start_Line, Start_Column, End_Line, End_Column);
+            File_Name_Found, Start_Line, Start_Column, End_Line, End_Column,
+            Status);
 
-         if File_Name_Found /= null then
+         if Search_Is_Completed (Status) then
             return;
          end if;
       end if;
@@ -240,9 +288,9 @@ package body Src_Info.Queries is
          Find_Spec_Or_Body
            (Lib_Info.Body_Info.Declarations,
             File_Name, Entity_Name, Line, Column,
-
-            File_Name_Found, Start_Line, Start_Column, End_Line, End_Column);
-         if File_Name_Found /= null then
+            File_Name_Found, Start_Line, Start_Column, End_Line, End_Column,
+            Status);
+         if Search_Is_Completed (Status) then
             return;
          end if;
       end if;
@@ -255,9 +303,9 @@ package body Src_Info.Queries is
               (Current_Sep.Value.Declarations,
                File_Name, Entity_Name, Line, Column,
                File_Name_Found, Start_Line, Start_Column,
-               End_Line, End_Column);
+               End_Line, End_Column, Status);
 
-            if File_Name_Found /= null then
+            if Search_Is_Completed (Status) then
                return;
             end if;
          end if;
@@ -273,9 +321,9 @@ package body Src_Info.Queries is
               (Current_Dep.Value.Declarations,
                File_Name, Entity_Name, Line, Column,
                File_Name_Found, Start_Line, Start_Column,
-               End_Line, End_Column);
+               End_Line, End_Column, Status);
 
-            if File_Name_Found /= null then
+            if Search_Is_Completed (Status) then
                return;
             end if;
          end if;
@@ -290,6 +338,17 @@ package body Src_Info.Queries is
       Start_Column := 1;
       End_Line := 1;
       End_Column := 1;
+      Status := Entity_Not_Found;
+   exception
+      when others =>
+         --  Trap all exceptions for better robustness, and report an
+         --  internal error
+         File_Name_Found := null;
+         Start_Line := 1;
+         Start_Column := 1;
+         End_Line := 1;
+         End_Column := 1;
+         Status := Internal_Error;
    end Find_Declaration_Or_Body;
 
 end Src_Info.Queries;
