@@ -78,6 +78,13 @@ endif
 
 -include $(DEP_FILES)
 
+   Another approach when CC is gcc is to use the -MD preprocessor option:
+
+DEP_CFLAGS=-Wp,-MD,$(OBJ_DIR)/$(*F).d
+
+$(OBJ_DIR)/%.o: %.c
+	$(CC) -c $(ALL_CFLAGS) $(DEP_CFLAGS) $< -o $(OBJ_DIR)/$@
+
 - The directory/source search is handled using the vpath make pattern:
 
 vpath %.c $(C_SRC_DIRS)
