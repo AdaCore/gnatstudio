@@ -64,7 +64,6 @@ with String_Utils;             use String_Utils;
 with GUI_Utils;                use GUI_Utils;
 with Odd_Intl;                 use Odd_Intl;
 with Pango.Layout;             use Pango.Layout;
-with Pango.Context;            use Pango.Context;
 
 package body Default_Preferences is
 
@@ -760,13 +759,17 @@ package body Default_Preferences is
    ----------------
 
    procedure Reset_Font (Ent : access Gtk_Widget_Record'Class) is
-      E : constant Gtk_Entry := Gtk_Entry (Ent);
+      E    : constant Gtk_Entry := Gtk_Entry (Ent);
       Desc : constant Pango_Font_Description := From_String (Get_Text (E));
    begin
       --  Also set the context, so that every time the pango layout is
       --  recreated by the entry (key press,...), we still use the correct
       --  font.
-      Set_Font_Description (Get_Pango_Context (E), Desc);
+      --  ??? Right now, the mechanism described above will cause gtk to
+      --  crash when Desc doesn't correspond to a drawable font, therefore
+      --  the following code is commented out.
+      --  Set_Font_Description (Get_Pango_Context (E), Desc);
+
       Set_Font_Description (Get_Layout (E), Desc);
    end Reset_Font;
 
