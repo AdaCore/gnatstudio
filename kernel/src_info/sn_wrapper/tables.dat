@@ -53,14 +53,16 @@ ma	"Macros"	name?start_position?filename; \
 md	"Method definitions"	class?name?start_position?filename; \
 	end_position?attributes?{ret_type}?{arg_types}?{arg_names}?{comment}
  
-mi	"Method implementations"	class?name?start_position?filename; \
-	end_position?attributes?{ret_type}?{arg_types}?{arg_names}?{comment}
+#mi	"Method implementations"	class?name?start_position?filename; \
+#	end_position?attributes?{ret_type}?{arg_types}?{arg_names}?{comment}
  
 rem	"Remarks"	filename?position?class?method_or_function;comment
  
 su	"Subroutines"	name?position?filename;attributes?{}?{}?{comment}
  
 t	"Typedefs"	name?position?filename;attributes?{original}?{}?{comment}
+
+ta	"Templates arguments"	scope?name?start_position?filename;position;attributes
  
 to	"Refers to"	class?symbol-name?sym-type?ref-class?ref-symbol?ref-type?access-type?position?filename;\
 	{caller_argument_types}?{ref_argument_types}
