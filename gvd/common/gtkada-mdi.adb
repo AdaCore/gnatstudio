@@ -2972,23 +2972,20 @@ package body Gtkada.MDI is
             Set_Focus_Child (Old_Focus);
          end if;
 
-      elsif MDI.Docks (None) /= null then
-         while List /= Null_List loop
-            C := MDI_Child (Get_Data (List));
-            List := Next (List);
+      else
+         while MDI.Docks (None) /= null loop
+            C := MDI_Child (Get_Nth_Page (MDI.Docks (None), 0));
 
-            if C.State = Normal then
-               --  Remove from middle notebook and put in layout
-               Ref (C);
-               Remove_From_Notebook (C, None);
-               Put (MDI.Layout, C, 0, 0);
-               Alloc := (C.X, C.Y,
-                         Allocation_Int (C.Uniconified_Width),
-                         Allocation_Int (C.Uniconified_Height));
-               Size_Allocate (C, Alloc);
+            --  Remove from middle notebook and put in layout
+            Ref (C);
+            Remove_From_Notebook (C, None);
+            Put (MDI.Layout, C, 0, 0);
+            Alloc := (C.X, C.Y,
+                      Allocation_Int (C.Uniconified_Width),
+                      Allocation_Int (C.Uniconified_Height));
+            Size_Allocate (C, Alloc);
 
-               Unref (C);
-            end if;
+            Unref (C);
          end loop;
 
          --  The middle notebook was already destroyed by the last call to
