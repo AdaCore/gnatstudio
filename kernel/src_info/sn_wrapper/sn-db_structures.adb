@@ -437,7 +437,7 @@ package body SN.DB_Structures is
       Buffer    : Unchecked_String_Access;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 2);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -457,7 +457,7 @@ package body SN.DB_Structures is
       Comments : Segment;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 6);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -479,7 +479,7 @@ package body SN.DB_Structures is
       Buffer    : Unchecked_String_Access;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 1);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -497,7 +497,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 3);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -515,7 +515,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key,  Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 1);
 
       Copy (Tab.Key,  Key_Data_Pair.Key,  Key_Data_Pair.Key_Size);
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
@@ -533,7 +533,7 @@ package body SN.DB_Structures is
       Buffer : Unchecked_String_Access;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 1);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -551,7 +551,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 4);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -583,7 +583,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 4);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -607,7 +607,7 @@ package body SN.DB_Structures is
       Num_Of_Fields : Integer;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 5);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -644,7 +644,7 @@ package body SN.DB_Structures is
       Comments  : Segment;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 6);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -666,7 +666,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 2);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -707,7 +707,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 3);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -727,7 +727,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 5);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -748,7 +748,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 1);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -766,7 +766,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 5);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -789,7 +789,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 3);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -807,7 +807,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 3);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -829,7 +829,7 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data);
+      CSF_Init (Key_Data_Pair.Data, Data, 2);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
