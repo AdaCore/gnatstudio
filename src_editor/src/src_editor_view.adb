@@ -53,7 +53,6 @@ with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Main_Window;           use Glide_Main_Window;
 
 package body Src_Editor_View is
 
@@ -780,8 +779,6 @@ package body Src_Editor_View is
    begin
       --  Set the title of the main window.
 
-      Reset_Title (Glide_Window (Get_Main_Window (View.Kernel)));
-
       View.Has_Focus := False;
       Save_Cursor_Position (View);
       External_End_Action (Buffer);
@@ -801,14 +798,7 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
       View   : constant Source_View   := Source_View (Widget);
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
-      --  Set the title of the main window.
-
-      Reset_Title
-        (Glide_Window (Get_Main_Window (View.Kernel)),
-         Get_Filename (Buffer));
-
       if not Selection_Exists (Get_Buffer (View)) then
          Set_Disable_Scroll_On_Focus (View, True);
          Restore_Cursor_Position (View);
