@@ -1597,6 +1597,8 @@ package body Browsers.Entities is
       B  : constant Type_Browser := Type_Browser (Browser);
       It : constant Type_Item    := Type_Item (Item);
    begin
+      Add_Navigation_Location (Get_Kernel (B), -"Entity Browser");
+
       Open_File_Editor
         (Kernel    => Get_Kernel (B),
          Filename  => Get_Filename (Get_File (Get_Declaration_Of (It.Entity))),
