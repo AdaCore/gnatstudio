@@ -18,39 +18,41 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package instanciates hash tables based on strings.
---  See HTables for complete documentation.
+with String_Utils;   use String_Utils;
+with GNAT.Case_Util; use GNAT.Case_Util;
 
-with HTables;
+package body String_Hash is
 
-generic
-   type Data_Type is private;
-   with procedure Free_Data (X : in out Data_Type);
+   -----------
+   -- Equal --
+   -----------
 
-   Null_Ptr : Data_Type;
+   function Equal (Key1, Key2 : String) return Boolean is
+   begin
+      if Case_Sensitive then
+         return Key1 = Key2;
+      else
+         return Case_Insensitive_Equal (Key1, Key2);
+      end if;
+   end Equal;
 
-   Case_Sensitive : Boolean := True;
-   --  Whether keys are case-sensitive
+   ----------
+   -- Hash --
+   ----------
 
-package String_Hash is
-
-   type Name_Htable_Num is new Natural range 0 .. 1000;
-   --  ??? This limitation should be raised.
-
-   function Hash (Key : String) return Name_Htable_Num;
-   --  See HTables for documentation.
-
-   function Equal (Key1, Key2 : String) return Boolean;
-   --  Whether the two keys are equal, depending on Case_Sensitive
-
-   package String_Hash_Table is new HTables.Simple_HTable
-     (Header_Num   => Name_Htable_Num,
-      Element      => Data_Type,
-      Free_Element => Free_Data,
-      No_Element   => Null_Ptr,
-      Key          => String,
-      Hash         => Hash,
-      Equal        => Equal);
-   --  See HTables for documentation.
+   function Hash (Key : String) return Name_Htable_Num is
+      function Internal is new HTables.Hash (Name_Htable_Num);
+   begin
+      if Case_Sensitive then
+         return Internal (Key);
+      else
+         declare
+            K : String := Key;
+         begin
+            To_Lower (K);
+            return Internal (K);
+         end;
+      end if;
+   end Hash;
 
 end String_Hash;
