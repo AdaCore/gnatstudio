@@ -69,6 +69,7 @@ with File_Utils;                use File_Utils;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -221,23 +222,22 @@ package body Project_Properties is
    --  location, and is used to resolve relative names.
 
    function Create_Widget_Attribute
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Project     : Project_Type;
-      Description : Attribute_Description_Access;
-      Attr        : Attribute_Type;
-      Path_Widget : Gtk_Entry;
-      Is_List     : Boolean) return Attribute_Editor;
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Project         : Project_Type;
+      Description     : Attribute_Description_Access;
+      Attribute_Index : String;
+      Path_Widget     : Gtk_Entry;
+      Is_List         : Boolean) return Attribute_Editor;
    --  Create the widget used to edit the attribute. This edits a specific
    --  attribute type, associated with Description (since for all indexes in
    --  the attribute the type can be different).
    --  See above for the description of Path_Widget
 
    function Create_Attribute_Dialog
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Project     : Project_Type;
-      Description : Attribute_Description_Access;
-      Attr        : Attribute_Type;
-      Index       : String := "") return String;
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Project         : Project_Type;
+      Description     : Attribute_Description_Access;
+      Attribute_Index : String) return String;
    --  Ask the user (through a dialog) for a new value for the attribute.
    --  If the attribute is a list, this queries the value for one of the
    --  elements in the list.
@@ -256,18 +256,24 @@ package body Project_Properties is
    type File_Attribute_Editor is access all File_Attribute_Editor_Record'Class;
 
    function Create_File_Attribute_Editor
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Project     : Project_Type;
-      Description : Attribute_Description_Access;
-      Attr        : Attribute_Type;
-      Path_Widget : Gtk_Entry;
-      Is_List     : Boolean) return File_Attribute_Editor;
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Project         : Project_Type;
+      Description     : Attribute_Description_Access;
+      Attribute_Index : String;
+      Path_Widget     : Gtk_Entry;
+      Is_List         : Boolean) return File_Attribute_Editor;
    --  Create a new attribute editor for a string attribute (any string, file
    --  or directory).
    --  Is_List should be true if the attribute is a list of simple strings
    --  Path_Widget is the widget that contains the full path to the project
    --  file's location, and is used to resolve relative names.
 
+   function Get_Value_As_List
+     (Editor          : access File_Attribute_Editor_Record;
+      Attribute_Index : String := "") return GNAT.OS_Lib.String_List;
+   function Get_Value_As_String
+     (Editor : access File_Attribute_Editor_Record;
+      Attribute_Index : String := "") return String;
    procedure Generate_Project
      (Editor             : access File_Attribute_Editor_Record;
       Project            : Project_Type;
@@ -307,6 +313,12 @@ package body Project_Properties is
    end record;
    type List_Attribute_Editor is access all List_Attribute_Editor_Record'Class;
 
+   function Get_Value_As_List
+     (Editor          : access List_Attribute_Editor_Record;
+      Attribute_Index : String := "") return GNAT.OS_Lib.String_List;
+   function Get_Value_As_String
+     (Editor : access List_Attribute_Editor_Record;
+      Attribute_Index : String := "") return String;
    procedure Generate_Project
      (Editor             : access List_Attribute_Editor_Record;
       Project            : Project_Type;
@@ -318,7 +330,7 @@ package body Project_Properties is
      (Kernel  : access Kernel_Handle_Record'Class;
       Project : Project_Type;
       Description : Attribute_Description_Access;
-      Attr    : Attribute_Type;
+      Attribute_Index : String;
       Is_List : Boolean) return List_Attribute_Editor;
    --  Create the widget used to edit an attribute with a dynamic or static
    --  list type.
@@ -355,21 +367,41 @@ package body Project_Properties is
    -- Attribute editors (indexed) --
    ---------------------------------
 
+   type Indexed_Values is record
+      Index  : GNAT.OS_Lib.String_Access;
+      Values : GNAT.OS_Lib.String_List_Access;
+   end record;
+   type Indexed_Values_Array is array (Natural range <>) of Indexed_Values;
+   type Indexed_Values_Array_Access is access Indexed_Values_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Indexed_Values_Array, Indexed_Values_Array_Access);
+
    type Indexed_Attribute_Editor_Record is new Attribute_Editor_Record with
       record
-         View        : Gtk_Tree_View;
-         Model       : Gtk_Tree_Store;
-         Path_Widget : Gtk_Entry;
+         View           : Gtk_Tree_View;
+         Model          : Gtk_Tree_Store;
+         Path_Widget    : Gtk_Entry;
+         Current_Values : Indexed_Values_Array_Access;
       end record;
    type Indexed_Attribute_Editor is
      access all Indexed_Attribute_Editor_Record'Class;
 
+   function Get_Value_As_List
+     (Editor          : access Indexed_Attribute_Editor_Record;
+      Attribute_Index : String := "") return GNAT.OS_Lib.String_List;
+   function Get_Value_As_String
+     (Editor : access Indexed_Attribute_Editor_Record;
+      Attribute_Index : String := "") return String;
    procedure Generate_Project
      (Editor             : access Indexed_Attribute_Editor_Record;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean);
    --  See doc from inherited subprogram
+
+   procedure On_Indexed_Editor_Destroy
+     (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the editor for indexed attributes is destroyed
 
    function Create_Indexed_Attribute_Editor
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -384,6 +416,7 @@ package body Project_Properties is
    --  Called when double-clicking on the value of an indexed attribute, and
    --  open a dialog to edit its value (that dialog contains one the standard
    --  widgets like combo boxes,... depending on the type of the attribute)
+
 
 
    type Widget_Array is array (Natural range <>) of Gtk_Widget;
@@ -459,18 +492,30 @@ package body Project_Properties is
      (Project : Project_Type;
       Attr    : Attribute_Description_Access;
       Index   : String;
-      Default_Only : Boolean := False) return String;
+      Default_Only  : Boolean := False;
+      Ignore_Editor : Boolean := False) return String;
    function Get_Current_Value
      (Kernel  : access Kernel_Handle_Record'Class;
       Project : Project_Type;
       Attr    : Attribute_Description_Access;
-      Default_Only : Boolean := False)
+      Index   : String := "";
+      Default_Only  : Boolean := False;
+      Ignore_Editor : Boolean := False)
       return GNAT.OS_Lib.String_List;
-   --  Get the current value for the given attribute. If the attribute has no
-   --  current value, the default value is returned.
-   --  Returned value must be freed by the caller.
+   --  Get the current value for the given attribute. This value is extracted
+   --  from one of three sources, in that order:
+   --    - Either the current editor for that attribute. This reflects the
+   --      changes that the user is currently doing
+   --    - The value in the current project, if such project exists. This
+   --      reflects the value this attribute had before the editor was started
+   --    - The default value as specified in the attribute definition
+   --  If Ignore_Editor is True, then the first step is true, and the value in
+   --  the project file is returned. This is used to detect changes in the
+   --  edited project.
    --  If Default_Only is true, then the default value is returned, no matter
-   --  what is set in the project currently
+   --  what is set in the project or the editor currently. This is used to
+   --  reflect the value the attribute has if not specified in the project.
+   --  This implies Ignore_Editor
 
    procedure Customize
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -520,27 +565,51 @@ package body Project_Properties is
    --  Whether, for the index Index, Attr behaves like a free-form string.
    --  False is returned for special types like lists, filenames,...
 
-   function Get_Index_In_Index_Types
-     (Attr : Attribute_Description_Access; Value : String) return Integer;
-   --  Return the index, for an indexed attribute, of the
-   --  Indexed_Attribute_Type that applies for the index Value.
+   function Get_Attribute_Type_From_Description
+     (Attr : Attribute_Description_Access; Index : String)
+      return Attribute_Type;
+   --  Return the type to use for an attribute given its index. This properly
+   --  handles the case where the attribute isn't indexed
 
    procedure Update_Attribute_Value
      (Attr               : Attribute_Description_Access;
-      Attr_Type          : Attribute_Type;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
       Value              : String;
       Project_Changed    : in out Boolean;
       Attribute_Index    : String := "");
    procedure Update_Attribute_Value
-     (Attr               : Attribute_Description_Access;
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Attr               : Attribute_Description_Access;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
       Values             : GNAT.OS_Lib.String_List;
-      Default_Values     : GNAT.OS_Lib.String_List;
+      Attribute_Index    : String := "";
       Project_Changed    : in out Boolean);
    --  Change, if needed, a project to reflect the new value of the attribute
+
+   function To_String (List : GNAT.OS_Lib.String_List) return String;
+   --  Convert List into a string suitable to represent it. The string need not
+   --  be parsable again to extract the values.
+
+   -------------------------------
+   -- On_Indexed_Editor_Destroy --
+   -------------------------------
+
+   procedure On_Indexed_Editor_Destroy
+     (Editor : access Gtk_Widget_Record'Class)
+   is
+      Ed : constant Indexed_Attribute_Editor :=
+        Indexed_Attribute_Editor (Editor);
+   begin
+      if Ed.Current_Values /= null then
+         for C in Ed.Current_Values'Range loop
+            Free (Ed.Current_Values (C).Index);
+            Free (Ed.Current_Values (C).Values);
+         end loop;
+         Unchecked_Free (Ed.Current_Values);
+      end if;
+   end On_Indexed_Editor_Destroy;
 
    ----------------------------
    -- Update_Attribute_Value --
@@ -548,7 +617,6 @@ package body Project_Properties is
 
    procedure Update_Attribute_Value
      (Attr               : Attribute_Description_Access;
-      Attr_Type          : Attribute_Type;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
       Value              : String;
@@ -557,53 +625,37 @@ package body Project_Properties is
    is
       Attribute : constant Attribute_Pkg :=
         Build (Attr.Pkg.all, Attr.Name.all);
-      Static_Default : aliased String := "";
-      Default_Value : GNAT.OS_Lib.String_Access :=
-        Static_Default'Unchecked_Access;
+      Default_Value : constant String := Get_Current_Value
+        (Project      => Project,
+         Attr         => Attr,
+         Index        => Attribute_Index,
+         Default_Only => True);
+      Old_Value : constant String := Get_Current_Value
+        (Project   => Project,
+         Attr      => Attr,
+         Ignore_Editor => True,
+         Index     => Attribute_Index);
    begin
-      case Attr_Type.Typ is
-         when Attribute_As_String
-            | Attribute_As_Filename
-            | Attribute_As_Directory =>
-            Default_Value := Attr_Type.Default;
-         when Attribute_As_Static_List =>
-            for S in Attr_Type.Static_Default'Range loop
-               if Attr_Type.Static_Default (S) then
-                  Default_Value := Attr_Type.Static_List (S);
-                  exit;
-               end if;
-            end loop;
-         when Attribute_As_Dynamic_List =>
-            Default_Value := Attr_Type.Dynamic_Default;
-      end case;
-
-      declare
-         Old_Value : constant String := Get_Current_Value
-           (Project   => Project,
-            Attr      => Attr,
-            Index     => Attribute_Index);
-      begin
-         if Value /= Old_Value then
-            if Attr.Omit_If_Default and then Value = Default_Value.all then
-               Delete_Attribute
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Attribute,
-                  Attribute_Index    => Attribute_Index);
-            else
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Attribute,
-                  Value              => Value,
-                  Attribute_Index    => Attribute_Index);
-            end if;
-            Trace (Me, "Change for attribute "
-                   & Attr.Pkg.all & "'" & Attr.Name.all
-                   & " Old=""" & Old_Value & """ New=""" & Value & """");
-            Project_Changed := True;
+      if Value /= Old_Value then
+         if Attr.Omit_If_Default and then Value = Default_Value then
+            Delete_Attribute
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Attribute          => Attribute,
+               Attribute_Index    => Attribute_Index);
+         else
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Attribute          => Attribute,
+               Value              => Value,
+               Attribute_Index    => Attribute_Index);
          end if;
-      end;
+         Trace (Me, "Change for attribute "
+                & Attr.Pkg.all & "'" & Attr.Name.all
+                & " Old=""" & Old_Value & """ New=""" & Value & """");
+         Project_Changed := True;
+      end if;
    end Update_Attribute_Value;
 
    ----------------------------
@@ -611,11 +663,12 @@ package body Project_Properties is
    ----------------------------
 
    procedure Update_Attribute_Value
-     (Attr               : Attribute_Description_Access;
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Attr               : Attribute_Description_Access;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
       Values             : GNAT.OS_Lib.String_List;
-      Default_Values     : GNAT.OS_Lib.String_List;
+      Attribute_Index    : String := "";
       Project_Changed    : in out Boolean)
    is
       Attribute : constant Attribute_Pkg :=
@@ -623,13 +676,31 @@ package body Project_Properties is
       Old_Values : aliased GNAT.OS_Lib.String_List := Get_Attribute_Value
         (Project   => Project,
          Attribute => Attribute,
-         Index     => "");
+         Index     => Attribute_Index);
       Equal : Boolean;
    begin
       if Old_Values'Length /= 0 then
          Equal := Is_Equal (Values, Old_Values, Case_Sensitive => False);
       else
-         Equal := Is_Equal (Values, Default_Values, Case_Sensitive => False);
+         declare
+            Default : GNAT.OS_Lib.String_List :=
+              Get_Current_Value
+                (Kernel       => Kernel,
+                 Project      => Project,
+                 Attr         => Attr,
+                 Index        => Attribute_Index,
+                 Default_Only => True);
+         begin
+            Equal := Is_Equal (Values, Default, Case_Sensitive => False);
+
+            if not Equal then
+               for V in Default'Range loop
+                  Trace (Me, "MANU Default=" & Default (V).all);
+               end loop;
+            end if;
+
+            Free (Default);
+         end;
       end if;
 
       if not Equal then
@@ -638,18 +709,16 @@ package body Project_Properties is
             Scenario_Variables => Scenario_Variables,
             Attribute          => Attribute,
             Values             => Values,
-            Attribute_Index    => "");
+            Attribute_Index    => Attribute_Index);
          Trace (Me, "Change for attribute "
-                & Attr.Pkg.all & "'" & Attr.Name.all);
---           for V in Old_Values'Range loop
---              Trace (Me, "MANU Old=" & Old_Values (V).all);
---           end loop;
---           for V in Default_Values'Range loop
---              Trace (Me, "MANU Default=" & Default_Values (V).all);
---           end loop;
---           for V in Values'Range loop
---              Trace (Me, "MANU New=" & Values (V).all);
---           end loop;
+                & Attr.Pkg.all & "'" & Attr.Name.all & "("
+                & Attribute_Index & ")");
+         for V in Old_Values'Range loop
+            Trace (Me, "MANU Old=" & Old_Values (V).all);
+         end loop;
+         for V in Values'Range loop
+            Trace (Me, "MANU New=" & Values (V).all);
+         end loop;
 
          Project_Changed := True;
       end if;
@@ -681,7 +750,6 @@ package body Project_Properties is
          then
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
-               Attr_Type          => Editor.Attribute.Non_Index_Type,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
                Value              => Relative_Path_Name
@@ -690,7 +758,6 @@ package body Project_Properties is
          else
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
-               Attr_Type          => Editor.Attribute.Non_Index_Type,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
                Value              => Get_Text (Editor.Ent),
@@ -738,23 +805,13 @@ package body Project_Properties is
                Next (Editor.Model, Iter);
             end loop;
 
-            declare
-               Default : GNAT.OS_Lib.String_List :=
-                 Get_Current_Value
-                   (Kernel       => Editor.Kernel,
-                    Project      => Project,
-                    Attr         => Editor.Attribute,
-                    Default_Only => True);
-            begin
-               Update_Attribute_Value
-                 (Attr               => Editor.Attribute,
-                  Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Values             => Values,
-                  Default_Values     => Default,
-                  Project_Changed    => Project_Changed);
-               Free (Default);
-            end;
+            Update_Attribute_Value
+              (Kernel             => Editor.Kernel,
+               Attr               => Editor.Attribute,
+               Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Values             => Values,
+               Project_Changed    => Project_Changed);
 
             Free (Values);
          end;
@@ -776,7 +833,6 @@ package body Project_Properties is
       if Editor.Combo /= null then
          Update_Attribute_Value
            (Attr               => Editor.Attribute,
-            Attr_Type          => Editor.Attribute.Non_Index_Type,
             Project            => Project,
             Scenario_Variables => Scenario_Variables,
             Value              => Get_Text (Get_Entry (Editor.Combo)),
@@ -786,11 +842,6 @@ package body Project_Properties is
             Num    : constant Gint := N_Children (Editor.Model);
             Values : GNAT.OS_Lib.Argument_List (1 .. Integer (Num));
             N      : Integer := Values'First;
-            Default : GNAT.OS_Lib.String_List := Get_Current_Value
-              (Kernel       => Editor.Kernel,
-               Project      => Project,
-               Attr         => Editor.Attribute,
-               Default_Only => True);
          begin
             Iter := Get_Iter_First (Editor.Model);
             while Iter /= Null_Iter loop
@@ -803,13 +854,12 @@ package body Project_Properties is
             end loop;
 
             Update_Attribute_Value
-              (Attr               => Editor.Attribute,
+              (Kernel             => Editor.Kernel,
+               Attr               => Editor.Attribute,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
                Values             => Values (1 .. N - 1),
-               Default_Values     => Default,
                Project_Changed    => Project_Changed);
-            Free (Default);
             Free (Values);
          end;
       end if;
@@ -826,33 +876,39 @@ package body Project_Properties is
       Project_Changed    : in out Boolean)
    is
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
-      Tmp   : Integer := -1;
    begin
       while Iter /= Null_Iter loop
          declare
             Index : constant String := Get_String (Editor.Model, Iter, 0);
          begin
-            for T in Editor.Attribute.Index_Types'Range loop
-               if Editor.Attribute.Index_Types (T).Index_Value = null then
-                  if Tmp = -1 then
-                     Tmp := T;
-                  end if;
-               elsif Editor.Attribute.Index_Types (T).Index_Value.all =
-                 Index
-               then
-                  Tmp := T;
-                  exit;
-               end if;
-            end loop;
+            if Editor.Attribute.Is_List then
+               declare
+                  Values : GNAT.OS_Lib.String_List := Get_Current_Value
+                    (Kernel  => Editor.Kernel,
+                     Project => Project,
+                     Attr    => Editor.Attribute,
+                     Index   => Index);
+               begin
+                  Update_Attribute_Value
+                    (Kernel             => Editor.Kernel,
+                     Attr               => Editor.Attribute,
+                     Project            => Project,
+                     Scenario_Variables => Scenario_Variables,
+                     Values             => Values,
+                     Attribute_Index    => Index,
+                     Project_Changed    => Project_Changed);
+                  Free (Values);
+               end;
+            else
+               Update_Attribute_Value
+                 (Attr               => Editor.Attribute,
+                  Project            => Project,
+                  Scenario_Variables => Scenario_Variables,
+                  Value              => Get_String (Editor.Model, Iter, 1),
+                  Attribute_Index    => Index,
+                  Project_Changed    => Project_Changed);
+            end if;
 
-            Update_Attribute_Value
-              (Attr               => Editor.Attribute,
-               Attr_Type          => Editor.Attribute.Index_Types (Tmp).Typ,
-               Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Value              => Get_String (Editor.Model, Iter, 1),
-               Attribute_Index    => Index,
-               Project_Changed    => Project_Changed);
             Next (Editor.Model, Iter);
          end;
       end loop;
@@ -1653,11 +1709,11 @@ package body Project_Properties is
    ----------------------------------
 
    function Create_List_Attribute_Editor
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Project     : Project_Type;
-      Description : Attribute_Description_Access;
-      Attr        : Attribute_Type;
-      Is_List     : Boolean) return List_Attribute_Editor
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Project         : Project_Type;
+      Description     : Attribute_Description_Access;
+      Attribute_Index : String;
+      Is_List         : Boolean) return List_Attribute_Editor
    is
       use Gtk.Enums.String_List;
       Editor : List_Attribute_Editor;
@@ -1697,6 +1753,8 @@ package body Project_Properties is
          end if;
       end Value_Cb;
 
+      Attr : constant Attribute_Type := Get_Attribute_Type_From_Description
+        (Description, Attribute_Index);
    begin
       Editor := new List_Attribute_Editor_Record;
       Initialize_Vbox (Editor, Homogeneous => False);
@@ -1719,7 +1777,8 @@ package body Project_Properties is
             Current : aliased GNAT.OS_Lib.String_List := Get_Current_Value
               (Kernel  => Kernel,
                Project => Project,
-               Attr    => Description);
+               Attr    => Description,
+               Index   => Attribute_Index);
          begin
             Current_Value := Current'Unchecked_Access;
             For_Each_Item_In_List (Kernel, Attr, Value_Cb'Unrestricted_Access);
@@ -1811,7 +1870,7 @@ package body Project_Properties is
    procedure Add_String_In_List (Editor : access Gtk_Widget_Record'Class) is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
       Value : constant String := Create_Attribute_Dialog
-        (Ed.Kernel, Ed.Project, Ed.Attribute, Ed.Attribute.Non_Index_Type);
+        (Ed.Kernel, Ed.Project, Ed.Attribute, Attribute_Index => "");
       Iter  : Gtk_Tree_Iter;
    begin
       if Value /= "" then
@@ -1988,12 +2047,12 @@ package body Project_Properties is
    ----------------------------------
 
    function Create_File_Attribute_Editor
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Project     : Project_Type;
-      Description : Attribute_Description_Access;
-      Attr        : Attribute_Type;
-      Path_Widget : Gtk_Entry;
-      Is_List     : Boolean) return File_Attribute_Editor
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Project         : Project_Type;
+      Description     : Attribute_Description_Access;
+      Attribute_Index : String;
+      Path_Widget     : Gtk_Entry;
+      Is_List         : Boolean) return File_Attribute_Editor
    is
       Editor   : File_Attribute_Editor;
       Button   : Gtk_Button;
@@ -2007,6 +2066,8 @@ package body Project_Properties is
       Col_Number : Gint;
       pragma Unreferenced (Col_Number);
 
+      Attr : constant Attribute_Type := Get_Attribute_Type_From_Description
+        (Description, Attribute_Index);
    begin
       Editor := new File_Attribute_Editor_Record;
       Initialize_Hbox (Editor, Homogeneous => False);
@@ -2095,7 +2156,8 @@ package body Project_Properties is
             Value : GNAT.OS_Lib.String_List := Get_Current_Value
               (Kernel  => Kernel,
                Project => Project,
-               Attr    => Description);
+               Attr    => Description,
+               Index   => Attribute_Index);
          begin
             for V in Value'Range loop
                Append (Editor.Model, Iter, Null_Iter);
@@ -2108,10 +2170,7 @@ package body Project_Properties is
                           Directory => Get_Text (Path_Widget),
                           Resolve_Links => False));
                   Set (Editor.Model, Iter, 1, True);
-               elsif (Description.Omit_If_Default
-                      and then Value (V).all = Attr.Default.all)
-                 or else Attr.Typ = Attribute_As_String
-               then
+               elsif Attr.Typ = Attribute_As_String then
                   Set (Editor.Model, Iter, 0, Value (V).all);
                   Set (Editor.Model, Iter, 1, False);
                elsif Description.Base_Name_Only then
@@ -2138,10 +2197,7 @@ package body Project_Properties is
             Current : constant String := Get_Current_Value
               (Project => Project, Attr => Description, Index   => "");
          begin
-            if (Description.Omit_If_Default
-                and then Current = Attr.Default.all)
-              or else Attr.Typ = Attribute_As_String
-            then
+            if Attr.Typ = Attribute_As_String then
                Set_Text (Editor.Ent, Current);
             elsif Description.Base_Name_Only then
                Set_Text (Editor.Ent, Base_Name (Current));
@@ -2174,17 +2230,18 @@ package body Project_Properties is
    -----------------------------
 
    function Create_Attribute_Dialog
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Project     : Project_Type;
-      Description : Attribute_Description_Access;
-      Attr        : Attribute_Type;
-      Index       : String := "") return String
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Project         : Project_Type;
+      Description     : Attribute_Description_Access;
+      Attribute_Index : String) return String
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       Ent    : Gtk_Entry;
       File   : Virtual_File;
       W      : List_Attribute_Editor;
+      Attr   : constant Attribute_Type := Get_Attribute_Type_From_Description
+        (Description, Attribute_Index);
    begin
       case Attr.Typ is
          when Attribute_As_String =>
@@ -2194,7 +2251,7 @@ package body Project_Properties is
                      Flags  => Modal or Destroy_With_Parent);
             Gtk_New (Ent);
             Set_Text (Ent, Get_Current_Value
-                        (Project, Description, Index => Index));
+                        (Project, Description, Index => Attribute_Index));
             Set_Activates_Default (Ent, True);
             Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
 
@@ -2220,7 +2277,7 @@ package body Project_Properties is
          when Attribute_As_Filename =>
             declare
                Current : constant String := Get_Current_Value
-                 (Project, Description, Index => Index);
+                 (Project, Description, Index => Attribute_Index);
             begin
                File := Select_File
                  (Parent => Get_Current_Window (Kernel),
@@ -2238,7 +2295,7 @@ package body Project_Properties is
             return Select_Directory
               (Parent => Get_Current_Window (Kernel),
                Base_Directory => Get_Current_Value
-                 (Project, Description, Index => Index),
+                 (Project, Description, Index => Attribute_Index),
                Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
 
          when Attribute_As_Static_List | Attribute_As_Dynamic_List =>
@@ -2247,10 +2304,11 @@ package body Project_Properties is
                      Parent => Get_Current_Window (Kernel),
                      Flags  => Modal or Destroy_With_Parent);
             W := Create_List_Attribute_Editor
-              (Kernel, Project, Description, Attr, Is_List => False);
+              (Kernel, Project, Description, Attribute_Index,
+               Is_List => False);
             Set_Text (Get_Entry (W.Combo),
                       Get_Current_Value
-                        (Project, Description, Index => Index));
+                        (Project, Description, Index => Attribute_Index));
             Pack_Start (Get_Vbox (Dialog), W, Expand => True, Fill => True);
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
@@ -2279,12 +2337,15 @@ package body Project_Properties is
    -----------------------------
 
    function Create_Widget_Attribute
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Project     : Project_Type;
-      Description : Attribute_Description_Access;
-      Attr        : Attribute_Type;
-      Path_Widget : Gtk_Entry;
-      Is_List     : Boolean) return Attribute_Editor is
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Project         : Project_Type;
+      Description     : Attribute_Description_Access;
+      Attribute_Index : String;
+      Path_Widget     : Gtk_Entry;
+      Is_List         : Boolean) return Attribute_Editor
+   is
+      Attr : constant Attribute_Type := Get_Attribute_Type_From_Description
+        (Description, Attribute_Index);
    begin
       case Attr.Typ is
          when Attribute_As_String
@@ -2292,13 +2353,14 @@ package body Project_Properties is
             | Attribute_As_Directory =>
             return Attribute_Editor
               (Create_File_Attribute_Editor
-                 (Kernel, Project, Description, Attr, Path_Widget, Is_List));
+                 (Kernel, Project, Description, Attribute_Index, Path_Widget,
+                  Is_List));
 
          when Attribute_As_Static_List
               | Attribute_As_Dynamic_List =>
             return Attribute_Editor
               (Create_List_Attribute_Editor
-                 (Kernel, Project, Description, Attr, Is_List));
+                 (Kernel, Project, Description, Attribute_Index, Is_List));
       end case;
    end Create_Widget_Attribute;
 
@@ -2329,29 +2391,39 @@ package body Project_Properties is
       return null;
    end Get_Attribute_Type_From_Name;
 
-   ------------------------------
-   -- Get_Index_In_Index_Types --
-   ------------------------------
+   -----------------------------------------
+   -- Get_Attribute_Type_From_Description --
+   -----------------------------------------
 
-   function Get_Index_In_Index_Types
-     (Attr : Attribute_Description_Access; Value : String) return Integer
+   function Get_Attribute_Type_From_Description
+     (Attr : Attribute_Description_Access; Index : String)
+      return Attribute_Type
    is
-      Default : Integer := -1;
+      Pos : Integer := -1;
    begin
-      if Attr.Index_Types /= null then
-         for T in Attr.Index_Types'Range loop
-            if Attr.Index_Types (T).Index_Value = null then
-               if Default = -1 then
-                  Default := T;
+      if Attr.Indexed then
+         if Attr.Index_Types /= null then
+            for T in Attr.Index_Types'Range loop
+               if Attr.Index_Types (T).Index_Value = null then
+                  if Pos = -1 then
+                     Pos := T;
+                  end if;
+               elsif Attr.Index_Types (T).Index_Value.all = Index then
+                  Pos := T;
+                  exit;
                end if;
-            elsif Attr.Index_Types (T).Index_Value.all = Value then
-               Default := T;
-               exit;
-            end if;
-         end loop;
+            end loop;
+         end if;
+
+         if Pos = -1 then
+            return Attr.Non_Index_Type;
+         else
+            return Attr.Index_Types (Pos).Typ;
+         end if;
+      else
+         return Attr.Non_Index_Type;
       end if;
-      return Default;
-   end Get_Index_In_Index_Types;
+   end Get_Attribute_Type_From_Description;
 
    -------------------
    -- Is_Any_String --
@@ -2361,23 +2433,142 @@ package body Project_Properties is
      (Attr  : Attribute_Description_Access;
       Index : String) return Boolean
    is
-      Tmp : constant Integer := Get_Index_In_Index_Types (Attr, Index);
+      Typ : constant Attribute_Type := Get_Attribute_Type_From_Description
+        (Attr, Index);
    begin
-      if Tmp = -1 then
-         return False;
-      else
-         case Attr.Index_Types (Tmp).Typ.Typ is
-            when Attribute_As_String    => return True;
-            when Attribute_As_Filename
-               | Attribute_As_Directory => return False;
-            when Attribute_As_Static_List =>
-               return Attr.Index_Types (Tmp).Typ.Static_List = null
-                 and then Attr.Index_Types (Tmp).Typ.Static_Allows_Any_String;
-            when Attribute_As_Dynamic_List =>
-               return False;
-         end case;
-      end if;
+      case Typ.Typ is
+         when Attribute_As_String    => return True;
+         when Attribute_As_Filename
+            | Attribute_As_Directory => return False;
+         when Attribute_As_Static_List =>
+            return Typ.Static_List = null
+              and then Typ.Static_Allows_Any_String;
+         when Attribute_As_Dynamic_List =>
+            return False;
+      end case;
    end Is_Any_String;
+
+   -------------------------
+   -- Get_Value_As_String --
+   -------------------------
+
+   function Get_Value_As_String
+     (Editor : access File_Attribute_Editor_Record;
+      Attribute_Index : String := "") return String
+   is
+      pragma Unreferenced (Attribute_Index);
+   begin
+      return Get_Text (Editor.Ent);
+   end Get_Value_As_String;
+
+   -------------------------
+   -- Get_Value_As_String --
+   -------------------------
+
+   function Get_Value_As_String
+     (Editor : access List_Attribute_Editor_Record;
+      Attribute_Index : String := "") return String
+   is
+      pragma Unreferenced (Attribute_Index);
+   begin
+      return Get_Text (Get_Entry (Editor.Combo));
+   end Get_Value_As_String;
+
+   -------------------------
+   -- Get_Value_As_String --
+   -------------------------
+
+   function Get_Value_As_String
+     (Editor : access Indexed_Attribute_Editor_Record;
+      Attribute_Index : String := "") return String
+   is
+      Iter : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
+   begin
+      while Iter /= Null_Iter loop
+         if Get_String (Editor.Model, Iter, 0) = Attribute_Index then
+            return Get_String (Editor.Model, Iter, 1);
+         end if;
+         Next (Editor.Model, Iter);
+      end loop;
+
+      return "";
+   end Get_Value_As_String;
+
+   -----------------------
+   -- Get_Value_As_List --
+   -----------------------
+
+   function Get_Value_As_List
+     (Editor : access File_Attribute_Editor_Record;
+      Attribute_Index : String := "") return GNAT.OS_Lib.String_List
+   is
+      pragma Unreferenced (Attribute_Index);
+      Count  : constant Integer := Integer (N_Children (Editor.Model));
+      Result : GNAT.OS_Lib.String_List (1 .. Count);
+      Iter   : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
+      Index  : Natural := Result'First;
+   begin
+      while Iter /= Null_Iter loop
+         Result (Index) := new String'(Get_String (Editor.Model, Iter, 0));
+         Index := Index + 1;
+         Next (Editor.Model, Iter);
+      end loop;
+
+      return Result;
+   end Get_Value_As_List;
+
+   -----------------------
+   -- Get_Value_As_List --
+   -----------------------
+
+   function Get_Value_As_List
+     (Editor          : access List_Attribute_Editor_Record;
+      Attribute_Index : String := "") return GNAT.OS_Lib.String_List
+   is
+      pragma Unreferenced (Attribute_Index);
+      Count  : constant Integer := Integer (N_Children (Editor.Model));
+      Result : GNAT.OS_Lib.String_List (1 .. Count);
+      Iter   : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
+      Index  : Natural := Result'First;
+   begin
+      while Iter /= Null_Iter loop
+         if Get_Boolean (Editor.Model, Iter, 1) then
+            Result (Index) := new String'(Get_String (Editor.Model, Iter, 0));
+            Index := Index + 1;
+         end if;
+         Next (Editor.Model, Iter);
+      end loop;
+
+      return Result (1 .. Index - 1);
+   end Get_Value_As_List;
+
+   -----------------------
+   -- Get_Value_As_List --
+   -----------------------
+
+   function Get_Value_As_List
+     (Editor          : access Indexed_Attribute_Editor_Record;
+      Attribute_Index : String := "") return GNAT.OS_Lib.String_List
+   is
+   begin
+      if Editor.Current_Values /= null then
+         for C in Editor.Current_Values'Range loop
+            if Editor.Current_Values (C).Index.all = Attribute_Index then
+               declare
+                  V : GNAT.OS_Lib.String_List
+                    (Editor.Current_Values (C).Values'Range);
+               begin
+                  for Val in Editor.Current_Values (C).Values'Range loop
+                     V (Val) := new String'
+                       (Editor.Current_Values (C).Values (Val).all);
+                  end loop;
+                  return V;
+               end;
+            end if;
+         end loop;
+      end if;
+      return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+   end Get_Value_As_List;
 
    -----------------------
    -- Get_Current_Value --
@@ -2387,59 +2578,43 @@ package body Project_Properties is
      (Project : Project_Type;
       Attr    : Attribute_Description_Access;
       Index   : String;
-      Default_Only : Boolean := False) return String
+      Default_Only : Boolean := False;
+      Ignore_Editor : Boolean := False) return String
    is
       Empty_String  : aliased String := "";
-      Default       : Integer;
       Default_Value : GNAT.OS_Lib.String_Access :=
         Empty_String'Unchecked_Access;
+      Typ : constant Attribute_Type := Get_Attribute_Type_From_Description
+        (Attr, Index);
+
    begin
-      --  Compute the default value
-      if Attr.Indexed then
-         Default := Get_Index_In_Index_Types (Attr, Index);
-         if Default /= -1 then
-            declare
-               T : Attribute_Type renames Attr.Index_Types (Default).Typ;
-            begin
-               case T.Typ is
-                  when Attribute_As_String
-                     | Attribute_As_Filename
-                     | Attribute_As_Directory =>
-                     Default_Value := T.Default;
-
-                  when Attribute_As_Static_List =>
-                     for S in T.Static_Default'Range loop
-                        if T.Static_Default (S) then
-                           Default_Value := T.Static_List (S);
-                           exit;
-                        end if;
-                     end loop;
-
-                  when Attribute_As_Dynamic_List =>
-                     Default_Value := T.Dynamic_Default;
-               end case;
-            end;
-         end if;
-
-      else
-         case Attr.Non_Index_Type.Typ is
-            when Attribute_As_String
-               | Attribute_As_Filename
-               | Attribute_As_Directory =>
-               Default_Value := Attr.Non_Index_Type.Default;
-
-            when Attribute_As_Static_List =>
-               for S in Attr.Non_Index_Type.Static_Default'Range loop
-                  if Attr.Non_Index_Type.Static_Default (S) then
-                     Default_Value := Attr.Non_Index_Type.Static_List (S);
-                     exit;
-                  end if;
-               end loop;
-
-            when Attribute_As_Dynamic_List =>
-               Default_Value := Attr.Non_Index_Type.Dynamic_Default;
-         end case;
+      --  First choice: if the editor is being edited, use that value
+      if not Default_Only
+        and then not Ignore_Editor
+        and then Attr.Editor /= null
+      then
+         return Get_Value_As_String (Attr.Editor, Index);
       end if;
+
+      --  Otherwise, we'll have to look in the project, or use the default
+      --  value if the attribute hasn't been specified otherwise.
+      case Typ.Typ is
+         when Attribute_As_String
+            | Attribute_As_Filename
+            | Attribute_As_Directory =>
+            Default_Value := Typ.Default;
+
+         when Attribute_As_Static_List =>
+            for S in Typ.Static_Default'Range loop
+               if Typ.Static_Default (S) then
+                  Default_Value := Typ.Static_List (S);
+                  exit;
+               end if;
+            end loop;
+
+         when Attribute_As_Dynamic_List =>
+            Default_Value := Typ.Dynamic_Default;
+      end case;
 
       if Default_Only then
          return Default_Value.all;
@@ -2461,7 +2636,9 @@ package body Project_Properties is
      (Kernel  : access Kernel_Handle_Record'Class;
       Project : Project_Type;
       Attr    : Attribute_Description_Access;
-      Default_Only : Boolean := False)
+      Index   : String := "";
+      Default_Only : Boolean := False;
+      Ignore_Editor : Boolean := False)
       return GNAT.OS_Lib.String_List
    is
       Result : String_List_Access;
@@ -2486,7 +2663,18 @@ package body Project_Properties is
          end if;
       end Save_Value;
 
+      Attr_Type : Attribute_Type;
    begin
+      --  First choice: if the attribute is being edited, use that value
+      if not Ignore_Editor
+        and then not Default_Only
+        and then Attr.Editor /= null
+      then
+         return Get_Value_As_List (Attr.Editor, Index);
+      end if;
+
+      --  Else lookup in the project or in the default values
+
       if Attr.Pkg.all = "" and then Attr.Name.all = "languages" then
          return Get_Languages (Project, Recursive => False);
       end if;
@@ -2497,7 +2685,7 @@ package body Project_Properties is
               (Project   => Project,
                Attribute => Build (Package_Name   => Attr.Pkg.all,
                                    Attribute_Name => Attr.Name.all),
-               Index     => "");
+               Index     => Index);
          begin
             if Current'Length /= 0 then
                return Current;
@@ -2507,19 +2695,22 @@ package body Project_Properties is
       end if;
 
       --  Else get the default value
-      case Attr.Non_Index_Type.Typ is
+
+      Attr_Type := Get_Attribute_Type_From_Description (Attr, Index);
+
+      case Attr_Type.Typ is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Directory =>
 
-            if Attr.Non_Index_Type.Default.all = "" then
+            if Attr_Type.Default.all = "" then
                return GNAT.OS_Lib.String_List'(1 .. 0 => null);
             else
                --  Workaround fatal crash in GNAT
                declare
                   V : GNAT.OS_Lib.String_List (1 .. 1);
                begin
-                  V (1) := new String'(Attr.Non_Index_Type.Default.all);
+                  V (1) := new String'(Attr_Type.Default.all);
                   return V;
                end;
             end if;
@@ -2527,7 +2718,7 @@ package body Project_Properties is
          when Attribute_As_Static_List
               | Attribute_As_Dynamic_List =>
             For_Each_Item_In_List
-              (Kernel, Attr.Non_Index_Type, Save_Value'Unrestricted_Access);
+              (Kernel, Attr_Type, Save_Value'Unrestricted_Access);
 
             declare
                R : constant GNAT.OS_Lib.String_List := Result.all;
@@ -2553,7 +2744,10 @@ package body Project_Properties is
       Cell_X, Cell_Y : Gint;
       Row_Found : Boolean;
       Iter      : Gtk_Tree_Iter;
-      Tmp      : Integer;
+      Value_Ed  : Attribute_Editor;
+      Dialog    : Gtk_Dialog;
+      Button    : Gtk_Widget;
+      Typ       : Attribute_Type;
    begin
       if Get_Event_Type (Event) = Gdk_2button_Press
         and then Get_Button (Event) = 1
@@ -2565,30 +2759,75 @@ package body Project_Properties is
          if Row_Found then
             Iter := Get_Iter (Ed.Model, Path);
 
-            Tmp := Get_Index_In_Index_Types
-              (Ed.Attribute, Value => Get_String (Ed.Model, Iter, 0));
+            declare
+               Attribute_Index : constant String :=
+                 Get_String (Ed.Model, Iter, 0);
+            begin
+               Typ := Get_Attribute_Type_From_Description
+                 (Ed.Attribute, Index => Attribute_Index);
 
-            --  No need to open a dialog to edit simple string, this is done
-            --  in-line
-            if Ed.Attribute.Index_Types (Tmp).Typ.Typ /=
-              Attribute_As_String
-            then
-               declare
-                  Value : constant String := Create_Attribute_Dialog
-                    (Ed.Kernel,
-                     Project     => Ed.Project,
-                     Description => Ed.Attribute,
-                     Attr        => Ed.Attribute.Index_Types (Tmp).Typ,
-                     Index       => Get_String (Ed.Model, Iter, 0));
-               begin
-                  if Value /= "" then
-                     Set (Ed.Model, Iter, 1, Value);
+               if Ed.Attribute.Is_List then
+                  Gtk_New (Dialog,
+                           Title  => -"Enter new value",
+                           Parent => Get_Current_Window (Ed.Kernel),
+                           Flags  => Modal or Destroy_With_Parent);
+                  Value_Ed := Create_Widget_Attribute
+                    (Kernel          => Ed.Kernel,
+                     Project         => Ed.Project,
+                     Description     => Ed.Attribute,
+                     Attribute_Index => Attribute_Index,
+                     Path_Widget     => Ed.Path_Widget,
+                     Is_List         => True);
+                  Pack_Start (Get_Vbox (Dialog), Value_Ed,
+                              Expand => True, Fill => True);
+                  Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+                  Grab_Default (Button);
+                  Button := Add_Button
+                    (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+                  Show_All (Dialog);
+
+                  case Run (Dialog) is
+                     when Gtk_Response_OK =>
+                        for C in Ed.Current_Values'Range loop
+                           if Ed.Current_Values (C).Index.all =
+                             Attribute_Index
+                           then
+                              Free (Ed.Current_Values (C).Values);
+                              Ed.Current_Values (C).Values :=
+                                new GNAT.OS_Lib.String_List'
+                                  (Get_Value_As_List (Value_Ed, ""));
+                              Set (Ed.Model, Iter, 1,
+                                   To_String
+                                     (Ed.Current_Values (C).Values.all));
+                           end if;
+                        end loop;
+                        Destroy (Dialog);
+                     when others =>
+                        Destroy (Dialog);
+                  end case;
+
+               else
+                  --  No need to open a dialog to edit simple string, this is
+                  --  done in-line
+                  if Typ.Typ /= Attribute_As_String then
+                     declare
+                        Value : constant String := Create_Attribute_Dialog
+                          (Kernel          => Ed.Kernel,
+                           Project         => Ed.Project,
+                           Description     => Ed.Attribute,
+                           Attribute_Index => Attribute_Index);
+                     begin
+                        if Value /= "" then
+                           Set (Ed.Model, Iter, 1, Value);
+                        end if;
+                     end;
+                  else
+                     Column := Get_Column (Ed.View, 1);
+                     Set_Cursor (Ed.View, Path, Column, Start_Editing => True);
                   end if;
-               end;
-            else
-               Column := Get_Column (Ed.View, 1);
-               Set_Cursor (Ed.View, Path, Column, Start_Editing => True);
-            end if;
+               end if;
+            end;
          end if;
 
          Path_Free (Path);
@@ -2596,6 +2835,23 @@ package body Project_Properties is
       end if;
       return False;
    end Edit_Indexed_Attribute;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (List : GNAT.OS_Lib.String_List) return String is
+      Str : Unbounded_String;
+   begin
+      for C in List'Range loop
+         Str := Str & List (C).all;
+         if C /= List'Last then
+            Str := Str & ',';
+         end if;
+      end loop;
+
+      return To_String (Str);
+   end To_String;
 
    -------------------------------------
    -- Create_Indexed_Attribute_Editor --
@@ -2607,9 +2863,9 @@ package body Project_Properties is
       Attr        : Attribute_Description_Access)
       return Indexed_Attribute_Editor
    is
-      Language_Col  : constant := 0;
-      Attribute_Col : constant := 1;
-      Editable_Col  : constant := 2;
+      Index_Col      : constant := 0;
+      Attribute_Col  : constant := 1;
+      Editable_Col   : constant := 2;
 
       use Gtk.Enums.String_List;
       Ed       : Indexed_Attribute_Editor;
@@ -2634,12 +2890,41 @@ package body Project_Properties is
          for C in Current_Index'Range loop
             if Case_Insensitive_Equal (Current_Index (C).all, Value) then
                Append (Ed.Model, Iter, Null_Iter);
-               Set (Ed.Model, Iter, Language_Col, Value);
-               Set (Ed.Model, Iter, Attribute_Col,
-                    Get_Current_Value
-                      (Project => Project, Attr  => Attr, Index => Value));
-               Set (Ed.Model, Iter, Editable_Col,
-                    Is_Any_String (Attr, Value));
+               Set (Ed.Model, Iter, Index_Col, Value);
+               Set (Ed.Model, Iter, Editable_Col, Is_Any_String (Attr, Value));
+
+               if Attr.Is_List then
+                  declare
+                     Current : constant GNAT.OS_Lib.String_List :=
+                       Get_Current_Value
+                         (Kernel   => Kernel,
+                          Project  => Project,
+                          Attr     => Attr,
+                          Index    => Value);
+                     Tmp : Indexed_Values_Array_Access;
+                  begin
+                     Set (Ed.Model, Iter, Attribute_Col, To_String (Current));
+
+                     Tmp := Ed.Current_Values;
+                     if Tmp /= null then
+                        Ed.Current_Values := new Indexed_Values_Array
+                          (1 .. Ed.Current_Values'Length + 1);
+                        Ed.Current_Values (Tmp'Range) := Tmp.all;
+                        Unchecked_Free (Tmp);
+                     else
+                        Ed.Current_Values := new Indexed_Values_Array (1 .. 1);
+                     end if;
+
+                     Ed.Current_Values (Ed.Current_Values'Last) :=
+                       (Index  => new String'(Value),
+                        Values => new GNAT.OS_Lib.String_List'(Current));
+--                     Free (Current);
+                  end;
+               else
+                  Set (Ed.Model, Iter, Attribute_Col,
+                       Get_Current_Value
+                         (Project => Project, Attr  => Attr, Index => Value));
+               end if;
             end if;
          end loop;
       end Value_Cb;
@@ -2652,6 +2937,10 @@ package body Project_Properties is
       Ed := new Indexed_Attribute_Editor_Record;
       Initialize_Vbox (Ed, Homogeneous => True);
 
+      Widget_Callback.Connect
+        (Ed, "destroy",
+         Widget_Callback.To_Marshaller (On_Indexed_Editor_Destroy'Access));
+
       Gtk_New (Scrolled);
       Pack_Start (Ed, Scrolled, Expand => True, Fill => True);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -2661,9 +2950,9 @@ package body Project_Properties is
       Ed.Project     := Project;
 
       Gtk_New (Ed.Model,
-               (Language_Col  => GType_String,
-                Attribute_Col => GType_String,
-                Editable_Col  => GType_Boolean));
+               (Index_Col      => GType_String,
+                Attribute_Col  => GType_String,
+                Editable_Col   => GType_Boolean));
 
       declare
          Current_Value : aliased GNAT.OS_Lib.String_List :=
@@ -2685,7 +2974,7 @@ package body Project_Properties is
                else
                   for C in Current_Value'Range loop
                      Append (Ed.Model, Iter, Null_Iter);
-                     Set (Ed.Model, Iter, Language_Col, Current_Value (C).all);
+                     Set (Ed.Model, Iter, Index_Col, Current_Value (C).all);
                      Set (Ed.Model, Iter, Attribute_Col,
                           Get_Current_Value
                             (Project => Project, Attr  => Attr,
@@ -2717,9 +3006,10 @@ package body Project_Properties is
       end if;
       Col_Number := Append_Column (Ed.View, Col);
       Pack_Start (Col, Text, True);
-      Add_Attribute (Col, Text, "text", Language_Col);
-      Set_Sort_Column_Id (Col, Language_Col);
+      Add_Attribute (Col, Text, "text", Index_Col);
+      Set_Sort_Column_Id (Col, Index_Col);
       Clicked (Col);
+      Set_Sort_Column_Id (Col, -1);
 
       Gtk_New (Col);
       Set_Resizable (Col, True);
@@ -2732,7 +3022,7 @@ package body Project_Properties is
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "text", Attribute_Col);
       Add_Attribute (Col, Text, "editable", Editable_Col);
-      Set_Sort_Column_Id (Col, Attribute_Col);
+--      Set_Sort_Column_Id (Col, Attribute_Col);
 
       Set_Editable_And_Callback (Ed.Model, Text, Attribute_Col);
 
@@ -2782,8 +3072,8 @@ package body Project_Properties is
            (Create_Indexed_Attribute_Editor (Kernel, Project, Attr));
       else
          Attr.Editor := Create_Widget_Attribute
-           (Kernel, Project, Attr, Attr.Non_Index_Type,
-            Path_Widget, Attr.Is_List);
+           (Kernel, Project, Attr, Attribute_Index => "",
+            Path_Widget => Path_Widget, Is_List => Attr.Is_List);
       end if;
 
       if Attr.Editor /= null then
@@ -3181,6 +3471,7 @@ package body Project_Properties is
                   else
                      Generate_Project
                        (Attr.Editor, Project, Scenario_Variables, Changed);
+                     Attr.Editor := null;
                   end if;
                end loop;
             end loop;
