@@ -81,6 +81,7 @@ package body Codefix.Formal_Errors is
       Match (Matcher, Message, Matches);
 
       if Matches (0) = No_Match then
+         Free (This);
          This := Invalid_Error_Message;
          return;
       end if;
@@ -150,7 +151,7 @@ package body Codefix.Formal_Errors is
       Old_Word    : Word_Cursor;
    begin
       if Str_Red /= "" then
-         Old_Word := (File_Cursor (Message)
+         Old_Word := (Clone (File_Cursor (Message))
                       with new String'(Str_Red), Format_Red);
 
          if Caption = "" then
@@ -167,7 +168,7 @@ package body Codefix.Formal_Errors is
             Set_Caption (New_Command, Caption);
          end if;
       else
-         Old_Word := (File_Cursor (Message)
+         Old_Word := (Clone (File_Cursor (Message))
                       with new String'("(^[\w]+)"), Regular_Expression);
 
          if Caption = "" then
@@ -182,6 +183,8 @@ package body Codefix.Formal_Errors is
       Initialize (New_Command, Current_Text, Old_Word, Str_Expected);
 
       Append (Result, New_Command);
+
+      Free (Old_Word);
 
       return Result;
    end Should_Be;
@@ -215,11 +218,12 @@ package body Codefix.Formal_Errors is
 
       Second_Cursor.Col := Matches (1).First;
 
-      Word1 := (File_Cursor (Message)
-               with new String'(First_String), Text_Ascii);
+      Word1 := (Clone (File_Cursor (Message))
+                with new String'(First_String), Text_Ascii);
 
 
-      Word2 := (Second_Cursor with new String'(Second_String), Text_Ascii);
+      Word2 := (Clone (Second_Cursor)
+                with new String'(Second_String), Text_Ascii);
 
       Initialize (New_Command, Current_Text, Word1, Word2);
 
@@ -228,6 +232,9 @@ package body Codefix.Formal_Errors is
          "Invert """ & First_String & """ and """ & Second_String & """");
 
       Append (Result, New_Command);
+
+      Free (Word1);
+      Free (Word2);
 
       return Result;
    end Wrong_Order;
@@ -248,7 +255,7 @@ package body Codefix.Formal_Errors is
       Result       : Solution_List;
    begin
 
-      Word := (File_Cursor (Message)
+      Word := (Clone (File_Cursor (Message))
                with new String'(String_Expected), Text_Ascii);
 
       Initialize (New_Command, Current_Text, Word, Add_Spaces, Position);
@@ -258,6 +265,8 @@ package body Codefix.Formal_Errors is
          "Add expected string """ & String_Expected & """");
 
       Append (Result, New_Command);
+
+      Free (Word);
 
       return Result;
    end Expected;
@@ -276,8 +285,7 @@ package body Codefix.Formal_Errors is
       Word         : Word_Cursor;
       Result       : Solution_List;
    begin
-
-      Word := (File_Cursor (Message)
+      Word := (Clone (File_Cursor (Message))
                with new String'(String_Unexpected), Mode);
 
       Initialize (New_Command, Current_Text, Word);
@@ -287,6 +295,8 @@ package body Codefix.Formal_Errors is
          "Remove unexpected word """ & String_Unexpected & """");
 
       Append (Result, New_Command);
+
+      Free (Word);
 
       return Result;
    end Unexpected;
@@ -322,8 +332,8 @@ package body Codefix.Formal_Errors is
          end case;
       end Closest;
 
-      New_Command : Replace_Word_Cmd;
-      Result      : Solution_List;
+      New_Command   : Replace_Word_Cmd;
+      Result        : Solution_List;
       Line_Cursor   : File_Cursor := File_Cursor (Message);
       Column_Chosen : Natural;
       Word          : Word_Cursor;
@@ -338,7 +348,7 @@ package body Codefix.Formal_Errors is
       end if;
 
       Word :=
-        (Line_Cursor with
+        (Clone (Line_Cursor) with
          String_Match => new String'("(^[\s]*)"),
          Mode         => Regular_Expression);
 
@@ -358,9 +368,9 @@ package body Codefix.Formal_Errors is
          "Move begin of instruction to column " &
            Integer'Image (Column_Chosen));
 
-      --      Free (Str_Red);
-
       Append (Result, New_Command);
+
+      Free (Word);
 
       return Result;
    end Wrong_Column;
@@ -380,7 +390,7 @@ package body Codefix.Formal_Errors is
    begin
       Word_With := (Line => 0,
                     Col => 1,
-                    File_Name => Cursor.File_Name,
+                    File_Name => Clone (Cursor.File_Name),
                     String_Match => new String'
                       ("with " & Missing_Clause
                        & "; use " & Missing_Clause & ";"),
@@ -394,6 +404,8 @@ package body Codefix.Formal_Errors is
          """ at the begining of the file");
 
       Append (Result, New_Command);
+
+      Free (Word_With);
 
       return Result;
    end With_Clause_Missing;
@@ -571,13 +583,15 @@ package body Codefix.Formal_Errors is
             declare
                New_Command : Remove_Pkg_Clauses_Cmd;
                With_Cursor : Word_Cursor :=
-                 (File_Cursor (Cursor) with new String'(Name), Text_Ascii);
+                 (Clone (File_Cursor (Cursor))
+                  with new String'(Name), Text_Ascii);
             begin
                Initialize (New_Command, Current_Text, With_Cursor);
                Set_Caption
                  (New_Command,
                   "Remove all clauses for package " & Name);
                Append (Result, New_Command);
+               Free (With_Cursor);
             end;
 
          when others =>
@@ -598,12 +612,12 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Solution_List
    is
-      Begin_Cursor : File_Cursor := File_Cursor (Cursor);
+      Begin_Cursor  : File_Cursor := File_Cursor (Cursor);
       New_Command   : Move_Word_Cmd;
       Result        : Solution_List;
       Pragma_Cursor : Word_Cursor;
    begin
-      Pragma_Cursor := (File_Cursor (Cursor) with
+      Pragma_Cursor := (Clone (File_Cursor (Cursor)) with
                         String_Match => new String'
                           ("(pragma[\b]*\([^\)*]\)[\b]*;)"),
                         Mode => Regular_Expression);
@@ -616,6 +630,8 @@ package body Codefix.Formal_Errors is
       Set_Caption
         (New_Command,
          "Move the pragma to the beginnig of the file");
+
+      Free (Pragma_Cursor);
 
       return Result;
    end First_Line_Pragma;
@@ -678,7 +694,7 @@ package body Codefix.Formal_Errors is
             end loop;
 
             Word :=
-              (File_Cursor (Error_Cursor) with
+              (Clone (File_Cursor (Error_Cursor)) with
                String_Match => new String'(Str_Array (Index_Str).all & "."),
                Mode         => Text_Ascii);
 
@@ -690,6 +706,8 @@ package body Codefix.Formal_Errors is
                  Str_Array (Index_Str).all & """");
 
             Append (Result, New_Command);
+
+            Free (Word);
 
             Index_Str := Index_Str + 1;
             Cursor_Node := Next (Cursor_Node);
@@ -739,7 +757,7 @@ package body Codefix.Formal_Errors is
         (Body_Name, Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
 
       With_Cursor :=
-        (File_Cursor (Cursor) with
+        (Clone (File_Cursor (Cursor)) with
          String_Match => null,
          Mode         => Text_Ascii);
 
@@ -756,8 +774,9 @@ package body Codefix.Formal_Errors is
 
       Append (Result, New_Command);
 
-      return Result;
+      Free (With_Cursor);
 
+      return Result;
    end Move_With_To_Body;
 
    ---------------------

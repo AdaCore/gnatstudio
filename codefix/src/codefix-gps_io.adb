@@ -213,6 +213,7 @@ package body Codefix.GPS_Io is
          Line_Str := new String'(Get_Line (This, Insert_Position));
          Insert_Position.Col := Line_Str'Last + 1;
          Replace (This, Insert_Position, 0, EOL_Str & New_Line);
+         Free (Line_Str);
       end if;
    end Add_Line;
 
@@ -310,8 +311,6 @@ package body Codefix.GPS_Io is
       Current_Index := File'First;
       Old_Index := Current_Index;
 
-      --  ??? In future, this operation should be made by diff utils
-
       while Current_Index <= File'Last loop
          Skip_To_Char (File.all, Current_Index, ASCII.LF);
 
@@ -341,8 +340,8 @@ package body Codefix.GPS_Io is
             & Find_Source_File
                 (This.Kernel, Get_File_Name (This))));
 
-
       This.File_Modified.all := False;
+      Free (File);
 
    end Update;
 

@@ -1718,6 +1718,8 @@ package body Codefix.Errors_Parser is
       end if;
 
       Concat (Solutions, Make_Conformant (Current_Text, Message, Spec_Cursor));
+
+      Free (Spec_Cursor);
    end Fix;
 begin
    Add_Parser (new Agregate_Misspelling);

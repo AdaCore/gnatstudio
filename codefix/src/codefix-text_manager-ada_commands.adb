@@ -114,6 +114,8 @@ package body Codefix.Text_Manager.Ada_Commands is
          Size);
 
       Free (Word_Chosen);
+      Free (Line);
+      Free (Cursor);
 
    end Execute;
 
@@ -436,6 +438,11 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Get_New_Mark (Current_Text, Body_Begin));
       This.Body_End := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Body_End));
+
+      Free (Spec_Begin);
+      Free (Spec_End);
+      Free (Body_Begin);
+      Free (Body_End);
    end Initialize;
 
    procedure Execute
@@ -499,6 +506,10 @@ package body Codefix.Text_Manager.Ada_Commands is
          Unchecked_Assign (New_Extract, Body_Extract);
       end if;
 
+      Free (Spec_Begin);
+      Free (Spec_End);
+      Free (Body_Begin);
+      Free (Body_End);
    end Execute;
 
    procedure Free (This : in out Remove_Entity_Cmd) is
@@ -544,6 +555,8 @@ package body Codefix.Text_Manager.Ada_Commands is
          Position,
          "pragma " & This.Name.all & " (" & This.Argument.all & ");",
          Current_Text);
+
+      Free (Position);
    end Execute;
 
    procedure Free (This : in out Add_Pragma_Cmd) is
@@ -608,6 +621,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Assign (New_Extract, Work_Extract);
 
       Free (Work_Extract);
+      Free (Cursor);
    end Execute;
 
    procedure Free (This : in out Make_Constant_Cmd) is
@@ -695,6 +709,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Assign (New_Extract, Work_Extract);
 
       Free (Work_Extract);
+      Free (Cursor);
    end Execute;
 
    procedure Free (This : in out Remove_Parenthesis_Cmd) is
