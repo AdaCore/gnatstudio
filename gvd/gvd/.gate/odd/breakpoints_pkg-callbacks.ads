@@ -25,19 +25,7 @@ package Breakpoints_Pkg.Callbacks is
    procedure On_Add_Location_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Update_Location_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Advanced_Location_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Add_Watchpoint_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Update_Watchpoint_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Advanced_Watchpoint_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Load_Exception_List_Clicked
@@ -46,16 +34,13 @@ package Breakpoints_Pkg.Callbacks is
    procedure On_Add_Exception_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Update_Exception_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Advanced_Exception_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Remove_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_View_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Advanced_Location_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Ok_Bp_Clicked

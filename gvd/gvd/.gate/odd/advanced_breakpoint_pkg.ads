@@ -1,6 +1,6 @@
 with Gtk.Window; use Gtk.Window;
-with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Box; use Gtk.Box;
+with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Combo; use Gtk.Combo;
@@ -17,6 +17,7 @@ with Gtk.Check_Button; use Gtk.Check_Button;
 package Advanced_Breakpoint_Pkg is
 
    type Advanced_Breakpoint_Record is new Gtk_Window_Record with record
+      Vbox34 : Gtk_Vbox;
       Main_Notebook : Gtk_Notebook;
       Condition_Box : Gtk_Vbox;
       Condition_Frame : Gtk_Frame;
@@ -29,7 +30,7 @@ package Advanced_Breakpoint_Pkg is
       Label105 : Gtk_Label;
       Ignore_Count_Combo : Gtk_Spin_Button;
       Command_Frame : Gtk_Frame;
-      Vbox34 : Gtk_Vbox;
+      Vbox35 : Gtk_Vbox;
       Label106 : Gtk_Label;
       Scrolledwindow12 : Gtk_Scrolled_Window;
       Command_Descr : Gtk_Text;
@@ -50,6 +51,9 @@ package Advanced_Breakpoint_Pkg is
       Action_All : Gtk_Radio_Button;
       Set_Default : Gtk_Check_Button;
       Scope : Gtk_Label;
+      Hbuttonbox13 : Gtk_Hbutton_Box;
+      Apply : Gtk_Button;
+      Close : Gtk_Button;
    end record;
    type Advanced_Breakpoint_Access is access all Advanced_Breakpoint_Record'Class;
 

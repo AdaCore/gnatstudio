@@ -34,4 +34,26 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       null;
    end On_Stop_Record_Clicked;
 
+   ----------------------
+   -- On_Apply_Clicked --
+   ----------------------
+
+   procedure On_Apply_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Apply_Clicked;
+
+   ----------------------
+   -- On_Close_Clicked --
+   ----------------------
+
+   procedure On_Close_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Close_Clicked;
+
 end Advanced_Breakpoint_Pkg.Callbacks;

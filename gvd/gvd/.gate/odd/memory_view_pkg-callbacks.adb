@@ -33,7 +33,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Window_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Arg1 : Gdk_Rectangle := Gdk_Rectangle (To_Gint (Params, 1));
+      Arg1 : Address := To_Address (Params, 1);
    begin
       null;
    end On_Memory_View_Size_Allocate;
