@@ -72,6 +72,8 @@ package Debugger.Gdb is
       Dir         : String;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure Detect_Language (Debugger : access Gdb_Debugger);
+
    procedure Found_File_Name
      (Debugger    : access Gdb_Debugger;
       Str         : String;
@@ -325,10 +327,11 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Version  : out Natural);
 
-   function Line_Contains_Code
+   procedure Lines_With_Code
      (Debugger : access Gdb_Debugger;
       File     : VFS.Virtual_File;
-      Line     : Positive) return Line_Kind;
+      Result   : out Boolean;
+      Lines    : out Line_Array);
 
    function List_Breakpoints
      (Debugger : access Gdb_Debugger) return GVD.Types.Breakpoint_Array;
@@ -408,6 +411,7 @@ private
       Default_Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Default_Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
       Debuggee_Pid     : Integer := 0;
+      Has_Symbol_List  : Integer := -1;
    end record;
 
    procedure Internal_Parse_Value
