@@ -42,6 +42,7 @@ with Codefix.Graphics;       use Codefix.Graphics;
 with Codefix.GPS_Io;         use Codefix.GPS_Io;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
+with Codefix.Errors_Parser;  use Codefix.Errors_Parser;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 
@@ -109,32 +110,12 @@ package body Codefix_Module is
    is
       Mitem : constant Codefix_Menu_Item := Codefix_Menu_Item (Widget);
       pragma Unreferenced (Context);
-
-      Result          : Extract;
-      Success_Execute : Boolean;
    begin
-      Secured_Execute
-        (Mitem.Fix_Command.all,
+      Validate_And_Commit
+        (Codefix_Module_ID.Corrector.all,
          Codefix_Module_ID.Current_Text.all,
-         Result,
-         Success_Execute);
-
-      if Success_Execute then
-         Validate_And_Commit
-           (Codefix_Module_ID.Corrector.all,
-            Codefix_Module_ID.Current_Text.all,
-            Mitem.Error,
-            Mitem.Fix_Command.all);
-      else
-         Trace
-           (Me, "No more sense for " & Get_Message
-              (Get_Error_Message (Mitem.Error)));
-
-         Insert
-            (Codefix_Module_ID.Kernel,
-             "No more sense for " & Get_Message
-               (Get_Error_Message (Mitem.Error)));
-      end if;
+         Mitem.Error,
+         Mitem.Fix_Command.all);
 
       Remove_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
@@ -166,18 +147,17 @@ package body Codefix_Module is
       New_Action    : Action_Item;
 
    begin
-      Free (Codefix_Module_ID.Errors_Found.all);
-      Free (Codefix_Module_ID.Corrector.all);
-      Free (Codefix_Module_ID.Current_Text.all);
-      --  Free (Codefix_Module_ID.Errors_Found);
-      --  Free (Codefix_Module_ID.Corrector);
-      --  Free (Codefix_Module_ID.Current_Text);
+      Free (Codefix_Module_ID.Errors_Found);
+      Free (Codefix_Module_ID.Corrector);
+      Free (Codefix_Module_ID.Current_Text);
 
       Codefix_Module_ID.Errors_Found := new Compilation_Output;
       Codefix_Module_ID.Corrector := new Correction_Manager;
       Codefix_Module_ID.Current_Text := new GPS_Navigator;
 
       GPS_Navigator (Codefix_Module_ID.Current_Text.all).Kernel := Kernel;
+      Set_Error_Cb
+        (Codefix_Module_ID.Corrector.all, Execute_Corrupted_Cb'Access);
 
       Get_Last_Output
         (Compilation_Output
@@ -465,7 +445,7 @@ package body Codefix_Module is
             Assign (Str, Get_Caption (Data (Solution_Node)));
             Mitem.Fix_Command := new Text_Command'Class'
               (Data (Solution_Node));
-            Free (Str);
+            Codefix.Free (Str);
             Mitem.Error := Error;
             Context_Callback.Connect
               (Mitem,
@@ -480,5 +460,32 @@ package body Codefix_Module is
 
       return Menu;
    end Create_Submenu;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Id : in out Codefix_Module_ID_Record) is
+   begin
+      Free (Id.Current_Text);
+      Free (Id.Corrector);
+      Free (Id.Errors_Found);
+      Free_Parsers;
+      Destroy (Module_ID_Record (Id));
+   end Destroy;
+
+   --------------------------
+   -- Execute_Corrupted_Cb --
+   --------------------------
+
+   procedure Execute_Corrupted_Cb (Error_Message : String) is
+   begin
+      Trace
+        (Me, "Fix of current error is no longer pertinent");
+      Trace (Me, "Exception got: " & Error_Message);
+      Insert
+        (Codefix_Module_ID.Kernel,
+         -"Fix of current error is no longer pertinent");
+   end Execute_Corrupted_Cb;
 
 end Codefix_Module;
