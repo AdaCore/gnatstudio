@@ -26,8 +26,10 @@ with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with Diff_Utils2;                       use Diff_Utils2;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
+with Vdiff2_Module;                     use Vdiff2_Module;
 with Traces;                            use Traces;
 with VFS;                               use VFS;
+
 
 package body Vdiff2_Command is
 
@@ -87,6 +89,7 @@ package body Vdiff2_Command is
    is
       pragma Unreferenced (Event);
    begin
+      Trace (Me, "File1: "& Full_Name (Command.Last_Active_Diff.File1));
       return Execute (Command);
    end Execute;
 
@@ -105,6 +108,7 @@ package body Vdiff2_Command is
       Selected_File : Virtual_File;
 
    begin
+
       if Has_File_Information (File_Selection_Context_Access (Context))
         and then
           Has_Directory_Information (File_Selection_Context_Access (Context))
@@ -117,25 +121,28 @@ package body Vdiff2_Command is
          if Curr_Node /= Diff_Head_List.Null_Node then
             Diff := Data (Curr_Node);
 
-         elsif Command.Last_Active_Diff /= Null_Head then
+         else
             Diff := Command.Last_Active_Diff;
          end if;
+      else
+         Diff := Command.Last_Active_Diff;
+      end if;
 
-         if Diff /= Null_Head then
-            Trace (Me, "Execute Action");
-            Command.Action (Command.Kernel, Diff);
+      if Diff /= Null_Head then
+         Trace (Me, "Execute Action");
+         Command.Action (Command.Kernel, Diff);
 
-            if Diff.List = Diff_Chunk_List.Null_List then
-               Remove_Nodes (Command.List_Diff.all,
+         if Diff.List = Diff_Chunk_List.Null_List then
+            Remove_Nodes (Command.List_Diff.all,
                              Prev (Command.List_Diff.all, Curr_Node),
                              Curr_Node);
-               Diff := Null_Head;
-            else
-               Set_Data (Curr_Node, Diff);
-            end if;
+            Diff := Null_Head;
+         else
+            Set_Data (Curr_Node, Diff);
          end if;
       end if;
-      Command.Last_Active_Diff := Diff;
+
+      Init_Prev_Diff_Cmd (Diff);
       return Commands.Success;
    exception
       when others =>
