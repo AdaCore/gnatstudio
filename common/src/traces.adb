@@ -83,8 +83,7 @@ package body Traces is
    Default_Activation : Boolean := False;
    --  Default activation status for debug handles
 
-   function Find_Handle (Unit_Name_Upper_Case : String)
-      return Debug_Handle;
+   function Find_Handle (Unit_Name_Upper_Case : String) return Debug_Handle;
    --  Return the debug handle associated with Unit_Name_Upper_Case,
    --  or null if there is none. The case of Unit_Name_Upper_Case is
    --  not changed.
@@ -93,10 +92,10 @@ package body Traces is
    --  can access it at the same time.
 
    procedure Log
-     (Handle : Debug_Handle;
-      Message : String;
-      Location : String := GNAT.Source_Info.Source_Location;
-      Entity   : String := GNAT.Source_Info.Enclosing_Entity;
+     (Handle        : Debug_Handle;
+      Message       : String;
+      Location      : String := GNAT.Source_Info.Source_Location;
+      Entity        : String := GNAT.Source_Info.Enclosing_Entity;
       Message_Color : String := Default_Fg);
    --  Log a message to Handle unconditionally.
 
@@ -167,7 +166,7 @@ package body Traces is
       Default   : Default_Activation_Status := From_Config;
       Finalize  : Boolean := True) return Debug_Handle
    is
-      Tmp : Debug_Handle := null;
+      Tmp        : Debug_Handle    := null;
       Upper_Case : constant String := To_Upper (Unit_Name);
    begin
       if Debug_Mode then
@@ -267,8 +266,7 @@ package body Traces is
             end if;
 
          elsif Message_If_Success'Length /= 0 then
-            Log (Handle, Message_If_Success,
-                 Location, Entity);
+            Log (Handle, Message_If_Success, Location, Entity);
          end if;
       end if;
    end Assert;
@@ -288,7 +286,12 @@ package body Traces is
 
    function Active (Handle : Debug_Handle) return Boolean is
    begin
-      return Handle.Active;
+      --  ??? work around an elaboration problem
+      if Handle = null then
+         return False;
+      else
+         return Handle.Active;
+      end if;
    end Active;
 
    -----------------------
@@ -312,10 +315,7 @@ package body Traces is
       Dur : Integer;
    begin
       Dur := Integer ((T - Handle.Timer) * 1000);
-      Put (Handle.Stream.all,
-           "(elapsed:"
-           & Integer'Image (Dur)
-           & "ms)");
+      Put (Handle.Stream.all, "(elapsed:" & Integer'Image (Dur) & "ms)");
       Handle.Timer := T;
    end Put_Elapsed_Time;
 
@@ -330,8 +330,7 @@ package body Traces is
       Call_Chain (Tracebacks, Len);
       Put (Handle.Stream.all, "(callstack: ");
       for J in Tracebacks'First .. Len loop
-         Put (Handle.Stream.all,
-              System.Address_Image (Tracebacks (J)) & ' ');
+         Put (Handle.Stream.all, System.Address_Image (Tracebacks (J)) & ' ');
       end loop;
       Put (Handle.Stream.all, ')');
    end Put_Stack_Trace;
@@ -340,11 +339,12 @@ package body Traces is
    -- Log --
    ---------
 
-   procedure Log (Handle   : Debug_Handle;
-                  Message  : String;
-                  Location : String := GNAT.Source_Info.Source_Location;
-                  Entity   : String := GNAT.Source_Info.Enclosing_Entity;
-                  Message_Color : String := Default_Fg)
+   procedure Log
+     (Handle        : Debug_Handle;
+      Message       : String;
+      Location      : String := GNAT.Source_Info.Source_Location;
+      Entity        : String := GNAT.Source_Info.Enclosing_Entity;
+      Message_Color : String := Default_Fg)
    is
       Start, Last : Positive;
       Continuation : constant String := '_' & Handle.Name.all & "_ ";
@@ -451,7 +451,7 @@ package body Traces is
 
    function Config_File
      (Filename : String;
-      Default : String) return String
+      Default  : String) return String
    is
       Env  : String_Access := Getenv (Config_File_Environment);
       Home : String_Access;
