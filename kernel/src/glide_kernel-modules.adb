@@ -22,6 +22,8 @@
 with Gtk.Image_Menu_Item;
 pragma Warnings (Off, Gtk.Image_Menu_Item);
 
+with GVD;               use GVD;
+
 with GUI_Utils;         use GUI_Utils;
 with Gdk.Dnd;           use Gdk.Dnd;
 with Gdk.Event;         use Gdk.Event;
@@ -99,16 +101,18 @@ package body Glide_Kernel.Modules is
       Command : Non_Interactive_Action);
    --  Execute a single command.
 
-   procedure Create_Menu
+   function Menu_Button_Press
      (Widget  : access GObject_Record'Class;
-      Data    : Menu_Factory_User_Data);
+      Event   : Gdk_Event;
+      Data    : Menu_Factory_User_Data) return Boolean;
    --  Create a menu using the data in Factory.
 
    package Command_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Non_Interactive_Action);
 
-   package Menu_Factory_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Menu_Factory_User_Data);
+   package Menu_Factory_Return_Callback is
+   new Gtk.Handlers.User_Return_Callback
+     (Glib.Object.GObject_Record, Boolean, Menu_Factory_User_Data);
 
    ---------------------
    -- Compute_Tooltip --
@@ -634,13 +638,14 @@ package body Glide_Kernel.Modules is
       return Item;
    end Register_Menu;
 
-   -----------------
-   -- Create_Menu --
-   -----------------
+   -----------------------
+   -- Menu_Button_Press --
+   -----------------------
 
-   procedure Create_Menu
-     (Widget : access GObject_Record'Class;
-      Data   : Menu_Factory_User_Data)
+   function Menu_Button_Press
+     (Widget  : access GObject_Record'Class;
+      Event   : Gdk_Event;
+      Data    : Menu_Factory_User_Data) return Boolean
    is
       pragma Unreferenced (Widget);
 
@@ -660,7 +665,7 @@ package body Glide_Kernel.Modules is
 
    begin
       --  Remove all items in the menu.
-
+      Ref (Data.Menu);
       Forall (Data.Menu, Remove_Item'Unrestricted_Access);
 
       --  Unref the previous context used for a global or contextual menu,
@@ -682,11 +687,23 @@ package body Glide_Kernel.Modules is
         (Data.Kernel, Data.Kernel.Last_Context_For_Contextual, Data.Menu);
       Show_All (Data.Menu);
 
+      --  Hack around a problem in the generation of time for button press
+      --  events in gtk+-2.4.13.
+      --  ??? Would be nice to investigate more and fix this bug.
+      --  ??? Check whether this bug is specific to Windows or to gtk+-2.4
+
+      if Host = Windows then
+         Set_Time (Event, Get_Time (Event) + 500);
+      end if;
+
+      return False;
+
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
-   end Create_Menu;
+         return False;
+   end Menu_Button_Press;
 
    ---------------------------
    -- Register_Dynamic_Menu --
@@ -729,9 +746,10 @@ package body Glide_Kernel.Modules is
       Set_Submenu (Item, Menu);
 
       if Factory /= null then
-         Menu_Factory_Callback.Connect
-           (Menu, "map",
-            Menu_Factory_Callback.To_Marshaller (Create_Menu'Access),
+         Menu_Factory_Return_Callback.Connect
+           (Item, "button_press_event",
+            Menu_Factory_Return_Callback.To_Marshaller
+              (Menu_Button_Press'Access),
             User_Data => (Kernel_Handle (Kernel), Factory, Menu));
       end if;
    end Register_Dynamic_Menu;
