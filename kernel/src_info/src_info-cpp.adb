@@ -832,6 +832,7 @@ package body Src_Info.CPP is
       when others   => -- unexpected exception
          Free (P);
          Free (Module_Typedefs);
+         Release_Cursor (Handler.SN_Table (FIL));
          --  ??? Here we probably want to report the unexpected exception
          --  and continue to work further, but currently we reraise that
          --  exception
@@ -4671,7 +4672,7 @@ package body Src_Info.CPP is
                         & " for member function "
                         & FU_Tab.Buffer (FU_Tab.Name.First ..
                            FU_Tab.Name.Last));
-                     return;
+                     exit;
                   end if;
 
                   Free (Desc);
@@ -4754,7 +4755,7 @@ package body Src_Info.CPP is
                Fail ("unable to create declaration for local variable " &
                  Var.Buffer (Var.Name.First .. Var.Name.Last));
                Free (Var);
-               return;
+               exit;
             end if;
 
             Process_Local_Variable
