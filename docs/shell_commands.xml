@@ -134,6 +134,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
      <description>Returns the current context in GPS. This is the currently selected file, line, column, project,... depending on what window is currently active</description>
      <see_also name="GPS.Editor.get_line()"/>
      <see_also name="GPS.Editor.*: Most of these functions apply to the current editor" />
+     <see_also name="GPS.MDI.current(): Access the current window" />
   </shell_doc>
 
   <shell_doc name="GPS.compute_xref">
@@ -1979,41 +1980,42 @@ The specific list depends on the hook type</param>
     ###################################################################-->
 
   <shell_doc name="GPS.MDI">
-    <description>Represents GPS's Multiple Document Interface</description>
+    <description>Represents GPS's Multiple Document Interface. This gives access to general graphical commands for GPS, as well as control over the current layout of the windows within GPS</description>
+    <see_also name="GPS.MDIWindow" />
   </shell_doc>
 
-  <shell_doc name="GPS.split_horizontally" real_name="GPS.MDI.split_horizontally">
-     <param name="reuse" default="false">A boolean</param>
-     <description>Split the current window in two parts horizontally (side by side). If reuse is true, attempt to reuse an existing space</description>
+  <shell_doc name="GPS.tile" real_name="GPS.MDI.tile">
+     <param name="vertically" default="True">A boolean</param>
+     <description>Tile the windows in the central area either horizontally or vertically</description>
   </shell_doc>
 
-  <shell_doc name="GPS.split_vertically" real_name="GPS.MDI.split_vertically">
-     <param name="reuse" default="false">A boolean</param>
-     <description>Split the current window in two parts vertically (on top of one another). If reuse is true, attempt to reuse an existing space</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.tile_horizontally" real_name="GPS.MDI.tile_horizontally">
-     <description>Tile the windows in the central area horizontally</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.tile_vertically" real_name="GPS.MDI.tile_vertically">
-     <description>Tile the windows in the central area vertically</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.maximize_windows" real_name="GPS.MDI.maximize_windows">
+  <shell_doc name="GPS.maximize" real_name="GPS.MDI.maximize">
      <description>Maximize all windows in the central area</description>
   </shell_doc>
 
-  <shell_doc name="GPS.unmaximize_windows" real_name="GPS.MDI.unmaximize_windows">
+  <shell_doc name="GPS.unmaximize" real_name="GPS.MDI.unmaximize">
      <description>Unmaximize all windows in the central area</description>
   </shell_doc>
 
-  <shell_doc name="GPS.single_window" real_name="GPS.MDI.single_window">
-     <description>Unsplit the central area of GPS, so that only one window is visible</description>
+  <shell_doc name="GPS.cascade" real_name="GPS.MDI.cascade">
+     <description>Cascade all windows in the central area, so that at least part of each one is visible</description>
   </shell_doc>
 
-  <shell_doc nam="GPS.clone_window" real_name="GPS.MDI.clone_window">
-     <description>Create a duplicate of the current window if possible. Not all windows support this operation</description>
+  <shell_doc name="GPS.get" real_name="GPS.MDI.get">
+     <param name="name">A string</param>
+     <return>An instance of GPS.MDIWindow</return>
+     <description>Return the window whose name is name. If there is no such window, an error is raised</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.get_by_child" real_name="GPS.MDI.get_by_child">
+     <param name="child">An instance of GPS.GUI</param>
+     <return>An instance of GPS.MDIWindow</return>
+     <description>Return the window that contains child, or raise an error if there is none</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.current" real_name="GPS.MDI.current">
+     <return>An instance of GPS.MDIWindow</return>
+     <description>Return the window that currently has the focus, or raise an error if there is none</description>
   </shell_doc>
 
   <shell_doc name="GPS.dialog" real_name="GPS.MDI.dialog">
@@ -2052,6 +2054,84 @@ If the force parameter is false, then a confirmation dialog is displayed so that
   <shell_doc name="GPS.exit" real_name="GPS.MDI.exit">
       <param name="force" default="false">A boolean</param>
       <description>Exit GPS. If there are unsaved changes, a dialog is first displayed to ask whether these should be saved. If the user cancels the operation through the dialog, GPS will not exit. If force is true, then no dialog is open, and nothing is saved</description>
+  </shell_doc>
+
+
+
+  <!--#################################################################
+    ####   MDIWindow class
+    ###################################################################-->
+
+  <shell_doc name="GPS.MDIWindow">
+     <description>This class represents one of the windows currently displayed in GPS. This includes both the windows currently visible to the user, and the
+ones that are temporarily hidden, for instance because they are displayed below another window.
+Windows acts as containers for other widgets</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.__init__">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <description>Prevents the creation of instances of GPS.MDIWindow. This is done by calling the various subprograms in the GPS.MDI class</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.split">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <param name="vertically" default="True">A boolean</param>
+     <param name="reuse" default="False">A boolean</param>
+     <description>Split the window in two parts, either horizontally (side by side), or vertically (one below the other). If reuse is true, attempt to reuse an existing space rather than splitting the current window. This should be used to avoid ending up with too small windows</description>
+     <see_also name="GPS.MDIWindow.single()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.iconify">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <param name="iconify" default="True">A boolean</param>
+     <description>Iconify the window. This only works if windows are unmaximized within the MDI. If iconify is False, the window is de-iconified instead</description>
+     <see_also name="GPS.MDI.unmaximize()"/>
+  </shell_doc>
+     
+  <shell_doc name="GPS.MDIWindow.float">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <param name="float" default="True">A boolean</param>
+     <description>Float the window, ie create a new toplevel window to display it. It is then under control of the user's operating system or window manager. If float is False, the window is reintegrated within the GPS MDI instead</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.dock">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <param name="dock" default="True">A boolean</param>
+     <param name="side" default="bottom">One of "bottom", "top", "left", "right"</param>
+     <description>Dock the window in one of the sides of GPS main window. If dock is False, the window is put in the central area instead</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.single">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <description>If the window is in the central area of the MDI, then all other windows in the central area are unsplit and put below window, so that only the latter remains visible to the customer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.raise">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <description>Raise the window so that it becomes visible to the user</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.name">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <return>A string</return>
+     <description>Return the name of the window</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.next">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <param name="visible_only" default="True">A boolean</param>
+     <return>An instance of GPS.MDIWindow</return>
+     <description>Return the next window in the MDI, or window itself if there is no other window. If visible_only is true, then only the windows currently visible to the user are visible. This always returns floating windows</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.get_child">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <return>An instance of GPS.GUI</return>
+     <description>Return the child contained in the window. The returned value might be an instance of a subclass of GPS.GUI, if that window was created from a shell command</description>
+     <example lang="python">
+        Accessing the GPS.Console instance used for python can be done with:
+           GPS.MDI.get ("Python").get_child()
+     </example>
   </shell_doc>
 
   <!--#################################################################
