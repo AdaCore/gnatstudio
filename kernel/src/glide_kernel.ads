@@ -69,6 +69,8 @@ package Glide_Kernel is
    --    Emitted when the project has changed. This means that a new project
    --    has been loaded in Glide, and that all the previous settings and
    --    caches are now obsolete.
+   --    Note: when this signal is emitted, the project view hasn't necessarily
+   --    been created yet.
    --
    --  - "project_view_changed"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
