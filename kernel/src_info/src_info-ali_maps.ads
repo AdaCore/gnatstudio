@@ -92,7 +92,12 @@ private package Src_Info.ALI_Maps is
       Label                                    => 'l',
       Primitive_Operation                      => 'p',
       With_Line                                => 'w',
-      Subprogram_Parameter                     => 'z',
+      Subprogram_In_Parameter                  => '>',
+      Subprogram_In_Out_Parameter              => '=',
+      Subprogram_Out_Parameter                 => '<',
+      Subprogram_Access_Parameter              => '^',
+      Formal_Generic_Parameter                 => 'z',
+      Parent_Package                           => 'k',
       End_Of_Spec                              => 'e',
       End_Of_Body                              => 't');
 
