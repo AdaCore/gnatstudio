@@ -79,6 +79,11 @@ package Src_Editor_View is
    --  If Center is True, the view will scroll so that the cursor line is
    --  in the middle, otherwise only a minimal scrolling is performed.
 
+   procedure Center_Cursor (View  : access Source_View_Record);
+   --  Place the cursor within a small margin of the border of the view. This
+   --  will scroll the view, if needed, to show a small context of text around
+   --  the cursor.
+
    procedure Window_To_Buffer_Coords
      (View          : access Source_View_Record;
       X, Y          : Gint;
