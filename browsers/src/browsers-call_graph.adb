@@ -289,6 +289,10 @@ package body Browsers.Call_Graph is
    --  Create a callgraph for the entity described in the current kernel
    --  context (if any)
 
+   procedure On_Find_All_References
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Find all the references of the current entity.
+
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -1463,6 +1467,33 @@ package body Browsers.Call_Graph is
                 & Exception_Information (E));
    end On_Call_Graph;
 
+   ----------------------------
+   -- On_Find_All_References --
+   ----------------------------
+
+   procedure On_Find_All_References
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+
+   begin
+      --  ??? Should we display an error message if the current context does
+      --  not contain an entity ?
+
+      if Context /= null
+        and then Context.all in Entity_Selection_Context'Class
+      then
+         Find_All_References_Internal
+           (Kernel,
+            Get_Entity (Entity_Selection_Context_Access (Context)),
+            Category_Title => -All_Refs_Category,
+            Include_Writes => True,
+            Include_Reads  => True);
+      end if;
+   end On_Find_All_References;
+
    ---------------------
    -- Default_Factory --
    ---------------------
@@ -1522,7 +1553,11 @@ package body Browsers.Call_Graph is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Tools : constant String := '/' & (-"Tools");
+      Tools    : constant String := '/' & (-"Tools");
+      Navigate : constant String := "/_" & (-"Navigate");
+      Find_All : constant String := -"Find _All References";
+      Mitem    : Gtk_Menu_Item;
+
    begin
       Register_Module
         (Module                  => Call_Graph_Module_Id,
@@ -1536,6 +1571,13 @@ package body Browsers.Call_Graph is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
+      Register_Menu
+        (Kernel, Navigate, Find_All, "",
+         On_Find_All_References'Access);
+
+      Gtk_New (Mitem);
+      Register_Menu
+        (Kernel, Navigate, Mitem, Ref_Item => Find_All);
 
       Register_Command
         (Kernel,
