@@ -46,11 +46,11 @@ with Snames;   use Snames;
 with Basic_Types;      use Basic_Types;
 with Wizards;          use Wizards;
 with Glide_Kernel;     use Glide_Kernel;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Intl;       use Glide_Intl;
 with String_Utils;     use String_Utils;
+with Project_Viewers;  use Project_Viewers;
 
 package body Creation_Wizard is
 
