@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <Clean-project>
   <action name="build-clean-root-project">
-    <external>gnatclean "%PPs"</external>
+    <shell>Project.scenario_variables_cmd_line -X</shell>
+    <external>gnatclean "%PPs" %1</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
@@ -11,7 +12,8 @@
     <title>/Build/C_lean/_Root Project</title>
   </menu>
   <action name="build-clean-all-root-project">
-    <external>gnatclean -r "%PPs"</external>
+    <shell>Project.scenario_variables_cmd_line -X</shell>
+    <external>gnatclean -r "%PPs" %1</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
@@ -22,7 +24,8 @@
   </menu>
 
   <action name="build-clean-subproject">
-    <external>gnatclean "%pps"</external>
+    <shell>Project.scenario_variables_cmd_line -X</shell>
+    <external>gnatclean "%pps" %1</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
