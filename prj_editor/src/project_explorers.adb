@@ -381,7 +381,7 @@ package body Project_Explorers is
       Current_Node     : Gtk_Ctree_Node;
       Include_Entities : Boolean)
       return Gtk_Ctree_Node;
-   --  Jump to the node following Current_Node. This subprogram will not a
+   --  Jump to the node following Current_Node. This subprogram will perform a
    --  depth-first search, and eventually return all the nodes in Explorer.
 
    procedure Jump_To_Node
