@@ -786,12 +786,24 @@ package body Glide_Kernel is
    ------------------
 
    procedure Save_Desktop
-     (Handle : access Kernel_Handle_Record)
+     (Handle             : access Kernel_Handle_Record;
+      As_Default_Desktop : Boolean := False)
    is
+      function Get_Project_Name return String;
+      --  Return the project name to match in the file
+
+      function Get_Project_Name return String is
+      begin
+         if As_Default_Desktop then
+            return "";
+         else
+            return Project_Path (Get_Project (Handle));
+         end if;
+      end Get_Project_Name;
+
       MDI   : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant String := Handle.Home_Dir.all & "desktop";
-      Project_Name : constant String :=
-        Project_Path (Get_Project (Handle));
+      Project_Name : constant String := Get_Project_Name;
       File  : File_Type;
       N     : Node_Ptr;
       M     : Node_Ptr;
@@ -831,11 +843,13 @@ package body Glide_Kernel is
               and then M.Tag.all = "MDI"
               and then Get_Attribute (M, "project") /= Project_Name
             then
-               Add_Child (N, M);
+               Add_Child (N, Deep_Copy (M));
             end if;
 
             M := M.Next;
          end loop;
+
+         Free (Old);
       end if;
 
       --  Add the current content, indexed on the current project
@@ -912,6 +926,7 @@ package body Glide_Kernel is
         Project_Path (Get_Project (Handle));
       Child  : Node_Ptr;
       Desktop_Node : Node_Ptr;
+      Default_Desktop_Node : Node_Ptr;
       Width  : Gint := 640;
       Height : Gint := 480;
       X, Y   : Gint := -1;
@@ -923,7 +938,8 @@ package body Glide_Kernel is
       Main_Window.Desktop_Loaded := True;
 
       if Is_Regular_File (File) then
-         Trace (Me, "loading desktop file " & File);
+         Trace (Me, "loading desktop file " & File
+                & " Project=" & Project_Name);
          Node := Parse (File);
 
          if Node /= null then
@@ -932,10 +948,12 @@ package body Glide_Kernel is
 
          while Child /= null loop
             if Child.Tag /= null then
-               if Child.Tag.all = "MDI"
-                 and then Get_Attribute (Child, "project") = Project_Name
-               then
-                  Desktop_Node := Child;
+               if Child.Tag.all = "MDI" then
+                  if Get_Attribute (Child, "project") = "" then
+                     Default_Desktop_Node := Child;
+                  elsif Get_Attribute (Child, "project") = Project_Name then
+                     Desktop_Node := Child;
+                  end if;
                elsif Child.Tag.all = "Height" then
                   Height := Gint'Value (Child.Value.all);
                elsif Child.Tag.all = "Width" then
@@ -972,6 +990,10 @@ package body Glide_Kernel is
             Trace (Me, "loading desktop for " & Project_Name);
             Kernel_Desktop.Restore_Desktop
               (MDI, Desktop_Node, Kernel_Handle (Handle));
+         elsif Default_Desktop_Node /= null then
+            Trace (Me, "loading default desktop (from file)");
+            Kernel_Desktop.Restore_Desktop
+              (MDI, Default_Desktop_Node, Kernel_Handle (Handle));
          else
             Trace (Me, "loading default desktop");
             Kernel_Desktop.Restore_Desktop
@@ -979,7 +1001,8 @@ package body Glide_Kernel is
          end if;
 
          Free (Node);
-         return Desktop_Node /= null;
+         return Desktop_Node /= null
+           or else Default_Desktop_Node /= null;
 
       else
          Trace (Me, "loading default desktop");

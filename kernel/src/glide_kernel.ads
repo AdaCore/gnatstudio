@@ -78,8 +78,11 @@ package Glide_Kernel is
    --  if the default desktop is used.
 
    procedure Save_Desktop
-     (Handle : access Kernel_Handle_Record);
+     (Handle             : access Kernel_Handle_Record;
+      As_Default_Desktop : Boolean := False);
    --  Save the current desktop.
+   --  If As_Default_Desktop is true, then this desktop will be loaded any time
+   --  no other valid desktop is found in the future.
 
    function Load_Desktop (Handle : access Kernel_Handle_Record) return Boolean;
    --  Reload a saved desktop.
