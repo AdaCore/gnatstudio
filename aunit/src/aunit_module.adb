@@ -174,9 +174,10 @@ package body Aunit_Module is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Item : Gtk_Menu_Item;
-      Edit : constant String := '/' & (-"Edit") & '/';
+      Menu_Item    : Gtk_Menu_Item;
+      Edit         : constant String := '/' & (-"Edit") & '/';
       Unit_Testing : constant String := -"Unit Testing";
+
    begin
       Register_Menu (Kernel, Edit & Unit_Testing,
                      Ref_Item => -"Select All", Add_Before => False);
@@ -216,5 +217,4 @@ begin
       Priority                => Default_Priority,
       Initializer             => Initialize_Module'Access,
       Contextual_Menu_Handler => null);
-
 end Aunit_Module;
