@@ -44,8 +44,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Ada.Text_IO;               use Ada.Text_IO;
-
 with Log_Editor_Window_Pkg;     use Log_Editor_Window_Pkg;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -221,7 +219,7 @@ package body VCS_View_Pkg is
    --  Callback for toggling of "Hide up-to-date files".
 
    function Button_Press
-     (Explorer : access Gtk_Widget_Record'Class;
+     (View     : access Gtk_Widget_Record'Class;
        Event   : Gdk_Event)
       return Boolean;
    --  Callback for the "button_press" event.
@@ -248,6 +246,8 @@ package body VCS_View_Pkg is
       Iter     : Gtk_Tree_Iter;
       Success  : Boolean;
    begin
+      Clear (Explorer.Model);
+
       while not Is_Empty (L) loop
          if not Explorer.Hide_Up_To_Date
            or else Head (L).Status /= Up_To_Date
@@ -341,21 +341,15 @@ package body VCS_View_Pkg is
                --  We have found an entry in the cache with the corresponding
                --  information.
 
+               Found := True;
+
                if Override_Cache then
                   --  Enter the new file information into the cache.
-
-                  if String_List.Is_Empty (Head (Status_Temp).File_Name) then
-                     Put_Line ("neuneu eh !!");
-                  end if;
-
                   Replace_Head (Cache_Temp,
                                 Copy_File_Status (Head (Status_Temp)));
                end if;
 
-               Prepend (Explorer.Stored_Status,
-                        Copy_File_Status (Head (Cache_Temp)));
-
-               Found := True;
+               exit;
             end if;
 
             Cache_Temp := Next (Cache_Temp);
@@ -363,17 +357,48 @@ package body VCS_View_Pkg is
 
          --  If the status for this file was not found in the cache,
          --  add the information to the cache.
+
          if not Found then
             Prepend (Explorer.Cached_Status,
                      Copy_File_Status (Head (Status_Temp)));
-            Prepend (Explorer.Stored_Status,
-                     Copy_File_Status (Head (Status_Temp)));
+            Cache_Temp := Explorer.Cached_Status;
          end if;
+
+         --  The info that we want to display is now in Head (Cache_Temp),
+         --  if it already exists in Explorer.Stored_Status, we simply modify
+         --  the element, otherwise we add it to the list.
+
+         declare
+            New_Status         : File_Status_Record
+              := Copy_File_Status (Head (Cache_Temp));
+            New_File_Name      : String
+              := String_List.Head (New_Status.File_Name);
+            Temp_Stored_Status : File_Status_List.List
+              := Explorer.Stored_Status;
+         begin
+            Found := False;
+
+            while not Found
+              and then not Is_Empty (Temp_Stored_Status)
+            loop
+               if New_File_Name =
+                 String_List.Head (Head (Temp_Stored_Status).File_Name)
+               then
+                  Found := True;
+                  Replace_Head (Temp_Stored_Status, New_Status);
+               end if;
+
+               Temp_Stored_Status := Next (Temp_Stored_Status);
+            end loop;
+
+            if not Found then
+               Prepend (Explorer.Stored_Status, New_Status);
+            end if;
+         end;
 
          Status_Temp := Next (Status_Temp);
       end loop;
 
-      Clear (Explorer.Model);
       Refresh (Explorer);
    end Display_File_Status;
 
@@ -616,6 +641,7 @@ package body VCS_View_Pkg is
               Parameter.Log_Editor.Files,
               Get_Text (Parameter.Log_Editor),
               Parameter.VCS_Ref);
+      Get_Status (Parameter.VCS_Ref, Parameter.Log_Editor.Files);
       Close (Parameter.Log_Editor);
    end Log_Editor_Ok_Clicked;
 
@@ -927,7 +953,6 @@ package body VCS_View_Pkg is
       pragma Unreferenced (Item);
    begin
       Explorer.Hide_Up_To_Date := not Explorer.Hide_Up_To_Date;
-      Clear (Explorer.Model);
       Refresh (Explorer);
    end Change_Hide_Up_To_Date;
 
@@ -936,15 +961,19 @@ package body VCS_View_Pkg is
    ------------------
 
    function Button_Press
-     (Explorer : access Gtk_Widget_Record'Class;
+     (View     : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event)
      return Boolean
    is
-      Menu    : Gtk_Menu;
-      Check   : Gtk_Check_Menu_Item;
-      Mitem   : Gtk_Menu_Item;
-      Context : Selection_Context_Access
-        := Get_Current_Explorer_Context (VCS_View_Access (Explorer).Kernel);
+      Menu     : Gtk_Menu;
+      Check    : Gtk_Check_Menu_Item;
+      Mitem    : Gtk_Menu_Item;
+      Context  : File_Selection_Context_Access := new File_Selection_Context;
+
+      Files    : String_List.List;
+      Explorer : VCS_View_Access := VCS_View_Access (View);
+      Kernel   : Kernel_Handle := Explorer.Kernel;
+
    begin
       if Get_Button (Event) = 1 then
          return False;
@@ -952,19 +981,38 @@ package body VCS_View_Pkg is
 
       Gtk_New (Menu);
 
-      VCS_Contextual_Menu (Explorer, Context, Menu);
+      Files := Get_Selected_Files (Kernel);
+
+      if not String_List.Is_Empty (Files) then
+         declare
+            First_File : String := String_List.Head (Files);
+         begin
+            Set_Context_Information
+              (Context,
+               Kernel,
+               Get_Creator (Get_Current_Explorer_Context (Kernel)));
+            Set_File_Name_Information
+              (Context,
+               Dir_Name (First_File),
+               First_File);
+            VCS_Contextual_Menu (Explorer, Context, Menu);
+         end;
+      end if;
+
+      Destroy (Context.all);
+      String_List.Free (Files);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
 
       Gtk_New (Check, Label => -"Hide up-to-date files");
-      Set_Active (Check, VCS_View_Access (Explorer).Hide_Up_To_Date);
+      Set_Active (Check, Explorer.Hide_Up_To_Date);
       Append (Menu, Check);
 
       Check_VCS_View_Handler.Connect
         (Check, "activate",
          Check_VCS_View_Handler.To_Marshaller (Change_Hide_Up_To_Date'Access),
-         VCS_View_Access (Explorer));
+         Explorer);
       Show_All (Menu);
       Popup (Menu);
 
@@ -1054,17 +1102,18 @@ package body VCS_View_Pkg is
      (Kernel : Kernel_Handle)
      return String_List.List
    is
-      Explorer : VCS_View_Access := Get_Explorer (Kernel);
-      Result   : String_List.List;
+      Result         : String_List.List;
+      Focused_Child  : MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      Explorer_Child : MDI_Child
+        := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
    begin
-      if Explorer = null then
-         if Get_Current_File (Kernel) = "" then
-            return Result;
-         end if;
-
+      if Explorer_Child = Focused_Child
+        and then Explorer_Child /= null
+      then
+         Result := Get_Selected_Files
+           (VCS_View_Access (Get_Widget (Explorer_Child)));
+      elsif Get_Current_File (Kernel) /= "" then
          String_List.Append (Result, Get_Current_File (Kernel));
-      else
-         Result := Get_Selected_Files (Explorer);
       end if;
 
       return Result;
