@@ -288,12 +288,26 @@ package body Odd.Explorer is
                False, False);
          end if;
 
-         Node := Insert_Node
-           (Tree, Parent_Node, null,
-            Null_Array + Buffer (Matches (3).First .. Matches (3).Last), 5,
-            Package_Pixmap, Package_Mask,
-            null, null,
-            True, False);
+         if Matches (2) = No_Match then
+            Node := Insert_Node
+              (Tree, Parent_Node, null,
+               Null_Array + Buffer (Matches (3).First .. Matches (3).Last), 5,
+               Package_Pixmap, Package_Mask,
+               null, null,
+               True, False);
+         else
+            Node := Insert_Node
+              (Tree, Parent_Node, null,
+               Null_Array +
+                 (Buffer (Matches (3).First .. Matches (3).Last) & " (" &
+                  Reduce (Buffer (Matches (2).First .. Matches (2).Last)) &
+                  ")"),
+               5,
+               Package_Pixmap, Package_Mask,
+               null, null,
+               True, False);
+         end if;
+
          Row_Data_Explorer.Node_Set_Row_Data
            (Tree, Node, Get_Pos (Buffer, Matches (3).First));
          First := Matches (0).Last;
