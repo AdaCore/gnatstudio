@@ -371,7 +371,7 @@ be used for communicating with Emacs.
 @item Addition to contextual menus
 A module is free to add entries to the main menu bar or to any
 contextual menus within GPS.
-  
+
 Most of the time, a module will decide to add new entries depending on
 what the contextual menu applies to (the current context), although it
 might also decide to do that based on what module is displaying the
@@ -397,20 +397,39 @@ content accordingly. This is how the switches editor updates the
 project/directory/file it is showing when a new selection is done in
 the explorer.
 
-@item Mime actions
-As opposed to signals, mime actions should be used when only one
-module (whichever it is) should answer to the request. There is no way
-to know how many modules are connected to a signal, and thus will
-react when it is emitted. There is also no way to know in what order
-the callbacks will be reached.
-  
-When a module emits a mime action, the first module to act upon this
-will stop the propagation of the request. This is for instance used to
-open a file editor or a text window, while making sure that only one
-editor is open.
-  
-Modules have an associated priority, used to control the order in
-which the mime action handlers are called.
+@item hooks and action hooks
+Hooks are similar to the usual gtk+ signals.
+Each hook is a named collection of subprograms to be called when the hook is
+executed. Such hooks are executed by various parts of GPS when some actions
+take place, like reloading the project, loading a file,@dots
+
+These are the most powerful way for a module to react to actions taking place
+in other parts of GPS, and to act appropriately.
+
+In most cases, all the subprograms in a hook are executed in turn, and thus
+they all get a chance to act.
+
+However, in some other cases, the subprograms are only executed until one of
+them indicates that it has accomplished a useful action, and that no other
+subprogram from this hook should be called. These are called @b{action hooks}.
+This is the fundamental mechanism used by GPS to request for instance the
+edition of a file: the module that wishes to display a file executes the
+hook "open_file_action_hook" with the appropriate argument. At this point, all
+subprograms bound to this hook are executed, until one of them acknowledge that
+it knows how to edit this file (and hopefully opens an editor). Then no other
+subprogram from this hook is called, so that the file is not open multiple
+times.
+
+This mechanism is used for instance by the module that handles the external
+editors. It is setup so that it binds to the "open_file_action_hook" hook. Any
+time a file needs to be open, the callback from this module is called first.
+If the user has indicated that the external editor should always be used, this
+external editors module opens the appropriate editor, and stops the execution
+of the hook. However, if the user didn't wish to use an external editor, this
+module does nothing, so that the callback from the source editor module is
+called in turn, and can thus open the file itself.
+
+See @file{glide_kernel-hooks.ads} for more information on hooks.
 
 @end itemize
 
