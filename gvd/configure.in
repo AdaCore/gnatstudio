@@ -1,5 +1,5 @@
 AC_REVISION($Revision$)
-AC_INIT(gvd/odd.ads)
+AC_INIT(gvd/gvd.ads)
 
 ODD_MAJOR_VERSION=0
 ODD_MINOR_VERSION=6
