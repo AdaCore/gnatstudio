@@ -643,15 +643,6 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Selected_Link_Color),
          -"Browsers:General");
 
-      Selected_Item_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Selected-Item-Color",
-         Default => "#888888",
-         Blurb   => -"Color to use to draw the selected item",
-         Nick    => -"Selected item color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Selected_Item_Color),
-         -"Browsers:General");
-
       Parent_Linked_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Linked-Item-Color",
          Default => "#AAAAAA",

@@ -178,10 +178,11 @@ package Glide_Kernel.Preferences is
    Browsers_Link_Font       : Param_Spec_Font;
    Browsers_Link_Color      : Param_Spec_Color;
    Selected_Link_Color      : Param_Spec_Color;
-   Selected_Item_Color      : Param_Spec_Color;
    Parent_Linked_Item_Color : Param_Spec_Color;
    Child_Linked_Item_Color  : Param_Spec_Color;
    Browsers_Vertical_Layout : Param_Spec_Boolean;
+   Selected_Item_Color      : Param_Spec_Color
+     renames GVD.Preferences.Selected_Item_Color;
 
    Dep_Browser_Show_System_Files : Param_Spec_Boolean;
    Dep_Browser_Show_Implicit_Dep : Param_Spec_Boolean;
