@@ -42,6 +42,12 @@ package VCS.Unknown_VCS is
       Clear_Logs  : Boolean := False;
       Local       : Boolean := False);
 
+   procedure Get_Status_Dirs
+     (Rep         : access Unknown_VCS_Record;
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False) renames Get_Status;
+
    function Local_Get_Status
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)

@@ -38,6 +38,12 @@ package VCS.CVS is
       Clear_Logs  : Boolean := False;
       Local       : Boolean := False);
 
+   procedure Get_Status_Dirs
+     (Rep         : access CVS_Record;
+      Dirs        : String_List.List;
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False) renames Get_Status;
+
    function Local_Get_Status
      (Rep       : access CVS_Record;
       Filenames : String_List.List)

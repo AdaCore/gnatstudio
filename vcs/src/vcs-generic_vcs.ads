@@ -43,6 +43,12 @@ package VCS.Generic_VCS is
       Clear_Logs  : Boolean := False;
       Local       : Boolean := False);
 
+   procedure Get_Status_Dirs
+     (Rep         : access Generic_VCS_Record;
+      Dirs        : String_List.List;
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False);
+
    function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List)
@@ -133,6 +139,7 @@ private
 
    type Status_Parser_Record is record
       Regexp             : Pattern_Matcher_Access;
+      Matches_Num        : Natural := 0;
       Status_Identifiers : Status_Parser.List;
 
       File_Index           : Natural := 0;
@@ -146,7 +153,12 @@ private
       Commands : Action_Array;
       Labels   : Action_Array;
 
-      Status   : Status_Array_Access;
+      Current_Query_Files : String_List_Utils.String_List.List;
+      --  The files transmitted to the current "query status" command.
+      --  It is only needed to store these when the status parser for the
+      --  current query cannot locate files (ie File_Index = 0).
+
+      Status              : Status_Array_Access;
 
       Status_Parser       : Status_Parser_Record;
       Local_Status_Parser : Status_Parser_Record;
