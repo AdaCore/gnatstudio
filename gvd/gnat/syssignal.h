@@ -176,4 +176,29 @@ sigset_t sys_sigsetmask P_ ((sigset_t new_mask));
 #ifndef HAVE_STRSIGNAL
 /* strsignal is in sysdep.c */
 char *strsignal ();
+
+#if defined (HAVE_SIGPROCMASK)
+
+#define BLOCK_SIGNAL(sig) do			\
+{                                               \
+  sigset_t ES_mask;                             \
+  sigemptyset (&ES_mask);                       \
+  sigaddset (&ES_mask, sig);                    \
+  sigprocmask (SIG_BLOCK, &ES_mask, NULL);      \
+} while (0)              
+#define UNBLOCK_SIGNAL(sig) do			\
+{                                               \
+  sigset_t ES_mask;                             \
+  sigemptyset (&ES_mask);                       \
+  sigaddset (&ES_mask, sig);                    \
+  sigprocmask (SIG_UNBLOCK, &ES_mask, NULL);    \
+} while (0)            
+
+#else /* HAVE_SIGPROCMASK */
+
+#define BLOCK_SIGNAL(sig) 0
+#define UNBLOCK_SIGNAL(sig) 0
+
+#endif /* HAVE_SIGPROCMASK */
+
 #endif
