@@ -257,10 +257,11 @@ package body Projects is
                   return;
             end;
 
+            Normalize_Cases (Project);
+
             Create (File, Mode => Out_File, Name => Filename);
             Pretty_Print
               (Project => Project,
-               Eliminate_Empty_Case_Constructions => True,
                W_Char => Internal_Write_Char'Unrestricted_Access,
                W_Eol  => Internal_Write_Eol'Unrestricted_Access,
                W_Str  => Internal_Write_Str'Unrestricted_Access);
