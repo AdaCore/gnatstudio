@@ -175,6 +175,10 @@ int ada_pyinstance_check (PyObject* obj) {
   return PyInstance_Check (obj);
 }
 
+int ada_pymethod_check (PyObject* obj) {
+  return PyMethod_Check (obj);
+}
+
 PyTypeObject* ada_gettypeobject (PyObject* obj) {
   return (PyTypeObject*)(obj->ob_type);
 }
