@@ -8,7 +8,7 @@ The section on the project explorer (@ref{The Project Explorer}) has
 already given a brief overview of what the projects are, and the
 information they contain.
 
-This chapter will provide more in-depth information, and will describe
+This chapter provides more in-depth information, and describes
 how such projects can be created and maintained.
 
 @menu
@@ -30,26 +30,25 @@ This section describes what the projects are, and what information
 they contain.
 
 The most important thing to note is that the projects used by GPS are
-the same as the ones used by GNAT itself. Therefore, these are
-basically text files (usually with the extension @file{.gpr}), which
-can be edited either manually, with any text editor, or through the
-more advanced GPS interface.
+the same as the ones used by GNAT itself. These are text files
+(using the extension @file{.gpr}) which can be edited either manually, with
+any text editor, or through the more advanced GPS interface.
 
-The exact syntax of the project files is fully describes in the GNAT
-user's guide (@url{gnat_ug.html}) and GNAT Reference Manual
-(@url{gnat_rm.html}). This is recommended reading in any case if you
+The exact syntax of the project files is fully described in the GNAT
+User's Guide (@url{gnat_ug.html}) and GNAT Reference Manual
+(@url{gnat_rm.html}). This is a recommended reading in any case if you
 want to use the more advanced capabilities of the project files, which
 are not necessarily all supported by the graphical interface yet.
 
 GPS cannot edit graphically all the aspects of the project files
 (variables for instance are not editable as such, since the GUI makes
 their use less necessary). However, it can load any project file, even
-those that you have edited manually. In turn, you can manually edit
+those that you have edited manually. On the other hand, you can manually edit
 the project files created by GPS.
 
-In most cases, you won't have to edit the project files
-manually. Several graphical tools are provided, such as the project
-wizard (@ref{The project wizard}) and the properties editor(@ref{The
+You will usually not have to edit the project files manually, since several
+graphical tools are provided such as the project wizard
+(@ref{The project wizard}) and the properties editor(@ref{The
 project properties editor}).
 
 All the non graphical GNAT tools are project aware, meaning that the notion
@@ -64,7 +63,6 @@ and any change you make to the generated Makefiles will be lost the
 next time the tool is run.
 
 
-
 @subsection Contents of project files
 
 @noindent
@@ -72,11 +70,11 @@ The project files contain all the information that describe the
 organization of your source files, object files and executables.
 
 Generally, one project file will not be enough to describe complex
-organization. Therefore, one would in fact use a project hierarchy,
+organization. In this case, you will create and use a project hierarchy,
 with a root project importing other subprojects. Each of the projects
 and subprojects is responsible for its own set of sources (recompile
 them with the appropriate switches, put the resulting files in the
-right directories,...).
+right directories, ...).
 
 Each project contains the following information, among other things
 (see the GNAT user's guide for a full list)
@@ -107,9 +105,9 @@ Each project contains the following information, among other things
 
 @item @b{Object directory}:
    When the sources of the project are compiled, the resulting object
-   files are put into this object directory. There exist only one such
+   files are put into this object directory. There exist exactly one object
    directory for each project. If you need to split the object files
-   among multiple object directories, you must create multiple
+   among multiple object directories, you need to create multiple
    projects importing one another as appropriate.
 
    When sources from imported subprojects are recompiled, the
@@ -117,24 +115,22 @@ Each project contains the following information, among other things
    directory, and will never pollute the parent's object directory.
 
 @item @b{Exec directory}:
-   When a set of object files is linked into an executable, the latter
+   When a set of object files is linked into an executable, this executable
    is put in the exec directory of the project file. If this attribute
-   is unspecified, the default is to put the executable into the
-   object directory.
+   is unspecified, the object directory is used.
 
 @item @b{List of source files}:
    The project is responsible for managing a set of source
    files. These files can be written in any programming
-   languages. Currently, the graphical interface only supports Ada, C
-   and C++.
+   languages. Currently, the graphical interface supports Ada, C and C++.
 
    The default to find this set of source files is to take all the
    files in the source directories that follow the naming scheme (see
-   below) for each language. However, it is possible, if you edit the
-   project file manually, to provide an explicit list of source
+   below) for each language. In addition if you edit the
+   project file manually, it is possible to provide an explicit list of source
    files.
 
-   This attribute cannot modify graphically yet.
+   This attribute cannot be modified graphically yet.
 
 @item @b{List of main units}:
    The main units of a project (or main files in some languages) are
@@ -150,7 +146,7 @@ Each project contains the following information, among other things
    
 @item @b{Naming schemes}:
    The naming scheme refer to the way files are named for each
-   languages of the project. This is used by GPS to guess the language
+   languages of the project. This is used by GPS to choose the language
    support to use when a source file is opened. This is also used to
    know what tools should be used to compile or otherwise work with a
    source file.
@@ -160,7 +156,8 @@ Each project contains the following information, among other things
    machine but start all the compilation, run and debugger on a remote
    host.
 
-   It also support embedded targets (VxWorks,...).
+   It also support embedded targets (VxWorks,...) by specifying alternate
+   names for the build and debug tools.
 
    The project file contains the information required to log on the
    remote host.
@@ -173,8 +170,7 @@ Each project contains the following information, among other things
 @item @b{Switches}:
    Each tool that is used by GPS (compiler, pretty-printer,
    debugger,...) has its own set of switches. Moreover, these switches
-   depend on what specific file is manipulated, and what its language
-   is.
+   may depend on what specific file is manipulated, and on its language.
 
 @end itemize
 
@@ -196,9 +192,9 @@ Explorer}).
 
 This can for instance be used to compile all the sources either in
 debug mode (so that the executables can be run in the debugger), or in
-optimized mode (to reduce the space and increase the speed when
-delivering to customers). In this case, all the attributes (source
-directories, tools,...) remain the same, except the switches. It would
+optimized mode (to reduce the space and increase the speed when delivering).
+In this case, all the attributes (source directories, tools,...) remain the
+same, except the switches. It would
 be more difficult to maintain a completely separate hierarchy of
 project, and it is much more efficient to create a new configuration
 variable and edit the switches for the appropriate scenario (@ref{The
@@ -217,10 +213,10 @@ Configuration Variable}. This opens the following dialog:
 
 @ifhtml
 @image{scenarios}
-@end iftex
+@end ifhtml
 
 There are two main areas in this dialog: in the top line, you specify
-the name of the variable. This name is used for two reasons:
+the name of the variable. This name is used for two purposes:
 
 @itemize @bullet
 @item It is displayed in the project explorer
@@ -238,7 +234,7 @@ defined. However, you don't need to pick the name of an existing
 variable, neither must the variable exist when GPS is started.
 
 The second part of this dialog is the list of authorized value for
-this variable. Any other value will result in an error reported by
+this variable. Any other value will generate an error reported by
 GPS, and the project won't be loaded as a result.
 
 One of these values is the default value (the one whose button in the
@@ -260,7 +256,6 @@ area on top of the project explorer will contain something similar to:
 @image{explorer-scenario}
 @end iftex
 
-
 @ifhtml
 @image{explorer-scenario}
 @end ifhtml
@@ -276,7 +271,7 @@ the one you wish to use.
 
 As soon as a new value is selected, GPS will recompute the project
 explorer (in case the source directories, object directories or list
-of source files) has changed. A number of things will also be updated
+of source files has changed). A number of things will also be updated
 (like the list of executables in the @code{Compile}, @code{Run} and
 @code{Debug} menus).
 
