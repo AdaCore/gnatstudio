@@ -131,8 +131,8 @@ package body Glide_Interactive_Consoles is
    is
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
+      Internal    : constant Boolean := Console.Internal_Insert;
 
-      Internal    : Boolean := Console.Internal_Insert;
    begin
       Console.Internal_Insert := True;
 
