@@ -316,38 +316,44 @@ package body Codefix.Text_Manager.Ada_Commands is
               (This.Obj_List,
                new String'("with " & Pkg_Info.Name.all & ";"));
          end if;
+
          This.Is_Instantiation := False;
       end if;
 
 
-      Clauses_List := Get_Use_Clauses
-        (Word_Used.String_Match.all,
-         Word_Used.File_Name.all,
-         Current_Text,
-         True);
+      if Category /= Cat_Use then
+         Clauses_List := Get_Use_Clauses
+           (Word_Used.String_Match.all,
+            Word_Used.File_Name.all,
+            Current_Text,
+            True);
 
-      Clause_Node := First (Clauses_List);
+         Clause_Node := First (Clauses_List);
 
-      if Destination /= "" then
-         while Clause_Node /= Words_Lists.Null_Node loop
-            Add_To_Remove (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
-            Append
-              (This.Obj_List,
-               new String'
-                 ("use " & Data (Clause_Node).String_Match.all & ";"));
-            Clause_Node := Next (Clause_Node);
-         end loop;
-      else
-         while Clause_Node /= Words_Lists.Null_Node loop
-            Add_To_Remove (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
-            Clause_Node := Next (Clause_Node);
-         end loop;
+         if Destination /= "" then
+            while Clause_Node /= Words_Lists.Null_Node loop
+               Add_To_Remove
+                 (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
+               Append
+                 (This.Obj_List,
+                  new String'
+                    ("use " & Data (Clause_Node).String_Match.all & ";"));
+               Clause_Node := Next (Clause_Node);
+            end loop;
+         else
+            while Clause_Node /= Words_Lists.Null_Node loop
+               Add_To_Remove
+                 (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
+               Clause_Node := Next (Clause_Node);
+            end loop;
+         end if;
       end if;
 
       if Destination /= "" then
          declare
             Current_Cursor : File_Cursor;
             Current_Info   : Construct_Information;
+            Found_With     : Boolean := False;
          begin
             Current_Cursor.File_Name := new String'(Destination);
             Current_Cursor.Line := 1;
@@ -360,9 +366,15 @@ package body Codefix.Text_Manager.Ada_Commands is
                exit when Current_Info.Category /= Cat_With
                  and then Current_Info.Category /= Cat_Use;
 
+               Found_With := True;
                Current_Cursor.Col := Current_Info.Sloc_End.Column;
                Current_Cursor.Line := Current_Info.Sloc_End.Line;
             end loop;
+
+            if not Found_With then
+               Current_Cursor.Col := 1;
+               Current_Cursor.Line := Current_Info.Sloc_Start.Line - 1;
+            end if;
 
             This.Last_With := new Mark_Abstr'Class'
               (Get_New_Mark (Current_Text, Current_Cursor));
