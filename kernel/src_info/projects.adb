@@ -1319,14 +1319,21 @@ package body Projects is
    ---------------------------
 
    function Executables_Directory (Project : Project_Type) return String is
-      Exec : constant String := Get_Attribute_Value
-        (Project, Attribute => Exec_Dir_Attribute);
    begin
-      if Exec /= "" then
-         return Name_As_Directory (Exec);
+      if Project = No_Project or else Get_View (Project) = Prj.No_Project then
+         return "";
       else
-         return Name_As_Directory
-           (Object_Path (Project, Recursive => False));
+         declare
+            Exec : constant String := Get_String
+              (Prj.Projects.Table (Get_View (Project)).Exec_Directory);
+         begin
+            if Exec /= "" then
+               return Name_As_Directory (Exec);
+            else
+               return Name_As_Directory
+                 (Object_Path (Project, Recursive => False));
+            end if;
+         end;
       end if;
    end Executables_Directory;
 
