@@ -43,6 +43,7 @@ with Gtk.Table;             use Gtk.Table;
 with Gtk.Toggle_Button;     use Gtk.Toggle_Button;
 with Gtk.Tooltips;          use Gtk.Tooltips;
 with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Window;            use Gtk.Window;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.MDI;            use Gtkada.MDI;
 with Gtkada.Handlers;       use Gtkada.Handlers;
@@ -1148,6 +1149,7 @@ package body Vsearch_Ext is
       end if;
 
       Grab_Focus (Vsearch.Pattern_Entry);
+      Present (Gtk_Window (Get_Toplevel (Vsearch)));
 
    exception
       when E : others =>
