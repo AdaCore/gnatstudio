@@ -236,6 +236,10 @@ package body Generic_List is
       end Local_Free;
 
    begin
+      if Start_Node = End_Node then
+         return;
+      end if;
+
       if Start_Node = Null_Node then
          --  If Start_Node is null, delete all nodes from the beginning
          --  of L1, until End_Node.
@@ -269,6 +273,7 @@ package body Generic_List is
       else
          Current := Start_Node;
          Current := Next (Current);
+
          --  Remove all nodes between Last and End_Node.
 
          while Current /= End_Node loop
@@ -277,28 +282,21 @@ package body Generic_List is
             Local_Free (Delete);
          end loop;
 
-         --  Remove End_Node
+         --  Do not remove End_Node if End_Node = Start_Node.
 
-         if Current = End_Node then
-            if End_Node /= Null_Node then
-               Delete := End_Node;
-               Last := End_Node.Next;
-               Local_Free (Delete);
-            end if;
+         if End_Node /= Null_Node then
+            Delete := End_Node;
+            Last := End_Node.Next;
+            Local_Free (Delete);
+         end if;
 
-            --  Set the boundaries.
+         --  Set the boundaries.
 
-            if Last = Null_Node then
-               L1.Last.all := Start_Node;
-               Start_Node.Next := Null_Node;
-            else
-               Start_Node.Next := Last;
-            end if;
-         else
-            --  In this case, Current = End_Node.
-
+         if Last = Null_Node then
             L1.Last.all := Start_Node;
             Start_Node.Next := Null_Node;
+         else
+            Start_Node.Next := Last;
          end if;
       end if;
    end Remove_Nodes;
