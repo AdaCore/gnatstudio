@@ -43,6 +43,7 @@ with System.Address_Image;
 with System;                   use System;
 with Traces;                   use Traces;
 with Basic_Types;              use Basic_Types;
+with String_Utils;             use String_Utils;
 with OS_Utils;                 use OS_Utils;
 
 package body Shell_Script is
@@ -1273,7 +1274,8 @@ package body Shell_Script is
                Last := Last + 1;
             end loop;
 
-            Args := Argument_String_To_List (Command (First .. Last - 1));
+            Args := Argument_String_To_List_With_Triple_Quotes
+              (Command (First .. Last - 1));
 
             if Args = null or else Args'Length = 0 then
                Trace (Me, "Couldn't parse argument string for "
