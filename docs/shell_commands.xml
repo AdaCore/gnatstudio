@@ -1696,11 +1696,12 @@ The specific list depends on the hook type</param>
 
   <shell_doc name="GPS.Hook.add">
       <param name="self">The instance of GPS.Hook</param>
-      <param name="function_name">A string, giving the fully qualified name of a shell command to run</param>
-      <description>Connect a new function to a specific hook. Any time this hook is run through run_hook, this function will be called with the same parameters passed to run_hook.
-Note that the function_name must include the name of the module, since otherwise Python will complain it doesn't know the function.</description>
+      <param name="function_name">A subprogram, see the "Subprogram Parameters" section in the GPS documentation</param>
+      <description>Connect a new function to a specific hook. Any time this hook is run through run_hook, this function will be called with the same parameters passed to run_hook.</description>
       <example lang="python">
-          GPS.Hook ("filed_edited").add ("my_module.my_function")
+          def my_function (*args):
+              print "A new file was edited"
+          GPS.Hook ("filed_edited").add (my_function)
       </example>
   </shell_doc>
 
