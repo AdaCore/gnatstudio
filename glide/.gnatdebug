@@ -17,7 +17,6 @@ UNEXPECTED_EXCEPTIONS=yes
 
 --  Select the modules that should be loaded
 
-MODULE.VDIFF2             = no
 MODULE.DOCGEN             = no
 MODULE.METRICS            = no
 MODULE.REFACTOR           = no
@@ -38,7 +37,6 @@ MODULE.GVD                = yes
 MODULE.AUNIT              = yes
 MODULE.VFS                = yes
 MODULE.HELP               = yes
-MODULE.VDIFF              = yes
 MODULE.SSH                = yes
 MODULE.PROJECT_PROPERTIES = yes
 MODULE.PROJECT_VIEWER     = yes
