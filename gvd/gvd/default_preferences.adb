@@ -89,8 +89,7 @@ package body Default_Preferences is
    --  Free the memory occupied by Data
 
    function Find_Node_By_Name
-     (Preferences : Node_Ptr; Name : String)
-      return Node_Ptr;
+     (Preferences : Node_Ptr; Name : String) return Node_Ptr;
    pragma Inline (Find_Node_By_Name);
 
    function Find_Node_By_Spec
@@ -115,6 +114,7 @@ package body Default_Preferences is
    function Generic_Get_Pref
      (Manager : access Preferences_Manager_Record'Class; Pref : Param)
       return Result;
+   --  ???
 
    procedure Toggled_Boolean (Toggle : access Gtk_Widget_Record'Class);
    --  Called when a toggle button has changed, to display the appropriate text
@@ -154,7 +154,7 @@ package body Default_Preferences is
    --  Called when a color has changed.
 
    function Value (S : String) return String;
-   --  Return the string as is (used for instanciation of Generic_Get_Pref
+   --  Return the string as is (used for instantiation of Generic_Get_Pref)
 
    procedure Set_Pref (Top, Node : Node_Ptr; Name : String; Value : String);
    --  Set or create preference.
