@@ -222,14 +222,17 @@ package body Vdiff2_Utils is
 
    end Show_Differences;
 
+   ------------------------
+   --  Show_Differences3 --
+   ------------------------
 
    procedure Show_Differences3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_Head)
    is
-      List      : constant Diff_List := Item.List;
       Args_edit : Argument_List := (1 => new String'(Item.File1.all));
-      CurrNode  : Diff_List_Node := First (List);
+      Res       : Diff_List;
+      CurrNode  : Diff_List_Node;
       CurrChunk : Diff_Chunk_Access;
 
    begin
@@ -239,7 +242,8 @@ package body Vdiff2_Utils is
          return;
       end if;
 
-      Simplify (Item.List, Item.Ref_File);
+      Res := Simplify (Item.List, Item.Ref_File);
+      CurrNode := First (Res);
       Register_Highlighting (Kernel);
 
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
@@ -260,7 +264,7 @@ package body Vdiff2_Utils is
          CurrNode := Next (CurrNode);
          Put_Line ("un tour");
       end loop;
-
+      Free_List (Res);
    end Show_Differences3;
 
    -------------
