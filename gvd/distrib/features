@@ -16,6 +16,8 @@ New features in GVD 1.1.0
 - The Memory View now handles editing in non-Hex mode, and possibility of 
   displaying ASCII and another format at the same time.
 - The different window settings are now remembered from one session to another.
+- New command line option --parent-window that gives a much better integration
+  with Glide.
 
 New features in GVD 1.0.2
 
