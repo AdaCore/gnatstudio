@@ -25,6 +25,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Parsers;
 with Glib.Convert;              use Glib.Convert;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
@@ -952,22 +953,28 @@ package body KeyManager_Module is
    is
       Filename : constant String := Get_Home_Dir (Kernel) & "keys.xml";
       File, Child : Node_Ptr;
+      Err : String_Access;
    begin
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
-         File := Parse (Filename);
-         Child := File.Child;
+         XML_Parsers.Parse (Filename, File, Err);
 
-         while Child /= null loop
-            Bind_Default_Key_Internal
-              (Manager,
-               Action      => Get_Attribute (Child, "action"),
-               Default_Key => Child.Value.all,
-               Changed     => True);
-            Child := Child.Next;
-         end loop;
+         if File = null then
+            Insert (Kernel, Err.all, Mode => Error);
+         else
+            Child := File.Child;
 
-         Free (File);
+            while Child /= null loop
+               Bind_Default_Key_Internal
+                 (Manager,
+                  Action      => Get_Attribute (Child, "action"),
+                  Default_Key => Child.Value.all,
+                  Changed     => True);
+               Child := Child.Next;
+            end loop;
+
+            Free (File);
+         end if;
       end if;
 
    exception
