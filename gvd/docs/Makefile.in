@@ -12,6 +12,7 @@ doc: gvd.texi
 	echo x | tex gvd.texi
 	texindex gvd.cp
 	tex gvd.texi
+	tex gvd.texi
 	dvips gvd.dvi -o gvd.ps
 	perl texi2html -menu -monolithic gvd.texi
 	makeinfo --force -o gvd.info gvd.texi
