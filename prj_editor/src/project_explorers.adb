@@ -412,8 +412,13 @@ package body Project_Explorers is
    --  Save the status of the project explorer to an XML tree
 
    procedure On_Open_Explorer
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Widget       : access GObject_Record'Class;
+      Kernel       : Kernel_Handle);
    --  Raise the existing explorer, or open a new one.
+
+   function Get_Or_Create_Project_View
+     (Kernel : access Kernel_Handle_Record'Class) return Project_Explorer;
+   --  Make sure a project view exists, and raise it.
 
    procedure Child_Selected
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
@@ -2201,17 +2206,14 @@ package body Project_Explorers is
          return False;
    end Button_Press_Release;
 
-   ----------------------
-   -- On_Open_Explorer --
-   ----------------------
+   --------------------------------
+   -- Get_Or_Create_Project_View --
+   --------------------------------
 
-   procedure On_Open_Explorer
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   function Get_Or_Create_Project_View
+     (Kernel : access Kernel_Handle_Record'Class) return Project_Explorer
    is
-      pragma Unreferenced (Widget);
       Explorer : Project_Explorer;
-      Files    : Project_Explorer_Files;
       Child    : MDI_Child;
    begin
       Child := Find_MDI_Child_By_Tag
@@ -2225,11 +2227,28 @@ package body Project_Explorers is
            (Child, -"Project Explorer - Project View",  -"Project View");
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
+         return Explorer;
       else
          Raise_Child (Child);
          Set_Focus_Child (Get_MDI (Kernel), Child);
+         return Project_Explorer (Get_Widget (Child));
       end if;
+   end Get_Or_Create_Project_View;
 
+   ----------------------
+   -- On_Open_Explorer --
+   ----------------------
+
+   procedure On_Open_Explorer
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Explorer : Project_Explorer;
+      Files    : Project_Explorer_Files;
+      Child    : MDI_Child;
+   begin
+      --  Start with the files view, so that if both are needed, the project
+      --  view ends up on top of the files view
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Explorer_Files_Record'Tag);
 
@@ -2244,6 +2263,8 @@ package body Project_Explorers is
          Raise_Child (Child);
          Set_Focus_Child (Get_MDI (Kernel), Child);
       end if;
+
+      Explorer := Get_Or_Create_Project_View (Kernel);
 
    exception
       when E : others =>
@@ -2332,7 +2353,6 @@ package body Project_Explorers is
          C.Current := Tmp;
       end Next;
 
-      Child : MDI_Child;
       Tmp   : Gtk_Ctree_Node;
 
    begin
@@ -2343,10 +2363,7 @@ package body Project_Explorers is
 
       --  Make sure the explorer is visible, and get a handle on it
 
-      On_Open_Explorer (Get_MDI (Kernel), Kernel_Handle (Kernel));
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Explorer_Record'Tag);
-      Explorer := Project_Explorer (Get_Widget (Child));
+      Explorer := Get_Or_Create_Project_View (Kernel);
 
       --  Find the next matching node
 
