@@ -3,7 +3,8 @@ with "gvd_common";
 
 project GVD is
 
-   for Source_Dirs use ("gvd");
+   for Languages use ("C", "Ada");
+   for Source_Dirs use ("gvd", "pixmaps");
    for Object_Dir use "obj";
 
    package Builder is
