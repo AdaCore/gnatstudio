@@ -694,6 +694,7 @@ package body Vsearch_Ext is
 
       --  We need to explicitely hide the options frame, otherwise the size is
       --  incorrectly recomputed by gtk+. Looks like a bug to me...
+
       if Get_Active (Vsearch.Options_Toggle) then
          Show (Vsearch_Module_Id.Search.Options_Frame);
       else
@@ -1031,7 +1032,7 @@ package body Vsearch_Ext is
          Widget_Callback.To_Marshaller (On_Stop_Search'Access), Vsearch);
 
       Gtk_New (Vsearch.Options_Toggle, -"Options>>");
-      Set_Active (Vsearch.Options_Toggle, False);
+      Set_Active (Vsearch.Options_Toggle, True);
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Options_Toggle, False, False, 0);
       Set_Tip (Get_Tooltips (Handle), Vsearch.Options_Toggle,
