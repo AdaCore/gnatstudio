@@ -769,7 +769,7 @@ package body Help_Module is
       Top        : constant GPS_Window := GPS_Window
         (Get_Main_Window (Kernel));
       About_File : constant String :=
-        Format_Pathname (Top.Prefix_Directory.all & "/share/gps/about.txt");
+        Format_Pathname (Get_System_Dir (Kernel) & "/share/gps/about.txt");
       Contents   : GNAT.OS_Lib.String_Access;
 
    begin
