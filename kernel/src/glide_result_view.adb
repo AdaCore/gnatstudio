@@ -920,6 +920,7 @@ package body Glide_Result_View is
         Glib.Convert.Locale_To_UTF8 (Category);
 
    begin
+      File_Iter := Null_Iter;
       Category_Iter := Get_Iter_First (Model);
       New_Category := False;
 
