@@ -345,7 +345,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "ls",
-         Usage        => "ls ([pattern]) -> None",
+         Usage        => "ls ([pattern]) -> list of files",
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
