@@ -20,8 +20,11 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Traces; use Traces;
 
 package body Tries is
+
+   Me : constant Debug_Handle := Create ("Tries");
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Cell_Child_Array, Cell_Child_Array_Access);
@@ -40,12 +43,14 @@ package body Tries is
      (Tree         : Cell_Child_Access;
       Index        : String;
       Cell         : out Cell_Child_Access;
+      Cell_Parent  : in out Cell_Child_Access;
       Last         : out Natural;
       Index_Length : out Natural;
       Scenario     : out Natural);
    --  Return the closest cell for Index. The first Last characters of Index
    --  have been processed so far on exit.  Kind describes the scenario, as
    --  in the following examples.
+   --  Cell_Parent is the parent cell of Cell.
    --
    --  First case:  (eg: index_last=2, Last=4, Index="abcdef")
    --     It is garanteed there are extra characters in the index, otherwise
@@ -104,7 +109,7 @@ package body Tries is
    begin
       loop
          Ind := Get_Index (C.Data);
-         if Ind /= null then
+         if Ind /= null or else C.Children = null then
             return Ind;
          end if;
 
@@ -131,6 +136,7 @@ package body Tries is
      (Tree         : Cell_Child_Access;
       Index        : String;
       Cell         : out Cell_Child_Access;
+      Cell_Parent  : in out Cell_Child_Access;
       Last         : out Natural;
       Index_Length : out Natural;
       Scenario     : out Natural)
@@ -140,64 +146,75 @@ package body Tries is
       Ind      : String_Access;
       Ind_First, Ind_Last : Natural;
    begin
+      --  If we are processing the root node
+      if Tree.Index_Length = 0 then
+         Cell_Parent := null;
+      end if;
+
       if Tree.Children = null then
-         Cell     := Tree;
-         Scenario := 5;
+         Cell        := Tree;
+         Scenario    := 5;
       else
+         Cell_Parent := Tree;
+
          for C in Tree.Children'Range loop
             Ind := Get_Index (Tree.Children (C));
-            Ind_First := Ind'First + Tree.Index_Length;
-            Ind_Last := Ind'First + Tree.Children (C).Index_Length - 1;
 
-            if Ind (Ind_First) = Index (Index'First) then
-               if Ind'Length = 1 and then Index'Length = 1 then
-                  Cell     := Tree.Children (C)'Unrestricted_Access;
-                  Last     := Index'Last;
-                  Scenario := 3;
+            if Ind /= null then
+               Ind_First := Ind'First + Tree.Index_Length;
+               Ind_Last := Ind'First + Tree.Children (C).Index_Length - 1;
+
+               if Ind (Ind_First) = Index (Index'First) then
+                  if Ind'Length = 1 and then Index'Length = 1 then
+                     Cell        := Tree.Children (C)'Unrestricted_Access;
+                     Last        := Index'Last;
+                     Scenario    := 3;
+                     return;
+                  end if;
+
+                  Start := Index'First + 1;
+                  for J in Ind_First + 1 .. Ind_Last loop
+                     if Ind (J) /= Index (Start) then
+
+                        --  If at least one character matched, this is the
+                        --  correct cell, although it will have to be splitted
+                        Cell         := Tree.Children (C)'Unrestricted_Access;
+                        Last         := Start - 1;
+                        Index_Length := J - Ind'First;
+                        Scenario     := 1;
+                        return;
+                     else
+                        Start := Start + 1;
+
+                        --  Cell matches, but will have to be splitted
+                        if Start > Index'Last then
+                           Cell       := Tree.Children (C)'Unrestricted_Access;
+                           Cell_Parent := Tree;
+                           Last       := Start;
+
+                           --  If all the characters of the index matched, we
+                           --  have found our cell
+
+                           if J = Ind_Last then
+                              Scenario   := 3;
+                           else
+                              Index_Length := J - Ind'First + 1;
+                              Scenario     := 2;
+                           end if;
+                           return;
+                        end if;
+                     end if;
+                  end loop;
+
+                  --  If at least one character matched, but the index was too
+                  --  short, check the children
+
+                  Find_Cell_Child
+                    (Tree.Children (C)'Unrestricted_Access,
+                     Index (Start .. Index'Last),
+                     Cell, Cell_Parent, Last, Index_Length, Scenario);
                   return;
                end if;
-
-               Start := Index'First + 1;
-               for J in Ind_First + 1 .. Ind_Last loop
-                  if Ind (J) /= Index (Start) then
-
-                     --  If at least one character matched, this is the correct
-                     --  cell, although it will have to be splitted
-                     Cell         := Tree.Children (C)'Unrestricted_Access;
-                     Last         := Start - 1;
-                     Index_Length := J - Ind'First;
-                     Scenario     := 1;
-                     return;
-                  else
-                     Start := Start + 1;
-
-                     --  Cell matches, but will have to be splitted
-                     if Start > Index'Last then
-                        Cell       := Tree.Children (C)'Unrestricted_Access;
-                        Last       := Start;
-
-                        --  If all the characters of the index matched, we have
-                        --  found our cell
-
-                        if J = Ind_Last then
-                           Scenario   := 3;
-                        else
-                           Index_Length := J - Ind'First + 1;
-                           Scenario     := 2;
-                        end if;
-                        return;
-                     end if;
-                  end if;
-               end loop;
-
-               --  If at least one character matched, but the index was too
-               --  short, check the children
-
-               Find_Cell_Child
-                 (Tree.Children (C)'Unrestricted_Access,
-                  Index (Start .. Index'Last),
-                  Cell, Last, Index_Length, Scenario);
-               return;
             end if;
          end loop;
       end if;
@@ -217,6 +234,7 @@ package body Tries is
    is
       pragma Suppress (All_Checks);
       Cell       : Cell_Child_Access;
+      Cell_Parent : Cell_Child_Access;
       Index      : constant String_Access := Get_Index (Data);
       Last       : Integer;
       Scenario   : Integer;
@@ -224,7 +242,7 @@ package body Tries is
       Tmp2       : Cell_Child_Array_Access;
    begin
       Find_Cell_Child
-        (Tree.Child'Unrestricted_Access, Index.all, Cell, Last,
+        (Tree.Child'Unrestricted_Access, Index.all, Cell, Cell_Parent, Last,
          Index_Length, Scenario);
       case Scenario is
          when 1 =>
@@ -311,23 +329,90 @@ package body Tries is
    -- Remove --
    ------------
 
-   procedure Remove
-     (Tree  : in out Trie_Tree;
-      Index : String)
-   is
+   procedure Remove (Tree : in out Trie_Tree; Index : String) is
       Cell         : Cell_Child_Access;
+      Cell_Parent  : Cell_Child_Access;
       Last         : Integer;
       Scenario     : Integer;
       Index_Length : Integer;
+      Tmp          : Cell_Child_Array_Access;
    begin
       Find_Cell_Child
-        (Tree.Child'Unrestricted_Access, Index, Cell, Last,
+        (Tree.Child'Unrestricted_Access, Index, Cell, Cell_Parent, Last,
          Index_Length, Scenario);
 
-      --  For efficiency, we do not rebalance the tree, just leave it as it is
-      if Scenario = 3 then
+      if Scenario = 3 or else Scenario = 4 then
          Free (Cell.Data);
          Cell.Data := No_Data;
+
+         if Cell.Children = null then
+            if Cell_Parent /= null then
+               --  If there was one single child, ie the cell we are removing:
+               if Cell_Parent.Children'Length = 1 then
+                  Unchecked_Free (Cell_Parent.Children);
+
+               elsif Cell_Parent.Children'Length = 2
+                 and then Cell_Parent.Data = No_Data
+               then
+                  declare
+                     Tmp : Cell_Child := Cell_Parent.all;
+                  begin
+                     if Cell_Parent.Children
+                       (Cell_Parent.Children'First)'Unrestricted_Access = Cell
+                     then
+                        Cell_Parent.all := Cell_Parent.Children
+                          (Cell_Parent.Children'Last);
+                     else
+                        Cell_Parent.all := Cell_Parent.Children
+                          (Cell_Parent.Children'First);
+                     end if;
+                     Unchecked_Free (Tmp.Children);
+                  end;
+
+               else
+                  for C in Cell_Parent.Children'Range loop
+                     if Cell_Parent.Children (C)'Unrestricted_Access =
+                       Cell
+                     then
+                        Tmp := Cell_Parent.Children;
+                        Cell_Parent.Children := new Cell_Child_Array'
+                          (Tmp (Tmp'First .. C - 1) & Tmp (C + 1 .. Tmp'Last));
+                        Unchecked_Free (Tmp);
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+            end if;
+
+            Free (Cell.all);
+
+         elsif Cell.Children'Length = 1 then
+            if Cell_Parent /= null then
+               for C in Cell_Parent.Children'Range loop
+                  if Cell_Parent.Children (C)'Unrestricted_Access = Cell then
+                     Cell_Parent.Children (C) :=
+                       Cell.Children (Cell.Children'First);
+                     exit;
+                  end if;
+               end loop;
+               Free (Cell.all);
+            else
+               Tree.Child := Cell.all;
+            end if;
+
+         elsif Cell_Parent /= null
+           and then Cell_Parent.Children'Length = 1
+         then
+            Tmp := Cell_Parent.Children;
+            Cell_Parent.Children := Cell.Children;
+            Unchecked_Free (Tmp);
+            Cell.Children := null;
+            Free (Cell.all);
+         end if;
+
+      else
+         Trace (Me, "Couldn't remove from Tree: " & Index & " scenario="
+                & Scenario'Img);
       end if;
    end Remove;
 
@@ -337,12 +422,13 @@ package body Tries is
 
    function Get (Tree : Trie_Tree; Index : String) return Data_Type is
       Cell         : Cell_Child_Access;
+      Cell_Parent  : Cell_Child_Access;
       Last         : Integer;
       Scenario     : Integer;
       Index_Length : Integer;
    begin
       Find_Cell_Child
-        (Tree.Child'Unrestricted_Access, Index, Cell, Last,
+        (Tree.Child'Unrestricted_Access, Index, Cell, Cell_Parent, Last,
          Index_Length, Scenario);
 
       if Scenario = 3 or Scenario = 4 then
@@ -357,6 +443,7 @@ package body Tries is
 
    function Start (Tree : Trie_Tree; Prefix : String) return Iterator is
       Cell         : Cell_Child_Access;
+      Cell_Parent  : Cell_Child_Access;
       Last         : Integer;
       Scenario     : Integer;
       Index_Length : Integer;
@@ -401,7 +488,7 @@ package body Tries is
       else
          --  Find the closest cell that matches the prefix
          Find_Cell_Child
-           (Tree.Child'Unrestricted_Access, Prefix, Cell, Last,
+           (Tree.Child'Unrestricted_Access, Prefix, Cell, Cell_Parent, Last,
             Index_Length, Scenario);
 
          --  From there, we need to return the cell and all of its children
