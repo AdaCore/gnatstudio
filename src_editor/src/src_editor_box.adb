@@ -29,6 +29,8 @@
 
 with Glib;                       use Glib;
 with Glib.Values;
+with Glide_Kernel;               use Glide_Kernel;
+with Glide_Kernel.Project;       use Glide_Kernel.Project;
 with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Container;              use Gtk.Container;
@@ -90,6 +92,13 @@ package body Src_Editor_Box is
    pragma Inline (To_Buffer_Column);
    --  Convert to a column number in the Source Box to a column number
    --  in the Source Buffer. Same rationale as in To_Box_Line.
+
+   procedure Prepend_Source_Directory
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Source_Filename : in out String_Access);
+   --  Search for the path of Source_Filename and prepend it if found.
+   --  The search includes the Project Include Path, and the Source Path
+   --  of the given Kernel Handle.
 
    procedure Show_Cursor_Position
      (Box    : Source_Editor_Box;
@@ -160,6 +169,24 @@ package body Src_Editor_Box is
    begin
       return Gint (Col - 1);
    end To_Buffer_Column;
+
+   ------------------------------
+   -- Prepend_Source_Directory --
+   ------------------------------
+
+   procedure Prepend_Source_Directory
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Source_Filename : in out String_Access)
+   is
+      Path : constant String :=
+        Find_Source_File
+          (Kernel, Source_Filename.all, Use_Source_Path => True);
+   begin
+      if Path /= "" then
+         Free (Source_Filename);
+         Source_Filename := new String'(Path);
+      end if;
+   end Prepend_Source_Directory;
 
    --------------------------
    -- Show_Cursor_Position --
@@ -421,6 +448,42 @@ package body Src_Editor_Box is
       Ref (Box.Root_Container);
       Remove (Parent, Box.Root_Container);
    end Detach;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Editor : access Source_Editor_Box_Record)
+      return Glide_Kernel.Kernel_Handle is
+   begin
+      return Editor.Kernel;
+   end Get_Kernel;
+
+   ------------------
+   -- Set_Filename --
+   ------------------
+
+   procedure Set_Filename
+     (Editor   : access Source_Editor_Box_Record;
+      Filename : String) is
+   begin
+      Free (Editor.Filename);
+      Editor.Filename := new String'(Filename);
+   end Set_Filename;
+
+   ------------------
+   -- Get_Filename --
+   ------------------
+
+   function Get_Filename
+     (Editor : access Source_Editor_Box_Record) return String is
+   begin
+      if Editor.Filename = null then
+         return "";
+      end if;
+      return Editor.Filename.all;
+   end Get_Filename;
 
    ---------------
    -- Load_File --
@@ -872,6 +935,13 @@ package body Src_Editor_Box is
             Entity_Name, Tmp_Line, Tmp_Col,
             Filename, Start_Line, Start_Column, End_Line, End_Column);
       end;
+
+      --  If the query failed, then abort.
+      if Filename = null then
+         return;
+      end if;
+
+      Prepend_Source_Directory (Editor.Kernel, Filename);
    end Find_Declaration_Or_Body;
 
 end Src_Editor_Box;
