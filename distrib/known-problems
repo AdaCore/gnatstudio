@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 1.3.0
 
-- C711-002 C714-001 Find in current file switches editor
+- C711-002 Find in current file switches editor
   Problem:    If you select Control-F to open the search window while in an
               editor, GPS switches the selected window, and thus makes it hard
               to search in the current file
