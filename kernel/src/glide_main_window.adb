@@ -75,6 +75,31 @@ package body Glide_Main_Window is
      (1 => Msg_Cst'Access,
       2 => Param1_Cst'Access);
 
+   Vertically_Cst : aliased constant String := "vertically";
+   Name_Cst       : aliased constant String := "name";
+   Child_Cst      : aliased constant String := "child";
+   Side_Cst       : aliased constant String := "side";
+   Dock_Cst       : aliased constant String := "dock";
+   Iconify_Cst    : aliased constant String := "iconify";
+   Float_Cst      : aliased constant String := "float";
+   Reuse_Cst      : aliased constant String := "reuse";
+   Visible_Only_Cst : aliased constant String := "visible_only";
+   Tile_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Vertically_Cst'Access);
+   Get_Cmd_Parameters : constant Cst_Argument_List := (1 => Name_Cst'Access);
+   Get_By_Child_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Child_Cst'Access);
+   Dock_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Dock_Cst'Access, 2 => Side_Cst'Access);
+   Iconify_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Iconify_Cst'Access);
+   Float_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Float_Cst'Access);
+   Split_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Vertically_Cst'Access, 2 => Reuse_Cst'Access);
+   Next_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Visible_Only_Cst'Access);
+
    type Tabs_Position_Preference is (Bottom, Top, Left, Right);
    for Tabs_Position_Preference'Size use Glib.Gint'Size;
    pragma Convention (C, Tabs_Position_Preference);
@@ -151,9 +176,12 @@ package body Glide_Main_Window is
    --  Called when the project is changed.
 
    procedure Default_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data    : in out Callback_Data'Class; Command : String);
    --  Handles shell commands defined in this package
+
+   procedure Default_Window_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
+   --  Handles shell commands for MDIWindow class
 
    -------------
    -- Execute --
@@ -525,6 +553,8 @@ package body Glide_Main_Window is
       Command2 : MDI_Window_Actions_Command_Access;
       MDI_Class : constant Class_Type := New_Class
         (Main_Window.Kernel, "MDI");
+      MDI_Window_Class : constant Class_Type := New_Class
+        (Main_Window.Kernel, "MDIWindow", Get_GUI_Class (Main_Window.Kernel));
    begin
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
@@ -577,12 +607,6 @@ package body Glide_Main_Window is
          Name        => "Split horizontally",
          Command     => Command2,
          Description => -("Split the current window in two horizontally"));
-      Register_Command
-        (Main_Window.Kernel, "split_horizontally",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Maximum_Args  => 1,
-         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -592,13 +616,6 @@ package body Glide_Main_Window is
          Name        => "Split vertically",
          Command     => Command2,
          Description => -("Split the current window in two vertically"));
-      Register_Command
-        (Main_Window.Kernel, "split_vertically",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Minimum_Args  => 0,
-         Maximum_Args  => 1,
-         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -609,11 +626,6 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description =>
            -("Tile the windows in the central area horizontally"));
-      Register_Command
-        (Main_Window.Kernel, "tile_horizontally",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -624,11 +636,6 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description =>
            -("Tile the windows in the central area vertically"));
-      Register_Command
-        (Main_Window.Kernel, "tile_vertically",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -638,11 +645,6 @@ package body Glide_Main_Window is
          Name        => "Maximize windows",
          Command     => Command2,
          Description => -("Maximize all windows in the central area"));
-      Register_Command
-        (Main_Window.Kernel, "maximize_windows",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -652,11 +654,6 @@ package body Glide_Main_Window is
          Name        => "Unmaximize windows",
          Command     => Command2,
          Description => -("Unmaximize all windows in the central area"));
-      Register_Command
-        (Main_Window.Kernel, "unmaximize_windows",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -667,11 +664,6 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description => -("Unsplit the central area of GPS, so that only one"
                           & " window is visible"));
-      Register_Command
-        (Main_Window.Kernel, "single_window",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -683,11 +675,6 @@ package body Glide_Main_Window is
          Description =>
          -("Create a duplicate of the current window if possible. Not all"
            & " windows support this operation."));
-      Register_Command
-        (Main_Window.Kernel, "clone_window",
-         Class         => MDI_Class,
-         Static_Method => True,
-         Handler => Default_Command_Handler'Access);
 
       Register_Command
         (Main_Window.Kernel, "dialog",
@@ -710,7 +697,6 @@ package body Glide_Main_Window is
          Class         => MDI_Class,
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
-
       Register_Command
         (Main_Window.Kernel, "save_all",
          Maximum_Args  => 1,
@@ -722,7 +708,209 @@ package body Glide_Main_Window is
          Minimum_Args => Exit_Cmd_Parameters'Length - 1,
          Maximum_Args => Exit_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
+
+
+      Register_Command
+        (Main_Window.Kernel, Constructor_Method,
+         Class         => MDI_Window_Class,
+         Handler       => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "split",
+         Class         => MDI_Window_Class,
+         Maximum_Args  => 2,
+         Handler       => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "iconify",
+         Maximum_Args  => 1,
+         Class         => MDI_Window_Class,
+         Handler       => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "float",
+         Maximum_Args  => 1,
+         Class         => MDI_Window_Class,
+         Handler       => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "dock",
+         Class         => MDI_Window_Class,
+         Maximum_Args  => 2,
+         Handler       => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "single",
+         Class         => MDI_Window_Class,
+         Handler       => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "raise",
+         Class         => MDI_Window_Class,
+         Handler       => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "get_child",
+         Class          => MDI_Window_Class,
+         Handler        => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "next",
+         Class          => MDI_Window_Class,
+         Maximum_Args   => 1,
+         Handler        => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "name",
+         Class          => MDI_Window_Class,
+         Handler        => Default_Window_Command_Handler'Access);
+
+      Register_Command
+        (Main_Window.Kernel, "tile",
+         Class         => MDI_Class,
+         Maximum_Args  => 1,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "maximize",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "unmaximize",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "cascade",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "get",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "get_by_child",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "current",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
    end Register_Keys;
+
+   ------------------------------------
+   -- Default_Window_Command_Handler --
+   ------------------------------------
+
+   procedure Default_Window_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      MDI_Window_Class : constant Class_Type :=
+        New_Class (Kernel, "MDIWindow");
+      Inst   : constant Class_Instance := Nth_Arg (Data, 1, MDI_Window_Class);
+      Child  : constant MDI_Child := MDI_Child (Gtk_Widget'(Get_Data (Inst)));
+      Widget : Gtk_Widget;
+      Result : Class_Instance;
+   begin
+      if Child = null then
+         Set_Error_Msg (Data, "MDIWindow no longer exists");
+
+      elsif Command = Constructor_Method then
+         Set_Error_Msg (Data, "Cannot build instances of MDIWindow");
+
+      elsif Command = "split" then
+         Name_Parameters (Data, Split_Cmd_Parameters);
+         if Get_State (Child) = Normal then
+            Set_Focus_Child (Child);
+            if Nth_Arg (Data, 2, True) then
+               Split (Get_MDI (Kernel),
+                      Orientation       => Orientation_Vertical,
+                      Reuse_If_Possible => Nth_Arg (Data, 3, False),
+                      After             => False);
+            else
+               Split (Get_MDI (Kernel),
+                      Orientation       => Orientation_Horizontal,
+                      Reuse_If_Possible => Nth_Arg (Data, 3, False),
+                      After             => False);
+            end if;
+         end if;
+
+      elsif Command = "iconify" then
+         Name_Parameters (Data, Iconify_Cmd_Parameters);
+         Minimize_Child (Child, Nth_Arg (Data, 2, True));
+
+      elsif Command = "float" then
+         Name_Parameters (Data, Float_Cmd_Parameters);
+         Float_Child (Child, Nth_Arg (Data, 2, True));
+
+      elsif Command = "dock" then
+         Name_Parameters (Data, Dock_Cmd_Parameters);
+         Set_Dock_Side (Child, Dock_Side'Value (Nth_Arg (Data, 3, "bottom")));
+         Dock_Child (Child, Nth_Arg (Data, 2, True));
+
+      elsif Command = "single" then
+         if Get_State (Child) = Normal then
+            Set_Focus_Child (Child);
+            Single_Window (Get_MDI (Kernel));
+         end if;
+
+      elsif Command = "raise" then
+         Raise_Child (Child, Give_Focus => True);
+
+      elsif Command = "name" then
+         Set_Return_Value (Data, Get_Title (Child));
+
+      elsif Command = "next" then
+         Name_Parameters (Data, Next_Cmd_Parameters);
+         declare
+            Child2 : MDI_Child;
+            Iter   : Child_Iterator := First_Child (Get_MDI (Kernel));
+            Return_Next : Boolean := False;
+            Visible_Only : constant Boolean := Nth_Arg (Data, 2, True);
+         begin
+            loop
+               Child2 := Get (Iter);
+
+               if Child2 = null then
+                  Iter := First_Child (Get_MDI (Kernel));
+                  Return_Next := True;
+                  Child2 := Get (Iter);
+               end if;
+
+               exit when Return_Next
+                 and then (not Visible_Only or else Is_Raised (Child2));
+
+               if Child2 = Child then
+                  exit when Return_Next;  --  We already traversed all
+                  Return_Next := True;
+               end if;
+
+               Next (Iter);
+            end loop;
+
+            Result := New_Instance (Get_Script (Data), MDI_Window_Class);
+            Set_Data (Result, Gtk_Widget (Child2));
+            Set_Return_Value (Data, Result);
+            Free (Result);
+         end;
+
+      elsif Command = "get_child" then
+         Widget := Get_Widget (Child);
+         Result := Get_Instance (Widget);
+         if Result /= null then
+            Set_Return_Value (Data, Result);
+         else
+            Result := New_Instance (Get_Script (Data), Get_GUI_Class (Kernel));
+            Set_Data (Result, Widget);
+            Set_Return_Value (Data, Result);
+            Free (Result);
+         end if;
+      end if;
+
+      Free (Inst);
+   end Default_Window_Command_Handler;
 
    -----------------------------
    -- Default_Command_Handler --
@@ -733,6 +921,9 @@ package body Glide_Main_Window is
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      MDI_Window_Class : Class_Type;
+      Child  : MDI_Child;
+      Inst   : Class_Instance;
    begin
       if Command = "exit" then
          Name_Parameters (Data, Exit_Cmd_Parameters);
@@ -746,38 +937,51 @@ package body Glide_Main_Window is
          then
             Set_Error_Msg (Data, -"Cancelled by user");
          end if;
-      elsif Command = "split_horizontally" then
-         Split
-           (Get_MDI (Kernel),
-            Orientation       => Orientation_Horizontal,
-            After             => True,
-            Reuse_If_Possible => Nth_Arg (Data, 1, False));
-      elsif Command = "split_vertically" then
-         Split
-           (Get_MDI (Kernel),
-            Orientation       => Orientation_Vertical,
-            After             => True,
-            Reuse_If_Possible => Nth_Arg (Data, 1, False));
-      elsif Command = "tile_horizontally" then
-         Tile_Horizontally (Get_MDI (Kernel));
-      elsif Command = "tile_vertically" then
-         Tile_Vertically (Get_MDI (Kernel));
-      elsif Command = "maximize_windows" then
+
+      elsif Command = "tile" then
+         Name_Parameters (Data, Tile_Cmd_Parameters);
+         if Nth_Arg (Data, 1, True) then
+            Tile_Vertically (Get_MDI (Kernel));
+         else
+            Tile_Horizontally (Get_MDI (Kernel));
+         end if;
+
+      elsif Command = "maximize" then
          Maximize_Children (Get_MDI (Kernel), True);
-      elsif Command = "unmaximize_windows" then
+
+      elsif Command = "unmaximize" then
          Maximize_Children (Get_MDI (Kernel), False);
-      elsif Command = "single_window" then
-         Single_Window (Get_MDI (Kernel));
-      elsif Command = "clone_window" then
-         declare
-            Focus : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-            N : MDI_Child;
-            pragma Unreferenced (N);
-         begin
-            if Focus /= null then
-               N  := Dnd_Data (Focus, Copy => True);
-            end if;
-         end;
+
+      elsif Command = "cascade" then
+         Cascade_Children (Get_MDI (Kernel));
+
+      elsif Command = "get"
+        or else Command = "get_by_child"
+        or else Command = "current"
+      then
+         if Command = "get" then
+            Name_Parameters (Data, Get_Cmd_Parameters);
+            Child := Find_MDI_Child_By_Name
+              (Get_MDI (Kernel), Nth_Arg (Data, 1));
+         elsif Command = "get_by_child" then
+            Name_Parameters (Data, Get_By_Child_Cmd_Parameters);
+            Child := Find_MDI_Child
+              (Get_MDI (Kernel),
+               Widget => Get_Data (Nth_Arg (Data, 1, Get_GUI_Class (Kernel))));
+         else
+            Child := Get_Focus_Child (Get_MDI (Kernel));
+         end if;
+
+         if Child = null then
+            Set_Error_Msg (Data, "No such window");
+         else
+            MDI_Window_Class := New_Class (Kernel, "MDIWindow");
+            Inst := New_Instance (Get_Script (Data), MDI_Window_Class);
+            Set_Data (Inst, Gtk_Widget (Child));
+            Set_Return_Value (Data, Inst);
+            Free (Inst);
+         end if;
+
       elsif Command = "dialog" then
          Name_Parameters (Data, Dialog_Cmd_Parameters);
 
