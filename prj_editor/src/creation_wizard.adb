@@ -769,7 +769,7 @@ package body Creation_Wizard is
    begin
       if Arr'Length /= 0 then
          Pack := Get_Or_Create_Package (Project, Name);
-         Var := Get_Or_Create_Attribute (Pack, "switches", List);
+         Var := Get_Or_Create_Attribute (Pack, "switches", Kind => List);
          for J in Arr'Range loop
             Append_To_List (Var, Arr (J).all);
          end loop;
@@ -791,13 +791,13 @@ package body Creation_Wizard is
          Path => Get_Chars (Wiz.Project_Location));
 
       --  Append the source directories
-      Var := Get_Or_Create_Attribute (Project, "source_dirs", List);
+      Var := Get_Or_Create_Attribute (Project, "source_dirs", Kind => List);
       for J in 0 .. Num_Src_Dir - 1 loop
          Append_To_List (Var, Get_Text (Wiz.Src_Dir_List, J, 0));
       end loop;
 
       --  Append the build directory
-      Var := Get_Or_Create_Attribute (Project, "object_dir", Single);
+      Var := Get_Or_Create_Attribute (Project, "object_dir", Kind => Single);
       Set_Value (Var, Get_Selection (Wiz.Obj_Dir_Selection));
 
       --  Append the switches
