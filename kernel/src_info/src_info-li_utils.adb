@@ -19,11 +19,18 @@ package body Src_Info.LI_Utils is
 
    function Find_Declaration_Internal
      (Declaration_Info_Ptr    : in E_Declaration_Info_List;
-      Symbol_Name             : in String;
+      Symbol_Name             : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
    --  specified E_Declaration_Info_List
+
+   procedure Create_LI_File
+     (File                    : out LI_File_Ptr;
+      Handler                 : in LI_Handler;
+      Source_Filename         : in String;
+      Parsed                  : in Boolean);
+   --  Creates an empty LI_File structure
 
    --  function eq (str1 : String; str2 : String) return Boolean;
    --  Checks two strings for equality
@@ -105,6 +112,97 @@ package body Src_Info.LI_Utils is
       Declaration_Info := D_Ptr;
    end Insert_Declaration;
 
+   -------------------------
+   --  Insert_Dependency  --
+   -------------------------
+
+   procedure Insert_Dependency
+     (Handler                 : in LI_Handler;
+      File                    : in out LI_File_Ptr;
+      List                    : in out LI_File_List;
+      Source_Filename         : in String;
+      Referred_Filename       : in String)
+   is
+      Dep_Ptr : Dependency_File_Info_List;
+      Tmp_LI_File : LI_File;
+      Tmp_LI_File_Ptr : LI_File_Ptr;
+      Success : Boolean;
+   begin
+      --  checking existance of given LI_File and create new one if necessary
+      if File = No_LI_File then
+         Create_LI_File
+           (File              => File,
+            Handler           => Handler,
+            Source_Filename   => Source_Filename,
+            Parsed            => True);
+      else
+         pragma Assert (LI_Handler (Handler) = File.LI.Handler,
+                     "Invalid Handler");
+         if File.LI.Parsed = False then
+            Tmp_LI_File := File.LI;
+            Create_LI_File
+              (File              => File,
+               Handler           => Handler,
+               Source_Filename   => Source_Filename,
+               Parsed            => True);
+            File.LI.Body_Info := Tmp_LI_File.Body_Info;
+         end if;
+      end if;
+      --  Now we are searching through common list of LI_Files and
+      --  trying to locate file with given name. If not found we are
+      --  inserting new dependency
+      Tmp_LI_File_Ptr := Get (List.Table, Referred_Filename);
+      if Tmp_LI_File_Ptr = No_LI_File then
+         Create_LI_File
+           (File              => Tmp_LI_File_Ptr,
+            Handler           => Handler,
+            Source_Filename   => Referred_Filename,
+            Parsed            => False);
+         Add (List.Table, Tmp_LI_File_Ptr, Success);
+         pragma Assert (Success,
+               "unable to insert new LI_File into the common LI_File_List");
+      end if;
+      --  Is this is a first dependencies info in this file?
+      if File.LI.Dependencies_Info = null then
+         --  creating new Dependency_File_Info_Node object
+         File.LI.Dependencies_Info := new Dependency_File_Info_Node;
+         File.LI.Dependencies_Info.Value.File.LI := Tmp_LI_File_Ptr;
+         File.LI.Dependencies_Info.Value.File.Part := Unit_Body;
+         File.LI.Dependencies_Info.Value.File.Source_Filename
+                                             := new String'(Referred_Filename);
+         File.LI.Dependencies_Info.Value.Dep_Info :=
+                                          (Depends_From_Spec => False,
+                                           Depends_From_Body => True);
+         File.LI.Dependencies_Info.Value.Declarations := null;
+         File.LI.Dependencies_Info.Next := null;
+      else
+         Dep_Ptr := File.LI.Dependencies_Info;
+         --  trying to locate Dependency_File_Info with given Source_Filename
+         loop
+            exit when
+               eq (Dep_Ptr.Value.File.Source_Filename.all, Referred_Filename);
+            if Dep_Ptr.Next = null then
+               --  Unable to find suitable Dependency_File_Info.
+               --  Creating a new one.
+               Dep_Ptr.Next := new Dependency_File_Info_Node;
+               Dep_Ptr.Next.Next := null;
+               Dep_Ptr := Dep_Ptr.Next;
+               Dep_Ptr.Value :=
+                 (File => (LI   => Tmp_LI_File_Ptr,
+                           Part => Unit_Body,
+                           Source_Filename =>
+                              new String'(Referred_Filename)),
+                  Dep_Info => (Depends_From_Spec => False,
+                                      Depends_From_Body => True),
+                  Declarations => null);
+               exit;
+            end if;
+            Dep_Ptr := Dep_Ptr.Next;
+         end loop;
+      end if;
+   end Insert_Dependency;
+
+
    -------------------------------------
    --  Insert_Dependency_Declaration  --
    -------------------------------------
@@ -114,6 +212,7 @@ package body Src_Info.LI_Utils is
       File                    : in out LI_File_Ptr;
       List                    : in out LI_File_List;
       Symbol_Name             : in String;
+      Referred_Filename       : in String;
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
@@ -133,44 +232,36 @@ package body Src_Info.LI_Utils is
    begin
       --  checking existance of given LI_File and create new one if necessary
       if File = No_LI_File then
-         File := new LI_File_Constrained'
-            (LI => (Parsed => True,
-                    Handler => LI_Handler (Handler),
-                    LI_Filename => new String'(Source_Filename),
-                    Body_Info => null,
-                    Spec_Info => null,
-                    Separate_Info => null,
-                    LI_Timestamp => 0,
-                    Compilation_Errors_Found => False,
-                    Dependencies_Info => null));
+         Create_LI_File
+           (File => File,
+            Handler => Handler,
+            Source_Filename => Source_Filename,
+            Parsed => True);
       else
          pragma Assert (LI_Handler (Handler) = File.LI.Handler,
                      "Invalid Handler");
          if File.LI.Parsed = False then
             Tmp_LI_File := File.LI;
-            File.LI := (Parsed => True,
-                        Handler => LI_Handler (Handler),
-                        LI_Filename => new String'(Source_Filename),
-                        Body_Info => Tmp_LI_File.Body_Info,
-                        Spec_Info => null,
-                        Separate_Info => null,
-                        LI_Timestamp => 0,
-                        Compilation_Errors_Found => False,
-                        Dependencies_Info => null);
+            Create_LI_File
+              (File => File,
+               Handler => Handler,
+               Source_Filename => Source_Filename,
+               Parsed => True);
+            File.LI.Body_Info := Tmp_LI_File.Body_Info;
          end if;
       end if;
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Get (List.Table, Source_Filename);
+      Tmp_LI_File_Ptr := Get (List.Table, Referred_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
            (Handler            => Handler,
             File               => Tmp_LI_File_Ptr,
             List               => List,
             Symbol_Name        => Symbol_Name,
-            Source_Filename    => Source_Filename,
+            Source_Filename    => Referred_Filename,
             Location           => Location,
             Parent_Filename    => Parent_Filename,
             Parent_Location    => Parent_Location,
@@ -195,7 +286,7 @@ package body Src_Info.LI_Utils is
                   File               => Tmp_LI_File_Ptr,
                   List               => List,
                   Symbol_Name        => Symbol_Name,
-                  Source_Filename    => Source_Filename,
+                  Source_Filename    => Referred_Filename,
                   Location           => Location,
                   Parent_Filename    => Parent_Filename,
                   Parent_Location    => Parent_Location,
@@ -213,7 +304,7 @@ package body Src_Info.LI_Utils is
          File.LI.Dependencies_Info.Value.File.LI := Tmp_LI_File_Ptr;
          File.LI.Dependencies_Info.Value.File.Part := Unit_Body;
          File.LI.Dependencies_Info.Value.File.Source_Filename
-                                             := new String'(Source_Filename);
+                                             := new String'(Referred_Filename);
          File.LI.Dependencies_Info.Value.Dep_Info :=
                                           (Depends_From_Spec => False,
                                            Depends_From_Body => True);
@@ -225,7 +316,7 @@ package body Src_Info.LI_Utils is
          --  trying to locate Dependency_File_Info with given Source_Filename
          loop
             exit when
-               eq (Dep_Ptr.Value.File.Source_Filename.all, Source_Filename);
+               eq (Dep_Ptr.Value.File.Source_Filename.all, Referred_Filename);
             if Dep_Ptr.Next = null then
                --  Unable to find suitable Dependency_File_Info.
                --  Creating a new one.
@@ -258,11 +349,13 @@ package body Src_Info.LI_Utils is
          --  with specified Symbol_Name
       end if;
       Insert_Declaration_Internal (D_Ptr, File, List, Symbol_Name,
-            Source_Filename,
+            Referred_Filename,
             Location, Parent_Filename, Parent_Location, Kind, Scope,
             End_Of_Scope_Location, Rename_Filename, Rename_Location);
       Declaration_Info := D_Ptr;
    end Insert_Dependency_Declaration;
+
+
 
    ------------------------
    --  Insert_Reference  --
@@ -311,7 +404,7 @@ package body Src_Info.LI_Utils is
 
    function Find_Declaration
      (File                    : in LI_File_Ptr;
-      Symbol_Name             : in String;
+      Symbol_Name             : in String := "";
       Class_Name              : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
@@ -334,7 +427,7 @@ package body Src_Info.LI_Utils is
 
    function Find_Dependency_Declaration
      (File                    : in LI_File_Ptr;
-      Symbol_Name             : in String;
+      Symbol_Name             : in String := "";
       Class_Name              : in String := "";
       Filename                : in String := "";
       Location                : in Point := Invalid_Point)
@@ -408,7 +501,6 @@ package body Src_Info.LI_Utils is
             Tmp_LI_File_Ptr := File;
          else
             Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
-            --  Is LI_File for parent exists?
             if (Tmp_LI_File_Ptr = No_LI_File) then
                --  ??? What should we do if LI_File for parent does not exists?
                null;
@@ -452,7 +544,7 @@ package body Src_Info.LI_Utils is
 
    function Find_Declaration_Internal
      (Declaration_Info_Ptr    : in E_Declaration_Info_List;
-      Symbol_Name             : in String;
+      Symbol_Name             : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
       D_Ptr : E_Declaration_Info_List;
@@ -460,15 +552,17 @@ package body Src_Info.LI_Utils is
       D_Ptr := Declaration_Info_Ptr;
       loop
          exit when D_Ptr = null;
-         if eq (D_Ptr.Value.Declaration.Name.all, Symbol_Name)
---           and then (
---             (Location /= Invalid_Point
+         if ((Symbol_Name'Length > 0
+                and then eq (D_Ptr.Value.Declaration.Name.all, Symbol_Name))
+            or else (Symbol_Name'Length = 0))
+           and then (
+             (Location /= Invalid_Point
                 and then (D_Ptr.Value.Declaration.Location.Line
                                                     = Location.Line)
                 and then (D_Ptr.Value.Declaration.Location.Column
-                                                    = Location.Column) -- )
---             or else (Location = Invalid_Point)
---           )
+                                                    = Location.Column))
+             or else (Location = Invalid_Point)
+           )
          then
             return D_Ptr;
          end if;
@@ -489,6 +583,46 @@ package body Src_Info.LI_Utils is
          return str1 = str2;
       end if;
    end eq;
+
+   ----------------------
+   --  Create_LI_File  --
+   ----------------------
+
+   procedure Create_LI_File
+     (File                    : out LI_File_Ptr;
+      Handler                 : in LI_Handler;
+      Source_Filename         : in String;
+      Parsed                  : in Boolean) is
+   begin
+      if (Parsed) then
+         File := new LI_File_Constrained'
+                  (LI =>  (Parsed => True,
+                           Handler => LI_Handler (Handler),
+                           LI_Filename => new String'(Source_Filename),
+                           Body_Info => null,
+                           Spec_Info => null,
+                           Dependencies_Info => null,
+                           Compilation_Errors_Found => False,
+                           Separate_Info => null,
+                           LI_Timestamp => 0));
+      else
+         File := new LI_File_Constrained'
+                  (LI =>  (Parsed => False,
+                           Handler => LI_Handler (Handler),
+                           LI_Filename => new String'(Source_Filename),
+                           Body_Info => null,
+                           Spec_Info => null,
+                           Separate_Info => null,
+                           LI_Timestamp => 0));
+      end if;
+   end Create_LI_File;
+
+
+--   procedure Create_Dependency_File_Info_Node
+--     ()
+--   is
+--   begin
+--   end Create_Dependency_File_Info_Node
 
    -------------------------------------------------------------------------
 

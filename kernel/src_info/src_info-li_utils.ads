@@ -41,11 +41,20 @@ private package Src_Info.LI_Utils is
    --    1. Inserts new declaration into the LI structrure tree
    --    2. Returns pointer to created declaration (Declaration_Info param)
 
+   procedure Insert_Dependency
+     (Handler                 : in LI_Handler;
+      File                    : in out LI_File_Ptr;
+      List                    : in out LI_File_List;
+      Source_Filename         : in String;
+      Referred_Filename       : in String);
+   --  Insert file-level dependency
+
    procedure Insert_Dependency_Declaration
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
       List                    : in out LI_File_List;
       Symbol_Name             : in String;
+      Referred_Filename       : in String;
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
@@ -70,20 +79,24 @@ private package Src_Info.LI_Utils is
 
    function Find_Declaration
      (File                    : in LI_File_Ptr;
-      Symbol_Name             : in String;
+      Symbol_Name             : in String := "";
       Class_Name              : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
+   --  If value for some attribute is not given then this attribute doesn't
+   --  affect on searching.
 
    function Find_Dependency_Declaration
      (File                    : in LI_File_Ptr;
-      Symbol_Name             : in String;
+      Symbol_Name             : in String := "";
       Class_Name              : in String := "";
       Filename                : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List;
-   --  Finds declaration in LI tree by it's Name and Location
+   --  Finds declaration in LI tree by it's Name and Location.
+   --  If value for some attribute is not given then this attribute doesn't
+   --  affect on searching.
 
    function eq (str1 : String; str2 : String) return Boolean;
    --  compares to strings
