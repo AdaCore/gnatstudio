@@ -1802,8 +1802,10 @@ package body GPS.Kernel is
 
             if Result
               and then Filter.Module /= null
-              and then not Case_Insensitive_Equal
-                (Module_Name (Get_Creator (Context)), Filter.Module.all)
+              and then (Get_Creator (Context) = null
+                        or else not Case_Insensitive_Equal
+                          (Module_Name (Get_Creator (Context)),
+                           Filter.Module.all))
             then
                Result := False;
             end if;
