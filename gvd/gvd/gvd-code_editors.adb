@@ -106,6 +106,8 @@ package body GVD.Code_Editors is
 
       if Get_Pref (Display_Explorer) then
          Add1 (Editor, Editor.Explorer_Scroll);
+      else
+         Ref (Editor.Explorer_Scroll);
       end if;
 
       Add2 (Editor, Editor.Source);
@@ -454,6 +456,22 @@ package body GVD.Code_Editors is
          GVD.Asm_Editors.Preferences_Changed (Edit.Asm);
          Highlight_Address_Range (Edit.Asm, Edit.Source_Line);
       end if;
+
+      if not Get_Pref (Display_Explorer) then
+         if Get_Parent (Edit.Explorer_Scroll) /= null then
+            Ref (Edit.Explorer_Scroll);
+            Remove (Edit, Edit.Explorer_Scroll);
+         end if;
+      else
+         if Get_Parent (Edit.Explorer_Scroll) = null then
+            Add1 (Edit, Edit.Explorer_Scroll);
+            Unref (Edit.Explorer_Scroll);
+            Show_All (Edit.Explorer_Scroll);
+         end if;
+         GVD.Explorer.Preferences_Changed (Edit.Explorer);
+         Set_Current_File (Edit.Explorer, Get_Current_File (Edit.Source));
+      end if;
+
    end Preferences_Changed;
 
 end GVD.Code_Editors;
