@@ -34,6 +34,10 @@ package Src_Info.ALI is
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
 
+   function Case_Insensitive_Identifiers (Handler : access ALI_Handler_Record)
+      return Boolean;
+   pragma Inline (Case_Insensitive_Identifiers);
+
    function LI_Filename_From_Source
      (Handler                : access ALI_Handler_Record;
       Source_Filename        : String;
