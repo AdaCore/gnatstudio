@@ -12,12 +12,10 @@ with GNAT.OS_Lib;
 
 --  TODO:
 --  - handles multiple views of the MDI (through several top-level windows)
---  - Provide automatic initial placement of widgets
 --  - Saving and restoring sessions (window location,...)
 --  - Icons should be put at the bottom, and automatically moved when the
 --    MDI window is resized.
 --  - Icons should be placed correctly when there are also docked items
---  - Hide maximize button in docks
 
 package Gtkada.MDI is
 
