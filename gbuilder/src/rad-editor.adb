@@ -14,7 +14,6 @@ with Gtk.Layout;        use Gtk.Layout;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
 with Gtk.Notebook;      use Gtk.Notebook;
-with Gtk.Packer;        use Gtk.Packer;
 with Gtk.Style;         use Gtk.Style;
 with Gtk.Viewport;      use Gtk.Viewport;
 with Gtk.Window;        use Gtk.Window;
@@ -775,12 +774,6 @@ package body RAD.Editor is
 
          elsif Is_Placeholder (Widget) then
             --  ??? Placeholder_Replace (Widget);
-            Gtk.Handlers.Emit_Stop_By_Name
-              (Signal_Widget, "button_press_event");
-            return True;
-
-         elsif Widget.all in Gtk_Packer_Record'Class then
-            --  ??? Add_Widget_To_Container (Widget);
             Gtk.Handlers.Emit_Stop_By_Name
               (Signal_Widget, "button_press_event");
             return True;
