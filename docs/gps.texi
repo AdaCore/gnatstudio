@@ -494,10 +494,15 @@ in the interface. Note that this font is sometimes overridden by
 GPS's own preferences, most notably in the source editor.
 
 @smallexample
-style "default" @{
-   font_name="Helvetica 9"
-@}
-class "*" style "default"
+gtk-font-name = "Helvetica 9"
+@end smallexample
+
+The key shortcuts associated with the menus can be changed dynamically
+if you want this behavior. It should be activated explicitely by
+setting the following in the configuration file:
+
+@smallexample
+gtk-can-change-accels = 1
 @end smallexample
 
 Special effects can be achieved easily. For instance, the following
