@@ -112,6 +112,7 @@ package Codefix.Errors_Manager is
 
    type Ambiguous_Callback is access procedure
      (Alternative_1, Alternative_2 : Extract;
+      Current_Text                 : Text_Navigator_Abstr'Class;
       Delete_Choice                : out Alternative_Choice);
    --  Is called when ambiguities appears. If Delete_Choice is 0, no solution
    --  are chosen and the ambiguity stay. Otherwise, the choice is deleted.
@@ -128,6 +129,7 @@ package Codefix.Errors_Manager is
    procedure Check_Ambiguities
      (Solutions        : in out Solution_List;
       Callback         : Ambiguous_Callback;
+      Current_Text     : Text_Navigator_Abstr'Class;
       No_More_Problems : out Boolean);
    --  Call the Callback when 2 solutions concerns the same line. If, at the
    --  end, there are no more ambiguities then No_More_Problems is Ture.
