@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,6 +22,7 @@ with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
 
 package Naming_Scheme_Editor_Pkg.Callbacks is
+
    procedure On_Standard_Scheme_Changed
      (Object : access Gtk_Widget_Record'Class);
 
