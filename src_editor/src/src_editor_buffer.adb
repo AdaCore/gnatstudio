@@ -322,6 +322,7 @@ package body Src_Editor_Buffer is
      (Buffer : Source_Buffer;
       Line   : Editable_Line_Type) return String;
    --  Return the string at line Line.
+   --  This should return the line without line terminator.
 
    function Get_String (Buffer : Source_Buffer) return String;
    pragma Unreferenced (Get_String);
@@ -3046,7 +3047,8 @@ package body Src_Editor_Buffer is
       Start_Line : Buffer_Line_Type;
       End_Line   : Buffer_Line_Type)
    is
-      Context : File_Area_Context_Access;
+      Context     : File_Area_Context_Access;
+      First, Last : Editable_Line_Type;
    begin
       Context := new File_Area_Context;
       Set_Context_Information
@@ -3072,7 +3074,27 @@ package body Src_Editor_Buffer is
          Set_File_Information (Context, "", Buffer.File_Identifier.all);
       end if;
 
-      Set_Area_Information (Context, Integer (Start_Line), Integer (End_Line));
+      --  Find the editable boundaries.
+
+      for J in reverse 1 .. Start_Line loop
+         First := Get_Editable_Line (Buffer, J);
+         exit when First /= 0;
+      end loop;
+
+      for J in End_Line .. Buffer.Line_Data'Last loop
+         Last := Get_Editable_Line (Buffer, J);
+         exit when Last /= 0;
+      end loop;
+
+      if First = 0 then
+         First := 1;
+      end if;
+
+      if Last = 0 then
+         Last := Buffer.Last_Editable_Line;
+      end if;
+
+      Set_Area_Information (Context, Integer (First), Integer (Last));
       Glide_Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
       Unref (Selection_Context_Access (Context));
    end Source_Lines_Revealed;
