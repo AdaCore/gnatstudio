@@ -554,7 +554,7 @@ package body Vsearch_Ext is
          Set_Sensitive (Vsearch.Replace_Combo, Replace);
          Set_Sensitive (Vsearch.Search_Replace_Button, Replace);
 
-         if (Data.Mask and All_Occurences) = 0 then
+         if (Data.Mask and All_Occurrences) = 0 then
             Set_Active (Vsearch.Search_All_Check, False);
          end if;
 
@@ -571,7 +571,7 @@ package body Vsearch_Ext is
          end if;
 
          Set_Sensitive
-           (Vsearch.Search_All_Check, (Data.Mask and All_Occurences) /= 0);
+           (Vsearch.Search_All_Check, (Data.Mask and All_Occurrences) /= 0);
 
          Set_Sensitive
            (Vsearch.Case_Check, (Data.Mask and Case_Sensitive) /= 0);

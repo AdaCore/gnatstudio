@@ -74,13 +74,13 @@ package Find_Utils is
    --    regular expression.
 
    type Search_Options_Mask is mod 256;
-   Case_Sensitive   : constant Search_Options_Mask := 2 ** 1;
-   Whole_Word       : constant Search_Options_Mask := 2 ** 2;
-   Regexp           : constant Search_Options_Mask := 2 ** 3;
-   All_Occurences   : constant Search_Options_Mask := 2 ** 4;
-   Search_Backward  : constant Search_Options_Mask := 2 ** 5;
-   Supports_Replace : constant Search_Options_Mask := 2 ** 6;
-   All_Options      : constant Search_Options_Mask := 255;
+   Case_Sensitive    : constant Search_Options_Mask := 2 ** 1;
+   Whole_Word        : constant Search_Options_Mask := 2 ** 2;
+   Regexp            : constant Search_Options_Mask := 2 ** 3;
+   All_Occurrences   : constant Search_Options_Mask := 2 ** 4;
+   Search_Backward   : constant Search_Options_Mask := 2 ** 5;
+   Supports_Replace  : constant Search_Options_Mask := 2 ** 6;
+   All_Options       : constant Search_Options_Mask := 255;
 
    -------------------
    -- Simple search --
@@ -183,22 +183,22 @@ package Find_Utils is
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean is abstract;
-   --  This subprogram should search for the next occurence of Context.
+   --  This subprogram should search for the next occurrence of Context.
    --  It should return False if there is no other search to be performed, True
-   --  if a call to this function might lead to another occurence of the search
-   --  string.
+   --  if a call to this function might lead to another occurrence of the
+   --  search string.
 
    function Replace
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Search_Backward : Boolean) return Boolean;
-   --  This subprogram should search for the next occurence of Context. If
+   --  This subprogram should search for the next occurrence of Context. If
    --  Is_First_Search, the search should start from the beginning
    --  It should set Context to null when there is nothing more to replace.
    --  It should return False if there is no other search to be performed, True
-   --  if a call to this function might lead to another occurence of the search
-   --  string.
+   --  if a call to this function might lead to another occurrence of the
+   --  search string.
    --  The default implementation does nothing.
 
    procedure Free (Context : in out Search_Context_Access);
@@ -210,17 +210,17 @@ package Find_Utils is
    ---------------
 
    type Module_Search_Context_Factory is access function
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Function called to create the search context.
    --  It should return null if it couldn't create the context, and thus if the
    --  search/replace won't be performed.
    --  The memory will be freed automatically by GPS.
-   --  All_Occurences is set to True if the search will be used to find all the
-   --  possible occurences the first time the user presses First. It could be
-   --  used to provide a different algorithm or initial setup.
+   --  All_Occurrences is set to True if the search will be used to find all
+   --  the possible occurrences the first time the user presses First. It could
+   --  be used to provide a different algorithm or initial setup.
    --
    --  It shouldn't set the general information like the pattern and the
    --  replacement pattern, since these are set automatically.
