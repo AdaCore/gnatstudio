@@ -646,6 +646,9 @@ project, use the contextual menu
 @code{Examine projects imported by sdc}: this will open a project hierarchy
 browser.
 
+On the @code{sdc.gpr} project, select the contextual menu
+@code{Examine recursive dependencies for sdc}.
+
 In the browser, you can move the project items, and select them to highlight
 the dependencies.
 
