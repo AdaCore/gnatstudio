@@ -184,6 +184,9 @@ private
      (Parent       : access Array_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
+   function Structurally_Equivalent
+     (Item1 : access Array_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
 
    type Array_Iterator is new Generic_Iterator with record
       Item  : Array_Type_Access;

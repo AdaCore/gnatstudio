@@ -731,4 +731,75 @@ package body Items.Simples is
       end if;
    end Reset_Recursive;
 
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Simple_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      return Item2.all in Simple_Type'Class
+        and then Item1.Type_Name.all = Item2.Type_Name.all;
+   end Structurally_Equivalent;
+
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Range_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      return Item2.all in Range_Type'Class
+        and then Item1.Min = Range_Type_Access (Item2).Min
+        and then Item1.Max = Range_Type_Access (Item2).Max;
+   end Structurally_Equivalent;
+
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Mod_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      return Item2.all in Mod_Type'Class
+        and then Item1.Modulo = Mod_Type_Access (Item2).Modulo;
+   end Structurally_Equivalent;
+
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Access_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      return Item2.all in Access_Type'Class;
+   end Structurally_Equivalent;
+
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Enum_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      return Item2.all in Enum_Type'Class;
+   end Structurally_Equivalent;
+
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Debugger_Output_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      --  Never any aliasing
+      return False;
+   end Structurally_Equivalent;
+
 end Items.Simples;

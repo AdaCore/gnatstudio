@@ -910,4 +910,55 @@ package body Items.Records is
       end if;
    end Draw_Border;
 
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Record_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      if not (Item2.all in Record_Type'Class)
+        or else Item1.Num_Fields /= Record_Type_Access (Item2).Num_Fields
+      then
+         return False;
+      end if;
+
+      for F in Item1.Fields'Range loop
+         if (Item1.Fields (F).Variant_Part /= null
+             and then Record_Type_Access (Item2).Fields (F).Variant_Part = null)
+           or else
+           (Item1.Fields (F).Variant_Part = null
+            and then Record_Type_Access (Item2).Fields (F).Variant_Part /= null)
+         then
+            return False;
+         end if;
+
+         if not Structurally_Equivalent
+           (Item1.Fields (F).Value, Record_Type_Access (Item2).Fields (F).Value)
+         then
+            return False;
+         end if;
+
+         if Item1.Fields (F).Variant_Part /= null then
+            if Item1.Fields (F).Variant_Part'Length /=
+              Record_Type_Access (Item2).Fields (F).Variant_Part'Length
+            then
+               return False;
+            end if;
+
+            for V in Item1.Fields (F).Variant_Part'Range loop
+               if not Structurally_Equivalent
+                 (Item1.Fields (F).Variant_Part (V),
+                  Record_Type_Access (Item2).Fields (F).Variant_Part (V))
+               then
+                  return False;
+               end if;
+            end loop;
+         end if;
+      end loop;
+      return True;
+   end Structurally_Equivalent;
+
+
 end Items.Records;

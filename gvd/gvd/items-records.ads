@@ -193,6 +193,9 @@ private
      (Parent       : access Record_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
+   function Structurally_Equivalent
+     (Item1 : access Record_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
 
    type Record_Iterator is new Generic_Iterator with record
       Item  : Record_Type_Access;

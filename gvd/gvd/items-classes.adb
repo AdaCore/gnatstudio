@@ -528,4 +528,31 @@ package body Items.Classes is
       end if;
    end Set_Type_Name;
 
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Class_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      if not (Item2.all in Class_Type'Class)
+        or else Item1.Num_Ancestors /= Class_Type_Access (Item2).Num_Ancestors
+        or else not Structurally_Equivalent
+        (Item1.Child, Class_Type_Access (Item2).Child)
+      then
+         return False;
+      end if;
+
+      for A in Item1.Ancestors'Range loop
+         if not Structurally_Equivalent
+           (Item1.Ancestors (A), Class_Type_Access (Item2).Ancestors (A))
+         then
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end Structurally_Equivalent;
+
 end Items.Classes;

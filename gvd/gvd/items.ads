@@ -306,6 +306,14 @@ package Items is
    --  If the type has not been evaluated yet (lazy evaluation), this is done
    --  at this point.
 
+   function Structurally_Equivalent
+     (Item1 : access Generic_Type; Item2 : access Generic_Type'Class)
+     return Boolean is abstract;
+   --  Return True if Item1 and Item2 are structurally equivalent.
+   --  Any access type is structurally equivalent to any other access type,
+   --  whereas two records are structurally equivalent only if there fields are
+   --  structurally equivalent.
+
    ---------------
    -- Constants --
    ---------------

@@ -117,6 +117,9 @@ private
    procedure Set_Type_Name
      (Item : access Class_Type;
       Name : String);
+   function Structurally_Equivalent
+     (Item1 : access Class_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
 
    type Class_Iterator is new Generic_Iterator with record
       Item     : Class_Type_Access;

@@ -977,4 +977,18 @@ package body Items.Arrays is
       return Iter.Item.Values (Iter.Child).Value;
    end Data;
 
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Array_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      return Item2.all in Array_Type'Class
+        and then Item1.Dimensions = Array_Type_Access (Item2).Dimensions
+        and then Structurally_Equivalent
+        (Item1.Item_Type, Array_Type_Access (Item2).Item_Type);
+   end Structurally_Equivalent;
+
 end Items.Arrays;

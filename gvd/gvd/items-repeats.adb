@@ -312,4 +312,17 @@ package body Items.Repeats is
       return Iter.Item.Value;
    end Data;
 
+   -----------------------------
+   -- Structurally_Equivalent --
+   -----------------------------
+
+   function Structurally_Equivalent
+     (Item1 : access Repeat_Type; Item2 : access Generic_Type'Class)
+      return Boolean is
+   begin
+      return Item2.all in Repeat_Type'Class
+        and then Structurally_Equivalent
+        (Item1.Value, Repeat_Type_Access (Item2).Value);
+   end Structurally_Equivalent;
+
 end Items.Repeats;

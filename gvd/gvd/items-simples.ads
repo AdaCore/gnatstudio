@@ -150,17 +150,26 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
    procedure Reset_Recursive (Item : access Simple_Type);
+   function Structurally_Equivalent
+     (Item1 : access Simple_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
 
    type Range_Type is new Simple_Type with record
       Min, Max : Long_Integer;
    end record;
    procedure Print (Value : Range_Type; Indent : Natural := 0);
+   function Structurally_Equivalent
+     (Item1 : access Range_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
    --  Free is inherited from Simple_Type.
 
    type Mod_Type is new Simple_Type with record
       Modulo : Long_Integer;
    end record;
    procedure Print (Value : Mod_Type; Indent : Natural := 0);
+   function Structurally_Equivalent
+     (Item1 : access Mod_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
    --  Free is inherited from Simple_Type.
 
    type Access_Type is new Simple_Type with null record;
@@ -170,9 +179,15 @@ private
      (Item    : in out Access_Type;
       Context : Drawing_Context;
       X, Y    : Glib.Gint := 0);
+   function Structurally_Equivalent
+     (Item1 : access Access_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
 
    type Enum_Type is new Simple_Type with null record;
    procedure Print (Value : Enum_Type; Indent : Natural := 0);
+   function Structurally_Equivalent
+     (Item1 : access Enum_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
    --  Free is inherited from Simple_Type.
 
    type Debugger_Output_Type is new Simple_Type with record
@@ -197,5 +212,8 @@ private
                     Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
    procedure Reset_Recursive (Item : access Debugger_Output_Type);
+   function Structurally_Equivalent
+     (Item1 : access Debugger_Output_Type; Item2 : access Generic_Type'Class)
+     return Boolean;
 
 end Items.Simples;
