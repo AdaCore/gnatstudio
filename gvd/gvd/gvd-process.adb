@@ -439,17 +439,6 @@ package body Odd.Process is
                       Addr      => null)));
       end if;
 
-      if Addr_First /= 0 then
-         Register_Post_Cmd
-           (Get_Process (Process.Debugger),
-            Set_Addr_Post_Process'Access,
-            Convert (new Load_File_Data'
-                     (Process   => Process,
-                      File_Name => null,
-                      Line      => 1,
-                      Addr    => new String'(Str (Addr_First .. Addr_Last)))));
-      end if;
-
       if Line /= 0 then
          Register_Post_Cmd
            (Get_Process (Process.Debugger),
@@ -459,6 +448,17 @@ package body Odd.Process is
                       File_Name => null,
                       Line      => Line,
                       Addr      => null)));
+      end if;
+
+      if Addr_First /= 0 then
+         Register_Post_Cmd
+           (Get_Process (Process.Debugger),
+            Set_Addr_Post_Process'Access,
+            Convert (new Load_File_Data'
+                     (Process   => Process,
+                      File_Name => null,
+                      Line      => 1,
+                      Addr    => new String'(Str (Addr_First .. Addr_Last)))));
       end if;
    end Text_Output_Handler;
 
