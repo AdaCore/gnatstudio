@@ -168,6 +168,7 @@ package Src_Contexts is
 
    type Files_Project_Context is new Abstract_Files_Context with private;
    type Files_Project_Context_Access is access all Files_Project_Context'Class;
+   --  Context used to search in all files from the project
 
    function Get_Current_Progress
      (Context : access Files_Project_Context) return Integer;
@@ -194,13 +195,15 @@ package Src_Contexts is
      (Scope              : Search_Scope;
       All_Occurrences    : Boolean) return Files_Project_Context_Access;
    --  Same as above, but suitable for use outside the GUI.
-   --  No file it set, you need to call Set_File_List explicitely
+   --  No file is set, you need to call Set_File_List explicitely
 
    ------------------------
    -- Open Files context --
    ------------------------
+
    type Open_Files_Context is new Abstract_Files_Context with private;
    type Open_Files_Context_Access is access all Open_Files_Context'Class;
+   --  Context used to search in all files current edited
 
    function Get_Current_Progress
      (Context : access Open_Files_Context) return Integer;
@@ -256,7 +259,9 @@ private
       Dir  : GNAT.Directory_Operations.Dir_Type;
    end record;
    type Dir_Data_Access is access Dir_Data;
+
    procedure Free (D : in out Dir_Data_Access);
+
    package Directory_List is new Generic_List (Dir_Data_Access);
 
    type File_Search_Context is abstract new Search_Context with record
