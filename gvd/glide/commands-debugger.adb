@@ -1,4 +1,4 @@
-----------------------------------------------------------------------
+-----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
@@ -62,6 +62,8 @@ package body Commands.Debugger is
          return False;
       end if;
 
+      Command.Do_Not_Free := True;
+
       case Command.BMode is
          when Set =>
             Command.BP := Break_Source
@@ -77,19 +79,20 @@ package body Commands.Debugger is
                Mode => Visible);
       end case;
 
-      --  ??? There is a tricky case here: when Command is executed and
-      --  Break_Source or Remove_Breakpoint is called, the debugger updates
-      --  the breakpoint information accordingly. If the corresponding file
-      --  is currently displayed, this will cause a new action item to be
-      --  inserted in the side column information, and this causes the
-      --  previous action for this column to be freed. Therefore, if the
-      --  command was launched through a click on the column, the variable
-      --  Column is not valid anymore at this point.
-      --  For now, I'll just comment the following line, since it has no
-      --  impact on the behaviour now, until I implement a general way
-      --  to avoid that sort of problem.
+      Command.Do_Not_Free := False;
 
-      --  Command_Finished (Command, True);
+      if Command.To_Be_Freed then
+         declare
+            C : Command_Access := Command_Access (Command);
+         begin
+            Destroy (C);
+         end;
+
+         return False;
+      else
+         Command_Finished (Command, True);
+      end if;
+
       return True;
    end Execute;
 
