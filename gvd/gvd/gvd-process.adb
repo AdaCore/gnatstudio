@@ -1874,10 +1874,7 @@ package body GVD.Process is
      (Process : access Visual_Debugger_Record;
       Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class) is
    begin
-      if Process.Registered_Dialog /= null then
-         raise Program_Error;
-      end if;
-
+      pragma Assert (Process.Registered_Dialog = null);
       Process.Registered_Dialog := Gtk_Dialog (Dialog);
    end Register_Dialog;
 
