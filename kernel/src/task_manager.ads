@@ -28,7 +28,8 @@
 --  the processing of the commands, and will run in the background until all
 --  the commands are finished.
 
-
+with Gtk.Box;
+with Gtk.Progress_Bar;
 with Gtk.Widget;  use Gtk.Widget;
 
 with Commands;    use Commands;
@@ -49,6 +50,11 @@ package Task_Manager is
    --  Add a command to be handled by the task manager.
    --  The command will be executed at once.
 
+   procedure Set_Progress_Area
+     (Manager : Task_Manager_Access;
+      Area    : Gtk.Box.Gtk_Hbox);
+   --  Indicate an area in which progress bars can be displayed.
+
 private
    type Queue_Status is (Not_Started, Running, Paused, Completed);
 
@@ -67,6 +73,8 @@ private
       Current_Priority : Integer := 0;
 
       Need_Refresh : Boolean := False;
+
+      Bar          : Gtk.Progress_Bar.Gtk_Progress_Bar := null;
    end record;
 
    type Task_Queue_Array is array (Natural range <>) of Task_Queue_Record;
@@ -90,7 +98,11 @@ private
       Minimal_Passive_Priority : Integer := 0;
 
       Need_Global_Refresh  : Boolean := True;
+
+      --  Graphical elements.
+
       GUI                  : Gtk_Widget := null;
+      Progress_Area        : Gtk.Box.Gtk_Hbox   := null;
    end record;
 
 end Task_Manager;
