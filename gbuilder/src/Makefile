@@ -1,2 +1,2 @@
 all:
-	gnatmake -m -g radical `gtkada-config` -largs ../pixmaps/pixmaps.o
+	gnatmake -m -g -gnata radical `gtkada-config` -largs ../pixmaps/pixmaps.o
