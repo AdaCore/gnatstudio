@@ -44,6 +44,7 @@ package body Glide_Kernel.Standard_Hooks is
    Diff_Hook_Type          : constant String := "diff_hooks";
    File_Hook_Type          : constant String := "file_hooks";
    Context_Hook_Type       : constant String := "context_hooks";
+   Compilation_Hook_Type   : constant String := "compilation_hooks";
    --  The various names to describe the hook types defined in this package
 
    procedure General_Line_Information
@@ -816,6 +817,39 @@ package body Glide_Kernel.Standard_Hooks is
       Free (F1);
       Free (F2);
       Free (F3);
+      Free (D);
+      return Tmp;
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Compilation_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Compilation_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Compilation_Hooks_Args) return Boolean
+   is
+      D : Callback_Data'Class := Create (Script, 3);
+      Tmp : Boolean;
+      F : constant Class_Instance := Create_File (Script, Data.File);
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, F);
+      Set_Nth_Arg (D, 3, Data.Category);
+
+      Tmp := Execute_Command (Script, Command, D);
       Free (D);
       return Tmp;
    end Execute_Shell;
