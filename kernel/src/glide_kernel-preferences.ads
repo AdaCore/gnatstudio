@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                      Copyright (C) 2001 - 2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -142,5 +142,19 @@ package Glide_Kernel.Preferences is
    Browsers_Link_Color : constant Property_Color :=
      Register_Property ("Browsers:Link_Color", "#0000FF");
    --  Color used to draw the links in the items
+
+   ---------
+   -- VCS --
+   ---------
+
+   VCS_Commit_File_Check : constant Glib.Properties.Property_String :=
+     Register_Property ("VCS:Commit_File_Check", "");
+   --  A script that will be called with one source file as argument
+   --  before VCS Commit operations.
+
+   VCS_Commit_Log_Check : constant Glib.Properties.Property_String :=
+     Register_Property ("VCS:Commit_Log_Check", "");
+   --  A script that will be called with one log file as argument before
+   --  VCS Commit operations.
 
 end Glide_Kernel.Preferences;
