@@ -170,14 +170,19 @@ package body Histories is
 
       if Value /= null then
          for V in Value'Range loop
-            --  Do not add the item directly, in case there was already a
-            --  similar entry in the list if it wasn't cleared
-            if Clear_Combo then
-               Gtk_New (Item, Value (V).all);
-               Show (Item);
-               Add (List, Item);
-            else
-               Add_Unique_List_Entry (List, Value (V).all);
+            --  Do not add the empty item. It is stored internally to properly
+            --  restore the contents of the entry, but shouldn't appear in the
+            --  list.
+            if Value (V).all /= "" then
+               --  Do not add the item directly, in case there was already a
+               --  similar entry in the list if it wasn't cleared
+               if Clear_Combo then
+                  Gtk_New (Item, Value (V).all);
+                  Show (Item);
+                  Add (List, Item);
+               else
+                  Add_Unique_List_Entry (List, Value (V).all);
+               end if;
             end if;
          end loop;
 
