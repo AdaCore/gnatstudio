@@ -33,6 +33,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -79,17 +80,6 @@ package body Src_Editor_Module is
       Mode      : Mime_Mode := Read_Write) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
-   function Go_To
-     (Kernel    : access Kernel_Handle_Record'Class;
-      File      : String;
-      Line      : Natural := 0;
-      Column    : Natural := 0;
-      Highlight : Boolean := True) return Source_Editor_Box;
-   --  Go to the specified file at Line:Column
-   --  Depending on the preferences, this may or may not open a new editor.
-   --  If Highlight is True, Line will be highlighted.
-   --  null is returned if no editor could be open
-
    procedure Save_To_File
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name    : String := "";
@@ -97,35 +87,25 @@ package body Src_Editor_Module is
    --  Save the current editor to Name, or its associated filename if Name is
    --  null.
 
-   procedure Cut_Clipboard (Kernel : access Kernel_Handle_Record'Class);
-   --  Copy the currently-selected text to the clipboard and then delete it.
-
-   procedure Copy_Clipboard (Kernel : access Kernel_Handle_Record'Class);
-   --  Copy the currently-selected text to the clipboard.
-
-   procedure Paste_Clipboard (Kernel : access Kernel_Handle_Record'Class);
-   --  Paste the contents of the clipboard.
-
-   procedure Select_All (Kernel : access Kernel_Handle_Record'Class);
-   --  Set the selection bounds from the begining to the end of the buffer.
-
    function Get_Editor_Filename
      (Kernel : access Kernel_Handle_Record'Class) return String;
    --  Return the filename of the last editor window that had the focus,
    --  "" if none.
+
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String;
+      File       : String := "";
       Create_New : Boolean := True) return Source_Editor_Box;
-   --  Open a file and return the handle associated with it. If the given
-   --  file does not exist, create an empty editor only if Create_New is True.
-   --  ??? Need more comments.
+   --  Open a file and return the handle associated with it.
+   --  See Create_File_Exitor.
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : String;
       Create_New : Boolean := True) return Source_Editor_Box;
    --  Create a new text editor that edits File.
+   --  If File is the empty string, or the file doesn't exist and Create_New is
+   --  True, then an empty editor is created.
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
 
@@ -199,29 +179,23 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Generate Body menu
 
-   ----------------------
-   -- Creating editors --
-   ----------------------
+   procedure On_Edit_File
+     (Widget : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Edit a file (from a contextual menu)
 
-   procedure New_Editor
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Create a new empty editor and add it in the MDI.
+   procedure Source_Editor_Contextual
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Generate the contextual menu entries for contextual menus in other
+   --  modules than the source editor.
 
    procedure New_View
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new view for the current editor and add it in the MDI.
    --  The current editor is the focus child in the MDI. If the focus child
    --  is not an editor, nothing happens.
-
-   procedure Open_File
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File    : String;
-      Success : out Boolean);
-   --  Open a given file. Print an error message if we failed to open or read
-   --  the file.
-   --  Depending on the preferences, a new editor will be opened each time
-   --  this function is called, or the same editor will be used, or a
-   --  new editor will be opened only for different files.
 
    ------------------
    -- Load_Desktop --
@@ -317,28 +291,6 @@ package body Src_Editor_Module is
       Box.Editor := Editor;
    end Initialize;
 
-   ----------------
-   -- New_Editor --
-   ----------------
-
-   procedure New_Editor
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      MDI    : constant MDI_Window := Get_MDI (Kernel);
-      Editor : Source_Editor_Box;
-      Box    : Source_Box;
-      Child  : MDI_Child;
-
-   begin
-      Gtk_New (Editor, Kernel_Handle (Kernel));
-      Gtk_New (Box, Editor);
-      Set_Size_Request (Box, Default_Editor_Width, Default_Editor_Height);
-      Attach (Editor, Box);
-      Child := Put (MDI, Box);
-      Show_All (Box);
-      Set_Title (Child, "No Name");
-   end New_Editor;
-
    --------------
    -- New_View --
    --------------
@@ -376,16 +328,11 @@ package body Src_Editor_Module is
    is
       Success     : Boolean;
       Editor      : Source_Editor_Box;
-      File_Exists : Boolean;
+      File_Exists : Boolean := True;
    begin
-      if File = "" then
-         return null;
+      if File /= "" then
+         File_Exists := Is_Regular_File (File);
       end if;
-
-      --  At this point, we know that this file has not been opened yet,
-      --  so we need to open it.
-
-      File_Exists := Is_Regular_File (File);
 
       --  Create a new editor only if the file exists or we are asked to
       --  create a new empty one anyway.
@@ -393,7 +340,7 @@ package body Src_Editor_Module is
          Gtk_New (Editor, Kernel_Handle (Kernel));
       end if;
 
-      if File_Exists then
+      if File /= "" and then File_Exists then
          Load_File (Editor, File, Success => Success);
          if not Success then
             Destroy (Editor);
@@ -410,7 +357,7 @@ package body Src_Editor_Module is
 
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String;
+      File       : String := "";
       Create_New : Boolean := True) return Source_Editor_Box
    is
       MDI         : constant MDI_Window := Get_MDI (Kernel);
@@ -421,22 +368,20 @@ package body Src_Editor_Module is
       Iter        : Child_Iterator := First_Child (MDI);
 
    begin
-      if File = "" then
-         return null;
-      end if;
+      if File /= "" then
+         --  ??? Should do a search on the full filename instead
+         loop
+            Child := Get (Iter);
+            exit when Child = null
+              or else Get_Title (Child) = Short_File;
+            Next (Iter);
+         end loop;
 
-      --  ??? Should do a search on the full filename instead
-      loop
-         Child := Get (Iter);
-         exit when Child = null
-           or else Get_Title (Child) = Short_File;
-         Next (Iter);
-      end loop;
-
-      if Child /= null then
-         Raise_Child (Child);
-         Set_Focus_Child (Child);
-         return Source_Box (Get_Widget (Child)).Editor;
+         if Child /= null then
+            Raise_Child (Child);
+            Set_Focus_Child (Child);
+            return Source_Box (Get_Widget (Child)).Editor;
+         end if;
       end if;
 
       Editor := Create_File_Editor (Kernel, File, Create_New);
@@ -449,7 +394,13 @@ package body Src_Editor_Module is
          Set_Size_Request (Box, Default_Editor_Width, Default_Editor_Height);
          Attach (Editor, Box);
          Child := Put (MDI, Box);
-         Set_Title (Child, Short_File);
+
+         if File /= "" then
+            Set_Title (Child, Short_File);
+         else
+            Set_Title (Child, "No Name");
+         end if;
+
       else
          Console.Insert
            (Kernel, "Can not open file '" & File & "'",
@@ -457,21 +408,6 @@ package body Src_Editor_Module is
       end if;
 
       return Editor;
-   end Open_File;
-
-   ---------------
-   -- Open_File --
-   ---------------
-
-   procedure Open_File
-     (Kernel  : access Kernel_Handle_Record'Class;
-      File    : String;
-      Success : out Boolean)
-   is
-      Editor  : Source_Editor_Box;
-   begin
-      Editor := Open_File (Kernel, File, Create_New => False);
-      Success := Editor /= null;
    end Open_File;
 
    -----------------------
@@ -483,37 +419,6 @@ package body Src_Editor_Module is
       Set_Cursor_Location (D.Edit, D.Line, D.Column);
       return False;
    end Location_Callback;
-
-   -----------
-   -- Go_To --
-   -----------
-
-   function Go_To
-     (Kernel    : access Kernel_Handle_Record'Class;
-      File      : String;
-      Line      : Natural := 0;
-      Column    : Natural := 0;
-      Highlight : Boolean := True) return Source_Editor_Box
-   is
-      Edit : Source_Editor_Box;
-      Id   : Idle_Handler_Id;
-   begin
-      Edit := Open_File (Kernel, File, Create_New => False);
-      if Edit /= null then
-         --  For some reason, we can not directly call Set_Cursor_Location,
-         --  since the source editor won't be scrolled the first time the
-         --  editor is displayed. Doing this in an idle callback ensures that
-         --  all the proper events and initializations have taken place before
-         --  we try to scroll the editor.
-         Id := Location_Idle.Add
-           (Location_Callback'Access, (Edit, Line, Column));
-
-         if Highlight then
-            Highlight_Line (Edit, Line);
-         end if;
-      end if;
-      return Edit;
-   end Go_To;
 
    ------------------
    -- Save_To_File --
@@ -532,62 +437,6 @@ package body Src_Editor_Module is
 
       Save_To_File (Source, Name, Success);
    end Save_To_File;
-
-   -------------------
-   -- Cut_Clipboard --
-   -------------------
-
-   procedure Cut_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
-   begin
-      if Source = null then
-         return;
-      end if;
-
-      Cut_Clipboard (Source);
-   end Cut_Clipboard;
-
-   --------------------
-   -- Copy_Clipboard --
-   --------------------
-
-   procedure Copy_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
-   begin
-      if Source = null then
-         return;
-      end if;
-
-      Copy_Clipboard (Source);
-   end Copy_Clipboard;
-
-   ---------------------
-   -- Paste_Clipboard --
-   ---------------------
-
-   procedure Paste_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
-   begin
-      if Source = null then
-         return;
-      end if;
-
-      Paste_Clipboard (Source);
-   end Paste_Clipboard;
-
-   ----------------
-   -- Select_All --
-   ----------------
-
-   procedure Select_All (Kernel : access Kernel_Handle_Record'Class) is
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
-   begin
-      if Source = null then
-         return;
-      end if;
-
-      Select_All (Source);
-   end Select_All;
 
    -------------------------
    -- Get_Editor_Filename --
@@ -632,9 +481,11 @@ package body Src_Editor_Module is
    -----------------
 
    procedure On_New_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Editor : Source_Editor_Box;
    begin
-      New_Editor (Kernel);
+      Editor := Open_File (Kernel, File => "");
 
    exception
       when E : others =>
@@ -710,9 +561,13 @@ package body Src_Editor_Module is
    ------------
 
    procedure On_Cut
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
-      Cut_Clipboard (Kernel);
+      if Source /= null then
+         Cut_Clipboard (Source);
+      end if;
 
    exception
       when E : others =>
@@ -724,9 +579,13 @@ package body Src_Editor_Module is
    -------------
 
    procedure On_Copy
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
-      Copy_Clipboard (Kernel);
+      if Source /= null then
+         Copy_Clipboard (Source);
+      end if;
 
    exception
       when E : others =>
@@ -738,9 +597,13 @@ package body Src_Editor_Module is
    --------------
 
    procedure On_Paste
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
-      Paste_Clipboard (Kernel);
+      if Source /= null then
+         Paste_Clipboard (Source);
+      end if;
 
    exception
       when E : others =>
@@ -752,9 +615,13 @@ package body Src_Editor_Module is
    -------------------
 
    procedure On_Select_All
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
-      Select_All (Kernel);
+      if Source /= null then
+         Select_All (Source);
+      end if;
 
    exception
       when E : others =>
@@ -782,12 +649,9 @@ package body Src_Editor_Module is
    procedure On_Goto_Declaration_Or_Body
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
    begin
-      if Get_Editor_Filename (Kernel) = "" then
-         --  Nothing to do, since no saved editor has the focus
-         return;
+      if Get_Editor_Filename (Kernel) /= "" then
+         Goto_Declaration_Or_Body (Kernel);
       end if;
-
-      Goto_Declaration_Or_Body (Kernel);
 
    exception
       when E : others =>
@@ -855,7 +719,7 @@ package body Src_Editor_Module is
          Gnatstub (Title, Success);
 
          if Success then
-            Open_File (Kernel, Body_Name (Title), Success);
+            Open_File_Editor (Kernel, Body_Name (Title));
          end if;
       end if;
 
@@ -874,8 +738,8 @@ package body Src_Editor_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
-      Success : Boolean := True;
       Edit : Source_Editor_Box;
+      Id : Idle_Handler_Id;
    begin
       if Mime_Type = Mime_Source_File then
          declare
@@ -885,20 +749,77 @@ package body Src_Editor_Module is
             Highlight : constant Boolean :=
               Get_Boolean (Data (Data'First + 3));
          begin
-            if File = "" then
-               New_Editor (Kernel);
-            elsif Line /= 0 or else Column /= 0 then
-               Edit := Go_To
-                 (Kernel, File, Natural (Line), Natural (Column), Highlight);
-               Success := Edit /= null;
-            else
-               Open_File (Kernel, File, Success);
+            Edit := Open_File (Kernel, File, Create_New => False);
+            if Edit /= null
+              and then (Line /= 0 or else Column /= 0)
+            then
+               --  For some reason, we can not directly call
+               --  Set_Cursor_Location, since the source editor won't be
+               --  scrolled the first time the editor is displayed. Doing
+               --  this in an idle callback ensures that all the proper
+               --  events and initializations have taken place before we try
+               --  to scroll the editor.
+               Id := Location_Idle.Add
+                 (Location_Callback'Access,
+                  (Edit, Natural (Line), Natural (Column)));
+
+               if Highlight then
+                  Highlight_Line (Edit, Natural (Line));
+               end if;
             end if;
-            return Success;
+            return Edit /= null;
          end;
       end if;
       return False;
    end Mime_Action;
+
+   ------------------
+   -- On_Edit_File --
+   ------------------
+
+   procedure On_Edit_File
+     (Widget : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File : File_Selection_Context_Access := File_Selection_Context_Access
+        (Context);
+   begin
+      Trace (Me, "On_Edit_File: " & File_Information (File));
+      Open_File_Editor
+        (Get_Kernel (Context),
+         Directory_Information (File) & File_Information (File));
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Edit_File;
+
+   ------------------------------
+   -- Source_Editor_Contextual --
+   ------------------------------
+
+   procedure Source_Editor_Contextual
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      File : File_Selection_Context_Access;
+      Mitem : Gtk_Menu_Item;
+   begin
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_Directory_Information (File)
+           and then Has_File_Information (File)
+         then
+            Gtk_New (Mitem, -"Edit " & Base_Name (File_Information (File)));
+            Append (Menu, Mitem);
+            Context_Callback.Connect
+              (Mitem, "activate",
+               Context_Callback.To_Marshaller (On_Edit_File'Access),
+               Selection_Context_Access (Context));
+         end if;
+      end if;
+   end Source_Editor_Contextual;
 
    -----------------------
    -- Initialize_Module --
@@ -969,31 +890,39 @@ package body Src_Editor_Module is
 
       --  Toolbars
 
-      Button := Insert_Stock (Toolbar, Stock_New, -"Create a New File");
+      Button := Insert_Stock (Toolbar, Stock_New, -"Create a New File",
+                              Position => 0);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_New_File'Access),
          Kernel_Handle (Kernel));
 
-      Button := Insert_Stock (Toolbar, Stock_Open, -"Open a File");
+      Button := Insert_Stock (Toolbar, Stock_Open, -"Open a File",
+                              Position => 1);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Open_File'Access),
          Kernel_Handle (Kernel));
 
-      Button := Insert_Stock (Toolbar, Stock_Save, -"Save Current File");
+      Button := Insert_Stock (Toolbar, Stock_Save, -"Save Current File",
+                              Position => 2);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Save'Access),
          Kernel_Handle (Kernel));
 
-      Append_Space (Toolbar);
-      Button := Insert_Stock (Toolbar, Stock_Undo, -"Undo Previous Action");
-      Button := Insert_Stock (Toolbar, Stock_Redo, -"Redo Previous Action");
-      Append_Space (Toolbar);
-      Button := Insert_Stock (Toolbar, Stock_Cut, -"Cut to Clipboard");
-      Button := Insert_Stock (Toolbar, Stock_Copy, -"Copy to Clipboard");
-      Button := Insert_Stock (Toolbar, Stock_Paste, -"Paste from Clipboard");
+      Insert_Space (Toolbar, Position => 3);
+      Button := Insert_Stock (Toolbar, Stock_Undo, -"Undo Previous Action",
+                             Position => 4);
+      Button := Insert_Stock (Toolbar, Stock_Redo, -"Redo Previous Action",
+                             Position => 5);
+      Insert_Space (Toolbar, Position => 6);
+      Button := Insert_Stock (Toolbar, Stock_Cut, -"Cut to Clipboard",
+                              Position => 7);
+      Button := Insert_Stock (Toolbar, Stock_Copy, -"Copy to Clipboard",
+                              Position => 8);
+      Button := Insert_Stock (Toolbar, Stock_Paste, -"Paste from Clipboard",
+                             Position => 9);
    end Initialize_Module;
 
    ---------------------
@@ -1006,7 +935,7 @@ package body Src_Editor_Module is
         (Module_Name             => Src_Editor_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => null,
+         Contextual_Menu_Handler => Source_Editor_Contextual'Access,
          Mime_Handler            => Mime_Action'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
