@@ -38,6 +38,7 @@ with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;    use Glide_Kernel.Timeout;
+with Language_Handlers;       use Language_Handlers;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 with Prj_API;                 use Prj_API;
 with Prj;                     use Prj;
@@ -45,6 +46,7 @@ with Src_Info;                use Src_Info;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 
+with Basic_Types;
 with GVD.Dialogs;             use GVD.Dialogs;
 with String_Utils;            use String_Utils;
 with GUI_Utils;               use GUI_Utils;
@@ -117,6 +119,15 @@ package body Builder_Module is
    procedure Free (Ar : in out String_List_Access);
    --  Free the memory associate with Ar.
 
+   function Compute_Arguments
+     (Kernel  : Kernel_Handle;
+      Syntax  : Command_Syntax;
+      Project : String;
+      File    : String) return Argument_List_Access;
+   --  Compute the make arguments following the right Syntax
+   --  (gnatmake / make), given a Project and File name.
+   --  It is the responsibility of the caller to free the returned object.
+
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -154,6 +165,82 @@ package body Builder_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called every time the project view has changed, ie potentially the list
    --  of main units.
+
+   -----------------------
+   -- Compute_Arguments --
+   -----------------------
+
+   function Compute_Arguments
+     (Kernel  : Kernel_Handle;
+      Syntax  : Command_Syntax;
+      Project : String;
+      File    : String) return Argument_List_Access
+   is
+      Result : Argument_List_Access;
+      Vars   : Argument_List_Access :=
+        Argument_String_To_List
+          (Scenario_Variables_Cmd_Line (Kernel, Syntax));
+
+   begin
+      case Syntax is
+         when GNAT_Syntax =>
+            --  gnatmake -d -Pproject main -XVAR1=value1 ...
+
+            Result := new Argument_List'
+              ((new String' ("-d"),
+                new String' ("-P" & Project),
+                new String' (File)) & Vars.all);
+
+         when Make_Syntax =>
+            --  make -s -C dir -f Makefile.project build VAR1=value1 ...
+
+            declare
+               Lang         : String := Get_Language_From_File
+                 (Get_Language_Handler (Kernel), File);
+               List         : constant Argument_List :=
+                 ((new String' ("-s"),
+                   new String' ("-C"),
+                   new String' (Dir_Name (Project)),
+                   new String' ("-f"),
+                   new String' ("Makefile." & Base_Name (Project, ".gpr")),
+                   new String' ("build")) & Vars.all);
+
+            begin
+               Lower_Case (Lang);
+
+               if Lang = "ada" then
+                  --  ??? Should set these values also if Ada is part of the
+                  --  supported languages.
+
+                  declare
+                     Ada_Compiler : constant String := Get_Attribute_Value
+                       (Project_View, Compiler_Command_Attribute,
+                        Ide_Package, Default => "gnatmake", Index => "ada");
+
+                  begin
+                     if Ada_Compiler = "gnatmake" then
+                        Result := new Argument_List'
+                          (List &
+                           new String' ("ADA_SOURCES=" & Base_Name (File)) &
+                           new String' ("ADAFLAGS=-d"));
+                     else
+                        Result := new Argument_List'
+                          (List &
+                           new String' ("ADA_SOURCES=" & Base_Name (File)) &
+                           new String' ("ADAFLAGS=-d"),
+                           new String' ("GNATMAKE=" & Ada_Compiler));
+                     end if;
+                  end;
+
+               else
+                  Result := new Argument_List' (List);
+               end if;
+            end;
+      end case;
+
+      Basic_Types.Unchecked_Free (Vars);
+      return Result;
+   end Compute_Arguments;
 
    ----------
    -- Free --
@@ -205,18 +292,31 @@ package body Builder_Module is
    procedure On_Build
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      K       : constant Kernel_Handle := Kernel_Handle (Kernel);
-
-      Top     : constant Glide_Window :=
+      K            : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (K));
-      Fd      : Process_Descriptor_Access;
-      Args    : Argument_List_Access;
-      Cmd     : String_Access;
-      Id      : Timeout_Handler_Id;
-      Context : Selection_Context_Access;
-      Prj     : Project_Id;
+      Fd           : Process_Descriptor_Access;
+      Cmd          : String_Access;
+      Args         : Argument_List_Access;
+      Id           : Timeout_Handler_Id;
+      Context      : Selection_Context_Access;
+      Prj          : Project_Id;
+      Project_View : constant Project_Id := Get_Project_View (K);
+      Project_Name : constant String := Get_Project_File_Name (K);
+      Langs        : Argument_List := Get_Languages (Project_View);
+      Syntax       : Command_Syntax;
 
    begin
+      Lower_Case (Langs (Langs'First).all);
+
+      if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
+         Syntax := GNAT_Syntax;
+      else
+         Syntax := Make_Syntax;
+      end if;
+
+      Free (Langs);
+
       --  If no file was specified in data, simply compile the current file.
 
       if Data.Length = 0 then
@@ -225,64 +325,86 @@ package body Builder_Module is
          if Context /= null
            and then Context.all in File_Selection_Context'Class
            and then Has_File_Information
-           (File_Selection_Context_Access (Context))
+             (File_Selection_Context_Access (Context))
          then
             Prj := Get_Project_From_File
-              (Get_Project_View (K),
+              (Project_View,
                File_Information (File_Selection_Context_Access (Context)));
 
-            if Prj = No_Project
-              or else Get_Project_File_Name (K) = ""
-            then
-               Cmd := new String'
-                 (File_Information (File_Selection_Context_Access (Context)));
+            if Prj = No_Project or else Project_Name = "" then
+               Args := new Argument_List'
+                 (1 => new String' (File_Information
+                         (File_Selection_Context_Access (Context))));
             else
-               Cmd := new String'
-                 ("-P" & Project_Path (Prj) & " "
-                  & Scenario_Variables_Cmd_Line (K) & " " & File_Information
-                  (File_Selection_Context_Access (Context)));
+               Args := Compute_Arguments
+                 (K, Syntax, Project_Path (Prj),
+                  File_Information (File_Selection_Context_Access (Context)));
             end if;
 
          --  There is no current file, so we can't compile anything
          else
-            return;
+            Console.Insert
+              (K, -"No file selected, cannot build.", Mode => Error);
          end if;
 
       else
          --  Are we using the default internal project ?
 
          if Get_Project_File_Name (K) = "" then
-            Cmd := new String' (Data.File);
+            case Syntax is
+               when GNAT_Syntax =>
+                  Args := new Argument_List' (1 => new String' (Data.File));
+
+               when Make_Syntax =>
+                  Console.Insert
+                    (K, -"You must save the project file before building.",
+                     Mode => Error);
+                  return;
+            end case;
          else
-            Cmd := new String'
-              ("-P" & Project_Path (Data.Project) & " " &
-               Scenario_Variables_Cmd_Line (K) & " " & Data.File);
+            Args := Compute_Arguments
+              (K, Syntax, Project_Path (Data.Project), Data.File);
          end if;
       end if;
 
       --  Ask for saving sources/projects before building
 
       if Save_All_MDI_Children (K, Force => False) = False then
+         Free (Args);
          return;
       end if;
 
       Console.Clear (K);
-      Console.Insert (K, "gnatmake " & Cmd.all, False);
+
+      case Syntax is
+         when GNAT_Syntax =>
+            Cmd := new String' (Get_Attribute_Value
+              (Project_View, Compiler_Command_Attribute,
+               Ide_Package, Default => "gnatmake", Index => "ada"));
+
+         when Make_Syntax =>
+            Cmd := new String' ("make");
+      end case;
+
+      Console.Insert (K, Cmd.all, Highlight_Sloc => False, Add_LF => False);
+
+      for J in Args'First .. Args'Last - 1 loop
+         Console.Insert
+           (K, " " & Args (J).all, Highlight_Sloc => False, Add_LF => False);
+      end loop;
+
+      Console.Insert
+        (K, " " & Args (Args'Last).all,
+         Highlight_Sloc => False, Add_LF => True);
 
       Push_State (K, Processing);
       Set_Sensitive_Menus (K, False);
 
-      Args := Argument_String_To_List ("gnatmake -d " & Cmd.all);
-
-      Free (Cmd);
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
       Non_Blocking_Spawn
-        (Fd.all,
-         Args (Args'First).all,
-         Args (Args'First + 1 .. Args'Last),
-         Buffer_Size => 0,
-         Err_To_Out  => True);
+        (Fd.all, Cmd.all, Args.all, Buffer_Size => 0, Err_To_Out => True);
+      Free (Cmd);
       Free (Args);
       Id := Process_Timeout.Add
         (Timeout, Idle_Build'Access, (K, Fd, null, null));
@@ -292,6 +414,7 @@ package body Builder_Module is
          Console.Insert (K, -"Invalid command.", False, Mode => Error);
          Pop_State (K);
          Set_Sensitive_Menus (K, True);
+         Free (Cmd);
          Free (Args);
          Free (Fd);
 
@@ -314,6 +437,8 @@ package body Builder_Module is
       if Context = null
         or else not (Context.all in File_Selection_Context'Class)
       then
+         Console.Insert
+           (Kernel, -"No file selected, cannot check syntax.", Mode => Error);
          return;
       end if;
 
@@ -329,9 +454,22 @@ package body Builder_Module is
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
          Id   : Timeout_Handler_Id;
+         Lang : String := Get_Language_From_File
+           (Get_Language_Handler (Kernel), File);
 
       begin
          if File = "" then
+            Console.Insert
+              (Kernel, -"No file name, cannot check syntax.", Mode => Error);
+            return;
+         end if;
+
+         Lower_Case (Lang);
+
+         if Lang /= "ada" then
+            Console.Insert
+              (Kernel, -"Syntax check of non Ada file not yet supported.",
+               Mode => Error);
             return;
          end if;
 
@@ -385,25 +523,40 @@ package body Builder_Module is
       if Context = null
         or else not (Context.all in File_Selection_Context'Class)
       then
-         Trace (Me, "On_Compile: context doesn't contain file name");
+         Console.Insert
+           (Kernel, -"No file selected, cannot compile.", Mode => Error);
          return;
       end if;
 
       declare
-         Top     : constant Glide_Window :=
+         Top          : constant Glide_Window :=
            Glide_Window (Get_Main_Window (Kernel));
-         File    : constant String :=
+         File         : constant String :=
            File_Information (File_Selection_Context_Access (Context));
-         Project : constant String := Get_Subproject_Name (Kernel, File);
-         Cmd     : constant String := "gnatmake -q -u ";
-
-         Fd      : Process_Descriptor_Access;
-         Args    : Argument_List_Access;
-         Id      : Timeout_Handler_Id;
+         Project      : constant String := Get_Subproject_Name (Kernel, File);
+         Project_View : constant Project_Id := Get_Project_View (Kernel);
+         Cmd          : constant String :=
+           Get_Attribute_Value
+             (Project_View, Compiler_Command_Attribute,
+              Ide_Package, Default => "gnatmake", Index => "ada") & " -q -u ";
+         Fd           : Process_Descriptor_Access;
+         Args         : Argument_List_Access;
+         Id           : Timeout_Handler_Id;
+         Lang         : String := Get_Language_From_File
+           (Get_Language_Handler (Kernel), File);
 
       begin
          if File = "" then
-            return;
+            Console.Insert
+              (Kernel, -"No file name, cannot compile.", Mode => Error);
+         end if;
+
+         Lower_Case (Lang);
+
+         if Lang /= "ada" then
+            Console.Insert
+              (Kernel, -"Compilation of non Ada file not yet supported.",
+               Mode => Error);
          end if;
 
          if Save_All_MDI_Children (Kernel, Force => False) = False then
@@ -426,7 +579,7 @@ package body Builder_Module is
             declare
                Full_Cmd : constant String :=
                  Cmd & "-P" & Project & " "
-                  & Scenario_Variables_Cmd_Line (Kernel)
+                  & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax)
                   & " " & File;
 
             begin
@@ -536,24 +689,24 @@ package body Builder_Module is
    -- Timeout_Compute_Xref --
    --------------------------
 
-   function Timeout_Compute_Xref (D : Compute_Xref_Data_Access)
-      return Boolean
+   function Timeout_Compute_Xref
+     (D : Compute_Xref_Data_Access) return Boolean
    is
       Handler      : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (D.Kernel));
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
-      Finished     : Boolean;
+      Not_Finished : Boolean;
       LI           : LI_Handler;
       New_Handler  : Boolean := False;
 
    begin
       if D.LI /= 0 and then D.Iter.all /= null then
-         Continue (D.Iter.all.all, Finished);
+         Continue (D.Iter.all.all, Not_Finished);
       else
-         Finished := True;
+         Not_Finished := True;
       end if;
 
-      while Finished loop
+      while Not_Finished loop
          D.LI := D.LI + 1;
          if D.LI > Num_Handlers then
             Insert (D.Kernel, "Finished parsing all source files");
@@ -571,7 +724,7 @@ package body Builder_Module is
                   Root_Project => Get_Project_View (D.Kernel),
                   Project      => Get_Project_View (D.Kernel),
                   Recursive    => True));
-            Continue (D.Iter.all.all, Finished);
+            Continue (D.Iter.all.all, Not_Finished);
          end if;
       end loop;
 
