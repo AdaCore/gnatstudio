@@ -247,7 +247,7 @@ endif
 
 .PHONY: check_src_editor
 check_src_editor: force
-	@[ -f ${SRC_EDITOR_SRC}/src/src_editor.ads ] || \
+	@[ -f ${SRC_EDITOR_SRC}/src/src_editor_box.ads ] || \
 	   (echo "src editor sources not found in ${SRC_EDITOR_SRC}, see README"; false)
 
 ######################
