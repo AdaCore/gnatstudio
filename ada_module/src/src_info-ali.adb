@@ -201,7 +201,6 @@ package body Src_Info.ALI is
      (Handler          : ALI_Handler;
       List             : LI_File_List;
       Source_Filename  : Virtual_File;
-      Sig_Base_Name    : String;
       Project          : Project_Type;
       Part             : Unit_Part;
       File             : out Source_File);
@@ -682,13 +681,11 @@ package body Src_Info.ALI is
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body =>
             Get_Unit_Source_File
-              (Handler, List, Source_Filename,
-               Base_Name (Source_Filename), Project, Unit_Body, File);
+              (Handler, List, Source_Filename, Project, Unit_Body, File);
 
          when Unit_Spec =>
             Get_Unit_Source_File
               (Handler, List, Source_Filename,
-               Other_File_Base_Name (Project, Source_Filename),
                Project, Unit_Spec, File);
 
          when Unit_Separate =>
@@ -704,17 +701,15 @@ package body Src_Info.ALI is
      (Handler          : ALI_Handler;
       List             : LI_File_List;
       Source_Filename  : Virtual_File;
-      Sig_Base_Name    : String;
       Project          : Project_Type;
       Part             : Unit_Part;
       File             : out Source_File)
    is
-      ALI_Filename : constant String := Get_ALI_Filename (Sig_Base_Name);
-      --   ??? Could we use Sname instead
-
+      ALI_Filename : constant Virtual_File := LI_Filename_From_Source
+        (Handler, Source_Filename, Project);
    begin
       File :=
-        (LI              => Get (List.Table.all, ALI_Filename),
+        (LI              => Get (List.Table.all, Base_Name (ALI_Filename)),
          Part            => Part,
          Source_Filename => null);
 
@@ -722,25 +717,16 @@ package body Src_Info.ALI is
       --  create a stub
 
       if File.LI = null then
-         declare
-            LI : Virtual_File :=
-              Create (ALI_Filename, Project, Use_Source_Path => False);
-         begin
-            if LI = VFS.No_File then
-               LI := Create_From_Base (ALI_Filename);
-            end if;
+         Create_LI_File
+           (File        => File.LI,
+            List        => List,
+            Project     => Project,
+            LI_Filename => ALI_Filename,
+            Handler     => LI_Handler (Handler));
 
-            Create_LI_File
-              (File        => File.LI,
-               List        => List,
-               Project     => Project,
-               LI_Filename => LI,
-               Handler     => LI_Handler (Handler));
-
-            if File.LI = null then
-               raise ALI_Internal_Error;
-            end if;
-         end;
+         if File.LI = null then
+            raise ALI_Internal_Error;
+         end if;
       end if;
 
       --  If the associated File_Info does not exist, then create it.
