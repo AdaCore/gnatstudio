@@ -225,6 +225,7 @@ ifeq ($(<PROJECT>_PROJECT),)
 <PROJECT>_PROJECT=True
 
 ifeq ($(BASE_DIR),)
+   include $(GNAT_ROOT)/share/Makefile.generic
    <config section>
    BASE_DIR=$(shell pwd)
    <PROJECT>_ROOT=True
@@ -240,8 +241,8 @@ as the main project or as a sub project.
 The <config section> will contain variables configuring the environment, with
 the following variables:
 
-   CC = <c compiler>
-   CXX = <c++ compiler>
+   CC = <c compiler>                         optional
+   CXX = <c++ compiler>                      optional
    LANGUAGES = <list of project languages>
    AR_EXT = <extension of archive files>
    MAIN = <language of main program>         optional
@@ -252,6 +253,10 @@ the following variables:
    ADA_BODY = <extension of ada body files>  optional
 
 Here is a detail of these variables:
+   - A variable CC, taken from IDE.Compiler_Command ("C")
+
+   - A variable CXX, taken from IDE.Compiler_Command ("C++")
+
    - A variable LANGUAGES will contain the list of languages for the project:
 
    LANGUAGES = c ada c++
@@ -355,6 +360,17 @@ C_SRCS = \
   $(foreach name,$(<PROJECT>_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 
 Same for CXX_SRCS (C++ sources) if needed (if Language attribute contains "c++")
+
+- If it cannot be determined statically whether there are non Ada sources,
+  an additional variable declaration is needed for the handling of archive
+  files (see LIBS handling below):
+
+<PROJECT>_SRCS := \
+  $(foreach name,$(<PROJECT>_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))\
+  $(foreach name,$(<PROJECT>_SRC_DIRS),$(notdir $(wildcard $(name)/*$(CXX_EXT))))
+
+Each "foreach" line will be generated only if the project supports the
+corresponding language.
 
 - The attribute Object_Dir is translated as variables <PROJECT>_OBJ_DIR and
   OBJ_DIR:
@@ -463,9 +479,13 @@ do not attempt to replace <project> by $(PROJECT_FILE) or any other similar
 changes, it won't work.
 
 - Each multi-language project file will generate a library that is added to
-  the list of libs using variable LIBS:
+  the list of libs using variable LIBS, unless it can be determined statically
+  (e.g the list of sources is specified explicitely) that no object files
+  will be generated, in which case the following lines should not be generated:
 
-LIBS := $(<PROJECT>_OBJ_DIR)/lib<project>$(AR_EXT) $(LIBS)
+ifneq ($(strip $(<PROJECT>_SRCS)),)
+   LIBS := $(<PROJECT>_OBJ_DIR)/lib<project>$(AR_EXT) $(LIBS)
+endif
 
 - Each Makefile is terminated by the following section that terminates the
   conditional section started at the beginning of the Makefile, and includes
