@@ -115,7 +115,7 @@ package body Glide_Kernel.Modules is
    function Module_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Command handler for the module commands.
 
    ---------------------
@@ -2015,7 +2015,7 @@ package body Glide_Kernel.Modules is
    function Module_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
+      Args    : GNAT.OS_Lib.Argument_List) return String
    is
       use String_List_Utils.String_List;
       use type Command_List.List_Node;
@@ -2024,7 +2024,6 @@ package body Glide_Kernel.Modules is
       Command_Node : Command_List.List_Node;
       L            : String_List_Utils.String_List.List;
       L2           : String_List_Utils.String_List.List_Node;
-      Args_Node    : List_Node;
       Success      : Boolean;
       Result       : GNAT.OS_Lib.String_Access;
       Current      : Module_List.List_Node;
@@ -2044,7 +2043,7 @@ package body Glide_Kernel.Modules is
       Result := new String'("");
 
       if Command = "help" then
-         if Is_Empty (Args) then
+         if Args'Length = 0 then
             Insert (-"The following commands are defined:");
 
             L := Commands_As_List ("", Kernel);
@@ -2069,8 +2068,9 @@ package body Glide_Kernel.Modules is
                   Data : constant Command_Information :=
                     Command_List.Data (Command_Node);
                begin
-                  if Data.Command.all = Head (Args) then
-                     Insert (Data.Help.all);
+                  if Data.Command.all = Args (Args'First).all then
+                     Insert (-("Usage: ") & Data.Usage.all);
+                     Insert (Data.Description.all);
                   end if;
                end;
 
@@ -2079,20 +2079,13 @@ package body Glide_Kernel.Modules is
          end if;
 
       elsif Command = "echo" then
-         Args_Node := First (Args);
-
-         while Args_Node /= Null_Node loop
-            Insert (Data (Args_Node));
-            Args_Node := Next (Args_Node);
+         for Index in Args'Range loop
+            Insert (Args (Index).all);
          end loop;
 
       elsif Command = "insmod" then
-         if Length (Args) /= 2 then
-            return (-"Wrong number of arguments.") & ASCII.LF;
-         end if;
-
          Dynamic_Register_Module
-           (Kernel, Data (First (Args)), Data (Next (First (Args))), Success);
+           (Kernel, Args (Args'First).all, Args (Args'First + 1).all, Success);
 
          if Success then
             return (-"Module successfully loaded.") & ASCII.LF;
@@ -2129,29 +2122,39 @@ package body Glide_Kernel.Modules is
 
       Register_Command
         (Kernel,
-         "help",
-         -"Lists recognized commands.",
-         Module_Command_Handler'Access);
+         Command      => "help",
+         Usage        => "help",
+         Description  => -"List recognized commands.",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Handler      => Module_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         "echo",
-         -"Display a line of text.",
-         Module_Command_Handler'Access);
+         Command      => "echo",
+         Usage        => "echo",
+         Description  => -"Display a line of text.",
+         Minimum_Args => 0,
+         Maximum_Args => Natural'Last,
+         Handler      => Module_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "insmod",
-         Help    => -"Usage:" & ASCII.LF
-           & "  insmod shared-lib module" & ASCII.LF
-           & (-"Dynamically register from shared-lib a new module."),
-         Handler => Module_Command_Handler'Access);
+         Command      => "insmod",
+         Usage        => "insmod shared-lib module",
+         Description  => -"Dynamically register from shared-lib a new module.",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Module_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "lsmod",
-         Help    => -"List modules currently loaded.",
-         Handler => Module_Command_Handler'Access);
+         Command      => "lsmod",
+         Usage        => "lsmod",
+         Description  => -"List modules currently loaded.",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Module_Command_Handler'Access);
    end Initialize;
 
    ----------------------
@@ -2160,9 +2163,12 @@ package body Glide_Kernel.Modules is
 
    procedure Register_Command
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Help    : String;
-      Handler : Module_Command_Function)
+      Command      : String;
+      Usage        : String;
+      Description  : String;
+      Minimum_Args : Natural := 0;
+      Maximum_Args : Natural := 0;
+      Handler      : Module_Command_Function)
    is
       use Command_List;
 
@@ -2187,9 +2193,12 @@ package body Glide_Kernel.Modules is
       end loop;
 
       Append (Kernel.Commands_List,
-                (Command => new String'(Command),
-                 Help    => new String'(Help),
-                 Command_Handler => Handler));
+              (Command         => new String'(Command),
+               Usage           => new String'(Usage),
+               Description     => new String'(Description),
+               Minimum_Args    => Minimum_Args,
+               Maximum_Args    => Maximum_Args,
+               Command_Handler => Handler));
    end Register_Command;
 
    -----------------------
@@ -2199,67 +2208,42 @@ package body Glide_Kernel.Modules is
    function Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
+      Args    : Argument_List) return String
    is
-      use String_List_Utils.String_List;
       use type Command_List.List_Node;
 
-      Command_Node : Command_List.List_Node;
-
-      Result : GNAT.OS_Lib.String_Access;
-
-      Command_Found : Boolean := False;
+      Command_Node : Command_List.List_Node :=
+        Command_List.First (Kernel.Commands_List);
+      Data   : Command_Information;
 
    begin
-      Result := new String'("");
-
-      Command_Node := Command_List.First (Kernel.Commands_List);
-
       while Command_Node /= Command_List.Null_Node loop
-         declare
-            Data : constant Command_Information :=
-              Command_List.Data (Command_Node);
-         begin
-            if Data.Command.all = Command then
-               Free (Result);
-               Result := new String'
-                 (Data.Command_Handler
-                    (Kernel,
-                     Command,
-                     Args));
-               Command_Found := True;
-
-               exit;
+         Data := Command_List.Data (Command_Node);
+         if Data.Command.all = Command then
+            if Data.Minimum_Args <= Args'Length
+              and then Args'Length <= Data.Maximum_Args
+            then
+               return Data.Command_Handler (Kernel, Command, Args);
+            else
+               return -"Incorrect number of arguments." & ASCII.LF
+                 & Data.Usage.all;
             end if;
-         end;
-
+         end if;
          Command_Node := Command_List.Next (Command_Node);
       end loop;
 
-      declare
-         R : constant String := Result.all;
-      begin
-         Free (Result);
-
-         if not Command_Found then
-            return -"command not recognized";
-         else
-            return R;
-         end if;
-      end;
+      return -"command not recognized";
    end Interpret_Command;
+
+   -----------------------
+   -- Interpret_Command --
+   -----------------------
 
    function Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String) return String
    is
-      use String_List_Utils.String_List;
-      use type Command_List.List_Node;
-
       Args         : Argument_List_Access;
-      The_Command  : GNAT.OS_Lib.String_Access;
-      The_Args     : String_List_Utils.String_List.List;
-
    begin
       if Command = "" then
          return "";
@@ -2268,23 +2252,22 @@ package body Glide_Kernel.Modules is
       Trace (Me, "Launching interactive command: " & Command);
 
       Args := Argument_String_To_List (Command);
-      The_Command := new String'(Args (Args'First).all);
-
-      for J in Args'First + 1 .. Args'Last loop
-         String_List_Utils.String_List.Append (The_Args, Args (J).all);
-      end loop;
 
       declare
-         R : constant String :=
-           Interpret_Command (Kernel, The_Command.all, The_Args);
+         R : constant String := Interpret_Command
+           (Kernel,
+            Command => Args (Args'First).all,
+            Args    => Args (Args'First + 1 .. Args'Last));
       begin
-         Free (The_Command);
-         Free (The_Args);
          Free (Args);
 
          return R;
       end;
    end Interpret_Command;
+
+   -----------------------
+   -- Interpret_Command --
+   -----------------------
 
    procedure Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -2293,11 +2276,14 @@ package body Glide_Kernel.Modules is
       Insert (Kernel, Interpret_Command (Kernel, Command), False);
    end Interpret_Command;
 
+   -----------------------
+   -- Interpret_Command --
+   -----------------------
+
    procedure Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List)
-   is
+      Args    : GNAT.OS_Lib.Argument_List) is
    begin
       Insert (Kernel, Interpret_Command (Kernel, Command, Args), False);
    end Interpret_Command;

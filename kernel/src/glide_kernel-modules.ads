@@ -964,12 +964,21 @@ package Glide_Kernel.Modules is
    --------------------------
 
    procedure Register_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Help    : String;
-      Handler : Module_Command_Function);
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Command      : String;
+      Usage        : String;
+      Description  : String;
+      Minimum_Args : Natural := 0;
+      Maximum_Args : Natural := 0;
+      Handler      : Module_Command_Function);
    --  Register Command, with Help as its help/usage text, and Handler
    --  as the default command handler.
+   --  Usage should only describe the command name and its arguments. Optional
+   --  arguments should be reported between [].
+   --  Description should describe the effects of the command. The description
+   --  should end with a '.'.
+   --  The number of parameters the command expects should be between
+   --  Minimum_Args and Maximum_Args.
 
    function Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -984,7 +993,7 @@ package Glide_Kernel.Modules is
    function Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Same as above, the arguments not included in Command.
 
    procedure Interpret_Command
@@ -996,7 +1005,7 @@ package Glide_Kernel.Modules is
    procedure Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List);
+      Args    : GNAT.OS_Lib.Argument_List);
    --  Same as above, the arguments not included in Command.
 
    function Commands_As_List
