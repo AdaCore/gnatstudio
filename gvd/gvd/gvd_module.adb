@@ -2392,9 +2392,9 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug          : constant String := '/' & (-"Debug") & '/';
+      Debug          : constant String := '/' & (-"_Debug") & '/';
       Debug_Sub      : constant String := Debug & (-"_Debug") & '/';
-      Data_Sub       : constant String := Debug & (-"Data") & '/';
+      Data_Sub       : constant String := Debug & (-"_Data") & '/';
       Mitem          : Gtk_Menu_Item;
       Menu           : Gtk_Menu;
       Debugger_Class : constant GPS.Kernel.Scripts.Class_Type :=
@@ -2508,6 +2508,8 @@ package body GVD_Module is
          Action => Command,
          Filter => Debugger_Filter);
 
+      Register_Menu (Kernel, Debug, Ref_Item => -"Tools");
+
       --  Dynamic Initialize menu
       Mitem := Register_Menu (Kernel, Debug, -"Initialize", "", null,
                               Ref_Item => -"Data");
@@ -2519,6 +2521,9 @@ package body GVD_Module is
 
       --  Add debugger menus
 
+      Mitem := Register_Menu (Kernel, Data_Sub, -"_Protection Domains", "",
+                              On_PD'Access);
+      Set_Sensitive (Mitem, False);
       Register_Menu (Kernel, Debug_Sub, Ref_Item => -"Data");
       Register_Menu (Kernel, Debug_Sub, -"_Connect to Board...", "",
                      On_Connect_To_Board'Access);
@@ -2541,11 +2546,6 @@ package body GVD_Module is
                      On_Threads'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"T_asks", "",
                      On_Tasks'Access, Ref_Item => -"Protection Domains");
-      Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Protection Domains"));
-      Set_Sensitive (Mitem, False);
-      Kernel_Callback.Connect
-        (Mitem, "activate", On_PD'Access,
-         User_Data => Kernel_Handle (Kernel));
       Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
