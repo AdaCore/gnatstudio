@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -210,6 +210,20 @@ package body Commands is
 
    begin
       if Queue = null then
+         --  If we are not calling the commands in "Queue" mode, execute the
+         --  Next/Alternate commands without adding them to the queue.
+
+         if Success then
+            Node := First (Action.Next_Commands);
+         else
+            Node := First (Action.Alternate_Commands);
+         end if;
+
+         while Node /= Null_Node loop
+            Execute (Data (Node));
+            Node := Next (Node);
+         end loop;
+
          return;
       end if;
 
