@@ -204,7 +204,7 @@ package body Builder_Module is
    --  If Project is No_Project and File is VFS.No_File, the current file is
    --  build.
    --  If Project is not No_Project and File is VFS.No_File, the main units
-   --  of Project are build.
+   --  of Project are built.
 
    procedure On_Custom
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -472,6 +472,7 @@ package body Builder_Module is
         (Get_Project (Kernel), Recursive => True);
       Syntax       : Command_Syntax;
       State_Pushed : Boolean := False;
+      Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
 
       C            : Build_Command_Access;
 
@@ -566,6 +567,7 @@ package body Builder_Module is
                      Mode => Error);
                   return;
             end case;
+
          else
             Args := Compute_Arguments
               (Kernel, Syntax, Project_Path (Project), File);
@@ -617,17 +619,21 @@ package body Builder_Module is
            (Kernel, Command_Access (C), Active => False, Queue_Id => "");
       end if;
 
+      Change_Dir (Old_Dir);
+
    exception
       when Invalid_Process =>
          Console.Insert (Kernel, -"Invalid command", Mode => Error);
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
+         Change_Dir (Old_Dir);
          Free (Cmd);
          Free (Args);
          Free (Fd);
 
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Change_Dir (Old_Dir);
 
          if State_Pushed then
             Pop_State (Kernel);
@@ -762,6 +768,7 @@ package body Builder_Module is
       Lang         : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
       C            : Build_Command_Access;
+      Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
 
    begin
       if File = VFS.No_File then
@@ -837,7 +844,6 @@ package body Builder_Module is
       end if;
 
       Free (Cmd);
-
       Create (C, (Kernel, Fd, null, null, null));
 
       if Synchronous then
@@ -849,10 +855,13 @@ package body Builder_Module is
            (Kernel, Command_Access (C), Active => False, Queue_Id => "");
       end if;
 
+      Change_Dir (Old_Dir);
+
    exception
       when Invalid_Process =>
          Console.Insert (Kernel, -"Invalid command", Mode => Error);
          Pop_State (Kernel);
+         Change_Dir (Old_Dir);
          Set_Sensitive_Menus (Kernel, True);
          Free (Fd);
    end Compile_File;
@@ -1281,9 +1290,6 @@ package body Builder_Module is
 
    begin
       if Menu = null then
-         if Mains'Length = 0 then
-            return;
-         end if;
          Gtk_New (Menu);
       end if;
 
@@ -1311,12 +1317,32 @@ package body Builder_Module is
                GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
             Builder_Module.Build_Item := Mitem;
             Has_Child := True;
+
          else
             --  ??? F4 key binding is no longer taken into account if the
             --  following line is called systematically:
             Set_Accel_Path (Mitem, "<gps>/Build/Make/" & Mains (M).all, Group);
          end if;
       end loop;
+
+      --  ??? gtk+ bug: mitem is created with a refcount of 2, and therefore
+      --  never destroyed later on. As a result, the keybinding will remaining
+      --  active for the whole life of GPS.
+
+      Gtk_New (Mitem, -"Project");
+      Append (Menu, Mitem);
+
+      if Set_Shortcut then
+         Set_Accel_Path (Mitem, "<gps>/Build/Make/Project", Group);
+      end if;
+
+      File_Project_Cb.Object_Connect
+        (Mitem, "activate",
+         File_Project_Cb.To_Marshaller (On_Build'Access),
+         Slot_Object => Kernel,
+         User_Data => File_Project_Record'
+           (Project => Get_Project (Kernel),
+            File    => VFS.No_File));
 
       Free (Mains);
    end Add_Build_Menu;
@@ -1432,20 +1458,6 @@ package body Builder_Module is
             Gtk.Accel_Group.Accel_Visible);
          Builder_Module.Build_Item := Mitem;
       end if;
-
-      --  ??? gtk+ bug: mitem is created with a refcount of 2, and therefore
-      --  never destroyed later on. As a result, the keybinding will remaining
-      --  active for the whole life of GPS.
-      Gtk_New (Mitem, -"All main units");
-      Append (Menu1, Mitem);
-      Set_Accel_Path (Mitem, "<gps>/Build/Make/<All main units>", Group);
-      File_Project_Cb.Object_Connect
-        (Mitem, "activate",
-         File_Project_Cb.To_Marshaller (On_Build'Access),
-         Slot_Object => Kernel,
-         User_Data => File_Project_Record'
-           (Project => Get_Project (Kernel),
-            File    => VFS.No_File));
 
       Gtk_New (Mitem, -"Custom...");
       Append (Menu1, Mitem);
