@@ -48,6 +48,7 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Prj;                       use Prj;
+with Prj.Ext;                   use Prj.Ext;
 with Prj.Tree;                  use Prj.Tree;
 with Prj_API;                   use Prj_API;
 with String_Utils;              use String_Utils;
@@ -59,6 +60,8 @@ with Prj_Normalize;             use Prj_Normalize;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Namet;                     use Namet;
+with Stringt;                   use Stringt;
 
 package body Project_Properties is
    use Widget_List;
@@ -85,6 +88,9 @@ package body Project_Properties is
       Program_Host       : Gtk.GEntry.Gtk_Entry;
       Protocol           : Gtk.GEntry.Gtk_Entry;
 
+      Selector     : Scenario_Selector;
+      Prj_Selector : Project_Selector;
+
       Pages              : Widget_Array_Access;
       --  The pages that have been registered.
 
@@ -104,9 +110,6 @@ package body Project_Properties is
       Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class);
    --  Internal initialization function
-
-   procedure Browse_Location (Editor : access Gtk_Widget_Record'Class);
-   --  Open a directory selector for the new location of the project file
 
    procedure Command_Set_Sensitive
      (Check : access Glib.Object.GObject_Record'Class;
@@ -257,7 +260,7 @@ package body Project_Properties is
       Widget_Callback.Object_Connect
         (Button2, "clicked",
          Widget_Callback.To_Marshaller (Browse_Location'Access),
-         Slot_Object => Editor);
+         Slot_Object => Editor.Path);
 
       Gtk_New (Editor.Use_Relative_Paths, -"Paths should be relative paths");
       Set_Active
@@ -577,8 +580,6 @@ package body Project_Properties is
       Page         : Project_Editor_Page;
       Box          : Gtk_Box;
       Main_Box     : Gtk_Box;
-      Selector     : Scenario_Selector;
-      Prj_Selector : Project_Selector;
 
    begin
       Gtk.Dialog.Initialize
@@ -640,11 +641,12 @@ package body Project_Properties is
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Box, Label, Expand => False);
 
-      Gtk_New (Prj_Selector, Kernel, Get_Project_From_View (Project_View));
-      Pack_Start (Box, Prj_Selector, Expand => True, Fill => True);
+      Gtk_New
+        (Editor.Prj_Selector, Kernel, Get_Project_From_View (Project_View));
+      Pack_Start (Box, Editor.Prj_Selector, Expand => True, Fill => True);
 
-      Gtk_New (Selector, Kernel);
-      Pack_Start (Box, Selector, Expand => True, Fill => True);
+      Gtk_New (Editor.Selector, Kernel);
+      Pack_Start (Box, Editor.Selector, Expand => True, Fill => True);
 
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
@@ -661,6 +663,7 @@ package body Project_Properties is
       Note : Gtk_Notebook := Gtk_Notebook (Notebook);
       Ed : Properties_Editor := Properties_Editor (Editor);
       Page : Integer := Integer (Get_Current_Page (Note));
+      Flags : Selector_Flags;
    begin
       if Page >= 1
         and then not Gtk.Object.In_Destruction_Is_Set (Ed)
@@ -684,23 +687,19 @@ package body Project_Properties is
                Free (Languages);
             end;
          end if;
+
+         Flags := Get_Flags (Get_Nth_Project_Editor_Page (Ed.Kernel, Page));
+
+         Set_Sensitive
+           (Ed.Prj_Selector, (Flags and Multiple_Projects) /= 0);
+         Set_Sensitive
+           (Ed.Selector, (Flags and Multiple_Scenarios) /= 0);
+
+      elsif Page = 0 then
+         Set_Sensitive (Ed.Prj_Selector, True);
+         Set_Sensitive (Ed.Selector, True);
       end if;
    end Switch_Page;
-
-   ---------------------
-   -- Browse_Location --
-   ---------------------
-
-   procedure Browse_Location (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Properties_Editor := Properties_Editor (Editor);
-      Name : constant String := Select_Directory
-        (-"Select project file location",
-         Base_Directory => Name_As_Directory (Get_Text (Ed.Path)));
-   begin
-      if Name /= "" then
-         Set_Text (Ed.Path, Name);
-      end if;
-   end Browse_Location;
 
    -------------------
    -- Get_Languages --
@@ -752,6 +751,7 @@ package body Project_Properties is
 
       Editor  : Properties_Editor;
       Changed : Boolean := False;
+      At_Least_One_Changed : Boolean := False;
       Project : constant Project_Node_Id :=
         Get_Project_From_View (Project_View);
       Project_Languages : Argument_List := Get_Languages (Project_View);
@@ -932,16 +932,97 @@ package body Project_Properties is
             end if;
          end;
 
-         for P in Editor.Pages'Range loop
-            if Editor.Pages (P) /= null then
-               Changed := Changed or Project_Editor
-                 (Get_Nth_Project_Editor_Page (Kernel, P),
-                  Project, Project_View, Kernel, Editor.Pages (P));
-            end if;
-         end loop;
-
          if Changed then
+            At_Least_One_Changed := True;
             Set_Project_Modified (Kernel, Project, True);
+         end if;
+
+         declare
+            Vars         : constant Project_Node_Array :=
+              Scenario_Variables (Kernel);
+            Saved_Values : String_Id_Array (Vars'Range);
+            Prj_Iter     : Project_Iterator := Start (Editor.Prj_Selector);
+            Ed           : Project_Editor_Page;
+            View         : Project_Id;
+         begin
+            --  Saved the current scenario
+            for S in Saved_Values'Range loop
+               String_To_Name_Buffer (External_Reference_Of (Vars (S)));
+               Saved_Values (S) := Value_Of (Name_Find);
+            end loop;
+
+            while Current (Prj_Iter) /= Empty_Node loop
+               Changed := False;
+
+               declare
+                  Scenar_Iter : Scenario_Iterator := Start (Editor.Selector);
+               begin
+                  while not At_End (Scenar_Iter) loop
+                     --  Set the scenario
+                     declare
+                        Curr : Argument_List := Current (Scenar_Iter);
+                        Is_Env  : Boolean := True;
+                     begin
+                        for V in Vars'Range loop
+                           Add (Get_String (External_Reference_Of (Vars (V))),
+                                Curr (V).all);
+
+                           Is_Env := Is_Env and then Curr (V).all /=
+                             Get_String (Saved_Values (V));
+                        end loop;
+
+                        Free (Curr);
+
+                        --  If the scenario is the one selected by the user,
+                        --  then we know the project view already
+                        if Is_Env then
+                           View := Current (Prj_Iter);
+                        else
+                           View := No_Project;
+                        end if;
+                     end;
+
+                     --  Modify each projects
+
+                     for P in Editor.Pages'Range loop
+                        Ed := Get_Nth_Project_Editor_Page (Kernel, P);
+
+                        --  If the page was visited at least once, and if the
+                        --  project is either the one the user clicked on or
+                        --  the page might apply to multiple projects
+                        if Editor.Pages (P) /= null
+                          and then ((Get_Flags (Ed) and Multiple_Projects) /= 0
+                                    or else Current (Prj_Iter) = Project)
+                        then
+                           Changed := Changed or Project_Editor
+                             (Ed, Current (Prj_Iter), View,
+                              Kernel, Editor.Pages (P),
+                              Vars,
+                              Ref_Project => Project);
+                        end if;
+                     end loop;
+
+                     Next (Scenar_Iter);
+                  end loop;
+               end;
+
+               At_Least_One_Changed := At_Least_One_Changed or Changed;
+
+               if Changed then
+                  Set_Project_Modified (Kernel, Current (Prj_Iter), True);
+               end if;
+
+               Next (Prj_Iter);
+            end loop;
+
+            --  Restore the scenario
+            for S in Saved_Values'Range loop
+               Add (Get_String (External_Reference_Of (Vars (S))),
+                    Get_String (Saved_Values (S)));
+            end loop;
+         end;
+
+         if At_Least_One_Changed then
             Recompute_View (Kernel);
          end if;
       end if;
