@@ -38,6 +38,7 @@ with Glib;             use Glib;
 with Gtk;
 with Gtk.Text_Buffer;
 with Gtk.Text_Mark;
+with Gtk.Text_Tag;
 
 with Language;
 with Src_Highlighting;
@@ -59,6 +60,23 @@ package Src_Editor_Buffer is
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
 
+   procedure Load_File
+     (Buffer          : access Source_Buffer_Record;
+      Filename        : String;
+      Lang_Autodetect : Boolean := True;
+      Success         : out Boolean);
+   --  Load the file into the buffer. If Lang_Autodetect is set to True, then
+   --  the editor tries to automatically set the language based on the
+   --  Filename. Otherwise, the language remains uchanged. After the file is
+   --  loaded into the buffer, the buffer is syntax-highlighted if Lang is set.
+   --
+   --  Note that if Lang_Autodetect is True, and the editor could not guess
+   --  the language from the filename, then Lang will be unset, and syntax
+   --  highlighting will be deactivated.
+
+   procedure Clear (Buffer : access Source_Buffer_Record);
+   --  Delete all characters from the given buffer, leaving an empty buffer.
+
    procedure Set_Language
      (Buffer : access Source_Buffer_Record;
       Lang   : Language.Language_Access);
@@ -69,7 +87,14 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Language.Language_Access;
    --  Get the current language. Return null if the language is not set.
 
-   --  ??? Set_Cursor_Position
+   procedure Set_Cursor_Position
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Column  : Gint;
+      Success : out Boolean);
+   --  Move the insert cursor to the given position. If the (Line, Column)
+   --  position is not valid, the cursor is not moved and Success is set
+   --  to False.
 
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
@@ -77,17 +102,38 @@ package Src_Editor_Buffer is
       Column : out Gint);
    --  Return the current cursor position
 
-   procedure Clear (Buffer : access Source_Buffer_Record);
-   --  Delete all characters from the given buffer, leaving an empty buffer.
+   procedure Highlight_Line
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Success : out Boolean);
+   --  Highlight the given line number. If another line was previously
+   --  highlighted, then restore this line unhighlighted.
+   --
+   --  If Line exceeds the number of lines in the buffer, no action is
+   --  performed and Success is set to False.
+
+   procedure Unhighlight_Line
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Success : out Boolean);
+   --  Restore the given line unhighlighted. If line exceeds the number
+   --  of lines in the buffer, no action is performed and Success is set
+   --  to False.
+
+   procedure Cancel_Highlight_Line
+     (Buffer : access Source_Buffer_Record);
+   --  If a line in the given buffer is highlighted (from using
+   --  Highlight_Line), then restores this line un-highlighted.
 
 private
 
    type Source_Buffer_Record is
      new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
    record
-      Lang           : Language.Language_Access;
-      Highlight_Tags : Src_Highlighting.Highlighting_Tags;
-      Insert_Mark    : Gtk.Text_Mark.Gtk_Text_Mark;
+      Lang          : Language.Language_Access;
+      Syntax_Tags   : Src_Highlighting.Highlighting_Tags;
+      Highlight_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
    end record;
 
 end Src_Editor_Buffer;
