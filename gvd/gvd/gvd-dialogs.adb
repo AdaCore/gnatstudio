@@ -75,6 +75,10 @@ package body GVD.Dialogs is
       Main_Window : Gtk_Window);
    --  Create a standard dialog.
 
+   procedure Initialize_Task_Thread
+     (Dialog : access GVD_Dialog_Record'Class);
+   --  Common initializations between task and thread dialogs.
+
    procedure Cancel_Simple_Entry
      (Simple_Dialog : access Gtk_Widget_Record'Class);
    --  "Cancel" was pressed in a simple entry dialog
@@ -104,6 +108,11 @@ package body GVD.Dialogs is
    --  Called when the user deletes a dialog by clicking on the small
    --  button in the title bar of the window.
 
+   procedure Update_Task_Thread
+     (Dialog   : access GVD_Dialog_Record'Class;
+      Info     : in out Thread_Information_Array);
+   --  Common operations between task and thread dialogs.
+
    -------------
    -- Gtk_New --
    -------------
@@ -126,6 +135,14 @@ package body GVD.Dialogs is
    end Gtk_New;
 
    procedure Gtk_New
+     (Thread_Dialog : out Thread_Dialog_Access;
+      Main_Window   : Gtk_Window) is
+   begin
+      Thread_Dialog := new Thread_Dialog_Record;
+      Initialize (Thread_Dialog, Main_Window);
+   end Gtk_New;
+
+   procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
@@ -140,6 +157,45 @@ package body GVD.Dialogs is
          Question_Description);
    end Gtk_New;
 
+   ------------------------
+   -- Update_Task_Thread --
+   ------------------------
+
+   procedure Update_Task_Thread
+     (Dialog : access GVD_Dialog_Record'Class;
+      Info   : in out Thread_Information_Array)
+   is
+      Num_Columns : Thread_Fields;
+      Row         : Gint;
+
+   begin
+      if Dialog.List = null and then Info'Length > 0 then
+         Num_Columns := Info (Info'First).Num_Fields;
+         Gtk_New
+           (Dialog.List, Gint (Num_Columns), Info (Info'First).Information);
+         Show_All (Dialog.List);
+         Widget_Callback.Connect
+           (Dialog.List,
+            "select_row",
+            On_Task_List_Select_Row'Access);
+         Add (Dialog.Scrolledwindow1, Dialog.List);
+      end if;
+
+      if Info'Length > 0 then
+         Freeze (Dialog.List);
+         Clear (Dialog.List);
+
+         for J in Info'First + 1 .. Info'Last loop
+            Row := Append (Dialog.List, Info (J).Information);
+         end loop;
+
+         Row := Columns_Autosize (Dialog.List);
+         Thaw (Dialog.List);
+      end if;
+
+      Free (Info);
+   end Update_Task_Thread;
+
    ------------
    -- Update --
    ------------
@@ -148,10 +204,10 @@ package body GVD.Dialogs is
      (Task_Dialog : access Task_Dialog_Record;
       Debugger    : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Process     : constant Process_Proxy_Access :=
+      Process : constant Process_Proxy_Access :=
         Get_Process (Debugger_Process_Tab (Debugger).Debugger);
-      Num_Columns : Thread_Fields;
-      Row         : Gint;
+      Info    : Thread_Information_Array (1 .. Max_Tasks);
+      Len     : Natural;
 
    begin
       if not Visible_Is_Set (Task_Dialog) then
@@ -169,38 +225,37 @@ package body GVD.Dialogs is
       end if;
 
       --  Read the information from the debugger
-      declare
-         Info : Thread_Information_Array :=
-           Info_Threads (Debugger_Process_Tab (Debugger).Debugger);
-      begin
-         if Task_Dialog.List = null and then Info'Length > 0 then
-            Num_Columns := Info (Info'First).Num_Fields;
-            Gtk_New
-              (Task_Dialog.List,
-               Gint (Num_Columns),
-               Info (Info'First).Information);
-            Show_All (Task_Dialog.List);
-            Widget_Callback.Connect
-              (Task_Dialog.List,
-               "select_row",
-               On_Task_List_Select_Row'Access);
-            Add (Task_Dialog.Scrolledwindow1, Task_Dialog.List);
+      Info_Tasks (Debugger_Process_Tab (Debugger).Debugger, Info, Len);
+      Update_Task_Thread (Task_Dialog, Info (1 .. Len));
+   end Update;
+
+   procedure Update
+     (Thread_Dialog : access Thread_Dialog_Record;
+      Debugger      : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Process : constant Process_Proxy_Access :=
+        Get_Process (Debugger_Process_Tab (Debugger).Debugger);
+      Info    : Thread_Information_Array (1 .. Max_Tasks);
+      Len     : Natural;
+
+   begin
+      if not Visible_Is_Set (Thread_Dialog) then
+         return;
+      end if;
+
+      --  If the debugger was killed, no need to refresh
+
+      if Process = null then
+         if Thread_Dialog.List /= null then
+            Thaw (Thread_Dialog.List);
          end if;
 
-         if Info'Length > 0 then
-            Freeze (Task_Dialog.List);
-            Clear (Task_Dialog.List);
+         return;
+      end if;
 
-            for J in Info'First + 1 .. Info'Last loop
-               Row := Append (Task_Dialog.List, Info (J).Information);
-            end loop;
-
-            Row := Columns_Autosize (Task_Dialog.List);
-            Thaw (Task_Dialog.List);
-         end if;
-
-         Free (Info);
-      end;
+      --  Read the information from the debugger
+      Info_Threads (Debugger_Process_Tab (Debugger).Debugger, Info, Len);
+      Update_Task_Thread (Thread_Dialog, Info (1 .. Len));
    end Update;
 
    -----------------------------
@@ -344,6 +399,18 @@ package body GVD.Dialogs is
       Update (Tab.Window.Task_Dialog, Tab);
    end On_Task_Process_Stopped;
 
+   -------------------------------
+   -- On_Thread_Process_Stopped --
+   -------------------------------
+
+   procedure On_Thread_Process_Stopped
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
+   begin
+      Update (Tab.Window.Thread_Dialog, Tab);
+   end On_Thread_Process_Stopped;
+
    ------------------------------
    -- On_Stack_Process_Stopped --
    ------------------------------
@@ -413,26 +480,39 @@ package body GVD.Dialogs is
          Return_Callback.To_Marshaller (Delete_Dialog'Access));
    end Initialize;
 
+   procedure Initialize_Task_Thread
+     (Dialog : access GVD_Dialog_Record'Class) is
+   begin
+      Button_Callback.Connect
+        (Dialog.Close_Button, "clicked",
+         Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
+
+      Set_Default_Size (Dialog, 400, 200);
+      Gtk_New (Dialog.Scrolledwindow1);
+      Pack_Start
+        (Dialog.Vbox1, Dialog.Scrolledwindow1, True, True, 0);
+      Set_Policy
+        (Dialog.Scrolledwindow1,
+         Policy_Automatic,
+         Policy_Automatic);
+      --  We can't create the clist here, since we don't know yet how many
+      --  columns there will be. This will be done on the first call to update
+   end Initialize_Task_Thread;
+
    procedure Initialize
      (Task_Dialog : access Task_Dialog_Record'Class;
       Main_Window : Gtk_Window) is
    begin
       Initialize (Task_Dialog, -"Task Status", Main_Window);
-      Button_Callback.Connect
-        (Task_Dialog.Close_Button, "clicked",
-         Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
+      Initialize_Task_Thread (Task_Dialog);
+   end Initialize;
 
-      Set_Default_Size (Task_Dialog, 400, 200);
-      Gtk_New (Task_Dialog.Scrolledwindow1);
-      Pack_Start
-        (Task_Dialog.Vbox1, Task_Dialog.Scrolledwindow1, True, True, 0);
-      Set_Policy
-        (Task_Dialog.Scrolledwindow1,
-         Policy_Automatic,
-         Policy_Automatic);
-
-      --  We can't create the clist here, since we don't know yet how many
-      --  columns there will be. This will be done on the first call to update
+   procedure Initialize
+     (Thread_Dialog : access Thread_Dialog_Record'Class;
+      Main_Window   : Gtk_Window) is
+   begin
+      Initialize (Thread_Dialog, -"Thread Status", Main_Window);
+      Initialize_Task_Thread (Thread_Dialog);
    end Initialize;
 
    procedure Initialize

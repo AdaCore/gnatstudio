@@ -39,6 +39,9 @@ package GVD.Dialogs is
    type Task_Dialog_Record is new GVD_Dialog_Record with private;
    type Task_Dialog_Access is access all Task_Dialog_Record'Class;
 
+   type Thread_Dialog_Record is new GVD_Dialog_Record with private;
+   type Thread_Dialog_Access is access all Thread_Dialog_Record'Class;
+
    type Question_Dialog_Record is new GVD_Dialog_Record with private;
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
 
@@ -80,6 +83,30 @@ package GVD.Dialogs is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the task window associated with a given tab.
+
+   procedure Gtk_New
+     (Thread_Dialog : out Thread_Dialog_Access;
+      Main_Window   : Gtk_Window);
+   --  Create an empty thread dialog.
+   --  No information will be displayed in it, and you need to add it through
+   --  a call to Update.
+
+   procedure Initialize
+     (Thread_Dialog : access Thread_Dialog_Record'Class;
+      Main_Window   : Gtk_Window);
+   --  Internal initialization function
+
+   procedure Update
+     (Thread_Dialog : access Thread_Dialog_Record;
+      Debugger      : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Update the contents of the thread dialog.
+   --  The information is read from Debugger (which is in fact a
+   --  Debugger_Process_Tab).
+
+   procedure On_Thread_Process_Stopped
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Callback function connected to the "process_stopped" signal.
+   --  It will update the thread window associated with a given tab.
 
    procedure Update_Call_Stack
      (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -186,6 +213,8 @@ private
    --  instead of having to convert in the callbacks ?
 
    type Task_Dialog_Record is new GVD_Dialog_Record with null record;
+
+   type Thread_Dialog_Record is new GVD_Dialog_Record with null record;
 
    type Question_Dialog_Record is new GVD_Dialog_Record with record
       Debugger : Debugger_Access;
