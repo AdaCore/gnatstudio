@@ -392,8 +392,11 @@ package body Welcome is
          File : constant String := Select_File
            (Title             => -"Select project file",
             Base_Directory    => Dir.all,
+            File_Pattern      => "*.gpr",
+            Pattern_Name      => -"Project Files",
             Use_Native_Dialog => Get_Pref (S.Kernel, Use_Native_Dialogs),
             History           => Get_History (S.Kernel));
+
       begin
          if File /= "" then
             Set_Text (Get_Entry (S.Open_Project), File);
