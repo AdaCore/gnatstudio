@@ -1371,6 +1371,8 @@ package body Shell_Script is
             Quoted := False;
             Triple_Quoted := False;
 
+            --  Search until the beginning of the next command (separated by
+            --  semicolon or newline).
             while Last <= Command'Last loop
                exit when not Quoted
                  and then not Triple_Quoted
@@ -1383,6 +1385,7 @@ package body Shell_Script is
                     and then Command (Last + 2) = '"'
                   then
                      Triple_Quoted := not Triple_Quoted;
+                     Last := Last + 2;
                   elsif not Triple_Quoted then
                      Quoted := not Quoted;
                   end if;
