@@ -28,22 +28,44 @@
 
 with Glib;                use Glib;
 with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
 with Gtk.Check_Button;    use Gtk.Check_Button;
 with Gtk.Combo;           use Gtk.Combo;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Label;           use Gtk.Label;
 with Gtk.List;            use Gtk.List;
+with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Radio_Button;    use Gtk.Radio_Button;
 with Gtk.Spin_Button;     use Gtk.Spin_Button;
+with Gtk.Stock;           use Gtk.Stock;
+with Gtk.Style;           use Gtk.Style;
 with Gtk.Table;           use Gtk.Table;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Notebook;        use Gtk.Notebook;
+with Gtkada.Handlers;     use Gtkada.Handlers;
+with Pango.Font;          use Pango.Font;
 
-with String_Utils;        use String_Utils;
-with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Unchecked_Deallocation;
 
+with Prj_API;              use Prj_API;
+with Prj_Normalize;        use Prj_Normalize;
+with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
+with String_Utils;         use String_Utils;
+with Switches_Editor_Pkg;  use Switches_Editor_Pkg;
+
+with Namet;               use Namet;
+with Stringt;             use Stringt;
+with Types;               use Types;
+with Prj;                 use Prj;
+with Prj.Tree;            use Prj.Tree;
+
 package body Switches_Editors is
+
+   Switches_Editor_Title_Font : constant String := "helvetica bold oblique 14";
+   --  <preference> Font to use for the switches editor dialog
 
    procedure Filter_Switches
      (Editor   : access Switches_Edit_Record'Class;
@@ -59,6 +81,33 @@ package body Switches_Editors is
       return Argument_List;
    --  Return the list of switches that are set in the GUI (as opposed to the
    --  one in the command lines).
+
+   type Switch_Editor_User_Data is record
+      Kernel    : Kernel_Handle;
+      Project   : Project_Id;
+      Switches  : Switches_Edit;
+      File_Name : String_Id;
+      Directory : String_Id;
+   end record;
+
+   package Switch_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Switch_Editor_User_Data);
+
+   procedure Close_Switch_Editor
+     (Button : access Gtk_Widget_Record'Class;
+      Data   : Switch_Editor_User_Data);
+   --  See Cancel_Switch_Editor below.
+
+   procedure Cancel_Switch_Editor
+     (Dialog : access Gtk_Widget_Record'Class);
+   --  Called when the user has closed a switch editor for a specific file.
+   --  The first version is the callback for the Close button, the second one
+   --  is for the "cancel".
+   --  If Data.File_Name is No_String, then this sets the default switches for
+   --  the project.
+   --  The switches for all the tools (gnatmake, compiler,...) are set if the
+   --  switch editor had a page for these.
+
 
    -------------
    -- Gtk_New --
@@ -694,5 +743,271 @@ package body Switches_Editors is
    begin
       Set_Page (Editor.Notebook1, Tool_Names'Pos (Tool));
    end Set_Page;
+
+   -------------------------
+   -- Close_Switch_Editor --
+   -------------------------
+
+   procedure Close_Switch_Editor
+     (Button : access Gtk_Widget_Record'Class;
+      Data   : Switch_Editor_User_Data)
+   is
+      S             : Switches_Edit   := Data.Switches;
+      Project       : Project_Node_Id := Get_Project_From_View (Data.Project);
+      Switches_Name : Name_Id;
+
+      procedure Change_Switches (Tool : Tool_Names; Pkg_Name : String);
+      --  Changes the switches for a specific package and tool.
+
+      ---------------------
+      -- Change_Switches --
+      ---------------------
+
+      procedure Change_Switches (Tool : Tool_Names; Pkg_Name : String) is
+         List : Project_Node_Id := Empty_Node;
+         Case_Item, Decl, Expr, Pkg : Project_Node_Id;
+         Found, F : Boolean := False;
+      begin
+         --  Create the string list for all the switches
+
+         declare
+            Args : Argument_List := Get_Switches (S, Tool);
+         begin
+            if Args'Length /= 0 then
+               List := Default_Project_Node (N_Literal_String_List, Prj.List);
+
+               for A in Args'Range loop
+                  Start_String;
+                  Store_String_Chars (Args (A).all);
+                  Expr := String_As_Expression (End_String);
+                  Set_Next_Expression_In_List
+                    (Expr, First_Expression_In_List (List));
+                  Set_First_Expression_In_List (List, Expr);
+               end loop;
+
+               Free (Args);
+            end if;
+         end;
+
+         --  ??? Shouldn't exist if there is already such a package => remove
+         --  the previous declaration.
+         if List = Empty_Node then
+            return;
+         end if;
+
+         --  Do we already have some declarations for this variable ? If yes,
+         --  we simply update them. Note that we need to update all of the
+         --  declarations, in case the user has put multiple of these.
+
+         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
+         Case_Item := Current_Scenario_Case_Item (Project, Pkg);
+
+         Decl := First_Declarative_Item_Of (Case_Item);
+         while Decl /= Empty_Node loop
+            Expr := Current_Item_Node (Decl);
+
+            if Kind_Of (Expr) = N_Attribute_Declaration
+              and then Name_Of (Expr) = Switches_Name
+            then
+               F := False;
+               if Data.File_Name = No_String then
+                  F := (Associative_Array_Index_Of (Expr) = No_String);
+               else
+                  F := Associative_Array_Index_Of (Expr) /= No_String
+                    and then String_Equal
+                    (Associative_Array_Index_Of (Expr), Data.File_Name);
+               end if;
+
+               if F then
+                  --  ??? Should handle the case where List is Empty_Node
+                  Set_Current_Term (First_Term (Expression_Of (Expr)), List);
+                  Found := True;
+               end if;
+            end if;
+
+            Decl := Next_Declarative_Item (Decl);
+         end loop;
+
+         --  Create the new instruction to be added to the project
+
+         if List /= Empty_Node and then not Found then
+            Decl := Get_Or_Create_Attribute
+              (Case_Item, "switches", Data.File_Name);
+            Set_Expression_Of (Decl, Enclose_In_Expression (List));
+         end if;
+      end Change_Switches;
+
+   begin
+      pragma Assert (Project /= Empty_Node);
+
+      --  Normalize the subproject we are currently working on, since we only
+      --  know how to modify normalized subprojects.
+      --  ??? Should check whether the project is already normalized.
+
+      Normalize_Project (Project);
+
+      Name_Len := 8;
+      Name_Buffer (1 .. Name_Len) := "switches";
+      Switches_Name := Name_Find;
+
+      if (Get_Pages (S) and Gnatmake_Page) /= 0 then
+         Change_Switches (Gnatmake, "gnatmake");
+      end if;
+
+      if (Get_Pages (S) and Compiler_Page) /= 0 then
+         Change_Switches (Compiler, "compiler");
+      end if;
+
+      if (Get_Pages (S) and Binder_Page) /= 0 then
+         Change_Switches (Binder, "gnatbind");
+      end if;
+
+      if (Get_Pages (S) and Linker_Page) /= 0 then
+         Change_Switches (Linker, "gnatlink");
+      end if;
+
+      Recompute_View (Data.Kernel);
+      Destroy (Get_Toplevel (Button));
+   end Close_Switch_Editor;
+
+   --------------------------
+   -- Cancel_Switch_Editor --
+   --------------------------
+
+   procedure Cancel_Switch_Editor
+     (Dialog : access Gtk_Widget_Record'Class) is
+   begin
+      Destroy (Dialog);
+   end Cancel_Switch_Editor;
+
+   -------------------
+   -- Edit_Switches --
+   -------------------
+
+   procedure Edit_Switches
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project_View : Prj.Project_Id;
+      File_Name    : Types.String_Id := No_String;
+      Directory    : Types.String_Id := No_String)
+   is
+      File : Name_Id := No_Name;
+      Switches : Switches_Edit;
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Button;
+      Label  : Gtk_Label;
+      Value : Variable_Value;
+      Is_Default : Boolean;
+      Desc : Pango_Font_Description;
+      Style : Gtk_Style;
+
+   begin
+      pragma Assert (Project_View /= No_Project);
+
+      Gtk_New (Dialog);
+
+      if File_Name /= No_String then
+         String_To_Name_Buffer (File_Name);
+         File := Name_Find;
+         Gtk_New
+           (Label, "Editing switches for " & Name_Buffer (1 .. Name_Len));
+      else
+         Gtk_New
+           (Label, "Editing default switches for project "
+            & Get_Name_String (Prj.Projects.Table (Project_View).Name));
+      end if;
+
+      Pack_Start (Get_Vbox (Dialog), Label, Padding => 10);
+
+      Style := Copy (Get_Style (Label));
+      Desc := From_String (Switches_Editor_Title_Font);
+      Set_Font_Description (Style, Desc);
+      Set_Style (Label, Style);
+
+      Gtk_New (Switches);
+      Pack_Start (Get_Vbox (Dialog),
+                  Get_Window (Switches), Fill => True, Expand => True);
+
+      if File_Name /= No_String then
+         Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
+      end if;
+
+      --  Set the switches for all the pages
+      if (Get_Pages (Switches) and Gnatmake_Page) /= 0 then
+         Get_Switches (Project_View, "gnatmake", File, Value, Is_Default);
+         declare
+            List : Argument_List := To_Argument_List (Value);
+         begin
+            Set_Switches (Switches, Gnatmake, List);
+            Free (List);
+         end;
+      end if;
+
+      if (Get_Pages (Switches) and Compiler_Page) /= 0 then
+         Get_Switches (Project_View, "compiler", File, Value, Is_Default);
+         declare
+            List : Argument_List := To_Argument_List (Value);
+         begin
+            Set_Switches (Switches, Compiler, List);
+            Free (List);
+         end;
+      end if;
+
+      if (Get_Pages (Switches) and Binder_Page) /= 0 then
+         Get_Switches (Project_View, "gnatbind", File, Value, Is_Default);
+         declare
+            List : Argument_List := To_Argument_List (Value);
+         begin
+            Set_Switches (Switches, Binder, List);
+            Free (List);
+         end;
+      end if;
+
+      if (Get_Pages (Switches) and Linker_Page) /= 0 then
+         Get_Switches (Project_View, "gnatlink", File, Value, Is_Default);
+         declare
+            List : Argument_List := To_Argument_List (Value);
+         begin
+            Set_Switches (Switches, Linker, List);
+            Free (List);
+         end;
+      end if;
+
+      Gtk_New_From_Stock (Button, Stock_Ok);
+      Pack_Start
+        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
+      Switch_Callback.Connect
+        (Button, "clicked",
+         Switch_Callback.To_Marshaller (Close_Switch_Editor'Access),
+         (Kernel    => Kernel_Handle (Kernel),
+          Project   => Project_View,
+          Switches  => Switches,
+          File_Name => File_Name,
+          Directory => Directory));
+
+      Gtk_New_From_Stock (Button, Stock_Cancel);
+      Pack_Start
+        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Cancel_Switch_Editor'Access), Dialog);
+
+      Show_All (Dialog);
+   end Edit_Switches;
+
+   -----------------------------------
+   -- Edit_Switches_From_Contextual --
+   -----------------------------------
+
+   procedure Edit_Switches_From_Contextual
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Data : Contextual_User_Data) is
+   begin
+      if Data.File_Name = No_String then
+         Edit_Switches (Data.Kernel, Data.Project, No_String, No_String);
+      else
+         Edit_Switches
+           (Data.Kernel, Data.Project, Data.File_Name, Data.Directory);
+      end if;
+   end Edit_Switches_From_Contextual;
 
 end Switches_Editors;

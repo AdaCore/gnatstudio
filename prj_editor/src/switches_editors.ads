@@ -37,9 +37,13 @@
 --  This file extends and replaces the GLADE-generated unit
 --  Switches_Editor_Pkg.
 
+with Gtk.Handlers;
 with Gtk.Widget;
 with GNAT.OS_Lib;
+with Glide_Kernel;
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
+with Prj;
+with Types;
 
 package Switches_Editors is
 
@@ -120,6 +124,45 @@ package Switches_Editors is
    --  Update the GUI from the contents of the command line for Tool.
    --  This is called every time the user has inserted new switches in the
    --  command line, so that we can keep the GUI and the command line coherent
+
+   -----------------------------------------------------
+   -- Editing switches for a specific file or project --
+   -----------------------------------------------------
+   --  The subprograms below are convenience subprogram to edit some specific
+   --  switches. They provide a higher-level framework over the standard
+   --  switches editor.
+
+   type Contextual_User_Data is record
+      Kernel    : Glide_Kernel.Kernel_Handle;
+      Project   : Prj.Project_Id;
+      File_Name : Types.String_Id;
+      Directory : Types.String_Id;
+   end record;
+
+   package Contextual_Callback is new Gtk.Handlers.User_Callback
+     (Gtk.Widget.Gtk_Widget_Record, Contextual_User_Data);
+
+   procedure Edit_Switches_From_Contextual
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Data : Contextual_User_Data);
+   --  Callback suitable for a contextual menu item.  If Data.File_Name is
+   --  No_String, then the default switches for the project are edited,
+   --  otherwise the switches for the specific file are edited.
+
+   procedure Edit_Switches
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project_View : Prj.Project_Id;
+      File_Name    : Types.String_Id := Types.No_String;
+      Directory    : Types.String_Id := Types.No_String);
+   --  Edit the switches for a specific file.
+   --
+   --  If File_Name is specified:
+   --  This file belongs to project Project_View, and is found in the directory
+   --  specified.
+   --  This opens an external dialog, and the switches are automatically
+   --  updated when the dialog is closed
+   --
+   --  Otherwise, this edits the default switches for Project_View.
 
 private
    type Switches_Edit_Record is new Switches_Editor_Record with record
