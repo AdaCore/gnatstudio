@@ -1218,7 +1218,10 @@ package body Project_Viewers is
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
 
-         if Has_Project_Information (File_Context) then
+         if Has_Project_Information (File_Context)
+           and then not Has_Directory_Information (File_Context)
+           and then not Has_File_Information (File_Context)
+         then
             Gtk_New (Item, Label => -"Save the project "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
@@ -1226,24 +1229,6 @@ package body Project_Viewers is
               (Item, "activate",
                Context_Callback.To_Marshaller
                (Save_Specific_Project'Access),
-               Selection_Context_Access (Context));
-
-            Gtk_New (Item, Label => -"Edit source Directories for "
-                     & Project_Name (Project_Information (File_Context)));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Source_Dirs_From_Contextual'Access),
-               Selection_Context_Access (Context));
-
-            Gtk_New (Item, Label => -"Change Object Directory for "
-                     & Project_Name (Project_Information (File_Context)));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (Change_Obj_Directory_From_Contextual'Access),
                Selection_Context_Access (Context));
 
             Gtk_New (Item, Label => -"Edit Default Switches for "
@@ -1263,11 +1248,7 @@ package body Project_Viewers is
                Context_Callback.To_Marshaller
                (On_Edit_Naming_Scheme'Access),
                Selection_Context_Access (Context));
-         end if;
 
-         if Has_Project_Information (File_Context)
-           and then not Has_Directory_Information (File_Context)
-         then
             Gtk_New (Item, -"Add dependency");
             Add (Menu, Item);
 
@@ -1305,6 +1286,28 @@ package body Project_Viewers is
             end if;
          end if;
 
+         if Has_Project_Information (File_Context)
+           and then not Has_File_Information (File_Context)
+         then
+            Gtk_New (Item, Label => -"Edit source Directories for "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Edit_Source_Dirs_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => -"Change Object Directory for "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Change_Obj_Directory_From_Contextual'Access),
+               Selection_Context_Access (Context));
+         end if;
+
          if Module_Name (Get_Creator (Context)) = Explorer_Module_Name then
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
@@ -1317,9 +1320,7 @@ package body Project_Viewers is
                Selection_Context_Access (Context));
          end if;
 
-         if Has_File_Information (File_Context)
-           and then Has_Project_Information (File_Context)
-         then
+         if Has_File_Information (File_Context) then
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
 
