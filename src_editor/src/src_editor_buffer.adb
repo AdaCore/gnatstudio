@@ -4199,7 +4199,6 @@ package body Src_Editor_Buffer is
       end if;
 
       Buffer.Do_Not_Move_Cursor := False;
-
       Place_Cursor (Buffer, Iter);
 
       return True;
@@ -4208,6 +4207,8 @@ package body Src_Editor_Buffer is
       when E : others =>
          --  Stop propagation of exception, since doing nothing
          --  in this callback is harmless.
+
+         Buffer.Do_Not_Move_Cursor := False;
 
          if Buffer_Text /= null then
             Free (Buffer_Text);
