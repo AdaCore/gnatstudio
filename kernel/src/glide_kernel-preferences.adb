@@ -52,6 +52,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Default font"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Font), -"General");
+      GVD.Preferences.Default_Font := Default_Font;
 
       Key_Theme_Name := Param_Spec_Enum (Key_Themes_Properties.Gnew_Enum
         (Name    => "General-Key-Theme-Name",
@@ -156,119 +157,55 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Save_Desktop_On_Exit), -"General");
 
-      -- Messages --
+      -- MDI --
 
-      Message_Highlight := Param_Spec_Color (Gnew_Color
-        (Name    => "Messages-Highlight-Color",
-         Nick    => -"Color highlighting",
-         Blurb   => -"Color used to highlight text in the messages window",
-         Default => "#FF0000"));
+      MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-Opaque",
+         Default => GVD.Default_Opaque_MDI,
+         Blurb   => -("If True, items will be resized or moved opaquely when"
+                      & " not maximized"),
+         Nick    => -"Opaque"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Message_Highlight), -"Messages");
+        (Kernel.Preferences, Param_Spec (MDI_Opaque), -"General:Windows");
 
-      Show_Build_Progress := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Messages-Show-Build-Progress",
-            Nick    => -"Show build progress",
-            Blurb   =>
-              -"True if the progress bar should show progress during builds",
-            Default => True));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Show_Build_Progress), -"Messages");
-
-      File_Pattern := Param_Spec_String
-        (Gnew_String
-           (Name  => "Messages-File-Pattern",
-            Nick  => -"File pattern",
-            Blurb =>
-              -"Pattern used to detect file locations (e.g error messages)",
-            Default => "^([^:]+):(\d+):(\d+)?"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (File_Pattern), -"Messages");
-
-      File_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-File-Pattern-Index",
-         Minimum => 1,
-         Maximum => 9,
-         Default => 1,
-         Blurb   => -"Index of filename in the pattern",
-         Nick    => -"File index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (File_Pattern_Index), -"Messages");
-
-      Line_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Line-Pattern-Index",
-         Minimum => 1,
-         Maximum => 9,
-         Default => 2,
-         Blurb   => -"Index of line number in the pattern",
-         Nick    => -"Line index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Line_Pattern_Index), -"Messages");
-
-      Column_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Column-Pattern-Index",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 3,
-         Blurb   => -"Index of column number in the pattern, 0 if none",
-         Nick    => -"Column index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Column_Pattern_Index), -"Messages");
-
-      -- Diff_Utils --
-
-      Diff_Context_Length := Param_Spec_Int (Gnew_Int
-        (Name    => "Diff_Utils-Context-Length",
-         Minimum => -1,
-         Maximum => Gint'Last,
-         Default => 5,
-         Blurb   => -("The number of lines displayed before and after each"
-                      & " chunk of differences. -1 to display the whole file"),
-         Nick    => -"Context length"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Diff_Context_Length), -"Visual diff");
-
-      Diff_Cmd := Param_Spec_String (Gnew_String
-        (Name  => "Diff-Utils-Diff",
-         Nick  => -"Diff command",
-         Blurb => -("Command used to compute differences between two files."
-                    & " Arguments can also be specified"),
-         Default => "diff"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Diff_Cmd), -"Visual diff");
-
-      Patch_Cmd := Param_Spec_String (Gnew_String
-        (Name    => "Diff-Utils-Patch",
-         Nick    => -"Patch command",
-         Blurb   =>
-           -"Command used to apply a patch. Arguments can also be specified",
-         Default => "patch"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
-
-      -- Explorer --
-
-      Show_Directories := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Explorer-Show-Directories",
-         Nick    => -"Show directories",
-         Blurb   => -"True if directories should be displayed in the explorer",
-         Default => True,
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Show_Directories), -"Explorer");
-      --  ??? Does it really make sense.
-
-      File_View_Shows_Only_Project := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Prj-Editor-File-View-Shows-Only-Project",
-         Nick    => -"Files from project only",
-         Blurb   => -("True if the file view should only show files belonging"
-                      & " to the project"),
+      MDI_Destroy_Floats := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-Destroy-Floats",
          Default => False,
-         Flags   => Param_Readable));
+         Blurb   => -("If False, closing the window associated with a floating"
+                      & " item will put the item back in the main GPS window,"
+                      & " but will not destroy it. If True, the item is"
+                      & " destroyed"),
+         Nick    => -"Destroy floats"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (File_View_Shows_Only_Project),
-         -"Explorer");
+        (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats),
+         -"General:Windows");
+
+      MDI_Background_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "MDI-Background-Color",
+         Default => "#666666",
+         Blurb   => -"Color to use for the background of the MDI",
+         Nick    => -"Background color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Background_Color),
+         -"General:Windows");
+
+      MDI_Title_Bar_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "MDI-Title-Bar-Color",
+         Default => "#AAAAAA",
+         Blurb   => -"Color to use for the title bar of unselected items",
+         Nick    => -"Title bar color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Title_Bar_Color),
+         -"General:Windows");
+
+      MDI_Focus_Title_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "MDI-Focus-Title-Color",
+         Default => "#000088",
+         Blurb   => -"Color to use for the title bar of selected items",
+         Nick    => -"Selected title bar color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color),
+         -"General:Windows");
 
       -- Source Editor --
 
@@ -338,33 +275,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor:General");
 
-      Indentation_Key := Gnew_Key
-        (Name  => "Src-Editor-Auto-Indent-Key",
-         Nick  => -"Auto-indentation",
-         Blurb => -"Key used for auto-indenting lines or block of lines",
-         Default_Modifier => Control_Mask,
-         Default_Key      => GDK_Tab);
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Indentation_Key), -"Editor:Keys");
-
-      Completion_Key := Gnew_Key
-        (Name  => "Src-Editor-Complete-Key",
-         Nick  => -"Completion",
-         Blurb => -"Key used for automatic completion of identifiers",
-         Default_Modifier => Control_Mask,
-         Default_Key      => GDK_slash);
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Completion_Key), -"Editor:Keys");
-
-      Delimiters_Jump_Key := Gnew_Key
-        (Name  => "Src-Editor-Delimiters-Jump-Key",
-         Nick  => -"Jump to delimiter",
-         Blurb => -"Key used for jumping to the corresponding delimiter",
-         Default_Modifier => Control_Mask,
-         Default_Key      => GDK_apostrophe);
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Delimiters_Jump_Key), -"Editor:Keys");
-
       Default_Keyword_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Keyword-Color",
          Nick    => -"Keyword color",
@@ -419,6 +329,7 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Source_Editor_Font),
          -"Editor:Fonts & Colors");
+      GVD.Preferences.Fixed_Font := Source_Editor_Font;
 
       Keyword_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Keyword-Font",
@@ -447,16 +358,7 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (String_Font),
          -"Editor:Fonts & Colors");
 
-      Tooltip_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Tooltip-Font",
-         Default => "Sans 10",
-         Blurb   => -"The font used to display tooltips in the source editor",
-         Nick    => -"Tooltip font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Tooltip_Font),
-         -"Editor:Fonts & Colors");
-
-      -- Languages --
+      -- Editor:Languages --
 
       Ada_Automatic_Indentation := Param_Spec_Boolean
         (Gnew_Boolean
@@ -467,7 +369,7 @@ package body Glide_Kernel.Preferences is
            Nick    => -"Auto indentation"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Ada_Automatic_Indentation),
-         -"Languages:Ada");
+         -"Editor:Ada");
 
       Ada_Use_Tabs := Param_Spec_Boolean
         (Gnew_Boolean
@@ -477,7 +379,7 @@ package body Glide_Kernel.Preferences is
              -("Whether the editor should use tabulations when indenting"),
            Nick    => -"Use tabulations"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Ada_Use_Tabs), -"Languages:Ada");
+        (Kernel.Preferences, Param_Spec (Ada_Use_Tabs), -"Editor:Ada");
 
       Ada_Indentation_Level := Param_Spec_Int
         (Gnew_Int
@@ -490,7 +392,7 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences,
          Param_Spec (Ada_Indentation_Level),
-         -"Languages:Ada");
+         -"Editor:Ada");
 
       Ada_Continuation_Level := Param_Spec_Int
         (Gnew_Int
@@ -503,7 +405,7 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences,
          Param_Spec (Ada_Continuation_Level),
-         -"Languages:Ada");
+         -"Editor:Ada");
 
       Ada_Declaration_Level := Param_Spec_Int
         (Gnew_Int
@@ -517,7 +419,7 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences,
          Param_Spec (Ada_Declaration_Level),
-         -"Languages:Ada");
+         -"Editor:Ada");
 
       Ada_Indent_Case_Extra := Param_Spec_Boolean
         (Gnew_Boolean
@@ -527,7 +429,7 @@ package body Glide_Kernel.Preferences is
            Nick    => -"RM style case indentation"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Ada_Indent_Case_Extra),
-         -"Languages:Ada");
+         -"Editor:Ada");
 
       C_Automatic_Indentation := Param_Spec_Boolean
         (Gnew_Boolean
@@ -538,7 +440,7 @@ package body Glide_Kernel.Preferences is
            Nick    => -"Auto indentation"));
       Register_Property
         (Kernel.Preferences, Param_Spec (C_Automatic_Indentation),
-         -"Languages:C/C++");
+         -"Editor:C/C++");
 
       C_Use_Tabs := Param_Spec_Boolean
         (Gnew_Boolean
@@ -548,7 +450,7 @@ package body Glide_Kernel.Preferences is
              -("Whether the editor should use tabulations when indenting"),
            Nick    => -"Use tabulations"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (C_Use_Tabs), -"Languages:C/C++");
+        (Kernel.Preferences, Param_Spec (C_Use_Tabs), -"Editor:C/C++");
 
       C_Indentation_Level := Param_Spec_Int
         (Gnew_Int
@@ -561,7 +463,266 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences,
          Param_Spec (C_Indentation_Level),
-         -"Languages:C/C++");
+         -"Editor:C/C++");
+
+      -- Editor:Keys --
+      Indentation_Key := Gnew_Key
+        (Name  => "Src-Editor-Auto-Indent-Key",
+         Nick  => -"Auto-indentation",
+         Blurb => -"Key used for auto-indenting lines or block of lines",
+         Default_Modifier => Control_Mask,
+         Default_Key      => GDK_Tab);
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Indentation_Key), -"Editor:Keys");
+
+      Completion_Key := Gnew_Key
+        (Name  => "Src-Editor-Complete-Key",
+         Nick  => -"Completion",
+         Blurb => -"Key used for automatic completion of identifiers",
+         Default_Modifier => Control_Mask,
+         Default_Key      => GDK_slash);
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Completion_Key), -"Editor:Keys");
+
+      Delimiters_Jump_Key := Gnew_Key
+        (Name  => "Src-Editor-Delimiters-Jump-Key",
+         Nick  => -"Jump to delimiter",
+         Blurb => -"Key used for jumping to the corresponding delimiter",
+         Default_Modifier => Control_Mask,
+         Default_Key      => GDK_apostrophe);
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Delimiters_Jump_Key), -"Editor:Keys");
+
+      -- Debugger --
+
+      GVD.Preferences.Register_Default_Preferences
+        (Kernel.Preferences, -"Debugger" & ':', "Debugger-");
+
+      -- Browsers --
+
+      Browsers_Bg_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Bg-Color",
+         Default => "#BBBBBB",
+         Blurb   => -"Color used to draw the background of the browsers",
+         Nick    => -"Background color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Bg_Color),
+         -"Browsers:General");
+
+      Browsers_Bg_Image := Param_Spec_String (Gnew_String
+        (Name    => "Browsers-Bg-Image",
+         Nick    => -"Background image",
+         Flags   => Param_Readable,
+         Blurb   =>
+           -("Image to draw in the background of browsers. If left empty,"
+             & " no image is drawn. Using a large image will slow down"
+             & " performances"),
+         Default => ""));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Bg_Image),
+         -"Browsers:General");
+
+      Browsers_Draw_Grid := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Browsers-Draw-Grid",
+         Default => True,
+         Blurb   => -("Whether a grid should be displayed in the browsers"),
+         Flags   => Param_Readable,
+         Nick    => -"Draw grid"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Draw_Grid),
+         -"Browsers:General");
+
+      Browsers_Hyper_Link_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Hyper-Link-Color",
+         Default => "#0000FF",
+         Blurb   => -"Color used to draw the hyper links in the items",
+         Nick    => -"Hyper link color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Hyper_Link_Color),
+         -"Browsers:General");
+
+      Selected_Link_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Selected-Link-Color",
+         Default => "#FF0000",
+         Blurb   => -"Color to use for links between selected items",
+         Nick    => -"Selected link color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Selected_Link_Color),
+         -"Browsers:General");
+
+      Unselected_Link_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Unselected-Link-Color",
+         Default => "#000000",
+         Blurb   => -"Color to use for links between unselected items",
+         Nick    => -"Default link color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Unselected_Link_Color),
+         -"Browsers:General");
+
+      Parent_Linked_Item_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Linked-Item-Color",
+         Default => "#AAAAAA",
+         Blurb   => -("Color to use for the background of the items linked"
+                      & " to the selected item"),
+         Nick    => -"Ancestor items color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Parent_Linked_Item_Color),
+         -"Browsers:General");
+
+      Child_Linked_Item_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Child-Linked-Item-Color",
+         Default => "#DDDDDD",
+         Blurb   => -("Color to use for the background of the items linked"
+                      & " from the selected item"),
+         Nick    => -"Offspring items color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Child_Linked_Item_Color),
+         -"Browsers:General");
+
+      Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Browsers-Vertical-Layout",
+         Default => True,
+         Blurb   => -("Whether the layout of the graph should be vertical"
+                      & " or horizontal"),
+         Nick    => -"Vertical layout"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
+         -"Browsers:General");
+
+      Dep_Browser_Show_System_Files := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Browsers-System-Files",
+         Default => False,
+         Blurb   => -("Whether the system files (Ada runtime or standard C"
+                      & " include files) should be visible in the browser"),
+         Nick    => -"Show system files"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Dep_Browser_Show_System_Files),
+         -"Browsers:File Dependencies");
+
+      Dep_Browser_Show_Implicit_Dep := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Browsers-Implicit-Dep",
+         Default => False,
+         Blurb   => -("If False, then only the explicit dependencies"
+                      & " are shown in the browser. Otherwise, all"
+                      & " dependencies, even implicit, are displayed"),
+         Nick    => -"Show implicit dependencies"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Dep_Browser_Show_Implicit_Dep),
+         -"Browsers:File Dependencies");
+
+      -- Diff_Utils --
+
+      Diff_Context_Length := Param_Spec_Int (Gnew_Int
+        (Name    => "Diff_Utils-Context-Length",
+         Minimum => -1,
+         Maximum => Gint'Last,
+         Default => 5,
+         Blurb   => -("The number of lines displayed before and after each"
+                      & " chunk of differences. -1 to display the whole file"),
+         Nick    => -"Context length"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Diff_Context_Length), -"Visual diff");
+
+      Diff_Cmd := Param_Spec_String (Gnew_String
+        (Name  => "Diff-Utils-Diff",
+         Nick  => -"Diff command",
+         Blurb => -("Command used to compute differences between two files."
+                    & " Arguments can also be specified"),
+         Default => "diff"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Diff_Cmd), -"Visual diff");
+
+      Patch_Cmd := Param_Spec_String (Gnew_String
+        (Name    => "Diff-Utils-Patch",
+         Nick    => -"Patch command",
+         Blurb   =>
+           -"Command used to apply a patch. Arguments can also be specified",
+         Default => "patch"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
+
+      -- Explorer --
+
+      Show_Directories := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Explorer-Show-Directories",
+         Nick    => -"Show directories",
+         Blurb   => -"True if directories should be displayed in the explorer",
+         Default => True,
+         Flags   => Param_Readable));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Show_Directories), -"Explorer");
+      --  ??? Does it really make sense.
+
+      File_View_Shows_Only_Project := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Prj-Editor-File-View-Shows-Only-Project",
+         Nick    => -"Files from project only",
+         Blurb   => -("True if the file view should only show files belonging"
+                      & " to the project"),
+         Default => False,
+         Flags   => Param_Readable));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (File_View_Shows_Only_Project),
+         -"Explorer");
+
+      -- Messages --
+
+      Message_Highlight := Param_Spec_Color (Gnew_Color
+        (Name    => "Messages-Highlight-Color",
+         Nick    => -"Color highlighting",
+         Blurb   => -"Color used to highlight text in the messages window",
+         Default => "#FF0000"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Message_Highlight), -"Messages");
+
+      Show_Build_Progress := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "Messages-Show-Build-Progress",
+            Nick    => -"Show build progress",
+            Blurb   =>
+              -"True if the progress bar should show progress during builds",
+            Default => True));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Show_Build_Progress), -"Messages");
+
+      File_Pattern := Param_Spec_String
+        (Gnew_String
+           (Name  => "Messages-File-Pattern",
+            Nick  => -"File pattern",
+            Blurb =>
+              -"Pattern used to detect file locations (e.g error messages)",
+            Default => "^([^:]+):(\d+):(\d+)?"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (File_Pattern), -"Messages");
+
+      File_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-File-Pattern-Index",
+         Minimum => 1,
+         Maximum => 9,
+         Default => 1,
+         Blurb   => -"Index of filename in the pattern",
+         Nick    => -"File index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (File_Pattern_Index), -"Messages");
+
+      Line_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Line-Pattern-Index",
+         Minimum => 1,
+         Maximum => 9,
+         Default => 2,
+         Blurb   => -"Index of line number in the pattern",
+         Nick    => -"Line index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Line_Pattern_Index), -"Messages");
+
+      Column_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Column-Pattern-Index",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 3,
+         Blurb   => -"Index of column number in the pattern, 0 if none",
+         Nick    => -"Column index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Column_Pattern_Index), -"Messages");
 
       -- Project Editor --
 
@@ -649,126 +810,6 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Wizard_Title_Font),
          -"Project wizard");
 
-      -- Browsers --
-
-      Browsers_Bg_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Bg-Color",
-         Default => "#BBBBBB",
-         Blurb   => -"Color used to draw the background of the browsers",
-         Nick    => -"Background color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Bg_Color),
-         -"Browsers:General");
-
-      Browsers_Bg_Image := Param_Spec_String (Gnew_String
-        (Name    => "Browsers-Bg-Image",
-         Nick    => -"Background image",
-         Flags   => Param_Readable,
-         Blurb   =>
-           -("Image to draw in the background of browsers. If left empty,"
-             & " no image is drawn. Using a large image will slow down"
-             & " performances"),
-         Default => ""));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Bg_Image),
-         -"Browsers:General");
-
-      Browsers_Draw_Grid := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-Draw-Grid",
-         Default => True,
-         Blurb   => -("Whether a grid should be displayed in the browsers"),
-         Flags   => Param_Readable,
-         Nick    => -"Draw grid"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Draw_Grid),
-         -"Browsers:General");
-
-      Browsers_Link_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Browsers-Link-Font",
-         Default => "sans 10",
-         Blurb   => -"Font used to draw the links between items",
-         Nick    => -"Links font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Link_Font),
-         -"Browsers:General");
-
-      Browsers_Hyper_Link_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Hyper-Link-Color",
-         Default => "#0000FF",
-         Blurb   => -"Color used to draw the hyper links in the items",
-         Nick    => -"Hyper link color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Hyper_Link_Color),
-         -"Browsers:General");
-
-      Selected_Link_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Selected-Link-Color",
-         Default => "#FF0000",
-         Blurb   => -"Color to use for links between selected items",
-         Nick    => -"Selected link color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Selected_Link_Color),
-         -"Browsers:General");
-
-      Unselected_Link_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Unselected-Link-Color",
-         Default => "#000000",
-         Blurb   => -"Color to use for links between unselected items",
-         Nick    => -"Default link color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Unselected_Link_Color),
-         -"Browsers:General");
-
-      Parent_Linked_Item_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Linked-Item-Color",
-         Default => "#AAAAAA",
-         Blurb   => -("Color to use for the background of the items linked"
-                      & " to the selected item"),
-         Nick    => -"Ancestor items color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Parent_Linked_Item_Color),
-         -"Browsers:General");
-
-      Child_Linked_Item_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Child-Linked-Item-Color",
-         Default => "#DDDDDD",
-         Blurb   => -("Color to use for the background of the items linked"
-                      & " from the selected item"),
-         Nick    => -"Offspring items color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Child_Linked_Item_Color),
-         -"Browsers:General");
-
-      Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-Vertical-Layout",
-         Default => True,
-         Blurb   => -("Whether the layout of the graph should be vertical"
-                      & " or horizontal"),
-         Nick    => -"Vertical layout"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
-         -"Browsers:General");
-
-      Dep_Browser_Show_System_Files := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-System-Files",
-         Default => False,
-         Blurb   => -("Whether the system files (Ada runtime or standard C"
-                      & " include files) should be visible in the browser"),
-         Nick    => -"Show system files"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Dep_Browser_Show_System_Files),
-         -"Browsers:File Dependencies");
-
-      Dep_Browser_Show_Implicit_Dep := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-Implicit-Dep",
-         Default => False,
-         Blurb   => -("If False, then only the explicit dependencies"
-                      & " are shown in the browser. Otherwise, all"
-                      & " dependencies, even implicit, are displayed"),
-         Nick    => -"Show implicit dependencies"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Dep_Browser_Show_Implicit_Dep),
-         -"Browsers:File Dependencies");
 
       -- VCS --
 
@@ -800,71 +841,6 @@ package body Glide_Kernel.Preferences is
          Nick    => -"CVS command"));
       Register_Property
         (Kernel.Preferences, Param_Spec (CVS_Command), -"VCS:CVS");
-
-      -- MDI --
-
-      MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-Opaque",
-         Default => GVD.Default_Opaque_MDI,
-         Blurb   => -("If True, items will be resized or moved opaquely when"
-                      & " not maximized"),
-         Nick    => -"Opaque"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Opaque), -"General:Windows");
-
-      MDI_Destroy_Floats := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-Destroy-Floats",
-         Default => False,
-         Blurb   => -("If False, closing the window associated with a floating"
-                      & " item will put the item back in the main GPS window,"
-                      & " but will not destroy it. If True, the item is"
-                      & " destroyed"),
-         Nick    => -"Destroy floats"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats),
-         -"General:Windows");
-
-      MDI_Title_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "MDI-Title-Font",
-         Default => "Sans 8",
-         Blurb   => -"Font used in the title bar of the items",
-         Nick    => -"Title font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Title_Font), -"General:Windows");
-
-      MDI_Background_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "MDI-Background-Color",
-         Default => "#666666",
-         Blurb   => -"Color to use for the background of the MDI",
-         Nick    => -"Background color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Background_Color),
-         -"General:Windows");
-
-      MDI_Title_Bar_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "MDI-Title-Bar-Color",
-         Default => "#AAAAAA",
-         Blurb   => -"Color to use for the title bar of unselected items",
-         Nick    => -"Title bar color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Title_Bar_Color),
-         -"General:Windows");
-
-      MDI_Focus_Title_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "MDI-Focus-Title-Color",
-         Default => "#000088",
-         Blurb   => -"Color to use for the title bar of selected items",
-         Nick    => -"Selected title bar color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color),
-         -"General:Windows");
-
-      --------------
-      -- Debugger --
-      --------------
-
-      GVD.Preferences.Register_Default_Preferences
-        (Kernel.Preferences, -"Debugger" & ':', "Debugger-");
    end Register_Global_Preferences;
 
    ----------------------
