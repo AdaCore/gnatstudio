@@ -53,6 +53,7 @@ with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with System;                      use System;
 with Prj.Attr;                    use Prj.Attr;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Namet;                       use Namet;
 
 with File_Utils;                  use File_Utils;
@@ -2013,7 +2014,7 @@ package body Glide_Kernel is
       Pkg : Package_Node_Id;
    begin
       Name_Len := Tool.Project_Package'Length;
-      Name_Buffer (1 .. Name_Len) := Tool.Project_Package.all;
+      Name_Buffer (1 .. Name_Len) := To_Lower (Tool.Project_Package.all);
       Pkg := Package_Node_Id_Of (Name_Find);
       if Pkg = Empty_Package then
          Register_New_Package (Tool.Project_Package.all, Pkg);
