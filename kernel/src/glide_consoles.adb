@@ -39,6 +39,9 @@ package body Glide_Consoles is
 
    Me : Debug_Handle := Create ("Glide_Console");
 
+   File_Pattern : constant Pattern_Matcher :=
+     Compile ("^([^:]+):(\d+):(\d+)?");
+
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Handler for "button_press_event" signal
@@ -119,18 +122,17 @@ package body Glide_Consoles is
       if Highlight_Sloc then
          declare
             Matched   : Match_Array (0 .. 3);
-            File      : constant Pattern_Matcher :=
-              Compile ("^([^:]+):(\d+):(\d+:)?", Multiple_Lines);
             Highlight : Gdk_Color;
-            Start : Natural := New_Text'First;
-            Last : Natural;
+            Start     : Natural := New_Text'First;
+            Last      : Natural;
 
          begin
             Highlight := Get_Pref (Console.Kernel, Highlight_File);
             Alloc (Get_Default_Colormap, Highlight);
 
             while Start <= New_Text'Last loop
-               Match (File, New_Text (Start .. New_Text'Last), Matched);
+               Match (File_Pattern, New_Text (Start .. New_Text'Last),
+                      Matched);
                exit when Matched (0) = No_Match;
 
                Insert
@@ -141,7 +143,7 @@ package body Glide_Consoles is
                if Matched (3) = No_Match then
                   Last := Matched (2).Last;
                else
-                  Last := Matched (3).Last - 1;
+                  Last := Matched (3).Last;
                end if;
 
                Insert
@@ -192,8 +194,6 @@ package body Glide_Consoles is
       Contents    : constant String := Get_Chars (Console.Text, 0);
       Start       : Natural := Natural (Position);
       Last        : Natural := Start;
-      Pattern     : constant Pattern_Matcher :=
-        Compile ("^([^:]*):(\d+):(\d+:)?");
       Matched     : Match_Array (0 .. 3);
       Line        : Positive;
       Column      : Positive;
@@ -213,7 +213,7 @@ package body Glide_Consoles is
          Last := Last + 1;
       end loop;
 
-      Match (Pattern, Contents (Start .. Last), Matched);
+      Match (File_Pattern, Contents (Start .. Last), Matched);
 
       if Matched (0) /= No_Match then
          Line :=
@@ -229,7 +229,8 @@ package body Glide_Consoles is
          if Matched (1).First < Matched (1).Last then
             Freeze (Console.Text);
             Claim_Selection (Console.Text, True, 0);
-            Select_Region (Console.Text, Gint (Start) - 1, Gint (Last));
+            Select_Region
+              (Console.Text, Gint (Start) - 1, Gint (Matched (0).Last));
             Thaw (Console.Text);
             Open_File_Editor
               (Console.Kernel,
