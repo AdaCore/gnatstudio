@@ -221,8 +221,12 @@ idle_handler (gpointer data)
 
 	html_engine_make_cursor_visible (engine);
 
-	gtk_adjustment_set_value (GTK_LAYOUT (html)->hadjustment, (gdouble) engine->x_offset);
-	gtk_adjustment_set_value (GTK_LAYOUT (html)->vadjustment, (gdouble) engine->y_offset);
+	if (engine->editable) {
+	   gtk_adjustment_set_value
+             (GTK_LAYOUT (html)->hadjustment, (gdouble) engine->x_offset);
+	   gtk_adjustment_set_value
+	     (GTK_LAYOUT (html)->vadjustment, (gdouble) engine->y_offset);
+	}
 
 	csc_html_private_calc_scrollbars (html);
 
