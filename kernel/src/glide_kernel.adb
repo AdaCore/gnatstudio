@@ -50,6 +50,7 @@ with String_Utils;              use String_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Default_Preferences;       use Default_Preferences;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -62,6 +63,7 @@ with Interfaces.C;              use Interfaces.C;
 with GUI_Utils;                 use GUI_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
+with Basic_Mapper;              use Basic_Mapper;
 
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Prj_API;                   use Prj_API;
@@ -75,6 +77,8 @@ with Prj.Tree;                  use Prj.Tree;
 
 with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
+
+with Unchecked_Deallocation;
 
 package body Glide_Kernel is
 
@@ -173,6 +177,8 @@ package body Glide_Kernel is
       Reset_Source_Info_List (Handle);
 
       Gtk_New (Handle.Tooltips);
+      Ref (Handle.Tooltips);
+      Sink (Handle.Tooltips);
 
       Handle.Preferences := new GPS_Preferences_Record;
       GVD.Preferences.GVD_Prefs := GVD_Preferences (Handle.Preferences);
@@ -716,9 +722,14 @@ package body Glide_Kernel is
    ----------
 
    procedure Free (Module : in out Module_ID) is
-      pragma Unreferenced (Module);
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Module_ID_Record'Class, Module_ID);
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Module_ID_Information, Module_ID_Information_Access);
    begin
-      null;
+      Destroy (Module.all);
+      Unchecked_Free (Module.Info);
+      Unchecked_Free (Module);
    end Free;
 
    ----------
@@ -786,6 +797,16 @@ package body Glide_Kernel is
 
    procedure Destroy (Context : in out Selection_Context) is
       pragma Unreferenced (Context);
+   begin
+      null;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Id : in out Module_ID_Record) is
+      pragma Unreferenced (Id);
    begin
       null;
    end Destroy;
@@ -1271,11 +1292,21 @@ package body Glide_Kernel is
          Free (Handle.Last_Context_For_Contextual);
       end if;
 
-      Reset (Handle.Source_Info_List);
+      --  Free the register search functions
+      Destroy (Handle.Search);
 
-      --  ??? Should free Module_List
-      --  ??? Should free VCS_List
-      --  ??? Should free Logs_Mapper
+      Destroy (Glide_Language_Handler (Handle.Lang_Handler));
+      Reset (Handle.Source_Info_List);
+      Free_Modules (Handle);
+      Free (Handle.VCS_List);
+      Free (Handle.Logs_Mapper);
+      Unref (Handle.Tooltips);
+
+      --  Free the memory allocated by gtk+, and disconnect all the callbacks,
+      --  reclaiming the associated memory.
+      Unref (Handle);
+
+      Kernel_Desktop.Free_Registered_Desktop_Functions;
    end Destroy;
 
 end Glide_Kernel;

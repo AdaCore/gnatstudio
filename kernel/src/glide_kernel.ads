@@ -172,7 +172,7 @@ package Glide_Kernel is
      (Handle         : access Kernel_Handle_Record;
       VCS_Identifier : String);
    --  Add a VCS identifier to the list of recognized VCS systems.
-   --  ??? This is temporary, until we VCS module can directly add a page in
+   --  ??? This is temporary, until the VCS module can directly add a page in
    --  the wizard or the project properties editor.
 
    -------------
@@ -282,6 +282,10 @@ package Glide_Kernel is
    --  Module identifier. Each of the registered module in Glide has such a
    --  identifier, that contains its name and all the callbacks associated with
    --  the module.
+
+   procedure Destroy (Id : in out Module_ID_Record);
+   --  Free the memory associated with the module. By default, this does
+   --  nothing.
 
    type Selection_Context is tagged private;
    type Selection_Context_Access is access all Selection_Context'Class;
