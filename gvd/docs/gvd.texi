@@ -4,7 +4,7 @@
 @settitle Using the GNU Visual Debugger
 @syncodeindex fn cp
 
-@set GVDVersion 1.0.2
+@set GVDVersion 1.0.3
 
 @titlepage
 
@@ -589,6 +589,14 @@ of breakpoints is recommended instead to stop programs.
    containing the following information:
    @itemize @bullet
      @item lines with code
+In this area, blue dots are shown that represent lines for which the debugger
+has debug information, in other words, lines that have been compiled with
+debug information and for which the compiler has generated some code.
+Currently, GVD does not check whether you try to set a breakpoint on a dotted
+line or not, and will blindly send to the underlying debugger the breakpoint
+command. This will usually (e.g in the case of gdb) result in setting a
+breakpoint in the closest location that matches the file and line that you
+specified.
      @item current line executed
      @item lines with breakpoints
    @end itemize
