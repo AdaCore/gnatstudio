@@ -198,15 +198,15 @@ package body VCS is
    -- Parse_Status --
    ------------------
 
-   function Parse_Status
-     (Rep   : access VCS_Record;
-      Text  : String;
-      Local : Boolean) return File_Status_List.List
+   procedure Parse_Status
+     (Rep        : access VCS_Record;
+      Text       : String;
+      Local      : Boolean;
+      Clear_Logs : Boolean)
    is
-      pragma Unreferenced (Rep, Text, Local);
-      Result : File_Status_List.List;
+      pragma Unreferenced (Rep, Text, Local, Clear_Logs);
    begin
-      return Result;
+      null;
    end Parse_Status;
 
    -----------------------

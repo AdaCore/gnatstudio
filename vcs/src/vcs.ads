@@ -315,10 +315,11 @@ package VCS is
 
    function Get_Queue (VCS : access VCS_Record) return Commands.Command_Queue;
 
-   function Parse_Status
-     (Rep   : access VCS_Record;
-      Text  : String;
-      Local : Boolean) return File_Status_List.List;
+   procedure Parse_Status
+     (Rep        : access VCS_Record;
+      Text       : String;
+      Local      : Boolean;
+      Clear_Logs : Boolean);
    --  Parse Text and return the list of status obtained.
    --  Local indicates whether we are parsing local status.
 

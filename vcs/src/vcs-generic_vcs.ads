@@ -105,10 +105,11 @@ package VCS.Generic_VCS is
      (Rep  : access Generic_VCS_Record;
       File : VFS.Virtual_File);
 
-   function Parse_Status
-     (Rep   : access Generic_VCS_Record;
-      Text  : String;
-      Local : Boolean) return File_Status_List.List;
+   procedure Parse_Status
+     (Rep        : access Generic_VCS_Record;
+      Text       : String;
+      Local      : Boolean;
+      Clear_Logs : Boolean);
 
    procedure Parse_Annotations
      (Rep   : access Generic_VCS_Record;
