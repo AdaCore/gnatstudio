@@ -743,7 +743,18 @@ package body Glide_Result_View is
       Set (Model, Iter, Highlight_Column, Highlighting);
       Set (Model, Iter, Highlight_Category_Column, Highlight_Category);
       Set (Model, Iter, Number_Of_Items_Column, 0);
-      Set (Model, Iter, Category_Line_Column, Highlight_Category & Line'Img);
+
+      --  ??? Lexicographic order will be used for line numbers > 1_000_000
+
+      declare
+         Img : constant String := Integer'Image (Line + 1_000_000);
+      begin
+         Set
+           (Model,
+            Iter,
+            Category_Line_Column,
+            Highlight_Category & Img (Img'Last - 5 .. Img'Last));
+      end;
 
       if Line = 0 then
          Set (Model, Iter, Weight_Column, 400);
