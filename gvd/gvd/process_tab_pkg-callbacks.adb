@@ -208,7 +208,6 @@ package body Process_Tab_Pkg.Callbacks is
          Index := Get_Current (History).Command.all'Length - S'Length;
    end Move_Until_Match;
 
-
    ----------------
    -- Find_Match --
    ----------------
@@ -216,17 +215,27 @@ package body Process_Tab_Pkg.Callbacks is
    procedure Find_Match
      (H   : in out History_List;
       Num : in Natural;
-      D   : in Direction) is
+      D   : in Direction)
+   is
+      Data    : History_Data;
+      Current : History_Data;
    begin
+      begin
+         Data := Get_Current (H);
+      exception
+         when No_Such_Item =>
+            Data.Command := new String' ("");
+      end;
       loop
          if D = Backward then
             Move_To_Previous (H);
          else
             Move_To_Next (H);
          end if;
-
-         exit when Get_Current (H).Debugger_Num = Num
-           and then Get_Current (H).Mode /= Hidden;
+         Current := Get_Current (H);
+         exit when Current.Debugger_Num = Num
+           and then Current.Mode /= Hidden
+           and then Current.Command.all /= Data.Command.all;
       end loop;
    end Find_Match;
 
