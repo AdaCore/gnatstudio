@@ -18,20 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
+with Glib;         use Glib;
+
 with Gdk.Input;
 with Gdk.Types;
+with Gdk.Cursor;   use Gdk.Cursor;
 with Gdk.Color;    use Gdk.Color;
 with Gdk.Cursor;   use Gdk.Cursor;
+with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
+
+with Gtk.Bin;      use Gtk.Bin;
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Main;     use Gtk.Main;
 with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
-with Gdk.Cursor;   use Gdk.Cursor;
-with Gdk.Window;   use Gdk.Window;
-with Gdk.Types; use Gdk.Types;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
@@ -54,40 +56,6 @@ with Unchecked_Conversion;
 pragma Warnings (Off, Debugger.Jdb);
 
 package body Odd.Process is
-
-   ---------------
-   -- Constants --
-   ---------------
-
-   Editor_Font_Size : constant Gint := 12;
-   --  Size of the font used in the editor.
-
-   Editor_Font : constant String := "Courier";
-   --  Font used in the editor.
-
-   Comments_Color : constant String := "red";
-   --  Color used for comments.
-
-   Strings_Color  : constant String := "brown";
-   --  Color used for strings.
-
-   Keywords_Color : constant String := "blue";
-   --  Color used for keywords.
-
-   Debugger_Highlight_Color : constant String := "blue";
-   --  Color used for highlighting in the debugger window.
-
-   Debugger_Font_Size : constant Gint := 12;
-   --  Size of the font used in the debugger text window.
-
-   Debugger_Font : constant String := "Courier";
-   --  Font used in the debugger text window.
-
-   Editor_Show_Line_Nums : constant Boolean := True;
-   --  Whether line numbers should be shown in the code editor
-
-   Align_Items_On_Grid : constant Boolean := True;
-   --  Should items be aligned on the grid.
 
    package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
 
@@ -216,15 +184,29 @@ package body Odd.Process is
    is
       function To_Main_Debug_Window is new
         Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
-      Process : Debugger_Process_Tab :=
+      Process    : constant Debugger_Process_Tab :=
         Convert (To_Main_Debug_Window (Window), Descriptor);
 
+      Editor     : Code_Editor;
+      Page       : Gint;
       File_First : Natural;
       File_Last  : Positive;
       Line       : Natural;
       Initial_Internal_Command : Boolean := True;
 
    begin
+      Page := Get_Current_Page (Process.Thread_Notebook);
+
+      --  ??? Apparently Gtk isn't able to handle -1 values in Get_Nth_Page.
+
+      if Page = -1 then
+         Page := 0;
+      end if;
+
+      Editor :=
+        Code_Editor
+          (Get_Child (Gtk_Bin (Get_Nth_Page (Process.Thread_Notebook, Page))));
+
       --  Do not show the output if we have an internal command
       if not Is_Internal_Command (Get_Process (Process.Debugger)) then
          Text_Output_Handler (Process, Str);
@@ -249,13 +231,13 @@ package body Odd.Process is
          --  Since the text file has been given by the debugger, the language
          --  to use is the one currently defined by the debugger.
          Set_Current_Language
-           (Process.Editor_Text, Get_Language (Process.Debugger));
+           (Editor, Get_Language (Process.Debugger));
 
          --  Display the file
 
          Set_Internal_Command (Get_Process (Process.Debugger), True);
          Load_File
-           (Process.Editor_Text,
+           (Editor,
             Str (File_First .. File_Last),
             Process.Debugger);
 
@@ -269,7 +251,7 @@ package body Odd.Process is
       end if;
 
       if Line /= 0 then
-         Set_Line (Process.Editor_Text, Line);
+         Set_Line (Editor, Line);
       end if;
    end Text_Output_Handler;
 
@@ -317,6 +299,7 @@ package body Odd.Process is
       Process : Debugger_Process_Tab;
       Id      : Gint;
       Label   : Gtk_Label;
+      Editor  : Code_Editor;
 
    begin
       Process := new Debugger_Process_Tab_Record;
@@ -384,7 +367,9 @@ package body Odd.Process is
       --  The language of the editor will automatically be set by the output
       --  filter.
 
-      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size,
+      Editor := Code_Editor (Get_Child (Gtk_Bin (Get_Nth_Page
+        (Process.Thread_Notebook, 0))));
+      Configure (Editor, Editor_Font, Editor_Font_Size,
                  dot_xpm, arrow_xpm,
                  Comments_Color    => Comments_Color,
                  Strings_Color     => Strings_Color,
