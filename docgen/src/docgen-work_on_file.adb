@@ -21,19 +21,17 @@
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Src_Info.Queries;          use Src_Info.Queries;
-with Test_Utils;                use Test_Utils;
 with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Language_Handlers;         use Language_Handlers;
-with Test_Utils;                use Test_Utils;
 with Docgen.Work_On_Source;     use Docgen.Work_On_Source;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glide_Intl;                use Glide_Intl;
+with Docgen.ALI_Utils;          use Docgen.ALI_Utils;
 
 package body Docgen.Work_On_File is
 
@@ -52,13 +50,13 @@ package body Docgen.Work_On_File is
 
    procedure Process_Files
      (Source_File_List   : in out Type_Source_File_List.List;
+      Handler            : in out Language_Handler;
+      Project_Tree       : in out Project_Node_Id;
+      Project_View       : in out Project_Id;
+      Source_Info_List   : in out Src_Info.LI_File_List;
       Options            : All_Options)
    is
       Source_File_Node : Type_Source_File_List.List_Node;
-      Source_Info_List : Src_Info.LI_File_List;
-      Handler          : Language_Handler;
-      Project_Tree     : Project_Node_Id;
-      Project_View     : Project_Id;
       Doc_File         : File_Type;
       Next_Package     : GNAT.OS_Lib.String_Access;
       Prev_Package     : GNAT.OS_Lib.String_Access;
@@ -140,12 +138,6 @@ package body Docgen.Work_On_File is
 
       Source_File_Node := TSFL.First (Source_File_List);
 
-      --  get the handler
-      Handler := Create_Lang_Handler;
-      --  get Project_Tree and Project_View
-      Reset (Source_Info_List);
-      Load_Project (TSFL.Data (Source_File_Node).Prj_File_Name.all,
-                    Handler, Project_Tree, Project_View);
       for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
 
          --  create the doc file from the package name for each package
@@ -172,9 +164,9 @@ package body Docgen.Work_On_File is
                            TSFL.Data (Source_File_Node).Package_Name.all,
                            Next_Package,
                            Prev_Package,
-                           TSFL.Data (Source_File_Node).Def_In_Line,
                            Source_File_List,
-                           Source_Info_List, Handler,
+                           Source_Info_List,
+                           Handler,
                            Project_Tree,
                            Project_View,
                            Options,
@@ -213,7 +205,6 @@ package body Docgen.Work_On_File is
       Package_Name       : String;
       Next_Package       : GNAT.OS_Lib.String_Access;
       Prev_Package       : GNAT.OS_Lib.String_Access;
-      Def_In_Line        : Integer;
       Source_File_List   : in out Type_Source_File_List.List;
       Source_Info_List   : in out Src_Info.LI_File_List;
       Handler            : in out Language_Handler;
@@ -225,18 +216,6 @@ package body Docgen.Work_On_File is
       LI_Unit                   : LI_File_Ptr;
       Entity_Iter               : Entity_Declaration_Iterator;
       Info                      : Entity_Information;
-
-      function Source_File_In_List
-        (Name : String) return Boolean;
-      --  returns true if the file is found in the source file list
-
-      function Is_Defined_In_Subprogram
-        (Entity          : String;
-         Short_Entity    : String;
-         Package_Name    : String) return Boolean;
-      --  returns true if the entity is defined within another entity and
-      --  not dierctly within the package. The function only parses the
-      --  full entity name to find a "."!
 
       function Get_Full_Entity_Filename
         (Filename         : String) return String;
@@ -278,54 +257,6 @@ package body Docgen.Work_On_File is
       --  contains pointers, and as the file entity list will be freed after
       --  each file has been processed and the index lists will remain until
       --  the last file.
-
-      -------------------------
-      -- Source_File_In_List --
-      -------------------------
-
-      function Source_File_In_List
-        (Name : String) return Boolean
-      is
-         Source_File_Node : Type_Source_File_List.List_Node;
-         Found            : Boolean;
-      begin
-         Found := False;
-         Source_File_Node := TSFL.First (Source_File_List);
-         for J in 1 .. TSFL.Length (Source_File_List) loop
-            if File_Name  (TSFL.Data (Source_File_Node).File_Name.all)
-              = (Name) then
-               Found := True;
-            end if;
-            Source_File_Node := TSFL.Next (Source_File_Node);
-         end loop;
-         return Found;
-      end Source_File_In_List;
-
-      ------------------------------
-      -- Is_Defined_In_Subprogram --
-      ------------------------------
-
-      function Is_Defined_In_Subprogram
-        (Entity          : String;
-         Short_Entity    : String;
-         Package_Name    : String) return Boolean is
-      begin
-         --  check if the short name of the entity starts right
-         --  after the package name followed by "."
-         if not (Get_String_Index (Entity, 1, To_Lower (Package_Name)) +
-                   Package_Name'Length + 1
-                     < Get_String_Index (Entity, 1, Short_Entity)) and
-         --  and that it is really the name at the end of the
-         --  entity name, followed by nothing
-           Entity'Last = (Get_String_Index (Entity, 1, Short_Entity)) +
-           Short_Entity'Last - 1
-         then
-            return False;
-         else
-            return True;
-         end if;
-      end Is_Defined_In_Subprogram;
-
 
       ------------------------------
       -- Get_Full_Entity_Filename --
@@ -398,9 +329,10 @@ package body Docgen.Work_On_File is
          if Local_Status = Success then
             return Get_Line (Local_Location);
             --  for example instantanations of generic entities don't
-            --  need to have a declaration in the body => return 0
+            --  need to have a declaration in the body
+            --  => return No_Body_Line_Needed = constant 0
          else
-            return 0;
+            return No_Body_Line_Needed;
          end if;
       end  Search_Line_In_Body;
 
@@ -473,7 +405,9 @@ package body Docgen.Work_On_File is
                   Reference_Node.Subprogram_Name := new String'
                     (Get_Name (Get_Entity (Child_Node)));
                   Reference_Node.Set_Link :=
-                    Source_File_In_List (Reference_Node.File_Name.all) and
+                    (Options.Link_All or
+                    Source_File_In_List (Source_File_List,
+                                         Reference_Node.File_Name.all)) and
                     (Get_Scope (Get_Entity (Child_Node)) = Global_Scope or
                        Options.Show_Private);
 
@@ -589,7 +523,8 @@ package body Docgen.Work_On_File is
                --  set the global variable: is the file known, where the
                --  declaration of the reference can be found?
                if Source_File_In_List
-                 (Get_File (Get_Location (Get (Reference_Iter)))) then
+                 (Source_File_List,
+                  Get_File (Get_Location (Get (Reference_Iter)))) then
                   Decl_Found := True;
                else
                   Decl_Found := False;
@@ -671,6 +606,11 @@ package body Docgen.Work_On_File is
 
    begin
 
+      Load_LI_File
+        (Source_Info_List, Handler, Project_View,
+         File_Name (Source_Filename),
+         LI_Unit);
+
       --  if body file, no need to start working on ALI, the lists of the
       --  spec file can be used.
       if File_Extension (Source_Filename) = ".adb" then
@@ -680,9 +620,9 @@ package body Docgen.Work_On_File is
                          Source_File_List,
                          Source_Filename,
                          Package_Name,
-                         Def_In_Line,
                          Entity_List,
                          Process_Body_File,
+                         LI_Unit,
                          Options);
 
          --  now free the list
@@ -690,10 +630,6 @@ package body Docgen.Work_On_File is
 
          --  but if a spec file, you have to look in the ALI files
       else
-         Load_LI_File
-           (Source_Info_List, Handler, Project_View,
-            File_Name (Source_Filename),
-            LI_Unit);
 
          if Options.Info_Output then
             Put_Line (-"Find all possible declarations");
@@ -715,7 +651,6 @@ package body Docgen.Work_On_File is
             else
                Entity_Node.Is_Private := True;
             end if;
-
             --  check if the entity in defined within a subprogram.
             --  if true => ignore!
             if not Is_Defined_In_Subprogram (Get_Full_Name
@@ -726,12 +661,12 @@ package body Docgen.Work_On_File is
             --  is in one of the files
             --  which are in list, if false => no need for creating links
             --  => ignore!
-              and Source_File_In_List (Get_Declaration_File_Of (Info))
+              and Source_File_In_List (Source_File_List,
+                                       Get_Declaration_File_Of (Info))
             --  AND check if it's a private entity and if they
             --  should be processed
               and (Options.Show_Private or not Entity_Node.Is_Private)
             then
-
                --  Info_Output is set, if further information are wished
                if Options.Info_Output then
                   Put_Line (-"-----");
@@ -762,10 +697,8 @@ package body Docgen.Work_On_File is
 
                --  for all entities which are not subprograms the ref lists
                --  must be set null;
-               if Get_Kind (Info) /= Non_Generic_Function_Or_Operator and
-                 Get_Kind (Info) /= Generic_Function_Or_Operator and
-                 Get_Kind (Info) /= Non_Generic_Procedure and
-                 Get_Kind (Info) /= Generic_Procedure then
+               if Get_Kind (Info).Kind /= Function_Or_Operator and
+                 Get_Kind (Info).Kind /= Procedure_Kind then
                   Entity_Node.Called_List := TRL.Null_List;
                   Entity_Node.Calls_List  := TRL.Null_List;
                end if;
@@ -775,58 +708,37 @@ package body Docgen.Work_On_File is
                --  more changes are allowed, because the index lists are
                --  created in the subprograms used here, so all info must
                --  be avaiable.
-               case Get_Kind (Info) is
-                  when Non_Generic_Function_Or_Operator |
-                       Generic_Function_Or_Operator =>
-                     Entity_Node.Kind := Function_Entity;
+               case Get_Kind (Info).Kind is
+                  when Procedure_Kind | Function_Or_Operator =>
+                     Entity_Node.Kind := Subprogram_Entity;
                      Process_Subprogram
                        (Source_Filename,
                         Get_Full_Entity_Filename
                           (Get_Declaration_File_Of (Info)),
                         Info);
-                  when Non_Generic_Procedure |
-                       Generic_Procedure =>
-                     Entity_Node.Kind := Procedure_Entity;
-                     Process_Subprogram
-                       (Source_Filename,
-                        Get_Full_Entity_Filename
-                          (Get_Declaration_File_Of (Info)),
-                        Info);
-                  when Record_Type | Enumeration_Type |
-                       Access_Type | Array_Type |
-                       Boolean_Type | String_Type | Class_Wide_Type |
-                       Decimal_Fixed_Point_Type |
-                       Floating_Point_Type | Modular_Integer_Type |
-                       Ordinary_Fixed_Point_Type |
-                       Private_Type | Protected_Type |
-                       Signed_Integer_Type | Task_Type
-                     => Process_Type
-                       (Source_Filename,
-                        Get_Full_Entity_Filename
-                          (Get_Declaration_File_Of (Info)));
+                  when Record_Kind | Enumeration_Kind |
+                       Access_Kind | Array_Kind |
+                       Boolean_Kind | String_Kind | Class_Wide |
+                       Decimal_Fixed_Point |
+                       Floating_Point | Modular_Integer |
+                       Ordinary_Fixed_Point |
+                       Private_Type | Protected_Kind |
+                       Signed_Integer =>
+                     if Get_Kind (Info).Is_Type then
+                        Process_Type
+                          (Source_Filename,
+                           Get_Full_Entity_Filename
+                             (Get_Declaration_File_Of (Info)));
+                     else
+                        Entity_Node.Kind := Var_Entity;
+                     end if;
                   when Exception_Entity =>
                      Entity_Node.Kind := Exception_Entity;
-                  when Array_Object | Boolean_Object | Enumeration_Object |
-                       Floating_Point_Object |
-                       Modular_Integer_Object |  Protected_Object |
-                       Record_Object | Signed_Integer_Object |
-                       String_Object |
-                       Access_Object | Class_Wide_Object |
-                       Ordinary_Fixed_Point_Object =>
-                     Entity_Node.Kind := Var_Entity;
-                  when Task_Object =>
+                  when Task_Kind =>
                      Entity_Node.Kind := Entry_Entity;
-                     Process_Subprogram
-                       (Source_Filename,
-                        Get_Full_Entity_Filename
-                          (Get_Declaration_File_Of (Info)),
-                        Info);
-                  when Generic_Package  =>
+                  when Package_Kind  =>
                      Entity_Node.Kind := Package_Entity;
-                     --  Put_Line ("generic:  " & Entity_Node.Name.all);
-                  when  Non_Generic_Package =>
-                     --  Put_Line (Entity_Node.Name.all);
-                     Entity_Node.Kind := Package_Entity;
+
                   when others => Entity_Node.Kind := Other_Entity;
                end case;
 
@@ -848,9 +760,9 @@ package body Docgen.Work_On_File is
                          Source_File_List,
                          Source_Filename,
                          Package_Name,
-                         Def_In_Line,
                          Entity_List,
                          Process_Body_File,
+                         LI_Unit,
                          Options);
 
          --  if body files are not being processed, free directly here
