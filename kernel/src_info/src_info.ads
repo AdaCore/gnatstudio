@@ -275,6 +275,7 @@ private
       Completion_Of_Private_Or_Incomplete_Type,
       Type_Extension,
       Implicit,
+      Primitive_Operation,
       Label,
       End_Of_Spec,
       End_Of_Body);
@@ -301,6 +302,9 @@ private
    --    - End_Of_Body: Used to identify the end of the following constructs.
    --      Subprogram body, package body, task body, entry body, protected
    --      body, accept statement.
+   --    - Primitive_Operation: used for primitive operations of tagged types
+   --      (in Ada), or for methods (in C++). It possibly points to inherited
+   --      methods in the parent type.
 
    type Reference_Kind_To_Boolean_Map is array (Reference_Kind) of Boolean;
 
