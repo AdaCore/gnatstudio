@@ -6,12 +6,16 @@ Known Problems fixed in GPS 1.2.0
               nodes are duplicated, and the exec directories disappear
   Workaround: Reload the project through Project->Recent instead
 
-- Problem:    When switching from an editor to another, the editors scroll
+- BC04-009 Annoying scrolling when switching tabs.
+  Problem:    When switching from an editor to another, the editors scroll
               back to the place where their cursor is set, not to the point
               that was viewed the most recently.
+  Workaround: Set the cursor within the viewed area before switching.
 
-- Problem:    When the debugger preference "show lines with code" is set,
+- Inconsistency between debugger dot colors when showing lines with code
+  Problem:    When the debugger preference "show lines with code" is set,
               unsetting a breakpoint will leave a blue dot.
+  Workaround: Always enable the "show lines with code" preference.
 
 Known Problems fixed in GPS 1.1.0
 
