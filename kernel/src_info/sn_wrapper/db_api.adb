@@ -80,7 +80,7 @@ package body DB_API is
       pragma Import (C, Internal_Open, "ada_db_open");
 
       procedure Free (List : in out String_List);
-      --  ???
+      --  Frees elements of specified list from memory
 
       procedure Free (List : in out String_List) is
       begin
