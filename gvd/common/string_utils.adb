@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -1014,14 +1014,22 @@ package body String_Utils is
 
          First := Last + 1;
          while First <= Str'Last
-           and then Is_Alphanumeric (Str (First))
+           and then Is_Graphic (Str (First))
+           and then Str (First) /= '"'
+           and then Str (First) /= ' '
          loop
             First := First + 1;
          end loop;
 
          if Last + 1 <= First - 1 then
             declare
-               Sub : constant String := Callback (Str (Last + 1 .. First - 1));
+               Sub : constant String :=
+                 Callback
+                   (Str (Last + 1 .. First - 1),
+                    Quoted => (Last - 1 >= Str'First
+                               and then First <= Str'Last
+                               and then Str (Last - 1) = '"'
+                               and then Str (First) = '"'));
             begin
                if Recursive then
                   Result := Result & Substitute
