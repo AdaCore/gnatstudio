@@ -3526,14 +3526,16 @@ package body Src_Editor_Module is
       --  We use insted the Line, First and Last variable below which represent
       --  the real word position on the line.
 
-      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data);
-      Buffer    : Source_Buffer;
-      Lang      : Language_Access;
-      Line      : Editable_Line_Type;
-      Column    : Positive;
-      First     : Natural;
-      W_End     : Gtk_Text_Iter;
-      W_Start   : Gtk_Text_Iter;
+      File_Data     : constant File_Hooks_Args := File_Hooks_Args (Data);
+      Buffer        : Source_Buffer;
+      Lang          : Language_Access;
+      Line          : Editable_Line_Type;
+      Column        : Positive;
+      First         : Natural;
+      W_End         : Gtk_Text_Iter;
+      W_Start       : Gtk_Text_Iter;
+      Indent_Params : Indent_Parameters;
+      Indent_Kind   : Indentation_Kind;
 
       ------------------
       -- Replace_Text --
@@ -3559,14 +3561,21 @@ package body Src_Editor_Module is
 
       Get_Cursor_Position (Buffer, W_End);
 
-      if Lang = null
-        or else Get_Language_Context (Lang).Case_Sensitive
-        or else Is_In_Comment (Buffer, W_End)
-      then
-         --  No language information or the language is case sensitive, in
-         --  those case there is nothing to do. We also check if we are
-         --  currently in a comment.
+      if Lang = null then
+         --  No language information
          return;
+
+      else
+         Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
+
+         if Indent_Params.Casing_Policy /= On_The_Fly
+           or else Get_Language_Context (Lang).Case_Sensitive
+           or else Is_In_Comment (Buffer, W_End)
+         then
+            --  On-the-fly casing not activated, the language is case sensitive
+            --  or we are in a comment.
+            return;
+         end if;
       end if;
 
       Get_Cursor_Position (Buffer, W_End, Line, Column);
@@ -3591,22 +3600,12 @@ package body Src_Editor_Module is
 
       if First /= Column then
          --  We have a word, set casing
-         declare
-            Indent_Params : Indent_Parameters;
-            Indent_Kind   : Indentation_Kind;
-            C             : constant Case_Handling.Casing_Exceptions :=
-                              Get_Case_Exceptions;
-         begin
-            Get_Indentation_Parameters
-              (Lang, Indent_Params, Indent_Kind);
-
-            Format_Buffer
-              (Lang,
-               Get_Slice (W_Start, W_End),
-               Replace         => Replace_Text'Unrestricted_Access,
-               Indent_Params   => Indent_Params,
-               Case_Exceptions => C);
-         end;
+         Format_Buffer
+           (Lang,
+            Get_Slice (W_Start, W_End),
+            Replace         => Replace_Text'Unrestricted_Access,
+            Indent_Params   => Indent_Params,
+            Case_Exceptions => Get_Case_Exceptions);
       end if;
    end Word_Added_Hook;
 
