@@ -196,15 +196,8 @@ package body HTTP_Protocol is
       Local_Name : Glib.UTF8_String)
       return GNAT.OS_Lib.String_Access
    is
-      Port       : constant Integer := 80;
-      Port_Image : constant String := "80";
-
-      Length  : Natural;
-      Socket  : Socket_Type;
-      Addr    : Sock_Addr_Type;
-      Channel : Stream_Access;
-
       HTTP_Token_OK        : constant String := "HTTP/1.1 200 OK";
+      HTTP_Token2_OK       : constant String := "HTTP/1.0 200 OK";
       Content_Length_Token : constant String := "CONTENT-LENGTH: ";
       --  These must be upper-cased.
 
@@ -212,13 +205,14 @@ package body HTTP_Protocol is
       Buffer_Last : Stream_Element_Count := 0;
       Index       : Stream_Element_Count := Buffer'First;
       Result      : String_Access;
+      Length  : Integer;
+      Socket  : Socket_Type;
+      Addr    : Sock_Addr_Type;
+      Channel : Stream_Access;
 
-      function Parse_Header return Natural;
+      function Parse_Header return Integer;
       --  Parse the headers of the http message, and return the length of the
-      --  message.
-
-      procedure Update_Buffer;
-      --  Read the next stream of bytes from the socket
+      --  message. Return -1 if we should read till the end of the message
 
       function Get_Char return Character;
       --  Return the next character from the buffer
@@ -233,7 +227,12 @@ package body HTTP_Protocol is
       function Get_Char return Character is
       begin
          if Index >= Buffer_Last then
-            Update_Buffer;
+            GNAT.Sockets.Receive_Socket (Socket, Buffer, Buffer_Last);
+            if Buffer_Last < Buffer'First then
+               Index := Buffer'Last + 1;
+            else
+               Index := Buffer'First;
+            end if;
          end if;
 
          if Index >= Buffer_Last then
@@ -244,24 +243,14 @@ package body HTTP_Protocol is
          end if;
       end Get_Char;
 
-      -------------------
-      -- Update_Buffer --
-      -------------------
-
-      procedure Update_Buffer is
-      begin
-         GNAT.Sockets.Receive_Socket (Socket, Buffer, Buffer_Last);
-         Index := Buffer'First;
-      end Update_Buffer;
-
       ------------------
       -- Parse_Header --
       ------------------
 
-      function Parse_Header return Natural is
+      function Parse_Header return Integer is
          Line        : String (1 .. 20000);
          Line_Index  : Natural;
-         Length      : Natural := 0;
+         Length      : Integer := -1;
          C           : Character;
          Ok          : Boolean := False;
       begin
@@ -289,6 +278,11 @@ package body HTTP_Protocol is
 
             if Line_Index > HTTP_Token_OK'Length
               and then Line (1 .. HTTP_Token_OK'Length) = HTTP_Token_OK
+            then
+               Ok := True;
+
+            elsif Line_Index > HTTP_Token2_OK'Length
+              and then Line (1 .. HTTP_Token2_OK'Length) = HTTP_Token2_OK
             then
                Ok := True;
 
@@ -323,9 +317,25 @@ package body HTTP_Protocol is
          String'Write (Channel, Str);
       end Write;
 
+      Port : Integer := 80;
+      Host_Last : Integer := Http.Host'Last;
    begin
+      for H in Http.Host'Range loop
+         if Http.Host (H) = ':' then
+            Host_Last := H - 1;
+            begin
+               Port := Integer'Value (Http.Host (H + 1 .. Http.Host'Last));
+            exception
+               when others =>
+                  Port := 80;
+            end;
+            exit;
+         end if;
+      end loop;
+
       Addr := (GNAT.Sockets.Family_Inet,
-               Addresses (Get_Host_By_Name (Http.Host.all), 1),
+               Addresses (Get_Host_By_Name
+                            (Http.Host (Http.Host'First .. Host_Last)), 1),
                Port_Type (Port));
 
       Create_Socket (Socket);
@@ -335,39 +345,69 @@ package body HTTP_Protocol is
 
       Channel := Stream (Socket);
 
-      Write ("GET " & Local_Name & " HTTP/1.1" & ASCII.LF);
-      Write ("Host: " & Http.Host.all & ":" & Port_Image & ASCII.LF);
-      Write ("" & ASCII.LF);
+      declare
+         Port_Image : constant String := Integer'Image (Port);
+      begin
+         Write ("GET " & Local_Name & " HTTP/1.1" & ASCII.LF);
+         Write ("Host: " & Http.Host (Http.Host'First .. Host_Last) & ":"
+                & Port_Image (Port_Image'First + 1 .. Port_Image'Last)
+                & ASCII.LF);
+         Write ("" & ASCII.LF);
+      end;
 
       Length := Parse_Header;
 
+      Trace (Me, "Length=" & Length'Img);
+
       if Length = 0 then
          return null;
+
+      elsif Length > 0 then
+         Result := new String (1 .. Length - 1);
+
+         for A in 1 .. Length - 1 loop
+            Result (A) := Get_Char;
+         end loop;
+
+      elsif Length = -1 then
+         --  Less efficient, but we do not know the message length
+         declare
+            Tmp   : String_Access;
+            Index : Natural;
+            C     : Character;
+         begin
+            Result := new String (1 .. 2000);
+            Index := Result'First;
+            loop
+               C := Get_Char;
+               exit when C = ASCII.NUL;
+               if Index > Result'Last then
+                  Tmp := Result;
+                  Result := new String (1 .. Result'Length * 2);
+                  Result (Tmp'Range) := Tmp.all;
+                  Free (Tmp);
+               end if;
+               Result (Index) := C;
+               Index := Index + 1;
+            end loop;
+
+            Tmp := Result;
+            Result := new String (1 .. Index - 1);
+            Result.all := Tmp (1 .. Index - 1);
+            Free (Tmp);
+         end;
       end if;
-
-      Result := new String (1 .. Length - 1);
-
---        declare
---           Result_Element : Stream_Element_Array
---             (1 .. Stream_Element_Offset (Length) - 1);
---           Last   : Stream_Element_Offset;
---        begin
---           GNAT.Sockets.Receive_Socket (Socket, Result_Element, Last);
---           for R in Result_Element'Range loop
---              Result (Integer (R)) := Character'Val (Result_Element (R));
---           end loop;
---        end;
-
-      for A in 1 .. Length - 1 loop
-         Result (A) := Get_Char;
-      end loop;
 
       Close_Socket (Socket);
       return Result;
 
    exception
+      when Host_Error =>
+         Trace (Me, "Invalid host "
+                & Http.Host (Http.Host'First .. Host_Last));
+         return null;
       when Socket_Error =>
-         Trace (Me, "Socket error");
+         Trace (Me, "Socket error when connecting to " & Http.Host.all);
          return null;
       when E : others =>
          Trace (Exception_Handle, "Unexpected exception "
