@@ -377,7 +377,9 @@ package body GVD.Menu is
             Check_Msg      => -"Stop at beginning of main subprogram",
             Check_Msg2     => Msg.all,
             Button_Active  => Is_Start'Access,
-            Button2_Active => Button2);
+            Button2_Active => Button2,
+            Key_Check      => "stop_beginning_debugger",
+            Key_Check2     => "multitask_mode_debugger");
       begin
          if Arguments = ""
            or else Arguments (Arguments'First) /= ASCII.NUL
@@ -915,6 +917,8 @@ package body GVD.Menu is
             Message => -"Enter an expression to display:",
             Key     => "gvd_display_expression_dialog",
             Check_Msg => -"Expression is a subprogram call",
+            History   => Tab.History,
+            Key_Check => "expression_subprogram_debugger",
             Button_Active => Is_Func'Access);
       begin
          if Expression /= ""
