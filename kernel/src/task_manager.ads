@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -137,6 +137,9 @@ private
       --  The command currently referenced by the contextual menu.
       --  This is an index in Queues, set to <0 when the command is not valid
       --  or the menu not created.
+
+      Running_Queue        : Integer := -1;
+      --  The queue containing the command that is currently being run.
 
       Push_Command, Pop_Command : Command_Access;
       --  Commands used to push/pop the "busy" state.
