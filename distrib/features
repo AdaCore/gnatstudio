@@ -3,6 +3,8 @@ details, please see the documentation.
 
 New features in GPS 1.4.0
 
+- C922-007 A space can now be put on the command line between "-P project"
+
 - Help directories can now be specified programmatically (add_doc_directory)
   so that each module can have its own documentation
 
