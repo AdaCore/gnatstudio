@@ -1059,6 +1059,7 @@ package body VCS_View_API is
       Open_Explorer (Get_Kernel (Context));
 
       if Get_Creator (Context) = VCS_Module_ID then
+         Clear (Get_Explorer (Kernel));
          Get_Status (Widget, Kernel);
 
       elsif Context.all in File_Selection_Context'Class then
