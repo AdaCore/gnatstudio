@@ -865,16 +865,22 @@ package body VCS.CVS is
       Checkin_File_Command : External_Command_Access;
 
       Arguments      : String_List.List;
-      Filenames_Temp : List_Node := First (Filenames);
+      Filenames_Temp : List_Node;
+      Sorted_Files   : String_List.List := Copy_String_List (Filenames);
       Head           : List;
 
       Log_File : constant String := Create_Tmp_File;
       Writable : Writable_File;
+      Dir      : String_Access;
 
    begin
       if Is_Empty (Filenames) then
          Handle_Error (Rep, -"File list empty");
       end if;
+
+      --  Sort the files.
+
+      Sort (Sorted_Files);
 
       --  Copy the log to the log file
 
@@ -882,42 +888,58 @@ package body VCS.CVS is
       Write (Writable, Log);
       Close (Writable);
 
-      --  Create the arguments
-
-      Append (Arguments, "commit");
-      Append (Arguments, "-F");
-      Append (Arguments, Log_File);
+      Filenames_Temp := First (Sorted_Files);
 
       while Filenames_Temp /= Null_Node loop
-         Append (Arguments, Locale_From_UTF8 (Data (Filenames_Temp)));
+         --  Create the arguments
+
+         Append (Arguments, "commit");
+         Append (Arguments, "-F");
+         Append (Arguments, Log_File);
+
+         Dir := new String'
+           (Dir_Name (Locale_From_UTF8 (Data (Filenames_Temp))));
+
+         while Filenames_Temp /= Null_Node loop
+            exit when Dir_Name
+              (Locale_From_UTF8 (Data (Filenames_Temp))) /= Dir.all;
+            Append
+              (Arguments,
+               Base_Name (Locale_From_UTF8 (Data (Filenames_Temp))));
+            Filenames_Temp := Next (Filenames_Temp);
+         end loop;
+
+         --  Create the commit command
+
+         Append (Head, Log_File);
+
+         Create
+           (Checkin_File_Command,
+            Rep.Kernel,
+            Get_Pref (Rep.Kernel, CVS_Command),
+            Dir.all,
+            Arguments,
+            Head,
+            Checkin_Handler'Access,
+            -"CVS: Committing");
+
+         --  Launch the commit command
+
+         Launch_Background_Command
+           (Rep.Kernel,
+            Command_Access (Checkin_File_Command),
+            False, True, CVS_Identifier);
+
+         --  Free the local data
+
+         Free (Arguments);
+         Free (Head);
+         Free (Dir);
+
          Filenames_Temp := Next (Filenames_Temp);
       end loop;
 
-      --  Create the commit command
-
-      Append (Head, Log_File);
-
-      Create
-        (Checkin_File_Command,
-         Rep.Kernel,
-         Get_Pref (Rep.Kernel, CVS_Command),
-         "",
-         Arguments,
-         Head,
-         Checkin_Handler'Access,
-         -"CVS: Committing");
-
-      --  Launch the commit command
-
-      Launch_Background_Command
-        (Rep.Kernel,
-         Command_Access (Checkin_File_Command),
-         False, True, CVS_Identifier);
-
-      --  Free the local data
-
-      Free (Arguments);
-      Free (Head);
+      Free (Sorted_Files);
    end Commit;
 
    ------------
