@@ -29,7 +29,6 @@ with Glib; use Glib;
 with Gtk.Enums; use Gtk.Enums;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.GEntry; use Gtk.GEntry;
-with Ada.Text_IO; use Ada.Text_IO;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Make_Harness_Window_Pkg; use Make_Harness_Window_Pkg;
 
