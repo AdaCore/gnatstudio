@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.4.0
 
+- C508-001 Focus and dialog issues
+  Problem:    If you start editing a file, and then click on the [x] button
+              in the title bar, this opens a confirmation dialog. Selecting
+              Cancel in the dialog doesn't give the focus back to the editor
+  Workaround: Click in the editor to gain the focus back
+
 - CA08-005 Searching file names in explorer fails for extended projects
   Problem:    If you are looking for a specific file name in the project
               explorer, the files in extended project will not be found by
