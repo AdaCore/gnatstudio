@@ -104,7 +104,7 @@ package body Project_Explorers is
             File : String_Id;
 
          when Category_Node =>
-            Subprogram_Spec : Boolean;
+            Category : Language_Category;
 
          when Entity_Node =>
             Sloc_Start, Sloc_End : Source_Location;
@@ -161,10 +161,9 @@ package body Project_Explorers is
    --  Add a new file node in the tree, for File
 
    function Add_Category_Node
-     (Explorer      : access Project_Explorer_Record'Class;
-      Category_Name : String;
-      Is_Specification : Boolean;
-      Parent_Node      : Gtk_Ctree_Node) return Gtk_Ctree_Node;
+     (Explorer    : access Project_Explorer_Record'Class;
+      Category    : Language_Category;
+      Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node;
    --  Add a new category node in the tree, for Category_Name
 
    function Add_Entity_Node
@@ -506,7 +505,7 @@ package body Project_Explorers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      Context      : Selection_Context_Access := new File_Selection_Context;
+      Context      : Selection_Context_Access;
       T            : Project_Explorer := Project_Explorer (Object);
       Row, Column  : Gint;
       Is_Valid     : Boolean;
@@ -524,20 +523,41 @@ package body Project_Explorers is
 
       Node := Node_Nth (T.Tree, Guint (Row));
       Gtk_Select (T.Tree, Node);
-
       Parent := Row_Get_Parent (Node_Get_Row (Node));
-      if Parent /= null then
-         Importing_Project := Get_Project_From_Node (T, Parent);
-      end if;
 
-      Set_File_Name_Information
-        (Context      => File_Selection_Context_Access (Context),
-         Directory    => Get_Directory_From_Node (T, Node),
-         File_Name    => Base_Name (Get_File_From_Node (T, Node)));
-      Set_File_Information
-        (Context      => File_Selection_Context_Access (Context),
-         Project_View => Get_Project_From_Node (T, Node),
-         Importing_Project => Importing_Project);
+      declare
+         Data : User_Data := Node_Get_Row_Data (T.Tree, Node);
+      begin
+         if Data.Node_Type = Entity_Node then
+            Context := new Entity_Selection_Context;
+         else
+            Context := new File_Selection_Context;
+         end if;
+
+         Set_File_Name_Information
+           (Context      => File_Name_Selection_Context_Access (Context),
+            Directory    => Get_Directory_From_Node (T, Node),
+            File_Name    => Base_Name (Get_File_From_Node (T, Node)));
+
+         if Data.Node_Type = Entity_Node then
+            Set_Entity_Information
+              (Context     => Entity_Selection_Context_Access (Context),
+               Entity_Name => Node_Get_Text (T.Tree, Node, 0),
+               Category    => Node_Get_Row_Data (T.Tree, Parent).Category,
+               Line        => Data.Sloc_Start.Line,
+               Column      => Data.Sloc_Start.Column);
+
+         else
+            if Parent /= null then
+               Importing_Project := Get_Project_From_Node (T, Parent);
+            end if;
+
+            Set_File_Information
+              (Context      => File_Selection_Context_Access (Context),
+               Project_View => Get_Project_From_Node (T, Node),
+               Importing_Project => Importing_Project);
+         end if;
+      end;
       return Context;
    end Explorer_Context_Factory;
 
@@ -786,10 +806,9 @@ package body Project_Explorers is
    -----------------------
 
    function Add_Category_Node
-     (Explorer         : access Project_Explorer_Record'Class;
-      Category_Name    : String;
-      Is_Specification : Boolean;
-      Parent_Node      : Gtk_Ctree_Node) return Gtk_Ctree_Node
+     (Explorer    : access Project_Explorer_Record'Class;
+      Category    : Language_Category;
+      Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
       N : Gtk_Ctree_Node;
       Is_Leaf : constant Boolean := False;
@@ -798,7 +817,7 @@ package body Project_Explorers is
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
          Sibling       => null,
-         Text          => Create_Line_Text (Category_Name),
+         Text          => Create_Line_Text (Category_Name (Category)),
          Spacing       => 5,
          Pixmap_Closed => Explorer.Close_Pixmaps (Category_Node),
          Mask_Closed   => Explorer.Close_Masks (Category_Node),
@@ -808,9 +827,8 @@ package body Project_Explorers is
          Expanded      => False);
 
       Node_Set_Row_Data
-        (Explorer.Tree, N, (Category_Node,
-                   Subprogram_Spec => Is_Specification,
-                   Up_To_Date => True));
+        (Explorer.Tree, N,
+         (Category_Node, Category => Category, Up_To_Date => True));
       return N;
    end Add_Category_Node;
 
@@ -1017,9 +1035,8 @@ package body Project_Explorers is
                   if Categories (Category) = null then
                      Categories (Category) := Add_Category_Node
                        (Explorer,
-                        Category_Name    => Category_Name (Category),
-                        Is_Specification => False,
-                        Parent_Node      => Node);
+                        Category    => Category,
+                        Parent_Node => Node);
                   end if;
 
                   N := Add_Entity_Node
