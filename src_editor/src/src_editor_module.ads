@@ -46,6 +46,8 @@ package Src_Editor_Module is
    Src_Editor_Module_Id : Glide_Kernel.Module_ID;
    Src_Editor_Module_Name : constant String := "Source_Editor";
 
+   Search_Result_Highlighting : constant String := "Search Results";
+
    type Undo_Redo_Information is record
       Undo_Button          : Gtk.Button.Gtk_Button;
       Redo_Button          : Gtk.Button.Gtk_Button;
