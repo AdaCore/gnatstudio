@@ -10,8 +10,19 @@
 
    <action name="generic_cvs_status" show-command="true" output="">
       <shell>echo "Querying status for $2-"</shell>
-      <external>cvs status $2-</external>
-      <shell>VCS.status_parse "Custom CVS" "%1" $1 FALSE</shell>
+      <external>cvs status "$2-"</external>
+      <shell>VCS.status_parse "Custom CVS" "%1" "$1" FALSE</shell>
+   </action>
+
+   <!-------------------->
+   <!-- CVS status dir -->
+   <!-------------------->
+
+   <action name="generic_cvs_status_dir" show-command="true" output="">
+      <shell>echo "Querying status for directory"</shell>
+      <shell>pwd</shell>
+      <external>cvs status .</external>
+      <shell>VCS.status_parse "Custom CVS" "%1" "$1" FALSE</shell>
    </action>
 
    <!------------------>
@@ -20,7 +31,7 @@
 
    <action name="generic_cvs_annotate" show-command="true" output="">
       <shell>echo "Querying annotations for $1"</shell>
-      <external>cvs annotate $1</external>
+      <external>cvs annotate "$1"</external>
       <shell>VCS.annotations_parse "Custom CVS" "$1" "%1"</shell>
    </action>
 
@@ -29,8 +40,8 @@
    <!---------------------->
 
    <action name="generic_cvs_local_status" show-command="true" output="none">
-      <shell>echo "Querying local status for $1"</shell>
-      <shell>Editor.get_buffer ${1}/CVS/Entries</shell>
+      <shell>echo "Querying local status for $2"</shell>
+      <shell>Editor.get_buffer "./CVS/Entries"</shell>
       <shell>VCS.status_parse "Custom CVS" "%1" FALSE TRUE</shell>
    </action>
 
@@ -41,8 +52,8 @@
    <action name="generic_cvs_commit" show-command="true" output="">
       <shell>echo "Committing files $2-"</shell>
       <shell>dump "$1" TRUE</shell>
-      <external>cvs commit -F %1 $2-</external>
-      <shell>delete %2</shell>
+      <external>cvs commit -F "%1" "$2-"</external>
+      <shell>delete "%2"</shell>
    </action>
 
    <!------------->
@@ -51,10 +62,10 @@
 
    <action name="generic_cvs_add" show-command="true" output="">
       <shell>echo "adding files $2-"</shell>
-      <external>cvs add $2-</external>
+      <external>cvs add "$2-"</external>
       <shell>dump "$1" TRUE</shell>
-      <external>cvs commit -F %1 $2-</external>
-      <shell>delete %2</shell>
+      <external>cvs commit -F "%1" "$2-"</external>
+      <shell>delete "%2"</shell>
    </action>
 
    <!---------------->
@@ -65,11 +76,11 @@
 
    <action name="generic_cvs_remove" show-command="true" output="">
       <shell>echo "removing files $2-"</shell>
-      <shell>delete $2-</shell>
-      <external>cvs remove $2-</external>
+      <shell>delete "$2-"</shell>
+      <external>cvs remove "$2-"</external>
       <shell>dump "$1" TRUE</shell>
-      <external>cvs commit -F %1 $2-</external>
-      <shell>delete %2</shell>
+      <external>cvs commit -F "%1" "$2-"</external>
+      <shell>delete "%2"</shell>
    </action>
 
    <!----------------->
@@ -80,7 +91,7 @@
 
    <action name="generic_cvs_history" show-command="true" output="">
       <shell output="">echo "Querying history for $2"</shell>
-      <external>cvs log -N -r$1 $2</external>
+      <external>cvs log -N -r$1 "$2"</external>
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1"</shell>
       <shell>MDI.split_vertically TRUE</shell>
@@ -92,7 +103,7 @@
    <!---------------->
 
    <action name="generic_cvs_update" show-command="true" output="">
-      <external>cvs update $*</external>
+      <external>cvs update "$*"</external>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
    </action>
@@ -102,47 +113,47 @@
    <!-------------->
 
    <action name="generic_cvs_diff_head" show-command="true" output="">
-      <external>cvs -f diff -rHEAD $1</external>
+      <external>cvs -f diff -rHEAD "$1"</external>
 
       <on-failure>
         <shell>dump "%1" TRUE</shell>
-        <shell>File %1</shell>
-        <shell>File $1</shell>
+        <shell>File "%1"</shell>
+        <shell>File "$1"</shell>
         <shell>Hook "diff_action_hook"</shell>
         <shell>Hook.run %1 null %2 %3</shell>
-        <shell>delete %5</shell>
+        <shell>delete "%5"</shell>
       </on-failure>
       <shell>MDI.dialog "No differences found."</shell>
    </action>
 
    <action name="generic_cvs_diff" show-command="true" output="">
-      <external>cvs -f diff -r $1 $2</external>
+      <external>cvs -f diff -r $1 "$2"</external>
 
       <on-failure>
         <shell>dump "%1" TRUE</shell>
-        <shell>File %1</shell>
-        <shell>File $2</shell>
+        <shell>File "%1"</shell>
+        <shell>File "$2"</shell>
         <shell>Hook "diff_action_hook"</shell>
         <shell>Hook.run %1 null %2 %3</shell>
-        <shell>delete %5</shell>
+        <shell>delete "%5"</shell>
       </on-failure>
       <shell>MDI.dialog "No differences found."</shell>
    </action>
 
    <action name="generic_cvs_diff2" show-command="true" output="">
-      <external>cvs -q update -p -r$2 $3</external>
+      <external>cvs -q update -p -r$2 "$3"</external>
       <shell>dump "%1" TRUE</shell>
-      <shell>File %1</shell>
+      <shell>File "%1"</shell>
 
-      <external>cvs -f diff -r$1 -r$2 $3</external>
+      <external>cvs -f diff -r$1 -r$2 "$3"</external>
 
       <on-failure>
         <shell>dump "%1" TRUE</shell>
-        <shell>File %1</shell>
+        <shell>File "%1"</shell>
         <shell>Hook "diff_action_hook"</shell>
         <shell>Hook.run %1 null %5 %2</shell>
-        <shell>delete %4</shell>
-        <shell>delete %8</shell>
+        <shell>delete "%4"</shell>
+        <shell>delete "%8"</shell>
       </on-failure>
       <shell>MDI.dialog "No differences found."</shell>
    </action>
@@ -170,19 +181,26 @@
    <!--------->
 
    <vcs name="Custom CVS" absolute_names="FALSE">
-      <status           action="generic_cvs_status"       label="Query status"/>
-      <local_status_dir action="generic_cvs_local_status" label="Local status"/>
-      <open             action="generic_cvs_open"         label="Open"/>
-      <update           action="generic_cvs_update"       label="Update"/>
-      <commit           action="generic_cvs_commit"       label="Commit"/>
-      <history          action="generic_cvs_history"      label="Query revision history"/>
-      <annotate         action="generic_cvs_annotate"     label="Annotate"/>
-      <add              action="generic_cvs_add"          label="Add"/>
-      <remove           action="generic_cvs_remove"       label="Remove"/>
-      <revert           action="generic_cvs_revert"       label="Revert"/>
-      <diff_head        action="generic_cvs_diff_head"    label="Compare against head revision"/>
-      <diff             action="generic_cvs_diff"         label="Compare against other revision"/>
-      <diff2            action="generic_cvs_diff2"        label="Compare between two revisions"/>
+      <status_files       action="generic_cvs_status"       label="Query status"/>
+      <status_dir         action="generic_cvs_status_dir"   label="Query status for directory"/>
+      <local_status_files action="generic_cvs_local_status" label="Local status"/>
+      <open               action="generic_cvs_open"         label="Open"/>
+      <update             action="generic_cvs_update"       label="Update"/>
+      <commit             action="generic_cvs_commit"       label="Commit"/>
+      <history            action="generic_cvs_history"      label="Query revision history"/>
+      <annotate           action="generic_cvs_annotate"     label="Annotate"/>
+      <add                action="generic_cvs_add"          label="Add"/>
+      <remove             action="generic_cvs_remove"       label="Remove"/>
+      <revert             action="generic_cvs_revert"       label="Revert"/>
+      <diff_head          action="generic_cvs_diff_head"    label="Compare against head revision"/>
+      <diff               action="generic_cvs_diff"         label="Compare against other revision"/>
+      <diff2              action="generic_cvs_diff2"        label="Compare between two revisions"/>
+
+      <status label="Up to date" stock="gps-vcs-up-to-date" />
+      <status label="Locally modified" stock="gps-vcs-modified" />
+      <status label="Needs merge" stock="gps-vcs-needs-merge" />
+      <status label="Needs update" stock="gps-vcs-needs-update" />
+      <status label="Had conflicts on merge" stock="gps-vcs-merge-conflicts" />
 
       <status_parser>
          <regexp>File: ([^\s]*)\s*Status: (.*?)\n\n *Working revision:\s*([^\s]*).*\n *Repository revision:\s*([^\s]*).*</regexp>
@@ -192,13 +210,12 @@
          <local_revision_index>3</local_revision_index>
          <repository_revision_index>4</repository_revision_index>
 
-         <up_to_date>Up-to-date</up_to_date>
-         <locally_modified>Locally Modified</locally_modified>
-         <needs_merge>Needs Merge</needs_merge>
-         <needs_update>Needs Patch</needs_update>
-         <removed>Locally Removed</removed>
-         <added>Locally Added</added>
-         <modified>Locally Modified</modified>
+         <status_matcher label="Up to date">Up-to-date</status_matcher>
+         <status_matcher label="Locally modified">Locally Modified</status_matcher>
+         <status_matcher label="Needs update">Needs Patch</status_matcher>
+         <status_matcher label="Needs merge">Needs Merge</status_matcher>
+         <status_matcher label="Added">Locally Added</status_matcher>
+         <status_matcher label="Removed">Locally Removed</status_matcher>
       </status_parser>
 
       <local_status_parser>
