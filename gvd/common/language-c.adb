@@ -32,7 +32,7 @@ package body Language.C is
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
-       ("^\w+\s+"                       --  type specs; there can be no
+       ("^\w+\s*"                       --  type specs; there can be no
         & "([\w_*]+\s+)?"               --  more than 3 tokens, right?
         & "([\w_*]+\s+)?"
         & "([*&]+\s*)?"                 --  pointer
@@ -529,7 +529,13 @@ package body Language.C is
    begin
       --  Go to beginning of line
 
-      while First > 1 and then Buffer (First - 1) /= ASCII.LF loop
+      if First < Buffer'First then
+         Indent := 0;
+         Next_Indent := 0;
+         return;
+      end if;
+
+      while First /= Buffer'First and then Buffer (First - 1) /= ASCII.LF loop
          First := First - 1;
       end loop;
 
