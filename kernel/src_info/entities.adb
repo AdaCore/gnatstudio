@@ -211,7 +211,6 @@ package body Entities is
             --  called internally when the file is removed from the htable,
             --  and the user is not supposed to call Unref more often than Ref
             Reset (F);
-            Trace (Assert_Me, "Freeing " & Base_Name (Get_Filename (F)));
 
             Unchecked_Free (F);
          end if;
@@ -269,12 +268,8 @@ package body Entities is
    procedure Add_All_Entities
      (File : Source_File; Entity : Entity_Information)
    is
-      Predef : constant Source_File := Get_Predefined_File (File.Db);
    begin
-      if Entity.Declaration.File /= File
-        and then Entity.Declaration.File /= Predef
-        and then File /= Predef
-      then
+      if Entity.Declaration.File /= File then
          --  ??? This might be costly, but we need to ensure there is a proper
          --  reference between the two files, for proper clean up
          Add_Depends_On (File, Entity.Declaration.File);
@@ -387,6 +382,7 @@ package body Entities is
 
    procedure Reset (File : Source_File) is
    begin
+      Trace (Assert_Me, "Reseting " & Full_Name (Get_Filename (File)).all);
       Cleanup_All_Entities_Field (File);
       Reset_All_Entities (File);
 
