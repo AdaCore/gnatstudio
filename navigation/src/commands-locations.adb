@@ -22,6 +22,53 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 
 package body Commands.Locations is
 
+   ------------------
+   -- Set_Location --
+   ------------------
+
+   procedure Set_Location
+     (Item       : access Source_Location_Command_Type;
+      New_Line   : Natural;
+      New_Column : Natural) is
+   begin
+      Item.Line := New_Line;
+      Item.Column := New_Column;
+   end Set_Location;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File
+     (Item : access Source_Location_Command_Type) return String is
+   begin
+      if Item.Filename = null then
+         return "";
+      end if;
+
+      return Item.Filename.all;
+   end Get_File;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line
+     (Item : access Source_Location_Command_Type) return Natural is
+   begin
+      return Item.Line;
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column
+     (Item : access Source_Location_Command_Type) return Natural is
+   begin
+      return Item.Column;
+   end Get_Column;
+
    ------------
    -- Create --
    ------------

@@ -41,6 +41,20 @@ package Commands.Locations is
    --  Create a new Source_Location_Command with the specified
    --  coordinates. Filename must be an absolute file name.
 
+   procedure Set_Location
+     (Item       : access Source_Location_Command_Type;
+      New_Line   : Natural;
+      New_Column : Natural);
+   --  Set the current location in Item.
+
+   function Get_File
+     (Item : access Source_Location_Command_Type) return String;
+   function Get_Line
+     (Item : access Source_Location_Command_Type) return Natural;
+   function Get_Column
+     (Item : access Source_Location_Command_Type) return Natural;
+   --  Basic accessors.
+
    function Execute
      (Command : access Source_Location_Command_Type) return Boolean;
 

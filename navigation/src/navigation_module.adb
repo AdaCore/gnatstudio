@@ -134,9 +134,68 @@ package body Navigation_Module is
               Get_Boolean (Data (Data'First + 5));
             Success    : Boolean;
 
+            Context    : Selection_Context_Access;
+            Entity     : Entity_Selection_Context_Access;
+            Entity_Col : Natural := 0;
+
          begin
             if not Navigate then
                return False;
+            end if;
+
+            --  If the current location is a source location,
+            --  try to update the line/column from the context
+
+            Context := Get_Current_Context (Kernel);
+
+            if Context /= null
+              and then Context.all in Entity_Selection_Context'Class
+            then
+               Entity := Entity_Selection_Context_Access (Context);
+
+               if Has_File_Information (Entity)
+                 and then Has_Line_Information (Entity)
+               then
+                  if Has_Column_Information (Entity) then
+                     Entity_Col := Column_Information (Entity);
+                  end if;
+
+                  --  If the entity location is not the current location,
+                  --  save the current location.
+
+                  if N_Data.Current_Location = null
+                    or else N_Data.Current_Location.all
+                       not in Source_Location_Command_Type'Class
+                    or else Get_File
+                      (Source_Location_Command (N_Data.Current_Location))
+                         /= Directory_Information (Entity)
+                            & File_Information (Entity)
+                    or else
+                      (Get_Line
+                           (Source_Location_Command (N_Data.Current_Location))
+                         /= Line_Information (Entity)
+                       and then
+                         Get_Line
+                           (Source_Location_Command (N_Data.Current_Location))
+                         /= 0)
+                  then
+                     Create (Location_Command,
+                             Kernel_Handle (Kernel),
+                             Directory_Information (Entity)
+                               & File_Information (Entity),
+                             Line_Information (Entity),
+                             Entity_Col,
+                             Entity_Col,
+                             False);
+
+                     if N_Data.Current_Location /= null then
+                        Prepend (N_Data.Back, N_Data.Current_Location);
+                     end if;
+
+                     N_Data.Current_Location
+                       := Command_Access (Location_Command);
+                  end if;
+               end if;
             end if;
 
             Create (Location_Command,
