@@ -6879,8 +6879,13 @@ by a space. For instance, @code{control-x control-k} means that the user should
 press @key{control-x}, followed by a @key{control-k} to activate the
 corresponding action.
 
+Use an empty string to describe the keybinding if you wish to deactivate a
+preexisting binding. The second example below deactivates the standard binding.
+
+
 @smallexample
 <key action="expand alias">control-o</key>
+<key action="Jump to matching delimiter" />
 @end smallexample
 
 Multiple actions can be bound to the same key binding. The first one with a
