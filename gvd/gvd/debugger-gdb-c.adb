@@ -70,13 +70,25 @@ package body Debugger.Gdb.C is
       --     unsigned int foo;
       --     int foo[5];    (as part of a struct field)
       --     struct { ... } foo;
+      --     struct foo a;
+      --     struct foo *a;  --  need to see the access type!
       --  Thus we have to skip even several words
+      --
+      --  For unions and structs, we skip on the last word of the type
+      --  declaration, ie after the closing bracket if there is any, or
+      --  after the type name.
 
       if Looking_At (Type_Str, Index, "struct ")
         or else Looking_At (Type_Str, Index, "union ")
       then
-         Skip_To_Char (Type_Str, Index, Context.Record_End);
+         Skip_Word (Type_Str, Index);
          Index := Index + 1;
+         Skip_Word (Type_Str, Index);
+         Index := Index + 1;
+         if Type_Str (Index) = Context.Record_Start then
+            Skip_To_Char (Type_Str, Index, Context.Record_End);
+            Index := Index + 1;
+         end if;
       end if;
 
       --  Skip to the right-most access or array definition
