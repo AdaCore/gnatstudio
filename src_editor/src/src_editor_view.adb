@@ -25,7 +25,6 @@ with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
 with Gdk.Color;                   use Gdk.Color;
 with Gdk.Event;                   use Gdk.Event;
-with Gdk.Font;                    use Gdk.Font;
 with Gdk.GC;                      use Gdk.GC;
 with Gdk.Window;                  use Gdk.Window;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
@@ -45,6 +44,7 @@ with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.Types;                use Gtkada.Types;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Pango.Font;                  use Pango.Font;
+with Pango.Layout;                use Pango.Layout;
 
 with Commands.Editor;             use Commands.Editor;
 with Language;                    use Language;
@@ -766,27 +766,17 @@ package body Src_Editor_View is
 
    procedure Set_Font
      (View : access Source_View_Record'Class;
-      Font : Pango.Font.Pango_Font_Description)
-   is
-      use type Gdk.Gdk_Font;
-      F : Gdk.Gdk_Font;
+      Font : Pango.Font.Pango_Font_Description) is
    begin
       View.Pango_Font := Font;
-      F := Gdk.Font.From_Description (Font);
 
-      if F /= null then
-         View.Font := F;
-
-         --  Make sure the widget is already realized. Otherwise, the
-         --  layout and style are not created yet.
-         if not Realized_Is_Set (View) then
-            return;
-         end if;
-
+      --  Make sure the widget is already realized. Otherwise, the
+      --  layout and style are not created yet.
+      if Realized_Is_Set (View) then
          Modify_Font (View, Font);
-
-         --  ??? Should recompute the width of the column on the side.
       end if;
+
+      --  ??? Should recompute the width of the column on the side.
    end Set_Font;
 
    -------------------------------
@@ -1371,7 +1361,6 @@ package body Src_Editor_View is
       Dummy_Gint                 : Gint;
       Iter                       : Gtk_Text_Iter;
       Y_In_Buffer                : Gint;
-      Y_In_Window                : Gint;
       Y_Pix_In_Window            : Gint;
       Line_Height                : Gint;
       Current_Line               : Natural;
@@ -1379,8 +1368,12 @@ package body Src_Editor_View is
       Dummy_Boolean              : Boolean;
       Data                       : Line_Info_Width;
       Buffer                     : Gdk.Pixmap.Gdk_Pixmap;
+      Layout                     : Pango_Layout;
 
    begin
+      Layout := Create_Pango_Layout (View);
+      Set_Font_Description (Layout, View.Pango_Font);
+
       Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 
       Gdk_New (Buffer, Left_Window, Width, Height);
@@ -1410,31 +1403,26 @@ package body Src_Editor_View is
          Buffer_To_Window_Coords
            (View, Text_Window_Left,
             Buffer_X => 0, Buffer_Y => Y_In_Buffer,
-            Window_X => Dummy_Gint, Window_Y => Y_In_Window);
+            Window_X => Dummy_Gint, Window_Y => Y_Pix_In_Window);
 
          --  And finally add the font height (ascent + descent) to get
          --  the Y coordinates of the line base
-
-         Y_Pix_In_Window := Y_In_Window;
-
-         Y_In_Window :=
-           Y_In_Window + Get_Ascent (View.Font);
 
          for J in View.Line_Info'Range loop
             Data := Get_Side_Info (View, Current_Line, J);
 
             if Data.Info /= null then
                if Data.Info.Text /= null then
-                  Draw_Text
+                  Set_Text (Layout, Data.Info.Text.all);
+                  Draw_Layout
                     (Drawable => Buffer,
-                     Font => View.Font,
-                     Gc => View.Side_Column_GC,
-                     X =>  Gint (View.Line_Info (J).Starting_X
+                     GC       => View.Side_Column_GC,
+                     X        =>  Gint (View.Line_Info (J).Starting_X
                                  + View.Line_Info (J).Width
                                  - Data.Width
                                  - 2),
-                     Y => Y_In_Window,
-                     Text => Data.Info.Text.all);
+                     Y        => Y_Pix_In_Window,
+                     Layout   => Layout);
                end if;
 
                if Data.Info.Image /= Null_Pixbuf then
@@ -1462,6 +1450,8 @@ package body Src_Editor_View is
          Current_Line := Natural (Get_Line (Iter)) + 1;
       end loop Drawing_Loop;
 
+      Unref (Layout);
+
       Draw_Pixmap
         (Drawable => Left_Window,
          Src      => Buffer,
@@ -1484,17 +1474,24 @@ package body Src_Editor_View is
       Info       : Glide_Kernel.Modules.Line_Information_Data)
    is
       Column : Integer;
-      Buffer : Integer;
-      Width  : Integer := -1;
-      Widths : array (Info'Range) of Integer;
+      Buffer : Gint;
+      Height : Gint;
+      Width  : Gint := -1;
+      Widths : array (Info'Range) of Gint;
+      Layout : Pango_Layout;
 
    begin
+      Layout := Create_Pango_Layout (View);
+      Set_Font_Description (Layout, View.Pango_Font);
+
       --  Compute the maximum width of the items to add.
+      --  ??? Might be expensive, Why don't we do it directly in
+      --  Redraw_Columns, which is called in the end anyway...
       for J in Info'Range loop
          Widths (J) := -1;
          if Info (J).Text /= null then
-            Buffer := Integer
-              (String_Width (View.Font, String'(Info (J).Text.all)));
+            Set_Text (Layout, String'(Info (J).Text.all));
+            Get_Pixel_Size (Layout, Buffer, Height);
 
             Widths (J) := Buffer;
 
@@ -1504,7 +1501,7 @@ package body Src_Editor_View is
          end if;
 
          if Info (J).Image /= Null_Pixbuf then
-            Buffer := Integer (Get_Width (Info (J).Image));
+            Buffer := Get_Width (Info (J).Image);
 
             if Buffer > Width then
                Widths (J) := Buffer;
@@ -1518,13 +1515,13 @@ package body Src_Editor_View is
       Get_Column_For_Identifier
         (View,
          Identifier,
-         Width,
+         Integer (Width),
          Column);
 
       --  Update the stored data.
       for J in Info'Range loop
          Insert_At_Position
-           (View, Info (J), Column, J, Widths (J));
+           (View, Info (J), Column, J, Integer (Widths (J)));
       end loop;
 
       --  If some of the data was in the display range, draw it.
@@ -1534,6 +1531,8 @@ package body Src_Editor_View is
       then
          Redraw_Columns (View);
       end if;
+
+      Unref (Layout);
    end Add_File_Information;
 
    ------------------------------------

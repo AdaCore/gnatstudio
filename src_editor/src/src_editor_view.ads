@@ -26,7 +26,6 @@
 with Glib; use Glib;
 with Gdk.GC;
 with Gdk.Event;
-with Gdk.Font;
 
 with Pango.Font;
 
@@ -177,7 +176,6 @@ private
       Saved_Cursor_Column : Gint;
 
       Pango_Font          : Pango.Font.Pango_Font_Description;
-      Font                : Gdk.Font.Gdk_Font;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
       Side_Background_GC  : Gdk.GC.Gdk_GC;
 
