@@ -2216,26 +2216,12 @@ package body Src_Editor_Module is
             if File = "" then
                loop
                   Child := Get (Iter);
+
                   exit when Child = null;
 
-                  declare
-                     Title   : constant String := Get_Title (Child);
-                     No_Name : constant String := -"Untitled";
-                  begin
-                     --  ??? Right now, we detect that a certain MDI child
-                     --  is an editor by checking that the title looks like an
-                     --  absolute path or is "Untitled[...]"
-
-                     if Is_Absolute_Path (Title)
-                       or else
-                         (Title'Length >= No_Name'Length
-                          and then Title
-                            (Title'First .. Title'First + No_Name'Length - 1)
-                             = No_Name)
-                     then
+                  if Get_Widget (Child).all in Source_Box_Record'Class then
                         Apply_Mime_On_Child (Child);
-                     end if;
-                  end;
+                  end if;
 
                   Next (Iter);
                end loop;
