@@ -53,6 +53,22 @@ package body GVD.Text_Box.Source_Editor is
       end if;
    end Get_Current_File;
 
+   -------------------------------
+   -- Get_Debugger_Current_File --
+   -------------------------------
+
+   function Get_Debugger_Current_File
+     (Editor : access Source_Editor_Record) return String
+   is
+      use type Basic_Types.String_Access;
+   begin
+      if Editor.Debugger_Current_File = null then
+         return "";
+      else
+         return Editor.Debugger_Current_File.all;
+      end if;
+   end Get_Debugger_Current_File;
+
    ----------------
    -- Get_Widget --
    ----------------

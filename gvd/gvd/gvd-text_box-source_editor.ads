@@ -68,7 +68,13 @@ package GVD.Text_Box.Source_Editor is
 
    function Get_Current_File
      (Editor : access Source_Editor_Record) return String;
-   --  See GVD.Code_Editors for more information
+   --  Return the name of the currently edited file.
+   --  "" is returned if there is no current file.
+
+   function Get_Debugger_Current_File
+     (Editor : access Source_Editor_Record) return String;
+   --  Return the name of the file at which the debugger is stopped.
+   --  "" is returned if there is no current debugger file.
 
    procedure Show_Message
      (Editor      : access Source_Editor_Record;
@@ -124,7 +130,7 @@ package GVD.Text_Box.Source_Editor is
 
 private
    type Source_Editor_Record is abstract tagged record
-      Widget : Gtk.Widget.Gtk_Widget;
+      Widget       : Gtk.Widget.Gtk_Widget;
       Current_File : Basic_Types.String_Access;
 
       Debugger_Current_File : Basic_Types.String_Access;
