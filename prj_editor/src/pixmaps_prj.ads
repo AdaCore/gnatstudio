@@ -38,6 +38,8 @@ package Pixmaps_Prj is
    delete_var_xpm         : aliased Chars_Ptr_Array (0 .. 0);
    project_closed_xpm     : aliased Chars_Ptr_Array (0 .. 0);
    project_xpm            : aliased Chars_Ptr_Array (0 .. 0);
+   project_imported_xpm   : aliased Chars_Ptr_Array (0 .. 0);
+   project_modified_xpm   : aliased Chars_Ptr_Array (0 .. 0);
    mini_folder_object_xpm : aliased Chars_Ptr_Array (0 .. 0);
 
 private
@@ -46,6 +48,8 @@ private
    pragma Import (C, delete_var_xpm);
    pragma Import (C, project_closed_xpm);
    pragma Import (C, project_xpm);
+   pragma Import (C, project_imported_xpm);
+   pragma Import (C, project_modified_xpm);
    pragma Import (C, mini_folder_object_xpm, "mini-folder_object_xpm");
 
 end Pixmaps_Prj;
