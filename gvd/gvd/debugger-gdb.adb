@@ -34,6 +34,8 @@ with Unchecked_Conversion;
 with Odd.Strings;       use Odd.Strings;
 with Gtk.Window;        use Gtk.Window;
 
+with Text_IO;
+
 package body Debugger.Gdb is
 
    use String_History;
@@ -366,6 +368,17 @@ package body Debugger.Gdb is
       end if;
 
       Wait_Prompt (Debugger);
+
+      --  Detect the current language, and get the name and line of the
+      --  initial file.
+      Set_Internal_Command (Get_Process (Debugger), True);
+      Send (Get_Process (Debugger), "show lang");
+      Wait_Prompt (Debugger);
+      Send (Get_Process (Debugger), "list");
+      Wait_Prompt (Debugger);
+      Send (Get_Process (Debugger), "info line");
+      Wait_Prompt (Debugger);
+      Set_Internal_Command (Get_Process (Debugger), False);
    end Set_Executable;
 
    -----------------
@@ -399,6 +412,9 @@ package body Debugger.Gdb is
    procedure Start (Debugger : access Gdb_Debugger;
                     Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      --  ??? This should be disabled for C mode. Maybe we should directly
+      --  disable the begin button ?
+
       if Window /= null then
          Text_Output_Handler (Convert (Window, Debugger),
                               "begin" & ASCII.LF, True);
@@ -539,9 +555,7 @@ package body Debugger.Gdb is
       begin
          Len := 0;
 
-         loop
-            exit when Len = Value'Length;
-
+         while Len /= Value'Length loop
             Match
               (Frame_Pattern, S (First .. S'Last - Prompt_Length), Matched);
 
@@ -554,7 +568,7 @@ package body Debugger.Gdb is
             if Matched (2) = No_Match then
                Value (Len).Program_Counter := new String' ("");
             else
-               Value (Len).Program_Counter := 
+               Value (Len).Program_Counter :=
                  new String' (S (Matched (3).First .. Matched (3).Last));
             end if;
 
