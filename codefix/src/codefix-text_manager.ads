@@ -21,7 +21,6 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
-with Ada_Analyzer; use Ada_Analyzer;
 with Language;     use Language;
 with Basic_Types;  use Basic_Types;
 with VFS;

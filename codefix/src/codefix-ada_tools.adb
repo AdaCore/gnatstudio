@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,7 +23,6 @@ with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 
 with Language;     use Language;
-with Ada_Analyzer; use Ada_Analyzer;
 
 package body Codefix.Ada_Tools is
 

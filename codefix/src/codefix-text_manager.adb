@@ -25,12 +25,12 @@ with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Case_Util;        use GNAT.Case_Util;
 
+with Ada_Analyzer;          use Ada_Analyzer;
 with Basic_Types;           use Basic_Types;
 with String_Utils;          use String_Utils;
 with Language;              use Language;
-with Language.Unknown;      use Language.Unknown;
 
-with Codefix.Merge_Utils; use Codefix.Merge_Utils;
+with Codefix.Merge_Utils;   use Codefix.Merge_Utils;
 
 package body Codefix.Text_Manager is
 
@@ -1403,28 +1403,16 @@ package body Codefix.Text_Manager is
          end loop;
       end Display_Constructs;
 
-      New_Buffer  : Extended_Line_Buffer;
-      Ignore      : Natural;
-      Buffer      : GNAT.OS_Lib.String_Access;
+      Buffer : GNAT.OS_Lib.String_Access;
 
    begin
       if not This.Structure_Up_To_Date.all then
          Buffer := Read_File (This);
          Analyze_Ada_Source
-           (Buffer => Buffer.all,
-            New_Buffer => New_Buffer,
-            Indent_Params => Default_Indent_Parameters,
-            Reserved_Casing  => Unchanged,
-            Ident_Casing => Unchanged,
-            Format_Operators => False,
-            Indent => False,
-            Constructs => This.Structure,
-            Current_Indent => Ignore,
-            Prev_Indent => Ignore,
-            Callback => null);
-
-         --  pragma Debug (Display_Constructs);
-
+           (Buffer           => Buffer.all,
+            Indent_Params    => Default_Indent_Parameters,
+            Format           => False,
+            Constructs       => This.Structure);
          Free (Buffer);
          This.Structure_Up_To_Date.all := True;
       end if;
@@ -2854,17 +2842,30 @@ package body Codefix.Text_Manager is
       Text          : String;
       Previous_Line : String)
    is
-      Line_Cursor         : File_Cursor := File_Cursor (Clone (Cursor));
-      Indent, Next_Indent : Natural;
-      First_Char          : Natural := Text'First;
+      Line_Cursor : File_Cursor := File_Cursor (Clone (Cursor));
+      Indent      : Natural;
+      First_Char  : Natural := Text'First;
+
    begin
       while First_Char <= Text'Last and then Is_Blank (Text (First_Char)) loop
          First_Char := First_Char + 1;
       end loop;
 
       Line_Cursor.Col := 1;
+      Indent          := 0;
 
-      Next_Indentation (Unknown_Lang, Previous_Line, Indent, Next_Indent);
+      --  ??? Consider using the "indent_line" command instead.
+
+      for J in Previous_Line'Range loop
+         case Previous_Line (J) is
+            when ' ' =>
+               Indent := Indent + 1;
+            when ASCII.HT =>
+               Indent := Indent + Tab_Width - (Indent mod Tab_Width);
+            when others =>
+               exit;
+         end case;
+      end loop;
 
       Add_Element
         (This, new Extract_Line'
@@ -2872,7 +2873,7 @@ package body Codefix.Text_Manager is
            Cursor          => Line_Cursor,
            Original_Length => 0,
            Content         =>
-              To_Mergable_String ((1 .. Next_Indent => ' ') &
+              To_Mergable_String ((1 .. Indent => ' ') &
                                    Text (First_Char .. Text'Last)),
            Next            => null,
            Coloration      => True));

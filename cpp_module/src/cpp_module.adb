@@ -354,17 +354,20 @@ package body Cpp_Module is
          Indent_Continue   => 0,
          Indent_Decl       => 0,
          Tab_Width         => Integer (Get_Pref (K, Tab_Width)),
-         Indent_Case_Extra => False);
+         Indent_Case_Extra => False,
+         Reserved_Casing   => Unchanged,
+         Ident_Casing      => Unchanged,
+         Format_Operators  => False,
+         Use_Tabs          => Tabs);
+
    begin
       Set_Indentation_Parameters
         (C_Lang,
          Indent_Style  => Style,
-         Use_Tabs      => Tabs,
          Params        => Params);
       Set_Indentation_Parameters
         (Cpp_Lang,
          Indent_Style  => Style,
-         Use_Tabs      => Tabs,
          Params        => Params);
    end On_Preferences_Changed;
 
