@@ -286,8 +286,8 @@
 	      <use_arrows_always>False</use_arrows_always>
 	      <items>Whole Text
 Comments Only
-Strings Only
 Comments + Strings
+Strings Only
 All but Comments
 </items>
 	      <child>
