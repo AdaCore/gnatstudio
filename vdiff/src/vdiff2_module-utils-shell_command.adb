@@ -317,27 +317,27 @@ package body Vdiff2_Module.Utils.Shell_Command is
    begin
       --  <preferences>
 
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
       Basic_Types.Free (Args);
       Args := (1 => new String'(Append_Style),
                2 => new String'(Append_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
       Basic_Types.Free (Args);
       Args := (1 => new String'(Old_Style),
                2 => new String'(Old_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
       Basic_Types.Free (Args);
       Args := (1 => new String'(Remove_Style),
                2 => new String'(Remove_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
       Basic_Types.Free (Args);
       Args := (1 => new String'(Change_Style),
                2 => new String'(Change_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
       Basic_Types.Free (Args);
       Args := (1 => new String'(Fine_Change_Style),
                2 => new String'(Change_Fine_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
       Basic_Types.Free (Args);
 
       VDiff2_Module (Vdiff_Module_ID).Enable_Fine_Diff
