@@ -259,6 +259,8 @@ package Codefix.Text_Manager is
       Line_Created,
       Line_Deleted);
 
+   function "=" (Left, Right : Extract_Line) return Boolean;
+
    procedure Assign (This : in out Extract_Line; Value : Extract_Line);
 
    function Get_Context (This : Extract_Line) return Line_Context;
@@ -351,6 +353,9 @@ package Codefix.Text_Manager is
 
    function Get_Coloration (This : Extract_Line) return Boolean;
 
+   function Get_Line (This : Ptr_Extract_Line; Cursor : File_Cursor'Class)
+     return Ptr_Extract_Line;
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
@@ -360,8 +365,22 @@ package Codefix.Text_Manager is
    --  code, modified or not. The modifications made in an extract do not have
    --  any influence in the source code before the call of Update function.
 
+   procedure Unchecked_Assign (This, Value : in out Extract'Class);
+
    procedure Remove
      (This, Prev : Ptr_Extract_Line; Container : in out Extract);
+
+   procedure Add_Element
+     (This, Previous, Element : Ptr_Extract_Line;
+      Container               : in out Extract);
+   --  Add a new line in the line list. The line is always disposed in order
+   --  to preserve the internal order of the lines, not just at the end of the
+   --  list.
+
+   procedure Add_Element (This : in out Extract; Element : Ptr_Extract_Line);
+   --  Add a new line in the line list. The line is always disposed in order
+   --  to preserve the internal order of the lines, not just at the end of the
+   --  list.
 
    type String_Mode is (Text_Ascii, Regular_Expression);
 
@@ -398,7 +417,7 @@ package Codefix.Text_Manager is
    procedure Commit
      (This         : Extract;
       Current_Text : in out Text_Navigator_Abstr'Class;
-      Offset_Line  : in out Natural);
+      Offset_Line  : in out Integer);
    --  Upate changes of the Extract_Line in the representation of the text.
 
    procedure Replace_Word
@@ -497,6 +516,10 @@ package Codefix.Text_Manager is
    --  Return the current form of the text contained in the extract. EOL_Str
    --  is used to make a new line.
 
+   function Get_New_Text (This : Extract) return String;
+   --  Return the current form of the text contained in the extract. EOL_Str
+   --  is used to make a new line.
+
    function Get_New_Text_Length (This : Extract) return Natural;
    --  Return the length of the current text in the extract.
 
@@ -537,11 +560,9 @@ package Codefix.Text_Manager is
      (This                 : out Extract;
       Extract_1, Extract_2 : Extract'Class;
       Current_Text         : Text_Navigator_Abstr'Class;
-      Success              : out Boolean;
-      Partial_Merge        : Boolean := False);
+      Success              : out Boolean);
    --  Merge Extract_1 and Extract_2 into This. If no solution can be found,
-   --  then success is false. If Partial_Merge is True, then only lines
-   --  contained in Extract_1 and Extract_2 will be merged.
+   --  then success is false.
 
    procedure Merge
      (New_Str : out Dynamic_String;
@@ -615,13 +636,6 @@ private
       Coloration      : Boolean := False;
    end record;
 
-   procedure Add_Element
-     (This, Previous, Element : Ptr_Extract_Line;
-      Container               : in out Extract);
-   --  Add a new line in the line list. The line is always disposed in order
-   --  to preserve the internal order of the lines, not just at the end of the
-   --  list.
-
    procedure Free is
       new Ada.Unchecked_Deallocation (Extract_Line, Ptr_Extract_Line);
 
@@ -644,8 +658,6 @@ private
       First   : Ptr_Extract_Line;
       Caption : Dynamic_String;
    end record;
-
-   procedure Add_Element (This : in out Extract; Element : Ptr_Extract_Line);
 
    function Get_Word_Length
      (This   : Extract_Line;

@@ -769,6 +769,18 @@ package body Codefix.Text_Manager is
    --  type Extract_Line
    ----------------------------------------------------------------------------
 
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : Extract_Line) return Boolean is
+   begin
+      return Left.Cursor = Right.Cursor
+        and then Left.Context = Right.Context
+        and then (Left.Context = Line_Deleted
+                  or else Left.Content.all = Right.Content.all);
+   end "=";
+
    ------------
    -- Assign --
    ------------
@@ -1313,14 +1325,42 @@ package body Codefix.Text_Manager is
       if Prev = null then
          Container.First := This.Next;
       else
-         Prev.Next := This;
+         Prev.Next := This.Next;
       end if;
       This.Next := null;
    end Remove;
 
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (This : Ptr_Extract_Line; Cursor : File_Cursor'Class)
+     return Ptr_Extract_Line is
+   begin
+      if This = null then
+         return null;
+      elsif This.Cursor = File_Cursor (Cursor) then
+         return This;
+      elsif This.Next = null then
+         return null;
+      else
+         return Get_Line (This.Next, Cursor);
+      end if;
+   end Get_Line;
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
+
+   ----------------------
+   -- Unchecked_Assign --
+   ----------------------
+
+   procedure Unchecked_Assign (This, Value : in out Extract'Class) is
+   begin
+      This.First := Value.First;
+      This.Caption := Value.Caption;
+   end Unchecked_Assign;
 
    -----------
    -- Clone --
@@ -1418,13 +1458,13 @@ package body Codefix.Text_Manager is
    end Set_String;
 
    ------------
-   -- Update --
+   -- Commit --
    ------------
 
    procedure Commit
      (This         : Extract;
       Current_Text : in out Text_Navigator_Abstr'Class;
-      Offset_Line  : in out Natural)
+      Offset_Line  : in out Integer)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
    begin
@@ -1467,36 +1507,48 @@ package body Codefix.Text_Manager is
       Lines_Before : Natural := 0;
       Lines_After  : Natural := 0) return String is
 
-      Current_Extract  : Ptr_Extract_Line := This.First;
       Extended_Extract : Extract;
-      Current_Col      : Natural := 1;
-      Current_Length   : Natural;
 
    begin
 
       Extended_Extract := Clone (This);
       Extend_Before (Extended_Extract, Current_Text, Lines_Before);
       Extend_After (Extended_Extract, Current_Text, Lines_After);
-      Current_Extract := Extended_Extract.First;
 
       declare
-         Buffer : String (1 .. Get_New_Text_Length
-                            (Extended_Extract));
+         Buffer : String := Get_New_Text (Extended_Extract);
       begin
-
-         while Current_Extract /= null loop
-            Current_Length := Get_New_Text_Length (Current_Extract.all);
-            Buffer (Current_Col ..
-                      Current_Col + Current_Length - 1) :=
-              Get_New_Text (Current_Extract.all);
-            Current_Col := Current_Col + Current_Length;
-            Current_Extract := Current_Extract.Next;
-         end loop;
-
          Free (Extended_Extract);
-
          return Buffer;
       end;
+
+   end Get_New_Text;
+
+   ------------------
+   -- Get_New_Text --
+   ------------------
+
+   function Get_New_Text (This : Extract) return String is
+      Current_Extract  : Ptr_Extract_Line := This.First;
+      Current_Col      : Natural := 1;
+      Current_Length   : Natural;
+      Buffer : String
+        (1 .. Get_New_Text_Length (This) +
+           EOL_Str'Length * Get_Number_Lines (This));
+   begin
+
+      Current_Extract := This.First;
+      while Current_Extract /= null loop
+         Current_Length := Get_New_Text_Length (Current_Extract.all)
+           + EOL_Str'Length;
+         Buffer (Current_Col ..
+                   Current_Col + Current_Length - 1) :=
+             Get_New_Text (Current_Extract.all) & EOL_Str;
+         Current_Col := Current_Col + Current_Length;
+         Current_Extract := Current_Extract.Next;
+      end loop;
+
+      return Buffer;
 
    end Get_New_Text;
 
@@ -1993,10 +2045,13 @@ package body Codefix.Text_Manager is
       Current_Line : Ptr_Extract_Line;
       Lines        : Lines_Array (1 .. Size_Before);
       Left_After   : Natural := 0;
+      Next_Line    : Ptr_Extract_Line;
+      Prev_Line    : Ptr_Extract_Line;
 
       procedure Delete_First is
       begin
          Remove (Lines (1), Previous (This, Lines (1)), This);
+         Free (Lines (1).all);
          Free (Lines (1));
          Lines (1 .. Lines'Last - 1) := Lines (2 .. Lines'Last);
          Lines (Lines'Last) := null;
@@ -2020,25 +2075,35 @@ package body Codefix.Text_Manager is
       Current_Line := Get_First_Line (This);
 
       while Current_Line /= null loop
+         Next_Line := Next (Current_Line.all);
+
          if Current_Line.Coloration = False
            or else Current_Line.Context = Original_Line
          then
             if Left_After = 0 then
-               Add_Last;
+               if Size_Before = 0 then
+                  Remove (Current_Line, Prev_Line, This);
+               else
+                  Prev_Line := Current_Line;
+                  Add_Last;
+               end if;
             else
+               Prev_Line := Current_Line;
                Left_After := Left_After + 1;
             end if;
          else
+            Prev_Line := Current_Line;
             Left_After := Size_After;
             Lines := (others => null);
          end if;
 
-         Current_Line := Next (Current_Line.all);
+         Current_Line := Next_Line;
       end loop;
 
       if Left_After = 0 then
          for J in Lines'Range loop
             Remove (Lines (J), Previous (This, Lines (J)), This);
+            Free (Lines (J).all);
             Free (Lines (J));
          end loop;
       end if;
@@ -2335,11 +2400,9 @@ package body Codefix.Text_Manager is
      (This                 : out Extract;
       Extract_1, Extract_2 : Extract'Class;
       Current_Text         : Text_Navigator_Abstr'Class;
-      Success              : out Boolean;
-      Partial_Merge        : Boolean := False) is
+      Success              : out Boolean) is
 
       Line_1, Line_2, New_Line : Ptr_Extract_Line;
-      Last_Cur_1, Last_Cur_2   : File_Cursor := Null_File_Cursor;
 
       procedure Loop_Add (Num : Integer);
       procedure Line_1_Original;
@@ -2472,32 +2535,12 @@ package body Codefix.Text_Manager is
 
       while Line_1 /= null and then Line_2 /= null loop
          if Line_1.Cursor < Line_2.Cursor then
-            if not Partial_Merge
-              or else Line_1.Cursor = Last_Cur_2
-              or else Line_2.Cursor = Last_Cur_1
-            then
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-            end if;
-
-            Last_Cur_1 := Line_1.Cursor;
-            Last_Cur_2 := Line_2.Cursor;
+            Add_Element (This, new Extract_Line'(Clone (Line_1.all, False)));
             Line_1 := Next (Line_1.all);
          elsif Line_2.Cursor < Line_1.Cursor then
-            if not Partial_Merge
-              or else Line_1.Cursor = Last_Cur_2
-              or else Line_2.Cursor = Last_Cur_1
-            then
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_2.all, False)));
-            end if;
-
-            Last_Cur_1 := Line_1.Cursor;
-            Last_Cur_2 := Line_2.Cursor;
+            Add_Element (This, new Extract_Line'(Clone (Line_2.all, False)));
             Line_2 := Next (Line_2.all);
          else
-            Last_Cur_1 := Line_1.Cursor;
-            Last_Cur_2 := Line_2.Cursor;
 
             case Line_1.Context is
                when Original_Line =>
@@ -2516,20 +2559,18 @@ package body Codefix.Text_Manager is
          end if;
       end loop;
 
-      if not Partial_Merge then
-         if Line_1 /= null then
-            while Line_1 /= null loop
-               Add_Element (This, new Extract_Line'(Clone
+      if Line_1 /= null then
+         while Line_1 /= null loop
+            Add_Element (This, new Extract_Line'(Clone
                                                       (Line_1.all, False)));
-               Line_1 := Next (Line_1.all);
-            end loop;
-         elsif Line_2 /= null then
-            while Line_2 /= null loop
-               Add_Element (This, new Extract_Line'(Clone
+            Line_1 := Next (Line_1.all);
+         end loop;
+      elsif Line_2 /= null then
+         while Line_2 /= null loop
+            Add_Element (This, new Extract_Line'(Clone
                                                       (Line_2.all, False)));
-               Line_2 := Next (Line_2.all);
-            end loop;
-         end if;
+            Line_2 := Next (Line_2.all);
+         end loop;
       end if;
 
    end Merge;
