@@ -583,7 +583,7 @@ package body Glide_Kernel.Editor is
    procedure Find_Dependencies
      (Kernel       : access Kernel_Handle_Record'Class;
       Source_Name  : String;
-      Dependencies : out Src_Info.Dependency_File_Info_List;
+      Dependencies : out Src_Info.Queries.Dependency_List;
       Status       : out Src_Info.Queries.Dependencies_Query_Status)
    is
       Source_Info   : LI_File_Ptr;
@@ -602,7 +602,7 @@ package body Glide_Kernel.Editor is
       end Handle_Internal_Error;
 
    begin
-      Dependencies := No_Dependencies;
+      Dependencies := null;
 
       if Source_Name = "" then
          Handle_Internal_Error (Msg => "Empty source file name");
@@ -616,14 +616,13 @@ package body Glide_Kernel.Editor is
 
       case Update_Status is
          when Failure =>
-            Dependencies := No_Dependencies;
+            Destroy (Dependencies);
+            Dependencies := null;
             Status := Failure;
-            return;
          when Success =>
-            null;
+            Find_Dependencies (Source_Info, Dependencies, Status);
       end case;
 
-      Find_Dependencies (Source_Info, Dependencies, Status);
    end Find_Dependencies;
 
 end Glide_Kernel.Editor;
