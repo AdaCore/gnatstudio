@@ -239,7 +239,7 @@ package body Debugger is
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
       Display          : Boolean := False;
-      Empty_Buffer     : Boolean := False;
+      Empty_Buffer     : Boolean := True;
       Wait_For_Prompt  : Boolean := True) is
    begin
       if Display then

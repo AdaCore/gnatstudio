@@ -104,7 +104,7 @@ package Debugger is
      (Debugger        : access Debugger_Root'Class;
       Cmd             : String;
       Display         : Boolean := False;
-      Empty_Buffer    : Boolean := False;
+      Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True);
    --  Send a command to the underlying process associated with Debugger.
    --  If Display is True, display the command in the debugger window.
@@ -403,10 +403,17 @@ package Debugger is
    -- Source Related Commands --
    -----------------------------
 
+   type Line_Kind is (Have_Code, No_Code, No_More_Code);
+   --  Type used by Line_Contains_Code below.
+   --  - Have_Code means that the line contains some code.
+   --  - No_Code means that the line contains no executable code.
+   --  - No_More_Code means that the current line and all subsequent lines
+   --    in the file have no code.
+
    function Line_Contains_Code
      (Debugger : access Debugger_Root;
       File     : String;
-      Line     : Positive) return Boolean is abstract;
+      Line     : Positive) return Line_Kind is abstract;
    --  Indicate whether a given file and line number contain executable code.
 
    Unknown_Command : exception;
