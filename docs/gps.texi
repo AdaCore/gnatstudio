@@ -9500,12 +9500,12 @@ GPS> run %2 "arg1" "arg2" "arg3"
 @noindent
 The Version Control interface in GPS can be customized, either to
 refine the behavior of the existing system and adapt it to specific
-needs, or to add support for other Version Control systems. 
+needs, or to add support for other Version Control systems.
 
 Custom VCS interfaces are defined entirely through XML files. Those
 files are read in the same location as all the other XML
 customizations that GPS offers. See @ref{Customizing through XML
-files} for a complete description. 
+files} for a complete description.
 
 There are two steps to follow when creating a custom VCS
 interface. The first step is to describe the VCS itself, and the
@@ -9547,18 +9547,18 @@ VCS relative to file names, and can take the values @code{TRUE} or
 commands in the VCS will work on absolute file names. If it set to
 @code{FALSE}, it means that all actions work on base file names, and
 that GPS will move to the appropriate directory before executing an
-action. 
+action.
 
 Here is an example, adapted to the use of CVS:
 
 @smallexample
    <vcs name="Custom CVS" absolute_names="FALSE">
-        
+
       (... description of action associations ...)
       (... description of supported status ...)
       (... description of output parsers ...)
 
-   </vcs>  
+   </vcs>
 @end smallexample
 
 @node Associating actions to operations
@@ -9574,7 +9574,7 @@ action:
 
 @smallexample
    <OPERATION  action="ACTION_LABEL" label="NAME OF OPERATION" />
-@end smallexample 
+@end smallexample
 
 Where:
 @table @samp
@@ -9634,7 +9634,7 @@ command (see next section for more information), and the
 
 Each node corresponding to a parser must contain a @code{regexp} node
 whose value is a standard system V regular expression used to
-parse the output. 
+parse the output.
 
 In this regular expression, parenthesized subexpressions can be
 indicated, identifying the file name, the status, the local revision,
@@ -9660,7 +9660,7 @@ indicated by the annotations.
 @noindent
 A number of ``standard'' VCS operations are known to GPS. Each of
 these operations can be implemented, using Actions. See @ref{Defining
-Actions}) for a complete description of how to implement actions. 
+Actions}) for a complete description of how to implement actions.
 
 Here is a list of all the defined VCS operations, and their
 parameters:
@@ -9676,7 +9676,7 @@ parameters:
   VCS query and return results as complete as possible.
 
 @item status_dir
-  @table @code    
+  @table @code
     @item $1 = the directory.
   @end table
   Same as above, but works on all the files in one directory.
@@ -9727,6 +9727,12 @@ parameters:
   a file.
 
 @item history
+  @table @code
+    @item $1 = file
+  @end table
+  Query the entire changelog history for the specified file.
+
+@item history_revision
   @table @code
     @item $1 = revision
     @item $2 = file
