@@ -22,6 +22,7 @@
 --  of all the windows and dialogs in GVD.
 
 with Gtk.Widget; use Gtk.Widget;
+with Glib;       use Glib;
 
 package GVD.Window_Settings is
 
@@ -34,5 +35,16 @@ package GVD.Window_Settings is
      (File_Name         : String;
       Main_Debug_Window : Gtk_Widget);
    --  Load the window settings from the file.
+
+   type Process_Tab_Geometry is record
+      Data_Height    : Gint;
+      Data_Width     : Gint;
+      Stack_Width    : Gint;
+      Command_Height : Gint;
+      Editor_Height  : Gint;
+   end record;
+
+   function Get_Process_Tab_Geometry
+     (Page : in Gint) return Process_Tab_Geometry;
 
 end GVD.Window_Settings;

@@ -18,13 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Widget;              use Gtk.Widget;
-with Glib;                    use Glib;
 with Gint_Xml;                use Gint_Xml;
+
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Notebook;            use Gtk.Notebook;
+with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
+
+with Gtkada.Canvas;           use Gtkada.Canvas;
 
 with Main_Debug_Window_Pkg;   use Main_Debug_Window_Pkg;
 with GVD.Memory_View;         use GVD.Memory_View;
 with GVD.Dialogs;             use GVD.Dialogs;
+with GVD.Process;             use GVD.Process;
 
 package body GVD.Window_Settings is
 
@@ -118,8 +125,13 @@ package body GVD.Window_Settings is
      (File_Name         : String;
       Main_Debug_Window : Gtk_Widget)
    is
-      Top : constant Main_Debug_Window_Access :=
+      Top       : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Main_Debug_Window);
+      Process   : Debugger_Process_Tab;
+      Page      : Gtk_Widget;
+      Num_Pages : constant Gint :=
+        Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
+
    begin
       if Current_Window_Settings = null then
          Current_Window_Settings := new Node;
@@ -129,26 +141,82 @@ package body GVD.Window_Settings is
       Set (Main_Debug_Window_Width, Gint (Get_Allocation_Width (Top)), True);
       Set (Main_Debug_Window_Height, Gint (Get_Allocation_Height (Top)), True);
 
-      Set (Memory_View_Width,
-           Gint (Get_Allocation_Width (Top.Memory_View)),
-           True);
-      Set (Memory_View_Height,
-           Gint (Get_Allocation_Height (Top.Memory_View)),
-           True);
+      if Get_Allocation_Width (Top.Memory_View) /= 1
+        and then Get_Allocation_Height (Top.Memory_View) /= 1
+      then
+         Set (Memory_View_Width,
+              Gint (Get_Allocation_Width (Top.Memory_View)),
+              True);
+         Set (Memory_View_Height,
+              Gint (Get_Allocation_Height (Top.Memory_View)),
+              True);
+      end if;
 
-      Set (History_Dialog_Width,
-           Gint (Get_Allocation_Width (Top.History_Dialog)),
-           True);
-      Set (History_Dialog_Height,
-           Gint (Get_Allocation_Height (Top.History_Dialog)),
-           True);
+      if Get_Allocation_Width (Top.History_Dialog) /= 1
+        and then Get_Allocation_Height (Top.History_Dialog) /= 1
+      then
+         Set (History_Dialog_Width,
+              Gint (Get_Allocation_Width (Top.History_Dialog)),
+              True);
+         Set (History_Dialog_Height,
+              Gint (Get_Allocation_Height (Top.History_Dialog)),
+              True);
+      end if;
 
-      Set (Task_Dialog_Width,
-           Gint (Get_Allocation_Width (Top.Task_Dialog)),
-           True);
-      Set (Task_Dialog_Height,
-           Gint (Get_Allocation_Height (Top.Task_Dialog)),
-           True);
+      if Get_Allocation_Width (Top.Task_Dialog) /= 1
+        and then Get_Allocation_Height (Top.Task_Dialog) /= 1
+      then
+         Set (Task_Dialog_Width,
+              Gint (Get_Allocation_Width (Top.Task_Dialog)),
+              True);
+         Set (Task_Dialog_Height,
+              Gint (Get_Allocation_Height (Top.Task_Dialog)),
+              True);
+      end if;
+
+      for Page_Num in 0 .. Num_Pages - 1 loop
+         Page := Get_Nth_Page (Top.Process_Notebook, Page_Num);
+
+         if Page /= null then
+            Process := Process_User_Data.Get (Page);
+
+            declare
+               Image : String := Gint'Image (Page_Num);
+            begin
+               Set (String_Gint
+                    ("Data_Height"
+                     & Image (Image'First + 1 .. Image'Last)),
+                    Gint (Get_Allocation_Height (Process.Data_Canvas)),
+                    True);
+               Set (String_Gint
+                    ("Data_Width"
+                     & Image (Image'First + 1 .. Image'Last)),
+                    Gint (Get_Allocation_Width (Process.Data_Canvas)),
+                    True);
+               Set (String_Gint
+                    ("Command_Height"
+                     & Image (Image'First + 1 .. Image'Last)),
+                    Gint (Get_Allocation_Height
+                           (Process.Command_Scrolledwindow)),
+                    True);
+               Set (String_Gint
+                    ("Editor_Height"
+                     & Image (Image'First + 1 .. Image'Last)),
+                    Gint (Get_Allocation_Height (Process.Editor_Vbox)),
+                    True);
+               if Get_Active (Top.Call_Stack) then
+                  Set (String_Gint
+                       ("Stack_Width"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Width
+                             (Process.Stack_Scrolledwindow)),
+                       True);
+               end if;
+
+            end;
+         end if;
+      end loop;
+
       Print (Current_Window_Settings, File_Name => File_Name);
    end Save_Window_Settings;
 
@@ -160,9 +228,13 @@ package body GVD.Window_Settings is
       Node : constant Node_Ptr :=
         Find_Tag (Current_Window_Settings.Child, String (Name));
    begin
-      pragma Assert (Node /= null);
-      pragma Assert (Node.Value /= null);
-      return Gint'Value (Node.Value.all);
+      if Node = null
+        or else Node.Value = null
+      then
+         return -1;
+      else
+         return Gint'Value (Node.Value.all);
+      end if;
    end Get_Setting;
 
    ---------
@@ -193,5 +265,59 @@ package body GVD.Window_Settings is
    begin
       Set (String (Var), Gint'Image (Value), Override);
    end Set;
+
+   ------------------------------
+   -- Get_Process_Tab_Geometry --
+   ------------------------------
+
+   function Get_Process_Tab_Geometry
+     (Page : in Gint) return Process_Tab_Geometry
+   is
+      Result : Process_Tab_Geometry;
+   begin
+      declare
+         Image : String := Gint'Image (Page);
+      begin
+         Result.Data_Height := Get_Setting
+           (String_Gint
+            ("Data_Height" & Image (Image'First + 1 .. Image'Last)));
+
+         Result.Data_Width := Get_Setting
+           (String_Gint
+            ("Data_Width" & Image (Image'First + 1 .. Image'Last)));
+
+         Result.Command_Height := Get_Setting
+           (String_Gint
+            ("Command_Height" & Image (Image'First + 1 .. Image'Last)));
+
+         Result.Editor_Height := Get_Setting
+           (String_Gint
+            ("Editor_Height" & Image (Image'First + 1 .. Image'Last)));
+
+         Result.Stack_Width := Get_Setting
+           (String_Gint
+            ("Stack_Width" & Image (Image'First + 1 .. Image'Last)));
+      end;
+
+      --  Use default values if needed.
+
+      if Result.Data_Height = -1 then
+         Result.Data_Height := 200;
+      end if;
+
+      if Result.Data_Width = -1 then
+         Result.Data_Width := 300;
+      end if;
+
+      if Result.Editor_Height = -1 then
+         Result.Editor_Height := 200;
+      end if;
+
+      if Result.Stack_Width = -1 then
+         Result.Stack_Width := 200;
+      end if;
+
+      return Result;
+   end Get_Process_Tab_Geometry;
 
 end GVD.Window_Settings;
