@@ -6382,7 +6382,9 @@ The current project file pathname.
 The root project pathname.
 
 @item %(p|P)[r](d|s)[f]
-Substituted by the list of sources or directories of a given project:
+Substituted by the list of sources or directories of a given project. This list
+is a list of space-separated, quoted names (all names are surrounded by double
+quotes, for proper handling of spaces in directories or file names).
 
 @table @code
 @item P
@@ -7375,6 +7377,28 @@ saves its output on a stack as needed. If a command line contains a special
 construct @code{%1}, @code{%2},@dots{} then these constructs will be replaced
 by the result of resp. the last command executed, the previous from last
 command, and so on.
+
+Every time you execute a new command, it pushes the previous %1, %2,@dots{}
+parameters one step, so that they become resp. %2, %3,@dots{} and the output
+of that command becomes %1.
+
+The output of the previous commands is substituted exactly as is. However, if
+the output is surrounded by quotes, they are ignored when substitution takes
+place, so you need to put them back if they are needed. The reason for this
+behavior is so that for scripting languages that systematically protect their
+output with quotes (simple or double), these quotes are in sometimes in the
+way when calling external commands.
+
+@ifset python
+@smallexample
+<action name="test quotes">
+  <shell lang="python">'-a -b -c'</shell>
+  <external> echo with quotes: "%1"</external>
+  <external> echo without quotes: %2</external/>
+</action>
+@end smallexample
+@end ifset
+
 
 @subsubsection Querying switches from the project
 @cindex get_tool_switches_as_string
@@ -8731,3 +8755,4 @@ python interpreter:
 @end ifinfo
 
 @bye
+
