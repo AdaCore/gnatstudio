@@ -76,14 +76,6 @@ package body Glide_Kernel.Editor is
    --  Return the source editor that has currently the focus in the MDI
    --  window associated with Top, null the focus child is not an editor.
 
-   function Tmp_Get_ALI_Filename
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Source_Filename : String)
-      return String;
-   --  ??? Return the full path to the ALI file associated to the given source
-   --  ??? file. Over simplistic algorithm applied: replaces the extension by
-   --  ??? ".ali". That'll do it until the demo.
-
    type LI_File_Update_Status is
      (Failure,
       Success);
@@ -132,41 +124,6 @@ package body Glide_Kernel.Editor is
       end if;
    end Get_Current_Editor;
 
-   --------------------------
-   -- Tmp_Get_ALI_Filename --
-   --------------------------
-
-   function Tmp_Get_ALI_Filename
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Source_Filename : String)
-      return String
-   is
-      Short_Source : constant String := Base_File_Name (Source_Filename);
-      Last_Dot     : Integer := Short_Source'Last;
-      ALI_Ext      : constant String := ".ali";
-   begin
-      while Last_Dot >= Short_Source'First loop
-         exit when Short_Source (Last_Dot) = '.';
-         Last_Dot := Last_Dot - 1;
-      end loop;
-      if Last_Dot < Short_Source'First then
-         Last_Dot := Short_Source'Last + 1;
-      end if;
-
-      declare
-         Short_Result : constant String :=
-           Short_Source (Short_Source'First .. Last_Dot - 1) & ALI_Ext;
-         Path : constant String :=
-           Find_Object_File (Kernel, Short_Result, Use_Object_Path => True);
-      begin
-         if Path = "" then
-            return Short_Result;
-         else
-            return Path;
-         end if;
-      end;
-   end Tmp_Get_ALI_Filename;
-
    ---------------------------------
    -- Update_LI_File_If_Necessary --
    ---------------------------------
@@ -183,8 +140,9 @@ package body Glide_Kernel.Editor is
          --  ??? At the moment, this procedure does not handle out of date
          --  ??? LI information. This should be corrected.
          declare
-            ALI_Filename : constant String :=
-              Tmp_Get_ALI_Filename (Kernel, Source_Filename);
+            ALI_Filename : constant String := ALI_Filename_From_Source
+              (Source_Filename, Get_Project_View (Kernel),
+               Get_Source_Path (Kernel));
             Success : Boolean;
          begin
             Parse_ALI_File
