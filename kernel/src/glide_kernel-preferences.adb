@@ -148,14 +148,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
 
-      Tmp_Dir := Param_Spec_String (Gnew_String
-        (Name    => "General-Tmp-Dir",
-         Nick    => -"Temporary directory",
-         Blurb   => -"Directory used to create temporary files",
-         Default => "/tmp"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Tmp_Dir), -"General");
-
       Save_Desktop_On_Exit := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Save-Desktop-On-Exit",
          Nick    => -"Save desktop on exit",
