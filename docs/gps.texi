@@ -4828,18 +4828,28 @@ through the integration of version control systems (VCS). Each project can be
 associated to a VCS, through the @code{VCS} tab in the Project property
 editor. @xref{The Project Properties Editor}.
 
-The systems that are currently supported in GPS are CVS and ClearCase. There
-are two interfaces to ClearCase: the standard ClearCase interface, which is
-built-in and uses a generic GPS terminology for VCS operations, and the Native
-ClearCase interface, which is fully customizable and uses by default the
+GPS does not come with any version control system: it will use an underlying
+command-line system such as CVS or ClearCase to perform the low level
+operations, and provides a high level user iterface on top of them.
+Be sure to have a properly installed version control system before enabling it
+under GPS.
+
+The systems that are supported out of the box in GPS are CVS and ClearCase.
+There are two interfaces to ClearCase: the standard ClearCase interface, which
+is built-in and uses a generic GPS terminology for VCS operations, and the
+Native ClearCase interface, which is fully customizable and uses by default the
 terminology specific to ClearCase.
 
 Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
 
-See @ref{Adding support for new Version Control Systems} for more information
-on how to customize and modify the existing ClearCase and CVS interfaces, as
-well as adding support for new ones.
+It is also possible to add your own support for other version control systems,
+or modify the existing CVS and ClearCase interfaces,
+see @ref{Adding support for new Version Control Systems} for more information.
+
+When using CVS, GPS will also need a corresponding @command{patch} command
+that usually comes with it. If you are under Windows, be sure to install
+a set of CVS and patch executables that are compatible.
 
 It is recommended that you first get familiar with the version control
 system that you intend to use in GPS first, since many concepts used in GPS
@@ -5625,6 +5635,16 @@ calling external tools (e.g. before a build).
 Whether the desktop (size and positions of all windows) should be saved when
 exiting.
 
+@item Multi language build
+Whether GPS should build (using gprmake) more than just Ada 
+sources for projects containing Ada and other (e.g. C) languages.
+
+By default, GPS will call gnatmake to build projects containing Ada sources,
+meaning that non Ada sources won't be built. By enabling this preference,
+a multi-language build tool, called @command{gprmake} will be called.
+Note that this tool is still under development, so this option should
+only be activated with caution.
+
 @item Jump to first location
 @cindex location
 Whether the first entry of the location window should be selected
@@ -6168,6 +6188,15 @@ Otherwise, all dependencies, even implicit, are displayed.
 @item @b{Visual diff}
 @cindex visual diff
 @cindex file comparison
+
+Note that in order to perform visual comparison between files, GPS
+needs to call external tool (not distributed with GPS) such as @command{diff}
+or @command{patch}. These tools are usually found on most unix systems, and
+may not be available by default on other OSes. In particular under Windows,
+it is recommanded that you install these tools if needed from one of the
+unix toolsets available, such as msys (@url{http://www.mingw.org/msys.shtml}) or
+cygwin (@url{http://www.cygwin.com}).
+
 @table @i
 @item Context length
 @cindex context length
@@ -6202,6 +6231,12 @@ Ignore white space when comparing lines.
 @item Patch command
 @cindex patch
 Command used to apply a patch. Arguments can also be specified.
+This command is used internally by GPS to perform the visual comparison on
+versioned files (e.g. when performing a comparison with a version control
+system).
+
+This command should be compatible with the @command{GNU patch} utility.
+
 @end table
 
 @item @b{Messages}
