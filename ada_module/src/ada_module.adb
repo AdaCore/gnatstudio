@@ -49,6 +49,7 @@ package body Ada_Module is
    Ada_Format_Operators      : Param_Spec_Boolean;
    Ada_Align_On_Colons       : Param_Spec_Boolean;
    Ada_Align_On_Arrows       : Param_Spec_Boolean;
+   Ada_Align_Decl_On_Colon   : Param_Spec_Boolean;
 
    package Casing_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
@@ -92,25 +93,27 @@ package body Ada_Module is
       Set_Indentation_Parameters
         (Ada_Lang,
          Indent_Style => Indentation_Kind'Val
-            (Get_Pref (Kernel, Ada_Automatic_Indentation)),
+           (Get_Pref (Kernel, Ada_Automatic_Indentation)),
          Params       =>
-           (Indent_Level      =>
+           (Indent_Level        =>
               Integer (Get_Pref (Kernel, Ada_Indentation_Level)),
-            Indent_Continue   =>
+            Indent_Continue     =>
               Integer (Get_Pref (Kernel, Ada_Continuation_Level)),
-            Indent_Decl       =>
+            Indent_Decl         =>
               Integer (Get_Pref (Kernel, Ada_Declaration_Level)),
-            Tab_Width         => Integer (Get_Pref (Kernel, Tab_Width)),
-            Indent_Case_Extra => Indent_Style'Val
+            Tab_Width           => Integer (Get_Pref (Kernel, Tab_Width)),
+            Indent_Case_Extra   => Indent_Style'Val
               (Get_Pref (Kernel, Ada_Indent_Case_Extra)),
-            Reserved_Casing   => Casing_Type'Val
+            Reserved_Casing     => Casing_Type'Val
               (Get_Pref (Kernel, Ada_Reserved_Casing)),
-            Ident_Casing      => Casing_Type'Val
+            Ident_Casing        => Casing_Type'Val
               (Get_Pref (Kernel, Ada_Ident_Casing)),
-            Format_Operators  => Get_Pref (Kernel, Ada_Format_Operators),
-            Use_Tabs          => Get_Pref (Kernel, Ada_Use_Tabs),
-            Align_On_Colons   => Get_Pref (Kernel, Ada_Align_On_Colons),
-            Align_On_Arrows   => Get_Pref (Kernel, Ada_Align_On_Arrows)));
+            Format_Operators    => Get_Pref (Kernel, Ada_Format_Operators),
+            Use_Tabs            => Get_Pref (Kernel, Ada_Use_Tabs),
+            Align_On_Colons     => Get_Pref (Kernel, Ada_Align_On_Colons),
+            Align_On_Arrows     => Get_Pref (Kernel, Ada_Align_On_Arrows),
+            Align_Decl_On_Colon =>
+              Get_Pref (Kernel, Ada_Align_Decl_On_Colon)));
    end On_Preferences_Changed;
 
    ---------------------
@@ -237,13 +240,24 @@ package body Ada_Module is
 
       Ada_Align_On_Arrows := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "Ada-Align-On_Arrows",
+          (Name    => "Ada-Align-On-Arrows",
            Default => False,
            Blurb   =>
              -"Whether to align associations on arrow delimiters",
            Nick    => -"Align associations on arrows"));
       Register_Property
         (Kernel, Param_Spec (Ada_Align_On_Arrows), -"Editor:Ada");
+
+      Ada_Align_Decl_On_Colon := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Align-Decl-On_Colon",
+           Default => False,
+           Blurb   =>
+             -("Whether to align continuation lines after a declaration " &
+               "based on the colon character"),
+           Nick    => -"Align declarations on colon"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Align_Decl_On_Colon), -"Editor:Ada");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
