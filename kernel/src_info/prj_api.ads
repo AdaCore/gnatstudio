@@ -183,6 +183,14 @@ package Prj_API is
    --  If Matching_Language is not No_Name, then only the source files matching
    --  the specific language are returned.
 
+   function Get_Source_Dirs
+     (Project_View       : Prj.Project_Id;
+      Recursive          : Boolean)
+     return Basic_Types.String_Array_Access;
+   --  Return the list of source directories.
+   --  If Recursive is True, directories from imported projects will also be
+   --  returned.
+
    function Get_Source_Files
      (Project_View : Prj.Project_Id;
       Recursive : Boolean)

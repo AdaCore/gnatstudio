@@ -3459,6 +3459,56 @@ package body Prj_API is
       end if;
    end Object_Path;
 
+   ---------------------
+   -- Get_Source_Dirs --
+   ---------------------
+
+   function Get_Source_Dirs
+     (Project_View       : Prj.Project_Id;
+      Recursive          : Boolean)
+     return Basic_Types.String_Array_Access
+   is
+      Src     : String_List_Id;
+      Count   : Natural := 0;
+      Sources : String_Array_Access;
+      Index   : Natural := 1;
+      Iter    : Imported_Project_Iterator := Start
+        (Get_Project_From_View (Project_View), Recursive);
+      View    : Project_Id;
+   begin
+      while Current (Iter) /= Empty_Node loop
+         View := Current (Iter);
+         Src := Projects.Table (View).Source_Dirs;
+
+         while Src /= Nil_String loop
+            Count := Count + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         Next (Iter);
+      end loop;
+
+      Reset (Iter);
+      Sources := new String_Array (1 .. Count);
+
+      while Current (Iter) /= Empty_Node loop
+         View := Current (Iter);
+         Src := Projects.Table (View).Source_Dirs;
+
+         while Src /= Nil_String loop
+            Sources (Index) := new String'
+              (Normalize_Pathname
+                 (Get_String (String_Elements.Table (Src).Value)));
+            Index := Index + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         Next (Iter);
+      end loop;
+
+      return Sources;
+   end Get_Source_Dirs;
+
    ----------------------
    -- Get_Source_Files --
    ----------------------
