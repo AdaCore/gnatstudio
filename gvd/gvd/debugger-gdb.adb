@@ -34,7 +34,8 @@ package body Debugger.Gdb is
    -- Constants --
    ---------------
 
-   Prompt_Regexp : constant Pattern_Matcher := Compile ("\(gdb\) ");
+   Prompt_Regexp : constant Pattern_Matcher :=
+     Compile ("^\(gdb\) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
 
    Prompt_Length : constant := 6;
@@ -45,6 +46,10 @@ package body Debugger.Gdb is
 
    Gdb_Options   : constant String := "-nw -q -fullname";
    --  Options always passed to gdb.
+
+   Highlight_Pattern : constant Pattern_Matcher :=
+     Compile ("^\(gdb\) ", Multiple_Lines);
+   --  Matches everything that should be highlighted in the debugger window.
 
    -------------
    -- Type_Of --
@@ -81,10 +86,9 @@ package body Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
-      Result : Expect_Match;
    begin
       --  Empty the buffer.
-      Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
+      Empty_Buffer (Get_Process (Debugger));
       Send (Get_Process (Debugger), "print " & Entity);
       Wait_Prompt (Debugger);
 
@@ -139,9 +143,9 @@ package body Debugger.Gdb is
 
       General_Spawn
         (Debugger, Local_Arguments, Gdb_Command, Proxy, Remote_Machine);
---        Add_Output_Filter (Get_Descriptor (Debugger.Process.all).all,
+--        Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
 --                           Trace_Filter'Access);
---        Add_Input_Filter (Get_Descriptor (Debugger.Process.all).all,
+--        Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
 --                          Trace_Filter'Access);
    end Spawn;
 
@@ -298,9 +302,8 @@ package body Debugger.Gdb is
    ---------------
 
    function Backtrace (Debugger : access Gdb_Debugger) return String is
-      Result : Expect_Match;
    begin
-      Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
+      Empty_Buffer (Get_Process (Debugger));
       Send (Get_Process (Debugger), "bt");
       Wait_Prompt (Debugger);
       declare
@@ -340,20 +343,40 @@ package body Debugger.Gdb is
       File     : String;
       Line     : Positive) return Boolean
    is
-      Result : Expect_Match;
+      Line_String : String := Positive'Image (Line);
+      --  Use a temporary variable to remove the leading space.
+
+      Last        : Natural := File'Last;
+      --  We have to use the basename for the file, since gdb does not
+      --  recognize the full name.
+
    begin
-      --  Empty the buffer.
-      Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
+      while Last >= File'First loop
+         if File (Last) = GNAT.OS_Lib.Directory_Separator then
+            exit;
+         end if;
+         Last := Last - 1;
+      end loop;
 
-      --  ??? Warning: the 'Image inserts a space between the colon and the
-      --  line number, which might be a problem...
-
-      Send (Get_Process (Debugger), "info line " & File & ':' &
-        Positive'Image (Line));
+      Send (Get_Process (Debugger), "info line "
+            & File (Last + 1 .. File'Last)
+            & ':' &
+            Line_String (Line_String'First + 1 .. Line_String'Last));
       Wait_Prompt (Debugger);
 
       return Index
         (Expect_Out (Get_Process (Debugger)), "but contains no code") = 0;
    end Line_Contains_Code;
+
+   --------------------------
+   -- Highlighting_Pattern --
+   --------------------------
+
+   function Highlighting_Pattern (Debugger : access Gdb_Debugger)
+                                 return GNAT.Regpat.Pattern_Matcher
+   is
+   begin
+      return Highlight_Pattern;
+   end Highlighting_Pattern;
 
 end Debugger.Gdb;

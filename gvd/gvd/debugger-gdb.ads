@@ -23,6 +23,7 @@
 
 with GNAT.OS_Lib;
 with Debugger;
+with GNAT.Regpat;
 
 package Debugger.Gdb is
 
@@ -37,6 +38,9 @@ package Debugger.Gdb is
    procedure Close (Debugger : access Gdb_Debugger);
 
    procedure Wait_Prompt (Debugger : access Gdb_Debugger);
+
+   function Highlighting_Pattern (Debugger : access Gdb_Debugger)
+                                 return GNAT.Regpat.Pattern_Matcher;
 
    function Type_Of
      (Debugger : access Gdb_Debugger;
