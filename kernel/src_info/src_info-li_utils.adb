@@ -129,13 +129,13 @@ package body Src_Info.LI_Utils is
                      LI_Timestamp             => File.LI.LI_Timestamp,
                      Compilation_Errors_Found => Compilation_Errors,
                      Dependencies_Info        => null);
+      end if;
 
-         if Update_Timestamp
-           and then Is_Regular_File (File.LI.LI_Filename.all)
-         then
-            File.LI.LI_Timestamp := To_Timestamp
-              (File_Time_Stamp (File.LI.LI_Filename.all));
-         end if;
+      if Update_Timestamp
+        and then Is_Regular_File (File.LI.LI_Filename.all)
+      then
+         File.LI.LI_Timestamp := To_Timestamp
+           (File_Time_Stamp (File.LI.LI_Filename.all));
       end if;
    end Convert_To_Parsed;
 
@@ -536,10 +536,9 @@ package body Src_Info.LI_Utils is
       List          : in out LI_File_List;
       Full_Filename : String)
    is
-      Xref_Name : String_Access;
-   begin
-      Xref_Name := Xref_Filename_For
+      Xref_Name : constant String_Access := Xref_Filename_For
         (Full_Filename, Get_DB_Dir (Handler), Get_Xrefs (Handler));
+   begin
       LI := Locate (List, Xref_Name.all);
 
       if LI = null then
@@ -712,26 +711,18 @@ package body Src_Info.LI_Utils is
      (File        : out LI_File_Ptr;
       List        : in out LI_File_List;
       LI_Filename : String;
-      Handler     : LI_Handler)
-   is
-      Success : Boolean;
+      Handler     : LI_Handler) is
    begin
       File := new LI_File_Constrained'
         (LI =>  (Parsed        => False,
                  Handler       => Handler,
-                 LI_Filename   => new String'(Base_Name (LI_Filename)),
+                 LI_Filename   => new String'(LI_Filename),
                  Body_Info     => null,
                  Spec_Info     => null,
                  Separate_Info => null,
                  LI_Timestamp  => 0));
 
-      Add (List.Table, File, Success);
-      if not Success then
-         Trace (Me, "Unable to insert LI file in the list (Name="
-                & LI_Filename & ')');
-         Destroy (File);
-         File := null;
-      end if;
+      Add (List.Table, File);
    end Create_LI_File;
 
    ------------------------
