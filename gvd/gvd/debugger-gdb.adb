@@ -92,7 +92,7 @@ package body Debugger.Gdb is
 
    Language_Pattern : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
-      """?(auto; currently )?([^""\s]+)", Multiple_Lines);
+      """?(auto; currently )?([^""\s]+)"".", Multiple_Lines);
    --  Pattern used to detect language changes in the debugger.
 
    Terminate_Pattern : constant Pattern_Matcher := Compile
