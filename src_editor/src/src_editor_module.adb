@@ -1208,8 +1208,6 @@ package body Src_Editor_Module is
          if D.Column_End /= 0
            and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
          then
-            --  ??? Select_Region does not take into account TAB characters
-
             Select_Region (D.Edit, D.Line, D.Column, D.Line, D.Column_End);
          end if;
       end if;
