@@ -601,6 +601,7 @@ package body VCS.CVS is
       end if;
 
       Display_File_Status (Kernel, Result, True);
+      File_Status_List.Free (Result);
    end Status_Output_Handler;
 
    ---------------------

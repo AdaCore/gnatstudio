@@ -34,6 +34,7 @@ with Traces;                    use Traces;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_View_API;              use VCS_View_API;
 
 with VCS;                       use VCS;
 with String_List;
@@ -117,6 +118,7 @@ package body VCS_Module is
 
             Clear (Explorer);
             Display_File_Status (Get_Kernel (Context), Status, False);
+            File_Status_List.Free (Status);
          end if;
       end if;
    end On_Context_Changed;
@@ -226,6 +228,7 @@ package body VCS_Module is
 
          Clear (Explorer);
          Display_File_Status (Kernel, Status, False);
+         File_Status_List.Free (Status);
 
          Widget_Callback.Object_Connect
            (Kernel,
@@ -358,49 +361,49 @@ package body VCS_Module is
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Update'Access),
+         Kernel_Callback.To_Marshaller (Update'Access),
          Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Open");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Open'Access),
+         Kernel_Callback.To_Marshaller (Open'Access),
          Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"View Diff");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_View_Diff'Access),
+         Kernel_Callback.To_Marshaller (View_Diff'Access),
          Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Edit log");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Edit_Log'Access),
+         Kernel_Callback.To_Marshaller (Edit_Log'Access),
          Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Commit");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Commit'Access),
+         Kernel_Callback.To_Marshaller (Commit'Access),
          Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Annotate");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_View_Annotate'Access),
+         Kernel_Callback.To_Marshaller (View_Annotate'Access),
          Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"View Changelog");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_View_Log'Access),
+         Kernel_Callback.To_Marshaller (View_Log'Access),
          Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Revert");
@@ -435,7 +438,7 @@ package body VCS_Module is
         (Module_Name             => VCS_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => VCS_Contextual_Menu'Access);
+         Contextual_Menu_Handler => VCS_View_API.VCS_Contextual_Menu'Access);
    end Register_Module;
 
 end VCS_Module;

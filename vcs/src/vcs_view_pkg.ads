@@ -18,14 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;    use Glib.Object;
-
 with Gtk.Box;        use Gtk.Box;
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
-
-with Gtk.Menu;       use Gtk.Menu;
 
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
@@ -53,10 +49,12 @@ package VCS_View_Pkg is
    end record;
 
    procedure Gtk_New (VCS_View : out VCS_View_Access;
-                      Kernel   : Kernel_Handle := null;
+                      Kernel   : Kernel_Handle;
                       Ref      : VCS_Access);
+   --  Create a new VCS explorer.
 
    procedure Initialize (VCS_View : access VCS_View_Record'Class);
+   --  Internal initialization function.
 
    procedure Clear (Explorer : VCS_View_Access);
    --  Clear all the files in the model.
@@ -65,9 +63,8 @@ package VCS_View_Pkg is
      (Kernel         : Kernel_Handle;
       Status         : File_Status_List.List;
       Override_Cache : Boolean);
-   --  Display Status in the explorer. Status must NOT be freed by the user.
-   --  Memory allocated to this list is freed when calling Clear.
-   --
+   --  Display Status in the explorer.
+   --  Status must be freed by the user after calling this function.
    --  If Override_Cache is set to True, then the cache will be updated
    --  with the new status information, if needed. Otherwise, the values from
    --  the cache will be used for displaying the files.
@@ -97,34 +94,6 @@ package VCS_View_Pkg is
    --  Launch log editors for these files.
    --  User must free Files afterwards.
 
-   procedure On_Open
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   procedure On_Update
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   procedure On_View_Diff
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   procedure On_View_Log
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   procedure On_View_Annotate
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   procedure On_Edit_Log
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   procedure On_Commit
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
    function Get_Current_Dir
      (Kernel : access Kernel_Handle_Record'Class)
      return String;
@@ -152,10 +121,5 @@ package VCS_View_Pkg is
 
    function Get_Dirs_In_Project
      (Kernel : Kernel_Handle) return String_List.List;
-
-   procedure VCS_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
 end VCS_View_Pkg;
