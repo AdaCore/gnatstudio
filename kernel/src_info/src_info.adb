@@ -586,9 +586,11 @@ package body Src_Info is
    -------------------------
 
    function Get_Source_Filename (File : Source_File) return String is
-      FI : constant File_Info_Ptr := Get_File_Info (File);
    begin
-      return FI.Source_Filename.all;
+      if File = No_Source_File then
+         return "";
+      end if;
+      return Get_File_Info (File).Source_Filename.all;
    end Get_Source_Filename;
 
    -------------------

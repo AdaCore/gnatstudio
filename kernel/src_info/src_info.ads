@@ -764,12 +764,26 @@ private
    --  The fields Line and Column are chosen so that this constant is different
    --  from Null_File_Location.
 
+   type Parent_Kind is (Pointed_Type, Parent_Type);
+   --  The type of an entity in Parent_Location:
+   --     - Pointed_Type: for access types, this means that the location is
+   --       in fact the designed type by the access. This is also the contents
+   --       type for an array.
+   --     - Parent_Type: for type and subtypes, this is one of the parent
+   --       types. This also contains the type of objects.
+   --  We need this to distinguish between the kinds, since for instance an
+   --  access type might either have a pointed type, or be a subtype of another
+   --  access type.
+
    type File_Location_Node;
    type File_Location_List is access File_Location_Node;
    type File_Location_Node is record
-      Value : File_Location;
-      Next  : File_Location_List;
+      Value                  : File_Location;
+      Kind                   : Parent_Kind;
+      Predefined_Entity_Name : Types.Name_Id;
+      Next                   : File_Location_List;
    end record;
+   --  Predefined_Entity_Name is set when Value is Predefined_Entity_Location
 
    function "=" (Left, Right : File_Location) return Boolean;
    --  A redefined equality function that compares uses the redefined equality
@@ -806,12 +820,6 @@ private
       Kind            : E_Kind;
 
       Parent_Location : File_Location_List;
-      --  Point to various information about the entity:
-      --   - The type we derive from for a type
-      --   - The type of a variable
-      --  This field can be set to Predefined_Entity_Location, for instance
-      --  for a C's typedef that redefined int ("typedef int myint;").
-      --
       --  Note that multiple parents can be set in the case of C++ classes and
       --  multiple inheritance.
 
