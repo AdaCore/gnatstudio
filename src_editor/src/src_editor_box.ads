@@ -30,9 +30,9 @@
 with Glib;
 with Glib.Object;
 with Gdk.Rectangle;
-with GVD.Tooltips;
-
 with Gdk.Event;
+with Gdk.Font;
+
 with Gtk.Box;
 with Gtk.Button;
 with Gtk.Container;
@@ -40,6 +40,7 @@ with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Menu_Item;
 
+with GVD.Tooltips;
 with Language;
 with Language_Handlers;
 with Glide_Kernel;
@@ -446,6 +447,9 @@ private
 
       Modified             : Boolean := False;
       Writable             : Boolean := True;
+
+      Default_GC, Bg_GC    : Gdk.Gdk_GC;
+      Tooltip_Font         : Gdk.Font.Gdk_Font;
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely

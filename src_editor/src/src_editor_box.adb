@@ -28,7 +28,12 @@ with Glide_Kernel.Modules;       use Glide_Kernel.Modules;
 with Glide_Kernel.Project;       use Glide_Kernel.Project;
 with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
 with Gdk;                        use Gdk;
+with Gdk.Color;                  use Gdk.Color;
+with Gdk.Drawable;               use Gdk.Drawable;
 with Gdk.Event;                  use Gdk.Event;
+with Gdk.Font;                   use Gdk.Font;
+with Gdk.GC;                     use Gdk.GC;
+with Gdk.Pixmap;                 use Gdk.Pixmap;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Types;
 with Gdk.Window;                 use Gdk.Window;
@@ -557,9 +562,49 @@ package body Src_Editor_Box is
             return;
          end if;
 
-         Trace (Me, "Tooltip: " & File.all & ':' & Image (L));
+         declare
+            Tooltip : constant String := File.all & ':' & Image (L);
+            Window  : constant Gdk.Gdk_Window :=
+              Get_Window (Widget, Text_Window_Text);
+            Color   : Gdk.Color.Gdk_Color;
 
-         Free (File);
+         begin
+            if Data.Box.Default_GC = null then
+               Color := Parse ("#FFFFFF");
+               Alloc (Get_Default_Colormap, Color);
+               Gdk_New (Data.Box.Default_GC, Window);
+               Gdk_New (Data.Box.Bg_GC, Window);
+               Set_Foreground (Data.Box.Bg_GC, Color);
+               Set_Background (Data.Box.Default_GC, Color);
+               Data.Box.Tooltip_Font := From_Description
+                 (Get_Pref (Data.Box.Kernel, Default_Tooltip_Font));
+            end if;
+
+            Height := Get_Ascent (Data.Box.Tooltip_Font) +
+                      Get_Descent (Data.Box.Tooltip_Font);
+            Width  := String_Width (Data.Box.Tooltip_Font, Tooltip) + 4;
+            Gdk.Pixmap.Gdk_New (Pixmap, Window, Width, Height);
+            Draw_Rectangle
+              (Pixmap,
+               Data.Box.Bg_GC,
+               Filled => True,
+               X      => 0,
+               Y      => 0,
+               Width  => Width - 1,
+               Height => Height - 1);
+            Draw_Text
+              (Pixmap, Data.Box.Tooltip_Font, Data.Box.Default_GC, 2,
+               Get_Ascent (Data.Box.Tooltip_Font), Tooltip);
+            Draw_Rectangle
+              (Pixmap,
+               Data.Box.Default_GC,
+               Filled => False,
+               X      => 0,
+               Y      => 0,
+               Width  => Width - 1,
+               Height => Height - 1);
+            Free (File);
+         end;
       end;
 
    exception
@@ -672,6 +717,13 @@ package body Src_Editor_Box is
 
    begin
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
+
+      if Box.Default_GC /= null then
+         Unref (Box.Bg_GC);
+         Unref (Box.Default_GC);
+         Unref (Box.Tooltip_Font);
+      end if;
+
       Unref (Box.Source_Buffer);
       Delete (Box.Source_View);
 
@@ -837,7 +889,7 @@ package body Src_Editor_Box is
    ---------------
 
    function Key_Press (Box : access GObject_Record'Class) return Boolean is
-      B         : constant Source_Editor_Box := Source_Editor_Box (Box);
+      B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       if B.Timestamp_Mode = Check_At_Modify then
          if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
@@ -873,15 +925,18 @@ package body Src_Editor_Box is
       --  If we are not currently asking the user (it is possible that we still
       --  get a focus in event, if the mouse has moved outside of the dialog,
       --  even though the dialog is modal ???
+
       if B.Timestamp_Mode /= Checking then
          Undo_Redo := Undo_Redo_Data.Get (B.Kernel, Undo_Redo_Id);
 
-         Set_Controls (Get_Queue (B.Source_Buffer),
-                       Undo_Redo.Undo_Button,
-                       Undo_Redo.Redo_Button,
-                       Undo_Redo.Undo_Menu_Item,
-                       Undo_Redo.Redo_Menu_Item);
+         Set_Controls
+           (Get_Queue (B.Source_Buffer),
+            Undo_Redo.Undo_Button,
+            Undo_Redo.Redo_Button,
+            Undo_Redo.Undo_Menu_Item,
+            Undo_Redo.Redo_Menu_Item);
       end if;
+
       return False;
    end Focus_In;
 
