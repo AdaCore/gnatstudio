@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -26,6 +26,8 @@
 --
 --      %f  -> base name of the currently opened file.
 --      %F  -> absolute name of the currently opened file.
+--
+--      %d  -> current directory.    %d%f = %F
 --
 --      %p  -> the current project (associated with the opened file)
 --      %P  -> the current root project

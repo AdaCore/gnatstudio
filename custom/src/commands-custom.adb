@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,6 +24,7 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
 with Glide_Intl;           use Glide_Intl;
+with Shell;                use Shell;
 
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
@@ -128,6 +129,7 @@ package body Commands.Custom is
          for J in Command.Args'Range loop
             if Command.Args (J).all (Command.Args (J)'First) /= '%' then
                New_Args (Last) := new String'(Command.Args (J).all);
+               Last := Last + 1;
 
             elsif Command.Args (J).all = "%f" then
                if Context /= null
@@ -136,7 +138,8 @@ package body Commands.Custom is
                   File := File_Selection_Context_Access (Context);
 
                   if Has_File_Information (File) then
-                     New_Args (J) := new String'(File_Information (File));
+                     New_Args (Last) := new String'(File_Information (File));
+                     Last := Last + 1;
                   else
                      return False;
                   end if;
@@ -151,12 +154,27 @@ package body Commands.Custom is
                   File := File_Selection_Context_Access (Context);
 
                   if Has_File_Information (File) then
-                     New_Args (J) := new String'
+                     New_Args (Last) := new String'
                        (Directory_Information (File)
-                          & File_Information (File));
+                        & File_Information (File));
+                     Last := Last + 1;
                   else
                      return False;
                   end if;
+               else
+                  return False;
+               end if;
+
+            elsif Command.Args (J).all = "%d" then
+               if Context /= null
+                 and then Context.all in File_Selection_Context'Class
+                 and then Has_Directory_Information
+                   (File_Selection_Context_Access (Context))
+               then
+                  File := File_Selection_Context_Access (Context);
+                  New_Args (Last) := new String'
+                    (Directory_Information (File));
+                  Last := Last + 1;
                else
                   return False;
                end if;
@@ -192,7 +210,7 @@ package body Commands.Custom is
                   New_Args (Last) := new String'(Project_Name (Project));
                else
                   Recurse := (Command.Args (J).all
-                                (Command.Args (J)'First + 2) = 'r');
+                              (Command.Args (J)'First + 2) = 'r');
 
                   if Recurse then
                      Index := Command.Args (J)'First + 3;
