@@ -151,6 +151,11 @@ package body VCS_View_API is
       Get_Status : Boolean);
    --  Perform VCS operations on directories contained in Context.
 
+   procedure Save_Files
+     (Kernel : Kernel_Handle;
+      Files  : String_List.List);
+   --  Ask the user whether he wants to save the file editors for Files.
+
    -------------------------------
    -- Contextual menu callbacks --
    -------------------------------
@@ -1098,6 +1103,31 @@ package body VCS_View_API is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Edit_Log;
 
+   ----------------
+   -- Save_Files --
+   ----------------
+
+   procedure Save_Files
+     (Kernel : Kernel_Handle;
+      Files  : String_List.List)
+   is
+      use String_List;
+      Child      : MDI_Child;
+      Success    : Boolean;
+      pragma Unreferenced (Success);
+      Files_Temp : List_Node := First (Files);
+   begin
+      while Files_Temp /= Null_Node loop
+         Child := Get_File_Editor (Kernel, Head (Files));
+
+         if Child /= null then
+            Success := Save_Child (Kernel, Child, False) /= Cancel;
+         end if;
+
+         Files_Temp := Next (Files_Temp);
+      end loop;
+   end Save_Files;
+
    ------------------
    -- Commit_Files --
    ------------------
@@ -1129,6 +1159,8 @@ package body VCS_View_API is
       First_Check, Last_Check : Command_Access := null;
 
    begin
+      Save_Files (Kernel, Files);
+
       while Files_Temp /= Null_Node loop
          --  Save any open log editors, and then get the corresponding logs.
 
@@ -2100,6 +2132,7 @@ package body VCS_View_API is
       Files    : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
+      Save_Files (Get_Kernel (Context), Files);
 
       while not String_List.Is_Empty (Files) loop
          Diff (Get_Current_Ref (Context), String_List.Head (Files));
@@ -2153,6 +2186,7 @@ package body VCS_View_API is
 
    begin
       Files := Get_Selected_Files (Context);
+      Save_Files (Get_Kernel (Context), Files);
 
       if String_List.Is_Empty (Files) then
          return;
@@ -2197,6 +2231,7 @@ package body VCS_View_API is
 
    begin
       Files := Get_Selected_Files (Context);
+      Save_Files (Get_Kernel (Context), Files);
 
       if String_List.Is_Empty (Files) then
          return;
