@@ -3071,7 +3071,7 @@ package body Src_Editor_Module is
       Recent_Menu_Item   : Gtk_Menu_Item;
       Command            : Interactive_Command_Access;
 
-      Src_Action_Context : constant Action_Context :=
+      Src_Action_Context : constant Action_Filter :=
         new Src_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application
@@ -3081,14 +3081,14 @@ package body Src_Editor_Module is
       Source_Editor_Module (Src_Editor_Module_Id).Kernel :=
         Kernel_Handle (Kernel);
 
-      Register_Context (Kernel, Src_Action_Context);
+      Register_Filter (Kernel, Src_Action_Context, "Source editor");
 
       Command := new Indentation_Command;
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Format selection",
          Command, -"Format the current line or selection",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Format selection",
@@ -3099,7 +3099,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Complete identifier", Command,
          -("Complete current identifier based on the contents of the editor"),
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Complete identifier",
@@ -3111,7 +3111,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Jump to matching delimiter", Command,
          -"Jump to the matching delimiter ()[]{}",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Jump to matching delimiter",
@@ -3124,7 +3124,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next word", Command,
            -"Move to the next word in the current source editor",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3133,7 +3133,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous word", Command,
            -"Move to the previous word in the current source editor",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3142,7 +3142,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous sentence", Command,
            -"Move to the previous sentence in the current source editor",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3151,14 +3151,14 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next sentence", Command,
            -"Move to the next sentence in the current source editor",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
 
       Command := new Scroll_Command;
       Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Center cursor on screen", Command,
            -"Scroll the current source editor so that the cursor is centered",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3167,7 +3167,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Delete word forward", Command,
            -"Delete the word following the current cursor position",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3176,7 +3176,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Delete word backward", Command,
            -"Delete the word preceding the current cursor position",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
 
       Register_Module
         (Module                  => Src_Editor_Module_Id,
@@ -3263,7 +3263,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, -"Cut to Clipboard", Command,
          -"Cut the current selection to the clipboard",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
       Register_Menu (Kernel, Edit, -"_Cut",  Stock_Cut,
                      null, Command_Access (Command),
                      GDK_Delete, Shift_Mask,
@@ -3277,7 +3277,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, -"Copy to Clipboard", Command,
          -"Copy the current selection to the clipboard",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
       Register_Menu (Kernel, Edit, -"C_opy",  Stock_Copy,
                      null, Command_Access (Command),
                      GDK_Insert, Control_Mask,
@@ -3291,7 +3291,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, -"Paste From Clipboard", Command,
          -"Paste the contents of the clipboard into the current editor",
-         Create (Context => Src_Action_Context));
+         Src_Action_Context);
       Register_Menu (Kernel, Edit, -"P_aste",  Stock_Paste,
                      null, Command_Access (Command),
                      GDK_Insert, Shift_Mask,
