@@ -218,9 +218,11 @@ Scripting GPS
 * The GPS Shell::
 @ifset python
 * The Python Interpreter::
-* Python FAQ::
 @end ifset
 * Subprogram parameters::
+@ifset python
+* Python FAQ::
+@end ifset
 * Hooks::
 
 @ifset python
@@ -9749,9 +9751,11 @@ user interactively for the name of the file to search.
 * The GPS Shell::
 @ifset python
 * The Python Interpreter::
-* Python FAQ::
 @end ifset
 * Subprogram parameters::
+@ifset python
+* Python FAQ::
+@end ifset
 * Hooks::
 @end menu
 
@@ -9867,6 +9871,11 @@ GPS.execute_action (action="Split horizontally")
 
 The list of actions known to GPS can be found through the
 @code{Edit->Key shortcuts} dialog. Action names are case sensitive.
+
+Some of the shell commands take subprograms as parameters. If you are using
+the GPS shell, this means you have to pass the name of a GPS action. If
+you are using Python, this means that you pass a subprogram,
+@xref{Subprogram parameters}. 
 
 @c ------------------------------------------------------------------------
 @node The GPS Shell
@@ -10136,6 +10145,181 @@ a lot of output to process.
 
 @end ifset
 
+@c --------------------------------------------------------------------
+@node Subprogram parameters
+@subsection Subprogram parameters
+@cindex subprogram parameters
+@c --------------------------------------------------------------------
+
+@noindent
+A few of the functions exported by GPS in the GPS shell or in python expect
+a subprogram as a parameter.
+
+This is handled in different ways depending on what language your are using:
+
+@itemize @bullet
+@item GPS shell
+
+It isn't possible to define new functions in the GPS shell. However, this
+concept is similar to the GPS actions (@pxref{Defining Actions}), which
+allow you to execute a set of commands and launch external processes.
+
+Therefore, a subprogram parameter in the GPS shell is a string, which is the
+name of the action to execute.
+
+For instance, the following code defines the action "on_edition",
+which is called every time a new file is edited. The action is defined
+in the shell itself, although this could be more conveniently done in
+a separate customization file.
+
+@smallexample
+parse_xml """<action name="on_edition"><shell>echo "File edited"</shell></action>"""
+Hook "file_edited"
+Hook.add %1 "on_edition"
+@end smallexample
+
+@ifset python
+
+Python of course has its own notion of subprogram, and GPS is fully compatible
+with it. As a result, the syntax is much more natural than in the GPS shell.
+The following example has the same result as above:
+
+@smallexample
+import GPS
+def on_edition(self, *arg):
+  print "File edited"
+GPS.Hook ("file_edited").add (on_edition)
+@end smallexample
+
+Matter are in fact slightly more complex if you want to pass methods
+are arguments. Python has basically three notions of callable
+subprograms, detailed below. The following examples all create a combo
+box in the toolbar, which calls a subprogram whenever its value is
+changed. The documentation for the combo box indicates that the
+callback in this case takes two parameters:
+
+@itemize -
+@item The instance of the combo
+@item The current selection in the combo box
+@end itemize
+
+The first parameter is the instance of the combo box associated with
+the toolbar widget, and, as always in python, you can store your own
+data in the instance, as shown in the examples below.
+
+Here is the description of the various subprograms:
+
+@itemize @bullet
+@item Global subprograms
+These are standard subprograms, found outside class definitions. There
+is no implicit parameter in this case. However, if you need to pass
+data to such a subprogram, you need to use global variables
+
+@smallexample
+import GPS
+
+my_var = "global data"
+
+def on_changed (combo, choice):
+   global my_var
+   print "on_changed called: " + \
+      my_var + " " + combo.data + " " + choice
+
+combo=GPS.Toolbar().append \
+   ("name", label="Name", on_changed=on_changed)
+combo.data = "My own data"
+@end smallexample
+
+
+@item Unbound methods
+These are methods of a class. You do not specify, when you pass the
+method in parameter to the combo box, what instance should be passed
+as its first parameter. Therefore, there is no extra parameter either.
+
+Note however than whatever class the method is defined in, the first
+parameter is always an instance of the class documented in the GPS
+documentation (in this case a GPS.ToolbarEntry instance), not an
+instance of the current class.
+
+In this first example, since we do not have access to the instance of
+MyClass, we also need to store the global data as a class
+component. This is a problem if multiple instances of the class can
+be created.
+
+@smallexample
+import GPS
+class MyClass:
+   my_var = "global data"
+   def __init__ (self):
+      self.combo = GPS.Toolbar().append \
+         ("name", label="name", on_changed=MyClass.on_changed)
+      self.combo.data = "My own data"
+
+   def on_changed (combo, choice):
+      ## No direct access to the instance of MyClass.
+      print "on_changed called: " + \
+         MyClass.my_var + " " + combo.data + " " + choice
+
+MyClass()
+@end smallexample
+
+As the example above explains, there is no direct access to MyClass
+when executing on_changed. An easy workaround is the following, in
+which the global data can be stored in the instance of MyClass,
+and thus be different for each instance of MyClass.
+
+@smallexample
+import GPS
+class MyClass:
+   def __init__ (self):
+      self.combo = GPS.Toolbar().append \
+         ("name", label="name", on_changed=MyClass.on_changed)
+      self.combo.data = "My own data"
+      self.combo.myclass = self   ## Save the instance
+      self.my_var = "global data"
+
+   def on_changed (combo, choice):
+      print "on_changed called: " + \
+         combo.myclass.my_var + " " + combo.data + " " + choice
+
+MyClass()
+@end smallexample
+
+@item Bound methods
+The last example works as expected, but is not convenient to use. The
+solution here is to use a bound method, which is a method for a
+specific instance of a class. Such a method always has an extra first
+parameter, set implicitly by Python or GPS, which is the instance of
+the class the method is defined in.
+
+Notice the way we pass the method in parameter to append(), and the
+extra third argument to on_changed in the example below.
+
+@smallexample
+import GPS
+class MyClass:
+   def __init__ (self):
+      self.combo = GPS.Toolbar().append \
+         ("name", label="Name", on_changed=self.on_changed)
+      self.combo.data = "My own data"
+      self.my_var = "global data"
+
+   def on_changed (self, combo, choice):
+      # self is the instance of MyClass specified in call to append()
+      print "on_changed called: " + \
+         self.my_var + " " + combo.data + " " + choice
+
+MyClass()
+@end smallexample
+
+@end itemize
+
+
+@end ifset
+
+@end itemize
+
+
 @c ------------------------------------------------------------------------
 @ifset python
 @node Python FAQ
@@ -10400,55 +10584,6 @@ are correctly interpreted by tools such as @file{a2ps} which can be used
 to convert the text file into a postscript document.
 
 @end ifset
-
-@c --------------------------------------------------------------------
-@node Subprogram parameters
-@subsection Subprogram parameters
-@cindex subprogram parameters
-@c --------------------------------------------------------------------
-
-@noindent
-A few of the functions exported by GPS in the GPS shell or in python expect
-a subprogram as a parameter.
-
-This is handled in different ways depending on what language your are using:
-
-@itemize @bullet
-@item GPS shell
-
-It isn't possible to define new functions in the GPS shell. However, this
-concept is similar to the GPS actions (@pxref{Defining Actions}), which
-allow you to execute a set of commands and launch external processes.
-
-Therefore, a subprogram parameter in the GPS shell is a string, which is the
-name of the action to execute.
-
-For instance, the following code defines the action "on_edition", which is
-called every time a new file is edited. The action is defined in the shell itself, although this could be more conveniently done in a separate customization
-file.
-
-@smallexample
-parse_xml """<action name="on_edition"><shell>echo "File edited"</shell></action>"""
-Hook "file_edited"
-Hook.add %1 "on_edition"
-@end smallexample
-
-@ifset python
-
-Python of course has its own notion of subprogram, and GPS is fully compatible
-with it. As a result, the syntax is much more natural than in the GPS shell.
-The following example has the same result as above:
-
-@smallexample
-import GPS
-def on_edition(self, *arg):
-  print "File edited"
-GPS.Hook ("file_edited").add (on_edition)
-@end smallexample
-
-@end ifset
-
-@end itemize
 
 
 @c --------------------------------------------------------------------
