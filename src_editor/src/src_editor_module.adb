@@ -766,7 +766,10 @@ package body Src_Editor_Module is
                Node := First (The_Data.List);
 
                while Node /= Null_Node loop
-                  Put_Line (Reopen_File, Data (Node));
+                  if Data (Node) /= "" then
+                     Put_Line (Reopen_File, Data (Node));
+                  end if;
+
                   Node := Next (Node);
                end loop;
 
