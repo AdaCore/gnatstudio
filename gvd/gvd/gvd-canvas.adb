@@ -930,14 +930,16 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record)
    is
-      Top  : Main_Debug_Window_Access
-        := Main_Debug_Window_Access (Get_Toplevel (Item.Canvas));
-      View : GVD_Memory_View
-        := Top.Memory_View;
+      Top  : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access
+          (Debugger_Process_Tab (Item.Canvas.Process).Window);
+      View : constant GVD_Memory_View := Top.Memory_View;
+
    begin
       if not Visible_Is_Set (View) then
          Show_All (View);
       end if;
+
       Display_Memory (View, Item.Component_Name);
       Gdk_Raise (Get_Window (View));
    end View_Into_Memory;
