@@ -25,7 +25,7 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Vsearch; use Callbacks_Vsearch;
-with Vsearch_Intl; use Vsearch_Intl;
+with Glide_Intl; use Glide_Intl;
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
 
 package body Files_Extra_Info_Pkg is
