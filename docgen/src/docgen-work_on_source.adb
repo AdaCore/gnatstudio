@@ -406,6 +406,8 @@ package body Docgen.Work_On_Source is
    --  If Package_Description is set, empty lines between the comment lines
    --  will be ignored, the direction of the processing is always the same
    --  and it stops when the first command is found.
+   --
+   --  ??? Should use Entities.Get_Documentation instead to share code
 
    function Entity_Defined_In_Package
      (Entity_Info       : Entity_Information;
