@@ -2793,50 +2793,66 @@ package body Debugger.Gdb is
    is
       Error_String : constant String := "Cannot access memory at";
       Result       : String (1 .. Size * 2);
-      Image        : constant String := Integer'Image (Size);
+      Image        : constant String := Integer'Image (Size / 8);
       S            : constant String := Send
         (Debugger,
          "x/"
          & Image (Image'First + 1 .. Image'Last)
-         & "bx " & Address, Mode => Internal);
+         & "gx " & Address, Mode => Internal);
       S_Index      : Integer := S'First + 2;
       Last_Index   : Integer := S'First + 2;
       Result_Index : Integer := 1;
+      Last         : Integer := S'Last;
+
+      Endian       : Endian_Type := Get_Endian_Type (Debugger);
    begin
       --  Detect "Cannot access memory at ..."
+
       Skip_To_String (S, Last_Index, Error_String);
 
       if Last_Index <= S'Last - Error_String'Length then
-         while S_Index <= Last_Index loop
-            --  Detect actual data : 0xXX right after an ASCII.HT.
-            if S (S_Index) = '0' then
-               if S (S_Index - 1) = ASCII.HT then
-                  Result (Result_Index .. Result_Index + 1) :=
-                    S (S_Index + 2 .. S_Index + 3);
-                  Result_Index := Result_Index + 2;
-               end if;
-            end if;
-            S_Index := S_Index + 1;
-         end loop;
-         while Result_Index <= Result'Last loop
-            Result (Result_Index) := '-';
-            Result_Index := Result_Index + 1;
-         end loop;
-         return Result;
+         --  The error string was detected...
+
+         Last := Last_Index;
       end if;
 
-      while S_Index <= S'Last loop
-         --  Detect actual data : 0xXX right after an ASCII.HT.
+      while S_Index <= Last loop
+         --  Detect actual data : 0xXX... right after an ASCII.HT.
+
          if S (S_Index) = '0' then
             if S (S_Index - 1) = ASCII.HT then
-               Result (Result_Index .. Result_Index + 1) :=
-                 S (S_Index + 2 .. S_Index + 3);
-               Result_Index := Result_Index + 2;
+               Result (Result_Index .. Result_Index + 15) :=
+                 S (S_Index + 2 .. S_Index + 17);
+               Result_Index := Result_Index + 16;
             end if;
          end if;
 
          S_Index := S_Index + 1;
       end loop;
+
+      --  Fill the values that could not be accessed with "-".
+      while Result_Index <= Result'Last loop
+         Result (Result_Index) := '-';
+         Result_Index := Result_Index + 1;
+      end loop;
+
+      if Endian = Little_Endian then
+         --  We need to reverse the blocks.
+
+         for J in 1 .. Result'Length / 16 loop
+            declare
+               Block : String (1 .. 16)
+                 := Result (Result'First + (J - 1) * 16
+                            .. Result'First + J * 16 - 1);
+            begin
+               for K in 1 .. 8 loop
+                  Result (Result'First + (J - 1) * 16 + (K - 1) * 2
+                          .. Result'First + (J - 1) * 16 + K * 2 - 1)
+                    := Block (16 - K * 2 + 1 .. 16 - (K - 1) * 2);
+               end loop;
+            end;
+         end loop;
+      end if;
 
       return Result;
    end Get_Memory;
