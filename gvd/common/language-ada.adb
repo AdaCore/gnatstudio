@@ -418,6 +418,15 @@ package body Language.Ada is
          else
             return "";
          end if;
+
+      elsif Line'Length > 4 then
+         for J in Line'First .. Line'Last - 4 loop
+            if Line (J .. J + 3) = "--  " then
+               return Line (Line'First .. J - 1) & Line (J + 4 .. Line'Last);
+            end if;
+
+            exit when Line (J) /= ' ';
+         end loop;
       end if;
 
       return Line;
