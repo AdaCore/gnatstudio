@@ -713,7 +713,10 @@ package body Items.Simples is
          end if;
 
          Index_New := Index_New + 1;
-         Index_Old := Index_Old + 1;
+
+         if V /= null then
+            Index_Old := Index_Old + 1;
+         end if;
       end loop;
 
       if V /= null then
