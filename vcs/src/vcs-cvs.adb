@@ -24,7 +24,7 @@ with Gtk.Enums;
 
 with Gtkada.MDI;                  use Gtkada.MDI;
 
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;

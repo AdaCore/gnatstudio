@@ -26,7 +26,7 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Default_Preferences;      use Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
 with Glib.Xml_Int;             use Glib.Xml_Int;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties.Creation; use Glib.Properties.Creation;

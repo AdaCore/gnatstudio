@@ -30,7 +30,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Basic_Mapper;              use Basic_Mapper;
 with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with VFS;                       use VFS;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;

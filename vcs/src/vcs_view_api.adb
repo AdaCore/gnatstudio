@@ -30,7 +30,7 @@ with VCS;                         use VCS;
 with VCS.Unknown_VCS;             use VCS.Unknown_VCS;
 with VCS_View_Pkg;                use VCS_View_Pkg;
 
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;

@@ -30,7 +30,7 @@ with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with Histories;                use Histories;
 with Python.GUI;               use Python, Python.GUI;
 with Python.Ada;               use Python.Ada;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
 with Interactive_Consoles;     use Interactive_Consoles;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
