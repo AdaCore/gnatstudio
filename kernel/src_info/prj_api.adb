@@ -3392,7 +3392,7 @@ package body Prj_API is
 
       procedure Convert_In_Section (Node : Project_Node_Id) is
          Decl : Project_Node_Id := First_Declarative_Item_Of (Node);
-         Current, Item, Expr, Term, Str : Project_Node_Id;
+         Current, Item, Expr, Str : Project_Node_Id;
       begin
          while Decl /= Empty_Node loop
             Current := Current_Item_Node (Decl);
@@ -3406,22 +3406,40 @@ package body Prj_API is
 
                when N_Attribute_Declaration =>
                   if Get_Name_String (Prj.Tree.Name_Of (Current)) =
-                      Source_Dir_Attribute_Name
-                    or else Get_Name_String (Prj.Tree.Name_Of (Current)) =
-                      Object_Dir_Attribute_Name
+                    Source_Dir_Attribute_Name
                   then
-                     Expr := Expression_Of (Current);
+                     Expr := First_Expression_In_List
+                       (Current_Term (First_Term (Expression_Of (Current))));
                      while Expr /= Empty_Node loop
-                        Term := First_Term (Expr);
-                        Str := Current_Term (Term);
+                        Str := Current_Term (First_Term (Expr));
+                        Assert (Me, Kind_Of (Str) = N_Literal_String,
+                                "First term in src_dir isn't literal string");
 
-                        Set_Value (Current,
-                                   Normalize_Pathname
-                                   (Get_String (String_Value_Of (Str)),
-                                    Get_Name_String (Directory_Of (Project))));
+                        Start_String;
+                        Store_String_Chars
+                          (Normalize_Pathname
+                           (Get_String (String_Value_Of (Str)),
+                            Get_Name_String (Directory_Of (Project))));
+                        Set_String_Value_Of (Str, End_String);
 
                         Expr := Next_Expression_In_List (Expr);
                      end loop;
+
+
+                  elsif Get_Name_String (Prj.Tree.Name_Of (Current)) =
+                      Object_Dir_Attribute_Name
+                  then
+                     Expr := Expression_Of (Current);
+                     Str := Current_Term (First_Term (Expr));
+                     Assert (Me, Kind_Of (Str) = N_Literal_String,
+                             "First term in obj_dir isn't literal string");
+
+                     Start_String;
+                     Store_String_Chars
+                       (Normalize_Pathname
+                        (Get_String (String_Value_Of (Str)),
+                         Get_Name_String (Directory_Of (Project))));
+                     Set_String_Value_Of (Str, End_String);
                   end if;
 
                when others =>
