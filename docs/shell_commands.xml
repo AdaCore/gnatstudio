@@ -218,6 +218,10 @@ Optionally you can also pass the full contents of an XML file, starting from the
      <description>Dump in the file $HOME/.gps/db_dump the current contents of the cross-references database. This is intended for debugging purposes only</description>
   </shell_doc>
 
+  <shell_doc name="GPS.reset_xref_db">
+     <description>Reset the internal cross-reference database that GPS is using for most of its navigation facilities. You shouldn't have to call that yourself, since in general GPS should know by itself when it is necessary to refresh its database. However, this might be used as a workaround if you think you have troubles with the cross-reference information which isn't accurate.</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   GPS shell commands
     ###################################################################-->
