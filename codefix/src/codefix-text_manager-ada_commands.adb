@@ -542,7 +542,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Add_Indented_Line
         (New_Extract,
          Position,
-         "pragma " & This.Name.all & " (" & This.Argument.all & ")",
+         "pragma " & This.Name.all & " (" & This.Argument.all & ");",
          Current_Text);
    end Execute;
 
