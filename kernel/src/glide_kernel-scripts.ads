@@ -689,9 +689,12 @@ package Glide_Kernel.Scripts is
      (Instance : Class_Instance;
       Widget   : Gtk.Widget.Gtk_Widget);
    --  Set the data stored in the instance. The two are then closely
-   --  associated: When the instance is destroyed, the widget is unreferenced.
-   --  If the widget is destroyed, the instance will no longer be associated
-   --  with a widget.
+   --  associated: the instance will exist for the whole life of the widget,
+   --  and will always be used when that widget is referenced, so that users
+   --  can associated user data with the instance.
+   --  However, it is possible for the widget to be destroyed while the
+   --  instance is still in use. No protection exists or is desirable against
+   --  that.
 
    function Get_Instance
      (Widget   : access Gtk.Widget.Gtk_Widget_Record'Class)
