@@ -49,6 +49,7 @@ with Project_Explorers;
 with Project_Viewers;
 with Src_Editor_Module;
 with VCS_Module;
+with VCS.CVS;
 with Glide_Kernel.Help;
 with Vdiff_Module;
 
@@ -156,6 +157,7 @@ begin
 
    Aunit_Module.Register_Module;
    VCS_Module.Register_Module;
+   VCS.CVS.Register_Module;
    Metrics_Module.Register_Module;
    Browsers.Dependency_Items.Register_Module;
    Browsers.Projects.Register_Module;
