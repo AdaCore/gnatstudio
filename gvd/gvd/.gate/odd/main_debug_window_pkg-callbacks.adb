@@ -564,6 +564,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Refresh1_Activate;
 
+   -----------------------
+   -- On_Show1_Activate --
+   -----------------------
+
+   procedure On_Show1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Show1_Activate;
+
    ---------------------------
    -- On_Overview1_Activate --
    ---------------------------

@@ -549,6 +549,13 @@ begin
       Widget_Callback.To_Marshaller (On_Refresh1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Refresh1);
 
+   Gtk_New (Main_Debug_Window.Show1, -"Show");
+   Set_Right_Justify (Main_Debug_Window.Show1, False);
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Show1, "activate",
+      Widget_Callback.To_Marshaller (On_Show1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Show1);
+
    Gtk_New (Main_Debug_Window.Help1, -"Help");
    Set_Right_Justify (Main_Debug_Window.Help1, True);
    Add (Main_Debug_Window.Menubar1, Main_Debug_Window.Help1);

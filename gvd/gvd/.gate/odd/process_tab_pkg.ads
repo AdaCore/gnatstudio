@@ -12,20 +12,20 @@ package Process_Tab_Pkg is
 
    type Process_Tab_Record is new Gtk_Window_Record with record
       Process_Paned : Gtk_Vpaned;
-      Vpaned6 : Gtk_Vpaned;
-      Hpaned1 : Gtk_Hpaned;
-      Scrolledwindow13 : Gtk_Scrolled_Window;
+      Data_Editor_Paned : Gtk_Vpaned;
+      Data_Paned : Gtk_Hpaned;
+      Stack_Scrolledwindow : Gtk_Scrolled_Window;
       Stack_List : Gtk_Clist;
       Label101 : Gtk_Label;
       Label201 : Gtk_Label;
       Label202 : Gtk_Label;
       Label203 : Gtk_Label;
       Label204 : Gtk_Label;
-      Scrolledwindow12 : Gtk_Scrolled_Window;
+      Data_Scrolledwindow : Gtk_Scrolled_Window;
       Data_Canvas : Gtk_Viewport;
       Editor_Frame : Gtk_Frame;
       Editor_Text : Gtk_Hbox;
-      Scrolledwindow7 : Gtk_Scrolled_Window;
+      Command_Scrolledwindow : Gtk_Scrolled_Window;
       Debugger_Text : Gtk_Text;
    end record;
    type Process_Tab_Access is access all Process_Tab_Record'Class;

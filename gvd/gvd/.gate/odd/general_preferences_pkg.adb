@@ -415,12 +415,6 @@ begin
      Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Look_3d_Check, -"3D Look");
-   Set_Active (General_Preferences.Look_3d_Check, True);
-   Attach (General_Preferences.Table3, General_Preferences.Look_3d_Check, 0, 4, 3, 4,
-     Expand or Fill, 0,
-     0, 0);
-
    Gtk_New (General_Preferences.Label88, -("Item Name"));
    Set_Alignment (General_Preferences.Label88, 7.45058e-09, 0.5);
    Set_Padding (General_Preferences.Label88, 0, 0);
@@ -591,6 +585,18 @@ begin
    Set_Max_Length (General_Preferences.Combo_Entry17, 0);
    Set_Text (General_Preferences.Combo_Entry17, -"");
    Set_Visibility (General_Preferences.Combo_Entry17, True);
+
+   Gtk_New (General_Preferences.Look_3d_Check, -"3D Look");
+   Set_Active (General_Preferences.Look_3d_Check, True);
+   Attach (General_Preferences.Table3, General_Preferences.Look_3d_Check, 0, 2, 3, 4,
+     Expand or Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Separate_Data_Check, -"Separate Window");
+   Set_Active (General_Preferences.Separate_Data_Check, False);
+   Attach (General_Preferences.Table3, General_Preferences.Separate_Data_Check, 2, 4, 3, 4,
+     Fill, 0,
+     0, 0);
 
    Gtk_New (General_Preferences.Label_Data, -("Data"));
    Set_Alignment (General_Preferences.Label_Data, 0.5, 0.5);
