@@ -708,6 +708,7 @@ package body VCS_View_API is
 
       Ref := Get_Current_Ref (Context);
       Set_Current_Context (Explorer, Context);
+      Clear (Explorer);
 
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -718,7 +719,6 @@ package body VCS_View_API is
             String_List.Append (Dirs, Directory_Information (File));
             Status :=  Local_Get_Status (Ref, Dirs);
             String_List.Free (Dirs);
-            Clear (Explorer);
             Display_File_Status
               (Get_Kernel (Context), Status, Ref, False, True);
             File_Status_List.Free (Status);
@@ -1438,6 +1438,8 @@ package body VCS_View_API is
       Real_Query : Boolean;
       Recursive  : Boolean)
    is
+      pragma Unreferenced (Explorer);
+
       procedure Query_Status_For_Project (The_Project : Project_Id);
       --  Display the status for The_Project only.
 
@@ -1468,7 +1470,6 @@ package body VCS_View_API is
                File_Status_List.Append (Status, Current_Status);
             end loop;
 
-            Clear (Explorer);
             Display_File_Status (Kernel, Status, Ref, False, True);
             File_Status_List.Free (Status);
 
