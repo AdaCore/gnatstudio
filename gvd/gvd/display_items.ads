@@ -100,9 +100,10 @@ package Display_Items is
    --  stops to update the display items.
 
    procedure Recompute_All_Aliases
-     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class);
+     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
+      Recompute_Values : Boolean := True);
    --  Recompute all the aliases, and reparse the values for all the
-   --  displayed items.
+   --  displayed items if Recompute_Values is True
 
    function Update_On_Auto_Refresh
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;

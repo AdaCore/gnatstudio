@@ -68,14 +68,15 @@ package body Display_Items is
    Border_Spacing : constant Gint := 2;
    --  Space left on each side of the value
 
-   Xref_Color : constant String := "blue";
-   --  Color to use for the items that are clickable.
+   Xref_Color : constant String := "#0000FF";
+   --  Color to use for the items that are clickable (blue).
 
-   Title_Color : constant String := "grey";
-   --  Color to use for the background of the title.
+   Title_Color : constant String := "#BEBEBE";
+   --  Color to use for the background of the title (grey).
 
-   Change_Color : constant String := "red";
-   --  Color used to highlight fields that have changed since the last update.
+   Change_Color : constant String := "#FF0000";
+   --  Color used to highlight fields that have changed since the last update
+   --  (red).
 
    Look_3d : constant Boolean := True;
    --  Should the items have a 3d look ?
@@ -89,8 +90,14 @@ package body Display_Items is
    Value_Font_Name : constant String := "Helvetica";
    --  Font used to display the value of the item.
 
+   Type_Font_Name  : constant String := "Helvetica-Oblique";
+   --  Font used to display the type of the item.
+
    Value_Font_Size : constant Gint := 10;
    --  Size of the font used to display the value of the item.
+
+   Type_Font_Size : constant Gint := 9;
+   --  Size of the font used to display the type of the item..
 
    Num_Buttons : constant := 2;
    --  Number of buttons in the title bar.
@@ -113,6 +120,7 @@ package body Display_Items is
    Xref_GC    : Gdk.GC.Gdk_GC;
    Change_GC  : Gdk.GC.Gdk_GC;
    Font       : Gdk.Font.Gdk_Font;
+   Type_Font  : Gdk.Font.Gdk_Font;
    Title_Font : Gdk.Font.Gdk_Font;
    Refresh_Button_GC : Gdk.GC.Gdk_GC;
 
@@ -412,6 +420,7 @@ package body Display_Items is
          Gdk_New (Refresh_Button_GC, Win);
 
          Font := Get_Gdkfont (Value_Font_Name, Value_Font_Size);
+         Type_Font := Get_Gdkfont (Type_Font_Name, Type_Font_Size);
          Title_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Size);
 
          Create_From_Xpm_D
@@ -440,6 +449,7 @@ package body Display_Items is
                           Xref_GC     => Xref_GC,
                           Modified_GC => Change_GC,
                           Font        => Font,
+                          Type_Font   => Type_Font,
                           Mode        => Item.Mode),
          Hide_Big_Items => Hide_Big_Items);
       if not Get_Visibility (Item.Entity.all) then
@@ -451,6 +461,7 @@ package body Display_Items is
                              Xref_GC     => Xref_GC,
                              Modified_GC => Change_GC,
                              Font        => Font,
+                             Type_Font   => Type_Font,
                              Mode        => Item.Mode));
       end if;
 
@@ -643,6 +654,7 @@ package body Display_Items is
                              Xref_GC     => Xref_GC,
                              Modified_GC => Change_GC,
                              Font        => Font,
+                             Type_Font   => Type_Font,
                              Mode        => Item.Mode),
             X => Border_Spacing,
             Y => Title_Height + Border_Spacing);
@@ -675,6 +687,7 @@ package body Display_Items is
                           Xref_GC     => Xref_GC,
                           Modified_GC => Change_GC,
                           Font        => Font,
+                          Type_Font   => Type_Font,
                           Mode        => Item.Mode),
          X => Get_X (Component.all),
          Y => Get_Y (Component.all));
@@ -813,6 +826,7 @@ package body Display_Items is
                           Xref_GC     => Xref_GC,
                           Modified_GC => Change_GC,
                           Font        => Font,
+                          Type_Font   => Type_Font,
                           Mode        => Item.Mode),
          Hide_Big_Items => Hide_Big_Items);
 
@@ -830,6 +844,7 @@ package body Display_Items is
                              Xref_GC     => Xref_GC,
                              Modified_GC => Change_GC,
                              Font        => Font,
+                             Type_Font   => Type_Font,
                              Mode        => Item.Mode));
       end if;
 
@@ -1050,6 +1065,7 @@ package body Display_Items is
                              Xref_GC     => Xref_GC,
                              Modified_GC => Change_GC,
                              Font        => Font,
+                             Type_Font   => Type_Font,
                              Mode        => Item.Mode));
          Update_Display (Item);
          Item_Resized (Item.Debugger.Data_Canvas, Item);
@@ -1136,7 +1152,33 @@ package body Display_Items is
    -- Free --
    ----------
 
-   procedure Free (Item : access Display_Item_Record) is
+   procedure Free (Item : access Display_Item_Record)
+   is
+
+      function Free_Alias
+        (Canvas : access Interactive_Canvas_Record'Class;
+         It     : access Canvas_Item_Record'Class) return Boolean;
+      --  If It is an alias of Item, and it wasn't displayed explicitly
+      --  by the user, then remove it from the canvas as well.
+
+      ----------------
+      -- Free_Alias --
+      ----------------
+
+      function Free_Alias
+        (Canvas : access Interactive_Canvas_Record'Class;
+         It     : access Canvas_Item_Record'Class) return Boolean
+      is
+      begin
+         if Display_Item (It).Is_Alias_Of = Display_Item (Item)
+           and then Display_Item (It).Is_Dereference
+         then
+            Free (Display_Item (It));
+         end if;
+         return True;
+      end Free_Alias;
+
+      Canvas : Odd_Canvas := Item.Debugger.Data_Canvas;
    begin
       if Item.Debugger.Selected_Item = Canvas_Item (Item) then
          Item.Debugger.Selected_Item := null;
@@ -1145,8 +1187,16 @@ package body Display_Items is
       Free (Item.Entity);
       Free (Item.Name);
       Free (Item.Id);
-      Remove (Item.Debugger.Data_Canvas, Item);
+
+      --  Should recompute aliases (delete all the items that we aliased
+      --  to this one, since the user was probably expecting them not to be
+      --  visible any more).
+
+      For_Each_Item (Canvas, Free_Alias'Unrestricted_Access);
+      Remove (Canvas, Item);
       --  Warning: the memory has been freed after Remove.
+
+      Recompute_All_Aliases (Canvas, Recompute_Values => False);
    end Free;
 
    -------------------------
@@ -1372,7 +1422,8 @@ package body Display_Items is
    ---------------------------
 
    procedure Recompute_All_Aliases
-     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class)
+     (Canvas           : access Odd.Canvas.Odd_Canvas_Record'Class;
+      Recompute_Values : Boolean := True)
    is
       function Recompute_Sizes
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -1456,7 +1507,9 @@ package body Display_Items is
       end if;
 
       --  Then re-parse the value of each item and display them again.
-      For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
+      if Recompute_Values then
+         For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
+      end if;
 
       --  Now that everything has been redimensionned, we can finish to
       --  manipulate the aliases
