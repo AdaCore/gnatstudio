@@ -223,7 +223,7 @@ package Src_Editor_Box is
       End_Line     : Natural := 0;
       End_Column   : Natural := 0) return String;
    --  Return the text located between (Start_Line, Start_Column) and
-   --  (End_Line, End_Column).
+   --  (End_Line, End_Column). The first line is 1, the first column is 1.
    --  If End_Line = 0, contents until the end of the buffer will be retrieved.
    --
    --  The validity of both locations should be verified before invoking this

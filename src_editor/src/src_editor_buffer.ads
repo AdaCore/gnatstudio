@@ -179,7 +179,7 @@ package Src_Editor_Buffer is
       End_Line     : Gint := -1;
       End_Column   : Gint := -1) return String;
    --  Return the text located between (Start_Line, Start_Column) and
-   --  (End_Line, End_Column).
+   --  (End_Line, End_Column). The first line is 0, the first column is 0
    --  If End_Line = -1, contents are taken until the end of the buffer.
    --
    --  The validity of both start and end positions must be verified before
