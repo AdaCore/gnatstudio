@@ -456,6 +456,11 @@ package Src_Editor_Box is
      return Positive;
    --  Return the number of the last line in the file.
 
+   function Get_Buffer
+     (Editor : access Source_Editor_Box_Record)
+     return String;
+   --  Return the contents of the entire buffer.
+
    ---------------------
    -- Contextual menu --
    ---------------------
