@@ -138,7 +138,7 @@ package Debugger.Jdb is
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;
       File     : String;
-      Line     : Positive) return Boolean;
+      Line     : Positive) return Line_Kind;
 
 private
    type Jdb_Debugger is new Debugger.Debugger_Root with record

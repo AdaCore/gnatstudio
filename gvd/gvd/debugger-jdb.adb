@@ -437,9 +437,9 @@ package body Debugger.Jdb is
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;
       File     : String;
-      Line     : Positive) return Boolean is
+      Line     : Positive) return Line_Kind is
    begin
-      return False;
+      return No_More_Code;
    end Line_Contains_Code;
 
    --------------------
