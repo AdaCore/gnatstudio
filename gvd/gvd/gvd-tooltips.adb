@@ -211,7 +211,7 @@ package body GVD.Tooltips is
             Wa_Cursor and Wa_Wmclass
             and Wa_Colormap and Wa_Visual);
 
-         Set_Back_Pixmap (Tooltip.Display_Window, Pixmap, 0);
+         Set_Back_Pixmap (Tooltip.Display_Window, Pixmap, False);
          Get_Pointer (Tooltip.Parent_Window, X, Y, Mask, Window);
          Move (Tooltip.Display_Window, X + 10, Y + 10);
          Gdk.Pixmap.Unref (Pixmap);
