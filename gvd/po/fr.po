@@ -130,9 +130,6 @@ msgstr "Cliquer sur la colonne 'Act' pour changer le statut"
 msgid  "Clone"
 msgstr "Cloner"
 
-msgid  "Close "
-msgstr "Fermer "
-
 msgid  "Close"
 msgstr "Fermer"
 
@@ -711,6 +708,9 @@ msgstr "Changer la valeur de "
 
 msgid  "Set Value"
 msgstr "Affecter"
+
+msgid  "Set Value of "
+msgstr "Affecter "
 
 msgid  "Show"
 msgstr "Montrer"

@@ -130,9 +130,6 @@ msgstr "Click in the 'Enb' column to change the status"
 msgid  "Clone"
 msgstr "Clone"
 
-msgid  "Close "
-msgstr "Close "
-
 msgid  "Close"
 msgstr "Close"
 
@@ -711,6 +708,9 @@ msgstr "Setting value of "
 
 msgid  "Set Value"
 msgstr "Set Value"
+
+msgid  "Set Value of "
+msgstr "Set Value of "
 
 msgid  "Show"
 msgstr "Show"
