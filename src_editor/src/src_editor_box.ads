@@ -174,11 +174,14 @@ package Src_Editor_Box is
    --  of a given line always exists).
 
    procedure Set_Cursor_Location
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Positive;
-      Column : Positive := 1);
+     (Editor      : access Source_Editor_Box_Record;
+      Line        : Positive;
+      Column      : Positive := 1;
+      Force_Focus : Boolean  := True);
    --  Move the insert cursor to the given location. Success is set to False
    --  if the position is outside of the buffer.
+   --  If Force_Focus is False, then the editor will not grab the focus
+   --  before setting the cursor position.
    --
    --  The position must be verified before invoking this procedure. An invalid
    --  position leads to an Assertion_Failure when compiled with assertion
@@ -364,6 +367,9 @@ package Src_Editor_Box is
    --  On success, File_Decl, Line_Decl and Column_Decl are set to the location
    --  of the declaration of the entity. It is the responsibility of the
    --  caller to free the memory associated with File_Decl.
+
+   procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
+   --  Set the focus on the source view.
 
    ---------------------
    -- Contextual menu --

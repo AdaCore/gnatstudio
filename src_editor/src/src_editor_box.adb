@@ -498,6 +498,15 @@ package body Src_Editor_Box is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Get_Declaration_Info;
 
+   ----------------
+   -- Grab_Focus --
+   ----------------
+
+   procedure Grab_Focus (Editor : access Source_Editor_Box_Record) is
+   begin
+      Grab_Focus (Editor.Source_View);
+   end Grab_Focus;
+
    ------------------
    -- Draw_Tooltip --
    ------------------
@@ -1545,14 +1554,18 @@ package body Src_Editor_Box is
    -------------------------
 
    procedure Set_Cursor_Location
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive;
-      Column  : Positive := 1)
+     (Editor      : access Source_Editor_Box_Record;
+      Line        : Positive;
+      Column      : Positive := 1;
+      Force_Focus : Boolean  := True)
    is
       Buffer_Line  : constant Gint := To_Buffer_Line (Line);
       Buffer_Col   : constant Gint := To_Buffer_Column (Column);
    begin
-      Grab_Focus (Editor.Source_View);
+      if Force_Focus then
+         Grab_Focus (Editor.Source_View);
+      end if;
+
       Set_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
       Scroll_To_Cursor_Location (Editor.Source_View);
    end Set_Cursor_Location;
