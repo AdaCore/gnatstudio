@@ -23,11 +23,14 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Gtk;                       use Gtk;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
+with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Types;              use Gtkada.Types;
 with Pango.Enums;
@@ -1855,6 +1858,10 @@ package body Src_Editor_Buffer is
       Ask_User : Boolean := False) return Boolean
    is
       New_Timestamp : Timestamp;
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Widget;
+      Success : Boolean;
+      Line, Column : Gint;
    begin
       if Buffer.Filename /= null
         and then Buffer.Filename.all /= ""
@@ -1863,19 +1870,46 @@ package body Src_Editor_Buffer is
          New_Timestamp := To_Timestamp (File_Time_Stamp (Buffer.Filename.all));
 
          if New_Timestamp > Buffer.Timestamp then
-            if not Ask_User
-              or else Message_Dialog
-              (Msg         => Base_Name (Buffer.Filename.all)
-                 & (-" changed on disk. Really edit ?"),
-               Dialog_Type => Confirmation,
-               Buttons     => Button_Yes or Button_No,
-               Title       => -"File changed on disk",
-               Parent      => Get_Main_Window (Buffer.Kernel)) /= Button_Yes
-            then
+            if not Ask_User then
                return False;
             end if;
 
-            Buffer.Timestamp := New_Timestamp;
+            Dialog := Create_Gtk_Dialog
+              (Msg         => Base_Name (Buffer.Filename.all)
+                 & (-" changed on disk. Really edit ?"),
+               Dialog_Type => Confirmation,
+               Title       => -"File changed on disk",
+               Parent      => Get_Main_Window (Buffer.Kernel));
+
+            Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
+            Button := Add_Button (Dialog, Stock_No, Gtk_Response_No);
+            Button := Add_Button
+              (Dialog, Stock_Revert_To_Saved, Gtk_Response_Accept);
+
+            Show_All (Dialog);
+
+            case Run (Dialog) is
+               when Gtk_Response_Yes =>
+                  Buffer.Timestamp := New_Timestamp;
+
+               when Gtk_Response_No =>
+                  Destroy (Dialog);
+                  return False;
+
+               when Gtk_Response_Accept =>
+                  Get_Cursor_Position (Buffer, Line, Column);
+                  Load_File
+                    (Buffer,
+                     Filename        => Buffer.Filename.all,
+                     Lang_Autodetect => True,
+                     Success         => Success);
+                  Set_Cursor_Position (Buffer, Line, Column);
+
+               when others =>
+                  null;
+            end case;
+
+            Destroy (Dialog);
          end if;
       end if;
 
