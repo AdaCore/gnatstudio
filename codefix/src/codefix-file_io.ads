@@ -54,7 +54,7 @@ package Codefix.File_Io is
 
    type Errors_File is new Errors_Interface with private;
 
-   procedure Get_Message
+   procedure Get_Direct_Message
      (This    : in out Errors_File;
       Current : out Error_Message);
 
