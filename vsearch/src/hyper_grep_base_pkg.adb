@@ -52,7 +52,7 @@ procedure Initialize (Hyper_Grep_Base : access Hyper_Grep_Base_Record'Class) is
 
 begin
    Gtk.Window.Initialize (Hyper_Grep_Base, Window_Toplevel);
-   Set_Title (Hyper_Grep_Base, "Hyper grep");
+   Set_Title (Hyper_Grep_Base, "Visual Search");
    Set_Policy (Hyper_Grep_Base, False, True, False);
    Set_Position (Hyper_Grep_Base, Win_Pos_None);
    Set_Modal (Hyper_Grep_Base, False);

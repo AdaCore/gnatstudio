@@ -20,7 +20,7 @@
     <handler>on_Hyper_Grep_delete_event</handler>
     <last_modification_time>Fri, 13 Apr 2001 15:48:35 GMT</last_modification_time>
   </signal>
-  <title>Hyper grep</title>
+  <title>Visual Search</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
