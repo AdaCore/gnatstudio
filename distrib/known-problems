@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.4.0
 
+- C812-004 Searching doesn't take into account a selection in the File View
+  Problem:    When a file is selected in the File View, using the search dialog
+              will not look into this file but in open editors.
+  Workaround: Use the search mode "Files..." or manually open the file before
+              searching.
+
 - C502-014 Code fixing does not work on lines containing TABs.
   Problem:    When there are errors in a line containing tabulations, the
               automatic code fixing does not provide an icon to fix errors.
