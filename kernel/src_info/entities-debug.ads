@@ -4,7 +4,7 @@ package Entities.Debug is
    --  Dump the contents of the Db database to standard_output
 
    procedure Dump (Entity : Entity_Information; Full : Boolean; Name : String);
-   procedure Dump (File   : Source_File);
+   procedure Dump (File   : Source_File; Show_Entities : Boolean);
    procedure Dump (Loc    : File_Location);
 
 

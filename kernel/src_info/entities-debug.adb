@@ -45,13 +45,14 @@ package body Entities.Debug is
      (Files : access Files_HTable.HTable) return Source_File_Array;
    --  Sort the Files and return a sorted array
 
-   procedure Dump (Sorted_Files : Source_File_Array);
+   procedure Dump
+     (Sorted_Files : Source_File_Array; Show_Entities : Boolean);
    procedure Dump (LIs       : in out LI_HTable.HTable);
    procedure Dump
      (Entities : Entities_Tries.Trie_Tree; Full : Boolean; Name : String);
    procedure Dump (LI        : LI_File);
    procedure Dump (Timestamp : Ada.Calendar.Time);
-   procedure Dump (Files     : Source_File_List; Name : String);
+   procedure Dump (Files : Source_File_List; Name : String);
    procedure Dump (Files     : Dependency_List; Name : String);
    procedure Dump (E         : Entity_Information_List_Access);
    procedure Dump (Dep       : File_Dependency);
@@ -315,7 +316,7 @@ package body Entities.Debug is
    -- Dump --
    ----------
 
-   procedure Dump (File : Source_File) is
+   procedure Dump (File : Source_File; Show_Entities : Boolean) is
    begin
       Dump (Get_Filename (File));
       Put (' ');
@@ -332,7 +333,11 @@ package body Entities.Debug is
 
       Dump (File.Depends_On,  "depends_on");
       Dump (File.Depended_On, "depended_on");
-      Dump (File.Entities, Full => False, Name => "entities");
+
+      if Show_Entities then
+         Dump (File.Entities, Full => False, Name => "entities");
+      end if;
+
       Dump (File.All_Entities, Full => False, Name => "all_entities");
    end Dump;
 
@@ -405,7 +410,7 @@ package body Entities.Debug is
          function Lt (Op1, Op2 : Natural) return Boolean;
 
          procedure Xchg (Op1, Op2 : Natural) is
-            T : Source_File := Sorted (Op1);
+            T : constant Source_File := Sorted (Op1);
          begin
             Sorted (Op1) := Sorted (Op2);
             Sorted (Op2) := T;
@@ -433,11 +438,12 @@ package body Entities.Debug is
    -- Dump --
    ----------
 
-   procedure Dump (Sorted_Files : Source_File_Array) is
+   procedure Dump
+     (Sorted_Files : Source_File_Array; Show_Entities : Boolean) is
    begin
       Put_Line ("====== Source files =====");
       for F in Sorted_Files'Range loop
-         Dump (Sorted_Files (F));
+         Dump (Sorted_Files (F), Show_Entities);
       end loop;
    end Dump;
 
@@ -495,7 +501,7 @@ package body Entities.Debug is
               (Db.Files'Unrestricted_Access);
          begin
             Dump (Db.LIs);
-            Dump (Files);
+            Dump (Files, Show_Entities => False);
 
             if Db.Entities = Entities_Tries.Empty_Trie_Tree then
                Dump_Entities_From_Files (Files);
