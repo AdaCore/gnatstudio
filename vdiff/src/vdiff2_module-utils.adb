@@ -196,7 +196,6 @@ package body Vdiff2_Module.Utils is
       end loop;
 
       for J in 1 .. 3 loop
-
          if VOffset (J) > 0 then
             Put_Button
               (Kernel, Info, Conflict, J,
@@ -214,28 +213,32 @@ package body Vdiff2_Module.Utils is
                   VRange (J).Last, VStyle (J).all,
                   Offset_Max - VOffset (J)));
             VRange (J).Blank_Lines := new String'(Tmp.all);
+            Trace (Me, "VRange (J).Blank_Lines" & Tmp.all);
          end if;
 
          if VRange (J).Action = Delete then
-            VRange (J).Mark := Tmp;
+            if Tmp /= null then
+               VRange (J).Mark := new String'(Tmp.all);
+            end if;
          elsif J = Ref then
 
             if VRange (Other).Action = Append or
               VRange (Other2).Action = Append then
-               VRange (J).Mark := Tmp;
-
+               if Tmp /= null then
+                  VRange (J).Mark := new String'(Tmp.all);
+               end if;
             else
                VRange (J).Mark := new String'
                  (Mark_Diff_Block (Kernel, VFile (J),
                                    VRange (J).First));
-               Free (Tmp);
             end if;
          else
             VRange (J).Mark := new String'
               (Mark_Diff_Block (Kernel, VFile (J),
                                 VRange (J).First));
-            Free (Tmp);
+
          end if;
+         Free (Tmp);
       end loop;
    end Append;
 
@@ -287,22 +290,22 @@ package body Vdiff2_Module.Utils is
       Args : Argument_List (1 .. 1);
    begin
       if Link.Range1.Mark /= null then
+         Trace (Me, "Execute Goto_Difference1 : " & Link.Range1.Mark.all);
          Args := (1 => new String'(Link.Range1.Mark.all));
          Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
          Basic_Types.Free (Args);
-         Trace (Me, "Execute Goto_Difference1");
       end if;
       if Link.Range2.Mark /= null then
+         Trace (Me, "Execute Goto_Difference2 : " & Link.Range2.Mark.all);
          Args := (1 => new String'(Link.Range2.Mark.all));
          Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
          Basic_Types.Free (Args);
-         Trace (Me, "Execute Goto_Difference2");
       end if;
       if Link.Range3.Mark /= null then
          Args := (1 => new String'(Link.Range3.Mark.all));
          Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
          Basic_Types.Free (Args);
-         Trace (Me, "Execute Goto_Difference3");
+         Trace (Me, "Execute Goto_Difference3 : " & Link.Range3.Mark.all);
       end if;
    end Goto_Difference;
 
@@ -464,18 +467,35 @@ package body Vdiff2_Module.Utils is
          Curr_Chunk_Source := Data (Curr_Node_Source);
          Curr_Chunk_Dest := Data (Curr_Node_Dest);
 
-         Curr_Chunk_Dest.Range1.Mark :=
-           new String'(Curr_Chunk_Source.Range1.Mark.all);
-         Curr_Chunk_Dest.Range2.Mark :=
-           new String'(Curr_Chunk_Source.Range2.Mark.all);
-         Curr_Chunk_Dest.Range3.Mark :=
-           new String'(Curr_Chunk_Source.Range3.Mark.all);
-         Curr_Chunk_Dest.Range1.Blank_Lines :=
-           new String'(Curr_Chunk_Source.Range1.Blank_Lines.all);
-         Curr_Chunk_Dest.Range2.Blank_Lines :=
-           new String'(Curr_Chunk_Source.Range2.Blank_Lines.all);
-         Curr_Chunk_Dest.Range3.Blank_Lines :=
-           new String'(Curr_Chunk_Source.Range3.Blank_Lines.all);
+         if Curr_Chunk_Source.Range1.Mark /= null then
+            Curr_Chunk_Dest.Range1.Mark :=
+              new String'(Curr_Chunk_Source.Range1.Mark.all);
+         end if;
+
+         if Curr_Chunk_Source.Range2.Mark /= null then
+            Curr_Chunk_Dest.Range2.Mark :=
+              new String'(Curr_Chunk_Source.Range2.Mark.all);
+         end if;
+
+         if Curr_Chunk_Source.Range3.Mark /= null then
+            Curr_Chunk_Dest.Range3.Mark :=
+              new String'(Curr_Chunk_Source.Range3.Mark.all);
+         end if;
+
+         if Curr_Chunk_Source.Range1.Blank_Lines /= null then
+            Curr_Chunk_Dest.Range1.Blank_Lines :=
+              new String'(Curr_Chunk_Source.Range1.Blank_Lines.all);
+         end if;
+
+         if Curr_Chunk_Source.Range2.Blank_Lines /= null then
+            Curr_Chunk_Dest.Range2.Blank_Lines :=
+              new String'(Curr_Chunk_Source.Range2.Blank_Lines.all);
+         end if;
+
+         if Curr_Chunk_Source.Range3.Blank_Lines /= null then
+            Curr_Chunk_Dest.Range3.Blank_Lines :=
+              new String'(Curr_Chunk_Source.Range3.Blank_Lines.all);
+         end if;
 
          Curr_Node_Source := Next (Curr_Node_Source);
          Curr_Node_Dest := Next (Curr_Node_Dest);
@@ -565,45 +585,6 @@ package body Vdiff2_Module.Utils is
          Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
       end if;
    end Modify_Differences;
-
-   -----------------
-   -- Visual_Diff --
-   -----------------
-
-   procedure Visual_Diff
-     (File1 : Virtual_File;
-      File2 : Virtual_File;
-      File3 : Virtual_File := VFS.No_File)
-   is
-      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Result : Diff_List;
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-      Item   : Diff_Head;
-
-   begin
-      if File3 /= VFS.No_File then
-         Result := Diff3 (Id.Kernel, File1, File2, File3);
-      else
-         Result := Diff (Id.Kernel, File1, File2);
-      end if;
-
-      if Result = Diff_Chunk_List.Null_List then
-         Button := Message_Dialog
-           (Msg         => -"No differences found.",
-            Buttons     => Button_OK,
-            Parent      => Get_Main_Window (Id.Kernel));
-         return;
-      end if;
-
-      Item := (List => Result,
-               File1 => File1,
-               File2 => File2,
-               File3 => VFS.No_File,
-               Current_Node => First (Result),
-               Ref_File => 2);
-      Process_Differences (Id.Kernel, Item, Id.List_Diff);
-   end Visual_Diff;
 
    -------------------------
    -- Process_Differences --
@@ -736,7 +717,7 @@ package body Vdiff2_Module.Utils is
       Args_edit : Argument_List := (1 => new String'(Full_Name (Item.File1)));
 
    begin
-
+      Trace (Me, "Show_Differences");
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
       Args_edit := (1 => new String'(Full_Name (Item.File2)));
@@ -842,7 +823,7 @@ package body Vdiff2_Module.Utils is
          Show_Differences (Kernel, Item);
          return;
       end if;
-
+      Trace (Me, "Show_Differences3");
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
@@ -904,9 +885,10 @@ package body Vdiff2_Module.Utils is
    ---------------------
 
    procedure Show_Diff_Chunk
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item    : Diff_Head; Curr_Chunk : Diff_Chunk_Access;
-      Info    : T_VLine_Information)
+     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item       : Diff_Head;
+      Curr_Chunk : Diff_Chunk_Access;
+      Info       : T_VLine_Information)
    is
       Other   : T_Loc := 0;
       Other2  : T_Loc := 0;
@@ -1119,5 +1101,44 @@ package body Vdiff2_Module.Utils is
            (Kernel, "remove_blank_lines", Args);
       end if;
    end Unhighlight_Block;
+
+   -----------------
+   -- Visual_Diff --
+   -----------------
+
+   procedure Visual_Diff
+     (File1 : Virtual_File;
+      File2 : Virtual_File;
+      File3 : Virtual_File := VFS.No_File)
+   is
+      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
+      Result : Diff_List;
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+      Item   : Diff_Head;
+
+   begin
+      if File3 /= VFS.No_File then
+         Result := Diff3 (Id.Kernel, File1, File2, File3);
+      else
+         Result := Diff (Id.Kernel, File1, File2);
+      end if;
+
+      if Result = Diff_Chunk_List.Null_List then
+         Button := Message_Dialog
+           (Msg         => -"No differences found.",
+            Buttons     => Button_OK,
+            Parent      => Get_Main_Window (Id.Kernel));
+         return;
+      end if;
+
+      Item := (List => Result,
+               File1 => File1,
+               File2 => File2,
+               File3 => File3,
+               Current_Node => First (Result),
+               Ref_File => 2);
+      Process_Differences (Id.Kernel, Item, Id.List_Diff);
+   end Visual_Diff;
 
 end Vdiff2_Module.Utils;
