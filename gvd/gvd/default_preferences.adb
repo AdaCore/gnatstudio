@@ -697,6 +697,9 @@ package body Default_Preferences is
             Node := File.Child;
             if File.Tag.all = "Preferences" then
                Trace (Me, "Load old style preferences");
+               --  ??? Would be nice to save a copy of the preferences file
+               --  e.g. ~/.gps/preferences.bak for downward compatibility
+
                while Node /= null loop
                   Set_Pref (Manager => Manager,
                             Name    => Node.Tag.all,
