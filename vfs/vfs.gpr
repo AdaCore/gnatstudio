@@ -1,0 +1,16 @@
+with "../kernel/kernel";
+with "../shared";
+
+project VFS is
+
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        ("-fPIC", "-g", "-O2", "-gnata", "-gnaty", "-gnatwue");
+   end Compiler;
+
+   package IDE renames Shared.IDE;
+
+end VFS;
