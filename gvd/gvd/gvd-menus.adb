@@ -114,15 +114,15 @@ package body Odd.Menus is
       Canvas : Interactive_Canvas);
    --  Callback for the "align on grid" contextual menu item.
 
+   procedure Change_Detect_Aliases
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Canvas : Interactive_Canvas);
+   --  Callback for the "detect aliases" contextual menu item.
+
    procedure Change_Line_Nums
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Editor : Code_Editor);
    --  Callback for the "show line numbers" contextual menu item.
-
-   procedure Print_Locals
-     (Widget : access Gtk_Widget_Record'Class;
-      Var    : Variable_Record);
-   --  Callback for the "display locals" contextual menu item.
 
    procedure Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
@@ -150,6 +150,18 @@ package body Odd.Menus is
    begin
       Align_On_Grid (Canvas, Get_Active (Item));
    end Change_Align_On_Grid;
+
+   ---------------------------
+   -- Change_Detect_Aliases --
+   ---------------------------
+
+   procedure Change_Detect_Aliases
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Canvas : Interactive_Canvas)
+   is
+   begin
+      null;
+   end Change_Detect_Aliases;
 
    ----------------------
    -- Change_Line_Nums --
@@ -232,23 +244,6 @@ package body Odd.Menus is
       end if;
    end Print_Variable;
 
-   ------------------
-   -- Print_Locals --
-   ------------------
-
-   procedure Print_Locals
-     (Widget : access Gtk_Widget_Record'Class;
-      Var    : Variable_Record)
-   is
-      pragma Warnings (Off, Widget);
-
-      S : String :=
-        "graph display `" & Info_Locals (Var.Process.Debugger) & '`';
-   begin
-      Text_Output_Handler (Var.Process, S & ASCII.LF, Is_Command => True);
-      Process_User_Command (Var.Process, S);
-   end Print_Locals;
-
    --------------------------------
    -- Contextual_Background_Menu --
    --------------------------------
@@ -275,6 +270,15 @@ package body Odd.Menus is
            (Check, "activate",
             Check_Canvas_Handler.To_Marshaller (Change_Align_On_Grid'Access),
             Interactive_Canvas (Canvas));
+
+--           Gtk_New (Check, Label => -"Detect Aliases");
+--           Set_Always_Show_Toggle (Check, True);
+--           Set_Active (Check, Get_Detect_Aliases (Canvas));
+--           Append (Menu, Check);
+--           Check_Canvas_Handler.Connect
+--             (Check, "activate",
+--              Check_Canvas_Handler.To_Marshaller (Change_Detect_Aliases'Access),
+--              Interactive_Canvas (Canvas));
 
          Show_All (Menu);
          Menu_User_Data.Set (Canvas, Menu, Contextual_Background_Menu_Name);
@@ -377,16 +381,6 @@ package body Odd.Menus is
       if Entity'Length = 0 then
          Set_State (Mitem, State_Insensitive);
       end if;
-
-      Gtk_New (Mitem, Label => -"Display Locals");
-      Append (Menu, Mitem);
-      Widget_Variable_Handler.Connect
-        (Mitem, "activate",
-         Widget_Variable_Handler.To_Marshaller (Print_Locals'Access),
-         Variable_Record'(Name_Length  => 0,
-                          Name         => "",
-                          Auto_Refresh => True,
-                          Process      => Convert (Editor)));
 
       --  Display a separator
 
