@@ -224,12 +224,12 @@ package body Codefix.Text_Manager.Ada_Commands is
          Unchecked_Assign (Extract_Temp, New_Extract);
          Unchecked_Free (New_Extract);
 
-         Merge
+         Merge_Extracts
            (New_Extract,
             Extract_Temp,
             Data (Current_Extract),
-            Current_Text,
-            Merge_Success);
+            Merge_Success,
+            False);
 
          if not Merge_Success then
             raise Text_Manager_Error;
