@@ -136,6 +136,7 @@ cd gtk+-2.0.2
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
   --enable-debug=minimum
 
+# This should no longer be needed with Gtk+ 2.0.3 (to be verified):
 # in gdk-pixbuf/Makefile, remove libpixbufloader-static-tiff.la in
 # noinst_LTLIBRARIES.
 
