@@ -102,6 +102,13 @@ package Debugger is
    --  debugger. Call Wait_Prompt before exiting if Wait_For_Prompt is True.
    --  If Mode <= Hidden, then the output of the command won't be shown
    --  in the command window.
+   --  If Mode indicates a visible command, it is executed asynchronously,
+   --  otherwise it is executed synchronously, ie wait until we get the
+   --  prompt.
+   --  Cmd can contain multiple commands, separated by ASCII.LF. There are
+   --  sent in turn, waiting for the completion of each before executing the
+   --  next. Only the last command can be asynchronous (depending on Mode), all
+   --  the others are synchronous.
 
    function Send_Full
      (Debugger        : access Debugger_Root'Class;
@@ -689,6 +696,7 @@ package Debugger is
       Variable  : in String) return String is abstract;
    --  Returns the starting address for a given variable.
    --  The returned adress should be "0x" followed by an hexadecimal number.
+   --  Alternatively, it returns "" if no such variable is found.
 
 private
 

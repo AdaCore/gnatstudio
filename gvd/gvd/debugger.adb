@@ -473,7 +473,14 @@ package body Debugger is
       Mode             : Command_Type := Hidden)
    is
       Process : Debugger_Process_Tab;
+      Last    : Positive := Cmd'First;
+      First   : Positive;
    begin
+      --  ???Note: Handling of several commands inside the same string,
+      --  separated by ASCII.LF is just a temporary workaround for the
+      --  "start" command in C mode. This should be removed once we have
+      --  the command queue working.
+
       case Mode is
          when Invisible_Command =>
          --  Handle global lock
@@ -486,31 +493,56 @@ package body Debugger is
                return;
             end if;
 
-            Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+            while Last <= Cmd'Last loop
+               First := Last;
+               Skip_To_Char (Cmd, Last, ASCII.LF);
 
-            if Wait_For_Prompt then
-               Wait_Prompt (Debugger);
-               Send_Internal_Post (Debugger, Cmd, Mode);
-            end if;
+               Send_Internal_Pre
+                 (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
+
+               --  All commands, except possibly the last, must wait for the
+               --  prompt
+
+               if Wait_For_Prompt or else Last - 1 /= Cmd'Last then
+                  Wait_Prompt (Debugger);
+                  Send_Internal_Post (Debugger, Cmd (First .. Last - 1), Mode);
+               end if;
+               Last := Last + 1;
+            end loop;
 
          when Visible_Command =>
             if Command_In_Process (Get_Process (Debugger)) then
                return;
             end if;
 
-            Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+            while Last <= Cmd'Last loop
+               First := Last;
+               Skip_To_Char (Cmd, Last, ASCII.LF);
 
-            if Wait_For_Prompt then
-               Process := Convert (Debugger.Window, Debugger);
-               Process.Running_Command := new String' (Cmd);
-               Process.Input_Id := My_Input.Add
-                 (To_Gint
-                  (Get_Output_Fd
-                   (Get_Descriptor (Get_Process (Debugger)).all)),
-                  Gdk.Types.Input_Read,
-                  Output_Available'Access,
-                  My_Input.Data_Access (Process));
-            end if;
+               Send_Internal_Pre
+                 (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
+
+               --  All commands, except the last, are synchronous, and must
+               --  wait for the prompt
+
+               if Last - 1 /= Cmd'Last then
+                  Wait_Prompt (Debugger);
+                  Send_Internal_Post (Debugger, Cmd (First .. Last - 1), Mode);
+
+               elsif Wait_For_Prompt then
+                  Process := Convert (Debugger.Window, Debugger);
+                  Process.Running_Command := new String'
+                    (Cmd (First .. Last - 1));
+                  Process.Input_Id := My_Input.Add
+                    (To_Gint
+                     (Get_Output_Fd
+                      (Get_Descriptor (Get_Process (Debugger)).all)),
+                     Gdk.Types.Input_Read,
+                     Output_Available'Access,
+                     My_Input.Data_Access (Process));
+               end if;
+               Last := Last + 1;
+            end loop;
       end case;
    end Send;
 
