@@ -42,6 +42,8 @@ with Gtk.Text_Mark; use Gtk.Text_Mark;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
+with Gtkada.MDI; use Gtkada.MDI;
+
 package Src_Editor_View is
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record
@@ -126,6 +128,11 @@ package Src_Editor_View is
    --  them in a loop.
    --  When one editor is closed, all the other editors that were synchronized
    --  with it are no longer synchronized between themselves.
+
+   procedure Set_Child
+     (View  : access Source_View_Record;
+      Child : MDI_Child);
+   --  Inform View that it is being contained in Child.
 
 private
 
@@ -224,6 +231,9 @@ private
 
       Cursor_Position      : Gdouble := Gdouble'Last;
       --  Stores the cursor position relative to the screen.
+
+      Child                : MDI_Child := null;
+      --  The child that contains Editor.
    end record;
 
 end Src_Editor_View;
