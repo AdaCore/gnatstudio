@@ -119,21 +119,22 @@ package Docgen is
    --  sort the entities in alphabetical order by name,
    --  BUT all public entites stand in front of the private
 
-   type Info_Types is (Open_Info, Close_Info,
-                       Subtitle_Info, Exception_Info, Type_Info,
-                       Subprogram_Info, Header_Info, Footer_Info,
-                       With_Info, Package_Desc_Info,
-                       Unit_Index_Info, Type_Index_Info,
-                       Subprogram_Index_Info, End_Of_Index_Info,
-                       Index_Item_Info, Body_Line_Info, Var_Info,
-                       Package_Info, Entry_Info);
+   type Info_Types is
+     (Open_Info, Close_Info,
+      Subtitle_Info, Exception_Info, Type_Info,
+      Subprogram_Info, Header_Info, Footer_Info,
+      With_Info, Package_Desc_Info,
+      Unit_Index_Info, Type_Index_Info,
+      Subprogram_Index_Info, End_Of_Index_Info,
+      Index_Item_Info, Body_Line_Info, Var_Info,
+      Package_Info, Entry_Info);
    --  the structure used in the type Doc_Info.
 
    type Doc_Info;
 
    type Doc_Subprogram_Type is access
-        procedure (File      : in Ada.Text_IO.File_Type;
-                   Text_Type : in out Doc_Info);
+     procedure (File      : Ada.Text_IO.File_Type;
+                Text_Type : in out Doc_Info);
    --  the procedure to define for each new output format
 
 
