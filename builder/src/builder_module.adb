@@ -1064,6 +1064,7 @@ package body Builder_Module is
                Message       => -"Enter the command to run:",
                Check_Msg     => -"Use external terminal",
                Key           => "gps_run_cmd",
+               History       => Get_History (K),
                Button_Active => Active'Unchecked_Access);
 
          begin
