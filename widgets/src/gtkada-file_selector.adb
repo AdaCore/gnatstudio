@@ -156,6 +156,18 @@ package body Gtkada.File_Selector is
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  ???
 
+   procedure On_Idle_Destroy (Win : in out File_Selector_Window_Access);
+   --  Callback used to destroy the idle loop.
+
+   ---------------------
+   -- On_Idle_Destroy --
+   ---------------------
+
+   procedure On_Idle_Destroy (Win : in out File_Selector_Window_Access) is
+   begin
+      Idle_Remove (Win.Idle_Handler);
+   end On_Idle_Destroy;
+
    -------------------
    -- Get_Selection --
    -------------------
@@ -434,7 +446,9 @@ package body Gtkada.File_Selector is
 
          Win.Remaining_Files := First (Win.Files);
          Win.Idle_Handler
-           := Add (Display_File'Access, File_Selector_Window_Access (Win));
+           := Add (Display_File'Access,
+                   File_Selector_Window_Access (Win),
+                   Destroy => On_Idle_Destroy'Access);
 
          return False;
 
@@ -558,7 +572,9 @@ package body Gtkada.File_Selector is
          GNAT.Directory_Operations.Open (Win.Current_Directory_Id.all, Dir);
          Win.Current_Directory_Is_Open := True;
          Win.Idle_Handler
-           := Add (Read_File'Access, File_Selector_Window_Access (Win));
+           := Add (Read_File'Access,
+                   File_Selector_Window_Access (Win),
+                   Destroy => On_Idle_Destroy'Access);
 
       exception
          when Directory_Error =>
@@ -914,7 +930,6 @@ package body Gtkada.File_Selector is
          Set_Text (Win.Selection_Entry, "");
       end if;
 
-      Idle_Remove (Win.Idle_Handler);
       Main_Quit;
       Win.Own_Main_Loop := False;
 
@@ -937,8 +952,6 @@ package body Gtkada.File_Selector is
       Free (Win.Current_Directory_Id);
       Free (Win.Files);
       Free (Win.Filters);
-
-      Idle_Remove (Win.Idle_Handler);
 
       if Win.Own_Main_Loop then
          Main_Quit;
