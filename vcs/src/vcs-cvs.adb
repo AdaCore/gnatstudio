@@ -353,8 +353,10 @@ package body VCS.CVS is
                      S : constant String :=
                        String_List.Head (Current_Status.File_Name);
                   begin
-                     if S (S'First + New_Dir'Length
-                           .. S'First + New_Dir'Length + 7) = "no file "
+                     if S'Length > New_Dir'Length + 7
+                       and then S
+                         (S'First + New_Dir'Length
+                              .. S'First + New_Dir'Length + 7) = "no file "
                      then
                         Free (Current_Status.File_Name);
                         Append (Current_Status.File_Name,
@@ -375,6 +377,23 @@ package body VCS.CVS is
                  and then Line (Index .. Index + 9) =  "Up-to-date"
                then
                   Current_Status.Status := Up_To_Date;
+
+                  declare
+                     S : constant String :=
+                       String_List.Head (Current_Status.File_Name);
+                  begin
+                     if S'Length > New_Dir'Length + 7
+                       and then
+                         S (S'First + New_Dir'Length
+                                .. S'First + New_Dir'Length + 7) = "no file "
+                     then
+                        Free (Current_Status.File_Name);
+                        Append (Current_Status.File_Name,
+                                New_Dir &
+                                S (S'First + New_Dir'Length + 8 .. S'Last));
+                        Current_Status.Status := Removed;
+                     end if;
+                  end;
                elsif Last >= Index + 13
                  and then Line (Index .. Index + 13) = "Needs Checkout"
                then
