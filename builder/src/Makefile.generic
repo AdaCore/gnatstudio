@@ -36,6 +36,7 @@
 # C_SRCS        explicit list of C sources (optional)
 # CXX_SRCS      explicit list of C++ sources (optional)
 # OBJ_DIR       a single directory where object files should be put
+# EXEC_DIR      a single directory where executables should be put (optional)
 # LANGUAGES     a blank separated list of languages supported, e.g "ada c"
 #               the current list of recognized languages is: ada, c, c++
 # CC            name of the C compiler (optional)
@@ -93,6 +94,10 @@ endif
 
 ifndef GNATMAKE
    GNATMAKE=gnatmake
+endif
+
+ifeq ($(EXEC_DIR),)
+   EXEC_DIR=$(OBJ_DIR)
 endif
 
 # Set the object search path
@@ -238,9 +243,9 @@ endif
 
 ifeq ($(strip $(filter-out c c++,$(LANGUAGES))),)
 # link with C/C++
-link: $(OBJ_DIR)/$(EXEC)
-$(OBJ_DIR)/$(EXEC): $(OBJ_FILES)
-	$(LINKER) $(OBJ_FILES) -o $(OBJ_DIR)/$(EXEC) $(LDFLAGS)
+link: $(EXEC_DIR)/$(EXEC)
+$(EXEC_DIR)/$(EXEC): $(OBJ_FILES)
+	$(LINKER) $(OBJ_FILES) -o $(EXEC_DIR)/$(EXEC) $(LDFLAGS)
 
 internal-build: internal-compile link
 
@@ -377,8 +382,8 @@ internal-clean:
 	@echo $(RM) $(OBJ_DIR)/*.d
 	@$(RM) $(OBJ_DIR)/*.d
 ifneq ($(EXEC),)
-	@echo $(RM) $(OBJ_DIR)/$(EXEC)
-	@$(RM) $(OBJ_DIR)/$(EXEC)
+	@echo $(RM) $(EXEC_DIR)/$(EXEC)
+	@$(RM) $(EXEC_DIR)/$(EXEC)
 endif
 
 force:
