@@ -573,7 +573,7 @@ package body Glide_Result_View is
       if Category_Iter = Null_Iter then
          if Create then
             Append (View.Tree.Model, Category_Iter, Null_Iter);
-            Fill_Iter (View, Category_Iter, Category, VFS.No_File,
+            Fill_Iter (View, Category_Iter, Category_UTF8, VFS.No_File,
                        "", "", "", "", "", False, View.Category_Pixbuf);
             New_Category := True;
          else
