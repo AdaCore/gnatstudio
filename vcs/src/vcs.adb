@@ -75,17 +75,20 @@ package body VCS is
    ---------------------
 
    function Get_VCS_From_Id (Id : String) return VCS_Access is
-      Result : VCS_Access := null;
-      Temp   : Identifiers.List := Identifiers_List;
+      use Identifiers;
+
+      Result : VCS_Access;
+      Temp   : List_Node  := First (Identifiers_List);
+
    begin
-      while not Identifiers.Is_Empty (Temp) loop
-         Result := Identifiers.Head (Temp) (Id);
+      while Temp /= Null_Node loop
+         Result := Data (Temp) (Id);
 
          if Result /= null then
             return Result;
          end if;
 
-         Temp := Identifiers.Next (Temp);
+         Temp := Next (Temp);
       end loop;
 
       return Result;
