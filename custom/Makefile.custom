@@ -13,8 +13,8 @@ BASE_DIR=$(CUSTOM_BASE_DIR)/../gtkada
 include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(CUSTOM_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
-BASE_DIR=$(CUSTOM_BASE_DIR)/../gvd
-include $(BASE_DIR)/Makefile.gvd_common
+BASE_DIR=$(CUSTOM_BASE_DIR)/../common
+include $(BASE_DIR)/Makefile.common
 BASE_DIR=$(CUSTOM_BASE_DIR)/../widgets
 include $(BASE_DIR)/Makefile.widgets
 BASE_DIR=$(CUSTOM_BASE_DIR)/../prj_editor

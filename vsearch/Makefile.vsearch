@@ -11,8 +11,6 @@ VSEARCH_BASE_DIR := $(BASE_DIR)
 
 BASE_DIR=$(VSEARCH_BASE_DIR)/../gtkada
 include $(BASE_DIR)/Makefile.gtkada
-BASE_DIR=$(VSEARCH_BASE_DIR)/../gvd
-include $(BASE_DIR)/Makefile.gvd_common
 BASE_DIR=$(VSEARCH_BASE_DIR)/../common
 include $(BASE_DIR)/Makefile.common
 

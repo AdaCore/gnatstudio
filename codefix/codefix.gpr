@@ -1,5 +1,4 @@
 with "../kernel/kernel";
-with "../gvd/gvd_common";
 with "../common/common";
 with "../vdiff/vdiff";
 with "../shared";

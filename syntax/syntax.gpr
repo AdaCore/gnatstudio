@@ -1,4 +1,3 @@
-with "../gvd/gvd_common";
 with "../shared";
 
 project Syntax is

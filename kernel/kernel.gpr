@@ -2,7 +2,6 @@ with "../gnat";
 with "../gtkada/gtkada";
 with "../common/common";
 with "../widgets/widgets";
-with "../gvd/gvd_common";
 with "../shared";
 
 project Kernel is
