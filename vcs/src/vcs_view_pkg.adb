@@ -172,6 +172,7 @@ package body VCS_View_Pkg is
    procedure Clear (Explorer : VCS_View_Access) is
    begin
       if Explorer /= null then
+         Scroll_To_Point (Explorer.Tree, 0, 0);
          Clear (Explorer.Model);
          File_Status_List.Free (Explorer.Stored_Status);
       end if;
@@ -184,16 +185,14 @@ package body VCS_View_Pkg is
    procedure Refresh (Explorer : VCS_View_Access) is
       use File_Status_List;
 
-      L        : List_Node := First (Explorer.Stored_Status);
+      L        : List_Node;
       Iter     : Gtk_Tree_Iter;
       Success  : Boolean;
 
    begin
-      --  ??? Here we scroll manually to the beginning of the tree view,
-      --  otherwise the call to Clear removes entries one by one from the
-      --  top, causing the tree to flicker for a long time.
-      Scroll_To_Point (Explorer.Tree, 0, 0);
-      Clear (Explorer.Model);
+      Clear (Explorer);
+
+      L := First (Explorer.Stored_Status);
 
       while L /= Null_Node loop
          if not Explorer.Hide_Up_To_Date
