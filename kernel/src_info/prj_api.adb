@@ -187,9 +187,10 @@ package body Prj_API is
    --------------------
 
    function Create_Project (Name, Path : String) return Project_Node_Id is
-      D : constant String := Path & Name & Project_File_Extension;
+      D       : constant String := Path & Name & Project_File_Extension;
       Project : constant Project_Node_Id := Default_Project_Node (N_Project);
       Project_Name : Name_Id;
+
    begin
       --  Adding the name of the project
       Name_Len := Name'Length;
@@ -218,6 +219,7 @@ package body Prj_API is
          (Name => Project_Name,
           Node => Project,
           Extended => False));
+
       return Project;
    end Create_Project;
 
@@ -227,9 +229,8 @@ package body Prj_API is
 
    function Create_Variable
      (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
-      Kind : Variable_Kind := List)
-      return Project_Node_Id
+      Name       : String;
+      Kind       : Variable_Kind := List) return Project_Node_Id
    is
       Node : constant Project_Node_Id :=
         Default_Project_Node (N_Variable_Declaration, Kind);
@@ -242,6 +243,7 @@ package body Prj_API is
 
       Set_Next_Variable (Node, First_Variable_Of (Prj_Or_Pkg));
       Set_First_Variable_Of (Prj_Or_Pkg, Node);
+
       return Node;
    end Create_Variable;
 
@@ -251,10 +253,9 @@ package body Prj_API is
 
    function Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
+      Name       : String;
       Index_Name : String := "";
-      Kind : Variable_Kind := List)
-      return Project_Node_Id
+      Kind       : Variable_Kind := List) return Project_Node_Id
    is
       Node : constant Project_Node_Id :=
         Default_Project_Node (N_Attribute_Declaration, Kind);
@@ -270,6 +271,7 @@ package body Prj_API is
       end if;
 
       Add_At_End (Prj_Or_Pkg, Node);
+
       return Node;
    end Create_Attribute;
 
@@ -278,11 +280,10 @@ package body Prj_API is
    ---------------------------
 
    function Create_Typed_Variable
-     (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
-      Typ  : Project_Node_Id;
-      Add_Before_First_Case_Or_Pkg : Boolean := False)
-      return Project_Node_Id
+     (Prj_Or_Pkg                   : Project_Node_Id;
+      Name                         : String;
+      Typ                          : Project_Node_Id;
+      Add_Before_First_Case_Or_Pkg : Boolean := False) return Project_Node_Id
    is
       Node : constant Project_Node_Id :=
         Default_Project_Node (N_Typed_Variable_Declaration, Prj.Single);
@@ -296,6 +297,7 @@ package body Prj_API is
 
       Set_Next_Variable (Node, First_Variable_Of (Prj_Or_Pkg));
       Set_First_Variable_Of (Prj_Or_Pkg, Node);
+
       return Node;
    end Create_Typed_Variable;
 
@@ -305,8 +307,7 @@ package body Prj_API is
 
    function Create_Type
      (Prj_Or_Pkg : Project_Node_Id;
-      Name : String)
-      return Project_Node_Id
+      Name       : String) return Project_Node_Id
    is
       Node : Project_Node_Id;
    begin
@@ -315,6 +316,7 @@ package body Prj_API is
       Name_Buffer (1 .. Name_Len) := Name;
       Set_Name_Of (Node, Name_Find);
       Add_At_End (Prj_Or_Pkg, Node, True);
+
       return Node;
    end Create_Type;
 
@@ -328,10 +330,12 @@ package body Prj_API is
       pragma Assert (Kind_Of (Typ) = N_String_Type_Declaration);
 
       Str := First_Literal_String (Typ);
+
       while Str /= Empty_Node loop
          if String_Equal (String_Value_Of (Str), Choice) then
             return;
          end if;
+
          Str := Next_Literal_String (Str);
       end loop;
 
@@ -346,10 +350,12 @@ package body Prj_API is
 
    procedure Delete_Package (Project : Project_Node_Id; Pkg_Name : String) is
       Node, Next : Project_Node_Id;
-      Current : Project_Node_Id := Empty_Node;
+      Current    : Project_Node_Id := Empty_Node;
    begin
       --  Remove the package from the list
+
       Node := First_Package_Of (Project);
+
       if Node /= Empty_Node then
          if Get_Name_String (Prj.Tree.Name_Of (Node)) = Pkg_Name then
             Current := First_Package_Of (Project);
@@ -364,12 +370,14 @@ package body Prj_API is
                   Set_Next_Package_In_Project
                     (Node, Next_Package_In_Project (Next));
                end if;
+
                Node := Next;
             end loop;
          end if;
       end if;
 
       --  Remove the declaration from the list of decl. items
+
       if Current /= Empty_Node then
          Remove_Node (Project, Current);
       end if;
@@ -383,7 +391,7 @@ package body Prj_API is
      (Project : Project_Node_Id; Pkg : String) return Project_Node_Id
    is
       Pack : Project_Node_Id;
-      N : Name_Id;
+      N    : Name_Id;
    begin
       Name_Len := Pkg'Length;
       Name_Buffer (1 .. Name_Len) := Pkg;
@@ -392,10 +400,12 @@ package body Prj_API is
       --  Check if the package already exists
 
       Pack := First_Package_Of (Project);
+
       while Pack /= Empty_Node loop
          if Prj.Tree.Name_Of (Pack) = N then
             return Pack;
          end if;
+
          Pack := Next_Package_In_Project (Pack);
       end loop;
 
@@ -467,11 +477,13 @@ package body Prj_API is
             --  Check that the value is valid, and reuse the string_id.
             while Str /= Empty_Node loop
                String_To_Name_Buffer (String_Value_Of (Str));
+
                if Name_Buffer (Name_Buffer'First .. Name_Len) = Value then
                   Set_Expression
                     (Var, String_As_Expression (String_Value_Of (Str)));
                   return;
                end if;
+
                Str := Next_Literal_String (Str);
             end loop;
 
@@ -500,6 +512,7 @@ package body Prj_API is
       pragma Assert (Expression_Kind_Of (Var) = Prj.Single);
 
       --  Create the expression if required
+
       Ext := Default_Project_Node (N_External_Value, Single);
       Set_Expression (Var, Enclose_In_Expression (Ext));
 
@@ -522,7 +535,8 @@ package body Prj_API is
    --------------------
 
    procedure Set_Expression
-     (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id) is
+     (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id)
+   is
       E : Project_Node_Id;
    begin
       E := Expression_Of (Var_Or_Attribute);
@@ -546,14 +560,14 @@ package body Prj_API is
    -- Get_Environment --
    ---------------------
 
-   function Get_Environment (Var_Or_Attribute : Project_Node_Id)
-      return String_Id
+   function Get_Environment
+     (Var_Or_Attribute : Project_Node_Id) return String_Id
    is
       Ext : Project_Node_Id;
    begin
       --  ??? We do not correctly detect constructions like
-      --  ???    A : A_Type := "A" & external ("OS");
-      --  ??? The external reference must be by itself in the reference
+      --         A : A_Type := "A" & external ("OS");
+      --  The external reference must be by itself in the reference
 
       pragma Assert (Var_Or_Attribute /= Empty_Node);
 
@@ -592,6 +606,7 @@ package body Prj_API is
    function Next (Iter : String_List_Iterator) return String_List_Iterator is
    begin
       pragma Assert (Iter.Current /= Empty_Node);
+
       case Kind_Of (Iter.Current) is
          when N_Literal_String =>
             return (Current => Next_Literal_String (Iter.Current));
@@ -628,8 +643,8 @@ package body Prj_API is
    -- Type_Values --
    -----------------
 
-   function Type_Values (Var_Or_Type : Project_Node_Id)
-      return String_List_Iterator
+   function Type_Values
+     (Var_Or_Type : Project_Node_Id) return String_List_Iterator
    is
       Typ : Project_Node_Id := Var_Or_Type;
    begin
@@ -699,6 +714,7 @@ package body Prj_API is
 
       Term := First_Term (Expr);
       pragma Assert (Term = Empty_Node or else Kind_Of (Term) = N_Term);
+
       if Term = Empty_Node then
          if Kind_Of (Node) = N_Term then
             Set_Next_Term (Node, Empty_Node);
@@ -707,6 +723,7 @@ package body Prj_API is
             Term := Default_Project_Node (N_Term, Single);
             Set_Current_Term (Term, Node);
          end if;
+
          Set_First_Term (Expr, Term);
 
       else
@@ -907,6 +924,7 @@ package body Prj_API is
                return;
             end if;
          end loop;
+
          List (Current) := Var;
          Current := Current + 1;
       end Add_If_Not_In_List;
@@ -926,6 +944,7 @@ package body Prj_API is
          --  For all the packages and the common section
          while Pkg /= Empty_Node loop
             Var := First_Variable_Of (Pkg);
+
             while Var /= Empty_Node loop
                if Kind_Of (Var) = N_Typed_Variable_Declaration
                  and then Is_External_Variable (Var)
@@ -947,6 +966,7 @@ package body Prj_API is
       Count : Natural := 0;
       Curr  : Positive := 1;
       Iter : Imported_Project_Iterator := Start (Project, Parse_Imported);
+
    begin
       while Current (Iter) /= Empty_Node loop
          Count := Count + Count_Vars (Current (Iter));
@@ -962,6 +982,7 @@ package body Prj_API is
             Register_Vars (Current (Iter), List, Curr);
             Next (Iter);
          end loop;
+
          return List (1 .. Curr - 1);
       end;
    end Find_Scenario_Variables;
@@ -1014,6 +1035,7 @@ package body Prj_API is
             return J;
          end if;
       end loop;
+
       return No_Project;
    end Get_Project_View_From_Name;
 
@@ -1689,14 +1711,15 @@ package body Prj_API is
    ------------------------------
 
    function Find_Last_Declaration_Of
-     (Parent  : Project_Node_Id;
+     (Parent     : Project_Node_Id;
       Attr_Name  : Name_Id;
       Attr_Index : String := "") return Project_Node_Id
    is
       Decl, Expr : Project_Node_Id;
-      Result : Project_Node_Id := Empty_Node;
+      Result     : Project_Node_Id := Empty_Node;
    begin
       Decl := First_Declarative_Item_Of (Parent);
+
       while Decl /= Empty_Node loop
          Expr := Current_Item_Node (Decl);
 
@@ -1722,10 +1745,10 @@ package body Prj_API is
       Attribute_Index    : String := "";
       Prepend            : Boolean := False)
    is
-      Attribute_N : Name_Id;
-      List : Project_Node_Id := Empty_Node;
+      Attribute_N     : Name_Id;
+      List            : Project_Node_Id := Empty_Node;
       Pkg, Term, Expr : Project_Node_Id;
-      Rename_Prj : Project_Node_Id := Project;
+      Rename_Prj      : Project_Node_Id := Project;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -1840,10 +1863,10 @@ package body Prj_API is
       Attribute_Name     : Types.Name_Id;
       Attribute_Index    : String := "")
    is
-      Parent : Project_Node_Id;
-      Pkg  : Project_Node_Id := Empty_Node;
-      Node, Tmp : Project_Node_Id;
-      Case_Items : Project_Node_Array_Access :=
+      Parent          : Project_Node_Id;
+      Pkg             : Project_Node_Id := Empty_Node;
+      Node, Tmp       : Project_Node_Id;
+      Case_Items      : Project_Node_Array_Access :=
         new Project_Node_Array (1 .. 100);
       Case_Items_Last : Natural := Case_Items'First - 1;
 
@@ -1921,9 +1944,9 @@ package body Prj_API is
       Attribute_Index    : String := "")
    is
       Attribute_N : Name_Id;
-      Val : Project_Node_Id := Empty_Node;
-      Pkg : Project_Node_Id;
-      Rename_Prj : Project_Node_Id := Project;
+      Val         : Project_Node_Id := Empty_Node;
+      Pkg         : Project_Node_Id;
+      Rename_Prj  : Project_Node_Id := Project;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -4320,7 +4343,7 @@ package body Prj_API is
       Namet.Finalize;
       Stringt.Initialize;
 
-      --  ??? Should this be done very time we parse an ali file ?
+      --  ??? Should this be done every time we parse an ali file ?
       ALI.ALIs.Free;
       ALI.Units.Free;
       ALI.Withs.Free;
