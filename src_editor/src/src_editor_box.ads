@@ -105,6 +105,43 @@ package Src_Editor_Box is
       return Language.Language_Access;
    --  Return the current language.
 
+   procedure Set_Cursor_Location
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : Positive;
+      Column  : Positive := 1;
+      Success : out Boolean);
+   --  Move the insert cursor to the given location. Success is set to False
+   --  if the position is outside of the buffer.
+
+   procedure Get_Cursor_Location
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : out Positive;
+      Column  : out Positive);
+   --  Get the current cursor position.
+
+   procedure Highlight_Line
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : Positive;
+      Success : out Boolean);
+   --  Highlight the given line number. If another line was previously
+   --  highlighted, then restore this line unhighlighted.
+   --
+   --  If Line exceeds the number of lines in the buffer, no action is
+   --  performed and Success is set to False.
+
+   procedure Unhighlight_Line
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : Positive;
+      Success : out Boolean);
+   --  Restore the given line unhighlighted. If line exceeds the number
+   --  of lines in the buffer, no action is performed and Success is set
+   --  to False.
+
+   procedure Cancel_Highlight_Line
+     (Editor : access Source_Editor_Box_Record);
+   --  If a line in the given buffer is highlighted (from using
+   --  Highlight_Line), then restores this line un-highlighted.
+
 private
 
    type Source_Editor_Box_Record is record
