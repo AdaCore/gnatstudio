@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -60,7 +59,6 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -208,7 +206,7 @@ package body Src_Editor_Module is
    function Save_Function
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget;
-      Force  : Boolean := False) return Save_Return_Value;
+      Mode   : Save_Function_Mode) return Boolean;
    --  Save the text editor.
    --  If Force is False, then offer a choice to the user before doing so.
 
@@ -256,10 +254,6 @@ package body Src_Editor_Module is
    procedure On_Save_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Save As... menu
-
-   procedure On_Save_All_Editors
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Save All Editors menu
 
    procedure On_Save_All
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1003,22 +997,23 @@ package body Src_Editor_Module is
 
       elsif Command = "save" then
          declare
-            Force    : constant Boolean := Nth_Arg (Data, 1, Default => False);
+            Interactive : constant Boolean :=
+              Nth_Arg (Data, 1, Default => True);
             All_Save : constant Boolean := Nth_Arg (Data, 2, Default => True);
             Child    : MDI_Child;
          begin
             if All_Save then
-               if not Save_All_MDI_Children (Kernel, Force) then
+               if not Save_MDI_Children (Kernel, Force => not Interactive) then
                   Set_Error_Msg (Data, -"cancelled");
                end if;
             else
                Child := Find_Current_Editor (Kernel);
                if Child = null then
                   Set_Error_Msg (Data, -"no file selected");
-               else
-                  Set_Return_Value
-                    (Data, To_Lower (Save_Return_Value'Image
-                                     (Save_Child (Kernel, Child, False))));
+               elsif not Save_MDI_Children
+                 (Kernel, Children => (1 => Child), Force => not Interactive)
+               then
+                  Set_Error_Msg (Data, -"cancelled");
                end if;
             end if;
          end;
@@ -1333,11 +1328,14 @@ package body Src_Editor_Module is
       Params : Glib.Values.GValues) return Boolean
    is
       pragma Unreferenced (Params);
+      Kernel : constant Kernel_Handle :=
+        Get_Kernel (Source_Box (Widget).Editor);
    begin
       return Get_Ref_Count (Source_Box (Widget).Editor) = 1
-        and then Save_Function
-          (Get_Kernel (Source_Box (Widget).Editor), Gtk_Widget (Widget), False)
-        = Cancel;
+        and then Save_MDI_Children
+          (Kernel,
+           Children => (1 => Find_MDI_Child (Get_MDI (Kernel), Widget)),
+           Force => False);
 
    exception
       when E : others =>
@@ -1673,54 +1671,23 @@ package body Src_Editor_Module is
    function Save_Function
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget;
-      Force  : Boolean := False) return Save_Return_Value
+      Mode   : Save_Function_Mode) return Boolean
    is
+      pragma Unreferenced (Kernel);
       Success        : Boolean;
       Containing_Box : constant Source_Box := Source_Box (Child);
       Box            : constant Source_Editor_Box := Containing_Box.Editor;
-      Button         : Message_Dialog_Buttons;
-
    begin
-      if Force then
-         if Needs_To_Be_Saved (Box) then
-            Save_To_File (Box, Success => Success);
-         end if;
+      case Mode is
+         when Query =>
+            return Needs_To_Be_Saved (Box);
 
-      elsif Needs_To_Be_Saved (Box) then
-         Button := Message_Dialog
-           (Msg            =>
-              (-"Do you want to save file ")
-              & Full_Name (Get_Filename (Box)).all & " ?",
-            Dialog_Type    => Confirmation,
-            Buttons        =>
-              Button_Yes or Button_All or Button_No or Button_Cancel,
-            Default_Button => Button_Yes,
-            Parent         => Get_Main_Window (Kernel));
-
-         case Button is
-            when Button_Yes =>
+         when Action =>
+            if Needs_To_Be_Saved (Box) then
                Save_To_File (Box, Success => Success);
-
-               if Success then
-                  return Saved;
-               else
-                  return Cancel;
-               end if;
-
-            when Button_No =>
-               return Not_Saved;
-
-            when Button_All =>
-               Save_To_File (Box, Success => Success);
-               return Save_All;
-
-            when others =>
-               return Cancel;
-
-         end case;
-      end if;
-
-      return Saved;
+            end if;
+            return Success;
+      end case;
    end Save_Function;
 
    ------------------------
@@ -2195,7 +2162,7 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget, Ignore);
 
    begin
-      Ignore := Save_All_MDI_Children (Kernel, Force => True);
+      Ignore := Save_MDI_Children (Kernel, Force => False);
 
    exception
       when E : others =>
@@ -2240,8 +2207,10 @@ package body Src_Editor_Module is
       else
          --  Use helper
 
-         if Save_Child
-           (Kernel, Child, Get_Pref (Kernel, Auto_Save)) /= Cancel
+         if Save_MDI_Children
+           (Kernel,
+            Children => (1 => Child),
+            Force    => Get_Pref (Kernel, Auto_Save))
          then
             declare
                Cmd : Argument_List_Access := Argument_String_To_List
@@ -2255,24 +2224,6 @@ package body Src_Editor_Module is
          end if;
       end if;
    end On_Print;
-
-   -------------------------
-   -- On_Save_All_Editors --
-   -------------------------
-
-   procedure On_Save_All_Editors
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Ignore : Boolean;
-      pragma Unreferenced (Widget, Ignore);
-
-   begin
-      Ignore := Save_All_Editors (Kernel, Force => True);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Save_All_Editors;
 
    -------------
    -- Execute --
@@ -2469,7 +2420,7 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         if not Save_All_MDI_Children
+         if not Save_MDI_Children
            (Kernel, Force => Get_Pref (Kernel, Auto_Save))
          then
             return;
@@ -2763,7 +2714,7 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         if not Save_All_MDI_Children
+         if not Save_MDI_Children
            (Kernel, Force => Get_Pref (Kernel, Auto_Save))
          then
             return;
@@ -3262,9 +3213,6 @@ package body Src_Editor_Module is
                      GDK_S, Control_Mask, Ref_Item => -"Save...");
       Register_Menu (Kernel, File, -"Save _As...", Stock_Save_As,
                      On_Save_As'Access, Ref_Item => -"Save...");
-      Register_Menu (Kernel, Save, -"All _Editors", "",
-                     On_Save_All_Editors'Access, Sensitive => False,
-                     Ref_Item => -"Desktop");
       Register_Menu (Kernel, Save, -"_All", "",
                      On_Save_All'Access, Ref_Item => -"Desktop");
 
