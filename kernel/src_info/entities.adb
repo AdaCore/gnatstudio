@@ -18,17 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar; use Ada.Calendar;
+with Ada.Calendar;            use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
-with VFS;          use VFS;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with Projects;     use Projects;
-with Traces;       use Traces;
+with VFS;                     use VFS;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with Projects;                use Projects;
+with Traces;                  use Traces;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 with GNAT.Heap_Sort_G;
-with Namet;        use Namet;
-with Projects.Registry; use Projects.Registry;
-with File_Utils;   use File_Utils;
+with Namet;                   use Namet;
+with Projects.Registry;       use Projects.Registry;
+with File_Utils;              use File_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Entities is

@@ -89,7 +89,7 @@ package body GVD.Window_Settings is
    --------------------------
 
    procedure Load_Window_Settings
-     (File_Name         : String)
+     (File_Name : String)
    is
       Err : GNAT.OS_Lib.String_Access;
    begin

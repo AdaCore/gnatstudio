@@ -220,7 +220,7 @@ package body GVD.Main_Window is
    is
       use type Glib.Object.GObject;
 
-      Tab     : Visual_Debugger := Visual_Debugger (Debugger);
+      Tab : Visual_Debugger := Visual_Debugger (Debugger);
 
    begin
       if Debugger = null then

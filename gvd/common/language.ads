@@ -33,7 +33,7 @@ package Language is
    Unexpected_Type : exception;
 
    procedure Free (Lang : in out Language_Access);
-   --  Free the memory pointed to by Lang and set it to null.
+   --  Free the memory pointed to by Lang and set it to null
 
    ------------------------
    -- Types manipulation --

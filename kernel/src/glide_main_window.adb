@@ -40,12 +40,12 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Dialog;           use Gtk.Dialog;
-with Gtk.Label;            use Gtk.Label;
-with Gtk.Size_Group;       use Gtk.Size_Group;
-with Gtk.GEntry;           use Gtk.GEntry;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Size_Group;            use Gtk.Size_Group;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -491,7 +491,6 @@ package body Glide_Main_Window is
          Flags   => Param_Readable));
       Register_Property
         (Main_Window.Kernel, Param_Spec (Animated_Image_Small), -"General");
-
 
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
 
@@ -1102,12 +1101,12 @@ package body Glide_Main_Window is
       if Command.Mode = Notebook_Windows then
          Check_Interactive_Selection_Dialog
            (Get_MDI (Command.Kernel), null,
-            Move_To_Next => Command.Move_To_Next,
+            Move_To_Next            => Command.Move_To_Next,
             Visible_In_Central_Only => Command.Mode = Notebook_Windows);
       else
          Check_Interactive_Selection_Dialog
            (Get_MDI (Command.Kernel), Context.Event,
-            Move_To_Next => Command.Move_To_Next,
+            Move_To_Next            => Command.Move_To_Next,
             Visible_In_Central_Only => Command.Mode = Notebook_Windows);
       end if;
       return Success;

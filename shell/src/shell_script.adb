@@ -876,9 +876,9 @@ package body Shell_Script is
                --  Needs to be executed separately, or we wouldn't get output
                --  in Usage
                Ignored : constant String := Execute_GPS_Shell_Command
-                 (Kernel => Kernel,
+                 (Kernel  => Kernel,
                   Command => "Help.reset %2",
-                  Errors => Errors'Unchecked_Access);
+                  Errors  => Errors'Unchecked_Access);
                pragma Unreferenced (Ignored);
             begin
                Insert (-("Usage: ") & Nth_Arg (Data, 1) & ASCII.LF & Usage);

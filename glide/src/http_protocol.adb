@@ -248,11 +248,11 @@ package body HTTP_Protocol is
       ------------------
 
       function Parse_Header return Integer is
-         Line        : String (1 .. 20000);
-         Line_Index  : Natural;
-         Length      : Integer := -1;
-         C           : Character;
-         Ok          : Boolean := False;
+         Line       : String (1 .. 20000);
+         Line_Index : Natural;
+         Length     : Integer := -1;
+         C          : Character;
+         Ok         : Boolean := False;
       begin
          loop
             Line_Index := Line'First;

@@ -29,7 +29,7 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Handlers;
 with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
@@ -473,7 +473,7 @@ package body Task_Manager.GUI is
          View := Task_Manager_Interface (Manager.GUI);
       end if;
 
-      --  Clear the GUIs if there is need for a global refresh.
+      --  Clear the GUIs if there is need for a global refresh
 
       Need_GUI_Refresh := View /= null
         and then (Manager.Need_Global_Refresh or else View.Lines = null);
@@ -525,8 +525,8 @@ package body Task_Manager.GUI is
                Pack_End
                  (Manager.Progress_Area,
                   Manager.Queues (J).Bar,
-                  Expand => False,
-                  Fill   => True,
+                  Expand  => False,
+                  Fill    => True,
                   Padding => 0);
 
                Manager_Contextual_Menus.Contextual_Callback.Connect
@@ -557,10 +557,10 @@ package body Task_Manager.GUI is
      (Manager : Task_Manager_Access;
       Index   : Integer)
    is
-      Command  : Command_Access;
-      Progress : Progress_Record;
-      Length   : Natural;
-      View     : Task_Manager_Interface;
+      Command         : Command_Access;
+      Progress        : Progress_Record;
+      Length          : Natural;
+      View            : Task_Manager_Interface;
       Progress_String : String_Access;
       Name_String     : String_Access;
       Fraction        : Gdouble;
@@ -641,8 +641,7 @@ package body Task_Manager.GUI is
                Progress.Total := 1;
             end if;
 
-            Fraction := Gdouble (Progress.Current)
-              / Gdouble (Progress.Total);
+            Fraction := Gdouble (Progress.Current) / Gdouble (Progress.Total);
 
             if Manager.Queues (Index).Total > 1 then
                Fraction := (Fraction + Gdouble (Manager.Queues (Index).Done))
@@ -666,11 +665,11 @@ package body Task_Manager.GUI is
    procedure Set_Column_Types
      (View : access Task_Manager_Interface_Record'Class)
    is
-      Tree          : constant Tree_View := View.Tree;
-      Col           : Gtk_Tree_View_Column;
-      Text_Rend     : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
-      Dummy         : Gint;
+      Tree        : constant Tree_View := View.Tree;
+      Col         : Gtk_Tree_View_Column;
+      Text_Rend   : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
+      Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin

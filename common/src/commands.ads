@@ -49,41 +49,41 @@ package Commands is
 
    type Progress_Record is record
       Activity : Progress_Activity := Unknown;
-      --  The current activity type.
+      --  The current activity type
 
       Current  : Natural := 0;
-      --  The current progress indicator.
+      --  The current progress indicator
 
       Total    : Natural := 1;
-      --  The total progress indicator.
+      --  The total progress indicator
    end record;
 
    function Name (Command : access Root_Command) return String;
-   --  Gives a description of the command.
+   --  Gives a description of the command
 
    function Progress (Command : access Root_Command) return Progress_Record;
-   --  Return the current progress of the command.
+   --  Return the current progress of the command
 
    procedure Set_Progress
      (Command  : access Root_Command;
       Progress : Progress_Record);
-   --  Set the progress of Command.
+   --  Set the progress of Command
 
    type Command_Return_Type is
      (Success,
-      --  The command terminated with success.
+      --  The command terminated with success
 
       Failure,
-      --  The command terminated and failed.
+      --  The command terminated and failed
 
       Execute_Again,
-      --  The command should be executed again as soon as possible.
+      --  The command should be executed again as soon as possible
 
       Lower_Priority,
-      --  Same as Execute_Again, and lower the priority of the command.
+      --  Same as Execute_Again, and lower the priority of the command
 
       Raise_Priority
-      --  Same as Execute_Again, and raise the priority of the command.
+      --  Same as Execute_Again, and raise the priority of the command
       );
 
    function Execute
@@ -107,10 +107,10 @@ package Commands is
    --  called. See above for details.
 
    procedure Free (X : in out Root_Command);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    procedure Destroy (X : in out Command_Access);
-   --  Free memory associated with X.
+   --  Free memory associated with X
 
    -----------------------
    -- Alternate actions --
@@ -215,13 +215,13 @@ package Commands is
    Null_Command_Queue : constant Command_Queue;
 
    function New_Queue return Command_Queue;
-   --  Create a new empty Command_Queue.
+   --  Create a new empty Command_Queue
 
    procedure Free_Queue (Q : in out Command_Queue);
-   --  Free memory associated with Q.
+   --  Free memory associated with Q
 
    procedure Empty_Queue (Q : Command_Queue);
-   --  Free all done, undone and pending actions in Q.
+   --  Free all done, undone and pending actions in Q
 
    procedure Enqueue
      (Queue         : Command_Queue;
@@ -246,10 +246,10 @@ package Commands is
    --  Command_Queue_Record, below).
 
    procedure Undo (Queue : Command_Queue);
-   --  Undo one action from the queue.
+   --  Undo one action from the queue
 
    procedure Redo (Queue : Command_Queue);
-   --  Redo one action from the queue.
+   --  Redo one action from the queue
 
    function Undo_Queue_Empty (Queue : Command_Queue) return Boolean;
    function Redo_Queue_Empty (Queue : Command_Queue) return Boolean;
@@ -272,11 +272,11 @@ private
 
    function Get_Previous_Command (Queue : Command_Queue)
      return Command_Access;
-   --  Return the previous command that was executed.
+   --  Return the previous command that was executed
 
    function Get_Next_Command (Queue : Command_Queue)
      return Command_Access;
-   --  Return the next command to be executed.
+   --  Return the next command to be executed
 
    procedure Execute (Command : access Root_Command);
    --  Convenience subprogram: same as function Execute, but does not
@@ -292,8 +292,8 @@ private
 
    function Get_Queue_Change_Hook
      (Queue : Command_Queue)
-     return Command_Queues.List;
-   --  Return the queue change hook.
+      return Command_Queues.List;
+   --  Return the queue change hook
 
    type Command_Queue_Record is record
       Command_In_Progress : Boolean := False;

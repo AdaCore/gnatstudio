@@ -416,7 +416,8 @@ package body Browsers.Entities is
       pragma Unreferenced (Command);
       Child : constant MDI_Child :=
         Open_Type_Browser_Child (Get_Kernel (Context.Context));
-      Item : Type_Item;
+      Item  : Type_Item;
+      pragma Unreferenced (Item);
    begin
       Item := Add_Or_Select_Item
         (Browser => Type_Browser (Get_Widget (Child)),

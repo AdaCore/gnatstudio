@@ -139,8 +139,8 @@ private
 
       --  Graphical elements.
 
-      GUI                  : Gtk_Widget := null;
-      Progress_Area        : Gtk.Box.Gtk_Hbox   := null;
+      GUI                  : Gtk_Widget       := null;
+      Progress_Area        : Gtk.Box.Gtk_Hbox := null;
       Referenced_Command   : Integer := -1;
       --  The command currently referenced by the contextual menu.
       --  This is an index in Queues, set to <0 when the command is not valid

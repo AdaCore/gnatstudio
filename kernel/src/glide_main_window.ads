@@ -65,19 +65,19 @@ package Glide_Main_Window is
       Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
       Prefix_Directory : String);
-   --  Internal initialization function.
+   --  Internal initialization function
 
    procedure Register_Keys (Main_Window : access Glide_Window_Record'Class);
    --  Register the key bindings associated with the window
 
    function Anim_Cb (Kernel : Glide_Kernel.Kernel_Handle) return Boolean;
-   --  Function called when the GPS animation needs to be updated.
+   --  Function called when the GPS animation needs to be updated
 
    procedure Display_Default_Image (Kernel : Glide_Kernel.Kernel_Handle);
-   --  Display the default image in the top right corner of the main window.
+   --  Display the default image in the top right corner of the main window
 
    function GPS_Name (Window : access Glide_Window_Record) return String;
-   --  Return the name of this GPS release.
+   --  Return the name of this GPS release
 
    procedure Quit
      (Main_Window : access Glide_Window_Record'Class;
@@ -87,7 +87,7 @@ package Glide_Main_Window is
    --  Save the desktop if needed.
 
    procedure Load_Desktop (Window : access Glide_Window_Record'Class);
-   --  Load a saved desktop, if any, and create the console if needed.
+   --  Load a saved desktop, if any, and create the console if needed
 
    procedure Reset_Title
      (Window : access Glide_Window_Record;
