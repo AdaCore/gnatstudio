@@ -855,9 +855,29 @@ package body VCS_View_API is
 
    procedure On_Menu_Get_Status
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
+      Context : Selection_Context_Access)
+   is
+      File     : File_Name_Selection_Context_Access;
+      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Files    : String_List.List;
    begin
-      Get_Status (Widget, Get_Kernel (Context));
+      Open_Explorer (Get_Kernel (Context));
+
+      if Get_Creator (Context) = VCS_Module_ID then
+         Get_Status (Widget, Kernel);
+
+      elsif Context.all in File_Name_Selection_Context'Class then
+         File := File_Name_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) then
+            String_List.Append (Files,
+                                Directory_Information (File)
+                                & File_Information (File));
+
+            Get_Status (Get_Current_Ref (Kernel), Files);
+            String_List.Free (Files);
+         end if;
+      end if;
    end On_Menu_Get_Status;
 
    ------------------------
