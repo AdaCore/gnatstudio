@@ -1,15 +1,15 @@
-all : sn elbrus
+all : snsrc src
 
-sn :
-	cd snsrc && ./configure && make && make install
+snsrc :
+	$(MAKE) -C snsrc all install
 
-elbrus :
-	cd src && $(MAKE)
+src :
+	$(MAKE) -C src
 
 distclean : uninstall
-	rm -f Makefile config.cache include/config.h config.log config.status
-	cd src && $(MAKE) distclean
-	cd snsrc && $(MAKE) distclean
+	$(RM) Makefile config.cache include/config.h config.log config.status
+	$(MAKE) -C src distclean
+	$(MAKE) -C snsrc distclean
 
 uninstall :
 	rm -f include/cdefs.h include/db.h include/mpool.h \
@@ -17,4 +17,5 @@ uninstall :
 		bin/*browser bin/db* lib/lib*
 
 install :
-	cd src && $(MAKE) install
+
+.PHONY: snsrc src
