@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                    Copyright (C) 2003 - 2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -34,12 +34,14 @@ package Commands.Interactive is
    type Interactive_Command_Context is record
       Event   : Gdk.Event.Gdk_Event := null;
       Context : Glide_Kernel.Selection_Context_Access;
+      Dir     : GNAT.OS_Lib.String_Access;
       Args    : GNAT.OS_Lib.String_List_Access;
    end record;
 
    Null_Context : constant Interactive_Command_Context :=
      (Event   => null,
       Context => null,
+      Dir     => null,
       Args    => null);
 
    procedure Free (X : in out Interactive_Command_Context);
