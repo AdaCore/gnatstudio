@@ -73,7 +73,7 @@ package Codefix_Module is
    procedure Remove_Pixmap (Error : Error_Id);
    --  Remove from the location box the pixmap of the error.
 
-   Compilation_Category : constant String := "builder_results";
+   Compilation_Category : constant String := "Builder Results";
    Location_Button_Name : constant String := "Codefix";
 
 end Codefix_Module;
