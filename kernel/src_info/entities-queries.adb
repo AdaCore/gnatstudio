@@ -761,6 +761,7 @@ package body Entities.Queries is
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
                   File                  => File);
+         Next (Iter);
       else
          if Project = No_Project then
             --  Project not found ? We'll have to parse all projects, since
@@ -781,7 +782,7 @@ package body Entities.Queries is
                     (Glide_Language_Handler (File.Db.Lang),
                      Get_Filename (File)),
                   Total_Progress        => 0,
-                  Current_Progress      => 0,
+                  Current_Progress      => 1,
                   Dep_Index             => Dependency_Arrays.First,
                   File                  => File);
 
@@ -795,8 +796,6 @@ package body Entities.Queries is
             Project   => Current (Iter.Importing),
             Recursive => False);
       end if;
-
-      Next (Iter);
    end Find_Ancestor_Dependencies;
 
    --------------------------
