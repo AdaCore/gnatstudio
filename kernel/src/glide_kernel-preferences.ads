@@ -139,7 +139,7 @@ package Glide_Kernel.Preferences is
    Message_Highlight     : Param_Spec_Color;
    Error_Src_Highlight   : Param_Spec_Color;
    Warning_Src_Highlight : Param_Spec_Color;
-   Style_Src_Highlight  : Param_Spec_Color;
+   Style_Src_Highlight   : Param_Spec_Color;
    Search_Src_Highlight  : Param_Spec_Color;
    Show_Build_Progress   : Param_Spec_Boolean;
    File_Pattern          : Param_Spec_String;
