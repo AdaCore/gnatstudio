@@ -208,6 +208,7 @@ package Language is
    ----------------------
 
    type Casing_Type is (Unchanged, Upper, Lower, Mixed);
+   for Casing_Type'Size use Integer'Size;
    pragma Convention (C, Casing_Type);
    --  Casing used for identifiers and reserved words.
    --  Only relevant for case insensitive languages.
