@@ -410,6 +410,10 @@ package Entities is
      (Entity : Entity_Information) return Entity_Information;
    --  Return the type returned by a subprogram
 
+   function Get_Type_Of
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the type of the entity
+
    ----------------------
    -- Setting entities --
    ----------------------
