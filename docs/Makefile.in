@@ -1,5 +1,6 @@
 prefix = @prefix@
 docdir = $(prefix)/doc/glide2
+sharedir = $(prefix)/share/glide
 
 DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
@@ -64,6 +65,7 @@ endif
 
 install:
 	$(MKDIR) $(docdir)
+	$(MKDIR) $(sharedir)
 	$(MKDIR) $(docdir)/html
 	$(MKDIR) $(docdir)/info
 	$(MKDIR) $(docdir)/ps
@@ -76,6 +78,7 @@ install:
 	for img in $(IMAGES); do \
 	  $(INSTALL_DATA) $$img $(docdir)/html; \
 	done
+	-$(INSTALL_DATA) glide-animation.gif $(sharedir)
 
 clean-temp-files:
 	-$(RM) *.aux
