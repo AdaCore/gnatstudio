@@ -380,7 +380,6 @@ package body Custom_Combos is
 
             Append_Widget (Get_Toolbar (Kernel), Combo, Tooltip_Text => Title);
             Set_Return_Value (Data, EntInst);
---            Free (EntInst);
             Show_All (Combo);
          end;
       end if;
