@@ -38,7 +38,8 @@ package List_Select_Pkg is
    --
    --  See gvd-main_debug_window_pkg-callbacks.adb for an example.
 
-   type List_Select_Access is private;
+   type List_Select_Record is new Gtk_Window_Record with private;
+   type List_Select_Access is access all List_Select_Record'Class;
 
    procedure Gtk_New
      (List_Select : out List_Select_Access;
@@ -51,6 +52,14 @@ package List_Select_Pkg is
    --  Help_Message is the text that will be displayed when pressing Help
    --  (if Help_Message is left to "", then the Help button is not displayed.)
    --  Item_Label is the label on top of the first column in the list.
+
+   procedure Initialize
+     (List_Select   : access List_Select_Record'Class;
+      Title         : String;
+      Help_Message  : String;
+      Item_Label    : String;
+      Comment_Label : String);
+   --  Internal initialize procedure.
 
    procedure Add_Item
      (List_Select : List_Select_Access;
@@ -83,6 +92,4 @@ private
       Cancel         : Gtk_Button;
       Help           : Gtk_Button;
    end record;
-   type List_Select_Access is access all List_Select_Record'Class;
-
 end List_Select_Pkg;

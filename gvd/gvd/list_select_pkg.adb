@@ -33,12 +33,6 @@ with Gtkada.Types;              use Gtkada.Types;
 
 package body List_Select_Pkg is
 
-   -----------------------
-   -- Local subprograms --
-   -----------------------
-
-   procedure Initialize (List_Select : access List_Select_Record'Class);
-
    --------------
    -- Add_Item --
    --------------
@@ -49,8 +43,10 @@ package body List_Select_Pkg is
       Comment     : String)
    is
       Index : Gint;
+      Text  : Chars_Ptr_Array := Label + Comment;
    begin
-      Index := Append (List_Select.List, Label + Comment);
+      Index := Append (List_Select.List, Text);
+      Free (Text);
    end Add_Item;
 
    ----------------------
@@ -76,16 +72,15 @@ package body List_Select_Pkg is
    -- Show --
    ----------
 
-   function Show
-     (List_Select : List_Select_Access) return String
-   is
+   function Show (List_Select : List_Select_Access) return String is
       Dummy : Gint;
    begin
       Dummy := Columns_Autosize (List_Select.List);
       Show_All (List_Select);
       Gtk.Main.Main;
+
       declare
-         S : String := Get_Text (List_Select.The_Entry);
+         S : constant String := Get_Text (List_Select.The_Entry);
       begin
          Destroy (List_Select);
          return S;
@@ -101,35 +96,28 @@ package body List_Select_Pkg is
       Title         : String := "";
       Help_Message  : String := "";
       Item_Label    : String := "";
-      Comment_Label : String := "")
-   is
+      Comment_Label : String := "") is
    begin
       List_Select := new List_Select_Record;
-      List_Select.Help_Text := new String' (Help_Message);
-      List_Select_Pkg.Initialize (List_Select);
-
-      if Item_Label = ""
-        and then Comment_Label = ""
-      then
-         Column_Titles_Hide (List_Select.List);
-      else
-         Set_Column_Title (List_Select.List, 0, Item_Label);
-         Set_Column_Title (List_Select.List, 1, Comment_Label);
-      end if;
-
-      Gtk.Window.Set_Title (Gtk_Window (List_Select), Title);
+      List_Select_Pkg.Initialize
+        (List_Select, Title, Help_Message, Item_Label, Comment_Label);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (List_Select : access List_Select_Record'Class) is
+   procedure Initialize
+     (List_Select   : access List_Select_Record'Class;
+      Title         : String;
+      Help_Message  : String;
+      Item_Label    : String;
+      Comment_Label : String) is
    begin
       Gtk.Window.Initialize (List_Select, Window_Toplevel);
-      Set_Title (List_Select, -"");
+      List_Select.Help_Text := new String' (Help_Message);
+
       Set_Policy (List_Select, False, True, False);
-      Set_Position (List_Select, Win_Pos_None);
       Set_Modal (List_Select, True);
 
       Gtk_New_Vbox (List_Select.Vbox, False, 0);
@@ -139,20 +127,14 @@ package body List_Select_Pkg is
       Pack_Start (List_Select.Vbox, List_Select.Hbox, True, True, 15);
 
       Gtk_New (List_Select.Scrolledwindow);
-      Set_Policy (List_Select.Scrolledwindow,
-                  Policy_Automatic,
-                  Policy_Automatic);
-      Pack_Start (List_Select.Hbox,
-                  List_Select.Scrolledwindow,
-                  True,
-                  True,
-                  15);
-
+      Set_Policy
+        (List_Select.Scrolledwindow, Policy_Automatic, Policy_Automatic);
+      Pack_Start
+        (List_Select.Hbox, List_Select.Scrolledwindow, True, True, 15);
       Set_USize (List_Select.Scrolledwindow, -1, 250);
 
       Gtk_New (List_Select.List, 2);
       Set_Selection_Mode (List_Select.List, Selection_Single);
-      Set_Shadow_Type (List_Select.List, Shadow_In);
       Set_Show_Titles (List_Select.List, True);
       Set_Column_Width (List_Select.List, 0, 80);
       Set_Column_Width (List_Select.List, 1, 80);
@@ -161,17 +143,9 @@ package body List_Select_Pkg is
       Add_With_Viewport (List_Select.Scrolledwindow, List_Select.List);
 
       Gtk_New (List_Select.Label1);
-      Set_Alignment (List_Select.Label1, 0.5, 0.5);
-      Set_Padding (List_Select.Label1, 0, 0);
-      Set_Justify (List_Select.Label1, Justify_Center);
-      Set_Line_Wrap (List_Select.Label1, False);
       Set_Column_Widget (List_Select.List, 0, List_Select.Label1);
 
       Gtk_New (List_Select.Label2);
-      Set_Alignment (List_Select.Label2, 0.5, 0.5);
-      Set_Padding (List_Select.Label2, 0, 0);
-      Set_Justify (List_Select.Label2, Justify_Center);
-      Set_Line_Wrap (List_Select.Label2, False);
       Set_Column_Widget (List_Select.List, 1, List_Select.Label2);
 
       Gtk_New_Hbox (List_Select.Hbox2, False, 0);
@@ -180,7 +154,6 @@ package body List_Select_Pkg is
       Gtk_New (List_Select.The_Entry);
       Set_Editable (List_Select.The_Entry, True);
       Set_Max_Length (List_Select.The_Entry, 0);
-      Set_Text (List_Select.The_Entry, -"");
       Set_Visibility (List_Select.The_Entry, True);
       Pack_Start (List_Select.Hbox2, List_Select.The_Entry, True, True, 15);
       Entry_Callback.Connect
@@ -217,5 +190,13 @@ package body List_Select_Pkg is
          Add (List_Select.Hbuttonbox, List_Select.Help);
       end if;
 
+      if Item_Label = "" and then Comment_Label = "" then
+         Column_Titles_Hide (List_Select.List);
+      else
+         Set_Column_Title (List_Select.List, 0, Item_Label);
+         Set_Column_Title (List_Select.List, 1, Comment_Label);
+      end if;
+
+      Set_Title (List_Select, Title);
    end Initialize;
 end List_Select_Pkg;
