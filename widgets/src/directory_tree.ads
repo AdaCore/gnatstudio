@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -25,7 +25,7 @@
 --  The directories on the disk are read only when a directory is expanded.
 --
 --  All directories passed as parameter to this file should use either '/'
---  or GNAT.Os_Lib.Directory_Separator as a separator.
+--  or GNAT.OS_Lib.Directory_Separator as a separator.
 --  They must end with a directory separator.
 
 with Gdk.Pixmap;
@@ -87,7 +87,8 @@ package Directory_Tree is
    type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Directory_Selector is access all Directory_Selector_Record'Class;
 
-   No_Selection : GNAT.OS_Lib.Argument_List (1 .. 0) := (others => null);
+   No_Selection : constant GNAT.OS_Lib.Argument_List (1 .. 0) :=
+     (others => null);
 
    procedure Gtk_New
      (Selector             : out Directory_Selector;
@@ -150,12 +151,11 @@ private
       Idle      : Gtk.Main.Idle_Handler_Id;
    end record;
 
-   type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with
-      record
-         Directory : Dir_Tree;
-         List      : Gtk.Clist.Gtk_Clist;
-         Tree_Contextual_Menu : Gtk.Menu.Gtk_Menu;
-         List_Contextual_Menu : Gtk.Menu.Gtk_Menu;
-      end record;
+   type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
+      Directory : Dir_Tree;
+      List      : Gtk.Clist.Gtk_Clist;
+      Tree_Contextual_Menu : Gtk.Menu.Gtk_Menu;
+      List_Contextual_Menu : Gtk.Menu.Gtk_Menu;
+   end record;
 
 end Directory_Tree;
