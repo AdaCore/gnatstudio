@@ -317,6 +317,7 @@ package body Entities.Queries is
          Entity := null;
       else
          Source := Get_Source_Info (Handler, File_Name);
+
          Find_Declaration
            (Db, Source, Entity_Name, Line, Column, Entity, Status,
             Check_Decl_Only, Handler);
@@ -1443,12 +1444,11 @@ package body Entities.Queries is
                Info_For_Decl (T.Start_Line) := Enclosing_Entity;
             end if;
 
-
             if T.First_Child = null then
                Line := T.Start_Line;
             else
                Fill_Table
-                 (Tree             => Tree.First_Child,
+                 (Tree             => T.First_Child,
                   Line_Start       => T.Start_Line,
                   Enclosing_Entity => T.Entity,
                   Line_Last        => Line,
@@ -1590,11 +1590,13 @@ package body Entities.Queries is
                Line_Last        => Last,
                Info             => Line_Info,
                Info_For_Decl    => Info_For_Decl);
+
             Free (Tree);
 
 --              for L in Line_Info'Range loop
 --                 if Line_Info (L) /= null then
---                 Trace (Me, "Line" & L'Img & " " & Get_Name (Line_Info (L)));
+--                    Trace (Me, "Line" & L'Img & " "
+--                           & Get_Name (Line_Info (L)).all);
 --                 end if;
 --              end loop;
 
