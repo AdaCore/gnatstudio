@@ -277,10 +277,6 @@ package body Browsers.Projects is
 
       Process_Project (Project, Src);
 
-      Layout
-        (Get_Canvas (Browser), False,
-         Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));
-
       if Item_Was_Present then
          --  Need to select the item as well: this doesn't impact the
          --  contextual menus, since the item is already selected anyway, but
@@ -291,9 +287,10 @@ package body Browsers.Projects is
 
          Select_Item (Browser, Src, Refresh_Items => True);
          Show_Item (Get_Canvas (Browser), Src);
-      else
-         Refresh_Canvas (Get_Canvas (Browser));
       end if;
+
+      Layout (Browser, Force => False);
+      Refresh_Canvas (Get_Canvas (Browser));
 
       Pop_State (Kernel);
 
@@ -347,8 +344,7 @@ package body Browsers.Projects is
 
       Refresh (Dest);
 
-      Layout (Get_Canvas (Browser), False,
-              Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));
+      Layout (Browser, Force => False);
       Refresh_Canvas (Get_Canvas (Browser));
       Pop_State (Kernel);
 
@@ -495,7 +491,6 @@ package body Browsers.Projects is
         (Browser,
          Get_Pref (Kernel, Default_Widget_Width),
          Get_Pref (Kernel, Default_Widget_Height));
-      Set_Auto_Layout (Get_Canvas (Browser), False);
       return Browser;
    end Create_Project_Browser;
 

@@ -40,7 +40,6 @@ with Src_Info.Queries;         use Src_Info.Queries;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
@@ -480,9 +479,6 @@ package body Browsers.Call_Graph is
       Child_Browser := Open_Call_Graph_Browser (Kernel);
       Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
 
-      --  For efficiency, do not recompute the layout for each item
-      Set_Auto_Layout (Get_Canvas (Browser), False);
-
       Item := Add_Entity_If_Not_Present (Browser, Node);
 
       if Get_Right_Arrow (Item) then
@@ -510,11 +506,7 @@ package body Browsers.Call_Graph is
             Process_Item (Node);
          end if;
 
-         Set_Auto_Layout (Get_Canvas (Browser), True);
-         Layout
-           (Get_Canvas (Browser),
-            Force => False,
-            Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));
+         Layout (Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Browser));
       end if;
 
@@ -545,12 +537,7 @@ package body Browsers.Call_Graph is
       end Clean;
 
    begin
-      Set_Auto_Layout (Get_Canvas (Data.Browser), True);
-      Layout (Get_Canvas (Data.Browser),
-              Force => False,
-              Vertical_Layout =>
-                Get_Pref (Get_Kernel (Data.Browser),
-                          Browsers_Vertical_Layout));
+      Layout (Data.Browser, Force => False);
       Refresh_Canvas (Get_Canvas (Data.Browser));
       Clean;
 
@@ -673,9 +660,6 @@ package body Browsers.Call_Graph is
       --  Look for an existing item corresponding to entity
       Item := Add_Entity_If_Not_Present (Browser, Entity);
       Set_Left_Arrow (Item, False);
-
-      --  For efficiency, do not recompute the layout for each item
-      Set_Auto_Layout (Get_Canvas (Browser), False);
 
       --  If we have a renaming, add the entry for the renamed entity
       Renaming_Of (Kernel, Entity, Is_Renaming, Rename);

@@ -348,9 +348,6 @@ package body Browsers.Dependency_Items is
          return;
       end if;
 
-      --  For efficiency, do not recompute the layout for each item
-      Set_Auto_Layout (Get_Canvas (Browser), False);
-
       Initial := File_Item (Find_File (Browser, F));
       if Initial = null then
          Gtk_New (Initial, Browser, Kernel, F);
@@ -407,17 +404,12 @@ package body Browsers.Dependency_Items is
             Show_Item (Get_Canvas (Browser), Initial);
 
             Destroy (List);
-
-            if Recompute_Layout then
-               Set_Auto_Layout (Get_Canvas (Browser), True);
-               Layout (Get_Canvas (Browser),
-                       Force => False,
-                       Vertical_Layout =>
-                         Get_Pref (Kernel, Browsers_Vertical_Layout));
-            end if;
          end if;
       end if;
 
+      if Recompute_Layout then
+         Layout (Browser, Force => False);
+      end if;
       Refresh_Canvas (Get_Canvas (Browser));
       Pop_State (Kernel_Handle (Kernel));
 
@@ -449,12 +441,7 @@ package body Browsers.Dependency_Items is
 
    begin
       if Data.Recompute_Layout then
-         Set_Auto_Layout (Get_Canvas (Data.Browser), True);
-         Layout (Get_Canvas (Data.Browser),
-                 Force => False,
-                 Vertical_Layout =>
-                   Get_Pref (Get_Kernel (Data.Browser),
-                             Browsers_Vertical_Layout));
+         Layout (Data.Browser, Force => False);
       end if;
 
       Refresh_Canvas (Get_Canvas (Data.Browser));
@@ -553,9 +540,6 @@ package body Browsers.Dependency_Items is
       Set_Left_Arrow (Item, False);
       Refresh (Item);
 
-      --  For efficiency, do not recompute the layout for each item.
-      Set_Auto_Layout (Get_Canvas (Browser), False);
-
       Data := (Iter             => new Dependency_Iterator,
                Browser          => Browser,
                Item             => Item,
@@ -573,6 +557,7 @@ package body Browsers.Dependency_Items is
             null;
          end loop;
          Destroy_Idle (Data);
+         Layout (Browser);
          Refresh_Canvas (Get_Canvas (Browser));
       end if;
 
@@ -854,11 +839,7 @@ package body Browsers.Dependency_Items is
 
          --  Do the layout only once
 
-         Set_Auto_Layout (Get_Canvas (Browser), True);
-         Layout (Get_Canvas (Browser),
-                 Force => False,
-                 Vertical_Layout =>
-                   Get_Pref (Kernel,  Browsers_Vertical_Layout));
+         Layout (Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Browser));
 
          Trace (Me, "No more unexpanded items");
@@ -1077,17 +1058,11 @@ package body Browsers.Dependency_Items is
       if Other_File /= "" then
          Item := File_Item (Find_File (B, Other_File));
          if Item = null then
-            Set_Auto_Layout (Get_Canvas (B), False);
-
             Gtk_New (Item, B,  Get_Kernel (Context), Other_File);
             Put (Get_Canvas (B), Item);
             Refresh (Item);
 
-            Set_Auto_Layout (Get_Canvas (B), True);
-            Layout (Get_Canvas (B),
-                    Force => False,
-                    Vertical_Layout =>
-                      Get_Pref (Get_Kernel (B), Browsers_Vertical_Layout));
+            Layout (B, Force => False);
             Refresh_Canvas (Get_Canvas (B));
 
          end if;
