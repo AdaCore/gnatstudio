@@ -638,10 +638,20 @@ package body Src_Editor_Module is
                     (Source_Box
                        (Get_Widget (Mark_Record.Child)).Editor);
 
-                  Scroll_To_Mark
-                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                     Mark_Record.Mark,
-                     Mark_Record.Length);
+                  --  If the Length is null, we set the length to 1, otherwise
+                  --  the cursor is not visible.
+
+                  if Mark_Record.Length = 0 then
+                     Scroll_To_Mark
+                       (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                        Mark_Record.Mark, 1);
+                  else
+                     Scroll_To_Mark
+                       (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                        Mark_Record.Mark,
+                        Mark_Record.Length);
+                  end if;
+
                else
                   if Mark_Record.File /= null
                     and then Is_In_List
