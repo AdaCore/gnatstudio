@@ -31,8 +31,9 @@ package ALI_Parser is
 
 
 
-   procedure Update_ALI (LI : Entities.LI_File);
-   --  Re-parse the contents of the ALI file
+   function Update_ALI (LI : Entities.LI_File) return Boolean;
+   --  Re-parse the contents of the ALI file, and return True in case of
+   --  success.
    --  This program is made public for testing purposes only.
    --  Do not use directly.
 
