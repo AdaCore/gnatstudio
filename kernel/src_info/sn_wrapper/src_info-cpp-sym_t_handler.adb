@@ -29,6 +29,7 @@ begin
       --  parent type (do not mess with Parent_xxx in CType_Description)
 
       if Desc.Builtin_Name /= null then
+         Info (Identifier & ": typedef for " & Desc.Builtin_Name.all);
          --  parent type is a builtin type: use Predefined_Point
          --  ??? Builtin_Name is not used anywhere. We should
          --  use it (e.g. for a field like Predefined_Type_Name)
@@ -36,33 +37,45 @@ begin
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Global_LI_File,
             List              => Global_LI_File_List,
-            Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+            Symbol_Name       => Identifier,
             Source_Filename   =>
               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
-            Parent_Filename   => "",
             Parent_Location   => Predefined_Point,
             Kind              => Desc.Kind,
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
       else
-         Insert_Declaration
-           (Handler           => LI_Handler (Global_CPP_Handler),
-            File              => Global_LI_File,
-            List              => Global_LI_File_List,
-            Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Location          => Sym.Start_Position,
-            Parent_Filename   => Desc.Ancestor_Filename.all,
-            Parent_Location   => Desc.Ancestor_Point,
-            Kind              => Desc.Kind,
-            Scope             => Global_Scope,
-            Declaration_Info  => Decl_Info);
+         if Desc.Ancestor_Point /= Invalid_Point then
+            --  we know parent location
+            Insert_Declaration
+              (Handler           => LI_Handler (Global_CPP_Handler),
+               File              => Global_LI_File,
+               List              => Global_LI_File_List,
+               Symbol_Name       => Identifier,
+               Source_Filename   =>
+                 Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+               Location          => Sym.Start_Position,
+               Parent_Filename   => Desc.Ancestor_Filename.all,
+               Parent_Location   => Desc.Ancestor_Point,
+               Kind              => Desc.Kind,
+               Scope             => Global_Scope,
+               Declaration_Info  => Decl_Info);
+         else
+            --  parent location is unknown
+            Insert_Declaration
+              (Handler           => LI_Handler (Global_CPP_Handler),
+               File              => Global_LI_File,
+               List              => Global_LI_File_List,
+               Symbol_Name       => Identifier,
+               Source_Filename   =>
+                 Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+               Location          => Sym.Start_Position,
+               Kind              => Desc.Kind,
+               Scope             => Global_Scope,
+               Declaration_Info  => Decl_Info);
+         end if;
       end if;
-
    else
       --  could not get E_Kind for the original type
       Warn ("Typedef " & Identifier & ": original type not found");

@@ -491,6 +491,7 @@ package body Src_Info.CPP is
          or Type_Name = "short"      or Type_Name = "signed short"
       then
          Desc.Kind := Signed_Integer_Type;
+         Desc.Builtin_Name := new String' (Type_Name);
          Success := True;
       elsif Type_Name = "unsigned char"
          or Type_Name = "unsigned int"
@@ -725,12 +726,6 @@ package body Src_Info.CPP is
       --  typedef found, it is time to set Is_Typedef
       Desc.Is_Typedef := True;
 
-      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
-         Desc.Ancestor_Point    := Typedef.Start_Position;
-         Desc.Ancestor_Filename := new String' (Typedef.Buffer (
-                       Typedef.File_Name.First .. Typedef.File_Name.Last));
-      end if;
-
       --  lookup left side of the typedef in our type
       --  hash table
       Seek_Key  := new String'
@@ -743,8 +738,10 @@ package body Src_Info.CPP is
 
          --  Set parent type to ancestor type
          Desc.Parent_Point := Desc.Ancestor_Point;
-         --  we need a copy here
-         Desc.Parent_Filename := new String' (Desc.Ancestor_Filename.all);
+         if Desc.Ancestor_Filename /= null then
+            --  we need a copy here
+            Desc.Parent_Filename := new String' (Desc.Ancestor_Filename.all);
+         end if;
 
          Success   := True;
          Free (Typedef);
@@ -754,6 +751,12 @@ package body Src_Info.CPP is
       Type_Name_To_Kind (Typedef.Buffer (
               Typedef.Original.First .. Typedef.Original.Last),
               Desc, Success);
+
+      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+         Desc.Ancestor_Point    := Typedef.Start_Position;
+         Desc.Ancestor_Filename := new String' (Typedef.Buffer (
+                       Typedef.File_Name.First .. Typedef.File_Name.Last));
+      end if;
 
       if Success then
          --  parent type found (E_Kind is resolved)
