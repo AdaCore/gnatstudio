@@ -161,7 +161,6 @@ case "${host}" in
       *win32* )
 	machine=intel386 opsys=windows
 	STRIP_CR=True
-	ASYNC_COMMANDS=False
 	CAN_OUTPUT=False
 	LINK_SIZE=11
 	FONT_SIZE=14
@@ -215,4 +214,4 @@ AC_SUBST(MAKEINFO)
 AC_SUBST(TEXI2HTML)
 AC_SUBST(TEX)
 
-AC_OUTPUT(common/src/sdefault.adb docs/Makefile gvd/gvd/Makefile gvd/gvd/gvd.ads gvd/tests/Makefile gvd/tests/language/bin/Makefile gvd/gnat/Makefile gvd/pixmaps/Makefile gvd/po/Makefile gvd/docs/Makefile Makefile.common)
+AC_OUTPUT(Makefile.common common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads)

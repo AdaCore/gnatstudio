@@ -1869,7 +1869,6 @@ case "${host}" in
       *win32* )
 	machine=intel386 opsys=windows
 	STRIP_CR=True
-	ASYNC_COMMANDS=False
 	CAN_OUTPUT=False
 	LINK_SIZE=11
 	FONT_SIZE=14
@@ -1895,7 +1894,7 @@ opsysfile="\\\"system/${opsys}.h\\\""
   # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1899: checking for $ac_word" >&5
+echo "configure:1898: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PKG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1929,7 +1928,7 @@ else
 fi
 
   echo $ac_n "checking GTK prefix""... $ac_c" 1>&6
-echo "configure:1933: checking GTK prefix" >&5
+echo "configure:1932: checking GTK prefix" >&5
   GTK="gtk+-2.0"
   if test "$PKG_CONFIG" = "no" ; then
     GTK_PREFIX=unknown
@@ -1942,7 +1941,7 @@ echo "configure:1933: checking GTK prefix" >&5
   # Extract the first word of "gtkada-config", so it can be a program name with args.
 set dummy gtkada-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1946: checking for $ac_word" >&5
+echo "configure:1945: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GTK_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1977,7 +1976,7 @@ fi
 
   min_gtk_version=2.0.0
   echo $ac_n "checking for GtkAda - version >= $min_gtk_version""... $ac_c" 1>&6
-echo "configure:1981: checking for GtkAda - version >= $min_gtk_version" >&5
+echo "configure:1980: checking for GtkAda - version >= $min_gtk_version" >&5
   no_gtk=""
   if test "$GTK_CONFIG" = "no" ; then
     no_gtk=yes
@@ -1996,7 +1995,7 @@ echo "configure:1981: checking for GtkAda - version >= $min_gtk_version" >&5
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat > conftest.$ac_ext <<EOF
-#line 2000 "configure"
+#line 1999 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -2040,7 +2039,7 @@ main ()
 }
 
 EOF
-if { (eval echo configure:2044: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:2043: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
 then
   :
 else
@@ -2214,7 +2213,7 @@ done
 ac_given_srcdir=$srcdir
 ac_given_INSTALL="$INSTALL"
 
-trap 'rm -fr `echo "common/src/sdefault.adb docs/Makefile gvd/gvd/Makefile gvd/gvd/gvd.ads gvd/tests/Makefile gvd/tests/language/bin/Makefile gvd/gnat/Makefile gvd/pixmaps/Makefile gvd/po/Makefile gvd/docs/Makefile Makefile.common widgets/cschtml/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "Makefile.common common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads widgets/cschtml/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
@@ -2340,7 +2339,7 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"common/src/sdefault.adb docs/Makefile gvd/gvd/Makefile gvd/gvd/gvd.ads gvd/tests/Makefile gvd/tests/language/bin/Makefile gvd/gnat/Makefile gvd/pixmaps/Makefile gvd/po/Makefile gvd/docs/Makefile Makefile.common"}
+CONFIG_FILES=\${CONFIG_FILES-"Makefile.common common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
