@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 1.4.0
 
+- C822-014 Cross-references fail on Ada files with file-specific naming schemes
+  Problem:    If you are using Ada files with an irregular naming scheme (ie
+              you don't specificy a general way to compute the name of the
+              file, but have to specify the mapping unit<->file for each file),
+              then cross-references for specs without bodies and separate units
+              fail
+  Workaround: None known
+
 - C812-004 Searching doesn't take into account a selection in the File View
   Problem:    When a file is selected in the File View, using the search dialog
               will not look into this file but in open editors.
