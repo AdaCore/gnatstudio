@@ -11336,6 +11336,7 @@ Options:
    --debug[=program]   Start a debug session and optionally load the
                        program with the given arguments
    --debugger debugger Specify the debugger's command line
+   --host=tools_host   Use tools_host to launch tools (e.g. gdb)
    --target=TARG:PRO   Load program on machine TARG using protocol PRO
    --load=lang:file    Execute an external file written in the
                        language lang
