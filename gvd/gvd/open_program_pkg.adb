@@ -288,8 +288,10 @@ begin
 
 end Initialize;
 
-procedure Open_Program (Descriptor : out Program_Descriptor) is
-   Open  : Open_Program_Access;
+procedure Open_Program
+  (Open       : in out Open_Program_Access;
+   Descriptor : out Program_Descriptor)
+is
    Menu  : System.Address;
    Menu1 : Widget_List.Glist;
 
@@ -297,13 +299,16 @@ procedure Open_Program (Descriptor : out Program_Descriptor) is
    use type System.Address;
 
 begin
-   Gtk_New (Open);
+   if Open = null then
+      Gtk_New (Open);
+   end if;
+
    Show_All (Open);
    Gtk.Main.Main;
 
    if not Open.Valid then
       Descriptor.Launch := None;
-      Destroy (Open);
+      Hide (Open);
       return;
    end if;
 
@@ -337,7 +342,7 @@ begin
       Descriptor.Launch := Launch_Method'Succ (Descriptor.Launch);
    end loop;
 
-   Destroy (Open);
+   Hide (Open);
 end Open_Program;
 
 procedure Free (Descriptor : in out Program_Descriptor) is

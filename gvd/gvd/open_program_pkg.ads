@@ -62,9 +62,13 @@ package Open_Program_Pkg is
       Launch        : Launch_Method;
    end record;
 
-   procedure Open_Program (Descriptor : out Program_Descriptor);
+   procedure Open_Program
+     (Open       : in out Open_Program_Access;
+      Descriptor : out Program_Descriptor);
    --  Open a program window and launch a main loop until the ok or cancel
    --  button has been pressed.
+   --  Open if null is set to the created window, that is hidden on return.
+   --  If non null, Open_Program will show it instead of creating a new one.
    --  Return the program descriptor. If Launch is None,
    --  this means a cancellation from the user.
    --  Note that this is your responsibility to free the memory associated with
