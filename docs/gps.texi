@@ -7809,19 +7809,9 @@ following:
 This indicates the row of the frame that should contain the switch. See the
 description of @code{lines} above.
 
-@item line-span (default value is 1)
-This indicates how many rows the frame should span. If this is set to 0, then
-the frame is hidden from the user. See for instance the Ada or C switches
-editor.
-
 @item column (default value is 1)
 This indicates the column of the frame that should contain the switch. See the
 description of @code{columns} above.
-
-@item column-span (default value is 1)
-This indicates how many columns the frame should span. If this is set to 0,
-then the frame is hidden from the user. See for instance the Ada or C
-switches editor.
 
 @item label
 This is the label which is displayed in the graphical interface
@@ -7863,10 +7853,25 @@ Here are the valid children for @code{<switches>}:
 
 @table @code
 @item <title>
-This tag, which accepts the @code{line}, @code{column}, @code{line-span} and
-@code{column-span} attributes, is used to give a name to a specific frame.
-The value of the attribute is the title itself. You do not have to specify
+This tag, which accepts the @code{line} and @code{column} attributes, is used
+to give a name to a specific frame.
+The value of the tag is the title itself. You do not have to specify
 a name, and this can be left to an empty value.
+
+Extra attributes for @code{<title>} are:
+
+    @table @code
+    @item line-span (default value is 1)
+This indicates how many rows the frame should span. If this is set to 0, then
+the frame is hidden from the user. See for instance the Ada or C switches
+editor.
+
+    @item column-span (default value is 1)
+This indicates how many columns the frame should span. If this is set to 0,
+then the frame is hidden from the user. See for instance the Ada or C
+switches editor.
+    @end table
+
 
 @item <check>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch}
