@@ -132,7 +132,6 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
    procedure Highlight_Current_Line (Editor : access GEdit_Record) is
       Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
-
    begin
       if Editor.Debugger_Current_File = VFS.No_File then
          return;
@@ -190,15 +189,34 @@ package body GVD.Text_Box.Source_Editor.Glide is
       null;
    end Highlight_Word;
 
-   ----------------------------
-   -- Highlight_Current_Line --
-   ----------------------------
+   ------------------------------
+   -- Unhighlight_Current_Line --
+   ------------------------------
 
-   procedure Unhighlight_Current_Line (Editor : access GEdit_Record) is
+   procedure Unhighlight_Current_Line
+     (Editor  : access GEdit_Record;
+      Process : Glib.Object.GObject)
+   is
       Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Line   : constant Integer :=
+                 Get_Current_Source_Line (Visual_Debugger (Process));
+
    begin
       if Editor.Debugger_Current_File = VFS.No_File then
          return;
+      end if;
+
+      if Line /= 0 then
+         Add_Line_Information
+           (Kernel,
+            Editor.Debugger_Current_File,
+            "Current Line",
+            --  ??? we should get that from elsewhere.
+            new Line_Information_Array'
+              (Line => Line_Information_Record'
+                 (Text  => null,
+                  Image => Gdk.Pixbuf.Null_Pixbuf,
+                  Associated_Command => null)));
       end if;
 
       declare
