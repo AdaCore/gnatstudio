@@ -22,7 +22,6 @@
 --  See the package Items for more information on all the private subprograms.
 
 with Odd.Types;
-with Gdk.Font;
 
 package Items.Simples is
 
@@ -127,7 +126,7 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Simple_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
    function Get_Component_Name
      (Item : access Simple_Type;
@@ -179,7 +178,7 @@ private
                    Only_Value : Boolean := False);
    procedure Size_Request
      (Item           : in out Debugger_Output_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
    procedure Paint (Item    : in out Debugger_Output_Type;
                     Context : Drawing_Context;

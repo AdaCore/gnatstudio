@@ -21,7 +21,6 @@
 --  Items used for simple types, ie whose value is a simple string.
 --  See the package Items for more information on all the private subprograms.
 
-with Gdk.Font;
 with Items.Simples;
 with Items.Records;
 
@@ -88,7 +87,7 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Class_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Class_Type;
                                 Lang : access Language.Language_Root'Class;

@@ -21,8 +21,6 @@
 --  Items used for repeated types.
 --  See the package Items for more information on all the private subprograms.
 
-with Gdk.Font;
-
 package Items.Repeats is
 
    ------------
@@ -71,7 +69,7 @@ private
 
    procedure Size_Request
      (Item           : in out Repeat_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Repeat_Type;
                                 Lang : access Language.Language_Root'Class;

@@ -162,13 +162,13 @@ package body Items.Simples is
 
    procedure Size_Request
      (Item           : in out Simple_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
    begin
       if Item.Valid and then Item.Value /= null then
-         Item.Width  := Text_Width (Font, Item.Value.all);
-         Item.Height := Get_Ascent (Font) + Get_Descent (Font);
+         Item.Width  := Text_Width (Context.Font, Item.Value.all);
+         Item.Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
       else
          Item.Width := Unknown_Width;
          Item.Height := Unknown_Height;
@@ -517,7 +517,7 @@ package body Items.Simples is
 
    procedure Size_Request
      (Item           : in out Debugger_Output_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
       Num_Lines  : Gint := 1;
@@ -532,16 +532,19 @@ package body Items.Simples is
             if Item.Value (J) = ASCII.LF then
                Num_Lines := Num_Lines + 1;
                Width := Gint'Max
-                 (Width, Text_Width (Font, Item.Value (Line_Start .. J - 1)));
+                 (Width,
+                  Text_Width (Context.Font, Item.Value (Line_Start .. J - 1)));
                Line_Start := J + 1;
             end if;
          end loop;
 
          Item.Width := Gint'Max
            (Item.Width,
-            Text_Width (Font, Item.Value (Line_Start .. Item.Value'Last)));
+            Text_Width (Context.Font,
+                        Item.Value (Line_Start .. Item.Value'Last)));
             Item.Height :=
-              (Get_Ascent (Font) + Get_Descent (Font)) * Num_Lines;
+              (Get_Ascent (Context.Font) + Get_Descent (Context.Font))
+              * Num_Lines;
       else
          Item.Width := Unknown_Width;
          Item.Height := Unknown_Height;

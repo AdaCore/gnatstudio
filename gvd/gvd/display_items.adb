@@ -107,6 +107,7 @@ package body Display_Items is
    --  ??? Should get rid of these global variables.
    --  This could be done in a global initialization file, for all the
    --  graphic contexts we use in Odd.
+
    White_GC   : Gdk.GC.Gdk_GC;
    Grey_GC    : Gdk.GC.Gdk_GC;
    Black_GC   : Gdk.GC.Gdk_GC;
@@ -325,10 +326,22 @@ package body Display_Items is
       --  visible (and possibly recalculate the size).
 
       Size_Request
-        (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
+        (Item.Entity.all,
+         Drawing_Context'(Pixmap      => Pixmap (Item),
+                          GC          => Black_GC,
+                          Xref_GC     => Xref_GC,
+                          Modified_GC => Change_GC,
+                          Font        => Font),
+         Hide_Big_Items => Hide_Big_Items);
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity.all, True);
-         Size_Request (Item.Entity.all, Font);
+         Size_Request
+           (Item.Entity.all,
+            Drawing_Context'(Pixmap      => Pixmap (Item),
+                             GC          => Black_GC,
+                             Xref_GC     => Xref_GC,
+                             Modified_GC => Change_GC,
+                             Font        => Font));
       end if;
 
       Update_Display (Item);
@@ -601,7 +614,13 @@ package body Display_Items is
       --  and its children.
 
       Size_Request
-        (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
+        (Item.Entity.all,
+         Drawing_Context'(Pixmap      => Pixmap (Item),
+                          GC          => Black_GC,
+                          Xref_GC     => Xref_GC,
+                          Modified_GC => Change_GC,
+                          Font        => Font),
+         Hide_Big_Items => Hide_Big_Items);
 
       --  Make sure we don't hide the item, unless it was already hidden.
       --  It could have been hidden automatically if it is now too high.
@@ -610,7 +629,13 @@ package body Display_Items is
         and then Was_Visible
       then
          Set_Visibility (Item.Entity.all, True);
-         Size_Request (Item.Entity.all, Font);
+         Size_Request
+           (Item.Entity.all,
+            Drawing_Context'(Pixmap      => Pixmap (Item),
+                             GC          => Black_GC,
+                             Xref_GC     => Xref_GC,
+                             Modified_GC => Change_GC,
+                             Font        => Font));
       end if;
 
       Update_Display (Item);
@@ -828,7 +853,13 @@ package body Display_Items is
         and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
       then
          Set_Visibility (Component.all, not Get_Visibility (Component.all));
-         Size_Request (Item.Entity.all, Font);
+         Size_Request
+           (Item.Entity.all,
+            Drawing_Context'(Pixmap      => Pixmap (Item),
+                             GC          => Black_GC,
+                             Xref_GC     => Xref_GC,
+                             Modified_GC => Change_GC,
+                             Font        => Font));
          Update_Display (Item);
          Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
 

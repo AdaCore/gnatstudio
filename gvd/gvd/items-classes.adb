@@ -21,7 +21,6 @@
 with GNAT.IO;  use GNAT.IO;
 
 with Glib;         use Glib;
-with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
@@ -236,7 +235,7 @@ package body Items.Classes is
 
    procedure Size_Request
      (Item           : in out Class_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
@@ -251,7 +250,7 @@ package body Items.Classes is
       if Item.Visible then
          for A in Item.Ancestors'Range loop
             if Item.Ancestors (A) /= null then
-               Size_Request (Item.Ancestors (A).all, Font, Hide_Big_Items);
+               Size_Request (Item.Ancestors (A).all, Context, Hide_Big_Items);
 
                --  If we don't have an null record
                if Item.Ancestors (A).Height /= 0 then
@@ -262,7 +261,7 @@ package body Items.Classes is
             end if;
          end loop;
 
-         Size_Request (Item.Child.all, Font, Hide_Big_Items);
+         Size_Request (Item.Child.all, Context, Hide_Big_Items);
 
          Total_Width := Gint'Max (Total_Width, Item.Child.Width) + Left_Border;
          Item.Child.Width := Total_Width;

@@ -22,7 +22,6 @@
 --  See the package Items for more information on all the private subprograms.
 
 with Odd.Types;
-with Gdk.Font;
 with Unchecked_Deallocation;
 
 package Items.Records is
@@ -155,7 +154,7 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Record_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Record_Type;
                                 Lang : access Language.Language_Root'Class;

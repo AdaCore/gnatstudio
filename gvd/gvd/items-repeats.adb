@@ -200,7 +200,7 @@ package body Items.Repeats is
 
    procedure Size_Request
      (Item           : in out Repeat_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
@@ -209,11 +209,13 @@ package body Items.Repeats is
          Item.Width := Unknown_Width;
          Item.Height := Unknown_Height;
       else
-         Size_Request (Item.Value.all, Font, Hide_Big_Items);
+         Size_Request (Item.Value.all, Context, Hide_Big_Items);
          Item.Width :=
-           Item.Value.Width + Text_Width (Font, Str) + 2 * Border_Spacing;
+           Item.Value.Width + Text_Width (Context.Font, Str)
+           + 2 * Border_Spacing;
          Item.Height :=
-           Gint'Max (Item.Value.Height, Get_Ascent (Font) + Get_Descent (Font))
+           Gint'Max (Item.Value.Height,
+                     Get_Ascent (Context.Font) + Get_Descent (Context.Font))
            + 2 * Border_Spacing;
       end if;
    end Size_Request;

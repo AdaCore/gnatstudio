@@ -500,7 +500,7 @@ package body Items.Records is
 
    procedure Size_Request
      (Item           : in out Record_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
@@ -533,15 +533,16 @@ package body Items.Records is
             --  not a variant part ?
 
             if Item.Fields (F).Value /= null then
-               Size_Request (Item.Fields (F).Value.all, Font, Hide_Big_Items);
+               Size_Request
+                 (Item.Fields (F).Value.all, Context, Hide_Big_Items);
 
                Total_Width  :=
                  Gint'Max (Total_Width, Item.Fields (F).Value.Width);
 
                --  Keep at least enough space to print the field name
-               Item.Fields (F).Value.Height :=
-                 Gint'Max (Item.Fields (F).Value.Height,
-                           Get_Ascent (Font) + Get_Descent (Font));
+               Item.Fields (F).Value.Height := Gint'Max
+                 (Item.Fields (F).Value.Height,
+                  Get_Ascent (Context.Font) + Get_Descent (Context.Font));
                Total_Height := Total_Height + Item.Fields (F).Value.Height;
             end if;
 
@@ -549,7 +550,7 @@ package body Items.Records is
 
             if Item.Fields (F).Variant_Part /= null then
                for V in Item.Fields (F).Variant_Part'Range loop
-                  Size_Request (Item.Fields (F).Variant_Part (V).all, Font,
+                  Size_Request (Item.Fields (F).Variant_Part (V).all, Context,
                                 Hide_Big_Items);
 
                   Total_Width  := Gint'Max
@@ -567,10 +568,11 @@ package body Items.Records is
            + (Item.Fields'Length - 1) * Line_Spacing;
 
          if Largest_Name = null then
-            Item.Gui_Fields_Width := Text_Width (Font, String' (" => "));
+            Item.Gui_Fields_Width :=
+              Text_Width (Context.Font, String' (" => "));
          else
             Item.Gui_Fields_Width :=
-              Text_Width (Font, Largest_Name.all & " => ");
+              Text_Width (Context.Font, Largest_Name.all & " => ");
          end if;
 
          --  Keep enough space for the border (Border_Spacing on each side)

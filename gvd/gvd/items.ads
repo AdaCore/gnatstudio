@@ -110,7 +110,7 @@ package Items is
 
    procedure Size_Request
      (Item           : in out Generic_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
       is abstract;
    --  Compute the size that Item needs to display itself on the screen.

@@ -618,7 +618,7 @@ package body Items.Arrays is
 
    procedure Size_Request
      (Item           : in out Array_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
@@ -644,13 +644,14 @@ package body Items.Arrays is
          Item.Index_Width := 20;  --  minimal width
          if Item.Values /= null then
             for V in Item.Values'Range loop
-               Size_Request (Item.Values (V).Value.all, Font, Hide_Big_Items);
+               Size_Request
+                 (Item.Values (V).Value.all, Context, Hide_Big_Items);
                Total_Width  :=
                  Gint'Max (Total_Width, Item.Values (V).Value.Width);
                Total_Height := Total_Height + Item.Values (V).Value.Height;
                Item.Index_Width :=
                  Gint'Max (Item.Index_Width, String_Width
-                           (Font,
+                           (Context.Font,
                             Index_String (Item, Item.Values (V).Index,
                                           Item.Num_Dimensions)));
             end loop;
@@ -659,7 +660,7 @@ package body Items.Arrays is
          end if;
 
          Item.Index_Width :=
-           Item.Index_Width + Text_Width (Font, String'(" => "));
+           Item.Index_Width + Text_Width (Context.Font, String'(" => "));
 
          --  Keep enough space for the border (Border_Spacing on each side)
 

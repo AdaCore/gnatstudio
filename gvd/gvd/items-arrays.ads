@@ -21,7 +21,6 @@
 --  Items used for array types
 --  See the package Items for more information on all the private subprograms.
 
-with Gdk.Font;
 with Unchecked_Deallocation;
 
 package Items.Arrays is
@@ -164,7 +163,7 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Array_Type;
-      Font           : Gdk.Font.Gdk_Font;
+      Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
    function Get_Component_Name (Item : access Array_Type;
                                 Lang : access Language.Language_Root'Class;
