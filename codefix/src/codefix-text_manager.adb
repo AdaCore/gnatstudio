@@ -746,7 +746,7 @@ package body Codefix.Text_Manager is
    function Clone (This : File_Cursor) return File_Cursor is
       New_Cursor : File_Cursor := This;
    begin
-      New_Cursor.File_Name := new String'(This.File_Name.all);
+      New_Cursor.File_Name := Clone (This.File_Name);
       return New_Cursor;
    end Clone;
 
@@ -1237,9 +1237,10 @@ package body Codefix.Text_Manager is
       end if;
 
       This.Context := Line_Modified;
-      Assign (This.Content, This.Content (1 .. First_Used - 1) &
-                New_String &
-                This.Content (Last_Used + 1 .. This.Content'Last));
+      Assign
+        (This.Content, This.Content (This.Content'First .. First_Used - 1) &
+           New_String &
+             This.Content (Last_Used + 1 .. This.Content'Last));
    end Set_String;
 
    ----------------------------------------------------------------------------
@@ -1256,7 +1257,7 @@ package body Codefix.Text_Manager is
       if New_Extract.First /= null then
          New_Extract.First := new Extract_Line'(Clone (New_Extract.First.all));
       end if;
-      New_Extract.Caption := new String'(New_Extract.Caption.all);
+      New_Extract.Caption := Clone (New_Extract.Caption);
 
       return New_Extract;
    end Clone;
@@ -1545,24 +1546,62 @@ package body Codefix.Text_Manager is
      (This         : in out Extract;
       Cursor       : File_Cursor'Class;
       New_String   : String;
-      Format       : String := "(^[\w]*)")
+      Old_String   : String;
+      Format_Old   : String_Mode := Text_Ascii)
    is
       Word_Length  : Natural;
-      Old_String   : Dynamic_String;
+      Old_Line     : Dynamic_String;
       Current_Line : Ptr_Extract_Line;
 
    begin
       Current_Line := Get_Line (This, Cursor);
-      Assign (Old_String, Current_Line.Content);
-      Word_Length := Get_Word_Length (Current_Line.all, Cursor.Col, Format);
+      Assign (Old_Line, Current_Line.Content);
 
-      Assign (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
-                New_String &
-                Old_String (Cursor.Col + Word_Length .. Old_String'Last));
+      case Format_Old is
+         when Regular_Expression =>
+            Word_Length := Get_Word_Length
+              (Current_Line.all, Cursor.Col, Old_String);
+
+         when Text_Ascii =>
+            Word_Length := Old_String'Length;
+
+      end case;
+
+      Assign
+        (Current_Line.Content,
+         Old_Line (1 .. Cursor.Col - 1) & New_String & Old_Line
+           (Cursor.Col + Word_Length .. Old_Line'Last));
+
+      Free (Old_Line);
 
       Current_Line.Context := Line_Modified;
+   end Replace_Word;
 
-      Free (Old_String);
+   ------------------
+   -- Replace_Word --
+   ------------------
+
+   procedure Replace_Word
+     (This         : in out Extract;
+      Cursor       : File_Cursor'Class;
+      New_String   : String;
+      Old_Length   : Natural) is
+
+      Old_Line     : Dynamic_String;
+      Current_Line : Ptr_Extract_Line;
+
+   begin
+      Current_Line := Get_Line (This, Cursor);
+      Assign (Old_Line, Current_Line.Content);
+
+      Assign
+        (Current_Line.Content,
+         Old_Line (1 .. Cursor.Col - 1) & New_String & Old_Line
+           (Cursor.Col + Old_Length .. Old_Line'Last));
+
+      Free (Old_Line);
+
+      Current_Line.Context := Line_Modified;
    end Replace_Word;
 
    --------------
@@ -1700,8 +1739,8 @@ package body Codefix.Text_Manager is
 
    function Search_String
      (This         : Extract;
-      Cursor       : File_Cursor'Class;
       Searched     : String;
+      Cursor       : File_Cursor'Class := Null_File_Cursor;
       Step         : Step_Way := Normal_Step;
       Jump_String  : Boolean := True)
      return File_Cursor'Class is
@@ -1711,8 +1750,18 @@ package body Codefix.Text_Manager is
 
    begin
 
-      Current := Get_Line (This, Cursor);
-      Current_Cursor := File_Cursor (Cursor);
+      if File_Cursor (Cursor) /= Null_File_Cursor then
+         Current_Cursor := File_Cursor (Cursor);
+      else
+         if Step = Normal_Step then
+            Current_Cursor :=
+              File_Cursor (Get_Cursor (Get_First_Line (This).all));
+         else
+            null; --  ??? Soon programmed
+         end if;
+      end if;
+
+      Current := Get_Line (This, Current_Cursor);
 
       loop
 
