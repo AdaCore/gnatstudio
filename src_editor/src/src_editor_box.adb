@@ -242,6 +242,21 @@ package body Src_Editor_Box is
       After    : Integer) return String;
    --  Auxiliary Get_Chars function.
 
+   procedure Replace_Slice
+     (Editor  : access Source_Editor_Box_Record;
+      Iter_1  : Gtk_Text_Iter;
+      Iter_2  : Gtk_Text_Iter;
+      Text    : String);
+   --  Auxiliary Replace_Slice procedure.
+
+   procedure Replace_Slice
+     (Editor  : access Source_Editor_Box_Record;
+      Iter_1  : Gtk_Text_Iter;
+      Before  : Integer;
+      After   : Integer;
+      Text    : String);
+   --  Auxiliary Replace_Slice procedure.
+
    -----------
    -- Setup --
    -----------
@@ -2420,5 +2435,108 @@ package body Src_Editor_Box is
 
       return "";
    end Get_Chars;
+
+   -------------------
+   -- Replace_Slice --
+   -------------------
+
+   procedure Replace_Slice
+     (Editor  : access Source_Editor_Box_Record;
+      Iter_1  : Gtk_Text_Iter;
+      Before  : Integer;
+      After   : Integer;
+      Text    : String)
+   is
+      Begin_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Success    : Boolean := True;
+   begin
+      Copy (Iter_1, Begin_Iter);
+      Copy (Iter_1, End_Iter);
+
+      if Before < 0 then
+         Set_Line_Offset (Begin_Iter, 0);
+      else
+         for J in 1 .. Before loop
+            Backward_Char (Begin_Iter, Success);
+            exit when not Success;
+         end loop;
+      end if;
+
+      if After < 0 then
+         Forward_To_Line_End (End_Iter, Success);
+      else
+         Success := True;
+
+         for J in 1 .. After loop
+            Forward_Char (End_Iter, Success);
+            exit when not Success;
+         end loop;
+      end if;
+
+      Replace_Slice (Editor, Begin_Iter, End_Iter, Text);
+   end Replace_Slice;
+
+   procedure Replace_Slice
+     (Editor  : access Source_Editor_Box_Record;
+      Iter_1  : Gtk_Text_Iter;
+      Iter_2  : Gtk_Text_Iter;
+      Text    : String) is
+   begin
+      Replace_Slice (Editor,
+                     To_Box_Line (Get_Line (Iter_1)),
+                     To_Box_Column (Get_Line_Offset (Iter_1)),
+                     To_Box_Line (Get_Line (Iter_2)),
+                     To_Box_Column (Get_Line_Offset (Iter_2)),
+                     Text);
+   end Replace_Slice;
+
+   procedure Replace_Slice
+     (Editor   : access Source_Editor_Box_Record;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark;
+      Before   : Integer;
+      After    : Integer;
+      Text     : String)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Position);
+      Replace_Slice (Editor, Iter, Before, After, Text);
+   end Replace_Slice;
+
+   procedure Replace_Slice_At_Position
+     (Editor   : access Source_Editor_Box_Record;
+      Line     : Positive;
+      Column   : Positive;
+      Before   : Integer;
+      After    : Integer;
+      Text     : String)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      if Is_Valid_Location (Editor, Line, Column) then
+         Get_Iter_At_Line_Offset
+           (Editor.Source_Buffer, Iter,
+            To_Buffer_Line (Line),
+            To_Buffer_Column (Column));
+
+         Replace_Slice (Editor, Iter, Before, After, Text);
+      end if;
+   end Replace_Slice_At_Position;
+
+   procedure Replace_Slice
+     (Editor    : access Source_Editor_Box_Record;
+      Begin_Pos : Gtk.Text_Mark.Gtk_Text_Mark;
+      End_Pos   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Text      : String)
+   is
+      Begin_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Editor.Source_Buffer, Begin_Iter, Begin_Pos);
+      Get_Iter_At_Mark (Editor.Source_Buffer, End_Iter, End_Pos);
+
+      Replace_Slice (Editor, Begin_Iter, End_Iter, Text);
+   end Replace_Slice;
 
 end Src_Editor_Box;

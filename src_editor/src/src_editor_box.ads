@@ -407,6 +407,33 @@ package Src_Editor_Box is
       After    : Integer) return String;
    --  Same as above, but position is given by Line, Column.
 
+   procedure Replace_Slice
+     (Editor   : access Source_Editor_Box_Record;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark;
+      Before   : Integer;
+      After    : Integer;
+      Text     : String);
+   --  Same as Replace_Slice, but compute the slice to be replaced
+   --  in the same way as Get_Chars.
+
+   procedure Replace_Slice_At_Position
+     (Editor   : access Source_Editor_Box_Record;
+      Line     : Positive;
+      Column   : Positive;
+      Before   : Integer;
+      After    : Integer;
+      Text     : String);
+   --  Same as Replace_Slice, but compute the slice to be replaced
+   --  in the same way as Get_Chars.
+
+   procedure Replace_Slice
+     (Editor    : access Source_Editor_Box_Record;
+      Begin_Pos : Gtk.Text_Mark.Gtk_Text_Mark;
+      End_Pos   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Text      : String);
+   --  Same as Replace_Slice, but get the slice to replace from
+   --  marks.
+
    procedure On_Goto_Line
      (Editor : access Source_Editor_Box_Record;
       Kernel : Glide_Kernel.Kernel_Handle);
