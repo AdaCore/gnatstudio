@@ -1951,7 +1951,7 @@ package body Browsers.Call_Graph is
              & Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
       Entities.Debug.Output      := My_Output'Unrestricted_Access;
       Entities.Debug.Output_Line := My_Output_Line'Unrestricted_Access;
-      Dump (Get_Database (Get_Kernel (Data)));
+      Dump (Get_Database (Get_Kernel (Data)), Full => True);
       Set_Default_Output;
       Close (Output);
    end Xref_Command_Handler;
