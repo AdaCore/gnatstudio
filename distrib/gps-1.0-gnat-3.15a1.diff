@@ -17,9 +17,9 @@
   
      for Source_Dirs use ();
   
---- glide/gps.gpr	19 Apr 2003 07:29:18 -0000	1.55
-+++ glide/gps.gpr	15 Jul 2003 12:17:11 -0000
-@@ -36,10 +36,8 @@
+--- gps.gpr	21 Oct 2004 15:05:13 -0000	1.65
++++ gps.gpr	2 Nov 2004 17:08:37 -0000
+@@ -39,11 +39,9 @@
        case Shared.Build is
           when "Debug" =>
             for Default_Switches ("Ada") use ("-m", "-a", "-g");
@@ -30,3 +30,16 @@
 -           for Global_Configuration_Pragmas use "gnat.adc";
        end case;
     end Builder;
+ 
+@@ -52,9 +50,10 @@
+    package Binder is
+       case Shared.OS is
+          when "Windows_NT" =>
++            for Default_Switches ("Ada") use ("-t");
+ 
+          when "unix" =>
+-            for Default_Switches ("Ada") use ("-E");
++            for Default_Switches ("Ada") use ("-E", "-t");
+       end case;
+    end Binder;
+ 
