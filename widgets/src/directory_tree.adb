@@ -472,8 +472,7 @@ package body Directory_Tree is
       if Iter = Null_Iter then
          return "";
       else
-         return Get_String
-           (Tree.File_Model, Iter, Absolute_Name_Column);
+         return Get_String (Tree.File_Model, Iter, Absolute_Name_Column);
       end if;
    end Get_Selection;
 
@@ -1470,6 +1469,7 @@ package body Directory_Tree is
            (T.File_Tree,
             T.Path, null, True,
             0.1, 0.1);
+         Select_Path (Get_Selection (T.File_Tree), T.Path);
          Disconnect (T.File_Tree, T.Realize_Cb_Id);
          T.Scroll_To_Directory := False;
       end if;
