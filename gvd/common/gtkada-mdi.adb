@@ -27,7 +27,9 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
---  with Glib.Values;      use Glib.Values;
+--  ??? The following is needed in GtkAda2.0 until we have put
+--  Get_User_Data in some common package with GtkAda1.2
+with Glib.Object;      use Glib.Object;
 with Gdk;              use Gdk;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Cursor;       use Gdk.Cursor;
@@ -409,7 +411,7 @@ package body Gtkada.MDI is
    -----------------
 
    procedure Realize_MDI (MDI : access Gtk_Widget_Record'Class) is
-      Window_Attr : Gdk_Window_Attr;
+      Window_Attr : Gdk.Window_Attr.Gdk_Window_Attr;
       M         : MDI_Window := MDI_Window (MDI);
       Color     : Gdk_Color;
       Cursor    : Gdk_Cursor;
@@ -1312,6 +1314,7 @@ package body Gtkada.MDI is
 
       if Get_Window (Child) /= Get_Window (Event)
         or else Get_Event_Type (Event) /= Button_Press
+        or else Get_Button (Event) /= 1
       then
          return False;
       end if;
@@ -1397,9 +1400,6 @@ package body Gtkada.MDI is
             Width => Gint (Alloc.Width),
             Height => Gint (Alloc.Height));
          Size_Allocate (Child, Alloc);
-
-         --  Move (MDI.Layout, Child, Gint16 (Alloc.X), Gint16 (Alloc.Y));
-         --  Set_USize (Child, Alloc.Width, Alloc.Height);
       end if;
 
       MDI_Child (Child).X := Alloc.X;
@@ -1409,6 +1409,8 @@ package body Gtkada.MDI is
          MDI_Child (Child).Uniconified_Width  := Gint (Alloc.Width);
          MDI_Child (Child).Uniconified_Height := Gint (Alloc.Height);
       end if;
+
+      MDI.Selected_Child := null;
       return True;
    end Button_Release;
 
@@ -1430,7 +1432,9 @@ package body Gtkada.MDI is
       Alloc   : Gtk_Allocation;
 
    begin
-      if Get_Window (Child) /= Get_Window (Event) then
+      if Get_Window (Child) /= Get_Window (Event)
+        or else MDI.Selected_Child = null
+      then
          return False;
       end if;
 
