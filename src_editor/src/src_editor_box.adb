@@ -2312,38 +2312,6 @@ package body Src_Editor_Box is
          Default_Editable => Editor.Writable);
    end Paste_Clipboard;
 
-   --------------------
-   -- Highlight_Line --
-   --------------------
-
-   procedure Highlight_Line
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive) is
-   begin
-      Highlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line));
-   end Highlight_Line;
-
-   ----------------------
-   -- Unhighlight_Line --
-   ----------------------
-
-   procedure Unhighlight_Line
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive) is
-   begin
-      Unhighlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line));
-   end Unhighlight_Line;
-
-   ---------------------------
-   -- Cancel_Highlight_Line --
-   ---------------------------
-
-   procedure Cancel_Highlight_Line
-     (Editor : access Source_Editor_Box_Record) is
-   begin
-      Cancel_Highlight_Line (Editor.Source_Buffer);
-   end Cancel_Highlight_Line;
-
    ----------------------
    -- Highlight_Region --
    ----------------------

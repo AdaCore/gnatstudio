@@ -2485,72 +2485,6 @@ package body Src_Editor_Buffer is
       Move_Mark (Buffer, Insert_Mark, End_Iter);
    end Select_All;
 
-   --------------------
-   -- Highlight_Line --
-   --------------------
-
-   procedure Highlight_Line
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint)
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      pragma Assert (Line < Get_Line_Count (Buffer));
-
-      --  Search for a highlighte line, if any, and unhighlight it.
-      Cancel_Highlight_Line (Buffer);
-
-      --  And finally highlight the given line
-      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Line, 0);
-      Copy (Source => Start_Iter, Dest => End_Iter);
-      Forward_To_Line_End (End_Iter);
-      Apply_Tag (Buffer, Buffer.HL_Line_Tag, Start_Iter, End_Iter);
-   end Highlight_Line;
-
-   ----------------------
-   -- Unhighlight_Line --
-   ----------------------
-
-   procedure Unhighlight_Line
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint)
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      pragma Assert (Line < Get_Line_Count (Buffer));
-
-      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Line, 0);
-      Copy (Source => Start_Iter, Dest => End_Iter);
-      Forward_To_Line_End (End_Iter);
-      Remove_Tag (Buffer, Buffer.HL_Line_Tag, Start_Iter, End_Iter);
-   end Unhighlight_Line;
-
-   ---------------------------
-   -- Cancel_Highlight_Line --
-   ---------------------------
-
-   procedure Cancel_Highlight_Line
-     (Buffer : access Source_Buffer_Record)
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Found      : Boolean := True;
-   begin
-      Get_Start_Iter (Buffer, Start_Iter);
-
-      if not Begins_Tag (Start_Iter, Buffer.HL_Line_Tag) then
-         Forward_To_Tag_Toggle (Start_Iter, Buffer.HL_Line_Tag, Found);
-      end if;
-
-      if Found then
-         Copy (Source => Start_Iter, Dest => End_Iter);
-         Forward_To_Line_End (End_Iter);
-         Remove_Tag (Buffer, Buffer.HL_Line_Tag, Start_Iter, End_Iter);
-      end if;
-   end Cancel_Highlight_Line;
-
    -------------------
    -- Select_Region --
    -------------------
@@ -3891,7 +3825,7 @@ package body Src_Editor_Buffer is
       Category := Lookup_Category (Id);
 
       if Category = 0 then
-         Trace (Me, -"Could not identify highlighting category: " & Id);
+         --  Could not identify highlighting category
          return;
       end if;
 

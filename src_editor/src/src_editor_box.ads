@@ -288,30 +288,6 @@ package Src_Editor_Box is
    --  ??? what is the relationship with the clipboard?
    --  ??? This function is commented out since it was removed in gtk-1.3.7.
 
-   procedure Highlight_Line
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive);
-   --  Highlight the given line number. If another line was previously
-   --  highlighted, then restore this line unhighlighted.
-   --
-   --  The line number must be verified before invoking this procedure. An
-   --  invalid line leads to an Assertion_Failure when compiled with assertion
-   --  checks, or to an undefined behavior otherwise.
-
-   procedure Unhighlight_Line
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive);
-   --  Restore the given line unhighlighted.
-   --
-   --  The line number must be verified before invoking this procedure. An
-   --  invalid line leads to an Assertion_Failure when compiled with assertion
-   --  checks, or to an undefined behavior otherwise.
-
-   procedure Cancel_Highlight_Line
-     (Editor : access Source_Editor_Box_Record);
-   --  If a line in the given buffer is highlighted (from using
-   --  Highlight_Line), then restores this line un-highlighted.
-
    procedure Highlight_Region
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;

@@ -260,30 +260,6 @@ package Src_Editor_Buffer is
    procedure Select_All (Buffer : access Source_Buffer_Record);
    --  Set the selection bounds from the begining to the end of the buffer.
 
-   procedure Highlight_Line
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint);
-   --  Highlight the given line number. If another line was previously
-   --  highlighted, then restore this line unhighlighted.
-   --
-   --  The validity of the line number must be verified before invoking this
-   --  procedure. An incorrect line number will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Unhighlight_Line
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint);
-   --  Restore the given line unhighlighted.
-   --
-   --  The validity of the line number must be verified before invoking this
-   --  procedure. An incorrect line number will cause an Assertion_Failure when
-   --  compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Cancel_Highlight_Line
-     (Buffer : access Source_Buffer_Record);
-   --  If a line in the given buffer is highlighted (from using
-   --  Highlight_Line), then restores this line un-highlighted.
-
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Gint;
