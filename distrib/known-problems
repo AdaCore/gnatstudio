@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.3.0
 
+- C707-020 Save As fails for read-only files
+  Problem:    Read-only files can not be saved, even with a different name
+  Workaround: Click on the Read-Only box at the bottom of the editor to
+              temporarily override the status
+
 - C611-012 Cross-references do not work with C under Solaris
   Problem:    Under some circumstances, on Solaris, the navigation in C/C++
               files does not work and displays the message "No cross-reference
