@@ -406,13 +406,11 @@ package body Src_Editor_View is
                declare
                   A : constant Natural_Array := View.Real_Lines.all;
                begin
-                  View.Real_Lines := new Natural_Array
-                    (1 .. Bottom_Line * 2);
+                  Unchecked_Free (View.Real_Lines);
+                  View.Real_Lines := new Natural_Array (1 .. Bottom_Line * 2);
                   View.Real_Lines (A'Range) := A;
                   View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
                     := (others => 0);
-                  --  ??? Should free the old array A.
-                  --  Where is View.Real_Lines itself freed ?
                end;
             end if;
 
@@ -890,6 +888,7 @@ package body Src_Editor_View is
          declare
             A : constant Natural_Array := View.Real_Lines.all;
          begin
+            Unchecked_Free (View.Real_Lines);
             View.Real_Lines := new Natural_Array
               (1 .. Line * 2);
 
