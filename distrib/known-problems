@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- DA27-002 Detection of external changes only when timestamp is more recent
+  Problem:    If you modify a file with an other editor than GPS, or through
+              a version control system, GPS will only detect changes to that
+              file if its new timestamp is earlier than before.
+  Workaround: "touch" the file, or save again with an editor
+
 - DA19-018 Casing not preserved for object and exec directories
   Problem:    In the project view (and in the result of current_context() in
               scripting languages), the object and exec directory names are
