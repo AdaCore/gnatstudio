@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.3.0
 
+- C418-010 Messages window not saved in the desktop
+  Problem:    When the desktop is saved, the location of the messages window
+              is not saved.
+  Workaround: It is possible to manually edit the file $HOME/.gps/desktop, but
+              it is simpler to move the messages window back to the location
+              where you want it on startup
+
 - C418-010 Incorrect desktop loading for location window
   Problem:    If the location window is put in the left dock, and the desktop
               is saved, then GPS won't be able to restore the desktop on startup
