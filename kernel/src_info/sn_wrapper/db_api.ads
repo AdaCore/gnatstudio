@@ -140,6 +140,7 @@ private
    pragma Convention (C, DB_File);
 
    function Is_Null (DB : DB_File) return Boolean;
+   pragma Inline (Is_Null);
    --  checks if DB is NULL (in terms of C)
 
    function Error_Message (DB : DB_File) return String;

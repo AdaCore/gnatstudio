@@ -60,11 +60,11 @@ package body DB_API is
       --  return Internal_Is_Null (DB) /= 0;
       return DB = null;
    end Is_Null;
-   pragma Inline (Is_Null);
 
    ----------------
    -- Last_ErrNo --
    ----------------
+
    function Last_ErrNo (DB : DB_File) return C.int;
    pragma Import (C, Last_ErrNo, "ada_get_last_errno");
 
@@ -216,7 +216,6 @@ package body DB_API is
      (DB       : DB_File;
       Movement : Cursor_Movement := Next) return Pair_Ptr
    is
-
       P        : Pair_Ptr;
       I_Pair   : System.Address;
       Move     : C.int;
