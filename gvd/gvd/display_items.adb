@@ -243,13 +243,28 @@ package body Display_Items is
    is
       Entity      : Generic_Type_Access;
       Value_Found : Boolean := False;
+      Alias_Item : Display_Item;
 
    begin
+
       if Default_Entity = null then
 
          declare
-            Id : String := Get_Uniq_Id (Debugger.Debugger, Variable_Name);
+            Id : constant String :=
+              Get_Uniq_Id (Debugger.Debugger, Variable_Name);
          begin
+
+            if Auto_Refresh then
+               --  If the an auto-updated similar item is on the canvas, we
+               --  simply show and select it.
+               Alias_Item :=
+                 Search_Item (Debugger.Data_Canvas, Id, Variable_Name);
+               if Alias_Item /= null then
+                  Select_Item (Alias_Item, Alias_Item.Entity);
+                  Show_Item (Debugger.Data_Canvas, Alias_Item);
+                  return;
+               end if;
+            end if;
 
             --  Parse the type and value of the variable. If we have an error
             --  at this level, this means that the variable is unknown, and we
@@ -288,7 +303,8 @@ package body Display_Items is
                when Language.Unexpected_Type | Constraint_Error =>
                   Print_Message
                     (Debugger.Window.Statusbar1,
-                     Error, "Could not parse type for " & Variable_Name);
+                     Error,
+                     "Could not parse type or value for " & Variable_Name);
                   return;
             end;
 
@@ -330,8 +346,12 @@ package body Display_Items is
 
    begin
       --  Is the item already on the canvas ? If yes, do not display it again
+      --  Note that this test is ignored if the item is frozen from the
+      --  beginning
 
-      Alias_Item := Search_Item (Debugger.Data_Canvas, Id, Variable_Name);
+      if Auto_Refresh then
+         Alias_Item := Search_Item (Debugger.Data_Canvas, Id, Variable_Name);
+      end if;
 
       if Alias_Item = null then
          Gtk_New (Item,
