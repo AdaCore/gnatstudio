@@ -156,9 +156,11 @@ package body Custom_Combos is
       use Gtk.Widget.Widget_List;
       Entries : constant Glist := Get_Children (Get_List (Combo.Combo));
       Tmp     : Glist := Entries;
+      Item    : Gtk_List_Item;
    begin
       while Tmp /= Null_List loop
-         if Get_Text (Gtk_Label (Get_Data (Tmp))) = Label then
+         Item := Gtk_List_Item (Get_Data (Tmp));
+         if Get_Text (Gtk_Label (Get_Child (Item))) = Label then
             Remove (Get_List (Combo.Combo), Get_Data (Tmp));
             exit;
          end if;
