@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                     use Glib;
+with Glib.Values;              use Glib.Values;
 with Glib.Object;              use Glib.Object;
 
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
@@ -51,6 +52,8 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
+
+with Commands;                 use Commands;
 
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -88,6 +91,7 @@ package body Glide_Result_View is
    Weight_Column        : constant := 9;
    Color_Column         : constant := 10;
    Button_Column        : constant := 11;
+   Action_Column        : constant := 12;
 
    -----------------------
    -- Local subprograms --
@@ -491,11 +495,11 @@ package body Glide_Result_View is
 
       Set_Rules_Hint (Tree, False);
 
-      Gtk_New (Col);
+      Gtk_New (View.Action_Column);
       Gtk_New (Pixbuf_Rend);
-      Pack_Start (Col, Pixbuf_Rend, False);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Button_Column);
-      Dummy := Append_Column (Tree, Col);
+      Pack_Start (View.Action_Column, Pixbuf_Rend, False);
+      Add_Attribute (View.Action_Column, Pixbuf_Rend, "pixbuf", Button_Column);
+      Dummy := Append_Column (Tree, View.Action_Column);
 
       Gtk_New (Text_Rend);
       Gtk_New (Pixbuf_Rend);
@@ -535,7 +539,8 @@ package body Glide_Result_View is
          Node_Type_Column          => GType_Int,
          Weight_Column             => GType_Int,
          Color_Column              => Gdk_Color_Type,
-         Button_Column             => Gdk.Pixbuf.Get_Type);
+         Button_Column             => Gdk.Pixbuf.Get_Type,
+         Action_Column             => GType_Pointer);
    end Columns_Types;
 
    ----------------
@@ -785,19 +790,18 @@ package body Glide_Result_View is
    is
       Explorer : constant Result_View := Result_View (View);
       Path     : Gtk_Tree_Path;
+      Column   : Gtk_Tree_View_Column;
 
-      function Get_Path_At_Event return Gtk_Tree_Path;
-      --  Return the path at which Event has occured.
-      --  User must free memory associated to the returned path.
+      procedure Get_Path_At_Event;
+      --  Return the path at which Event has occured, and the Column.
+      --  User must free memory associated to path.
 
-      function Get_Path_At_Event return Gtk_Tree_Path is
+      procedure Get_Path_At_Event is
          X         : constant Gdouble := Get_X (Event);
          Y         : constant Gdouble := Get_Y (Event);
          Buffer_X  : Gint;
          Buffer_Y  : Gint;
          Row_Found : Boolean;
-         Path      : Gtk_Tree_Path;
-         Column    : Gtk_Tree_View_Column := null;
 
       begin
          Path := Gtk_New;
@@ -810,14 +814,12 @@ package body Glide_Result_View is
             Buffer_X,
             Buffer_Y,
             Row_Found);
-
-         return Path;
       end Get_Path_At_Event;
 
       Success : Boolean;
    begin
       if Get_Button (Event) = 1 then
-         Path := Get_Path_At_Event;
+         Get_Path_At_Event;
 
          if Path /= null then
             if Get_Depth (Path) in 1 .. 2 then
@@ -828,6 +830,30 @@ package body Glide_Result_View is
                end if;
 
             elsif Get_Depth (Path) = 3 then
+               if Column = Explorer.Action_Column then
+                  declare
+                     Value   : GValue;
+                     Iter    : Gtk_Tree_Iter;
+                     Action  : Action_Item;
+                     Success : Boolean;
+                  begin
+                     Iter := Get_Iter (Explorer.Model, Path);
+
+                     Init (Value, GType_Pointer);
+
+                     Get_Value (Explorer.Model, Iter, Action_Column, Value);
+                     Action := To_Action_Item (Get_Address (Value));
+
+                     if Action /= null
+                       and then Action.Associated_Command /= null
+                     then
+                        Success := Execute (Action.Associated_Command);
+                     end if;
+
+                     Unset (Value);
+                  end;
+               end if;
+
                Select_Path (Get_Selection (Explorer.Tree), Path);
                Goto_Location (View);
             end if;
@@ -839,7 +865,7 @@ package body Glide_Result_View is
       else
 
          --  If there is no selection, select the item under the cursor.
-         Path := Get_Path_At_Event;
+         Get_Path_At_Event;
 
          if Path /= null then
             if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
@@ -878,6 +904,8 @@ package body Glide_Result_View is
       Created       : Boolean;
       Line_Iter     : Gtk_Tree_Iter;
 
+      Value         : GValue;
+
       pragma Unreferenced (Identifier);
    begin
       Get_Category_File (View, Category,
@@ -888,19 +916,24 @@ package body Glide_Result_View is
       then
          Line_Iter := Children (View.Model, File_Iter);
 
-         while File_Iter /= Null_Iter loop
+         while Line_Iter /= Null_Iter loop
             if Get_String
-              (View.Model, File_Iter, Message_Column) = Message
+              (View.Model, Line_Iter, Message_Column) = Message
               and then Get_String
-                (View.Model, File_Iter, Line_Column) = Image (Line)
+                (View.Model, Line_Iter, Line_Column) = Image (Line)
               and then Get_String
-                (View.Model, File_Iter, Column_Column) = Image (Column)
+                (View.Model, Line_Iter, Column_Column) = Image (Column)
             then
-               Set (View.Model, File_Iter,
+               Set (View.Model, Line_Iter,
                     Button_Column, C_Proxy (Action.Image));
+               Init (Value, GType_Pointer);
+               Set_Address (Value, To_Address (Action));
+               Set_Value (View.Model, Line_Iter,
+                    Action_Column, Value);
+               Unset (Value);
             end if;
 
-            Next (View.Model, File_Iter);
+            Next (View.Model, Line_Iter);
          end loop;
       end if;
    end Add_Action_Item;
