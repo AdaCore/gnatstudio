@@ -10,7 +10,7 @@ on objects in other archives.
 Current approach:
 - create an archive for each project, and link with them once
   - pros: only needed objects are linked
-          avoid command line limitations
+          avoid partially command line limitations
   - cons: may get unresolved symbols, depending on order and lib dependencies
           need to recreate the archive each time a file in the project modified
 
@@ -28,12 +28,16 @@ Possible solutions are:
   - pros: all symbols resolved
   - cons: can hit command line length limit easily
           all objects always linked
+          not compatible with multiple sources containing a 'main' in a single
+          project (or subproject).
 
 - create a relocatable object for each project
   - pros: all symbols resolved
           avoid command line limitations
   - cons: all objects always linked
           need to recreate the relocatable object each time a file is modified
+          not compatible with multiple sources containing a 'main' in a single
+          project (or subproject).
 
 - create a global archive at link time
   - pros: all symbols resolved
@@ -44,13 +48,3 @@ Possible solutions are:
 Last solution looks to me to be the right one, unless there is a better
 option I haven't listed.
 
-Implementation issues:
-
-- to avoid the command line length limitation, we want to build the
-  archive incrementally, project by project.
-  -> use the same recursive mechanism used for e.g. the compile target
-
-- tricky: we want to rebuild this global archive only when needed, which is
-  difficult to know, since the objects are spread amongst several projects.
-  Consider using stamp files, but these are hard to get completely right
-  (see gcc makefile).
