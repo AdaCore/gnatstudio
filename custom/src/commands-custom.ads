@@ -60,6 +60,7 @@
 
 with Glide_Kernel;         use Glide_Kernel;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 package Commands.Custom is
 
@@ -71,12 +72,13 @@ package Commands.Custom is
       Kernel       : Kernel_Handle;
       Command      : String;
       Args         : Argument_List_Access;
-      GPS_Command  : Boolean);
+      Script       : Glide_Kernel.Scripts.Scripting_Language);
    --  Create a new custom command.
    --  Caller must not free memory allocated to Args.
-   --  If GPS_Command is True, the command will be interpreted as a
-   --  a GPS internal command, otherwise it will be launched as a
-   --  system command.
+   --
+   --  If Script is null, the command is launched as a system
+   --  command. Otherwise, it is interpreted as a GPS Internal command in the
+   --  specific scripting language.
 
    procedure Free (X : in out Custom_Command);
    --  Free memory associated to X.
@@ -95,7 +97,7 @@ private
       Kernel      : Kernel_Handle;
       Command     : String_Access;
       Args        : Argument_List_Access;
-      GPS_Command : Boolean;
+      Script      : Glide_Kernel.Scripts.Scripting_Language;
    end record;
 
 end Commands.Custom;

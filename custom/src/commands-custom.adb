@@ -28,11 +28,11 @@ with Glide_Intl;           use Glide_Intl;
 
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
+with String_Utils;         use String_Utils;
 
 with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Text_IO;          use Ada.Text_IO;
 with Traces;               use Traces;
-
 with Ada.Unchecked_Deallocation;
 
 package body Commands.Custom is
@@ -58,13 +58,13 @@ package body Commands.Custom is
       Kernel       : Kernel_Handle;
       Command      : String;
       Args         : Argument_List_Access;
-      GPS_Command  : Boolean) is
+      Script       : Glide_Kernel.Scripts.Scripting_Language) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
       Item.Command := new String'(Command);
       Item.Args := Args;
-      Item.GPS_Command := GPS_Command;
+      Item.Script := Script;
    end Create;
 
    -------------
@@ -74,23 +74,55 @@ package body Commands.Custom is
    function Execute (Command : access Custom_Command) return Boolean is
       Context  : constant Selection_Context_Access :=
         Get_Current_Context (Command.Kernel);
-      File     : File_Selection_Context_Access;
       Success  : Boolean := False;
       No_Args  : String_List (1 .. 0);
       New_Args : Argument_List_Access;
       Last     : Integer;
       Index    : Integer;
 
-      Project  : Project_Type := No_Project;
-      List     : String_Array_Access;
       Recurse  : Boolean;
-
-      procedure Free_Array is new Ada.Unchecked_Deallocation
-        (Object => String_List, Name => String_List_Access);
 
       function Command_To_String
         (Command : String; Args : String_List) return String;
       --  Transform a command and its arguments into a string.
+
+      function Substitution (Param : String) return String;
+      --  Substitution function for the various '%...' parameters
+
+      function Project_From_Param (Param : String) return Project_Type;
+      --  Return the project from the parameter. Parameter is the string
+      --  following the '%' sign
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Object => String_List, Name => String_List_Access);
+
+      ------------------------
+      -- Project_From_Param --
+      ------------------------
+
+      function Project_From_Param (Param : String) return Project_Type is
+         File : File_Selection_Context_Access;
+      begin
+         if Param (Param'First) = 'P' then
+            return Get_Project (Command.Kernel);
+         elsif Context /= null
+           and then Context.all in File_Selection_Context'Class
+           and then Has_Project_Information
+             (File_Selection_Context_Access (Context))
+         then
+            File := File_Selection_Context_Access (Context);
+            return Project_Information (File);
+         else
+            Insert (Command.Kernel,
+                    -"Command not executed: it requires a project",
+                    Mode => Error);
+            return No_Project;
+         end if;
+      end Project_From_Param;
+
+      -----------------------
+      -- Command_To_String --
+      -----------------------
 
       function Command_To_String
         (Command : String; Args : String_List) return String
@@ -119,6 +151,121 @@ package body Commands.Custom is
          end;
       end Command_To_String;
 
+      ------------------
+      -- Substitution --
+      ------------------
+
+      function Substitution (Param : String) return String is
+         File : File_Selection_Context_Access;
+         Project  : Project_Type := No_Project;
+         List     : String_Array_Access;
+      begin
+         if Param = "f" or else Param = "F" then
+            if Context /= null
+              and then Context.all in File_Selection_Context'Class
+              and then Has_File_Information
+                (File_Selection_Context_Access (Context))
+            then
+               File := File_Selection_Context_Access (Context);
+
+               if Param = "f" then
+                  return File_Information (File);
+               else
+                  return Directory_Information (File)
+                    & File_Information (File);
+               end if;
+
+            else
+               Insert (Command.Kernel,
+                       -"Command not executed: it requires a file",
+                       Mode => Error);
+               raise Invalid_Substitution;
+            end if;
+
+         elsif Param = "d" then
+            if Context /= null
+              and then Context.all in File_Selection_Context'Class
+              and then Has_Directory_Information
+                 (File_Selection_Context_Access (Context))
+            then
+               File := File_Selection_Context_Access (Context);
+               return Directory_Information (File);
+            else
+               Insert (Command.Kernel,
+                       -"Command not executed: it requires a directory",
+                       Mode => Error);
+               raise Invalid_Substitution;
+            end if;
+
+         elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
+
+            Project := Project_From_Param (Param);
+            if Project = No_Project then
+               raise Invalid_Substitution;
+            end if;
+
+            if Param = "p" or else Param = "P" then
+               return Project_Name (Project);
+
+            elsif Param = "pp" or else Param = "PP" then
+               return Project_Path (Project);
+
+            else
+               Recurse := Param (Param'First + 1) = 'r';
+
+               if Recurse then
+                  Index := Param'First + 2;
+               else
+                  Index := Param'First + 1;
+               end if;
+
+               if Param (Index) = 's' then
+                  List := Get_Source_Files (Project, Recurse);
+
+               elsif Param (Index) = 'd' then
+                  List := Source_Dirs (Project, Recurse);
+               end if;
+
+               if List = null then
+                  Insert (Command.Kernel,
+                          -"Command not executed: it requires a project",
+                          Mode => Error);
+                  raise Invalid_Substitution;
+               end if;
+
+               if Index < Param'Last
+                 and then Param (Index + 1) = 'f'
+               then
+                  --  Append the list to a file.
+                  declare
+                     File : File_Type;
+                  begin
+                     Create (File);
+
+                     for K in List'Range loop
+                        Put_Line (File, List (K).all);
+                     end loop;
+
+                     Free (List);
+
+                     declare
+                        N : constant String := Name (File);
+                     begin
+                        Close (File);
+                        return N;
+                     end;
+                  end;
+               end if;
+            end if;
+         end if;
+
+         Insert (Command.Kernel,
+                 -"Unknown substitution parameter: " & Param,
+                 Mode => Error);
+         raise Invalid_Substitution;
+      end Substitution;
+
+
    begin
       --  Perform arguments substitutions for the command.
 
@@ -127,173 +274,58 @@ package body Commands.Custom is
          Last := New_Args'First;
 
          for J in Command.Args'Range loop
-            if Command.Args (J).all (Command.Args (J)'First) /= '%' then
-               New_Args (Last) := new String'(Command.Args (J).all);
-               Last := Last + 1;
-
-            elsif Command.Args (J).all = "%f" then
-               if Context /= null
-                 and then Context.all in File_Selection_Context'Class
-                 and then Has_File_Information
-                   (File_Selection_Context_Access (Context))
-               then
-                  File := File_Selection_Context_Access (Context);
-                  New_Args (Last) := new String'(File_Information (File));
-                  Last := Last + 1;
-
-               else
-                  Insert (Command.Kernel,
-                          -"Command not executed: it requires a file",
-                          Mode => Error);
-                  return False;
-               end if;
-
-            elsif Command.Args (J).all = "%F" then
-               if Context /= null
-                 and then Context.all in File_Selection_Context'Class
-                 and then Has_File_Information
-                   (File_Selection_Context_Access (Context))
-               then
-                  File := File_Selection_Context_Access (Context);
-                  New_Args (Last) := new String'
-                    (Directory_Information (File)
-                     & File_Information (File));
-                  Last := Last + 1;
-               else
-                  Insert (Command.Kernel,
-                          -"Command not executed: it requires a file",
-                          Mode => Error);
-                  return False;
-               end if;
-
-            elsif Command.Args (J).all = "%d" then
-               if Context /= null
-                 and then Context.all in File_Selection_Context'Class
-                 and then Has_Directory_Information
-                   (File_Selection_Context_Access (Context))
-               then
-                  File := File_Selection_Context_Access (Context);
-                  New_Args (Last) := new String'
-                    (Directory_Information (File));
-                  Last := Last + 1;
-               else
-                  Insert (Command.Kernel,
-                          -"Command not executed: it requires a directory",
-                          Mode => Error);
-                  return False;
-               end if;
-
-            elsif Command.Args (J).all
-              (Command.Args (J)'First .. Command.Args (J)'First + 1) = "%P"
-              or else Command.Args (J).all
-              (Command.Args (J)'First .. Command.Args (J)'First + 1) = "%p"
+            --  Special case for %prs, since this is a list of files
+            if Command.Args (J).all = "prs"
+              or else Command.Args (J).all = "Prs"
             then
-               --  Determine the project to use
-
-               if Command.Args (J).all
-                 (Command.Args (J)'First .. Command.Args (J)'First + 1) = "%P"
-               then
-                  Project := Get_Project (Command.Kernel);
-               elsif Context /= null
-                 and then Context.all in File_Selection_Context'Class
-               then
-                  File := File_Selection_Context_Access (Context);
-
-                  if Has_Project_Information (File) then
-                     Project := Project_Information (File);
-                  end if;
-               end if;
-
-               if Project = No_Project then
-                  Insert (Command.Kernel,
-                          -"Command not executed: it requires a project",
-                          Mode => Error);
-                  return False;
-               end if;
-
-               if Command.Args (J).all = "%p"
-                 or else Command.Args (J).all = "%P"
-               then
-                  New_Args (Last) := new String'(Project_Name (Project));
-                  Last := Last + 1;
-               elsif Command.Args (J).all = "%pp"
-                 or else Command.Args (J).all = "%PP"
-               then
-                  New_Args (Last) := new String'(Project_Path (Project));
-                  Last := Last + 1;
-               else
-                  Recurse := (Command.Args (J).all
-                              (Command.Args (J)'First + 2) = 'r');
-
-                  if Recurse then
-                     Index := Command.Args (J)'First + 3;
-                  else
-                     Index := Command.Args (J)'First + 2;
-                  end if;
-
-                  if Command.Args (J).all (Index) = 's' then
-                     List := Get_Source_Files (Project, Recurse);
-
-                  elsif Command.Args (J).all (Index) = 'd' then
-                     List := Source_Dirs (Project, Recurse);
-                  end if;
-
-                  if List = null then
-                     Insert (Command.Kernel,
-                             -"Command not executed: it requires a project",
-                             Mode => Error);
+               declare
+                  Project : constant Project_Type := Project_From_Param
+                    (Command.Args (J).all);
+                  List    : String_Array_Access;
+               begin
+                  if Project = No_Project then
                      return False;
                   end if;
 
-                  if Index = Command.Args (J)'Last then
-                     --  Append the list to the current arguments
+                  List := Get_Source_Files (Project, Recurse);
 
-                     declare
-                        New_New_Args : Argument_List_Access
-                          := new String_List
-                          (New_Args'First .. New_Args'Last + List'Length - 1);
-                     begin
-                        New_New_Args (New_Args'First .. Last - 1)
-                          := New_Args (New_Args'First .. Last - 1);
+                  declare
+                     New_New_Args : Argument_List_Access := new String_List
+                       (New_Args'First .. New_Args'Last + List'Length - 1);
+                  begin
+                     New_New_Args (New_Args'First .. Last - 1) :=
+                       New_Args (New_Args'First .. Last - 1);
 
-                        for K in List'Range loop
-                           New_New_Args (Last) := new String'(List (K).all);
-                           Last := Last + 1;
-                        end loop;
-
-                        Free (List);
-                        Free_Array (New_Args);
-                        New_Args := New_New_Args;
-                     end;
-
-                  elsif Command.Args (J).all (Index + 1) = 'f' then
-
-                     --  Append the list to a file.
-                     declare
-                        File : File_Type;
-                     begin
-                        Create (File);
-
-                        for K in List'Range loop
-                           Put_Line (File, List (K).all);
-                        end loop;
-
-                        Free (List);
-                        New_Args (Last) := new String'(Name (File));
+                     for K in List'Range loop
+                        New_New_Args (Last) := new String'(List (K).all);
                         Last := Last + 1;
-                        Close (File);
-                     end;
-                  end if;
-               end if;
+                     end loop;
+
+                     Free (List);
+                     Unchecked_Free (New_Args);
+                     New_Args := New_New_Args;
+                  end;
+               end;
+
+            else
+               New_Args (Last) := new String'
+                 (Substitute
+                    (Command.Args (J).all,
+                     Substitution_Char => '%',
+                     Callback          => Substitution'Unrestricted_Access,
+                     Recursive         => False));
             end if;
+
+            Last := Last + 1;
          end loop;
 
          --  Arguments have been substituted, launch the command.
 
-         if Command.GPS_Command then
-            Execute_GPS_Shell_Command
-              (Command.Kernel,
-               Command_To_String (Command.Command.all, New_Args.all));
+         if Command.Script /= null then
+            Execute_Command
+              (Command.Script,
+               Command_To_String (Command.Command.all, New_Args.all),
+               Display_In_Console => True);
             Success := True;
          else
             Launch_Process
@@ -309,8 +341,9 @@ package body Commands.Custom is
 
          Free (New_Args);
 
-      elsif Command.GPS_Command then
-         Execute_GPS_Shell_Command (Command.Kernel, Command.Command.all);
+      elsif Command.Script /= null then
+         Execute_Command (Command.Script, Command.Command.all,
+                          Display_In_Console => True);
          Success := True;
 
       else
@@ -324,6 +357,8 @@ package body Commands.Custom is
             "",
             Success);
       end if;
+
+      Command_Finished (Command, Success);
 
       return Success;
 
