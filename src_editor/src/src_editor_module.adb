@@ -570,24 +570,14 @@ package body Src_Editor_Module is
          end if;
 
       elsif Modified (Box) then
-         if Get_Filename (Box) /= "" then
-            Button := Message_Dialog
-              (Msg            =>
-                 (-"Do you want to save file ") & Get_Filename (Box) & " ?",
-               Dialog_Type    => Confirmation,
-               Buttons        =>
-                 Button_Yes or Button_All or Button_No or Button_Cancel,
-               Default_Button => Button_Cancel,
-               Parent         => Get_Main_Window (Kernel));
-         else
-            Button := Message_Dialog
-              (Msg            => -"Do you want to save file <no name> ?",
-               Dialog_Type    => Confirmation,
-               Buttons        =>
-                 Button_Yes or Button_All or Button_No or Button_Cancel,
-               Default_Button => Button_Cancel,
-               Parent         => Get_Main_Window (Kernel));
-         end if;
+         Button := Message_Dialog
+           (Msg            =>
+              (-"Do you want to save file ") & Get_Filename (Box) & " ?",
+            Dialog_Type    => Confirmation,
+            Buttons        =>
+              Button_Yes or Button_All or Button_No or Button_Cancel,
+            Default_Button => Button_Cancel,
+            Parent         => Get_Main_Window (Kernel));
 
          case Button is
             when Button_Yes =>
@@ -703,14 +693,55 @@ package body Src_Editor_Module is
             if File /= "" then
                Set_Title (Child, File, Short_File);
             else
-               Set_Title (Child, -"No Name");
+               --  Determine the number of "Untitled" files open.
+
+               declare
+                  Iterator    : Child_Iterator := First_Child (MDI);
+                  The_Child   : MDI_Child;
+                  Nb_Untitled : Natural := 0;
+                  No_Name     : constant String := -"Untitled";
+               begin
+                  The_Child := Get (Iterator);
+
+                  while The_Child /= null loop
+                     declare
+                        Title : constant String := Get_Title (The_Child);
+                     begin
+                        if Title'Length >= No_Name'Length
+                          and then Title
+                            (Title'First
+                               .. Title'First + No_Name'Length - 1) = No_Name
+                        then
+                           Nb_Untitled := Nb_Untitled + 1;
+                        end if;
+                     end;
+
+                     Next (Iterator);
+                     The_Child := Get (Iterator);
+                  end loop;
+
+                  if Nb_Untitled = 0 then
+                     Set_Title (Child, -"Untitled");
+                  else
+                     declare
+                        I : constant String := Natural'Image (Nb_Untitled + 1);
+                     begin
+                        Set_Title
+                          (Child,
+                           -"Untitled"
+                             & " (" & I (I'First + 1 .. I'Last) & ")");
+                     end;
+                  end if;
+
+                  Set_Filename (Editor, Get_Title (Child));
+               end;
             end if;
 
             --  We have created a new file editor : emit the
             --  corresponding signal.
             --  ??? what do we do when opening an editor with no name ?
 
-            File_Edited (Kernel, File);
+            File_Edited (Kernel, Get_Title (Child));
          end if;
 
          Gtkada.Handlers.Return_Callback.Object_Connect
@@ -1520,13 +1551,20 @@ package body Src_Editor_Module is
                   exit when Child = null;
 
                   declare
-                     Title : constant String := Get_Title (Child);
+                     Title   : constant String := Get_Title (Child);
+                     No_Name : constant String := -"Untitled";
                   begin
                      --  ??? Right now, we detect that a certain MDI child
-                     --  is an editor by looking at the first character of
-                     --  the title. This is very wrong !
+                     --  is an editor by checking that the first character is
+                     --  "/" or that the title is "Untitled[...]"
 
-                     if Title (Title'First) = '/' then
+                     if Title (Title'First) = '/'
+                       or else (Title'Length >= No_Name'Length
+                                and then Title
+                                  (Title'First
+                                     .. Title'First + No_Name'Length - 1)
+                                  = No_Name)
+                     then
                         Apply_Mime_On_Child (Child);
                      end if;
                   end;
@@ -1536,14 +1574,32 @@ package body Src_Editor_Module is
 
                return True;
 
+            elsif not Is_Regular_File (File) then
+               declare
+                  Base : constant String := Base_Name (File);
+               begin
+                  loop
+                     Child := Get (Iter);
+
+                     exit when Child = null
+                       or else Get_Title (Child) = Base;
+                     Next (Iter);
+                  end loop;
+
+                  if Child /= null then
+                     --  The editor was found.
+                     Apply_Mime_On_Child (Child);
+
+                     return True;
+                  end if;
+               end;
+
             else
                loop
                   Child := Get (Iter);
 
                   exit when Child = null
-                    or else Get_Title (Child) = File
-                    or else Get_Title (Child) = -"No Name";
-                  --  ??? It is dangerous to rely on 'No Name' for a new file
+                    or else Get_Title (Child) = File;
                   Next (Iter);
                end loop;
 
