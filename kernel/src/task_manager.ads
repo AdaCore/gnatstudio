@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003 - 2005                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -82,6 +82,12 @@ package Task_Manager is
    --  associated progress bar) are not taken into account.
 
 private
+
+   procedure Run
+     (Manager : Task_Manager_Access;
+      Active  : Boolean);
+   --  Runs the task manager, if it is not already running.
+
    type Queue_Status is (Not_Started, Running, Paused, Completed, Interrupted);
 
    type Task_Queue_Record is record
