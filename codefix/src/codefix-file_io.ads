@@ -98,13 +98,13 @@ package Codefix.File_Io is
    procedure Get_Direct_Message
      (This    : in out Errors_File;
       Current : out Error_Message);
-   --  Gets a message without any modification of cols or lines numbers.
+   --  Get a message without any modification of cols or lines numbers.
 
    function No_More_Messages (This : Errors_File) return Boolean;
    --  Is true where all the messages are got fron Get_Message.
 
    procedure Open (This : in out Errors_File; File_Name : String);
-   --  Opens the file where errors are recorded.
+   --  Open the file where errors are recorded.
 
 private
 
@@ -116,9 +116,10 @@ private
    end record;
 
    function Get_Line_Node
-     (This : File_Interface;
-      Line : Positive) return List_Str.List_Node;
-   --  ???
+     (This     : File_Interface;
+      Position : Positive) return List_Str.List_Node;
+   --  Return the Node of the list contained in File_Interface what is recorded
+   --  at the position given in parameter.
 
    type File_Type_Access is access all File_Type;
    procedure Free is new Ada.Unchecked_Deallocation

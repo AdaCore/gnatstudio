@@ -137,10 +137,12 @@ private
    end record;
 
    procedure Parse_Head (Message : String; This : out Error_Message);
-   --  ???
+   --  Initialize Col, Line and File_Name fields of This by parsing the head
+   --  of the message.
 
    function Clone (This : Error_Message) return Error_Message;
-   --  ???
+   --  Duplicate all the information used in Error_Message, specially the
+   --  object referenced in.
 
    Invalid_Error_Message : constant Error_Message := (0, 0, null, null);
 

@@ -18,20 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  ??? What is this unit used for
+--  This unit is the standard derivation of Text_Navigator_Abstr.
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 
 generic
 
    type Unique_File is new Text_Interface with private;
-   --  ???
+   --  Type of Text_Interfaces that the Text_Navigator contains.
 
 package Codefix.Text_Navigators is
 
    type Text_Navigator is new Text_Navigator_Abstr with null record;
 
    function New_Text_Interface (This : Text_Navigator) return Ptr_Text;
-   --  ???
+   --  Create and initialise a new Text_Interface used by the text navigator.
 
 end Codefix.Text_Navigators;
