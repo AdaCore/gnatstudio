@@ -265,6 +265,7 @@ package body Directory_Tree is
       Last : Natural;
    begin
       Open (D, Absolute_Dir);
+
       loop
          Read (D, File, Last);
          exit when Last = 0;
@@ -277,12 +278,14 @@ package body Directory_Tree is
             return True;
          end if;
       end loop;
+
       Close (D);
       return False;
 
    exception
       when Directory_Error =>
          --  The directory couldn't be open, probably because of permissions.
+
          return False;
    end Has_Subdirectories;
 
@@ -293,8 +296,7 @@ package body Directory_Tree is
    function Filter
      (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean is
    begin
-      return Dir_Name (Dir_Name'First) /= '.'
-        and then Dir_Name /= "CVS";
+      return Dir_Name /= "CVS";
    end Filter;
 
    --------------------
@@ -310,7 +312,9 @@ package body Directory_Tree is
       if Win /= null then
          Set_Busy_Cursor (Win, True, True);
       end if;
+
       Add_Sub_Directories (Dir_Tree (Widget), Node);
+
       if Win /= null then
          Set_Busy_Cursor (Win, False);
       end if;
@@ -327,15 +331,21 @@ package body Directory_Tree is
       Node : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
       Tmp  : Gtk_Ctree_Node := Row_Get_Children (Node_Get_Row (Node));
       Tmp2 : Gtk_Ctree_Node;
+
    begin
       Freeze (Tree);
+
       --  Leave only one child, so as to keep the "[+]" visible
+
       loop
          Tmp2 := Row_Get_Sibling (Node_Get_Row (Tmp));
+
          exit when Tmp2 = null;
+
          Remove_Node (Tree, Tmp);
          Tmp := Tmp2;
       end loop;
+
       Boolean_Data.Node_Set_Row_Data (Tree, Node, False);
       Thaw (Tree);
    end Collapse_Tree_Cb;
@@ -355,6 +365,7 @@ package body Directory_Tree is
 
    begin
       --  Have we already parsed the subdirectories ?
+
       if Boolean_Data.Node_Get_Row_Data (Tree, N) then
          return;
       end if;
@@ -386,6 +397,7 @@ package body Directory_Tree is
       --  This can be done only after there are some other children, or the
       --  parent node is collapsed, thus causing another dummy node to be
       --  inserted.
+
       Remove_Node (Tree, Row_Get_Children (Node_Get_Row (N)));
 
       Boolean_Data.Node_Set_Row_Data (Tree, N, True);
@@ -465,8 +477,9 @@ package body Directory_Tree is
       Dir            : String;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null)
    is
-      Root : constant Gtk_Ctree_Node := Node_Nth (Tree, 0);
+      Root     : constant Gtk_Ctree_Node := Node_Nth (Tree, 0);
       Root_Dir : constant String := Directory (Tree, Root, False);
+
    begin
       if Busy_Cursor_On /= null then
          Set_Busy_Cursor (Busy_Cursor_On, True);
@@ -497,6 +510,7 @@ package body Directory_Tree is
       D : Idle_Data_Access := Data;
    begin
       --  Parse the directory name
+
       while Dir_End <= Data.Dir'Last
         and then Data.Dir (Dir_End) /= '/'
         and then Data.Dir (Dir_End) /= GNAT.OS_Lib.Directory_Separator
@@ -509,9 +523,11 @@ package body Directory_Tree is
       end if;
 
       --  Find the node for the directory
+
       Expand (Data.Tree, Data.Node);
 
       Tmp := Row_Get_Children (Node_Get_Row (Data.Node));
+
       while Tmp /= null loop
          exit when Node_Get_Text (Data.Tree, Tmp, 0) =
            Data.Dir (Data.Index + 1 .. Dir_End);
@@ -525,9 +541,11 @@ package body Directory_Tree is
             Gtk_Select (Data.Tree, Tmp);
             Node_Moveto (Data.Tree, Tmp, 0, 0.1, 0.2);
          end if;
+
          if Data.Busy_Cursor /= null then
             Set_Busy_Cursor (Data.Busy_Cursor, False);
          end if;
+
          D.Tree.Idle := 0;
          Free (D.Dir);
          Free (D);
@@ -566,11 +584,13 @@ package body Directory_Tree is
       Num_Rows : constant Gint := Get_Rows (Selector.List);
    begin
       --  Check if the directory is already there
+
       for J in 0 .. Num_Rows - 1 loop
          if Get_Text (Selector.List, J, 0) = Name then
             return J;
          end if;
       end loop;
+
       return -1;
    end Find_Directory_In_Selection;
 
@@ -579,28 +599,33 @@ package body Directory_Tree is
    -------------------
 
    procedure Add_Directory
-     (Selector : access Directory_Selector_Record'Class;
-      Dir : String;
+     (Selector  : access Directory_Selector_Record'Class;
+      Dir       : String;
       Recursive : Boolean)
    is
-      Row : Gint;
+      Row    : Gint;
       Handle : Dir_Type;
-      File : String (1 .. 255);
-      Last : Natural;
+      File   : String (1 .. 1024);
+      Last   : Natural;
+
    begin
       pragma Assert
         (Selector.List /= null, "Not a multiple-directory selector");
 
       Row := Find_Directory_In_Selection (Selector, Dir);
+
       if Row = -1 then
          Row := Append (Selector.List, Null_Array + Dir);
       end if;
+
       Select_Row (Selector.List, Row, -1);
 
       if Recursive then
          Open (Handle, Dir);
+
          loop
             Read (Handle, File, Last);
+
             exit when Last = 0;
 
             if Is_Directory (Dir & File (File'First .. Last))
@@ -643,9 +668,11 @@ package body Directory_Tree is
      (Selector : access Directory_Selector_Record'Class; Recursive : Boolean)
    is
       use type Gint_List.Glist;
+
       List : Gint_List.Glist := Get_Selection (Selector.List);
       Next : Gint_List.Glist;
       Num  : Guint := Gint_List.Length (List);
+
    begin
       --  Add the directories recursively to the selection (we can't remove
       --  them right away, since this would cancel the current selection and
@@ -656,6 +683,7 @@ package body Directory_Tree is
             declare
                Row : constant Gint := Gint_List.Get_Data (List);
                Dir : constant String := Get_Text (Selector.List, Row, 0);
+
             begin
                for J in 0 .. Get_Rows (Selector.List) - 1 loop
                   declare
@@ -669,6 +697,7 @@ package body Directory_Tree is
                   end;
                end loop;
             end;
+
             List := Gint_List.Next (List);
          end loop;
       end if;
@@ -676,6 +705,7 @@ package body Directory_Tree is
       --  Now remove the whole selection
 
       List := Get_Selection (Selector.List);
+
       while List /= Gint_List.Null_List loop
          Next := Gint_List.Next (List);
          Remove (Selector.List, Gint_List.Get_Data (List));
@@ -705,9 +735,7 @@ package body Directory_Tree is
    -- Add_Single_Directory_Cb --
    -----------------------------
 
-   procedure Add_Single_Directory_Cb
-     (W : access Gtk_Widget_Record'Class)
-   is
+   procedure Add_Single_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : Directory_Selector := Directory_Selector (W);
    begin
       Add_Directory (Selector, Get_Selection (Selector.Directory), False);
@@ -722,9 +750,10 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
-      Item     : Gtk_Menu_Item;
-      Selected_Row, Selected_Col : Gint;
-      Is_Valid : Boolean;
+      Item         : Gtk_Menu_Item;
+      Selected_Row : Gint;
+      Selected_Col : Gint;
+      Is_Valid     : Boolean;
 
    begin
       if Selector.Tree_Contextual_Menu /= null then
@@ -757,6 +786,7 @@ package body Directory_Tree is
 
          return Selector.Tree_Contextual_Menu;
       end if;
+
       return null;
    end Tree_Contextual_Menu;
 
@@ -779,7 +809,8 @@ package body Directory_Tree is
       Event  : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
       use type Gint_List.Glist;
-      Item : Gtk_Menu_Item;
+
+      Item     : Gtk_Menu_Item;
       Is_Valid : constant Boolean :=
         Get_Selection (Selector.List) /= Gint_List.Null_List;
 
@@ -843,6 +874,7 @@ package body Directory_Tree is
       Bbox      : Gtk_Hbutton_Box;
       Button    : Gtk_Button;
       Arrow     : Gtk_Arrow;
+
    begin
       Initialize_Vbox (Selector, Homogeneous => False, Spacing => 0);
 
@@ -914,17 +946,21 @@ package body Directory_Tree is
      (Selector  : access Directory_Selector_Record'Class) return String
    is
       use type Gint_List.Glist;
+
       List : Gint_List.Glist;
+
    begin
       --  A single directory selector ?
+
       if Selector.List = null then
          return Get_Selection (Selector.Directory);
-
       else
          List := Get_Selection (Selector.List);
+
          if List /= Gint_List.Null_List then
             return Get_Text (Selector.List, Gint_List.Get_Data (List), 0);
          end if;
+
          return "";
       end if;
    end Get_Single_Selection;
@@ -938,18 +974,20 @@ package body Directory_Tree is
       return GNAT.OS_Lib.Argument_List is
    begin
       --  A single directory selector ?
+
       if Selector.List = null then
          return (1 => new String' (Get_Selection (Selector.Directory)));
-
       else
          declare
             Length : constant Gint := Get_Rows (Selector.List);
-            Args : Argument_List (1 .. Natural (Length));
+            Args   : Argument_List (1 .. Natural (Length));
+
          begin
             for A in Args'Range loop
                Args (A) := new String'
                  (Get_Text (Selector.List, Gint (A) - 1, 0));
             end loop;
+
             return Args;
          end;
       end if;
@@ -965,9 +1003,10 @@ package body Directory_Tree is
       Parent   : access Gtk.Window.Gtk_Window_Record'Class)
       return Gtk.Dialog.Gtk_Response_Type
    is
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Widget;
+      Dialog   : Gtk_Dialog;
+      Button   : Gtk_Widget;
       Response : Gtk_Response_Type;
+
    begin
       Gtk_New (Dialog,
                Title => Title,
