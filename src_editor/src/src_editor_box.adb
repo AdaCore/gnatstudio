@@ -1984,7 +1984,6 @@ package body Src_Editor_Box is
               or else Info.Name = null
             then
                --  No unit name found
-
                New_Name := new String'("");
             else
                --  Info.Name is a valid Ada unit name
@@ -1993,12 +1992,14 @@ package body Src_Editor_Box is
                   New_Name := new String'
                     (Get_Source_Filename
                        (To_Lower (Info.Name.all) & "%s",
-                        Get_Project (Editor.Kernel)));
+                        Get_Project (Editor.Kernel),
+                        File_Must_Exist => False));
                else
                   New_Name := new String'
                     (Get_Source_Filename
                        (To_Lower (Info.Name.all) & "%b",
-                        Get_Project (Editor.Kernel)));
+                        Get_Project (Editor.Kernel),
+                        File_Must_Exist => False));
                end if;
             end if;
 
