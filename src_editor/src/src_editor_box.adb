@@ -1499,7 +1499,7 @@ package body Src_Editor_Box is
               (Kernel, File_Information (C));
          begin
             if Other_File /= "" then
-               Open_File_Editor (Kernel, Other_File);
+               Open_File_Editor (Kernel, Other_File, Line => 0);
             end if;
          end;
       end if;
