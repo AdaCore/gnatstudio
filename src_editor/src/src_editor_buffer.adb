@@ -240,9 +240,12 @@ package body Src_Editor_Buffer is
    procedure Internal_Save_To_File
      (Buffer   : Source_Buffer;
       Filename : String;
+      Internal : Boolean;
       Success  : out Boolean);
    --  Low level save function. Only writes the buffer contents on disk,
    --  with no modification on the buffer's settings.
+   --  If Internal is True, do not emit kernel signals. This is used notably
+   --  for automatic saves.
 
    procedure Preferences_Changed
      (Buffer : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -357,7 +360,9 @@ package body Src_Editor_Buffer is
       Internal_Save_To_File
         (Buffer,
          Dir_Name (Buffer.Filename.all) & ".#" &
-         Base_Name (Buffer.Filename.all), Success);
+         Base_Name (Buffer.Filename.all),
+         True,
+         Success);
       Buffer.Modified_Auto := False;
 
       return True;
@@ -1731,6 +1736,7 @@ package body Src_Editor_Buffer is
    procedure Internal_Save_To_File
      (Buffer   : Source_Buffer;
       Filename : String;
+      Internal : Boolean;
       Success  : out Boolean)
    is
       FD         : File_Descriptor := Invalid_FD;
@@ -1943,6 +1949,7 @@ package body Src_Editor_Buffer is
       elsif Success
         and then (Buffer.Filename = null
                   or else Buffer.Filename.all /= Filename)
+        and then not Internal
       then
          if Buffer.Filename /= null then
             File_Closed (Buffer.Kernel, Buffer.Filename.all);
@@ -2002,7 +2009,7 @@ package body Src_Editor_Buffer is
          Recompute_View (Buffer.Kernel);
       end if;
 
-      Internal_Save_To_File (Buffer.all'Access, Filename, Success);
+      Internal_Save_To_File (Buffer.all'Access, Filename, False, Success);
 
       if not Success then
          return;
