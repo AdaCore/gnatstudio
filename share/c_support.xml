@@ -1,0 +1,139 @@
+<?xml version="1.0" ?>
+<Root>
+   <tool name="C" package="Builder" index="C" language="C">
+      <switches lines="2" columns="2">
+        <title line="1" column="1" >Code generation</title>
+        <title line="1" column="2" >Debugging</title>
+        <title line="2" column="1" column-span="2" >Messages</title>
+
+        <combo switch="-O" noswitch="0" nodigit="1" >
+           <combo-entry label="No optimization" value="0" />
+           <combo-entry label="Some optimization" value="1" />
+           <combo-entry label="Full optimization" value="2" />
+           <combo-entry label="Full + Automatic inline" value="3" />
+        </combo>
+        <check label="Unroll loops" switch="-funroll-loops"
+               tip="Perform the optimization of loop unrolling. This is only done for loops whose number of iterations can be determined at compile time or run time" />
+        <check label="Position independent code" switch="-fPIC"
+               tip="If supported for the target machine, emit position-independent code, suitable for dynamic linking and avoiding any limit of the size of the global offset table" />
+        <check label="Profiling" switch="-pg"
+               tip="Generate extra code to write profile information suitable for the analysis program gprof" />
+        <check label="Code coverage" switch="-ftest-coverage"
+               tip="Create data files for the gcov code-coverage utility" />
+        <check label="Instrument arcs" switch="-fprofile-arcs"
+               tip="Instrument arcs during compilation. For each function of your program, gcc creates a program flow graph, then finds a spanning tree for the graph. Only arcs that are not on the spanning tree have to be instrumented: the compiler adds code to count the number of times that these arcs are executed" />
+        <dependency master-page="C" slave-page="C"
+                    master-switch="-ftest-coverage"
+                    slave-switch="-fprofile-arcs"
+                    master-status="off" slave-status="off" />
+
+        <check label="Debug information" switch="-g" column="2"
+                tip="Produce debugging information in the operating system's native format" />
+
+        <check label="All warnings" switch="-Wall" line="2"
+               tip="This enables all the warnings about constructions that some users consider questionable, and that are easy to avoid" />
+        <check label="Strict ANSI" switch="-ansi" line="2"
+               tip="In C mode, support all ANSI standard C programs" />
+      </switches>
+   </tool>
+
+   <tool name="C++" package="Builder" index="C++" language="C++">
+      <switches lines="2" columns="2">
+        <title line="1" column="1" >Code generation</title>
+        <title line="1" column="2" >Debugging</title>
+        <title line="2" column="1" column-span="2" >Messages</title>
+
+        <combo switch="-O" noswitch="0" nodigit="1" >
+           <combo-entry label="No optimization" value="0" />
+           <combo-entry label="Some optimization" value="1" />
+           <combo-entry label="Full optimization" value="2" />
+           <combo-entry label="Full + Automatic inline" value="3" />
+        </combo>
+        <check label="Unroll loops" switch="-funroll-loops"
+               tip="Perform the optimization of loop unrolling. This is only done for loops whose number of iterations can be determined at compile time or run time" />
+        <check label="Position independent code" switch="-fPIC"
+               tip="If supported for the target machine, emit position-independent code, suitable for dynamic linking and avoiding any limit of the size of the global offset table" />
+        <check label="Profiling" switch="-pg"
+               tip="Generate extra code to write profile information suitable for the analysis program gprof" />
+        <check label="Code coverage" switch="-ftest-coverage"
+               tip="Create data files for the gcov code-coverage utility" />
+        <check label="Instrument arcs" switch="-fprofile-arcs"
+               tip="Instrument arcs during compilation. For each function of your program, gcc creates a program flow graph, then finds a spanning tree for the graph. Only arcs that are not on the spanning tree have to be instrumented: the compiler adds code to count the number of times that these arcs are executed" />
+        <dependency master-page="C" slave-page="C"
+                    master-switch="-ftest-coverage"
+                    slave-switch="-fprofile-arcs"
+                    master-status="off" slave-status="off" />
+        <check label="Elide constructors" switch="-felide-constructor" />
+        <check label="Conserve space" switch="-fconserve-space"
+               tip="Put uninitialized or runtime-initialized global variables into the common segment. This saves space in the executable at the cost of not diagnosing duplicate definitions" />
+
+        <check label="Debug information" switch="-g" column="2"
+                tip="Produce debugging information in the operating system's native format" />
+
+        <check label="All warnings" switch="-Wall" line="2"
+               tip="This enables all the warnings about constructions that some users consider questionable, and that are easy to avoid" />
+        <check label="Overloaded virtual" switch="-Woverloaded-virtual" />
+      </switches>
+   </tool>
+
+   <vsearch-pattern>
+     <name>C: -&gt;MEMBER</name>
+     <regexp>\s*(\w+)\s*[^(]</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C: -&gt;MEMBER(</name>
+     <regexp>-&gt;\s*(\w+)\s*(</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C assignment</name>
+     <regexp>(\b(\w+)\s*(([-+*/%&amp;|^]|&lt;&lt;|&gt;&gt;)?=[^=]|\+\+|--))|((\+\+|--)\s*(\w+))</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C call</name>
+     <regexp>\b(\w+)\s*(</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C comparison</name>
+     <regexp>\b(\w+)\s*(==|!=|&gt;=|&lt;=|&gt;[^&gt;]|&lt;[^&lt;])|(==|!=|[^&gt;]&gt;=|[^&lt;]&lt;=|[^-&gt;]&gt;|[^&lt;]&lt;)\s*(\w+)</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C++ CLASS::member</name>
+     <regexp>\b(\w+)\s*::\s*\w+\s*[^(]</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C++ class::MEMBER</name>
+     <regexp>\b\w+\s*::\s*(\w+)\s*[^(]</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C++ CLASS::member(</name>
+     <regexp>\b(\w+)\s*::\s*\w+\s*\(</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C++ class::MEMBER(</name>
+     <regexp>\b\w+\s*::\s*(\w+)\s*\(</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C++ CLASS&lt;...&gt;</name>
+     <regexp>\b(\w+)&lt;[\w,\s]+&gt;</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C++ OBJECT-&gt;member</name>
+     <regexp>\b(\w+)\s*-&gt;\s*\w+\s*[^(]</regexp>
+   </vsearch-pattern>
+
+   <vsearch-pattern>
+     <name>C++ OBJECT-&gt;member(</name>
+     <regexp>\b(\w+)\s*-&gt;\s*\w+\s*\(</regexp>
+   </vsearch-pattern>
+
+</Root> 
