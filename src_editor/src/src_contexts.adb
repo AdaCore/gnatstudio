@@ -76,8 +76,8 @@ package body Src_Contexts is
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Lang          : Language_Access := null;
-      Ref_Line      : Natural         := 1;
-      Ref_Column    : Natural         := 1;
+      Ref_Line      : Editable_Line_Type := 1;
+      Ref_Column    : Natural            := 1;
       Was_Partial   : out Boolean);
    --  Search Context in buffer (Buffer_First .. Buffer'Last), searching only
    --  in the appropriate scope.
@@ -97,7 +97,7 @@ package body Src_Contexts is
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
-      Start_Line    : Natural := 1;
+      Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Natural := 1;
       Force_Read    : Boolean := False;
       Was_Partial   : out Boolean);
@@ -139,7 +139,7 @@ package body Src_Contexts is
       Scope          : Search_Scope;
       Lexical_State  : in out Recognized_Lexical_States;
       Lang           : Language_Access;
-      Current_Line   : Integer;
+      Current_Line   : Editable_Line_Type;
       Current_Column : Integer;
       Backward       : Boolean;
       Result         : out Match_Result_Access);
@@ -159,7 +159,7 @@ package body Src_Contexts is
       Name          : VFS.Virtual_File;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
-      Start_Line    : Natural := 1;
+      Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Natural := 1;
       Result        : out Match_Result_Access;
       Force_Read    : Boolean := False);
@@ -268,8 +268,8 @@ package body Src_Contexts is
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Lang          : Language_Access := null;
-      Ref_Line      : Natural         := 1;
-      Ref_Column    : Natural         := 1;
+      Ref_Line      : Editable_Line_Type := 1;
+      Ref_Column    : Natural            := 1;
       Was_Partial   : out Boolean)
    is
       Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
@@ -421,7 +421,7 @@ package body Src_Contexts is
 
       Pos           : Positive := Buffer_First;
       Line_Start    : Positive;
-      Line          : Natural := Ref_Line;
+      Line          : Editable_Line_Type := Ref_Line;
       Column        : Natural := Ref_Column;
       Last_Index    : Positive := Buffer_First;
       Section_End   : Integer;
@@ -442,7 +442,7 @@ package body Src_Contexts is
            (Context,
             Buffer, Buffer_First, Buffer'Last,
             Callback,
-            Pos, Line, Column, Was_Partial);
+            Pos, Integer (Line), Column, Was_Partial);
          return;
       end if;
 
@@ -461,8 +461,8 @@ package body Src_Contexts is
 
          if Scanning_Allowed (Old_State) then
             Scan_Buffer_No_Scope
-              (Context, Buffer, Line_Start, Section_End,
-               Callback, Last_Index, Line, Column, Was_Partial);
+              (Context, Buffer, Integer (Line_Start), Section_End,
+               Callback, Last_Index, Integer (Line), Column, Was_Partial);
 
             if Was_Partial then
                Lexical_State := Old_State;
@@ -500,7 +500,7 @@ package body Src_Contexts is
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
-      Start_Line    : Natural := 1;
+      Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Natural := 1;
       Force_Read    : Boolean := False;
       Was_Partial   : out Boolean)
@@ -509,7 +509,7 @@ package body Src_Contexts is
       Buffer        : GNAT.OS_Lib.String_Access;
       Child         : MDI_Child;
       Start         : Natural;
-      Line          : Natural;
+      Line          : Editable_Line_Type;
       Box           : Source_Editor_Box;
 
    begin
@@ -552,11 +552,14 @@ package body Src_Contexts is
       else
          Box := Get_Source_Box_From_MDI (Child);
 
-         if not Is_Valid_Location (Box, Start_Line, Start_Column) then
+         if not Is_Valid_Position
+           (Get_Buffer (Box), Start_Line, Start_Column)
+         then
             return;
          end if;
 
-         Buffer := new String'(Get_Slice (Box, Start_Line, Start_Column));
+         Buffer := new String'
+           (Get_Text (Get_Buffer (Box), Start_Line, Start_Column));
          Start := Buffer'First;
       end if;
 
@@ -625,7 +628,7 @@ package body Src_Contexts is
       Scope          : Search_Scope;
       Lexical_State  : in out Recognized_Lexical_States;
       Lang           : Language_Access;
-      Current_Line   : Integer;
+      Current_Line   : Editable_Line_Type;
       Current_Column : Integer;
       Backward       : Boolean;
       Result         : out Match_Result_Access)
@@ -654,8 +657,8 @@ package body Src_Contexts is
          --  current position, we can stop there. Else, if we have passed the
          --  current position but don't have any match yet, we have to return
          --  the last match.
-         if Match.Line > Current_Line
-           or else (Match.Line = Current_Line
+         if Match.Line > Integer (Current_Line)
+           or else (Match.Line = Integer (Current_Line)
                     and then Match.End_Column >= Current_Column)
          then
             if not Continue_Till_End
@@ -689,14 +692,18 @@ package body Src_Contexts is
       end Continue_Dialog;
 
       Was_Partial : Boolean;
+      Buffer_Text : GNAT.OS_Lib.String_Access;
+
    begin
       Result := null;
 
       if Backward then
+         Buffer_Text := Get_String (Get_Buffer (Editor));
          Scan_Buffer
-           (Get_Slice (Editor, 1, 1), 1, Context,
+           (Buffer_Text.all, 1, Context,
             Backward_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang, Was_Partial => Was_Partial);
+         GNAT.OS_Lib.Free (Buffer_Text);
 
          --  Start from the end if necessary.
 
@@ -710,7 +717,8 @@ package body Src_Contexts is
 
       else
          Scan_Buffer
-           (Get_Slice (Editor, Current_Line, 1), Current_Column, Context,
+           (Get_Text (Get_Buffer (Editor), Current_Line, 1),
+            Current_Column, Context,
             Stop_At_First_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang, Current_Line, Current_Column,
             Was_Partial);
@@ -730,10 +738,12 @@ package body Src_Contexts is
             end if;
 
             Lexical_State := Statements;
+            Buffer_Text := Get_String (Get_Buffer (Editor));
             Scan_Buffer
-              (Get_Slice (Editor, 1, 1), 1, Context,
+              (Buffer_Text.all, 1, Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope,
                Lexical_State, Lang, Was_Partial => Was_Partial);
+            GNAT.OS_Lib.Free (Buffer_Text);
          end if;
       end if;
    end Scan_Next;
@@ -806,7 +816,7 @@ package body Src_Contexts is
       Name          : VFS.Virtual_File;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
-      Start_Line    : Natural := 1;
+      Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Natural := 1;
       Result        : out Match_Result_Access;
       Force_Read    : Boolean := False)
@@ -1153,14 +1163,15 @@ package body Src_Contexts is
    is
       Lang   : Language_Access;
       Match  : Match_Result_Access;
-      Line, Column : Natural;
+      Column : Natural;
+      Line   : Editable_Line_Type;
 
    begin
       Assert (Me, not Context.All_Occurrences,
               "All occurences not supported for current_file_context");
 
       Lang := Get_Language_From_File (Handler, Get_Filename (Editor));
-      Get_Cursor_Location (Editor, Line, Column);
+      Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
 
       --  If we had a previous selection, and it had a null length, move the
       --  cursor forward, otherwise we would keep hitting the same match. Of
@@ -1193,9 +1204,9 @@ package body Src_Contexts is
          Result         => Match);
 
       if Match /= null then
-         Context.Begin_Line   := Match.Line;
+         Context.Begin_Line   := Editable_Line_Type (Match.Line);
          Context.Begin_Column := Match.Column;
-         Context.End_Line     := Match.Line;
+         Context.End_Line     := Editable_Line_Type (Match.Line);
          Context.End_Column   := Match.End_Column;
 
          Unchecked_Free (Match);
@@ -1203,7 +1214,7 @@ package body Src_Contexts is
          Set_Cursor_Location
            (Editor, Context.Begin_Line, Context.Begin_Column);
          Select_Region
-           (Editor,
+           (Get_Buffer (Editor),
             Context.Begin_Line,
             Context.Begin_Column,
             Context.End_Line,
@@ -1286,19 +1297,21 @@ package body Src_Contexts is
          if Get_Options (Context).Regexp then
             Current_Matches := Match
               (Context,
-               Get_Slice (Editor, Context.Begin_Line, Context.Begin_Column)) /=
-              -1;
+               Get_Text
+                 (Get_Buffer (Editor),
+                  Context.Begin_Line,
+                  Context.Begin_Column)) /= -1;
 
          elsif Get_Options (Context).Case_Sensitive then
-            Current_Matches := Get_Slice
-              (Editor,
+            Current_Matches := Get_Text
+              (Get_Buffer (Editor),
                Context.Begin_Line, Context.Begin_Column,
                Context.End_Line, Context.End_Column) =
               Context_As_String (Context);
          else
             Current_Matches := UTF8_Strdown
-              (Get_Slice
-                 (Editor,
+              (Get_Text
+                 (Get_Buffer (Editor),
                   Context.Begin_Line, Context.Begin_Column,
                   Context.End_Line, Context.End_Column)) =
               UTF8_Strdown (Context_As_String (Context));
@@ -1306,7 +1319,7 @@ package body Src_Contexts is
 
          if Current_Matches then
             Replace_Slice
-              (Editor,
+              (Get_Buffer (Editor),
                Context.Begin_Line,
                Context.Begin_Column,
                Context.End_Line,
@@ -1322,7 +1335,7 @@ package body Src_Contexts is
       --  contain any newline character
 
       declare
-         BL : constant Natural := Context.Begin_Line;
+         BL : constant Editable_Line_Type := Context.Begin_Line;
          BC : constant Natural := Context.Begin_Column + Replace_String'Length;
          Replaced_Has_Null_Length : constant Boolean :=
            Context.Begin_Line = Context.End_Line
@@ -1389,9 +1402,9 @@ package body Src_Contexts is
                Force_Read    => Kernel = null);
 
             if Match /= null then
-               Context.Begin_Line   := Match.Line;
+               Context.Begin_Line   := Editable_Line_Type (Match.Line);
                Context.Begin_Column := Match.Column;
-               Context.End_Line     := Match.Line;
+               Context.End_Line     := Editable_Line_Type (Match.Line);
                Context.End_Column   := Match.End_Column;
                Tmp := Callback (Match.all);
                Unchecked_Free (Match);
@@ -1432,9 +1445,9 @@ package body Src_Contexts is
                Force_Read    => Kernel = null);
 
             if Match /= null then
-               Context.Begin_Line   := Match.Line;
+               Context.Begin_Line   := Editable_Line_Type (Match.Line);
                Context.Begin_Column := Match.Column;
-               Context.End_Line     := Match.Line;
+               Context.End_Line     := Editable_Line_Type (Match.Line);
                Context.End_Column   := Match.End_Column;
                Tmp := Callback (Match.all);
                Unchecked_Free (Match);
@@ -1520,9 +1533,9 @@ package body Src_Contexts is
 
       Child        : MDI_Child;
       Editor       : Source_Editor_Box;
-      Start_Line   : Positive;
+      Start_Line   : Editable_Line_Type;
       Start_Column : Positive;
-      End_Line     : Positive;
+      End_Line     : Editable_Line_Type;
       End_Column   : Positive;
       Success      : Boolean;
       Matches      : Match_Result_Array_Access;
@@ -1543,7 +1556,7 @@ package body Src_Contexts is
 
                if Get_Filename (Editor) = Current_File (C) then
                   Get_Selection_Bounds
-                    (Editor,
+                    (Get_Buffer (Editor),
                      Start_Line, Start_Column, End_Line, End_Column,
                      Success);
 
@@ -1554,7 +1567,7 @@ package body Src_Contexts is
                     and then Context.End_Column   = End_Column
                   then
                      Replace_Slice
-                       (Editor,
+                       (Get_Buffer (Editor),
                         Start_Line, Start_Column, End_Line, End_Column,
                         Replace_String);
                   end if;
