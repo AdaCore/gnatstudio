@@ -102,7 +102,16 @@ package body Glide_Kernel.Custom is
                  and then Is_Regular_File (F)
                then
                   Trace (Me, "Loading " & F);
-                  File_Node := Parse (F);
+
+                  begin
+                     File_Node := Parse (F);
+                  exception
+                     when E : others =>
+                        Trace (Me, "Could not parse XML file: " & F);
+                        Insert (Kernel, -"Could not parse XML file: " & F);
+                        Trace (Me, Exception_Information (E));
+                        File_Node := null;
+                  end;
 
                   if File_Node = null then
                      Console.Insert
