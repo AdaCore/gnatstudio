@@ -459,7 +459,7 @@ package body Creation_Wizard is
       Emit_Switches (Wiz, Project, Get_Name_String (Name_Linker), Linker);
 
       --  Append the naming scheme
-      Create_Project_Entry (Wiz.Naming, Project);
+      Create_Project_Entry (Wiz.Naming, Wiz.Kernel, Project);
 
       Save_Project (Project, Recursive => False);
 
