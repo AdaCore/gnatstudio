@@ -23,15 +23,26 @@ with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Combo;                use Gtk.Combo;
-with Gtk.List;                 use Gtk.List;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Clist;                use Gtk.Clist;
+with Gtk.Size_Group;           use Gtk.Size_Group;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Window;               use Gtk.Window;
 with Gtkada.Types;             use Gtkada.Types;
+with Casing;                   use Casing;
 with Prj.Tree;                 use Prj.Tree;
+with Prj.Util;                 use Prj.Util;
 with Prj_API;                  use Prj_API;
 with Prj;                      use Prj;
 with Types;                    use Types;
+with Namet;                    use Namet;
+with Snames;                   use Snames;
 with Stringt;                  use Stringt;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
+with GUI_Utils;                use GUI_Utils;
+with Glide_Intl;               use Glide_Intl;
+with Prj_API;                  use Prj_API;
 
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
@@ -41,19 +52,94 @@ package body Naming_Editors is
    Empty_Spec_Name : constant String := "<spec_file_name>";
    Empty_Body_Name : constant String := "<body_file_name>";
 
+   Default_Gnat_Dot_Replacement : constant String := "-";
+   Default_Gnat_Spec_Suffix     : constant String := ".ads";
+   Default_Gnat_Body_Suffix     : constant String := ".adb";
+   Default_Gnat_Separate_Suffix : constant String := ".adb";
+   --  Default settings for the GNAT naming scheme.
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New (Editor : out Naming_Editor) is
+      Casing_Items : String_List.Glist;
+      Size_Group : Gtk_Size_Group;
    begin
       Editor := new Naming_Editor_Record;
       Initialize (Editor);
+
+      Set_Size_Request (Editor.Exception_List, -1, 170);
+      Gtk_New (Size_Group, Both);
+      Add_Widget (Size_Group, Editor.Standard_Scheme);
+      Add_Widget (Size_Group, Editor.Casing);
+      Add_Widget (Size_Group, Editor.Dot_Replacement);
+      Add_Widget (Size_Group, Editor.Spec_Extension);
+      Add_Widget (Size_Group, Editor.Body_Extension);
+      Add_Widget (Size_Group, Editor.Separate_Extension);
+
+      Gtk_New (Size_Group, Both);
+      Add_Widget (Size_Group, Editor.Label_Naming_Scheme);
+      Add_Widget (Size_Group, Editor.Label_Casing);
+      Add_Widget (Size_Group, Editor.Label_Dot_Replacement);
+      Add_Widget (Size_Group, Editor.Label_Spec_Extensions);
+      Add_Widget (Size_Group, Editor.Label_Body_Extensions);
+      Add_Widget (Size_Group, Editor.Label_Separate_Extensions);
+
       Ref (Editor.Main_Box);
       Unparent (Editor.Main_Box);
+
       Set_Auto_Sort (Editor.Exception_List, True);
       Reset_Exception_Fields (Editor);
+
+      for Casing in Casing_Type loop
+         if Casing /= Unknown then
+            String_List.Append (Casing_Items, -Image (Casing));
+         end if;
+      end loop;
+
+      Set_Popdown_Strings (Editor.Casing, Casing_Items);
+      Free_String_List (Casing_Items);
    end Gtk_New;
+
+   ------------------------
+   -- Edit_Naming_Scheme --
+   ------------------------
+
+   function Edit_Naming_Scheme
+     (Parent       : access Gtk_Window_Record'Class;
+      Project      : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id) return Boolean
+   is
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Widget;
+      Editor : Naming_Editor;
+   begin
+      Gtk_New (Dialog,
+               Title => -"Edit naming scheme for project "
+                 & Project_Name (Project_View),
+               Parent => Parent,
+               Flags  => Modal or Destroy_With_Parent);
+
+      Gtk_New (Editor);
+      Pack_Start (Get_Vbox (Dialog), Get_Window (Editor));
+
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Show_All (Dialog);
+
+      Show_Project_Settings (Editor, Project_View);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         Create_Project_Entry (Editor, Project);
+         Destroy (Dialog);
+         return True;
+      end if;
+
+      Destroy (Dialog);
+      return False;
+   end Edit_Naming_Scheme;
 
    ----------------
    -- Get_Window --
@@ -100,15 +186,18 @@ package body Naming_Editors is
       case Scheme_Num is
          when 0 =>
             --  GNAT Default
-            Set_Text (Get_Entry (Editor.Casing), "lowercase");
-            Set_Text (Editor.Dot_Replacement, "-");
-            Set_Text (Get_Entry (Editor.Spec_Extension), ".ads");
-            Set_Text (Get_Entry (Editor.Body_Extension), ".adb");
-            Set_Text (Get_Entry (Editor.Separate_Extension), ".adb");
+            Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
+            Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
+            Set_Text (Get_Entry (Editor.Spec_Extension),
+                      Default_Gnat_Spec_Suffix);
+            Set_Text (Get_Entry (Editor.Body_Extension),
+                      Default_Gnat_Body_Suffix);
+            Set_Text (Get_Entry (Editor.Separate_Extension),
+                      Default_Gnat_Separate_Suffix);
 
          when 1 =>
             --  APEX Default
-            Set_Text (Get_Entry (Editor.Casing), "lowercase");
+            Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, ".");
             Set_Text (Get_Entry (Editor.Spec_Extension), ".1.ada");
             Set_Text (Get_Entry (Editor.Body_Extension), ".2.ada");
@@ -116,7 +205,7 @@ package body Naming_Editors is
 
          when 2 =>
             --  DEC Ada Default
-            Set_Text (Get_Entry (Editor.Casing), "lowercase");
+            Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, "__");
             Set_Text (Get_Entry (Editor.Spec_Extension), "_.ada");
             Set_Text (Get_Entry (Editor.Body_Extension), ".ada");
@@ -135,66 +224,175 @@ package body Naming_Editors is
      (Editor  : access Naming_Editor_Record;
       Project : Prj.Tree.Project_Node_Id)
    is
-      use Widget_List;
-      List  : Gtk_List := Get_List (Editor.Standard_Scheme);
-      Scheme : Gint := Child_Position (List, Get_Data (Get_Selection (List)));
-      Pack : Project_Node_Id := Empty_Node;
-      Var : Project_Node_Id;
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
+      Workaround_For_Default_Extensions : constant Boolean := True;
+      --  ??? Should be True while the default extensions are not registered in
+      --  ??? the project parser.
    begin
+      Delete_Package (Project, Get_Name_String (Name_Naming));
+
       --  Do nothing for the standard GNAT naming scheme
-      if Scheme /= 0 then
-         Pack := Get_Or_Create_Package (Project, "Naming");
-         Var := Create_Attribute (Pack, "Casing", Kind => Single);
-         Set_Value (Var, Get_Text (Get_Entry (Editor.Casing)));
-         Var := Create_Attribute
-           (Pack, "Dot_Replacement", Kind => Single);
-         Set_Value (Var, Get_Text (Editor.Dot_Replacement));
-         Var := Create_Attribute
-           (Pack, "Specification_Append", Kind => Single);
-         Set_Value (Var, Get_Text (Get_Entry (Editor.Spec_Extension)));
-         Var := Create_Attribute (Pack, "Body_Append", Kind => Single);
-         Set_Value (Var, Get_Text (Get_Entry (Editor.Body_Extension)));
-         Var := Create_Attribute
-           (Pack, "Separate_Append", Kind => Single);
-         Set_Value (Var, Get_Text (Get_Entry (Editor.Separate_Extension)));
+      if Workaround_For_Default_Extensions
+        or else Get_Index_In_List (Editor.Standard_Scheme) /= 0
+      then
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Pkg_Name           => Get_Name_String (Name_Naming),
+            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
+            Value              => Get_Text (Get_Entry (Editor.Spec_Extension)),
+            Attribute_Index    => Ada_String);
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Pkg_Name           => Get_Name_String (Name_Naming),
+            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
+            Value              => Get_Text (Get_Entry (Editor.Body_Extension)),
+            Attribute_Index    => Ada_String);
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Pkg_Name           => Get_Name_String (Name_Naming),
+            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Attribute_Name     => Get_Name_String (Name_Separate_Suffix),
+            Value         => Get_Text (Get_Entry (Editor.Separate_Extension)));
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Pkg_Name           => Get_Name_String (Name_Naming),
+            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Attribute_Name     => Get_Name_String (Name_Casing),
+            Value              => Image
+              (Casing_Type'Val (Get_Index_In_List (Editor.Casing))));
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Pkg_Name           => Get_Name_String (Name_Naming),
+            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Attribute_Name     => Get_Name_String (Name_Dot_Replacement),
+            Value              => Get_Text (Editor.Dot_Replacement));
       end if;
 
-      if Num_Rows /= 0 then
-         if Pack = Empty_Node then
-            Pack := Get_Or_Create_Package (Project, "Naming");
-         end if;
+      for J in 0 .. Num_Rows - 1 loop
+         declare
+            U : constant String := Get_Text (Editor.Exception_List, J, 0);
+            U_Id : String_Id := No_String;
+            Spec : constant String :=
+              Get_Text (Editor.Exception_List, J, 1);
+            Bod : constant String :=
+              Get_Text (Editor.Exception_List, J, 2);
+         begin
+            if U /= "" then
+               Start_String;
+               Store_String_Chars (U);
+               U_Id := End_String;
+            end if;
 
-         for J in 0 .. Num_Rows - 1 loop
-            declare
-               U : constant String := Get_Text (Editor.Exception_List, J, 0);
-               U_Id : String_Id := No_String;
-               Spec : constant String :=
-                 Get_Text (Editor.Exception_List, J, 1);
-               Bod : constant String :=
-                 Get_Text (Editor.Exception_List, J, 2);
-            begin
-               if U /= "" then
-                  Start_String;
-                  Store_String_Chars (U);
-                  U_Id := End_String;
-               end if;
-
-               if Spec /= "" then
-                  Var := Create_Attribute
-                    (Pack, "Specification", U_Id, Single);
-                  Set_Value (Var, Spec);
-               end if;
-               if Bod /= "" then
-                  Var := Create_Attribute
-                    (Pack, "Body_Part", U_Id, Single);
-                  Set_Value (Var, Bod);
-               end if;
-            end;
-         end loop;
-
-      end if;
+            if Spec /= "" then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Get_Name_String (Name_Naming),
+                  Scenario_Variables => (1 .. 0 => Empty_Node),
+                  Attribute_Name     => Get_Name_String (Name_Specification),
+                  Value              => Spec,
+                  Attribute_Index    => U_Id);
+            end if;
+            if Bod /= "" then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Get_Name_String (Name_Naming),
+                  Scenario_Variables => (1 .. 0 => Empty_Node),
+                  Attribute_Name     => Get_Name_String (Name_Implementation),
+                  Value              => Bod,
+                  Attribute_Index    => U_Id);
+            end if;
+         end;
+      end loop;
    end Create_Project_Entry;
+
+   ---------------------------
+   -- Show_Project_Settings --
+   ---------------------------
+
+   procedure Show_Project_Settings
+     (Editor : access Naming_Editor_Record; Project_View : Prj.Project_Id)
+   is
+      Data  : Naming_Data := Prj.Projects.Table (Project_View).Naming;
+      Value : Variable_Value;
+      Elem  : Array_Element_Id;
+      Row   : Gint;
+   begin
+      if Data.Dot_Replacement /= No_Name then
+         Set_Text (Editor.Dot_Replacement,
+                   Get_Name_String (Data.Dot_Replacement));
+      else
+         Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
+      end if;
+
+      Set_Text (Get_Entry (Editor.Casing), -Image (Data.Casing));
+
+      Value := Value_Of
+        (Index => Name_Ada, In_Array => Data.Specification_Suffix);
+      if Value.Kind = Single and then Value.Value /= No_String then
+         Set_Text
+           (Get_Entry (Editor.Spec_Extension), Get_String (Value.Value));
+      else
+         Set_Text
+           (Get_Entry (Editor.Spec_Extension),  Default_Gnat_Spec_Suffix);
+      end if;
+
+      Value := Value_Of
+        (Index    => Name_Ada, In_Array => Data.Implementation_Suffix);
+      if Value.Kind = Single and then Value.Value /= No_String then
+         Set_Text
+           (Get_Entry (Editor.Body_Extension), Get_String (Value.Value));
+      else
+         Set_Text
+           (Get_Entry (Editor.Body_Extension),  Default_Gnat_Body_Suffix);
+      end if;
+
+      if Data.Separate_Suffix /= No_Name then
+         Set_Text
+           (Get_Entry (Editor.Separate_Extension),
+            Get_Name_String (Data.Separate_Suffix));
+      else
+         Set_Text
+           (Get_Entry (Editor.Separate_Extension),
+            Default_Gnat_Separate_Suffix);
+      end if;
+
+      Freeze (Editor.Exception_List);
+      Clear (Editor.Exception_List);
+
+      Elem := Data.Specifications;
+      while Elem /= No_Array_Element loop
+         Value := Prj.Array_Elements.Table (Elem).Value;
+         Row := Prepend
+           (Editor.Exception_List,
+            Get_Name_String (Prj.Array_Elements.Table (Elem).Index)
+            + Get_String (Value.Value) + "");
+         Elem := Prj.Array_Elements.Table (Elem).Next;
+      end loop;
+
+      Elem := Data.Bodies;
+      while Elem /= No_Array_Element loop
+         Value := Prj.Array_Elements.Table (Elem).Value;
+         Row := Find_First_Row_Matching
+           (Editor.Exception_List,
+            0,
+            Get_Name_String (Prj.Array_Elements.Table (Elem).Index));
+         if Row = -1 then
+            Row := Prepend
+              (Editor.Exception_List,
+               Get_Name_String (Prj.Array_Elements.Table (Elem).Index)
+               + "" + Get_String (Value.Value));
+         else
+            Set_Text (Editor.Exception_List, Row, 2,
+                      Get_String (Value.Value));
+         end if;
+         Elem := Prj.Array_Elements.Table (Elem).Next;
+      end loop;
+
+      Sort (Editor.Exception_List);
+      Thaw (Editor.Exception_List);
+   end Show_Project_Settings;
 
    -----------------------
    -- Add_New_Exception --

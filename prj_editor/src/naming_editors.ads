@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget;
+with Gtk.Window;
 with Gtk.GEntry;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with Prj.Tree;
@@ -29,7 +30,16 @@ package Naming_Editors is
    type Naming_Editor is access all Naming_Editor_Record'Class;
 
    procedure Gtk_New (Editor : out Naming_Editor);
-   --  Create a new naming scheme editor
+   --  Create a new naming scheme editor.
+
+   function Edit_Naming_Scheme
+     (Parent       : access Gtk.Window.Gtk_Window_Record'Class;
+      Project      : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id) return Boolean;
+   --  Open a dialog to edit the naming scheme for Project (given one of its
+   --  views). This dialog is modal, and needs to be closed before the user can
+   --  do anything else with Glide.
+   --  Return True if the project was modified.
 
    function Get_Window
      (Editor : access Naming_Editor_Record) return Gtk.Widget.Gtk_Widget;
@@ -50,6 +60,10 @@ package Naming_Editors is
       Project : Prj.Tree.Project_Node_Id);
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
+
+   procedure Show_Project_Settings
+     (Editor : access Naming_Editor_Record; Project_View : Prj.Project_Id);
+   --  Show the settings used for Project_View
 
    ---------------
    -- Callbacks --
