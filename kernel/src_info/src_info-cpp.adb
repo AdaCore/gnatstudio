@@ -4150,7 +4150,7 @@ package body Src_Info.CPP is
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
-            Kind              => Desc.Kind,
+            Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
