@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -19,13 +19,17 @@
 -----------------------------------------------------------------------
 
 with Gtk.Notebook;
-with Foreign_Naming_Editors;
-with Ada_Naming_Editors;
 with Glide_Kernel;
 with GNAT.OS_Lib;
 with Projects;
+with Gtk.Widget;
 
 package Naming_Editors is
+
+   -------------------
+   -- Naming editor --
+   -------------------
+   --  The following widget is a multi-language naming editor.
 
    type Naming_Editor_Record is new Gtk.Notebook.Gtk_Notebook_Record
      with private;
@@ -77,16 +81,54 @@ package Naming_Editors is
       Project      : Projects.Project_Type);
    --  Change the visible pages in editor, based on languages
 
+   ----------------------------
+   -- Language naming editor --
+   ----------------------------
+   --  The following widget describes the naming scheme editor for a single
+   --  language.
+
+   type Language_Naming_Editor_Record is abstract tagged private;
+   type Language_Naming_Editor is
+     access all Language_Naming_Editor_Record'Class;
+
+   procedure Destroy (Editor : access Language_Naming_Editor_Record)
+      is abstract;
+   --  Free the memory used by the editor (but not Editor itself).
+
+   function Get_Window
+     (Editor : access Language_Naming_Editor_Record)
+      return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return the window to insert in the multi-language editor.
+
+   function Create_Project_Entry
+     (Editor             : access Language_Naming_Editor_Record;
+      Project            : Projects.Project_Type;
+      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
+      is abstract;
+   --  Create a new entry in the project file Project for the naming scheme
+   --  defined in Editor.
+   --  Project can be No_Project.
+   --  Return True if the project was changed.
+
+   procedure Show_Project_Settings
+     (Editor             : access Language_Naming_Editor_Record;
+      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project            : Projects.Project_Type;
+      Display_Exceptions : Boolean := True) is abstract;
+   --  Show the settings used for Project for the specific language.
+   --  If Display_Exceptions is False, then the files in the exception list
+   --  will not be displayed, only the suffixes will be. This is intended to be
+   --  used when creating new projects based on an existing one.
+   --  If Project is No_Project, then the default settings are displayed.
+
 private
    type Language_Naming is record
       Language       : GNAT.OS_Lib.String_Access;
-      Ada_Naming     : Ada_Naming_Editors.Ada_Naming_Editor;
-      Foreign_Naming : Foreign_Naming_Editors.Foreign_Naming_Editor;
-      --  ??? Should have a common ancestor for all naming editors, registered
-      --  in Language_Handlers.Glide. However, the latter must be independent
-      --  of GtkAda...
+      Naming         : Language_Naming_Editor;
       Is_Visible     : Boolean;
    end record;
+
+   type Language_Naming_Editor_Record is abstract tagged null record;
 
    type Language_Naming_Array is array (Natural range <>) of Language_Naming;
    type Language_Naming_Array_Access is access Language_Naming_Array;

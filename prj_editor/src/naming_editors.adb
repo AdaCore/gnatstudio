@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -19,19 +19,17 @@
 -----------------------------------------------------------------------
 
 with Glib; use Glib;
-with Ada_Naming_Editors;      use Ada_Naming_Editors;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Basic_Types;             use Basic_Types;
-with Foreign_Naming_Editors;  use Foreign_Naming_Editors;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Notebook;            use Gtk.Notebook;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
-with Namet;                   use Namet;
 with Projects;                use Projects;
 with String_Utils;            use String_Utils;
 with Ada.Unchecked_Deallocation;
+with Project_Viewers;         use Project_Viewers;
 
 package body Naming_Editors is
 
@@ -40,6 +38,8 @@ package body Naming_Editors is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Language_Naming_Array, Language_Naming_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Language_Naming_Editor_Record'Class, Language_Naming_Editor);
 
    ----------------
    -- On_Destroy --
@@ -49,8 +49,11 @@ package body Naming_Editors is
       Naming : constant Naming_Editor := Naming_Editor (Widget);
    begin
       for P in Naming.Pages'Range loop
+         Destroy (Naming.Pages (P).Naming);
+         Unchecked_Free (Naming.Pages (P).Naming);
          Free (Naming.Pages (P).Language);
       end loop;
+      Unchecked_Free (Naming.Pages);
    end On_Destroy;
 
    -------------
@@ -110,6 +113,7 @@ package body Naming_Editors is
          Old    : Language_Naming_Array_Access;
          Last   : Natural;
          Exists : Boolean := False;
+         Naming : Language_Naming_Editor;
       begin
          --  Has the page already been created ?
 
@@ -119,13 +123,8 @@ package body Naming_Editors is
                  To_Lower (Name)
                then
                   Exists := True;
-                  if Editor.Pages (P).Ada_Naming /= null then
-                     Show (Get_Window (Editor.Pages (P).Ada_Naming));
-                  else
-                     Show (Get_Window (Editor.Pages (P).Foreign_Naming));
-                  end if;
+                  Show (Get_Window (Editor.Pages (P).Naming));
                   Editor.Pages (P).Is_Visible := True;
-
                   exit;
                end if;
             end loop;
@@ -135,62 +134,48 @@ package body Naming_Editors is
             return;
          end if;
 
-         --  Extend the array that stores all the editors
-         if Editor.Pages = null then
-            Editor.Pages := new Language_Naming_Array (1 .. 1);
-         else
-            Old := Editor.Pages;
-            Editor.Pages := new Language_Naming_Array
-              (Old'First .. Old'Last + 1);
-            Editor.Pages (Old'Range) := Old.all;
-            Unchecked_Free (Old);
-         end if;
+         Naming := Get_Naming_Scheme_Page (Kernel, Name);
 
-         --  Create the new page
+         if Naming /= null then
+            --  Extend the array that stores all the editors
 
-         Last := Editor.Pages'Last;
-         Editor.Pages (Last).Language := new String'(Name);
-         Mixed_Case (Editor.Pages (Last).Language.all);
+            if Editor.Pages = null then
+               Editor.Pages := new Language_Naming_Array (1 .. 1);
+            else
+               Old := Editor.Pages;
+               Editor.Pages := new Language_Naming_Array
+                 (Old'First .. Old'Last + 1);
+               Editor.Pages (Old'Range) := Old.all;
+               Unchecked_Free (Old);
+            end if;
 
-         Gtk_New (Label, Editor.Pages (Last).Language.all);
+            --  Create the new page
 
-         if To_Lower (Name) = Ada_String then
-            Gtk_New (Editor.Pages (Last).Ada_Naming);
+            Last := Editor.Pages'Last;
+            Editor.Pages (Last).Language := new String'(Name);
+            Mixed_Case (Editor.Pages (Last).Language.all);
+            Editor.Pages (Last).Naming := Naming;
+
+            Gtk_New (Label, Editor.Pages (Last).Language.all);
+
             Append_Page
-              (Editor, Get_Window (Editor.Pages (Last).Ada_Naming), Label);
-            Show_All (Get_Window (Editor.Pages (Last).Ada_Naming));
+              (Editor, Get_Window (Editor.Pages (Last).Naming), Label);
+            Show_All (Get_Window (Editor.Pages (Last).Naming));
 
             if Project /= No_Project then
                Show_Project_Settings
-                 (Editor.Pages (Last).Ada_Naming, Project, True);
+                 (Editor.Pages (Last).Naming, Kernel, Project, True);
             end if;
 
-         else
-            Name_Len := Name'Length;
-            Name_Buffer (1 .. Name_Len) := Name;
-            Gtk_New (Editor.Pages (Last).Foreign_Naming, Name_Find);
-            Append_Page
-              (Editor, Get_Window (Editor.Pages (Last).Foreign_Naming),
-               Label);
-            Show_All (Get_Window (Editor.Pages (Last).Foreign_Naming));
-
-            Show_Project_Settings
-              (Editor.Pages (Last).Foreign_Naming,
-               Kernel, Project, True);
+            Editor.Pages (Last).Is_Visible := True;
          end if;
-
-         Editor.Pages (Last).Is_Visible := True;
       end Create_Page;
 
       Current : constant Gint := Get_Current_Page (Editor);
    begin
       if Editor.Pages /= null then
          for P in Editor.Pages'Range loop
-            if Editor.Pages (P).Ada_Naming /= null then
-               Hide (Get_Window (Editor.Pages (P).Ada_Naming));
-            else
-               Hide (Get_Window (Editor.Pages (P).Foreign_Naming));
-            end if;
+            Hide (Get_Window (Editor.Pages (P).Naming));
             Editor.Pages (P).Is_Visible := False;
          end loop;
       end if;
@@ -227,16 +212,9 @@ package body Naming_Editors is
       --  has actually changed.
 
       for P in Editor.Pages'Range loop
-         if Editor.Pages (P).Ada_Naming /= null
-           and then Editor.Pages (P).Is_Visible
-         then
+         if Editor.Pages (P).Is_Visible then
             Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Ada_Naming, Project, Scenario_Variables);
-         elsif Editor.Pages (P).Foreign_Naming /= null
-           and then Editor.Pages (P).Is_Visible
-         then
-            Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Foreign_Naming, Project, Scenario_Variables);
+              (Editor.Pages (P).Naming, Project, Scenario_Variables);
          end if;
       end loop;
 
@@ -255,16 +233,12 @@ package body Naming_Editors is
    is
       Languages : Argument_List := Get_Languages (Project);
    begin
-      for P in Editor.Pages'Range loop
-         if Editor.Pages (P).Ada_Naming /= null then
+      if Editor.Pages /= null then
+         for P in Editor.Pages'Range loop
             Show_Project_Settings
-              (Editor.Pages (P).Ada_Naming, Project, Display_Exceptions);
-         else
-            Show_Project_Settings
-              (Editor.Pages (P).Foreign_Naming, Kernel,
-               Project, Display_Exceptions);
-         end if;
-      end loop;
+              (Editor.Pages (P).Naming, Kernel, Project, Display_Exceptions);
+         end loop;
+      end if;
 
       Free (Languages);
    end Show_Project_Settings;
