@@ -336,7 +336,7 @@ package body Glide_Kernel.Preferences is
          Nick  => -"Completion",
          Blurb => -"Key used for automatic completion of identifiers",
          Default_Modifier => Control_Mask,
-         Default_Key      => GDK_Return);
+         Default_Key      => GDK_slash);
       Register_Property
         (Kernel.Preferences, Param_Spec (Completion_Key), -"Editor:General");
 
