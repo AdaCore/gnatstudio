@@ -23,6 +23,9 @@ with Glib.Values;         use Glib.Values;
 with Glib.Object;         use Glib.Object;
 with Glib.Properties;     use Glib.Properties;
 
+with Gdk.Types;           use Gdk.Types;
+with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
+with Gdk.Event;           use Gdk.Event;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
@@ -85,6 +88,11 @@ package body Glide_Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
    --  Handler for the "button_release_event" signal.
+
+   function Key_Press_Handler
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Handler for the "key_press_event" signal.
 
    procedure Replace_Cursor (Console : Glide_Interactive_Console);
    --  If the cursor is in a forbidden zone, place it at the prompt.
@@ -198,7 +206,7 @@ package body Glide_Interactive_Consoles is
    is
       pragma Unreferenced (Params);
 
-      Console : Glide_Interactive_Console :=
+      Console : constant Glide_Interactive_Console :=
         Glide_Interactive_Console (Object);
    begin
       Console.Button_Press := False;
@@ -211,6 +219,101 @@ package body Glide_Interactive_Consoles is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Release_Handler;
+
+   -----------------------
+   -- Key_Press_Handler --
+   -----------------------
+
+   function Key_Press_Handler
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      Console : constant Glide_Interactive_Console :=
+        Glide_Interactive_Console (Object);
+
+      Key         : constant Gdk_Key_Type  := Get_Key_Val (Event);
+      Prompt_Iter : Gtk_Text_Iter;
+      Last_Iter   : Gtk_Text_Iter;
+   begin
+      case Key is
+         when GDK_Up =>
+            if Console.Current_Position = Null_Node then
+               Console.Current_Position := First (Console.History);
+
+               Get_Iter_At_Mark
+                 (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+               Get_End_Iter (Console.Buffer, Last_Iter);
+               Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+
+               if Console.Current_Position /= Null_Node then
+                  Get_Iter_At_Mark
+                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+                  Insert
+                    (Console.Buffer,
+                     Prompt_Iter,
+                     Data (Console.Current_Position));
+                  Get_End_Iter (Console.Buffer, Last_Iter);
+                  Place_Cursor (Console.Buffer, Last_Iter);
+               end if;
+            else
+               if Next (Console.Current_Position) = Null_Node then
+                  null;
+               else
+                  Console.Current_Position := Next (Console.Current_Position);
+
+                  Get_Iter_At_Mark
+                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+                  Get_End_Iter (Console.Buffer, Last_Iter);
+                  Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+
+                  Get_Iter_At_Mark
+                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+                  Insert
+                    (Console.Buffer,
+                     Prompt_Iter,
+                     Data (Console.Current_Position));
+                  Get_End_Iter (Console.Buffer, Last_Iter);
+                  Place_Cursor (Console.Buffer, Last_Iter);
+               end if;
+            end if;
+
+            return True;
+
+         when GDK_Down =>
+            if Console.Current_Position = Null_Node then
+               null;
+            else
+               Console.Current_Position :=
+                 Prev (Console.History, Console.Current_Position);
+
+               Get_Iter_At_Mark
+                 (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+               Get_End_Iter (Console.Buffer, Last_Iter);
+               Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+
+               if Console.Current_Position /= Null_Node then
+                  Get_Iter_At_Mark
+                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+                  Insert
+                    (Console.Buffer,
+                     Prompt_Iter,
+                     Data (Console.Current_Position));
+                  Get_End_Iter (Console.Buffer, Last_Iter);
+                  Place_Cursor (Console.Buffer, Last_Iter);
+               end if;
+            end if;
+
+            return True;
+
+         when others =>
+            return False;
+      end case;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Key_Press_Handler;
 
    --------------------
    -- Display_Prompt --
@@ -286,10 +389,12 @@ package body Glide_Interactive_Consoles is
               Interpret_Command (Console.Kernel, Command);
          begin
             Get_End_Iter (Console.Buffer, Pos);
-
             Insert (Console.Buffer, Pos, Output);
 
-            --  ??? Must add Command to the history.
+            if Command /= "" then
+               Prepend (Console.History, Command);
+               Console.Current_Position := Null_Node;
+            end if;
 
             Get_Iter_At_Mark (Console.Buffer, Prompt, Console.Prompt_Mark);
             Get_End_Iter (Console.Buffer, Pos);
@@ -467,6 +572,13 @@ package body Glide_Interactive_Consoles is
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Console.View, "button_press_event",
          Button_Press_Handler'Access,
+         Gtk_Widget (Console),
+         After => False);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Console.View, "key_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Key_Press_Handler'Access),
          Gtk_Widget (Console),
          After => False);
 
