@@ -69,7 +69,8 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Default width for all the newly created windows",
          Minimum => 50,
          Maximum => 2000,
-         Default => 400));
+         Default => 400,
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Widget_Width), -"General");
 
@@ -79,7 +80,8 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Default height for all the newly created windows",
          Minimum => 50,
          Maximum => 2000,
-         Default => 400));
+         Default => 400,
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Widget_Height), -"General");
 
@@ -132,8 +134,8 @@ package body Glide_Kernel.Preferences is
 
       Display_Welcome := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Display-Welcome",
-         Nick    => -"Display Welcome Window",
-         Blurb   => -("True if GPS window should display the welcome window"
+         Nick    => -"Display welcome window",
+         Blurb   => -("True if GPS should display the welcome window"
                       & " for the selection of the project"),
          Default => True));
       Register_Property
@@ -300,6 +302,15 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Tooltips"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Display_Tooltip), -"Editor:General");
+
+      Highlight_Delimiters := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Src-Editor-Highlight-Delimiters",
+         Default => True,
+         Blurb   => -"Whether delimiters should be highlighted: (){}[]",
+         Nick    => -"Highlight delimiters"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Highlight_Delimiters),
+         -"Editor:General");
 
       Periodic_Save := Param_Spec_Int (Gnew_Int
         (Name    => "Src-Editor-Periodic-Save",
@@ -715,6 +726,23 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Dep_Browser_Show_Implicit_Dep),
          -"Browsers:File Dependencies");
+
+      -- VCS --
+      Hide_Up_To_Date := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "VCS-Hide-Up-To-Date",
+         Default => False,
+         Blurb   => -"Whether up to date files should be hidden by default",
+         Nick    => -"Hide up-to-date files"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Hide_Up_To_Date), -"VCS");
+
+      Hide_Not_Registered := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "VCS-Hide-Not-Registered",
+         Default => False,
+         Blurb   => -"Whether unregistered files should be hidden by default",
+         Nick    => -"Hide non registered files"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Hide_Not_Registered), -"VCS");
 
       -- CVS --
 
