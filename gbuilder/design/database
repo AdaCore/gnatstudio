@@ -293,7 +293,7 @@ if needed). These properties are identified with a special attribute
       You do not need to specify the first argument, since this is always
       the widget. Only the extra arguments need to be defined. -->
 
- <element name="signal>
+ <element name="signal">
     <complexType>
         <sequence>
             <element name="documentation" type="string"
@@ -475,6 +475,5 @@ Here is an example for a gtk+ database
          <documentation>Number of columns in the widget</documentation>
       </property>
    </widget_type>
-
 
 </library>
