@@ -66,6 +66,18 @@ package body Src_Info.LI_Utils is
    --  Checks if given position belongs to class body (found in the given
    --  list of declarations)
 
+   procedure Insert_Dependency
+     (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      DB_Dir               : String;
+      File                 : in out LI_File_Ptr;
+      List                 : LI_File_List;
+      Project              : Project_Type;
+      Referred_Filename    : String;
+      Referred_LI          : out LI_File_Ptr;
+      Dep_Ptr              : out Dependency_File_Info_List);
+   --  Same as the procedure with the same name, but also returns the newly
+   --  inserted dependency.
+
    ------------------------
    -- Insert_declaration --
    ------------------------
@@ -168,45 +180,70 @@ package body Src_Info.LI_Utils is
       Referred_Filename    : String)
    is
       Dep_Ptr : Dependency_File_Info_List;
-      Tmp_LI_File_Ptr : LI_File_Ptr;
+      Referred_LI : LI_File_Ptr;
+   begin
+      Insert_Dependency
+        (Handler, DB_Dir, File, List, Project, Referred_Filename,
+         Referred_LI, Dep_Ptr);
+   end Insert_Dependency;
+
+   -----------------------
+   -- Insert_Dependency --
+   -----------------------
+
+   procedure Insert_Dependency
+     (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      DB_Dir               : String;
+      File                 : in out LI_File_Ptr;
+      List                 : LI_File_List;
+      Project              : Project_Type;
+      Referred_Filename    : String;
+      Referred_LI          : out LI_File_Ptr;
+      Dep_Ptr              : out Dependency_File_Info_List)
+   is
+      Set_Contents : Boolean := False;
    begin
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
 
       Create_Stub_For_File
-        (LI            => Tmp_LI_File_Ptr,
+        (LI            => Referred_LI,
          Handler       => CPP_LI_Handler (Handler),
          DB_Dir        => DB_Dir,
          List          => List,
          Project       => Project,
          Full_Filename => Referred_Filename);
 
+      Assert (Me, File.LI.Body_Info.Source_Filename.all /=
+              Base_Name (Referred_Filename),
+              "Can't insert dependency, LI file "
+              & Referred_LI.LI.LI_Filename.all
+              & " is already for file "
+              & Referred_Filename);
+
       --  Is this a first dependencies info in this file?
 
       if File.LI.Dependencies_Info = null then
          File.LI.Dependencies_Info := new Dependency_File_Info_Node;
          Dep_Ptr := File.LI.Dependencies_Info;
+         Set_Contents := True;
 
       else
          --  Try to locate Dependency_File_Info with given Source_Filename
 
          Dep_Ptr := File.LI.Dependencies_Info;
 
+         while Get_Source_Filename (Dep_Ptr.Value.File) /=
+           Base_Name (Referred_Filename)
          loop
-            if Get_Source_Filename (Dep_Ptr.Value.File) =
-              Base_Name (Referred_Filename)
-            then
-               return;
-            end if;
-
             if Dep_Ptr.Next = null then
                --  Unable to find suitable Dependency_File_Info.
                --  Creating a new one.
 
                Dep_Ptr.Next := new Dependency_File_Info_Node;
                Dep_Ptr := Dep_Ptr.Next;
-
+               Set_Contents := True;
                exit;
             end if;
             Dep_Ptr := Dep_Ptr.Next;
@@ -215,14 +252,16 @@ package body Src_Info.LI_Utils is
 
       --  Creating new Dependency_File_Info_Node object
 
-      Dep_Ptr.all :=
-        (Value => (File         => (LI              => Tmp_LI_File_Ptr,
-                                    Part            => Unit_Body,
-                                    Source_Filename => null),
-                   Dep_Info     => (Depends_From_Spec => False,
-                                    Depends_From_Body => True),
-                   Declarations => null),
-         Next  => null);
+      if Set_Contents then
+         Dep_Ptr.all :=
+           (Value => (File         => (LI              => Referred_LI,
+                                       Part            => Unit_Body,
+                                       Source_Filename => null),
+                      Dep_Info     => (Depends_From_Spec => False,
+                                       Depends_From_Body => True),
+                      Declarations => null),
+            Next  => null);
+      end if;
    end Insert_Dependency;
 
    -----------------------------------
@@ -246,84 +285,41 @@ package body Src_Info.LI_Utils is
       Rename_Location       : Point := Invalid_Point;
       Declaration_Info      : out E_Declaration_Info_List)
    is
-      D_Ptr, Tmp_Ptr  : E_Declaration_Info_List;
-      Dep_Ptr         : Dependency_File_Info_List;
-      Tmp_LI_File_Ptr : LI_File_Ptr;
+      D_Ptr       : E_Declaration_Info_List;
+      Dep_Ptr     : Dependency_File_Info_List;
+      Referred_LI : LI_File_Ptr;
 
    begin
-      --  Now we are searching through common list of LI_Files and
-      --  trying to locate file with given name. If not found or if there
-      --  are no such symbol declared in the found file then
-      --  we are inserting new declaration
+      Insert_Dependency
+        (Handler           => Handler,
+         DB_Dir            => DB_Dir,
+         File              => File,
+         List              => List,
+         Project           => Project,
+         Referred_Filename => Referred_Filename,
+         Referred_LI       => Referred_LI,
+         Dep_Ptr           => Dep_Ptr);
 
-      Create_Stub_For_File
-        (LI            => Tmp_LI_File_Ptr,
-         Handler       => Handler,
-         DB_Dir        => DB_Dir,
-         List          => List,
-         Project       => Project,
-         Full_Filename => Referred_Filename);
+      --  D_Ptr := Find_Declaration
+      --    (File        => Tmp_LI_File_Ptr,
+      --     Symbol_Name => Symbol_Name,
+      --     Location    => Location);
 
-      D_Ptr := Find_Declaration
-        (File        => Tmp_LI_File_Ptr,
-         Symbol_Name => Symbol_Name,
-         Location    => Location);
-
-      if D_Ptr = null then
-         Insert_Declaration
-           (File                  => Tmp_LI_File_Ptr,
-            List                  => List,
-            DB_Dir                => DB_Dir,
-            Symbol_Name           => Symbol_Name,
-            Location              => Location,
-            Parent_Filename       => Parent_Filename,
-            Parent_Location       => Parent_Location,
-            Kind                  => Kind,
-            Scope                 => Scope,
-            Project               => Project,
-            End_Of_Scope_Location => End_Of_Scope_Location,
-            Declaration_Info      => Tmp_Ptr);
-      end if;
-
-      --  Is this is a first dependencies info in this file?
-      if File.LI.Dependencies_Info = null then
-         --  creating new Dependency_File_Info_Node object
-         File.LI.Dependencies_Info := new Dependency_File_Info_Node'
-           (Value => (File         => (LI              => Tmp_LI_File_Ptr,
-                                       Part            => Unit_Body,
-                                       Source_Filename => null),
-                      Dep_Info     => (Depends_From_Spec => False,
-                                       Depends_From_Body => True),
-                      Declarations => null),
-            Next  => null);
-         Dep_Ptr := File.LI.Dependencies_Info;
-      else
-         Dep_Ptr := File.LI.Dependencies_Info;
-         --  trying to locate Dependency_File_Info with given Source_Filename
-
-         --  ??? MANU: using Base_Name here is a hack, we need to correctly
-         --  handle Directory_Name found in #include "dir/file.h"
-
-         while Get_Source_Filename (Dep_Ptr.Value.File) /=
-           Base_Name (Referred_Filename)
-         loop
-            if Dep_Ptr.Next = null then
-               --  Unable to find suitable Dependency_File_Info.
-               --  Creating a new one.
-               Dep_Ptr.Next := new Dependency_File_Info_Node'
-                 (Value => (File => (LI              => Tmp_LI_File_Ptr,
-                                     Part            => Unit_Body,
-                                     Source_Filename => null),
-                            Dep_Info     => (Depends_From_Spec => False,
-                                             Depends_From_Body => True),
-                            Declarations => null),
-                  Next  => null);
-               Dep_Ptr := Dep_Ptr.Next;
-               exit;
-            end if;
-            Dep_Ptr := Dep_Ptr.Next;
-         end loop;
-      end if;
+      --  if D_Ptr = null then
+      --     Insert_Declaration
+      --       (File                  => Tmp_LI_File_Ptr,
+      --        List                  => List,
+      --        DB_Dir                => DB_Dir,
+      --        Symbol_Name           => Symbol_Name,
+      --        Location              => Location,
+      --        Parent_Filename       => Parent_Filename,
+      --        Parent_Location       => Parent_Location,
+      --        Kind                  => Kind,
+      --        Scope                 => Scope,
+      --        Project               => Project,
+      --        End_Of_Scope_Location => End_Of_Scope_Location,
+      --        Declaration_Info      => Tmp_Ptr);
+      --  end if;
 
       --  Now Dep_Ptr points to valid Dependency_File_Info_Node object
       --  Inserting new declaration
@@ -362,7 +358,7 @@ package body Src_Info.LI_Utils is
 
       Insert_Declaration_Internal
         (D_Ptr,
-         Tmp_LI_File_Ptr,
+         Referred_LI,
          List,
          DB_Dir,
          Symbol_Name,

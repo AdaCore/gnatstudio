@@ -92,6 +92,14 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
+   procedure Sym_GV_Handler
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project     : Project_Type;
+      Module_Type_Defs : Module_Typedefs_List;
+      Decl_Info        : out E_Declaration_Info_List);
    procedure Sym_CON_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
@@ -141,6 +149,14 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
+   procedure Sym_CL_Handler
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project     : Project_Type;
+      Module_Type_Defs : Module_Typedefs_List;
+      Decl_Info        : out E_Declaration_Info_List);
    procedure Sym_UN_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
@@ -155,6 +171,14 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
+   procedure Sym_IV_Handler
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
+      Module_Type_Defs : Module_Typedefs_List;
+      Decl_Info        : out E_Declaration_Info_List);
    procedure Sym_IU_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
@@ -1444,13 +1468,7 @@ package body Src_Info.CPP is
             Sym.Start_Position := CL_Tab.Start_Position;
             Sym.Identifier     := CL_Tab.Name;
             Sym_CL_Handler
-              (Sym, Handler, File, List, Project, Module_Type_Defs);
-
-            Decl_Info := Find_Declaration
-              (File         => File,
-               Symbol_Name  => CL_Tab.Buffer
-                 (CL_Tab.Name.First .. CL_Tab.Name.Last),
-               Location     => CL_Tab.Start_Position);
+              (Sym, Handler, File, List, Project, Module_Type_Defs, Decl_Info);
 
             if Decl_Info = null then
                Fail ("We've just called Sym_CL_Handler but it has"
@@ -2825,6 +2843,13 @@ package body Src_Info.CPP is
                Next => File.LI.Body_Info.Declarations);
             Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
             Decl_Info.Value.Declaration.Kind := Overloaded_Entity_Kind;
+            Decl_Info.Value.Declaration.Location :=
+              (File =>  (LI              => File,
+                         Part            => Unit_Body,
+                         Source_Filename => null),
+               Line => 1,
+               Column => 1);
+
             File.LI.Body_Info.Declarations := Decl_Info;
          end if;
       end if;
@@ -2892,12 +2917,7 @@ package body Src_Info.CPP is
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
             Sym_GV_Handler
-              (Sym, Handler, File, List, Project, Module_Type_Defs);
-
-            Decl_Info := Find_Declaration
-              (File                    => File,
-               Symbol_Name             => Ref_Id,
-               Location                => Var.Start_Position);
+              (Sym, Handler, File, List, Project, Module_Type_Defs, Decl_Info);
 
             if Decl_Info = null then
                Fail ("unable to create declaration for global variable "
@@ -3044,13 +3064,7 @@ package body Src_Info.CPP is
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
             Sym_IV_Handler
-              (Sym, Handler, File, List, Project, Module_Type_Defs);
-
-            Decl_Info := Find_Declaration
-              (File                    => File,
-               Class_Name              => Ref_Class,
-               Symbol_Name             => Ref_Id,
-               Location                => Var.Start_Position);
+              (Sym, Handler, File, List, Project, Module_Type_Defs, Decl_Info);
 
             if Decl_Info = null then
                Fail ("unable to create declaration for instance variable "
@@ -3168,7 +3182,6 @@ package body Src_Info.CPP is
       else
          Ref_Kind := Modification;
       end if;
-
 
       Insert_Reference
         (Declaration_Info        => Decl_Info,
@@ -3453,15 +3466,12 @@ package body Src_Info.CPP is
                   Next => File.LI.Body_Info.Declarations);
                Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
                Decl_Info.Value.Declaration.Kind := Overloaded_Entity_Kind;
-               Decl_Info.Value.Declaration.Location.Line :=
-                  Class_Def.Start_Position.Line;
-               Decl_Info.Value.Declaration.Location.File :=
-                  (LI              => File,
-                   Part            => Unit_Body,
-                   Source_Filename =>
-                      new String'(Get_LI_Filename (File)));
-               Decl_Info.Value.Declaration.Location.Column :=
-                  Class_Def.Start_Position.Column;
+               Decl_Info.Value.Declaration.Location :=
+                 (File   => (LI              => File,
+                             Part            => Unit_Body,
+                             Source_Filename => null),
+                  Line   => Class_Def.Start_Position.Line,
+                  Column => Class_Def.Start_Position.Column);
                File.LI.Body_Info.Declarations := Decl_Info;
             end if;
 
@@ -3793,6 +3803,24 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info      : E_Declaration_Info_List;
+   begin
+      Sym_CL_Handler
+        (Sym, Handler, File, List, Project, Module_Type_Defs, Decl_Info);
+   end Sym_CL_Handler;
+
+   --------------------
+   -- Sym_CL_Handler --
+   --------------------
+
+   procedure Sym_CL_Handler
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project     : Project_Type;
+      Module_Type_Defs : Module_Typedefs_List;
+      Decl_Info        : out E_Declaration_Info_List)
+   is
       Desc           : CType_Description;
       Class_Def      : CL_Table;
       Success        : Boolean;
@@ -3801,6 +3829,8 @@ package body Src_Info.CPP is
       Super_Def      : CL_Table;
       Super_Desc     : CType_Description;
    begin
+      Decl_Info := null;
+
       --  Info ("Sym_CL_Hanlder: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
       --        & """");
@@ -4619,13 +4649,33 @@ package body Src_Info.CPP is
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      Decl_Info : E_Declaration_Info_List;
+   begin
+      Sym_GV_Handler
+        (Sym, Handler, File, List, Project, Module_Type_Defs, Decl_Info);
+   end Sym_GV_Handler;
+
+   --------------------
+   -- Sym_GV_Handler --
+   --------------------
+
+   procedure Sym_GV_Handler
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project     : Project_Type;
+      Module_Type_Defs : Module_Typedefs_List;
+      Decl_Info        : out E_Declaration_Info_List)
+   is
       Desc      : CType_Description;
       Var       : GV_Table;
       Success   : Boolean;
-      Decl_Info : E_Declaration_Info_List;
       Scope     : E_Scope := Global_Scope;
 
    begin
+      Decl_Info := null;
+
       --  Info ("Sym_GV_Handler: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
       --        & """");
@@ -4730,38 +4780,34 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Module_Type_Defs);
 
+      Filename : constant String := Sym.Buffer
+        (Sym.Identifier.First .. Sym.Identifier.Last);
+
       --  ??? We shouldn't use Base_Name below, but should allow find file to
       --  recognize directories in the name.
       Full_Included : constant String := Get_Full_Path_From_File
         (Registry        => Project_Registry (Get_Registry (Project)),
-         Filename        => Base_Name
-            (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)),
+         Filename        => Base_Name (Filename),
          Use_Source_Path => True,
          Use_Object_Path => False);
 
    begin
       --  Info ("Sym_IU_Handler: """
       --        & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-      --        & " depends on " & Full_Included
-      --        & """");
+      --        & " depends on """ & Full_Included
+      --        & """/""" & Filename & """");
 
       if Full_Included = "" then
-         Info ("File not found on path: "
-               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+         Info ("File not found on path: " & Filename);
 
-         declare
-            --  Put xref files for missing includes to the root project DB dir
-            DB_Dir : constant String := Get_DB_Dir (Handler.Root_Project);
-         begin
-            Insert_Dependency
-              (Handler           => Handler,
-               DB_Dir            => DB_Dir,
-               File              => File,
-               List              => List,
-               Project           => Project,
-               Referred_Filename => Sym.Buffer
-                 (Sym.Identifier.First .. Sym.Identifier.Last));
-         end;
+         --  Put xref files for missing includes to the root project DB dir
+         Insert_Dependency
+           (Handler           => Handler,
+            DB_Dir            => Get_DB_Dir (Handler.Root_Project),
+            File              => File,
+            List              => List,
+            Project           => Project,
+            Referred_Filename => Filename);
       else
          declare
             Prj_For_IU : constant Project_Type := Get_Project_From_File
@@ -4792,13 +4838,33 @@ package body Src_Info.CPP is
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      Inst_Var  : IV_Table;
       Decl_Info : E_Declaration_Info_List;
+   begin
+      Sym_IV_Handler
+        (Sym, Handler, File, List, Project, Module_Type_Defs, Decl_Info);
+   end Sym_IV_Handler;
+
+   --------------------
+   -- Sym_IV_Handler --
+   --------------------
+
+   procedure Sym_IV_Handler
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
+      Module_Type_Defs : Module_Typedefs_List;
+      Decl_Info        : out E_Declaration_Info_List)
+
+   is
+      Inst_Var  : IV_Table;
       Success   : Boolean;
       Desc      : CType_Description;
       Class_Def : CL_Table;
 
    begin
+      Decl_Info := null;
       --  Info ("Sym_IV_Handler: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
       --        & """");
@@ -4868,7 +4934,6 @@ package body Src_Info.CPP is
 
       if not Success then
          --  Cannot determine type of this instance variable
-
          Free (Inst_Var);
          return;
       end if;
@@ -4916,7 +4981,8 @@ package body Src_Info.CPP is
    exception
       when  DB_Error |   -- non-existent table
             Not_Found => -- no such variable
-         null;           -- ignore error
+         Fail ("Sym_IV_Handler: unexpected exception");
+         Decl_Info := null;
    end Sym_IV_Handler;
 
    --------------------
