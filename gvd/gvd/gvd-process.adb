@@ -995,8 +995,8 @@ package body GVD.Process is
 
          if Get_Active (Call_Stack) then
             Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
-            Process.Backtrace_Mask := Process.Backtrace_Mask
-              xor Stack_List_Mask (Geometry_Info.Stack_Mask);
+            Process.Backtrace_Mask := 
+              Stack_List_Mask (Geometry_Info.Stack_Mask);
             Show_Call_Stack_Columns (Process);
             Set_Column_Width (Process.Stack_List, 0,
                               Geometry_Info.Stack_Num_Width);
