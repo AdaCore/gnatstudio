@@ -1307,15 +1307,17 @@ package body Src_Editor_View is
       case Get_Key_Val (Event) is
          when GDK_Return =>
             External_End_Action (Buffer);
-            Insert_At_Cursor (Buffer, "" & ASCII.LF);
 
-            --  ??? COULD BE A KEY HANDLER AS WELL
-            Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
-            Copy (Last, Dest => Start);
-            Backward_Line (Start, Result);
-            Result :=
-              Do_Indentation (Buffer, Get_Language (Buffer), Start, Last);
-            return True;
+            if Should_Indent (Buffer) then
+               Insert_At_Cursor (Buffer, "" & ASCII.LF);
+
+               --  ??? COULD BE A KEY HANDLER AS WELL
+               Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
+               Copy (Last, Dest => Start);
+               Backward_Line (Start, Result);
+               Result := Do_Indentation (Buffer, Start, Last);
+               return True;
+            end if;
 
          when GDK_Linefeed | GDK_Tab |
            GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End | GDK_Begin |
