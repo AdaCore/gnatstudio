@@ -221,6 +221,15 @@ package body Builder_Module is
    --  Build->Make menu.
    --  If Data contains a null file name, then the current file is compiled.
 
+   procedure On_Build
+     (Kernel      : Kernel_Handle;
+      File        : String;
+      Project     : Project_Type;
+      Synchronous : Boolean := False);
+   --  Same as On_Build.
+   --  If Synchronous is True, this subprogram will block GPS until the
+   --  compilation is finished executing.
+
    procedure On_Custom
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Custom... menu
@@ -489,11 +498,13 @@ package body Builder_Module is
    --------------
 
    procedure On_Build
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
+     (Kernel      : Kernel_Handle;
+      File        : String;
+      Project     : Project_Type;
+      Synchronous : Boolean := False)
    is
-      K            : constant Kernel_Handle := Kernel_Handle (Kernel);
       Top          : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (K));
+        Glide_Window (Get_Main_Window (Kernel));
       Fd           : Process_Descriptor_Access;
       Cmd          : String_Access;
       Args         : Argument_List_Access;
@@ -502,9 +513,8 @@ package body Builder_Module is
 
       Context      : Selection_Context_Access;
       Prj          : Project_Type;
-      Project      : constant Project_Type := Get_Project (K);
       Langs        : Argument_List := Get_Languages
-        (Project, Recursive => True);
+        (Get_Project (Kernel), Recursive => True);
       Syntax       : Command_Syntax;
       State_Pushed : Boolean := False;
 
@@ -524,7 +534,7 @@ package body Builder_Module is
       --  project whose name is changed when saving
 
       if not Save_All_MDI_Children
-        (K, Force => Get_Pref (K, Auto_Save))
+        (Kernel, Force => Get_Pref (Kernel, Auto_Save))
       then
          Free (Args);
          return;
@@ -532,8 +542,8 @@ package body Builder_Module is
 
       --  If no file was specified in data, simply compile the current file.
 
-      if Data.Length = 0 then
-         Context := Get_Current_Context (K);
+      if File'Length = 0 then
+         Context := Get_Current_Context (Kernel);
 
          if Context /= null
            and then Context.all in File_Selection_Context'Class
@@ -550,14 +560,16 @@ package body Builder_Module is
                   Change_Dir (Directory_Information (File_Context));
                end if;
 
-               Prj := Get_Project_From_File (Get_Registry (K), File);
+               Prj := Get_Project_From_File (Get_Registry (Kernel), File);
 
-               if Prj = No_Project or else Is_Default (Project) then
+               if Prj = No_Project
+                 or else Is_Default (Get_Project (Kernel))
+               then
                   Args := new Argument_List'
                     (Clone (Default_Builder_Switches) & new String'(File));
                else
                   Args := Compute_Arguments
-                    (K, Syntax, Project_Path (Prj), File);
+                    (Kernel, Syntax, Project_Path (Prj), File);
                end if;
             end;
 
@@ -565,43 +577,44 @@ package body Builder_Module is
 
          else
             Console.Insert
-              (K, -"No file selected, cannot build", Mode => Error);
+              (Kernel, -"No file selected, cannot build", Mode => Error);
             return;
          end if;
 
       else
          --  Are we using the default internal project ?
 
-         if Is_Default (Get_Project (K)) then
+         if Is_Default (Get_Project (Kernel)) then
             case Syntax is
                when GNAT_Syntax =>
-                  if Data.File = All_Files then
+                  if File = All_Files then
                      Console.Insert
-                       (K, -"Default project has no main unit", Mode => Error);
+                       (Kernel, -"Default project has no main unit",
+                        Mode => Error);
                      return;
                   else
                      Args := new Argument_List'
                        (Clone (Default_Builder_Switches)
-                        & new String'(Data.File));
+                        & new String'(File));
                   end if;
 
                when Make_Syntax =>
                   Console.Insert
-                    (K, -"You must save the project file before building",
+                    (Kernel, -"You must save the project file before building",
                      Mode => Error);
                   return;
             end case;
          else
             Args := Compute_Arguments
-              (K, Syntax, Project_Path (Data.Project), Data.File);
+              (Kernel, Syntax, Project_Path (Project), File);
          end if;
 
-         Change_Dir (Dir_Name (Project_Path (Data.Project)));
+         Change_Dir (Dir_Name (Project_Path (Project)));
       end if;
 
-      Clear_Compilation_Output (K);
+      Clear_Compilation_Output (Kernel);
 
-      Push_State (K, Processing);
+      Push_State (Kernel, Processing);
       State_Pushed := True;
 
       case Syntax is
@@ -614,13 +627,13 @@ package body Builder_Module is
             Cmd := new String'("make");
       end case;
 
-      Set_Sensitive_Menus (K, False);
+      Set_Sensitive_Menus (Kernel, False);
 
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
 
       Insert_And_Launch
-        (K,
+        (Kernel,
          Remote_Protocol  =>
            Get_Pref (GVD_Prefs, Remote_Protocol),
          Remote_Host      =>
@@ -631,14 +644,21 @@ package body Builder_Module is
 
       Free (Cmd);
       Free (Args);
-      Id := Process_Timeout.Add
-        (Timeout, Idle_Build'Access, (K, Fd, null, null, null));
+
+      if Synchronous then
+         while Idle_Build ((Kernel, Fd, null, null, null)) loop
+            delay 0.2;
+         end loop;
+      else
+         Id := Process_Timeout.Add
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
+      end if;
 
    exception
       when Invalid_Process =>
-         Console.Insert (K, -"Invalid command", Mode => Error);
-         Pop_State (K);
-         Set_Sensitive_Menus (K, True);
+         Console.Insert (Kernel, -"Invalid command", Mode => Error);
+         Pop_State (Kernel);
+         Set_Sensitive_Menus (Kernel, True);
          Free (Cmd);
          Free (Args);
          Free (Fd);
@@ -647,8 +667,20 @@ package body Builder_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
 
          if State_Pushed then
-            Pop_State (K);
+            Pop_State (Kernel);
          end if;
+   end On_Build;
+
+   --------------
+   -- On_Build --
+   --------------
+
+   procedure On_Build
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
+   begin
+      On_Build
+        (Kernel_Handle (Kernel), Data.File,
+         Data.Project, Synchronous => False);
    end On_Build;
 
    ---------------------
@@ -850,7 +882,7 @@ package body Builder_Module is
            (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
       else
          while Idle_Build ((Kernel, Fd, null, null, null)) loop
-            null;
+            delay 0.2;
          end loop;
       end if;
 
@@ -883,6 +915,24 @@ package body Builder_Module is
          Compile_File (Get_Kernel (Data), Get_Name (Info),
                        Synchronous => True);
 
+      elsif Command = "make" then
+         Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
+         Info := Get_Data (Instance);
+
+         declare
+            Main    : constant String := Get_Name (Info);
+            Project : constant Project_Type := Get_Project_From_File
+              (Registry => Project_Registry (Get_Registry (Get_Kernel (Data))),
+               Source_Filename   => Main,
+               Root_If_Not_Found => True);
+         begin
+            On_Build
+              (Get_Kernel (Data),
+               File        => Main,
+               Project     => Project,
+               Synchronous => True);
+         end;
+
       elsif Command = "get_build_output" then
          Node := First
            (Builder_Module_ID_Access (Builder_Module_ID).Output);
@@ -899,7 +949,7 @@ package body Builder_Module is
          D := new Compute_Xref_Data'
            (Kernel, new LI_Handler_Iterator_Access, 0);
          while Timeout_Compute_Xref (D) loop
-            null;
+            delay 0.01;
          end loop;
          Timeout_Xref_Destroy (D);
       end if;
@@ -1719,6 +1769,17 @@ package body Builder_Module is
          Description  =>
            -("Compile the file. This call will return only once the"
              & " compilation is completed"),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_File_Class (Kernel),
+         Handler      => Compile_Command'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "make",
+         Description  =>
+           -("Compile and link the file and all its dependencies. This call"
+             & " will return only once the compilation is completed"),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_File_Class (Kernel),
