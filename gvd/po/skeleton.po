@@ -61,8 +61,8 @@ msgstr "Auto-Align Displays on Nearest Grid Point"
 msgid  "Automatic Display of Button Hints"
 msgstr "Automatic Display of Button Hints"
 
-msgid  "Automatic Display of Variable Values"
-msgstr "Automatic Display of Variable Values"
+msgid  "Automatic Display of Variables"
+msgstr "Automatic Display of Variables"
 
 msgid  "Auto-Refreshed"
 msgstr "Auto-Refreshed"
@@ -94,9 +94,6 @@ msgstr "Bug detected in GVD"
 msgid  "Byte"
 msgstr "Byte"
 
-msgid  "bytes"
-msgstr "bytes"
-
 msgid  "Call Stack"
 msgstr "Call Stack"
 
@@ -114,6 +111,9 @@ msgstr "Changed Data"
 
 msgid  "Change Directory..."
 msgstr "Change Directory..."
+
+msgid  "Choice"
+msgstr "Choice"
 
 msgid  "Classes"
 msgstr "Classes"
@@ -199,6 +199,9 @@ msgstr "Current Line"
 msgid  "Cut"
 msgstr "Cut"
 
+msgid  "       [--dargs [debugger options]] "
+msgstr "       [--dargs [debugger options]] "
+
 msgid  "Data"
 msgstr "Data"
 
@@ -222,6 +225,9 @@ msgstr "Debugger Name"
 
 msgid  "Decimal"
 msgstr "Decimal"
+
+msgid  "Default Color"
+msgstr "Default Color"
 
 msgid  "Define Command..."
 msgstr "Define Command..."
@@ -355,9 +361,6 @@ msgstr ": File not found"
 msgid  "File not found: "
 msgstr "File not found: "
 
-msgid  "<file not found>"
-msgstr "<file not found>"
-
 msgid  "File/Variable"
 msgstr "File/Variable"
 
@@ -391,14 +394,8 @@ msgstr "GDB Settings..."
 msgid  "General"
 msgstr "General"
 
-msgid  "Get Core File"
-msgstr "Get Core File"
-
-msgid  "Getting assembly code..."
-msgstr "Getting assembly code..."
-
-msgid  "   gvd [options...] executable-file "
-msgstr "   gvd [options...] executable-file "
+msgid  "   gvd [options...] executable-file"
+msgstr "   gvd [options...] executable-file"
 
 msgid  "Halfword"
 msgstr "Halfword"
@@ -505,8 +502,14 @@ msgstr "   --log-level [0-4] Set level of logging (Default is 3)."
 msgid  "  machine: "
 msgstr "  machine: "
 
+msgid  "Memory"
+msgstr "Memory"
+
 msgid  "Memory View"
 msgstr "Memory View"
+
+msgid  "Modified"
+msgstr "Modified"
 
 msgid  "More Status Display..."
 msgstr "More Status Display..."
@@ -522,9 +525,6 @@ msgstr "Next"
 
 msgid  "Next Instruction"
 msgstr "Next Instruction"
-
-msgid  "   --no-explorer     Do not display explorer window."
-msgstr "   --no-explorer     Do not display explorer window."
 
 msgid  "No extension files"
 msgstr "No extension files"
@@ -573,9 +573,6 @@ msgstr "Overview..."
 
 msgid  "Packages"
 msgstr "Packages"
-
-msgid  "Page size:"
-msgstr "Page size:"
 
 msgid  "Parameters"
 msgstr "Parameters"
@@ -652,14 +649,17 @@ msgstr "Regular expression"
 msgid  "remote"
 msgstr "remote"
 
+msgid  "Remote Copy"
+msgstr "Remote Copy"
+
+msgid  "Remote Shell"
+msgstr "Remote Shell"
+
 msgid  "Remove"
 msgstr "Remove"
 
 msgid  "Replay selection"
 msgstr "Replay selection"
-
-msgid  "Reset"
-msgstr "Reset"
 
 msgid  "Run/Start..."
 msgstr "Run/Start..."
@@ -685,6 +685,12 @@ msgstr "Select and print stack frame that called this one"
 msgid  "Selection :"
 msgstr "Selection :"
 
+msgid  "Selection"
+msgstr "Selection"
+
+msgid  "Separate Window"
+msgstr "Separate Window"
+
 msgid  "Session:"
 msgstr "Session:"
 
@@ -694,11 +700,20 @@ msgstr "Session List"
 msgid  "Set Breakpoint on Line"
 msgstr "Set Breakpoint on Line"
 
+msgid  "Setting value of "
+msgstr "Setting value of "
+
 msgid  "Set Value"
 msgstr "Set Value"
 
+msgid  "Show"
+msgstr "Show"
+
 msgid  "Show all "
 msgstr "Show all "
+
+msgid  "Show ASCII"
+msgstr "Show ASCII"
 
 msgid  "Show Asm and Source"
 msgstr "Show Asm and Source"
@@ -717,6 +732,12 @@ msgstr "Show Line Numbers"
 
 msgid  "Show Lines with Code"
 msgstr "Show Lines with Code"
+
+msgid  "Show Next Page"
+msgstr "Show Next Page"
+
+msgid  "Show Previous Page"
+msgstr "Show Previous Page"
 
 msgid  "Show Source Code"
 msgstr "Show Source Code"
@@ -787,6 +808,9 @@ msgstr "Stop recording"
 msgid  "Strings"
 msgstr "Strings"
 
+msgid  "Strip Carriage Return"
+msgstr "Strip Carriage Return"
+
 msgid  "Submit changes"
 msgstr "Submit changes"
 
@@ -813,6 +837,9 @@ msgstr "Task Status"
 
 msgid  "Temporary breakpoint"
 msgstr "Temporary breakpoint"
+
+msgid  "Test"
+msgstr "Test"
 
 msgid  "the following information:"
 msgstr "the following information:"
@@ -894,9 +921,6 @@ msgstr "Warn if Multiple GVD Instances are Running"
 
 msgid  "watch"
 msgstr "watch"
-
-msgid  "Web Browser"
-msgstr "Web Browser"
 
 msgid  "What Now ... ?"
 msgstr "What Now ... ?"
