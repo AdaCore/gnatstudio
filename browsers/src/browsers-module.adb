@@ -266,7 +266,7 @@ package body Browsers.Module is
 
       Ada_Runtime_File := Ada_Runtime_File
         or else Name = "ada.ads"
-        or else Name = "interfaces.ads"
+        or else Name = "interfac.ads"
         or else Name = "system.ads"
         or else Name = "unchconv.ads"
         or else Name = "unchdeal.ads"
