@@ -123,7 +123,7 @@ package Glide_Kernel.Modules is
    --  Return the name of the module registered as ID.
 
    ----------------------
-   -- COntextual menus --
+   -- Contextual menus --
    ----------------------
 
    type Context_Factory is access function
