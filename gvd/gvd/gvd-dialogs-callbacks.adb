@@ -115,9 +115,10 @@ package body GVD.Dialogs.Callbacks is
 
          --  After switching to a new protection domain, we want the
          --  PD dialog to reflect that change immediately
+
          Info_PD (Process.Debugger, Info, Len);
          Freeze (Gtk_Clist (Object));
-         Update_PD (Main_Window.PD_Dialog, Info (1..Len));
+         Update_PD (Main_Window.PD_Dialog, Info (1 .. Len));
          Handler_Block (Object, Main_Window.PD_Dialog.Select_Row_Id);
          Select_Row (Gtk_Clist (Object), Index, 0);
          Handler_Unblock (Object, Main_Window.PD_Dialog.Select_Row_Id);
