@@ -79,6 +79,26 @@ package body Glide_Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Clear menu.
 
+   -----------------------------
+   -- Get_Interactive_Console --
+   -----------------------------
+
+   function Get_Interactive_Console
+     (Kernel : access Kernel_Handle_Record'Class)
+     return Glide_Interactive_Console
+   is
+      Top : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+   begin
+      if Top /= null
+        and then Get_Current_Process (Top) /= null
+      then
+         return Glide_Page.Glide_Page
+           (Get_Current_Process (Top)).Interactive_Console;
+      end if;
+
+      return null;
+   end Get_Interactive_Console;
+
    -----------------
    -- Get_Console --
    -----------------
@@ -121,12 +141,15 @@ package body Glide_Kernel.Console is
       Add_LF         : Boolean := True;
       Mode           : Message_Type := Info)
    is
-      Console : constant Glide_Console := Get_Console (Kernel);
+      Console             : constant Glide_Console := Get_Console (Kernel);
+      Interactive_Console : constant Glide_Interactive_Console
+        := Get_Interactive_Console (Kernel);
    begin
       if Console = null then
          Put_Line (Text);
       else
          Insert (Console, Text, Highlight_Sloc, Add_LF, Mode);
+         Insert (Interactive_Console, Text, Add_LF);
       end if;
    end Insert;
 
