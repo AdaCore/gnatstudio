@@ -314,8 +314,11 @@ package body Projects is
    function Project_Path (Project : Project_Type) return String is
       View : constant Project_Id := Get_View (Project);
    begin
-      if View = Prj.No_Project or else Status (Project) /= From_File then
+      if Status (Project) /= From_File then
          return "";
+      elsif View = Prj.No_Project then
+         --  Still needed for the project wizard
+         return Get_String (Path_Name_Of (Project.Node));
       else
          return Get_String
            (Prj.Projects.Table (View).Display_Path_Name);
