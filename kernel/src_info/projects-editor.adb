@@ -241,6 +241,13 @@ package body Projects.Editor is
    --  Return an N_Expression node that represents the static string Value.
    --  ??? Could be implemented in terms of Concatenate.
 
+   function Expression_As_String
+     (Tree       : Project_Node_Tree_Ref;
+      Expression : Project_Node_Id) return Name_Id;
+   --  Return the string contained in an expression. If the expression contains
+   --  more than a string literal, No_Name is returned.
+   --  This also accepts cases when Expression itself is a string_literal
+
    procedure Set_Expression
      (Tree             : Project_Node_Tree_Ref;
       Var_Or_Attribute : Project_Node_Id;
@@ -1637,6 +1644,35 @@ package body Projects.Editor is
             Delete_Direct_References => False);
    end Remove_Value;
 
+   --------------------------
+   -- Expression_As_String --
+   --------------------------
+
+   function Expression_As_String
+     (Tree       : Project_Node_Tree_Ref;
+      Expression : Project_Node_Id) return Name_Id
+   is
+      Term : Project_Node_Id;
+   begin
+      case Kind_Of (Expression, Tree) is
+         when N_Literal_String =>
+            return String_Value_Of (Expression, Tree);
+         when N_Expression =>
+            Term := First_Term (Expression, Tree);
+            if Term /= Empty_Node
+              and then Next_Term (Term, Tree) = Empty_Node
+              and then Kind_Of (Current_Term (Term, Tree), Tree) =
+                N_Literal_String
+            then
+               return String_Value_Of (Current_Term (Term, Tree), Tree);
+            else
+               return No_Name;
+            end if;
+         when others =>
+            return No_Name;
+      end case;
+   end Expression_As_String;
+
    ----------------------------------------
    -- Rename_Value_For_External_Variable --
    ----------------------------------------
@@ -1660,12 +1696,20 @@ package body Projects.Editor is
          case Kind_Of (Node, Root_Project.Tree) is
             when N_External_Value =>
                if External_Default_Of (Node, Tree) /= Empty_Node
-                 and then
-                   String_Value_Of (External_Default_Of (Node, Tree), Tree) =
-                   Old_V_Name
+                 and then Expression_As_String
+                   (Tree, External_Default_Of (Node, Tree)) = Old_V_Name
                then
-                  Set_String_Value_Of
-                    (External_Default_Of (Node, Tree), Tree, New_Value_Name);
+                  if Kind_Of (External_Default_Of (Node, Tree), Tree) =
+                    N_Literal_String
+                  then
+                     Set_String_Value_Of
+                       (External_Default_Of (Node, Tree), Tree,
+                        New_Value_Name);
+                  else
+                     Set_External_Default_Of
+                       (Node, Tree,
+                        Create_Literal_String (New_Value_Name, Tree));
+                  end if;
                end if;
 
             when N_String_Type_Declaration =>
