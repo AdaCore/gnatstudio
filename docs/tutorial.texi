@@ -634,7 +634,8 @@ Click on the right arrow of @file{tokens.ads} to display the files that
 @noindent
 
 Back in the project explorer, on the @i{sdc} project, select the contextual
-menu @code{Add dependency->From project file...}, then open the @i{tutorial}
+menu @code{Project->Dependencies...}, then on the @code{Add From File},
+then open the @i{tutorial}
 directory and click on the @code{projects} subdirectory. Select the file
 @code{prj1.gpr}.
 
@@ -651,7 +652,7 @@ project, use the contextual menu
 browser.
 
 On the @code{sdc.gpr} project, select the contextual menu
-@code{Show recursive dependencies for sdc}.
+@code{Show projects imported by sdc recursively}.
 
 In the browser, you can move the project items, and select them to highlight
 the dependencies.
