@@ -152,6 +152,7 @@ package body Codefix.Text_Manager is
       New_Text.File_Name := new String'(Name);
       Initialize (New_Text.all, Name);
       Buffer := Read_File (New_Text.all);
+
       Analyze_Ada_Source
         (Buffer => Buffer.all,
          New_Buffer => New_Buffer,
@@ -173,8 +174,8 @@ package body Codefix.Text_Manager is
 --               Put (Current.Name.all & ": ");
 --            end if;
 --            Put (Current.Category'Img);
---            Put (", " & Current.Sloc_Entity.Line'Img & ", ");
---            Put (Current.Sloc_End.Line'Img);
+--            Put (", " & Current.Sloc_End.Line'Img & ", ");
+--            Put (Current.Sloc_End.Column'Img);
 --            Put (" (");
 --            if Current.Is_Declaration then
 --               Put ("spec");
@@ -316,6 +317,15 @@ package body Codefix.Text_Manager is
          Jump_String);
    end Search_String;
 
+   function Search_Unit
+     (This      : Text_Navigator_Abstr'Class;
+      File_Name : String;
+      Category  : Language_Category;
+      Name      : String) return Construct_Information is
+   begin
+      return Search_Unit (Get_File (This, File_Name).all, Category, Name);
+   end Search_Unit;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -396,12 +406,14 @@ package body Codefix.Text_Manager is
 
       end Nearer;
 
+      --  begin of Get_Unit
+
    begin
       Current_Info := Current_Text.Tokens_List.First;
 
       while Current_Info /= null loop
 
-         if Current_Info.Category = Cat_Unknown
+         if Category_1 = Cat_Unknown
            or else Current_Info.Category = Category_1
            or else Current_Info.Category = Category_2
          then
@@ -616,6 +628,39 @@ package body Codefix.Text_Manager is
       return Null_File_Cursor;
    end Search_String;
 
+   function Search_Unit
+     (This     : Text_Interface'Class;
+      Category : Language_Category;
+      Name     : String) return Construct_Information is
+
+      Current_Info : Construct_Access;
+
+   begin
+
+      Current_Info := This.Tokens_List.First;
+
+      while Current_Info /= null loop
+         if Current_Info.Category = Category
+           and then Current_Info.Name.all = Name
+         then
+            return Current_Info.all;
+         end if;
+         Current_Info := Current_Info.Next;
+      end loop;
+
+      return (Category        => Cat_Unknown,
+              Name            => null,
+              Profile         => null,
+              Sloc_Start      => (0, 0, 0),
+              Sloc_Entity     => (0, 0, 0),
+              Sloc_End        => (0, 0, 0),
+              Is_Declaration  => False,
+              Prev            => null,
+              Next            => null);
+
+   end Search_Unit;
+
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -643,6 +688,20 @@ package body Codefix.Text_Manager is
    ----------------------------------------------------------------------------
    --  type Extract_Line
    ----------------------------------------------------------------------------
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Extract_Line) is
+   begin
+      Free (This.Content);
+      Free (This.Cursor);
+      if This.Next /= null then
+         Free (This.Next.all);
+         Free (This.Next);
+      end if;
+   end Free;
 
    ----------------
    -- Get_String --
@@ -904,7 +963,7 @@ package body Codefix.Text_Manager is
         (Destination,
          new Extract_Line'
            (Original_Line,
-            File_Cursor (Clone (Cursor)),
+            Clone (Cursor),
             Str'Length,
             new String'(Str),
             null));
@@ -1210,21 +1269,6 @@ package body Codefix.Text_Manager is
          Line := Line.Next;
       end loop;
    end Delete_All_Lines;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Extract_Line) is
-   begin
-      Free (This.Content);
-      Free (This.Cursor);
-
-      if This.Next /= null then
-         Free (This.Next.all);
-         Free (This.Next);
-      end if;
-   end Free;
 
    -----------------
    -- Add_Element --
