@@ -79,6 +79,9 @@ package body Odd.Process is
    Debugger_Font : constant String := "Courier";
    --  Font used in the debugger text window.
 
+   Editor_Show_Line_Nums : constant Boolean := True;
+   --  Whether line numbers should be shown in the code editor
+
 
 
    function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
@@ -229,6 +232,9 @@ package body Odd.Process is
          Load_File (Process.Editor_Text,
                     Str (Matched (1).First .. Matched (1).Last),
                     Process.Debugger);
+         Set_Line (Process.Editor_Text,
+                   Natural'Value
+                   (Str (Matched (2).First .. Matched (2).Last)));
 
          --  Restore the initial status of the process. We can not force it to
          --  False, since, at least with gdb, the "info line" command used in
@@ -326,10 +332,12 @@ package body Odd.Process is
       --  The language of the editor will automatically be set by the output
       --  filter.
 
-      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size, stop_xpm,
-                 Comments_Color => Comments_Color,
-                 Strings_Color  => Strings_Color,
-                 Keywords_Color => Keywords_Color);
+      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size,
+                 stop_xpm, current_xpm,
+                 Comments_Color    => Comments_Color,
+                 Strings_Color     => Strings_Color,
+                 Keywords_Color    => Keywords_Color,
+                 Show_Line_Numbers => Editor_Show_Line_Nums);
 
       --  Set the output filter, so that we output everything in the Gtk_Text
       --  window.
@@ -364,6 +372,10 @@ package body Odd.Process is
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
    begin
+
+      --  ??? Should forbid commands that modify the configuration of the
+      --  debugger, like "set annotate" for gdb, otherwise we can't be sure
+      --  what to expect from the debugger.
 
       Set_Internal_Command (Get_Process (Debugger.Debugger), False);
 
