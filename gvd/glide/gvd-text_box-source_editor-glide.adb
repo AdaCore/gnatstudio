@@ -19,13 +19,16 @@
 -----------------------------------------------------------------------
 
 with Gdk.Pixbuf;
-with Gtk.Container;        use Gtk.Container;
-with Gtkada.MDI;           use Gtkada.MDI;
-with Basic_Types;          use Basic_Types;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Main_Window;    use Glide_Main_Window;
+with Gdk.Color;                use Gdk.Color;
+with Gtk.Container;            use Gtk.Container;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Basic_Types;              use Basic_Types;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Main_Window;        use Glide_Main_Window;
 
 with GVD.Process;          use GVD.Process;
 with GVD.Code_Editors;     use GVD.Code_Editors;
@@ -33,6 +36,7 @@ with GVD.Types;            use GVD.Types;
 with GVD_Module;           use GVD_Module;
 with Debugger_Pixmaps;     use Debugger_Pixmaps;
 with String_Utils;         use String_Utils;
+with String_List_Utils;    use String_List_Utils;
 
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box;
 
@@ -41,9 +45,12 @@ with Commands.Debugger;       use Commands.Debugger;
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
+
 with GVD.Preferences;         use GVD.Preferences;
 
 package body GVD.Text_Box.Source_Editor.Glide is
+
+   Highlight_Category : constant String := "Debugger Highlight";
 
    use String_List_Utils.String_List;
 
@@ -125,6 +132,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
    procedure Highlight_Current_Line (Editor : access GEdit_Record) is
       Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+
    begin
       if Editor.Debugger_Current_File = null then
          return;
@@ -134,7 +142,28 @@ package body GVD.Text_Box.Source_Editor.Glide is
         (Kernel, Editor.Debugger_Current_File.all,
          Editor.Line, 1, Enable_Navigation => False, New_File => False,
          From_Path => False);
-      Append (Editor.Highlighted_Files, Editor.Debugger_Current_File.all);
+
+      declare
+         Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+           (1 => new String'(Editor.Debugger_Current_File.all),
+            2 => new String'(Highlight_Category));
+      begin
+         Execute_GPS_Shell_Command (Kernel, "unhighlight", Args);
+      end;
+
+      if Editor.Line /= 0 then
+         declare
+            Args : constant GNAT.OS_Lib.Argument_List (1 .. 3) :=
+              (1 => new String'(Editor.Debugger_Current_File.all),
+               2 => new String'(Highlight_Category),
+               3 => new String'(Editor.Line'Img));
+         begin
+            Execute_GPS_Shell_Command (Kernel, "highlight", Args);
+         end;
+      end if;
+
+      Add_Unique_Sorted
+        (Editor.Highlighted_Files, Editor.Debugger_Current_File.all);
    end Highlight_Current_Line;
 
    --------------------
@@ -162,6 +191,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Window : access GVD.Main_Window.GVD_Main_Window_Record'Class) is
    begin
       Editor.Window := GVD.Main_Window.GVD_Main_Window (Window);
+
+      --  Initialize the color for line highlighting.
+
+      Preferences_Changed (Editor);
    end Initialize;
 
    ---------------
@@ -203,9 +236,17 @@ package body GVD.Text_Box.Source_Editor.Glide is
    -------------------------
 
    procedure Preferences_Changed (Editor : access GEdit_Record) is
-      pragma Unreferenced (Editor);
+      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Args   : GNAT.OS_Lib.Argument_List :=
+        (1 => new String'(Highlight_Category),
+         2 => new String'
+           (To_String (Get_Pref (Kernel, Editor_Highlight_Color))));
    begin
-      null;
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+
+      for A in Args'Range loop
+         GNAT.OS_Lib.Free (Args (A));
+      end loop;
    end Preferences_Changed;
 
    --------------
@@ -520,10 +561,17 @@ package body GVD.Text_Box.Source_Editor.Glide is
    begin
       Free (Editor.Current_Breakpoints);
 
-      while not Is_Empty (Editor.Highlighted_Files) loop
-         --  Clear the line highlight for files that had an highlight.
+      --  Clear the line highlight for files that had an highlight.
 
-         Clear_Highlighting (Kernel, Head (Editor.Highlighted_Files));
+      while not Is_Empty (Editor.Highlighted_Files) loop
+         declare
+            Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+              (1 => new String'(Head (Editor.Highlighted_Files)),
+               2 => new String'(Highlight_Category));
+         begin
+            Execute_GPS_Shell_Command (Kernel, "unhighlight", Args);
+         end;
+
          Next (Editor.Highlighted_Files);
       end loop;
    end Free_Debug_Info;
