@@ -1,3 +1,13 @@
+Known Problems in GVD 1.0.1
+
+- Command line arguments --version and --help do not work under Windows.
+  Problem:
+     When using the --version or --help command line option under windows
+     systems, gvd starts and nothing happens.
+  Workaround:
+     No work around, either ignore this minor problem or use 1.0.2
+  Status: Fixed in GVD 1.0.2
+
 Known Problems in GVD 1.0.0
 
 - Start with arguments
