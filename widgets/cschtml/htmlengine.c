@@ -2804,10 +2804,10 @@ parse_one_token (HTMLEngine *p, HTMLObject *clue, const gchar *str)
 }
 
 
-guint
+GtkType
 html_engine_get_type (void)
 {
-	static guint html_engine_type = 0;
+	static gulong html_engine_type = 0;
 
 	if (!html_engine_type) {
 		static const GtkTypeInfo html_engine_info = {
@@ -4014,7 +4014,7 @@ html_engine_get_selection_string (HTMLEngine *engine)
 	g_string_free (buffer, FALSE);
 
 	utf8 = g_locale_to_utf8 (string, strlen (string), NULL, NULL, NULL);
-	
+
 	free (string);
 
 	return utf8;

@@ -4,17 +4,17 @@
    Copyright (C) 1997 Martin Jones (mjones@kde.org)
    Copyright (C) 1997 Torben Weis (weis@kde.org)
    Copyright (C) 1999, 2000 Helix Code, Inc.
-   
+
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
    License as published by the Free Software Foundation; either
    version 2 of the License, or (at your option) any later version.
-   
+
    This library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-   
+
    You should have received a copy of the GNU Library General Public License
    along with this library; see the file COPYING.LIB.  If not, write to
    the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -101,7 +101,7 @@ struct _HTMLEngine {
 	HTMLTokenizer *ht;
 	HTMLStringTokenizer *st;
 	HTMLObject *clue;
-	
+
 	HTMLObject *flow;
 
 	gint leftBorder;
@@ -131,7 +131,7 @@ struct _HTMLEngine {
 	gboolean inTextArea;
 
 	gboolean newPage;
- 
+
 	HTMLStack *font_style_stack; /* Font style stack, elements are CscHTMLFontStyles.  */
 	HTMLStack *font_face_stack;	/* Font face stack, elements are gchar * */
 	HTMLStack *color_stack;	/* Color stack, elements are GdkColors.  */
@@ -158,7 +158,7 @@ struct _HTMLEngine {
 
 	/* The background pixmap, an HTMLImagePointer */
         gpointer bgPixmapPtr;
-  
+
 	/* Stack of lists currently active */
 	HTMLStack *listStack;
 
@@ -230,7 +230,7 @@ struct _HTMLEngine {
            the text we are in.  */
 	CscHTMLFontStyle insertion_font_style;
 	gchar *insertion_font_face;
-	
+
 	/* This is set to TRUE when at least one element is selected (in whole
            or in part), to FALSE when no item is selected at all.  */
 	gboolean active_selection;
@@ -249,7 +249,7 @@ struct _HTMLEmbedded;
 
 struct _HTMLEngineClass {
 	GtkObjectClass parent_class;
-	
+
 	void (* title_changed) (HTMLEngine *engine);
 	void (* set_base) (HTMLEngine *engine, const gchar *base);
 	void (* set_base_target) (HTMLEngine *engine, const gchar *base_target);
@@ -263,7 +263,7 @@ struct _HTMLEngineClass {
 
 
 /* Object construction.  */
-guint       html_engine_get_type      (void);
+GtkType     html_engine_get_type      (void);
 HTMLEngine *html_engine_new           (void);
 void        html_engine_realize       (HTMLEngine *engine,
 				       GdkWindow  *window);
