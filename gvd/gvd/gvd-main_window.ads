@@ -89,6 +89,10 @@ package GVD.Main_Window is
 
       Locked              : Boolean := False;
       --  Boolean used to handle global locking between debugger pages.
+
+      Standalone          : Boolean := True;
+      --  True if the gvd main window is used on its own (e.g, not as part
+      --  of an integrated environment).
    end record;
    type GVD_Main_Window is access all GVD_Main_Window_Record'Class;
 
