@@ -92,9 +92,9 @@ package body Glide_Kernel.Project is
    begin
       Prj.Reset;
       Prj.Part.Parse (Kernel.Project, Project, True);
-      Prj.Proc.Process (Kernel.Project_View, Kernel.Project);
+      Kernel.Project_View := No_Project;
       Project_Changed (Kernel);
-      Project_View_Changed (Kernel);
+      Recompute_View (Kernel);
    end Load_Project;
 
    -----------------
