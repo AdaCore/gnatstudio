@@ -504,16 +504,16 @@ package body Codefix.GPS_Io is
    end No_More_Messages;
 
    ---------------------
-   -- Get_Last_Output --
+   -- Set_Last_Output --
    ---------------------
 
-   procedure Get_Last_Output
-     (This : in out Compilation_Output; Kernel : Kernel_Handle) is
+   procedure Set_Last_Output
+     (This   : in out Compilation_Output;
+      Kernel : Kernel_Handle;
+      Output : String) is
    begin
-      Assign
-        (This.Errors_Buffer,
-         Execute_GPS_Shell_Command (Kernel, "get_build_output"));
+      Assign (This.Errors_Buffer, Output);
       This.Kernel := Kernel;
-   end Get_Last_Output;
+   end Set_Last_Output;
 
 end Codefix.GPS_Io;

@@ -132,9 +132,12 @@ package Codefix.GPS_Io is
    function No_More_Messages (This : Compilation_Output) return Boolean;
    --  Is true where all the messages are got fron Get_Message.
 
-   procedure Get_Last_Output
-     (This : in out Compilation_Output; Kernel : Kernel_Handle);
-   --  Returns the last compilation output
+   procedure Set_Last_Output
+     (This   : in out Compilation_Output;
+      Kernel : Kernel_Handle;
+      Output : String);
+   --  Initialize the list of error messages from the output of a previous
+   --  compilation.
 
 private
 
