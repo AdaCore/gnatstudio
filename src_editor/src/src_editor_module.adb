@@ -691,10 +691,14 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
 
       File  : constant String := Get_String (Nth (Args, 1));
+      Base  : constant String := Base_Name (File);
    begin
       --  Insert the saved file in the reopen menu.
 
-      if File /= "" then
+      if File /= ""
+        and then not (Base'Length > 2
+                      and then Base (Base'First .. Base'First + 1) = ".#")
+      then
          Add_To_Reopen_Menu (Kernel, File);
       end if;
    exception
