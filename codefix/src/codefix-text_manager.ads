@@ -30,8 +30,6 @@ with Codefix.Merge_Utils; use Codefix.Merge_Utils;
 
 package Codefix.Text_Manager is
 
-   Text_Manager_Error : exception;
-
    type Step_Way is (Normal_Step, Reverse_Step);
    type Relative_Position is (Before, After, Specified);
    type Case_Type is (Lower, Upper, Mixed);
@@ -193,6 +191,10 @@ package Codefix.Text_Manager is
    function Line_Max (This : Text_Interface) return Natural is abstract;
    --  Return the number of the last line in the text loaded.
 
+   procedure Text_Has_Changed (This : in out Text_Interface'Class);
+   --  This function informs a Text_Interface that the text has changed. If
+   --  an analyse of the structure is asked, then the text will be re-parsed.
+
    function Search_Unit
      (This     : Text_Interface'Class;
       Category : Language_Category;
@@ -215,6 +217,17 @@ package Codefix.Text_Manager is
       Current_Line : String)
    return Text_Cursor'Class;
    --  Return the right paren corresponding to the one in the cursor.
+
+   procedure Next_Word
+     (This   : Text_Interface'Class;
+      Cursor : in out Text_Cursor'Class;
+      Word   : out Dynamic_String);
+   --  Put Cursor after the next word, and set 'Word' to this value, knowing
+   --  that a word is a succession of non-blanks characters.
+
+   function Get_Structure
+     (This : Text_Interface'Class) return Construct_List_Access;
+   --  Return the parsed strucutre of the text_interface.
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -363,6 +376,17 @@ package Codefix.Text_Manager is
    --  spec, find also the body. If it isn't a spec, then only the body
    --  informations are initialized.
 
+   procedure Next_Word
+     (This   : Text_Navigator_Abstr'Class;
+      Cursor : in out File_Cursor'Class;
+      Word   : out Dynamic_String);
+   --  Put Cursor after the next word, and set 'Word' to this value, knowing
+   --  that a word is a succession of non-blanks characters.
+
+   function Get_Structure
+     (This      : Text_Navigator_Abstr'Class;
+      File_Name : String) return Construct_List_Access;
+   --  Return the parsed strucutre of the text_interface.
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -404,7 +428,9 @@ package Codefix.Text_Manager is
      (This         : Extract_Line;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Integer);
-   --  Upate changes of the Extract_Line in the representation of the text,
+   --  Upate changes of the Extract_Line in the representation of the text. The
+   --  parameted Offset_Line counts the offset of inserted - delete lines of
+   --  the current commit.
 
    procedure Free (This : in out Extract_Line);
    --  Free the memory associated to an Extract_Line, and if this line is in
@@ -520,9 +546,6 @@ package Codefix.Text_Manager is
    --  code, modified or not. The modifications made in an extract do not have
    --  any influence in the source code before the call of Update function.
 
-   procedure Unchecked_Assign (This, Value : in out Extract'Class);
-   --  Assign Value to This without any clone of any object in the pool.
-
    procedure Remove
      (This, Prev : Ptr_Extract_Line; Container : in out Extract);
    --  Remove the line This from the Container
@@ -573,12 +596,19 @@ package Codefix.Text_Manager is
    --  order where they are recorded.
 
    procedure Replace
-     (This          : Extract;
+     (This          : in out Extract;
       Start, Length : Natural;
       Value         : String;
       Line_Number   : Natural := 1);
    --  Replace 'len' characters from 'start' column and 'line_number' line
    --  with 'Value'.
+
+   procedure Replace
+     (This   : in out Extract;
+      Start  : File_Cursor'Class;
+      Length : Natural;
+      Value  : String);
+   --  Replace 'len' characters from 'start' column with 'Value'.
 
    procedure Replace
      (This                      : in out Extract;
@@ -828,11 +858,14 @@ package Codefix.Text_Manager is
    --  A Text_Command is a modification in the text that can be defined one
    --  time, and made later, with taking into account others possible changes.
 
+   type Ptr_Command is access all Text_Command'Class;
+
    procedure Execute
      (This         : Text_Command;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class) is abstract;
-   --  Execute a command, and create an extract to preview the changes.
+   --  Execute a command, and create an extract to preview the changes. This
+   --  procedure raises a Codefix_Panic is the correction is no longer avaible.
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command.
@@ -980,10 +1013,10 @@ private
    end record;
 
    function Get_File
-     (This : Text_Navigator_Abstr'Class;
-      Name : String) return Ptr_Text;
-   --  Returns the existent file interface, or create a new one if it
-   --  doesn't exists.
+     (This    : Text_Navigator_Abstr'Class;
+      Name    : String) return Ptr_Text;
+   --  Returns the existent file interface, or create a new one if it doesn't
+   --  exists.
 
    type Mark_Abstr is abstract tagged record
       null;
@@ -996,9 +1029,13 @@ private
    procedure Free is new Ada.Unchecked_Deallocation
      (Construct_List, Construct_List_Access);
 
+   type Ptr_Boolean is access all Boolean;
+   procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
+
    type Text_Interface is abstract tagged record
-      Tokens_List : Construct_List_Access := new Construct_List;
-      File_Name   : Dynamic_String;
+      Structure            : Construct_List_Access := new Construct_List;
+      File_Name            : Dynamic_String;
+      Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
    end record;
 
    function Get_Unit
@@ -1011,7 +1048,7 @@ private
    function Search_Body
      (Current_Text : Text_Interface;
       Spec         : Construct_Information)
-      return Construct_Information;
+     return Construct_Information;
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
