@@ -1848,10 +1848,28 @@ package body Codefix.Text_Manager is
       Start, Len : Natural;
       New_String : String) is
    begin
-      This.Context := Unit_Modified;
+      if Len /= New_String'Length
+        or else To_String (This.Content) (Start .. Start + Len - 1) /=
+          New_String
+      then
+         This.Context := Unit_Modified;
 
-      Replace (This.Content, Start, Len, New_String);
+         Replace (This.Content, Start, Len, New_String);
+      end if;
    end Replace;
+
+   --------------------
+   -- Replace_To_End --
+   --------------------
+
+   procedure Replace_To_End
+     (This  : in out Extract_Line;
+      Start : Natural;
+      Value : String) is
+   begin
+      --  ??? May be optimize by a function replace_to_end for Mergable_Strings
+      Replace (This, Start, To_String (This.Content)'Last, Value);
+   end Replace_To_End;
 
    --------------------
    -- Set_Coloration --
@@ -1895,7 +1913,9 @@ package body Codefix.Text_Manager is
    begin
       if This = null then
          return null;
-      elsif This.Cursor = File_Cursor (Cursor) then
+      elsif This.Cursor.File_Name.all = Cursor.File_Name.all
+        and then This.Cursor.Line = Cursor.Line
+      then
          return This;
       elsif This.Next = null then
          return null;
@@ -2046,6 +2066,92 @@ package body Codefix.Text_Manager is
       end loop;
 
       Replace (Current_Extract.all, Start, Length, Value);
+
+   end Replace;
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace
+     (This                      : in out Extract;
+      Dest_Start, Dest_Stop     : File_Cursor'Class;
+      Source_Start, Source_Stop : File_Cursor'Class;
+      Current_Text              : Text_Navigator_Abstr'Class)
+   is
+      function Get_Next_Source_Line return Dynamic_String;
+      --  Retutn the next source line that have to be added to the extract,
+      --  addinf Head or Bottom if needed.
+
+      Destination_Line : Ptr_Extract_Line := Get_Line (This, Dest_Start);
+
+      Cursor_Dest      : File_Cursor := File_Cursor (Dest_Start);
+      Cursor_Source    : File_Cursor := File_Cursor (Source_Start);
+      Source_Line      : Dynamic_String;
+      Head, Bottom     : Dynamic_String;
+
+      function Get_Next_Source_Line return Dynamic_String is
+         Line : Dynamic_String :=
+           new String'(Get_Line (Current_Text, Cursor_Source));
+      begin
+         if Cursor_Source.Line = Source_Stop.Line then
+            Assign (Line, Line (1 .. Source_Stop.Col) & Bottom.all);
+         end if;
+
+         if Cursor_Source.Line = Source_Start.Line then
+            Assign (Line, Head.all & Line (Source_Start.Col .. Line'Last));
+         end if;
+
+         Cursor_Source.Line := Cursor_Source.Line + 1;
+
+         return Line;
+      end Get_Next_Source_Line;
+
+   begin
+      Cursor_Source.Col := 1;
+
+      Assign (Head, Get_String (Get_Line (This, Dest_Start).all)
+                (1 .. Dest_Start.Col - 1));
+
+      Assign (Bottom, Get_String (Get_Line (This, Dest_Stop).all));
+      Assign (Bottom, Bottom (Dest_Stop.Col + 1 .. Bottom'Last));
+
+      while Cursor_Source.Line <= Source_Stop.Line loop
+         Assign (Source_Line, Get_Next_Source_Line);
+
+         if Destination_Line /= null then
+            Replace_To_End
+              (Destination_Line.all,
+               1,
+               Source_Line.all);
+
+            if Cursor_Dest.Line < Dest_Stop.Line then
+               Cursor_Dest.Line := Cursor_Dest.Line + 1;
+               Destination_Line := Get_Line (Destination_Line, Cursor_Dest);
+               null;
+            else
+               Destination_Line := null;
+            end if;
+         else
+            Add_Indented_Line
+              (This,
+               Cursor_Dest,
+               Source_Line.all,
+               Current_Text);
+         end if;
+
+      end loop;
+
+      if Destination_Line /= null then
+         loop
+            Destination_Line.Context := Unit_Deleted;
+            Cursor_Dest.Line := Cursor_Dest.Line + 1;
+
+            exit when Cursor_Dest.Line > Dest_Stop.Line;
+
+            Destination_Line := Get_Line (Destination_Line, Cursor_Dest);
+         end loop;
+      end if;
 
    end Replace;
 
@@ -2391,8 +2497,12 @@ package body Codefix.Text_Manager is
       Line_Cursor         : File_Cursor := File_Cursor (Clone (Cursor));
       Previous_Line       : Dynamic_String;
       Indent, Next_Indent : Natural;
-
+      First_Char          : Natural := Text'First;
    begin
+      while First_Char <= Text'Last and then Is_Blank (Text (First_Char)) loop
+         First_Char := First_Char + 1;
+      end loop;
+
       Line_Cursor.Col := 1;
       Previous_Line := new String'(Get_Line (Current_Text, Line_Cursor));
       Next_Indentation (Unknown_Lang, Previous_Line.all, Indent, Next_Indent);
@@ -2402,7 +2512,8 @@ package body Codefix.Text_Manager is
            Cursor          => Line_Cursor,
            Original_Length => 0,
            Content         =>
-             To_Mergable_String ((1 .. Next_Indent => ' ') & Text),
+              To_Mergable_String ((1 .. Next_Indent => ' ') &
+                                   Text (First_Char .. Text'Last)),
            Next            => null,
            Coloration      => True));
       Free (Previous_Line);
