@@ -2652,6 +2652,7 @@ package body Project_Explorers is
       N_Type : Node_Types;
       Prj    : constant Project_Id := Get_Project_From_Node (Explorer, Node);
       Files  : String_Array_Access := Files_In_Project;
+      Expanded : Boolean := Row_Get_Expanded (Node_Get_Row (Node));
 
    begin
       if Files = null then
@@ -2674,10 +2675,11 @@ package body Project_Explorers is
                   and then Has_Entries (Str, Files))
               or else
               (Data.Node_Type = Project_Node
-                 and then Projects.Table (Prj).Imported_Projects =
-                   Empty_Project_List
-                 and then (not Get_Pref (Explorer.Kernel, Show_Directories)
-                   or else Projects.Table (Prj).Source_Dirs = Nil_String))
+               and then
+               (Projects.Table (Prj).Imported_Projects /= Empty_Project_List
+                or else
+                (Get_Pref (Explorer.Kernel, Show_Directories)
+                 and then Projects.Table (Prj).Source_Dirs /= Nil_String)))
             then
                Set_Node_Info
                  (Ctree         => Explorer.Tree,
@@ -2692,6 +2694,7 @@ package body Project_Explorers is
                   Expanded      => False);
                Add_Dummy_Node (Explorer, Node);
             end if;
+            Expanded := True;
          end;
       end if;
 
@@ -2699,7 +2702,7 @@ package body Project_Explorers is
          --  Likewise, if a node is not expanded, we simply remove all
          --  underlying information.
 
-         if not Row_Get_Expanded (Node_Get_Row (Node)) then
+         if not Expanded then
             Data.Up_To_Date := False;
             Node_Set_Row_Data (Explorer.Tree, Node, Data);
 
@@ -2745,8 +2748,8 @@ package body Project_Explorers is
             Mask_Closed   => Explorer.Close_Masks (N_Type),
             Pixmap_Opened => Explorer.Open_Pixmaps (N_Type),
             Mask_Opened   => Explorer.Open_Masks (N_Type),
-            Is_Leaf       => False,
-            Expanded      => Row_Get_Expanded (Node_Get_Row (Node)));
+            Is_Leaf       => Row_Get_Is_Leaf (Node_Get_Row (Node)),
+            Expanded      => Expanded);
       end if;
 
       if Files_In_Project = null then
