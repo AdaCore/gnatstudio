@@ -28,7 +28,7 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
 with GVD.Status_Bar; use GVD.Status_Bar;
-with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
+with General_Preferences_Pkg; use General_Preferences_Pkg;
 with Open_Program_Pkg; use Open_Program_Pkg;
 with Open_Session_Pkg; use Open_Session_Pkg;
 with GVD.Dialogs; use GVD.Dialogs;
@@ -62,8 +62,8 @@ package Main_Debug_Window_Pkg is
       -- Additional fields --
       -----------------------
 
-      Memory_View         : GVD.Memory_View.Odd_Memory_View;
-      Odd_Preferences     : Odd_Preferences_Access;
+      Memory_View         : GVD.Memory_View.GVD_Memory_View;
+      GVD_Preferences     : General_Preferences_Access;
       Open_Program        : Open_Program_Access;
       Open_Session        : Open_Session_Access;
       History_Dialog      : History_Dialog_Access;
@@ -189,7 +189,7 @@ package Main_Debug_Window_Pkg is
       Button61 : Gtk_Widget;
       Frame7 : Gtk_Frame;
       Process_Notebook : Gtk_Notebook;
-      Statusbar1 : Odd_Status_Bar;
+      Statusbar1 : GVD_Status_Bar;
    end record;
    type Main_Debug_Window_Access is access all Main_Debug_Window_Record'Class;
 

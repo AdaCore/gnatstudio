@@ -24,7 +24,7 @@ with Gtk.Main;            use Gtk.Main;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Text;            use Gtk.Text;
-with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
+with General_Preferences_Pkg; use General_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Odd_Intl;            use Odd_Intl;
 with GVD;                 use GVD;
@@ -477,11 +477,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Top : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
    begin
-      if Top.Odd_Preferences = null then
-         Gtk_New (Top.Odd_Preferences);
+      if Top.GVD_Preferences = null then
+         Gtk_New (Top.GVD_Preferences);
       end if;
 
-      Show_All (Top.Odd_Preferences);
+      Show_All (Top.GVD_Preferences);
    end On_Preferences1_Activate;
 
    -------------------------------
@@ -653,8 +653,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       --  Give some visual feedback to the user
-      Text_Output_Handler (Tab, "<^C>" & ASCII.LF, Is_Command => True);
-
+      Output_Text (Tab, "<^C>" & ASCII.LF, Is_Command => True);
       Unregister_Dialog (Tab);
 
       Interrupt

@@ -57,7 +57,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Window_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
    end On_Memory_View_Size_Allocate;
@@ -69,7 +69,7 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Address_Entry_Activate
      (Object : access Gtk_Entry_Record'Class)
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
    end On_Address_Entry_Activate;
@@ -81,8 +81,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Address_View_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      View : constant Odd_Memory_View :=
-        Odd_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
    end On_Address_View_Clicked;
@@ -94,8 +94,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Pgup_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      View : constant Odd_Memory_View :=
-        Odd_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Page_Up (View);
    end On_Pgup_Clicked;
@@ -107,8 +107,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Pgdn_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      View : constant Odd_Memory_View :=
-        Odd_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Page_Down (View);
    end On_Pgdn_Clicked;
@@ -120,7 +120,7 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Size_Entry_Changed
      (Object : access Gtk_Entry_Record'Class)
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
    end On_Size_Entry_Changed;
@@ -132,7 +132,7 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Data_Entry_Changed
      (Object : access Gtk_Entry_Record'Class)
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
    end On_Data_Entry_Changed;
@@ -145,7 +145,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
       Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
       case Get_Key_Val (Arg1) is
@@ -188,7 +188,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
       use type Glib.Gint;
       use type Glib.Guint;
    begin
@@ -229,7 +229,7 @@ package body Memory_View_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Arg1 : String := To_String (Params, 1);
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Insert (View, Arg1 (1 .. 1));
       Emit_Stop_By_Name (View.View, "insert_text");
@@ -242,7 +242,7 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Page_Size_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       View.Number_Of_Bytes := Integer'Value (Get_Text (View.Value));
       --  This entry is not editable and cannot contain anything else
@@ -258,7 +258,7 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Reset_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Free (View.Flags);
       View.Flags := new String' (View.Values.all);
@@ -272,7 +272,7 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Submit_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      View : Odd_Memory_View := Odd_Memory_View (Get_Toplevel (Object));
+      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Apply_Changes (View);
    end On_Submit_Clicked;

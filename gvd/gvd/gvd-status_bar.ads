@@ -21,7 +21,7 @@
 --  This package implements a status bar to display error and help
 --  messages.
 --  It encapsulates the behavior of the Gtk_Status_Bar, but is easier to use.
---  It provides a separate window to display the historic of message.
+--  It provides a separate window to display the list of messages displayed.
 --
 --  The messages are hidden after a delay.
 
@@ -34,33 +34,33 @@ with Gtk.Window;
 
 package GVD.Status_Bar is
 
-   type Odd_Status_Bar_Record is new Gtk.Box.Gtk_Box_Record with private;
-   type Odd_Status_Bar is access all Odd_Status_Bar_Record'Class;
+   type GVD_Status_Bar_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type GVD_Status_Bar is access all GVD_Status_Bar_Record'Class;
 
    type Category is (Help, Error);
 
-   procedure Gtk_New (Status : out Odd_Status_Bar);
+   procedure Gtk_New (Status : out GVD_Status_Bar);
    --  Create a new status bar
 
-   procedure Initialize (Status : access Odd_Status_Bar_Record'Class);
+   procedure Initialize (Status : access GVD_Status_Bar_Record'Class);
    --  Internal initialization function
 
    procedure Print_Message
-     (Status  : access Odd_Status_Bar_Record;
+     (Status  : access GVD_Status_Bar_Record;
       Context : Category;
       Msg     : String);
    --  Print a new message in the status bar.
    --  The message will be automatically hidden after a while.
 
-   procedure Hide_Historic (Status : access Odd_Status_Bar_Record);
+   procedure Hide_History (Status : access GVD_Status_Bar_Record);
    --  Hide the history window
 
 private
    type Id_Array is array (Category'Range) of Gtk.Status_Bar.Context_Id;
 
-   type Odd_Status_Bar_Record is new Gtk.Box.Gtk_Box_Record with record
+   type GVD_Status_Bar_Record is new Gtk.Box.Gtk_Box_Record with record
       Arrow_Button : Gtk.Button.Gtk_Button;
-      Historic_Win : Gtk.Window.Gtk_Window;
+      History_Win  : Gtk.Window.Gtk_Window;
       Status       : Gtk.Status_Bar.Gtk_Status_Bar;
 
       Arrow        : Gtk.Arrow.Gtk_Arrow;

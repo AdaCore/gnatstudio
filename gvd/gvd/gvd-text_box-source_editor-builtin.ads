@@ -38,7 +38,7 @@ with Gtk.Text;
 
 package GVD.Source_Editors is
 
-   type Source_Editor_Record is new GVD.Text_Boxes.Odd_Text_Box_Record with
+   type Source_Editor_Record is new GVD.Text_Boxes.GVD_Text_Box_Record with
      private;
    type Source_Editor is access all Source_Editor_Record'Class;
 
@@ -68,17 +68,17 @@ package GVD.Source_Editors is
      (Editor : access Source_Editor_Record;
       Button : Natural;
       Line   : Natural) return Boolean;
-   --  See GVD.Boxes for documentation
+   --  See GVD.Text_Boxes for documentation
 
    function Invisible_Column_Width
      (Editor : access Source_Editor_Record) return Glib.Gint;
-   --  See GVD.Boxes for documentation
+   --  See GVD.Text_Boxes for documentation
 
    function Child_Contextual_Menu
      (Source : access Source_Editor_Record;
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu;
-   --  See GVD.Boxes for documentation
+   --  See GVD.Text_Boxes for documentation
 
    procedure Insert_Buffer
      (Editor : access Source_Editor_Record;
@@ -173,7 +173,7 @@ private
    type Color_Array is array (Language.Language_Entity'Range) of
      Gdk.Color.Gdk_Color;
 
-   type Source_Editor_Record is new GVD.Text_Boxes.Odd_Text_Box_Record with
+   type Source_Editor_Record is new GVD.Text_Boxes.GVD_Text_Box_Record with
    record
       Process : Gtk.Widget.Gtk_Widget;
 

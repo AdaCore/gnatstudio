@@ -48,29 +48,29 @@ package body GVD.Text_Boxes is
    Layout_Width : constant := 20;
    --  Width for the area reserved for the buttons.
 
-   package Box_Cb is new Callback (Odd_Text_Box_Record);
-   package Box_Event_Cb is new Return_Callback (Odd_Text_Box_Record, Boolean);
+   package Box_Cb is new Callback (GVD_Text_Box_Record);
+   package Box_Event_Cb is new Return_Callback (GVD_Text_Box_Record, Boolean);
 
-   procedure Scroll_Layout (Box : access Odd_Text_Box_Record'Class);
+   procedure Scroll_Layout (Box : access GVD_Text_Box_Record'Class);
    --  Synchronize the new position of the buttons layout after the user has
    --  scrolled the box
 
    procedure Scroll_Layout_Changed
-     (Box : access Odd_Text_Box_Record'Class);
+     (Box : access GVD_Text_Box_Record'Class);
    --  Synchronize the new values of the buttons layout after the user has
    --  scrolled the Box. This procedure is mainly called on resize events.
 
-   procedure Destroy_Cb (Box : access Odd_Text_Box_Record'Class);
+   procedure Destroy_Cb (Box : access GVD_Text_Box_Record'Class);
    --  Free the memory occupied by the editor and the buttons layout, as well
    --  as all the associated pixmaps.
 
    function Pixmap_Clicked_Cb
-     (Box   : access Odd_Text_Box_Record'Class;
+     (Box   : access GVD_Text_Box_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean;
    --  Callback for button_press events in the buttons layout.
 
    function Button_Press_Cb
-     (Box   : access Odd_Text_Box_Record'Class;
+     (Box   : access GVD_Text_Box_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean;
    --  Handle button press events in the text child.
 
@@ -78,9 +78,9 @@ package body GVD.Text_Boxes is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Box : out Odd_Text_Box) is
+   procedure Gtk_New (Box : out GVD_Text_Box) is
    begin
-      Box := new Odd_Text_Box_Record;
+      Box := new GVD_Text_Box_Record;
       Initialize (Box);
    end Gtk_New;
 
@@ -88,7 +88,7 @@ package body GVD.Text_Boxes is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Box : access Odd_Text_Box_Record'Class) is
+   procedure Initialize (Box : access GVD_Text_Box_Record'Class) is
       Scrollbar : Gtk_Vscrollbar;
    begin
       Gtk.Box.Initialize_Hbox (Box, Homogeneous => False);
@@ -139,7 +139,7 @@ package body GVD.Text_Boxes is
    ---------------
 
    procedure Configure
-     (Box               : access Odd_Text_Box_Record;
+     (Box               : access GVD_Text_Box_Record;
       Ps_Font_Name      : String;
       Font_Size         : Glib.Gint;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array)
@@ -185,7 +185,7 @@ package body GVD.Text_Boxes is
    --  have their own adjustment, and we synchronize the Gtk_Layout ones with
    --  the Gtk_Text ones whenever it is needed.
 
-   procedure Scroll_Layout (Box : access Odd_Text_Box_Record'Class) is
+   procedure Scroll_Layout (Box : access GVD_Text_Box_Record'Class) is
    begin
       Set_Value
         (Get_Vadjustment (Box.Buttons), Get_Value (Get_Vadj (Box.Child)));
@@ -197,7 +197,7 @@ package body GVD.Text_Boxes is
    -- Scroll_Layout_Changed --
    ---------------------------
 
-   procedure Scroll_Layout_Changed (Box : access Odd_Text_Box_Record'Class) is
+   procedure Scroll_Layout_Changed (Box : access GVD_Text_Box_Record'Class) is
    begin
       Set_Upper
         (Get_Vadjustment (Box.Buttons),
@@ -235,7 +235,7 @@ package body GVD.Text_Boxes is
    -- Destroy_Cb --
    ----------------
 
-   procedure Destroy_Cb (Box : access Odd_Text_Box_Record'Class) is
+   procedure Destroy_Cb (Box : access GVD_Text_Box_Record'Class) is
    begin
       Free (Box.Buffer);
       Unref (Box.Font);
@@ -247,7 +247,7 @@ package body GVD.Text_Boxes is
    --------------
 
    procedure Set_Line
-     (Box         : access Odd_Text_Box_Record;
+     (Box         : access GVD_Text_Box_Record;
       Line        : Natural;
       Set_Current : Boolean := True)
    is
@@ -307,7 +307,7 @@ package body GVD.Text_Boxes is
    -- Get_Line --
    --------------
 
-   function Get_Line (Box : access Odd_Text_Box_Record) return Natural is
+   function Get_Line (Box : access GVD_Text_Box_Record) return Natural is
    begin
       return Box.Current_Line;
    end Get_Line;
@@ -317,7 +317,7 @@ package body GVD.Text_Boxes is
    ---------------
 
    function Get_Child
-     (Box : access Odd_Text_Box_Record) return Gtk.Text.Gtk_Text is
+     (Box : access GVD_Text_Box_Record) return Gtk.Text.Gtk_Text is
    begin
       return Box.Child;
    end Get_Child;
@@ -327,7 +327,7 @@ package body GVD.Text_Boxes is
    -----------------
 
    function Get_Buttons
-     (Box : access Odd_Text_Box_Record) return Gtk.Layout.Gtk_Layout is
+     (Box : access GVD_Text_Box_Record) return Gtk.Layout.Gtk_Layout is
    begin
       return Box.Buttons;
    end Get_Buttons;
@@ -337,7 +337,7 @@ package body GVD.Text_Boxes is
    ---------------------
 
    function Index_From_Line
-     (Box : access Odd_Text_Box_Record'Class; Line : Natural)
+     (Box : access GVD_Text_Box_Record'Class; Line : Natural)
      return Natural
    is
       Index : Natural;
@@ -365,7 +365,7 @@ package body GVD.Text_Boxes is
    ------------
 
    procedure Insert
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       Fore   : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Back   : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Chars  : in String := "") is
@@ -377,7 +377,7 @@ package body GVD.Text_Boxes is
    -- Hide_Current_Line_Button --
    ------------------------------
 
-   procedure Hide_Current_Line_Button (Box : access Odd_Text_Box_Record) is
+   procedure Hide_Current_Line_Button (Box : access GVD_Text_Box_Record) is
    begin
       if Get_Parent (Box.Current_Line_Button) /= null then
          Freeze (Box.Buttons);
@@ -391,7 +391,7 @@ package body GVD.Text_Boxes is
    ----------------------
 
    function Pixels_From_Line
-     (Box  : access Odd_Text_Box_Record;
+     (Box  : access GVD_Text_Box_Record;
       Line : Natural) return Gint is
    begin
       return Gint (Line - 1) * Box.Line_Height + 3;
@@ -402,7 +402,7 @@ package body GVD.Text_Boxes is
    ----------------------
 
    function Line_From_Pixels
-     (Box  : access Odd_Text_Box_Record;
+     (Box  : access GVD_Text_Box_Record;
       Y    : Gint) return Natural is
    begin
       return Natural (Y / Box.Line_Height + 1);
@@ -413,7 +413,7 @@ package body GVD.Text_Boxes is
    -----------------------
 
    function Pixmap_Clicked_Cb
-     (Box   : access Odd_Text_Box_Record'Class;
+     (Box   : access GVD_Text_Box_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean
    is
       Line    : Natural := 0;
@@ -451,7 +451,7 @@ package body GVD.Text_Boxes is
    ---------------------
 
    function Button_Press_Cb
-     (Box   : access Odd_Text_Box_Record'Class;
+     (Box   : access GVD_Text_Box_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean
    is
       Menu    : Gtk_Menu;
@@ -504,7 +504,7 @@ package body GVD.Text_Boxes is
    ----------------
 
    procedure Set_Buffer
-     (Box            : access Odd_Text_Box_Record;
+     (Box            : access GVD_Text_Box_Record;
       Buffer         : GVD.Types.String_Access := null;
       Clear_Previous : Boolean := True) is
    begin
@@ -523,7 +523,7 @@ package body GVD.Text_Boxes is
    -- Lines_Count --
    -----------------
 
-   function Lines_Count (Box : access Odd_Text_Box_Record) return Natural is
+   function Lines_Count (Box : access GVD_Text_Box_Record) return Natural is
       Lines : Natural := 1;
    begin
       if Box.Buffer /= null then
@@ -541,7 +541,7 @@ package body GVD.Text_Boxes is
    -- Is_Empty --
    --------------
 
-   function Is_Empty (Box : access Odd_Text_Box_Record) return Boolean is
+   function Is_Empty (Box : access GVD_Text_Box_Record) return Boolean is
    begin
       return Box.Buffer = null;
    end Is_Empty;
@@ -550,7 +550,7 @@ package body GVD.Text_Boxes is
    -- Update_Child --
    ------------------
 
-   procedure Update_Child (Box : access Odd_Text_Box_Record'Class) is
+   procedure Update_Child (Box : access GVD_Text_Box_Record'Class) is
    begin
       --  Clear the old text
       Freeze (Box.Child);
@@ -567,7 +567,7 @@ package body GVD.Text_Boxes is
    ------------------
 
    procedure Insert_Buffer
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       Buffer : String) is
    begin
       Insert (Box, Chars => Buffer);
@@ -578,7 +578,7 @@ package body GVD.Text_Boxes is
    -----------------------
 
    function On_Pixmap_Clicked
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       Button : Natural;
       Line   : Natural) return Boolean
    is
@@ -594,7 +594,7 @@ package body GVD.Text_Boxes is
    ----------------------------
 
    function Invisible_Column_Width
-     (Box : access Odd_Text_Box_Record) return Glib.Gint is
+     (Box : access GVD_Text_Box_Record) return Glib.Gint is
    begin
       return 0;
    end Invisible_Column_Width;
@@ -604,7 +604,7 @@ package body GVD.Text_Boxes is
    ---------------------------
 
    function Child_Contextual_Menu
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu
    is
@@ -620,7 +620,7 @@ package body GVD.Text_Boxes is
    ----------------
 
    function Get_Buffer
-     (Box : access Odd_Text_Box_Record) return GVD.Types.String_Access is
+     (Box : access GVD_Text_Box_Record) return GVD.Types.String_Access is
    begin
       return Box.Buffer;
    end Get_Buffer;
@@ -630,7 +630,7 @@ package body GVD.Text_Boxes is
    ---------------------
 
    procedure Get_Entity_Area
-     (Box    : access Odd_Text_Box_Record'Class;
+     (Box    : access GVD_Text_Box_Record'Class;
       X, Y   : in Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle;
       Entity : in out GVD.Types.String_Access)
@@ -740,12 +740,12 @@ package body GVD.Text_Boxes is
    ---------------------
 
    procedure Highlight_Range
-     (Box    : access Odd_Text_Box_Record;
-      From, To : Glib.Gint;
+     (Box         : access GVD_Text_Box_Record;
+      From, To    : Glib.Gint;
       Widget_From : Glib.Gint;
-      Line   : Natural;
-      Fore  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      Back  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color)
+      Line        : Natural;
+      Fore        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color)
    is
    begin
       --  If this range is currently highlighted, do nothing for efficiency

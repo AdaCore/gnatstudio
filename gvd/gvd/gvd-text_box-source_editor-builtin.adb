@@ -79,7 +79,7 @@ package body GVD.Source_Editors is
    subtype Line_Number is String (1 .. Line_Numbers_Width);
    --  Type of strings used to display line numbers.
 
-   Editor_Contextual_Menu_Name : constant String := "odd_editor_context";
+   Editor_Contextual_Menu_Name : constant String := "gvd_editor_context";
    --  String used to store the editor contextual menu as a user data
 
    Max_Tooltip_Width : constant := 400;

@@ -37,17 +37,17 @@ with GVD.Types;
 
 package GVD.Text_Boxes is
 
-   type Odd_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with private;
-   type Odd_Text_Box is access all Odd_Text_Box_Record'Class;
+   type GVD_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type GVD_Text_Box is access all GVD_Text_Box_Record'Class;
 
-   procedure Gtk_New (Box   : out Odd_Text_Box);
+   procedure Gtk_New (Box   : out GVD_Text_Box);
    --  Create a new box.
 
-   procedure Initialize (Box   : access Odd_Text_Box_Record'Class);
+   procedure Initialize (Box   : access GVD_Text_Box_Record'Class);
    --  Initialize a new box structure
 
    procedure Configure
-     (Box               : access Odd_Text_Box_Record;
+     (Box               : access GVD_Text_Box_Record;
       Ps_Font_Name      : String;
       Font_Size         : Glib.Gint;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array);
@@ -62,14 +62,14 @@ package GVD.Text_Boxes is
    --  destroyed.
 
    procedure Insert
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       Fore   : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Back   : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Chars  : in String := "");
    --  Insert some text in the child text.
 
    procedure Set_Line
-     (Box         : access Odd_Text_Box_Record;
+     (Box         : access GVD_Text_Box_Record;
       Line        : Natural;
       Set_Current : Boolean := True);
    --  Set the current line (and draw the button on the side).
@@ -77,50 +77,50 @@ package GVD.Text_Boxes is
    --  one on which the debugger is stopped). Otherwise, Line is simply the
    --  line that we want to display in the editor.
 
-   function Get_Line (Box : access Odd_Text_Box_Record) return Natural;
+   function Get_Line (Box : access GVD_Text_Box_Record) return Natural;
    --  Return the current line.
 
    function Get_Child
-     (Box : access Odd_Text_Box_Record) return Gtk.Text.Gtk_Text;
+     (Box : access GVD_Text_Box_Record) return Gtk.Text.Gtk_Text;
    --  Return the child
 
    function Get_Buttons
-     (Box : access Odd_Text_Box_Record) return Gtk.Layout.Gtk_Layout;
+     (Box : access GVD_Text_Box_Record) return Gtk.Layout.Gtk_Layout;
    --  The layout where the buttons are displayed.
 
    function Pixels_From_Line
-     (Box  : access Odd_Text_Box_Record;
+     (Box  : access GVD_Text_Box_Record;
       Line : Natural) return Glib.Gint;
    --  Return the location (in pixels) for a given line.
 
    function Line_From_Pixels
-     (Box  : access Odd_Text_Box_Record;
+     (Box  : access GVD_Text_Box_Record;
       Y    : Glib.Gint) return Natural;
    --  Return the line for a given location in pixels.
 
    function Index_From_Line
-     (Box : access Odd_Text_Box_Record'Class; Line : Natural)
+     (Box : access GVD_Text_Box_Record'Class; Line : Natural)
      return Natural;
    --  Return the index in the buffer at which Line starts.
 
-   procedure Hide_Current_Line_Button (Box : access Odd_Text_Box_Record);
+   procedure Hide_Current_Line_Button (Box : access GVD_Text_Box_Record);
    --  Hide the arrow that shows the current line.
 
    function On_Pixmap_Clicked
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       Button : Natural;
       Line   : Natural) return Boolean;
    --  Called whenever the left or right mouse buttons are pressed in the
    --  buttons area.
 
    function Invisible_Column_Width
-     (Box : access Odd_Text_Box_Record) return Glib.Gint;
+     (Box : access GVD_Text_Box_Record) return Glib.Gint;
    --  Return the width, in pixels, of the column on the left side of the
    --  text widget, whose contents is not included in the buffer.
    --  This column can be used for instance to display line numbers.
 
    function Child_Contextual_Menu
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu;
    --  Return the contextual menu to use when the user right-clicks in the
@@ -129,7 +129,7 @@ package GVD.Text_Boxes is
    --  below the cursor was Entity.
 
    procedure Set_Buffer
-     (Box            : access Odd_Text_Box_Record;
+     (Box            : access GVD_Text_Box_Record;
       Buffer         : GVD.Types.String_Access := null;
       Clear_Previous : Boolean := True);
    --  Changes the buffer associated with the child. The child widget is simply
@@ -140,18 +140,18 @@ package GVD.Text_Boxes is
    --  Set Buffer to null if you simply want to free the memory.
 
    function Get_Buffer
-     (Box : access Odd_Text_Box_Record) return GVD.Types.String_Access;
+     (Box : access GVD_Text_Box_Record) return GVD.Types.String_Access;
    --  Return the buffer associated with the box
 
-   function Lines_Count (Box : access Odd_Text_Box_Record) return Natural;
+   function Lines_Count (Box : access GVD_Text_Box_Record) return Natural;
    --  Return the number of lines found in the Buffer associated with the
    --  child.
    --  This function can be expensive to compute.
 
-   function Is_Empty (Box : access Odd_Text_Box_Record) return Boolean;
+   function Is_Empty (Box : access GVD_Text_Box_Record) return Boolean;
    --  Return True if no data is displayed in the child.
 
-   procedure Update_Child (Box : access Odd_Text_Box_Record'Class);
+   procedure Update_Child (Box : access GVD_Text_Box_Record'Class);
    --  Update the contents of the text in Child, from the contents of the
    --  buffer.
    --  If no buffer is defined (or the last call to Set_Buffer simply passed
@@ -159,14 +159,14 @@ package GVD.Text_Boxes is
    --  Insert_Buffer is called after clearing the buffer
 
    procedure Insert_Buffer
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       Buffer : String);
    --  This function is responsible for copying the contents of the buffer into
    --  the text child (which is the default behavior).
    --  It can be overriden if one wants to provide syntax highlighting.
 
    procedure Get_Entity_Area
-     (Box    : access Odd_Text_Box_Record'Class;
+     (Box    : access GVD_Text_Box_Record'Class;
       X, Y   : in Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle;
       Entity : in out GVD.Types.String_Access);
@@ -176,7 +176,7 @@ package GVD.Text_Boxes is
    --  Area is not relevant if the Entity returned is null.
 
    procedure Highlight_Range
-     (Box    : access Odd_Text_Box_Record;
+     (Box    : access GVD_Text_Box_Record;
       From, To : Glib.Gint;
       Widget_From : Glib.Gint;
       Line   : Natural;
@@ -189,7 +189,7 @@ package GVD.Text_Boxes is
    --  is inserted at Widget_From in the text widget.
 
 private
-   type Odd_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with record
+   type GVD_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Child               : Gtk.Text.Gtk_Text;
       Current_Line_Button : Gtk.Pixmap.Gtk_Pixmap;
       Current_Line        : Natural := 0;

@@ -37,7 +37,7 @@ package body GVD.Tooltips is
    -- Local packages --
    --------------------
 
-   package Odd_Tooltips_Timeout is new Timeout (Tooltips);
+   package GVD_Tooltips_Timeout is new Timeout (Tooltips);
 
    ---------------------
    -- Local functions --
@@ -248,7 +248,7 @@ package body GVD.Tooltips is
       Tooltip.Area.Height := 0;
       Tooltip.Active := True;
       Tooltip.Handler_Id :=
-        Odd_Tooltips_Timeout.Add
+        GVD_Tooltips_Timeout.Add
           (Tooltip.Timeout, Display_Tooltip'Access, Tooltip);
    end Set_Tooltip;
 

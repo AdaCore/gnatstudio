@@ -27,13 +27,13 @@ package GVD.Trace is
      (Descriptor : Process_Descriptor'Class;
       Str        : String;
       User_Data  : System.Address := System.Null_Address);
-   --  Filter that should be called when Odd receives inputs.
+   --  Filter that should be called when GVD receives inputs.
 
    procedure Output_Filter
      (Descriptor : Process_Descriptor'Class;
       Str        : String;
       User_Data  : System.Address := System.Null_Address);
-   --  Filter that should be called when Odd receives output from the
+   --  Filter that should be called when GVD receives output from the
    --  underlying debugger.
 
 end GVD.Trace;

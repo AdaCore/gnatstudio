@@ -41,9 +41,9 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 package body GVD.Status_Bar is
 
-   package Status_Timeout is new Gtk.Main.Timeout (Odd_Status_Bar);
+   package Status_Timeout is new Gtk.Main.Timeout (GVD_Status_Bar);
 
-   function Hide_Callback (Status : Odd_Status_Bar) return Boolean;
+   function Hide_Callback (Status : GVD_Status_Bar) return Boolean;
    --  Function called to hide the current message.
 
    procedure Arrow_Cb (Widget : access Gtk_Widget_Record'Class);
@@ -58,9 +58,9 @@ package body GVD.Status_Bar is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Status : out Odd_Status_Bar) is
+   procedure Gtk_New (Status : out GVD_Status_Bar) is
    begin
-      Status := new Odd_Status_Bar_Record;
+      Status := new GVD_Status_Bar_Record;
       Initialize (Status);
    end Gtk_New;
 
@@ -68,7 +68,7 @@ package body GVD.Status_Bar is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Status : access Odd_Status_Bar_Record'Class) is
+   procedure Initialize (Status : access GVD_Status_Bar_Record'Class) is
    begin
       Initialize_Hbox (Status, Homogeneous => False, Spacing => 4);
 
@@ -97,7 +97,7 @@ package body GVD.Status_Bar is
    -------------------
 
    procedure Print_Message
-     (Status  : access Odd_Status_Bar_Record;
+     (Status  : access GVD_Status_Bar_Record;
       Context : Category;
       Msg     : String)
    is
@@ -116,14 +116,14 @@ package body GVD.Status_Bar is
 
       --  schedule the message to be removed
       Status.Timeout_Id := Status_Timeout.Add
-        (Hide_Delay, Hide_Callback'Access, Odd_Status_Bar (Status));
+        (Hide_Delay, Hide_Callback'Access, GVD_Status_Bar (Status));
    end Print_Message;
 
    -------------------
    -- Hide_Callback --
    -------------------
 
-   function Hide_Callback (Status : Odd_Status_Bar) return Boolean is
+   function Hide_Callback (Status : GVD_Status_Bar) return Boolean is
       Id : Message_Id;
    begin
       if not Status.Is_Blank then
@@ -141,7 +141,7 @@ package body GVD.Status_Bar is
    --------------
 
    procedure Arrow_Cb (Widget : access Gtk_Widget_Record'Class) is
-      Status  : Odd_Status_Bar := Odd_Status_Bar (Widget);
+      Status  : GVD_Status_Bar := GVD_Status_Bar (Widget);
       X, Y    : Gint;
       Success : Boolean;
       Text    : Gtk_Text;
@@ -152,7 +152,7 @@ package body GVD.Status_Bar is
 
    begin
       --  If not already displayed, create it.
-      if Status.Historic_Win = null then
+      if Status.History_Win = null then
 
          Destroy (Status.Arrow);
          Gtk_New (Status.Arrow, Arrow_Down, Shadow_Out);
@@ -161,16 +161,16 @@ package body GVD.Status_Bar is
 
          Get_Origin (Get_Window (Status.Arrow_Button), X, Y, Success);
 
-         Gtk_New (Status.Historic_Win, Window_Popup);
+         Gtk_New (Status.History_Win, Window_Popup);
          Set_Policy
-           (Status.Historic_Win,
+           (Status.History_Win,
             Allow_Shrink => True,
             Allow_Grow   => True,
             Auto_Shrink  => True);
 
          Gtk_New (Frame);
          Set_Shadow_Type (Frame, Shadow_Etched_In);
-         Add (Status.Historic_Win, Frame);
+         Add (Status.History_Win, Frame);
          Show (Frame);
 
          Gtk_New (Text);
@@ -216,54 +216,54 @@ package body GVD.Status_Bar is
          --  ??? The text widget should be able to automatically give a correct
          --  width, but it doesn't.
          Set_Default_Size
-           (Status.Historic_Win,
+           (Status.History_Win,
             Gint'Min (Gint (Get_Allocation_Width (Status.Status)), 500),
             -1);
 
-         Realize (Status.Historic_Win);
-         Y := Y - Gint (Get_Allocation_Height (Status.Historic_Win));
-         Set_UPosition (Status.Historic_Win, X, Y);
+         Realize (Status.History_Win);
+         Y := Y - Gint (Get_Allocation_Height (Status.History_Win));
+         Set_UPosition (Status.History_Win, X, Y);
 
-         Show_All (Status.Historic_Win);
+         Show_All (Status.History_Win);
 
-         Grab_Add (Status.Historic_Win);
+         Grab_Add (Status.History_Win);
          Success := Pointer_Grab
-           (Get_Window (Status.Historic_Win),
+           (Get_Window (Status.History_Win),
             Event_Mask => Button_Press_Mask or Button_Release_Mask,
             Time       => 0);
 
          Return_Callback.Object_Connect
-           (Status.Historic_Win, "button_press_event",
+           (Status.History_Win, "button_press_event",
             Return_Callback.To_Marshaller (Button_Press'Access),
             Status);
          Return_Callback.Object_Connect
-           (Status.Historic_Win, "key_press_event",
+           (Status.History_Win, "key_press_event",
             Return_Callback.To_Marshaller (Button_Press'Access),
             Status);
 
       --  Otherwise remove it
       else
-         Hide_Historic (Status);
+         Hide_History (Status);
       end if;
    end Arrow_Cb;
 
-   -------------------
-   -- Hide_Historic --
-   -------------------
+   ------------------
+   -- Hide_History --
+   ------------------
 
-   procedure Hide_Historic (Status : access Odd_Status_Bar_Record) is
+   procedure Hide_History (Status : access GVD_Status_Bar_Record) is
    begin
       Pointer_Ungrab (0);
-      Grab_Remove (Status.Historic_Win);
-      Destroy (Status.Historic_Win);
+      Grab_Remove (Status.History_Win);
+      Destroy (Status.History_Win);
 
       Destroy (Status.Arrow);
       Gtk_New (Status.Arrow, Arrow_Up, Shadow_Out);
       Add (Status.Arrow_Button, Status.Arrow);
       Show (Status.Arrow);
 
-      Status.Historic_Win := null;
-   end Hide_Historic;
+      Status.History_Win := null;
+   end Hide_History;
 
    ------------------
    -- Button_Press --
@@ -272,7 +272,7 @@ package body GVD.Status_Bar is
    function Button_Press
      (Widget : access Gtk_Widget_Record'Class) return Boolean is
    begin
-      Hide_Historic (Odd_Status_Bar (Widget));
+      Hide_History (GVD_Status_Bar (Widget));
       return False;
    end Button_Press;
 
