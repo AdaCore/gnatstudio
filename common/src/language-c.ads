@@ -109,12 +109,6 @@ package Language.C is
       Case_Exceptions : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception);
 
-   function Comment_Block
-     (Lang    : access C_Language;
-      Block   : String;
-      Comment : Boolean := True;
-      Clean   : Boolean := False) return String;
-
 private
    type C_Language is new Language_Root with null record;
 
