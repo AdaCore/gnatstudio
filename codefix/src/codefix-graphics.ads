@@ -26,17 +26,13 @@ with Generic_List;
 
 with Codefix;                use Codefix;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
+with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
-with Codefix.File_Io;        use Codefix.File_Io;
-with Codefix.Text_Navigators;
-use Codefix.Formal_Errors.Extract_List;
+use Codefix.Formal_Errors.Command_List;
 
 with Codefix_Window_Pkg;     use Codefix_Window_Pkg;
 
 package Codefix.Graphics is
-
-   package Navigator is new Text_Navigators (File_Interface);
-   use Navigator;
 
    Display_Lines_Before : constant Integer := 5;
    Display_Lines_After  : constant Integer := 5;
@@ -47,9 +43,9 @@ package Codefix.Graphics is
    use Vdiff_Lists;
 
    type Graphic_Codefix_Record is new Codefix_Window_Record with record
-      Current_Text       : Text_Navigator;
+      Current_Text       : Ptr_Text_Navigator;
       Corrector          : Correction_Manager;
-      Errors_Found       : Errors_File;
+      Errors_Found       : Ptr_Errors_Interface;
       Successful_Update  : Boolean;
       Nb_Tabs            : Integer := 0;
       Current_Error      : Error_Id := Null_Error_Id;
@@ -59,10 +55,17 @@ package Codefix.Graphics is
 
    type Graphic_Codefix_Access is access all Graphic_Codefix_Record;
 
-   procedure Gtk_New (Graphic_Codefix : out Graphic_Codefix_Access);
+   procedure Gtk_New
+     (Graphic_Codefix : out Graphic_Codefix_Access;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Current_Text    : Ptr_Text_Navigator;
+      Errors_Found    : Ptr_Errors_Interface);
 
    procedure Initialize
-     (Graphic_Codefix : access Graphic_Codefix_Record'Class);
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Current_Text    : Ptr_Text_Navigator;
+      Errors_Found    : Ptr_Errors_Interface);
 
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class);
    --  Free the memory associated to a Graphic_Codefix.
