@@ -34,9 +34,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Docgen.Backend;            use Docgen.Backend;
-with Language.Ada;              use Language.Ada;
---  ??? This is a tempoary solution. This must be removed as soon as docgen is
---  able manage source file structures that contains this info by themselves.
+with Language;                  use Language;
 
 package body Docgen.Work_On_Source is
 
@@ -108,6 +106,7 @@ package body Docgen.Work_On_Source is
       Doc_File         : File_Descriptor;
       Text             : String;
       Options          : All_Options;
+      Language         : Language_Access;
       Level            : in out Natural);
    --  Extracts all the comment lines of the source file which are at the
    --  beginning of it. Empty lines are ignored, the procedure stops when
@@ -484,7 +483,10 @@ package body Docgen.Work_On_Source is
             if Found_Main_Package then
                Process_Package_Description
                  (B, Kernel, Doc_File,
-                  File_Text.all, Options, Level);
+                  File_Text.all, Options,
+                  Get_Language_From_File
+                    (Get_Language_Handler (Kernel), Source_Filename),
+                  Level);
                Process_With_Clause
                  (B,
                   Kernel,
@@ -1245,6 +1247,7 @@ package body Docgen.Work_On_Source is
       Doc_File : File_Descriptor;
       Text     : String;
       Options  : All_Options;
+      Language : Language_Access;
       Level    : in out Natural)
    is
       pragma Unreferenced (Options);
@@ -1258,7 +1261,7 @@ package body Docgen.Work_On_Source is
       End_Line := Start_Line;
 
       Skip_To_Current_Comment_Block_End
-        (Get_Language_Context (Ada_Lang).all, Text, End_Line, True);
+        (Get_Language_Context (Language).all, Text, End_Line, True);
 
       Description := new String'
         (Text (Line_Start (Text, Start_Line) .. Line_End (Text, End_Line)));
