@@ -559,9 +559,6 @@ package body External_Editor_Module is
 
       for S in Servers'Range loop
          Args := Argument_String_To_List (Servers (S).Command_Name.all);
-
-         --  ??? Will not work on windows: we should locate "glide.bat" or
-         --  "emacs.exe", not "glide" or emacs".
          Path := Locate_Exec_On_Path (Args (Args'First).all);
 
          if Path /= null then
@@ -664,15 +661,13 @@ package body External_Editor_Module is
          return;
       end if;
 
-      Substitute (Args,
-                  P => Project_Name (Get_Project (Kernel)),
-                  F => File,
-                  C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
-                  L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),
-                  E => Extended_Lisp);
-
-      --  ??? This will fail on windows, since we are searching for "emacs",
-      --  not "emacs.exe" or "glide" instead of "glide.bat". C401-012
+      Substitute
+        (Args,
+         P => Project_Name (Get_Project (Kernel)),
+         F => File,
+         C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
+         L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),
+         E => Extended_Lisp);
       Path := Locate_Exec_On_Path (Args (Args'First).all);
 
       if Path = null then
