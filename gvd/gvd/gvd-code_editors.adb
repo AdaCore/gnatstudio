@@ -124,6 +124,7 @@ package body GVD.Code_Editors is
            (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
          Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
          Child := Put (Top.Process_Mdi, Editor.Explorer_Scroll);
+         Set_Focus_Child (Child);
          Set_Title (Child, "Explorer");
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);

@@ -1825,6 +1825,7 @@ package body Project_Explorers is
          Child := Put (Get_MDI (Kernel), Explorer);
          Set_Title
            (Child, -"Project Explorer - Project View",  -"Project View");
+         Set_Focus_Child (Child);
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
          return Explorer;

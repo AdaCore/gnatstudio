@@ -1111,7 +1111,7 @@ package body Vsearch_Ext is
          Child := Put (Get_MDI (Kernel), Vsearch_Module_Id.Search,
                        All_Buttons or Float_As_Transient
                        or Always_Destroy_Float);
-
+         Set_Focus_Child (Child);
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
 

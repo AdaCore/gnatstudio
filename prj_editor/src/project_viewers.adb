@@ -1060,6 +1060,7 @@ package body Project_Viewers is
             Get_Pref (Kernel, Default_Widget_Width),
             Get_Pref (Kernel, Default_Widget_Height));
          Child := Put (Get_MDI (Kernel), Viewer);
+         Set_Focus_Child (Child);
          Set_Title (Child, Project_Switches_Name);
 
          --  The initial contents of the viewer should be read immediately from

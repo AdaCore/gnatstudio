@@ -223,6 +223,7 @@ package body Codefix_Module is
 
       Window := Get_MDI (Kernel);
       Child := Put (Window, Graphic_Codefix);
+      Set_Focus_Child (Child);
       Set_Title (Child, -"Code fixing", -"Codefix");
 
    exception

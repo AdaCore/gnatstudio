@@ -392,6 +392,7 @@ package body Browsers.Dependency_Items is
          Child := Put
            (Get_MDI (Kernel), Browser,
             Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
+         Set_Focus_Child (Child);
          Set_Title (Child, -"Dependency Browser");
       end if;
 

@@ -646,6 +646,7 @@ package body GVD_Module is
 
       Set_Mode (Editor, Source_Asm);
       Child := Put (Top.Process_Mdi, Assembly);
+      Set_Focus_Child (Child);
       Set_Dock_Side (Child, Right);
       Dock_Child (Child);
       Unref (Assembly);

@@ -1074,6 +1074,7 @@ package body Project_Explorers_Files is
       if Child = null then
          Gtk_New (Files, Kernel);
          Child := Put (Get_MDI (Kernel), Files);
+         Set_Focus_Child (Child);
          Set_Title
            (Child, -"Project Explorer - File View",  -"File View");
          Set_Dock_Side (Child, Left);

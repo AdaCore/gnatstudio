@@ -424,6 +424,7 @@ package body Browsers.Call_Graph is
          Child := Put
            (Get_MDI (Kernel), Browser,
             Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
+         Set_Focus_Child (Child);
          Set_Title (Child, -"Call graph Browser");
       end if;
 

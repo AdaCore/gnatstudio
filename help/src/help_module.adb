@@ -648,6 +648,7 @@ package body Help_Module is
          Child := Put
            (MDI, Scrolled,
             Focus_Widget => Gtk_Widget (Scrolled.Csc));
+         Set_Focus_Child (Child);
          Set_Title (Child, -"Help");
          Show_All (Scrolled);
          Raise_Child (Child);

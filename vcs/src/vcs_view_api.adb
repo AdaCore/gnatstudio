@@ -1033,6 +1033,7 @@ package body VCS_View_API is
          Gtk_New (Explorer, Kernel);
          Set_Size_Request (Explorer, 400, 400);
          Child := Put (MDI, Explorer);
+         Set_Focus_Child (Child);
          Set_Title (Child, -"VCS Explorer");
 
          Widget_Callback.Object_Connect
