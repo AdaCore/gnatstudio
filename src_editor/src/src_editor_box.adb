@@ -1296,9 +1296,9 @@ package body Src_Editor_Box is
 
       if Get_Status (Editor.Source_Buffer) /= Modified then
          B := Check_Timestamp
-           (Editor.Source_Buffer, Ask_User => False, Force => True);
+           (Editor.Source_Buffer, Ask_User => False, Force => Force);
       else
-         B := Check_Timestamp (Editor.Source_Buffer, Ask_User => not Force,
+         B := Check_Timestamp (Editor.Source_Buffer, Ask_User => True,
                                Force => Force);
       end if;
    end Check_Timestamp;

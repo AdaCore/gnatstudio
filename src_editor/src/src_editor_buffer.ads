@@ -474,7 +474,8 @@ package Src_Editor_Buffer is
    --  whether he really wants to edit (unless Ask_User is False). False is
    --  returned if the timestamp is more recent, and the user doesn't want to
    --  force the edition.
-   --  If Force, then the buffer will be updated in any case.
+   --  If Force, then the buffer will be updated in any case, withouth checking
+   --  the timestamp.
 
    procedure Ref (Buffer : access Source_Buffer_Record);
    --  Should be called every time that a view is showing Buffer.

@@ -3433,7 +3433,7 @@ package body Src_Editor_Buffer is
       if Buffer.Filename /= VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
 
-         if New_Timestamp > Buffer.Timestamp then
+         if Force or else New_Timestamp > Buffer.Timestamp then
             if Force then
                Response := Gtk_Response_No;
             else
