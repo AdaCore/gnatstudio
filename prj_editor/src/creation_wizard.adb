@@ -418,11 +418,12 @@ package body Creation_Wizard is
    ------------------
 
    function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
-      Wiz          : Prj_Wizard := Prj_Wizard (W);
+      Wiz          : constant Prj_Wizard := Prj_Wizard (W);
       Project, Var : Project_Node_Id;
       Dir          : constant String := Name_As_Directory
         (Get_Text (Wiz.Project_Location));
-      Name         : constant String := Get_Text (Wiz.Project_Name);
+      Name         : constant String := Base_Name
+        (Get_Text (Wiz.Project_Name), Project_File_Extension);
 
    begin
       Project := Create_Project (Name => Name, Path => Dir);
