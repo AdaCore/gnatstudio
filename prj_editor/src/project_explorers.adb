@@ -456,12 +456,12 @@ package body Project_Explorers is
       Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Context);
-      C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Ctxt);
    begin
-      return Get_Creator (Ctxt) = Explorer_Module_ID
-        and then Has_Project_Information (C)
-        and then not Has_Directory_Information (C);
+      return Ctxt.all in File_Selection_Context'Class
+        and then Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Has_Project_Information (File_Selection_Context_Access (Ctxt))
+        and then not Has_Directory_Information
+           (File_Selection_Context_Access (Ctxt));
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -473,12 +473,13 @@ package body Project_Explorers is
       Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Context);
-      C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Ctxt);
    begin
-      return Get_Creator (Ctxt) = Explorer_Module_ID
-        and then Has_Directory_Information (C)
-        and then not Has_File_Information (C);
+      return Ctxt.all in File_Selection_Context'Class
+        and then Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Has_Directory_Information
+           (File_Selection_Context_Access (Ctxt))
+        and then not Has_File_Information
+           (File_Selection_Context_Access (Ctxt));
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -490,11 +491,11 @@ package body Project_Explorers is
       Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Context);
-      C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Ctxt);
    begin
-      return Get_Creator (Ctxt) = Explorer_Module_ID
-        and then Has_File_Information (C)
+      return Ctxt.all in File_Selection_Context'Class
+        and then Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Has_File_Information
+           (File_Selection_Context_Access (Ctxt))
         and then Ctxt.all not in Entity_Selection_Context'Class;
    end Filter_Matches_Primitive;
 
