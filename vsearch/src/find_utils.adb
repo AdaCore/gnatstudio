@@ -428,7 +428,9 @@ package body Find_Utils is
                   end loop;
 
                   Section_End := Pos - 1;
-                  Pos := Pos + 1;
+                  if Pos <= Buffer'Last then
+                     Pos := Pos + 1;
+                  end if;
                   State := Statements;
 
                --  Multi-line comments end with specific sequences
