@@ -710,7 +710,7 @@ according to the new setup.
 
 @noindent
 The Outline View, which you can choose to activate through the
-@code{Project->Outline View} menu, shows the contents of the current file.
+@code{Tools->Outline View} menu, shows the contents of the current file.
 
 The exact meaning of this depends on the language you are seeing. For
 Ada, C and C++ files, this is the list of entities that are declared at
