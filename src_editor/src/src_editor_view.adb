@@ -601,20 +601,19 @@ package body Src_Editor_View is
         and then Get_Event_Type (Event) = Button_Press
       then
          declare
-            Dummy_Gint                 : Gint;
-            Iter                       : Gtk_Text_Iter;
-            Line                       : Natural;
-            Column_Index               : Integer := -1;
-            Button_X, Button_Y         : Gint;
-            X, Y                       : Gint;
-            Dummy_Boolean              : Boolean;
+            Dummy_Gint         : Gint;
+            Iter               : Gtk_Text_Iter;
+            Line               : Natural;
+            Column_Index       : Integer := -1;
+            Button_X, Button_Y : Gint;
+            X, Y               : Gint;
+            Dummy_Boolean      : Boolean;
 
          begin
             --  Get the coordinates of the click.
 
             Button_X := Gint (Get_X (Event));
             Button_Y := Gint (Get_Y (Event));
-
 
             --  Find the line number.
             Window_To_Buffer_Coords
@@ -626,7 +625,7 @@ package body Src_Editor_View is
             Line := Natural (Get_Line (Iter)) + 1;
 
             --  Find the column number.
-            for J in View.Line_Info.all'Range loop
+            for J in View.Line_Info'Range loop
                if View.Line_Info (J).Starting_X <= Natural (Button_X)
                  and then Natural (Button_X)
                  <= View.Line_Info (J).Starting_X + View.Line_Info (J).Width
@@ -799,7 +798,7 @@ package body Src_Editor_View is
            Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 2;
 
          if Current_Line /= 0 then
-            for J in View.Line_Info.all'Range loop
+            for J in View.Line_Info'Range loop
                if View.Line_Info (J).Stick_To_Data then
                   if View.Real_Lines (Current_Line) /= 0 then
                      Data := View.Line_Info (J).Column_Info
@@ -865,11 +864,11 @@ package body Src_Editor_View is
       Column : Integer;
       Buffer : Integer;
       Width  : Integer := 0;
-      Widths : array (Info.all'Range) of Integer;
+      Widths : array (Info'Range) of Integer;
 
    begin
       --  Compute the maximum width of the items to add.
-      for J in Info.all'Range loop
+      for J in Info'Range loop
          Widths (J) := 0;
          if Info (J).Text /= null then
             Buffer := Integer
@@ -904,7 +903,7 @@ package body Src_Editor_View is
       View.Line_Info (Column).Stick_To_Data := Stick_To_Data;
 
       --  Update the stored data.
-      for J in Info.all'Range loop
+      for J in Info'Range loop
          Insert_At_Position
            (View, Info (J), Column, Info (J).Line, Widths (J));
       end loop;
@@ -927,7 +926,7 @@ package body Src_Editor_View is
    begin
 
       --  Browse through existing columns and try to match Identifier.
-      for J in View.Line_Info.all'Range loop
+      for J in View.Line_Info'Range loop
          if View.Line_Info (J).Identifier.all = Identifier then
             Column := J;
 
