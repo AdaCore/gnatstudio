@@ -25,10 +25,8 @@ with Src_Info;                  use Src_Info;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Types;                     use Types;
-with Namet;                     use Namet;
 with Projects;                  use Projects;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Prj;
 with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
@@ -295,44 +293,22 @@ package body Language_Handlers.Glide is
       end if;
    end Known_Languages;
 
-   -----------------------
-   -- Add_Language_Info --
-   -----------------------
+   --------------------------
+   -- Set_Language_Handler --
+   --------------------------
 
-   procedure Add_Language_Info
-     (Handler             : access Glide_Language_Handler_Record;
-      Language_Name       : String;
-      LI                  : Src_Info.LI_Handler;
-      Default_Spec_Suffix : String;
-      Default_Body_Suffix : String)
+   procedure Set_Language_Handler
+     (Handler       : access Glide_Language_Handler_Record;
+      Language_Name : String;
+      LI            : Src_Info.LI_Handler)
    is
       Index : constant Natural :=
         Get_Index_From_Language (Handler, Language_Name);
-      Lang  : Name_Id;
-      Spec, Impl : Name_Id;
-
    begin
       if Index /= 0 then
          Handler.Languages (Index).Handler := LI;
-
-         Name_Len := Language_Name'Length;
-         Name_Buffer (1 .. Name_Len) := To_Lower (Language_Name);
-         Lang := Name_Find;
-
-         Name_Len := Default_Spec_Suffix'Length;
-         Name_Buffer (1 .. Name_Len) := Default_Spec_Suffix;
-         Spec := Name_Find;
-
-         Name_Len := Default_Body_Suffix'Length;
-         Name_Buffer (1 .. Name_Len) := Default_Body_Suffix;
-         Impl := Name_Find;
-
-         Prj.Register_Default_Naming_Scheme
-           (Language => Lang,
-            Default_Spec_Suffix => Spec,
-            Default_Body_Suffix => Impl);
       end if;
-   end Add_Language_Info;
+   end Set_Language_Handler;
 
    ------------------------------
    -- Get_LI_Handler_From_File --

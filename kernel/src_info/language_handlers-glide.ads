@@ -134,14 +134,14 @@ package Language_Handlers.Glide is
      (Handler : access Glide_Language_Handler_Record)
       return GNAT.OS_Lib.Argument_List;
 
-   procedure Add_Language_Info
-     (Handler             : access Glide_Language_Handler_Record;
-      Language_Name       : String;
-      LI                  : Src_Info.LI_Handler;
-      Default_Spec_Suffix : String;
-      Default_Body_Suffix : String);
+   procedure Set_Language_Handler
+     (Handler       : access Glide_Language_Handler_Record;
+      Language_Name : String;
+      LI            : Src_Info.LI_Handler);
    --  Register some extra information for a specific language.
    --  Nothing is done if Language_Name hasn't been registered first.
+   --  See also Projects.Registry.Register_Default_Language_Extension and
+   --  Projects.Registry.Add_Language_Extension.
 
    function Languages_Count (Handler : access Glide_Language_Handler_Record)
       return Natural;
