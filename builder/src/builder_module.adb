@@ -37,8 +37,10 @@ with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;    use Glide_Kernel.Timeout;
+with Language_Handlers.Glide; use Language_Handlers.Glide;
 with Prj_API;                 use Prj_API;
 with Prj;                     use Prj;
+with Src_Info;                use Src_Info;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 
@@ -77,6 +79,31 @@ package body Builder_Module is
    --  Called by the Gtk main loop when idle.
    --  Handle on going build.
 
+   type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
+
+   type Compute_Xref_Data is record
+      Kernel : Kernel_Handle;
+      Iter   : LI_Handler_Iterator_Access_Access;
+      LI     : Natural;
+   end record;
+   type Compute_Xref_Data_Access is access Compute_Xref_Data;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (LI_Handler_Iterator_Access, LI_Handler_Iterator_Access_Access);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Compute_Xref_Data, Compute_Xref_Data_Access);
+
+   package Xref_Timeout is new Gtk.Main.Timeout (Compute_Xref_Data_Access);
+
+
+   procedure Timeout_Xref_Destroy (D : in out Compute_Xref_Data_Access);
+   --  Destroy the memory associated with an Xref_Timeout.
+
+   function Timeout_Compute_Xref (D : Compute_Xref_Data_Access)
+      return Boolean;
+   --  Compute the cross-references for the next files in the project.
+
    procedure Set_Sensitive_Menus
      (Kernel    : Kernel_Handle;
       Sensitive : Boolean);
@@ -105,6 +132,10 @@ package body Builder_Module is
    procedure On_Custom
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Custom... menu
+
+   procedure On_Compute_Xref
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Build->Compute Xref information menu
 
    procedure On_Run
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
@@ -446,6 +477,82 @@ package body Builder_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Custom;
 
+   --------------------------
+   -- Timeout_Xref_Destroy --
+   --------------------------
+
+   procedure Timeout_Xref_Destroy (D : in out Compute_Xref_Data_Access) is
+   begin
+      Pop_State (D.Kernel);
+      Free (D.Iter.all);
+      Unchecked_Free (D.Iter);
+      Unchecked_Free (D);
+   end Timeout_Xref_Destroy;
+
+   --------------------------
+   -- Timeout_Compute_Xref --
+   --------------------------
+
+   function Timeout_Compute_Xref (D : Compute_Xref_Data_Access)
+      return Boolean
+   is
+      Handler      : Glide_Language_Handler :=
+        Glide_Language_Handler (Get_Language_Handler (D.Kernel));
+      Num_Handlers : constant Natural := Languages_Count (Handler);
+      Finished     : Boolean;
+      LI           : LI_Handler;
+
+   begin
+      if D.LI /= 0 and then D.Iter.all /= null then
+         Continue (D.Iter.all.all, Finished);
+      else
+         Finished := True;
+      end if;
+
+      if Finished then
+         D.LI := D.LI + 1;
+         if D.LI > Num_Handlers then
+            return False;
+         end if;
+
+         Free (D.Iter.all);
+
+         LI := Get_Nth_Handler (Handler, D.LI);
+         if LI /= null then
+            D.Iter.all := new LI_Handler_Iterator'Class'
+              (Generate_LI_For_Project
+                 (Handler      => LI,
+                  Root_Project => Get_Project_View (D.Kernel),
+                  Project      => Get_Project_View (D.Kernel),
+                  Recursive    => True));
+         end if;
+      end if;
+
+      return True;
+   end Timeout_Compute_Xref;
+
+   ---------------------
+   -- On_Compute_Xref --
+   ---------------------
+
+   procedure On_Compute_Xref
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
+      Id      : Timeout_Handler_Id;
+
+   begin
+      Push_State (Kernel, Processing);
+      Id := Xref_Timeout.Add
+        (Timeout, Timeout_Compute_Xref'Access,
+         new Compute_Xref_Data' (Kernel, new LI_Handler_Iterator_Access, 0),
+         Timeout_Xref_Destroy'Access);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Compute_Xref;
+
    ----------------
    -- Idle_Build --
    ----------------
@@ -725,6 +832,9 @@ package body Builder_Module is
 
       Register_Menu (Kernel, Build, -"Custom...", "",
                      On_Custom'Access, GDK_F9);
+
+      Register_Menu (Kernel, Build, -"Recompute Xref information", "",
+                     On_Compute_Xref'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
