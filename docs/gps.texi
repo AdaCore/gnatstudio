@@ -1785,8 +1785,9 @@ You can then either complete the name by typing it, or continue hitting the
 @key{Tab} key to cycle through the possible completions, or click on one of the
 completions in the list displayed.
 
-You can also directly access the previous file names typed in this dialog
-by clicking on the @i{down} arrow on the right of the first text area.
+If you press the down arrow key, the focus will move to the list of
+completions, so that you can select a file from this list without using the
+mouse.
 
 Once you have made your choice, click on the @code{OK} button to validate.
 Clicking on @code{Cancel} or hitting the @key{Esc} key will cancel the
@@ -2967,6 +2968,13 @@ optionally followed by a series of digits, letters or
 underscores). Spaces are not allowed. Likewise, reserved Ada keywords
 must be avoided. If the name is invalid, GPS will display an error
 message when you press the @code{Forward} button.
+
+Child projects can be created from this dialog. These are project whose
+name is of the form @code{Parent.Child}. However, the generated project
+is invalid, since one of the restrictions for these projects, which is
+currently not enforced by GPS, is that the project must import or
+extend its parent project. Therefore, you will not be able to
+load this project in GPS until you have manually edited it.
 
 In this page, you should also select what languages the source files
 in this project are written in. Currently supported are @code{Ada},
