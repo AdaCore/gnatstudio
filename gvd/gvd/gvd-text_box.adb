@@ -123,10 +123,8 @@ package body GVD.Text_Box is
         (Get_Vadj (Box.Child), "changed",
          Box_Cb.To_Marshaller (Scroll_Layout_Changed'Access),
          Slot_Object => Box);
-      Box_Cb.Object_Connect
-        (Get_Vadj (Box.Child), "destroy",
-         Box_Cb.To_Marshaller (Destroy_Cb'Access),
-         Slot_Object => Box);
+      Box_Cb.Connect
+        (Box, "destroy", Box_Cb.To_Marshaller (Destroy_Cb'Access));
       Box_Event_Cb.Object_Connect
         (Box.Buttons, "button_press_event",
          Box_Event_Cb.To_Marshaller (Pixmap_Clicked_Cb'Access),
@@ -233,6 +231,7 @@ package body GVD.Text_Box is
    begin
       Free (Box.Buffer);
       Unref (Box.Font);
+
       Destroy (Box.Current_Line_Button);
    end Destroy_Cb;
 
