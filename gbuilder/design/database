@@ -50,7 +50,9 @@ Here is a first list of required data:
   - "properties"
     List of properties of the widget that can be changed at the GUI level. This
     can for instance be the text associated with a label, the icon for a
-    button, ... A documentation string should be allowed
+    button, ... A documentation string should be allowed. A default value should
+    be provided whenever appropriate so that the GUI builder can display as
+    much information about the widget as possible.
   - "children_add"
     Function to use to add children. Gtk+'s containers typically have several
     such function (pack_start, pack_end, add, append_widget, ...).
