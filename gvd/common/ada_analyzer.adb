@@ -1783,7 +1783,7 @@ package body Ada_Analyzer is
                Top_Token.Sloc_Name.Index  := Prec;
             end if;
 
-            if Top_Token.Declaration then
+            if Top_Token.Declaration and then Prev_Token /= Tok_End then
                --  This is a variable declaration
 
                declare
