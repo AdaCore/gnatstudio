@@ -1238,7 +1238,7 @@ package body Src_Editor_Module is
       --------------
 
       procedure Gnatstub (Name : String; Success : out Boolean) is
-         Args   : Argument_List (1 .. 1);
+         Args   : Argument_List (1 .. 2);
          Exec   : String_Access := Locate_Exec_On_Path ("gnatstub");
 
       begin
@@ -1249,15 +1249,21 @@ package body Src_Editor_Module is
 
          Fd := new Process_Descriptor;
          Args (1) := new String' (Name);
+         Args (2) := new String' (Dir_Name (Name));
          Non_Blocking_Spawn (Fd.all, Exec.all, Args, Err_To_Out => True);
          Success := True;
-
+         Console.Insert
+           (Kernel, Exec.all & ' ' & Args (1).all & ' ' & Args (2).all, False);
          Free (Exec);
-         Free (Args (1));
+
+         for J in Args'Range loop
+            Free (Args (J));
+         end loop;
 
       exception
          when Invalid_Process =>
             Success := False;
+            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
       end Gnatstub;
 
    begin
