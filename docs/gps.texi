@@ -280,7 +280,9 @@ manner. In the right side of the title bar of the window, three small
 buttons are displayed. The rightmost button is a cross. Clicking on
 this button will close the window
 
-@c ??? Need screeshot of child, with title bar and buttons
+@iftex
+@image{mdi-title-bar}
+@end iftex
 
 Alternatively, you can also select the window by clicking anywhere in
 its title bar, and then select the menu @code{Window->Close}
@@ -310,7 +312,9 @@ Note that if there are a lot of windows, two small arrows will appear
 on the right of the tabs. Clicking on these arrows will show the
 remaining tabs.
 
-@c ??? Would be nice to have a screenshot of the scrolling tab arrows
+@iftex
+@image{mdi-scroll-tabs}
+@end iftex
 
 You can go back to this maximized state in two ways: either select the
 menu @code{Window->Maximize All}, or click on the middle button on the
@@ -341,19 +345,25 @@ All the windows will be resized to the same size, and be moved one on
 top of the other, so that the top and left sides of all windows are
 visible. This way, you can easily select any window
 
-@c ??? Need screenshot of cascade
+@iftex
+@image{mdi-cascade}
+@end iftex
 
 @item Window->Tile Horizontally
 All the windows are resized to the same dimensions, and are put side
 by side, from left to right. No window will overlap any other.
 
-@c ??? Need screenshot of tile horizontally
+@iftex
+@image{mdi-tile-horizontal}
+@end iftex
 
 @item Window->Tile Vertically
 All the windows are resized to the same dimensions, and are put side
 by side, from top to bottom. No window will overlap any other.
 
-@c ??? Need screenshot of tile vertically
+@iftex
+@image{mdi-tile-vertical}
+@end iftex
 
 @end table
 
@@ -371,7 +381,9 @@ de-iconify the window, by clicking once again on the same button.
 When de-iconified, a window will restore the size and position it had
 before it was iconified.
 
-@c ??? Need screenshot of iconified window
+@iftex
+@image{mdi-icons}
+@end iftex
 
 @end table
 
