@@ -56,10 +56,8 @@ package Src_Info.CPP is
      (Handler                : access CPP_LI_Handler_Record;
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
-      List                   : in out LI_File_List;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String);
+      List                   : LI_File_List;
+      Project                : Projects.Project_Type);
    --  See comment in src_info.ads
 
    function Case_Insensitive_Identifiers
@@ -69,18 +67,15 @@ package Src_Info.CPP is
 
    procedure Parse_All_LI_Information
      (Handler                : access CPP_LI_Handler_Record;
-      List                   : in out LI_File_List;
+      List                   : LI_File_List;
       In_Directory           : String;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String);
+      Project                : Projects.Project_Type);
    --  Does nothing for now.
 
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
       Source_Filename        : String;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String) return String;
+      Project                : Projects.Project_Type) return String;
    --  See comment in src_info.ads.
    --  For C/C++, this function returns the name of the xref filename to
    --  generate.
@@ -108,7 +103,7 @@ package Src_Info.CPP is
    --  Free the memory used by the list of source files and save xref
    --  pool.
 
-   procedure Add (HT : in out LI_File_List; LIFP : LI_File_Ptr);
+   procedure Add (HT : LI_File_List; LIFP : LI_File_Ptr);
    --  Just wrapper for internal Add to support extended testing
 
    function Get_DB_Dir (Project : Projects.Project_Type) return String;

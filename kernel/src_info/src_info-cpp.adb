@@ -27,7 +27,6 @@ with Projects;             use Projects;
 with Projects.Registry;    use Projects.Registry;
 with Src_Info;             use Src_Info;
 with Src_Info.LI_Utils;    use Src_Info.LI_Utils;
-with Src_Info.Prj_Utils;   use Src_Info.Prj_Utils;
 with Src_Info.Type_Utils;  use Src_Info.Type_Utils;
 
 with DB_API;            use DB_API;
@@ -68,7 +67,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
@@ -76,98 +75,98 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_GV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CON_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FD_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FU_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_E_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_EC_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_T_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CL_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_UN_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IU_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MA_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MD_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
@@ -200,7 +199,7 @@ package body Src_Info.CPP is
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
@@ -208,77 +207,77 @@ package body Src_Info.CPP is
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Fu_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Con_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_E_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ec_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Iv_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ma_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Mi_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Cl_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_T_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Un_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+      List    : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
@@ -358,7 +357,7 @@ package body Src_Info.CPP is
       Source_Filename : String;
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
-      List            : in out LI_File_List;
+      List            : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    --  Attempts to find class declaration among this Handler.File declarations
@@ -371,7 +370,7 @@ package body Src_Info.CPP is
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
       Project  : Project_Type;
-      List_Of_Files : in out LI_File_List);
+      List_Of_Files : LI_File_List);
    --  Process the SN databases to create the LI structure for
    --  Source_Filename. Source_Filename is the name of the file as it appears
    --  in the sources (for instance, if we have #include "dir/file.h", then
@@ -384,7 +383,7 @@ package body Src_Info.CPP is
       Symbol           : Symbol_Type;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    --  Process local variables and arguments for specified function/method
@@ -410,7 +409,7 @@ package body Src_Info.CPP is
       CL_Tab           : CL_Table := Invalid_CL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    --  Finds arguments for the template specified by (Scope, Template_Args,
@@ -473,7 +472,7 @@ package body Src_Info.CPP is
       Filename         : String;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
-      List             : out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    --  Generates list of dependency declarations for the method
@@ -485,7 +484,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       Project          : Project_Type;
       File             : out LI_File_Ptr;
-      List             : out LI_File_List);
+      List             : LI_File_List);
    --  Generates list of dependency declarations for the function
    --  with given name
 
@@ -519,7 +518,7 @@ package body Src_Info.CPP is
       Arg_Types    : in Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
-      List         : in out LI_File_List;
+      List         : LI_File_List;
       Project : Project_Type;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info    : out E_Declaration_Info_List;
@@ -538,7 +537,7 @@ package body Src_Info.CPP is
       Handler      : access CPP_LI_Handler_Record'Class;
       Project : Project_Type;
       File         : in out LI_File_Ptr;
-      List         : in out LI_File_List;
+      List         : LI_File_List;
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False);
    --  Attempts to find/create the first forward declaration
@@ -1050,7 +1049,7 @@ package body Src_Info.CPP is
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
       Project  : Project_Type;
-      List_Of_Files : in out LI_File_List)
+      List_Of_Files : LI_File_List)
    is
       P               : Pair_Ptr;
       Module_Typedefs : Src_Info.Type_Utils.Module_Typedefs_List;
@@ -1199,18 +1198,14 @@ package body Src_Info.CPP is
      (Handler                : access CPP_LI_Handler_Record;
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
-      List                   : in out LI_File_List;
-      Project                : Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String)
+      List                   : LI_File_List;
+      Project                : Project_Type)
    is
-      pragma Unreferenced (Predefined_Source_Path);
-      pragma Unreferenced (Predefined_Object_Path);
-
-      Full_Filename : constant String := Find_File
-        (Source_Filename, Include_Path (Project, Recursive => True),
-         Predefined_Path => "");
-
+      Full_Filename : constant String := Get_Full_Path_From_File
+        (Registry        => Project_Registry (Get_Registry (Project)),
+         Filename        => Source_Filename,
+         Use_Source_Path => True,
+         Use_Object_Path => False);
       DB_Dir : constant String := Get_DB_Dir (Project);
    begin
       --  Do nothing if we couldn't create the database directory
@@ -1275,15 +1270,11 @@ package body Src_Info.CPP is
 
    procedure Parse_All_LI_Information
      (Handler                : access CPP_LI_Handler_Record;
-      List                   : in out LI_File_List;
+      List                   : LI_File_List;
       In_Directory           : String;
-      Project                : Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String)
+      Project                : Project_Type)
    is
       pragma Unreferenced (Handler);
-      pragma Unreferenced (Predefined_Source_Path);
-      pragma Unreferenced (Predefined_Object_Path);
       pragma Unreferenced (List);
       pragma Unreferenced (In_Directory);
       pragma Unreferenced (Project);
@@ -1310,13 +1301,13 @@ package body Src_Info.CPP is
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
       Source_Filename        : String;
-      Project                : Project_Type;
-      Predefined_Source_Path : String) return String
+      Project                : Project_Type) return String
    is
-      pragma Unreferenced (Predefined_Source_Path);
-      Full_Filename : constant String := Find_File
-        (Source_Filename, Include_Path (Project, Recursive => True),
-         Predefined_Path => "");
+      Full_Filename : constant String := Get_Full_Path_From_File
+        (Registry        => Project_Registry (Get_Registry (Project)),
+         Filename        => Source_Filename,
+         Use_Source_Path => True,
+         Use_Object_Path => False);
       DB_Dir : constant String := Get_DB_Dir (Project);
       Xref_Pool_Filename : constant String :=
         DB_Dir & Browse.Xref_Pool_Filename;
@@ -1424,7 +1415,7 @@ package body Src_Info.CPP is
       Source_Filename : String;
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
-      List            : in out LI_File_List;
+      List            : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -1569,7 +1560,7 @@ package body Src_Info.CPP is
       Arg_Types        : in Segment;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List;
@@ -1746,7 +1737,7 @@ package body Src_Info.CPP is
       Handler      : access CPP_LI_Handler_Record'Class;
       Project : Project_Type;
       File         : in out LI_File_Ptr;
-      List         : in out LI_File_List;
+      List         : LI_File_List;
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False)
    is
@@ -1898,9 +1889,9 @@ package body Src_Info.CPP is
    -- Add --
    ---------
 
-   procedure Add (HT : in out LI_File_List; LIFP : LI_File_Ptr) is
+   procedure Add (HT : LI_File_List; LIFP : LI_File_Ptr) is
    begin
-      Add (HT.Table, LIFP);
+      Add (HT.Table.all, LIFP);
    end Add;
 
    ----------------------
@@ -1911,7 +1902,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2015,7 +2006,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2171,7 +2162,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2270,7 +2261,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2359,7 +2350,7 @@ package body Src_Info.CPP is
       Filename         : String;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
-      List             : out LI_File_List;
+      List             : LI_File_List;
       Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2488,7 +2479,7 @@ package body Src_Info.CPP is
       Handler  : access CPP_LI_Handler_Record'Class;
       Project  : Project_Type;
       File     : out LI_File_Ptr;
-      List     : out LI_File_List)
+      List     : LI_File_List)
    is
       P           : Pair_Ptr;
       FDecl       : FD_Table;
@@ -2621,7 +2612,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2851,7 +2842,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2994,7 +2985,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3184,7 +3175,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3276,7 +3267,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3492,7 +3483,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3684,7 +3675,7 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3784,7 +3775,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3911,7 +3902,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4022,7 +4013,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4043,7 +4034,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4076,7 +4067,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4153,7 +4144,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4355,7 +4346,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4611,7 +4602,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4720,7 +4711,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4728,10 +4719,12 @@ package body Src_Info.CPP is
 
       --  ??? We shouldn't use Base_Name below, but should allow find file to
       --  recognize directories in the name.
-      Full_Included : constant String := Find_File
-        (Base_Name (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)),
-         Include_Path (Project, Recursive => True),
-         Predefined_Path => "");
+      Full_Included : constant String := Get_Full_Path_From_File
+        (Registry        => Project_Registry (Get_Registry (Project)),
+         Filename        => Base_Name
+            (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)),
+         Use_Source_Path => True,
+         Use_Object_Path => False);
 
    begin
       --  Info ("Sym_IU_Handler: """
@@ -4782,7 +4775,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4921,7 +4914,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4954,7 +4947,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -5179,7 +5172,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -5275,7 +5268,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -5347,7 +5340,7 @@ package body Src_Info.CPP is
       Symbol           : Symbol_Type;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -5696,7 +5689,7 @@ package body Src_Info.CPP is
       CL_Tab           : CL_Table := Invalid_CL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
