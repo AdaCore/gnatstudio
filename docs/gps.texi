@@ -6610,6 +6610,19 @@ to use.
 How the tool bar should be displayed: not at all, with small icons or with
 large icons
 
+@item Show status bar
+@cindex status bar
+Whether the status bar at the bottom of the GPS window should be displayed.
+This status bar contains one or more progress bars while GPS is executing long
+actions like a build or a search. These progress bars can be used to monitor
+the progress of those actions.
+
+If you wish to save vertical screen space, you can hide this status bar. The
+progress bars will no longer be visible, however you can display the Task
+Manager, through the @code{Tools/Task Manager} menu, to get similar information.
+This manager can then be put on the right or left side of the GPS window,
+for instance just below the Project View.
+
 @item Show text in tool bar
 @cindex tool bar
 Whether the tool bar should show both text and icons, or only icons.
