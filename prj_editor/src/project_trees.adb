@@ -27,7 +27,7 @@
 -----------------------------------------------------------------------
 
 with Interfaces.C.Strings;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Conversion;
 with System;
@@ -46,29 +46,30 @@ with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Types;         use Gtkada.Types;
+with Gtkada.MDI;           use Gtkada.MDI;
 
 with Prj;                  use Prj;
 with Namet;                use Namet;
 with Stringt;              use Stringt;
 with Types;                use Types;
 
-with Prj_API;              use Prj_API;
-with Pixmaps_IDE;          use Pixmaps_IDE;
-with Pixmaps_Prj;          use Pixmaps_Prj;
-with Language;             use Language;
-with Language.Ada; use Language.Ada;
-with Language.C;   use Language.C;
-with Language.Cpp; use Language.Cpp;
-with Basic_Types;  use Basic_Types;
-with String_Utils; use String_Utils;
-with Glide_Kernel; use Glide_Kernel;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Prj_API;                  use Prj_API;
+with Pixmaps_IDE;              use Pixmaps_IDE;
+with Pixmaps_Prj;              use Pixmaps_Prj;
+with Language;                 use Language;
+with Basic_Types;              use Basic_Types;
+with String_Utils;             use String_Utils;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Glide_Kernel.Editor;      use Glide_Kernel.Editor;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Switches_Editors;     use Switches_Editors;
-with Variable_Editors; use Variable_Editors;
-with GUI_Utils;    use GUI_Utils;
-with Directory_Tree;  use Directory_Tree;
+with Glide_Kernel.Browsers;    use Glide_Kernel.Browsers;
+with Switches_Editors;         use Switches_Editors;
+with Variable_Editors;         use Variable_Editors;
+with GUI_Utils;                use GUI_Utils;
+with Browsers;                 use Browsers;
+with Browsers.Canvas;          use Browsers.Canvas;
+with Directory_Tree;           use Directory_Tree;
 
 package body Project_Trees is
 
@@ -331,6 +332,11 @@ package body Project_Trees is
       Data : Contextual_User_Data);
    --  Callback for the contextual menu item to add some source directories
 
+   procedure Edit_Dependencies_From_Contextual
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Data : Contextual_User_Data);
+   --  Examine the dependencies of a specific file
+
    procedure Change_Obj_Directory_From_Contextual
      (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
       Data : Contextual_User_Data);
@@ -395,6 +401,23 @@ package body Project_Trees is
          Recompute_View (Data.Kernel);
       end if;
    end Change_Obj_Directory_From_Contextual;
+
+   ---------------------------------------
+   -- Edit_Dependencies_From_Contextual --
+   ---------------------------------------
+
+   procedure Edit_Dependencies_From_Contextual
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Data : Contextual_User_Data)
+   is
+      Browser : MDI_Child;
+   begin
+      Browser := Open_Browser (Data.Kernel, Dependency_Browser);
+      Examine_Dependencies
+        (Data.Kernel,
+         Glide_Browser (Get_Widget (Browser)),
+         Get_String (Data.File_Name));
+   end Edit_Dependencies_From_Contextual;
 
    --------------------------
    -- Tree_Contextual_Menu --
@@ -501,6 +524,19 @@ package body Project_Trees is
            (Item, "activate",
             Contextual_Callback.To_Marshaller
             (Edit_Switches_From_Contextual'Access),
+            (Kernel    => T.Kernel,
+             Project   => Prj,
+             File_Name => File,
+             Directory => Directory));
+
+         String_To_Name_Buffer (File);
+         Gtk_New (Item, Label => Name_Buffer (Name_Buffer'First .. Name_Len)
+                  & " depends on...");
+         Append (T.Contextual_Menu, Item);
+         Contextual_Callback.Connect
+           (Item, "activate",
+            Contextual_Callback.To_Marshaller
+            (Edit_Dependencies_From_Contextual'Access),
             (Kernel    => T.Kernel,
              Project   => Prj,
              File_Name => File,
@@ -1916,10 +1952,4 @@ package body Project_Trees is
 
       return False;
    end Button_Press;
-
-begin
-   --  ??? Temporary, this will be done in Glide itself.
-   Add_File_Extensions (Ada_Lang, ".ads;.adb;.ada;.a;.dg");
-   Add_File_Extensions (C_Lang,   ".c;.h");
-   Add_File_Extensions (Cpp_Lang, ".cc;.cpp;.C;.hh;.H");
 end Project_Trees;
