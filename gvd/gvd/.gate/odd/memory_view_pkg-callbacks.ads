@@ -43,10 +43,6 @@ package Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
-   function On_View_Button_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-
    procedure On_Reset_Clicked
      (Object : access Gtk_Button_Record'Class);
 

@@ -33,7 +33,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Window_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Arg1 : Address := To_Address (Params, 1);
+      Arg1 : Gdk_Rectangle := Gdk_Rectangle (To_Gint (Params, 1));
    begin
       null;
    end On_Memory_View_Size_Allocate;
@@ -154,19 +154,6 @@ package body Memory_View_Pkg.Callbacks is
    begin
       return False;
    end On_View_Button_Release_Event;
-
-   --------------------------------
-   -- On_View_Button_Press_Event --
-   --------------------------------
-
-   function On_View_Button_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
-   begin
-      return False;
-   end On_View_Button_Press_Event;
 
    ----------------------
    -- On_Reset_Clicked --
