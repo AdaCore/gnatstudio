@@ -218,8 +218,7 @@ package body Project_Viewers is
    --  Called when the preferences have changed.
 
    procedure Edit_Multiple_Switches
-     (Viewer : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+     (Viewer : access Gtk_Widget_Record'Class);
    --  Edit the switches for all the files selected in Viewer.
 
    procedure Set_Sensitive_Cb
@@ -251,11 +250,9 @@ package body Project_Viewers is
 
    procedure Project_Viewers_Set
      (Viewer            : access Project_Viewer_Record'Class;
-      Iter              : Gtk_Tree_Iter;
-      File              : String;
-      Compiler_Switches : String;
-      Compiler_Color    : Gdk_Color);
-   --  Set the contents of the line Iter in the model
+      Iter              : Gtk_Tree_Iter);
+   --  Set the contents of the line Iter in the model. It is assumed the file
+   --  name has already been set on that line
 
    --------------------------
    -- Project editor pages --
@@ -466,23 +463,38 @@ package body Project_Viewers is
 
    procedure Project_Viewers_Set
      (Viewer            : access Project_Viewer_Record'Class;
-      Iter              : Gtk_Tree_Iter;
-      File              : String;
-      Compiler_Switches : String;
-      Compiler_Color    : Gdk_Color)
+      Iter              : Gtk_Tree_Iter)
    is
       procedure Internal
         (Tree, Iter : System.Address;
-         Col1  : Gint; Value1 : String;
          Col2  : Gint; Value2 : String;
          Col3  : Gint; Value3 : Gdk_Color;
          Final : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
+
+      File_Name  : constant String := Get_String
+        (Viewer.Model, Iter, File_Name_Column);
+      Color      : Gdk_Color;
+      Value      : Prj.Variable_Value;
+      Is_Default : Boolean;
+      Language   : constant Name_Id := Get_String
+        (Get_Language_From_File
+         (Glide_Language_Handler (Get_Language_Handler (Viewer.Kernel)),
+          File_Name));
    begin
+      Get_Switches
+        (Viewer.Current_Project, Compiler_Package, File_Name,
+         Language, Value, Is_Default);
+
+      if Is_Default then
+         Color := Viewer.Default_Switches_Color;
+      else
+         Color := Black (Get_Default_Colormap);
+      end if;
+
       Internal (Get_Object (Viewer.Model), Iter'Address,
-                File_Name_Column,         File & ASCII.NUL,
-                Compiler_Switches_Column, Compiler_Switches & ASCII.NUL,
-                Compiler_Color_Column,    Compiler_Color);
+                Compiler_Switches_Column, To_String (Value) & ASCII.NUL,
+                Compiler_Color_Column,    Color);
    end Project_Viewers_Set;
 
    -----------------
@@ -496,10 +508,6 @@ package body Project_Viewers is
    is
       File_N     : String (1 .. Integer (String_Length (File_Name)));
       Iter       : Gtk_Tree_Iter;
-      Color      : Gdk_Color;
-      Value      : Prj.Variable_Value;
-      Is_Default : Boolean;
-      Language   : Name_Id;
 
    begin
       String_To_Name_Buffer (File_Name);
@@ -509,23 +517,9 @@ package body Project_Viewers is
         or else Is_Regular_File
           (String_Utils.Name_As_Directory (Directory_Filter) & File_N)
       then
-         Language := Get_String
-           (Get_Language_From_File
-            (Glide_Language_Handler (Get_Language_Handler (Viewer.Kernel)),
-             File_N));
-         Get_Switches
-           (Viewer.Current_Project, Compiler_Package, File_N,
-            Language, Value, Is_Default);
-
-         if Is_Default then
-            Color := Viewer.Default_Switches_Color;
-         else
-            Color := Black (Get_Default_Colormap);
-         end if;
-
          Append (Viewer.Model, Iter, Null_Iter);
-         Project_Viewers_Set
-           (Viewer, Iter, File_N, To_String (Value), Color);
+         Set (Viewer.Model, Iter, File_Name_Column, File_N);
+         Project_Viewers_Set (Viewer, Iter);
       end if;
    end Append_Line;
 
@@ -537,41 +531,22 @@ package body Project_Viewers is
      (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
      return Boolean
    is
-      V            : constant Project_Viewer := Project_Viewer (Viewer);
-      File         : File_Selection_Context_Access;
-      Iter         : Gtk_Tree_Iter;
-
+      V     : constant Project_Viewer := Project_Viewer (Viewer);
+      Iter  : Gtk_Tree_Iter;
    begin
       if Get_Event_Type (Event) = Gdk_2button_Press
         and then Get_Button (Event) = 1
       then
          Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
          if Iter /= Null_Iter then
-            declare
-               File_Name : constant String := Get_String
-                 (V.Model, Iter, File_Name_Column);
-            begin
-               File := new File_Selection_Context;
-               Set_Context_Information
-                 (File, Kernel => V.Kernel,
-                  Creator => Module_ID (Prj_Editor_Module_ID));
-               Set_File_Information
-                 (File,
-                  Directory    => Dir_Name (Get_Full_Path_From_File
-                  (Registry        => Get_Registry (V.Kernel),
-                   Filename        => File_Name,
-                   Use_Source_Path => True,
-                   Use_Object_Path => False)),
-                  File_Name    => File_Name,
-                  Project      => V.Current_Project);
+            if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
+               Unselect_All (Get_Selection (V.Tree));
+               Select_Iter (Get_Selection (V.Tree), Iter);
+            end if;
 
-               Edit_Switches_For_Context
-                 (Selection_Context_Access (File), Force_Default => False);
-               Free (Selection_Context_Access (File));
-            end;
+            Edit_Multiple_Switches (V);
+            return True;
          end if;
-
-         return True;
       end if;
 
       return False;
@@ -589,7 +564,7 @@ package body Project_Viewers is
    procedure Project_View_Changed (Viewer  : access Gtk_Widget_Record'Class) is
       V : Project_Viewer := Project_Viewer (Viewer);
    begin
-      Clear (V);  --  ??? Should delete selectively
+      Clear (V.Model);  --  ??? Should delete selectively
       if V.Current_Project /= No_Project then
          V.Current_Project := Get_Project (V.Kernel);
          Show_Project (V, V.Current_Project);
@@ -632,7 +607,7 @@ package body Project_Viewers is
       end if;
 
       Viewer.Current_Project := Project;
-      Clear (Viewer);  --  ??? Should delete selectively
+      Clear (Viewer.Model);  --  ??? Should delete selectively
 
       if Viewer.Current_Project /= No_Project then
          Show_Project (Viewer, Viewer.Current_Project, Directory);
@@ -735,6 +710,8 @@ package body Project_Viewers is
       Gtk_New (Col);
       Col_Number := Append_Column (Viewer.Tree, Col);
       Set_Title (Col, -"File");
+      Set_Resizable (Col, True);
+      Set_Reorderable (Col, True);
       Gtk_New (Render);
       Pack_Start (Col, Render, False);
       Add_Attribute (Col, Render, "text", File_Name_Column);
@@ -742,6 +719,8 @@ package body Project_Viewers is
       Gtk_New (Col);
       Col_Number := Append_Column (Viewer.Tree, Col);
       Set_Title (Col, -"Compiler switches");
+      Set_Resizable (Col, True);
+      Set_Reorderable (Col, True);
       Gtk_New (Render);
       Pack_Start (Col, Render, False);
       Add_Attribute (Col, Render, "text", Compiler_Switches_Column);
@@ -762,7 +741,7 @@ package body Project_Viewers is
         (Kernel, Context_Changed_Signal,
          Explorer_Selection_Changed'Access,
          Viewer);
-      Widget_Callback.Object_Connect
+      Viewer.View_Changed_Id := Widget_Callback.Object_Connect
         (Kernel, Project_View_Changed_Signal,
          Widget_Callback.To_Marshaller (Project_View_Changed'Access),
          Viewer);
@@ -814,15 +793,6 @@ package body Project_Viewers is
          Append_Line (Viewer, Files (F), Directory_Filter);
       end loop;
    end Show_Project;
-
-   -----------
-   -- Clear --
-   -----------
-
-   procedure Clear (Viewer : access Project_Viewer_Record) is
-   begin
-      Clear (Viewer.Model);
-   end Clear;
 
    --------------------
    -- On_New_Project --
@@ -1427,13 +1397,14 @@ package body Project_Viewers is
 
    begin
       --  ??? Should call Project_Editor_Contextual
-      Unselect_All (Get_Selection (V.Tree));
       Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
+      Unselect_All (Get_Selection (V.Tree));
 
       if Iter = Null_Iter then
          Set_File_Information
            (Context, Project => V.Current_Project);
       else
+         Select_Iter (Get_Selection (V.Tree), Iter);
          declare
             File_Name   : constant String := Get_String
               (V.Model, Iter, File_Name_Column);
@@ -1454,11 +1425,10 @@ package body Project_Viewers is
       if Has_File_Information (Context) then
          Gtk_New (Item, -"Edit switches for all selected files");
          Add (Menu, Item);
-         Context_Callback.Object_Connect
+         Widget_Callback.Object_Connect
            (Item, "activate",
-            Context_Callback.To_Marshaller (Edit_Multiple_Switches'Access),
-            Slot_Object => V,
-            User_Data => Selection_Context_Access (Context));
+            Widget_Callback.To_Marshaller (Edit_Multiple_Switches'Access),
+            Slot_Object => V);
       end if;
 
       return Selection_Context_Access (Context);
@@ -1469,11 +1439,8 @@ package body Project_Viewers is
    ----------------------------
 
    procedure Edit_Multiple_Switches
-     (Viewer : access GObject_Record'Class; Context : Selection_Context_Access)
+     (Viewer : access Gtk_Widget_Record'Class)
    is
-      use Gtk.Enums.Gint_List;
-      File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
       V : constant Project_Viewer := Project_Viewer (Viewer);
       Selection : constant Gtk_Tree_Selection := Get_Selection (V.Tree);
       Length : Natural := 0;
@@ -1500,10 +1467,23 @@ package body Project_Viewers is
             Next (V.Model, Iter);
          end loop;
 
-         Edit_Switches_For_Files
-           (Get_Kernel (File),
-            Project_Information (File),
-            Names);
+         if Edit_Switches_For_Files (V.Kernel, V.Current_Project, Names) then
+            --  Temporarily block the handlers so that the the editor is not
+            --  cleared, or we would lose the selection
+            Gtk.Handlers.Handler_Block (V.Kernel, V.View_Changed_Id);
+            Recompute_View (V.Kernel);
+            Gtk.Handlers.Handler_Unblock (V.Kernel, V.View_Changed_Id);
+
+            Iter := Get_Iter_First (V.Model);
+            while Iter /= Null_Iter loop
+               if Iter_Is_Selected (Selection, Iter) then
+                  Project_Viewers_Set (V, Iter);
+               end if;
+
+               Next (V.Model, Iter);
+            end loop;
+         end if;
+
          Free (Names);
       end;
 

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Box;
+with Gtk.Handlers;
 with Gtk.Tree_Store;
 with Gtk.Tree_View;
 with Gdk.Color;
@@ -65,9 +66,6 @@ package Project_Viewers is
    --
    --  Project_View mustn't be No_Project.
 
-   procedure Clear (Viewer : access Project_Viewer_Record);
-   --  Removes all files currently displayed in Viewer.
-
    procedure Add_To_Reopen
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Filename : String);
@@ -84,6 +82,9 @@ private
       --  level, rather than file specific
 
       Kernel  : Glide_Kernel.Kernel_Handle;
+
+      View_Changed_Id : Gtk.Handlers.Handler_Id;
+      --  Id for the "project_view_changed" handler
 
       Current_Project : Projects.Project_Type;
       --  The project to which the files currently in the viewer belong. This
