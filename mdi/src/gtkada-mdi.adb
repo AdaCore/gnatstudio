@@ -1222,13 +1222,18 @@ package body Gtkada.MDI is
 
    procedure Dock_Child
      (Child : access MDI_Child_Record'Class;
-      Dock : Boolean := True)
+      Dock : Boolean := True;
+      Side : Dock_Side := None)
    is
       MDI : MDI_Window := Child.MDI;
       C : MDI_Child;
       Label : Gtk_Label;
       Note : Gtk_Notebook;
    begin
+      if Side /= None then
+         Set_Dock_Side (Child, Side);
+      end if;
+
       if Child.State /= Docked
         and then Child.State /= Embedded
         and then Dock
