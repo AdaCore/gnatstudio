@@ -432,12 +432,15 @@ package Prj_API is
    --  Move to the next imported project.
 
    function Find_All_Projects_Importing
-     (Root_Project : Project_Node_Id; Project : Project_Id)
-      return Project_Id_Array;
+     (Root_Project : Project_Node_Id;
+      Project      : Project_Id;
+      Include_Self : Boolean := False) return Project_Id_Array;
    --  Return the list of all the projects that import Project, either directly
    --  or indirectly.
    --  If Project is No_Project, the resulting array contains all the project
    --  in the hierarchy.
+   --  If Include_Self is true, then Project will be included in the returned
+   --  array (if it isn't No_Project, of course).
 
    -------------------
    -- Finding nodes --

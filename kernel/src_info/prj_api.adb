@@ -3507,8 +3507,9 @@ package body Prj_API is
    ---------------------------------
 
    function Find_All_Projects_Importing
-     (Root_Project : Project_Node_Id; Project : Project_Id)
-      return Project_Id_Array
+     (Root_Project : Project_Node_Id;
+      Project      : Project_Id;
+      Include_Self : Boolean := False) return Project_Id_Array
    is
       type Boolean_Array is array (Positive range <>) of Boolean;
 
@@ -3536,7 +3537,9 @@ package body Prj_API is
             Index := Index - 1;
          end loop;
 
-         Index := Index - 1;
+         if not Include_Self then
+            Index := Index - 1;
+         end if;
 
          while Index >= List'First loop
             Result (Index) := Get_Project_View_From_Name (List (Index));
