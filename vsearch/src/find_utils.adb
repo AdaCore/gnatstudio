@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -43,6 +43,7 @@ with OS_Utils;                use OS_Utils;
 package body Find_Utils is
 
    Me : Debug_Handle := Create ("Find_Utils");
+   pragma Unreferenced (Me);
 
    procedure Free_Pattern_Matcher is new Unchecked_Deallocation
      (Pattern_Matcher, Pattern_Matcher_Access);
@@ -89,8 +90,7 @@ package body Find_Utils is
    function Scan_File_And_Store
      (Context  : access Search_Context'Class;
       Kernel   : access Kernel_Handle_Record'Class;
-      Name : String)
-     return Match_Result_Array_Access;
+      Name : String) return Match_Result_Array_Access;
    --  Same as above, but behaves as if there was a default callback that
    --  prints the result in the Glide console.
    --  It returns the list of matches that were found in the file, or null if
@@ -278,7 +278,7 @@ package body Find_Utils is
 
    begin
       --  ??? Would be nice to handle backward search, which is extremely hard
-      --  ??? with regular expressions
+      --  with regular expressions
 
       if Context.Options.Regexp then
          Re_Search;
@@ -455,7 +455,7 @@ package body Find_Utils is
 
    begin
       --  ??? Would be nice to handle backward search, which is extremely hard
-      --  ??? with regular expressions
+      --  with regular expressions
 
       --  ??? We should use the naming scheme to find the actual language
       Lang := Get_Language_From_File (Name);
@@ -554,8 +554,7 @@ package body Find_Utils is
    function Scan_File_And_Store
      (Context  : access Search_Context'Class;
       Kernel   : access Kernel_Handle_Record'Class;
-      Name : String)
-      return Match_Result_Array_Access
+      Name : String) return Match_Result_Array_Access
    is
       pragma Unreferenced (Kernel);
       Result : Match_Result_Array_Access := null;
@@ -846,8 +845,9 @@ package body Find_Utils is
    is
       pragma Unreferenced (Search_Backward);
    begin
-      --  IF there are still some matches in the current file that we haven't
+      --  If there are still some matches in the current file that we haven't
       --  returned , do it now.
+
       if Context.Next_Matches_In_File /= null then
          Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
          if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
@@ -901,7 +901,7 @@ package body Find_Utils is
       Last      : Natural;
 
    begin
-      --  IF there are still some matches in the current file that we haven't
+      --  If there are still some matches in the current file that we haven't
       --  returned , do it now.
       if Context.Next_Matches_In_File /= null then
          Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
