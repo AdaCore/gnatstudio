@@ -4657,7 +4657,8 @@ arguments can be specified as well, replacing the @code{--dargs} option.
 Same as in GVD.
 @end table
 
-For example, the equivalent of the following command line:
+For example, the equivalent of the following command line using a sh-like
+shell would be:
 
 @smallexample
 $ gvd --debugger=gdb-5 executable --pargs 1 2 3
@@ -4666,22 +4667,17 @@ $ gvd --debugger=gdb-5 executable --pargs 1 2 3
 would be
 
 @smallexample
-$ gps --debug='executable 1 2 3' --debugger=gdb-5
+$ gps --debug="executable 1 2 3" --debugger=gdb-5
 @end smallexample
-
-The following command line switch no longer exists in GPS:
 
 @table @code
-@item --log-level
-This switch was used to get the full log of the communications between GVD
-and the underlying debugger. This can be replaced in GPS with
+@item --traceon=GVD.OUT
 
-@smallexample
-gps --traceon=GVD.OUT
-@end smallexample
+This switch replaces the --log-level=4 option that was
+used to get the full log of the communications between GVD
+and the underlying debugger.
 
 @end table
-
 
 
 @subsection Menu Items
@@ -5976,8 +5972,8 @@ The way the editor will handle the case settings below.
 @code{End_Of_Line} auto-casing will be done when hitting @key{Enter} key;
 @code{On_The_Fly} auto-casing will be done word-by-word while typing.
 For the @code{End_Of_Line} and @code{On_The_Fly} policies it is always
-possible to fore the casing of the current line forcing the indentation.
-The indentation key is @key{Ctrl-Tab} by default.
+possible to force the casing of the current line by pressing the indentation
+key (@key{Ctrl-Tab} by default).
 @end ignore
 
 @item Reserved word casing
