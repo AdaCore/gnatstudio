@@ -23,7 +23,7 @@ with Ada.Exceptions;                    use Ada.Exceptions;
 with GNAT.Regpat;                       use GNAT.Regpat;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-
+with String_Utils;                      use String_Utils;
 with Language;                          use Language;
 
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
@@ -78,7 +78,7 @@ package body Codefix.Formal_Errors is
    procedure Parse_Head (Message : String; This : out Error_Message) is
       Matches : Match_Array (0 .. 3);
       Matcher : constant Pattern_Matcher :=
-         Compile ("([^:]*):([0-9]*):([0-9]*)");
+        Compile ("^([^:]+):(\d+):(\d+)");
 
    begin
       Match (Matcher, Message, Matches);
@@ -259,22 +259,18 @@ package body Codefix.Formal_Errors is
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified) return Solution_List
    is
-      New_Command  : Insert_Word_Cmd;
-      Word         : Word_Cursor;
-      Result       : Solution_List;
-   begin
+      New_Command : Insert_Word_Cmd;
+      Word        : Word_Cursor;
+      Result      : Solution_List;
 
+   begin
       Word := (Clone (File_Cursor (Message))
                with new String'(String_Expected), Text_Ascii);
-
       Initialize (New_Command, Current_Text, Word, Add_Spaces, Position);
-
       Set_Caption
         (New_Command,
          "Add expected string """ & String_Expected & """");
-
       Append (Result, New_Command);
-
       Free (Word);
 
       return Result;
@@ -293,18 +289,15 @@ package body Codefix.Formal_Errors is
       New_Command  : Remove_Word_Cmd;
       Word         : Word_Cursor;
       Result       : Solution_List;
+
    begin
       Word := (Clone (File_Cursor (Message))
                with new String'(String_Unexpected), Mode);
-
       Initialize (New_Command, Current_Text, Word);
-
       Set_Caption
         (New_Command,
          "Remove unexpected word """ & String_Unexpected & """");
-
       Append (Result, New_Command);
-
       Free (Word);
 
       return Result;
@@ -319,7 +312,6 @@ package body Codefix.Formal_Errors is
       Message         : File_Cursor'Class;
       Column_Expected : Natural := 0) return Solution_List
    is
-
       function Closest (Size_Red : Positive) return Positive;
       --  Return the closest indentation modulo Indentation_Width.
 
@@ -374,11 +366,8 @@ package body Codefix.Formal_Errors is
 
       Set_Caption
         (New_Command,
-         "Move begin of instruction to column " &
-           Integer'Image (Column_Chosen));
-
+         "Move begin of instruction to column " & Image (Column_Chosen));
       Append (Result, New_Command);
-
       Free (Word);
 
       return Result;
@@ -406,14 +395,11 @@ package body Codefix.Formal_Errors is
                     Mode => Text_Ascii);
 
       Initialize (New_Command, Current_Text, Word_With);
-
       Set_Caption
         (New_Command,
          "Add with and use clause for package """ & Missing_Clause &
          """ at the begining of the file");
-
       Append (Result, New_Command);
-
       Free (Word_With);
 
       return Result;
@@ -433,11 +419,9 @@ package body Codefix.Formal_Errors is
       New_Command : Recase_Word_Cmd;
    begin
       Initialize (New_Command, Current_Text, Cursor, Correct_Word, Word_Case);
-
       Set_Caption
         (New_Command,
          "Recase bad-cased word");
-
       Append (Result, New_Command);
 
       return Result;
@@ -453,7 +437,6 @@ package body Codefix.Formal_Errors is
       Category     : Language_Category;
       Name         : String) return Solution_List
    is
-
       function Add_Pragma return Add_Pragma_Cmd;
       --  Add a pragma after the declaration or, if there is no declaration,
       --  after the body.
@@ -529,10 +512,8 @@ package body Codefix.Formal_Errors is
       Result : Solution_List;
 
    begin
-
       case Category is
          when Cat_Variable =>
-
             declare
                New_Command : Remove_Elements_Cmd;
                Var_Cursor  : Word_Cursor :=
@@ -546,7 +527,6 @@ package body Codefix.Formal_Errors is
             end;
 
          when Cat_Function | Cat_Procedure =>
-
             declare
                Delete_Command : Remove_Entity_Cmd;
                Pragma_Command : Add_Pragma_Cmd;
@@ -565,7 +545,6 @@ package body Codefix.Formal_Errors is
             end;
 
          when Cat_Type =>
-
             declare
                Delete_Command : Remove_Entity_Cmd;
                Pragma_Command : Add_Pragma_Cmd;
@@ -584,7 +563,6 @@ package body Codefix.Formal_Errors is
             end;
 
          when Cat_Local_Variable =>
-
             declare
                New_Command : Add_Pragma_Cmd;
             begin
@@ -597,7 +575,6 @@ package body Codefix.Formal_Errors is
             end;
 
          when Cat_With =>
-
             declare
                New_Command : Remove_Pkg_Clauses_Cmd;
                With_Cursor : Word_Cursor :=
@@ -613,7 +590,6 @@ package body Codefix.Formal_Errors is
             end;
 
          when others =>
-
             Raise_Exception
               (Codefix_Panic'Identity,
                "Wrong category given : " & Language_Category'Image (Category));
@@ -622,9 +598,9 @@ package body Codefix.Formal_Errors is
       return Result;
    end Not_Referenced;
 
-   ------------------------
-   --  First_Line_Pragma --
-   ------------------------
+   -----------------------
+   -- First_Line_Pragma --
+   -----------------------
 
    function First_Line_Pragma
      (Current_Text : Text_Navigator_Abstr'Class;
@@ -635,20 +611,17 @@ package body Codefix.Formal_Errors is
       Result        : Solution_List;
       Pragma_Cursor : Word_Cursor;
    begin
-      Pragma_Cursor := (Clone (File_Cursor (Cursor)) with
-                        String_Match => new String'
-                          ("(pragma[\b]*\([^\)*]\)[\b]*;)"),
-                        Mode => Regular_Expression);
-
+      Pragma_Cursor :=
+        (Clone (File_Cursor (Cursor)) with
+         String_Match => new String'
+           ("(pragma[\b]*\([^\)*]\)[\b]*;)"),
+         Mode => Regular_Expression);
       Begin_Cursor.Line := 0;
       Begin_Cursor.Col := 1;
-
       Initialize (New_Command, Current_Text, Pragma_Cursor, Begin_Cursor);
-
       Set_Caption
         (New_Command,
-         "Move the pragma to the beginnig of the file");
-
+         "Move the pragma to the beginning of the file");
       Free (Pragma_Cursor);
 
       return Result;
@@ -666,13 +639,10 @@ package body Codefix.Formal_Errors is
       New_Command : Make_Constant_Cmd;
       Result      : Solution_List;
    begin
-
       Initialize (New_Command, Current_Text, Cursor, Name);
-
       Set_Caption
         (New_Command,
          "Add ""constant"" to the declaration of """ & Name & """");
-
       Append (Result, New_Command);
 
       return Result;
@@ -721,16 +691,12 @@ package body Codefix.Formal_Errors is
               (Clone (File_Cursor (Error_Cursor)) with
                String_Match => new String'(Str_Array (Index_Str).all & "."),
                Mode         => Text_Ascii);
-
             Initialize (New_Command, Current_Text, Word, False);
-
             Set_Caption
               (New_Command,
                "Prefix """ & Name & """ by """ &
                  Str_Array (Index_Str).all & """");
-
             Append (Result, New_Command);
-
             Free (Word);
 
             Index_Str := Index_Str + 1;
@@ -758,10 +724,8 @@ package body Codefix.Formal_Errors is
       Result      : Solution_List;
    begin
       Initialize (New_Command, Current_Text, Cursor);
-
       Set_Caption
         (New_Command, "Remove useless conversion of """ & Object_Name & """");
-
       Append (Result, New_Command);
 
       return Result;
@@ -783,25 +747,20 @@ package body Codefix.Formal_Errors is
    begin
       Assign (Body_Name,
               Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
-
       With_Cursor :=
         (Clone (File_Cursor (Cursor)) with
          String_Match => null,
          Mode         => Text_Ascii);
-
       Initialize
         (New_Command,
          Current_Text,
          With_Cursor,
          Body_Name.all);
-
       Set_Caption
         (New_Command,
          "Move with clause from """ & Base_Name (Cursor.File_Name.all) &
          """ to """ & Base_Name (Body_Name.all) & """");
-
       Append (Result, New_Command);
-
       Free (With_Cursor);
       Free (Body_Name);
 
@@ -830,8 +789,8 @@ package body Codefix.Formal_Errors is
       Initialize (Command1, Current_Text, Internal_Body_Cursor, Spec_Cursor);
       Initialize (Command2, Current_Text, Spec_Cursor, Internal_Body_Cursor);
 
-      Set_Caption (Command1, "Modify the the implementation profile");
-      Set_Caption (Command2, "Modify the specification profile");
+      Set_Caption (Command1, "Modify the implementation profile");
+      Set_Caption (Command2, "Modify the spec profile");
 
       Append (Result, Command1);
       Append (Result, Command2);
@@ -856,7 +815,6 @@ package body Codefix.Formal_Errors is
          (File_Cursor (Cursor) with null, Text_Ascii),
          "",
          Cat_Use);
-
       Set_Caption (New_Command, "Remove use clause");
       Append (Result, New_Command);
 
@@ -873,9 +831,9 @@ package body Codefix.Formal_Errors is
       Pkg_Cursor    : File_Cursor'Class;
       Seek_With     : Boolean) return Solution_List
    is
-      Result           : Solution_List;
-      Use_Solution     : Get_Visible_Declaration_Cmd;
-      Prefix_Solution  : Get_Visible_Declaration_Cmd;
+      Result          : Solution_List;
+      Use_Solution    : Get_Visible_Declaration_Cmd;
+      Prefix_Solution : Get_Visible_Declaration_Cmd;
    begin
       Add_Use
         (Use_Solution,
@@ -885,7 +843,6 @@ package body Codefix.Formal_Errors is
          Seek_With);
       Set_Caption
         (Use_Solution, "Update with and use's clauses to show the object");
-
       Prefix_Object
         (Prefix_Solution,
          Current_Text,
@@ -894,7 +851,6 @@ package body Codefix.Formal_Errors is
          Seek_With);
       Set_Caption
         (Prefix_Solution, "Update with clauses and prefix the object");
-
       Append (Result, Use_Solution);
       Append (Result, Prefix_Solution);
 
