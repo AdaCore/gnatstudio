@@ -47,8 +47,6 @@ with Codefix.Text_Navigators;
 use Codefix.Formal_Errors.Extract_List;
 with Codefix.Graphics; use Codefix.Graphics;
 
-with Gen_Proposition_Pkg; use Gen_Proposition_Pkg;
-
 package body Codefix_Window_Pkg.Callbacks is
 
    use Gtk.Arguments;
@@ -61,9 +59,9 @@ package body Codefix_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Graphic_Codefix : Graphic_Codefix_Access :=
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
-      Arg1 : Gdk_Event := To_Event (Params, 1);
+      Arg1 : constant Gdk_Event := To_Event (Params, 1);
    begin
       Quit (Graphic_Codefix);
       return False;
@@ -76,7 +74,7 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Fix_Entry_Changed
      (Object : access Gtk_Widget_Record'Class)
    is
-      Graphic_Codefix : Graphic_Codefix_Access :=
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
 
    begin
@@ -94,7 +92,7 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Skip_Correction_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Graphic_Codefix : Graphic_Codefix_Access :=
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
    begin
       Load_Next_Error (Graphic_Codefix);
@@ -125,7 +123,7 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Cancel_Changes_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Graphic_Codefix : Graphic_Codefix_Access :=
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
    begin
       null;
