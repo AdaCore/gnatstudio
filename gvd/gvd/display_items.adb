@@ -111,7 +111,7 @@ package body Display_Items is
    --  Just before the next update of the canvas, all these temporary links are
    --  removed, all aliases are cancelled and all items are made visible. Then
    --  we recompute the list of aliases before redrawing the canvas. It is
-   --  worth nothing that when we have an hidden item, we do not waste time
+   --  worth noting that when we have an hidden item, we do not waste time
    --  reparsing its value.
    --
    --  Note also that for simplicity we do not create chains of aliases, ie
@@ -292,6 +292,10 @@ package body Display_Items is
          Alias_Item :=
            Search_Item (Debugger.Data_Canvas, Id.all, Variable_Name);
 
+         --  Two structures are aliased only if they have the same address and
+         --  the same structure. The latter is to handle cases like
+         --  "struct A {struct B {int field}} where A, B and field have the
+         --  same address and would be considered as aliases otherwise.
          if Alias_Item /= null
            and then
            (not Typed_Aliases
