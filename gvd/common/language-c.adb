@@ -73,6 +73,7 @@ package body Language.Debugger.C is
         or else Str = "unsigned int"
         or else Str = "char"
         or else Str = "float"
+        or else Str = "double"
         or else Str = "long"
         or else Str = "short"
         or else Str = "void";
