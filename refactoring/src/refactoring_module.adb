@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                      Copyright (C) 2003-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -79,7 +79,8 @@ package body Refactoring_Module is
       Gtk_New (Submenu);
       Set_Submenu (Item, Submenu);
 
-      Gtk_New (Item, -"Rename " & Krunch (Get_Name (Entity)));
+      Gtk_New
+        (Item, -"Rename " & Krunch (Entity_Name_Information (Selection)));
       Append (Submenu, Item);
       Context_Callback.Connect
         (Item, "activate",
