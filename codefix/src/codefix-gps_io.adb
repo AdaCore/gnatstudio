@@ -21,7 +21,7 @@
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 with Glide_Kernel.Project;  use Glide_Kernel.Project;
 
-with String_Utils;          use String_Utils;
+with String_Utils; use String_Utils;
 
 package body Codefix.GPS_Io is
 
@@ -106,14 +106,8 @@ package body Codefix.GPS_Io is
       Cursor : Text_Cursor'Class;
       Len    : Natural) return String is
    begin
-      return Interpret_Command
-        (This.Kernel,
-         "get_chars -l" & Natural'Image (Cursor.Line)
-         & " -c" & Natural'Image (Cursor.Col) & " "
-         & Find_Source_File
-             (This.Kernel, Get_File_Name (This))
-         & " -a" & Natural'Image (Len)
-         & " -b 0");
+      return Get_Recorded_Line (This, Cursor.Line)
+        (Cursor.Col .. Cursor.Col + Len - 1);
    end Get;
 
    --------------
@@ -124,20 +118,31 @@ package body Codefix.GPS_Io is
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class) return String
    is
-      Line : constant String := Interpret_Command
-        (This.Kernel,
-         "get_chars -l" & Natural'Image (Cursor.Line)
-         & " -c" & Natural'Image (Cursor.Col) & " "
-         & Find_Source_File
-             (This.Kernel, Get_File_Name (This))
-         & " -b 0");
+      Line : constant String := Get_Recorded_Line (This, Cursor.Line);
    begin
-      if Line (Line'Last + 1 - EOL_Str'Length .. Line'Last) /= EOL_Str then
-         return Line;
-      else
-         return Line (Line'First .. Line'Last - EOL_Str'Length);
-      end if;
+      return Line (Cursor.Col .. Line'Last);
    end Get_Line;
+
+   -----------------------
+   -- Get_Recorded_Line --
+   -----------------------
+
+   function Get_Recorded_Line
+     (This   : Console_Interface;
+      Number : Positive) return String
+   is
+      Node : String_List.List_Node;
+   begin
+      Update (This);
+
+      Node := First (This.Lines.all);
+
+      for J in 1 .. Number - 1 loop
+         Node := Next (Node);
+      end loop;
+
+      return Data (Node).all;
+   end Get_Recorded_Line;
 
    -------------
    -- Replace --
@@ -151,16 +156,31 @@ package body Codefix.GPS_Io is
    is
       Garbage : Dynamic_String;
    begin
-      Garbage := new String'
-        (Interpret_Command
-           (This.Kernel,
-            "replace_text -l" & Natural'Image (Cursor.Line)
-            & " -c" & Natural'Image (Cursor.Col) & " "
-            & Find_Source_File
-                (This.Kernel, Get_File_Name (This))
-            & " -a" & Natural'Image (Len)
-            & " -b 0"
-            & " """ & New_Value & """"));
+      This.File_Modified.all := True; --  ??? To be deleted with the callback
+
+      if Cursor.Line /= 0 then
+         Garbage := new String'
+           (Interpret_Command
+              (This.Kernel,
+               "replace_text -l" & Natural'Image (Cursor.Line)
+               & " -c" & Natural'Image (Cursor.Col) & " "
+               & Find_Source_File
+                   (This.Kernel, Get_File_Name (This))
+               & " -a" & Natural'Image (Len)
+               & " -b 0"
+               & " """ & New_Value & """"));
+      else
+         Garbage := new String'
+           (Interpret_Command
+              (This.Kernel,
+               "replace_text -l 1"
+               & " -c 1 "
+               & Find_Source_File
+                   (This.Kernel, Get_File_Name (This))
+               & " -a 0"
+               & " -b 0"
+               & " """ & New_Value & """"));
+      end if;
       --  ??? Be carefull !!! In New_Value, if there is any cote,
       --  the command will be bad interpreted !!! Waiting to know the
       --  escape character before fixing this bug.
@@ -179,12 +199,15 @@ package body Codefix.GPS_Io is
       Line_Str        : Dynamic_String;
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
    begin
+      This.File_Modified.all := True; --  ??? To be deleted with the callback
+
       Insert_Position.Col := 1;
+
       if Cursor.Line = 0 then
          Replace (This, Insert_Position, 0, New_Line & EOL_Str);
       else
          Line_Str := new String'(Get_Line (This, Insert_Position));
-         Insert_Position.Col := Line_Str'Last;
+         Insert_Position.Col := Line_Str'Last + 1;
          Replace (This, Insert_Position, 0, EOL_Str & New_Line);
       end if;
    end Add_Line;
@@ -199,6 +222,8 @@ package body Codefix.GPS_Io is
    is
       Garbage : Dynamic_String;
    begin
+      This.File_Modified.all := True; --  ??? To be deleted with the callback
+
       Garbage := new String'
         (Interpret_Command
            (This.Kernel,
@@ -231,7 +256,7 @@ package body Codefix.GPS_Io is
    begin
 
       Put_Line (Find_Source_File
-                  (This.Kernel, Get_File_Name (This)));
+                  (This.Kernel, Get_File_Name (This))); --  ??? Debug ?
 
       return new String'
         (Interpret_Command
@@ -255,13 +280,67 @@ package body Codefix.GPS_Io is
 
    function Line_Max (This : Console_Interface) return Natural is
    begin
-      return Natural'Value
+      Update (This);
+
+      return This.Lines_Number.all;
+   end Line_Max;
+
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (This : Console_Interface) is
+      File          : Dynamic_String;
+      Current_Index : Natural := 0;
+      Old_Index     : Natural := 0;
+      Last_Line     : Dynamic_String;
+   begin
+      if not This.File_Modified.all then
+         return;
+      end if;
+
+      Free (This.Lines.all);
+
+      File := Read_File (This);
+
+      Current_Index := File'First;
+      Old_Index := Current_Index;
+
+      --  ??? In future, this operation should be made by diff utils
+
+      while Current_Index <= File'Last loop
+         Skip_To_Char (File.all, Current_Index, ASCII.LF);
+
+         if Current_Index > File'Last then
+            Current_Index := File'Last;
+         end if;
+
+         if File (Current_Index) = ASCII.LF then
+            Last_Line := new String (1 .. Current_Index - Old_Index);
+            Last_Line.all := File (Old_Index .. Current_Index - 1);
+         else
+            Last_Line := new String (1 .. Current_Index - Old_Index + 1);
+            Last_Line.all := File (Old_Index .. Current_Index);
+         end if;
+
+
+         Append (This.Lines.all, Last_Line);
+
+         Current_Index := Current_Index + 1;
+         Old_Index     := Current_Index;
+      end loop;
+
+      This.Lines_Number.all := Natural'Value
         (Interpret_Command
            (This.Kernel,
             "get_last_line "
             & Find_Source_File
                 (This.Kernel, Get_File_Name (This))));
-   end Line_Max;
+
+
+      This.File_Modified.all := False;
+
+   end Update;
 
    ----------------
    -- Set_Kernel --
