@@ -51,7 +51,7 @@ begin
                  (Class_Def.Name.First .. Class_Def.Name.Last),
                Referred_Filename  => Class_Def.Buffer
                  (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
-               Source_Filename    => Class_Def.Buffer
+               Source_Filename    => Ref.Buffer
                  (Ref.File_Name.First .. Ref.File_Name.Last),
                Location           => Class_Def.Start_Position,
                Kind               => Record_Type,
@@ -75,7 +75,7 @@ begin
                List               => Global_LI_File_List,
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
-               Source_Filename    => Class_Def.Buffer
+               Source_Filename    => Ref.Buffer
                  (Ref.File_Name.First .. Ref.File_Name.Last),
                Location           => Class_Def.Start_Position,
                Kind               => Record_Type,
@@ -91,4 +91,5 @@ begin
       Location          => Ref.Position,
       Kind              => Reference);
    Free (Class_Def);
+   Free (Class_Desc);
 end Fu_To_Cl_Handler;
