@@ -697,9 +697,6 @@ package body Src_Editor_Buffer.Line_Information is
                   X        => Starting_X,
                   Y        => Y_Pix_In_Window,
                   Layout   => Layout);
---                 Draw_Rectangle
---                   (Drawable, GC, True, Starting_X, Y_Pix_In_Window,
---                    Gint (Line_Info.Width), 4);
             end if;
 
             if Line_Info.Info.Image /= Null_Pixbuf then
