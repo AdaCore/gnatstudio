@@ -611,13 +611,14 @@ package body Src_Contexts is
       else
          Insert_Result
            (Kernel,
-            -"Search for: " & Look_For,
-            File_Name,
-            Match.Text,
-            To_Positive (Match.Line), To_Positive (Match.Column),
-            Match.End_Column - Match.Column,
-            True,
-            Search_Result_Highlighting);
+            Category  => -"Search for: " & Look_For,
+            File      => File_Name,
+            Text      => Match.Text,
+            Line      => To_Positive (Match.Line),
+            Column    => To_Positive (Match.Column),
+            Length    => Match.End_Column - Match.Column,
+            Highlight => True,
+            Highlight_Category => Search_Result_Highlighting);
       end if;
    end Highlight_Result;
 
