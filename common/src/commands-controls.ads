@@ -32,9 +32,13 @@ package Commands.Controls is
       Redo_Button    : Gtk_Button;
       Undo_Menu_Item : Gtk_Menu_Item;
       Redo_Menu_Item : Gtk_Menu_Item);
-   --  ???
+   --  Associate the state of Queue to the buttons:
+   --  The sensitivity of Undo/Redo widgets (named "controls")
+   --  indicate the presence of actions in the corresponding Undo/Redo Queues.
+   --  Activating the controls executes the first action in the corresponding
+   --  queue.
 
    procedure Unset_Controls (Queue : Command_Queue);
-   --  ???
+   --  Disconnect any controls that are connected to Queue.
 
 end Commands.Controls;
