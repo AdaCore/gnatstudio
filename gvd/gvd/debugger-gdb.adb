@@ -689,18 +689,14 @@ package body Debugger.Gdb is
            (Convert (Window, Debugger),
             Continuation_Line_Filter'Access, Continuation_Line_Pattern);
 
-         --  ??? Should avoid the duplication of this code between debugger-*
-
-         if GPS_Window (Window).Debug_Mode then
-            Add_Filter
-              (Get_Descriptor (Debugger.Process).all,
-               Output_Filter'Access, Output,
-               Window.all'Address);
-            Add_Filter
-              (Get_Descriptor (Debugger.Process).all,
-               Input_Filter'Access, Input,
-               Window.all'Address);
-         end if;
+         Add_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            Output_Filter'Access, Output,
+            Window.all'Address);
+         Add_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            Input_Filter'Access, Input,
+            Window.all'Address);
       end if;
    end Spawn;
 
