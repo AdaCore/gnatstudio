@@ -45,7 +45,8 @@ with Types;                     use Types;
 
 package body Projects is
 
-   Me : constant Debug_Handle := Create ("Projects");
+   Me    : constant Debug_Handle := Create ("Projects");
+   Debug : constant Debug_Handle := Create ("Projects.Debug");
 
    type Name_Id_Array_Access is access Name_Id_Array;
 
@@ -1228,7 +1229,8 @@ package body Projects is
    function Start
      (Root_Project : Project_Type;
       Recursive    : Boolean := True;
-      Direct_Only  : Boolean := False)
+      Direct_Only  : Boolean := False;
+      Include_Extended : Boolean := True)
       return Imported_Project_Iterator
    is
       Iter : Imported_Project_Iterator;
@@ -1242,11 +1244,13 @@ package body Projects is
          Trace (Me, "Start: compute deps for "
                 & Project_Name (Root_Project));
 
-         --  Trace (Me, "Start: " & Project_Name (Root_Project));
-         --  for N in Root_Project.Data.Imported_Projects'Range loop
-         --     Trace (Me, "    => "
-         --            & Get_String (Root_Project.Data.Imported_Projects (N)));
-         --  end loop;
+         if Active (Debug) then
+            Trace (Debug, "Start: " & Project_Name (Root_Project));
+            for N in Root_Project.Data.Imported_Projects'Range loop
+               Trace (Debug, "    => "
+                      & Get_String (Root_Project.Data.Imported_Projects (N)));
+            end loop;
+         end if;
       end if;
 
       if Recursive then
@@ -1255,6 +1259,7 @@ package body Projects is
             Direct_Only   => Direct_Only,
             Importing     => False,
             Current_Cache => No_Project,
+            Include_Extended => Include_Extended,
             Current       => Root_Project.Data.Imported_Projects'Last + 1);
          Next (Iter);
          return Iter;
@@ -1264,6 +1269,7 @@ package body Projects is
             Direct_Only   => Direct_Only,
             Importing     => False,
             Current_Cache => No_Project,
+            Include_Extended => Include_Extended,
             Current       => Root_Project.Data.Imported_Projects'First);
       end if;
    end Start;
@@ -1442,11 +1448,13 @@ package body Projects is
 
       --  The code below is used for debugging sessions
 
-      --  Trace (Me, "Find_All_Projects_Importing: "
-      --         & Get_String (Name));
-      --  for J in Project.Data.Importing_Projects'Range loop
-      --     Trace (Me, Get_String (Project.Data.Importing_Projects (J)));
-      --  end loop;
+      if Active (Debug) then
+         Trace (Debug, "Find_All_Projects_Importing: "
+                & Get_String (Name));
+         for J in Project.Data.Importing_Projects'Range loop
+            Trace (Debug, Get_String (Project.Data.Importing_Projects (J)));
+         end loop;
+      end if;
 
    exception
       when E : others =>
@@ -1485,6 +1493,7 @@ package body Projects is
          Direct_Only   => Direct_Only,
          Importing     => True,
          Current_Cache => No_Project,
+         Include_Extended => True,   --  ??? Should this be configurable
          Current       => Project.Data.Importing_Projects'Last + 1);
 
       --  The project iself is always at index 'Last
@@ -1545,7 +1554,8 @@ package body Projects is
          if Iterator.Importing then
             while Iterator.Current >=
               Iterator.Root.Data.Importing_Projects'First
-              and then not Project_Imports (Current (Iterator), Iterator.Root)
+              and then not Project_Imports
+                 (Current (Iterator), Iterator.Root, Iterator.Include_Extended)
             loop
                Iterator.Current := Iterator.Current - 1;
             end loop;
@@ -1553,7 +1563,8 @@ package body Projects is
          else
             while Iterator.Current >=
               Iterator.Root.Data.Imported_Projects'First
-              and then not Project_Imports (Iterator.Root, Current (Iterator))
+              and then not Project_Imports
+                 (Iterator.Root, Current (Iterator), Iterator.Include_Extended)
             loop
                Iterator.Current := Iterator.Current - 1;
             end loop;
