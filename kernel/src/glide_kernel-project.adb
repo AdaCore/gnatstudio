@@ -70,27 +70,17 @@ package body Glide_Kernel.Project is
 
    procedure Change_Project_Dir
      (Handle : access Kernel_Handle_Record'Class;
-      Dir    : String)
-   is
-      Project : Project_Node_Id;
-      Default : constant String := "default";
-
+      Dir    : String) is
    begin
       Change_Dir (Dir);
 
-      if Get_Project_File_Name (Handle) = "" then
-         Project := Default_Project_Node (N_Project);
+      --  ??? We may want to use the following code to have a "dynamic"
+      --  default project. But it is unclear whether this is an intuitive
+      --  behavior, and this code hasn't been tested properly yet.
 
-         --  Adding the project path
-         Name_Len := Dir'Length;
-         Name_Buffer (1 .. Name_Len) := Dir;
-         Set_Directory_Of (Project, Name_Enter);
-
-         Name_Len := Name_Len + Default'Length;
-         Name_Buffer (Name_Len - Default'Length + 1 .. Name_Len) := Default;
-         Set_Path_Name_Of (Project, Name_Enter);
-         Recompute_View (Handle);
-      end if;
+      --  if Get_Project_File_Name (Handle) = "" then
+      --     Load_Default_Project (Handle, Dir);
+      --  end if;
    end Change_Project_Dir;
 
    ----------------------
