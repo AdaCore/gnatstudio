@@ -40,6 +40,8 @@ with Projects.Editor;      use Projects.Editor;
 with Types;                use Types;
 with Traces;               use Traces;
 with VFS;                  use VFS;
+with Basic_Types;          use Basic_Types;
+with Language_Handlers;    use Language_Handlers;
 
 package body Glide_Kernel.Scripts is
 
@@ -625,6 +627,20 @@ package body Glide_Kernel.Scripts is
                   Module_Name (Module_List.Data (Current)));
                Current := Module_List.Next (Current);
             end loop;
+         end;
+
+      elsif Command = "supported_languages" then
+         declare
+            Langs : Argument_List := Known_Languages
+              (Get_Language_Handler (Kernel), Sorted => True);
+         begin
+            Set_Return_Value_As_List (Data);
+
+            for L in Langs'Range loop
+               Set_Return_Value (Data, Langs (L).all);
+            end loop;
+
+            Free (Langs);
          end;
 
       elsif Command = "set_busy" then
@@ -1260,6 +1276,16 @@ package body Glide_Kernel.Scripts is
          Command      => "lsmod",
          Return_Value => "list of modules",
          Description  => -"List modules currently loaded.",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "supported_languages",
+         Return_Value => "sorted list of languages",
+         Description  =>
+            -"List of languages for which GPS has special support.",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Handler      => Default_Command_Handler'Access);
