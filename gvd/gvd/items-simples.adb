@@ -181,7 +181,7 @@ package body Items.Simples is
       if Show_Value (Context.Mode) then
          Set_Text (Context.Layout, Item.Value.all);
          Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+           (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
          Draw_Layout
            (Drawable => Context.Pixmap,
             GC       => Text_GC,
@@ -236,7 +236,7 @@ package body Items.Simples is
       if Show_Value (Context.Mode) then
          Set_Text (Context.Layout, Item.Value.all);
          Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+           (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
          Get_Pixel_Size (Context.Layout, W, H);
          Item.Width := Gint'Max (W, Item.Width);
          Item.Height := Item.Height + H;
@@ -488,7 +488,7 @@ package body Items.Simples is
       if Item.Valid and then Item.Value /= null then
          Set_Text (Context.Layout, Item.Value.all);
          Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Command_Font));
+           (Context.Layout, Get_Pref (GVD_Prefs, Fixed_Font));
          Get_Pixel_Size (Context.Layout, Item.Width, Item.Height);
       else
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
@@ -535,8 +535,7 @@ package body Items.Simples is
 
       Line_Start := Item.Value'First;
 
-      Set_Font_Description
-        (Context.Layout, Get_Pref (GVD_Prefs, Command_Font));
+      Set_Font_Description (Context.Layout, Get_Pref (GVD_Prefs, Fixed_Font));
 
       for J in Item.Value'Range loop
          if Item.Value (J) = ASCII.LF then
