@@ -58,10 +58,4 @@ private
       Scenario_Variables : Projects.Scenario_Variable_Array) is abstract;
    --  Generate the project entry for the attribute edited by the attribute
 
-   function Get_Value_As_String
-     (Editor             : access Root_Attribute_Editor_Record)
-      return String is abstract;
-   --  Return the value selected in the editor, as a string. If the editor
-   --  is associated with a list, the empty string should be returned.
-
 end Project_Properties;
