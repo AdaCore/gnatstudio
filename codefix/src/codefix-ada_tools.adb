@@ -129,14 +129,6 @@ package body Codefix.Ada_Tools is
       Success    : Boolean;
    begin
       while With_Index <= With_Clause.Nb_Elems loop
-         while With_Index <= With_Clause.Nb_Elems
-           and then With_Clause.Clauses (With_Index) /= null
-         loop
-            With_Index := With_Index + 1;
-         end loop;
-
-         exit when With_Index > With_Clause.Nb_Elems;
-
          Success := True;
 
          for Use_Index in 1 .. Use_Parsed'Last loop
@@ -256,6 +248,7 @@ package body Codefix.Ada_Tools is
    -- Is_In_Escape_Part --
    -----------------------
 
+   --  ??? Add checks for 'x'
    function Is_In_Escape_Part
      (This     : Ada_Escape_Str;
       Text     : String;
