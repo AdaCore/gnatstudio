@@ -571,9 +571,15 @@ package body GUI_Utils is
 
                Grab_Focus (Widget);
                Show_All (Menu);
+
+               --  Here we are calling Popup with an Activate_Time 200ms after
+               --  the event time. This works around a bug under Windows that
+               --  causes the menu to disappear on a click when there are too
+               --  many entries.
+
                Popup (Menu,
                       Button        => Gdk.Event.Get_Button (Event),
-                      Activate_Time => Gdk.Event.Get_Time (Event));
+                      Activate_Time => Gdk.Event.Get_Time (Event) + 200);
                Emit_Stop_By_Name (Widget, "button_press_event");
                return True;
             end if;
