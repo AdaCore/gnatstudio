@@ -751,7 +751,8 @@ package body GVD.Process is
         (Process, Signals, Class_Record,
          Type_Name => "GvdDebuggerProcessTab");
 
-      Menu_Item := Gtk_Menu_Item (Get_Widget (Window.Factory, -"/Window"));
+      Menu_Item :=
+        Gtk_Menu_Item (Get_Widget (Window.Factory, '/' & (-"Window")));
       Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
 
       Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
