@@ -25,10 +25,10 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Basic_Types;              use Basic_Types;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Main_Window;        use Glide_Main_Window;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 with GVD.Process;          use GVD.Process;
 with GVD.Code_Editors;     use GVD.Code_Editors;
