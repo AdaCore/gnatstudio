@@ -18,41 +18,43 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;                  use Glib;
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Pixmap;            use Gdk.Pixmap;
 with Gdk.Types;             use Gdk.Types;
 with Gdk.Event;             use Gdk.Event;
-with Gtk.Handlers;          use Gtk.Handlers;
-with Gtkada.Types;          use Gtkada.Types;
-with Gtkada.Handlers;       use Gtkada.Handlers;
-with Odd.Pixmaps;           use Odd.Pixmaps;
-with GNAT.Regpat;           use GNAT.Regpat;
-with Language;              use Language;
-with Odd.Strings;           use Odd.Strings;
 with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Ctree;             use Gtk.Ctree;
-with Gtk.Style;             use Gtk.Style;
-with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Menu;              use Gtk.Menu;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with Odd.Code_Editors;      use Odd.Code_Editors;
-with Odd.Types;             use Odd.Types;
-with Odd.Process;           use Odd.Process;
-with Debugger;              use Debugger;
-with Odd_Intl;              use Odd_Intl;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
+with Gtk.Style;             use Gtk.Style;
 with Gtk.Tooltips;          use Gtk.Tooltips;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtkada.Types;          use Gtkada.Types;
+with Gtkada.Handlers;       use Gtkada.Handlers;
+
+with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+
+with Language;              use Language;
+with Debugger;              use Debugger;
+
+with Odd.Code_Editors;      use Odd.Code_Editors;
 with Odd.Menus;             use Odd.Menus;
+with Odd.Pixmaps;           use Odd.Pixmaps;
+with Odd.Preferences;       use Odd.Preferences;
+with Odd.Process;           use Odd.Process;
 with Odd.Source_Editors;    use Odd.Source_Editors;
+with Odd.Strings;           use Odd.Strings;
+with Odd.Types;             use Odd.Types;
+with Odd_Intl;              use Odd_Intl;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Odd.Explorer is
-
-   File_Name_Bg_Color : constant String := "#BEBEBE";
-   --  Color used for the background of the file name in the editor (grey).
 
    type Node_Data (Length : Integer) is record
       Extension    : String (1 .. Length);
