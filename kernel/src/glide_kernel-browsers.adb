@@ -123,6 +123,25 @@ package body Glide_Kernel.Browsers is
       Status        : Dependencies_Query_Status;
       Intern        : Internal_File;
       New_Item      : Boolean;
+      Must_Add_Link : Boolean;
+
+      function Has_One
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
+      --  Set Add_Link to False if there is at least one link returned.
+      --  ??? Would be nicer if we had real iterators in the canvas
+
+      -------------
+      -- Has_One --
+      -------------
+
+      function Has_One
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean is
+      begin
+         Must_Add_Link := False;
+         return False;
+      end Has_One;
 
    begin
       Lib_Info := Locate_From_Source (Kernel, File);
@@ -157,15 +176,26 @@ package body Glide_Kernel.Browsers is
                Item := File_Item
                  (Find_File (In_Browser, Get_Source_Filename (Intern)));
                New_Item := Item = null;
+               Must_Add_Link := True;
+
                if New_Item then
                   Gtk_New (Item, Get_Window (In_Browser), Kernel, Intern);
+
+               else
+                  --  If the item already existed, chances are that the link
+                  --  also existed. Don't duplicate it in that case.
+                  For_Each_Link
+                    (Get_Canvas (In_Browser), Has_One'Unrestricted_Access,
+                     From => Canvas_Item (Initial), To => Canvas_Item (Item));
                end if;
 
-               Gtk_New (Link, Dependency_Information (Dep.Value));
-               Add_Link (Get_Canvas (In_Browser),
-                         Link => Link,
-                         Src  => Initial,
-                         Dest => Item);
+               if Must_Add_Link then
+                  Gtk_New (Link, Dependency_Information (Dep.Value));
+                  Add_Link (Get_Canvas (In_Browser),
+                            Link => Link,
+                            Src  => Initial,
+                            Dest => Item);
+               end if;
 
                if New_Item then
                   Put (Get_Canvas (In_Browser), Item);
