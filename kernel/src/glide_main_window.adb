@@ -23,10 +23,11 @@ with Pango.Font;                use Pango.Font;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
 with Glib.Error;                use Glib.Error;
-with Glib.Object;               use Glib.Object;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -52,14 +53,17 @@ package body Glide_Main_Window is
 
    Me : constant Debug_Handle := Create ("Glide_Main_Window");
 
+   Force_Cst      : aliased constant String := "force";
+   Exit_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Force_Cst'Access);
+
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the delete event.
 
    procedure Preferences_Changed
-     (Main_Window : access GObject_Record'Class;
-      Kernel      : Kernel_Handle);
+     (Kernel      : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
@@ -93,6 +97,14 @@ package body Glide_Main_Window is
       Event   : Gdk_Event)
       return Command_Return_Type;
    --  Act on the layout of windows
+
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project is changed.
+
+   procedure Default_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Handles shell commands defined in this package
 
    -------------
    -- Execute --
@@ -198,17 +210,24 @@ package body Glide_Main_Window is
       return True;
    end Delete_Callback;
 
+   ------------------------
+   -- On_Project_Changed --
+   ------------------------
+
+   procedure On_Project_Changed
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
+   end On_Project_Changed;
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
 
    procedure Preferences_Changed
-     (Main_Window : access GObject_Record'Class;
-      Kernel      : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
       use Glib;
-
-      Main       : constant Glide_Window := Glide_Window (Main_Window);
       Key_Theme  : String := Key_Themes'Image
         (Key_Themes'Val (Get_Pref (Kernel, Key_Theme_Name)));
 
@@ -225,9 +244,9 @@ package body Glide_Main_Window is
          "gtk-key-theme-name=""" & Key_Theme & '"');
 
       if Get_Pref (Kernel, Toolbar_Show_Text) then
-         Set_Style (Main.Toolbar, Toolbar_Both);
+         Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
       else
-         Set_Style (Main.Toolbar, Toolbar_Icons);
+         Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
       end if;
 
       Configure
@@ -299,12 +318,12 @@ package body Glide_Main_Window is
         (Main_Window, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
 
-      Kernel_Callback.Connect
-        (Main_Window, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
-         Kernel_Handle (Main_Window.Kernel));
+      Add_Hook (Main_Window.Kernel, Preferences_Changed_Hook,
+                Preferences_Changed'Access);
+      Preferences_Changed (Main_Window.Kernel);
 
-      Preferences_Changed (Main_Window, Main_Window.Kernel);
+      Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
+                On_Project_Changed'Access);
 
       Return_Callback.Object_Connect
         (Main_Window, "delete_event",
@@ -437,7 +456,38 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description => -("Unsplit the central area of GPS, so that only one"
                           & " window is visible"));
+
+      Register_Command
+        (Main_Window.Kernel,
+         Command      => "exit",
+         Params       => Parameter_Names_To_Usage (Exit_Cmd_Parameters, 1),
+         Description  =>
+           -("Exit GPS. If there are unsaved changes, a dialog is first"
+             & " displayed to ask whether these should be saved. If the"
+             & " user cancels the operation through the dialog, GPS will not"
+             & " exit. If force is true, then no dialog is open, and nothing"
+             & " is saved"),
+         Minimum_Args => Exit_Cmd_Parameters'Length - 1,
+         Maximum_Args => Exit_Cmd_Parameters'Length,
+         Handler      => Default_Command_Handler'Access);
    end Register_Keys;
+
+   -----------------------------
+   -- Default_Command_Handler --
+   -----------------------------
+
+   procedure Default_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+   begin
+      if Command = "exit" then
+         Name_Parameters (Data, Exit_Cmd_Parameters);
+         Quit (Glide_Window (Get_Main_Window (Kernel)),
+               Force => Nth_Arg (Data, 1, False));
+      end if;
+   end Default_Command_Handler;
 
    -------------
    -- Execute --
