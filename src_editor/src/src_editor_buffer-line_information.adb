@@ -820,6 +820,8 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer_Line_Starting_X : Gint := 0;
       Editable_Line          : Editable_Line_Type;
    begin
+      Set_Cursor_Position (Editor, Gint (Line - 1), 0);
+
       if EL.all /= null then
          for Col in EL.all'Range loop
             if Offset < Gint
