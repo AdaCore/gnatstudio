@@ -4646,7 +4646,971 @@ debug sessions at once.
 * Upgrading from GVD to GPS::
 @end menu
 
-@include ../gvd/docs/gvd_contents.texi
+@c -------------------------------------------------------------------- 
+@node The Debug Menu
+@section The Debug Menu
+@cindex menu
+@cindex debug
+@cindex debugger
+@c --------------------------------------------------------------------
+
+@noindent
+The @code{Debug} entry in the menu bar provides operations that act at a
+global level. Key shortcuts are available for the most common operations, and
+are displayed in the menus themselves.
+Here is a detailed list of the menu items that can be found in the menu bar:
+
+@table @b
+   @item Run...
+@cindex run
+Opens a dialog window allowing you to specify the arguments to pass to the
+program to be debugged, and whether this program should be stopped at the
+beginning of the main subprogram. If you confirm by clicking on the @i{OK}
+button, the program will be launched according to the arguments entered.
+
+   @item Step
+@cindex step
+Execute the program until it reaches a different source line.
+
+   @item Step Instruction
+@cindex stepi
+Execute the program for one machine instruction only.
+
+   @item Next
+@cindex next
+Execute the program until it reaches the next source line, 
+stepping over subroutine calls.
+
+   @item Next Instruction
+@cindex nexti
+Execute the program until it reaches the next machine instruction,
+stepping over subroutine calls.
+
+   @item Finish
+@cindex finish
+Continue execution until selected stack frame returns.
+
+   @item Continue
+@cindex continue
+Continue execution of the program being debugged.
+
+   @item Interrupt
+@cindex interrupt
+Asynchronously interrupt the program being debugged. Note that depending on
+the state of the program, you may stop it in low-level system code that does
+not have debug information, or in some cases, not even a coherent state. Use
+of breakpoints is preferable to interrupting programs. Interrupting programs
+is nevertheless indispensable in some situations, for example when the
+program appears to be in an infinite (or at least very time-consuming) loop.
+
+   @item Terminate Current
+@cindex terminate
+Terminate the current debug session, by closing the data window and the debugger
+console, as well as terminating the underlying debugger (e.g @code{gdb}) used
+to handle the low level debugging.
+
+   @item Terminate
+@cindex terminate
+Terminate all your debug sessions. Same as @code{Terminate Current} if there
+is only one debugger open.
+
+@end table
+
+@subsection Debug
+
+@table @b
+
+   @item Connect to Board...
+@cindex connect
+@cindex board
+@cindex target
+@cindex cross debugger
+Opens a simple dialog to connect to a remote board. This option is only
+relevant to cross debuggers.
+
+   @item Load File...
+@cindex load
+
+@anchor{open program menu}
+Opens a file selection dialog that allows you to choose a program to
+debug. The program to debug is either an executable for native debugging, or
+a partially linked module for cross environments (e.g VxWorks).
+
+   @item Add Symbols...
+@cindex add symbols
+Add the symbols from a given file/module. This corresponds to the gdb
+command @i{add-symbol-file}. This menu is particularly useful under VxWorks
+targets, where the modules can be loaded independently of the debugger.
+For instance, if a module is independently loaded on the target (e.g. using
+windshell), it is absolutely required to use this functionality,
+otherwise the debugger won't work properly.
+
+   @item Attach...
+@cindex attach
+Instead of starting a program to debug, you can instead attach to an
+already running process. To do so, you need to specify the process id
+of the process you want to debug. The process might be busy in an
+infinite loop, or waiting for event processing. Note that as for
+@ref{core files}, you need to specify an executable before attaching to a
+process.
+
+   @item Detach
+@cindex detach
+Detaches the currently debugged process from the underlying debugger.
+This means that the executable will continue to run independently. You can use
+the @i{Attach To Process} menu later to re-attach to this process.
+
+   @item Debug Core File...
+@cindex core file
+@anchor{core files}
+This will open a file selection dialog that allows you to debug a core file
+instead of debugging a running process. Note that you must first specify an
+executable to debug before loading a core file.
+
+   @item Kill
+@cindex kill
+Kills the process being debugged.
+
+@end table
+
+@subsection Data
+@cindex menu
+@cindex data
+@noindent
+Note that most items in this menu need to access the underlying debugger
+when the process is stopped, not when it is running. This means that you first
+need to stop the process on a breakpoint or interrupt it, before using
+the following commands. Failing to do so will result in blank windows.
+
+@table @b
+   @item Call Stack
+@cindex call stack
+      Displays the Call Stack window.
+      See @ref{The Call Stack Window} for more details.
+
+   @item Threads
+@cindex thread
+      Opens a new window containing the list of threads currently present in
+      the executable as reported by the underlying debugger. For each thread,
+      it will give information such as internal identifier, name and status.
+      This information is language- and debugger-dependent. You should refer to
+      the underlying debugger's documentation for more details.
+      As indicated above, the process being debugged needs to be stopped
+      before using this command, otherwise a blank list will be displayed.
+
+      When supported by the underlying debugger, clicking on a thread will
+      change the context (variables, call stack, source file) displayed,
+      allowing you to inspect the stack of the selected thread.
+
+   @item Tasks
+@cindex task
+      For GDB only, this will open a new window containing the list of Ada
+      tasks currently present in the executable. Similarly to the thread
+      window, you can switch to a selected task context by clicking on it, if
+      supported by GDB. See the GDB documentation for the list of
+      items displayed for each task.
+
+      As for the thread window, the process being debugged needs to be stopped
+      before using this window.
+
+@iftex
+@cindex screen shot
+@image{tasks, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{tasks}
+@end ifhtml
+
+   @item Protection Domains
+@cindex protection domain
+      For VxWorks AE only, this will open a new window containing the
+      list of available protection domains in the target. To change to a
+      different protection domain, simply click on it. A @c{*} character
+      indicates the current protection domain.
+
+   @item Assembly
+@cindex assembly
+      Opens a new window displaying an assembly dump of the current code
+      being executed.
+      See @ref{The Assembly Window} for more details.
+
+   @item Edit Breakpoints
+@cindex breakpoint
+      Opens an advanced window to create and modify any kind of breakpoint
+      (see @ref{The Breakpoint Editor}).
+      For simple breakpoint creation, see the description of the source window.
+
+   @item Examine Memory
+@cindex memory view
+      Opens a memory viewer/editor. See @ref{The Memory Window} for more
+      details.
+
+   @item Command History
+@cindex command
+@cindex history
+      Opens a dialog with the list of commands executed in the current session.
+      You can select any number of items in this list and replay the selection
+      automatically.
+
+   @item Display Local Variables
+@cindex local variables
+      Opens an item in the Data Window containing all the local variables
+      for the current frame.
+
+   @item Display Arguments
+@cindex arguments
+      Opens an item in the Data Window containing the arguments
+      for the current frame.
+
+   @item Display Registers
+@cindex registers
+      Opens an item in the Data Window containing the machine registers
+      for the current frame.
+
+   @item Display Any Expression...
+@cindex display expression
+      Opens a small dialog letting you specify an arbitrary expression
+      in the Data Window. This expression can be a variable name, or a
+      more complex expression, following the syntax of the underlying debugger.
+      See the documentation of e.g gdb for more details on the syntax.
+      The check button @i{Expression is a subprogram call} should be enabled
+      if the expression is actually a debugger
+      command (e.g @code{p/x var}) or a procedure call in the program being
+      debugged (e.g @code{call my_proc}).
+
+   @item Refresh
+@cindex refresh
+      Refreshes all the items displayed in the Data Window.
+@end table
+
+@c --------------------------------------------------------------------
+@node The Call Stack Window
+@section The Call Stack Window
+@cindex call stack
+@c --------------------------------------------------------------------
+
+@noindent
+   The call stack window gives a list of frames corresponding to the current
+   execution stack for the current thread/task.
+
+@iftex
+@cindex screen shot
+@image{call-stack, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{call-stack}
+@end ifhtml
+
+   The bottom frame corresponds to the outermost frame where the thread is
+   currently stopped. This frame corresponds to the first function
+   executed by the current thread (e.g main if the main thread is in C).
+   You can click on any frame to switch to the caller's context, this will
+   update the display in the source window. See also the up and down
+   buttons in the tool bar to go up and down one frame in the call stack.
+
+@cindex contextual menu
+   The contextual menu (right mouse button) allows you to choose which
+   information you want to display in the call stack window (via check buttons):
+   @itemize @bullet
+      @item Frame number: the debugger frame number (usually starts at 0 or 1)
+      @item Program Counter: the low level address corresponding to the
+            function's entry point.
+      @item Subprogram Name: the name of the subprogram in a given frame
+      @item Parameters: the parameters of the subprogram
+      @item File Location: the filename and line number information.
+   @end itemize
+
+   By default, only the subprogram name is displayed.
+   You can hide the call stack window by closing it, as for other windows, and
+   show it again using the menu @code{Data->Call Stack}.
+
+@c --------------------------------------------------------------------
+@node The Data Window
+@section The Data Window
+@cindex data
+@cindex data window
+@c --------------------------------------------------------------------
+
+@c --------------------------------------------------------------------
+@subsection Description
+@c --------------------------------------------------------------------
+
+@noindent
+@cindex menu
+@cindex contextual menu
+   The data window contains all the graphic boxes that can be accessed
+   using the @i{Data->Display} menu items, or the data window
+   @i{Display Expression...} contextual menu, or the source window
+   @i{Display} contextual menu items, or finally the
+   @i{graph} command in the debugger console.
+
+   For each of these commands, a box is displayed in the data window
+   with the following information:
+
+@iftex
+@cindex screen shot
+@image{canvas, 9.8cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{canvas}
+@end ifhtml
+
+   @itemize @bullet
+   @item A title bar containing:
+@cindex title bar
+     @itemize @bullet
+     @item The number of this expression: this is a positive number starting
+       from 1 and incremented for each new box displayed. It represents the
+       internal identifier of the box.
+
+     @item The name of the expression: this is the expression or variable
+       specified when creating the box.
+
+     @item An icon representing either a flash light, or a lock.
+@cindex icon
+       This is a click-able icon that will change the state of the box from
+       automatically updated (the flash light icon) to frozen (the lock
+       icon).
+       When frozen, the value is grayed, and will not change until you change
+       the state. When updated, the value of the box will be recomputed each
+       time an execution command is sent to the debugger (e.g step, next).
+
+     @item An icon representing an 'X'.
+@cindex icon
+       You can click on this icon to close/delete any box.
+     @end itemize
+
+   @item A main area.
+     The main area will display the data value hierarchically
+     in a language-sensitive manner. The canvas knows about data structures
+     of various languages (e.g @code{C}, @code{Ada}, @code{C++}) and will
+     organize them accordingly.
+     For example, each field of a record/struct/class, or each item of an
+     array will be displayed separately. For each subcomponent, a thin box
+     is displayed to distinguish it from the other components.
+   @end itemize
+
+@cindex contextual menu
+   A contextual menu, that takes into account the current component selected
+   by the mouse, gives access to the following capabilities:
+   @table @b
+     @item Close @i{component}
+Closes the selected item.
+
+     @item Hide all @i{component}
+@cindex hide
+Hides all subcomponents of the selected item. To select a particular field
+or item in a record/array, move your mouse over the name of this
+component, not over the box containing the values for this item.
+
+     @item Show all @i{component}
+@cindex show
+Shows all subcomponents of the selected item.
+
+     @item Clone @i{component}
+@cindex clone
+Clones the selected component into a new, independent item.
+
+     @item View memory at address of @i{component}
+@cindex memory view
+Brings up the memory view dialog and explore memory at the address of the 
+component.
+
+     @item Set value of @i{component}
+Sets the value of a selected component. This will open an entry box
+where you can enter the new value of a variable/component. Note that
+GDB does not perform any type or range checking on the value entered.
+
+     @item Update Value
+@cindex update value
+Refreshes the value displayed in the selected item.
+
+     @item Show Value
+@cindex show value
+Shows only the value of the item.
+
+     @item Show Type
+@cindex show type
+Shows only the type of each field for the item.
+
+     @item Show Value+Type
+Shows both the value and the type of the item.
+
+@c ??? Should have screen shot with value + type
+
+     @item Auto refresh
+@cindex auto refresh
+Enables or disables the automatic refreshing of the item upon program execution
+(e.g step, next).
+
+   @end table
+
+@cindex contextual menu
+   A contextual menu can be accessed in the canvas itself (point the mouse to
+   an empty area in the canvas, and click on the right mouse button) with the
+   following entries:
+   @table @b
+     @item Display Expression...
+@cindex display expression
+      Open a small dialog letting you specify an arbitrary expression
+      in the Data Window. This expression can be a variable name, or a
+      more complex expression, following the syntax of the current language and
+      underlying debugger.
+      See the documentation of e.g gdb for more details on the syntax.
+      The check button @i{Expression is a subprogram call} should be enabled
+      if the expression is actually not an expression but rather a debugger
+      command (e.g @code{p/x var}) or a procedure call in the program being
+      debugged (e.g @code{call my_proc}).
+
+     @item Align On Grid
+@cindex align
+Enables or disables alignment of items on the grid.
+
+     @item Detect Aliases
+@cindex aliases
+Enables or disables the automatic detection of shared data structures.
+Each time you display an item or dereference a pointer, all
+the items already displayed on the canvas are considered and their addresses
+are compared with the address of the new item to display. If they match,
+(for example if you tried to dereference a pointer to an object already
+displayed) instead of creating a new item a link will be displayed.
+
+     @item Zoom in
+@cindex zoom in
+Redisplays the items in the data window with a bigger font
+
+     @item Zoom out
+@cindex zoom out
+Displays the items in the data window with smaller fonts and pixmaps. This
+can be used when you have several items in the window and you can't see all
+of them at the same time (for instance if you are displaying a tree and
+want to clearly see its structure).
+
+     @item Zoom
+@cindex zoom
+Allows you to choose the zoom level directly from a menu.
+
+   @end table
+
+@c --------------------------------------------------------------------
+@subsection Manipulating items
+@c --------------------------------------------------------------------
+
+@subsubsection Moving items
+@noindent
+All the items on the canvas have some common behavior and can be fully
+manipulated with the mouse.
+They can be moved freely anywhere on the canvas, simply by clicking on
+them and then dragging the mouse. Note that if you are trying to move
+an item outside of the visible area of the data window, the latter will
+be scrolled so as to make the new position visible.
+
+Automatic scrolling is also provided if you move the mouse while dragging
+an item near the borders of the data window. As long as the mouse
+remains close to the border and the button is pressed on the item,
+the data window is scrolled and the item is moved. This provides an
+easy way to move an item a long distance from its initial position.
+
+@subsubsection Colors
+@noindent
+Most of the items are displayed using several colors, each
+conveying a special meaning. Here is the meaning assigned to all colors
+(note that the exact color can be changed through the preferences
+dialog; these are the default colors):
+
+@iftex
+@cindex screen shot
+@image{colors, 10cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{colors}
+@end ifhtml
+
+@table @b
+
+@item black
+This is the default color used to print the value of variables or
+expressions.
+
+@item blue
+@cindex C
+@cindex Ada
+This color is used for C pointers (or Ada access values), i.e. all the variables
+and fields that are memory addresses that denote some other value in
+memory.
+
+You can easily dereference these (that is to say see the value pointed to)
+by double-clicking on the blue text itself.
+
+@item red
+This color is used for variables and fields whose value has changed since
+the data window was last displayed. For instance, if you display an array
+in the data window and then select the @i{Next} button in the tool bar, then
+the elements of the array whose value has just changed will appear in red.
+
+@cindex menu
+As another example, if you choose to display the value of local variables in
+the data window (@i{Display->Display Local Variables}), then only the
+variables whose value has changed are highlighted, the others are left in
+black.
+
+@end table
+
+@subsubsection Icons
+@cindex icon
+@noindent
+Several different icons can be used in the display of items. They also
+convey special meanings.
+
+@table @b
+
+@item trash bin icon
+This icon indicates that the debugger could not get the value of the
+variable or expression. There might be several reasons, for instance the
+variable is currently not in scope (and thus does not exist), or it might
+have been optimized away by the compiler. In all cases, the display will be
+updated as soon as the variable becomes visible again.
+
+@item package icon
+This icon indicates that part of a complex structure is currently hidden.
+Manipulating huge items in the data window (for instance if the variable
+is an array of hundreds of complex elements) might not be very helpful. As a
+result, you can shrink part of the value to save some screen space and make it
+easier to visualize the interesting parts of these variables.
+
+Double-clicking on this icon will expand the hidden part, and clicking on
+any sub-rectangle in the display of the variable will hide that part and
+replace it with that icon.
+
+See also the description of the contextual menu to automatically show or hide
+all the contents of an item. Note also that one alternative to hiding
+subcomponents is to clone them in a separate item (see the contextual menu
+again).
+
+@end table
+
+@c --------------------------------------------------------------------
+@node The Breakpoint Editor
+@section The Breakpoint Editor
+@cindex breakpoint editor
+@cindex breakpoint
+@c --------------------------------------------------------------------
+
+@iftex
+@cindex screen shot
+@image{breakpoints, 11.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{breakpoints}
+@end ifhtml
+
+@noindent
+@cindex menu
+The breakpoint editor can be accessed from the menu
+@i{Data->Edit Breakpoints}. It gives access to the different kind of
+breakpoints: on source location, subprogram, address and Ada exceptions.
+
+The top area provides an interface to easily create the different kinds of
+breakpoints, while the bottom area lists the existing breakpoints and
+their characteristics.
+
+It is possible to access to advanced breakpoint characteristics for a given
+breakpoint, by first selecting a breakpoint in the list, and then by clicking
+on the @i{Advanced} button, which will display a new dialog window
+where you can specify commands to run automatically after a breakpoint
+is hit, or specify how many times a selected breakpoint will be ignored.
+If running VxWorks AE, you can also change the Scope and Action
+of breakpoints.
+
+@iftex
+@cindex screen shot
+@image{bp-advanced, 8.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{bp-advanced}
+@end ifhtml
+
+@subsection Scope/Action Settings for VxWorks AE
+@cindex VxWorks AE
+
+@noindent
+In VxWorks AE breakpoints have two extra properties:
+
+@itemize @bullet
+@item Scope:
+@cindex scope
+ which task(s) can hit a given breakpoint. Possible Scope values are:
+ @itemize @minus
+  @item task:
+@cindex task
+   the breakpoint can only be hit by the task that was active when the
+   breakpoint was set. If the breakpoint is set before the program is
+   run, the breakpoint will affect the environment task
+  @item pd:
+@cindex protection domain
+   any task in the current protection domain can hit that breakpoint
+  @item any:
+   any task in any protection domain can hit that breakpoint. This
+   setting is only allowed for tasks in the Kernel domain.
+
+ @end itemize
+
+@item Action:
+@cindex action
+ when a task hits a breakpoints, which tasks are stopped:
+ @itemize @minus
+  @item task:
+@cindex task
+   stop only the task that hit the breakpoint.
+  @item pd:
+@cindex protection domain
+   stop all tasks in the current protection domain
+  @item all:
+   stop all breakable tasks in the system
+
+ @end itemize
+@end itemize
+
+These two properties can be set/changed through the advanced breakpoints
+characteristics by clicking on the @i{Advanced} button. There are two
+ways of setting these properties:
+
+@itemize @bullet
+
+@item Per breakpoint settings:
+ after setting a breakpoint (the default Scope/Action values will be
+ task/task), select the @i{Scope/Action} tab in the @i{Advanced} settings.
+ To change these settings on a given breakpoint, select it from
+ the breakpoints list, select the desired values of Scope and Action and click
+ on the @i{Update} button.
+
+@item Default session settings:
+ select the @i{Scope/Action} tab in the
+ @i{Advanced} settings. Select the desired Scope and Action settings, check
+ the @i{Set as session defaults} check box below and click the @i{Close}
+ button. From now on, every new breakpoint will have the selected values
+ for Scope and Action.
+
+@end itemize
+
+@c --------------------------------------------------------------------
+@node The Memory Window
+@section The Memory Window
+@cindex memory view
+@c --------------------------------------------------------------------
+
+@iftex
+@cindex screen shot
+@image{memory-view, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{memory-view}
+@end ifhtml
+
+@noindent
+The memory window allows you to display the contents of memory by
+specifying either an address, or a variable name.
+
+@cindex C
+@cindex hexadecimal
+To display memory contents, enter the address using the C hexadecimal notation:
+0xabcd, or the name of a variable, e.g foo, in the @i{Location} text entry.
+In the latter case, its address is computed automatically. Then either press
+@i{Enter} or click on the @i{View} button. This will display the memory with
+the corresponding addresses in the bottom text area.
+
+@cindex ASCII
+You can also specify the unit size (@i{Byte}, @i{Halfword} or @i{Word}),
+the format (@i{Hexadecimal}, @i{Decimal}, @i{Octal} or @i{ASCII}), and you
+can display the corresponding ASCII value at the same time.
+
+@cindex key
+The @i{up} and @i{down} arrows as well as the @key{Page up} and @key{Page down}
+keys in the memory text area allows you to walk through the memory in
+order of ascending/descending addresses respectively.
+
+Finally, you can modify a memory area by simply clicking on the location
+you want to modify, and by entering the new values. Modified values will
+appear in a different color (red by default) and will only be taken into
+account (i.e written to the target) when you click on the @i{Submit changes}
+button. Clicking on the @i{Undo changes} or going up/down in the memory
+will undo your editing.
+
+Clicking on @i{Close} will close the memory window, canceling your last
+pending changes, if any.
+
+@c --------------------------------------------------------------------
+@node Using the Source Editor when Debugging
+@section Using the Source Editor when Debugging
+@cindex source file
+@cindex editing
+@cindex debug
+@c --------------------------------------------------------------------
+
+@noindent
+   When debugging, the left area of each source editor provides the
+   following information:
+
+   @table @b
+     @item Lines with code
+In this area, blue dots are present next to lines for which the debugger
+has debug information, in other words, lines that have been compiled with
+debug information and for which the compiler has generated some code.
+Currently, there is no check when you try to set a breakpoint on a non dotted
+line: this will simply send the breakpoint command to the underlying
+debugger, and usually (e.g in the case of gdb) result in setting a
+breakpoint at the closest location that matches the file and line that you
+specified.
+     @item Current line executed
+@cindex current line
+This is a green arrow showing the line about to be executed.
+
+     @item Lines with breakpoints
+@cindex breakpoint
+For lines where breakpoints have been set, a red mark is displayed on top
+of the blue dot for the line. You can add and delete
+breakpoints by clicking on this area (the first click will set a breakpoint,
+the second click will remove it).
+   @end table
+
+@iftex
+@cindex screen shot
+@image{tooltips, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{tooltips}
+@end ifhtml
+
+@cindex syntax highlighting
+@cindex tooltip
+   The second area in the source window is a text window on the right that
+   displays the source files, with syntax highlighting.
+   If you leave the cursor over a variable, a tooltip will
+   appear showing the value of this variable. Automatic tooltips can be
+   disabled in the preferences menu.
+@cindex preferences
+   See @ref{preferences dialog}.
+
+@cindex contextual menu
+   When the debugger is active, the contextual menu of the source window
+   contains a sub menu called @code{Debug} providing the following entries.
+
+Note that these entries are dynamic: they will apply to the entity
+found under the cursor when the menu is displayed (depending on the current
+language). In addition, if a selection has been made in the source window the
+text of the selection will be used instead. This allows you to display
+more complex expressions easily (for example by adding some comments to your
+code with the complex expressions you want to be able to display in the
+debugger).
+
+   @table @b
+     @item Print @i{selection}
+@cindex print
+Prints the selection (or by default the name under the cursor) in the
+debugger console.
+
+     @item Display @i{selection}
+@cindex display
+Displays the selection (or by default the name under the cursor) in the
+data window. The value will be automatically refreshed each time the process
+state changes (e.g after a step or a next command). To freeze the display
+in the canvas, you can either click on the corresponding icon in the data
+window, or use the contextual menu for the specific item (see
+@ref{The Data Window} for more information).
+
+     @item Print @i{selection}.all
+Dereferences the selection (or by default the name under the cursor) and
+prints the value in the debugger console.
+
+     @item Display @i{selection}.all
+Dereferences the selection (or by default the name under the cursor) and
+displays the value in the data window.
+
+     @item View memory at address of @i{selection}
+@cindex memory view
+Brings up the memory view dialog and explores memory at the address of the 
+selection.
+
+     @item Set Breakpoint on Line @i{xx}
+@cindex breakpoint
+Sets a breakpoint on the line under the cursor, in the current file.
+
+     @item Set Breakpoint on @i{selection}
+Sets a breakpoint at the beginning of the subprogram named @i{selection}
+
+     @item Continue Until Line @i{xx}
+@cindex continue until
+Continues execution (the program must have been started previously) until 
+it reaches the specified line.
+
+     @item Show Current Location
+@cindex current location
+Jumps to the current line of execution. This is particularly useful after
+navigating through your source code.
+
+   @end table
+
+@c --------------------------------------------------------------------
+@node The Assembly Window
+@section The Assembly Window
+@c --------------------------------------------------------------------
+
+It is sometimes convenient to look at the assembly code for the subprogram
+or source line you are currently debugging.
+
+You can open the assembly window by using the menu @code{Debug->Data->Assembly}.
+
+@iftex
+@cindex screen shot
+@image{assembly, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{assembly}
+@end ifhtml
+
+The current assembly instruction is highlighted with a green
+arrow on its left.  The instructions corresponding to the current source
+line are highlighted in red by default. This allows you to easily see
+where the program counter will point to, once you have pressed the "Next"
+button on the tool bar.
+
+Moving to the next assembly instruction is done through the "Nexti"
+(next instruction) button in the tool bar. If you choose "Stepi"
+instead (step instruction), this will also jump to the subprogram
+being called.
+
+For efficiency reasons, only a small part of the assembly code around the
+current instruction is displayed.
+You can specify in the @ref{preferences dialog} how many instructions
+are displayed by default. Also, you can easily
+display the instructions immediately preceding or following the
+currently displayed instructions by pressing one of the @key{Page up} or
+@key{Page down} keys, or by using the contextual menu in the assembly
+window.
+
+A convenient complement when debugging at the assembly level is the
+ability of displaying the contents  of machine registers.
+When the debugger supports it (as gdb does), you can select the
+@code{Data->Display Registers} menu to get an item in the canvas that will
+show the current contents of each machine register, and that will be updated
+every time one of them changes.
+
+You might also choose to look at a single register.
+With gdb, select the @code{Data->Display Any Expression}, entering
+something like
+
+@cindex example
+@smallexample
+output /x $eax
+@end smallexample
+
+in the field, and selecting the toggle button "Expression is a subprogram
+call". This will create a new canvas item that will be refreshed every
+time the value of the register (in this case eax) changes.
+
+@c --------------------------------------------------------------------
+@node The Debugger Console
+@section The Debugger Console
+@cindex debugger
+@cindex debugger console
+@c --------------------------------------------------------------------
+
+@noindent
+This is the text window located at the bottom of the main window.
+In this console, you have direct access to the underlying debugger,
+and can send commands (you need to refer to the underlying debugger's
+documentation, but usually typing @i{help} will give you an overview of
+the commands available).
+
+If the underlying debugger allows it, pressing @key{Tab} in this 
+window will provide completion for the command that is being typed (or for
+its arguments).
+
+There are also additional commands defined to provide a simple
+text interface to some graphical features.
+
+Here is the complete list of such commands. The arguments between square
+brackets are optional and can be omitted.
+
+@table @command
+@item graph (print|display) expression [dependent on display_num] [link_name name]
+@cindex graph print
+@cindex graph display
+This command creates a new item in the canvas, that shows the value of
+@var{Expression}. @var{Expression} should be the name of a variable, or one
+of its fields, that is in the current scope for the debugger.
+
+The command @code{graph print} will create a frozen item, that is not
+automatically refreshed when the debugger stops, whereas @code{graph display}
+displays an automatically refreshed item.
+
+The new item is associated with a number, that is visible in its title bar.
+These numbers can be used to create links between the items, using the
+second argument to the command, @var{dependent on}. The link itself (i.e. the
+line) can be given a name that is automatically displayed, using the third
+argument.
+
+@item graph (print|display) `command`
+This command is similar to the one above, except it should be used to
+display the result of a debugger command in the canvas.
+
+For instance, if you want to display the value of a variable in hexadecimal
+rather than the default decimal with gdb, you should use a command like:
+
+@cindex example
+@smallexample
+graph display `print /x my_variable`
+@end smallexample
+
+This will evaluate the command between back-quotes every time the debugger
+stops, and display this in the canvas. The lines that have changed will
+be automatically highlighted (in red by default).
+
+This command is the one used by default to display the value of registers
+for instance.
+
+@item graph (enable|disable) display display_num [display_num ...]
+@cindex graph enable
+@cindex graph disable
+This command will change the refresh status of items in the canvas. As
+explained above, items are associated with a number visible in their title
+bar.
+
+Using the @code{graph enable} command will force the item to be automatically
+refreshed every time the debugger stops, whereas the @code{graph disable}
+command will freeze the item.
+
+@item graph undisplay display_num
+@cindex graph undisplay
+This command will remove an item from the canvas
+
+@item view (source|asm|source_asm)
+@cindex view
+@cindex asm
+This command indicates what should be displayed in the source window.
+The first option indicates that only the source code should be visible,
+the second one specifies that only the assembly code should be visible,
+and the last one indicates that both should be displayed.
+
+@end table
 
 @node Upgrading from GVD to GPS
 @section Upgrading from GVD to GPS
