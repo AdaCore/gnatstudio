@@ -29,9 +29,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
 with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with String_Utils;              use String_Utils;
@@ -180,123 +178,15 @@ package body Glide_Kernel is
       end loop;
    end Initialize_All_Modules;
 
-   ------------------------------
-   -- Compute_Predefined_Paths --
-   ------------------------------
-
-   procedure Compute_Predefined_Paths (Handle : access Kernel_Handle_Record) is
-      Source_Path : Boolean := True;
-
-      procedure Add_Directory (S : String);
-      --  Add S to the search path.
-      --  If Source_Path is True, the source path is modified.
-      --  Otherwise, the object path is modified.
-
-      procedure Add_Directory (S : String) is
-         Tmp : String_Access;
-      begin
-         if S = "" then
-            return;
-
-         elsif S = "<Current_Directory>" then
-            if Source_Path then
-               Tmp := Handle.Predefined_Source_Path;
-               Handle.Predefined_Source_Path :=
-                 new String' (Handle.Predefined_Source_Path.all & ":.");
-
-            else
-               Tmp := Handle.Predefined_Object_Path;
-               Handle.Predefined_Object_Path :=
-                 new String' (Handle.Predefined_Object_Path.all & ":.");
-            end if;
-
-         elsif Source_Path then
-            Tmp := Handle.Predefined_Source_Path;
-            Handle.Predefined_Source_Path :=
-              new String' (Handle.Predefined_Source_Path.all & ":" & S);
-
-         else
-            Tmp := Handle.Predefined_Object_Path;
-            Handle.Predefined_Object_Path :=
-              new String' (Handle.Predefined_Object_Path.all & ":" & S);
-         end if;
-
-         Free (Tmp);
-      end Add_Directory;
-
-      Fd     : Process_Descriptor;
-      Result : Expect_Match;
-      Args   : Argument_List (1 .. 1);
-      Gnatls : constant String := Get_Attribute_Value
-        (Get_Project_View (Handle), Gnatlist_Attribute,
-         Ide_Package, Default => "gnatls");
-
-   begin
-      --  If the gnatls commands hasn't changed, no need to recompute the
-      --  predefined paths.
-
-      if Handle.Gnatls_Cache /= null
-        and then Handle.Gnatls_Cache.all = Gnatls
-      then
-         return;
-      end if;
-
-      Free (Handle.Gnatls_Cache);
-      Handle.Gnatls_Cache := new String' (Gnatls);
-
-      Free (Handle.Predefined_Source_Path);
-      Free (Handle.Predefined_Object_Path);
-      Handle.Predefined_Source_Path := new String' ("");
-      Handle.Predefined_Object_Path := new String' ("");
-
-      Args (1) := new String' ("-v");
-      Non_Blocking_Spawn
-        (Fd, Gnatls, Args, Buffer_Size => 0, Err_To_Out => True);
-      Free (Args (1));
-      Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
-
-      loop
-         Expect (Fd, Result, "\n", Timeout => -1);
-
-         declare
-            S : constant String := Trim (Expect_Out (Fd), Ada.Strings.Left);
-         begin
-            if S = "Object Search Path:" & ASCII.LF then
-               Source_Path := False;
-            else
-               Add_Directory (S (S'First .. S'Last - 1));
-            end if;
-         end;
-      end loop;
-
-   exception
-      when Process_Died =>
-         Close (Fd);
-   end Compute_Predefined_Paths;
-
    --------------------------------
    -- Get_Predefined_Source_Path --
    --------------------------------
 
    function Get_Predefined_Source_Path
-     (Handle : access Kernel_Handle_Record) return String
-   is
-      Gnatlist : String_Access;
+     (Handle : access Kernel_Handle_Record) return String is
    begin
       if Handle.Predefined_Source_Path = null then
-         --  Gnatlist := new String' (Get_Gnatlist (Handle.Project));
-         Gnatlist := new String' ("");
-
-         if Gnatlist.all = "" then
-            Free (Gnatlist);
-            Gnatlist := new String' ("gnatls");
-         end if;
-
-         --  Parse_Gnatlist (Gnatlist);
-         Free (Gnatlist);
-
          return ".";
-
       else
          return Handle.Predefined_Source_Path.all;
       end if;
@@ -417,16 +307,6 @@ package body Glide_Kernel is
    begin
       Src_Info.Reset (Handle.Source_Info_List);
    end Reset_Source_Info_List;
-
-   --------------------------
-   -- Get_Source_Info_List --
-   --------------------------
-
-   function Get_Source_Info_List
-     (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List is
-   begin
-      return Handle.Source_Info_List;
-   end Get_Source_Info_List;
 
    ---------------------
    -- Project_Changed --

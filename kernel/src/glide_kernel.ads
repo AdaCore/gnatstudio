@@ -70,59 +70,6 @@ package Glide_Kernel is
    --  the modules can add entries in the menus and the MDI.
    --  Only the modules that haven't been initialized yet are processed.
 
-   procedure Compute_Predefined_Paths (Handle : access Kernel_Handle_Record);
-   --  Compute the predefined source and object paths, given the current
-   --  project view associated with Handle.
-
-   function Get_Predefined_Source_Path
-     (Handle : access Kernel_Handle_Record) return String;
-   --  Return the predefined Source_Path associated to the given Kernel Handle.
-   --  Return the empty string if no source path has been set yet.
-
-   function Get_Predefined_Object_Path
-     (Handle : access Kernel_Handle_Record) return String;
-   --  Return the predefined Object_Path associated to the given Kernel Handle.
-   --  Return the empty string if no object path has been set yet.
-
-   function Get_Source_Info_List
-     (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
-   --  Return the Source Information List for the given Kernel Handle
-
-   function Locate_From_Source_And_Complete
-     (Handle            : access Kernel_Handle_Record;
-      Source_Filename   : String)
-      return Src_Info.LI_File_Ptr;
-   --  Find the ALI file for Source_Filename, and return a handle to it.
-
-   procedure Find_All_References
-     (Kernel       : access Kernel_Handle_Record;
-      Entity       : Src_Info.Queries.Entity_Information;
-      Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
-      Project      : Prj.Project_Id := Prj.No_Project;
-      LI_Once      : Boolean := False);
-   --  See Src_Info.Queries.
-   --  This function needs to be in this package, since it requires access to
-   --  the list of LI files.
-
-   procedure Next
-     (Kernel   : access Kernel_Handle_Record;
-      Iterator : in out Src_Info.Queries.Entity_Reference_Iterator);
-   --  See Src_Info.Queries.
-
-   procedure Find_Ancestor_Dependencies
-     (Kernel          : access Kernel_Handle_Record;
-      Source_Filename : String;
-      Iterator        : out Src_Info.Queries.Dependency_Iterator;
-      Project         : Prj.Project_Id := Prj.No_Project);
-   --  See Src_Info.Queries.
-   --  This function needs to be in this package, since it requires access to
-   --  the list of LI files.
-
-   procedure Next
-     (Kernel   : access Kernel_Handle_Record;
-      Iterator : in out Src_Info.Queries.Dependency_Iterator);
-   --  See Src_Info.Queries.
-
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record);
    --  Save the current desktop.
@@ -205,6 +152,53 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record)
       return Language_Handlers.Language_Handler;
    --  Return the language handler used by this kernel.
+
+   function Get_Predefined_Source_Path
+     (Handle : access Kernel_Handle_Record) return String;
+   --  Return the predefined Source_Path associated to the given Kernel Handle.
+   --  Return the current directory if no source path has been set yet.
+
+   -------------
+   -- Queries --
+   -------------
+   --  The following programs are provided as proxies for the ones in
+   --  Src_Info.Queries. They should be used instead of the other ones so that
+   --  the list of parsed LI files can be kept in the kernel
+
+   function Locate_From_Source_And_Complete
+     (Handle            : access Kernel_Handle_Record;
+      Source_Filename   : String)
+      return Src_Info.LI_File_Ptr;
+   --  Find the ALI file for Source_Filename, and return a handle to it.
+
+   procedure Find_All_References
+     (Kernel       : access Kernel_Handle_Record;
+      Entity       : Src_Info.Queries.Entity_Information;
+      Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
+      Project      : Prj.Project_Id := Prj.No_Project;
+      LI_Once      : Boolean := False);
+   --  See Src_Info.Queries.
+   --  This function needs to be in this package, since it requires access to
+   --  the list of LI files.
+
+   procedure Next
+     (Kernel   : access Kernel_Handle_Record;
+      Iterator : in out Src_Info.Queries.Entity_Reference_Iterator);
+   --  See Src_Info.Queries.
+
+   procedure Find_Ancestor_Dependencies
+     (Kernel          : access Kernel_Handle_Record;
+      Source_Filename : String;
+      Iterator        : out Src_Info.Queries.Dependency_Iterator;
+      Project         : Prj.Project_Id := Prj.No_Project);
+   --  See Src_Info.Queries.
+   --  This function needs to be in this package, since it requires access to
+   --  the list of LI files.
+
+   procedure Next
+     (Kernel   : access Kernel_Handle_Record;
+      Iterator : in out Src_Info.Queries.Dependency_Iterator);
+   --  See Src_Info.Queries.
 
    --------------
    -- Contexts --
@@ -379,6 +373,11 @@ package Glide_Kernel is
    Variable_Changed_Signal     : constant String := "variable_changed";
 
 private
+
+   function Get_Predefined_Object_Path
+     (Handle : access Kernel_Handle_Record) return String;
+   --  Return the predefined Object_Path associated to the given Kernel Handle.
+   --  Return the current directory if no object path has been set yet.
 
    type Module_ID_Information (Name_Length : Natural) is record
       Name            : String (1 .. Name_Length);
