@@ -45,11 +45,9 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
-with Prj_API;                  use Prj_API;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
-with Prj;              use Prj;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Language;         use Language;
 
@@ -184,7 +182,6 @@ package body Browsers.Call_Graph is
 
    procedure Print_Ref
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Project_Id;
       File    : String;
       Line    : Natural;
       Column  : Natural;
@@ -883,32 +880,14 @@ package body Browsers.Call_Graph is
 
    procedure Print_Ref
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Project_Id;
       File    : String;
       Line    : Natural;
       Column  : Natural;
-      Name    : String)
-   is
-      Path : String_Access;
+      Name    : String) is
    begin
-      if Project /= No_Project then
-         Path := Locate_Regular_File
-           (File,
-            Include_Path (Project, Recursive => False)
-            & Path_Separator & Get_Predefined_Source_Path (Kernel));
-      else
-         Path := Locate_Regular_File
-           (File, Path_Separator & Get_Predefined_Source_Path (Kernel));
-      end if;
-
-      if Path = null then
-         Path := new String' (File);
-      end if;
-
       Console.Insert
         (Kernel,
-         Path.all & ':' & Image (Line) & ':' & Image (Column) & ' ' & Name);
-      Free (Path);
+         File & ':' & Image (Line) & ':' & Image (Column) & ' ' & Name);
    end Print_Ref;
 
    -------------------------
@@ -923,7 +902,7 @@ package body Browsers.Call_Graph is
       else
          Location := Get_Location (Get (D.Iter.all));
          Print_Ref
-           (D.Kernel, Get (D.Iter.all), Get_File (Location),
+           (D.Kernel, Get_File (Location),
             Get_Line (Location), Get_Column (Location),
             Get_Name (D.Entity));
          Next (D.Kernel, D.Iter.all);
@@ -955,7 +934,6 @@ package body Browsers.Call_Graph is
       if Info /= No_Entity_Information then
          begin
             Print_Ref (Get_Kernel (Entity),
-                       Project_Information (Entity),
                        Get_Declaration_File_Of (Info),
                        Get_Declaration_Line_Of (Info),
                        Get_Declaration_Column_Of (Info),
