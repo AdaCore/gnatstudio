@@ -397,7 +397,12 @@ package body VCS.CVS is
                elsif Last >= Index + 14
                  and then Line (Index .. Index + 14) = "Locally Removed"
                then
-                  Current_Status.Status := Not_Registered;
+                  Current_Status.Status := Removed;
+
+               elsif Last >= Index + 12
+                 and then Line (Index .. Index + 12) = "Locally Added"
+               then
+                  Current_Status.Status := Added;
 
                elsif Last >= Index + 10
                  and then Line (Index .. Index + 10) = "Needs Merge"
