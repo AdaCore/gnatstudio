@@ -672,12 +672,12 @@ package Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information.
 
-   procedure Add_Blank_Lines
+   function Add_Blank_Lines
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
       GC     : Gdk.GC.Gdk_GC;
       Text   : String;
-      Number : Positive);
+      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Number blank lines at line Line.
    --  Blank lines cannot be edited, and are not saved on disk.
 

@@ -498,12 +498,12 @@ package Src_Editor_Box is
    procedure Redo (Editor : access Source_Editor_Box_Record);
    --  Undo/Redo last edit command.
 
-   procedure Add_Blank_Lines
+   function Add_Blank_Lines
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type;
       GC     : Gdk.GC.Gdk_GC;
       Text   : String;
-      Number : Positive);
+      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  See Src_Editor_Buffer.Add_Blank_Lines.
 
 private
