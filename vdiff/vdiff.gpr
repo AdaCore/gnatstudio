@@ -1,0 +1,8 @@
+with "../gtkada/gtkada";
+
+project VDiff is
+
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+
+end VDiff;
