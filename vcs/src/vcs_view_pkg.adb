@@ -60,6 +60,7 @@ with Log_Utils;                 use Log_Utils;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 
 with Basic_Types;               use Basic_Types;
@@ -845,8 +846,7 @@ package body VCS_View_Pkg is
 
    function Button_Press
      (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event)
-     return Boolean
+      Event    : Gdk_Event) return Boolean
    is
       Menu     : Gtk_Menu;
       Check    : Gtk_Check_Menu_Item;
@@ -1072,6 +1072,8 @@ package body VCS_View_Pkg is
       Initialize_Hbox (VCS_View);
 
       VCS_View.Kernel := Kernel;
+      VCS_View.Hide_Up_To_Date := Get_Pref (Kernel, Hide_Up_To_Date);
+      VCS_View.Hide_Not_Registered := Get_Pref (Kernel, Hide_Not_Registered);
 
       Gtk_New_Vbox (Vbox1, False, 0);
       Pack_Start (VCS_View, Vbox1);
