@@ -1212,8 +1212,16 @@ package body Odd.Source_Editors is
             end if;
 
          else
-            Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
-            if Value.all = "" then
+            if Can_Tooltip_On_Entity
+              (Get_Language (Debugger.Debugger), Variable_Name)
+            then
+               Value :=
+                 new String'(Value_Of (Debugger.Debugger, Variable_Name));
+               if Value.all = "" then
+                  Free (Value);
+                  return;
+               end if;
+            else
                return;
             end if;
 
