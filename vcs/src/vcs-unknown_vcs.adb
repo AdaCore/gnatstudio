@@ -121,6 +121,7 @@ package body VCS.Unknown_VCS is
          Current_Status := Blank_Status;
          Current_Status.File := Create (Data (Current_Filename));
 
+         File_Status_List.Append (Result, Current_Status);
          Current_Filename := Next (Current_Filename);
       end loop;
 
