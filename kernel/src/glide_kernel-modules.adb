@@ -1097,8 +1097,8 @@ package body Glide_Kernel.Modules is
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : String;
-      Line              : Natural := 0;
-      Column            : Natural := 0;
+      Line              : Natural := 1;
+      Column            : Natural := 1;
       Column_End        : Natural := 0;
       Highlight_Line    : Boolean := False;
       Enable_Navigation : Boolean := True;
