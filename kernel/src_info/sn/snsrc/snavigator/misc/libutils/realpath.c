@@ -94,7 +94,7 @@ realpath(path, resolved)
     }
   else
     {
-      _fullpath (resolved, path, MAXPATHLEN);
+      _fullpath (resolved, path, PATH_MAX);
       for (p = resolved; *p; p++)
         if (*p == '/')
           *p = '\\';
