@@ -105,30 +105,41 @@ procedure GPS is
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
-   GPS            : Glide_Window;
-   Directory      : Dir_Type;
-   Str            : String (1 .. 1024);
-   Last           : Natural;
-   Project_Name   : String_Access;
-   Prj            : String_Access;
-   Button         : Message_Dialog_Buttons;
-   pragma Unreferenced (Button);
-   Home           : String_Access;
-   Prefix         : String_Access;
-   Dir            : String_Access;
-   Batch_File, Batch_Script : String_Access;
-   Target,
-   Protocol,
-   Debugger_Name  : String_Access;
-   Splash         : Gtk_Window;
-   Timeout_Id     : Timeout_Handler_Id;
+   GPS                    : Glide_Window;
+   Directory              : Dir_Type;
+   Str                    : String (1 .. 1024);
+   Last                   : Natural;
+   Home                   : String_Access;
+   Project_Name           : String_Access;
+   Prj                    : String_Access;
+   Prefix                 : String_Access;
+   Dir                    : String_Access;
+   Batch_File             : String_Access;
+   Batch_Script           : String_Access;
+   Target                 : String_Access;
+   Protocol               : String_Access;
+   Debugger_Name          : String_Access;
+   Splash                 : Gtk_Window;
    User_Directory_Existed : Boolean;
-   pragma Unreferenced (Timeout_Id);
-   Result         : Boolean;
-   pragma Unreferenced (Result);
+   Cleanup_Needed         : Boolean := False;
+
+   Button                 : Message_Dialog_Buttons;
+   Result                 : Boolean;
+   Timeout_Id             : Timeout_Handler_Id;
+   pragma Unreferenced (Button, Result, Timeout_Id);
 
    procedure Init_Settings;
    --  Set up environment for GPS.
+
+   procedure Main_Processing;
+   --  Main GPS processing (launches a gtk+ main loop and handle unexpected
+   --  exceptions).
+
+   procedure Do_Cleanups;
+   --  Perform clean ups and automatic saving before exiting.
+
+   procedure Parse_Switches;
+   --  Parse command line switches.
 
    procedure Display_Splash_Screen;
    --  Display the GPS splash screen
@@ -213,11 +224,11 @@ procedure GPS is
       Message    : String) is
    begin
       if (Log_Level and Log_Level_Critical) /= 0 then
-         Trace (Gtk_Trace, Log_Domain & "-Critical: " & Message);
+         Trace (Gtk_Trace, Log_Domain & "-CRITICAL: " & Message);
       elsif (Log_Level and Log_Level_Warning) /= 0 then
-         Trace (Gtk_Trace, Log_Domain & "-Warning: " & Message);
+         Trace (Gtk_Trace, Log_Domain & "-WARNING: " & Message);
       else
-         Trace (Gtk_Trace, Log_Domain & "-Misc: " & Message);
+         Trace (Gtk_Trace, Log_Domain & "-MISC: " & Message);
       end if;
    end Gtk_Log;
 
@@ -228,10 +239,25 @@ procedure GPS is
    procedure Init_Settings is
       Dir_Created : Boolean := False;
       File        : File_Type;
+      Charset     : String_Access;
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
    begin
+      Charset := Getenv ("CHARSET");
+
+      if Charset.all = "" then
+         --  Gtk+ does not like if CHARSET is not defined.
+         Setenv ("CHARSET", "ISO-8859-1");
+      end if;
+
+      Free (Charset);
+
+      OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
+      Projects.Registry.Initialize;
+
+      Gtk.Main.Init;
+
       --  Set the TERM variable to a dummy value, since we only know how to
       --  handle simple terminals
 
@@ -358,7 +384,189 @@ procedure GPS is
                Justification => Justify_Left);
             OS_Exit (1);
       end;
+
+      --  Initialize the traces
+
+      Traces.Parse_Config_File
+        (Default => String_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
+      Trace (Me, "GPS " & GVD.Version & " (" & GVD.Source_Date &
+             ") hosted on " & GVD.Target);
+
+      Gtk_New
+        (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
+      Reset_Title (GPS);
+
+      Glide_Menu.Register_Common_Menus (GPS.Kernel);
+
+      Kernel_Callback.Connect
+        (Get_MDI (GPS.Kernel), "child_selected",
+         Kernel_Callback.To_Marshaller (Child_Selected'Unrestricted_Access),
+         GPS.Kernel);
+
+      DDE.Register_DDE_Server (GPS.Kernel);
+
+      GPS.Debug_Mode := True;
+      GPS.Log_Level  := GVD.Types.Hidden;
+
+      if Override_Gtk_Theme then
+         declare
+            Key_Theme : String := Key_Themes'Image
+              (Key_Themes'Val (Get_Pref (GPS.Kernel, Key_Theme_Name)));
+         begin
+            String_Utils.Mixed_Case (Key_Theme);
+            Gtk.Rc.Parse_String
+              ("gtk-font-name=""" &
+               To_String (Get_Pref (GPS.Kernel, Default_Font)) &
+               '"' & ASCII.LF &
+               "gtk-can-change-accels=" &
+               Integer'Image
+                 (Boolean'Pos
+                    (Get_Pref (GPS.Kernel, Can_Change_Accels))) & ASCII.LF &
+               "gtk-key-theme-name=""" & Key_Theme & '"');
+         end;
+      end if;
+
+      Parse_Switches;
+      Display_Splash_Screen;
+
+      if Splash = null then
+         Timeout_Id := Process_Timeout.Add
+           (1, Finish_Setup'Unrestricted_Access,
+            (GPS.Kernel, null, null, null, null));
+      else
+         Timeout_Id := Process_Timeout.Add
+           (1000, Finish_Setup'Unrestricted_Access,
+            (GPS.Kernel, null, null, null, null));
+      end if;
    end Init_Settings;
+
+   --------------------
+   -- Parse_Switches --
+   --------------------
+
+   procedure Parse_Switches is
+   begin
+      loop
+         case Getopt ("-version -help P! -log-level= " &
+                      "-debug? -debugger= -target= -load= -eval=")
+         is
+            -- long option names --
+            when '-' =>
+               case Full_Switch (Full_Switch'First + 1) is
+                  -- --version --
+                  when 'v' =>
+                     if GVD.Can_Output then
+                        Put_Line ("GPS version " & GVD.Version & " (" &
+                          GVD.Source_Date & ") hosted on " & GVD.Target);
+                     else
+                        Button := Message_Dialog
+                          ("GPS version " & GVD.Version & " (" &
+                           GVD.Source_Date & ") hosted on " & GVD.Target,
+                           Information, Button_OK,
+                           Title => -"Version",
+                        Justification => Justify_Left);
+                     end if;
+
+                     OS_Exit (0);
+
+                  when 'h' =>
+                     -- --help --
+                     if Full_Switch = "-help" then
+                        Help;
+                        OS_Exit (0);
+                     end if;
+
+                  -- --log-level --
+                  when 'l' =>
+                     if Full_Switch = "-log-level" then
+                        begin
+                           GPS.Log_Level := GVD.Types.Command_Type'Val
+                             (GVD.Types.Command_Type'Pos
+                              (GVD.Types.Command_Type'Last) + 1 -
+                              Integer'Value (Parameter));
+
+                        exception
+                           when Constraint_Error =>
+                              if GVD.Can_Output then
+                                 Put_Line ("Invalid parameter to --log-level");
+                              end if;
+
+                              Help;
+                              OS_Exit (1);
+                        end;
+
+                     elsif Full_Switch = "-load" then
+                        --  --load
+                        Free (Batch_File);
+                        Batch_File := new String'(Parameter);
+                     end if;
+
+                  when 'd' =>
+                     --  --debug
+                     if Full_Switch = "-debug" then
+                        Free (GPS.Program_Args);
+                        GPS.Program_Args := new String'(Clean_Parameter);
+
+                     else
+                        --  --debugger
+                        Free (Debugger_Name);
+                        Debugger_Name := new String'(Parameter);
+                     end if;
+
+                  when 'e' =>
+                     --  --eval
+                     Free (Batch_Script);
+                     Batch_Script := new String'(Parameter);
+
+                  -- --target --
+                  when 't' =>
+                     declare
+                        Param  : constant String := Parameter;
+                        Column : constant Natural :=
+                          Ada.Strings.Fixed.Index
+                            (Param, ":", Ada.Strings.Backward);
+
+                     begin
+                        --  Param should be of the form target:protocol
+
+                        if Column = 0 then
+                           raise Invalid_Switch;
+                        end if;
+
+                        Free (Target);
+                        Free (Protocol);
+                        Target   :=
+                          new String '(Param (Param'First .. Column - 1));
+                        Protocol :=
+                          new String '(Param (Column + 1 .. Param'Last));
+                     end;
+
+                  when others =>
+                     null;
+               end case;
+
+            when 'P' =>
+               Project_Name := new String'
+                 (Normalize_Pathname (Parameter));
+               Trace (Me, "Found project: " & Parameter);
+
+            when ASCII.NUL =>
+               exit;
+
+            when others =>
+               null;
+         end case;
+      end loop;
+
+   exception
+      when Invalid_Switch | GNAT.Command_Line.Invalid_Parameter =>
+         if GVD.Can_Output then
+            Put_Line ("Invalid command line");
+         end if;
+
+         Help;
+         OS_Exit (1);
+   end Parse_Switches;
 
    ----------
    -- Help --
@@ -549,19 +757,24 @@ procedure GPS is
       end Load_Sources;
 
    begin
+      Cleanup_Needed := True;
+
       --  Parse the system's RC file
+
       if Is_Regular_File (System_Rc) then
          Trace (Me, "Parsing System RC file " & System_Rc);
          Gtk.Rc.Parse (System_Rc);
       end if;
 
       --  Parse the user's RC file
+
       if Is_Regular_File (Rc) then
          Trace (Me, "Parsing RC file " & Rc);
          Gtk.Rc.Parse (Rc);
       end if;
 
       --  Load the custom key bindings, if any
+
       if Is_Regular_File (Key) then
          Trace (Me, "Loading key bindings from " & Key);
          Gtk.Accel_Map.Load (Key);
@@ -833,189 +1046,11 @@ procedure GPS is
       end if;
    end Child_Selected;
 
-begin
-   Home := Getenv ("CHARSET");
+   ---------------------
+   -- Main_Processing --
+   ---------------------
 
-   if Home.all = "" then
-      --  Gtk+ does not like if CHARSET is not defined.
-      Setenv ("CHARSET", "ISO-8859-1");
-   end if;
-
-   Free (Home);
-
-   OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
-   Projects.Registry.Initialize;
-
-   Gtk.Main.Init;
-
-   Init_Settings;
-
-   --  Initialize the traces
-   Traces.Parse_Config_File
-     (Default => String_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
-   Trace (Me, "GPS " & GVD.Version & " (" & GVD.Source_Date &
-          ") hosted on " & GVD.Target);
-
-   Gtk_New
-     (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
-   Reset_Title (GPS);
-
-   Glide_Menu.Register_Common_Menus (GPS.Kernel);
-
-   Kernel_Callback.Connect
-     (Get_MDI (GPS.Kernel), "child_selected",
-      Kernel_Callback.To_Marshaller (Child_Selected'Unrestricted_Access),
-      GPS.Kernel);
-
-   DDE.Register_DDE_Server (GPS.Kernel);
-
-   GPS.Debug_Mode := True;
-   GPS.Log_Level  := GVD.Types.Hidden;
-
-   if Override_Gtk_Theme then
-      declare
-         Key_Theme : String := Key_Themes'Image
-           (Key_Themes'Val (Get_Pref (GPS.Kernel, Key_Theme_Name)));
-      begin
-         String_Utils.Mixed_Case (Key_Theme);
-         Gtk.Rc.Parse_String
-           ("gtk-font-name=""" &
-            To_String (Get_Pref (GPS.Kernel, Default_Font)) &
-            '"' & ASCII.LF &
-            "gtk-can-change-accels=" &
-            Integer'Image
-              (Boolean'Pos
-                 (Get_Pref (GPS.Kernel, Can_Change_Accels))) & ASCII.LF &
-            "gtk-key-theme-name=""" & Key_Theme & '"');
-      end;
-   end if;
-
-   --  Switch parsing
-
-   loop
-      case Getopt ("-version -help P! -log-level= " &
-                   "-debug? -debugger= -target= -load= -eval=")
-      is
-         -- long option names --
-         when '-' =>
-            case Full_Switch (Full_Switch'First + 1) is
-               -- --version --
-               when 'v' =>
-                  if GVD.Can_Output then
-                     Put_Line ("GPS version " & GVD.Version & " (" &
-                       GVD.Source_Date & ") hosted on " & GVD.Target);
-                  else
-                     Button := Message_Dialog
-                       ("GPS version " & GVD.Version & " (" &
-                        GVD.Source_Date & ") hosted on " & GVD.Target,
-                        Information, Button_OK,
-                        Title => -"Version",
-                        Justification => Justify_Left);
-                  end if;
-
-                  OS_Exit (0);
-
-               when 'h' =>
-                  -- --help --
-                  if Full_Switch = "-help" then
-                     Help;
-                     OS_Exit (0);
-                  end if;
-
-               -- --log-level --
-               when 'l' =>
-                  if Full_Switch = "-log-level" then
-                     begin
-                        GPS.Log_Level := GVD.Types.Command_Type'Val
-                          (GVD.Types.Command_Type'Pos
-                           (GVD.Types.Command_Type'Last) + 1 -
-                           Integer'Value (Parameter));
-
-                     exception
-                        when Constraint_Error =>
-                           if GVD.Can_Output then
-                              Put_Line ("Invalid parameter to --log-level");
-                           end if;
-
-                           Help;
-                           OS_Exit (-1);
-                     end;
-
-                  elsif Full_Switch = "-load" then
-                     --  --load
-                     Free (Batch_File);
-                     Batch_File := new String'(Parameter);
-                  end if;
-
-               when 'd' =>
-                  --  --debug
-                  if Full_Switch = "-debug" then
-                     Free (GPS.Program_Args);
-                     GPS.Program_Args := new String'(Clean_Parameter);
-
-                  else
-                     --  --debugger
-                     Free (Debugger_Name);
-                     Debugger_Name := new String'(Parameter);
-                  end if;
-
-               when 'e' =>
-                  --  --eval
-                  Free (Batch_Script);
-                  Batch_Script := new String'(Parameter);
-
-               -- --target --
-               when 't' =>
-                  declare
-                     Param  : constant String := Parameter;
-                     Column : constant Natural :=
-                       Ada.Strings.Fixed.Index
-                         (Param, ":", Ada.Strings.Backward);
-
-                  begin
-                     --  Param should be of the form target:protocol
-
-                     if Column = 0 then
-                        raise Invalid_Switch;
-                     end if;
-
-                     Free (Target);
-                     Free (Protocol);
-                     Target   :=
-                       new String '(Param (Param'First .. Column - 1));
-                     Protocol :=
-                       new String '(Param (Column + 1 .. Param'Last));
-                  end;
-
-               when others =>
-                  null;
-            end case;
-
-         when 'P' =>
-            Project_Name := new String'
-              (Normalize_Pathname (Parameter));
-            Trace (Me, "Found project: " & Parameter);
-
-         when ASCII.NUL =>
-            exit;
-
-         when others =>
-            null;
-      end case;
-   end loop;
-
-   Display_Splash_Screen;
-
-   if Splash = null then
-      Timeout_Id := Process_Timeout.Add
-        (1, Finish_Setup'Unrestricted_Access,
-         (GPS.Kernel, null, null, null, null));
-   else
-      Timeout_Id := Process_Timeout.Add
-        (1000, Finish_Setup'Unrestricted_Access,
-         (GPS.Kernel, null, null, null, null));
-   end if;
-
+   procedure Main_Processing is
    begin
       Gtk.Main.Main;
    exception
@@ -1030,48 +1065,58 @@ begin
             Title => -"Fatal Error",
             Justification => Justify_Left);
          Result := Save_All_MDI_Children (GPS.Kernel, Force => False);
-   end;
+   end Main_Processing;
 
-   Gtk.Accel_Map.Save
-     (String_Utils.Name_As_Directory (Dir.all) & "custom_key");
+   -----------------
+   -- Do_Cleanups --
+   -----------------
 
-   Free_Modules (GPS.Kernel);
-
-   --  Call Handlers_Destroy after Free_Modules and Glide_Page.Destroy,
-   --  since some handlers are already disconnected by these functions, and
-   --  only Handlers_Destroy know what handlers are still left and need to be
-   --  disconnected.
-
-   Handlers_Destroy (GPS.Kernel);
-
-   --  Since the call to destroy below will free the animation at some point,
-   --  we no longer want to access/update it past this point.
-
-   GPS.Animation_Image := null;
-
-   declare
-      Kernel : Kernel_Handle;
+   procedure Do_Cleanups is
+      Kernel : constant Kernel_Handle := GPS.Kernel;
    begin
-      Kernel := GPS.Kernel;
-      Destroy (GPS);
-      Destroy (Kernel);
-   end;
-
-   Projects.Registry.Finalize;
-   Traces.Finalize;
-
-   Free (Home);
-   Free (Dir);
-   Free (Prefix);
-
-exception
-   when Invalid_Switch | GNAT.Command_Line.Invalid_Parameter =>
-      if GVD.Can_Output then
-         Put_Line ("Invalid command line");
+      if not Cleanup_Needed then
+         return;
       end if;
 
-      Help;
+      Cleanup_Needed := False;
 
+      if Get_Pref (Kernel, Save_Desktop_On_Exit) then
+         Save_Desktop (Kernel);
+      end if;
+
+      Gtk.Accel_Map.Save
+        (String_Utils.Name_As_Directory (Dir.all) & "custom_key");
+
+      Free_Modules (Kernel);
+
+      --  Call Handlers_Destroy after Free_Modules and Destroy (GPS),
+      --  since some handlers are already disconnected by these functions, and
+      --  only Handlers_Destroy know what handlers are still left and need to
+      --  be disconnected.
+
+      Handlers_Destroy (Kernel);
+
+      --  Since the call to destroy below will free the animation at some
+      --  point, we no longer want to access/update it past this point.
+
+      GPS.Animation_Image := null;
+      Destroy (GPS);
+      Destroy (Kernel);
+
+      Projects.Registry.Finalize;
+      Traces.Finalize;
+
+      Free (Home);
+      Free (Dir);
+      Free (Prefix);
+   end Do_Cleanups;
+
+begin
+   Init_Settings;
+   Main_Processing;
+   Do_Cleanups;
+
+exception
    when E : others =>
       Trace (Me, "Unexpected exception: " & Exception_Information (E));
 end GPS;
