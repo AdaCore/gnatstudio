@@ -24,7 +24,6 @@ with Gtk.Main;              use Gtk.Main;
 with Gtk.Stock;             use Gtk.Stock;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
-with Gtkada.MDI;            use Gtkada.MDI;
 
 with Creation_Wizard;       use Creation_Wizard;
 with Glide_Intl;            use Glide_Intl;
@@ -536,9 +535,6 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       Top       : constant Glide_Window := Glide_Window (Object);
-      MDI       : constant MDI_Window :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Child     : MDI_Child := Get_Focus_Child (MDI);
       Fd        : Process_Descriptor;
       Matched   : Match_Array (0 .. 0);
       Result    : Expect_Match;
@@ -547,17 +543,17 @@ package body Glide_Menu is
         (ASCII.SUB & "completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
       Dead      : Boolean;
-      --  Id        : Message_Id;
       Cmd       : constant String :=
         "gnatmake -P" & Get_Project_File_Name (Top.Kernel) & " ";
+      Title     : constant String := Get_Focus_Title (Top.Kernel);
 
    begin
-      --  ??? if Get_Widget (Child).all not in Source_Box_Record'Class then
-      --     return;
-      --  end if;
+      if not Focus_Is_Editor (Top.Kernel) then
+         return;
+      end if;
 
-      Args := Argument_String_To_List (Cmd & Get_Title (Child));
-      Console.Insert (Top.Kernel, Cmd & Get_Title (Child) & ASCII.LF, False);
+      Args := Argument_String_To_List (Cmd & Title);
+      Console.Insert (Top.Kernel, Cmd & Title & ASCII.LF, False);
       Non_Blocking_Spawn
         (Fd, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
          Err_To_Out  => True);
@@ -582,7 +578,6 @@ package body Glide_Menu is
             if Matched (0) = No_Match then
                Console.Insert (Top.Kernel, S);
             else
-               --  Id := Push (Top.Statusbar, 1, S (S'First + 1 .. S'Last));
                Print_Message (Top.Statusbar, Help, S (S'First + 1 .. S'Last));
             end if;
          end;
@@ -591,8 +586,7 @@ package body Glide_Menu is
    exception
       when Process_Died =>
          Console.Insert (Top.Kernel, Expect_Out (Fd));
-         --  Id := Push (Top.Statusbar, 1, "completed.");
-         Print_Message (Top.Statusbar, Help, "completed.");
+         Print_Message (Top.Statusbar, Help, -"completed.");
          Close (Fd);
    end On_Build;
 
@@ -800,9 +794,6 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       Top     : constant Glide_Window := Glide_Window (Object);
-      MDI     : constant MDI_Window :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Child   : MDI_Child := Get_Focus_Child (MDI);
       Success : Boolean;
 
       function Body_Name (Name : String) return String;
@@ -828,9 +819,9 @@ package body Glide_Menu is
       end Gnatstub;
 
    begin
-      --  if Get_Widget (Child).all in Source_Box_Record'Class then
+      if Focus_Is_Editor (Top.Kernel) then
          declare
-            Title : constant String := Get_Title (Child);
+            Title : constant String := Get_Focus_Title (Top.Kernel);
          begin
             Gnatstub (Title, Success);
 
@@ -838,7 +829,7 @@ package body Glide_Menu is
                Open_File (Top.Kernel, Body_Name (Title));
             end if;
          end;
-      --  end if;
+      end if;
    end On_Generate_Body;
 
    ----------------------
