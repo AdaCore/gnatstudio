@@ -163,8 +163,9 @@ package body GVD.Canvas is
       Win : Gdk.Window.Gdk_Window := Get_Window (C);
 
    begin
-      Set_Detect_Aliases (C, Get_Pref (Default_Detect_Aliases));
       Align_On_Grid (C, Get_Pref (Align_Items_On_Grid));
+      Set_Detect_Aliases (C, Get_Pref (Default_Detect_Aliases));
+      Recompute_All_Aliases (C);
 
       if Get_Pref (Display_Grid) then
          Configure (C, Grid_Size => Default_Grid_Size);
@@ -259,6 +260,7 @@ package body GVD.Canvas is
       C.Box_Context.Title_Font := Get_Gdkfont
         (Get_Pref (Title_Font), Get_Pref (Title_Font_Size));
       For_Each_Item (C, Refresh_Item'Unrestricted_Access);
+
       Refresh_Canvas (C);
    end Preferences_Changed;
 
