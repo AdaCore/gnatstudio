@@ -114,7 +114,7 @@ package body Codefix.GPS_Io is
    ----------
 
    procedure Undo (This : in out Console_Interface) is
-      Garbage : String := Interpret_Command
+      Garbage : constant String := Interpret_Command
         (This.Kernel, "edit_undo " & Get_File_Name (This));
       pragma Unreferenced (Garbage);
    begin
@@ -183,7 +183,7 @@ package body Codefix.GPS_Io is
 
       if Cursor.Line /= 0 then
          declare
-            Garbage : String := Interpret_Command
+            Garbage : constant String := Interpret_Command
               (This.Kernel,
                "replace_text -l" & Natural'Image (Cursor.Line)
                & " -c" & Natural'Image (Cursor.Col) & " "
@@ -198,7 +198,7 @@ package body Codefix.GPS_Io is
          end;
       else
          declare
-            Garbage : String := Interpret_Command
+            Garbage : constant String := Interpret_Command
               (This.Kernel,
                "replace_text -l 1"
                & " -c 1 "
@@ -256,7 +256,7 @@ package body Codefix.GPS_Io is
       Text_Has_Changed (This);
 
       declare
-         Garbage : String := Interpret_Command
+         Garbage : constant String := Interpret_Command
            (This.Kernel,
             "replace_text -l" & Natural'Image (Cursor.Line)
             & " -c" & Natural'Image (Cursor.Col) & " "
