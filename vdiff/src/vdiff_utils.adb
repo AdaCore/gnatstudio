@@ -26,14 +26,13 @@ with Glib; use Glib;
 with Gdk.Color; use Gdk.Color;
 with Pango.Font; use Pango.Font;
 with Gtk.Adjustment; use Gtk.Adjustment;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Gtk.Enums; use Gtk.Enums;
 with Gtk.Style; use Gtk.Style;
 with Vdiff_Pkg; use Vdiff_Pkg;
 
 package body Vdiff_Utils is
-
-   Diff_Font : constant String := "courier 12";
-   --  <preferences>
 
    package ICS renames Interfaces.C.Strings;
 
@@ -42,11 +41,12 @@ package body Vdiff_Utils is
    ---------------------
 
    procedure Fill_Diff_Lists
-     (List1 : access Gtk_Clist_Record'Class;
-      List2 : access Gtk_Clist_Record'Class;
-      File1 : String;
-      File2 : String;
-      Diff  : Diff_Occurrence_Link)
+     (Kernel : access Kernel_Handle_Record'Class;
+      List1  : access Gtk_Clist_Record'Class;
+      List2  : access Gtk_Clist_Record'Class;
+      File1  : String;
+      File2  : String;
+      Diff   : Diff_Occurrence_Link)
    is
       S             : String (1 .. 8192);
       Last          : Natural;
@@ -65,7 +65,8 @@ package body Vdiff_Utils is
       Remove_Style  : Gtk_Style;
       Change_Style  : Gtk_Style;
       Color         : Gdk_Color;
-      Desc          : Pango_Font_Description := From_String (Diff_Font);
+      Desc          : Pango_Font_Description :=
+        Get_Pref (Kernel, Default_Source_Editor_Font);
 
       procedure Add_Blank_Line
         (List  : access Gtk_Clist_Record'Class;
@@ -108,6 +109,7 @@ package body Vdiff_Utils is
       end Read_Line;
 
    begin
+      --  ??? When are these styles freed ?
       Default_Style := Copy (Get_Style (List1));
       Set_Font_Description (Default_Style, Desc);
 

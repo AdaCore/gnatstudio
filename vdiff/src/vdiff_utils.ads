@@ -21,18 +21,20 @@
 --  This package provides visual utilities to handle differences between
 --  files.
 
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Clist; use Gtk.Clist;
-with Diff_Utils; use Diff_Utils;
+with Gtk.Widget;   use Gtk.Widget;
+with Gtk.Clist;    use Gtk.Clist;
+with Diff_Utils;   use Diff_Utils;
+with Glide_Kernel;
 
 package Vdiff_Utils is
 
    procedure Fill_Diff_Lists
-     (List1 : access Gtk_Clist_Record'Class;
-      List2 : access Gtk_Clist_Record'Class;
-      File1 : String;
-      File2 : String;
-      Diff  : Diff_Occurrence_Link);
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      List1  : access Gtk_Clist_Record'Class;
+      List2  : access Gtk_Clist_Record'Class;
+      File1  : String;
+      File2  : String;
+      Diff   : Diff_Occurrence_Link);
    --  Fill List1 and List2 with lines of File given a result of diff Diff.
 
    procedure Value1_Changed (Object : access Gtk_Widget_Record'Class);

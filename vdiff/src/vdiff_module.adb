@@ -90,7 +90,8 @@ package body Vdiff_Module is
          Gtk_New (Vdiff);
          Set_Text (Vdiff.File_Label1, File1);
          Set_Text (Vdiff.File_Label2, File2);
-         Fill_Diff_Lists (Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
+         Fill_Diff_Lists
+           (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
          Show_All (Vdiff.Main_Box);
          Child := Put (Get_MDI (Kernel), Vdiff);
 
@@ -145,7 +146,8 @@ package body Vdiff_Module is
                   Set_Text (Vdiff.File_Label1, Base & (-" <reference>"));
                   Set_Text (Vdiff.File_Label2, New_File);
                   Fill_Diff_Lists
-                    (Vdiff.Clist1, Vdiff.Clist2, Ref_File, New_File, Result);
+                    (Kernel, Vdiff.Clist1, Vdiff.Clist2, Ref_File,
+                     New_File, Result);
                   Delete_File (Ref_File, Success);
                end;
 
@@ -169,7 +171,8 @@ package body Vdiff_Module is
                   Set_Text (Vdiff.File_Label1, Orig_File);
                   Set_Text (Vdiff.File_Label2, Base & (-" <reference>"));
                   Fill_Diff_Lists
-                    (Vdiff.Clist1, Vdiff.Clist2, Orig_File, Ref_File, Result);
+                    (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_File,
+                     Ref_File, Result);
                   Delete_File (Ref_File, Success);
                end;
 
@@ -184,7 +187,8 @@ package body Vdiff_Module is
                Set_Text (Vdiff.File_Label1, Orig_File);
                Set_Text (Vdiff.File_Label2, New_File);
                Fill_Diff_Lists
-                 (Vdiff.Clist1, Vdiff.Clist2, Orig_File, New_File, Result);
+                 (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_File,
+                  New_File, Result);
 
                --  ??? Connect to destroy signal so that we can free result:
                --  Free (Result);
