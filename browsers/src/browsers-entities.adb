@@ -592,9 +592,9 @@ package body Browsers.Entities is
    procedure On_Type_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Access :=
+      Context : Selection_Context_Access :=
         Get_Current_Context (Kernel);
-      Child : constant MDI_Child := Open_Type_Browser_Child (Kernel);
+      Child : MDI_Child;
       Item  : Type_Item;
       pragma Unreferenced (Widget, Item);
 
@@ -602,9 +602,12 @@ package body Browsers.Entities is
       if Context /= null
         and then Context.all in Entity_Selection_Context'Class
       then
+         Ref (Context);
+         Child := Open_Type_Browser_Child (Kernel);
          Item := Add_Or_Select_Item
            (Browser => Type_Browser (Get_Widget (Child)),
             Entity  => Get_Entity (Entity_Selection_Context_Access (Context)));
+         Unref (Context);
       end if;
 
    exception
