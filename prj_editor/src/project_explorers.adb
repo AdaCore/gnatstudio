@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -84,7 +84,7 @@ with VFS;                       use VFS;
 with Src_Info;
 with String_Hash;
 
-with Project_Explorers_Common; use Project_Explorers_Common;
+with Project_Explorers_Common;  use Project_Explorers_Common;
 
 package body Project_Explorers is
 
@@ -131,13 +131,13 @@ package body Project_Explorers is
    use String_Status_Hash.String_Hash_Table;
 
    type Explorer_Search_Context is new Search_Context with record
-      Current : Gtk_Tree_Iter := Null_Iter;
-      Include_Entities : Boolean;
-      Include_Projects : Boolean;
+      Current             : Gtk_Tree_Iter := Null_Iter;
+      Include_Entities    : Boolean;
+      Include_Projects    : Boolean;
       Include_Directories : Boolean;
-      Include_Files : Boolean;
+      Include_Files       : Boolean;
 
-      Matches : String_Status_Hash.String_Hash_Table.HTable;
+      Matches             : String_Status_Hash.String_Hash_Table.HTable;
       --  The search is performed on the internal Ada structures first, and for
       --  each matching project, directory or file, an entry is made in this
       --  table (set to true). This then speeds up the traversing of the tree
@@ -164,9 +164,9 @@ package body Project_Explorers is
    --  Create a new search context for the explorer
 
    function Explorer_Search_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Include_Projects  : Boolean;
-      Include_Files     : Boolean)
+     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Include_Projects : Boolean;
+      Include_Files    : Boolean)
       return Search_Context_Access;
    --  Create a new search context for the explorer. Only one occurence is
    --  searched, and only in Projects or Files, depending on the parameters.
@@ -261,12 +261,12 @@ package body Project_Explorers is
 
    procedure Collapse_Tree_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
-   --  Called every time a node is collapsed.
+   --  Called every time a node is collapsed
 
    function Button_Press
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean;
-   --  Called every time a row is clicked.
+   --  Called every time a row is clicked
 
    procedure Tree_Select_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
@@ -280,8 +280,8 @@ package body Project_Explorers is
 
    procedure Update_Project_Node
      (Explorer : access Project_Explorer_Record'Class;
-      Files : File_Array_Access;
-      Node : Gtk_Tree_Iter);
+      Files    : File_Array_Access;
+      Node     : Gtk_Tree_Iter);
    --  Recompute the directories for the project.
 
    procedure Update_Directory_Node
@@ -371,9 +371,9 @@ package body Project_Explorers is
    --  a project.
 
    procedure Explorer_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu
 
    function Explorer_Context_Factory
@@ -404,8 +404,8 @@ package body Project_Explorers is
    --  Save the status of the project explorer to an XML tree
 
    procedure On_Open_Explorer
-     (Widget       : access GObject_Record'Class;
-      Kernel       : Kernel_Handle);
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
    --  Raise the existing explorer, or open a new one.
 
    function Get_Or_Create_Project_View
@@ -435,10 +435,10 @@ package body Project_Explorers is
    ----------------------
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View) is
-      Col           : Gtk_Tree_View_Column;
-      Text_Rend     : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
-      Dummy         : Gint;
+      Col         : Gtk_Tree_View_Column;
+      Text_Rend   : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
+      Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin
@@ -475,7 +475,7 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean
    is
-      T    : constant Project_Explorer := Project_Explorer (Explorer);
+      T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
       return On_Button_Press (T.Kernel, T.Tree, T.Tree.Model, Event, False);
 
@@ -511,8 +511,8 @@ package body Project_Explorers is
 
       Set_File_Information
         (Context,
-         File         => Get_File_From_Node (T.Tree.Model, Node),
-         Project      => Get_Project_From_Node
+         File    => Get_File_From_Node (T.Tree.Model, Node),
+         Project => Get_Project_From_Node
            (T.Tree.Model, T.Kernel, Node, False));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Unref (Selection_Context_Access (Context));
@@ -573,15 +573,13 @@ package body Project_Explorers is
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
          "button_release_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Button_Press'Access),
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
          "button_press_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Button_Press'Access),
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
 
@@ -669,7 +667,7 @@ package body Project_Explorers is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr
+      return Node_Ptr
    is
       N : Node_Ptr;
    begin
@@ -717,14 +715,14 @@ package body Project_Explorers is
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Event_Widget);
-      Context : Selection_Context_Access;
-      T       : constant Project_Explorer := Project_Explorer (Object);
-      Item    : Gtk_Menu_Item;
-      Check   : Gtk_Check_Menu_Item;
+      Context   : Selection_Context_Access;
+      T         : constant Project_Explorer := Project_Explorer (Object);
+      Item      : Gtk_Menu_Item;
+      Check     : Gtk_Check_Menu_Item;
 
-      Iter    : constant Gtk_Tree_Iter := Find_Iter_For_Event
+      Iter      : constant Gtk_Tree_Iter := Find_Iter_For_Event
         (T.Tree, T.Tree.Model, Event);
-      Path    : Gtk_Tree_Path;
+      Path      : Gtk_Tree_Path;
       Node_Type : Node_Types;
    begin
       if Iter /= Null_Iter then
@@ -781,8 +779,9 @@ package body Project_Explorers is
    -- Execute --
    -------------
 
-   procedure Execute (Hook   : Project_Changed_Hook_Record;
-                      Kernel : access Kernel_Handle_Record'Class)
+   procedure Execute
+     (Hook   : Project_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -798,10 +797,10 @@ package body Project_Explorers is
    ----------------------
 
    function Add_Project_Node
-     (Explorer     : access Project_Explorer_Record'Class;
-      Project      : Project_Type;
-      Parent_Node  : Gtk_Tree_Iter := Null_Iter;
-      Name_Suffix  : String := "") return Gtk_Tree_Iter
+     (Explorer    : access Project_Explorer_Record'Class;
+      Project     : Project_Type;
+      Parent_Node : Gtk_Tree_Iter := Null_Iter;
+      Name_Suffix : String := "") return Gtk_Tree_Iter
    is
       N         : Gtk_Tree_Iter;
       Ref       : Gtk_Tree_Iter := Null_Iter;
@@ -1040,10 +1039,10 @@ package body Project_Explorers is
 
       while Dir_Node /= Null_Node loop
          N := Add_Directory_Node
-           (Explorer         => Explorer,
-            Directory        => Data (Dir_Node),
-            Project          => Project,
-            Parent_Node      => Node);
+           (Explorer    => Explorer,
+            Directory   => Data (Dir_Node),
+            Project     => Project,
+            Parent_Node => Node);
 
          File_Node_Index := File_Node'First;
          for S in Files'Range loop
@@ -1073,11 +1072,11 @@ package body Project_Explorers is
    -------------------------
 
    procedure Expand_Project_Node
-     (Explorer               : access Project_Explorer_Record'Class;
-      Node                   : Gtk_Tree_Iter)
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Tree_Iter)
    is
       use String_List_Utils.String_List;
-      Project     : constant Project_Type := Get_Project_From_Node
+      Project : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
 
       procedure Add_Projects;
@@ -1116,8 +1115,8 @@ package body Project_Explorers is
 
       Files : File_Array_Access := Get_Source_Files
         (Project, Recursive => False);
-      Dirs : String_List_Utils.String_List.List;
-      Dir  : constant Name_Id_Array := Source_Dirs (Project);
+      Dirs  : String_List_Utils.String_List.List;
+      Dir   : constant Name_Id_Array := Source_Dirs (Project);
 
    begin
       Push_State (Explorer.Kernel, Busy);
@@ -1161,10 +1160,10 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter;
       Project  : Project_Type)
    is
-      Obj : constant String :=
+      Obj  : constant String :=
         Name_As_Directory (Object_Path (Project, False));
       Exec : constant String := Executables_Directory (Project);
-      N   : Gtk_Tree_Iter;
+      N    : Gtk_Tree_Iter;
       pragma Unreferenced (N);
    begin
       if Obj /= "" then
@@ -1180,11 +1179,11 @@ package body Project_Explorers is
         and then Exec /= Obj
       then
          N := Add_Directory_Node
-           (Explorer         => Explorer,
-            Directory        => Exec,
-            Project          => Project,
-            Parent_Node      => Node,
-            Exec_Directory   => True);
+           (Explorer       => Explorer,
+            Directory      => Exec,
+            Project        => Project,
+            Parent_Node    => Node,
+            Exec_Directory => True);
       end if;
    end Add_Object_Directories;
 
@@ -1196,7 +1195,7 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter)
    is
-      File_Name  : constant Virtual_File :=
+      File_Name : constant Virtual_File :=
         Get_File_From_Node (Explorer.Tree.Model, Node);
    begin
       Append_File_Info (Explorer.Kernel, Explorer.Tree.Model, Node, File_Name);
@@ -1308,15 +1307,15 @@ package body Project_Explorers is
    procedure Expand_Tree_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
    is
-      Margin   : constant Gint := 30;
-      T        : constant Project_Explorer := Project_Explorer (Explorer);
-      Path     : constant Gtk_Tree_Path :=
+      Margin    : constant Gint := 30;
+      T         : constant Project_Explorer := Project_Explorer (Explorer);
+      Path      : constant Gtk_Tree_Path :=
         Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
-      Node     : constant Gtk_Tree_Iter := Get_Iter (T.Tree.Model, Path);
-      Success  : Boolean;
+      Node      : constant Gtk_Tree_Iter := Get_Iter (T.Tree.Model, Path);
+      Success   : Boolean;
       pragma Unreferenced (Success);
       Area_Rect : Gdk_Rectangle;
-      Path2    : Gtk_Tree_Path;
+      Path2     : Gtk_Tree_Path;
    begin
       if T.Expanding then
          return;
@@ -1360,10 +1359,10 @@ package body Project_Explorers is
    procedure Collapse_Tree_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
    is
-      E         : constant Project_Explorer := Project_Explorer (Explorer);
-      Path      : constant Gtk_Tree_Path :=
+      E    : constant Project_Explorer := Project_Explorer (Explorer);
+      Path : constant Gtk_Tree_Path :=
         Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
-      Node      : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
+      Node : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
 
    begin
       --  Redraw the pixmap.
@@ -1437,9 +1436,9 @@ package body Project_Explorers is
 
       N, N2 : Gtk_Tree_Iter;
 
-      Project : constant Project_Type := Get_Project_From_Node
+      Project  : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Sources : Name_Id_Array := Source_Dirs (Project);
+      Sources  : Name_Id_Array := Source_Dirs (Project);
       Imported : Project_Type_Array := Get_Imported_Projects (Project);
 
       function Is_Same_Directory (Dir1, Dir2 : String) return Boolean is
@@ -1751,7 +1750,7 @@ package body Project_Explorers is
    ---------------------------------------
 
    procedure Add_Or_Update_Flat_View_Root_Node
-     (Explorer     : access Project_Explorer_Record'Class)
+     (Explorer : access Project_Explorer_Record'Class)
    is
       Iter2, Iter3 : Gtk_Tree_Iter;
       Imported : Project_Type_Array := Get_Imported_Projects
@@ -1805,8 +1804,9 @@ package body Project_Explorers is
    -- Execute --
    -------------
 
-   procedure Execute (Hook : Refresh_Hook_Record;
-                      Kernel : access Kernel_Handle_Record'Class)
+   procedure Execute
+     (Hook   : Refresh_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -1818,10 +1818,10 @@ package body Project_Explorers is
    -------------
 
    procedure Refresh (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class) is
-      T : constant Project_Explorer := Project_Explorer (Explorer);
-      Iter         : Gtk_Tree_Iter;
-      Dummy        : Boolean;
-      Path         : Gtk_Tree_Path;
+      T     : constant Project_Explorer := Project_Explorer (Explorer);
+      Iter  : Gtk_Tree_Iter;
+      Dummy : Boolean;
+      Path  : Gtk_Tree_Path;
       pragma Unreferenced (Dummy);
 
    begin
@@ -1980,9 +1980,9 @@ package body Project_Explorers is
    -----------------------------
 
    function Explorer_Search_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Include_Projects  : Boolean;
-      Include_Files     : Boolean)
+     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Include_Projects : Boolean;
+      Include_Files    : Boolean)
       return Search_Context_Access
    is
       pragma Unreferenced (Kernel);
@@ -2022,11 +2022,11 @@ package body Project_Explorers is
       --  Return the next matching node
 
       procedure Next_Or_Child
-        (Name   : String;
-         Start  : Gtk_Tree_Iter;
+        (Name        : String;
+         Start       : Gtk_Tree_Iter;
          Check_Match : Boolean;
-         Result : out Gtk_Tree_Iter;
-         Finish : out Boolean);
+         Result      : out Gtk_Tree_Iter;
+         Finish      : out Boolean);
       pragma Inline (Next_Or_Child);
       --  Move to the next node, starting from a project or directory node by
       --  name Name.
@@ -2064,11 +2064,11 @@ package body Project_Explorers is
       -------------------
 
       procedure Next_Or_Child
-        (Name   : String;
-         Start  : Gtk_Tree_Iter;
+        (Name        : String;
+         Start       : Gtk_Tree_Iter;
          Check_Match : Boolean;
-         Result : out Gtk_Tree_Iter;
-         Finish : out Boolean) is
+         Result      : out Gtk_Tree_Iter;
+         Finish      : out Boolean) is
       begin
          if Check_Match
            and then Start /= C.Current and then Match (C, Name) /= -1
@@ -2255,8 +2255,8 @@ package body Project_Explorers is
       --------------------
 
       function Check_Entities
-        (File      : VFS.Virtual_File;
-         Project   : Project_Type) return Boolean
+        (File    : VFS.Virtual_File;
+         Project : Project_Type) return Boolean
       is
          use type Src_Info.LI_Handler;
          Languages  : constant Glide_Language_Handler :=
@@ -2310,7 +2310,7 @@ package body Project_Explorers is
          Mark_File      : Search_Status;
          Increment      : Search_Status)
       is
-         Dir : constant String := Dir_Name (File).all;
+         Dir  : constant String := Dir_Name (File).all;
          Iter : Imported_Project_Iterator;
 
       begin
@@ -2443,9 +2443,9 @@ package body Project_Explorers is
      (Explorer    : Project_Explorer;
       Target_Node : Gtk_Tree_Iter)
    is
-      Path     : Gtk_Tree_Path;
-      Parent   : Gtk_Tree_Path;
-      Expand   : Boolean;
+      Path   : Gtk_Tree_Path;
+      Parent : Gtk_Tree_Path;
+      Expand : Boolean;
 
       procedure Expand_Recursive (The_Path : Gtk_Tree_Path);
       --  Expand Path and all parents of Path that are not expanded.
@@ -2480,10 +2480,7 @@ package body Project_Explorers is
       Path_Free (Parent);
       Set_Cursor (Explorer.Tree, Path, null, False);
 
-      Scroll_To_Cell
-        (Explorer.Tree,
-         Path, null, True,
-         0.1, 0.1);
+      Scroll_To_Cell (Explorer.Tree, Path, null, True, 0.1, 0.1);
 
       Path_Free (Path);
    end Jump_To_Node;
@@ -2545,9 +2542,9 @@ package body Project_Explorers is
       Context : Glide_Kernel.Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      File_C   : File_Selection_Context_Access;
-      C        : Search_Context_Access;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      File_C : File_Selection_Context_Access;
+      C      : Search_Context_Access;
    begin
       if Context /= null
         and then Context.all in File_Selection_Context'Class
@@ -2585,9 +2582,9 @@ package body Project_Explorers is
    -------------------------
 
    procedure Explorer_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
       File : File_Selection_Context_Access;
@@ -2707,7 +2704,7 @@ package body Project_Explorers is
                      Extra_Information => Gtk_Widget (Extra),
                      Id                => Explorer_Module_ID,
                      Mask              => All_Options and not Supports_Replace
-                     and not Search_Backward and not All_Occurrences));
+                       and not Search_Backward and not All_Occurrences));
       end;
    end Register_Module;
 
