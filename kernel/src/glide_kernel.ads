@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -212,6 +212,17 @@ package Glide_Kernel is
       Renamed_Entity : out Src_Info.Queries.Entity_Information);
    --  See Src_Info.Queries.
    --  You must call Destroy on the returned entity.
+
+   procedure Find_Next_Body
+     (Kernel      : access Kernel_Handle_Record;
+      Lib_Info    : Src_Info.Li_File_Ptr;
+      File_Name   : String;
+      Entity_Name : String;
+      Line        : Positive;
+      Column      : Positive;
+      Location    : out Src_Info.File_Location;
+      Status      : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
+   --  See Src_Info.Queries.
 
    procedure Parse_All_LI_Information
      (Kernel       : access Kernel_Handle_Record;

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -751,5 +751,33 @@ package body Glide_Kernel is
          end if;
       end loop;
    end Parse_All_LI_Information;
+
+   --------------------
+   -- Find_Next_Body --
+   --------------------
+
+   procedure Find_Next_Body
+     (Kernel      : access Kernel_Handle_Record;
+      Lib_Info    : LI_File_Ptr;
+      File_Name   : String;
+      Entity_Name : String;
+      Line        : Positive;
+      Column      : Positive;
+      Location    : out Src_Info.File_Location;
+      Status      : out Find_Decl_Or_Body_Query_Status)
+   is
+      Project : Prj.Project_Id := Get_Project_From_File
+        (Get_Project_View (Kernel), File_Name);
+   begin
+      Find_Next_Body (Lib_Info, File_Name, Entity_Name, Line, Column,
+                      Get_LI_Handler_From_File
+                        (Glide_Language_Handler (Kernel.Lang_Handler),
+                         File_Name, Project),
+                      Kernel.Source_Info_List,
+                      Project,
+                      Get_Predefined_Source_Path (Kernel),
+                      Get_Predefined_Object_Path (Kernel),
+                      Location, Status);
+   end Find_Next_Body;
 
 end Glide_Kernel;
