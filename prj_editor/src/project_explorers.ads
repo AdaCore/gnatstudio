@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package groups a tre (that shows projects, directories, files, and
+--  This package groups a tree (that shows projects, directories, files, and
 --  entities in the files), and the display of the scenario variables that the
 --  user can modify.
 --  This widget also knows how to save its state to an Ada stream, and re-read
@@ -30,8 +30,12 @@ with Vsearch_Ext;
 with Gtk.Ctree;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
+with Gdk.Pixbuf;
 
 with Gtk.Box;
+with Gtk.Notebook;
+with Gtk.Tree_View;
+with Gtk.Tree_Store;
 
 package Project_Explorers is
 
@@ -76,14 +80,22 @@ private
 
    type Pixmap_Array is array (Node_Types) of Gdk.Pixmap.Gdk_Pixmap;
    type Mask_Array   is array (Node_Types) of Gdk.Bitmap.Gdk_Bitmap;
+   type Pixbuf_Array is array (Node_Types) of Gdk.Pixbuf.Gdk_Pixbuf;
 
    type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
       Scenario      : Scenario_Views.Scenario_View;
       Tree          : Gtk.Ctree.Gtk_Ctree;
+
+      Notebook      : Gtk.Notebook.Gtk_Notebook;
       Search        : Vsearch_Ext.Vsearch_Extended;
       Kernel        : Glide_Kernel.Kernel_Handle;
       Open_Pixmaps  : Pixmap_Array;
       Close_Pixmaps : Pixmap_Array;
+
+      Open_Pixbufs  : Pixbuf_Array;
+      Close_Pixbufs : Pixbuf_Array;
+      --  ??? We need pixbufs for the Tree_View and pixmaps for the CTree...
+
       Open_Masks    : Mask_Array;
       Close_Masks   : Mask_Array;
 
@@ -92,5 +104,11 @@ private
       --  refresh. It is used to restore the selection at the end of the
       --  refresh. It needs to be stored in this record, so that if this node
       --  is removed then we simply do not try to restore the selection
+
+
+      --  The following fields are for the File view.
+      File_Tree     : Gtk.Tree_View.Gtk_Tree_View;
+      File_Model    : Gtk.Tree_Store.Gtk_Tree_Store;
+      Expanding     : Boolean := False;
    end record;
 end Project_Explorers;
