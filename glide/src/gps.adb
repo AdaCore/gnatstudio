@@ -102,8 +102,6 @@ procedure GPS is
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
-   Splash_Default_Size : constant := 39326;
-   --  Default size of the splash screen.
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
@@ -121,6 +119,7 @@ procedure GPS is
    Target                 : String_Access;
    Protocol               : String_Access;
    Debugger_Name          : String_Access;
+   About_Contents         : GNAT.OS_Lib.String_Access;
    Splash                 : Gtk_Window;
    User_Directory_Existed : Boolean;
    Cleanup_Needed         : Boolean := False;
@@ -217,7 +216,7 @@ procedure GPS is
       then
          FD := Open_Read (File, Binary);
 
-         if File_Length (FD) /= Splash_Default_Size then
+         if About_Contents.all /= "" then
             Splash_Timeout := 4000;
          end if;
 
@@ -417,6 +416,15 @@ procedure GPS is
 
       Gtk_New
         (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
+
+      About_Contents := Read_File
+        (Format_Pathname (GPS.Prefix_Directory.all & "/share/gps/about.txt"));
+
+      if About_Contents = null then
+         GPS.Public_Version := False;
+         About_Contents := new String'("");
+      end if;
+
       Reset_Title (GPS);
 
       Glide_Menu.Register_Common_Menus (GPS.Kernel);
@@ -473,11 +481,13 @@ procedure GPS is
                   -- --version --
                   when 'v' =>
                      if GVD.Can_Output then
-                        Put_Line ("GPS version " & GVD.Version & " (" &
-                          GVD.Source_Date & ") hosted on " & GVD.Target);
+                        Put_Line (GPS_Name (GPS) & " version " &
+                                  GVD.Version & " (" &
+                                  GVD.Source_Date & ") hosted on " &
+                                  GVD.Target);
                      else
                         Button := Message_Dialog
-                          ("GPS version " & GVD.Version & " (" &
+                          (GPS_Name (GPS) & " version " & GVD.Version & " (" &
                            GVD.Source_Date & ") hosted on " & GVD.Target,
                            Information, Button_OK,
                            Title => -"Version",
@@ -607,7 +617,8 @@ procedure GPS is
       --  by the regular Traces mechanism.
 
       if GVD.Can_Output then
-         Put_Line ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
+         Put_Line (GPS_Name (GPS) & " " & GVD.Version &
+                   " (" & GVD.Source_Date & ")" &
                    (-", the GNAT Programming System."));
          Put_Line (-"Usage:");
          Put_Line
@@ -633,7 +644,7 @@ procedure GPS is
 
       else
          Button := Message_Dialog
-           ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
+           (GPS_Name (GPS) & " " & GVD.Version & " (" & GVD.Source_Date & ")" &
             (-", the GNAT Programming System.") & LF &
             (-"Usage:") & LF &
             (-"   gps [options] [-Pproject-file] [source1] [source2] ...") &
@@ -747,7 +758,6 @@ procedure GPS is
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
       Project           : Projects.Project_Type;
-      Contents          : GNAT.OS_Lib.String_Access;
       Screen            : Welcome_Screen;
       pragma Unreferenced (Data);
 
@@ -851,7 +861,7 @@ procedure GPS is
       GVD_Module.Register_Module (GPS.Kernel);
       Builder_Module.Register_Module (GPS.Kernel);
       Vdiff_Module.Register_Module (GPS.Kernel);
---      Vdiff2_Module.Register_Module (GPS.Kernel);
+      --  Vdiff2_Module.Register_Module (GPS.Kernel);
       VCS_Module.Register_Module (GPS.Kernel);
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
@@ -894,20 +904,14 @@ procedure GPS is
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
 
-      Contents := Read_File
-        (Format_Pathname (GPS.Prefix_Directory.all & "/share/gps/about.txt"));
-
-      if Contents = null then
-         Contents := new String'("");
-      end if;
-
       Console.Insert
         (GPS.Kernel,
-         -"Welcome to GPS " & GVD.Version & " (" & GVD.Source_Date &
+         -"Welcome to " & GPS_Name (GPS) & " " & GVD.Version &
+         " (" & GVD.Source_Date &
          (-") hosted on ") & GVD.Target & ASCII.LF &
-         (-"the GNAT Programming System") & ASCII.LF & Contents.all &
+         (-"the GNAT Programming System") & ASCII.LF & About_Contents.all &
          "(c) 2001-2003 ACT-Europe");
-      Free (Contents);
+      Free (About_Contents);
 
       --  We now make sure we have a project loaded, so that opening editors
       --  will work correctly.
@@ -1119,7 +1123,8 @@ procedure GPS is
 
       if Started then
          if Child = null then
-            Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
+            Reset_Title
+              (Glide_Window (Get_Main_Window (Kernel)));
          else
             Reset_Title
               (Glide_Window (Get_Main_Window (Kernel)),
