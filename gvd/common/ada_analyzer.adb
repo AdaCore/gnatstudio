@@ -268,6 +268,10 @@ package body Ada_Analyzer is
       Align_Colon         : Natural := 0;
       --  The column on which to align declarations.
 
+      Colon_Col           : Natural := 0;
+      --  The column where the last ':' was found.
+      --  Only relevant for Tok_Colon tokens
+
       Sloc                : Source_Location;
       --  Source location for this entity
 
@@ -1086,6 +1090,13 @@ package body Ada_Analyzer is
 
                Do_Indent (Prec, Num_Spaces);
             end if;
+
+         elsif Prev_Token = Tok_Colon_Equal
+           and then Top (Tokens).Colon_Col /= 0
+           and then Continuation_Val = 0
+         then
+            Continuation_Val := Top (Tokens).Colon_Col + 4 - Indent_Continue;
+            Do_Indent (Prec, Num_Spaces, Continuation => True);
 
          elsif Is_Continuation_Line then
             Do_Indent (Prec, Num_Spaces, Continuation => True);
@@ -2046,9 +2057,15 @@ package body Ada_Analyzer is
             Non_Blank    : Natural;
             Offset_Align : Natural;
             First_Paren  : Natural;
+            Colon_Token  : Token_Stack.Generic_Type_Access;
 
          begin
             Prev_Token := Tok_Colon;
+            Non_Blank := Start_Of_Line;
+
+            if Format then
+               Skip_Blanks (Buffer, Non_Blank);
+            end if;
 
             if Top_Token.Declaration
               and then Top_Token.Token = Tok_Identifier
@@ -2062,8 +2079,10 @@ package body Ada_Analyzer is
                   --  Create a dummy token to separate variables
                   --  declaration from their type.
 
-                  Val.Token := Tok_Colon;
+                  Val.Token     := Tok_Colon;
+                  Val.Colon_Col := P - Non_Blank;
                   Push (Tokens, Val);
+                  Colon_Token := Top (Tokens);
                end;
             end if;
 
@@ -2097,9 +2116,6 @@ package body Ada_Analyzer is
                Long := 1;
             end if;
 
-            Non_Blank := Start_Of_Line;
-            Skip_Blanks (Buffer, Non_Blank);
-
             if Num_Parens /= 0 then
                --  Handle properly alignment of first parameter in the
                --  following case:
@@ -2125,6 +2141,10 @@ package body Ada_Analyzer is
 
             Offset_Align :=
               Integer'Max (0, Align_Colon - (P - Non_Blank + 1));
+
+            if Colon_Token /= null then
+               Colon_Token.Colon_Col := Colon_Token.Colon_Col + Offset_Align;
+            end if;
 
             Replace_Text
               (First, Last,
@@ -2395,6 +2415,14 @@ package body Ada_Analyzer is
                      if Prev_Prev_Token = Tok_Comma then
                         Do_Indent (P, Num_Spaces);
                      else
+                        if Prev_Prev_Token = Tok_Colon_Equal
+                          and then Top_Token.Colon_Col /= 0
+                          and then Continuation_Val = 0
+                        then
+                           Continuation_Val :=
+                             Top (Tokens).Colon_Col + 4 - Indent_Continue;
+                        end if;
+
                         Do_Indent (P, Num_Spaces, Continuation => True);
                      end if;
                   end if;
