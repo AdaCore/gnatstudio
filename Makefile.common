@@ -310,7 +310,7 @@ ${MAIN}: check_modules ${NO_STYLE_FILES} ${C_OBJS} force
 	cd ${OBJ_DIR}; gnatmake $@ ${STYLE_FLAGS} ${ALL_FLAGS}  ${GNATBIND_FLAGS} ${GNATLINK_FLAGS} -largs ${C_OBJS} ${MODULE_LIB} 
 
 ${NO_STYLE_FILES}: force
-	@cd ${OBJ_DIR}; gnatmake -u $@ ${ALL_FLAGS}
+	@cd ${OBJ_DIR}; gnatmake -q -u $@ ${ALL_FLAGS}
 
 empty:=
 space:= $(empty) $(empty)
