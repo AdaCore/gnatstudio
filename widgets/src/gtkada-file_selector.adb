@@ -55,7 +55,6 @@ with Traces;          use Traces;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Gtkada.File_Selector is
@@ -1148,6 +1147,7 @@ package body Gtkada.File_Selector is
       Found           : Boolean := False;
       Event           : constant Gdk_Event := To_Event (Params, 1);
       S               : constant String := Get_Text (Win.Selection_Entry);
+      G               : constant String := Get_String (Event);
 
       First_Match     : Gint := -1;
       --  The first column that completely matches S.
@@ -1155,47 +1155,49 @@ package body Gtkada.File_Selector is
       Suffix_Length   : Integer := -1;
       --  The length of the biggest common matching prefix.
 
-      Sep             : Natural;
       Last            : Natural := S'Last;
-
       D               : Dir_Type;
-
       Best_Match      : String (1 .. 1024);
       Best_File_Match : String (1 .. 1024);
       File            : String (1 .. 1024);
 
-
       procedure Matcher
-        (T        : String;
+        (Base     : String;
+         T        : String;
          Position : Gint := -1);
-      --  ???
+      --  ??? Should replace Matcher by
+      --  Project_Explorers_Files.Greatest_Common_Path
 
       -------------
       -- Matcher --
       -------------
 
       procedure Matcher
-        (T        : String;
+        (Base     : String;
+         T        : String;
          Position : Gint := -1)
       is
          K : Natural := 0;
       begin
-
          while K < T'Length
-           and then K < S'Length
-           and then T (T'First + K) = S (S'First + K) loop
+           and then K < Base'Length
+           and then T (T'First + K) = Base (Base'First + K)
+         loop
             K := K + 1;
          end loop;
 
          --  Does the prefix match S ?
-         if K = S'Length then
+
+         if K = Base'Length then
             if Suffix_Length = -1 then
                First_Match := Position;
                Best_Match (1 .. T'Length) := T;
                Suffix_Length := T'Length;
+
             else
                --  If there is already a biggest match, try to
                --  get it.
+
                while K < Suffix_Length
                  and then K < T'Length
                  and then T (T'First + K) = Best_Match (K + 1)
@@ -1209,69 +1211,43 @@ package body Gtkada.File_Selector is
       end Matcher;
 
    begin
-      declare
-         G : constant String := Get_String (Event);
-      begin
-         if G'Length /= 0
-           and then G (G'First) = ASCII.HT
-         then
+      if G'Length /= 0
+        and then G (G'First) = ASCII.HT
+      then
+         declare
+            Dir  : constant String := Dir_Name (S);
+            Base : constant String := Base_Name (S);
+         begin
             --  Handle "Tab completion".
             --  The current implementation will fail if there are file names
             --  longer than 1024 characters.
 
-            --  Find out what is the biggest common prefix matching the
-            --  text in the selection entry.
+            --  Handle the easy part: change to the longest directory available
 
-            if S = ".." then
-               Set_Text (Win.Selection_Entry, "");
-               On_Up_Button_Clicked (Object);
+            if Is_Absolute_Path (Dir) and then Is_Directory (Dir) then
+               Change_Directory (Win, Dir);
+            elsif Is_Directory (Win.Current_Directory.all & Dir) then
+               Change_Directory (Win, Win.Current_Directory.all & Dir);
+            else
+               --  Dir is a non-existing directory: exit now
+
                return True;
             end if;
 
-            if S'Length >= 3 and then
-              S (S'First .. S'First + 2) = ".." & Directory_Separator
-            then
-               Set_Text (Win.Selection_Entry, S (S'First + 3 .. S'Last));
-               On_Up_Button_Clicked (Object);
-               return On_Selection_Entry_Key_Press_Event (Object, Params);
+            --  Simple case: Base is a complete valid directory.
+
+            if Is_Directory (Win.Current_Directory.all & Base) then
+               Change_Directory (Win, Win.Current_Directory.all & Base);
+               return True;
             end if;
 
-            --  Test if S has an absolute directory as prefix
-
-            if S'Length >= 1 then
-               Sep := Index (S, (1 => Directory_Separator));
-
-               if Is_Directory (S (S'First .. Sep)) then
-                  Set_Text (Win.Selection_Entry, S (Sep + 1 .. S'Last));
-                  Set_Position (Win.Selection_Entry, Gint (S'Last - Sep));
-                  Change_Directory (Win, S (S'First .. Sep));
-
-                  return On_Selection_Entry_Key_Press_Event (Object, Params);
-
-               end if;
-            end if;
-
-            while Last > S'First
-              and then S (Last) /= Directory_Separator loop
-               Last := Last - 1;
-            end loop;
-
-            if Is_Directory (Win.Current_Directory.all
-                             & S (S'First .. Last))
-            then
-               Change_Directory (Win, Win.Current_Directory.all
-                                 & S (S'First .. Last));
-               if Last /= S'Last then
-                  Set_Text (Win.Selection_Entry, S (Last + 1 .. S'Last));
-                  Set_Position (Win.Selection_Entry, Gint (S'Last - Last));
-                  return On_Selection_Entry_Key_Press_Event
-                    (Object, Params);
-               end if;
-            end if;
+            --  Base may be the start of a longer name: start the match and
+            --  find out whether Base is the start of a unique directory, in
+            --  which case open it, or the starat of a file.
 
             if Win.File_List /= null then
                for J in 0 .. Get_Rows (Win.File_List) - 1 loop
-                  Matcher (Get_Text (Win.File_List, J, 1), J);
+                  Matcher (Base, Get_Text (Win.File_List, J, 1), J);
                end loop;
             end if;
 
@@ -1283,13 +1259,14 @@ package body Gtkada.File_Selector is
                Read (D, File, Last);
                exit when Last = 0;
 
-               Matcher (File (File'First .. Last));
+               Matcher (Base, File (1 .. Last));
             end loop;
 
             Close (D);
 
             if First_Match /= -1 then
                --  The best match is a file.
+
                if Suffix_Length > 0 then
                   Select_Row (Win.File_List, First_Match, 1);
                   Moveto (Win.File_List, First_Match, 1, 0.0, 0.0);
@@ -1300,6 +1277,7 @@ package body Gtkada.File_Selector is
 
             else
                --  The best match is a directory.
+
                if Suffix_Length > 0 then
                   Set_Text (Win.Selection_Entry,
                             Best_Match (1 .. Suffix_Length));
@@ -1307,40 +1285,40 @@ package body Gtkada.File_Selector is
                end if;
 
                if Is_Directory (Win.Current_Directory.all
-                                & Best_Match (1 .. Suffix_Length))
+                                  & Best_Match (1 .. Suffix_Length))
                  and then Win.Current_Directory.all
-                 /= Normalize_Pathname (Win.Current_Directory.all
-                                        & Best_Match (1 .. Suffix_Length))
+                   /= Normalize_Pathname (Win.Current_Directory.all
+                                            & Best_Match (1 .. Suffix_Length))
                then
                   Set_Text (Win.Selection_Entry, "");
                   Change_Directory (Win,
                                     Win.Current_Directory.all
-                                    & Best_Match (1 .. Suffix_Length));
+                                      & Best_Match (1 .. Suffix_Length));
                end if;
             end if;
 
             return True;
-         end if;
+         end;
+      end if;
 
-         if Win.File_List /= null then
-            for J in 0 .. Get_Rows (Win.File_List) - 1 loop
-               exit when Found;
+      if Win.File_List /= null then
+         for J in 0 .. Get_Rows (Win.File_List) - 1 loop
+            exit when Found;
 
-               declare
-                  T : constant String := Get_Text (Win.File_List, J, 1);
-                  S : constant String := Get_Text (Win.Selection_Entry) & G;
-               begin
-                  if T'Length >= S'Length
-                    and then T (T'First .. T'First + S'Length - 1)
-                    = S (S'First .. S'First + S'Length - 1)
-                  then
-                     Found := True;
-                     Moveto (Win.File_List, J, 1, 0.0, 0.0);
-                  end if;
-               end;
-            end loop;
-         end if;
-      end;
+            declare
+               T : constant String := Get_Text (Win.File_List, J, 1);
+               S : constant String := Get_Text (Win.Selection_Entry) & G;
+            begin
+               if T'Length >= S'Length
+                 and then T (T'First .. T'First + S'Length - 1)
+                 = S (S'First .. S'First + S'Length - 1)
+               then
+                  Found := True;
+                  Moveto (Win.File_List, J, 1, 0.0, 0.0);
+               end if;
+            end;
+         end loop;
+      end if;
 
       return False;
 
