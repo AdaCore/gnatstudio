@@ -22,6 +22,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
+#include "cscmarshal.h"
 #include "htmlengine-edit-clueflowstyle.h"
 #include "htmlengine-edit-copy.h"
 #include "htmlengine-edit-cut.h"
@@ -601,7 +602,15 @@ unrealize (GtkWidget *widget)
 static gint
 expose (GtkWidget *widget, GdkEventExpose *event)
 {
-	html_engine_draw (CSC_HTML (widget)->engine,
+	CscHTML *html = CSC_HTML (widget);
+
+	/* ??? From the old draw callback:
+	HTMLPainter *painter = html->engine->painter;
+
+	html_painter_clear (painter);
+	*/
+
+	html_engine_draw (html->engine,
 			  event->area.x, event->area.y,
 			  event->area.width, event->area.height);
 
@@ -609,22 +618,6 @@ expose (GtkWidget *widget, GdkEventExpose *event)
 		(* GTK_WIDGET_CLASS (parent_class)->expose_event) (widget, event);
 
 	return TRUE;
-}
-
-static void
-draw (GtkWidget *widget, GdkRectangle *area)
-{
-	CscHTML *html = CSC_HTML (widget);
-	HTMLPainter *painter = html->engine->painter;
-
-	html_painter_clear (painter);
-
-	html_engine_draw (CSC_HTML (widget)->engine,
-			  area->x, area->y,
-			  area->width, area->height);
-
-	if (GTK_WIDGET_CLASS (parent_class)->draw)
-		(* GTK_WIDGET_CLASS (parent_class)->draw) (widget, area);
 }
 
 static void
@@ -1045,7 +1038,7 @@ class_init (CscHTMLClass *klass)
 	signals [TITLE_CHANGED] = 
 	  gtk_signal_new ("title_changed",
 			  GTK_RUN_FIRST,
-			  object_class->type,
+			  G_TYPE_FROM_CLASS (object_class),
 			  GTK_SIGNAL_OFFSET (CscHTMLClass, title_changed),
 			  gtk_marshal_NONE__STRING,
 			  GTK_TYPE_NONE, 1,
@@ -1053,23 +1046,23 @@ class_init (CscHTMLClass *klass)
 	signals [URL_REQUESTED] =
 	  gtk_signal_new ("url_requested",
 			  GTK_RUN_FIRST,
-			  object_class->type,
+			  G_TYPE_FROM_CLASS (object_class),
 			  GTK_SIGNAL_OFFSET (CscHTMLClass, url_requested),
-			  gtk_marshal_NONE__POINTER_POINTER,
+			  cschtml_VOID__STRING_POINTER,
 			  GTK_TYPE_NONE, 2,
 			  GTK_TYPE_STRING,
 			  GTK_TYPE_POINTER);
 	signals [LOAD_DONE] = 
 	  gtk_signal_new ("load_done",
 			  GTK_RUN_FIRST,
-			  object_class->type,
+			  G_TYPE_FROM_CLASS (object_class),
 			  GTK_SIGNAL_OFFSET (CscHTMLClass, load_done),
 			  gtk_marshal_NONE__NONE,
 			  GTK_TYPE_NONE, 0);
 	signals [LINK_CLICKED] =
 	  gtk_signal_new ("link_clicked",
 			  GTK_RUN_FIRST,
-			  object_class->type,
+			  G_TYPE_FROM_CLASS (object_class),
 			  GTK_SIGNAL_OFFSET (CscHTMLClass, link_clicked),
 			  gtk_marshal_NONE__STRING,
 			  GTK_TYPE_NONE, 1,
@@ -1077,7 +1070,7 @@ class_init (CscHTMLClass *klass)
 	signals [SET_BASE] =
 		gtk_signal_new ("set_base",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, set_base),
 				gtk_marshal_NONE__STRING,
 				GTK_TYPE_NONE, 1,
@@ -1085,7 +1078,7 @@ class_init (CscHTMLClass *klass)
 	signals [SET_BASE_TARGET] =
 		gtk_signal_new ("set_base_target",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, set_base_target),
 				gtk_marshal_NONE__STRING,
 				GTK_TYPE_NONE, 1,
@@ -1094,7 +1087,7 @@ class_init (CscHTMLClass *klass)
 	signals [ON_URL] =
 		gtk_signal_new ("on_url",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, on_url),
 				gtk_marshal_NONE__STRING,
 				GTK_TYPE_NONE, 1,
@@ -1103,7 +1096,7 @@ class_init (CscHTMLClass *klass)
 	signals [REDIRECT] =
 		gtk_signal_new ("redirect",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, redirect),
 				gtk_marshal_NONE__POINTER_INT,
 				GTK_TYPE_NONE, 2,
@@ -1113,7 +1106,7 @@ class_init (CscHTMLClass *klass)
 	signals [SUBMIT] =
 		gtk_signal_new ("submit",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, submit),
 				gtk_marshal_NONE__POINTER_POINTER_POINTER,
 				GTK_TYPE_NONE, 3,
@@ -1124,7 +1117,7 @@ class_init (CscHTMLClass *klass)
 	signals [OBJECT_REQUESTED] =
 		gtk_signal_new ("object_requested",
 				GTK_RUN_LAST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, object_requested),
 				gtk_marshal_BOOL__POINTER,
 				GTK_TYPE_BOOL, 1,
@@ -1133,7 +1126,7 @@ class_init (CscHTMLClass *klass)
 	signals [CURRENT_PARAGRAPH_STYLE_CHANGED] =
 		gtk_signal_new ("current_paragraph_style_changed",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, current_paragraph_style_changed),
 				gtk_marshal_NONE__INT,
 				GTK_TYPE_NONE, 1,
@@ -1142,7 +1135,7 @@ class_init (CscHTMLClass *klass)
 	signals [CURRENT_PARAGRAPH_INDENTATION_CHANGED] =
 		gtk_signal_new ("current_paragraph_indentation_changed",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, current_paragraph_indentation_changed),
 				gtk_marshal_NONE__INT,
 				GTK_TYPE_NONE, 1,
@@ -1151,7 +1144,7 @@ class_init (CscHTMLClass *klass)
 	signals [CURRENT_PARAGRAPH_ALIGNMENT_CHANGED] =
 		gtk_signal_new ("current_paragraph_alignment_changed",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, current_paragraph_alignment_changed),
 				gtk_marshal_NONE__INT,
 				GTK_TYPE_NONE, 1,
@@ -1160,19 +1153,16 @@ class_init (CscHTMLClass *klass)
 	signals [INSERTION_FONT_STYLE_CHANGED] =
 		gtk_signal_new ("insertion_font_style_changed",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLClass, insertion_font_style_changed),
 				gtk_marshal_NONE__INT,
 				GTK_TYPE_NONE, 1,
 				GTK_TYPE_INT);
 	
-	gtk_object_class_add_signals (object_class, signals, LAST_SIGNAL);
-
 	object_class->destroy = destroy;
 	
 	widget_class->realize = realize;
 	widget_class->unrealize = unrealize;
-	widget_class->draw = draw;
 	widget_class->key_press_event = key_press_event;
 	widget_class->expose_event  = expose;
 	widget_class->size_allocate = size_allocate;
@@ -1300,6 +1290,14 @@ csc_html_construct (GtkWidget *htmlw)
 			    GTK_SIGNAL_FUNC (html_engine_submit_cb), html);
 	gtk_signal_connect (GTK_OBJECT (html->engine), "object_requested",
 			    GTK_SIGNAL_FUNC (html_engine_object_requested_cb), html);
+}
+
+HTMLEngine *
+csc_html_get_engine (CscHTML *html)
+{
+	g_return_if_fail (html != NULL);
+
+	return html->engine;
 }
 
 
