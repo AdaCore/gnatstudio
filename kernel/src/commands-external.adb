@@ -37,8 +37,6 @@ package body Commands.External is
    -- Local subprograms --
    -----------------------
 
-   procedure Destroy (D : in External_Command_Access);
-   --  ???
    pragma Warnings (Off, Destroy);
 
    procedure Free is new Ada.Unchecked_Deallocation
@@ -51,9 +49,15 @@ package body Commands.External is
    -- Destroy --
    -------------
 
-   procedure Destroy (D : in External_Command_Access) is
-      D_Copy : External_Command_Access := D;
+   procedure Destroy (D : access External_Command) is
+      use String_List;
+
+      D_Copy : External_Command_Access := External_Command_Access (D);
    begin
+      Free (D.Args);
+      Free (D.Head);
+      Free (D.Command);
+      Free (D.Dir);
       Free (D_Copy);
    end Destroy;
 
@@ -64,16 +68,16 @@ package body Commands.External is
    procedure Create
      (Item         : out External_Command_Access;
       Kernel       : Kernel_Handle;
-      Command      : String_List.List;
-      Dir          : String_List.List;
+      Command      : String;
+      Dir          : String;
       Args         : String_List.List;
       Head         : String_List.List;
       Handler      : String_List_Handler) is
    begin
       Item := new External_Command;
       Item.Kernel  := Kernel;
-      Item.Command := Copy_String_List (Command);
-      Item.Dir     := Copy_String_List (Dir);
+      Item.Command := new String' (Command);
+      Item.Dir     := new String' (Dir);
       Item.Args    := Copy_String_List (Args);
       Item.Head    := Copy_String_List (Head);
       Item.Handler := Handler;
@@ -103,7 +107,7 @@ package body Commands.External is
       when Process_Died =>
          declare
             S       : constant String := Expect_Out (D.Fd);
-            Success : Boolean;
+            Success : Boolean := True;
          begin
             if S /= "" then
                String_List.Append (D.Output, S);
@@ -148,8 +152,8 @@ package body Commands.External is
    begin
       --  ??? Must add many checks for empty lists, etc.
 
-      if not String_List.Is_Empty (Command.Dir) then
-         Change_Dir (String_List.Head (Command.Dir));
+      if Command.Dir.all /= "" then
+         Change_Dir (Command.Dir.all);
       end if;
 
       for J in Args'Range loop
@@ -159,7 +163,7 @@ package body Commands.External is
 
       Non_Blocking_Spawn
         (Command.Fd,
-         Data (First (Command.Command)),
+         Command.Command.all,
          Args,
          Err_To_Out => True,
          Buffer_Size => 0);
@@ -170,7 +174,7 @@ package body Commands.External is
 
       String_List.Free (Command.Args);
 
-      if not String_List.Is_Empty (Command.Dir) then
+      if Command.Dir.all /= ""  then
          Change_Dir (Old_Dir);
       end if;
 
@@ -184,7 +188,7 @@ package body Commands.External is
       when Directory_Error =>
          Insert (Command.Kernel,
                  -"Directory error: cannot access "
-                 & String_List.Head (Command.Dir),
+                   & Command.Dir.all,
                  False, True, Error);
          return False;
    end Execute;
