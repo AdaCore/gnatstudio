@@ -119,6 +119,11 @@ package body Docgen is
          Info             : Doc_Info)
       is
          Call_Graph_Entities : Type_Entity_List.List;
+         --  Used to store entities of the callgraph for subprograms
+         --  contained in inner packages
+
+         function Is_Operator (op : String) return Boolean;
+         --  Indicates if op is a subprogram which overloads an operator
 
          function Callback
            (Entity         : Language_Entity;
@@ -134,6 +139,44 @@ package body Docgen is
          --  Prints the call graph of all subprograms contained in the list
          --  Call_Graph_Entities. This list is made when we are parsing an
          --  inner package.
+
+         -------------------
+         --  Is_Operator  --
+         -------------------
+
+         function Is_Operator (op : String) return Boolean
+         is
+            use List_Reference_In_File;
+            Ref_List_Info      : List_Reference_In_File.List_Node;
+         begin
+            Ref_List_Info
+              := List_Reference_In_File.First (List_Ref_In_File);
+
+            while Ref_List_Info /= List_Reference_In_File.Null_Node loop
+               if List_Reference_In_File.Data (Ref_List_Info).Name
+               /= null then
+                  if  op
+                    = List_Reference_In_File.Data (Ref_List_Info).Name.all
+                     --  op is a reference
+                    and then
+                      (Get_Kind (List_Reference_In_File.Data
+                                   (Ref_List_Info).Entity.all).Kind
+                         = Function_Or_Operator
+                       or else
+                         Get_Kind (List_Reference_In_File.Data
+                                     (Ref_List_Info).Entity.all).Kind
+                         = Procedure_Kind)
+                     --  The entity of this reference overloads an operator
+                  then
+                     return True;
+                  end if;
+                  Ref_List_Info
+                    := List_Reference_In_File.Next (Ref_List_Info);
+               end if;
+            end loop;
+            return False;
+         end Is_Operator;
+
 
          --------------
          -- Callback --
@@ -171,16 +214,79 @@ package body Docgen is
                      Entity_Line);
 
                when String_Text =>
-                  Format_String
-                    (B,
-                     File,
-                     Text,
-                     Sloc_Start.Index,
-                     Sloc_Start.Line,
-                     Sloc_End.Index,
-                     Sloc_End.Line,
-                     Entity_Line);
-
+                  --  In this context, we must detect overriden operators
+                  if Text (Sloc_Start.Index) = '"'
+                    and then
+                      Text (Sloc_End.Index) = '"'
+                    and then
+                      Sloc_Start.Index + 1 <= Sloc_End.Index - 1
+                  then
+                     if (not Is_Spec_File (Kernel, File_Name)
+                         and then
+                        --  For a body file, we must search the word in the
+                        --  list of reference that has been made before
+                        --  because the body is formated in one piece and we
+                        --  don't have any information about this word
+                           Is_Operator
+                             (Text (Sloc_Start.Index + 1 ..
+                                      Sloc_End.Index - 1)))
+                       or else
+                         (Is_Spec_File (Kernel, File_Name)
+                          and then
+                           --  For a spec file, we know immediatly the nature
+                           --  of the word
+                            Info.Info_Type = Subprogram_Info
+                          and then
+                            Text (Sloc_Start.Index + 1 .. Sloc_End.Index - 1)
+                            = Get_Name (Info.Subprogram_Entity.Entity))
+                     then
+                        --  Function which overrides an operator
+                        Format_Identifier
+                          (B,
+                           Entity_List,
+                           List_Ref_In_File,
+                           Sloc_Start.Index + 1,
+                           Sloc_Start.Line,
+                           Sloc_Start.Column,
+                           Sloc_End.Index - 1,
+                           Sloc_End.Line,
+                           Kernel,
+                           File,
+                           LI_Unit,
+                           Text,
+                           File_Name,
+                           Entity_Line,
+                           Line_In_Body,
+                           Source_File_List,
+                           Link_All,
+                           Is_Body,
+                           Process_Body,
+                           Info,
+                           Call_Graph_Entities);
+                     else
+                        --  Simple string
+                        Format_String
+                          (B,
+                           File,
+                           Text,
+                           Sloc_Start.Index,
+                           Sloc_Start.Line,
+                           Sloc_End.Index,
+                           Sloc_End.Line,
+                           Entity_Line);
+                     end if;
+                  else
+                     --  Simple string
+                     Format_String
+                       (B,
+                        File,
+                        Text,
+                        Sloc_Start.Index,
+                        Sloc_Start.Line,
+                        Sloc_End.Index,
+                        Sloc_End.Line,
+                        Entity_Line);
+                  end if;
                when Character_Text =>
                   Format_Character
                     (B,
@@ -236,6 +342,7 @@ package body Docgen is
          begin
             Entity_Subprogram := Type_Entity_List.First (Call_Graph_Entities);
             while Entity_Subprogram /= Type_Entity_List.Null_Node loop
+               --  For each subprogram of the package, we print its callgraph
                Name_Entity
                  := new String'(Get_Name
                                   (Type_Entity_List.Data
@@ -263,6 +370,7 @@ package body Docgen is
            and then Info.Info_Type = Package_Info
            and then not Type_Entity_List.Is_Empty (Call_Graph_Entities)
          then
+            --  Callgraph for inner package
             Call_Graph_Packages_Header (B, Kernel, File, Info);
             Call_Graph_Packages (Call_Graph_Entities);
             Call_Graph_Packages_Footer (B, Kernel, File, Info);
@@ -404,10 +512,14 @@ package body Docgen is
                      Line_In_Body := Get_Line
                        (Data (Entity_Node).Line_In_Body);
 
-                     if Data (Entity_Node).Kind = Subprogram_Entity then
+                     if Data (Entity_Node).Kind = Subprogram_Entity
+                     and then Info.Doc_Info_Options.References
+                     then
                         Type_Entity_List.Append
                           (Call_Graph_Entities,
                            Clone (Data (Entity_Node), True));
+                        --  The entity of the subprogram is stored in order to
+                        --  print its callgraph later.
                      end if;
 
                      Type_Entity_List.Remove_Nodes
@@ -600,18 +712,187 @@ package body Docgen is
       Info : Entity_Information) return Entity_Handle
    is
       use List_Entity_Handle;
-      Node : List_Entity_Handle.List_Node;
+      Node  : List_Entity_Handle.List_Node;
    begin
-      Node := List_Entity_Handle.First (List);
+      Node  := List_Entity_Handle.First (List);
+
       while Node /= List_Entity_Handle.Null_Node loop
-         if Is_Equal (Info, List_Entity_Handle.Data (Node).all) then
-            return List_Entity_Handle.Data (Node);
-         else
-            Node := List_Entity_Handle.Next (Node);
+         if List_Entity_Handle.Data (Node) /= null then
+            if Is_Equal (List_Entity_Handle.Data (Node).all, Info) then
+               return List_Entity_Handle.Data (Node);
+            end if;
          end if;
+         Node := List_Entity_Handle.Next (Node);
       end loop;
       return null;
    end Find_In_List;
+
+   -----------------
+   --  Add_Child  --
+   -----------------
+
+   procedure Add_Child (List   : in out Type_List_Tagged_Element.List;
+                        Target : in Entity_Handle;
+                        Patch  : in Entity_Handle)
+   is
+      use Type_List_Tagged_Element;
+      Node        : Type_List_Tagged_Element.List_Node;
+      Follow_Node : Type_List_Tagged_Element.List_Node;
+      Found       : Boolean;
+      Tag_Elem    : Tagged_Element_Handle;
+   begin
+      Found       := False;
+      Node        := Type_List_Tagged_Element.First (List);
+      Follow_Node := Type_List_Tagged_Element.Null_Node;
+
+      if Node /= Type_List_Tagged_Element.Null_Node then
+         --  Work on the first node first
+         if Is_Equal (Data (Node).Me.all, Target.all) then
+            --  Target found: update and exit
+            Tag_Elem := new Tagged_Element'(Data (Node));
+            List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
+            Tag_Elem.Number_Of_Children := Tag_Elem.Number_Of_Children + 1;
+            Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
+            Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+            Found := True;
+         end if;
+
+         if not Found then
+            Follow_Node := Node;
+            Node := Type_List_Tagged_Element.Next (Node);
+
+            while Node /= Type_List_Tagged_Element.Null_Node loop
+               if Is_Equal (Data (Node).Me.all, Target.all) then
+                  --  Target found: update and exit
+                  Tag_Elem := new Tagged_Element'(Data (Node));
+                  List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
+                  Tag_Elem.Number_Of_Children
+                    := Tag_Elem.Number_Of_Children + 1;
+                  Type_List_Tagged_Element.Remove_Nodes
+                    (List, Follow_Node, Node);
+                  Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+                  Found := True;
+               else
+                  Follow_Node := Node;
+                  Node := Type_List_Tagged_Element.Next (Node);
+               end if;
+               exit when Found;
+            end loop;
+         end if;
+      end if;
+   end Add_Child;
+
+   ------------------
+   --  Add_Parent  --
+   ------------------
+
+   procedure Add_Parent (List   : in out Type_List_Tagged_Element.List;
+                         Target : in Entity_Handle;
+                         Patch  : in Entity_Handle)
+   is
+      use Type_List_Tagged_Element;
+      Node        : Type_List_Tagged_Element.List_Node;
+      Follow_Node : Type_List_Tagged_Element.List_Node;
+      Found       : Boolean;
+      Tag_Elem    : Tagged_Element_Handle;
+   begin
+      Found       := False;
+      Node        := Type_List_Tagged_Element.First (List);
+      Follow_Node := Type_List_Tagged_Element.Null_Node;
+
+      if Node /= Type_List_Tagged_Element.Null_Node then
+         --  Work on the first node first
+         if Is_Equal (Data (Node).Me.all, Target.all) then
+            --  Target found: update and exit
+            Tag_Elem := new Tagged_Element'(Data (Node));
+            List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
+            Tag_Elem.Number_Of_Parents := Tag_Elem.Number_Of_Parents + 1;
+            Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
+            Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+            Found := True;
+         end if;
+
+         if not Found then
+            Follow_Node := Node;
+            Node := Type_List_Tagged_Element.Next (Node);
+
+            while Node /= Type_List_Tagged_Element.Null_Node loop
+               if Is_Equal (Data (Node).Me.all, Target.all) then
+                  --  Target found: update and exit
+                  Tag_Elem := new Tagged_Element'(Data (Node));
+                  List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
+                  Tag_Elem.Number_Of_Parents
+                    := Tag_Elem.Number_Of_Parents + 1;
+                  Type_List_Tagged_Element.Remove_Nodes
+                    (List, Follow_Node, Node);
+                  Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+                  Found := True;
+               else
+                  Follow_Node := Node;
+                  Node := Type_List_Tagged_Element.Next (Node);
+               end if;
+               exit when Found;
+            end loop;
+         end if;
+      end if;
+   end Add_Parent;
+
+   ------------------------------
+   --  Must_Print_Tagged_Type  --
+   ------------------------------
+
+   procedure Must_Print_Tagged_Type
+     (List : in out Type_List_Tagged_Element.List;
+      Target : in Entity_Handle)
+   is
+      use Type_List_Tagged_Element;
+      Node        : Type_List_Tagged_Element.List_Node;
+      Follow_Node : Type_List_Tagged_Element.List_Node;
+      Found       : Boolean;
+      Tag_Elem    : Tagged_Element_Handle;
+   begin
+      Found := False;
+      Node        := Type_List_Tagged_Element.First (List);
+      Follow_Node := Type_List_Tagged_Element.Null_Node;
+
+      if Node /= Type_List_Tagged_Element.Null_Node then
+         --  Work on the first node first
+         if Is_Equal (Data (Node).Me.all, Target.all) then
+            --  Target found: update if needed and exit
+            if Data (Node).Print_Me =  False then
+               Tag_Elem := new Tagged_Element'(Data (Node));
+               Tag_Elem.Print_Me := True;
+               Type_List_Tagged_Element.Remove_Nodes
+                 (List, Follow_Node, Node);
+               Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+            end if;
+            Found := True;
+         end if;
+
+         if not Found then
+            Follow_Node := Node;
+            Node := Type_List_Tagged_Element.Next (Node);
+
+            while Node /= Type_List_Tagged_Element.Null_Node loop
+               if Is_Equal (Data (Node).Me.all, Target.all) then
+                  --  Target found: update if needed and exit
+                  if Data (Node).Print_Me =  False then
+                     Tag_Elem := new Tagged_Element'(Data (Node));
+                     Tag_Elem.Print_Me := True;
+                     Type_List_Tagged_Element.Remove_Nodes
+                       (List, Follow_Node, Node);
+                     Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+                  end if;
+                  Found := True;
+               else
+                  Follow_Node := Node;
+                  Node := Type_List_Tagged_Element.Next (Node);
+               end if;
+               exit when Found;
+            end loop;
+         end if;
+      end if;
+   end Must_Print_Tagged_Type;
 
    ----------
    -- Free --
