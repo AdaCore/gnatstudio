@@ -37,6 +37,12 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.Label;            use Gtk.Label;
+with Gtk.Size_Group;       use Gtk.Size_Group;
+with Gtk.GEntry;           use Gtk.GEntry;
+with Gtk.Stock;            use Gtk.Stock;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -53,8 +59,17 @@ package body Glide_Main_Window is
    Me : constant Debug_Handle := Create ("Glide_Main_Window");
 
    Force_Cst      : aliased constant String := "force";
+   Msg_Cst        : aliased constant String := "msg";
+   Param1_Cst     : aliased constant String := "param1";
    Exit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Force_Cst'Access);
+   Save_Windows_Parameters : constant Cst_Argument_List :=
+     (1 => Force_Cst'Access);
+   Dialog_Cmd_Parameters   : constant Cst_Argument_List :=
+     (1 => Msg_Cst'Access);
+   Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Msg_Cst'Access,
+      2 => Param1_Cst'Access);
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -84,7 +99,8 @@ package body Glide_Main_Window is
    --  children.
 
    type Window_Mode is
-     (Split_H, Split_V, Tile_H, Tile_V, Cascade, Maximize, Unmaximize, Single);
+     (Split_H, Split_V, Tile_H, Tile_V, Cascade, Maximize, Unmaximize, Single,
+      Clone);
    type MDI_Window_Actions_Command is new Interactive_Command with record
       Kernel : Kernel_Handle;
       Mode   : Window_Mode;
@@ -118,9 +134,11 @@ package body Glide_Main_Window is
    begin
       case Command.Mode is
          when Split_H =>
-            Split (Get_MDI (Command.Kernel), Orientation_Horizontal);
+            Split (Get_MDI (Command.Kernel), Orientation_Horizontal,
+                   After => True);
          when Split_V =>
-            Split (Get_MDI (Command.Kernel), Orientation_Vertical);
+            Split (Get_MDI (Command.Kernel), Orientation_Vertical,
+                   After => True);
          when Tile_H =>
             Tile_Horizontally (Get_MDI (Command.Kernel));
          when Tile_V =>
@@ -133,7 +151,19 @@ package body Glide_Main_Window is
             Maximize_Children (Get_MDI (Command.Kernel), False);
          when Single =>
             Single_Window (Get_MDI (Command.Kernel));
+         when Clone =>
+            declare
+               Focus : constant MDI_Child :=
+                 Get_Focus_Child (Get_MDI (Command.Kernel));
+               N : MDI_Child;
+               pragma Unreferenced (N);
+            begin
+               if Focus /= null then
+                  N  := Dnd_Data (Focus, Copy => True);
+               end if;
+            end;
       end case;
+
       return Success;
    end Execute;
 
@@ -341,6 +371,9 @@ package body Glide_Main_Window is
    procedure Register_Keys (Main_Window : access Glide_Window_Record'Class) is
       Command : MDI_Child_Selection_Command_Access;
       Command2 : MDI_Window_Actions_Command_Access;
+      MDI_Class : constant Class_Type := New_Class
+        (Main_Window.Kernel, "MDI",
+         -"Represents GPS's Multiple Document Interface");
    begin
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
@@ -393,6 +426,13 @@ package body Glide_Main_Window is
          Name        => "Split horizontally",
          Command     => Command2,
          Description => -("Split the current window in two horizontally"));
+      Register_Command
+        (Main_Window.Kernel,
+         Command     => "split_horizontally",
+         Description => -"Split the current window in two parts horizontally",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -402,6 +442,13 @@ package body Glide_Main_Window is
          Name        => "Split vertically",
          Command     => Command2,
          Description => -("Split the current window in two vertically"));
+      Register_Command
+        (Main_Window.Kernel,
+         Command     => "split_vertically",
+         Description => -"Split the current window in two parts vertically",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -412,6 +459,13 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description =>
            -("Tile the windows in the central area horizontally"));
+      Register_Command
+        (Main_Window.Kernel,
+         Command     => "tile_horizontally",
+         Description => -"Tile the windows in the central area horizontally",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -422,6 +476,13 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description =>
            -("Tile the windows in the central area vertically"));
+      Register_Command
+        (Main_Window.Kernel,
+         Command     => "tile_vertically",
+         Description => -"Tile the windows in the central area vertically",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -431,6 +492,13 @@ package body Glide_Main_Window is
          Name        => "Maximize windows",
          Command     => Command2,
          Description => -("Maximize all windows in the central area"));
+      Register_Command
+        (Main_Window.Kernel,
+         Command     => "maximize_windows",
+         Description => -"Maximize all windows in the central area",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -440,6 +508,13 @@ package body Glide_Main_Window is
          Name        => "Unmaximize windows",
          Command     => Command2,
          Description => -("Unmaximize all windows in the central area"));
+      Register_Command
+        (Main_Window.Kernel,
+         Command     => "unmaximize_windows",
+         Description => -"Unmaximize all windows in the central area",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -450,7 +525,97 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description => -("Unsplit the central area of GPS, so that only one"
                           & " window is visible"));
+      Register_Command
+        (Main_Window.Kernel,
+         Command     => "single_window",
+         Description =>
+         -("Unsplit the central area of GPS, so that only one window is"
+           & " visible"),
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
 
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Clone;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Clone window",
+         Command     => Command2,
+         Description =>
+         -("Create a duplicate of the current window if possible. Not all"
+           & " windows support this operation."));
+      Register_Command
+        (Main_Window.Kernel, "clone_window",
+         Description =>
+         -("Create a duplicate of the current window if possible. Not all"
+           & " windows support this operation."),
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler => Default_Command_Handler'Access);
+
+      Register_Command
+        (Main_Window.Kernel,
+         Command      => "dialog",
+         Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
+         Description  =>
+           -("Display a modal dialog to report information to a user. This"
+             & " blocks the interpreter until the dialog is closed."),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel,
+         Command      => "yes_no_dialog",
+         Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
+         Return_Value => "boolean",
+         Description  =>
+           -("Display a modal dialog to ask a question to the user. This"
+             & " blocks the interpreter until the dialog is closed. The"
+             & " dialog has two buttons Yes and No, and the selected button"
+             & " is returned to the caller"),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel,
+         Command      => "input_dialog",
+         Params       =>
+           Parameter_Names_To_Usage (Input_Dialog_Cmd_Parameters),
+         Return_Value => "list",
+         Description  =>
+           -("Display a modal dialog and request some input from the user."
+             & " The message is displayed at the top, and one input field"
+             & " is displayed for each remaining argument. The return value"
+             & " is the value that the user has input for each of these"
+             & " parameters." & ASCII.LF
+             & "An empty list is returned if the user presses Cancel"),
+         Minimum_Args => 2,
+         Maximum_Args => 100,
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Main_Window.Kernel,
+         Command      => "save_all",
+         Params       => Parameter_Names_To_Usage (Save_Windows_Parameters),
+         Description  =>
+           -("Save all currently unsaved windows. This includes open editors,"
+             & " the project, and any other window that has registered some"
+             & " save callbacks." & ASCII.LF
+             & "If the force parameter is false, then a confirmation dialog"
+             & " is displayed so that the user can select which windows"
+             & " to save."),
+         Minimum_Args  => 0,
+         Maximum_Args  => 1,
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel,
          Command      => "exit",
@@ -480,6 +645,117 @@ package body Glide_Main_Window is
          Name_Parameters (Data, Exit_Cmd_Parameters);
          Quit (Glide_Window (Get_Main_Window (Kernel)),
                Force => Nth_Arg (Data, 1, False));
+      elsif Command = "save_all" then
+         Name_Parameters (Data, Save_Windows_Parameters);
+
+         if not Save_MDI_Children
+           (Kernel, No_Children, Nth_Arg (Data, 1, False))
+         then
+            Set_Error_Msg (Data, -"Cancelled by user");
+         end if;
+      elsif Command = "split_horizontally" then
+         Split (Get_MDI (Kernel), Orientation_Horizontal, After => True);
+      elsif Command = "split_vertically" then
+         Split (Get_MDI (Kernel), Orientation_Vertical, After => True);
+      elsif Command = "tile_horizontally" then
+         Tile_Horizontally (Get_MDI (Kernel));
+      elsif Command = "tile_vertically" then
+         Tile_Vertically (Get_MDI (Kernel));
+      elsif Command = "maximize_windows" then
+         Maximize_Children (Get_MDI (Kernel), True);
+      elsif Command = "unmaximize_windows" then
+         Maximize_Children (Get_MDI (Kernel), False);
+      elsif Command = "single_window" then
+         Single_Window (Get_MDI (Kernel));
+      elsif Command = "clone_window" then
+         declare
+            Focus : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+            N : MDI_Child;
+            pragma Unreferenced (N);
+         begin
+            if Focus /= null then
+               N  := Dnd_Data (Focus, Copy => True);
+            end if;
+         end;
+      elsif Command = "dialog" then
+         Name_Parameters (Data, Dialog_Cmd_Parameters);
+
+         declare
+            Result : Message_Dialog_Buttons;
+            pragma Unreferenced (Result);
+         begin
+            Result := Message_Dialog
+              (Msg     => Nth_Arg (Data, 1),
+               Buttons => Button_OK,
+               Justification => Justify_Left,
+               Parent  => Get_Main_Window (Kernel));
+         end;
+
+      elsif Command = "yes_no_dialog" then
+         Name_Parameters (Data, Dialog_Cmd_Parameters);
+         Set_Return_Value
+           (Data, Message_Dialog
+            (Msg           => Nth_Arg (Data, 1),
+             Buttons       => Button_Yes + Button_No,
+             Justification => Justify_Left,
+             Dialog_Type   => Confirmation,
+             Parent        => Get_Main_Window (Kernel)) = Button_Yes);
+
+      elsif Command = "input_dialog" then
+         declare
+            Dialog : Gtk_Dialog;
+            Label  : Gtk_Label;
+            Group  : Gtk_Size_Group;
+            Hbox   : Gtk_Hbox;
+            Button : Gtk_Widget;
+
+            type Ent_Array
+               is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
+            Ent : Ent_Array;
+
+         begin
+            Name_Parameters (Data, Input_Dialog_Cmd_Parameters);
+            Gtk_New (Dialog,
+                     Title  => Nth_Arg (Data, 1),
+                     Parent => Get_Main_Window (Kernel),
+                     Flags  => Modal);
+
+            Gtk_New (Label, Nth_Arg (Data, 1));
+            Set_Alignment (Label, 0.0, 0.5);
+            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+            Gtk_New (Group);
+
+            for Num in Ent'Range loop
+               Gtk_New_Hbox (Hbox, Homogeneous => False);
+               Pack_Start (Get_Vbox (Dialog), Hbox);
+
+               Gtk_New (Label, Nth_Arg (Data, Num) & ':');
+               Set_Alignment (Label, 0.0, 0.5);
+               Add_Widget (Group, Label);
+               Pack_Start (Hbox, Label, Expand => False);
+
+               Gtk_New (Ent (Num));
+               Set_Activates_Default (Ent (Num),  True);
+               Pack_Start (Hbox, Ent (Num));
+            end loop;
+
+            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+            Grab_Default (Button);
+            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+            Show_All (Dialog);
+
+            Set_Return_Value_As_List (Data);
+
+            if Run (Dialog) = Gtk_Response_OK then
+               for Num in Ent'Range loop
+                  Set_Return_Value (Data, Get_Text (Ent (Num)));
+               end loop;
+            end if;
+
+            Destroy (Dialog);
+         end;
       end if;
    end Default_Command_Handler;
 
