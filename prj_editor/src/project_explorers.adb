@@ -197,7 +197,6 @@ package body Project_Explorers is
       Directory        : String;
       Parent_Node      : Gtk_Tree_Iter := Null_Iter;
       Project          : Project_Type;
-      Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False;
       Exec_Directory   : Boolean := False) return Gtk_Tree_Iter;
    --  Add a new directory node in the tree, for Directory.
@@ -311,12 +310,6 @@ package body Project_Explorers is
    --
    --  If Force_Expanded is true, then the node is considered as currently
    --  expanded.
-
-   function Has_Entries
-     (Project   : Project_Type;
-      Directory : String;
-      Files     : String_Array_Access) return Boolean;
-   --  Return True if Directory contains any file among Files.
 
    procedure Refresh
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -618,14 +611,18 @@ package body Project_Explorers is
       User : Kernel_Handle) return MDI_Child
    is
       Explorer : Project_Explorer;
+      Child    : MDI_Child;
    begin
       if Node.Tag.all = "Project_Explorer_Project" then
+         Trace (Me, "Load_Desktop");
          Gtk_New (Explorer, User);
          Refresh (Explorer);
-         return Put
+         Child := Put
            (MDI, Explorer,
             Default_Width  => Get_Pref (User, Default_Widget_Width),
             Default_Height => Get_Pref (User, Default_Widget_Height));
+         Trace (Me, "Done loading desktop");
+         return Child;
       end if;
 
       return null;
@@ -837,33 +834,6 @@ package body Project_Explorers is
       return N;
    end Add_Project_Node;
 
-   -----------------
-   -- Has_Entries --
-   -----------------
-
-   function Has_Entries
-     (Project   : Project_Type;
-      Directory : String;
-      Files     : String_Array_Access) return Boolean
-   is
-      Dir : constant String := Name_As_Directory (Normalize_Pathname
-        (Directory, Dir_Name (Project_Path (Project)),
-         Resolve_Links => False));
-   begin
-      if Files /= null then
-         --  We check in the project itself whether there are some files in the
-         --  directory.
-
-         for F in Files'Range loop
-            if Dir_Name (Files (F).all) = Dir then
-               return True;
-            end if;
-         end loop;
-      end if;
-
-      return False;
-   end Has_Entries;
-
    --------------------------------
    -- Update_Directory_Node_Text --
    --------------------------------
@@ -896,7 +866,6 @@ package body Project_Explorers is
       Directory        : String;
       Parent_Node      : Gtk_Tree_Iter := Null_Iter;
       Project          : Project_Type;
-      Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False;
       Exec_Directory   : Boolean := False) return Gtk_Tree_Iter
    is
@@ -912,7 +881,7 @@ package body Project_Explorers is
 
       Is_Leaf := Node_Type = Obj_Directory_Node
         or else Node_Type = Exec_Directory_Node
-        or else not Has_Entries (Project, Directory, Files_In_Project);
+        or else not Directory_Contains_Files (Project, Directory);
 
       if Object_Directory then
          --  Append the object directory before the first project.
@@ -973,8 +942,6 @@ package body Project_Explorers is
       use String_List_Utils.String_List;
       Project     : constant Project_Type :=
         Get_Project_From_Node (Explorer, Node, False);
-      Files       : String_Array_Access := Get_Source_Files
-        (Project, Recursive => False, Full_Path => True, Normalized => True);
 
       procedure Add_Projects;
       --  Adds the subprojects.
@@ -1035,8 +1002,7 @@ package body Project_Explorers is
               (Explorer         => Explorer,
                Directory        => Data (Dir_Node),
                Project          => Project,
-               Parent_Node      => Node,
-               Files_In_Project => Files);
+               Parent_Node      => Node);
             Dir_Node := Next (Dir_Node);
          end loop;
 
@@ -1056,13 +1022,11 @@ package body Project_Explorers is
          Add_Projects;
       end if;
 
-      Free (Files);
       Pop_State (Explorer.Kernel);
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Free (Files);
          Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
 
@@ -1087,7 +1051,6 @@ package body Project_Explorers is
             Directory        => Obj,
             Project          => Project,
             Parent_Node      => Node,
-            Files_In_Project => null,
             Object_Directory => True);
       end if;
 
@@ -1100,8 +1063,7 @@ package body Project_Explorers is
             Directory        => Exec,
             Project          => Project,
             Parent_Node      => Node,
-            Files_In_Project => null,
-               Exec_Directory   => True);
+            Exec_Directory   => True);
       end if;
    end Add_Object_Directories;
 
@@ -1452,7 +1414,6 @@ package body Project_Explorers is
                Directory        => Data (Dir_Node),
                Parent_Node      => Node,
                Project          => Project,
-               Files_In_Project => Files,
                Object_Directory => False);
             Dir_Node := Next (Dir_Node);
          end loop;
@@ -1692,7 +1653,7 @@ package body Project_Explorers is
               Get_String (Explorer.Tree.Model, Node, Base_Name_Column);
          begin
             if (Node_Type = Directory_Node
-                and then Has_Entries (Prj, Str, Files))
+                and then Directory_Contains_Files (Prj, Str))
               or else
                 (Node_Type = Project_Node and then Has_Imported_Projects (Prj))
               or else Direct_Sources_Count (Prj) /= 0
