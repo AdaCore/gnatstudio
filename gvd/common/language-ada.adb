@@ -21,6 +21,7 @@
 with GNAT.Regpat;  use GNAT.Regpat;
 with Odd.Pixmaps;  use Odd.Pixmaps;
 with Odd.Strings;  use Odd.Strings;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Language.Debugger.Ada is
 
@@ -46,8 +47,8 @@ package body Language.Debugger.Ada is
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
        ("^[ \t]*(procedure|function)\s+" &
-        "(\w+)(\s+|\s*\([^\)]+\))" &
-        "(\s*return\s+(\w|\.)+\s*)?(is\W|;)", Multiple_Lines);
+        "(\w+)(\s*|\s*\([^\)]+\))\s*" &
+        "(return\s+(\w|\.)+\s*)?(is\s|;)", Multiple_Lines);
 
    Package_RE    : aliased Pattern_Matcher :=
      Compile
@@ -189,6 +190,17 @@ package body Language.Debugger.Ada is
       --  on the side might be displayed properly.
 
       else
+
+         --  First skip the current word
+         if Is_Letter (Buffer (Next_Char)) then
+            while Next_Char <= Buffer'Last
+              and then Is_Letter (Buffer (Next_Char))
+            loop
+               Next_Char := Next_Char + 1;
+            end loop;
+         end if;
+
+         --  Then the strange characters
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ' '
            and then Buffer (Next_Char) /= ASCII.LF
@@ -196,6 +208,7 @@ package body Language.Debugger.Ada is
            and then Buffer (Next_Char) /= '"'
            and then Buffer (Next_Char) /= '-'   --  for comments
            and then Buffer (Next_Char) /= '''   --  constant character
+           and then not Is_Letter (Buffer (Next_Char))
          loop
             Next_Char := Next_Char + 1;
          end loop;
