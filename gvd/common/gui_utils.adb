@@ -18,9 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gdk.Color;                use Gdk.Color;
 with Gdk.Cursor;               use Gdk.Cursor;
+with Gdk.Drawable;             use Gdk.Drawable;
 with Gdk.Event;                use Gdk.Event;
+with Gdk.Font;                 use Gdk.Font;
+with Gdk.GC;                   use Gdk.GC;
 with Gdk.Main;                 use Gdk.Main;
+with Gdk.Pixmap;               use Gdk.Pixmap;
 with Gdk.Window;               use Gdk.Window;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
@@ -40,6 +45,7 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Widget;               use Gtk.Widget;
+with Pango.Font;               use Pango.Font;
 
 package body GUI_Utils is
 
@@ -521,5 +527,57 @@ package body GUI_Utils is
       Iter := Get_Iter_From_String (M, Path_String);
       Set_Value (M, Iter, Data, Text_Value);
    end Edited_Callback;
+
+   -----------------------------
+   -- Create_Pixmap_From_Text --
+   -----------------------------
+
+   procedure Create_Pixmap_From_Text
+     (Text     : String;
+      Font     : Pango.Font.Pango_Font_Description;
+      Bg_Color : Gdk.Color.Gdk_Color;
+      Window   : Gdk.Window.Gdk_Window;
+      Pixmap   : out Gdk.Gdk_Pixmap;
+      Width    : out Glib.Gint;
+      Height   : out Glib.Gint)
+   is
+      GC : Gdk_GC;
+      F  : Gdk_Font;
+   begin
+      --  ??? Should use a pango_layout instead for proper support of
+      --  internationalization
+
+      Gdk_New (GC, Window);
+      Set_Foreground (GC, Bg_Color);
+
+      F := From_Description (Font);
+
+      Height := Get_Ascent (F) + Get_Descent (F);
+      Width  := String_Width (F, Text) + 4;
+      Gdk.Pixmap.Gdk_New (Pixmap, Window, Width, Height);
+      Draw_Rectangle
+        (Pixmap,
+         GC,
+         Filled => True,
+         X      => 0,
+         Y      => 0,
+         Width  => Width - 1,
+         Height => Height - 1);
+
+      Set_Foreground (GC, Black (Get_Default_Colormap));
+      Draw_Text (Pixmap, F, GC, 2, Get_Ascent (F), Text);
+
+      Draw_Rectangle
+        (Pixmap,
+         GC,
+         Filled => False,
+         X      => 0,
+         Y      => 0,
+         Width  => Width - 1,
+         Height => Height - 1);
+
+      Unref (F);
+      Unref (GC);
+   end Create_Pixmap_From_Text;
 
 end GUI_Utils;

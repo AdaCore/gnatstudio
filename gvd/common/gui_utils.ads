@@ -21,6 +21,7 @@
 --  This package contains a series of subprograms that can be used
 --  for misc. graphical tasks.
 
+with Gdk.Color;
 with Gdk.Event;
 with Gdk.Window;
 with Glib.Object;
@@ -37,6 +38,7 @@ with Gtk.List_Item;
 with Gtk.Menu;
 with Gtk.Tree_Store;
 with Gtk.Widget;
+with Pango.Font;
 
 package GUI_Utils is
 
@@ -115,6 +117,23 @@ package GUI_Utils is
       Column   : Glib.Gint);
    --  Set the renderer as editable, and make sure that its text is updated
    --  when the user has finished editing it.
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   procedure Create_Pixmap_From_Text
+     (Text     : String;
+      Font     : Pango.Font.Pango_Font_Description;
+      Bg_Color : Gdk.Color.Gdk_Color;
+      Window   : Gdk.Window.Gdk_Window;
+      Pixmap   : out Gdk.Gdk_Pixmap;
+      Width    : out Glib.Gint;
+      Height   : out Glib.Gint);
+   --  Create a new pixmap that contains Text. Bg_Color is used for the
+   --  background of the pixmap.
+   --  Window is used to get access to the display (creation of graphic
+   --  contexts and pixmaps with appropriate depth).
 
    ----------------------
    -- Contextual menus --
