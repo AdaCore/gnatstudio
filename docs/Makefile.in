@@ -8,16 +8,21 @@ TEX= @TEX@
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
-IMAGES = gps_title.jpg explorer-views.gif mdi-icons.gif mdi-title-bar.gif \
-	 gps-animation.gif mdi-scroll-tabs.gif search-hide.gif \
-	 locations-view.gif mdi-tile-horizontal.gif search-options.gif \
-	 mdi-cascade.gif mdi-tile-vertical.gif
+CP = cp -p
+IMAGES = gps_title.jpg *.gif
 
 TEXI2HTML_FLAGS=-split_chapter -menu
 
-all: doc tutorial clean-temp-files
+all: cp_gvd doc tutorial clean-temp-files
 non-ps: common clean-temp-files
 static:
+
+cp_gvd:
+	@-for img in main-window breakpoints memory-view \
+	     assembly canvas process colors tasks explorer tooltips; do \
+	  $(CP) ../gvd/docs/$${img}.gif .; \
+	  $(CP) ../gvd/docs/$${img}.eps .; \
+	done
 
 tutorial: gps-tutorial.html
 
