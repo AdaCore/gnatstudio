@@ -111,6 +111,7 @@ with SSH_Protocol;
 with HTTP_Protocol;
 with Refactoring_Module;
 with Action_Editor;
+with Outline_View;
 with Socket_Module;
 
 procedure GPS is
@@ -157,7 +158,8 @@ procedure GPS is
      Create ("MODULE.Project_Viewer", On);
    Project_Properties_Trace : constant Debug_Handle :=
      Create ("MODULE.Project_Properties", On);
-   CPP_Trace    : constant Debug_Handle := Create ("MODULE.CPP", On);
+   CPP_Trace : constant Debug_Handle := Create ("MODULE.CPP", On);
+   Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
    Socket_Trace : constant Debug_Handle := Create ("MODULE.Socket", Off);
    Server_Mode  : constant Debug_Handle := Create ("Server_Mode", Off);
 
@@ -1070,6 +1072,10 @@ procedure GPS is
 
       if Active (Files_Explorer_Trace) then
          Project_Explorers_Files.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Outline_View_Trace) then
+         Outline_View.Register_Module (GPS.Kernel);
       end if;
 
       if Active (External_Editor_Trace) then
