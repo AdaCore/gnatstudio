@@ -1905,8 +1905,8 @@ package body Project_Viewers is
 
    function Widget_Factory
      (Page         : access Naming_Editor_Record;
-      Project_View : Project_Id; Kernel : access Kernel_Handle_Record'Class)
-      return Gtk_Widget
+      Project_View : Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Page);
       Editor : Naming_Editor;
@@ -1952,8 +1952,7 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Page);
    begin
-      Set_Visible_Pages
-        (Naming_Editor (Widget), Languages, Project_View);
+      Set_Visible_Pages (Naming_Editor (Widget), Languages, Project_View);
    end Refresh;
 
    ---------------------
