@@ -976,7 +976,7 @@ package body Src_Editor_View is
          View,
          After => False);
 
-      if GVD.Gtk_Extra_Refresh then
+      if GVD.Host = GVD.Windows then
          --  ??? Under Windows, a click does not refresh the entire area as it
          --  does under X. We need it to properly redraw current line and
          --  current block, therefore we do it manually.
