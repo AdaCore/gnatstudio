@@ -32,6 +32,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with String_Utils;              use String_Utils;
 
 with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_Module;                use VCS_Module;
 
 with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
@@ -1228,7 +1229,7 @@ package body VCS.CVS is
       VCS_CVS_Module_ID.CVS_Reference.Kernel := Kernel_Handle (Kernel);
       VCS_CVS_Module_ID.CVS_Reference.Queue  := New_Queue;
 
-      Register_VCS (Kernel, CVS_Identifier);
+      Register_VCS (VCS_Module_ID, CVS_Identifier);
    end Register_Module;
 
 end VCS.CVS;

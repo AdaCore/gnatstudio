@@ -30,6 +30,7 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_Module;                use VCS_Module;
 
 with Commands;                  use Commands;
 
@@ -461,7 +462,7 @@ package body VCS.ClearCase is
         := Kernel_Handle (Kernel);
       VCS_ClearCase_Module_ID.ClearCase_Reference.Queue  := New_Queue;
 
-      Register_VCS (Kernel, ClearCase_Identifier);
+      Register_VCS (VCS_Module_ID, ClearCase_Identifier);
    end Register_Module;
 
 end VCS.ClearCase;

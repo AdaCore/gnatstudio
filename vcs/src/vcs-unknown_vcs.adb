@@ -20,6 +20,7 @@
 
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with VCS_Module;                use VCS_Module;
 
 package body VCS.Unknown_VCS is
 
@@ -283,7 +284,7 @@ package body VCS.Unknown_VCS is
    begin
       --  ??? Where should this be unregistered. Memory leak otherwise.
       Register_VCS_Identifier (Identify_VCS'Access);
-      Register_VCS (Kernel, Unknown_VCS_Name);
+      Register_VCS (VCS_Module_ID, "");
 
       --  ??? Where is this freed. Memory leak
       Unknown_VCS_Reference := new Unknown_VCS_Record;
