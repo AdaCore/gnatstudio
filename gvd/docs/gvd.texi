@@ -60,6 +60,7 @@ Description of the main windows
 * The Tool Bar::
 * The Call Stack Window::
 * The Data Window::
+* The Breakpoint Editor::
 * The Memory Window::
 * The Explorer Window::
 * The Source Window::
@@ -123,6 +124,7 @@ at the moment it crashed.
 * The Tool Bar::
 * The Call Stack Window::
 * The Data Window::
+* The Breakpoint Editor::
 * The Memory Window::
 * The Explorer Window::
 * The Source Window::
@@ -577,13 +579,10 @@ the following commands. Failing to do so will result in blank windows.
 @image{tasks, 12.7cm}
 @end iftex
 
-@iftex
-@image{breakpoints, 12.7cm}
-@end iftex
-
    @item Edit Breakpoints...
-      Opens an advanced window to create any kind of breakpoint. For simple
-      breakpoint creation, see the description of the source window.
+      Opens an advanced window to create and modify any kind of breakpoint
+      (see @ref{The Breakpoint Editor}).
+      For simple breakpoint creation, see the description of the source window.
 
    @item Examine Memory...
       Opens a memory viewer/editor. See @ref{The Memory Window} for more
@@ -941,6 +940,28 @@ again).
 
 @end table
 
+@c --------------------------------------------------------------------
+@node The Breakpoint Editor
+@section The Breakpoint Editor
+@c --------------------------------------------------------------------
+
+@iftex
+@image{breakpoints, 12.7cm}
+@end iftex
+
+@noindent
+The breakpoint editor can be accessed from the menu
+@i{Data->Edit Breakpoints...}. It gives access to the different kind of
+breakpoints: on source location, subprogram, address, variables, exceptions.
+
+The top area provides an interface to easily create the different kinds of
+breakpoints, while the bottom area lists the existing exception and
+their characteristics.
+
+It is possible to access to advanced breakpoint characteristics by clicking
+on the @i{Advanced} button, which will display a new area on the right of the
+window, where you can specify commands to run automatically after a breakpoint
+is hit, or specify how many times a selected breakpoint will be ignored.
 
 @c --------------------------------------------------------------------
 @node The Memory Window
