@@ -28,20 +28,12 @@ with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 
 with Glide_Intl;              use Glide_Intl;
 
-with GVD.Status_Bar;          use GVD.Status_Bar;
-
 with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 
-with GVD.Dialogs;             use GVD.Dialogs;
-
-with GNAT.Expect;               use GNAT.Expect;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Factory_Data;            use Factory_Data;
@@ -96,24 +88,6 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Project->Open menu
 
-   procedure On_Build
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Build->Make menu
-
-   procedure On_Run
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Build->Run menu
-
-   procedure On_Stop_Build
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Build->Stop Build menu
-
    procedure On_Manual
      (Object : Data_Type_Access;
       Action : Guint;
@@ -125,25 +99,6 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Help->About menu
-
-   -----------------------------
-   -- Misc internal functions --
-   -----------------------------
-
-   procedure Refresh;
-   --  Handle pending graphical events.
-
-   -------------
-   -- Refresh --
-   -------------
-
-   procedure Refresh is
-      Dead : Boolean;
-   begin
-      while Gtk.Main.Events_Pending loop
-         Dead := Main_Iteration;
-      end loop;
-   end Refresh;
 
    ---------------------
    -- On_Open_Project --
@@ -248,156 +203,6 @@ package body Glide_Menu is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Preferences;
 
-   --------------
-   -- On_Build --
-   --------------
-
-   procedure On_Build
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top       : constant Glide_Window := Glide_Window (Object);
-      Fd        : Process_Descriptor;
-      Matched   : Match_Array (0 .. 0);
-      Result    : Expect_Match;
-      Args      : Argument_List_Access;
-      Matcher   : constant Pattern_Matcher := Compile
-        ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
-         Multiple_Lines);
-      Title     : String_Access;
-      --  ??? Should get the name of the real main
-      Project   : constant String := Get_Project_File_Name (Top.Kernel);
-      Cmd       : constant String :=
-        "gnatmake -P" & Project & " "
-        & Scenario_Variables_Cmd_Line (Top.Kernel)
-        & " ";
-
-   begin
-      if Get_Current_Explorer_Context (Top.Kernel) /= null then
-         Title := new String'
-           (File_Information (File_Selection_Context_Access (
-             Get_Current_Explorer_Context (Top.Kernel))));
-      else
-         return;
-      end if;
-
-      Set_Busy (Top.Kernel, True);
-
-      if Project = "" then
-         --  This is the default internal project
-
-         Args := Argument_String_To_List ("gnatmake -d " & Title.all);
-         Console.Insert (Top.Kernel, "gnatmake " & Title.all, False);
-
-      else
-         Args := Argument_String_To_List (Cmd & Title.all & " -d");
-         Console.Insert (Top.Kernel, Cmd & Title.all, False);
-      end if;
-
-      Top.Interrupted := False;
-      Non_Blocking_Spawn
-        (Fd, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-         Err_To_Out  => True);
-
-      loop
-         Refresh;
-
-         if Top.Interrupted then
-            Interrupt (Fd);
-            Console.Insert (Top.Kernel, "<^C>");
-         end if;
-
-         Expect (Fd, Result, ".+", Timeout => 50);
-
-         declare
-            S : constant String := Expect_Out (Fd);
-         begin
-            Match (Matcher, S, Matched);
-
-            if Matched (0) = No_Match then
-               Console.Insert (Top.Kernel, S, Add_LF => False);
-            else
-               Print_Message
-                 (Top.Statusbar, GVD.Status_Bar.Help,
-                  S (S'First + 1 .. S'Last));
-            end if;
-         end;
-      end loop;
-
-      --  Note: The loop above can only exit via an exception (expected
-      --  exception is Process_Died), so put any clean up code in the handlers
-      --  below, not here.
-
-   exception
-      when Process_Died =>
-         Free (Title);
-         Console.Insert (Top.Kernel, Expect_Out (Fd), Add_LF => False);
-         --  ??? Check returned status.
-
-         Set_Busy (Top.Kernel, False);
-
-         if Top.Interrupted then
-            Top.Interrupted := False;
-            Print_Message
-              (Top.Statusbar, GVD.Status_Bar.Help,
-               -"build interrupted.");
-         else
-            Print_Message
-              (Top.Statusbar, GVD.Status_Bar.Help,
-               -"build completed.");
-         end if;
-
-         Close (Fd);
-
-      when E : others =>
-         Free (Title);
-         Close (Fd);
-         Set_Busy (Top.Kernel, False);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Build;
-
-   ------------
-   -- On_Run --
-   ------------
-
-   procedure On_Run
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Arguments : constant String := Simple_Entry_Dialog
-        (Parent  => Object,
-         Title   => -"Arguments Selection",
-         Message => -"Enter the arguments to your application:",
-         Key     => "glide_run_arguments");
-
-   begin
-      if Arguments = ""
-        or else Arguments (Arguments'First) /= ASCII.NUL
-      then
-         null;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Run;
-
-   -------------------
-   -- On_Stop_Build --
-   -------------------
-
-   procedure On_Stop_Build
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top : constant Glide_Window := Glide_Window (Object);
-   begin
-      Top.Interrupted := True;
-   end On_Stop_Build;
-
    ---------------
    -- On_Manual --
    ---------------
@@ -476,7 +281,6 @@ package body Glide_Menu is
       Edit        : constant String := "/_" & (-"Edit")     & '/';
       Gotom       : constant String := "/_" & (-"Navigate") & '/';
       Project     : constant String := "/_" & (-"Project")  & '/';
-      Build       : constant String := "/_" & (-"Build")    & '/';
       Tools       : constant String := "/_" & (-"Tools")    & '/';
       Debug       : constant String := "/_" & (-"Debug")    & '/';
       Data_Sub    : constant String := (-"Data")            & '/';
@@ -513,16 +317,6 @@ package body Glide_Menu is
                   On_Open_Project'Access),
          Gtk_New (Project & "sep1", Item_Type => Separator),
          Gtk_New (Project & (-"Generate API doc"), "", Stock_Execute, null),
-
-         Gtk_New (Build & (-"Check File"), "", null),
-         Gtk_New (Build & (-"Compile File"), "", Stock_Convert, null),
-         Gtk_New (Build & (-"Make"), "", Stock_Refresh, On_Build'Access),
-         Gtk_New (Build & (-"Build Library"), "", null),
-         Gtk_New (Build & "sep1", Item_Type => Separator),
-         Gtk_New (Build & (-"Execute..."), "", Stock_Execute, On_Run'Access),
-         Gtk_New (Build & "sep2", Item_Type => Separator),
-         Gtk_New
-           (Build & (-"Stop Build"), "", Stock_Stop, On_Stop_Build'Access),
 
          Gtk_New (Debug & Data_Sub & (-"Call Stack"), "", null, Check_Item),
 
