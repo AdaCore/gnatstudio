@@ -35,12 +35,14 @@
 
   * [Yeti] Add a callback reporting failures (opening error, ...)
 
-7 * [Yeti] Add a Match_Array parameter to the callback
+  * [Yeti] A callback for matches and another for files
 
   * [Yeti] Select between reporting all matches in the line or only the first.
 
   * [Yeti] Avoid endless recursion
     Links such as "up_dir -> ..", "here -> ."
+
+  * [Yeti] Get match position with Boyer-Moore too
 
 -----------
 -- Speed --
