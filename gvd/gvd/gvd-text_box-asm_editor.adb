@@ -79,10 +79,12 @@ package body GVD.Asm_Editors is
 
    procedure On_Frame_Changed
      (Editor : access Asm_Editor_Record'Class;
-      Pc     : String);
+      Pc     : String;
+      End_Pc : String);
    --  Called when the assembly code for the address PC needs to be loaded.
-   --  This gets the assembly source code for that frame, and display it in
-   --  the editor.
+   --  This gets the assembly source code for a range starting at PC, and
+   --  going up to End_Pc.
+   --  A minimal range of Assembly_Range_Size is displayed.
 
    function In_Range
      (Pc     : String;
@@ -163,51 +165,138 @@ package body GVD.Asm_Editors is
 
    procedure On_Frame_Changed
      (Editor : access Asm_Editor_Record'Class;
-      Pc     : String)
+      Pc     : String;
+      End_Pc : String)
    is
       Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
-      S       : String_Access;
+      S, S2, S3 : String_Access;
       Start,
       Last    : Address_Type;
       Start_End, Last_End : Natural;
       Low_Range, High_Range : String_Access;
+      Pc_In_Range : constant Boolean := In_Range (Pc, Editor.Current_Range);
+      Pc_End_In_Range : constant Boolean :=
+        In_Range (End_Pc, Editor.Current_Range);
 
    begin
+      --  Is the range already visible ?
+      if Pc_In_Range and then Pc_End_In_Range then
+         return;
+      end if;
+
       Set_Busy_Cursor (Process, True);
 
-      Editor.Current_Range := Find_In_Cache (Editor, Pc);
-
-      if Editor.Current_Range = null then
-         Set_Buffer
-           (Editor, Getting_Assembly_Msg, Clear_Previous => False);
-         Update_Child (Editor);
-
+      --  Should we prepend to the current buffer ?
+      if not Pc_In_Range and then Pc_End_In_Range then
          Get_Machine_Code
            (Process.Debugger,
             Range_Start     => Start,
             Range_End       => Last,
             Range_Start_Len => Start_End,
             Range_End_Len   => Last_End,
-            Code            => S);
+            Code            => S,
+            Start_Address   => Pc,
+            End_Address     => Editor.Current_Range.Low.all);
 
-         if Start_End /= 0 then
-            Low_Range := new String' (Start (1 .. Start_End));
+         Free (Editor.Current_Range.Low);
+         Editor.Current_Range.Low := new String' (Pc);
+
+         S2 := Editor.Current_Range.Data;
+         Editor.Current_Range.Data :=
+           new String' (Do_Tab_Expansion (S.all) & S2.all);
+         Free (S2);
+
+      --  Should we append to the current buffer
+      elsif Pc_In_Range and then not Pc_End_In_Range then
+         Get_Machine_Code
+           (Process.Debugger,
+            Range_Start     => Start,
+            Range_End       => Last,
+            Range_Start_Len => Start_End,
+            Range_End_Len   => Last_End,
+            Code            => S,
+            Start_Address   => Editor.Current_Range.High.all,
+            End_Address     => End_Pc & "+1");
+
+         Free (Editor.Current_Range.High);
+         Editor.Current_Range.High := new String' (End_Pc);
+
+         S2 := Editor.Current_Range.Data;
+         Editor.Current_Range.Data :=
+           new String' (S2.all & Do_Tab_Expansion (S.all));
+         Free (S2);
+
+      --  Else get a whole new range (minimum size Assembly_Range_Size)
+      else
+         Editor.Current_Range := Find_In_Cache (Editor, Pc);
+         if Editor.Current_Range = null then
+            if Current_Preferences.Assembly_Range_Size.all = "0" then
+               Get_Machine_Code
+                 (Process.Debugger,
+                  Range_Start     => Start,
+                  Range_End       => Last,
+                  Range_Start_Len => Start_End,
+                  Range_End_Len   => Last_End,
+                  Code            => S);
+            else
+               Get_Machine_Code
+                 (Process.Debugger,
+                  Range_Start     => Start,
+                  Range_End       => Last,
+                  Range_Start_Len => Start_End,
+                  Range_End_Len   => Last_End,
+                  Code            => S,
+                  Start_Address   => Pc,
+                  End_Address     =>
+                    Pc & "+" & Current_Preferences.Assembly_Range_Size.all);
+            end if;
+
+            if Start_End /= 0 then
+               Low_Range := new String' (Start (1 .. Start_End));
+            end if;
+
+            if Last_End /= 0 then
+               High_Range := new String' (Last (1 .. Last_End));
+            end if;
+
+            --  If the end address is not visible, disassemble a little
+            --  bit more...
+
+            if High_Range /= null
+              and then End_Pc > High_Range.all
+            then
+               Get_Machine_Code
+                 (Process.Debugger,
+                  Range_Start     => Start,
+                  Range_End       => Last,
+                  Range_Start_Len => Start_End,
+                  Range_End_Len   => Last_End,
+                  Code            => S2,
+                  Start_Address   => High_Range.all,
+                  End_Address     => End_Pc & "+1");
+               S3 := new String' (S.all & S2.all);
+               Free (S);
+               Free (S2);
+               S := S3;
+               Free (High_Range);
+
+               if Last_End /= 0 then
+                  High_Range := new String' (Last (1 .. Last_End));
+               end if;
+            end if;
+
+            Editor.Cache := new Cache_Data'
+              (Low  => Low_Range,
+               High => High_Range,
+               Data => new String'(Do_Tab_Expansion (S.all)),
+               Next => Editor.Cache);
+            Free (S);
+            Editor.Current_Range := Editor.Cache;
          end if;
-
-         if Last_End /= 0 then
-            High_Range := new String' (Last (1 .. Last_End));
-         end if;
-
-         Editor.Cache := new Cache_Data'
-           (Low  => Low_Range,
-            High => High_Range,
-            Data => new String'(Do_Tab_Expansion (S.all)),
-            Next => Editor.Cache);
-         Free (S);
-         Editor.Current_Range := Editor.Cache;
       end if;
 
-      Set_Buffer (Editor, Editor.Current_Range.Data, Clear_Previous => False);
+      Set_Buffer
+        (Editor, Editor.Current_Range.Data, Clear_Previous => False);
       Update_Child (Editor);
       Set_Busy_Cursor (Process, False);
    end On_Frame_Changed;
@@ -287,10 +376,7 @@ package body GVD.Asm_Editors is
       Line : Natural;
    begin
       --  Do we need to reload some assembly code ?
-
-      if not In_Range (Pc, Editor.Current_Range) then
-         On_Frame_Changed (Editor, Pc);
-      end if;
+      On_Frame_Changed (Editor, Pc, Pc);
 
       --  Find the right line ?
 
@@ -314,7 +400,7 @@ package body GVD.Asm_Editors is
       Range_Start_Len : Natural;
       Range_End_Len   : Natural;
       Pos_Start,
-      Pos_End         : Natural;
+      Pos_End         : Natural := 0;
 
    begin
       Freeze (Get_Buttons (Editor));
@@ -323,23 +409,30 @@ package body GVD.Asm_Editors is
         (Debugger_Process_Tab (Editor.Process).Debugger,
          Source_Line, Range_Start, Range_End, Range_Start_Len, Range_End_Len);
 
-      Pos_Start := Pos_From_Address
-        (Editor, Range_Start (1 .. Range_Start_Len));
+      while Pos_Start = 0 or else Pos_End = 0 loop
 
-      --  No need to get the end address if we could not even find the starting
-      --  line.
-      if Pos_Start /= 0 then
-         Pos_End := Pos_From_Address
-           (Editor, Range_End (1 .. Range_End_Len));
-      end if;
+         Pos_Start := Pos_From_Address
+           (Editor, Range_Start (1 .. Range_Start_Len));
 
-      --  In the params below, Line is set to 0 since anyway there is no
-      --  invisible column in this editor.
+         --  No need to get the end address if we could not even find the
+         --  starting line.
+         if Pos_Start /= 0 then
+            Pos_End := Pos_From_Address
+              (Editor, Range_End (1 .. Range_End_Len));
+         end if;
+
+         --  If part of the range is not visible, update the contents of the
+         --  buffer.
+         if Pos_Start = 0 or else Pos_End = 0 then
+            On_Frame_Changed
+              (Editor, Range_Start (1 .. Range_Start_Len),
+               Range_End (1 .. Range_End_Len));
+         end if;
+      end loop;
 
       Highlight_Range
         (Editor, Gint (Pos_Start), Gint (Pos_End),
-         Gint (Pos_Start - 1), Line => 0,
-         Fore => Editor.Highlight_Color);
+         Gint (Pos_Start - 1), Fore => Editor.Highlight_Color);
 
       Thaw (Get_Buttons (Editor));
    end Highlight_Address_Range;
@@ -388,33 +481,24 @@ package body GVD.Asm_Editors is
      (Editor  : access Asm_Editor_Record'Class;
       Address : String) return Natural
    is
-      Max_Lines : Natural;
-      Buffer    : String_Access;
+      Buffer    : String_Access := Get_Buffer (Editor);
       Index     : Natural;
 
    begin
-      Buffer := Get_Buffer (Editor);
-
       if Buffer = null then
          return 0;
       end if;
 
-      Max_Lines := Lines_Count (Editor);
       Index     := Buffer'First;
 
-      for Line in 1 .. Max_Lines loop
+      while Index <= Buffer'Last loop
          if Index + Address'Length - 1 <= Buffer'Last
            and then Buffer (Index .. Index + Address'Length - 1) = Address
          then
             return Index;
          end if;
 
-         while Index <= Buffer'Last
-           and then Buffer (Index) /= ASCII.LF
-         loop
-            Index := Index + 1;
-         end loop;
-
+         Skip_To_Char (Buffer.all, Index, ASCII.LF);
          Index := Index + 1;
       end loop;
 
