@@ -48,6 +48,7 @@ with Items.Simples;     use Items.Simples;
 with Items.Arrays;      use Items.Arrays;
 with Items.Records;     use Items.Records;
 with Items.Classes;     use Items.Classes;
+with GtkAda.Intl;       use GtkAda.Intl;
 
 with Unchecked_Conversion;
 
@@ -327,12 +328,17 @@ package body Debugger.Gdb is
    is
       S : constant String :=
         Send_Full (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode);
+      Pos : Integer := S'Last - Prompt_Length;
    begin
-      if S'Length > Prompt_Length then
-         return S (S'First .. S'Last - Prompt_Length - 1);
-      else
+      if S'Length <= Prompt_Length then
          return "";
       end if;
+
+      if S (Pos) = ASCII.LF then
+         Pos := Pos - 1;
+      end if;
+
+      return S (S'First .. Pos);
    end Send;
 
    -------------
@@ -784,32 +790,12 @@ package body Debugger.Gdb is
    procedure Start
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
-      Mode      : Command_Type := Hidden)
-   is
-      Cmd   : constant String := Start (Get_Language (Debugger));
-      First : Positive;
-      Last  : Positive := Cmd'First;
-
+      Mode      : Command_Type := Hidden) is
    begin
       if Arguments /= "" then
          Send (Debugger, "set args " & Arguments, Mode => Mode);
       end if;
-
-      if Cmd /= "" then
-         while Last <= Cmd'Last loop
-            First := Last;
-
-            while Last <= Cmd'Last
-              and then Cmd (Last) /= ASCII.LF
-            loop
-               Last := Last + 1;
-            end loop;
-
-            Send (Debugger, Cmd (First .. Last - 1), Mode => Mode);
-            Last := Last + 1;
-         end loop;
-      end if;
-
+      Send (Debugger, Start (Get_Language (Debugger)), Mode => Mode);
       Set_Is_Started (Debugger, True);
    end Start;
 
@@ -1602,6 +1588,11 @@ package body Debugger.Gdb is
                   Int := Index;
                   Skip_To_Char (Type_Str, Int, ' ');
 
+                  --  Reset the valid flag, so that only one of the variant
+                  --  parts is valid.
+
+                  Set_Valid (R, False);
+
                   declare
                      Repeat_Num : Positive;
                      V : Generic_Type_Access;
@@ -2147,7 +2138,12 @@ package body Debugger.Gdb is
       S : constant String := Send
         (Debugger, "print &(" & Variable & ")", Mode => Internal);
       Index : Integer := S'Last;
+      SNF : constant String := -"No symbol ";
    begin
+      if S (S'First .. S'First + SNF'Length - 1) = SNF then
+         return "";
+      end if;
+
       --  Find the last occurence of "0x" in the string.
       loop
          Skip_To_Char (S, Index, 'x', Step => -1);
