@@ -792,7 +792,6 @@ package body Docgen.Work_On_Source is
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
             Free (Header);
-            Free (Data_Package.Package_Header);
          end loop;
 
          Free (Data_Subtitle.Subtitle_Name);
@@ -883,7 +882,6 @@ package body Docgen.Work_On_Source is
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
             Free (Header);
-            Free (Data_Var.Var_Header);
          end loop;
 
          Free (Data_Subtitle.Subtitle_Name);
@@ -974,7 +972,6 @@ package body Docgen.Work_On_Source is
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
             Free (Header);
-            Free (Data_Exception.Exception_Header);
          end loop;
 
          Free (Data_Subtitle.Subtitle_Name);
@@ -1066,7 +1063,6 @@ package body Docgen.Work_On_Source is
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
             Free (Header);
-            Free (Data_Type.Type_Header);
          end loop;
       end if;
 
@@ -1159,7 +1155,6 @@ package body Docgen.Work_On_Source is
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
             Free (Header);
-            Free (Data_Entry.Entry_Header);
          end loop;
       end if;
 
@@ -1253,7 +1248,6 @@ package body Docgen.Work_On_Source is
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
             Free (Header);
-            Free (Data_Subprogram.Subprogram_Header);
          end loop;
       end if;
 
