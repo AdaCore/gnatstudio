@@ -7,14 +7,11 @@ a prerequisite.
 You need to use a recent version of the GNAT compiler (version >= GNAT 3.15, or
 GCC >= 3.4).
 
-If you are using a version of GNAT more recent than 3.15p, you need to
-remove the file common/src/stubs.c before building.
-
-You then need to install the Gtk+ 2.2.x suite (e.g 2.2.4).
+You then need to install the Gtk+ 2.x suite (e.g 2.2.4).
 To download and build Gtk+, follow the instructions given at www.gtk.org
 
-Once Gtk+ has been installed, you need to install the latest GtkAda 2.2.x.
-See GtkAda-2.2.x/INSTALL for instructions.
+Once Gtk+ has been installed, you need to install the latest GtkAda 2.4.x
+See GtkAda-2.4.x/INSTALL for instructions.
 
 Then make sure that your PATH and LD_LIBRARY_PATH environment variables point
 to the GtkAda installation
@@ -23,9 +20,6 @@ Once GtkAda has been installed, extract the GPS sources:
 
   $ gzip -dc gps-*-src.tgz | tar xvf -
   $ cd gps*
-
-If you are using a version of GNAT more recent than 3.15, remove the file
-common/src/stubs.c
 
 Under Windows only, you need to apply the gps-win32.diff patch file:
   $ patch -p0 < docs/gps-win32.diff
@@ -53,8 +47,4 @@ above, with a few additional steps:
 - You need to create a symbolic link called 'gnat_src' that points to recent
   GNAT sources (preferably sources as recent as the GPS sources used), e.g.
   gcc/gcc/ada from the gcc CVS HEAD sources available at gcc.gnu.org
-
-- If you are building using GNAT 3.15, you need to apply the patch
-  distrib/gps-1.0-gnat-3.15a1.diff
-  This step isn't needed if you are using GCC 3.4 or GNAT 5
 
