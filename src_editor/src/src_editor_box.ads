@@ -390,6 +390,23 @@ package Src_Editor_Box is
    --  Lenght is the length of text that should be selected after
    --  Mark.
 
+   function Get_Chars
+     (Editor   : access Source_Editor_Box_Record;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark;
+      Before   : Integer;
+      After    : Integer) return String;
+   --  Return the characters before and after position.
+   --  Before is the number of characters to get before position,
+   --  After is the number of characters to get after position.
+
+   function Get_Chars
+     (Editor   : access Source_Editor_Box_Record;
+      Line     : Positive;
+      Column   : Positive;
+      Before   : Integer;
+      After    : Integer) return String;
+   --  Same as above, but position is given by Line, Column.
+
    procedure On_Goto_Line
      (Editor : access Source_Editor_Box_Record;
       Kernel : Glide_Kernel.Kernel_Handle);

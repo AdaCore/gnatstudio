@@ -235,6 +235,13 @@ package body Src_Editor_Box is
    --  Find the reference to Entity in Source which is closest to (Line,
    --  Column), and sets Line and Column to this new location
 
+   function Get_Chars
+     (Editor   : access Source_Editor_Box_Record;
+      Position : Gtk_Text_Iter;
+      Before   : Integer;
+      After    : Integer) return String;
+   --  Auxiliary Get_Chars function.
+
    -----------
    -- Setup --
    -----------
@@ -2337,5 +2344,81 @@ package body Src_Editor_Box is
          end if;
       end if;
    end Scroll_To_Mark;
+
+   ---------------
+   -- Get_Chars --
+   ---------------
+
+   function Get_Chars
+     (Editor   : access Source_Editor_Box_Record;
+      Position : Gtk_Text_Iter;
+      Before   : Integer;
+      After    : Integer) return String
+   is
+      pragma Unreferenced (Editor);
+
+      Begin_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Success    : Boolean := True;
+   begin
+      Copy (Position, Begin_Iter);
+      Copy (Position, End_Iter);
+
+      if Before < 0 then
+         Set_Line_Offset (Begin_Iter, 0);
+      else
+         for J in 1 .. Before loop
+            Backward_Char (Begin_Iter, Success);
+            exit when not Success;
+         end loop;
+      end if;
+
+      if After < 0 then
+         Forward_To_Line_End (End_Iter, Success);
+      else
+         Success := True;
+
+         for J in 1 .. After loop
+            Forward_Char (End_Iter, Success);
+            exit when not Success;
+         end loop;
+      end if;
+
+      return Get_Text (Begin_Iter, End_Iter);
+   end Get_Chars;
+
+   function Get_Chars
+     (Editor   : access Source_Editor_Box_Record;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark;
+      Before   : Integer;
+      After    : Integer) return String
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Position);
+
+      return Get_Chars (Editor, Iter, Before, After);
+   end Get_Chars;
+
+   function Get_Chars
+     (Editor   : access Source_Editor_Box_Record;
+      Line     : Positive;
+      Column   : Positive;
+      Before   : Integer;
+      After    : Integer) return String
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      if Is_Valid_Location (Editor, Line, Column) then
+         Get_Iter_At_Line_Offset
+           (Editor.Source_Buffer, Iter,
+            To_Buffer_Line (Line),
+            To_Buffer_Column (Column));
+
+         return Get_Chars (Editor, Iter, Before, After);
+      end if;
+
+      return "";
+   end Get_Chars;
 
 end Src_Editor_Box;
