@@ -386,7 +386,7 @@ package body Vsearch_Ext is
          if Data.Extra_Information /= null then
             Attach
               (Vsearch.Table, Data.Extra_Information,
-               0, 2, 3, 4, Fill, 0, 2, 0);
+               0, 2, 4, 5, Fill, 0, 2, 0);
             Show_All (Vsearch.Table);
             Vsearch.Extra_Information := Data.Extra_Information;
          end if;
