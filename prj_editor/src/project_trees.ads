@@ -33,6 +33,9 @@ package Project_Trees is
    --  Prj_Tree is the project parsed in a tree form, whereas Project should
    --  be the currently evaluated form, depending on the scenario
    --  variables.
+   --  if Project is the same that was already loaded, and since the list of
+   --  withed projects can not changed, the open/close status of all the
+   --  project nodes is kept.
 
    ---------------
    -- Selection --
