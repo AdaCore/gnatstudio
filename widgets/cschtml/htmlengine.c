@@ -2835,9 +2835,6 @@ html_engine_destroy (GtkObject *object)
 
 	engine = HTML_ENGINE (object);
 
-	if (engine->cut_buffer != NULL)
-		html_engine_cut_buffer_destroy (engine->cut_buffer);
-
 	html_color_set_destroy (engine->color_set);
 
 	if (engine->invert_gc != NULL)
