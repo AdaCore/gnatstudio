@@ -418,6 +418,9 @@ package body Vsearch_Ext is
                Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
                Regexp         => Get_Active (Vsearch.Regexp_Check));
             Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
+         else
+            Insert (Vsearch.Kernel, -"Invalid search context specified");
+            return;
          end if;
       end if;
 
