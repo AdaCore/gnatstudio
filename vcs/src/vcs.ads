@@ -41,6 +41,8 @@ package VCS is
 
    type VCS_Access is access all VCS_Record'Class;
 
+   procedure Free (Ref : access VCS_Record);
+
    procedure Free (S : in out String);
    package String_List is new Generic_List (String, Free => Free);
 

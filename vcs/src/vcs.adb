@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Widget; use Gtk.Widget;
+
 package body VCS is
 
    -----------------------------
@@ -45,6 +47,16 @@ package body VCS is
          Rep.Local_Error_Function (Message, Rep.User_Data);
       end if;
    end Set_Error;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ref : access VCS_Record)
+   is
+   begin
+      null;
+   end Free;
 
    ----------
    -- Free --
