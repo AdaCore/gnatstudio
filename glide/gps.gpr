@@ -1,4 +1,3 @@
-with "../common/common";
 with "../gtkada/gtkada";
 with "../gvd/gvd";
 with "../kernel/kernel";
