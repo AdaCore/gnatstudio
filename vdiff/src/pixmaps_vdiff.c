@@ -1,0 +1,7 @@
+#include "../pixmaps/up_diff_xpm"
+#include "../pixmaps/down_diff_xpm"
+#include "../pixmaps/first_diff_xpm"
+#include "../pixmaps/last_diff_xpm"
+#include "../pixmaps/reload_diff_xpm"
+#include "../pixmaps/unhighlight_diff_xpm"
+#include "../pixmaps/close_diff_xpm"
