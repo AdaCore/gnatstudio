@@ -78,6 +78,8 @@ package Debugger is
    --
    --  The Debugger should set up filters to handle the change of current
    --  language, ...
+   --
+   --  Should raise Spawn_Error if the debugger could not be spawned.
 
    procedure General_Spawn
      (Debugger       : access Debugger_Root'Class;
@@ -90,6 +92,8 @@ package Debugger is
    --  be run on a remote machine.
    --  This is provided as a support for the implementation of the primitive
    --  subprogram Spawn, and should work with most debuggers.
+   --
+   --  Raises Spawn_Error if the debugger could not be spawned.
 
    procedure Initialize (Debugger : access Debugger_Root) is abstract;
    --  Initialize the debugger.
@@ -133,6 +137,19 @@ package Debugger is
    --  Parse the value of Entity.
    --  Value should contain the result of Parse_Type when this procedure is
    --  called, and it is completed to reflect the new value.
+
+   function Get_Uniq_Id
+     (Debugger : access Debugger_Root;
+      Entity   : String)
+     return String;
+   --  Return a uniq ID for Entity.
+   --  In most cases, this will be the address of the variable. However, some
+   --  languages do not have addresses (Java), but since they do not allow
+   --  overloading, returning the name might be enough (This is the default)
+   --
+   --  This ID is used to detect aliases in the canvas display.
+   --  The return result be the value of access types (ie types that can be
+   --  dereferenced).
 
    procedure Wait_Prompt (Debugger : access Debugger_Root) is abstract;
    --  Wait for the prompt.
@@ -256,6 +273,9 @@ package Debugger is
    Unknown_Command : exception;
    --  Raised when a command is not recognized either by the debugger, or for
    --  the currently activate language.
+
+   Spawn_Error : exception;
+   --  Raised when the debugger could not be spawned.
 
 private
 
