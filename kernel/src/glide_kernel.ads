@@ -127,6 +127,12 @@ package Glide_Kernel is
       return Gtkada.MDI.MDI_Window;
    --  Return the MDI associated with Handle
 
+   function Get_Main_Window (Handle : access Kernel_Handle_Record)
+      return Gtk.Window.Gtk_Window;
+   --  Return the main window associated with the kernel.
+   --  The main usage for this function should be to display the dialogs
+   --  centered with regards to this window.
+
    function Find_MDI_Child_By_Tag
      (Handle : access Kernel_Handle_Record; Tag : Ada.Tags.Tag)
       return Gtkada.MDI.MDI_Child;

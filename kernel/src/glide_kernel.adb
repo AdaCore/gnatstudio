@@ -591,4 +591,14 @@ package body Glide_Kernel is
       null;
    end Destroy;
 
+   ---------------------
+   -- Get_Main_Window --
+   ---------------------
+
+   function Get_Main_Window (Handle : access Kernel_Handle_Record)
+      return Gtk.Window.Gtk_Window is
+   begin
+      return Handle.Main_Window;
+   end Get_Main_Window;
+
 end Glide_Kernel;
