@@ -197,6 +197,15 @@ package body Debugger.Gdb is
          Set_Debugger (Language_Debugger_Access (Language),
                        Debugger.all'Access);
       end;
+
+      --  Get the initial file name, so that we can display the appropriate
+      --  file in the code editor.
+      --  This should be done only after we have detected the current language,
+      --  or no color highlighting will be provided.
+      Send (Get_Process (Debugger), "list");
+      Wait_Prompt (Debugger);
+      Send (Get_Process (Debugger), "info line");
+      Wait_Prompt (Debugger);
    end Initialize;
 
    -----------
@@ -364,6 +373,9 @@ package body Debugger.Gdb is
             Line_String (Line_String'First + 1 .. Line_String'Last));
       Wait_Prompt (Debugger);
 
+      --  ??? This patterns detects too many matching lines, and should be
+      --  fixed.   Detecting :beg: might do the trick.
+      --  We could also use a more complex pattern for Wait.
       return Index
         (Expect_Out (Get_Process (Debugger)), "but contains no code") = 0;
    end Line_Contains_Code;

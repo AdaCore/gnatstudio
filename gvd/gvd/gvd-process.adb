@@ -146,6 +146,7 @@ package body Odd.Process is
       Start   : Positive := Str'First;
    begin
       Freeze (Process.Debugger_Text);
+      Set_Point (Process.Debugger_Text, Get_Length (Process.Debugger_Text));
 
       while Start <= Str'Last loop
          Match (Highlighting_Pattern (Process.Debugger),
@@ -189,12 +190,14 @@ package body Odd.Process is
    is
       Process : Debugger_Process_Tab := Convert (Descriptor);
       Matched : Match_Array (0 .. 2);
+      Initial_Internal_Command : Boolean := True;
    begin
       --  Do not show the output if we have an internal command
       if not Is_Internal_Command (Get_Process (Process.Debugger)) then
          Text_Output_Handler (Process, Str);
          Process.Edit_Pos := Get_Length (Process.Debugger_Text);
          Set_Point (Process.Debugger_Text, Process.Edit_Pos);
+         Initial_Internal_Command := False;
       end if;
 
       --  ??? This is specific to gdb...
@@ -205,7 +208,6 @@ package body Odd.Process is
 
       --  End of gdb specific section
 
-      Put_Line (Str);
       if Matched (0) /= No_Match then
          --  Get everything in the buffer (since the following command
          --  needs to interact with the debugger, and we want to hide its
@@ -214,16 +216,26 @@ package body Odd.Process is
          --  Empty_Buffer (Get_Process (Process.Debugger));
          Wait_Prompt (Process.Debugger);
 
+         --  Override the language currently defined in the editor.
+         --  Since the text file has been given by the debugger, the language
+         --  to use is the one currently defined by the debugger.
+         Set_Current_Language (Process.Editor_Text,
+                               Get_Language (Process.Debugger));
+
          --  Display the file
+         --  ??? Should also display the correct line
 
          Set_Internal_Command (Get_Process (Process.Debugger), True);
          Load_File (Process.Editor_Text,
                     Str (Matched (1).First .. Matched (1).Last),
                     Process.Debugger);
 
-         --  ??? Should also display the correct line
-
-         Set_Internal_Command (Get_Process (Process.Debugger), False);
+         --  Restore the initial status of the process. We can not force it to
+         --  False, since, at least with gdb, the "info line" command used in
+         --  Load_File will also output a file reference, and thus we have a
+         --  recursive call to Text_Output_Handler.
+         Set_Internal_Command (Get_Process (Process.Debugger),
+                               Initial_Internal_Command);
       end if;
    end Text_Output_Handler;
 
@@ -298,8 +310,8 @@ package body Odd.Process is
       Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       --  Allocate the colors for highlighting. This needs to be done before
-      --  Initializing the debugger, since some output will be output at that
-      --  time.
+      --  Initializing the debugger, since some file name might be output at
+      --  that time.
 
       Process.Debugger_Text_Highlight_Color :=
         Parse (Debugger_Highlight_Color);
@@ -307,6 +319,17 @@ package body Odd.Process is
 
       Process.Debugger_Text_Font :=
         Get_Gdkfont (Debugger_Font, Debugger_Font_Size);
+
+      --  Initialize the code editor.
+      --  This should be done before initializing the debugger, in case the
+      --  debugger outputs a file name that should be displayed in the editor.
+      --  The language of the editor will automatically be set by the output
+      --  filter.
+
+      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size, stop_xpm,
+                 Comments_Color => Comments_Color,
+                 Strings_Color  => Strings_Color,
+                 Keywords_Color => Keywords_Color);
 
       --  Set the output filter, so that we output everything in the Gtk_Text
       --  window.
@@ -322,16 +345,10 @@ package body Odd.Process is
          Output_Available'Access,
          My_Input.Data_Access (Process));
 
-      --  Initialize the debugger.
+      --  Initialize the debugger, and possibly get the name of the initial
+      --  file.
 
       Initialize (Process.Debugger);
-
-      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size, stop_xpm,
-                 Comments_Color => Comments_Color,
-                 Strings_Color  => Strings_Color,
-                 Keywords_Color => Keywords_Color);
-      Set_Current_Language (Process.Editor_Text,
-                            Get_Language (Process.Debugger));
       return Process;
    end Create_Debugger;
 
