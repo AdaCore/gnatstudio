@@ -198,3 +198,8 @@ PyObject* ada_py_false() {
 PyObject* ada_py_true() {
   return Py_True;
 }
+
+PyObject* ada_pyclass_name(PyClassObject* obj) {
+  return obj->cl_name;
+}
+
