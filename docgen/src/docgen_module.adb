@@ -445,8 +445,14 @@ package body Docgen_Module is
       Array2List (Kernel, Sources, Source_File_List,
                   Docgen.Backend.Get_Extension (B));
       Generate (Kernel, Source_File_List, Sources'Length, B);
-      VFS.Unchecked_Free (Sources);
-      --  Type_Source_File_Table.Reset (Source_File_List);
+
+      --  ??? The following commented line should probably be moved to
+      --  to the function in charge of finalizing the files processing
+      --  since it is executed as a background command whose execution
+      --  is up to the task manager. It's therefore better not to free
+      --  structures passed to it as parameters.
+
+      --  VFS.Unchecked_Free (Sources);
 
       Trace (Me, "Done generating for project");
 
@@ -670,7 +676,6 @@ package body Docgen_Module is
           Is_Spec       => Is_Spec_File (Kernel, File)));
 
       if Is_Spec and then Process_Body then
-         Nb_Files := 2;
          Body_File := Create
            (Other_File_Base_Name
               (Get_Project_From_File
@@ -686,6 +691,7 @@ package body Docgen_Module is
             Allow_Create => True);
 
          if Body_File /= No_File then
+            Nb_Files := 2;
             Type_Source_File_Table.Set
               (Source_File_List,
                Source,
