@@ -282,20 +282,22 @@ package body SN.Xref_Pools is
    is
       Data  : Xref_Elmt_Ptr;
       N     : Integer := 0;
-      Source : aliased constant String := Full_Name (Source_Filename).all;
+      Source : String_Access := new String'(Full_Name (Source_Filename).all);
+
    begin
       --  Get hashed value
 
-      Data := STable.Get (Pool.HTable, Source'Unrestricted_Access);
+      Data := STable.Get (Pool.HTable, Source);
 
       if Data /= null then
+         Free (Source);
          return Data.Xref_Filename;
       end if;
 
       --  Generate new xref file name
 
       Data := new Xref_Elmt_Record; -- new hashtable value
-      Data.Source_Filename := new String'(Source);
+      Data.Source_Filename := Source;
       loop
          declare
             Full_Name : constant Virtual_File :=
