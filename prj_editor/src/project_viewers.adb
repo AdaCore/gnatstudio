@@ -61,6 +61,7 @@ with Prj;           use Prj;
 with Stringt;       use Stringt;
 with Types;         use Types;
 with Namet;         use Namet;
+with Snames;        use Snames;
 
 with Switches_Editors; use Switches_Editors;
 
@@ -287,8 +288,10 @@ package body Project_Viewers is
       Name_Buffer (1 .. Name_Len) := File_Name;
       File := Name_Find;
 
+      --  ??? Should show the switches for the specific language of the file
       Get_Switches
-        (Viewer.Project_Filter, "compiler", File, Value, Is_Default);
+        (Viewer.Project_Filter, "compiler", File,
+         Snames.Name_Ada, Value, Is_Default);
       Line := New_String (To_String (Value));
 
       if Is_Default then

@@ -62,6 +62,7 @@ with Stringt;             use Stringt;
 with Types;               use Types;
 with Prj;                 use Prj;
 with Prj.Tree;            use Prj.Tree;
+with Snames;              use Snames;
 
 package body Switches_Editors is
 
@@ -952,23 +953,38 @@ package body Switches_Editors is
       S             : Switches_Edit   := Data.Switches;
       Project       : Project_Node_Id := Get_Project_From_View (Data.Project);
 
-      procedure Change_Switches (Tool : Tool_Names; Pkg_Name : String);
+      procedure Change_Switches
+        (Tool : Tool_Names; Pkg_Name : String; Language : Name_Id);
       --  Changes the switches for a specific package and tool.
 
       ---------------------
       -- Change_Switches --
       ---------------------
 
-      procedure Change_Switches (Tool : Tool_Names; Pkg_Name : String) is
+      procedure Change_Switches
+        (Tool : Tool_Names; Pkg_Name : String; Language : Name_Id)
+      is
          Args : Argument_List := Get_Switches (S, Tool);
       begin
-         Update_Attribute_Value_In_Scenario
-           (Project         => Project,
-            Pkg_Name        => Pkg_Name,
-            Attribute_Name  => "switches",
-            Values          => Args,
-            Attribute_Index => Data.File_Name,
-            Prepend         => False);
+         --  Editing the default switches for a specific language ?
+         if Data.File_Name = No_String then
+            Get_Name_String (Language);
+            Update_Attribute_Value_In_Scenario
+              (Project         => Project,
+               Pkg_Name        => Pkg_Name,
+               Attribute_Name  => "default_switches",
+               Values          => Args,
+               Attribute_Index => String_From_Name_Buffer,
+               Prepend         => False);
+         else
+            Update_Attribute_Value_In_Scenario
+              (Project         => Project,
+               Pkg_Name        => Pkg_Name,
+               Attribute_Name  => "switches",
+               Values          => Args,
+               Attribute_Index => Data.File_Name,
+               Prepend         => False);
+         end if;
          Free (Args);
       end Change_Switches;
 
@@ -982,30 +998,30 @@ package body Switches_Editors is
       Normalize_Project (Project);
 
       if (Get_Pages (S) and Gnatmake_Page) /= 0 then
-         Change_Switches (Gnatmake, "gnatmake");
+         --  ??? Currently, we only edit the default switches for Ada
+         Change_Switches (Gnatmake, "builder", Snames.Name_Ada);
       end if;
 
       if (Get_Pages (S) and Ada_Page) /= 0 then
-         Change_Switches (Ada_Compiler, "compiler");
+         Change_Switches (Ada_Compiler, "compiler", Snames.Name_Ada);
       end if;
 
-      --  ??? This code needs to be commented out while the project parser
-      --  doesn't know about the packages c_compiler and cpp_compiler
+      if (Get_Pages (S) and C_Page) /= 0 then
+         Change_Switches (C_Compiler, "compiler", Snames.Name_C);
+      end if;
 
-      --  if (Get_Pages (S) and C_Page) /= 0 then
-      --     Change_Switches (C_Compiler, "c_compiler");
-      --  end if;
-
-      --  if (Get_Pages (S) and Cpp_Page) /= 0 then
-      --     Change_Switches (Cpp_Compiler, "cpp_compiler");
-      --  end if;
+      if (Get_Pages (S) and Cpp_Page) /= 0 then
+         Change_Switches (Cpp_Compiler, "compiler", Snames.Name_CPP);
+      end if;
 
       if (Get_Pages (S) and Binder_Page) /= 0 then
-         Change_Switches (Binder, "gnatbind");
+         --  ??? Currently, we only edit the default switches for Ada
+         Change_Switches (Binder, "binder", Snames.Name_Ada);
       end if;
 
       if (Get_Pages (S) and Linker_Page) /= 0 then
-         Change_Switches (Linker, "gnatlink");
+         --  ??? Currently, we only edit the default switches for Ada
+         Change_Switches (Linker, "linker", Snames.Name_Ada);
       end if;
 
       Recompute_View (Data.Kernel);
@@ -1079,7 +1095,9 @@ package body Switches_Editors is
 
       --  Set the switches for all the pages
       if (Get_Pages (Switches) and Gnatmake_Page) /= 0 then
-         Get_Switches (Project_View, "gnatmake", File, Value, Is_Default);
+         --  ??? This will only show Ada switches
+         Get_Switches (Project_View, "builder", File,
+                       Snames.Name_Ada, Value, Is_Default);
          declare
             List : Argument_List := To_Argument_List (Value);
          begin
@@ -1089,7 +1107,8 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and Ada_Page) /= 0 then
-         Get_Switches (Project_View, "compiler", File, Value, Is_Default);
+         Get_Switches (Project_View, "compiler", File,
+                       Snames.Name_Ada, Value, Is_Default);
          declare
             List : Argument_List := To_Argument_List (Value);
          begin
@@ -1099,7 +1118,8 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and C_Page) /= 0 then
-         Get_Switches (Project_View, "c_compiler", File, Value, Is_Default);
+         Get_Switches (Project_View, "compiler", File,
+                       Snames.Name_C, Value, Is_Default);
          declare
             List : Argument_List := To_Argument_List (Value);
          begin
@@ -1109,7 +1129,8 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and Cpp_Page) /= 0 then
-         Get_Switches (Project_View, "cpp_compiler", File, Value, Is_Default);
+         Get_Switches (Project_View, "compiler", File,
+                       Snames.Name_CPP, Value, Is_Default);
          declare
             List : Argument_List := To_Argument_List (Value);
          begin
@@ -1119,7 +1140,9 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and Binder_Page) /= 0 then
-         Get_Switches (Project_View, "gnatbind", File, Value, Is_Default);
+         --  ??? This will only show Ada switches
+         Get_Switches (Project_View, "binder", File,
+                       Snames.Name_Ada, Value, Is_Default);
          declare
             List : Argument_List := To_Argument_List (Value);
          begin
@@ -1129,7 +1152,9 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and Linker_Page) /= 0 then
-         Get_Switches (Project_View, "gnatlink", File, Value, Is_Default);
+         --  ??? This will only show Ada switches
+         Get_Switches (Project_View, "linker", File,
+                       Snames.Name_Ada, Value, Is_Default);
          declare
             List : Argument_List := To_Argument_List (Value);
          begin
