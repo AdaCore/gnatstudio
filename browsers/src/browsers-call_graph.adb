@@ -51,6 +51,7 @@ with Browsers.Canvas;  use Browsers.Canvas;
 with Language;         use Language;
 
 with Ada.Exceptions;   use Ada.Exceptions;
+with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Traces;           use Traces;
 
@@ -71,6 +72,9 @@ package body Browsers.Call_Graph is
       Kernel : Kernel_Handle;
       Iter   : Entity_Reference_Iterator_Access;
       Entity : Entity_Information;
+      Include_Writes : Boolean;
+      Include_Reads  : Boolean;
+      Category : String_Access;
    end record;
    package Entity_Iterator_Idle is new Gtk.Main.Idle (Entity_Idle_Data);
 
@@ -147,10 +151,29 @@ package body Browsers.Call_Graph is
       Context : Selection_Context_Access);
    --  List all the references to the entity
 
+   procedure Find_All_Writes_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  List all the "write to" references to the entity
+
+   procedure Find_All_Reads_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  List all the "reads to" references to the entity
+
    procedure Find_All_Local_References_From_Contextual
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  List all the references to the entity in the local file (or ALI file).
+
+   procedure Find_All_References_Internal
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access;
+      Category_Title : String;
+      Include_Writes : Boolean;
+      Include_Reads  : Boolean);
+   --  Internal implementation for Find_All_References_From_Contextual,
+   --  Find_All_Writes_From_Contextual and Find_All_Reads_From_Contextual.
 
    function Find_Next_Reference (D : Entity_Idle_Data)
       return Boolean;
@@ -1048,6 +1071,7 @@ package body Browsers.Call_Graph is
    begin
       Destroy (Data.Iter);
       Destroy (Data.Entity);
+      Free (Data.Category);
       Pop_State (Data.Kernel);
    end Destroy_Idle;
 
@@ -1085,25 +1109,33 @@ package body Browsers.Call_Graph is
       if Get (D.Iter.all) = No_Reference then
          return False;
       else
-         Location := Get_Location (Get (D.Iter.all));
-         Print_Ref
-           (D.Kernel, Get_File (Location),
-            Get_Line (Location), Get_Column (Location),
-            Get_Name (D.Entity),
-            -"References for: " & Get_Name (D.Entity));
+         if (D.Include_Writes and then Is_Write_Reference (Get (D.Iter.all)))
+           or else
+           (D.Include_Reads and then Is_Read_Reference (Get (D.Iter.all)))
+         then
+            Location := Get_Location (Get (D.Iter.all));
+            Print_Ref
+              (D.Kernel, Get_File (Location),
+               Get_Line (Location), Get_Column (Location),
+               Get_Name (D.Entity),
+               D.Category.all & Get_Name (D.Entity));
+         end if;
          Next (D.Kernel, D.Iter.all);
 
          return True;
       end if;
    end Find_Next_Reference;
 
-   -----------------------------------------
-   -- Find_All_References_From_Contextual --
-   -----------------------------------------
+   ----------------------------------
+   -- Find_All_References_Internal --
+   ----------------------------------
 
-   procedure Find_All_References_From_Contextual
+   procedure Find_All_References_Internal
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context_Access;
+      Category_Title : String;
+      Include_Writes : Boolean;
+      Include_Reads  : Boolean)
    is
       pragma Unreferenced (Widget);
 
@@ -1120,17 +1152,22 @@ package body Browsers.Call_Graph is
       if Info /= No_Entity_Information then
          begin
             Remove_Result_Category
-              (Get_Kernel (Entity), -"References for: " & Get_Name (Info));
+              (Get_Kernel (Entity), Category_Title & Get_Name (Info));
 
-            Print_Ref (Get_Kernel (Entity),
-                       Get_Declaration_File_Of (Info),
-                       Get_Declaration_Line_Of (Info),
-                       Get_Declaration_Column_Of (Info),
-                       Get_Name (Info),
-                       -"References for: " & Get_Name (Info));
+            if Include_Reads then
+               Print_Ref (Get_Kernel (Entity),
+                          Get_Declaration_File_Of (Info),
+                          Get_Declaration_Line_Of (Info),
+                          Get_Declaration_Column_Of (Info),
+                          Get_Name (Info),
+                          Category_Title & Get_Name (Info));
+            end if;
 
             Data := (Kernel => Get_Kernel (Entity),
                      Iter   => new Entity_Reference_Iterator,
+                     Include_Writes => Include_Writes,
+                     Include_Reads  => Include_Reads,
+                     Category       => new String'(Category_Title),
                      Entity => Copy (Info));
 
             Find_All_References (Get_Kernel (Entity), Info, Data.Iter.all);
@@ -1153,7 +1190,52 @@ package body Browsers.Call_Graph is
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
          Pop_State (Get_Kernel (Entity));
+   end Find_All_References_Internal;
+
+   -----------------------------------------
+   -- Find_All_References_From_Contextual --
+   -----------------------------------------
+
+   procedure Find_All_References_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      Find_All_References_Internal
+        (Widget, Context,
+         Category_Title => -"References for: ",
+         Include_Writes => True,
+         Include_Reads  => True);
    end Find_All_References_From_Contextual;
+
+   -------------------------------------
+   -- Find_All_Writes_From_Contextual --
+   -------------------------------------
+
+   procedure Find_All_Writes_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      Find_All_References_Internal
+        (Widget, Context,
+         Category_Title => -"Modifications of: ",
+         Include_Writes => True,
+         Include_Reads  => False);
+   end Find_All_Writes_From_Contextual;
+
+   ------------------------------------
+   -- Find_All_Reads_From_Contextual --
+   ------------------------------------
+
+   procedure Find_All_Reads_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      Find_All_References_Internal
+        (Widget, Context,
+         Category_Title => -"Read-Only references for: ",
+         Include_Writes => False,
+         Include_Reads  => True);
+   end Find_All_Reads_From_Contextual;
 
    -----------------------------------------------
    -- Find_All_Local_References_From_Contextual --
@@ -1318,6 +1400,24 @@ package body Browsers.Call_Graph is
               (Item, "activate",
                Context_Callback.To_Marshaller
                  (Find_All_Local_References_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => (-"Find all writes to ") &
+                     Entity_Name_Information (Entity_Context));
+            Append (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (Find_All_Writes_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => (-"Find all reads of ") &
+                     Entity_Name_Information (Entity_Context));
+            Append (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (Find_All_Reads_From_Contextual'Access),
                Selection_Context_Access (Context));
          end if;
       end if;
