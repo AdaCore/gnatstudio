@@ -167,6 +167,13 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box);
    --  Callback for the "destroy" signal.
 
+   procedure On_Toggle_Overwrite
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box);
+   --  Callback to be called when the view receives the "toggle_overwrite"
+   --  signal.
+
    procedure Initialize_Box
      (Box    : access Source_Editor_Box_Record;
       Kernel : Glide_Kernel.Kernel_Handle;
@@ -975,6 +982,29 @@ package body Src_Editor_Box is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Box_Destroy;
 
+   -------------------------
+   -- On_Toggle_Overwrite --
+   -------------------------
+
+   procedure On_Toggle_Overwrite
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box)
+   is
+      pragma Unreferenced (Object, Params);
+   begin
+      Box.Overwrite := not Box.Overwrite;
+
+      if Box.Overwrite then
+         Set_Text (Box.Overwrite_Label, -"Ovwrt");
+      else
+         Set_Text (Box.Overwrite_Label, -"Ins");
+      end if;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Toggle_Overwrite;
+
    --------------------
    -- Initialize_Box --
    --------------------
@@ -1055,6 +1085,21 @@ package body Src_Editor_Box is
         (Event_Box, "button_press_event",
          Object_Return_Callback.To_Marshaller (On_Read_Only_Pressed'Access),
          Box);
+
+      --  Insert/Overwrite label
+      Gtk_New (Frame);
+      Set_Shadow_Type (Frame, Shadow_In);
+      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
+      Gtk_New (Event_Box);
+      Add (Frame, Event_Box);
+      Gtk_New (Box.Overwrite_Label, -"Ins");
+      Add (Event_Box, Box.Overwrite_Label);
+
+      Box_Callback.Connect
+        (Box.Source_View,
+         "toggle_overwrite",
+         On_Toggle_Overwrite'Access,
+         User_Data => Source_Editor_Box (Box));
 
       --  Filename area...
       Gtk_New (Frame);
