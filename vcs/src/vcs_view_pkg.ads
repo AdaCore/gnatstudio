@@ -18,10 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Box;    use Gtk.Box;
+with Glib.Object;    use Glib.Object;
+
+with Gtk.Box;        use Gtk.Box;
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
+
+with Gtk.Menu;       use Gtk.Menu;
 
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
@@ -41,10 +45,11 @@ package VCS_View_Pkg is
       Kernel : Kernel_Handle;
       --  Reference to the Glide kernel that launched the explorer, if any.
 
-      Show_All : Boolean := False;
+      Hide_Up_To_Date : Boolean := False;
+      --  Whether up-to-date and unknown files should be hidden in the view.
 
-      Stored_Status : File_Status_List.List;
-      Cached_Status : File_Status_List.List;
+      Stored_Status   : File_Status_List.List;
+      Cached_Status   : File_Status_List.List;
    end record;
 
    procedure Gtk_New (VCS_View : out VCS_View_Access;
@@ -91,5 +96,66 @@ package VCS_View_Pkg is
       Ref      : VCS_Access);
    --  Launch log editors for these files.
    --  User must free Files afterwards.
+
+   procedure On_Open
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure On_Update
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure On_View_Diff
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure On_View_Log
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure On_View_Annotate
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure On_Edit_Log
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure On_Commit
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   function Get_Current_Dir
+     (Kernel : access Kernel_Handle_Record'Class)
+     return String;
+   --  Convenience function to get the current directory.
+
+   function Get_Current_File (Kernel : Kernel_Handle) return String;
+   --  Convenience function to get the current file.
+
+   function Get_Current_Ref
+     (Kernel : access Kernel_Handle_Record'Class)
+     return VCS_Access;
+   --  Convenience function to get the current file.
+
+   function Get_Selected_Files
+     (Kernel : Kernel_Handle)
+     return String_List.List;
+   --  Return the currently selected files, as a list.
+   --  Caller must free this list afterwards.
+
+   function Get_Explorer (Kernel : Kernel_Handle) return VCS_View_Access;
+   --  Return the vcs explorer, if created, null otherwise.
+
+   function Get_Files_In_Project
+     (Kernel : Kernel_Handle) return String_List.List;
+
+   function Get_Dirs_In_Project
+     (Kernel : Kernel_Handle) return String_List.List;
+
+   procedure VCS_Contextual_Menu
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
 end VCS_View_Pkg;
