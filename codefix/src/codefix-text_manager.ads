@@ -211,8 +211,9 @@ package Codefix.Text_Manager is
 
    function Get_Right_Paren
      (This   : Text_Interface'Class;
-      Cursor : Text_Cursor'Class)
-     return Text_Cursor'Class;
+      Cursor : Text_Cursor'Class;
+      Current_Line : String)
+   return Text_Cursor'Class;
    --  Return the right paren corresponding to the one in the cursor.
 
    ----------------------------------------------------------------------------
@@ -656,6 +657,16 @@ package Codefix.Text_Manager is
    --  Add a line AFTER the line specified by the cursor.
    --  Make a cursor with 0 for the line number to add a line at the beginning
    --  of the file. This procedure also indents automatically the line.
+
+   procedure Add_Indented_Line
+     (This          : in out Extract;
+      Cursor        : File_Cursor'Class;
+      Text          : String;
+      Previous_Line : String);
+   --  Add a line AFTER the line specified by the cursor.
+   --  Make a cursor with 0 for the line number to add a line at the beginning
+   --  of the file. This procedure also indents automatically the line in
+   --  function of the previous one.
 
    procedure Delete_Line
      (This   : in out Extract;
