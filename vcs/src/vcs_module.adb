@@ -108,18 +108,17 @@ package body VCS_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item : Gtk_Menu_Item;
-      VCS       : constant String := '/' & (-"VCS");
+      VCS       : constant String := -"VCS";
 
    begin
       Register_Menu
-        (Kernel, VCS, Ref_Item => -"Goto", Add_Before => False);
+        (Kernel, "/_" & VCS, Ref_Item => -"Navigate", Add_Before => False);
       Gtk_New (Menu_Item, -"VCS Explorer");
-      Register_Menu (Kernel, VCS, Menu_Item);
+      Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_Open_Interface'Access),
          Kernel_Handle (Kernel));
-
    end Initialize_Module;
 
 begin
@@ -129,4 +128,3 @@ begin
       Initializer             => Initialize_Module'Access,
       Contextual_Menu_Handler => null);
 end VCS_Module;
-
