@@ -74,6 +74,7 @@ with Src_Editor_Module.Line_Highlighting;
 
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
+with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
 
 package body Src_Editor_Buffer is
 
@@ -88,9 +89,16 @@ package body Src_Editor_Buffer is
    --  The interval at which to check whether the buffer should be reparsed,
    --  in milliseconds.
 
+   Cursor_Stop_Interval : constant Guint32 := 100;
+   --  The interval after which we consider that the cursor has stopped.
+
    Buffer_Recompute_Delay    : constant Duration := 1.0;
    --  The delay between the last edit and the re-parsing of the buffer,
    --  in seconds.
+
+   Cursor_Reactivity_Delay   : constant Duration := 0.5;
+   --  The timeout between the last time the cursor moves and the time it is
+   --  considered as having stopped.
 
    package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
 
@@ -317,8 +325,16 @@ package body Src_Editor_Buffer is
    --  Indicate that the text has been edited, and that a timeout should be
    --  registered to call the corresponding "after-timeout" hook.
 
+   procedure Register_Cursor_Timeout
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Indicate that the cursor has moved, and that a timeout should be
+   --  registered to call the corresponding "after-timeout" hook.
+
    function Check_Blocks (Buffer : Source_Buffer) return Boolean;
    --  Timeout that recomputes the blocks if needed.
+
+   function Cursor_Stop_Hook (Buffer : Source_Buffer) return Boolean;
+   --  Hook called after the cursor has stopped moving.
 
    type Src_String is record
       Contents  : Unchecked_String_Access;
@@ -658,6 +674,45 @@ package body Src_Editor_Buffer is
          return False;
    end Check_Blocks;
 
+   ----------------------
+   -- Cursor_Stop_Hook --
+   ----------------------
+
+   function Cursor_Stop_Hook (Buffer : Source_Buffer) return Boolean is
+   begin
+      if Clock < Buffer.Cursor_Timestamp + Cursor_Reactivity_Delay then
+         return True;
+      end if;
+
+      --  Emit the hook
+      Cursor_Stopped (Buffer);
+
+      Buffer.Cursor_Timeout_Registered := False;
+      return False;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Cursor_Stop_Hook;
+
+   -----------------------------
+   -- Register_Cursor_Timeout --
+   -----------------------------
+
+   procedure Register_Cursor_Timeout
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Cursor_Timestamp := Clock;
+
+      if not Buffer.Cursor_Timeout_Registered then
+         Buffer.Cursor_Timeout_Registered := True;
+         Buffer.Cursor_Timeout := Buffer_Timeout.Add
+           (Cursor_Stop_Interval,
+            Cursor_Stop_Hook'Access,
+            Source_Buffer (Buffer));
+      end if;
+   end Register_Cursor_Timeout;
+
    ---------------------------
    -- Register_Edit_Timeout --
    ---------------------------
@@ -792,9 +847,13 @@ package body Src_Editor_Buffer is
 
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class) is
    begin
-      --  Clear the completion data.
+      --  Clear the completion data if we are not already completing.
 
-      Clear (Buffer.Completion);
+      if not Buffer.Inserting then
+         Clear (Buffer.Completion);
+      end if;
+
+      Register_Cursor_Timeout (Buffer);
    end Cursor_Move_Hook;
 
    ---------------
@@ -836,6 +895,10 @@ package body Src_Editor_Buffer is
 
       if Buffer.Blocks_Timeout_Registered then
          Timeout_Remove (Buffer.Blocks_Timeout);
+      end if;
+
+      if Buffer.Cursor_Timeout_Registered then
+         Timeout_Remove (Buffer.Cursor_Timeout);
       end if;
    end Destroy_Hook;
 
@@ -1069,6 +1132,7 @@ package body Src_Editor_Buffer is
 
    begin
       Edit_Hook (Buffer);
+      Cursor_Move_Hook (Buffer);
 
       if Buffer.Inserting then
          return;
@@ -1262,6 +1326,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Edit_Hook (Buffer);
+      Cursor_Move_Hook (Buffer);
 
       if Buffer.Inserting then
          return;
@@ -2290,7 +2355,7 @@ package body Src_Editor_Buffer is
          Block_List.Free (Buffer.Blocks);
 
          Buffer.First_Removed_Line := 0;
-         Buffer.Last_Removed_Line := 0;
+         Buffer.Last_Removed_Line  := 0;
          Buffer.Last_Editable_Line := 1;
 
          --  Unregister the blocks timeout.
@@ -2298,6 +2363,13 @@ package body Src_Editor_Buffer is
          if Buffer.Blocks_Timeout_Registered then
             Timeout_Remove (Buffer.Blocks_Timeout);
             Buffer.Blocks_Timeout_Registered := False;
+         end if;
+
+         --  Unregister the cursor timeout.
+
+         if Buffer.Cursor_Timeout_Registered then
+            Timeout_Remove (Buffer.Cursor_Timeout);
+            Buffer.Cursor_Timeout_Registered := False;
          end if;
 
          Buffer.Blank_Lines := 0;
