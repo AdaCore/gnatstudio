@@ -1100,7 +1100,7 @@ package body VCS.CVS is
          return False;
       end if;
 
-      Open_File_Editor (Kernel, Current_File, 0, 0);
+      Open_File_Editor (Kernel, Current_File);
 
       L_Temp := Next (Next (L_Temp));
 
