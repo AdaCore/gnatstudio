@@ -21,10 +21,12 @@
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with Glib.Object;             use Glib.Object;
 with Glide_Intl;              use Glide_Intl;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Contexts;   use Glide_Kernel.Contexts;
 with Glide_Kernel.Scripts;    use Glide_Kernel.Scripts;
+with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Widget;              use Gtk.Widget;
 with Traces;                  use Traces;
@@ -32,13 +34,28 @@ with String_Utils;            use String_Utils;
 with Case_Handling;           use Case_Handling;
 with VFS;                     use VFS;
 
-package body  Casing_Exceptions is
+package body Casing_Exceptions is
 
    Me : constant Debug_Handle := Create ("Casing");
 
    Case_Exceptions_Filename : constant String := "case_exceptions.xml";
 
-   Casing_Exceptions_Table  : Case_Handling.Casing_Exceptions;
+   type Casing_Module_Record is new Module_ID_Record with record
+      Kernel                   : Kernel_Handle;
+      Casing_Exceptions_Table  : Case_Handling.Casing_Exceptions;
+   end record;
+   type Casing_Module is access all Casing_Module_Record'Class;
+
+   Casing_Module_Id : Casing_Module;
+
+   procedure Destroy (Id : in out Casing_Module_Record);
+   --  Terminate the module and save the casing exceptions on file.
+
+   procedure Casing_Contextual
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Build the casing contextual memu
 
    procedure On_Add_Case_Exception
      (Widget  : access GObject_Record'Class;
@@ -82,7 +99,7 @@ package body  Casing_Exceptions is
    procedure Add_Exception (Ident : String) is
    begin
       Case_Handling.Add_Exception
-        (Casing_Exceptions_Table, Ident, Read_Only => False);
+        (Casing_Module_Id.Casing_Exceptions_Table, Ident, Read_Only => False);
    end Add_Exception;
 
    ----------------------
@@ -91,7 +108,8 @@ package body  Casing_Exceptions is
 
    procedure Remove_Exception (Ident : String) is
    begin
-      Case_Handling.Remove_Exception (Casing_Exceptions_Table, Ident);
+      Case_Handling.Remove_Exception
+        (Casing_Module_Id.Casing_Exceptions_Table, Ident);
    end Remove_Exception;
 
    -------------------------
@@ -100,7 +118,7 @@ package body  Casing_Exceptions is
 
    function Get_Case_Exceptions return Case_Handling.Casing_Exceptions is
    begin
-      return Casing_Exceptions_Table;
+      return Casing_Module_Id.Casing_Exceptions_Table;
    end Get_Case_Exceptions;
 
    ---------------------------
@@ -272,8 +290,9 @@ package body  Casing_Exceptions is
                      --  This is a full word exception, we ignore all other
                      --  nodes for Now.
                      Add_Exception
-                       (Casing_Exceptions_Table,
-                        Child.Value.all, Read_Only => True);
+                       (Casing_Module_Id.Casing_Exceptions_Table,
+                        Child.Value.all,
+                        Read_Only => True);
                   end if;
                   Child := Child.Next;
                end loop;
@@ -376,31 +395,40 @@ package body  Casing_Exceptions is
       end;
    end Casing_Contextual;
 
-   ------------------------
-   -- Casing_Initilalize --
-   ------------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Casing_Initialize
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Filename : constant String :=
         Get_Home_Dir (Kernel) & Case_Exceptions_Filename;
    begin
-      Load_Exceptions (Casing_Exceptions_Table, Filename, Read_Only => False);
-   end Casing_Initialize;
+      Casing_Module_Id := new Casing_Module_Record;
+      Casing_Module_Id.Kernel := Kernel_Handle (Kernel);
+      Register_Module
+        (Module                  => Module_ID (Casing_Module_Id),
+         Kernel                  => Kernel,
+         Module_Name             => "Casing",
+         Contextual_Menu_Handler => Casing_Contextual'Access,
+         Priority                => Default_Priority - 1);
+      Load_Exceptions
+        (Casing_Module_Id.Casing_Exceptions_Table,
+         Filename,
+         Read_Only => False);
+   end Register_Module;
 
-   ---------------------
-   -- Casing_Finalize --
-   ---------------------
+   -------------
+   -- Destroy --
+   -------------
 
-   procedure Casing_Finalize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
+   procedure Destroy (Id : in out Casing_Module_Record) is
       Filename : constant String :=
-        Get_Home_Dir (Kernel) & Case_Exceptions_Filename;
+        Get_Home_Dir (Id.Kernel) & Case_Exceptions_Filename;
    begin
-      Save_Exceptions (Casing_Exceptions_Table, Filename);
-      Destroy (Casing_Exceptions_Table);
-   end Casing_Finalize;
+      Save_Exceptions (Id.Casing_Exceptions_Table, Filename);
+      Destroy (Id.Casing_Exceptions_Table);
+   end Destroy;
 
 end Casing_Exceptions;
