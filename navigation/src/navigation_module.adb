@@ -390,15 +390,15 @@ package body Navigation_Module is
          Ref_Item => -"Edit",
          Add_Before => False);
 
-      Register_Menu (Kernel, Navigate, -"Goto File Spec<->Body",
+      Register_Menu (Kernel, Navigate, -"Goto _File Spec<->Body",
                      Stock_Convert, On_Other_File'Access);
-      Register_Menu (Kernel, Navigate, -"Goto Parent Unit", "", null);
-      Register_Menu (Kernel, Navigate, -"Find All References", "", null);
+      Register_Menu (Kernel, Navigate, -"Goto _Parent Unit", "", null);
+      Register_Menu (Kernel, Navigate, -"Find _All References", "", null);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
-      Register_Menu (Kernel, Navigate, -"Start Of Statement",
+      Register_Menu (Kernel, Navigate, -"_Start Of Statement",
                      Stock_Go_Up, null);
-      Register_Menu (Kernel, Navigate, -"End Of Statement",
+      Register_Menu (Kernel, Navigate, -"_End Of Statement",
                      Stock_Go_Down, null);
       Register_Menu (Kernel, Navigate, -"Next Procedure", "", null);
       Register_Menu (Kernel, Navigate, -"Previous Procedure", "", null);
