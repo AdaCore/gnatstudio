@@ -28,12 +28,12 @@ with Gdk.Types;           use Gdk.Types;
 with Gdk.Event;           use Gdk.Event;
 
 with Gtk;                 use Gtk;
-with Gtk.Box;             use Gtk.Box;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Container;       use Gtk.Container;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Item_Factory;    use Gtk.Item_Factory;
 with Gtk.Text;            use Gtk.Text;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
@@ -41,7 +41,6 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Object;          use Gtk.Object;
-with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -50,6 +49,7 @@ with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.MDI;          use Gtkada.MDI;
 with Gtkada.Types;        use Gtkada.Types;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
@@ -83,8 +83,6 @@ with Dock_Paned;                 use Dock_Paned;
 
 with System;
 with Ada.Unchecked_Conversion;
-
-pragma Warnings (Off, Debugger.Jdb);
 
 package body GVD.Process is
 
@@ -516,7 +514,9 @@ package body GVD.Process is
             Process.Current_Output (Addr_First .. Addr_Last));
       end if;
 
-      if Get_Active (Process.Window.Call_Stack) then
+      if Get_Active (Gtk_Check_Menu_Item (Get_Item
+        (Process.Window.Factory, -"/Data/Call Stack")))
+      then
          Found_Frame_Info
            (Process.Debugger, Process.Current_Output.all, First, Last);
 
@@ -588,7 +588,7 @@ package body GVD.Process is
          Process.Current_Output := new String' (Str);
          Process.Last_Match := 0;
       else
-         --  ??? Consider optimizing this by using the GNAT.Table approach
+         --  ??? Consider optimizing this by using GNAT.Dynamic_Table
          Tmp_Str := Process.Current_Output;
          Process.Current_Output :=
            new String' (Process.Current_Output.all & Str);
@@ -700,6 +700,8 @@ package body GVD.Process is
       Debugger_Num  : Natural := 1;
       Length        : Guint;
       Geometry_Info : Process_Tab_Geometry;
+      Menu_Item     : Gtk_Menu_Item;
+      Call_Stack    : Gtk_Check_Menu_Item;
 
    begin
       Process := new Debugger_Process_Tab_Record;
@@ -708,10 +710,15 @@ package body GVD.Process is
 
       --  Remove the stack window if needed.
 
-      if not Get_Active (Window.Call_Stack) then
+      if not Get_Active (Gtk_Check_Menu_Item (Get_Item
+        (Window.Factory, -"/Data/Call Stack")))
+      then
          Ref (Process.Stack_Scrolledwindow);
          Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
       end if;
+
+      Menu_Item := Gtk_Menu_Item (Get_Widget (Window.Factory, -"/Window"));
+      Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String' (Remote_Host);
@@ -806,12 +813,7 @@ package body GVD.Process is
 
       Gtk_New (Label);
 
-      if Window.TTY_Mode then
-         Ref (Process.Command_Scrolledwindow);
-         Dock_Remove (Process.Process_Paned, Process.Command_Scrolledwindow);
-      end if;
-
-      Append_Page (Window.Process_Notebook, Process.Process_Hbox, Label);
+      Append_Page (Window.Process_Notebook, Process.Process_Mdi, Label);
 
       --  Set the graphical parameters.
 
@@ -820,23 +822,18 @@ package body GVD.Process is
                           & "window_settings")
       then
          Geometry_Info := Get_Process_Tab_Geometry
-           (Page_Num (Window.Process_Notebook, Process.Process_Hbox));
+           (Page_Num (Window.Process_Notebook, Process.Process_Mdi));
 
-         Set_Position (Process.Data_Editor_Paned, Geometry_Info.Data_Height);
-
-         if Get_Pref (Display_Explorer) then
-            Set_Position (Get_Explorer_Editor_Pane (Process.Editor_Text),
-                          Geometry_Info.Explorer_Width);
-         end if;
+         Call_Stack :=
+           Gtk_Check_Menu_Item
+             (Get_Item (Window.Factory, -"/Data/Call Stack"));
 
          if Get_Pref (Separate_Data) then
-            Ref (Process.Data_Paned);
-            Dock_Remove (Process.Data_Editor_Paned, Process.Data_Paned);
-            Add (Process, Process.Data_Paned);
-            Unref (Process.Data_Paned);
-            Show_All (Process);
+            Float_Child
+              (Find_MDI_Child (Process.Process_Mdi, Process.Data_Paned),
+               True);
 
-            if Get_Active (Window.Call_Stack) then
+            if Get_Active (Call_Stack) then
                Set_Default_Size
                  (Process,
                   Geometry_Info.Data_Width + Geometry_Info.Stack_Width,
@@ -847,18 +844,9 @@ package body GVD.Process is
                   Geometry_Info.Data_Width,
                   Geometry_Info.Data_Height);
             end if;
-
-            Set_Position (Process.Process_Paned, Geometry_Info.Editor_Height);
-
-         else
-            Set_Position
-              (Process.Process_Paned,
-               Geometry_Info.Data_Height +
-               Geometry_Info.Editor_Height +
-               Gint (Get_Gutter_Size (Process.Data_Editor_Paned)));
          end if;
 
-         if Get_Active (Window.Call_Stack) then
+         if Get_Active (Call_Stack) then
             Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
          end if;
       end if;
@@ -871,14 +859,15 @@ package body GVD.Process is
       if Length > 1 then
          Set_Show_Tabs (Window.Process_Notebook, True);
       elsif Length /= 0 then
-         Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
+         Set_Sensitive
+           (Get_Item (Window.Factory, -"/File/Open Program..."), True);
       end if;
 
       --  Set the user data, so that we can easily convert afterwards.
 
       Process_User_Data.Set
         (Process.Editor_Text, Process, Process_User_Data_Name);
-      Process_User_Data.Set (Process.Process_Hbox, Process.all'Access);
+      Process_User_Data.Set (Process.Process_Mdi, Process.all'Access);
 
       --  Spawn the debugger. Note that this needs to be done after the
       --  creation of a new notebook page, since Spawn might need to access
@@ -1023,7 +1012,7 @@ package body GVD.Process is
       --  Change the title of the tab for that debugger
 
       Label := Get_Tab_Label
-        (Debugger.Window.Process_Notebook, Debugger.Process_Hbox);
+        (Debugger.Window.Process_Notebook, Debugger.Process_Mdi);
       Set_Text (Gtk_Label (Label),
                 Debug (1 .. Debug'Last - 5) & " - "
                 & Base_File_Name (Executable_Name));
@@ -1347,7 +1336,7 @@ package body GVD.Process is
       Next_Page (Notebook);
 
       Close (Debugger.Debugger);
-      Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Hbox));
+      Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Mdi));
       Destroy (Debugger);
 
       --  If the last notebook page was destroyed, disable "Open Program"
@@ -1358,7 +1347,8 @@ package body GVD.Process is
       if Length = 1 then
          Set_Show_Tabs (Notebook, False);
       elsif Length = 0 then
-         Set_Sensitive (Gtk_Widget (Top.Open_Program1), False);
+         Set_Sensitive
+           (Get_Item (Top.Factory, -"/File/Open Program..."), False);
       end if;
    end Close_Debugger;
 
@@ -1673,19 +1663,9 @@ package body GVD.Process is
          Detach (Get_Source (Process.Editor_Text));
          Process.Separate_Data := not Process.Separate_Data;
 
-         if Process.Separate_Data then
-            Ref (Process.Data_Paned);
-            Dock_Remove (Process.Data_Editor_Paned, Process.Data_Paned);
-            Add (Process, Process.Data_Paned);
-            Unref (Process.Data_Paned);
-            Show_All (Process);
-         else
-            Hide (Process);
-            Ref (Process.Data_Paned);
-            Remove (Process, Process.Data_Paned);
-            Add1 (Process.Data_Editor_Paned, Process.Data_Paned);
-            Unref (Process.Data_Paned);
-         end if;
+         Float_Child
+           (Find_MDI_Child (Process.Process_Mdi, Process.Data_Paned),
+            Process.Separate_Data);
 
          Attach (Get_Source (Process.Editor_Text), Parent);
       end if;
@@ -1699,16 +1679,9 @@ package body GVD.Process is
      (Process : access Debugger_Process_Tab_Record) is
    begin
       --  Set the label text.
-      Set_Text
-        (Process.Editor_Label,
+      Set_Title
+        (Find_MDI_Child (Process.Process_Mdi, Process.Editor_Text),
          Base_File_Name (Get_Current_File (Process.Editor_Text)));
-
-      --  Align the label on top of the source editor.
-      Set_USize
-        (Gtk_Widget (Process.Explorer_Separator),
-         Gint (Get_Allocation_Width (Process.Editor_Text)) -
-           Get_Window_Size (Process.Editor_Text),
-         0);
    end Update_Editor_Frame;
 
 end GVD.Process;
