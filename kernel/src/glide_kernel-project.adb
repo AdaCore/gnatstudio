@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,13 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with GNAT.Expect;               use GNAT.Expect;
-
-pragma Warnings (Off);
-with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
-pragma Warnings (On);
-
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -32,7 +25,6 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 with Projects;           use Projects;
 with Projects.Editor;    use Projects.Editor;
 with Projects.Registry;  use Projects.Registry;
-with String_Utils;       use String_Utils;
 with Basic_Types;
 with Prj;
 with Types;                    use Types;
@@ -56,38 +48,6 @@ package body Glide_Kernel.Project is
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class)
    is
-      Current : GNAT.OS_Lib.String_Access;
-
-      procedure Add_Directory (S : String);
-      --  Add S to the search path.
-      --  If Source_Path is True, the source path is modified.
-      --  Otherwise, the object path is modified.
-
-      -------------------
-      -- Add_Directory --
-      -------------------
-
-      procedure Add_Directory (S : String) is
-         Tmp : GNAT.OS_Lib.String_Access;
-      begin
-         if S = ""
-           or else S = "<Current_Directory>"
-         then
-            --  Do not include "." in the default source paths: when the user
-            --  is compiling, it would represent the object directory, when the
-            --  user is searching file it would represent whatever the current
-            --  directory is at that point, ...
-            return;
-
-         else
-            Tmp := Current;
-            Current := new String'(Current.all & Path_Separator & S);
-            Free (Tmp);
-         end if;
-      end Add_Directory;
-
-      Fd          : TTY_Process_Descriptor;
-      Result      : Expect_Match;
       Gnatls      : constant String := Get_Attribute_Value
         (Get_Project (Handle), Gnatlist_Attribute, Default => "gnatls");
       Gnatls_Args : Argument_List_Access :=
@@ -112,55 +72,20 @@ package body Glide_Kernel.Project is
       Path := Locate_Exec_On_Path (Gnatls_Args (1).all);
 
       if Path /= null then
-         Current := new String'("");
-
-         Non_Blocking_Spawn
-           (Fd, Path.all,
-            Gnatls_Args (2 .. Gnatls_Args'Last),
-            Buffer_Size => 0, Err_To_Out => True);
+         Compute_Predefined_Paths
+           (Handle.Registry.all,
+            Gnatls_Path  => Handle.Gnatls_Cache.all,
+            Gnatls_Args  => Gnatls_Args,
+            GNAT_Version => Handle.GNAT_Version);
 
          Free (Path);
          Free (Gnatls_Args);
-         Expect (Fd, Result, "GNATLS .+\)", Timeout => -1);
-         Free (Handle.GNAT_Version);
-
-         declare
-            S : constant String := Expect_Out_Match (Fd);
-         begin
-            Handle.GNAT_Version := new String'(S (S'First + 7 .. S'Last));
-         end;
-
-         Expect (Fd, Result, "Source Search Path:", Timeout => -1);
-
-         loop
-            Expect (Fd, Result, "\n", Timeout => -1);
-
-            declare
-               S : constant String :=
-                 Trim (Strip_CR (Expect_Out (Fd)), Ada.Strings.Left);
-            begin
-               if S = "Object Search Path:" & ASCII.LF then
-                  Set_Predefined_Source_Path
-                    (Handle.Registry.all, Current.all);
-                  Free (Current);
-                  Current := new String'("");
-               else
-                  Add_Directory (S (S'First .. S'Last - 1));
-               end if;
-            end;
-         end loop;
 
       else
          Set_Predefined_Source_Path (Handle.Registry.all, "");
          Set_Predefined_Object_Path (Handle.Registry.all, "");
          Free (Gnatls_Args);
       end if;
-
-   exception
-      when Process_Died =>
-         Set_Predefined_Object_Path (Handle.Registry.all, Current.all);
-         Free (Current);
-         Close (Fd);
    end Compute_Predefined_Paths;
 
    --------------------------
