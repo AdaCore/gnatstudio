@@ -788,16 +788,21 @@ package Glide_Kernel.Modules is
    --  Register Command, with Help as its help/usage text, and Handler
    --  as the default command handler.
 
-   procedure Interpret_Command
+   function Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String);
-   --  Interprets Command.
+      Command : String) return String;
    --  Command is a string followed by a list of arguments, for example
    --     "edit gps.adb"
    --  Commands are registered using Register_Command, see above.
    --  The following commands are recognized by the kernel:
    --    "help"   : brings up the list of currently recognized commands.
    --    "help X" : brings up help concerning command X.
+
+   procedure Interpret_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String);
+   --  Same as above, but do not return any result, and display the output
+   --  on the console.
 
 private
 
