@@ -735,9 +735,6 @@ package body Src_Info is
 
    begin
       GM_Split (Time, Year, Month, Day, Hour, Minutes, Second);
-      Trace (Me, "To_Timestamp:"
-               & Year'Img & Month'Img & Day'Img & Hour'Img
-               & Minutes'Img & Second'Img);
 
       return Timestamp (Year - Base_Year) * Seconds_In_Year
         + Timestamp (Month) * Seconds_In_Month
