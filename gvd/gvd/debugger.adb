@@ -42,7 +42,6 @@ with GVD;               use GVD;
 with GVD.Preferences;   use GVD.Preferences;
 with GVD.Process;       use GVD.Process;
 with String_Utils;      use String_Utils;
-with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
 with Basic_Types;       use Basic_Types;
 with GVD.Main_Window;   use GVD.Main_Window;
@@ -395,7 +394,6 @@ package body Debugger is
          end if;
 
          Set_Command_In_Process (Get_Process (Debugger), False);
-         Debugger.Processing_User_Command := False;
          Unregister_Dialog (Process);
 
          --  Do the postprocessing here instead of calling Send_Internal_Post
@@ -462,7 +460,6 @@ package body Debugger is
 
          Timeout_Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
-         Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy (Process, False);
          Free (Process.Current_Command);
@@ -485,7 +482,6 @@ package body Debugger is
       Process : Debugger_Process_Tab;
 
    begin
-      Debugger.Processing_User_Command := True;
       Set_Command_In_Process (Get_Process (Debugger));
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
@@ -537,7 +533,6 @@ package body Debugger is
    begin
       --  See also Output_Available for similar handling.
 
-      Debugger.Processing_User_Command := False;
       Set_Command_In_Process (Get_Process (Debugger), False);
 
       if Mode /= Internal and then Process_Command (Debugger) then
@@ -672,7 +667,6 @@ package body Debugger is
          Button := Message_Dialog
            (-"The underlying debugger died unexpectedly. Closing it",
             Error, Button_OK);
-         Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy (Process, False);
          Unregister_Dialog (Process);
@@ -689,27 +683,13 @@ package body Debugger is
       Mode         : Invisible_Command := Hidden) return String
    is
       Process : Debugger_Process_Tab;
-      Main    : constant GVD_Main_Window := GVD_Main_Window (Debugger.Window);
-
    begin
-      if Debugger.Processing_User_Command then
-         Wait_User_Command (Debugger);
-      end if;
-
-      if Main.Locked then
-         Output_Error (Main, "Internal inconsistency: recursing in Send_Full");
-         return "";
-      end if;
-
-      Main.Locked := True;
-
       Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
       Wait_Prompt (Debugger);
 
       declare
          S : constant String := Expect_Out (Get_Process (Debugger));
       begin
-         Main.Locked := False;
          Send_Internal_Post (Debugger, Cmd, Mode);
 
          if Need_To_Strip_CR then
@@ -721,9 +701,7 @@ package body Debugger is
 
    exception
       when Process_Died =>
-         Main.Locked := False;
          Process := Convert (Debugger.Window, Debugger);
-         Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy (Process, False);
          Unregister_Dialog (Process);
