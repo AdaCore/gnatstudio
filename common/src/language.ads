@@ -323,19 +323,19 @@ package Language is
    --                      variable decl.
 
    Default_Indent_Parameters : constant Indent_Parameters :=
-                                 (Indent_Level        => 3,
-                                  Indent_Continue     => 2,
-                                  Indent_Decl         => 0,
-                                  Tab_Width           => 8,
-                                  Indent_Case_Extra   => Automatic,
-                                  Casing_Policy     => Case_Handling.Disabled,
-                                  Reserved_Casing   => Case_Handling.Unchanged,
-                                  Ident_Casing      => Case_Handling.Unchanged,
-                                  Format_Operators    => False,
-                                  Use_Tabs            => False,
-                                  Align_On_Colons     => False,
-                                  Align_On_Arrows     => False,
-                                  Align_Decl_On_Colon => False);
+     (Indent_Level        => 3,
+      Indent_Continue     => 2,
+      Indent_Decl         => 0,
+      Tab_Width           => 8,
+      Indent_Case_Extra   => Automatic,
+      Casing_Policy       => Case_Handling.Disabled,
+      Reserved_Casing     => Case_Handling.Unchanged,
+      Ident_Casing        => Case_Handling.Unchanged,
+      Format_Operators    => False,
+      Use_Tabs            => False,
+      Align_On_Colons     => False,
+      Align_On_Arrows     => False,
+      Align_Decl_On_Colon => False);
 
    type Indentation_Kind is (None, Simple, Extended);
    for Indentation_Kind'Size use Integer'Size;
@@ -495,12 +495,16 @@ package Language is
       return Character_Set;
    --  Returns the character set used for the language identifiers
 
-   function Comment_Line
+   function Comment_Block
      (Lang    : access Language_Root;
-      Line    : String;
-      Comment : Boolean := True) return String;
-   --  Comment or uncomment (if Comment is false) one line of code.
-   --  Comment_Line (Comment_Line (A), Comment => False) should return A.
+      Block   : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String;
+   --  Comment or uncomment (if Comment is false) a text block
+   --  Comment_Block (L, Comment_Block (L, A), Comment => False)
+   --  should return A.
+   --  If Clean is True, a clean up of of the block should be performed
+   --  (e.g. leading spaces are removed for each line).
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;
@@ -610,4 +614,15 @@ private
       Indent_Params : Indent_Parameters := Default_Indent_Parameters;
       Indent_Style  : Indentation_Kind  := Extended;
    end record;
+
+   function Comment_Line
+     (Lang    : access Language_Root;
+      Line    : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String;
+   --  Comment or uncomment (if Comment is false) one line of code.
+   --  Comment_Line (Comment_Line (A), Comment => False) should return A.
+   --  If Clean is True, a clean up of of the line should be performed
+   --  (e.g. leading spaces are removed).
+
 end Language;
