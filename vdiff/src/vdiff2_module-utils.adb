@@ -20,7 +20,7 @@
 
 with Glide_Kernel;                      use Glide_Kernel;
 with Glide_Intl;                        use Glide_Intl;
-with Glide_Kernel.Modules;              use Glide_Kernel.Modules;
+with Glide_Kernel.Standard_Hooks;       use Glide_Kernel.Standard_Hooks;
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with Gtkada.MDI;                        use Gtkada.MDI;
