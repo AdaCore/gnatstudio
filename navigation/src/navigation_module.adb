@@ -194,16 +194,12 @@ package body Navigation_Module is
       Line   : Natural)
    is
       Line_Img : aliased String := Image (Line);
-      S_Line   : constant String :=
-        Execute_GPS_Shell_Command
-          (Kernel,
-           "Editor.cursor_set_position",
-           (Full_Name (File).all'Unrestricted_Access,
-            Line_Img'Unchecked_Access));
-      pragma Unreferenced (S_Line);
-
    begin
-      null;
+      Execute_GPS_Shell_Command
+        (Kernel,
+         "Editor.cursor_set_position",
+         (Full_Name (File).all'Unrestricted_Access,
+          Line_Img'Unchecked_Access));
    end Set_Current_Line;
 
    -------------------
