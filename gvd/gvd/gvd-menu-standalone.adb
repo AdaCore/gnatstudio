@@ -246,16 +246,21 @@ package body GVD.Menu.Standalone is
    is
       pragma Unreferenced (Action, Widget);
 
-      File_Name : constant String :=
-        File_Selection_Dialog (Title => -"Source name", Must_Exist => True);
-      Tab       : constant Visual_Debugger :=
-        Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
 
    begin
-      Change_Dir (Dir_Name (File_Name));
-      Load_File (Tab.Editor_Text, File_Name, Set_Current => False);
-      Set_Line (Tab.Editor_Text, 1, Set_Current => False,
-                Process => Glib.Object.GObject (Tab));
+      if Tab /= null then
+         declare
+            File_Name : constant String :=
+              File_Selection_Dialog
+                (Title => -"Source name", Must_Exist => True);
+         begin
+            Change_Dir (Dir_Name (File_Name));
+            Load_File (Tab.Editor_Text, File_Name, Set_Current => False);
+            Set_Line (Tab.Editor_Text, 1, Set_Current => False,
+                      Process => Glib.Object.GObject (Tab));
+         end;
+      end if;
    end On_Open_Source;
 
    -----------------------
