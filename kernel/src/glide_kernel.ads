@@ -265,6 +265,12 @@ package Glide_Kernel is
    --  find the LI file matching a given source file (for instance, with a
    --  separate krunched file in Ada).
 
+   function Scope_To_String (Scope : Src_Info.E_Scope) return String;
+   --  Return a printable string for the scope.
+
+   function Kind_To_String (Kind : Src_Info.E_Kind) return String;
+   --  Return a printable string for the entity kind.
+
    --------------
    -- Contexts --
    --------------
