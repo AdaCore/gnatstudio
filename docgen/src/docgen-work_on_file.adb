@@ -30,6 +30,7 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with VFS;                       use VFS;
 with Projects.Registry;         use Projects.Registry;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 
 package body Docgen.Work_On_File is
 
@@ -219,7 +220,6 @@ package body Docgen.Work_On_File is
       Sort_List_Name (Type_Index_List);
 
       --  Create the index doc files for the packages
-
       Process_Unit_Index
         (B, Kernel, Source_File_List,
          Unused_Bis, Unused, Options, Converter,
@@ -273,6 +273,15 @@ package body Docgen.Work_On_File is
       --  pointed by the field Entity of the record Reference_In_File
       Ent_Handle       : Entity_Handle := null;
       Status           : Find_Decl_Or_Body_Query_Status;
+--  Waiting that bug in compiler is fixed
+--        Field            : Entity_Information;
+--        Entity_Complete  : Entity_List_Information;
+--        Found_Private    : Boolean;
+--        Tree_Field : Scope_Tree;
+--        Node_Field : Scope_Tree_Node;
+--        Iter_Field : Scope_Tree_Node_Iterator;
+
+
 
       procedure Process_Subprogram
         (Source_Filename : Virtual_File;
@@ -427,13 +436,9 @@ package body Docgen.Work_On_File is
          then
             Find_Next_Body
               (Kernel, LI_Unit, Info, Entity_Node.Line_In_Body, Status);
-
             if Status /= Success then
                Entity_Node.Line_In_Body := Null_File_Location;
-            else
-               Trace (Me,
-                      "Find Next Body returned" &
-                      Natural'Image (Get_Line (Entity_Node.Line_In_Body)));
+               Trace (Me, "Status returned is not success");
             end if;
 
             Find_All_References
@@ -473,9 +478,9 @@ package body Docgen.Work_On_File is
 
                Find_Next_Body
                  (Kernel, LI_Unit, Info, Entity_Node.Line_In_Body, Status);
-
                if Status /= Success then
                   Entity_Node.Line_In_Body := Null_File_Location;
+                  Trace (Me, "Status returned is not success");
                end if;
 
                Free (Reference_Scope_Tree);
@@ -585,7 +590,6 @@ package body Docgen.Work_On_File is
                Converter,
                Doc_Directory,
                Doc_Suffix);
-
          else
             Trace (Me, "LI file not found");  --  later Exception?
          end if;
@@ -599,7 +603,6 @@ package body Docgen.Work_On_File is
             Entity_Iter :=
               Find_All_References_In_File (LI_Unit, Source_Filename);
             Tree := Create_Tree (LI_Unit);
-
             loop
                Ref_In_File := Get (Entity_Iter);
 
@@ -618,6 +621,14 @@ package body Docgen.Work_On_File is
                   Find_Next_Body
                     (Kernel, LI_Unit,
                      Info, Entity_Node.Line_In_Body, Status);
+                  if Status /= Success then
+                     Entity_Node.Line_In_Body := Null_File_Location;
+                     Insert
+                       (Kernel,
+                        "Somes files should be recompiled",
+                        True,
+                        Verbose);
+                  end if;
 
                   --  Check if the declaration of the entity is in one of the
                   --  files which are in list, if false => no need for
@@ -674,6 +685,89 @@ package body Docgen.Work_On_File is
                                 (Source_Filename,
                                  Get_Declaration_File_Of (Info));
 
+                              --  Code before will be possible when bug in
+                              --  compiler about private field marked as
+                              --  public is fixed
+
+--                                Trace (Me, "Nom type:: " & Get_Name (Info));
+--
+--                                Get_Scope_Tree (Kernel,
+--                                                Info,
+--                                                Tree_Field,
+--                                                Node_Field,
+--                                                True);
+--                                Iter_Field := Start (Node_Field);
+--                                Found_Private := False;
+--                                loop
+--                                   Node_Field := Get (Iter_Field);
+--                                exit when Node_Field = Null_Scope_Tree_Node;
+--                                   Field := Get_Entity (Node_Field);
+--
+--                                   if not Is_Discriminant
+--                                     (Field, LI_Unit, Info) then
+--                                      Trace (Me, "Trouve 1 field ::");
+--                                      Trace (Me, "Nom " & Get_Name (Field));
+--                                      Trace (Me, "Prive :: "
+--                                          & Boolean'Image
+--                                            (Get_Scope (Field)
+--                                               /= Global_Scope));
+--                                      if Get_Scope (Field)
+--                                        /= Global_Scope then
+--                                         Found_Private := True;
+--                                      end if;
+--                                      exit when Found_Private;
+--                                   end if;
+--
+--                                   Destroy (Field);
+--                                   Next (Iter_Field);
+--                                end loop;
+--
+--                                Free (Tree_Field);
+--
+--                                if Found_Private then
+--                                   Entity_Complete.Entity
+--                                     := Create
+--                                       (File   =>
+--                                        Get_File (Entity_Node.Line_In_Body),
+--                                        Line   =>
+--                                        Get_Line (Entity_Node.Line_In_Body),
+--                                        Column =>
+--                                      Get_Column (Entity_Node.Line_In_Body),
+--                                        Name   =>
+--                                          Get_Name (Entity_Node.Entity),
+--                                        Scope  =>
+--                                          Get_Scope (Entity_Node.Entity),
+--                                        Kind   =>
+--                                          Get_Kind (Entity_Node.Entity));
+--                                   Entity_Complete.Name :=
+--                                     new String'(Get_Full_Name
+--                                                (Info, LI_Unit, ".", Tree));
+--                                   Entity_Complete.Is_Private := True;
+--                                   Entity_Complete.Line_In_Body
+--                                     := Entity_Node.Line_In_Body;
+--                               Entity_Complete.Called_List := TRL.Null_List;
+--                               Entity_Complete.Calls_List  := TRL.Null_List;
+--
+--                                   Type_Entity_List.Append
+--                                     (Entity_List, Entity_Complete);
+--                                   Trace (Me, "Ajout ds Entity_List :: "
+--                                          & Entity_Complete.Name.all);
+--                                   Trace (Me, "Rencontre ligne: "
+--                                          & Natural'Image
+--                                            (Get_Declaration_Line_Of
+--                                               (Entity_Complete.Entity)));
+--                                   Trace (Me, "Is_Generic : "
+--                                          & Boolean'Image
+--                                            (Get_Kind (Info).Is_Generic));
+--                                   Trace (Me, "Is_Private : "
+--                                          & Boolean'Image
+--                                            (Entity_Complete.Is_Private));
+--                                   Process_Type
+--                                     (Source_Filename,
+--                                      Get_Declaration_File_Of
+--                                        (Entity_Complete.Entity));
+--                                end if;
+
                            else
                               Entity_Node.Kind := Var_Entity;
                            end if;
@@ -690,11 +784,9 @@ package body Docgen.Work_On_File is
 
                      --  Add to the entity list of this file
                      Type_Entity_List.Append (Entity_List, Entity_Node);
-
                   end if;
                else
                   --  New reference on the current entity
-
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
                      (Name   =>
@@ -703,9 +795,7 @@ package body Docgen.Work_On_File is
                       Column => Get_Column (Get_Location (Ref_In_File)),
                       Entity => Ent_Handle));
                end if;
-
                --  Get next entity (or reference) in this file
-
                Next (Entity_Iter);
             end loop;
 
@@ -713,7 +803,6 @@ package body Docgen.Work_On_File is
             Free (Tree);
 
             --  Process the documentation of this file
-
             Process_Source
               (B,
                Kernel,
