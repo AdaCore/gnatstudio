@@ -104,6 +104,20 @@ private
    --  Action is the Action that has just finished. Success indicates
    --  the success of Action.
 
+   procedure Add_Queue_Change_Hook
+     (Queue   : Command_Queue;
+      Command : Command_Access);
+   --  Set a command that will be executed every time that the state of the
+   --  queue changes.
+   --  ??? Right now there is only one such command at all times, there should
+   --  be the possibility for a set of commands.
+   --  ??? This might be moved to the public part.
+
+   function Get_Queue_Change_Hook
+     (Queue : Command_Queue)
+     return Command_Access;
+   --  Return the queue change hook.
+
    procedure Free (X : in out Command_Access);
    package Command_Queues is new Generic_List (Command_Access);
 
@@ -122,6 +136,10 @@ private
       --  This contains the actions that have been done and undone.
       --  (Again, most recent additions to this queue are at its
       --  beginning.)
+
+      Queue_Change_Hook   : Command_Access;
+      --  This is the action that will be executed every time the state
+      --  of the queue changes.
    end record;
    type Command_Queue is access Command_Queue_Record;
 
