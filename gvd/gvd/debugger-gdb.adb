@@ -90,7 +90,9 @@ package body Debugger.Gdb is
       declare
          S : String := Expect_Out (Debugger.Process.all);
       begin
-         if S'Length > 14 then
+         if S'Length > 14
+           and then S (S'First .. S'First + 12) /= "No definition"
+         then
             return S (S'First + 7 .. S'Last - 6);
          else
             return "";
