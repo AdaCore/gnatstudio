@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,8 +31,9 @@ package Docgen.Work_On_File is
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_File_List : in out Type_Source_File_Table.HTable;
+      Nb_Files         : Natural;
       Options          : Docgen.All_Options);
-   --  Process all files from Source_File_List, and generate their
+   --  Process the Nb_Files files from Source_File_List, and generate their
    --  documentation.
 
 end Docgen.Work_On_File;
