@@ -106,7 +106,6 @@ package Src_Editor_View is
    procedure Add_File_Information
      (View          : access Source_View_Record;
       Identifier    : String;
-      Width         : Integer;
       Info          : Glide_Kernel.Modules.Line_Information_Data;
       Stick_To_Data : Boolean := True);
    --  Add the line information to the view.
@@ -115,9 +114,14 @@ private
 
    type Line_Information_Access is access Line_Information_Record;
 
-   procedure Free (X : in out Line_Information_Access);
+   type Line_Info_Width is record
+      Info  : Line_Information_Access;
+      Width : Integer;
+   end record;
 
-   package Line_Info_List is new Generic_List (Line_Information_Access);
+   procedure Free (X : in out Line_Info_Width);
+
+   package Line_Info_List is new Generic_List (Line_Info_Width);
 
    type Position is (Left, Right);
 
