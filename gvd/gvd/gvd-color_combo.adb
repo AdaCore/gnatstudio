@@ -182,7 +182,8 @@ package body GVD.Color_Combo is
 
       Gdk_New (Tmp_Gc, Get_Window (Combo));
       Set_Foreground (Tmp_Gc, Combo.Color);
-      Draw_Rectangle (Get_Pixmap (Pixmap), Tmp_Gc, True, 5, 20, 16, 4);
+      Get (Pixmap, Val, Mask);
+      Draw_Rectangle (Val, Tmp_Gc, True, 5, 20, 16, 4);
       Draw (Pixmap, Full_Area);
       Unref (Tmp_Gc);
    end Display_Button;
