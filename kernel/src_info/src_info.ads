@@ -313,6 +313,7 @@ package Src_Info is
       Exception_Entity,
       Floating_Point_Object,
       Floating_Point_Type,
+      Generic_Class,
       Generic_Function_Or_Operator,
       Generic_Package,
       Generic_Procedure,
@@ -490,7 +491,10 @@ private
    --  The primitive operations are stored in E_Declaration in a field
    --  Primitive_Operations.
 
-
+   --  C++ templates
+   --  =============
+   --
+   --  C++ class templates have Generic_Class kind.
 
    type Reference_Kind is
      (Reference,

@@ -35,6 +35,7 @@ private package Src_Info.ALI_Maps is
    E_Kind_To_Char : constant E_Kind_To_Char_Map :=
      (Overloaded_Entity                => ASCII.NUL,
       Unresolved_Entity                => ASCII.NUL,
+      Generic_Class                    => ASCII.NUL,
       Access_Object                    => 'p',
       Access_Type                      => 'P',
       Array_Object                     => 'a',
