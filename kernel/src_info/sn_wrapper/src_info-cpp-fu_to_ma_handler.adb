@@ -71,7 +71,8 @@ begin
    Free (Macro);
 
 exception
-   when DB_Error | Not_Found  => null; -- ignore
+   when DB_Error | Not_Found =>
+      Warn ("Referred macro " & Ref_Id & " not found");
 
 end Fu_To_Ma_Handler;
 

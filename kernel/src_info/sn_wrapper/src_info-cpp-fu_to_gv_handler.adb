@@ -12,16 +12,13 @@ procedure Fu_To_Gv_Handler (Ref : TO_Table) is
    Success      : Boolean;
    Scope        : E_Scope := Global_Scope;
    Attributes   : SN_Attributes;
+   Ref_Id       : constant String := Ref.Buffer
+     (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 begin
-   Info ("Fu_To_GV_Handler: """
-         & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-               Ref.Referred_Symbol_Name.Last)
-         & """");
+   Info ("Fu_To_GV_Handler: '" & Ref_Id & "'");
 
    --  we need declaration's location
-   Var := Find (SN_Table (GV),
-      Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                  Ref.Referred_Symbol_Name.Last));
+   Var := Find (SN_Table (GV), Ref_Id);
 
    --  Find declaration
    if Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)
@@ -29,15 +26,12 @@ begin
       begin
          Decl_Info := Find_Declaration
            (File                    => Global_LI_File,
-            Symbol_Name             =>
-               Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                           Ref.Referred_Symbol_Name.Last),
+            Symbol_Name             => Ref_Id,
             Location                => Var.Start_Position);
       exception
          when Declaration_Not_Found =>
             Fail ("Failed to lookup declaration for global variable "
-               & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                             Ref.Referred_Symbol_Name.Last));
+                  & Ref_Id);
             Free (Var);
             return;
       end;
@@ -45,9 +39,7 @@ begin
       begin -- Find dependency declaration
          Decl_Info := Find_Dependency_Declaration
            (File                    => Global_LI_File,
-            Symbol_Name             =>
-               Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                           Ref.Referred_Symbol_Name.Last),
+            Symbol_Name             => Ref_Id,
             Filename                =>
                Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
             Location                => Var.Start_Position);
@@ -124,9 +116,6 @@ begin
       Kind                    => Ref_Kind);
 exception
    when Not_Found  | DB_Error => -- ignore
-      Fail ("Global variable " &
-            Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                        Ref.Referred_Symbol_Name.Last) &
-            " not found");
+      Fail ("Global variable " & Ref_Id & " not found");
 end Fu_To_Gv_Handler;
 

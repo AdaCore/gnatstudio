@@ -13,16 +13,20 @@ is
    Success    : Boolean;
    Decl_Info  : E_Declaration_Info_List;
 begin
+
    Info ("Fu_To_E_Handler: """ & Ref_Id & """");
+
    Find_Enum
      (Type_Name      => Ref_Id,
       Desc           => Enum_Desc,
       Enum_Def       => Enum_Def,
       Success        => Success);
+
    if not Success then
       Warn ("Enum type " & Ref_Id & " is not found in SN DB");
       return;
    end if;
+
    if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
          Enum_Def.Buffer (Enum_Def.File_Name.First ..
                                     Enum_Def.File_Name.Last)

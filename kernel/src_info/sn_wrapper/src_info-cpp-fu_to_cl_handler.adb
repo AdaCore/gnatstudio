@@ -12,21 +12,25 @@ is
    Success    : Boolean;
    Decl_Info  : E_Declaration_Info_List;
 begin
+
    Info ("Fu_To_Cl_Handler: """
          & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                Ref.Referred_Symbol_Name.Last)
          & """");
+
    Find_Class
      (Type_Name      => Ref.Buffer
          (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last),
       Desc           => Class_Desc,
       Class_Def      => Class_Def,
       Success        => Success);
+
    if not Success then
       Warn ("Class " & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                Ref.Referred_Symbol_Name.Last) & " is not found in SN DB");
       return;
    end if;
+
    if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
          Class_Def.Buffer (Class_Def.File_Name.First ..
                                     Class_Def.File_Name.Last)

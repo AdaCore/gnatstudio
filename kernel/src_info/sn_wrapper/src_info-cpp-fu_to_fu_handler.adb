@@ -12,6 +12,8 @@ procedure Fu_To_Fu_Handler (Ref : TO_Table) is
    Overloaded   : Boolean := False;
    Init         : Boolean := True;
    Kind         : E_Kind;
+   Ref_Id       : constant String := Ref.Buffer
+     (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 
    function Find_Function (Fn : FU_Table) return E_Declaration_Info_List;
    --  searches for forward declaration. if no fwd decl found, searches for
@@ -42,16 +44,12 @@ procedure Fu_To_Fu_Handler (Ref : TO_Table) is
 
 begin
 
-   Info ("Fu_To_Fu_Handler: """
-         & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-               Ref.Referred_Symbol_Name.Last)
-         & """");
+   Info ("Fu_To_Fu_Handler: '" & Ref_Id & "'");
 
    Set_Cursor
      (SN_Table (FU),
       By_Key,
-      Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                  Ref.Referred_Symbol_Name.Last) & Field_Sep,
+      Ref_Id,
       False);
 
    loop
@@ -65,6 +63,11 @@ begin
       Free (P);
       exit when Overloaded;
    end loop;
+
+   if Init then -- referred function not found
+      Warn ("Referred function " & Ref_Id & " not found");
+      return;
+   end if;
 
    if not Overloaded then
       --  If procedure
@@ -143,8 +146,7 @@ begin
                   References => null),
                Next => Global_LI_File.LI.Body_Info.Declarations);
             Decl_Info.Value.Declaration.Name :=
-               new String'(Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                                       Ref.Referred_Symbol_Name.Last));
+               new String'(Ref_Id);
             Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
             Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
       end;
@@ -159,10 +161,7 @@ begin
       Reference);
 exception
    when Not_Found  | DB_Error => -- ignore
-      Fail ("Function " &
-            Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                                    Ref.Referred_Symbol_Name.Last) &
-            " not found");
+      Fail ("Function " & Ref_Id & " not found");
    return;
 end Fu_To_Fu_Handler;
 

@@ -122,7 +122,8 @@ begin
    Free (Typedef);
 
 exception
-   when DB_Error | Not_Found  => null; -- ignore
+   when DB_Error | Not_Found  =>
+      Warn ("Referred typedef " & Ref_Id & " not found");
 
 end Fu_To_T_Handler;
 

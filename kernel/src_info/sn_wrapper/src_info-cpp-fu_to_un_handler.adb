@@ -13,16 +13,20 @@ is
    Success    : Boolean;
    Decl_Info  : E_Declaration_Info_List;
 begin
-   Info ("Fu_To_Un_Handler: """ & Ref_Id & """");
+
+   Info ("Fu_To_Un_Handler: '" & Ref_Id & "'");
+
    Find_Union
      (Type_Name      => Ref_Id,
       Desc           => Union_Desc,
       Union_Def      => Union_Def,
       Success        => Success);
+
    if not Success then
       Warn ("Union type " & Ref_Id & " is not found in SN DB");
       return;
    end if;
+
    if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
          Union_Def.Buffer (Union_Def.File_Name.First ..
                                     Union_Def.File_Name.Last)
@@ -88,5 +92,6 @@ begin
       Kind              => Reference);
    Free (Union_Def);
    Free (Union_Desc);
+
 end Fu_To_Un_Handler;
 
