@@ -22,15 +22,15 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
+with Gtkada.Handlers;     use Gtkada.Handlers;
 with Odd_Intl;            use Odd_Intl;
 with Odd.Process;         use Odd.Process;
+with Odd.Dialogs.Callbacks; use Odd.Dialogs.Callbacks;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
 with Odd.Types;
-
-with Ada.Text_IO;  use Ada.Text_IO;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -770,6 +770,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       if Top.Backtrace_Dialog = null then
          Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object), Bt (1 .. Len));
+         Widget_Callback.Connect
+           (Gtk_Widget (Tab), "process_stopped",
+            On_Backtrace_Process_Stopped'Access);
       else
          Update (Top.Backtrace_Dialog, Bt (1 .. Len));
       end if;
