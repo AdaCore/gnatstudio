@@ -186,7 +186,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       Open (Ref, Files);
@@ -216,7 +216,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       Update (Ref, Files);
@@ -235,7 +235,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       Open_Explorer (Kernel);
@@ -254,7 +254,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       Add (Ref, Files);
@@ -272,7 +272,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       Remove (Ref, Files);
@@ -290,7 +290,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       Revert (Ref, Files);
@@ -322,7 +322,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       while not String_List.Is_Empty (Files) loop
@@ -342,7 +342,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       while not String_List.Is_Empty (Files) loop
@@ -362,7 +362,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
       while not String_List.Is_Empty (Files) loop
@@ -403,7 +403,7 @@ package body VCS_View_API is
 
       File_Name : File_Selection_Context_Access;
 
-      Kernel    : Kernel_Handle := Get_Kernel (Context);
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Context.all in File_Selection_Context'Class then
          File_Name := File_Selection_Context_Access (Context);
@@ -420,7 +420,8 @@ package body VCS_View_API is
               and then File_S (File_S'Last - 3 .. File_S'Last) = "_log"
             then
                declare
-                  Original : String := Get_File_From_Log (Kernel, File_S);
+                  Original : constant String :=
+                    Get_File_From_Log (Kernel, File_S);
                begin
                   Set_File_Information
                     (File_Name,
@@ -601,7 +602,8 @@ package body VCS_View_API is
       File         : File_Selection_Context_Access;
       Status       : File_Status_List.List;
       Dirs         : String_List.List;
-      Ref          : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
+      Ref          : constant VCS_Access :=
+        Get_Current_Ref (Get_Kernel (Context));
 
       use String_List;
    begin
@@ -645,9 +647,11 @@ package body VCS_View_API is
       Args   : Gtk_Args)
    is
       pragma Unreferenced (Object);
-      Context      : Selection_Context_Access :=
+      Context      : constant Selection_Context_Access :=
         To_Selection_Context_Access (To_Address (Args, 1));
-      Explorer     : VCS_View_Access := Get_Explorer (Get_Kernel (Context));
+      Explorer     : constant VCS_View_Access :=
+        Get_Explorer (Get_Kernel (Context));
+
    begin
       Change_Context (Explorer, Context);
    end On_Context_Changed;
@@ -659,7 +663,7 @@ package body VCS_View_API is
    procedure Open_Explorer
      (Kernel : Kernel_Handle)
    is
-      MDI      : MDI_Window := Get_MDI (Kernel);
+      MDI      : constant MDI_Window := Get_MDI (Kernel);
       Explorer : VCS_View_Access := Get_Explorer (Kernel);
       Child    : MDI_Child;
       Dirs     : String_List.List;
@@ -699,7 +703,8 @@ package body VCS_View_API is
       File     : File_Selection_Context_Access;
       List     : String_List.List;
       Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+
    begin
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -751,10 +756,11 @@ package body VCS_View_API is
       Log_Check_Script   : constant String :=
         Get_Pref (Kernel, VCS_Commit_Log_Check);
 
-      Ref                : VCS_Access := Get_Current_Ref (Kernel);
+      Ref                : constant VCS_Access := Get_Current_Ref (Kernel);
 
       Child              : MDI_Child;
       Success            : Boolean;
+
    begin
       while Files_Temp /= Null_Node loop
          --  Save any open log editors, and then get the corresponding logs.
@@ -865,7 +871,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       File     : File_Selection_Context_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
    begin
       if Get_Creator (Context) = VCS_Module_ID then
@@ -898,7 +904,7 @@ package body VCS_View_API is
       File     : File_Selection_Context_Access;
       List     : String_List.List;
       Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -940,7 +946,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       File     : File_Selection_Context_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
    begin
       if Get_Creator (Context) = VCS_Module_ID then
@@ -969,7 +975,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       File     : File_Selection_Context_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
    begin
       if Get_Creator (Context) = VCS_Module_ID then
@@ -998,7 +1004,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       File     : File_Selection_Context_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Get_Creator (Context) = VCS_Module_ID then
          View_Annotate (Widget, Kernel);
@@ -1023,7 +1029,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       File     : File_Selection_Context_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
    begin
       if Get_Creator (Context) = VCS_Module_ID then
@@ -1052,7 +1058,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       File     : File_Selection_Context_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
 
    begin
@@ -1208,7 +1214,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
       File_Context : File_Selection_Context_Access;
-      Kernel       : Kernel_Handle := Get_Kernel (Context);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
    begin
       Open_Explorer (Get_Kernel (Context));
       Clear (Get_Explorer (Get_Kernel (Context)));
@@ -1236,7 +1242,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
       File_Context : File_Selection_Context_Access;
-      Kernel       : Kernel_Handle := Get_Kernel (Context);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
    begin
       Open_Explorer (Get_Kernel (Context));
       Clear (Get_Explorer (Get_Kernel (Context)));
@@ -1263,7 +1269,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       File     : File_Selection_Context_Access;
-      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
 
    begin
       if Get_Creator (Context) = VCS_Module_ID then
@@ -1293,7 +1299,7 @@ package body VCS_View_API is
 
       Files  : String_List.List;
       File   : File_Selection_Context_Access;
-      Ref    : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
+      Ref    : constant VCS_Access := Get_Current_Ref (Get_Kernel (Context));
       Status : File_Status_List.List;
       Status_Temp : List_Node;
 
