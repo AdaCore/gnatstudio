@@ -8,7 +8,7 @@ Known Problems fixed in GPS 1.3.1
 - C902-001 Wrong highlighting of special C #include directives
   Problem:    In a C file, when using #include constructs with no < nor "
               (e.g. #include FOO), the source highlighting gets confused.
-  Workaround: Avoid this kind of special construct.
+  Workaround: Avoid this kind of special construct
 
 - C901-002 Internal error when binding control-x and another control-x exists
   Problem:    If you have previously a multi-key bindings starting with
@@ -17,12 +17,17 @@ Known Problems fixed in GPS 1.3.1
   Workaround: Use another multi-key binding in the last case, instead of only
               control-x
 
+- C901-001 Wrong indentation of C struct inside function profile
+  Problem:    When defining struct parameters in C function profiles, the
+              C indentation engine gets confused.
+  Workaround: Use the 'Simple' indentation scheme
+
 - C822-012 GPS does not start under HP-UX
   Problem:    When starting gps, the following is displayed:
      /usr/lib/dld.sl: Can't open shared library: /opt/gtk-2.0/lib/libiconv.sl.2
      /usr/lib/dld.sl: No such file or directory
      Abort(coredump)
-  Workaround: None, an upgrade to 1.3.1 is needed.
+  Workaround: None, an upgrade to 1.3.1 is needed
 
 - C825-002 Exit when using task manager suspend/resume
   Problem:    When using the task manager contextual menu with no task
