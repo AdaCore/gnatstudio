@@ -558,35 +558,31 @@ package body VCS_View_Pkg is
       Sort_Id       : Gint;
 
       Up_To_Date_Status : File_Status;
-
+      Registered_Status : constant Status_Array :=
+                            Get_Registered_Status (VCS_Identifier);
       use type File_Status_List.List_Node;
    begin
+      if Registered_Status'Length >= 2 then
+         Up_To_Date_Status := Registered_Status (Registered_Status'First + 1);
+      end if;
+
       --  Free the logs associated to the files that are up-to-date, and
       --  update the vcs label in the editors.
-
-      if Clear_Logs then
-         declare
-            A : constant Status_Array :=
-              Get_Registered_Status (VCS_Identifier);
-         begin
-            if A'Length >= 2 then
-               Up_To_Date_Status := A (A'First + 1);
-            end if;
-         end;
-      end if;
 
       while Status_Temp /= File_Status_List.Null_Node loop
          declare
             S      : constant File_Status_Record :=
-              File_Status_List.Data (Status_Temp);
+                       File_Status_List.Data (Status_Temp);
             File   : constant Virtual_File := S.File;
          begin
+            --  Clear the logs
+
             if Clear_Logs
               and then S.Status = Up_To_Date_Status
             then
                declare
                   Log   : constant Virtual_File :=
-                    Get_Log_From_File (Kernel, File, False);
+                            Get_Log_From_File (Kernel, File, False);
                begin
                   if Log /= VFS.No_File
                     and then Is_Regular_File (Log)
@@ -598,6 +594,8 @@ package body VCS_View_Pkg is
                   Remove_File_From_Mapping (Kernel, File);
                end;
             end if;
+
+            --  Display the editor status
 
             if Is_Open (Kernel, File) then
                Display_Editor_Status (Kernel, VCS_Identifier, S);
@@ -710,8 +708,14 @@ package body VCS_View_Pkg is
 
             for J in Page.Status'Range loop
                if Page.Status (J).Status = New_Status.Status.Status then
+                  --  Do not append the file if it is up-to-date but the
+                  --  file does not exist.
 
-                  if Page.Status (J).Display then
+                  if Page.Status (J).Display
+                    and then not
+                      (Page.Status (J).Status = Up_To_Date_Status
+                       and then not Is_Regular_File (New_Status.Status.File))
+                  then
                      if Iter = Null_Iter
                        and then Force_Display
                      then
