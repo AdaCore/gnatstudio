@@ -31,11 +31,14 @@ package body Codefix.Errors_Manager is
    function Cut_Message (Str : String) return String is
       Ind : Natural := Str'First;
    begin
+      --  ??? This needs to be synchronized with the regular expression used
+      --  to detect the error messages, and won't apply to custom messages
       Skip_To_Char (Str, Ind, ':');
       Ind := Ind + 1;
       Skip_To_Char (Str, Ind, ':');
       Ind := Ind + 1;
       Skip_To_Char (Str, Ind, ':');
+      Ind := Ind + 1;
 
       return Str (Ind .. Str'Last);
    end Cut_Message;
