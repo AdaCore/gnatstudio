@@ -1773,15 +1773,13 @@ package body Builder_Module is
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
       Append (Menu1, Mitem);
-      --  ??? F9 key binding is no longer taken into account if the following
-      --  line is commented out:
-      --  Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom...", Group);
       Kernel_Callback.Connect
         (Mitem, "activate",
          Kernel_Callback.To_Marshaller (On_Custom'Access),
          User_Data => Kernel_Handle (Kernel));
       Add_Accelerator
         (Mitem, "activate", Group, GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
+      Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom", Group);
 
       --  Should be able to run any program
 
