@@ -893,21 +893,28 @@ package body Find_Utils is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
-      pragma Unreferenced (Search_Backward);
-
-      Editor       : constant Source_Editor_Box :=
+      Editor : constant Source_Editor_Box :=
         Find_Current_Editor (Kernel);
-      Lang         : Language_Access;
-      Match        : Match_Result_Access;
+      Lang   : Language_Access;
+      Match  : Match_Result_Access;
+      Inc    : Integer;
 
    begin
+      if Search_Backward then
+         Inc := -1;
+      else
+         Inc := 1;
+      end if;
+
       --  If there are still some matches in the current file that we haven't
-      --  returned , do it now.
+      --  returned, do it now.
 
       if Context.Next_Matches_In_File /= null then
-         Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
+         Context.Last_Match_Returned := Context.Last_Match_Returned + Inc;
 
-         if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
+         if Context.Last_Match_Returned > 0
+           and then Context.Last_Match_Returned
+             <= Context.Next_Matches_In_File'Last
            and then Context.Next_Matches_In_File (Context.Last_Match_Returned)
              /= null
          then
@@ -963,7 +970,17 @@ package body Find_Utils is
       --  ??? Should use tags to take into account changes in the buffer
       --  between two searches.
 
-      Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
+      if Search_Backward then
+         for J in reverse Context.Next_Matches_In_File'Range loop
+            if Context.Next_Matches_In_File (J) /= null then
+               Context.Last_Match_Returned := J;
+               exit;
+            end if;
+         end loop;
+      else
+         Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
+      end if;
+
       Match :=
         Context.Next_Matches_In_File (Context.Last_Match_Returned);
       Unhighlight_All (Editor);
