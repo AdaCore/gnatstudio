@@ -177,6 +177,16 @@ Customizing and Extending GPS
 * Defining New Styles and Key Bindings::
 * Scripting GPS::
 
+Customizing the Menu and Tool Bar
+* Customization files::
+* Defining Actions::
+* Macro arguments::
+* Adding new menus::
+* Adding tool bar buttons::
+* Binding actions to keys::
+* Defining new search patterns::
+* Full example::
+
 Environment
 * Command Line Options::
 * Environment Variables::
@@ -6062,11 +6072,24 @@ after the last key stroke.
 This facility for creating complex shortcuts is not available for menu
 items yet.
 
+
 @c -----------------------------------------------------------------
 @node Customizing the Menu and Tool Bar
 @section Customizing the Menu and Tool Bar
-@c -----------------------------------------------------------------
 @cindex customization
+@c -----------------------------------------------------------------
+
+@menu
+* Customization files::
+* Defining Actions::
+* Macro arguments::
+* Adding new menus::
+* Adding tool bar buttons::
+* Binding actions to keys::
+* Defining new search patterns::
+* Full example::
+@end menu
+
 @noindent
 You can customize the GPS menu bar in two different ways: you can
 redefine or add new key bindings to the existing menu items, and
@@ -6090,19 +6113,48 @@ reason you need to edit the file manually, you need to do it outside of
 GPS, or save the file under a different name, and rename it after exiting
 GPS.
 
+@c ------------------------------------------------------------------------
+@node Customization files
 @subsection Customization files
-@noindent
+@c ------------------------------------------------------------------------
 
-The GPS menu bar can be customized through XML files put under the
-directory @file{$HOME/.gps/customize} on Unix
-systems, and @file{%HOME%\.gps\customize} on Windows systems.
-Any file in the @file{customize} directory will be loaded by GPS at
-start up. Alternatively, you can also put system wide customization files
-under the directory @file{<INSTALL>/share/gps/customize}, where
-@file{<INSTALL>} is the name of the GPS installation directory.
-Files in the system directory are loaded before the files in the local
-directory, so that you can override locally any definition from the system
-directory.
+@noindent
+The GPS menu bar can be customized through XML files. These files are found
+through three possible mechanisms, described here in the order in which they
+are searched. Files found through @code{GPS_CUSTOM_PATH} or the user's
+directory can override any setup found in the system directory. Likewise,
+files found in the user's directory can override any file found in the
+@code{GPS_CUSTOM_PATH} directories.
+
+@itemize @bullet
+@item System wide customization
+
+The directory @file{<INSTALL>/share/gps/customize}, where
+@file{<INSTALL>} is the name of the GPS installation directory, should contain
+the files that will always be loaded whenever GPS is loaded, by any user on
+the system
+
+@item @code{GPS_CUSTOM_PATH}
+
+This environment variable can be set before launching GPS. It should contain
+a list of directories, separated by semicolons (';') on Windows systems and
+colors (':') on Unix systems. All the files found in these directories will
+be searched for customization files.
+
+This is a convenient way to have project-specific customization files. You can
+for instance create scripts, or icons, that set the appropriate value for the
+variable and then start GPS. Depending on your project, this allows you to
+load specific aliases which do not make sense for other projects.
+
+@item User directory
+
+The directory @file{$HOME/.gps/customize} on Unix
+systems, and @file{%HOME%\.gps\customize} on Windows systems, can also contain
+customization files which are parsed at startup. This is a convenient way for
+users to define their own customization, that they want to load no matter which
+project they are working on.
+@end itemize
+
 
 The format of these files have changed in GPS 1.3.0. A conversion program
 is provided that will automatically convert all files in the customization
@@ -6116,14 +6168,57 @@ declaration, as in the following example:
 @smallexample
 <?xml version="1.0" encoding="iso-8859-1">
 <submenu>
-   <title>encoded text</title>
+  <title>text/title>
 </submenu>
 @end smallexample
 
+Any given XML file can contain customization for various aspects of GPS, mixing
+aliases, new languages or menus,@dots{} in a single file if you wishes. This is
+a convenient way to distribute your customization to other users.
+
+These files must be valid XML files, ie must start with the @code{<?xml?>} tag,
+and contain a single root XML node, the name of which is left to your
+consideration. The general format is therefore
+
+@smallexample
+<?xml version="1.0" ?>
+<root_node>
+  ...
+</root_node>
+@end smallexample
+
+XML comments are not supported in these files.
+
+The list of valid XML child nodes that can be specified under <root> is
+described in later sections. This includes:
+
+@table @code
+@item <action>
+  (@pxref{Defining Actions})
+@item <key>
+  (@pxref{Binding actions to keys})
+@item <submenu>
+  (@pxref{Adding new menus})
+@item <alias>
+  (@pxref{Defining Text Aliases})
+@item <language>
+  (@pxref{Adding Support for New Languages})
+@item <button>
+  (@pxref{Adding tool bar buttons})
+@item <vsearch-pattern>
+  (@pxref{Defining new search patterns})
+@end table
+
+@c -----------------------------------------------------------------------
+@node Defining Actions
 @subsection Defining Actions
 @cindex action
-@noindent
+@cindex <action>
+@cindex <shell>
+@cindex <external>
+@c -----------------------------------------------------------------------
 
+@noindent
 These files distinguish the actions from their associated menus or
 key bindings. These actions can take on several forms: external commands,
 shell commands and predefined commands, as will be explained in more details
@@ -6150,7 +6245,7 @@ Thus, the @code{external} tag would look like:
 
 @smallexample
 <action name="my_command">
-    <external>cmd /c c:\.gps\my_scripts\my_command.cmd</external>
+  <external>cmd /c c:\.gps\my_scripts\my_command.cmd</external>
 </action>
 @end smallexample
 
@@ -6191,7 +6286,7 @@ project browser.
 @smallexample
 <action name="current file uses">
   <shell lang="shell">File %f</shell>
-  <shell lang="shell">File.uses $1</shell>
+  <shell lang="shell">File.uses %1</shell>
 </action>
 @end smallexample
 
@@ -6232,119 +6327,14 @@ for a full list.
 Some actions are also predefined in GPS itself. This include for instance
 aliases expansion, manipulating MDI windows,...
 
-
-@subsection Adding new menus
-@cindex menus
-@noindent
-
-These commands can be associated with menus, tool bar buttons and keys. All
-of these use similar syntax.
-
-Binding a menu to an action is done through the @code{<menu>} tag. This tag
-requires an @code{action} attribute which specifies which action to execute
-when the menu is selected by the user. If no action by this name was defined,
-no new menu is added.
-
-It should also have one XML child called @code{<title>} which specifies the
-label of the menu
-You can define the accelerator keys for your menus, using underscores
-in the titles. Thus, if you want an accelerator on the first letter in
-a menu named @code{File}, set its title as @code{_File}.
-
-You can specify which menu this new item is added to by putting the
-@code{<menu>} tag to a @code{<submenu>} tag. The latter also takes a
-@code{<title>} as a child. You can add items or sub menus to existing menus,
-using titles for menus that already exist.
-
-For example, this adds an item named @code{mymenu} to the standard
-@code{Edit} menu.
-
-@smallexample
-<submenu>
-  <title>Edit</title>
-  <menu action="current file uses">
-     <title>mymenu</title>
-  </menu>
-</submenu>
-@end smallexample
-
-Use the @code{/} separator to identify the submenu in a menu. For
-example, this adds a new item "stats" to the standard "unit testing" submenu
-in "tools".
-
-@smallexample
-<submenu>
-  <title>Tools/unit testing</title>
-  <menu action="execute my stats">
-    <title>stats</title>
-  </menu>
-</submenu>
-@end smallexample
-
-Adding an item with an empty title or no title at all inserts a
-menu separator.
-
-
-
-@subsection Adding tool bar buttons
-@cindex tool bar
-@noindent
-
-As an alternative to creating new menu items, you can create new
-buttons on the tool bar, with a similar syntax, by using
-the @code{<button>} tag. As for the @code{<menu>} tag, it requires an
-@code{action} attribute which specifies what should be done when the button
-is pressed. The button is not created if no such action was created.
-
-@cindex jpeg
-@cindex png
-@cindex gif
-@cindex xpm
-Within this tag, the tag @code{<pixmap>} can be used to indicate
-the location of an image file (of the type @code{jpeg, png, gif}
-or @code{xpm}) to be used as icon for the button. An empty
-@code{<button>} tag indicates a separator in the tool bar.
-
-A title can also be specified with @code{<title>}. This will be visible only
-if the user choses to see both text and icons in the tool bar.
-
-The following example defines a new button:
-
-@smallexample
-<button action="execute my stats">
-   <title>stats</title>
-   <pixmap>/my_pixmaps/button.jpg</pixmap>
-</button>
-@end smallexample
-
-
-@subsection Binding actions to keys
-@cindex key
-@noindent
-
-All the actions defined above can be bound to specific key shortcuts through
-the @code{<key>} attribute. As usual, it requires one @code{<action>}
-attribute to specify what to do when the key is pressed.
-
-This tag doesn't contain any child tag. Instead, its text contents specified
-the keyboard shortcut. The name
-of the key can be prefixed by @code{control-}, @code{alt-}, @code{shift-} or
-any combination of these to specify the key modifiers to apply.
-
-You can also define multiple key bindings similar to Emacs's by separating them
-by a space. For instance, @code{control-x control-k} means that the user should
-press @key{control-x}, followed by a @key{control-k} to activate the
-corresponding action.
-
-@smallexample
-<key action="expand alias">control-o</key>
-@end smallexample
-
-
+@c ---------------------------------------------------------------------
+@node Macro arguments
 @subsection Macro arguments
 @cindex menu
 @cindex argument
 @cindex substitution
+@c ---------------------------------------------------------------------
+
 @noindent
 When an action is defined, you can use macro arguments to pass to your
 shell or external commands. Macro arguments
@@ -6357,6 +6347,9 @@ Base name of the currently opened file.
 
 @item %F
 Absolute name of the currently opened file.
+
+@item %d
+The currently directory.
 
 @item %p
 The current project. This is the name of the project, not the project file.
@@ -6411,9 +6404,191 @@ directories in the current project, and all imported sub projects,
 recursively.
 @end table
 
-@subsection Full example
-@noindent
 
+@c ----------------------------------------------------------------------
+@node Adding new menus
+@subsection Adding new menus
+@cindex menus
+@cindex <menu>
+@cindex <submenu>
+@cindex <title>
+@c ----------------------------------------------------------------------
+
+@noindent
+These commands can be associated with menus, tool bar buttons and keys. All
+of these use similar syntax.
+
+Binding a menu to an action is done through the @code{<menu>} tag. This tag
+requires an @code{action} attribute which specifies which action to execute
+when the menu is selected by the user. If no action by this name was defined,
+no new menu is added.
+
+It should also have one XML child called @code{<title>} which specifies the
+label of the menu
+You can define the accelerator keys for your menus, using underscores
+in the titles. Thus, if you want an accelerator on the first letter in
+a menu named @code{File}, set its title as @code{_File}.
+
+You can specify which menu this new item is added to by putting the
+@code{<menu>} tag to a @code{<submenu>} tag. The latter also takes a
+@code{<title>} as a child. You can add items or sub menus to existing menus,
+using titles for menus that already exist.
+
+For example, this adds an item named @code{mymenu} to the standard
+@code{Edit} menu.
+
+@smallexample
+<submenu>
+  <title>Edit</title>
+  <menu action="current file uses">
+     <title>mymenu</title>
+  </menu>
+</submenu>
+@end smallexample
+
+Use the @code{/} separator to identify the submenu in a menu. For
+example, this adds a new item "stats" to the standard "unit testing" submenu
+in "tools".
+
+@smallexample
+<submenu>
+  <title>Tools/unit testing</title>
+  <menu action="execute my stats">
+    <title>stats</title>
+  </menu>
+</submenu>
+@end smallexample
+
+Adding an item with an empty title or no title at all inserts a
+menu separator.
+
+
+
+@c ----------------------------------------------------------------------
+@node Adding tool bar buttons
+@subsection Adding tool bar buttons
+@cindex tool bar
+@c ----------------------------------------------------------------------
+
+@noindent
+As an alternative to creating new menu items, you can create new
+buttons on the tool bar, with a similar syntax, by using
+the @code{<button>} tag. As for the @code{<menu>} tag, it requires an
+@code{action} attribute which specifies what should be done when the button
+is pressed. The button is not created if no such action was created.
+
+@cindex jpeg
+@cindex png
+@cindex gif
+@cindex xpm
+Within this tag, the tag @code{<pixmap>} can be used to indicate
+the location of an image file (of the type @code{jpeg, png, gif}
+or @code{xpm}) to be used as icon for the button. An empty
+@code{<button>} tag indicates a separator in the tool bar.
+
+A title can also be specified with @code{<title>}. This will be visible only
+if the user choses to see both text and icons in the tool bar.
+
+The following example defines a new button:
+
+@smallexample
+<button action="execute my stats">
+   <title>stats</title>
+   <pixmap>/my_pixmaps/button.jpg</pixmap>
+</button>
+@end smallexample
+
+@c ---------------------------------------------------------------------
+@node Binding actions to keys
+@subsection Binding actions to keys
+@cindex key
+@cindex <key>
+@c ----------------------------------------------------------------------
+
+@noindent
+All the actions defined above can be bound to specific key shortcuts through
+the @code{<key>} attribute. As usual, it requires one @code{<action>}
+attribute to specify what to do when the key is pressed.
+
+This tag doesn't contain any child tag. Instead, its text contents specified
+the keyboard shortcut. The name
+of the key can be prefixed by @code{control-}, @code{alt-}, @code{shift-} or
+any combination of these to specify the key modifiers to apply.
+
+You can also define multiple key bindings similar to Emacs's by separating them
+by a space. For instance, @code{control-x control-k} means that the user should
+press @key{control-x}, followed by a @key{control-k} to activate the
+corresponding action.
+
+@smallexample
+<key action="expand alias">control-o</key>
+@end smallexample
+
+@c ----------------------------------------------------------------
+@node Defining new search patterns
+@subsection Defining new search patterns
+@cindex <vsearch-pattern>
+@cindex predefined patterns
+@c ----------------------------------------------------------------
+
+@noindent
+The search dialog contains a number of predefined search patterns for Ada
+and C. These are generally complex regular expressions, presented in the dialog
+with a more descriptive name. This includes for instance "Ada assignment",
+which will match all such assignments.
+
+You can define your own search patterns in the customization files. This is
+done through the @code{<vsearch-pattern>} tag. This tag can have a number of
+children tags:
+
+@table @code
+@item <name>
+
+This tag is the string that is displayed in the search dialog to
+represent the new pattern. This is the text that the user will
+effectively see, instead of the often hard to understand regular
+expression.
+
+@item <regexp>
+
+This tag provides the regular expression to use when the pattern has
+been selected by the user. Be careful that you must protect reserved
+XML characters such as '<' and replace them by their equivalent
+expansion ("&lt;" for this character).
+
+This accepts one optional attribute, named @code{case-sensitive}. This
+attribute accepts one of two possible values ("true" or "false") which
+indicates whether the search should distinguish lower case and upper
+case letters. Its default value is "false".
+
+@item <string>
+
+This tag provides a constant string that should be searched. 
+Only one of @code{<regexp>} and @code{<string>} should be provided. If
+both exists, the first @code{<regep>} child found is used. If there is
+none, the first @code{<string>} child is used.
+
+The tag accepts the same optional attribute @code{case-sensitive} as
+above
+@end table
+
+Here is a small example on how the "Ada assignment" pattern was
+defined.
+
+@smallexample
+<vsearch-pattern>
+  <name>Ada: assignment</name>
+  <regexp case-sensitive="false">\b(\w+)\s*:=</regexp>
+</vsearch-pattern>
+@end smallexample
+
+
+@c ----------------------------------------------------------------
+@node Full example
+@subsection Full example
+@c ----------------------------------------------------------------
+
+@noindent
 The following example is a full example for one of the files in the
 customization directory. The only thing that hasn't been described before is
 the first line of the file, which is required to make it a valid XML file.
@@ -6422,17 +6597,17 @@ the first line of the file, which is required to make it a valid XML file.
 <?xml version="1.0"?>
 <Custom>
   <action name="action1">
-      <external>external-command 1</external>
+    <external>external-command 1</external>
   </action>
 
   <action name="action2">
-      <shell>edit %f</shell>
+    <shell>edit %f</shell>
   </action>
 
   <submenu>
     <title>custom menu</title>
     <menu action="action1">
-       <title>item 1</title>
+      <title>item 1</title>
     </menu>
 
     <submenu>
@@ -6447,7 +6622,6 @@ the first line of the file, which is required to make it a valid XML file.
     </submenu>
   </submenu>
 </Custom>
-
 @end smallexample
 
 The example above creates a top-level menu named @code{custom menu}.
@@ -6458,6 +6632,7 @@ etc@dots{}
 @c --------------------------------------------------------------------------
 @node Adding Support for New Languages
 @section Adding Support for New Languages
+@cindex <Language>
 @c --------------------------------------------------------------------------
 
 @noindent
@@ -6636,11 +6811,11 @@ Here is an example of a language definition for the GPS project files:
 </Custom>
 @end smallexample
 
-
 @c --------------------------------------------------------------------------
 @node Defining Text Aliases
 @section Defining Text Aliases
 @cindex aliases
+@cindex <alias>
 @c --------------------------------------------------------------------------
 
 @noindent
@@ -6778,23 +6953,27 @@ entities in the expansion text.
 @subsection Aliases files
 
 @noindent
-GPS manages multiple aliases files. One of them is editable
-interactively by the user through the @code{Edit->Aliases} menu,
-whereas all the others are defined system-wide, and are not editable
-interactively.
+The customization files described earlier can also contain aliases
+definition. This can be used for instance to create project or system wide
+aliases. All the customization files will be parsed to look for aliases
+definition.
 
-The user-defined file is @file{$HOME/.gps/aliases}.
+However, all these customization files are considered as read-only by GPS,
+and therefore cannot be edited through the graphical interface. It is
+possible to override some of the aliases in your own custom files.
 
-The system files are all the files stored in the directory
-@file{<prefix>/share/gps/aliases}, where @file{<prefix>} is the path
-in which GPS was installed. The aliases defined in these files are
-read-only, and indicated as such in the aliases editor.
+There is one specific files, which must contain only aliases definition. This
+is the file @file{$HOME/.gps/aliases}. Whenever you edit aliases graphically,
+or create new ones, they are stored in this file, which is the only one that
+GPS will ever modify automatically.
 
 The system files are loaded first, and aliases defined in them can be
 overriden by the user-defined file.
 
-All the files have the same XML format, which can be seen in the
-following example. Each alias has its own @i{<alias>} tag.
+These files are standard customization files, @xref{Customization files}.
+The specific XML tag to use is @i{<alias>}, one per new alias.
+The following example contains a standalone customization file, but you might
+wish to merge the @i{<alias>} tag in any other customization file.
 
 @smallexample
 <?xml version="1.0"?>
@@ -6833,7 +7012,6 @@ These tags contain text, which is the default value for the parameter.
 This is a child of the @code{alias} node, whose value is the
 replacement text for the alias.
 @end table
-
 
 @c --------------------------------------------------------------------------
 @node Defining New Styles and Key Bindings
@@ -7660,6 +7838,12 @@ under Windows) if GPS_HOME is not set, or to $GPS_HOME/.gps (respectively
 @cindex GPS_DOC_PATH
 Set the search path for the documentation. See @ref{Integrated Help} for
 more details.
+
+   @item GPS_CUSTOM_PATH
+@cindex GPS_CUSTOM_PATH
+Contains a list of directories to search for custom files. See
+@ref{Customizing the Menu and Tool Bar} for more details.
+
 
 @c Currently disabled, since this is not well supported yet
 @c    @item GDK_USE_XFT
