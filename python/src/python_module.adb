@@ -754,10 +754,12 @@ package body Python_Module is
    is
       Item : constant PyObject := Get_Param (Data, N);
    begin
+      --  ??? Could add more cases of automatic conversion: strings containing
+      --  "true" or "false", or add support for booleans for newer versions of
+      --  python (>= 2.3)
+
       if Item = null then
          raise Invalid_Parameter;
-      elsif PyBool_Check (Item) then
-         return Item = Py_True;
       elsif PyInt_Check (Item) then
          return PyInt_AsLong (Item) = 1;
       else

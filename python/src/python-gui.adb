@@ -190,8 +190,7 @@ package body Python.GUI is
    function Is_A_TTY (Self : PyObject; Args : PyObject) return PyObject is
       pragma Unreferenced (Self, Args);
    begin
-      Py_INCREF (Py_False);
-      return Py_False;
+      return PyInt_FromLong (0);
    end Is_A_TTY;
 
    -----------
