@@ -574,6 +574,7 @@ package body Glide_Kernel.Hooks is
         (Get (Kernel.Hooks, Type_Prefix & Type_Name));
    begin
       if Info = null then
+         Trace (Me, "Hook type unknown: " & Type_Name);
          return Unknown;
       else
          return Info.Profile;
