@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2779,7 +2779,7 @@ package body Docgen.Work_On_Source is
             loop
                Index_End := Index_End + 1;
             end loop;
-            return Text (Index_Start .. Index_End);
+            return Text (Location .. Index_End - 1);
          else
             return "";
          end if;
