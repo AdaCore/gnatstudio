@@ -2584,7 +2584,7 @@ package body Project_Explorers is
          300, 600,
          "Project View", "Project Explorer - Project View",
          Docked, Left,
-         True);
+         True, True);
 
       Register_Menu
         (Kernel, Project, -"Project View", "", On_Open_Explorer'Access);
