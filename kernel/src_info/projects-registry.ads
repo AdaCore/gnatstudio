@@ -52,6 +52,14 @@ package Projects.Registry is
    --  Create a new file. This will automatically try to solve Name to an
    --  absolute path if it currently is a base name.
 
+   procedure Set_Trusted_Mode
+     (Registry        : Project_Registry'Class;
+      Trusted_Mode    : Boolean);
+   --  Set the trusted mode for the registry:
+   --  If it is True, then it is assumed that no links are used in the project,
+   --  and that directory names cannot match file names according to the
+   --  naming scheme. This provides much faster loading.
+
    ------------------------
    -- Predefined project --
    ------------------------
