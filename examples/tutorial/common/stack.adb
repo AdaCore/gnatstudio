@@ -46,7 +46,7 @@ package body Stack is
 
       Screen_Output.Debug_Msg ("Pushing -> " & Values.To_String (V));
 
-      Last := Last - 1;
+      Last := Last + 1;
       Tab (Last) := V;
    end Push;
 
