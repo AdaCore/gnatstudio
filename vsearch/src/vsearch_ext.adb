@@ -21,6 +21,7 @@
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Gdk.Window;              use Gdk.Window;
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with Glib.Xml_Int;            use Glib.Xml_Int;
@@ -81,6 +82,8 @@ package body Vsearch_Ext is
    Replace_Hist_Key   : constant History_Key := "search_replace";
    Auto_Hide_Hist_Key : constant History_Key := "search_autohide";
    Select_Window_Hist_Key : constant History_Key := "search_select_window";
+   Window_X_Hist_Key  : constant History_Key := "search_window_x";
+   Window_Y_Hist_Key  : constant History_Key := "search_window_y";
    --  The key for the histories.
 
    procedure Free (Data : in out Search_Module_Data);
@@ -285,6 +288,71 @@ package body Vsearch_Ext is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
+   procedure Store_Position (Vsearch : Vsearch_Extended);
+   procedure Restore_Position (Vsearch : Vsearch_Extended);
+   --  Store and restore the position of the Vsearc dialog.
+
+   ----------------------
+   -- Restore_Position --
+   ----------------------
+
+   procedure Restore_Position (Vsearch : Vsearch_Extended) is
+      Child   : constant MDI_Child :=
+        Find_MDI_Child (Get_MDI (Vsearch.Kernel), Vsearch);
+      Hist : String_List_Access;
+      X, Y : Gint;
+      Win  : Gtk_Widget;
+   begin
+      Win := Get_Toplevel (Get_Widget (Child));
+
+      Hist := Get_History
+        (Get_History (Vsearch.Kernel).all, Window_X_Hist_Key);
+
+      if Hist = null then
+         return;
+      end if;
+
+      X := Gint'Value (Hist (Hist'First).all);
+
+      Hist := Get_History
+        (Get_History (Vsearch.Kernel).all, Window_Y_Hist_Key);
+
+      if Hist = null then
+         return;
+      end if;
+
+      Y := Gint'Value (Hist (Hist'First).all);
+
+      Set_UPosition (Win, X, Y);
+   end Restore_Position;
+
+   --------------------
+   -- Store_Position --
+   --------------------
+
+   procedure Store_Position (Vsearch : Vsearch_Extended) is
+      Child   : constant MDI_Child :=
+        Find_MDI_Child (Get_MDI (Vsearch.Kernel), Vsearch);
+
+      Win  : Gtk_Widget;
+      X, Y : Gint;
+   begin
+      if Is_Floating (Child) then
+         --  Store the position of the floating window
+
+         Win := Get_Toplevel (Get_Widget (Child));
+         Get_Root_Origin (Get_Window (Win), X, Y);
+
+         Add_To_History
+           (Get_History (Vsearch.Kernel).all, Window_X_Hist_Key,
+            Gint'Image (X));
+
+         Add_To_History
+           (Get_History (Vsearch.Kernel).all, Window_Y_Hist_Key,
+            Gint'Image (Y));
+      end if;
+   end Store_Position;
+
    ------------------
    -- Load_Desktop --
    ------------------
@@ -359,9 +427,15 @@ package body Vsearch_Ext is
 
          Widget_Callback.Object_Connect
            (Close_Button, "clicked", Close_Vsearch'Access, Vsearch);
+
+         --  Set the position of the floating window
+         Restore_Position (Vsearch);
       else
          Hide_All (Vsearch.Auto_Hide_Check);
          Set_Child_Visible (Vsearch.Auto_Hide_Check, False);
+
+         --  Store the position of the floating window
+         Store_Position (Vsearch);
       end if;
 
    exception
@@ -377,6 +451,7 @@ package body Vsearch_Ext is
    procedure Close_Vsearch (Search : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Search);
    begin
+      Store_Position (Vsearch);
       Close (Get_MDI (Vsearch.Kernel), Search, Force => True);
 
    exception
