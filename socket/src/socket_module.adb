@@ -326,8 +326,7 @@ package body Socket_Module is
 
       Set_Socket_Option
         (Socket_Module (Socket_Module_ID).Server,
-         Socket_Level,
-           (Reuse_Address, True));
+         Socket_Level, (Reuse_Address, True));
 
       Bind_Socket
         (Socket_Module (Socket_Module_ID).Server,
