@@ -1929,7 +1929,9 @@ package body Ada_Analyzer is
             Top_Token := Top (Tokens);
 
             if Prev_Token = Tok_Comma then
-               if Top_Token.Token = Tok_Declare then
+               if Top_Token.Token = Tok_Declare
+                 or else Top_Token.Token = Tok_Identifier
+               then
                   --  Inside a declare block, indent broken lines specially
                   --  declare
                   --     A,
