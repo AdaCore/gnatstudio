@@ -459,7 +459,7 @@ package body Vdiff2_Module.Callback is
    begin
       Create
         (Cmd,
-         VDiff2_Module (Vdiff_Module_ID).Kernel,
+         Get_Kernel (Vdiff_Module_ID.all),
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Change_Ref_File'Access);
 
@@ -503,7 +503,7 @@ package body Vdiff2_Module.Callback is
    begin
       Create
         (Cmd,
-         VDiff2_Module (Vdiff_Module_ID).Kernel,
+         Get_Kernel (Vdiff_Module_ID.all),
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Unhighlight_Difference'Access);
 
@@ -535,7 +535,7 @@ package body Vdiff2_Module.Callback is
    begin
       Create
         (Cmd,
-         VDiff2_Module (Vdiff_Module_ID).Kernel,
+         Get_Kernel (Vdiff_Module_ID.all),
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Reload_Difference'Access);
 
@@ -567,7 +567,7 @@ package body Vdiff2_Module.Callback is
    begin
       Create
         (Cmd,
-         VDiff2_Module (Vdiff_Module_ID).Kernel,
+         Get_Kernel (Vdiff_Module_ID.all),
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Close_Difference'Access);
       Selected_File :=

@@ -1074,6 +1074,7 @@ package body Vdiff2_Module.Utils is
       File3 : Virtual_File := VFS.No_File)
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
+      Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
       Result : Diff_List;
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
@@ -1081,16 +1082,16 @@ package body Vdiff2_Module.Utils is
 
    begin
       if File3 /= VFS.No_File then
-         Result := Diff3 (Id.Kernel, File1, File2, File3);
+         Result := Diff3 (Kernel, File1, File2, File3);
       else
-         Result := Diff (Id.Kernel, File1, File2);
+         Result := Diff (Kernel, File1, File2);
       end if;
 
       if Result = Diff_Chunk_List.Null_List then
          Button := Message_Dialog
            (Msg         => -"No differences found.",
             Buttons     => Button_OK,
-            Parent      => Get_Current_Window (Id.Kernel));
+            Parent      => Get_Current_Window (Kernel));
          return;
       end if;
 
@@ -1102,7 +1103,7 @@ package body Vdiff2_Module.Utils is
          Current_Node => First (Result),
          Ref_File     => 2,
          Tmp_File     => VFS.No_File);
-      Process_Differences (Id.Kernel, Item, Id.List_Diff);
+      Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
    ------------------
@@ -1117,20 +1118,20 @@ package body Vdiff2_Module.Utils is
       Tmp_File  : VFS.Virtual_File := VFS.No_File) return Boolean
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
+      Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
       Result : Diff_List;
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
       Item   : Diff_Head;
 
    begin
-      Result :=
-        Diff (Id.Kernel, Orig_File, New_File, Diff_File, Revert);
+      Result := Diff (Kernel, Orig_File, New_File, Diff_File, Revert);
 
       if Result = Diff_Chunk_List.Null_List then
          Button := Message_Dialog
            (Msg         => -"No differences found.",
             Buttons     => Button_OK,
-            Parent      => Get_Current_Window (Id.Kernel));
+            Parent      => Get_Current_Window (Kernel));
          return False;
       end if;
 
@@ -1142,7 +1143,7 @@ package body Vdiff2_Module.Utils is
          Current_Node => First (Result),
          Ref_File     => 1,
          Tmp_File     => Tmp_File);
-      Process_Differences (Id.Kernel, Item, Id.List_Diff);
+      Process_Differences (Kernel, Item, Id.List_Diff);
       return True;
    end Visual_Patch;
 

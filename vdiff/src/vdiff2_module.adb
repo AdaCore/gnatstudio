@@ -48,7 +48,6 @@ package body Vdiff2_Module is
       Context : access Selection_Context'Class) return Boolean;
    --  ??? See In_Diff_List subprogram
 
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -62,17 +61,15 @@ package body Vdiff2_Module is
       Command : Interactive_Command_Access;
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
-      VDiff2_Module (Vdiff_Module_ID).Kernel := Kernel_Handle (Kernel);
-      VDiff2_Module (Vdiff_Module_ID).List_Diff :=
-        new Diff_Head_List.List;
+      VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.List;
 
       Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access);
 
       Register_Module
-        (Module                  => Vdiff_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Vdiff_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Vdiff_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => Vdiff_Module_Name,
+         Priority    => Default_Priority);
 
       Filter := new In_Diff_List_Filter;
 

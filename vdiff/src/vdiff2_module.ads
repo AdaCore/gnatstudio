@@ -51,7 +51,6 @@ private
    No_Handler : constant Handler_Id := (Null_Signal_Id, null);
 
    type VDiff2_Module_Record is new Module_ID_Record with record
-      Kernel           : Kernel_Handle;
       Number_active    : Natural := 0;
       List_Diff        : Diff_Head_List_Access;
       Enable_Fine_Diff : Boolean := True;
