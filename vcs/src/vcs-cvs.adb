@@ -142,6 +142,34 @@ package body VCS.CVS is
    --  Display comparison between file given in Head and patch
    --  given in List.
 
+   function Checkin_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Remove the log file stored in the first element of Head.
+
+   ---------------------
+   -- Checkin_Handler --
+   ---------------------
+
+   function Checkin_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      pragma Unreferenced (Kernel, List);
+      Success : Boolean;
+
+   begin
+      --  Delete the associated log file, if it exists.
+
+      if not String_List.Is_Empty (Head) then
+         GNAT.OS_Lib.Delete_File (String_List.Head (Head), Success);
+      end if;
+
+      return True;
+   end Checkin_Handler;
+
    ----------
    -- Name --
    ----------
@@ -808,25 +836,61 @@ package body VCS.CVS is
    is
       use String_List;
 
+      Checkin_File_Command : External_Command_Access;
+
       Arguments      : String_List.List;
       Filenames_Temp : List_Node := First (Filenames);
       Logs_Temp      : List_Node := First (Logs);
-      Single_File    : String_List.List;
 
    begin
       while Filenames_Temp /= Null_Node loop
-         Append (Arguments, "-Q");
-         Append (Arguments, "commit");
-         Append (Arguments, "-m");
-         Append (Arguments, Data (Logs_Temp));
-         Append (Single_File, Data (Filenames_Temp));
+         declare
+            File     : constant String := Data (Filenames_Temp);
+            Head     : List;
+            Log_File : constant String := Get_Tmp_Dir
+              & "cvs_log_" & Base_Name (File);
+            Fd       : GNAT.OS_Lib.File_Descriptor;
 
-         Simple_Action (Rep, Single_File, Arguments);
+         begin
+            Append (Arguments, "-Q");
+            Append (Arguments, "commit");
+            Append (Arguments, "-F");
+            Append (Arguments, Log_File);
 
-         Free (Arguments);
-         Free (Single_File);
-         Logs_Temp      := Next (Logs_Temp);
-         Filenames_Temp := Next (Filenames_Temp);
+            Fd := GNAT.OS_Lib.Create_File (Log_File, GNAT.OS_Lib.Binary);
+
+            declare
+               Log           : aliased constant String := Data (Logs_Temp);
+               Bytes_Written : Integer;
+               pragma Unreferenced (Bytes_Written);
+            begin
+               Bytes_Written :=
+                 GNAT.OS_Lib.Write (Fd, Log (Log'First)'Address, Log'Length);
+            end;
+
+            GNAT.OS_Lib.Close (Fd);
+
+            Append (Arguments, Base_Name (File));
+
+            Append (Head, Log_File);
+
+            Create
+              (Checkin_File_Command,
+               Rep.Kernel,
+               Get_Pref (Rep.Kernel, CVS_Command),
+               Dir_Name (File),
+               Arguments,
+               Head,
+               Checkin_Handler'Access);
+
+            Enqueue (Rep.Queue, Checkin_File_Command);
+
+            Free (Arguments);
+            Free (Head);
+
+            Logs_Temp      := Next (Logs_Temp);
+            Filenames_Temp := Next (Filenames_Temp);
+         end;
       end loop;
 
    exception
