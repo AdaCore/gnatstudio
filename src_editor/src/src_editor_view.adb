@@ -34,6 +34,7 @@ with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
+with Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Defaults;         use Src_Editor_Defaults;
 with String_Utils;                use String_Utils;
@@ -52,10 +53,6 @@ package body Src_Editor_View is
    package Source_View_Callback is new Gtk.Handlers.Callback
      (Widget_Type => Source_View_Record);
 
-   package Source_View_Return_Callback is new Gtk.Handlers.Return_Callback
-     (Widget_Type => Source_View_Record,
-      Return_Type => Boolean);
-
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Source_Buffer_Record,
       User_Type => Source_View);
@@ -71,21 +68,21 @@ package body Src_Editor_View is
    --  size for instance.
 
    function Expose_Event_Cb
-     (View  : access Source_View_Record'Class;
-      Event : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
    --  This procedure handles all expose events happening on the left border
    --  window. It will the redraw the exposed area (this window may contains
    --  things such as line number, breakpoint icons, etc).
 
    function Focus_Out_Event_Cb
-     (View   : access Source_View_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk.Event.Gdk_Event_Focus) return Boolean;
    --  Save the current insert cursor position before the Source_View looses
    --  the focus. This will allow us to restore it as soon as the focus is
    --  gained back.
 
    function Focus_In_Event_Cb
-     (View   : access Source_View_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk.Event.Gdk_Event_Focus) return Boolean;
    --  Restore the previously saved insert cursor position when the Source_View
    --  gains the focus back.
@@ -147,9 +144,10 @@ package body Src_Editor_View is
    ---------------------
 
    function Expose_Event_Cb
-     (View  : access Source_View_Record'Class;
-      Event : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
    is
+      View        : constant Source_View := Source_View (Widget);
       Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
       Area : constant Gdk_Rectangle := Get_Area (Event);
@@ -170,9 +168,10 @@ package body Src_Editor_View is
    ------------------------
 
    function Focus_Out_Event_Cb
-     (View   : access Source_View_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk.Event.Gdk_Event_Focus) return Boolean
    is
+      View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Insert_Iter : Gtk_Text_Iter;
    begin
@@ -189,9 +188,10 @@ package body Src_Editor_View is
    -----------------------
 
    function Focus_In_Event_Cb
-     (View   : access Source_View_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk.Event.Gdk_Event_Focus) return Boolean
    is
+      View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Saved_Insert_Iter : Gtk_Text_Iter;
    begin
@@ -411,25 +411,25 @@ package body Src_Editor_View is
         (View, "map",
          Marsh => Source_View_Callback.To_Marshaller (Map_Cb'Access),
          After => True);
-      Source_View_Return_Callback.Connect
+      Gtkada.Handlers.Return_Callback.Connect
         (View, "expose_event",
-         Marsh => Source_View_Return_Callback.To_Marshaller
-                    (Expose_Event_Cb'Access),
+         Marsh => Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Expose_Event_Cb'Access),
          After => False);
       Source_Buffer_Callback.Connect
         (Buffer, "changed",
          Marsh => Source_Buffer_Callback.To_Marshaller (Modified_Cb'Access),
          User_Data => Source_View (View),
          After => True);
-      Source_View_Return_Callback.Connect
+      Gtkada.Handlers.Return_Callback.Connect
         (View, "focus_in_event",
-         Marsh => Source_View_Return_Callback.To_Marshaller
-                    (Focus_In_Event_Cb'Access),
+         Marsh => Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Focus_In_Event_Cb'Access),
          After => False);
-      Source_View_Return_Callback.Connect
+      Gtkada.Handlers.Return_Callback.Connect
         (View, "focus_out_event",
-         Marsh => Source_View_Return_Callback.To_Marshaller
-                    (Focus_Out_Event_Cb'Access),
+         Marsh => Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Focus_Out_Event_Cb'Access),
          After => False);
    end Initialize;
 
