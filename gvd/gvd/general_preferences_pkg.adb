@@ -83,7 +83,7 @@ begin
    Set_Shadow_Type (General_Preferences.Frame1, Shadow_Etched_In);
    Add (General_Preferences.Notebook1, General_Preferences.Frame1);
 
-   Gtk_New (General_Preferences.Table1, 5, 4, False);
+   Gtk_New (General_Preferences.Table1, 4, 4, False);
    Set_Row_Spacings (General_Preferences.Table1, 2);
    Set_Col_Spacings (General_Preferences.Table1, 0);
    Add (General_Preferences.Frame1, General_Preferences.Table1);
@@ -94,15 +94,6 @@ begin
    Set_Justify (General_Preferences.Label13, Justify_Left);
    Set_Line_Wrap (General_Preferences.Label13, False);
    Attach (General_Preferences.Table1, General_Preferences.Label13, 0, 1, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Label14, -("Automatic Display of Variable Values"));
-   Set_Alignment (General_Preferences.Label14, 7.45058e-09, 0.5);
-   Set_Padding (General_Preferences.Label14, 2, 0);
-   Set_Justify (General_Preferences.Label14, Justify_Left);
-   Set_Line_Wrap (General_Preferences.Label14, False);
-   Attach (General_Preferences.Table1, General_Preferences.Label14, 0, 1, 1, 2,
      Expand or Fill, 0,
      0, 0);
 
@@ -118,21 +109,9 @@ begin
      Expand, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Variable_Popup_Check, -"as Popup Tips");
-   Set_Active (General_Preferences.Variable_Popup_Check, False);
-   Attach (General_Preferences.Table1, General_Preferences.Variable_Popup_Check, 1, 3, 1, 2,
-     Expand, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Variable_Status_Check, -"in the Status Line");
-   Set_Active (General_Preferences.Variable_Status_Check, False);
-   Attach (General_Preferences.Table1, General_Preferences.Variable_Status_Check, 3, 4, 1, 2,
-     Expand, 0,
-     0, 0);
-
    Gtk_New (General_Preferences.Warn_Multiple_Check, -"Warn if Multiple GVD Instances are Running");
    Set_Active (General_Preferences.Warn_Multiple_Check, False);
-   Attach (General_Preferences.Table1, General_Preferences.Warn_Multiple_Check, 0, 4, 2, 3,
+   Attach (General_Preferences.Table1, General_Preferences.Warn_Multiple_Check, 0, 4, 1, 2,
      Expand or Fill, 0,
      0, 0);
 
@@ -141,7 +120,7 @@ begin
    Set_Padding (General_Preferences.Label16, 2, 0);
    Set_Justify (General_Preferences.Label16, Justify_Left);
    Set_Line_Wrap (General_Preferences.Label16, False);
-   Attach (General_Preferences.Table1, General_Preferences.Label16, 0, 1, 4, 5,
+   Attach (General_Preferences.Table1, General_Preferences.Label16, 0, 1, 3, 4,
      Expand or Fill, 0,
      0, 0);
 
@@ -150,7 +129,7 @@ begin
    Set_Max_Length (General_Preferences.Statusbar_Timeout_Entry, 0);
    Set_Text (General_Preferences.Statusbar_Timeout_Entry, -"");
    Set_Visibility (General_Preferences.Statusbar_Timeout_Entry, True);
-   Attach (General_Preferences.Table1, General_Preferences.Statusbar_Timeout_Entry, 1, 2, 4, 5,
+   Attach (General_Preferences.Table1, General_Preferences.Statusbar_Timeout_Entry, 1, 2, 3, 4,
      Expand or Fill, 0,
      0, 0);
 
@@ -159,22 +138,22 @@ begin
    Set_Padding (General_Preferences.Label17, 2, 0);
    Set_Justify (General_Preferences.Label17, Justify_Center);
    Set_Line_Wrap (General_Preferences.Label17, False);
-   Attach (General_Preferences.Table1, General_Preferences.Label17, 2, 4, 4, 5,
+   Attach (General_Preferences.Table1, General_Preferences.Label17, 2, 4, 3, 4,
      Expand or Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Break_Exception_Check, -"Break On Exceptions");
    Set_Active (General_Preferences.Break_Exception_Check, False);
-   Attach (General_Preferences.Table1, General_Preferences.Break_Exception_Check, 0, 4, 3, 4,
+   Attach (General_Preferences.Table1, General_Preferences.Break_Exception_Check, 0, 4, 2, 3,
      Expand or Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Label7, -("General"));
-   Set_Alignment (General_Preferences.Label7, 0.5, 0.5);
-   Set_Padding (General_Preferences.Label7, 0, 0);
-   Set_Justify (General_Preferences.Label7, Justify_Center);
-   Set_Line_Wrap (General_Preferences.Label7, False);
-   Set_Tab (General_Preferences.Notebook1, 0, General_Preferences.Label7);
+   Gtk_New (General_Preferences.Label_General, -("General"));
+   Set_Alignment (General_Preferences.Label_General, 0.5, 0.5);
+   Set_Padding (General_Preferences.Label_General, 0, 0);
+   Set_Justify (General_Preferences.Label_General, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label_General, False);
+   Set_Tab (General_Preferences.Notebook1, 0, General_Preferences.Label_General);
 
    Gtk_New_Vbox (General_Preferences.Vbox18, False, 2);
    Set_Border_Width (General_Preferences.Vbox18, 2);
@@ -213,7 +192,7 @@ begin
    Set_Shadow_Type (General_Preferences.Frame17, Shadow_Etched_In);
    Pack_Start (General_Preferences.Vbox18, General_Preferences.Frame17, False, False, 0);
 
-   Gtk_New (General_Preferences.Table10, 6, 2, False);
+   Gtk_New (General_Preferences.Table10, 6, 3, False);
    Set_Row_Spacings (General_Preferences.Table10, 2);
    Set_Col_Spacings (General_Preferences.Table10, 5);
    Add (General_Preferences.Frame17, General_Preferences.Table10);
@@ -236,12 +215,6 @@ begin
    Gtk_New (General_Preferences.Show_Line_Numbers_Check, -"Show Line Numbers");
    Set_Active (General_Preferences.Show_Line_Numbers_Check, True);
    Attach (General_Preferences.Table10, General_Preferences.Show_Line_Numbers_Check, 0, 1, 1, 2,
-     Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Syntax_Hilight_Check, -"Syntax Highlighting");
-   Set_Active (General_Preferences.Syntax_Hilight_Check, True);
-   Attach (General_Preferences.Table10, General_Preferences.Syntax_Hilight_Check, 0, 2, 2, 3,
      Fill, 0,
      0, 0);
 
@@ -292,6 +265,24 @@ begin
      0, 0,
      0, 0);
 
+   Gtk_New (General_Preferences.Syntax_Highlight_Check, -"Syntax Highlighting");
+   Set_Active (General_Preferences.Syntax_Highlight_Check, True);
+   Attach (General_Preferences.Table10, General_Preferences.Syntax_Highlight_Check, 0, 1, 2, 3,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Strip_Cr_Check, -"Strip Carriage Return");
+   Set_Active (General_Preferences.Strip_Cr_Check, True);
+   Attach (General_Preferences.Table10, General_Preferences.Strip_Cr_Check, 1, 2, 2, 3,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Tooltips_Check, -"Automatic Display of Variables");
+   Set_Active (General_Preferences.Tooltips_Check, True);
+   Attach (General_Preferences.Table10, General_Preferences.Tooltips_Check, 2, 3, 1, 2,
+     0, 0,
+     0, 0);
+
    Gtk_New (General_Preferences.Frame18, -"Assembly");
    Set_Shadow_Type (General_Preferences.Frame18, Shadow_Etched_In);
    Pack_Start (General_Preferences.Vbox18, General_Preferences.Frame18, False, False, 0);
@@ -309,12 +300,12 @@ begin
    Gtk_New (General_Preferences.Asm_Highlight_Combo);
    Pack_Start (General_Preferences.Hbox7, General_Preferences.Asm_Highlight_Combo, False, True, 0);
 
-   Gtk_New (General_Preferences.Label8, -("Source"));
-   Set_Alignment (General_Preferences.Label8, 0.5, 0.5);
-   Set_Padding (General_Preferences.Label8, 0, 0);
-   Set_Justify (General_Preferences.Label8, Justify_Center);
-   Set_Line_Wrap (General_Preferences.Label8, False);
-   Set_Tab (General_Preferences.Notebook1, 1, General_Preferences.Label8);
+   Gtk_New (General_Preferences.Label_Source, -("Source"));
+   Set_Alignment (General_Preferences.Label_Source, 0.5, 0.5);
+   Set_Padding (General_Preferences.Label_Source, 0, 0);
+   Set_Justify (General_Preferences.Label_Source, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label_Source, False);
+   Set_Tab (General_Preferences.Notebook1, 1, General_Preferences.Label_Source);
 
    Gtk_New (General_Preferences.Frame3);
    Set_Border_Width (General_Preferences.Frame3, 2);
@@ -488,12 +479,12 @@ begin
      0, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Label9, -("Data"));
-   Set_Alignment (General_Preferences.Label9, 0.5, 0.5);
-   Set_Padding (General_Preferences.Label9, 0, 0);
-   Set_Justify (General_Preferences.Label9, Justify_Center);
-   Set_Line_Wrap (General_Preferences.Label9, False);
-   Set_Tab (General_Preferences.Notebook1, 2, General_Preferences.Label9);
+   Gtk_New (General_Preferences.Label_Data, -("Data"));
+   Set_Alignment (General_Preferences.Label_Data, 0.5, 0.5);
+   Set_Padding (General_Preferences.Label_Data, 0, 0);
+   Set_Justify (General_Preferences.Label_Data, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label_Data, False);
+   Set_Tab (General_Preferences.Notebook1, 2, General_Preferences.Label_Data);
 
    Gtk_New (General_Preferences.Frame13);
    Set_Border_Width (General_Preferences.Frame13, 2);
@@ -528,17 +519,104 @@ begin
      Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Debug_Higlight_Combo);
-   Attach (General_Preferences.Table8, General_Preferences.Debug_Higlight_Combo, 1, 2, 0, 1,
+   Gtk_New (General_Preferences.Debug_Highlight_Combo);
+   Attach (General_Preferences.Table8, General_Preferences.Debug_Highlight_Combo, 1, 2, 0, 1,
      0, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Label10, -("Command"));
-   Set_Alignment (General_Preferences.Label10, 0.5, 0.5);
-   Set_Padding (General_Preferences.Label10, 0, 0);
-   Set_Justify (General_Preferences.Label10, Justify_Center);
-   Set_Line_Wrap (General_Preferences.Label10, False);
-   Set_Tab (General_Preferences.Notebook1, 3, General_Preferences.Label10);
+   Gtk_New (General_Preferences.Label_Command, -("Command"));
+   Set_Alignment (General_Preferences.Label_Command, 0.5, 0.5);
+   Set_Padding (General_Preferences.Label_Command, 0, 0);
+   Set_Justify (General_Preferences.Label_Command, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label_Command, False);
+   Set_Tab (General_Preferences.Notebook1, 3, General_Preferences.Label_Command);
+
+   Gtk_New (General_Preferences.Frame19);
+   Set_Border_Width (General_Preferences.Frame19, 2);
+   Set_Shadow_Type (General_Preferences.Frame19, Shadow_Etched_In);
+   Add (General_Preferences.Notebook1, General_Preferences.Frame19);
+
+   Gtk_New (General_Preferences.Table11, 5, 2, False);
+   Set_Row_Spacings (General_Preferences.Table11, 2);
+   Set_Col_Spacings (General_Preferences.Table11, 2);
+   Add (General_Preferences.Frame19, General_Preferences.Table11);
+
+   Gtk_New (General_Preferences.Label206, -("Font"));
+   Set_Alignment (General_Preferences.Label206, 7.45058e-09, 0.5);
+   Set_Padding (General_Preferences.Label206, 0, 0);
+   Set_Justify (General_Preferences.Label206, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label206, False);
+   Attach (General_Preferences.Table11, General_Preferences.Label206, 0, 1, 0, 1,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Label207, -("Default Color"));
+   Set_Alignment (General_Preferences.Label207, 7.45058e-09, 0.5);
+   Set_Padding (General_Preferences.Label207, 0, 0);
+   Set_Justify (General_Preferences.Label207, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label207, False);
+   Attach (General_Preferences.Table11, General_Preferences.Label207, 0, 1, 1, 2,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Memory_Font_Combo);
+   Attach (General_Preferences.Table11, General_Preferences.Memory_Font_Combo, 1, 2, 0, 1,
+     0, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Memory_Default_Combo);
+   Attach (General_Preferences.Table11, General_Preferences.Memory_Default_Combo, 1, 2, 1, 2,
+     0, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Label210, -("Modified"));
+   Set_Alignment (General_Preferences.Label210, 7.45058e-09, 0.5);
+   Set_Padding (General_Preferences.Label210, 0, 0);
+   Set_Justify (General_Preferences.Label210, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label210, False);
+   Attach (General_Preferences.Table11, General_Preferences.Label210, 0, 1, 4, 5,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Label209, -("Selection"));
+   Set_Alignment (General_Preferences.Label209, 7.45058e-09, 0.5);
+   Set_Padding (General_Preferences.Label209, 0, 0);
+   Set_Justify (General_Preferences.Label209, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label209, False);
+   Attach (General_Preferences.Table11, General_Preferences.Label209, 0, 1, 3, 4,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Label208, -("Color Highlighting"));
+   Set_Alignment (General_Preferences.Label208, 7.45058e-09, 0.5);
+   Set_Padding (General_Preferences.Label208, 0, 0);
+   Set_Justify (General_Preferences.Label208, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label208, False);
+   Attach (General_Preferences.Table11, General_Preferences.Label208, 0, 1, 2, 3,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Memory_Highlight_Combo);
+   Attach (General_Preferences.Table11, General_Preferences.Memory_Highlight_Combo, 1, 2, 2, 3,
+     0, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Memory_Selection_Combo);
+   Attach (General_Preferences.Table11, General_Preferences.Memory_Selection_Combo, 1, 2, 3, 4,
+     0, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Memory_Modified_Combo);
+   Attach (General_Preferences.Table11, General_Preferences.Memory_Modified_Combo, 1, 2, 4, 5,
+     0, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Label_Memory, -("Memory"));
+   Set_Alignment (General_Preferences.Label_Memory, 0.5, 0.5);
+   Set_Padding (General_Preferences.Label_Memory, 0, 0);
+   Set_Justify (General_Preferences.Label_Memory, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label_Memory, False);
+   Set_Tab (General_Preferences.Notebook1, 4, General_Preferences.Label_Memory);
 
    Gtk_New (General_Preferences.Frame6);
    Set_Border_Width (General_Preferences.Frame6, 2);
@@ -559,30 +637,30 @@ begin
      Expand or Fill, 0,
      3, 0);
 
-   Gtk_New (General_Preferences.Get_Core_File_Entry);
-   Set_Editable (General_Preferences.Get_Core_File_Entry, True);
-   Set_Max_Length (General_Preferences.Get_Core_File_Entry, 0);
-   Set_Text (General_Preferences.Get_Core_File_Entry, -"");
-   Set_Visibility (General_Preferences.Get_Core_File_Entry, True);
-   Attach (General_Preferences.Table6, General_Preferences.Get_Core_File_Entry, 1, 2, 1, 2,
-     Expand or Fill, 0,
-     3, 0);
-
    Gtk_New (General_Preferences.List_Processes_Entry);
    Set_Editable (General_Preferences.List_Processes_Entry, True);
    Set_Max_Length (General_Preferences.List_Processes_Entry, 0);
    Set_Text (General_Preferences.List_Processes_Entry, -"");
    Set_Visibility (General_Preferences.List_Processes_Entry, True);
-   Attach (General_Preferences.Table6, General_Preferences.List_Processes_Entry, 1, 2, 2, 3,
+   Attach (General_Preferences.Table6, General_Preferences.List_Processes_Entry, 1, 2, 1, 2,
      Expand or Fill, 0,
      3, 0);
 
-   Gtk_New (General_Preferences.Web_Browser_Entry);
-   Set_Editable (General_Preferences.Web_Browser_Entry, True);
-   Set_Max_Length (General_Preferences.Web_Browser_Entry, 0);
-   Set_Text (General_Preferences.Web_Browser_Entry, -"");
-   Set_Visibility (General_Preferences.Web_Browser_Entry, True);
-   Attach (General_Preferences.Table6, General_Preferences.Web_Browser_Entry, 1, 2, 3, 4,
+   Gtk_New (General_Preferences.Remote_Shell_Entry);
+   Set_Editable (General_Preferences.Remote_Shell_Entry, True);
+   Set_Max_Length (General_Preferences.Remote_Shell_Entry, 0);
+   Set_Text (General_Preferences.Remote_Shell_Entry, -"");
+   Set_Visibility (General_Preferences.Remote_Shell_Entry, True);
+   Attach (General_Preferences.Table6, General_Preferences.Remote_Shell_Entry, 1, 2, 2, 3,
+     Expand or Fill, 0,
+     3, 0);
+
+   Gtk_New (General_Preferences.Remote_Copy_Entry);
+   Set_Editable (General_Preferences.Remote_Copy_Entry, True);
+   Set_Max_Length (General_Preferences.Remote_Copy_Entry, 0);
+   Set_Text (General_Preferences.Remote_Copy_Entry, -"");
+   Set_Visibility (General_Preferences.Remote_Copy_Entry, True);
+   Attach (General_Preferences.Table6, General_Preferences.Remote_Copy_Entry, 1, 2, 3, 4,
      Expand or Fill, 0,
      3, 0);
 
@@ -595,7 +673,7 @@ begin
      Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Label44, -("Get Core File"));
+   Gtk_New (General_Preferences.Label44, -("List Processes"));
    Set_Alignment (General_Preferences.Label44, 7.45058e-09, 0.5);
    Set_Padding (General_Preferences.Label44, 3, 0);
    Set_Justify (General_Preferences.Label44, Justify_Center);
@@ -604,7 +682,7 @@ begin
      Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Label45, -("List Processes"));
+   Gtk_New (General_Preferences.Label45, -("Remote Shell"));
    Set_Alignment (General_Preferences.Label45, 7.45058e-09, 0.5);
    Set_Padding (General_Preferences.Label45, 3, 0);
    Set_Justify (General_Preferences.Label45, Justify_Center);
@@ -613,7 +691,7 @@ begin
      Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Label48, -("Web Browser"));
+   Gtk_New (General_Preferences.Label48, -("Remote Copy"));
    Set_Alignment (General_Preferences.Label48, 7.45058e-09, 0.5);
    Set_Padding (General_Preferences.Label48, 3, 0);
    Set_Justify (General_Preferences.Label48, Justify_Center);
@@ -622,12 +700,12 @@ begin
      Fill, 0,
      0, 0);
 
-   Gtk_New (General_Preferences.Label12, -("Helpers"));
-   Set_Alignment (General_Preferences.Label12, 0.5, 0.5);
-   Set_Padding (General_Preferences.Label12, 0, 0);
-   Set_Justify (General_Preferences.Label12, Justify_Center);
-   Set_Line_Wrap (General_Preferences.Label12, False);
-   Set_Tab (General_Preferences.Notebook1, 4, General_Preferences.Label12);
+   Gtk_New (General_Preferences.Label_Helpers, -("Helpers"));
+   Set_Alignment (General_Preferences.Label_Helpers, 0.5, 0.5);
+   Set_Padding (General_Preferences.Label_Helpers, 0, 0);
+   Set_Justify (General_Preferences.Label_Helpers, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label_Helpers, False);
+   Set_Tab (General_Preferences.Notebook1, 5, General_Preferences.Label_Helpers);
 
    Gtk_New (General_Preferences.Hbuttonbox6);
    Set_Spacing (General_Preferences.Hbuttonbox6, 30);
@@ -643,19 +721,19 @@ begin
       Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Ok_Button);
 
-   Gtk_New (General_Preferences.Reset_Button, -"Reset");
-   Set_Flags (General_Preferences.Reset_Button, Can_Default);
+   Gtk_New (General_Preferences.Apply_Button, -"Apply");
+   Set_Flags (General_Preferences.Apply_Button, Can_Default);
    Button_Callback.Connect
-     (General_Preferences.Reset_Button, "clicked",
+     (General_Preferences.Apply_Button, "clicked",
       Button_Callback.To_Marshaller (On_Reset_Button_Clicked'Access));
-   Add (General_Preferences.Hbuttonbox6, General_Preferences.Reset_Button);
+   Add (General_Preferences.Hbuttonbox6, General_Preferences.Apply_Button);
 
-   Gtk_New (General_Preferences.Help_Button, -"Help");
-   Set_Flags (General_Preferences.Help_Button, Can_Default);
+   Gtk_New (General_Preferences.Cancel_Button, -"Cancel");
+   Set_Flags (General_Preferences.Cancel_Button, Can_Default);
    Button_Callback.Connect
-     (General_Preferences.Help_Button, "clicked",
+     (General_Preferences.Cancel_Button, "clicked",
       Button_Callback.To_Marshaller (On_Help_Button_Clicked'Access));
-   Add (General_Preferences.Hbuttonbox6, General_Preferences.Help_Button);
+   Add (General_Preferences.Hbuttonbox6, General_Preferences.Cancel_Button);
 
    General_Preferences.Main_Window := Gtk_Window (Main_Window);
 end Initialize;
