@@ -98,6 +98,7 @@ package File_Utils is
    function File_Time_Stamp (File : String) return Ada.Calendar.Time;
    --  Similar to GNAT.OS_Lib.File_Time_Stamp, but with a return value that can
    --  be easily compared to other time stamps.
+   --  Return VFS.No_Time if File does not exist or timestamp cannot be read.
 
    type Path_Iterator is private;
 
