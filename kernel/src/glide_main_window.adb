@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Values;
+with Pango.Font;                use Pango.Font;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
 with Glide_Kernel;              use Glide_Kernel;
@@ -30,6 +31,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
@@ -169,6 +171,12 @@ package body Glide_Main_Window is
    is
       Main : constant Glide_Window := Glide_Window (Main_Window);
    begin
+      Gtk.Rc.Parse_String
+        ("gtk-font-name=""" &
+         To_String (Get_Pref (Kernel, Default_Font)) &
+           '"' & ASCII.LF & "gtk-key-theme-name=""" &
+         Get_Pref (Kernel, Key_Theme_Name) & '"');
+
       if Get_Pref (Kernel, Toolbar_Show_Text) then
          Set_Style (Main.Toolbar, Toolbar_Both);
       else
