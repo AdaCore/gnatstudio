@@ -14,6 +14,7 @@ is
    P : Pair_Ptr;
 begin
    Info ("Sym_FU_Hanlder: """
+         & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
          & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
          & """");
 
@@ -34,7 +35,7 @@ begin
       exception
          when DB_Error | Not_Found =>
             Fail ("unable to find method " &
-                  Sym.Buffer (Sym.Class.First .. Sym.Class.Last) &
+                  Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "." &
                   Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
       end;
    else

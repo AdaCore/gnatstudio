@@ -175,6 +175,7 @@ package body Src_Info.CPP is
       CL     => Sym_CL_Handler'Access,
       UN     => Sym_UN_Handler'Access,
       MA     => Sym_MA_Handler'Access,
+      MI     => Sym_FU_Handler'Access,
       IV     => Sym_IV_Handler'Access,
       IU     => Sym_IU_Handler'Access,
       others => Sym_Default_Handler'Access);
@@ -190,6 +191,7 @@ package body Src_Info.CPP is
    procedure Fu_To_Con_Handler (Ref : TO_Table);
    procedure Fu_To_E_Handler   (Ref : TO_Table);
    procedure Fu_To_Ec_Handler  (Ref : TO_Table);
+   procedure Fu_To_Mi_Handler  (Ref : TO_Table);
 
    -------------------
    --  To_Handlers  --
@@ -201,6 +203,7 @@ package body Src_Info.CPP is
       CON    => Fu_To_Con_Handler'Access,
       E      => Fu_To_E_Handler'Access,
       EC     => Fu_To_Ec_Handler'Access,
+      MI     => Fu_To_Mi_Handler'Access,
       others => null);
 
    function Ext (S : String) return String;
@@ -234,6 +237,8 @@ package body Src_Info.CPP is
       EC     => Ext ("ec"),
       TO     => Ext ("to"),
       IV     => Ext ("iv"),
+      MI     => Ext ("mi"),
+      MD     => Ext ("md"),
       SN_IN  => Ext ("in"),
       UN     => Ext ("un"),
       others => Ext (""));
@@ -976,6 +981,7 @@ package body Src_Info.CPP is
    procedure Fu_To_Con_Handler   (Ref : TO_Table) is separate;
    procedure Fu_To_E_Handler     (Ref : TO_Table) is separate;
    procedure Fu_To_Ec_Handler    (Ref : TO_Table) is separate;
+   procedure Fu_To_Mi_Handler    (Ref : TO_Table) is separate;
 
 end Src_Info.CPP;
 
