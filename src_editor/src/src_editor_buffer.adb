@@ -2551,8 +2551,12 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Screen_Position (Buffer, End_Iter, End_Line, End_Column);
 
       else
-         pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
-         pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+         if not Is_Valid_Position (Buffer, Start_Line, Start_Column)
+           or else not Is_Valid_Position (Buffer, End_Line, End_Column)
+         then
+            Trace (Me, "invalid position in Select_Region, aborting.");
+            return;
+         end if;
 
          Get_Iter_At_Line_Offset
            (Buffer, Start_Iter, Start_Line, Start_Column);
@@ -2577,8 +2581,12 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
-      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
-      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+      if not Is_Valid_Position (Buffer, Start_Line, Start_Column)
+        or else not Is_Valid_Position (Buffer, End_Line, End_Column)
+      then
+         Trace (Me, "invalid position in Highlight_Region, aborting.");
+         return;
+      end if;
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
       Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
@@ -2599,8 +2607,12 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
-      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
-      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+      if not Is_Valid_Position (Buffer, Start_Line, Start_Column)
+        or else not Is_Valid_Position (Buffer, End_Line, End_Column)
+      then
+         Trace (Me, "invalid position in Unhighlight_Region, aborting.");
+         return;
+      end if;
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
       Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
