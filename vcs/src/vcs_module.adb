@@ -23,7 +23,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 
-with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Intl;                use Glide_Intl;
@@ -40,8 +39,6 @@ with String_List_Utils;         use String_List_Utils;
 package body VCS_Module is
 
    VCS_Module_Name : constant String := "VCS_Interface";
-   VCS_Module_ID : Module_ID;
-
    Me : Debug_Handle := Create (VCS_Module_Name);
 
    procedure Initialize_Module
@@ -180,21 +177,13 @@ package body VCS_Module is
    is
       Submenu      : Gtk_Menu;
       Menu_Item    : Gtk_Menu_Item;
-      File_Context : File_Selection_Context_Access;
    begin
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File_Context)
-           or else Has_Directory_Information (File_Context)
-           or else Has_Project_Information (File_Context)
-         then
-            Gtk_New (Menu_Item, Label => -"VCS");
-            Gtk_New (Submenu);
-            VCS_View_API.VCS_Contextual_Menu (Object, Context, Submenu);
-            Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
-            Append (Menu, Menu_Item);
-         end if;
+      if Context.all in File_Name_Selection_Context'Class then
+         Gtk_New (Menu_Item, Label => -"VCS");
+         Gtk_New (Submenu);
+         VCS_View_API.VCS_Contextual_Menu (Object, Context, Submenu);
+         Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+         Append (Menu, Menu_Item);
       end if;
    end VCS_Contextual_Menu;
 
