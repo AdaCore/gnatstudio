@@ -201,7 +201,9 @@ package body Glide_Kernel.Project is
 
       procedure Report_Error (S : String) is
       begin
-         Insert (Handle, S, Mode => Glide_Kernel.Console.Error);
+         if not Handle.Project_Is_Default then
+            Insert (Handle, S, Mode => Glide_Kernel.Console.Error);
+         end if;
       end Report_Error;
 
       Scenario_Vars : constant Project_Node_Array :=
