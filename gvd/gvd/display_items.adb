@@ -585,8 +585,8 @@ package body Display_Items is
             Filled => True,
             X      => 0,
             Y      => Title_Height,
-            Width  => Alloc_Width - 1,
-            Height => Alloc_Height - Title_Height - 1);
+            Width  => Alloc_Width,
+            Height => Alloc_Height - Title_Height);
 
       else
          Draw_Rectangle
@@ -595,8 +595,8 @@ package body Display_Items is
             Filled => True,
             X      => 0,
             Y      => Title_Height,
-            Width  => Alloc_Width - 1,
-            Height => Alloc_Height - Title_Height - 1);
+            Width  => Alloc_Width,
+            Height => Alloc_Height - Title_Height);
       end if;
 
       Draw_Rectangle
@@ -621,17 +621,17 @@ package body Display_Items is
          Draw_Line
            (Pixmap (Item),
             GC   => Black_GC,
-            X1   => Alloc_Width - 1,
+            X1   => Alloc_Width,
             Y1   => 2,
-            X2   => Alloc_Width - 1,
-            Y2   => Alloc_Height - 1);
+            X2   => Alloc_Width,
+            Y2   => Alloc_Height);
          Draw_Line
            (Pixmap (Item),
             GC   => Black_GC,
             X1   => 1,
-            Y1   => Alloc_Height - 1,
-            X2   => Alloc_Width - 1,
-            Y2   => Alloc_Height - 1);
+            Y1   => Alloc_Height,
+            X2   => Alloc_Width,
+            Y2   => Alloc_Height);
       end if;
 
       Draw_Line
