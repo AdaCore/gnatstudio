@@ -174,8 +174,7 @@ package body Glide_Kernel is
 
    function Get_Default_Accelerators
      (Handle : access Kernel_Handle_Record)
-     return Gtk.Accel_Group.Gtk_Accel_Group
-   is
+      return Gtk.Accel_Group.Gtk_Accel_Group is
    begin
       return GVD_Main_Window (Handle.Main_Window).Main_Accel_Group;
    end Get_Default_Accelerators;
@@ -191,11 +190,14 @@ package body Glide_Kernel is
          if not Module_List.Head (Module).Was_Initialized then
             Trace (Me, "Initializing module "
                    & Module_List.Head (Module).Name);
+
             if Module_List.Head (Module).Initializer /= null then
                Module_List.Head (Module).Initializer (Handle);
             end if;
+
             Module_List.Head (Module).Was_Initialized := True;
          end if;
+
          Module := Module_List.Next (Module);
       end loop;
    end Initialize_All_Modules;
@@ -222,6 +224,7 @@ package body Glide_Kernel is
       if Handle.Predefined_Source_Path = null then
          return "";
       end if;
+
       return Handle.Predefined_Source_Path.all;
    end Get_Predefined_Source_Path;
 
@@ -247,6 +250,7 @@ package body Glide_Kernel is
       if Handle.Predefined_Object_Path = null then
          return "";
       end if;
+
       return Handle.Predefined_Object_Path.all;
    end Get_Predefined_Object_Path;
 
@@ -275,9 +279,8 @@ package body Glide_Kernel is
    ------------------------
 
    function Locate_From_Source
-     (Handle            : access Kernel_Handle_Record;
-      Source_Filename   : String)
-      return Src_Info.LI_File_Ptr
+     (Handle          : access Kernel_Handle_Record;
+      Source_Filename : String) return Src_Info.LI_File_Ptr
    is
       File : Src_Info.LI_File_Ptr;
    begin
