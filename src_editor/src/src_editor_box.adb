@@ -55,7 +55,6 @@ with Gtk.Handlers;                use Gtk.Handlers;
 with Gtk.Label;                   use Gtk.Label;
 with Gtk.Main;                    use Gtk.Main;
 with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Object;                  use Gtk.Object;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Separator;               use Gtk.Separator;
@@ -241,16 +240,6 @@ package body Src_Editor_Box is
    function On_Goto_Line_Func
      (Editor : access GObject_Record'Class) return Boolean;
    --  Callback when clicking on the line number in the status bar
-
-   procedure On_Goto_Next_Body
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Goto Body" contextual menu
-
-   procedure On_Goto_Type
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Goto type declaration" contextual menu
 
    procedure Find_Closest_Match
      (Source : access Source_Editor_Box_Record'Class;
@@ -1399,7 +1388,6 @@ package body Src_Editor_Box is
       Column        : Gint := 0;
       Entity_Column : Gint;
       X, Y          : Gint;
-      Item          : Gtk_Menu_Item;
       Start_Iter    : Gtk_Text_Iter;
       End_Iter      : Gtk_Text_Iter;
       Context       : Entity_Selection_Context_Access;
@@ -1441,7 +1429,8 @@ package body Src_Editor_Box is
 
          else
             Event_To_Buffer_Coords
-              (Editor.Source_View, Event, Line, Column, Out_Of_Bounds);
+              (Editor.Source_View, Event, Line,
+               Column, Out_Of_Bounds);
          end if;
 
          if Out_Of_Bounds then
@@ -1519,14 +1508,16 @@ package body Src_Editor_Box is
                Search_Entity_Bounds (Start_Iter, End_Iter);
             end if;
 
-            --  Expand the tabs
-            Get_Screen_Position
-              (Editor.Source_Buffer, Start_Iter, Line, Entity_Column);
+            if not Out_Of_Bounds then
+               --  Expand the tabs
+               Get_Screen_Position
+                 (Editor.Source_Buffer, Start_Iter, Line, Entity_Column);
 
-            Set_Entity_Information
-              (Context,
-               Get_Text (Start_Iter, End_Iter),
-               To_Box_Column (Entity_Column));
+               Set_Entity_Information
+                 (Context,
+                  Get_Text (Start_Iter, End_Iter),
+                  To_Box_Column (Entity_Column));
+            end if;
          end if;
 
          Set_File_Information
@@ -1541,68 +1532,88 @@ package body Src_Editor_Box is
             --  would result in unwanted scrolling otherwise.
 
             Place_Cursor (Editor.Source_Buffer, Start_Iter);
-
-            if Has_Entity_Name_Information (Context) then
-               Push_State (Get_Kernel (Context), Busy);
-
-               declare
-                  Name   : constant String :=
-                    Krunch (Entity_Name_Information (Context));
-                  Entity : constant Entity_Information := Get_Entity (Context);
-                  Location : Entities.File_Location;
-                  Current_Location : Entities.File_Location;
-
-               begin
-                  if Entity /= null then
-                     Current_Location :=
-                       (File   => Get_Or_Create
-                          (Db   => Get_Database (Get_Kernel (Context)),
-                           File => File_Information (Context)),
-                        Line   => Contexts.Line_Information (Context),
-                        Column => Column_Type
-                          (Contexts.Entity_Column_Information (Context)));
-
-                     Find_Next_Body
-                       (Entity   => Entity,
-                        Current_Location => Current_Location,
-                        Location => Location);
-
-                     if Location /= Entities.No_File_Location
-                       and then Location /= Current_Location
-                     then
-                        if Is_Container (Get_Kind (Entity).Kind) then
-                           Gtk_New (Item, -"Goto body of " & Name);
-                        else
-                           Gtk_New (Item, -"Goto full declaration of " & Name);
-                        end if;
-
-                        Add (Menu, Item);
-                        Context_Callback.Object_Connect
-                          (Item, "activate", On_Goto_Next_Body'Access,
-                           User_Data   => Selection_Context_Access (Context),
-                           Slot_Object => Editor,
-                           After       => True);
-                     end if;
-
-                     if Get_Type_Of (Entity) /= null then
-                        Gtk_New (Item, -"Goto type declaration of " & Name);
-                        Add (Menu, Item);
-                        Context_Callback.Object_Connect
-                          (Item, "activate", On_Goto_Type'Access,
-                           User_Data   => Selection_Context_Access (Context),
-                           Slot_Object => Editor,
-                           After       => True);
-                     end if;
-                  end if;
-               end;
-
-               Pop_State (Get_Kernel (Context));
-            end if;
          end if;
       end if;
 
       return Selection_Context_Access (Context);
    end Get_Contextual_Menu;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label
+     (Creator   : access Goto_Body_Menu_Label;
+      Context   : access Selection_Context'Class) return String
+   is
+      pragma Unreferenced (Creator);
+      Entity : constant Entity_Information := Get_Entity
+        (Entity_Selection_Context_Access (Context));
+   begin
+      if Is_Container (Get_Kind (Entity).Kind) then
+         return -"Goto body of " & Get_Name (Entity).all;
+      else
+         return -"Goto full declaration of " & Get_Name (Entity).all;
+      end if;
+   end Get_Label;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Has_Type_Filter;
+      Context : access Glide_Kernel.Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      C      : Entity_Selection_Context_Access;
+      Entity : Entity_Information;
+   begin
+      if Context.all in Entity_Selection_Context'Class then
+         C := Entity_Selection_Context_Access (Context);
+         Entity := Get_Entity (C);
+         return Entity /= null and then Get_Type_Of (Entity) /= null;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Has_Body_Filter;
+      Context : access Glide_Kernel.Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      C      : Entity_Selection_Context_Access;
+      Entity : Entity_Information;
+      Location : Entities.File_Location;
+      Current_Location : Entities.File_Location;
+   begin
+      if Context.all in Entity_Selection_Context'Class then
+         C := Entity_Selection_Context_Access (Context);
+         Entity := Get_Entity (C);
+
+         if Entity /= null then
+            Current_Location :=
+              (File   => Get_Or_Create
+                 (Db   => Get_Database (Get_Kernel (Context)),
+                  File => File_Information (C)),
+               Line   => Contexts.Line_Information (C),
+               Column => Column_Type (Contexts.Entity_Column_Information (C)));
+
+            Find_Next_Body
+              (Entity   => Entity,
+               Current_Location => Current_Location,
+               Location => Location);
+
+            return Location /= Entities.No_File_Location
+              and then Location /= Current_Location;
+         end if;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
 
    -------------
    -- Execute --
@@ -1716,48 +1727,45 @@ package body Src_Editor_Box is
       return Commands.Success;
    end Execute;
 
-   -----------------------
-   -- On_Goto_Next_Body --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Goto_Next_Body
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Goto_Next_Body_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Command);
       C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+        Entity_Selection_Context_Access (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Box    : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       Goto_Declaration_Or_Body
         (Kernel,
          To_Body => True,
-         Editor  => Source_Editor_Box (Widget),
+         Editor  => Box,
          Context => C);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Next_Body;
+   -------------
+   -- Execute --
+   -------------
 
-   ------------------
-   -- On_Goto_Type --
-   ------------------
-
-   procedure On_Goto_Type
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Goto_Type_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Command);
       C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Editor : constant Source_Editor_Box := Source_Editor_Box (Widget);
-      Entity : Entity_Information;
+        Entity_Selection_Context_Access (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Editor    : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Entity : Entity_Information := Get_Entity (C);
    begin
-      Push_State (Kernel, Busy);
-
-      Entity := Get_Entity (C);
-
       if Entity = null then
          --  Probably means that we either could not locate the ALI file,
          --  or it could also be that we failed to parse it. Either way,
@@ -1770,6 +1778,7 @@ package body Src_Editor_Box is
             & (-("Recompile your file or select Build->Recompute Xref"
                  & " Information, depending on the language")),
             Mode           => Error);
+         return Commands.Failure;
       else
          Entity := Get_Type_Of (Entity);
          Go_To_Closest_Match
@@ -1778,16 +1787,9 @@ package body Src_Editor_Box is
             Line     => Get_Line (Get_Declaration_Of (Entity)),
             Column   => Get_Column (Get_Declaration_Of (Entity)),
             Entity   => Entity);
+         return Commands.Success;
       end if;
-
-      Pop_State (Kernel);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Kernel);
-   end On_Goto_Type;
+   end Execute;
 
    -------------
    -- Gtk_New --
