@@ -104,8 +104,8 @@ install_binaries() {
   echo "Installing the binaries ...."
   cd $basedir
 
-  if [ -f bin/gpr2make ]; then
-     rm $current_dir/bin/gpr2make
+  if [ -f bin/gprmake ]; then
+     rm $current_dir/bin/gprmake
   fi
 
   # Do the installation through tar, to preserve symbolic links
