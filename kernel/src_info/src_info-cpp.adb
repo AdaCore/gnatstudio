@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2002                            --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,13 +13,15 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-with Ada.Exceptions;       use Ada.Exceptions;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with GNAT.Directory_Operations;
+
+with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Text_IO;               use Ada.Text_IO;
 
 with Prj;
 with Prj_API;              use Prj_API;
@@ -56,7 +58,7 @@ package body Src_Info.CPP is
       List_Of_Files     : LI_File_List;
       Module_Typedefs   : Module_Typedefs_List;
       Xrefs             : Xref_Pool;
-      DB_Dir            : SN.String_Access;
+      DB_Dir            : GNAT.OS_Lib.String_Access;
    end record;
    --  This type is used in symbol handlers to access all necessary
    --  objects (replacement for global variables)
@@ -243,7 +245,7 @@ package body Src_Info.CPP is
 
    function Get_Full_Filename_In_Project
      (Project : Prj.Project_Id; Source_File : String)
-     return SN.String_Access;
+      return GNAT.OS_Lib.String_Access;
    pragma Inline (Get_Full_Filename_In_Project);
    --  Returns full name of specified source file or null, if file not found
    --  in project. User has to free returned string.
@@ -257,6 +259,33 @@ package body Src_Info.CPP is
       Xrefs                : Xref_Pool) return Boolean;
    --  Checks if given source file is up-to-date with corresponding
    --  xref file. Return true if SN DB needed to be updated.
+
+   function Find_First_Forward_Declaration
+     (Buffer       : String_Access;
+      Name         : Segment;
+      Filename     : Segment;
+      Return_Type  : Segment;
+      Arg_Types    : Segment_Vector.Node_Access;
+      Env          : Handler_Environment)
+      return E_Declaration_Info_List;
+   --  Attempts to find the first forward declaration
+   --  for the function. Returns null if not found or
+   --  forward declaration is in another file which
+   --  has not been yet processed
+
+   function Find_First_Forward_Declaration
+     (Buffer       : String_Access;
+      Class_Name   : Segment;
+      Name         : Segment;
+      Filename     : Segment;
+      Return_Type  : Segment;
+      Arg_Types    : Segment_Vector.Node_Access;
+      Env          : Handler_Environment)
+      return E_Declaration_Info_List;
+   --  Attempts to find the first forward declaration
+   --  for the method. Returns null if not found or
+   --  forward declaration is in another file which
+   --  has not been yet processed
 
    ----------------
    -- Up_To_Date --
@@ -296,6 +325,7 @@ package body Src_Info.CPP is
       pragma Unreferenced (Full_Filename);
       HI : CPP_LI_Handler_Iterator;
    begin
+      HI.State := Done;
       return HI;
    end Generate_LI_For_Source;
 
@@ -311,12 +341,17 @@ package body Src_Info.CPP is
       return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Handler);
-      HI : CPP_LI_Handler_Iterator;
+      Tmp_File : File_Type;
+      HI       : CPP_LI_Handler_Iterator;
+      Success  : Boolean;
+      Xref_File_Name : String_Access;
    begin
-      --  ??? Note: this is currently incorrect, since C and C++ files will be
-      --  ??? processed in two separate passes.
-
       HI.SN_Dir := new String' (Get_SN_Dir (Root_Project));
+
+      --  Check that DB_Directory exists. If not, create it.
+      if not Is_Directory (HI.SN_Dir.all) then
+         Make_Dir (HI.SN_Dir.all);
+      end if;
 
       --  Prepare the list of files
       Compute_Sources
@@ -327,103 +362,113 @@ package body Src_Info.CPP is
          GNAT.Directory_Operations.Make_Dir (HI.SN_Dir.all);
       end if;
 
-      Load (HI.Xrefs,
-        Name_As_Directory (HI.SN_Dir.all) & Browse.Xref_Pool_Filename);
+      Load (HI.Xrefs, HI.SN_Dir.all & Browse.Xref_Pool_Filename);
 
+      HI.List_Filename := new String' (HI.SN_Dir.all & "gps_list");
+
+      --  Create the list of files that need to be analyzed.
+      Create (Tmp_File, Out_File, Name => HI.List_Filename.all);
+
+      loop
+         declare
+            File : constant String := Current_Source_File (HI);
+         begin
+            exit when File = "";
+
+            --  Start processing next file
+            --  File needs to be processed if:
+            --  1. Its xref file is invalid (just created)
+            --  2. Source is newer than xref file
+
+            if not Is_Xref_Valid (File, HI.Xrefs)
+              or else not Up_To_Date (File, HI.SN_Dir.all, HI.Xrefs)
+            then
+               Trace (Info_Stream, "Updating " & File);
+
+               Xref_File_Name := Xref_Filename_For
+                 (File, HI.SN_Dir.all, HI.Xrefs);
+
+               --  Remove the current xref file if it exists, since
+               --  cbrowser opens it in append mode.
+
+               if Is_Regular_File (HI.SN_Dir.all & Xref_File_Name.all) then
+                  declare
+                     Xref : constant String :=
+                       HI.SN_Dir.all & Xref_File_Name.all & ASCII.NUL;
+                  begin
+                     Delete_File (Xref'Address, Success);
+                  end;
+               end if;
+
+               Put_Line (Tmp_File, "@" & HI.SN_Dir.all & Xref_File_Name.all);
+               Put_Line (Tmp_File, File);
+            end if;
+         end;
+         Next_Source_File (HI);
+      end loop;
+
+      Close (Tmp_File);
+      SN.Browse.Browse (HI.List_Filename.all, HI.SN_Dir.all, HI.PD);
+      HI.State := Analyze_Files;
       return HI;
    end Generate_LI_For_Project;
+
+   --------------
+   -- Continue --
+   --------------
 
    procedure Continue
      (Iterator : in out CPP_LI_Handler_Iterator;
       Finished : out Boolean)
    is
-      Process_Alive : Boolean := False;
-      Success       : Boolean;
+      Process_Alive  : Boolean := False;
+      Success        : Boolean;
    begin
       Finished := False;
 
-      if Iterator.State = Done then
-         Finished := True;
-         return;
-      end if;
-
-      if Iterator.State /= Start then
-         Browse.Is_Alive (Iterator.PD, Process_Alive);
-      end if;
-
-      if Process_Alive then
-         return;
-      end if;
-
-      --  process terminated, we need to start the new one
-      --  or to finish the updating
-
       case Iterator.State is
+         when Done =>
+            Finished := True;
+            return;
 
-         when Start | Analyse_Files | Process_Files =>
-            loop
-               if Iterator.State /= Start then
-                  Next_Source_File (Iterator);
-               else
-                  Iterator.State := Analyse_Files;
-               end if;
+         when Analyze_Files =>
+            --  If we haven't finished the first phase, keep waiting.
+            Browse.Is_Alive (Iterator.PD, Process_Alive);
+            if Process_Alive then
+               return;
+            end if;
 
-               declare
-                  Next_File : constant String :=
-                    Current_Source_File (Iterator);
-               begin
-                  if Next_File = "" then
-                     if Iterator.State = Process_Files then
-                        --  all files processed, start generating of xrefs
-                        Iterator.State := Process_Xrefs;
-                        Browse.Generate_Xrefs
-                          (Iterator.SN_Dir.all,
-                           Iterator.Tmp_Filename,
-                           Iterator.PD);
-                     else
-                        --  nothing to update
-                        Iterator.State := Done;
-                        Finished := True;
-                     end if;
-                     return;
-                  else
-                     --  Start processing next file
-                     --  File needs to be processing if:
-                     --  1. Its xref file is invalid (just created)
-                     --  2. Source is newer than xref file
-                     if not Is_Xref_Valid (Next_File, Iterator.Xrefs)
-                       or else not Up_To_Date
-                         (Next_File, Iterator.SN_Dir.all, Iterator.Xrefs)
-                     then
-                        Trace (Info_Stream, "Updating " & Next_File);
-                        Iterator.State := Process_Files;
-                        Browse.Browse
-                          (Next_File,
-                           Iterator.SN_Dir.all,
-                           Iterator.Xrefs,
-                           Iterator.PD);
-                        Set_Valid (Next_File, True, Iterator.Xrefs);
-                        return;
-                     end if;
-                  end if;
-               end;
-            end loop;
+            Trace (Info_Stream, "Starting the dbimp process");
+
+            --  All files processed, start generating of xrefs
+            Iterator.State := Process_Xrefs;
+            Browse.Generate_Xrefs
+              (Iterator.SN_Dir.all,
+               Iterator.Tmp_Filename,
+               Iterator.PD);
 
          when Process_Xrefs =>
+            --  If we haven't finished the second phase, keep waiting.
+            Browse.Is_Alive (Iterator.PD, Process_Alive);
+            if Process_Alive then
+               return;
+            end if;
+
             Finished := True;
             Iterator.State := Done;
             Save (Iterator.Xrefs,
-              Name_As_Directory (Iterator.SN_Dir.all)
-                & Browse.Xref_Pool_Filename);
+                  Iterator.SN_Dir.all & Browse.Xref_Pool_Filename);
             Free (Iterator.Xrefs);
             Delete_File (Iterator.Tmp_Filename'Address, Success);
-            Free_String (Iterator.SN_Dir);
+            Free (Iterator.SN_Dir);
 
-         when Done          =>
-            Finished := True;
-
+            declare
+               Tmp : constant String := Iterator.List_Filename.all & ASCII.NUL;
+            begin
+               Delete_File (Tmp'Address, Success);
+            end;
+            Free (Iterator.List_Filename);
       end case;
-
    end Continue;
 
    ----------------
@@ -434,7 +479,7 @@ package body Src_Info.CPP is
    begin
       return Name_As_Directory
         (Prj_API.Object_Path (Project, Recursive => False))
-        & Browse.DB_Dir_Name;
+        & Name_As_Directory (Browse.DB_Dir_Name);
    end Get_SN_Dir;
 
    ----------------------------------
@@ -443,7 +488,7 @@ package body Src_Info.CPP is
 
    function Get_Full_Filename_In_Project
      (Project : Prj.Project_Id; Source_File : String)
-     return SN.String_Access
+     return GNAT.OS_Lib.String_Access
    is
       Path : constant String := Find_File
         (Source_File, Include_Path (Project, Recursive => True),
@@ -568,7 +613,7 @@ package body Src_Info.CPP is
       SN_Dir      : constant String := Get_SN_Dir (Project);
       --  SN project directory
 
-      Full_Filename : SN.String_Access :=
+      Full_Filename : GNAT.OS_Lib.String_Access :=
         Get_Full_Filename_In_Project (Project, Source_Filename);
 
       Env : Handler_Environment;
@@ -610,14 +655,14 @@ package body Src_Info.CPP is
 
       Close_DB_Files (Env.SN_Table);
 
-      Free_String (Full_Filename);
+      Free (Full_Filename);
       Free (Env.DB_Dir);
 
    exception
       when E : others =>
          Trace (Warn_Stream, "Unexpected exception: "
                 & Exception_Information (E));
-         Free_String (Full_Filename);
+         Free (Full_Filename);
    end Create_Or_Complete_LI;
 
    ------------------------------
@@ -668,7 +713,7 @@ package body Src_Info.CPP is
       pragma Unreferenced (Handler);
       pragma Unreferenced (Predefined_Source_Path);
       DB_Dir             : constant String := Get_SN_Dir (Project);
-      Full_Filename : SN.String_Access :=
+      Full_Filename : String_Access :=
         Get_Full_Filename_In_Project (Project, Source_Filename);
       Xref_Pool_Filename : constant String :=
         Name_As_Directory (DB_Dir) & Browse.Xref_Pool_Filename;
@@ -828,38 +873,11 @@ package body Src_Info.CPP is
       end if;
    end Find_Or_Create_Class;
 
-   function Find_First_Forward_Declaration
-     (Buffer       : SN.String_Access;
-      Name         : Segment;
-      Filename     : Segment;
-      Return_Type  : Segment;
-      Arg_Types    : Segment_Vector.Node_Access;
-      Env          : Handler_Environment)
-      return E_Declaration_Info_List;
-   --  Attempts to find the first forward declaration
-   --  for the function. Returns null if not found or
-   --  forward declaration is in another file which
-   --  has not been yet processed
-
-   function Find_First_Forward_Declaration
-     (Buffer       : SN.String_Access;
-      Class_Name   : Segment;
-      Name         : Segment;
-      Filename     : Segment;
-      Return_Type  : Segment;
-      Arg_Types    : Segment_Vector.Node_Access;
-      Env          : Handler_Environment)
-      return E_Declaration_Info_List;
-   --  Attempts to find the first forward declaration
-   --  for the method. Returns null if not found or
-   --  forward declaration is in another file which
-   --  has not been yet processed
-
    ------------------------------------
    -- Find_First_Forward_Declaration --
    ------------------------------------
    function Find_First_Forward_Declaration
-     (Buffer       : SN.String_Access;
+     (Buffer       : String_Access;
       Class_Name   : Segment;
       Name         : Segment;
       Filename     : Segment;
@@ -956,7 +974,7 @@ package body Src_Info.CPP is
    -- Find_First_Forward_Declaration --
    ------------------------------------
    function Find_First_Forward_Declaration
-     (Buffer       : SN.String_Access;
+     (Buffer       : String_Access;
       Name         : Segment;
       Filename     : Segment;
       Return_Type  : Segment;
@@ -1560,7 +1578,7 @@ package body Src_Info.CPP is
       FDecl_Tmp      : FD_Table;
       Ref_Id         : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-      Buffer   : SN.String_Access;
+      Buffer   : String_Access;
       Filename       : Segment;
       Return_Type    : Segment;
       Start_Position : Point;
@@ -2071,7 +2089,7 @@ package body Src_Info.CPP is
       Ref_Class     : constant String := Ref.Buffer
         (Ref.Referred_Class.First .. Ref.Referred_Class.Last);
       Attributes    : SN_Attributes;
-      Filename_Buf  : SN.String_Access;
+      Filename_Buf  : String_Access;
       Filename      : Segment;
       Start_Position : Point;
 
@@ -3191,8 +3209,8 @@ package body Src_Info.CPP is
    is
       Decl_Info      : E_Declaration_Info_List := null;
       Target_Kind    : E_Kind;
-      Sym_Type       : SN.String_Access :=
-                     new String'(ASCII.NUL & ASCII.NUL & ASCII.NUL);
+      Sym_Type       : String_Access :=
+        new String'(ASCII.NUL & ASCII.NUL & ASCII.NUL);
       tmp_int        : Integer;
       P              : Pair_Ptr;
       FU_Tab         : FU_Table;

@@ -71,9 +71,7 @@ package Src_Info.CPP is
    --  returns Xref_Filename for Source_Filename
 
    type Iterator_State_Type is
-     (Start,         -- starting state
-      Analyse_Files, -- searching files to be updated
-      Process_Files, -- processing one file from list of source files
+     (Analyze_Files, -- parsing the files with cbrowser.
       Process_Xrefs, -- processing xrefs for all files
       Done);         -- updating done
 
@@ -126,16 +124,20 @@ package Src_Info.CPP is
 
 private
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
-      State           : Iterator_State_Type := Start;
+      State           : Iterator_State_Type := Done;
       Root_Project    : Prj.Project_Id;
       Project         : Prj.Project_Id;
-      SN_Dir          : SN.String_Access;
+      SN_Dir          : GNAT.OS_Lib.String_Access;
       Xrefs           : Xref_Pool;
       Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
+      List_Filename   : GNAT.OS_Lib.String_Access;
       PD              : GNAT.Expect.Process_Descriptor;
    end record;
    --  State is an internal state of iterator, it can be inconsistant with
    --  the real iterator state, because real iterator state depends also on
    --  internal process. State is recomputed during call to Continue.
+   --
+   --  List_Filename is the name of the files that contains the list of C/C++
+   --  sources to process, as well as their associated xref file.
 
 end Src_Info.CPP;
