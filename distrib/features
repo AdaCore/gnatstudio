@@ -1,5 +1,7 @@
 New features in GPS 1.0.0
 
+- The default font can now be set from the preferences dialog
+- The Emacs key bindings can now be set directly from the preferences dialog
 - Home button in file selector now takes into account the HOME environment
   variable
 
