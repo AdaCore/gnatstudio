@@ -79,7 +79,7 @@ package Glide_Kernel.Project is
 
    function Save_Project_Conditional
      (Kernel    : access Kernel_Handle_Record'Class;
-      Force     : Boolean) return Boolean;
+      Force     : Boolean) return Save_Return_Value;
    --  Ask the user whether to save the project (if Force is False), or save it
    --  inconditionnaly if Force is True.
    --  False is returned if the user has selected the "Cancel" button in the
