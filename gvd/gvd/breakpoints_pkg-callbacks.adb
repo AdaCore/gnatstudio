@@ -305,7 +305,7 @@ package body Breakpoints_Pkg.Callbacks is
          Set_Line
            (Editor.Process.Editor_Text,
             Editor.Process.Breakpoints (Selection).Line,
-            Process => GObject (Editor.Process));
+            GObject (Editor.Process));
       end if;
 
    exception
