@@ -45,6 +45,7 @@ with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
@@ -134,6 +135,10 @@ package body Src_Editor_Box is
       End_Iter     : out Gtk_Text_Iter);
    --  Find the position of the begining and the end of the entity pointed to
    --  by Start_Iter.
+
+   function Focus_In (Box : access GObject_Record'Class) return Boolean;
+   --  Callback for the focus_in event. This checks whether the physical file
+   --  on the disk is more recent than the one that was read for the editor.
 
    ----------------------------------
    -- The contextual menu handling --
@@ -503,7 +508,9 @@ package body Src_Editor_Box is
                                 (-"Do you want to save it ?"),
               Dialog_Type    => Confirmation,
               Buttons        => Button_Yes or Button_No,
-              Default_Button => Button_Yes) = Button_Yes
+              Default_Button => Button_Yes,
+              Parent         => Get_Main_Window (Box.Kernel)) =
+           Button_Yes
          then
             Save_To_File (Box, Success => Success);
          end if;
@@ -531,6 +538,8 @@ package body Src_Editor_Box is
 
    begin
       Glib.Object.Initialize (Box);
+      Box.Kernel := Kernel;
+
       Gtk_New_Vbox (Box.Root_Container, Homogeneous => False);
 
       Gtk_New (Frame);
@@ -611,6 +620,11 @@ package body Src_Editor_Box is
 
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
+      Add_Events (Box.Source_View, Focus_Change_Mask);
+      Object_Return_Callback.Object_Connect
+        (Box.Source_View, "focus_in_event",
+         Object_Return_Callback.To_Marshaller (Focus_In'Access), Box);
+
       --  The Contextual Menu handling
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -619,6 +633,37 @@ package body Src_Editor_Box is
          ID              => Src_Editor_Module_Id,
          Context_Func    => Get_Contextual_Menu'Access);
    end Initialize_Box;
+
+   --------------
+   -- Focus_In --
+   --------------
+
+   function Focus_In (Box : access GObject_Record'Class) return Boolean is
+      B : Source_Editor_Box := Source_Editor_Box (Box);
+      New_Timestamp : Timestamp;
+
+   begin
+      if B.Filename /= null then
+         New_Timestamp := To_Timestamp (File_Time_Stamp (B.Filename.all));
+
+         if New_Timestamp >  B.Timestamp then
+            if Message_Dialog
+              (Msg         => Base_Name (B.Filename.all)
+               & (-" changed on disk. Really edit ?"),
+               Dialog_Type => Confirmation,
+               Buttons     => Button_Yes or Button_No,
+               Title       => -"File changed on disk",
+               Parent      => Get_Main_Window (B.Kernel)) /= Button_Yes
+            then
+               --  ??? Should move focus in some other widget, to prevent
+               --  edition.
+               return False;
+            end if;
+            B.Timestamp := New_Timestamp;
+         end if;
+      end if;
+      return False;
+   end Focus_In;
 
    ----------------------
    -- Is_Entity_Letter --
@@ -1028,6 +1073,7 @@ package body Src_Editor_Box is
 
       if Success then
          Editor.Filename := new String' (Filename);
+         Editor.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
          Set_Text (Editor.Modified_Label, -"Unmodified");
          Editor.Modified := False;
          Editor.Writable := Is_Writable_File (Filename);
@@ -1055,13 +1101,37 @@ package body Src_Editor_Box is
          return;
       end if;
 
+      Success := True;
+
       if Filename = "" then
          if Editor.Filename = null then
             Success := False;
          else
-            Save_To_File (Editor.Source_Buffer, Editor.Filename.all, Success);
+            if To_Timestamp (File_Time_Stamp (Editor.Filename.all)) >
+              Editor.Timestamp
+              and then Message_Dialog
+              (Msg => Base_Name (Editor.Filename.all)
+                 & (-" changed on disk. Do you want to overwrite ?"),
+               Dialog_Type => Confirmation,
+               Buttons => Button_OK or Button_Cancel,
+               Title => -"File changed on disk",
+               Parent => Get_Main_Window (Editor.Kernel)) /= Button_OK
+            then
+               Success := False;
+            else
+               Save_To_File
+                 (Editor.Source_Buffer, Editor.Filename.all, Success);
+            end if;
          end if;
-      else
+
+      elsif Message_Dialog
+        (Msg => Base_Name (Filename)
+           & (-" already exists. Do you want to overwrite ?"),
+         Dialog_Type => Confirmation,
+         Buttons => Button_OK or Button_Cancel,
+         Title => "Confirm overwriting",
+         Parent => Get_Main_Window (Editor.Kernel)) = Button_OK
+      then
          Save_To_File (Editor.Source_Buffer, Filename, Success);
       end if;
 

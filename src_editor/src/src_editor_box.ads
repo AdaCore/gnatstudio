@@ -43,6 +43,7 @@ with Language;
 with Language_Handlers;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glide_Kernel;
+with Src_Info;
 with Src_Editor_Buffer;
 with Src_Editor_View;
 
@@ -387,6 +388,8 @@ private
      (Editor_Tooltip_Data, Src_Editor_View.Source_View_Record, Draw_Tooltip);
 
    type Source_Editor_Box_Record is new Glib.Object.GObject_Record with record
+      Kernel               : Glide_Kernel.Kernel_Handle;
+
       Root_Container       : Gtk.Box.Gtk_Box;
       Never_Attached       : Boolean := True;
       Source_View          : Src_Editor_View.Source_View;
@@ -400,6 +403,10 @@ private
 
       --  The non graphical attributes
       Filename             : String_Access;
+
+      Timestamp            : Src_Info.Timestamp := 0;
+      --  Timestamp of the file the last time it was checked. It it used to
+      --  detect cases where the file was edited by an external editor.
 
       Tooltip              : Editor_Tooltips.Tooltips;
       --  Those tooltips display the value of variables pointed to by the
