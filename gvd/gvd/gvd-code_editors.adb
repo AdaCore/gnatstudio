@@ -219,8 +219,13 @@ package body GVD.Code_Editors is
      (Editor    : access Code_Editor_Record;
       Br        : GVD.Types.Breakpoint_Array) is
    begin
-      Update_Breakpoints (Editor.Source, Br);
-      Update_Breakpoints (Editor.Asm, Br);
+      if Editor.Mode = Source_Only or else Editor.Mode = Source_Asm then
+         Update_Breakpoints (Editor.Source, Br);
+      end if;
+
+      if Editor.Mode = Asm_Only or else Editor.Mode = Source_Asm then
+         Update_Breakpoints (Editor.Asm, Br);
+      end if;
    end Update_Breakpoints;
 
    ---------------
@@ -317,7 +322,10 @@ package body GVD.Code_Editors is
 
    procedure Change_Mode
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
-      Data : Editor_Mode_Data) is
+      Data : Editor_Mode_Data)
+   is
+      Process : Debugger_Process_Tab :=
+        Debugger_Process_Tab (Data.Editor.Process);
    begin
       if Get_Active (Item) and then Data.Editor.Mode /= Data.Mode then
          --  If we are currently processing a command, wait till the current
@@ -349,6 +357,10 @@ package body GVD.Code_Editors is
                Show_All (Data.Editor.Source);
                Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
                          Set_Current => True);
+               if Process.Breakpoints /= null then
+                  Update_Breakpoints
+                    (Data.Editor.Source, Process.Breakpoints.all);
+               end if;
 
             when Asm_Only =>
                Add2 (Data.Editor, Data.Editor.Asm);
@@ -358,6 +370,10 @@ package body GVD.Code_Editors is
                end if;
                Highlight_Address_Range
                  (Data.Editor.Asm, Data.Editor.Source_Line);
+               if Process.Breakpoints /= null then
+                  Update_Breakpoints
+                    (Data.Editor.Asm, Process.Breakpoints.all);
+               end if;
 
             when Source_Asm =>
                Add2 (Data.Editor,      Data.Editor.Pane);
@@ -372,6 +388,12 @@ package body GVD.Code_Editors is
                  (Data.Editor.Asm, Data.Editor.Source_Line);
                Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
                          Set_Current => True);
+               if Process.Breakpoints /= null then
+                  Update_Breakpoints
+                    (Data.Editor.Source, Process.Breakpoints.all);
+                  Update_Breakpoints
+                    (Data.Editor.Asm, Process.Breakpoints.all);
+               end if;
          end case;
       end if;
    end Change_Mode;
