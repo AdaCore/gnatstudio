@@ -1126,10 +1126,11 @@ package body Src_Editor_Box is
    --------------------------
 
    function Check_Timestamp_Idle (Box : GObject) return Boolean is
-      B         : constant Source_Editor_Box := Source_Editor_Box (Box);
+      B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       if B.Timestamp_Mode = Check_At_Focus then
          B.Timestamp_Mode := Checking;
+
          if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
             --  We'll ask again next time the user wants to modify the file.
             B.Timestamp_Mode := Check_At_Modify;
