@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-
 with GVD.Status_Bar;            use GVD.Status_Bar;
 
 with Glide_Kernel;              use Glide_Kernel;
@@ -29,7 +27,7 @@ with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Intl;                use Glide_Intl;
 with GNAT.Expect;               use GNAT.Expect;
 
-with Glide_Main_Window; use Glide_Main_Window;
+with Glide_Main_Window;         use Glide_Main_Window;
 
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -178,13 +176,6 @@ package body Commands.Builder is
                  (S (Matched (1).First .. Matched (1).Last));
                Command.Progress.Total := Natural'Value
                  (S (Matched (2).First .. Matched (2).Last));
-
-               Set_Fraction
-                 (Top.Statusbar,
-                  Gdouble'Value
-                    (S (Matched (3).First .. Matched (3).Last)) / 100.0);
-               Set_Progress_Text
-                 (Top.Statusbar, S (S'First .. Matched (2).Last));
             end if;
          end;
       end loop;
@@ -207,8 +198,6 @@ package body Commands.Builder is
          end if;
 
          Free (Buffer);
-         Set_Fraction (Top.Statusbar, 0.0);
-         Set_Progress_Text (Top.Statusbar, "");
          Parse_Compiler_Output (Kernel, Expect_Out (Fd.all));
          Close (Fd.all, Status);
 
@@ -234,8 +223,6 @@ package body Commands.Builder is
          Set_Sensitive_Menus (Kernel, True);
          Close (Fd.all);
          Free (Fd);
-         Set_Fraction (Top.Statusbar, 0.0);
-         Set_Progress_Text (Top.Statusbar, "");
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
 
          return Failure;
