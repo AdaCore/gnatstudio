@@ -771,7 +771,7 @@ package body VCS_View_Pkg is
 
       Set (Explorer.Model, Iter, Has_Log_Column, Line_Info.Log);
       Set (Explorer.Model, Iter, Name_Column,
-           Full_Name (Line_Info.Status.File).all);
+           Full_Name (Line_Info.Status.File, True).all);
 
       Set (Explorer.Model, Iter, Base_Name_Column,
            Base_Name (Line_Info.Status.File));
@@ -829,7 +829,7 @@ package body VCS_View_Pkg is
    begin
       while Iter /= Null_Iter loop
          if Get_String (Explorer.Model, Iter, Name_Column) =
-           Full_Name (Name).all
+           Full_Name (Name, True).all
          then
             return Iter;
          end if;
