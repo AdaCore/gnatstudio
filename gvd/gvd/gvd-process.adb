@@ -27,7 +27,7 @@ with Glib; use Glib;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Font;            use Gdk.Font;
 with Gdk.Event;           use Gdk.Event;
-with Gdk.Types.Keysyms;     use Gdk.Types.Keysyms;
+with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 
 with Gtk;                 use Gtk;
 with Gtk.Arguments;       use Gtk.Arguments;
@@ -250,12 +250,11 @@ package body GVD.Process is
         Debugger_Process_Tab (Object);
 
    begin
-      if Process.Window.Standalone then
-         --  Do not delete the data window if in stand alone mode.
-         return True;
-      else
+      if Process.Exiting then
          Process.Data_Paned := null;
          return False;
+      else
+         return True;
       end if;
    end On_Data_Paned_Delete_Event;
 
@@ -314,12 +313,11 @@ package body GVD.Process is
         Debugger_Process_Tab (Object);
 
    begin
-      if Process.Window.Standalone then
-         --  Do not delete the command window if in stand alone mode.
-         return True;
-      else
+      if Process.Exiting then
          Process.Command_Scrolledwindow := null;
          return False;
+      else
+         return True;
       end if;
    end On_Command_Scrolledwindow_Delete_Event;
 
@@ -869,6 +867,11 @@ package body GVD.Process is
          Gtk.Text.Set_Position
            (Process.Debugger_Text, Gint (Process.Edit_Pos));
       end if;
+
+   exception
+      when others =>
+         --  ??? Should log unexpected exception
+         null;
    end Output_Text;
 
    ------------------------
@@ -976,7 +979,7 @@ package body GVD.Process is
 
       if Frame_Info = No_Debug_Info then
          Show_Message (Process.Editor_Text,
-                       "There is no debug information for this frame.");
+                       -"There is no debug information for this frame.");
       end if;
 
       --  Last step is to update the breakpoints once all the rest has been
@@ -1291,7 +1294,7 @@ package body GVD.Process is
       --  Add debugger console and source viewer
 
       Child := Put (Process.Process_Mdi, Process.Command_Scrolledwindow);
-      Set_Title (Child, "Debugger Console");
+      Set_Title (Child, -"Debugger Console");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
       Raise_Child (Child);
