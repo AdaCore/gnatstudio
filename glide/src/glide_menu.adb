@@ -30,7 +30,6 @@ with Glide_Kernel;                 use Glide_Kernel;
 with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;         use Glide_Kernel.Project;
 with Glide_Main_Window;            use Glide_Main_Window;
-with Project_Viewers;              use Project_Viewers;
 
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with Factory_Data;                 use Factory_Data;
@@ -114,7 +113,6 @@ package body Glide_Menu is
          if Filename /= "" then
             Change_Dir (Dir_Name (Filename));
             Load_Project (Kernel, Filename);
-            Add_To_Reopen (Kernel, Filename);
          end if;
       end;
 

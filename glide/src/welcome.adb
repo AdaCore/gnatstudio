@@ -301,7 +301,6 @@ package body Welcome is
       begin
          if Name /= "" then
             Load_Project (S.Kernel, Name);
-            Project_Viewers.Add_To_Reopen (S.Kernel, Name);
             Result := True;
          end if;
       end;
@@ -358,11 +357,8 @@ package body Welcome is
 
       if File_Extension (Project_Name) = Project_File_Extension then
          Load_Project (S.Kernel, Project_Name);
-         Project_Viewers.Add_To_Reopen (S.Kernel, Project_Name);
       else
          Load_Project (S.Kernel, Project_Name & Project_File_Extension);
-         Project_Viewers.Add_To_Reopen
-           (S.Kernel, Project_Name & Project_File_Extension);
       end if;
 
    exception

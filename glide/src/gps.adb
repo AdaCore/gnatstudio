@@ -561,7 +561,6 @@ procedure GPS is
          end if;
 
          Load_Project (GPS.Kernel, Project_Name.all);
-         Project_Viewers.Add_To_Reopen (GPS.Kernel, Project_Name.all);
          Load_Sources;
       end if;
 
