@@ -3468,7 +3468,7 @@ package body Project_Viewers is
 
          if Label = "" or else Switch = "" then
             Insert (Kernel,
-                      -("Invalid <spin> node in custom file, requires"
+                      -("Invalid <field> node in custom file, requires"
                         & " a label and a switch attributes"),
                     Mode => Glide_Kernel.Console.Error);
             return;
