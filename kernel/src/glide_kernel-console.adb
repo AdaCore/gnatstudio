@@ -18,7 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
+with Glib.Values;          use Glib.Values;
+
 with Interactive_Consoles; use Interactive_Consoles;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
@@ -441,6 +444,50 @@ package body Glide_Kernel.Console is
          Return_Callback.To_Marshaller (Console_Delete_Event'Access));
    end Initialize_Console;
 
+   ------------------
+   -- Mime_Handler --
+   ------------------
+
+   function Mime_Handler
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Mime_Type : String;
+      Data      : GValue_Array;
+      Mode      : Mime_Mode := Read_Write) return Boolean;
+
+   function Mime_Handler
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Mime_Type : String;
+      Data      : GValue_Array;
+      Mode      : Mime_Mode := Read_Write) return Boolean
+   is
+      View : constant Result_View := Get_Or_Create_Result_View (Kernel, False);
+      pragma Unreferenced (Mode);
+   begin
+      if View /= null
+        and then Mime_Type = Mime_Location_Action
+      then
+         declare
+            Identifier : constant String := Get_String (Data (Data'First));
+            Category   : constant String := Get_String (Data (Data'First + 1));
+            File       : constant String := Get_String (Data (Data'First + 2));
+            Line       : constant Gint   := Get_Int (Data (Data'First + 3));
+            Column     : constant Gint   := Get_Int (Data (Data'First + 4));
+            Message    : constant String := Get_String (Data (Data'First + 5));
+            Action     : constant Action_Item := To_Action_Item
+              (Get_Address (Data (Data'First + 6)));
+         begin
+            Add_Action_Item
+              (View, Identifier, Category, File,
+               Integer (Line), Integer (Column),
+               Message, Action);
+         end;
+
+         return True;
+      end if;
+
+      return False;
+   end Mime_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -458,7 +505,8 @@ package body Glide_Kernel.Console is
         (Module       => Module_ID (Console_Module_Id),
          Kernel       => Kernel,
          Module_Name  => Console_Module_Name,
-         Priority     => Default_Priority);
+         Priority     => Default_Priority,
+         Mime_Handler => Mime_Handler'Access);
 
       Initialize_Console (Kernel);
 
