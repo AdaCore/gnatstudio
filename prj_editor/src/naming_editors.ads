@@ -45,14 +45,13 @@ package Naming_Editors is
    --  Create a new naming scheme editor, that edits the languages supported by
    --  Project_View.
 
-   function Edit_Naming_Scheme
+   procedure Edit_Naming_Scheme
      (Parent       : access Gtk.Window.Gtk_Window_Record'Class;
       Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_View : Prj.Project_Id) return Boolean;
+      Project_View : Prj.Project_Id);
    --  Open a dialog to edit the naming scheme for Project (given one of its
    --  views). This dialog is modal, and needs to be closed before the user can
    --  do anything else with Fps.
-   --  Return True if the project was modified.
 
    procedure Create_Project_Entry
      (Editor          : access Naming_Editor_Record;

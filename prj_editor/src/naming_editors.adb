@@ -128,10 +128,10 @@ package body Naming_Editors is
    -- Edit_Naming_Scheme --
    ------------------------
 
-   function Edit_Naming_Scheme
+   procedure Edit_Naming_Scheme
      (Parent       : access Gtk.Window.Gtk_Window_Record'Class;
       Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_View : Prj.Project_Id) return Boolean
+      Project_View : Prj.Project_Id)
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -156,12 +156,9 @@ package body Naming_Editors is
       if Run (Dialog) = Gtk_Response_OK then
          Create_Project_Entry
            (Editor, Kernel, Get_Project_From_View (Project_View));
-         Destroy (Dialog);
-         return True;
       end if;
 
       Destroy (Dialog);
-      return False;
    end Edit_Naming_Scheme;
 
    --------------------------
