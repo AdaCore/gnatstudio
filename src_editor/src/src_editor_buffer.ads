@@ -312,6 +312,11 @@ package Src_Editor_Buffer is
    procedure Redo (Buffer : access Source_Buffer_Record);
    --  Redo last undone command.
 
+   function Get_Queue
+     (Buffer : access Source_Buffer_Record)
+     return Command_Queue;
+   --  Return the action queue associated to Buffer.
+
 private
 
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
