@@ -552,7 +552,7 @@ example, this adds a submenu named @file{Olga} containing an item named
 Adding an item with an empty title or no title at all inserts a
 menu separator.
 
-You can use macro arguments to pass to you shell
+You can use macro arguments to pass to your shell
 commands. Macro arguments are special parameters that are transformed
 every time that the command is about to be executed. The following
 macro arguments exist in GPS:
