@@ -353,6 +353,7 @@ package body Src_Info.CPP is
    --  in the sources (for instance, if we have #include "dir/file.h", then
    --  Source_Filename is "dir/file.h". Full_Filename is the full path to the
    --  physical file on the disk.
+   --  If the SN database doesn't exist, File is set to No_LI_File.
 
    procedure Process_Local_Variables
      (FU_Tab           : FU_Table;
@@ -759,6 +760,7 @@ package body Src_Info.CPP is
       if not Is_Open (Handler.SN_Table (FIL)) then
          --  .fil table does not exist, no data available
          Fail (".fil table does not exist: is SN DB generated already?");
+         File := No_LI_File;
          return;
       end if;
 
