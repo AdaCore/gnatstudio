@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -36,8 +36,15 @@ with DB_API; use DB_API;
 
 package SN.DB_Structures is
 
-   type Buffer_String_Array is array (Natural) of Character;
-   type Buffer_String is access all Buffer_String_Array;
+   Buffer_String_Size : constant := 4_096;
+   --  Maximum size for the buffer string
+
+   type Buffer_String is array (0 .. Buffer_String_Size - 1) of Character;
+   --  Used to record a copy of the dbm key and data objects. Note that this
+   --  buffer must start to 0 as indexes to internal fields are computed using
+   --  the C data convention.
+
+   Null_Buffer : constant Buffer_String := (others => ' ');
 
    type CL_Table is record
       Name                : Segment;
