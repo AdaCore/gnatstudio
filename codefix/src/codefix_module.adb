@@ -249,14 +249,14 @@ package body Codefix_Module is
    is
       pragma Unreferenced (Object);
 
-      Location      : File_Location_Context_Access;
+      Location      : Message_Context_Access;
       Error         : Error_Id;
       Error_Caption : GNAT.OS_Lib.String_Access;
       Menu_Item     : Gtk_Menu_Item;
 
    begin
-      if Context.all in File_Location_Context'Class then
-         Location := File_Location_Context_Access (Context);
+      if Context.all in Message_Context'Class then
+         Location := Message_Context_Access (Context);
 
          if not Has_Category_Information (Location)
            or else Category_Information (Location) /= Compilation_Category
