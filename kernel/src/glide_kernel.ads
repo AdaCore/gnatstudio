@@ -153,6 +153,13 @@ package Glide_Kernel is
    --  Return the predefined Source_Path associated to the given Kernel Handle.
    --  Return the current directory if no source path has been set yet.
 
+   function Save_All_MDI_Children
+     (Handle : access Kernel_Handle_Record) return Boolean;
+   --  Ask the user if he wants to save all open MDI children.
+   --  If at any time the user answers "no", the function stops asking
+   --  the children and returns False.
+   --  Return True otherwise.
+
    -------------
    -- Queries --
    -------------
@@ -343,6 +350,17 @@ package Glide_Kernel is
    --  Child is the widget that was put directly in the MDI. It is always of
    --  the type MDI_Child_Tag registered with Register_Module.
 
+   type Module_Save_Function is access function
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget;
+      Force  : Boolean := False) return Boolean;
+   --  A function called when the kernel asks a MDI child to save itself.
+   --  If Force is True, this function should save the child state
+   --  automatically, and if Force is False, the widgets may decide to
+   --  ask the user first.
+   --  If the user has refused to save the widget, return False,
+   --  otherwise return True.
+
    ---------------------
    -- Signal emission --
    ---------------------
@@ -429,6 +447,7 @@ private
       Contextual_Menu : Module_Menu_Handler;
       Mime_Handler    : Module_Mime_Handler;
       Default_Factory : Module_Default_Context_Factory;
+      Save_Function   : Module_Save_Function;
       Child_Tag       : Ada.Tags.Tag;
    end record;
 
