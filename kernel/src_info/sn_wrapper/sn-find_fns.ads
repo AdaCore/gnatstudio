@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -50,7 +50,6 @@ package SN.Find_Fns is
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String);
    --  Same as above with one extra parameter
-
 
    procedure Get_Pair
      (DB             : DB_File;
