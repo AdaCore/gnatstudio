@@ -961,6 +961,7 @@ package body Projects.Registry is
       Prj.Tree.Initialize;
 
       Name_C_Plus_Plus := Get_String (Cpp_String);
+      Any_Attribute_Name := Get_String (Any_Attribute);
    end Initialize;
 
    --------------
