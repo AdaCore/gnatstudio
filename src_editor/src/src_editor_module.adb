@@ -806,6 +806,38 @@ package body Src_Editor_Module is
             return -"Missing parameter file.";
          end if;
 
+      elsif Command = "get_buffer" then
+         Node := First (Args);
+
+         while Node /= Null_Node loop
+            if Filename = null then
+               Filename := new String'(Data (Node));
+            else
+               Free (Filename);
+               return -"close: too many parameters";
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         if Filename /= null then
+            declare
+               Child : constant MDI_Child
+                := Find_Editor (Kernel, Filename.all);
+            begin
+               if Child /= null then
+                  return Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
+
+               else
+                  return -"File not found or not open.";
+               end if;
+            end;
+         else
+
+            return -"Missing parameter file.";
+         end if;
+
+
       else
          return -"Command not recognized: " & Command;
       end if;
@@ -2585,6 +2617,15 @@ package body Src_Editor_Module is
          Help => -"Usage:" & ASCII.LF
          & "  get_last_line file" & ASCII.LF
          & "Returns the number of the last line in file.",
+         Handler => Edit_Command_Handler'Access);
+
+
+      Register_Command
+        (Kernel,
+         Command => "get_buffer",
+         Help => -"Usage:" & ASCII.LF
+         & "  get_buffer file" & ASCII.LF
+         & "Returns the text contained in the current buffer for file.",
          Handler => Edit_Command_Handler'Access);
 
       Register_Command
