@@ -51,7 +51,7 @@ CFLAGS+=-O2 -g
 GNATBIND_FLAGS+=-bargs -E
 GNATLINK_FLAGS+=
 GNATMAKE_FLAGS=-gnataQ -m ${CFLAGS}
-STYLE_FLAGS=-gnaty -gnatwu
+STYLE_FLAGS=-gnaty -gnatwuwe
 
 all: ${MAIN}
 
