@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.0
 
+- C312-005 Reloading current project kills all open windows
+  Problem:    If you reopen (Project->Open or Project->Recent) the currently
+              loaded projects, GPS asks for saving the windows, and then closes
+              all of them to reload the desktop
+  Workaround: Load another project before reloading the project
+
 - C312-013 Problem building with relative paths under Windows
   Problem:    Under Windows, when using projects with relative pathnames,
               if you change the current drive (by e.g. opening a file in
