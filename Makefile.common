@@ -144,7 +144,7 @@ ifneq (,$(findstring prj_editor,$(MODULES)))
 # information on how to setup the required links
 PRJ_EDITOR_SRC=../../prj_editor
 
-MODULE_INCLUDE+=-I${PRJ_EDITOR_SRC}/src
+MODULE_INCLUDE+=-aI${PRJ_EDITOR_SRC}/src -aO${PRJ_EDITOR_SRC}/obj
 endif
 
 .PHONY: check_prj_editor
@@ -162,7 +162,7 @@ ifneq (,$(findstring src_editor,$(MODULES)))
 # information on how to setup the required links
 SRC_EDITOR_SRC=../../src_editor
 
-MODULE_INCLUDE+=-I${SRC_EDITOR_SRC}/src
+MODULE_INCLUDE+=-aI${SRC_EDITOR_SRC}/src -aO${SRC_EDITOR_SRC}/obj
 endif
 
 .PHONY: check_src_editor
@@ -180,7 +180,7 @@ ifneq (,$(findstring hypergrep,$(MODULES)))
 # information on how to setup the required links
 HYPERGREP_SRC=../../hypergrep
 
-MODULE_INCLUDE+=-I${HYPERGREP_SRC}/src
+MODULE_INCLUDE+=-aI${HYPERGREP_SRC}/src -aO${HYPERGREP_SRC}/obj
 endif
 
 .PHONY: check_hypergrep
@@ -198,7 +198,7 @@ ifneq (,$(findstring vdiff,$(MODULES)))
 # information on how to setup the required links
 VDIFF_SRC=../../vdiff
 
-MODULE_INCLUDE+=-I${VDIFF_SRC}/src
+MODULE_INCLUDE+=-aI${VDIFF_SRC}/src -aO${VDIFF_SRC}/obj
 endif
 
 .PHONY: check_vdiff
@@ -235,7 +235,7 @@ ifneq (,$(findstring kernel,$(MODULES)))
 # information on how to setup the required links
 KERNEL_SRC=../../kernel
 
-MODULE_INCLUDE+=-I${KERNEL_SRC}/src
+MODULE_INCLUDE+=-aI${KERNEL_SRC}/src -aO${KERNEL_SRC}/obj
 endif
 
 .PHONY: check_kernel
@@ -253,7 +253,7 @@ ifneq (,$(findstring glide,$(MODULES)))
 # information on how to setup the required links
 GLIDE_SRC=../../glide
 
-MODULE_INCLUDE+=-I${GLIDE_SRC}/src
+MODULE_INCLUDE+=-aI${GLIDE_SRC}/src -aO${GLIDE_SRC}/obj
 endif
 
 .PHONY: check_glide
@@ -287,8 +287,10 @@ empty:=
 space:= $(empty) $(empty)
 vpath %.c ${subst ${space},:,${dir ${C_FILES}}}
 
+C_MODULE_INCLUDE=${subst -aI,-I,${filter-out -aO%,${MODULE_INCLUDE}}}
+
 ${OBJ_DIR}/%.o: %.c
-	cd ${OBJ_DIR}; gcc ${CFLAGS} -Wall -c ../src/$< -I../src ${MODULE_INCLUDE}
+	cd ${OBJ_DIR}; gcc ${CFLAGS} -Wall -c ../src/$< -I../src ${C_MODULE_INCLUDE}
 
 # Check that the modules we depend on are available through links
 check_modules: ${MODULES:%=check_%}
