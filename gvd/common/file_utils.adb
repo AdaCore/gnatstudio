@@ -343,7 +343,9 @@ package body File_Utils is
       Parent_Dir : constant String := ".." & Directory_Separator;
 
    begin
-      if File = Base or else File = Base (Base'First .. Base'Last - 1) then
+      if File_Equal (File, Base)
+        or else File_Equal (File, Base (Base'First .. Base'Last - 1))
+      then
          return ".";
       end if;
 
@@ -351,16 +353,16 @@ package body File_Utils is
          Length := Base_End - Base'First + 1;
 
          if File'Length >= Length
-           and then File
-           (File'First .. File'First + Length - 1) = Base
-           (Base'First .. Base_End)
+           and then File_Equal
+             (File (File'First .. File'First + Length - 1),
+              Base (Base'First .. Base_End))
          then
             return (Level * Parent_Dir) & File
               (File'First + Length .. File'Last);
 
          --  Else try without the last directory separator
          elsif File'Length = Length - 1
-           and then File = Base (Base'First .. Base_End - 1)
+           and then File_Equal (File, Base (Base'First .. Base_End - 1))
          then
             return (Level * Parent_Dir) & File
               (File'First + Length .. File'Last);
