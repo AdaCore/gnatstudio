@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -286,7 +286,7 @@ package body Src_Editor_View is
                   View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
                     := (others => 0);
                   --  ??? Should free the old array A.
-                  --  ??? Where is View.Real_Lines itself freed ?
+                  --  Where is View.Real_Lines itself freed ?
                end;
             end if;
 
@@ -980,7 +980,6 @@ package body Src_Editor_View is
          end if;
       end loop;
 
-
       --  If we reach this point, that means no column was found that
       --  corresponds to Identifier. Therefore we create one.
 
@@ -1043,8 +1042,9 @@ package body Src_Editor_View is
          View.Original_Text_Inserted := True;
       end if;
 
-      --  ??? Loop needs comment, and could be implemented more efficiently
-      --  ??? through the use of aggregates.
+      --  ??? Loop needs comment, and might be implemented more efficiently
+      --  through the use of aggregates (to be checked).
+
       for J in reverse Start + 1 .. View.Real_Lines.all'Last loop
          if J <= View.Real_Lines.all'First - 1 + Number then
             View.Real_Lines (J) := 0;
