@@ -26,10 +26,10 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
@@ -94,14 +94,9 @@ package body Vdiff_Module is
       R      : Diff_Occurrence_Link := Result;
       Vdiff  : Vdiff_Access;
       Child  : MDI_Child;
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
    begin
       if Result = null then
-         Button := Message_Dialog
-           (Msg     => -"No differences found.",
-            Buttons => Button_OK,
-            Parent  => Get_Main_Window (Kernel));
+         Insert (Kernel, -"No differences found");
          return null;
       end if;
 
