@@ -1024,6 +1024,7 @@ package body GUI_Utils is
          Confine_To => Get_Window (In_Widget),
          Cursor     => Cursor,
          Time       => 0);
+      Grab_Add (In_Widget);
       Unref (Cursor);
 
       Grab_Focus (In_Widget);
@@ -1039,6 +1040,7 @@ package body GUI_Utils is
       Mods := Get_State (Output);
       Free (Output);
 
+      Grab_Remove (In_Widget);
       Keyboard_Ungrab (0);
       Pointer_Ungrab (0);
       Gtk.Handlers.Disconnect (In_Widget, Id);
