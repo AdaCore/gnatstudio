@@ -735,13 +735,30 @@ package body VCS.CVS is
    procedure Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False)
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False)
    is
       use String_List;
 
       Current_Filename : List_Node := First (Filenames);
    begin
       if Current_Filename = Null_Node then
+         return;
+      end if;
+
+      if Local then
+         declare
+            Status : File_Status_List.List :=
+              Local_Get_Status (Rep, Filenames);
+         begin
+            Display_File_Status
+              (Rep.Kernel,
+               Status,
+               VCS_CVS_Module_ID.CVS_Reference, True, True,
+               Clear_Logs);
+            File_Status_List.Free (Status);
+         end;
+
          return;
       end if;
 
@@ -1514,7 +1531,11 @@ package body VCS.CVS is
       Register_VCS (VCS_Module_ID, CVS_Identifier);
 
       Actions :=
-        (Status       => new String'(-"Query status"),
+        (None         => null,
+         Status       => new String'(-"Query status"),
+         Status_Dir   => null,
+         Local_Status => null,
+         Local_Status_Dir => null,
          Open         => new String'(-"Start editing"),
          Update       => new String'(-"Update"),
          Commit       => new String'(-"Commit"),

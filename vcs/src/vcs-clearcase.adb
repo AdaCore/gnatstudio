@@ -406,8 +406,11 @@ package body VCS.ClearCase is
    procedure Get_Status
      (Rep         : access ClearCase_Record;
       Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False)
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False)
    is
+      pragma Unreferenced (Local);
+
       C            : External_Command_Access;
       Command_Head : List;
       Args         : List;
@@ -1693,7 +1696,11 @@ package body VCS.ClearCase is
 
       --  ??? Need to adapt this to the ClearCase terminology.
       Actions :=
-        (Status       => new String'(-"Query status"),
+        (None         => null,
+         Status       => new String'(-"Query status"),
+         Status_Dir   => null,
+         Local_Status => null,
+         Local_Status_Dir => null,
          Open         => new String'(-"Start editing"),
          Update       => new String'(-"Update"),
          Commit       => new String'(-"Commit"),
