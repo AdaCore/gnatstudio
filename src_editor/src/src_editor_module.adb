@@ -646,7 +646,9 @@ package body Src_Editor_Module is
                Prepend (The_Data.List, File);
 
                if Counter >= Max_Number_Of_Reopens then
-                  Next (The_Data.List);
+                  Node := Last (The_Data.List);
+                  Node := Prev (The_Data.List, Node);
+                  Remove_Nodes (The_Data.List, Node);
                end if;
 
                Open (Reopen_File, Out_File, Reopen_File_Name);
@@ -1224,9 +1226,11 @@ package body Src_Editor_Module is
             Column    : constant Gint    := Get_Int (Data (Data'First + 2));
             Highlight : constant Boolean :=
               Get_Boolean (Data (Data'First + 3));
+            New_File  : constant Boolean :=
+              Get_Boolean (Data (Data'First + 5));
 
          begin
-            Edit := Open_File (Kernel, File, Create_New => True);
+            Edit := Open_File (Kernel, File, Create_New => New_File);
 
             if Edit /= null
               and then (Line /= 0 or else Column /= 0)
@@ -1288,6 +1292,11 @@ package body Src_Editor_Module is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Mime_Action;
 
    ------------------
@@ -1362,7 +1371,7 @@ package body Src_Editor_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       File        : constant String := '/' & (-"File") & '/';
-      Save        : constant String := File & (-"Save") & '/';
+      Save        : constant String := File & (-"Save...") & '/';
       Edit        : constant String := '/' & (-"Edit") & '/';
       Navigate    : constant String := '/' & (-"Navigate") & '/';
       Mitem       : Gtk_Menu_Item;
@@ -1393,7 +1402,7 @@ package body Src_Editor_Module is
       --  Menus
 
       Register_Menu (Kernel, File, -"Open...",  Stock_Open,
-                     On_Open_File'Access, GDK_F3, Ref_Item => -"Save");
+                     On_Open_File'Access, GDK_F3, Ref_Item => -"Save...");
 
       Source_Editor_Module (Src_Editor_Module_Id).Reopen_Menu_Item :=
         Register_Menu (Kernel, File, -"Reopen", "", null,
@@ -1429,8 +1438,8 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, File, -"New View", "", On_New_View'Access,
                      Ref_Item => -"Open...");
 
-      Register_Menu (Kernel, Save, -"Current File", Stock_Save, On_Save'Access,
-                     GDK_S, Control_Mask, Ref_Item => -"Desktop");
+      Register_Menu (Kernel, File, -"Save", Stock_Save, On_Save'Access,
+                     GDK_S, Control_Mask, Ref_Item => -"Save...");
       Register_Menu (Kernel, Save, -"Current File As...", Stock_Save_As,
                      On_Save_As'Access, Ref_Item => -"Desktop");
       Register_Menu (Kernel, Save, -"All Editors", "",
