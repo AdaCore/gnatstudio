@@ -34,7 +34,7 @@ package Commands.External is
                List   : String_List.List) return Boolean;
 
    procedure Create
-     (Item         : out External_Command;
+     (Item         : out External_Command_Access;
       Kernel       : Kernel_Handle;
       Command      : String_List.List;
       Dir          : String_List.List;
