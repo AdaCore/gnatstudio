@@ -878,6 +878,15 @@ package body Src_Editor_View is
 
             Block_End_Y := Y + Height;
 
+            if Block_End_Y > Rect.Height then
+               Block_End_Y := Rect.Height;
+            else
+               Draw_Line
+                 (Window,
+                  View.Current_Block_GC,
+                  X, Block_End_Y, X + Bracket_Length, Block_End_Y);
+            end if;
+
             Draw_Line
               (Window, View.Current_Block_GC,
                X, Block_Begin_Y, X, Block_End_Y);
@@ -888,10 +897,6 @@ package body Src_Editor_View is
                   X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
             end if;
 
-            Draw_Line
-              (Window,
-               View.Current_Block_GC,
-               X, Block_End_Y, X + Bracket_Length, Block_End_Y);
          end Draw_Block;
 
       begin
@@ -950,7 +955,7 @@ package body Src_Editor_View is
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
-            Line_Height := Get_Line_Height (View, Cursor_Iter);
+            Line_Height := Get_Line_Height (View, Cursor_Iter) - 1;
 
             Draw_Rectangle
               (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
@@ -971,7 +976,8 @@ package body Src_Editor_View is
 
          if Column > 0 then
             X := Column * View.Char_Width - Rect.X + Margin;
-            Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
+            Draw_Line
+              (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
          end if;
       end Highlight_Text;
 
