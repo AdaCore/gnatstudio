@@ -1307,7 +1307,7 @@ package body Src_Editor_Buffer is
       Column : out Gint)
    is
       Start   : Gtk_Text_Iter;
-      Result  : Boolean;
+      Result  : Boolean := True;
       Tab_Len : constant Gint := Get_Pref (Buffer.Kernel, Tab_Width);
 
    begin
@@ -1315,9 +1315,10 @@ package body Src_Editor_Buffer is
       Column := 0;
       Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
 
-      loop
-         exit when Equal (Start, Iter);
+      --  We have to test Result, in case Iter was pointing after the end of
+      --  the buffer.
 
+      while Result and then not Equal (Start, Iter) loop
          if Get_Char (Start) = ASCII.HT then
             Column := Column + Tab_Len - (Column mod Tab_Len);
          else
@@ -1325,7 +1326,6 @@ package body Src_Editor_Buffer is
          end if;
 
          Forward_Char (Start, Result);
-         pragma Assert (Result);
       end loop;
    end Get_Screen_Position;
 
