@@ -4,7 +4,7 @@ LARGS = -aO../../gvd/gnat -largs sn/lib/db_capi.o -Lsn/snsrc/db/PORT -ldb ../../
 CP=cp -p
 
 build:
-	cd standalone_obj; gcc -c ../common/a-file_utils.c
+	cd standalone_obj; gcc -c ../common/file-utils.c
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali $(LARGS)
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_many_ali $(LARGS)
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali_twice $(LARGS)
@@ -31,6 +31,8 @@ distrib:
 	$(CP) ../../gvd/common/language-unknown.ad? gvd
 	$(CP) ../../gvd/common/language.ad? gvd
 	$(CP) ../../gvd/common/odd_intl.ad? gvd
+	$(CP) ../../ada_module/src/src_info-* common
+	$(CP) ../../cpp_module/src/src_info-* common
 	$(CP) ../../gvd/gnat/g-exptty.ad? gvd
 	$(CP) ../../gvd/gnat/g-tty.ad? gvd
 	$(CP) ../../gvd/gnat/gexpect_tty.c gvd
