@@ -2467,8 +2467,8 @@ package body Project_Viewers is
                        & " modifications outside of GPS. This isn't needed"
                        & " for modifications through GPS. Note also that"
                        & " this doesn't reparse the physical project file"
-                       & " on disk, and you should simply reload the project"
-                       & " if you have done manual modifications to it."));
+                       & " on disk. Re-open the project if you have done"
+                       & " manual modifications to it."));
 
       Register_Project_Editor_Page
         (Kernel,
