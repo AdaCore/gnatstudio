@@ -265,6 +265,16 @@ package body String_Utils is
                In_String := not In_String;
                Index := Index + 1;
 
+               --  In cases like {field = 0x8048f88 "bar"}, we need to consider
+               --  the string finished.
+               if not In_String
+                 and then Index <= Type_Str'Last
+                 and then Type_Str (Index) /= ' '
+               then
+                  Index := Index + 1;
+                  return;
+               end if;
+
             when ''' =>
                if In_String then
                   if Str'Length /= 0 then
