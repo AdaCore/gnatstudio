@@ -244,12 +244,6 @@ package body Wizards is
    procedure On_Destroy (Wiz : access Gtk_Widget_Record'Class) is
       W : Wizard := Wizard (Wiz);
    begin
-      if W.Pages /= null then
-         for P in W.Pages'Range loop
-            Destroy (W.Pages (P));
-         end loop;
-      end if;
-
       if W.Titles /= null then
          for P in W.Titles'Range loop
             Free (W.Titles (P));
