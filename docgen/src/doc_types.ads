@@ -18,19 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package defines the types and subprograms used by the other
+--  Docgen packages. There are the three types needed for the lists,
+--  the type All_Options, the Doc_Subprogram_Type and
+--  the type Doc_Info, which will be used to destinguish, which
+--  entity type should be processed by the output procedure.
+
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with List_Utils;                use List_Utils;
-with Src_Info;                  use Src_Info;
 with Generic_List;
 
 package Doc_Types is
 
    Max_Line_Length : constant Natural := 160;
-
    Dummy_Exception : exception;
 
-   --  the structures for the list of the source files
+
    type Source_File_Information is record
       File_Name        : GNAT.OS_Lib.String_Access;
       Prj_File_Name    : GNAT.OS_Lib.String_Access;
@@ -38,30 +42,40 @@ package Doc_Types is
       Def_In_Line      : Integer;
       Other_File_Found : Boolean;
    end record;
+   --  the structures for the list of the source files
    procedure Free (X : in out Source_File_Information);
    package Type_Source_File_List is
      new Generic_List (Source_File_Information);
    function Compare_Elements (X, Y : Source_File_Information) return Boolean;
    procedure Sort_List_Name is
      new Sort (Type_Source_File_List, "<" => Compare_Elements);
+   --  sort elements by name (BUT: the spec files in front of body files)
 
-   --  the structures for the list of reference entities
-   --  used in type Entity_List_Information
-   --  this one will be used to save the positions,
-   --  where a subprogram is called
    type Reference_List_Information is record
       File_Name       : GNAT.OS_Lib.String_Access;
-      File_Found      : Boolean;
+      Set_Link        : Boolean;   --  if False, no link will be set
       Column          : Natural;
       Line            : Positive;
+      Subprogram_Name : GNAT.OS_Lib.String_Access;
+      --  the structures for the list of reference entities
+      --  used in type Entity_List_Information.
+      --  This one will be used to save the positions,
+      --  where a subprogram is called or which is called by him.
    end record;
    procedure Free (X : in out Reference_List_Information);
    package Type_Reference_List is
      new Generic_List (Reference_List_Information);
    function Compare_Elements_Column
      (X, Y : Reference_List_Information) return Boolean;
+   function Compare_Elements_Name
+     (X, Y : Reference_List_Information) return Boolean;
    procedure Sort_List_Column is
      new Sort (Type_Reference_List, "<" => Compare_Elements_Column);
+   --  sort the list by column
+   procedure Sort_List_Name is
+     new Sort (Type_Reference_List, "<" => Compare_Elements_Name);
+   --  sort the list by name
+
 
    type Entity_Type is (Procedure_Entity,
                         Function_Entity,
@@ -70,23 +84,22 @@ package Doc_Types is
                         Var_Entity,
                         Package_Entity,
                         Other_Entity);
+   --  a simplfied list of possible entity types
 
-   --  the structures for the list of entities
    type Entity_List_Information is record
-      --  these are items will be used by every entity
-      --  except when used in Doc_Info with Body_Line_Info (see below)
       Kind            : Entity_Type;
       Name            : GNAT.OS_Lib.String_Access;
       Short_Name      : GNAT.OS_Lib.String_Access;
       File_Name       : GNAT.OS_Lib.String_Access;
-      File_Found      : Boolean;
       Column          : Natural;
       Line            : Integer;
       Is_Private      : Boolean;
-      --  the following items can be used if necessery
-      Line_In_Body    : Positive;
-      Ref_List        : Type_Reference_List.List;
+      --  The following items won't be used in the index lists
+      Line_In_Body    : Natural;  --  if 0, no link to be set!
+      Calls_List      : Type_Reference_List.List;
+      Called_List     : Type_Reference_List.List;
    end record;
+   --  the structures for the list of entities
    procedure Free (X : in out Entity_List_Information);
    package Type_Entity_List is new Generic_List (Entity_List_Information);
    function Compare_Elements_Name
@@ -97,11 +110,13 @@ package Doc_Types is
      (X, Y : Entity_List_Information) return Boolean;
    procedure Sort_List_Line   is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Line);
+   --  sort list by line
    procedure Sort_List_Column is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Column);
+   --  sort list by column
    procedure Sort_List_Name   is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Name);
-   --  Sort_List_Name sorts the entities in alphabetical order,
+   --  sort the entities in alphabetical order by name,
    --  BUT all public entites stand in front of the private
 
    type Info_Types is (Open_Info, Close_Info,
@@ -112,9 +127,9 @@ package Doc_Types is
                        Subprogram_Index_Info, End_Of_Index_Info,
                        Index_Item_Info, Body_Line_Info, Var_Info,
                        Package_Info);
+   --  the structure used in the type Doc_Info.
 
-
-   --  the data structure used to pass the information
+   --  The data structure used to pass the information
    --  to the procedure which is defined
    --  as the Doc_Subprogram_Type (see below) to
    --  be the only procedure to be defined
@@ -161,6 +176,7 @@ package Doc_Types is
             when Package_Info =>
                Package_Entity                : Entity_List_Information;
                Package_Header                : GNAT.OS_Lib.String_Access;
+               Package_Header_Line           : Natural;
                Package_Description           : GNAT.OS_Lib.String_Access;
                Package_List                  : Type_Entity_List.List;
 
@@ -172,6 +188,7 @@ package Doc_Types is
             when Var_Info =>
                Var_Entity                    : Entity_List_Information;
                Var_Header                    : GNAT.OS_Lib.String_Access;
+               Var_Header_Line              : Natural;
                Var_Description               : GNAT.OS_Lib.String_Access;
                Var_List                      : Type_Entity_List.List;
 
@@ -179,6 +196,7 @@ package Doc_Types is
             when Exception_Info =>
                Exception_Entity              : Entity_List_Information;
                Exception_Header              : GNAT.OS_Lib.String_Access;
+               Exception_Header_Line              : Natural;
                Exception_Description         : GNAT.OS_Lib.String_Access;
                Exception_List                : Type_Entity_List.List;
 
@@ -186,6 +204,7 @@ package Doc_Types is
             when Type_Info =>
                Type_Entity                   : Entity_List_Information;
                Type_Header                   : GNAT.OS_Lib.String_Access;
+               Type_Header_Line              : Natural;
                Type_Description              : GNAT.OS_Lib.String_Access;
                Type_List                     : Type_Entity_List.List;
 
@@ -193,6 +212,7 @@ package Doc_Types is
             when Subprogram_Info =>
                Subprogram_Entity             : Entity_List_Information;
                Subprogram_Header             : GNAT.OS_Lib.String_Access;
+               Subprogram_Header_Line        : Natural;
                Subprogram_Description        : GNAT.OS_Lib.String_Access;
                Subprogram_Link               : Boolean;
                Subprogram_List               : Type_Entity_List.List;
@@ -231,11 +251,16 @@ package Doc_Types is
             when others => null;  --  exception later
          end case;
       end record;
+   --  The data structure used to pass the information
+   --  to the procedure which is defined
+   --  as the Doc_Subprogram_Type (see below) to
+   --  be the only procedure to be defined
+   --  when a new output format should be added
 
-   --  the procedure to define for each new output format
    type Doc_Subprogram_Type is access
         procedure (File      : in Ada.Text_IO.File_Type;
                    Text_Type : in out Doc_Info);
+   --  the procedure to define for each new output format
 
    type All_Options is record
       Doc_Subprogram       : Doc_Subprogram_Type;
@@ -260,6 +285,8 @@ package Doc_Types is
       --  True if the program should search for the references
       --  adding information like "subprogram called by..."
    end record;
+   --  the type containing all the information which can be
+   --  set by using the opions of the command line
 
    function Count_Lines
      (Line    : String) return Natural;
@@ -269,13 +296,8 @@ package Doc_Types is
      (Type_Str  : String;
       Index     : Natural;
       Substring : String) return Natural;
-   --  returns the index of the substring in the Type_Str
-   --  the search starts at position Index
-   --  if no position is found, return 0
-
-   function Kind_To_String
-     (Kind : Src_Info.E_Kind) return String;
-   --  returns the string of the E_Kind name: this is copied
-   --  from one of the kernel packages
+   --  returns the index of the substring in the Type_Str.
+   --  The search starts at position Index,
+   --  if no position is found, return 0.
 
 end Doc_Types;
