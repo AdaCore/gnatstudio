@@ -455,8 +455,14 @@ package body Src_Editor_View is
 
       elsif Window_Type = Text_Window_Text then
          declare
-            Column  : constant := 80;
-            Rect    : Gdk_Rectangle;
+            Column        : constant Gint :=
+              Get_Pref (View.Kernel, Highlight_Column);
+            Rect          : Gdk_Rectangle;
+            Line_Y        : Gint;
+            Line_Height   : Gint;
+            Cursor_Iter   : Gtk_Text_Iter;
+            Dummy         : Gint := 0;
+            Buffer_Line_Y : Gint;
 
          begin
             --  Get the window coordinates.
@@ -465,15 +471,7 @@ package body Src_Editor_View is
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
 
-            --  ??? Maybe the following could be cached.
-
-            declare
-               Line_Y        : Gint;
-               Line_Height   : Gint;
-               Cursor_Iter   : Gtk_Text_Iter;
-               Dummy         : Gint := 0;
-               Buffer_Line_Y : Gint;
-            begin
+            if View.Highlight_Current then
                Get_Iter_At_Mark
                  (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
 
@@ -487,12 +485,14 @@ package body Src_Editor_View is
                   True,
                   0, Buffer_Line_Y,
                   Rect.Width, Line_Height);
-            end;
+            end if;
 
-            --  Redraw the line showing the 80th column
+            --  Redraw the line showing the nth column if needed
 
-            X := Column * View.Char_Width - Rect.X;
-            Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
+            if Column > 0 then
+               X := Column * View.Char_Width - Rect.X;
+               Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
+            end if;
          end;
       end if;
 
@@ -575,9 +575,10 @@ package body Src_Editor_View is
       Gdk_New
         (View.Current_Line_GC,
          Get_Window (View, Text_Window_Text));
-      Set_Foreground
-        (View.Current_Line_GC,
-         Get_Pref (View.Kernel, Current_Line_Color));
+      Color := Get_Pref (View.Kernel, Current_Line_Color);
+      Set_Foreground (View.Current_Line_GC, Color);
+      View.Highlight_Current :=
+        not Equal (Color, White (Get_Default_Colormap));
 
       Gdk_New
         (View.Default_GC,
@@ -740,6 +741,7 @@ package body Src_Editor_View is
       Source  : constant Source_View := Source_View (View);
       Descr   : Pango_Font_Description;
       Layout  : Pango_Layout;
+      Color   : Gdk_Color;
       Height  : Gint;
 
    begin
@@ -748,7 +750,7 @@ package body Src_Editor_View is
       Descr := Get_Pref (Kernel, Source_Editor_Font);
       Set_Font (Source, Descr);
 
-      --  Recalculate the width of one character.
+      --  Recompute the width of one character.
 
       Layout := Create_Pango_Layout (Source);
       Set_Font_Description (Layout, Descr);
@@ -756,14 +758,16 @@ package body Src_Editor_View is
       Get_Pixel_Size (Layout, Source.Char_Width, Height);
       Unref (Layout);
 
-      --  Re-set the color of the current line.
+      --  Reset the color of the current line.
       --  This procedure might be called before the Map_Cb has been called,
       --  and therefore the Current_Line_GC might not be initialized at this
       --  point.
+
       if Source.Current_Line_GC /= null then
-         Set_Foreground
-           (Source.Current_Line_GC,
-            Get_Pref (Source.Kernel, Current_Line_Color));
+         Color := Get_Pref (Source.Kernel, Current_Line_Color);
+         Set_Foreground (Source.Current_Line_GC, Color);
+         Source.Highlight_Current :=
+           not Equal (Color, White (Get_Default_Colormap));
       end if;
 
    exception
