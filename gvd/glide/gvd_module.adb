@@ -185,7 +185,7 @@ package body GVD_Module is
       Create_Line_Information_Column
         (Kernel,
          File,
-         GVD_Module_Name & "/Line Information",
+         Breakpoints_Column_Id,
          Stick_To_Data => True,
          Every_Line    => True);
    end Create_Debugger_Columns;
@@ -200,7 +200,7 @@ package body GVD_Module is
    begin
       Remove_Line_Information_Column (Kernel, File, "Current Line");
       Remove_Line_Information_Column
-        (Kernel, File, GVD_Module_Name & "/Line Information");
+        (Kernel, File, Breakpoints_Column_Id);
    end Remove_Debugger_Columns;
 
    ---------------------------
@@ -1264,7 +1264,7 @@ package body GVD_Module is
          Add_Line_Information
            (GVD_Module_User_Data (GVD_Module_ID.all).Kernel,
             File_Line.File.all,
-            GVD_Module_Name & "/Line Information",
+            Breakpoints_Column_Id,
             new Line_Information_Array' (A));
       end;
 
