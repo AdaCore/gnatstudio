@@ -30,8 +30,6 @@ package VCS.ClearCase is
 
    type ClearCase_Access is access all ClearCase_Record'Class;
 
-   procedure Free (Ref : access ClearCase_Record);
-
    function Name (Ref : access ClearCase_Record) return String;
 
    procedure Get_Status

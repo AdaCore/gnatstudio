@@ -23,15 +23,23 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 
 package body VCS.ClearCase is
 
-   ClearCase_Reference : VCS_Access;
+   type VCS_Clearcase_Module_ID_Record is new Module_ID_Record with record
+      ClearCase_Reference : VCS_Access;
+   end record;
+   type VCS_Clearcase_Module_ID_Access is access all
+     VCS_Clearcase_Module_ID_Record'Class;
+
 
    VCS_ClearCase_Module_Name : constant String := "ClearCase_Connectivity";
-   VCS_ClearCase_Module_ID   : Module_ID;
+   VCS_ClearCase_Module_ID   : VCS_Clearcase_Module_ID_Access;
    ClearCase_Identifier      : constant String := "ClearCase";
 
    -----------------------
    -- Local Subprograms --
    -----------------------
+
+   procedure Destroy (Id : in out VCS_Clearcase_Module_ID_Record);
+   --  Free the memory occupied by this module
 
    function Identify_VCS (S : String) return VCS_Access;
    --  Return an access to VCS_Record if S describes a ClearCase system.
@@ -58,21 +66,11 @@ package body VCS.ClearCase is
       Lower_Case (Identifier);
 
       if Strip_Quotes (Id) = Identifier then
-         return ClearCase_Reference;
+         return VCS_ClearCase_Module_ID.ClearCase_Reference;
       end if;
 
       return null;
    end Identify_VCS;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ref : access ClearCase_Record) is
-      pragma Unreferenced (Ref);
-   begin
-      null;
-   end Free;
 
    ----------------
    -- Get_Status --
@@ -236,6 +234,16 @@ package body VCS.ClearCase is
       null;
    end Annotate;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Id : in out VCS_Clearcase_Module_ID_Record) is
+   begin
+      Free (Id.ClearCase_Reference);
+      Unregister_VCS_Identifier (Identify_VCS'Access);
+   end Destroy;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -244,15 +252,16 @@ package body VCS.ClearCase is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
    begin
+      VCS_ClearCase_Module_ID := new VCS_Clearcase_Module_ID_Record;
       Register_VCS_Identifier (Identify_VCS'Access);
       Register_Module
-        (Module                  => VCS_ClearCase_Module_ID,
+        (Module                  => Module_ID (VCS_ClearCase_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => VCS_ClearCase_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null);
 
-      ClearCase_Reference := new ClearCase_Record;
+      VCS_ClearCase_Module_ID.ClearCase_Reference := new ClearCase_Record;
 
       Register_VCS (Kernel, ClearCase_Identifier);
    end Register_Module;
