@@ -306,6 +306,13 @@ package body Src_Editor_Buffer is
       Set    : Boolean);
    --  Common function for [Add|Remove]_Line_Highlighting.
 
+   function Do_Indentation
+     (Buffer      : Source_Buffer;
+      Lang        : Language_Access;
+      Cursor_Iter : Gtk_Text_Iter;
+      New_Line    : Boolean := True) return Boolean;
+   --  Perform indentation for Cursor_Line.
+
    ---------------------
    -- Get_Buffer_Line --
    ---------------------
@@ -866,10 +873,6 @@ package body Src_Editor_Buffer is
       Column_End   : Gint;
 
    begin
-      if Buffer.Inserting then
-         return;
-      end if;
-
       User_Edit_Hook (Buffer);
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
@@ -903,6 +906,10 @@ package body Src_Editor_Buffer is
            (Buffer,
             Buffer_Line_Type (Line_Start + 1),
             Buffer_Line_Type (Line_End + 1));
+      end if;
+
+      if Buffer.Inserting then
+         return;
       end if;
 
       if not Is_Null_Command (Command)
@@ -2519,7 +2526,7 @@ package body Src_Editor_Buffer is
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
       Copy (Iter, End_Iter);
       Forward_Chars (End_Iter, Length, Result);
-      Delete (Buffer, Iter, End_Iter);
+      Delete_Interactive (Buffer, Iter, End_Iter, True, Result);
 
       if not Enable_Undo then
          Buffer.Inserting := Previous_Inserting_Value;
@@ -3349,10 +3356,8 @@ package body Src_Editor_Buffer is
         Buffer.Editable_Lines;
 
       Bottom_Line : Buffer_Line_Type;
-
       Ref_Editable_Line : Editable_Line_Type;
 
-      Inserted_In_Place : Boolean := False;
 
       procedure Expand_Lines
         (N : Buffer_Line_Type);
@@ -3366,30 +3371,13 @@ package body Src_Editor_Buffer is
          Unchecked_Free (Buffer_Lines);
          Buffer_Lines := new Line_Data_Array (1 .. N * 2);
 
-         if Start > H'Last then
-            Buffer_Lines (H'Range) := H;
 
-            for J in H'Last + 1 .. Buffer_Lines'Last loop
-               Buffer_Lines (J) := New_Line_Data;
-               Create_Side_Info (Buffer, J);
-            end loop;
-         else
-            Buffer_Lines (H'First .. Start) := H (H'First .. Start);
+         Buffer_Lines (H'Range) := H;
 
-            for J in Start + 1 .. Start + Number loop
-               Buffer_Lines (J) := New_Line_Data;
-               Create_Side_Info (Buffer, J);
-            end loop;
-
-            Buffer_Lines (Start + Number + 1
-                            .. H'Last + Number) := H (Start + 1 .. H'Last);
-
-            for J in H'Last + Number + 1 .. Buffer_Lines'Last loop
-               Buffer_Lines (J) := New_Line_Data;
-               Create_Side_Info (Buffer, J);
-            end loop;
-         end if;
-
+         for J in H'Last + 1 .. Buffer_Lines'Last loop
+            Buffer_Lines (J) := New_Line_Data;
+            Create_Side_Info (Buffer, J);
+         end loop;
 
          Unchecked_Free (Buffer.Editable_Lines);
          Buffer.Editable_Lines := new Editable_Line_Array
@@ -3405,47 +3393,16 @@ package body Src_Editor_Buffer is
             end if;
          end loop;
 
-         if Ref_Editable_Line > K'Last then
-            Buffer.Editable_Lines (K'Range) := K;
+         Buffer.Editable_Lines (K'Range) := K;
 
 
-            for J in K'Last + 1 .. Buffer.Editable_Lines'Last loop
-               Buffer.Editable_Lines (J) :=
-                 (Where       => In_Buffer,
-                  Buffer_Line => R + Buffer_Line_Type (J - K'Last),
-                  Side_Info_Data => null);
-               Create_Side_Info (Buffer, J);
-            end loop;
-
-         else
-            Editable_Lines (K'First .. Ref_Editable_Line)
-              := K (K'First .. Ref_Editable_Line);
-
-            for J in Ref_Editable_Line + 1 .. Ref_Editable_Line
-               + Editable_Line_Type (Number) loop
-               Editable_Lines (J) :=
-                 (Where       => In_Buffer,
-                  Buffer_Line => Start
-                    + Buffer_Line_Type (J - Ref_Editable_Line),
-                  Side_Info_Data => null);
-               Create_Side_Info (Buffer, J);
-            end loop;
-
-            Editable_Lines
-              (Ref_Editable_Line +  Editable_Line_Type (Number) + 1 .. K'Last
-                 +  Editable_Line_Type (Number))
-              := K (Ref_Editable_Line + 1 .. K'Last);
-
-            for J in K'Last +  Editable_Line_Type (Number) + 1
-              .. Buffer.Editable_Lines'Last
-            loop
-               Buffer.Editable_Lines (J) :=
-                 (Where       => In_Buffer,
-                  Buffer_Line => R + Buffer_Line_Type (J - K'Last),
-                  Side_Info_Data => null);
-               Create_Side_Info (Buffer, J);
-            end loop;
-         end if;
+         for J in K'Last + 1 .. Buffer.Editable_Lines'Last loop
+            Buffer.Editable_Lines (J) :=
+              (Where       => In_Buffer,
+               Buffer_Line => R + Buffer_Line_Type (J - K'Last),
+               Side_Info_Data => null);
+            Create_Side_Info (Buffer, J);
+         end loop;
       end Expand_Lines;
 
    begin
@@ -3489,46 +3446,36 @@ package body Src_Editor_Buffer is
 
          if Buffer_Lines'Last < Bottom_Line then
             Expand_Lines (Bottom_Line);
-            Inserted_In_Place := True;
          end if;
 
          --  Shift down the existing lines.
 
-         if Inserted_In_Place then
+         for J in reverse Start + Number + 1 .. Buffer_Lines'Last loop
+            Buffer_Lines (J) := Buffer_Lines (J - Number);
 
-            --  Reset the newly inserted lines.
+            if Buffer_Lines (J).Editable_Line /= 0 then
+               Buffer_Lines (J).Editable_Line
+                 := Buffer_Lines (J).Editable_Line
+                 + Editable_Line_Type (Number);
 
-            for J in 1 .. Number loop
-               Buffer_Lines (Start + J) := New_Line_Data;
-               Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
-                 + Editable_Line_Type (J);
+               Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
+                 := J;
+            end if;
+         end loop;
 
-               Create_Side_Info (Buffer, Start + J);
-            end loop;
+         --  Reset the newly inserted lines.
 
-         else
+         for J in 1 .. Number loop
+            Buffer_Lines (Start + J) := New_Line_Data;
+            Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
+              + Editable_Line_Type (J);
 
-            for J in reverse Start + Number + 1 .. Buffer_Lines'Last loop
-               Buffer_Lines (J) := Buffer_Lines (J - Number);
+            Editable_Lines
+              (Buffer_Lines (Start + J).Editable_Line).Buffer_Line :=
+              Start + J;
 
-               if Buffer_Lines (J).Editable_Line /= 0 then
-                  Buffer_Lines (J).Editable_Line
-                    := Buffer_Lines (J).Editable_Line
-                    + Editable_Line_Type (Number);
-               end if;
-            end loop;
-
-            --  Reset the newly inserted lines.
-
-            for J in 1 .. Number loop
-               Buffer_Lines (Start + J) := New_Line_Data;
-               Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
-                 + Editable_Line_Type (J);
-
-               Create_Side_Info (Buffer, Start + J);
-            end loop;
-         end if;
-
+            Create_Side_Info (Buffer, Start + J);
+         end loop;
       end if;
    end Add_Lines;
 
@@ -3542,25 +3489,39 @@ package body Src_Editor_Buffer is
       End_Line   : Buffer_Line_Type)
    is
       Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
+      Editable_Lines : Editable_Line_Array_Access renames
+        Buffer.Editable_Lines;
 
    begin
       if End_Line <= Start_Line then
          return;
       end if;
 
-      for J in 1 .. Buffer_Lines'Last - End_Line loop
-         Buffer_Lines (Start_Line + J) := Buffer_Lines (End_Line + J);
+      --  Shift up remaining lines
 
-         if Buffer_Lines (Start_Line + J).Editable_Line /= 0 then
-            Buffer_Lines (Start_Line + J).Editable_Line :=
-              Buffer_Lines (Start_Line + J).Editable_Line
+      for J in Start_Line + 1 .. Buffer_Lines'Last + Start_Line - End_Line loop
+         Buffer_Lines (J) := Buffer_Lines (End_Line + J - Start_Line);
+
+         if Buffer_Lines (J).Editable_Line /= 0 then
+            Buffer_Lines (J).Editable_Line :=
+              Buffer_Lines (J).Editable_Line
               - Editable_Line_Type (End_Line - Start_Line);
+
+            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line := J;
          end if;
       end loop;
 
-      Buffer_Lines
-        (Buffer_Lines'Last + Start_Line - End_Line + 1
-           .. Buffer_Lines'Last) := (others => New_Line_Data);
+      --  Reset bottom lines
+
+      for J in Buffer_Lines'Last + Start_Line - End_Line + 1
+        .. Buffer_Lines'Last
+      loop
+         if Buffer_Lines (J).Editable_Line /= 0 then
+            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line := 0;
+         end if;
+
+         Buffer_Lines (J) := New_Line_Data;
+      end loop;
    end Remove_Lines;
 
    -----------------------
@@ -3821,9 +3782,25 @@ package body Src_Editor_Buffer is
    --------------------
 
    function Do_Indentation
-     (Buffer   : Source_Buffer;
-      Lang     : Language_Access;
-      New_Line : Boolean := True) return Boolean
+     (Buffer      : Source_Buffer;
+      Lang        : Language_Access;
+      New_Line    : Boolean := True) return Boolean
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+      return Do_Indentation (Buffer, Lang, Iter, New_Line);
+   end Do_Indentation;
+
+   --------------------
+   -- Do_Indentation --
+   --------------------
+
+   function Do_Indentation
+     (Buffer      : Source_Buffer;
+      Lang        : Language_Access;
+      Cursor_Iter : Gtk_Text_Iter;
+      New_Line    : Boolean := True) return Boolean
    is
       Indent_Style  : Indentation_Kind;
 
@@ -3946,10 +3923,13 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
+      --  Compute Cursor_Column
+
       if Use_Tabs then
-         Get_Screen_Position (Buffer, Cursor_Line, Cursor_Column);
+         Get_Screen_Position (Buffer, Cursor_Iter, Cursor_Line, Cursor_Column);
       else
-         Get_Cursor_Position (Buffer, Cursor_Line, Cursor_Column);
+         Cursor_Line := Get_Line (Cursor_Iter);
+         Cursor_Column := Get_Line_Offset (Cursor_Iter);
       end if;
 
       Get_Selection_Bounds (Buffer, Start, Pos, Result);
@@ -4148,12 +4128,12 @@ package body Src_Editor_Buffer is
    -- Add_Blank_Lines --
    ---------------------
 
-   procedure Add_Blank_Lines
+   function Add_Blank_Lines
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
       GC     : Gdk.GC.Gdk_GC;
       Text   : String;
-      Number : Positive)
+      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
    is
       pragma Unreferenced (Text);
       LFs         : String (1 .. Natural (Number));
@@ -4165,7 +4145,7 @@ package body Src_Editor_Buffer is
       Buffer_Line := Get_Buffer_Line (Editor, Line);
 
       if Buffer_Line = 0 then
-         return;
+         return null;
       end if;
 
       End_Action (Editor);
@@ -4214,6 +4194,10 @@ package body Src_Editor_Buffer is
          Editor.Line_Data (J).Editable_Line := 0;
          Editor.Line_Data (J).Current_Highlight := GC;
       end loop;
+
+      Get_Iter_At_Line_Offset (Editor, Iter, Gint (Buffer_Line - 1), 0);
+
+      return Create_Mark (Editor, "", Iter);
    end Add_Blank_Lines;
 
    -----------------
@@ -4303,18 +4287,26 @@ package body Src_Editor_Buffer is
       End_Line     : out Editable_Line_Type;
       End_Column   : out Natural)
    is
-      Iter    : Gtk_Text_Iter;
-      Success : Boolean;
+      Iter      : Gtk_Text_Iter;
+      Success   : Boolean;
    begin
-      --  ??? Should move past non-editable lines.
-
       Get_Iter_At_Line_Offset
         (Buffer,
          Iter,
          Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
          Gint (Start_Column - 1));
 
-      Forward_Chars (Iter, Gint (Length), Success);
+      for J in 1 .. Length loop
+         Forward_Char (Iter, Success);
+         exit when not Success;
+
+         while Buffer.Line_Data
+           (Buffer_Line_Type (Get_Line (Iter) + 1)).Editable_Line = 0
+         loop
+            Forward_Char (Iter, Success);
+            exit when not Success;
+         end loop;
+      end loop;
 
       End_Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
