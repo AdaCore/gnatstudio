@@ -27,8 +27,12 @@ package body Test_Lib is
       Current_Text : Text_Navigator_Abstr'Class;
       Corrector    : in out Correction_Manager)
    is
-      Current_Solution : Extract_List.List_Node;
-      Num_Sol          : Integer;
+      Current_Solution              : Extract_List.List_Node;
+      Num_Sol                       : Integer;
+      Extended_Extract              : Extract;
+      Success_Update, Already_Fixed : Boolean;
+      Display_Lines_Before          : constant Integer := 5;
+      Display_Lines_After           : constant Integer := 5;
    begin
 
       Current_Solution := First (Solutions);
@@ -43,12 +47,43 @@ package body Test_Lib is
       Num_Sol := 0;
 
       while Current_Solution /= Extract_List.Null_Node loop
+         Extended_Extract := Clone (Extract (Data (Current_Solution)));
+
+         Extend_Before
+           (Extended_Extract,
+            Current_Text,
+            Display_Lines_Before);
+         Extend_After
+           (Extended_Extract,
+            Current_Text,
+            Display_Lines_After);
+
+         Update_Changes
+           (Corrector,
+            Current_Text,
+            Extended_Extract,
+            Success_Update,
+            Already_Fixed);
+
+         if Already_Fixed or else not Success_Update then
+            Free (Extended_Extract);
+            return;
+         end if;
+
+         Reduce
+           (Extended_Extract,
+            Display_Lines_Before,
+            Display_Lines_After);
+
          Num_Sol := Num_Sol + 1;
          if Visible then
             Put_Line ("Proposition" & Integer'Image (Num_Sol) & " : ");
-            Put_Line (Get_New_Text (Data (Current_Solution),
-                                    Current_Text, 2, 2));
+            Put_Line (Get_New_Text (Extended_Extract));
          end if;
+
+         Reduce (Extended_Extract, 0, 0);
+         Set_Data (Current_Solution, Extended_Extract);
+
          Current_Solution := Next (Current_Solution);
       end loop;
 
