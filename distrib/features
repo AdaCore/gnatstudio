@@ -3,6 +3,8 @@ details, look at the documentation.
 
 New features in GPS 1.2.0
 
+- Speed improvement when displaying many files at once in the VCS explorer
+
 - Support for project file pathname in custom file
 
 - C306-012 New "flat view" option in the project explorer
@@ -11,7 +13,7 @@ New features in GPS 1.2.0
 
 - C224-009 Added support for the new limited-with statements in projects
 
-- C219-004 Major speend improvements when loading and editing big projects,
+- C219-004 Major speed improvements when loading and editing big projects,
   especially when using file-specific naming schemes.
 
 - More flexible handling of custom files
@@ -28,7 +30,7 @@ New features in GPS 1.2.0
 
 - C109-012 Ability to force saving of a read-only file
 
-- BC09-010 Filtering of duplicate messages in the Locations Tree.
+- BC09-010 Filtering of duplicate messages in the Locations Tree
 
 - BB29-016 VCS explorer and location window now saved in desktops
 
