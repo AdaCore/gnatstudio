@@ -58,7 +58,7 @@ package body Docgen_Backend_HTML is
 
    function Get_Html_File_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return String;
+      File   : Virtual_File_Access) return String;
    --  Create a .htm file name from the full path of the source file
    --  for ex.: from util/src/docgen.adb the name docgen_adb.htm is created
 
@@ -199,7 +199,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.Package_Header.all,
-         Get_Declaration_File_Of (Info.Package_Entity.Entity),
+         Get_Declaration_File_Of (Info.Package_Entity.Entity).all,
          Get_Declaration_Line_Of (Info.Package_Entity.Entity),
          No_Body_Line_Needed,
          False,
@@ -243,7 +243,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.Package_Open_Close_Header.all,
-         Get_Declaration_File_Of (Info.Package_Open_Close_Entity.Entity),
+         Get_Declaration_File_Of (Info.Package_Open_Close_Entity.Entity).all,
          Get_Declaration_Line_Of (Info.Package_Open_Close_Entity.Entity),
          No_Body_Line_Needed,
          False, Info, Level, Get_Indent (B.all));
@@ -278,7 +278,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.With_Header.all,
-         Info.With_File,
+         Info.With_File.all,
          Info.With_Header_Line,
          No_Body_Line_Needed,
          False, Info, 0, Get_Indent (B.all));
@@ -315,7 +315,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.Var_Header.all,
-         Get_Declaration_File_Of (Info.Var_Entity.Entity),
+         Get_Declaration_File_Of (Info.Var_Entity.Entity).all,
          Get_Declaration_Line_Of (Info.Var_Entity.Entity),
          No_Body_Line_Needed,
          False,
@@ -355,7 +355,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.Exception_Header.all,
-         Get_Declaration_File_Of (Info.Exception_Entity.Entity),
+         Get_Declaration_File_Of (Info.Exception_Entity.Entity).all,
          Get_Declaration_Line_Of (Info.Exception_Entity.Entity),
          No_Body_Line_Needed,
          False, Info, Level, Get_Indent (B.all));
@@ -392,7 +392,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.Type_Header.all,
-         Get_Declaration_File_Of (Info.Type_Entity.Entity),
+         Get_Declaration_File_Of (Info.Type_Entity.Entity).all,
          Get_Declaration_Line_Of (Info.Type_Entity.Entity),
          No_Body_Line_Needed,
          False, Info, Level, Get_Indent (B.all));
@@ -416,7 +416,7 @@ package body Docgen_Backend_HTML is
       Parent_Node : List_Entity_Handle.List_Node;
       Child_Node  : List_Entity_Handle.List_Node;
       Entity      : Entity_Handle;
-      F           : VFS.Virtual_File;
+      F           : VFS.Virtual_File_Access;
       Space       : constant String :=
         (1 .. Level * Get_Indent (B.all) => ' ');
 
@@ -456,7 +456,7 @@ package body Docgen_Backend_HTML is
                      & """ TARGET=""main"">"
                      & Get_Name (Entity.all)
                      & "</A> at&nbsp;"
-                     & Base_Name (F)
+                     & Base_Name (F.all)
                      & "&nbsp;"
                      & Image (Get_Declaration_Line_Of (Entity.all))
                      & ":"
@@ -470,7 +470,7 @@ package body Docgen_Backend_HTML is
                      & Space
                      & Get_Name (Entity.all)
                      & " at&nbsp;"
-                     & Base_Name (F)
+                     & Base_Name (F.all)
                      & "&nbsp;"
                      & Image (Get_Declaration_Line_Of (Entity.all))
                      & ":"
@@ -525,7 +525,7 @@ package body Docgen_Backend_HTML is
                      & """ TARGET=""main"">"
                      & Get_Name (Entity.all)
                      & "</A> at&nbsp;"
-                     & Base_Name (F)
+                     & Base_Name (F.all)
                      & "&nbsp;"
                      & Image (Get_Declaration_Line_Of (Entity.all))
                      & ":"
@@ -539,7 +539,7 @@ package body Docgen_Backend_HTML is
                      & Space
                      & Get_Name (Entity.all)
                      & " at&nbsp;"
-                     & Base_Name (F)
+                     & Base_Name (F.all)
                      & "&nbsp;"
                      & Image (Get_Declaration_Line_Of (Entity.all))
                      & ":"
@@ -590,7 +590,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.Entry_Header.all,
-         Get_Declaration_File_Of (Info.Entry_Entity.Entity),
+         Get_Declaration_File_Of (Info.Entry_Entity.Entity).all,
          Get_Declaration_Line_Of (Info.Entry_Entity.Entity),
          No_Body_Line_Needed,
          False, Info, Level, Get_Indent (B.all));
@@ -634,7 +634,7 @@ package body Docgen_Backend_HTML is
       use Type_Reference_List;
       Node : Type_Reference_List.List_Node;
       Data : Type_Reference_List.Data_Access;
-      F    : VFS.Virtual_File;
+      F    : VFS.Virtual_File_Access;
 
    begin
       if Type_Reference_List.Is_Empty (Local_List) then
@@ -682,7 +682,7 @@ package body Docgen_Backend_HTML is
                   & """>"
                   & Get_Name (Data.Entity)
                   & "</A> declared at&nbsp;"
-                  & Base_Name (F)
+                  & Base_Name (F.all)
                   & "&nbsp;"
                   & Image (Get_Declaration_Line_Of (Data.Entity))
                   & ":"
@@ -697,7 +697,7 @@ package body Docgen_Backend_HTML is
                   & Space
                   & Get_Name (Data.Entity)
                   & " declared at&nbsp;"
-                  & Base_Name (F)
+                  & Base_Name (F.all)
                   & "&nbsp;"
                   & Image (Get_Declaration_Line_Of (Data.Entity))
                   & ":"
@@ -740,7 +740,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.Subprogram_Header.all,
-         Get_Declaration_File_Of (Info.Subprogram_Entity.Entity),
+         Get_Declaration_File_Of (Info.Subprogram_Entity.Entity).all,
          Get_Declaration_Line_Of (Info.Subprogram_Entity.Entity),
          Get_Line (Info.Subprogram_Entity.Line_In_Body),
          False, Info, Level, Get_Indent (B.all));
@@ -752,10 +752,11 @@ package body Docgen_Backend_HTML is
    ----------------
 
    procedure Doc_Header
-     (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Info             : in out Doc_Info_Header)
+     (B       : access Backend_HTML;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      LI_Unit : LI_File_Ptr;
+      File    : File_Descriptor;
+      Info    : in out Docgen.Doc_Info_Header)
    is
       pragma Unreferenced (B);
    begin
@@ -773,7 +774,7 @@ package body Docgen_Backend_HTML is
          Put_Line
            (File, "<A HREF=""" &
             Get_Html_File_Name
-              (Kernel, Other_File_Name (Kernel, Info.Header_File))
+              (Kernel, Get_Other_File_Of (LI_Unit, Info.Header_File.all))
             & """> ");
          Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
 
@@ -858,7 +859,8 @@ package body Docgen_Backend_HTML is
          "<FRAME SRC=""" &
          Base_Name
            (Get_Doc_File_Name
-              (Type_Source_File_List.Data_Ref (Source_File_Node).File_Name,
+              (Type_Source_File_List.Data_Ref
+                 (Source_File_Node).File_Name'Unchecked_Access,
                Doc_Directory, Doc_Suffix)) & """ NAME=""main"" >");
       Put_Line
         (Frame_File,
@@ -1038,8 +1040,7 @@ package body Docgen_Backend_HTML is
                "<BR><A HREF="""
                & Base_Name
                  (Get_Doc_File_Name
-                    (Get_Declaration_File_Of
-                       (Info.Doc_Tagged_Type),
+                    (Get_Declaration_File_Of (Info.Doc_Tagged_Type),
                      Info.Directory.all,
                      Info.Suffix.all))
                & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
@@ -1057,8 +1058,7 @@ package body Docgen_Backend_HTML is
               (File, "<B>Parent object: </B><A HREF=""" &
                Base_Name
                  (Get_Doc_File_Name
-                    (Get_Declaration_File_Of
-                       (Info.Doc_Tagged_Type),
+                    (Get_Declaration_File_Of (Info.Doc_Tagged_Type),
                      Info.Directory.all,
                      Info.Suffix.all))
                & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
@@ -1085,8 +1085,7 @@ package body Docgen_Backend_HTML is
               (File, "<B>Child object: </B><A HREF=""" &
                Base_Name
                  (Get_Doc_File_Name
-                    (Get_Declaration_File_Of
-                       (Info.Doc_Tagged_Type),
+                    (Get_Declaration_File_Of (Info.Doc_Tagged_Type),
                      Info.Directory.all,
                      Info.Suffix.all))
                & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
@@ -1121,7 +1120,8 @@ package body Docgen_Backend_HTML is
          & Info.Item_Name.all & "</A>");
       Put_Line
         (File, " <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; in " &
-         Base_Name (Info.Item_File) & ASCII.LF & ASCII.LF & "<BR>" & ASCII.LF);
+         Base_Name (Info.Item_File.all) &
+         ASCII.LF & ASCII.LF & "<BR>" & ASCII.LF);
    end Doc_Index_Item;
 
    -----------------------
@@ -1191,7 +1191,7 @@ package body Docgen_Backend_HTML is
          File,
          List_Ref_In_File,
          Info.Body_Text.all,
-         Info.Body_File,
+         Info.Body_File.all,
          First_File_Line,
          No_Body_Line_Needed,
          True, Info, Level, Get_Indent (B.all));
@@ -1226,11 +1226,11 @@ package body Docgen_Backend_HTML is
 
    function Get_Html_File_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return String
+      File   : Virtual_File_Access) return String
    is
       pragma Unreferenced (Kernel);
-      Ext  : constant String := File_Extension (File);
-      Temp : constant String := Base_Name (File, Ext) & '_'
+      Ext  : constant String := File_Extension (File.all);
+      Temp : constant String := Base_Name (File.all, Ext) & '_'
         & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
    begin
       return Temp;
@@ -1538,7 +1538,7 @@ package body Docgen_Backend_HTML is
       Entity_Info      : Entity_Information;
       Entity_Abstract  : in out Boolean)
    is
-      pragma Unreferenced (Start_Index, Start_Column, End_Index, LI_Unit);
+      pragma Unreferenced (Start_Index, Start_Column, End_Index);
 
       procedure Create_Regular_Link;
       --  will create a regular link to the entity, links to both spec
@@ -1578,8 +1578,8 @@ package body Docgen_Backend_HTML is
          Put (File,
               "<A HREF="""
               & Get_Html_File_Name
-                (Kernel, Other_File_Name
-                   (Kernel, Get_Declaration_File_Of (Entity_Info)))
+                (Kernel, Get_Other_File_Of
+                   (LI_Unit, Get_Declaration_File_Of (Entity_Info).all))
               & '#' & Image (Line_In_Body)
               & """>" & Text (Loc_Start .. Loc_End) & "</A>");
          Set_Last_Index (B.all, Loc_End + 1);
