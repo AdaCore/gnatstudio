@@ -747,10 +747,7 @@ package body Python_Module is
    procedure Python_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
-      Project  : constant Project_Type := Get_Data (Instance);
+      Project  : constant Project_Type := Get_Data (Data, 1);
    begin
       if Command = "__str__" then
          Set_Return_Value (Data, Project_Name (Project));
@@ -760,9 +757,7 @@ package body Python_Module is
 
       elsif Command = "__cmp__" then
          declare
-            Inst2 : constant Class_Instance := Nth_Arg
-              (Data, 2, Get_Project_Class (Kernel));
-            Project2 : constant Project_Type := Get_Data (Inst2);
+            Project2 : constant Project_Type := Get_Data (Data, 2);
             Name  : constant String := Project_Path (Project);
             Name2 : constant String := Project_Path (Project2);
          begin
@@ -796,10 +791,7 @@ package body Python_Module is
    procedure Python_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
-      Entity   : constant Entity_Information := Get_Data (Instance);
+      Entity   : constant Entity_Information := Get_Data (Data, 1);
    begin
       if Command = "__str__"
         or else Command = "__repr__"
@@ -826,9 +818,7 @@ package body Python_Module is
 
       elsif Command = "__cmp__" then
          declare
-            Inst2 : constant Class_Instance :=
-              Nth_Arg (Data, 2, Get_Entity_Class (Kernel));
-            Entity2 : constant Entity_Information := Get_Data (Inst2);
+            Entity2 : constant Entity_Information := Get_Data (Data, 2);
             Line1, Line2 : Integer;
             Name1 : constant String := Get_Name (Entity);
             Name2 : constant String := Get_Name (Entity2);
@@ -889,10 +879,7 @@ package body Python_Module is
    procedure Python_Location_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
-      Info     : constant File_Location_Info := Get_Data (Instance);
+      Info     : constant File_Location_Info := Get_Data (Data, 1);
       Fileinfo : constant File_Info := Get_Data (Get_File (Info));
    begin
       if Command = "__str__"
@@ -912,9 +899,7 @@ package body Python_Module is
 
       elsif Command = "__cmp__" then
          declare
-            Inst2 : constant Class_Instance :=
-              Nth_Arg (Data, 2, Get_File_Location_Class (Kernel));
-            Info2 : constant File_Location_Info := Get_Data (Inst2);
+            Info2 : constant File_Location_Info := Get_Data (Data, 2);
             Fileinfo2 : constant File_Info := Get_Data (Get_File (Info2));
             Line1, Line2 : Integer;
             Name1 : constant String := Full_Name (Get_File (Fileinfo)).all;
@@ -989,6 +974,15 @@ package body Python_Module is
 
    procedure Free (Data : in out Python_Callback_Data) is
    begin
+      Py_DECREF (Data.Args);
+
+      if Data.Kw /= null then
+         Py_DECREF (Data.Kw);
+      end if;
+
+      --  Do not free the return value, this is taken care of later on by all
+      --  callers
+
       Unchecked_Free (Data.Kw_Params);
    end Free;
 
@@ -1005,14 +999,14 @@ package body Python_Module is
          Script           => Python_Scripting (Script),
          Args             => PyTuple_New (Arguments_Count),
          Kw               => Py_None,
-         Return_Value     => Py_None,
-         Return_Dict      => Py_None,
+         Return_Value     => null,
+         Return_Dict      => null,
          Has_Return_Value => False,
          Return_As_List   => False,
          Kw_Params        => null,
          Is_Method        => False);
    begin
-      Py_INCREF (Callback.Return_Value);
+      Py_INCREF (Callback.Kw);
       return Callback;
    end Create;
 
@@ -1094,12 +1088,19 @@ package body Python_Module is
       Callback.Args         := Args;
       Callback.Kw           := Kw;
       Callback.Return_Value := Py_None;
+      Callback.Return_Dict  := null;
       Callback.Script       := Handler.Script;
       Callback.Is_Method    := Handler.Is_Method;
       Py_INCREF (Callback.Return_Value);
+      Py_INCREF (Callback.Args);
+
+      if Callback.Kw /= null then
+         Py_INCREF (Callback.Kw);
+      end if;
 
       Handler.Handler.all (Callback, Handler.Command);
 
+      --  This doesn't free the return value
       Free (Callback);
 
       if Callback.Return_Dict /= null then
@@ -1641,6 +1642,7 @@ package body Python_Module is
       C    : constant PyObject := Lookup_Class_Object
         (Data.Script.GPS_Module, Get_Name (Class));
       Item_Class : PyObject;
+      Inst : Class_Instance;
    begin
       Item := Get_Param (Data, N);
       if not PyInstance_Check (Item) then
@@ -1658,8 +1660,13 @@ package body Python_Module is
          raise Invalid_Parameter;
       end if;
 
-      return new Python_Class_Instance_Record'
+--  ??? This is never freed. We should have a callback so that when Item
+--  is destroyed, Inst is destroyed
+      --  The following call doesn't modify the refcounf of Item.
+      Inst := new Python_Class_Instance_Record'
         (Class_Instance_Record with Script => Data.Script, Data => Item);
+
+      return Inst;
 
    exception
       when No_Such_Parameter =>
@@ -1997,11 +2004,14 @@ package body Python_Module is
    is
       Item : constant PyObject := PyObject_GetAttrString
         (Instance.Data, GPS_Data_Attr);
+      Result : System.Address;
    begin
       if Item = null or else not PyCObject_Check (Item) then
          raise Invalid_Data;
       end if;
-      return PyCObject_AsVoidPtr (Item);
+      Result := PyCObject_AsVoidPtr (Item);
+      Py_DECREF (Item);
+      return Result;
    end Get_Data;
 
    -------------------
@@ -2061,6 +2071,7 @@ package body Python_Module is
         (Value, PyCObject_Destructor (On_Destroy));
    begin
       PyObject_SetAttrString (Instance.Data, GPS_Data_Attr, Data);
+      Py_DECREF (Data);
    end Set_Data;
 
    --------------------
