@@ -13,6 +13,7 @@ foreach $line (<IMPUNIT>) {
    chomp ($line);
    if ($line =~ /"([^"]+)",\s*-- (.*)/) {
        $filename=$1;
+       $filename =~ s/\s*$//g;
        $unit=$2;
        $unit =~ s/_/__/g;
        ($hierarchy) = ($unit =~ /^([^.]+)\./);
