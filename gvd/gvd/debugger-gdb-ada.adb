@@ -314,6 +314,7 @@ package body Debugger.Gdb.Ada is
       Tmp_Index : Natural := Index;
       R         : Array_Type_Access;
       Index_Str : Unbounded_String;
+      G         : Generic_Type_Access;
 
    begin
       --  As a special case, if we have (<>) for the dimensions (ie an
@@ -341,6 +342,7 @@ package body Debugger.Gdb.Ada is
 
       Result := New_Array_Type (Num_Dimensions => Num_Dim);
       R := Array_Type_Access (Result);
+      Set_Type_Name (R, Get_Type_Info (Get_Debugger (Lang), Entity, Type_Str));
 
       --  Then parse the dimensions.
 
@@ -430,11 +432,18 @@ package body Debugger.Gdb.Ada is
       --  If we have a simple type, no need to ask gdb, for efficiency reasons.
 
       if Is_Simple_Type (Lang, Type_Str (Tmp_Index .. Index - 1)) then
-         Set_Item_Type (R.all, New_Simple_Type);
+         G := New_Simple_Type;
+         Set_Type_Name (G, Type_Str (Tmp_Index .. Index - 1));
+         Set_Item_Type (R.all, G);
 
       elsif Tmp_Index + 6 <= Type_Str'Last
         and then Type_Str (Tmp_Index .. Tmp_Index + 5) = "access"
       then
+         G := New_Access_Type;
+         Set_Type_Name
+           (G, Get_Type_Info
+            (Get_Debugger (Lang), Array_Item_Name (Lang, Entity, "0"),
+             "array"));
          Set_Item_Type (R.all, New_Access_Type);
 
       else
@@ -625,7 +634,7 @@ package body Debugger.Gdb.Ada is
                  (G, Get_Type_Info
                   (Get_Debugger (Lang),
                    Record_Field_Name
-                     (Lang, Entity, Get_Field_Name (R.all, Fields).all),
+                   (Lang, Entity, Get_Field_Name (R.all, Fields).all),
                    Type_Str (Tmp_Index .. Index - 1)));
 
             else
