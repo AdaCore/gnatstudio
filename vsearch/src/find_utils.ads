@@ -155,7 +155,8 @@ package Find_Utils is
       Callback   : Scan_Callback;
       Ref_Index  : in out Integer;
       Ref_Line   : in out Integer;
-      Ref_Column : in out Integer);
+      Ref_Column : in out Integer;
+      Was_Partial : out Boolean);
    --  Find matches of Context in Buffer, starting at Buffer'First, and until
    --  either the end of the buffer or Callback returns False.
    --  Buffer is assumes to be a single valid scope, and thus no scope handling
@@ -164,6 +165,9 @@ package Find_Utils is
    --  position Ref_Line and Ref_Column in the original file. They are
    --  automatically updated when new positions are computed, so that they can
    --  be used during the next call to Scan_Buffer_No_Scope.
+   --
+   --  On exit, Was_Partial is set to True if the search was interrupted
+   --  because the callback returned False.
 
    Invalid_Context : exception;
    --  Raised when trying to access the components in Search_Context

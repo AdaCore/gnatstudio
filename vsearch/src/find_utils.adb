@@ -107,10 +107,11 @@ package body Find_Utils is
 
       Index : Integer := Buffer'First;
       Line, Column : Integer := 0;
+      Was_Partial : Boolean;
    begin
       Scan_Buffer_No_Scope
         (Context, Buffer, Callback'Unrestricted_Access,
-         Index, Line, Column);
+         Index, Line, Column, Was_Partial);
       return Result;
    end Match;
 
@@ -124,7 +125,8 @@ package body Find_Utils is
       Callback   : Scan_Callback;
       Ref_Index  : in out Integer;
       Ref_Line   : in out Integer;
-      Ref_Column : in out Integer)
+      Ref_Column : in out Integer;
+      Was_Partial : out Boolean)
    is
       Last_Line_Start : Natural := Buffer'First;
 
@@ -187,12 +189,15 @@ package body Find_Utils is
                     Ref_Column + Context.Sub_Matches (0).Last - Pos + 1,
                   Text       => Line))
                then
+                  Was_Partial := True;
                   return;
                end if;
             end;
 
             Pos := Pos + 1;
          end loop;
+
+         Was_Partial := False;
       end Re_Search;
 
       ---------------
@@ -238,6 +243,7 @@ package body Find_Utils is
                      End_Column => Ref_Column + Context.Look_For'Length,
                      Text       => Line))
                   then
+                     Was_Partial := True;
                      return;
                   end if;
                end;
@@ -245,6 +251,7 @@ package body Find_Utils is
 
             Pos := Pos + 1;
          end loop;
+         Was_Partial := False;
       end BM_Search;
 
    begin
