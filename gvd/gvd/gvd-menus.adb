@@ -162,7 +162,7 @@ package body Odd.Menus is
       Item    : Item_Record)
    is
    begin
-      Set_Visibility (Item.Component.all, True, Recursive => True);
+      Set_Visibility (Item.Component, True, Recursive => True);
       Update_Resize_Display (Item.Item, True);
    end Show_All;
 
@@ -175,7 +175,7 @@ package body Odd.Menus is
       Item    : Item_Record)
    is
    begin
-      Set_Visibility (Item.Component.all, False, Recursive => True);
+      Set_Visibility (Item.Component, False, Recursive => True);
       Update_Resize_Display (Item.Item, True);
    end Hide_All;
 

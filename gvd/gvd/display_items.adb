@@ -496,7 +496,7 @@ package body Display_Items is
                           Mode        => Item.Mode),
          Hide_Big_Items => Hide_Big_Items);
       if not Get_Visibility (Item.Entity.all) then
-         Set_Visibility (Item.Entity.all, True);
+         Set_Visibility (Item.Entity, True);
          Size_Request
            (Item.Entity.all,
             Drawing_Context'(Pixmap      => Pixmap (Item),
@@ -906,7 +906,7 @@ package body Display_Items is
       if not Get_Visibility (Item.Entity.all)
         and then Was_Visible
       then
-         Set_Visibility (Item.Entity.all, True);
+         Set_Visibility (Item.Entity, True);
          Size_Request
            (Item.Entity.all,
             Drawing_Context'(Pixmap      => Pixmap (Item),
@@ -1231,7 +1231,7 @@ package body Display_Items is
       end Reattach_All_Links;
 
    begin
-      Set_Visibility (Component.all, not Get_Visibility (Component.all));
+      Set_Visibility (Component, not Get_Visibility (Component.all));
       --  Need to recompute the positions of the components first
       Update_Resize_Display
         (Item,
