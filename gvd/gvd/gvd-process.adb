@@ -1078,7 +1078,9 @@ package body GVD.Process is
 
       Menu_Item :=
         Gtk_Menu_Item (Get_Widget (Window.Factory, '/' & (-"Window")));
-      Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
+      Set_Submenu
+        (Menu_Item,
+         Create_Menu (Process.Process_Mdi, Window.Main_Accel_Group));
 
       Widget_Callback.Connect
         (Process, "process_stopped",
