@@ -56,7 +56,7 @@ package Odd is
    Editor_Show_Line_Nums : constant Boolean := True;
    --  Whether line numbers should be shown in the code editor
 
-   Editor_Show_Line_With_Code : constant Boolean := False;
+   Editor_Show_Line_With_Code : constant Boolean := True;
    --  Whether dots should be shown in the code editor for lines that
    --  contain code.
 
