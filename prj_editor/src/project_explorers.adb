@@ -284,6 +284,11 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter);
    --  Set the text to display for this directory node
 
+   procedure Update_Absolute_Paths
+     (Explorer : access Gtk_Widget_Record'Class);
+   --  Update the text for all directory nodes in the tree, mostly after the
+   --  "show absolute path" setting has changed.
+
    ----------------------------
    -- Retrieving information --
    ----------------------------
@@ -703,7 +708,7 @@ package body Project_Explorers is
          Append (Menu, Check);
          Widget_Callback.Object_Connect
            (Check, "toggled",
-            Widget_Callback.To_Marshaller (Refresh'Access),
+            Widget_Callback.To_Marshaller (Update_Absolute_Paths'Access),
             Slot_Object => T);
       end if;
 
@@ -851,6 +856,44 @@ package body Project_Explorers is
                 (Node_Text, Dir_Name (Project_Path (Project))));
       end if;
    end Update_Directory_Node_Text;
+
+   ---------------------------
+   -- Update_Absolute_Paths --
+   ---------------------------
+
+   procedure Update_Absolute_Paths
+     (Explorer : access Gtk_Widget_Record'Class)
+   is
+      Exp : constant Project_Explorer := Project_Explorer (Explorer);
+      procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type);
+      --  Recursively process node
+
+      procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type) is
+         It : Gtk_Tree_Iter := Children (Exp.Tree.Model, Iter);
+      begin
+         while It /= Null_Iter loop
+            case Get_Node_Type (Exp.Tree.Model, It) is
+               when Project_Node | Extends_Project_Node =>
+                  Process_Node
+                    (It, Get_Project_From_Node (Exp, It, False));
+
+               when Directory_Node
+                 | Obj_Directory_Node
+                 | Exec_Directory_Node =>
+                  Update_Directory_Node_Text (Exp, Project, It);
+
+               when others =>
+                  null;
+            end case;
+
+            Next (Exp.Tree.Model, It);
+         end loop;
+      end Process_Node;
+
+   begin
+      Process_Node
+        (Get_Iter_First (Exp.Tree.Model), Get_Project (Exp.Kernel));
+   end Update_Absolute_Paths;
 
    ------------------------
    -- Add_Directory_Node --
