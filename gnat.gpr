@@ -1,0 +1,5 @@
+project GNAT is
+
+  for Source_Dirs use ("gnat");
+
+end GNAT;
