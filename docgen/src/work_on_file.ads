@@ -1,74 +1,64 @@
-with Ada.Text_IO;       use Ada.Text_IO;
-with Ada.Command_Line; use Ada.Command_Line;
-with Ada.Text_IO;      use Ada.Text_IO;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2001-2002                       --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
 
-with Prj;                  use Prj;
-with Prj.Tree;             use Prj.Tree;
-with Src_Info;             use Src_Info;
-with Src_Info.Queries;     use Src_Info.Queries;
-
-with Language_Handlers;       use Language_Handlers;
-with Language_Handlers.Glide; use Language_Handlers.Glide;
-with Test_Utils;              use Test_Utils;
-with Generic_List;
-
-with work_on_source;	use work_on_source;
+with Ada.Text_IO;               use Ada.Text_IO;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Prj;                       use Prj;
+with Prj.Tree;                  use Prj.Tree;
+with Src_Info;                  use Src_Info;
+with Language_Handlers;         use Language_Handlers;
+with Doc_Types;                 use Doc_Types;
 
 package Work_on_File is
 
-   procedure Process_File
-     (Prj_Filename    : String_Access;
-      Source_Filename : String_Access);
-   --Process the file: Find all declarations in the file, sort them and
-   --call the subprograms for the creation of the documentation output.
-   --Each file listed in the command line or in the
-   --project file must be used with this procedure.
-
+   procedure Process_Files
+     (Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options);
+   --  Process the files
 
 private
 
-   procedure Process_Procedure
-     (Prj_Filename    : String_Access;
-      Source_Filename : String_Access;
-      LI_Unit         : LI_File_Ptr;
-      Entity_Iter     : Entity_Declaration_Iterator;
-      Info            : Entity_Information);
-   --prepares the documantation for the different procedures in the source file.
+   procedure Process_One_File
+     (Doc_File           : File_Type;
+      First_File         : Boolean;
+      Last_File          : Boolean;
+      Source_Filename    : String;
+      Package_Name       : String;
+      Next_Package       : GNAT.OS_Lib.String_Access;
+      Prev_Package       : GNAT.OS_Lib.String_Access;
+      Def_In_Line        : Integer;
+      Source_File_List   : in out Type_Source_File_List.List;
+      Source_Info_List   : in out Src_Info.LI_File_List;
+      Handler            : in out Language_Handler;
+      Project_Tree       : in out Project_Node_Id;
+      Project_View       : in out Project_Id;
+      Options            : All_Options;
+      Process_Body_File  : Boolean);
+   --  called by Process_Files for each file from the given list
+   --  will examine that file and call the function needed (see below)
 
-   procedure Process_Function
-     (Prj_Filename    : String_Access;
-      Source_Filename : String_Access;
-      LI_Unit         : LI_File_Ptr;
-      Entity_Iter     : Entity_Declaration_Iterator;
-      Info            : Entity_Information);
-   --prepares the documantation for the different procedures in the source file.
-
-   procedure Process_Exception
-     (Prj_Filename    : String_Access;
-      Source_Filename : String_Access;
-      LI_Unit         : LI_File_Ptr;
-      Entity_Iter     : Entity_Declaration_Iterator;
-      Info            : Entity_Information);
-   --prepares the documantation for the exceptions in the source file.
-
-
-   procedure Process_Type
-     (Prj_Filename    : String_Access;
-      Source_Filename : String_Access;
-      LI_Unit         : LI_File_Ptr;
-      Entity_Iter     : Entity_Declaration_Iterator;
-      Info            : Entity_Information);
-   --prepares the documantation for the types in the source file.
-
-
-   function Get_Doc_File
-      (Source_Filename : String_Access) return String;
-   --returns the pointer to the new created doc file -> first only HTML
 
    function Kind_To_String
      (Kind : Src_Info.E_Kind) return String;
+   --  returns the string of the E_Kind name: this is copied
+   --  from one of the kernel packages
 
 
 end Work_on_File;
