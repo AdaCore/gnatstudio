@@ -2794,7 +2794,7 @@ package body CPP_Parser is
                   Recompute_TO := True;
 
                elsif not Recompute_TO
-                 and then File_Time_Stamp (Xref_File_Name) > TO_Timestamp
+                 and then File_Time_Stamp (Xref_File_Name) /= TO_Timestamp
                then
                   Recompute_TO := True;
                end if;
