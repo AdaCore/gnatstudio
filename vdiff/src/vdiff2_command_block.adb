@@ -85,9 +85,9 @@ package body Vdiff2_Command_Block is
 
    function Execute
      (Command : access Diff_Command_Block;
-      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Context);
    begin
       Trace (Me, "File1: "& Full_Name (Command.Last_Active_Diff.File1).all);
       return Execute (Command);

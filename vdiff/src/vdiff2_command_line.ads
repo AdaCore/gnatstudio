@@ -22,9 +22,9 @@
 
 with Glide_Kernel;         use Glide_Kernel;
 with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
 with Vdiff2_Command;       use Vdiff2_Command;
 with Diff_Utils2;          use Diff_Utils2;
-with Gdk.Event;
 with VFS;                  use VFS;
 
 package Vdiff2_Command_Line is
@@ -55,7 +55,7 @@ package Vdiff2_Command_Line is
 
    function Execute
      (Command : access Diff_Command_Line;
-      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Execute the command Command
    --  Search in the global List of Diff the current diff end apply Action on
    --  this

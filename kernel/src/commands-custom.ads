@@ -58,7 +58,6 @@
 --
 --      %l, %c -> the current line and column in the current file.
 
-with Gdk.Event;
 with Glide_Kernel;         use Glide_Kernel;
 with GNAT.Expect;          use GNAT.Expect;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -123,8 +122,8 @@ package Commands.Custom is
    --  Free memory associated with X.
 
    function Execute
-     (Command       : access Custom_Command;
-      Event         : Gdk.Event.Gdk_Event) return Command_Return_Type;
+     (Command : access Custom_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Execute Command, and return Success if the command could be launched
    --  successfully.
    --  Context-related arguments (like "%f", "%p" and so on) are converted

@@ -21,7 +21,6 @@
 with Glib.Values;
 with Pango.Font;                use Pango.Font;
 with Gdk.Dnd;                   use Gdk.Dnd;
-with Gdk.Event;                 use Gdk.Event;
 with Glib.Error;                use Glib.Error;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
@@ -96,7 +95,7 @@ package body Glide_Main_Window is
      MDI_Child_Selection_Command'Class;
    function Execute
      (Command : access MDI_Child_Selection_Command;
-      Event   : Gdk_Event)
+      Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  Check whether Event should activate the selection dialog for MDI
    --  children.
@@ -112,7 +111,7 @@ package body Glide_Main_Window is
      MDI_Window_Actions_Command'Class;
    function Execute
      (Command : access MDI_Window_Actions_Command;
-      Event   : Gdk_Event)
+      Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  Act on the layout of windows
 
@@ -130,10 +129,10 @@ package body Glide_Main_Window is
 
    function Execute
      (Command : access MDI_Window_Actions_Command;
-      Event   : Gdk_Event)
+      Context : Interactive_Command_Context)
       return Command_Return_Type
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Context);
    begin
       case Command.Mode is
          when Split_H =>
@@ -768,7 +767,7 @@ package body Glide_Main_Window is
 
    function Execute
      (Command : access MDI_Child_Selection_Command;
-      Event   : Gdk_Event) return Command_Return_Type is
+      Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       if Command.Mode = Notebook_Windows then
          Check_Interactive_Selection_Dialog
@@ -777,7 +776,7 @@ package body Glide_Main_Window is
             Visible_In_Central_Only => Command.Mode = Notebook_Windows);
       else
          Check_Interactive_Selection_Dialog
-           (Get_MDI (Command.Kernel), Event,
+           (Get_MDI (Command.Kernel), Context.Event,
             Move_To_Next => Command.Move_To_Next,
             Visible_In_Central_Only => Command.Mode = Notebook_Windows);
       end if;
