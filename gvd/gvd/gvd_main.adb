@@ -237,17 +237,18 @@ procedure GVD_Main is
                            "[--pargs [program options]]");
          Put_Line (-"Options:");
          Put_Line
-           (-"   --debugger DEBUG  use DEBUG as the underlying debugger.");
-         Put_Line (-"   --jdb             assume a java debugger.");
-         Put_Line (-"   --host HOST       Run inferior debugger on HOST.");
-         Put_Line (-("   --target TARG:PRO " &
+           (-"   --debugger DEBUG    use DEBUG as the underlying debugger.");
+         Put_Line (-"   --jdb               assume a java debugger.");
+         Put_Line (-"   --host HOST         Run inferior debugger on HOST.");
+         Put_Line (-("   --target=TARG:PRO   " &
                      "Load program on machine TARG using protocol PRO."));
          Put_Line
-           (-"   --log-level [0-4] Set level of logging (Default is 3).");
+           (-"   --log-level [0-4]   Set level of logging (Default is 3).");
+         Put_Line (-"   --editor-window=xid Use xid as the editor X window.");
          Put_Line
-           (-("   --tty             Use controlling tty as additional " &
+           (-("   --tty               Use controlling tty as additional " &
               "debugger console."));
-         Put_Line (-"   --version         Show the GVD version and exit.");
+         Put_Line (-"   --version           Show the GVD version and exit.");
          New_Line;
          Put_Line (-"Other arguments are passed to the underlying debugger.");
 
@@ -327,7 +328,7 @@ begin
    Initialize_Option_Scan (Section_Delimiters => "-dargs -pargs");
 
    loop
-      case Getopt ("-debugger: -jdb -parent-window: -tty fullname " &
+      case Getopt ("-debugger: -jdb -editor-window: -tty fullname " &
         "-version -help -host: -log-level: -target:")
       is
          -- long option names --
@@ -338,6 +339,11 @@ begin
                when 'd' =>
                   Free (Debugger_Name);
                   Debugger_Name := new String' (Clean_Parameter);
+
+               when 'e' =>
+                  -- --editor-window --
+                  Main_Debug_Window.External_XID :=
+                    Guint'Value (Clean_Parameter);
 
                -- -fullname --
                when 'f' => null;
@@ -373,11 +379,6 @@ begin
                          (GVD.Types.Command_Type'Pos
                            (GVD.Types.Command_Type'Last) + 1 - Level);
                   end if;
-
-               when 'p' =>
-                  -- --parent-window --
-                  Main_Debug_Window.External_XID :=
-                    Guint'Value (Clean_Parameter);
 
                when 't' =>
                   -- --tty --
