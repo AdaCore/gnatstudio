@@ -1591,7 +1591,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
             Create_Pixmap_From_Text
               (Text       => Value.all,
-               Font       => Get_Pref (GVD_Prefs, Value_Font),
+               Font       =>
+                 Get_Pref (GVD_Prefs, GVD.Preferences.Default_Font),
                Bg_Color   => White (Get_Default_Colormap),
                Widget     => Widget,
                Pixmap     => Pixmap,
