@@ -24,8 +24,10 @@ with Gdk.Color;        use Gdk.Color;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Window;       use Gdk.Window;
 with Glib;             use Glib;
+with Gtk.Handlers;     use Gtk.Handlers;
 with Gtk.Layout;       use Gtk.Layout;
 with Gtk.Menu;         use Gtk.Menu;
+with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtk.Pixmap;       use Gtk.Pixmap;
 with Gtk.Text;         use Gtk.Text;
 with Gtk.Widget;       use Gtk.Widget;
@@ -36,13 +38,14 @@ with Odd.Strings;      use Odd.Strings;
 with Odd.Text_Boxes;   use Odd.Text_Boxes;
 with Odd.Types;        use Odd.Types;
 with GNAT.Regpat;      use GNAT.Regpat;
-
-with Ada.Text_IO;      use Ada.Text_IO;
+with Odd_Intl;         use Odd_Intl;
 
 package body Odd.Asm_Editors is
 
    Editor_Highlight_Color : constant String := "#FF0000";
    --  Color to use to highlight the assembly code for the current line (red)
+
+   package Editor_Cb is new Callback (Asm_Editor_Record);
 
    function Line_From_Address
      (Editor  : access Asm_Editor_Record'Class;
@@ -71,6 +74,30 @@ package body Odd.Asm_Editors is
       Result : out Boolean;
       Num    : out Integer);
    --  Result is set to True if a breakpoint is set at address Addr
+
+   procedure On_Frame_Changed
+     (Editor : access Asm_Editor_Record'Class;
+      Pc     : String);
+   --  Called when the assembly code for the address PC needs to be loaded.
+   --  This gets the assembly source code for that frame, and display it in
+   --  the editor.
+
+   function In_Range
+     (Pc     : String;
+      R      : Cache_Data_Access)
+     return Boolean;
+   --  Return True if PC is in the range of address described by R.
+
+   function Find_In_Cache
+     (Editor : access Asm_Editor_Record'Class;
+      Pc     : String)
+     return Cache_Data_Access;
+   --  Return the cached data that contains PC.
+   --  null is returned if none is found.
+
+   procedure Show_Current_Line_Menu
+     (Editor : access Asm_Editor_Record'Class);
+   --  Display the current line in the editor.
 
    -------------
    -- Gtk_New --
@@ -136,33 +163,46 @@ package body Odd.Asm_Editors is
    -- On_Frame_Changed --
    ----------------------
 
-   procedure On_Frame_Changed (Editor : access Asm_Editor_Record) is
+   procedure On_Frame_Changed
+     (Editor : access Asm_Editor_Record'Class;
+      Pc     : String)
+   is
       Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
       S       : String_Access;
       Start,
       Last    : Address_Type;
       Start_End, Last_End : Natural;
+      Low_Range, High_Range : String_Access;
    begin
-      Get_Machine_Code
-        (Process.Debugger,
-         Range_Start     => Start,
-         Range_End       => Last,
-         Range_Start_Len => Start_End,
-         Range_End_Len   => Last_End,
-         Code            => S);
+      Editor.Current_Range := Find_In_Cache (Editor, Pc);
 
-      Set_Buffer (Editor, S);
+      if Editor.Current_Range = null then
+         Get_Machine_Code
+           (Process.Debugger,
+            Range_Start     => Start,
+            Range_End       => Last,
+            Range_Start_Len => Start_End,
+            Range_End_Len   => Last_End,
+            Code            => S);
+
+         if Start_End /= 0 then
+            Low_Range := new String'(Start (1 .. Start_End));
+         end if;
+         if Last_End /= 0 then
+            High_Range := new String'(Last (1 .. Last_End));
+         end if;
+
+         Editor.Cache := new Cache_Data'
+           (Low  => Low_Range,
+            High => High_Range,
+            Data => S,
+            Next => Editor.Cache);
+         Editor.Current_Range := Editor.Cache;
+      end if;
+
+      Set_Buffer (Editor, Editor.Current_Range.Data, Clear_Previous => False);
+      Editor.Highlight_Start := 0;
       Update_Child (Editor);
-
-      --  ??? Should set Low_Range and High_Range
-      Free (Editor.Low_Range);
-      Free (Editor.High_Range);
-      if Start_End /= 0 then
-         Editor.Low_Range := new String'(Start (1 .. Start_End));
-      end if;
-      if Last_End /= 0 then
-         Editor.High_Range := new String'(Last (1 .. Last_End));
-      end if;
    end On_Frame_Changed;
 
    -----------------------
@@ -206,9 +246,18 @@ package body Odd.Asm_Editors is
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu
    is
-      Menu : Gtk_Menu;
+      Menu  : Gtk_Menu;
+      Mitem : Gtk_Menu_Item;
    begin
       Gtk_New (Menu);
+
+      Gtk_New (Mitem, Label => -"Show Current Location");
+      Append (Menu, Mitem);
+      Editor_Cb.Object_Connect
+        (Mitem, "activate",
+         Editor_Cb.To_Marshaller (Show_Current_Line_Menu'Access),
+         Editor);
+
       Append_To_Contextual_Menu
         (Debugger_Process_Tab (Editor.Process).Editor_Text, Menu);
 
@@ -228,12 +277,8 @@ package body Odd.Asm_Editors is
    begin
       --  Do we need to reload some assembly code ?
 
-      if Editor.Low_Range = null
-        or else Editor.High_Range = null
-        or else Pc < Editor.Low_Range.all
-        or else Pc > Editor.High_Range.all
-      then
-         On_Frame_Changed (Editor);
+      if not In_Range (Pc, Editor.Current_Range) then
+         On_Frame_Changed (Editor, Pc);
       end if;
 
       --  Find the right line ?
@@ -469,5 +514,71 @@ package body Odd.Asm_Editors is
       Show_All (Get_Buttons (Editor));
       Thaw (Get_Buttons (Editor));
    end Update_Breakpoints;
+
+   --------------
+   -- In_Range --
+   --------------
+
+   function In_Range
+     (Pc     : String;
+      R      : Cache_Data_Access)
+     return Boolean is
+   begin
+      return R /= null
+        and then R.Low /= null
+        and then R.High /= null
+        and then Pc >= R.Low.all
+        and then Pc <= R.High.all;
+   end In_Range;
+
+   -------------------
+   -- Find_In_Cache --
+   -------------------
+
+   function Find_In_Cache
+     (Editor : access Asm_Editor_Record'Class;
+      Pc     : String)
+     return Cache_Data_Access
+   is
+      Tmp : Cache_Data_Access := Editor.Cache;
+   begin
+      while Tmp /= null loop
+         if In_Range (Pc, Tmp) then
+            return Tmp;
+         end if;
+         Tmp := Tmp.Next;
+      end loop;
+      return null;
+   end Find_In_Cache;
+
+   ---------------------------
+   -- On_Executable_Changed --
+   ---------------------------
+
+   procedure On_Executable_Changed
+     (Editor : access Asm_Editor_Record)
+   is
+      Tmp : Cache_Data_Access := Editor.Cache;
+   begin
+      --  Clear the cache, since it is no longer valid.
+      while Editor.Cache /= null loop
+         Tmp := Editor.Cache.Next;
+         Free (Tmp.Low);
+         Free (Tmp.High);
+         Free (Tmp.Data);
+         Editor.Cache := Tmp;
+      end loop;
+   end On_Executable_Changed;
+
+   ----------------------------
+   -- Show_Current_Line_Menu --
+   ----------------------------
+
+   procedure Show_Current_Line_Menu
+     (Editor : access Asm_Editor_Record'Class)
+   is
+   begin
+      Set_Line (Editor, Get_Line (Editor), Set_Current => True);
+   end Show_Current_Line_Menu;
 
 end Odd.Asm_Editors;

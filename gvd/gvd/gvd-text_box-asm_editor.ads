@@ -62,11 +62,6 @@ package Odd.Asm_Editors is
    --  Current_Line_Icon is displayed on the left of the line currently
    --  "active" (using the procedure Set_Line below).
 
-   procedure On_Frame_Changed (Editor : access Asm_Editor_Record);
-   --  Called whenever the current frame has changed.
-   --  This gets the assembly source code for that frame, and display it in
-   --  the editor.
-
    procedure Set_Address
      (Editor : access Asm_Editor_Record;
       Pc     : String);
@@ -94,7 +89,26 @@ package Odd.Asm_Editors is
       Source_Line : Natural);
    --  Highlight the assembly lines matching a given source line.
 
+   procedure On_Executable_Changed
+     (Editor : access Asm_Editor_Record);
+   --  Called when the executable associated with the explorer has changed.
+
 private
+
+   type Cache_Data;
+   type Cache_Data_Access is access Cache_Data;
+   type Cache_Data is record
+      Low, High : Odd.Types.String_Access;
+      --  The low and high ranges for this item
+
+      Data      : Odd.Types.String_Access;
+      --  The assembly code for that range
+
+      Next      : Cache_Data_Access;
+   end record;
+   --  This implements a cache for the assembly code, for specific ranges.
+   --  Some debuggers (gdb) might take a long time to output the assembly code
+   --  for a specific region, so it is better to keep it once we have it.
 
    type Asm_Editor_Record is new Odd.Text_Boxes.Odd_Text_Box_Record with
       record
@@ -109,7 +123,8 @@ private
          Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
          Stop_Mask      : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
 
-         Low_Range, High_Range : Odd.Types.String_Access;
+         Cache          : Cache_Data_Access;
+         Current_Range  : Cache_Data_Access;
       end record;
 
 end Odd.Asm_Editors;
