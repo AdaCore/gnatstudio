@@ -10,6 +10,7 @@ with Errout;       use Errout;
 
 with Gtk.Window;      use Gtk.Window;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
 
@@ -30,6 +31,7 @@ procedure Prj_Editor is
    Scenar : Scenario_View;
    MDI : MDI_Window;
    Child : MDI_Child;
+   Scrolled : Gtk_Scrolled_Window;
 
    procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class);
    --  Called every time the selection has changed in the tree
@@ -100,8 +102,12 @@ begin
 
 
    --  Explorer
+   Gtk_New (Scrolled);
+   Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
    Gtk_New (Tree, Columns => 1);
-   Child := Put (MDI, Tree);
+   Add (Scrolled, Tree);
+   Child := Put (MDI, Scrolled);
+   Set_Title (Child, "Explorer");
    Set_Dock_Side (Child, Left);
    Dock_Child (Child);
 
@@ -112,21 +118,24 @@ begin
      (Tree, "tree_unselect_row",
       Widget_Callback.To_Marshaller (Selection_Changed'Unrestricted_Access));
 
-   --  Project Viewer
-
-   Gtk_New (Viewer);
-   Child := Put (MDI, Viewer);
-
    --  Scenario editor
 
    Gtk_New (Scenar, Project);
    Child := Put (MDI, Scenar);
+   Set_Title (Child, "Current Scenario");
    Set_Dock_Side (Child, Top);
    Dock_Child (Child);
 
    Widget_Callback.Object_Connect
      (Scenar, "changed",
       Widget_Callback.To_Marshaller (Refresh_Tree'Unrestricted_Access), Tree);
+
+   --  Project Viewer
+
+   Gtk_New (Viewer);
+   Child := Put (MDI, Viewer);
+   Set_Title (Child, "Project Contents");
+
 
    Refresh_Tree (Tree);
 
