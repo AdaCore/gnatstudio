@@ -2448,6 +2448,7 @@ package body Gtkada.MDI is
          Set_Show_Tabs (MDI.Docks (Side), False);
          Set_Show_Border (MDI.Docks (Side), False);
          Set_Border_Width (MDI.Docks (Side), 0);
+         Set_Scrollable (MDI.Docks (Side));
          --  Coordinates don't matter, they are set in Size_Allocate_MDI.
          Put (MDI, MDI.Docks (Side), 0, 0);
          Widget_Callback.Connect
@@ -2455,15 +2456,19 @@ package body Gtkada.MDI is
             Docked_Switch_Page'Access, After => True);
 
          --   Size to be computed
+
          if Side /= None then
             MDI.Docks_Size (Side) := -1;
          end if;
+
          Show_All (MDI.Docks (Side));
 
       else
          --  Putting the following creates an infinite loop with the
          --  size_allocate signal in GVD (in the source window, when it is
          --  maximized).
+         --  Is this still True ???
+
          Set_Show_Tabs (MDI.Docks (Side), True);
       end if;
    end Create_Notebook;
