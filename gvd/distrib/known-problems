@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 2.0.0
 
+- Data window items folded on update
+  Problem:    When the items displayed in the data window are refreshed, they
+              might become folded if they are too big, even though the user
+              has explicitely unfolded them.
+  Workaround: Clone the part of the item that you want to keep visible. This
+              part, being smaller, will not be folded automatically.
+
 - Aliasing detection with first field of a structure
   Problem:    In the data window, a structure (or Ada record) and its first
               field are always considered as aliases
