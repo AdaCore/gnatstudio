@@ -124,6 +124,7 @@ package body Language.Debugger.Ada is
            and then Buffer (Next_Char) /= ASCII.LF
            and then Buffer (Next_Char) /= ASCII.HT
            and then Buffer (Next_Char) /= '"'
+           and then Buffer (Next_Char) /= '-'   --  for comments
          loop
             Next_Char := Next_Char + 1;
          end loop;
