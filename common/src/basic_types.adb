@@ -72,8 +72,7 @@ package body Basic_Types is
                     ((Case_Sensitive and then L1 (A).all = L2 (B).all)
                      or else
                      (not Case_Sensitive
-                      and then To_Lower (L1 (A).all) =
-                               To_Lower (L2 (B).all)))
+                      and then To_Lower (L1 (A).all) = To_Lower (L2 (B).all)))
                   then
                      L1 (A) := null;
                      L2 (B) := null;

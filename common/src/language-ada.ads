@@ -26,7 +26,7 @@ package Language.Ada is
    type Ada_Language is new Language_Root with private;
 
    Ada_Lang : constant Language_Access;
-   --  Class constant for the Ada language.
+   --  Class constant for the Ada language
 
    -------------
    -- Parsing --
