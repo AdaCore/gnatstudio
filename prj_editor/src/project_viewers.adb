@@ -2446,16 +2446,16 @@ package body Project_Viewers is
                      Ref_Item => -"Open...", Add_Before => True);
 
       Prj_Editor_Module_ID.Reopen_Menu := Register_Menu
-        (Kernel, Project, -"Reopen", "",
+        (Kernel, Project, -"Recent", "",
          null, Ref_Item => -"Open...", Add_Before => False);
       Refresh_Reopen_Menu (Kernel);
 
       Register_Menu
         (Kernel, Project, -"Edit Switches", "",
-         On_Edit_Switches'Access, Ref_Item => -"Reopen", Add_Before => False);
+         On_Edit_Switches'Access, Ref_Item => -"Recent", Add_Before => False);
       Register_Menu
         (Kernel, Project, -"Edit Properties", "",
-         On_Project_Properties'Access, Ref_Item => -"Reopen",
+         On_Project_Properties'Access, Ref_Item => -"Recent",
          Add_Before => False);
       Register_Menu
         (Kernel, Project, -"Save All", "",
