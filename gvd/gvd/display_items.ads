@@ -54,6 +54,11 @@ package Display_Items is
                                Auto_Refresh : Boolean);
    --  Change the auto refresh status of the item, and update its pixmap.
 
+   procedure On_Background_Click
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Event  : Gdk.Event.Gdk_Event);
+   --  Called for clicks in the background of the canvas.
+
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record
@@ -63,6 +68,11 @@ private
          Debugger     : Odd.Process.Debugger_Process_Tab;
 
          Title_Height : Glib.Gint;
+
+         Contents_Valid : Boolean := False;
+         --  Set to True if the value of the variable could be parsed (ie the
+         --  Entity fields contains both the types and the value). Set to
+         --  False if Entity contains only the type definition.
 
          Id           : Generic_Values.String_Access := null;
          --  Uniq ID used for the variable.

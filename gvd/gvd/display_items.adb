@@ -37,6 +37,8 @@ with Language;         use Language;
 with Gdk.Types;        use Gdk.Types;
 with Gdk.Event;        use Gdk.Event;
 with Odd.Pixmaps;      use Odd.Pixmaps;
+with Gtk.Menu;         use Gtk.Menu;
+with Odd.Menus;        use Odd.Menus;
 
 with Ada.Text_IO;      use Ada.Text_IO;
 
@@ -107,6 +109,8 @@ package body Display_Items is
    Title_Font : Gdk.Font.Gdk_Font;
    Refresh_Button_Gc : Gdk.GC.Gdk_GC;
 
+   Trash_Pixmap        : Gdk_Pixmap;
+   Trash_Mask          : Gdk_Bitmap;
    Close_Pixmap        : Gdk_Pixmap;
    Close_Mask          : Gdk_Bitmap;
    Locked_Pixmap       : Gdk_Pixmap;
@@ -132,6 +136,13 @@ package body Display_Items is
    --  its visibility state changed.
    --  If Component is null, the whole item is redraw, otherwise only the
    --  specific Component is updated.
+
+   procedure Select_Item (Item      : access Display_Item_Record'Class;
+                          Component : Generic_Type_Access);
+   --  Select a specific Component in Item, after unselecting the current
+   --  selection.
+   --  If Component is null, no new selection is made, but the current one is
+   --  released.
 
    procedure Dereference_Item (Item : access Display_Item_Record;
                                X    : Gint;
@@ -163,6 +174,8 @@ package body Display_Items is
       Auto_Refresh  : Boolean := True)
    is
       Entity : Generic_Type_Access;
+      Value_Found : Boolean := False;
+      Alias_Item : Display_Item;
    begin
       Set_Internal_Command (Get_Process (Debugger.Debugger), True);
 
@@ -174,7 +187,10 @@ package body Display_Items is
          --  is True.
          Item := null;
 
-         if Search_Item (Debugger.Data_Canvas, Id) /= null then
+         Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
+         if Alias_Item /= null then
+            Select_Item (Alias_Item, Alias_Item.Entity);
+            Show_Item (Debugger.Data_Canvas, Alias_Item);
             Set_Internal_Command (Get_Process (Debugger.Debugger), False);
             return;
          end if;
@@ -189,10 +205,12 @@ package body Display_Items is
                Set_Internal_Command (Get_Process (Debugger.Debugger), False);
                return;
             else
-               Parse_Value (Debugger.Debugger, Variable_Name, Entity);
+               Parse_Value (Debugger.Debugger, Variable_Name, Entity,
+                            Value_Found);
             end if;
 
             Item := new Display_Item_Record;
+            Item.Contents_Valid := Value_Found;
             Item.Entity := Entity;
 
             --  If we got an exception while parsing the value, we create the
@@ -260,18 +278,25 @@ package body Display_Items is
            (Close_Pixmap, Win, Close_Mask, Null_Color, cancel_xpm);
          Create_From_Xpm_D
            (Locked_Pixmap, Win, Locked_Mask, Null_Color, lock_xpm);
+         Create_From_Xpm_D (Box_Pixmap, Win, Box_Mask, Null_Color, box_xpm);
+         Create_From_Xpm_D
+           (Trash_Pixmap, Win, Trash_Mask, Null_Color, trash_xpm);
          Create_From_Xpm_D
            (Auto_Display_Pixmap,
             Win, Auto_Display_Mask, Null_Color, display_small_xpm);
-         Create_From_Xpm_D (Box_Pixmap, Win, Box_Mask, Null_Color, box_xpm);
 
          Set_Hidden_Pixmap (Box_Pixmap, Box_Mask);
+         Set_Unknown_Pixmap (Trash_Pixmap, Trash_Mask);
       end if;
 
       --  Compute the size, hidding if necessary the big components. However,
       --  we never want the top level item to be hidden, so we force it to
       --  visible (and possibly recalculate the size).
-      Size_Request (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
+
+      Set_Valid (Item.Entity, Item.Contents_Valid);
+
+      Size_Request
+        (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity.all, True);
          Size_Request (Item.Entity.all, Font);
@@ -297,7 +322,7 @@ package body Display_Items is
 
       --  Compute the width and height of the title bar
 
-      Title_Width := (2 + Num_Buttons) * Spacing
+      Title_Width := (5 + Num_Buttons) * Spacing
         + String_Width (Font, Item.Name.all)
         + Num_Buttons * Buttons_Size;
       Title_Height := Gint'Max
@@ -401,7 +426,6 @@ package body Display_Items is
       Set_Clip_Mask (Black_Gc, Null_Pixmap);
       Set_Clip_Origin (Black_Gc, 0, 0);
 
-
       if Item.Entity /= null then
          Paint (Item.Entity.all, Black_GC, Xref_Gc, Font,
                 Pixmap (Item),
@@ -444,16 +468,19 @@ package body Display_Items is
    is
       Alias_Item : Display_Item := null;
 
-      procedure Alias_Found (Canvas : access Interactive_Canvas_Record'Class;
-                             Item   : access Canvas_Item_Record'Class);
+      function Alias_Found (Canvas : access Interactive_Canvas_Record'Class;
+                            Item   : access Canvas_Item_Record'Class)
+                           return Boolean;
       --  Set New_Item to a non-null value if an alias was found for
+      --  Return False when we need to stop traversing the list of children.
 
       -----------------
       -- Alias_Found --
       -----------------
 
-      procedure Alias_Found (Canvas : access Interactive_Canvas_Record'Class;
-                             Item   : access Canvas_Item_Record'Class)
+      function Alias_Found (Canvas : access Interactive_Canvas_Record'Class;
+                            Item   : access Canvas_Item_Record'Class)
+                           return Boolean
       is
       begin
          if Display_Item (Item).Id /= null
@@ -461,7 +488,9 @@ package body Display_Items is
            and then Display_Item (Item).Id.all = Id
          then
             Alias_Item := Display_Item (Item);
+            return False;
          end if;
+         return True;
       end Alias_Found;
 
    begin
@@ -531,6 +560,47 @@ package body Display_Items is
       end if;
    end Dereference_Item;
 
+   -----------------
+   -- Select_Item --
+   -----------------
+
+   procedure Select_Item (Item      : access Display_Item_Record'Class;
+                          Component : Generic_Type_Access)
+   is
+   begin
+      --  Unselect the current selection
+
+      if Item.Debugger.Selected_Item /= null
+        and then Item.Debugger.Selected_Component /= Component
+      then
+         Set_Selected (Item.Debugger.Selected_Component, False);
+         Update_Component (Display_Item (Item.Debugger.Selected_Item),
+                           Item.Debugger.Selected_Component);
+         if Item.Debugger.Selected_Item /= Canvas_Item (Item)
+           or else Component = null
+         then
+            Gtkada.Canvas.Item_Updated
+              (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
+         end if;
+      end if;
+
+      --  Select the new one
+
+      if Component /= null then
+         Set_Selected (Component, not Get_Selected (Component));
+         Update_Component (Item, Component);
+         Gtkada.Canvas.Item_Updated (Item.Debugger.Data_Canvas, Item);
+         if Get_Selected (Component) then
+            Item.Debugger.Selected_Item := Canvas_Item (Item);
+            Item.Debugger.Selected_Component := Component;
+         else
+            Item.Debugger.Selected_Item := null;
+         end if;
+      else
+         Item.Debugger.Selected_Item := null;
+      end if;
+   end Select_Item;
+
    ---------------------
    -- On_Button_Click --
    ---------------------
@@ -541,6 +611,7 @@ package body Display_Items is
       Buttons_Start : Gint :=
         Gint (Get_Coord (Item).Width) - Num_Buttons * Buttons_Size
         - Num_Buttons * Spacing + 1;
+      Component : Generic_Type_Access;
    begin
 
       --  Click in a button ?
@@ -576,18 +647,32 @@ package body Display_Items is
             end if;
             Buttons_Start := Buttons_Start + Buttons_Size + Spacing;
          end loop;
+         return;
       end if;
+
+      --  Get the selected component
+
+      Component := Get_Component
+        (Item.Entity, Gint (Get_X (Event)),
+         Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
+
+      --  Contextual menus ?
+
+      if Get_Button (Event) = 3
+        and then Get_Event_Type (Event) = Button_Press
+      then
+         Popup (Item_Contextual_Menu (Item.Debugger.Data_Canvas,
+                                      Item,
+                                      Component),
+                Button            => Get_Button (Event),
+                Activate_Time     => Get_Time (Event));
 
       --  Dereferencing access types.
 
-      if Get_Button (Event) = 1
+      elsif Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
         and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
-        and then Get_Component
-        (Item.Entity,
-         Gint (Get_X (Event)),
-         Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing).all
-        in Access_Type'Class
+        and then Component.all in Access_Type'Class
       then
          Dereference_Item
            (Item,
@@ -601,16 +686,10 @@ package body Display_Items is
         and then Get_Event_Type (Event) = Gdk_2button_Press
         and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
       then
-         declare
-            Component : Generic_Type_Access := Get_Component
-              (Item.Entity, Gint (Get_X (Event)),
-               Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
-         begin
-            Set_Visibility (Component.all, not Get_Visibility (Component.all));
-            Size_Request (Item.Entity.all, Font);
-            Update_Display (Item);
-            Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
-         end;
+         Set_Visibility (Component.all, not Get_Visibility (Component.all));
+         Size_Request (Item.Entity.all, Font);
+         Update_Display (Item);
+         Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
 
       --  Selecting a component
 
@@ -618,34 +697,7 @@ package body Display_Items is
         and then Get_Event_Type (Event) = Button_Release
         and then Gint (Get_Y (Event)) > Spacing + Buttons_Size
       then
-         declare
-            Component : Generic_Type_Access := Get_Component
-              (Item.Entity, Gint (Get_X (Event)),
-               Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
-         begin
-            if Item.Debugger.Selected_Item /= null
-              and then Item.Debugger.Selected_Component /= Component
-            then
-               Set_Selected (Item.Debugger.Selected_Component, False);
-               Update_Component (Display_Item (Item.Debugger.Selected_Item),
-                                 Item.Debugger.Selected_Component);
-               if Item.Debugger.Selected_Item /= Canvas_Item (Item)  then
-                  Gtkada.Canvas.Item_Updated
-                    (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
-               end if;
-            end if;
-
-            Set_Selected (Component, not Get_Selected (Component));
-            Update_Component (Item, Component);
-            Gtkada.Canvas.Item_Updated (Item.Debugger.Data_Canvas, Item);
-            if Get_Selected (Component) then
-               Item.Debugger.Selected_Item := Canvas_Item (Item);
-               Item.Debugger.Selected_Component := Component;
-            else
-               Item.Debugger.Selected_Item := null;
-            end if;
-         end;
-         null;
+         Select_Item (Item, Component);
       end if;
    end On_Button_Click;
 
@@ -661,18 +713,18 @@ package body Display_Items is
    begin
       Item.Auto_Refresh := Auto_Refresh;
 
+      Draw_Rectangle (Pixmap (Item),
+                      GC     => Grey_GC,
+                      Filled => True,
+                      X      => Width - 2 * Buttons_Size - 2 * Spacing,
+                      Y      => Spacing,
+                      Width  => Buttons_Size,
+                      Height => Buttons_Size);
+      Set_Clip_Origin (Black_Gc,
+                       Width - 2 * Buttons_Size - 2 * Spacing,
+                       Spacing);
       if Item.Auto_Refresh then
-         Draw_Rectangle (Pixmap (Item),
-                         GC     => Grey_GC,
-                         Filled => True,
-                         X      => Width - 2 * Buttons_Size - 2 * Spacing,
-                         Y      => Spacing,
-                         Width  => Buttons_Size,
-                         Height => Buttons_Size);
          Set_Clip_Mask (Black_Gc, Auto_Display_Mask);
-         Set_Clip_Origin (Black_Gc,
-                          Width - 2 * Buttons_Size - 2 * Spacing,
-                          Spacing);
          Draw_Pixmap (Pixmap (Item),
                       GC     => Black_Gc,
                       Src    => Auto_Display_Pixmap,
@@ -681,17 +733,7 @@ package body Display_Items is
                       Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
                       Ydest  => Spacing);
       else
-         Draw_Rectangle (Pixmap (Item),
-                         GC     => Grey_Gc,
-                         Filled => True,
-                         X      => Width - 2 * Buttons_Size - 2 * Spacing,
-                         Y      => Spacing,
-                         Width  => Buttons_Size,
-                         Height => Buttons_Size);
          Set_Clip_Mask (Black_Gc, Locked_Mask);
-         Set_Clip_Origin (Black_Gc,
-                          Width - 2 * Buttons_Size - 2 * Spacing,
-                          Spacing);
          Draw_Pixmap (Pixmap (Item),
                       GC     => Black_Gc,
                       Src    => Locked_Pixmap,
@@ -699,9 +741,9 @@ package body Display_Items is
                       Ysrc   => 0,
                       Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
                       Ydest  => Spacing);
-         Set_Clip_Mask (Black_Gc, Null_Pixmap);
-         Set_Clip_Origin (Black_Gc, 0, 0);
       end if;
+      Set_Clip_Mask (Black_Gc, Null_Pixmap);
+      Set_Clip_Origin (Black_Gc, 0, 0);
    end Set_Auto_Refresh;
 
    ----------
@@ -719,5 +761,39 @@ package body Display_Items is
       Remove (Item.Debugger.Data_Canvas, Item);
       --  Warning: the memory has been freed after Remove.
    end Free;
+
+   -------------------------
+   -- On_Background_Click --
+   -------------------------
+
+   procedure On_Background_Click
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Event  : Gdk.Event.Gdk_Event)
+   is
+      --  This is slightly complicated since we need to get a valid item
+      --  to undo the selection.
+
+      function Unselect (Canvas : access Interactive_Canvas_Record'Class;
+                         Item   : access Canvas_Item_Record'Class)
+                        return Boolean
+      is
+         pragma Warnings (Off, Canvas);
+      begin
+         Select_Item (Display_Item (Item), null);
+         return False;
+      end Unselect;
+
+   begin
+      if Get_Button (Event) = 1 then
+         For_Each_Item (Canvas, Unselect'Unrestricted_Access);
+
+      elsif Get_Button (Event) = 3
+        and then Get_Event_Type (Event) = Button_Press
+      then
+         Popup (Contextual_Background_Menu (Canvas),
+                Button            => Get_Button (Event),
+                Activate_Time     => Get_Time (Event));
+      end if;
+   end On_Background_Click;
 
 end Display_Items;
