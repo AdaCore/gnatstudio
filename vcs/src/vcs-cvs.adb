@@ -558,7 +558,7 @@ package body VCS.CVS is
       Next_Index : Natural;
 
    begin
-      --  ??? Do we really have to change the current (global) dfirectory ?
+      --  ??? Do we really have to change the current (global) directory ?
       --  This may have unexpected side effects, so would be nice to avoid it.
 
       Change_Dir (New_Dir);
