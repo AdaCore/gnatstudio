@@ -167,15 +167,19 @@ package body Prj_Normalize is
    is
       Decl_Item : Project_Node_Id := Declarative_Item;
       Case_Item : Project_Node_Id;
-      J : Natural;
       Var_Index : Natural;
       Parent_Decl   : Project_Node_Array_Access;
       Decl_Item_Out : Project_Node_Array_Access;
-      In_Case : Boolean;
 
       procedure Append (Item : Project_Node_Id);
       --  Append Item at the end of the declaration list for all the
       --  Parent_Decl.
+
+      procedure Find_Parent_Decl;
+      --  Find the output declarative item to which statements read in the
+      --  initial project should be added. If we have already seen a case
+      --  statement, then this sets the appropriate list of case items that
+      --  should be appended to.
 
       ------------
       -- Append --
@@ -206,71 +210,80 @@ package body Prj_Normalize is
          end loop;
       end Append;
 
+      ----------------------
+      -- Find_Parent_Decl --
+      ----------------------
+
+      procedure Find_Parent_Decl is
+         In_Case : Boolean;
+         J       : Natural;
+      begin
+         --  First, a quick check to make sure that at least one item in Values
+         --  is not null. Otherwise, we end up appending the same expression to
+         --  all the nodes in the case statement.
+
+         J := Values'First;
+         if Converter.Case_Section = Empty_Node then
+            while J <= Values'Last loop
+               exit when Values (J) /= No_String;
+               J := J + 1;
+            end loop;
+         end if;
+
+         In_Case := (J <= Values'Last);
+
+         --  Find the parent in which new declarations will be added
+
+         if In_Case then
+            if Converter.Case_Section = Empty_Node then
+               Converter.Case_Section := Default_Project_Node
+                 (N_Case_Construction);
+               Set_Case_Variable_Reference_Of
+                 (Converter.Case_Section,
+                  Get_Scenario_Var_Reference (Mgr, Internal_Project));
+            end if;
+            declare
+               Names : constant String_Id_Array :=
+                 Get_Scenario_Names (Mgr, Values, Create => True);
+            begin
+               Parent_Decl := new Project_Node_Array (Names'Range);
+               for A in Names'Range loop
+                  Parent_Decl (A) := Get_Or_Create_Case_Item
+                    (Names (A), Converter.Case_Section);
+               end loop;
+            end;
+         else
+            Parent_Decl := new Project_Node_Array (1 .. 1);
+            Parent_Decl (1) := Converter.Common_Section;
+         end if;
+
+         --  Find the last declaration in that parent
+         --  ??? Can we really call recurse twice with the same Parent.
+         --  ??? If not, we don't need to look for the end, only insert in
+         --  ??? front
+
+         Decl_Item_Out := new Project_Node_Array (Parent_Decl'Range);
+
+         for P in Parent_Decl'Range loop
+            if Parent_Decl (P) /= Empty_Node then
+               Decl_Item_Out (P) :=
+                 First_Declarative_Item_Of (Parent_Decl (P));
+               if Decl_Item_Out (P) /= Empty_Node then
+                  while Next_Declarative_Item (Decl_Item_Out (P))
+                    /= Empty_Node
+                  loop
+                     Decl_Item_Out (P) :=
+                       Next_Declarative_Item (Decl_Item_Out (P));
+                  end loop;
+               end if;
+            else
+               Decl_Item_Out (P) := Empty_Node;
+            end if;
+         end loop;
+      end Find_Parent_Decl;
 
    begin
-      --  First, a quick check to make sure that at least one item in Values is
-      --  not null. Otherwise, we end up appending the same expression to all
-      --  the nodes in the case statement.
-
-      J := Values'First;
-      if Converter.Case_Section = Empty_Node then
-         while J <= Values'Last loop
-            exit when Values (J) /= No_String;
-            J := J + 1;
-         end loop;
-      end if;
-
-      In_Case := (J <= Values'Last);
-
-      --  Find the parent in which new declarations will be added
-      --  ??? Shouldn't be done here: if there is no statement before the case,
-      --  ??? then all declarations will be added in the common section, even
-      --  ??? the ones after the case.
-
-      if In_Case then
-         if Converter.Case_Section = Empty_Node then
-            Converter.Case_Section := Default_Project_Node
-              (N_Case_Construction);
-            Set_Case_Variable_Reference_Of
-              (Converter.Case_Section,
-               Get_Scenario_Var_Reference (Mgr, Internal_Project));
-         end if;
-         declare
-            Names : constant String_Id_Array :=
-              Get_Scenario_Names (Mgr, Values, Create => True);
-         begin
-            Parent_Decl := new Project_Node_Array (Names'Range);
-            for A in Names'Range loop
-               Parent_Decl (A) := Get_Or_Create_Case_Item
-                 (Names (A), Converter.Case_Section);
-            end loop;
-         end;
-      else
-         Parent_Decl := new Project_Node_Array (1 .. 1);
-         Parent_Decl (1) := Converter.Common_Section;
-      end if;
-
-      --  Find the last declaration in that parent
-      --  ??? Can we really call recurse twice with the same Parent.
-      --  ??? If not, we don't need to look for the end, only insert in front
-
-      Decl_Item_Out := new Project_Node_Array (Parent_Decl'Range);
-
-      for P in Parent_Decl'Range loop
-         if Parent_Decl (P) /= Empty_Node then
-            Decl_Item_Out (P) := First_Declarative_Item_Of (Parent_Decl (P));
-            if Decl_Item_Out (P) /= Empty_Node then
-               while Next_Declarative_Item (Decl_Item_Out (P))
-                 /= Empty_Node
-               loop
-                  Decl_Item_Out (P) :=
-                    Next_Declarative_Item (Decl_Item_Out (P));
-               end loop;
-            end if;
-         else
-            Decl_Item_Out (P) := Empty_Node;
-         end if;
-      end loop;
+      Find_Parent_Decl;
 
       --  Add the required nodes
 
@@ -312,6 +325,15 @@ package body Prj_Normalize is
                   Case_Item := Next_Case_Item (Case_Item);
                end loop;
                Values (Var_Index) := No_String;
+
+               --  We then need to reevaluate the parent declaration, since all
+               --  statements from now on need to be added to the case
+               --  statement, otherwise we won't respect the order of commands
+               --  given by the user
+
+               Free (Parent_Decl);
+               Free (Decl_Item_Out);
+               Find_Parent_Decl;
 
             when N_Package_Declaration =>
                declare
