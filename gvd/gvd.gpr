@@ -1,6 +1,7 @@
 with "../gtkada/gtkada";
 with "gnat_gvd";
 with "gvd_common";
+with "../kernel/kernel";
 
 project GVD is
 
