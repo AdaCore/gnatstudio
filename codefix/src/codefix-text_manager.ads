@@ -1010,6 +1010,7 @@ package Codefix.Text_Manager is
      (This         : in out Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor'Class;
+      New_Position : File_Cursor'Class;
       Add_Spaces   : Boolean := True;
       Position     : Relative_Position := Specified);
    --  Set all the marks that will be necessary later to insert the word.
@@ -1021,7 +1022,7 @@ package Codefix.Text_Manager is
      (This         : Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
-   --  Set an extact with the word inserted.
+   --  Set an extract with the word inserted.
 
    --------------------
    -- Move_Word_Cmd  --
@@ -1245,6 +1246,7 @@ private
       Word       : Word_Mark;
       Add_Spaces : Boolean := True;
       Position   : Relative_Position := Specified;
+      New_Position : Word_Mark;
    end record;
 
    type Move_Word_Cmd is new Text_Command with record
