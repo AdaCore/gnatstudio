@@ -12,8 +12,6 @@
   * [Yeti] Set case sensitivity of Files_Combo and Directory_Combo accordingly
     with the underlying OS
 
-8 * [Yeti] Update sensitivity of "Files" and "Directory" labels
-
   * [Yeti] Add predefined files extensions
     e.g.: *.ad[sb], *.[ch], *.java, ...
 
