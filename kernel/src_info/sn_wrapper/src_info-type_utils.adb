@@ -240,43 +240,37 @@ package body Src_Info.Type_Utils is
       end if;
 
       --  look in classes
-      if Is_Open (SN_Table (CL)) then
-         declare
-            Class_Def  : CL_Table;
-         begin
-            Find_Class (Type_Name, SN_Table, Desc, Class_Def, Success);
-            if Success then
-               Free (Class_Def);
-               return;
-            end if;
-         end;
-      end if;
+      declare
+         Class_Def  : CL_Table;
+      begin
+         Find_Class (Type_Name, SN_Table, Desc, Class_Def, Success);
+         if Success then
+            Free (Class_Def);
+            return;
+         end if;
+      end;
 
       --  look in unions
-      if Is_Open (SN_Table (UN)) then
-         declare
-            Union_Def  : UN_Table;
-         begin
-            Find_Union (Type_Name, SN_Table, Desc, Union_Def, Success);
-            if Success then
-               Free (Union_Def);
-               return;
-            end if;
-         end;
-      end if;
+      declare
+         Union_Def  : UN_Table;
+      begin
+         Find_Union (Type_Name, SN_Table, Desc, Union_Def, Success);
+         if Success then
+            Free (Union_Def);
+            return;
+         end if;
+      end;
 
       --  look in enums
-      if Is_Open (SN_Table (E)) then
-         declare
-            Enum_Def : E_Table;
-         begin
-            Find_Enum (Type_Name, SN_Table, Desc, Enum_Def, Success);
-            if Success then
-               Free (Enum_Def);
-               return;
-            end if;
-         end;
-      end if;
+      declare
+         Enum_Def : E_Table;
+      begin
+         Find_Enum (Type_Name, SN_Table, Desc, Enum_Def, Success);
+         if Success then
+            Free (Enum_Def);
+            return;
+         end if;
+      end;
 
       --  try template arguments
       if (Symbol /= Undef) and (Symbol /= CL) and (Symbol /= UN) then
@@ -462,6 +456,9 @@ package body Src_Info.Type_Utils is
       Matches      : Match_Array (0 .. 1);
    begin
       Success := False;
+      if not Is_Open (SN_Table (CL)) then
+         return;
+      end if;
       Match (Template_Type_Pat, Type_Name, Matches);
       if Matches (0) /= No_Match then
          Find
@@ -515,6 +512,9 @@ package body Src_Info.Type_Utils is
       Matches      : Match_Array (0 .. 1);
    begin
       Success := False;
+      if not Is_Open (SN_Table (UN)) then
+         return;
+      end if;
       Match (Template_Type_Pat, Type_Name, Matches);
       if Matches (0) /= No_Match then
          Find
@@ -567,6 +567,9 @@ package body Src_Info.Type_Utils is
       Matches : Match_Array (0 .. 1);
    begin
       Success := False;
+      if not Is_Open (SN_Table (E)) then
+         return;
+      end if;
       Match (Template_Type_Pat, Type_Name, Matches);
 
       if Matches (0) /= No_Match then
