@@ -1091,6 +1091,12 @@ package body String_Utils is
 
          if Args (J) /= null then
             Len := Len + Args (J)'Length + 3;
+
+            for T in Args (J)'Range loop
+               if Args (J)(T) = Quote then
+                  Len := Len + 1;
+               end if;
+            end loop;
          end if;
       end loop;
 
@@ -1098,20 +1104,44 @@ package body String_Utils is
          Result : String (1 .. Len + 1);
          Ind    : Natural := Result'First;
 
+         procedure Append (Str : String);
+         --  Append the contents of Str to Result, protecting quote characters
+
+         ------------
+         -- Append --
+         ------------
+
+         procedure Append (Str : String) is
+         begin
+            for J in Str'Range loop
+               if Str (J) = Quote then
+                  Result (Ind)     := '\';
+                  Result (Ind + 1) := Quote;
+                  Ind := Ind + 2;
+               else
+                  Result (Ind) := Str (J);
+                  Ind := Ind + 1;
+               end if;
+            end loop;
+         end Append;
+
       begin
          for J in Args'Range loop
             if Args (J) /= null then
                if Index (Args (J).all, " ") > 0
                  and then Index (Args (J).all, (1 => Quote)) = 0
                then
-                  Result (Ind .. Ind + Args (J)'Length + 2) :=
-                    Quote & Args (J).all & Quote & " ";
-                  Ind := Ind + Args (J)'Length + 3;
+                  Result (Ind) := Quote;
+                  Ind := Ind + 1;
+                  Append (Args (J).all);
+                  Result (Ind) := Quote;
+                  Result (Ind + 1) := ' ';
+                  Ind := Ind + 2;
 
                else
-                  Result (Ind .. Ind + Args (J)'Length) :=
-                    Args (J).all & " ";
-                  Ind := Ind + Args (J)'Length + 1;
+                  Append (Args (J).all);
+                  Result (Ind) := ' ';
+                  Ind := Ind + 1;
                end if;
             end if;
          end loop;
