@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 2.2.0
 
+- D713-012 Improper substitution in XML files
+  Problem:    When chaining multiple shell commands in an XML action, the
+              second command can refer to the output of the first by using %1.
+              However, this is improperly detected by GPS when using
+              "%1.suffix" (ie the 1 character immediately followed by other
+              chars
+  Workaround: Put a blank after "%1 "
+
 - DA17-002 Extra spaces adding in GPS shell commands
   Problem:    When chaining multiple commands in an action for instance, the
               result of previous commands always ends with a space. Likewise,
