@@ -1,0 +1,14 @@
+with "gvd";
+with "../kernel/kernel";
+
+project GVD_Glide is
+
+   for Source_Dirs use ("glide");
+   for Object_Dir use "obj";
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
+   end Compiler;
+
+end GVD_Glide;
