@@ -509,4 +509,18 @@ package body Items.Classes is
       end if;
    end Draw_Border;
 
+   -------------------
+   -- Set_Type_Name --
+   -------------------
+
+   procedure Set_Type_Name
+     (Item : access Class_Type;
+      Name : String)
+   is
+   begin
+      if Item.Child /= null then
+         Set_Type_Name (Item.Child, Name);
+      end if;
+   end Set_Type_Name;
+
 end Items.Classes;

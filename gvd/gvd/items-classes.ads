@@ -114,6 +114,9 @@ private
      (Parent       : access Class_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
+   procedure Set_Type_Name
+     (Item : access Class_Type;
+      Name : String);
 
    type Class_Iterator is new Generic_Iterator with record
       Item     : Class_Type_Access;
