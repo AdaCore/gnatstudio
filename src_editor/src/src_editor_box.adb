@@ -726,16 +726,29 @@ package body Src_Editor_Box is
               & Base_Name (Get_Filename
                   (Get_File (Get_Declaration_Of (Entity)))) & ':'
               & Image (Get_Line (Get_Declaration_Of (Entity)));
+            Doc : constant String := Get_Documentation (Entity);
 
          begin
-            Create_Pixmap_From_Text
-              (Text     => Str,
-               Font     => Get_Pref (Data.Box.Kernel, Default_Font),
-               Bg_Color => White (Get_Default_Colormap),
-               Widget   => Widget,
-               Pixmap   => Pixmap,
-               Width    => Width,
-               Height   => Height);
+            if Doc /= "" then
+               Create_Pixmap_From_Text
+                 (Text     => Str & ASCII.LF & "-----------------------------"
+                  & ASCII.LF & Doc,
+                  Font     => Get_Pref (Data.Box.Kernel, Default_Font),
+                  Bg_Color => White (Get_Default_Colormap),
+                  Widget   => Widget,
+                  Pixmap   => Pixmap,
+                  Width    => Width,
+                  Height   => Height);
+            else
+               Create_Pixmap_From_Text
+                 (Text     => Str,
+                  Font     => Get_Pref (Data.Box.Kernel, Default_Font),
+                  Bg_Color => White (Get_Default_Colormap),
+                  Widget   => Widget,
+                  Pixmap   => Pixmap,
+                  Width    => Width,
+                  Height   => Height);
+            end if;
          end;
       end;
 
