@@ -229,17 +229,17 @@ package Debugger is
    --  if the debugger does not have any special support for this command.
    --  GDB_COMMAND: "whatis"
 
-   function Info_Locals (Debugger : access Debugger_Root) return String
-      is abstract;
+   function Info_Locals
+     (Debugger : access Debugger_Root) return String is abstract;
    --  Return the command to be used to display local variables
 
-   function Info_Args (Debugger : access Debugger_Root) return String
-      is abstract;
+   function Info_Args
+     (Debugger : access Debugger_Root) return String is abstract;
    --  Return the command to be used to display the parameters of the current
    --  subprogram
 
-   function Info_Registers (Debugger : access Debugger_Root) return String
-      is abstract;
+   function Info_Registers
+     (Debugger : access Debugger_Root) return String is abstract;
    --  Return the command to be used to display the value of registers
 
    type Value_Format is (Decimal, Binary, Hexadecimal, Octal);
@@ -307,7 +307,7 @@ package Debugger is
    --  Implementation Note: This could have been done by adding another output
    --  filter to the debugger, that would take care of parsing the output.
    --  However, since display a file requires multiple operations, it seemed
-   --  better to do it in Odd.Process.Text_Output_Handler.
+   --  better to do it in GVD.Process.Text_Output_Handler.
 
    procedure Found_Frame_Info
      (Debugger    : access Debugger_Root;
@@ -395,7 +395,7 @@ package Debugger is
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Step program until it reaches a different assembly line
    --  See above for details on Display.
-   --  GDB_COMMAND: "stepu"
+   --  GDB_COMMAND: "stepi"
 
    procedure Step_Over_Instruction
      (Debugger : access Debugger_Root;
@@ -583,7 +583,7 @@ package Debugger is
 
    function List_Breakpoints
      (Debugger  : access Debugger_Root)
-     return GVD.Types.Breakpoint_Array is abstract;
+      return GVD.Types.Breakpoint_Array is abstract;
    --  Return the list of breakpoints set in the current session.
 
    ----------------
@@ -591,8 +591,7 @@ package Debugger is
    ----------------
 
    function List_Exceptions
-     (Debugger : access Debugger_Root)
-     return GVD.Types.Exception_Array;
+     (Debugger : access Debugger_Root) return GVD.Types.Exception_Array;
    --  Return the list of exceptions defined in the current session.
    --  An empty array is returned no breakpoint can be set on exceptions (this
    --  is the default behavior).
