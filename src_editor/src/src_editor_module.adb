@@ -77,7 +77,7 @@ with Find_Utils;                use Find_Utils;
 with Histories;                 use Histories;
 with OS_Utils;                  use OS_Utils;
 with Aliases_Module;            use Aliases_Module;
-with Commands;                  use Commands;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
 with Gtkada.Types;              use Gtkada.Types;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -402,7 +402,8 @@ package body Src_Editor_Module is
    --  otherwise return an empty string.
 
    function Expand_Aliases_Entities
-     (Data : Event_Data; Special : Character) return String;
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Special : Character) return String;
    --  Does the expansion of special entities in the aliases.
 
    type On_Recent is new Menu_Callback_Record with record
@@ -2852,14 +2853,15 @@ package body Src_Editor_Module is
    -----------------------------
 
    function Expand_Aliases_Entities
-     (Data : Event_Data; Special : Character) return String
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Special : Character) return String
    is
       Box : Source_Editor_Box;
-      W   : Gtk_Widget;
+      W   : Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       Line, Column : Positive;
    begin
-      if Get_Widget (Data).all in Source_View_Record'Class then
-         W := Get_Parent (Get_Widget (Data));
+      if W.all in Source_View_Record'Class then
+         W := Get_Parent (W);
          while W.all not in Source_Box_Record'Class loop
             W := Get_Parent (W);
          end loop;
@@ -2883,14 +2885,14 @@ package body Src_Editor_Module is
             when 'p' =>
                return Project_Name
                  (Get_Project_From_File
-                  (Get_Registry (Get_Kernel (Data)),
+                  (Get_Registry (Kernel),
                    Get_Filename (Box),
                    Root_If_Not_Found => True));
 
             when 'P' =>
                return Project_Path
                  (Get_Project_From_File
-                  (Get_Registry (Get_Kernel (Data)),
+                  (Get_Registry (Kernel),
                    Get_Filename (Box),
                    Root_If_Not_Found => True));
 
@@ -2921,7 +2923,7 @@ package body Src_Editor_Module is
       Selector         : Scope_Selector;
       Extra            : Files_Extra_Scope;
       Recent_Menu_Item : Gtk_Menu_Item;
-      Command          : Command_Access;
+      Command          : Interactive_Command_Access;
 
       Src_Key_Context  : constant Key_Context := new Src_Editor_Key_Context;
       --  Memory is never freed, but this is needed for the whole life of
@@ -2934,37 +2936,40 @@ package body Src_Editor_Module is
 
       Command := new Indentation_Command;
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Key
+      Register_Action
+        (Kernel, "Indent current line",
+         Command, -"Auto-indent the current line or block of lines");
+      Bind_Default_Key
         (Handler     => Get_Key_Handler (Kernel),
-         Name        => "Indent current line",
+         Action      => "Indent current line",
          Default_Key => GDK_Tab,
          Default_Mod => Control_Mask,
-         Command     => Command,
-         Tooltip     => -"Auto-indent the current line or block of lines",
          Context     => Src_Key_Context);
 
       Command := new Completion_Command;
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Key
+      Register_Action
+        (Kernel, "Complete identifier", Command,
+         -("Completion the current identifier based on the"
+           & " contents of the editor"));
+      Bind_Default_Key
         (Handler     => Get_Key_Handler (Kernel),
-         Name        => "Complete identifier",
+         Action      => "Complete identifier",
          Default_Key => GDK_slash,
          Default_Mod => Control_Mask,
-         Command     => Command,
-         Tooltip     => -("Completion the current identifier based on the"
-                           & " contents of the editor"),
          Context     => Src_Key_Context);
 
       Command := new Jump_To_Delimiter_Command;
       Jump_To_Delimiter_Command (Command.all).Kernel :=
         Kernel_Handle (Kernel);
-      Register_Key
+      Register_Action
+        (Kernel, "Jump to matching delimiter", Command,
+         -"Jump to the matching delimiter ()[]{}");
+      Bind_Default_Key
         (Handler     => Get_Key_Handler (Kernel),
-         Name        => "Jump to matching delimiter",
+         Action      => "Jump to matching delimiter",
          Default_Key => GDK_apostrophe,
          Default_Mod => Control_Mask,
-         Command     => Command,
-         Tooltip   => -"Jump to the matching delimiter ()[]{}",
          Context     => Src_Key_Context);
 
       Register_Module
