@@ -146,8 +146,10 @@ package body GVD.Proc_Utils is
    end Open_Processes;
 
    procedure Open_Processes (Handle : out Process_Handle; Host : String) is
-      New_Args : Argument_List (1 .. 2);
-      Match    : Expect_Match := 0;
+      Match       : Expect_Match := 0;
+      Remote_Args : Argument_List_Access :=
+        Argument_String_To_List (Get_Pref (GVD_Prefs, Remote_Protocol));
+      New_Args    : Argument_List (1 .. 1 + Remote_Args'Length);
 
    begin
       Handle := new Process_Record;
@@ -158,14 +160,18 @@ package body GVD.Proc_Utils is
          Handle.Descriptor := new Process_Descriptor;
       end if;
 
-      New_Args (2) := new String' (Get_Pref (GVD_Prefs, List_Processes));
-      New_Args (1) := new String' (Host);
+      New_Args (1 .. Remote_Args'Length - 1) :=
+        Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last);
+      New_Args (Remote_Args'Length) := new String'(Host);
+      New_Args (Remote_Args'Length + 1) :=
+        new String' (Get_Pref (GVD_Prefs, List_Processes));
       Non_Blocking_Spawn
         (Handle.Descriptor.all,
-         Get_Pref (GVD_Prefs, Remote_Protocol), New_Args);
+         Remote_Args (Remote_Args'First).all, New_Args);
       Expect (Handle.Descriptor.all, Match, "\n");
-      Free (New_Args (1));
-      Free (New_Args (2));
+      Free (New_Args (Remote_Args'Length));
+      Free (New_Args (Remote_Args'Length + 1));
+      Free (Remote_Args);
 
    exception
       when Process_Died => null;
