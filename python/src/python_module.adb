@@ -513,8 +513,6 @@ package body Python_Module is
    is
       pragma Unreferenced (Console, User_Data);
    begin
-      Trace (Me, "MANU Interrupt "
-             & In_Process (Python_Module_Id.Script.Interpreter)'Img);
       if In_Process (Python_Module_Id.Script.Interpreter) then
          PyErr_SetInterrupt;
          return True;
