@@ -1413,6 +1413,7 @@ package body Gtkada.File_Selector is
 
             if Is_Directory (Win.Current_Directory.all & Base) then
                Change_Directory (Win, Win.Current_Directory.all & Base);
+               Set_Text (Win.Selection_Entry, "");
                return True;
             end if;
 
