@@ -31,6 +31,7 @@
 with Prj;
 with Prj.Tree;
 with Glib.Object;
+with Gtk.Handlers;
 with Gtk.Window;
 
 package Glide_Kernel is
@@ -49,6 +50,10 @@ package Glide_Kernel is
    ---------------------
    -- Signal emission --
    ---------------------
+
+   package Object_User_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Glib.Object.GObject);
+   --  Generic callback that can be used to connect a signal to a kernel.
 
    procedure Project_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "project_changed" signal
