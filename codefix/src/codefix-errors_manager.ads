@@ -97,6 +97,9 @@ package Codefix.Errors_Manager is
    function Get_Number_Of_Fixes (This : Error_Id) return Natural;
    --  Return the number of possible fixes contained in Error_Id.
 
+   procedure Undo (This : Error_Id; Current_Text : Text_Navigator_Abstr'Class);
+   --  Undo the changes that have been made with This.
+
    ----------------------------------------------------------------------------
    --  type Correction_Manager
    ----------------------------------------------------------------------------
@@ -172,6 +175,10 @@ package Codefix.Errors_Manager is
    --  Set the function that will be called when the execution of a command \
    --  doesn't work.
 
+   function Get_Previous_Error
+     (This : Correction_Manager; Error : Error_Id) return Error_Id;
+   --  Return the error that have been recorded before Error in This.
+
    ----------------------------------------------------------------------------
    --  type Error_State
    ----------------------------------------------------------------------------
@@ -199,10 +206,11 @@ private
    procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
 
    type Error_Id_Record is record
-      Message   : Error_Message := Invalid_Error_Message;
-      Solutions : Solution_List := Command_List.Null_List;
-      Category  : Dynamic_String;
-      Fixed     : Ptr_Boolean := new Boolean'(False);
+      Message         : Error_Message := Invalid_Error_Message;
+      Solutions       : Solution_List := Command_List.Null_List;
+      Category        : Dynamic_String;
+      Fixed           : Ptr_Boolean := new Boolean'(False);
+      Solution_Chosen : Ptr_Extract := new Extract;
    end record;
 
    procedure Free (This : in out Error_Id_Record);
