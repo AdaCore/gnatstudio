@@ -234,7 +234,7 @@ package body VCS.ClearCase is
                   null;
                when others =>
                   declare
-                     S : String := Expect_Out (Fd);
+                     S : constant String := Expect_Out (Fd);
                   begin
                      if S (S'Last) = ASCII.LF then
                         String_List.Append (Result, S (S'First .. S'Last - 1));
@@ -338,7 +338,7 @@ package body VCS.ClearCase is
       --  Detect a possible error in the output.
       if List_Temp /= Null_Node then
          declare
-            S             : String := Data (List_Temp);
+            S             : constant String := Data (List_Temp);
             Error_Pattern : constant String := "Error";
             Index         : Integer := S'First;
          begin
@@ -367,7 +367,7 @@ package body VCS.ClearCase is
 
       while List_Temp /= Null_Node loop
          declare
-            S              : String := Data (List_Temp);
+            S              : constant String := Data (List_Temp);
             Current_Status : File_Status_Record;
             Index          : Integer;
             Last_Index     : Integer;
