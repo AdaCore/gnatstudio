@@ -485,6 +485,7 @@ package body Project_Properties is
       Append (Items, "sparc-wrs-vxworks-gdb");
       Append (Items, "sparc64-wrs-vxworks-gdb");
       Append (Items, "xscale-wrs-vxworks-gdb");
+      Append (Items, "powerpc-elf-lynxos-gdb");
       Append (Items, "powerpc-xcoff-lynxos-gdb");
       Set_Popdown_Strings (Combo, Items);
       Free_String_List (Items);

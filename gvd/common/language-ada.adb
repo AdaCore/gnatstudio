@@ -137,8 +137,9 @@ package body Language.Ada is
                8  => new String'("sparc-wrs-vxworks-gnatmake"),
                9  => new String'("sparc64-wrs-vxworks-gnatmake"),
                10 => new String'("xscale-wrs-vxworks-gnatmake"),
-               11 => new String'("powerpc-xcoff-lynxos-gnatmake"),
-               12 => new String'("gnaampmake")),
+               11 => new String'("powerpc-elf-lynxos-gnatmake"),
+               12 => new String'("powerpc-xcoff-lynxos-gnatmake"),
+               13 => new String'("gnaampmake")),
             Editable       => True),
       2 => (Attribute_Name  => new String'("gnatlist"),
             attribute_Index => null,
@@ -154,8 +155,9 @@ package body Language.Ada is
                8  => new String'("sparc-wrs-vxworks-gnatls"),
                9  => new String'("sparc64-wrs-vxworks-gnatls"),
                10 => new String'("xscale-wrs-vxworks-gnatls"),
-               11 => new String'("powerpc-xcoff-lynxos-gnatls"),
-               12 => new String'("gnaampls")),
+               11 => new String'("powerpc-elf-lynxos-gnatls"),
+               12 => new String'("powerpc-xcoff-lynxos-gnatls"),
+               13 => new String'("gnaampls")),
             Editable        => True));
 
 
