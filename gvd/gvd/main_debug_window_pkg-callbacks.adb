@@ -69,6 +69,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
+      --  Ref the object since we will destroy it in the main procedure.
+
+      Ref (Object);
       Cleanup_Debuggers (Main_Debug_Window_Access (Object));
       Main_Quit;
       return False;
