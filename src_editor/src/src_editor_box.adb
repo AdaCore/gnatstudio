@@ -236,6 +236,10 @@ package body Src_Editor_Box is
       Context : Selection_Context_Access);
    --  Callback for the "Goto Line" contextual menu
 
+   function On_Goto_Line_Func
+     (Editor : access GObject_Record'Class) return Boolean;
+   --  Callback when clicking on the line number in the status bar
+
    procedure On_Goto_Declaration
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -1073,8 +1077,14 @@ package body Src_Editor_Box is
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
+      Gtk_New (Event_Box);
+      Add (Frame, Event_Box);
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
-      Add (Frame, Box.Cursor_Loc_Label);
+      Add (Event_Box, Box.Cursor_Loc_Label);
+      Object_Return_Callback.Object_Connect
+        (Event_Box, "button_press_event",
+         Object_Return_Callback.To_Marshaller (On_Goto_Line_Func'Access),
+         Box);
 
       --  Modified file area...
       Gtk_New (Frame);
@@ -1673,8 +1683,10 @@ package body Src_Editor_Box is
    ------------------
 
    procedure On_Goto_Line
-     (Editor : access Source_Editor_Box_Record;
-      Kernel : Glide_Kernel.Kernel_Handle) is
+     (Editor : access GObject_Record'Class;
+      Kernel : Glide_Kernel.Kernel_Handle)
+   is
+      Box : constant Source_Editor_Box := Source_Editor_Box (Editor);
    begin
       declare
          Str : constant String := Simple_Entry_Dialog
@@ -1686,7 +1698,7 @@ package body Src_Editor_Box is
             return;
          end if;
 
-         Set_Cursor_Location (Editor, Positive'Value (Str));
+         Set_Cursor_Location (Box, Positive'Value (Str));
 
       exception
          when Constraint_Error =>
@@ -1710,6 +1722,17 @@ package body Src_Editor_Box is
       On_Goto_Line
         (Editor => Source_Editor_Box (Widget), Kernel => Get_Kernel (Context));
    end On_Goto_Line;
+
+   -----------------------
+   -- On_Goto_Line_Func --
+   -----------------------
+
+   function On_Goto_Line_Func
+     (Editor : access GObject_Record'Class) return Boolean is
+   begin
+      On_Goto_Line (Editor, Source_Editor_Box (Editor).Kernel);
+      return True;
+   end On_Goto_Line_Func;
 
    -------------------------
    -- On_Goto_Declaration --

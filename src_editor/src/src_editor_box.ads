@@ -414,7 +414,7 @@ package Src_Editor_Box is
    --  marks.
 
    procedure On_Goto_Line
-     (Editor : access Source_Editor_Box_Record;
+     (Editor : access Glib.Object.GObject_Record'Class;
       Kernel : Glide_Kernel.Kernel_Handle);
    --  Navigate->Goto Line... menu
 
