@@ -1185,6 +1185,7 @@ package body Ada_Analyzer is
 
                   if Num_Parens = 0
                     and then Top_Token.Token in Token_Class_Declk
+                    and then Top_Token.Profile_Start = 0
                   then
                      Top_Token.Profile_Start := P;
                   end if;
@@ -1206,6 +1207,7 @@ package body Ada_Analyzer is
 
                      if Num_Parens = 0
                        and then Top_Token.Token in Token_Class_Declk
+                       and then Top_Token.Profile_End = 0
                      then
                         Top_Token.Profile_End := P;
                      end if;
