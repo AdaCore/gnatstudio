@@ -175,9 +175,8 @@ package body Find_Utils is
          Pos : Natural := Start_Index;
       begin
          loop
-            --  ??? Requires GNAT 3.16 >= 20021016  (BA15-007)
-            --  Match (RE, Buffer, Context.Sub_Matches.all, Pos, End_Index);
-            Match (RE, Buffer (Pos .. End_Index), Context.Sub_Matches.all);
+            --  Requires GNAT 3.16 >= 20021016  (BA15-007)
+            Match (RE, Buffer, Context.Sub_Matches.all, Pos, End_Index);
 
             exit when Context.Sub_Matches (0) = No_Match;
 
