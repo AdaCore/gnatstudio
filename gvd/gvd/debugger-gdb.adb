@@ -323,8 +323,9 @@ package body Debugger.Gdb is
      return String
    is
       --  ??? Probably, this should be language-dependent.
-      S : String := Send (debugger, "print &(" & Entity & ")");
+      S       : String := Send (Debugger, "print &(" & Entity & ")");
       Matched : Match_Array (0 .. 1);
+
    begin
       Match (" (0x[0-9a-zA-Z]+)", S, Matched);
       if Matched (1) /= No_Match then
