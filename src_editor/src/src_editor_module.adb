@@ -1840,12 +1840,6 @@ package body Src_Editor_Module is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean is
    begin
-      Grab_Focus (D.Edit);
-
-      if D.Child /= null then
-         Set_Focus_Child (D.Child);
-      end if;
-
       if D.Line /= 0 and then Is_Valid_Location (D.Edit, D.Line) then
          Set_Screen_Location (D.Edit, D.Line, D.Column, D.Child = null);
 
@@ -2777,7 +2771,7 @@ package body Src_Editor_Module is
                Source := Open_File
                  (Kernel, File,
                   Create_New => New_File,
-                  Focus      => not No_Location);
+                  Focus      => (not No_Location) and then (Child = null));
 
                if Child /= null then
                   Set_Focus_Child (Child);
