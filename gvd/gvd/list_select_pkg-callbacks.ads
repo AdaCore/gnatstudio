@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -20,11 +20,17 @@
 
 with Gtk.Arguments;
 with Gtk.Widget;
+with Gdk.Event; use Gdk.Event;
 
 package List_Select_Pkg.Callbacks is
+
    procedure On_Clist_Select_Row
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
+
+   function On_Clist_Button_Press
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
 
    procedure On_The_Entry_Activate
      (Object : access Gtk_Entry_Record'Class);

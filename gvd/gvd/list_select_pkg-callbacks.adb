@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -46,6 +46,22 @@ package body List_Select_Pkg.Callbacks is
       Set_Text
         (List_Select.The_Entry, Trim (Get_Text (List, Arg1, 0), Left));
    end On_Clist_Select_Row;
+
+   ---------------------------
+   -- On_Clist_Button_Press --
+   ---------------------------
+
+   function On_Clist_Button_Press
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean is
+      pragma Unreferenced (Object);
+   begin
+      if Get_Event_Type (Event) = Gdk_2button_Press then
+         Gtk.Main.Main_Quit;
+      end if;
+
+      return False;
+   end On_Clist_Button_Press;
 
    ---------------------------
    -- On_The_Entry_Activate --
