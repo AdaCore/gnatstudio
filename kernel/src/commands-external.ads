@@ -22,32 +22,43 @@ with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
 with Gtk.Main;             use Gtk.Main;
 with Glide_Kernel;         use Glide_Kernel;
 with String_List_Utils;    use String_List_Utils;
+with Basic_Types;          use Basic_Types;
 
 package Commands.External is
 
    type External_Command is new Root_Command with private;
    type External_Command_Access is access all External_Command;
 
+   procedure Destroy (D : access External_Command);
+   --  Free memory associated to D.
+
    type String_List_Handler is access
      function (Kernel : Kernel_Handle;
                Head   : String_List.List;
                List   : String_List.List) return Boolean;
-   --  ??? Where are the params of handlers freed ?
+   --  Parses the output of a command, contained in List.
+   --  Return True if the command was executed successfully.
+   --  The parameters should be freed by this function.
 
    procedure Create
      (Item         : out External_Command_Access;
       Kernel       : Kernel_Handle;
-      Command      : String_List.List;
-      Dir          : String_List.List;
+      Command      : String;
+      Dir          : String;
       Args         : String_List.List;
       Head         : String_List.List;
       Handler      : String_List_Handler);
-   --  Copies of Command, Dir, Args and Head are made internally.
-   --  Commands in Command are executed one after the other if the previous one
-   --  succeeded.
-   --  ??? Missing comments
+   --  Copies of Args and Head are made internally.
+   --  Command is spawned as a shell command, with Args as its arguments.
+   --  Head and the output of this command are then passed to Handler.
+   --  When the command is executed, its output is passed to Handler,
+   --  the result of which determines the success of the execution.
+   --  If Handler is null, the output of the command is discarded, and
+   --  the commands always executes successfully.
 
    function Execute (Command : access External_Command) return Boolean;
+   --  Execute Command, and launch the associated Handler.
+   --  See comments for Create.
 
 private
 
@@ -57,8 +68,8 @@ private
    type External_Command is new Root_Command with record
       Kernel  : Kernel_Handle;
       Fd      : TTY_Process_Descriptor;
-      Command : String_List.List;
-      Dir     : String_List.List;
+      Command : String_Access;
+      Dir     : String_Access;
       Args    : String_List.List;
       Head    : String_List.List;
       Handler : String_List_Handler;
