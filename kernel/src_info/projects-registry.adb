@@ -41,8 +41,8 @@ with Prj.Tree;                  use Prj.Tree;
 with Prj;                       use Prj;
 with Projects.Editor;           use Projects.Editor;
 with Snames;                    use Snames;
+with Stringt;
 with String_Hash;
-with Stringt;                   use Stringt;
 with Traces;                    use Traces;
 with Types;                     use Types;
 
@@ -634,10 +634,9 @@ package body Projects.Registry is
       procedure Record_Source (File : String; Lang : Name_Id) is
       begin
          String_Elements.Increment_Last;
-         Start_String;
-         Store_String_Chars (File);
          String_Elements.Table (String_Elements.Last) :=
-           (Value    => End_String,
+           (Value    => Get_String (File),
+            Flag     => False,  --  Irrelevant for files
             Location => No_Location,
             Next     => Prj.Projects.Table (Get_View (Project)).Sources);
          Prj.Projects.Table (Get_View (Project)).Sources :=
@@ -646,8 +645,8 @@ package body Projects.Registry is
          Set (Registry.Data.Sources, K => File, E => (Project, Lang, No_Name));
       end Record_Source;
 
-      Languages : Argument_List                := Get_Languages (Project);
-      Dirs      : constant String_Array_Access := Source_Dirs (Project, False);
+      Languages : Argument_List := Get_Languages (Project);
+      Dirs      : String_Array_Access;
       Dir       : Dir_Type;
       Length    : Natural;
       Buffer    : String (1 .. 2048);
@@ -665,40 +664,19 @@ package body Projects.Registry is
       then
          Free (Languages);
 
-         --  ??? Temporary: check whether each directory contains source files
-         --  for the project. This is faster than checkin this later on, and
-         --  speeds up loading of big projects (7501 files in 150 directories:
-         --  loading goes from 1min20 to 30s).
-         --  However, this work has already been done by the project parser, so
-         --  we need to get the information from there.
+         --  Check which directories contain source files.
 
-         for D in Dirs'Range loop
-            Open (Dir, Dirs (D).all);
-            Has_File := False;
-
-            loop
-               Read (Dir, Buffer, Length);
-               exit when Length = 0;
-
-               --  Have to use the naming scheme, since the hash-table hasn't
-               --  been filled yet (Get_Language_From_File wouldn't work)
-
-               Get_Unit_Part_And_Name_From_Filename
-                 (Filename  => Buffer (1 .. Length),
-                  Project   => Get_View (Project),
-                  Part      => Part,
-                  Unit_Name => Unit,
-                  Lang      => Lang);
-
-               if Lang = Name_Ada then
-                  Has_File := True;
-                  exit;
-               end if;
+         declare
+            Dirs : String_List_Id;
+         begin
+            Dirs := Prj.Projects.Table (Get_View (Project)).Source_Dirs;
+            while Dirs /= Nil_String loop
+               Update_Directory_Cache
+                 (Project, Get_String (String_Elements.Table (Dirs).Value),
+                  String_Elements.Table (Dirs).Flag);
+               Dirs := String_Elements.Table (Dirs).Next;
             end loop;
-
-            Update_Directory_Cache (Project, Dirs (D).all, Has_File);
-            Close (Dir);
-         end loop;
+         end;
 
          return;
       end if;
@@ -708,6 +686,8 @@ package body Projects.Registry is
 
       --  ??? We are parsing Ada files twice for projects that have Ada and at
       --  least another language.
+
+      Dirs := Source_Dirs (Project, False);
 
       for D in Dirs'Range loop
          Open (Dir, Dirs (D).all);
@@ -784,6 +764,7 @@ package body Projects.Registry is
       end if;
 
       Free (Languages);
+      Free (Dirs);
    end Add_Foreign_Source_Files;
 
    ------------------------
