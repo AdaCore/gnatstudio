@@ -529,6 +529,7 @@ begin
    Free (Dir);
    Free (Prefix);
 
+   Destroy (GPS);
    Destroy (GPS.Kernel);
    Prj_API.Finalize;
 
