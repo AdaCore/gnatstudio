@@ -35,6 +35,7 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
+with Language;         use Language;
 
 with Traces;           use Traces;
 
@@ -60,13 +61,22 @@ package body Browsers.Call_Graph is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries into contextual menus
 
-   procedure Edit_File_Call_Graph_From_Contextual
+   procedure Examine_Entity_Call_Graph
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Lib_Info      : LI_File_Ptr;
+      Entity_Name   : String;
+      Entity_Line   : Positive;
+      Entity_Column : Natural);
+   --  Display the call graph for the node.
+
+   procedure Edit_Entity_Call_Graph_From_Contextual
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
-   --  Show the whole call graph for the file described in Context.
+   --  Show the whole call graph for the Entity described in Context.
 
    function Find_Entity
-     (In_Browser : access Glide_Browser_Record'Class; Entity_Name : String)
+     (In_Browser : access Glide_Browser_Record'Class;
+      Entity     : Entity_Information)
       return Canvas_Item;
    --  Return the child that shows Item_Name in the browser, or null if
    --  Item_Name is not already displayed in the canvas.
@@ -91,10 +101,10 @@ package body Browsers.Call_Graph is
      (Item    : out Entity_Item;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Entity_Name : String) is
+      Entity  : Src_Info.Queries.Entity_Information) is
    begin
       Item := new Entity_Item_Record;
-      Initialize (Item, Browser, Kernel, Entity_Name);
+      Initialize (Item, Browser, Kernel, Entity);
    end Gtk_New;
 
    ----------------
@@ -105,24 +115,35 @@ package body Browsers.Call_Graph is
      (Item    : access Entity_Item_Record'Class;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Entity_Name : String)
+      Entity  : Src_Info.Queries.Entity_Information)
    is
       Font : Gdk_Font;
       Width, Height : Gint;
    begin
-      Item.Entity_Name := new String' (Entity_Name);
-      Item.Browser := Glide_Browser (Browser);
+      Item.Entity := Entity;
+      Item.Browser     := Glide_Browser (Browser);
 
       Font := Get_Text_Font (Browser);
 
-      Width  := String_Width (Font, Entity_Name) + 4 * Margin;
+      Width  := String_Width (Font, Get_Name (Entity)) + 4 * Margin;
       Height := (Get_Ascent (Font) + Get_Descent (Font)) + 2 * Margin;
 
       Set_Screen_Size_And_Pixmap
         (Item, Get_Window (Browser), Width, Height);
 
+      Set_Orthogonal_Links (Get_Canvas (Browser), True);
+
       Refresh (Browser, Item);
    end Initialize;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Item : in out Entity_Item_Record) is
+   begin
+      Destroy (Item.Entity);
+   end Destroy;
 
    -------------
    -- Refresh --
@@ -141,7 +162,7 @@ package body Browsers.Call_Graph is
          GC    => Get_Text_GC (Browser),
          X     => Margin,
          Y     => Margin + Get_Ascent (Font),
-         Text  => Item.Entity_Name.all);
+         Text  => Get_Name (Item.Entity));
    end Refresh;
 
    -------------------------------
@@ -195,7 +216,8 @@ package body Browsers.Call_Graph is
    -----------------
 
    function Find_Entity
-     (In_Browser : access Glide_Browser_Record'Class; Entity_Name : String)
+     (In_Browser : access Glide_Browser_Record'Class;
+      Entity     : Entity_Information)
       return Canvas_Item
    is
       Found : Canvas_Item := null;
@@ -211,13 +233,22 @@ package body Browsers.Call_Graph is
 
       function Check_Item
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         Info : Entity_Information;
       begin
-         if Item.all in Entity_Item_Record'Class
-           and then Entity_Item (Item).Entity_Name.all = Entity_Name
-         then
-            Found := Canvas_Item (Item);
-            return False;
+         if Item.all in Entity_Item_Record'Class then
+            Info := Entity_Item (Item).Entity;
+            --  ??? Should we check the file name as well
+            if Get_Name (Info) = Get_Name (Entity)
+              and then Get_Declaration_Line_Of (Info) =
+                Get_Declaration_Line_Of (Entity)
+              and then Get_Declaration_Column_Of (Info) =
+                Get_Declaration_Column_Of (Entity)
+            then
+               Found := Canvas_Item (Item);
+               return False;
+            end if;
          end if;
 
          return True;
@@ -228,98 +259,133 @@ package body Browsers.Call_Graph is
       return Found;
    end Find_Entity;
 
-   ------------------------------------------
-   -- Edit_File_Call_Graph_From_Contextual --
-   ------------------------------------------
+   -------------------------------
+   -- Examine_Entity_Call_Graph --
+   -------------------------------
 
-   procedure Edit_File_Call_Graph_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   procedure Examine_Entity_Call_Graph
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Lib_Info      : LI_File_Ptr;
+      Entity_Name   : String;
+      Entity_Line   : Positive;
+      Entity_Column : Natural)
    is
-      File : File_Selection_Context_Access := File_Selection_Context_Access
-        (Context);
-      Lib_Info : LI_File_Ptr;
-      Tree : Scope_Tree;
-      Node : Scope_Tree_Node;
       Iter : Scope_Tree_Node_Iterator;
       Item, Child : Entity_Item;
       Child_Browser : MDI_Child;
       Browser : Call_Graph_Browser;
       Link : Glide_Browser_Link;
+      Entity : Entity_Information;
+      Tree : Scope_Tree;
+      Node : Scope_Tree_Node;
 
    begin
-      Push_State (Get_Kernel (File), Busy);
-      Lib_Info := Locate_From_Source_And_Complete
-        (Get_Kernel (File), File_Information (File));
+      Push_State (Kernel_Handle (Kernel), Busy);
 
-      if Lib_Info = No_LI_File then
-         Trace (Me, "Edit_File_Call_Graph_From_Contextual: Couldn't find"
-                & " LI file for " & File_Information (File));
-         Pop_State (Get_Kernel (File));
+      Tree := Create_Tree (Lib_Info);
+      if Tree = Null_Scope_Tree then
+         Trace (Me, "Couldn't create scope tree for "
+                & Get_LI_Filename (Lib_Info));
+         Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
-      Child_Browser := Open_Call_Graph_Browser (Get_Kernel (Context));
-      Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
+      Node := Find_Entity_Declaration
+        (Tree, Entity_Name, Entity_Line, Entity_Column);
 
-      Tree := Create_Tree (Lib_Info);
-      if Tree /= Null_Scope_Tree then
-         Node := Find_Entity_Declaration (Tree, "Init_Settings", 79, 14);
-         if Node /= Null_Scope_Tree_Node then
-
-            Item := Entity_Item
-              (Find_Entity (Browser, Get_Entity_Name (Node)));
-            if Item = null then
-               Gtk_New
-                 (Item, Browser,  Get_Kernel (Context),
-                  Entity_Name => Get_Entity_Name (Node));
-               Put (Get_Canvas (Browser), Item);
-            end if;
-
-            Iter := Start (Node);
-            while Get (Iter) /= Null_Scope_Tree_Node loop
-               if Is_Subprogram (Get (Iter)) then
-                  Child := Entity_Item
-                    (Find_Entity (Browser, Get_Entity_Name (Get (Iter))));
-                  if Child = null then
-                     Gtk_New
-                       (Child, Browser,  Get_Kernel (Context),
-                        Entity_Name => Get_Entity_Name (Get (Iter)));
-                     Put (Get_Canvas (Browser), Child);
-                  end if;
-
-                  if not Has_Link (Get_Canvas (Browser), Item, Child) then
-                     Link := new Glide_Browser_Link_Record;
-                     Add_Link (Get_Canvas (Browser),
-                               Link => Link,
-                               Src => Item,
-                               Dest => Child);
-                  end if;
-               end if;
-
-               Next (Iter);
-            end loop;
-
-            Layout (Get_Canvas (Browser),
-                    Force => False,
-                    Vertical_Layout => Vertical_Layout);
-            Refresh_Canvas (Get_Canvas (Browser));
-
-         else
-            Trace (Me, "Couldn't find required entity in file "
-                   & File_Information (File));
-         end if;
-
-         --  Trace_Dump (Me, Tree);
+      if Node = Null_Scope_Tree_Node then
+         Trace (Me, "Couldn't find entity "
+                & Entity_Name & " in "
+                & Get_LI_Filename (Lib_Info)
+                & " at line" & Entity_Line'Img
+                & " column" & Entity_Column'Img);
          Free (Tree);
-
-      else
-         Trace (Me, "Couldn't create scope tree for file "
-                & File_Information (File));
+         Pop_State (Kernel_Handle (Kernel));
+         return;
       end if;
 
-      Pop_State (Get_Kernel (File));
-   end Edit_File_Call_Graph_From_Contextual;
+      Child_Browser := Open_Call_Graph_Browser (Kernel);
+      Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
+
+      --  For efficiency, do not recompute the layout for each item
+      Set_Auto_Layout (Get_Canvas (Browser), False);
+
+      Entity := Get_Entity (Tree, Node);
+      Item := Entity_Item (Find_Entity (Browser, Entity));
+      if Item = null then
+         Gtk_New (Item, Browser,  Kernel, Entity => Entity);
+         Put (Get_Canvas (Browser), Item);
+      else
+         Destroy (Entity);
+      end if;
+
+      Iter := Start (Node);
+      while Get (Iter) /= Null_Scope_Tree_Node loop
+         if Is_Subprogram (Get (Iter)) then
+            Entity := Get_Entity (Tree, Get (Iter));
+            Child := Entity_Item (Find_Entity (Browser, Entity));
+            if Child = null then
+               Gtk_New (Child, Browser,  Kernel, Entity => Entity);
+               Put (Get_Canvas (Browser), Child);
+            else
+               Destroy (Entity);
+            end if;
+
+            if not Has_Link (Get_Canvas (Browser), Item, Child) then
+               Link := new Glide_Browser_Link_Record;
+               Add_Link (Get_Canvas (Browser),
+                         Link => Link,
+                         Src => Item,
+                         Dest => Child);
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      Set_Auto_Layout (Get_Canvas (Browser), True);
+      Layout (Get_Canvas (Browser),
+              Force => False,
+              Vertical_Layout => Vertical_Layout);
+      Refresh_Canvas (Get_Canvas (Browser));
+
+      Pop_State (Kernel_Handle (Kernel));
+      Free (Tree);
+   end Examine_Entity_Call_Graph;
+
+   --------------------------------------------
+   -- Edit_Entity_Call_Graph_From_Contextual --
+   --------------------------------------------
+
+   procedure Edit_Entity_Call_Graph_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      Entity   : Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Lib_Info : LI_File_Ptr;
+   begin
+      Push_State (Get_Kernel (Entity), Busy);
+
+      Lib_Info := Locate_From_Source_And_Complete
+        (Get_Kernel (Entity), File_Information (Entity));
+
+      if Lib_Info = No_LI_File then
+         Trace (Me, "Edit_File_Call_Graph_From_Contextual: Couldn't find"
+                & " LI file for " & File_Information (Entity));
+         Pop_State (Get_Kernel (Entity));
+         return;
+      end if;
+
+      Examine_Entity_Call_Graph
+        (Get_Kernel (Entity),
+         Lib_Info,
+         Entity_Name_Information (Entity),
+         79,  --  Line_Information (Entity),
+         14); --  Column_Information (Entity));
+
+      Pop_State (Get_Kernel (Entity));
+   end Edit_Entity_Call_Graph_From_Contextual;
 
    ---------------------
    -- On_Button_Click --
@@ -332,7 +398,14 @@ package body Browsers.Call_Graph is
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
-         null;
+         Examine_Entity_Call_Graph
+           (Get_Kernel (Item.Browser),
+            Locate_From_Source_And_Complete
+            (Get_Kernel (Item.Browser), Get_Declaration_File_Of (Item.Entity)),
+            Get_Name (Item.Entity),
+            Get_Declaration_Line_Of (Item.Entity),
+            Get_Declaration_Column_Of (Item.Entity));
+
       elsif Get_Event_Type (Event) = Button_Press then
          Select_Item (Item.Browser, Item, True);
       end if;
@@ -347,19 +420,23 @@ package body Browsers.Call_Graph is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Item         : Gtk_Menu_Item;
-      File_Context : File_Selection_Context_Access;
+      Item           : Gtk_Menu_Item;
+      Entity_Context : Entity_Selection_Context_Access;
    begin
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-         if Has_File_Information (File_Context) then
+      if Context.all in Entity_Selection_Context'Class then
+         Entity_Context := Entity_Selection_Context_Access (Context);
+
+         if Has_Category_Information (Entity_Context)
+           and then Category_Information (Entity_Context)
+             in Subprogram_Category
+         then
             Gtk_New (Item, Label => (-"Examine call graph for ") &
-                     File_Information (File_Context));
+                     Entity_Name_Information (Entity_Context));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
                Context_Callback.To_Marshaller
-               (Edit_File_Call_Graph_From_Contextual'Access),
+               (Edit_Entity_Call_Graph_From_Contextual'Access),
                Selection_Context_Access (Context));
          end if;
       end if;

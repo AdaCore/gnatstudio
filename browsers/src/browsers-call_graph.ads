@@ -19,9 +19,9 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;
-with GNAT.OS_Lib;
 with Glide_Kernel;
 with Browsers.Canvas;
+with Src_Info.Queries;
 
 package Browsers.Call_Graph is
 
@@ -44,20 +44,26 @@ package Browsers.Call_Graph is
      (Item    : out Entity_Item;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Entity_Name : String);
+      Entity  : Src_Info.Queries.Entity_Information);
    --  Create a new entity item.
+   --  You shouldn't free Entity yourself, this will be taken care of by the
+   --  item itself.
 
    procedure Initialize
      (Item    : access Entity_Item_Record'Class;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Entity_Name : String);
+      Entity  : Src_Info.Queries.Entity_Information);
    --  Internal initialization function
 
    procedure Refresh
      (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Item    : access Entity_Item_Record);
    --  Redraw the item to its double buffer
+
+   procedure Destroy (Item : in out Entity_Item_Record);
+   --  Free the memory occupied by the item. This is called automatically when
+   --  the item is removed from the canvas.
 
    procedure On_Button_Click
      (Item  : access Entity_Item_Record;
@@ -66,8 +72,8 @@ package Browsers.Call_Graph is
 private
    type Entity_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
    with record
-      Entity_Name : GNAT.OS_Lib.String_Access;
       Browser     : Browsers.Canvas.Glide_Browser;
+      Entity      : Src_Info.Queries.Entity_Information;
    end record;
 
 end Browsers.Call_Graph;
