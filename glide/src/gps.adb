@@ -40,7 +40,8 @@ with Prj;                  use Prj;
 
 --  Just force the loading of the modules
 --  Removing any of the line below will not load the module in Glide, and thus
---  the associated functionalities will not be available
+--  the associated functionalities will not be available. Note that you also
+--  need to call Register_Module in the main program below.
 pragma Warnings (Off);
 with Project_Viewers;
 with Project_Explorers;
@@ -157,6 +158,14 @@ procedure Glide2 is
    end Init_Settings;
 
 begin
+   Project_Viewers.Register_Module;
+   Project_Explorers.Register_Module;
+   Aunit_Module.Register_Module;
+   Browsers.Module.Register_Module;
+   VCS_Module.Register_Module;
+   GVD_Module.Register_Module;
+   Metrics_Module.Register_Module;
+
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
 
