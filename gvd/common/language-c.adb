@@ -67,7 +67,17 @@ package body Language.Debugger.C is
         or else Str = "float"
         or else Str = "double"
         or else Str = "long"
+
+         --  "long int", "long unsigned int"
+        or else (Str'Length >= 5
+                 and then Str (Str'First .. Str'First + 4) = "long ")
+
         or else Str = "short"
+
+         --  "short int", "short unsigned int"
+        or else (Str'Length >= 6
+                 and then Str (Str'First .. Str'First + 5) = "short ")
+
         or else Str = "void";
    end Is_Simple_Type;
 
