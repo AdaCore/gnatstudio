@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -506,6 +506,15 @@ package Browsers.Canvas is
      (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf;
    --  Return a pixbuf containing the contents of Browser.
    --  The returned pixbuf should be unref'ed when no longer used.
+
+   ----------------
+   -- Navigation --
+   ----------------
+
+   procedure Add_Navigation_Location
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title  : String);
+   --  Add a location command to open the browser named Title.
 
 private
 

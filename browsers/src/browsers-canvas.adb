@@ -61,6 +61,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;
 with Layouts;                   use Layouts;
 with VFS;                       use VFS;
@@ -2308,5 +2309,25 @@ package body Browsers.Canvas is
 
       return Pixbuf;
    end Get_Pixbuf;
+
+   -----------------------------
+   -- Add_Navigation_Location --
+   -----------------------------
+
+   procedure Add_Navigation_Location
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title  : String)
+   is
+      Args   : GNAT.OS_Lib.Argument_List (1 .. 1);
+   begin
+      Args (1) := new String'
+        ("MDI.get """ & Title & """ ; MDIWindow.raise_window %1");
+
+      Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
+
+      for J in Args'Range loop
+         GNAT.OS_Lib.Free (Args (J));
+      end loop;
+   end Add_Navigation_Location;
 
 end Browsers.Canvas;
