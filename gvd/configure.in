@@ -160,7 +160,7 @@ case "${host}" in
       *-386bsd* )               opsys=386bsd ;;
       *-freebsd* )              opsys=freebsd ;;
       *-nextstep* )             opsys=nextstep ;;
-      *win32* )
+      *win32* | *mingw32* )
 	machine=intel386 opsys=windows
 	STRIP_CR=True
 	CAN_OUTPUT=False
