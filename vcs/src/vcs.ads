@@ -246,10 +246,8 @@ package VCS is
 
    procedure Set_Error (Rep     : access VCS_Record;
                         Message : String);
-
    --  Register a function that will be called every time that
    --  an error occurs.
-   --  ??? maybe this doesn't have to be abstract.
 
 
    --  missing:
