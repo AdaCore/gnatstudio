@@ -4,22 +4,36 @@ Glide 2.
 Since Glide groups many tools, some of them have their own repository
 such as GtkAda and GVD.
 
-Some of the tools need additional sources to compile:
-  - hypergrep:
-    Put a link called "gvd" in the directory that contains this README file.
-    The link should point to the top-level directory of the GVD sources
+Some of the tools need additional sources to compile, so you need to set up
+the following links:
+- Put a link called "gvd" in the directory that contains this README file.
+  The link should point to the top-level directory of the GVD sources
 
-  - prj_editor:
-    Put a link called "gnat" in the directory that contains this README file.
-    The link should point to the src/ada directory in the GNAT sources.
-    This tool requires at least GNAT 3.15
+- Put a link called "gnat" in the directory that contains this README file.
+  The link should point to the src/ada directory in the GNAT sources.
+  This tool requires at least GNAT 3.15.
 
-  - glide:
-    Put a link called "aunit" in the directory that contains this README file.
-    The link should point to the gui directory in the AUnit sources.
+IMPORTANT NOTICE: you need to use the same version of GNAT sources and binaries.
 
 All the tools need access to an installed version of GtkAda. Make sure that
 gtkada-config is found in your PATH.
+
+The directory containing this README (usually called glidiator if taken
+fresh from CVS) should look like:
+
+aunit/
+common/
+gbuilder/
+glide/
+gnat -> /home/my_account/gnat/src/ada
+gvd ->  /home/my_account/gvd
+hypergrep/
+kernel/
+prj_editor/
+src_editor/
+syntax/
+vcs/
+vdiff/
 
 Building Glide 2
 =================
@@ -30,12 +44,12 @@ README file:
 
 This is needed to automatically generate some of the required sources and
 Makefiles.
-For best compatibility with GNAT, <prefix_dir> should be the value
-returned by `gnatls -v`, minus the "adainclude" at the end.
+For best compatibility with GNAT, <prefix_dir> should be same as the
+prefix used for building GNAT.
 
 Then go to the directory of the tool you want to build and execute the
 following commands:
      make
      make install
 
-
+Or if you want to build the world, do a make in the top level directory.
