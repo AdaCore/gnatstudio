@@ -176,7 +176,7 @@ endif
 .PHONY: check_browsers
 check_browsers: force
 	@[ -f ${BROWSERS_SRC}/src/make_browsers.adb ] || \
-	   (echo "browsers sources not found in ${WIDGETS_SRC}, see README"; false)
+	   (echo "browsers sources not found in ${BROWSERS_SRC}, see README"; false)
 
 ###################
 ## GTKADA module ##
