@@ -408,6 +408,10 @@ package body Theme_Manager_Module is
             end if;
          end;
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Selection_Toggled;
 
    ----------
