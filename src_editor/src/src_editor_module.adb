@@ -4523,21 +4523,12 @@ package body Src_Editor_Module is
         Source_Editor_Module (Src_Editor_Module_Id);
 
       Color   : Gdk_Color;
-      GC      : Gdk.GC.Gdk_GC;
       Success : Boolean;
    begin
-      Gdk_New (GC, Get_Window (Gtk_Widget (Get_Main_Window (Kernel))));
-
       Color := Get_Pref (Kernel, Search_Results_Color);
       Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
-      if Success then
-         Set_Foreground (GC, Color);
-      else
-         Set_Foreground (GC, White (Get_Default_Colormap));
-      end if;
-
-      Line_Highlighting.Add_Category (Search_Result_Highlighting, GC, Color);
+      Line_Highlighting.Add_Category (Search_Result_Highlighting, Color);
 
       if Pref_Display_Subprogram_Names /= Id.Show_Subprogram_Names then
          --  The preference for showing the subprogram name has changed:
