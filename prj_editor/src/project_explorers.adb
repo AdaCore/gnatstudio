@@ -471,8 +471,6 @@ package body Project_Explorers is
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget
    is
-      pragma Warnings (Off, Node);
-      pragma Warnings (Off, User);
       Explorer : Project_Explorer;
    begin
       if Node.Tag.all = "Project_Explorer" then
