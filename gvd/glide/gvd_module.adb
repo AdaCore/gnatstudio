@@ -1608,7 +1608,9 @@ package body GVD_Module is
       then
          return False;
 
-      elsif Command_In_Process (Get_Process (Debugger)) then
+      elsif Id.Show_Lines_With_Code
+        and then Command_In_Process (Get_Process (Debugger))
+      then
          GVD_Module (GVD_Module_ID).Slow_Query := True;
          Timeout_Id := Timeout_Add
            (100, Idle_Reveal_Lines'Access);
