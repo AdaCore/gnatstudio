@@ -18,21 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System; use System;
-with Glib; use Glib;
-with Gdk.Event; use Gdk.Event;
-with Gdk.Types; use Gdk.Types;
-with Gtk.Accel_Group; use Gtk.Accel_Group;
-with Gtk.Object; use Gtk.Object;
-with Gtk.Enums; use Gtk.Enums;
-with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
 
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 
 package body Final_Window_Pkg.Callbacks is
-
-   use Gtk.Arguments;
 
    ---------------------------------
    -- On_Final_Validation_Clicked --
@@ -41,7 +31,8 @@ package body Final_Window_Pkg.Callbacks is
    procedure On_Final_Validation_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Final_Window : Final_Window_Access := Final_Window_Access (Object);
+      Final_Window : constant Final_Window_Access :=
+        Final_Window_Access (Object);
       Success      : Boolean;
    begin
       Update
@@ -49,7 +40,6 @@ package body Final_Window_Pkg.Callbacks is
          Success,
          Final_Window.Graphic_Codefix.Current_Text,
          null);
-
       Quit (Final_Window.Graphic_Codefix);
    end On_Final_Validation_Clicked;
 
@@ -60,8 +50,8 @@ package body Final_Window_Pkg.Callbacks is
    procedure On_Final_Cancel_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Final_Window : constant Final_Window_Access
-        := Final_Window_Access (Object);
+      Final_Window : constant Final_Window_Access :=
+        Final_Window_Access (Object);
    begin
       Quit (Final_Window.Graphic_Codefix);
    end On_Final_Cancel_Clicked;

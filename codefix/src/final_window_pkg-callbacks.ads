@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
 
 package Final_Window_Pkg.Callbacks is

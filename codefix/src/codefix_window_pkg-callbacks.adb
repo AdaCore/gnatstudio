@@ -18,32 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;                 use Ada.Text_IO;
-
-with System;                      use System;
 with Glib;                        use Glib;
-with Gdk.Event;                   use Gdk.Event;
-with Gdk.Types;                   use Gdk.Types;
-with Gtk.Accel_Group;             use Gtk.Accel_Group;
-with Gtk.Object;                  use Gtk.Object;
 with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Style;                   use Gtk.Style;
 with Gtk.Widget;                  use Gtk.Widget;
-with Gtk.Label;                   use Gtk.Label;
-with Gtk.Text;                    use Gtk.Text;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Enums;                   use Gtk.Enums;
 use Gtk.Enums.String_List;
-with Gtk.Combo;                   use Gtk.Combo;
-with Gtk.List;                    use Gtk.List;
 
 with Codefix;                     use Codefix;
-with Codefix.Text_Manager;        use Codefix.Text_Manager;
 with Codefix.Errors_Manager;      use Codefix.Errors_Manager;
-with Codefix.Errors_Parser;       use Codefix.Errors_Parser;
 with Codefix.Formal_Errors;       use Codefix.Formal_Errors;
-with Codefix.File_Io;             use Codefix.File_Io;
-with Codefix.Text_Navigators;
 use Codefix.Formal_Errors.Extract_List;
 with Codefix.Graphics; use Codefix.Graphics;
 
@@ -59,9 +42,11 @@ package body Codefix_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
+      pragma Unreferenced (Params);
+
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
-      Arg1 : constant Gdk_Event := To_Event (Params, 1);
+      --  Arg1 : constant Gdk_Event := To_Event (Params, 1);
    begin
       Quit (Graphic_Codefix);
       return False;
@@ -76,7 +61,6 @@ package body Codefix_Window_Pkg.Callbacks is
    is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
-
    begin
       if Get_Text (Graphic_Codefix.Fix_Entry) /= "" then
          Set_Page
@@ -112,7 +96,6 @@ package body Codefix_Window_Pkg.Callbacks is
         (Graphic_Codefix.Corrector,
          Graphic_Codefix.Current_Error,
          Integer (Get_Current_Page (Graphic_Codefix.Choices_Proposed) + 1));
-
       Load_Next_Error (Graphic_Codefix);
    end On_Accept_Correction_Clicked;
 
@@ -125,6 +108,9 @@ package body Codefix_Window_Pkg.Callbacks is
    is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
+
+      pragma Unreferenced (Graphic_Codefix);
+
    begin
       null;
    end On_Cancel_Changes_Clicked;
@@ -136,7 +122,7 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Apply_Changes_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Graphic_Codefix : Graphic_Codefix_Access :=
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
       Success : Boolean;
    begin
@@ -145,7 +131,6 @@ package body Codefix_Window_Pkg.Callbacks is
          Success,
          Graphic_Codefix.Current_Text,
          null);
-
       Quit (Graphic_Codefix);
    end On_Apply_Changes_Clicked;
 

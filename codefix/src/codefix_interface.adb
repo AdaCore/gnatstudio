@@ -20,8 +20,6 @@
 
 with Gtk; use Gtk;
 with Gtk.Main;
-with Gtk.Widget; use Gtk.Widget;
-with Codefix_Window_Pkg; use Codefix_Window_Pkg;
 with Codefix.Graphics; use Codefix.Graphics;
 
 procedure Codefix_Interface is

@@ -35,7 +35,7 @@ package Codefix is
    --  Width of a tab in GNAT
 
    Indentation_Width : constant := 3;
-   --  Width of an identation in GNAT
+   --  Width of an indentation in GNAT
 
    EOL_Str : constant String := (1 => ASCII.LF);
    --  String used to insert an end of line.
