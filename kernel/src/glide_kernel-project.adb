@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -247,22 +247,27 @@ package body Glide_Kernel.Project is
       --  editor needs to be loaded to display error messages
       Close_All_Children (Kernel);
 
-      Load (Registry           => Kernel.Registry.all,
-            Root_Project_Path  => Project,
-            Errors             => Report_Error'Unrestricted_Access,
-            New_Project_Loaded => New_Project_Loaded);
+      if Is_Regular_File (Project) then
+         Load (Registry           => Kernel.Registry.all,
+               Root_Project_Path  => Project,
+               Errors             => Report_Error'Unrestricted_Access,
+               New_Project_Loaded => New_Project_Loaded);
 
-      if not New_Project_Loaded then
-         return;
+         if not New_Project_Loaded then
+            return;
+         end if;
+
+         Project_Changed (Kernel);
+         Recompute_View (Kernel);
+
+         --  Reload the desktop, in case there is a project-specific setup
+         --  already
+         Had_Project_Desktop := Load_Desktop (Kernel);
+
+         Reset_Title (Glide_Window (Kernel.Main_Window));
+      else
+         Load_Default_Project (Kernel, Directory => Get_Current_Dir);
       end if;
-
-      Project_Changed (Kernel);
-      Recompute_View (Kernel);
-
-      --  Reload the desktop, in case there is a project-specific setup already
-      Had_Project_Desktop := Load_Desktop (Kernel);
-
-      Reset_Title (Glide_Window (Kernel.Main_Window));
    end Load_Project;
 
    -----------------
