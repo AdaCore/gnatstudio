@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -65,6 +65,7 @@ with Histories;                    use Histories;
 with Glide_Kernel.Scripts;         use Glide_Kernel.Scripts;
 with VFS;                          use VFS;
 with System;                       use System;
+with Welcome_Page;                 use Welcome_Page;
 
 package body Help_Module is
 
@@ -263,6 +264,10 @@ package body Help_Module is
    procedure On_About
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Menu Help->About...
+
+   procedure On_Welcome
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Menu Help->Welcome...
 
    type String_Menu_Item_Record is new Gtk_Menu_Item_Record with record
       File       : VFS.Virtual_File;
@@ -1276,6 +1281,11 @@ package body Help_Module is
             return null;
          end if;
       end if;
+
+      if Node.Tag.all = "Welcome_Page" then
+         return Create_Welcome_Page (User);
+      end if;
+
       return null;
    end Load_Desktop;
 
@@ -1300,6 +1310,13 @@ package body Help_Module is
            (Full_Name (Help_Browser (Widget).Current_Help_File).all);
 
          Add_Child (N, Child);
+         return N;
+      end if;
+
+      if Widget.all in Welcome_Page_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Welcome_Page");
+
          return N;
       end if;
 
@@ -1420,6 +1437,18 @@ package body Help_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_About;
+
+   ----------------
+   -- On_Welcome --
+   ----------------
+
+   procedure On_Welcome
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Display_Welcome_Page (Kernel);
+   end On_Welcome;
 
    ------------------
    -- On_Open_HTML --
@@ -1728,6 +1757,9 @@ package body Help_Module is
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Help, Mitem);
+
+      Register_Menu
+        (Kernel, Help, -"_Welcome", "", On_Welcome'Access);
 
       Register_Menu
         (Kernel, Help, -"_Open HTML File...", "", On_Open_HTML'Access);
