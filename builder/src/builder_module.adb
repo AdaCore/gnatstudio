@@ -248,9 +248,13 @@ package body Builder_Module is
    --  Command handler for the "compile" command.
 
    procedure Compile_File
-     (Kernel : Kernel_Handle;
-      File   : String);
+     (Kernel      : Kernel_Handle;
+      File        : String;
+      Synchronous : Boolean := False);
    --  Launch a compilation command for File.
+   --  If Synchronous is true, then this procedure will not return until the
+   --  file is fully compiled; all other GPS operations are blocked while the
+   --  compilation takes place in this case.
 
    procedure Clear_Compilation_Output (Kernel : Kernel_Handle);
    --  Clear the compiler output, the console, and the result view.
@@ -750,7 +754,8 @@ package body Builder_Module is
 
    procedure Compile_File
      (Kernel : Kernel_Handle;
-      File   : String)
+      File   : String;
+      Synchronous : Boolean := False)
    is
       Arg1         : aliased String := "-u";
       Top          : constant Glide_Window :=
@@ -839,8 +844,15 @@ package body Builder_Module is
       end if;
 
       Free (Cmd);
-      Id := Process_Timeout.Add
-        (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
+
+      if not Synchronous then
+         Id := Process_Timeout.Add
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
+      else
+         while Idle_Build ((Kernel, Fd, null, null, null)) loop
+            null;
+         end loop;
+      end if;
 
    exception
       when Invalid_Process =>
@@ -868,7 +880,8 @@ package body Builder_Module is
       if Command = "compile" then
          Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
          Info := Get_Data (Instance);
-         Compile_File (Get_Kernel (Data), Get_Name (Info));
+         Compile_File (Get_Kernel (Data), Get_Name (Info),
+                       Synchronous => True);
 
       elsif Command = "get_build_output" then
          Node := First
@@ -1703,7 +1716,9 @@ package body Builder_Module is
       Register_Command
         (Kernel,
          Command      => "compile",
-         Description  => -"Compile the file.",
+         Description  =>
+           -("Compile the file. This call will return only once the"
+             & " compilation is completed"),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_File_Class (Kernel),
