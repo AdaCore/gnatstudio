@@ -22,7 +22,7 @@
 --  find the language given any filename.
 --  Note that this type is abstract, and overloaded by two other types, one for
 --  GVD standalone that simply uses the file extensions to guess the language,
---  and the other one for Glide that uses the project files and their naming
+--  and the other one for GPS that uses the project files and their naming
 --  scheme.
 
 with Language;
@@ -48,7 +48,7 @@ package Language_Handlers is
    ------------------
    -- Registration --
    ------------------
-   --  Languages must be registered before they are available to Gvd or Glide.
+   --  Languages must be registered before they are available to Gvd or GPS.
 
    procedure Register_Language
      (Handler : access Language_Handler_Record;
