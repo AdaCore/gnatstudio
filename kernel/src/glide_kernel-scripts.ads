@@ -26,7 +26,8 @@
 
 with System;
 with GNAT.OS_Lib;
-with Glib.Object;
+--  with Glib.Object;
+with Gtk.Handlers;
 with Gtk.Widget;
 with Entities;
 with Projects;
@@ -79,6 +80,10 @@ package Glide_Kernel.Scripts is
    --  Return the name of the subprogram, as a string that can be displayed for
    --  the user. This is used when analysing the contents of a hook for
    --  instance
+
+   package Subprogram_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
+      User_Type   => Subprogram_Type);
 
    -----------------
    -- Class types --
@@ -338,18 +343,15 @@ package Glide_Kernel.Scripts is
       return Scripting_Language is abstract;
    --  Return the scripting language that creates this instance
 
-   function Get_Class (Instance : access Class_Instance_Record)
-      return Class_Type is abstract;
-   --  Return the class to which this instance belongs
-
-   function Get_Data (Instance : access Class_Instance_Record)
-      return Glib.Object.GObject is abstract;
-   function Get_Data (Instance : access Class_Instance_Record)
+   function Get_Data
+     (Instance : access Class_Instance_Record; Class : Class_Type)
       return System.Address is abstract;
-   function Get_Data (Instance : access Class_Instance_Record)
+   function Get_Data
+     (Instance : access Class_Instance_Record; Class : Class_Type)
       return Integer is abstract;
    function Get_Data
-     (Instance : access Class_Instance_Record) return String is abstract;
+     (Instance : access Class_Instance_Record; Class : Class_Type)
+      return String is abstract;
    --  Get the data embedded in the class.
    --  Invalid_Data is raised if no such data was stored in the instance
 
@@ -359,21 +361,25 @@ package Glide_Kernel.Scripts is
    --  instance.
 
    procedure Set_Data
-     (Instance : access Class_Instance_Record;
-      Value    : access Glib.Object.GObject_Record'Class) is abstract;
-   procedure Set_Data
-     (Instance : access Class_Instance_Record;
-      Value    : String) is abstract;
-   procedure Set_Data
-     (Instance : access Class_Instance_Record;
-      Value    : Integer) is abstract;
+     (Instance   : access Class_Instance_Record;
+      Class      : Class_Type;
+      Value      : String) is abstract;
    procedure Set_Data
      (Instance   : access Class_Instance_Record;
+      Class      : Class_Type;
+      Value      : Integer) is abstract;
+   procedure Set_Data
+     (Instance   : access Class_Instance_Record;
+      Class      : Class_Type;
       Value      : System.Address;
       On_Destroy : Destroy_Handler := null) is abstract;
    --  Associate some data with the instance.
    --  In the case of a GObject, the reference counting for the object is
    --  increased or decreased as appropriate.
+   --  The class name is required to handle multiple inheritance: if we were
+   --  always using the same internal identifier to associated data with the
+   --  instance, then we couldn't have a class with multiple ancestors, each
+   --  expecting its own user data set in the constructor
 
    procedure Primitive_Free
      (Instance     : in out Class_Instance_Record;
@@ -508,9 +514,9 @@ package Glide_Kernel.Scripts is
    --  Return the kernel in which Script is registered
 
    function Is_Subclass
-     (Script : access Scripting_Language_Record;
-      Class  : Class_Type;
-      Base   : Class_Type) return Boolean is abstract;
+     (Script   : access Scripting_Language_Record;
+      Instance : access Class_Instance_Record'Class;
+      Base     : Class_Type) return Boolean is abstract;
    --  Whether Class is a Base or a subclass of Base.
 
    --------------------------
