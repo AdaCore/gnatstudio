@@ -51,6 +51,8 @@ package Codefix.GPS_Io is
    procedure Free (This : in out Console_Interface);
    --  Free the memory associated with the Console_Interface
 
+   procedure Undo (This : in out Console_Interface);
+
    function Get
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class;

@@ -109,6 +109,18 @@ package body Codefix.GPS_Io is
       Free (This.File_Modified);
    end Free;
 
+   ----------
+   -- Undo --
+   ----------
+
+   procedure Undo (This : in out Console_Interface) is
+      Garbage : Dynamic_String;
+   begin
+      Garbage := new String'
+        (Interpret_Command
+           (This.Kernel, "edit_undo " & Get_File_Name (This)));
+   end Undo;
+
    ---------
    -- Get --
    ---------
