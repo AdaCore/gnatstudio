@@ -47,7 +47,6 @@ with Process_Proxies;       use Process_Proxies;
 with GVD.Canvas;            use GVD.Canvas;
 with GVD.Code_Editors;      use GVD.Code_Editors;
 with GVD.Explorer;          use GVD.Explorer;
-with GVD.Menus;             use GVD.Menus;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
 with GVD.Strings;           use GVD.Strings;
@@ -78,9 +77,6 @@ package body GVD.Source_Editors is
 
    subtype Line_Number is String (1 .. Line_Numbers_Width);
    --  Type of strings used to display line numbers.
-
-   Editor_Contextual_Menu_Name : constant String := "gvd_editor_context";
-   --  String used to store the editor contextual menu as a user data
 
    Max_Tooltip_Width : constant := 400;
    Max_Tooltip_Height : constant := 300;
@@ -364,7 +360,6 @@ package body GVD.Source_Editors is
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu
    is
-      Menu  : Gtk_Menu;
       Mitem : Gtk_Menu_Item;
       Check : Gtk_Check_Menu_Item;
 
@@ -382,19 +377,16 @@ package body GVD.Source_Editors is
       --  Destroy the previous menu (which we couldn't do earlier because
       --  of the call to popup. It will change every item anyway.
 
-      begin
-         Menu := Menu_User_Data.Get (Source, Editor_Contextual_Menu_Name);
-         Destroy (Menu);
-      exception
-         when Gtkada.Types.Data_Error => null;
-      end;
+      if Source.Contextual_Menu /= null then
+         Destroy (Source.Contextual_Menu);
+      end if;
 
       --  Create a new menu
 
-      Gtk_New (Menu);
+      Gtk_New (Source.Contextual_Menu);
 
       Gtk_New (Mitem, Label => -"Print " & Entity);
-      Append (Menu, Mitem);
+      Append (Source.Contextual_Menu, Mitem);
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Print_Variable'Access),
@@ -405,7 +397,7 @@ package body GVD.Source_Editors is
       end if;
 
       Gtk_New (Mitem, Label => -"Display " & Entity);
-      Append (Menu, Mitem);
+      Append (Source.Contextual_Menu, Mitem);
       Data.Auto_Refresh := True;
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
@@ -419,13 +411,13 @@ package body GVD.Source_Editors is
       --  Display a separator
 
       Gtk_New (Mitem);
-      Append (Menu, Mitem);
+      Append (Source.Contextual_Menu, Mitem);
 
       --  Line specific items
 
       Gtk_New
         (Mitem, Label => -"Set Breakpoint on Line" & Integer'Image (Line));
-      Append (Menu, Mitem);
+      Append (Source.Contextual_Menu, Mitem);
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Set_Breakpoint'Access),
@@ -433,17 +425,17 @@ package body GVD.Source_Editors is
 
       Gtk_New
         (Mitem, Label => -"Continue Until Line" & Integer'Image (Line));
-      Append (Menu, Mitem);
+      Append (Source.Contextual_Menu, Mitem);
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Till_Breakpoint'Access),
          Data);
 
       Gtk_New (Mitem);
-      Append (Menu, Mitem);
+      Append (Source.Contextual_Menu, Mitem);
 
       Gtk_New (Mitem, Label => -"Show Current Location");
-      Append (Menu, Mitem);
+      Append (Source.Contextual_Menu, Mitem);
       Editor_Cb.Object_Connect
         (Mitem, "activate",
          Editor_Cb.To_Marshaller (Show_Current_Line_Menu'Access),
@@ -453,14 +445,14 @@ package body GVD.Source_Editors is
          and then Source.Debugger_Current_File.all /= "");
 
       Gtk_New (Mitem);
-      Append (Menu, Mitem);
+      Append (Source.Contextual_Menu, Mitem);
 
       --  Editor specific items
 
       Gtk_New (Check, Label => -"Display Line Numbers");
       Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Show_Line_Nums (Source));
-      Append (Menu, Check);
+      Append (Source.Contextual_Menu, Check);
       Check_Editor_Handler.Connect
         (Check, "activate",
          Check_Editor_Handler.To_Marshaller (Change_Line_Nums'Access),
@@ -469,18 +461,18 @@ package body GVD.Source_Editors is
       Gtk_New (Check, Label => -"Show Lines with Code");
       Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Show_Lines_With_Code (Source));
-      Append (Menu, Check);
+      Append (Source.Contextual_Menu, Check);
       Check_Editor_Handler.Connect
         (Check, "activate",
          Check_Editor_Handler.To_Marshaller (Change_Lines_With_Code'Access),
          Source_Editor (Source));
 
       Append_To_Contextual_Menu
-        (Debugger_Process_Tab (Source.Process).Editor_Text, Menu);
+        (Debugger_Process_Tab (Source.Process).Editor_Text,
+         Source.Contextual_Menu);
 
-      Show_All (Menu);
-      Menu_User_Data.Set (Source, Menu, Editor_Contextual_Menu_Name);
-      return Menu;
+      Show_All (Source.Contextual_Menu);
+      return Source.Contextual_Menu;
    end Child_Contextual_Menu;
 
    -------------------
@@ -1374,7 +1366,7 @@ package body GVD.Source_Editors is
 
          Draw_Rectangle
            (Pixmap,
-            Get_Box_Context (Debugger.Data_Canvas).Thaw_Bg_GC,
+            Get_Box_Context (GVD_Canvas (Debugger.Data_Canvas)).Thaw_Bg_GC,
             Filled => True,
             X      => 0,
             Y      => 0,

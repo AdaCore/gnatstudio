@@ -214,6 +214,7 @@ private
       --  mouse.
 
       Highlight_Color     : Gdk.Color.Gdk_Color;
+      Contextual_Menu     : Gtk.Menu.Gtk_Menu;
    end record;
 
 end GVD.Source_Editors;
