@@ -123,7 +123,7 @@
       <diff_head        action="generic_cvs_diff_head"    label="Compare against head rev."/>
 
       <status_parser>
-         <regexp>File: ([^\s]*)\s*Status: (.*?)\n\n *Working revision:\t([^\t]*)\s.*\n *Repository revision:\t([^\t]*)\s.*</regexp>
+         <regexp>File: ([^\s]*)\s*Status: (.*?)\n\n *Working revision:\s*([^\s]*).*\n *Repository revision:\s*([^\s]*).*</regexp>
 
          <file_index>1</file_index>
          <status_index>2</status_index>
@@ -140,7 +140,7 @@
       </status_parser>
 
       <local_status_parser>
-         <regexp>/(.*?)/(.*?)/.*//</regexp>
+         <regexp>/(.+)/(.+?)/.*//(\n|$)</regexp>
 
          <file_index>1</file_index>
          <local_revision_index>2</local_revision_index>
