@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2001-2005                      --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -788,7 +788,7 @@ package body Browsers.Projects is
       Imported_By_Command (Command.all).Show_Ancestors := True;
       Register_Contextual_Menu
         (Kernel, "Show projects importing",
-         Label  => -"Show projects dependening on %p",
+         Label  => -"Show projects depending on %p",
          Stock_Image => Stock_Go_Back,
          Action => Command,
          Filter => Action_Filter
