@@ -171,10 +171,6 @@ package Glide_Kernel is
    -------------
    --  See documentation in Glide_Kernel.Modules
 
-   Kernel_Module : constant Module_ID;
-   --  The kernel itself.
-   --  ??? Should be a Main_Window module instead
-
    type Module_Priority is new Natural;
    Low_Priority     : constant Module_Priority := Module_Priority'First;
    Default_Priority : constant Module_Priority := 500;
@@ -273,13 +269,6 @@ private
       Kernel  : Kernel_Handle;
       Creator : Module_ID;
    end record;
-
-   Kernel_Module : constant Module_ID := new Module_ID_Information'
-     (Name_Length     => 6,
-      Name            => "Kernel",
-      Priority        => High_Priority,
-      Initializer     => null,
-      Contextual_Menu => null);
 
    package Module_List is new Generic_List (Module_ID);
    Global_Modules_List : Module_List.List;
