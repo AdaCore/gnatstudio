@@ -147,6 +147,10 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class);
    --  ???
 
+   procedure Quit_Main_Loop
+     (Object : access Gtk_Widget_Record'Class);
+   --  Quit the Main_Loop.
+
    procedure On_Destroy
      (Object : access Gtk_Widget_Record'Class);
    --  ???
@@ -219,30 +223,41 @@ package body Gtkada.File_Selector is
    -----------------
 
    function Select_File
-     (File_Selector : access File_Selector_Window_Record) return String
+     (File_Selector : File_Selector_Window_Access) return String
    is
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
    begin
+      pragma Assert (File_Selector /= null);
+
+      Filter_A.Label := new String' (-"All files");
+
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
 
-      Show_All (File_Selector);
-
-      Widget_Callback.Connect
+      Widget_Callback.Object_Connect
         (File_Selector.Ok_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access));
-      Widget_Callback.Connect
+         Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access),
+         File_Selector);
+      Widget_Callback.Object_Connect
         (File_Selector.Cancel_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
+         Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access),
+         File_Selector);
+
+      Show_All (File_Selector);
+      File_Selector.Own_Main_Loop := True;
 
       Gtk.Main.Main;
 
-      declare
-         File : constant String := Get_Selection (File_Selector);
-      begin
-         Destroy (File_Selector);
-         return File;
-      end;
+      if File_Selector.Current_Directory = null then
+         return "";
+      else
+         declare
+            File : constant String := Get_Selection (File_Selector);
+         begin
+            Destroy (File_Selector);
+            return File;
+         end;
+      end if;
    end Select_File;
 
    -------------
@@ -272,6 +287,10 @@ package body Gtkada.File_Selector is
       Style       : Gtk_Style;
 
    begin
+      if Win.Current_Directory = null then
+         return False;
+      end if;
+
       begin
          Use_File_Filter
            (Win.Current_Filter,
@@ -343,6 +362,10 @@ package body Gtkada.File_Selector is
       end Compare;
 
    begin
+      if Win.Current_Directory = null then
+         return False;
+      end if;
+
       if not Win.Current_Directory_Is_Open then
          return False;
       end if;
@@ -392,9 +415,8 @@ package body Gtkada.File_Selector is
 
    procedure Destroy (Filter : access Filter_Show_All)
    is
-      Label : String_Access := Filter.Label;
    begin
-      Free (Label);
+      Free (Filter.Label);
    end Destroy;
 
    ---------------------
@@ -728,8 +750,11 @@ package body Gtkada.File_Selector is
               (Win.File_List,
                Gtk.Enums.Gint_List.Get_Data (Row_List), 1));
 
-         if Get_Event_Type (Event) = Gdk_2button_Press then
-            Gtk.Main.Main_Quit;
+         if Get_Event_Type (Event) = Gdk_2button_Press
+           and then Win.Own_Main_Loop
+         then
+            Main_Quit;
+            Win.Own_Main_Loop := False;
          end if;
       end if;
    end On_File_List_End_Selection;
@@ -744,14 +769,28 @@ package body Gtkada.File_Selector is
       null;
    end On_Selection_Entry_Changed;
 
+   ---------------------
+   --  Quit_Main_Loop --
+   ---------------------
+
+   procedure Quit_Main_Loop
+     (Object : access Gtk_Widget_Record'Class) is
+   begin
+      Main_Quit;
+   end Quit_Main_Loop;
+
    --------------------------
    -- On_Ok_Button_Clicked --
    --------------------------
 
    procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class) is
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Win : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Object);
    begin
       Main_Quit;
+      Win.Own_Main_Loop := False;
    end On_Ok_Button_Clicked;
 
    ------------------------------
@@ -762,8 +801,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
-
+        File_Selector_Window_Access (Object);
    begin
       if Win /= null
         and then Win.Selection_Entry /= null
@@ -772,6 +810,7 @@ package body Gtkada.File_Selector is
       end if;
 
       Main_Quit;
+      Win.Own_Main_Loop := False;
    end On_Cancel_Button_Clicked;
 
    ----------------
@@ -789,6 +828,11 @@ package body Gtkada.File_Selector is
       Free (Win.Filters);
       Free (Win.Files);
       Free (Win.Remaining_Files);
+
+      if Win.Own_Main_Loop then
+         Main_Quit;
+         Win.Own_Main_Loop := False;
+      end if;
    end On_Destroy;
 
    ----------------------------------
@@ -1270,7 +1314,7 @@ package body Gtkada.File_Selector is
 
    procedure Destroy (Filter : access File_Filter_Record) is
    begin
-      null;
+      Free (Filter.Label);
    end Destroy;
 
    ----------
