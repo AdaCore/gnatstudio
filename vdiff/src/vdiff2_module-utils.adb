@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
+--                     Copyright (C) 2003 - 2005                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -633,9 +633,9 @@ package body Vdiff2_Module.Utils is
              Reuse_If_Possible => True);
 
       Create_Line_Information_Column
-        (Kernel, Item.File1, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File1, Id_Col_Vdiff, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File2, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File2, Id_Col_Vdiff, True, True);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
@@ -779,11 +779,11 @@ package body Vdiff2_Module.Utils is
         (1 .. Get_File_Last_Line (Kernel, Item.File3));
 
       Create_Line_Information_Column
-        (Kernel, Item.File1, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File1, Id_Col_Vdiff, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File2, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File2, Id_Col_Vdiff, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File3, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File3, Id_Col_Vdiff, True, True);
 
       Res := Simplify (Item.List, Item.Ref_File);
       Curr_Node := First (Res);
