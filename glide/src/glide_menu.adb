@@ -47,8 +47,6 @@ with Vdiff_Pkg;               use Vdiff_Pkg;
 with Vdiff_Utils;             use Vdiff_Utils;
 with Diff_Utils;              use Diff_Utils;
 
-with Prj_Editor_Window;       use Prj_Editor_Window;
-
 with GVD.Dialogs;             use GVD.Dialogs;
 
 with GNAT.Expect;             use GNAT.Expect;
