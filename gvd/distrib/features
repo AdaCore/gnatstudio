@@ -1,3 +1,8 @@
+New features in GVD 1.0.2
+
+- Added support for C++ in gdb.
+- Assembly window is now much more efficient.
+
 New features in GVD 1.0.1
 
 - Better internalization handling
