@@ -107,16 +107,19 @@ package body String_Utils is
             Index := Next_Line (Buffer, Index);
          end loop;
       else
-         Index := Line_Start (Buffer, Index) - 2;
-         for Line in 1 .. -Lines loop
-            while Index >= Buffer'First
-              and then Buffer (Index) /= ASCII.LF
-              and then Buffer (Index) /= ASCII.CR
-            loop
-               Index := Index - 1;
+         Index := Line_Start (Buffer, Index);
+         if Index > 2 then
+            Index := Index - 2;
+            for Line in 1 .. -Lines loop
+               while Index >= Buffer'First
+                 and then Buffer (Index) /= ASCII.LF
+                 and then Buffer (Index) /= ASCII.CR
+               loop
+                  Index := Index - 1;
+               end loop;
             end loop;
-         end loop;
-         Index := Index + 1;
+            Index := Index + 1;
+         end if;
       end if;
    end Skip_Lines;
 
