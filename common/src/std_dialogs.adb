@@ -33,7 +33,7 @@ with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
 with Histories;             use Histories;
 
-package body Dialogs is
+package body Std_Dialogs is
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
       Entry_Field   : Gtk_Combo;
@@ -236,4 +236,4 @@ package body Dialogs is
       Response (Gtk_Dialog (Simple_Dialog), Gtk_Response_OK);
    end Ok_Simple_Entry;
 
-end Dialogs;
+end Std_Dialogs;

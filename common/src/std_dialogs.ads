@@ -22,7 +22,7 @@ with Gtk.Enums;
 with Gtk.Window;
 with Histories;
 
-package Dialogs is
+package Std_Dialogs is
 
    function Simple_Entry_Dialog
      (Parent    : access Gtk.Window.Gtk_Window_Record'Class;
@@ -60,5 +60,4 @@ package Dialogs is
    --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
    --  expressions to display.
 
-end Dialogs;
-
+end Std_Dialogs;
