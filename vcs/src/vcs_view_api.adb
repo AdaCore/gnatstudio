@@ -18,50 +18,50 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Enums;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Dialogs;              use Gtkada.Dialogs;
+with Gtkada.MDI;                  use Gtkada.MDI;
 
-with VCS;                       use VCS;
-with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
-with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS;                         use VCS;
+with VCS.Unknown_VCS;             use VCS.Unknown_VCS;
+with VCS_View_Pkg;                use VCS_View_Pkg;
 
-with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-with Glide_Result_View;         use Glide_Result_View;
+with Glide_Intl;                  use Glide_Intl;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Console;        use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
+with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;        use Glide_Kernel.Project;
+with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
+with Glide_Result_View;           use Glide_Result_View;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
-with String_List_Utils;         use String_List_Utils;
+with String_List_Utils;           use String_List_Utils;
 
-with VCS_Module;                use VCS_Module;
-with Log_Utils;                 use Log_Utils;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with VCS_Module;                  use VCS_Module;
+with Log_Utils;                   use Log_Utils;
+with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
-with GVD.Dialogs;               use GVD.Dialogs;
+with GVD.Dialogs;                 use GVD.Dialogs;
 
-with Basic_Types;               use Basic_Types;
+with Basic_Types;                 use Basic_Types;
 
-with Projects.Registry;         use Projects, Projects.Registry;
+with Projects.Registry;           use Projects, Projects.Registry;
 
-with Commands;                  use Commands;
-with Commands.VCS;              use Commands.VCS;
-with Commands.External;         use Commands.External;
+with Commands;                    use Commands;
+with Commands.VCS;                use Commands.VCS;
+with Commands.External;           use Commands.External;
 
-with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with VFS;                       use VFS;
-with File_Utils;                use File_Utils;
-with String_Utils;              use String_Utils;
+with Traces;                      use Traces;
+with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
+with VFS;                         use VFS;
+with File_Utils;                  use File_Utils;
+with String_Utils;                use String_Utils;
 
 package body VCS_View_API is
 
@@ -1167,9 +1167,10 @@ package body VCS_View_API is
       List   : String_List.List;
       Kernel : Kernel_Handle;
 
-      function Get_Location
-        (File, ChangeLog_File : Virtual_File) return String;
-      --  Returns the line/columns where the cursor needs to be located.
+      procedure Get_Location
+        (File, ChangeLog_File : Virtual_File;
+         Line, Column         : out Natural);
+      --  Returns the line/column where the cursor needs to be located.
       --  This function must be called only when the global ChangeLog file
       --  contains an entry for file.
 
@@ -1177,8 +1178,9 @@ package body VCS_View_API is
       -- Get_Location --
       ------------------
 
-      function Get_Location
-        (File, ChangeLog_File : Virtual_File) return String
+      procedure Get_Location
+        (File, ChangeLog_File : Virtual_File;
+         Line, Column         : out Natural)
       is
          Filename           : constant String := Base_Name (File);
          --  The filename to look for in the ChangeLog file
@@ -1186,34 +1188,36 @@ package body VCS_View_API is
          ChangeLog_Filename : aliased String := Full_Name (ChangeLog_File).all;
          --  The global ChangeLog file
 
-         L, C, Last         : Natural;
+         Last               : Natural;
          Entry_Found        : Boolean;
 
       begin
-         L := 1;
-         C := 0;
+         Line   := 1;
+         Column := 0;
 
          --  Get last line in the file
-         --  ??? This won't work when file contains blank characters
-         --  Same for Editor.get_chars below
 
          Last := Natural'Value
            (Execute_GPS_Shell_Command
-              (Kernel, "Editor.get_last_line " & ChangeLog_Filename));
+              (Kernel,
+               "Editor.get_last_line",
+               (1 => ChangeLog_Filename'Unchecked_Access)));
 
          --  First, look for the filename entry
 
          loop
             declare
-               Line : constant String :=
+               L_Img : aliased String := Image (Line);
+               B_Line  : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel,
-                    "Editor.get_chars " &
-                    ChangeLog_Filename & Natural'Image (L));
+                    "Editor.get_chars",
+                    (ChangeLog_Filename'Unchecked_Access,
+                     L_Img'Unchecked_Access));
             begin
-               Entry_Found := Index (Line, Filename) /= 0;
-               exit when Entry_Found or else L = Last;
-               L := L + 1;
+               Entry_Found := Index (B_Line, Filename) /= 0;
+               exit when Entry_Found or else Line = Last;
+               Line := Line + 1;
             end;
          end loop;
 
@@ -1223,27 +1227,29 @@ package body VCS_View_API is
          if not Entry_Found then
             --  No entry found, this should not happen, returns the first
             --  position in the file.
-            --  ??? Why are we returning a blank character at the first
-            --  position of the string
-            return " 1 1";
+            Line   := 1;
+            Column := 1;
+            return;
          end if;
 
-         L := L + 1;
+         Line := Line + 1;
 
          loop
             declare
-               Line : constant String :=
+               L_Img   : aliased String := Image (Line);
+               B_Line  : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel,
-                    "Editor.get_chars " &
-                    ChangeLog_Filename & Natural'Image (L));
+                    "Editor.get_chars",
+                    (ChangeLog_Filename'Unchecked_Access,
+                     L_Img'Unchecked_Access));
                Is_Empty : Boolean := True;
             begin
-               for K in Line'Range loop
-                  if Line (K) /= ' '
-                    and then Line (K) /= ASCII.HT
-                    and then Line (K) /= ASCII.CR
-                    and then Line (K) /= ASCII.LF
+               for K in B_Line'Range loop
+                  if B_Line (K) /= ' '
+                    and then B_Line (K) /= ASCII.HT
+                    and then B_Line (K) /= ASCII.CR
+                    and then B_Line (K) /= ASCII.LF
                   then
                      Is_Empty := False;
                      exit;
@@ -1251,12 +1257,14 @@ package body VCS_View_API is
                end loop;
 
                if Is_Empty then
-                  if Line'Length = 0 or else Line (Line'First) = ASCII.LF then
+                  if B_Line'Length = 0
+                    or else B_Line (B_Line'First) = ASCII.LF
+                  then
                      --  An empty line, insert an HT
 
                      declare
-                        Line  : aliased String := Natural'Image (L);
-                        Col   : aliased String := "1";
+                        L_Img : aliased String := Image (Line);
+                        C_Img : aliased String := "1";
                         Text1 : aliased String :=
                           String'(1 => ASCII.HT);
                         Text2 : aliased String :=
@@ -1265,10 +1273,10 @@ package body VCS_View_API is
 
                      begin
                         Args (1) := ChangeLog_Filename'Unchecked_Access;
-                        Args (2) := Line'Unchecked_Access;
-                        Args (3) := Col'Unchecked_Access;
+                        Args (2) := L_Img'Unchecked_Access;
+                        Args (3) := C_Img'Unchecked_Access;
 
-                        if L >= Last then
+                        if Line >= Last then
                            --  This is the end of the file
                            Args (4) := Text1'Unchecked_Access;
                         else
@@ -1279,26 +1287,23 @@ package body VCS_View_API is
                           (Kernel, "Editor.replace_text", Args);
                      end;
 
-                     C := 2;
+                     Column := 2;
 
-                  elsif Line (Line'First) = ASCII.HT then
+                  elsif B_Line (B_Line'First) = ASCII.HT then
                      --  A line with a single HT, place cursor just after
-                     C := 2;
+                     Column := 2;
 
                   else
                      --  Only spaces, put cursor at the end of the line
-                     C := Line'Last;
+                     Column := B_Line'Last;
                   end if;
 
                   exit;
                end if;
 
-               L := L + 1;
+               Line := Line + 1;
             end;
          end loop;
-
-         --  ??? Should use Image (L) instead
-         return Natural'Image (L) & Natural'Image (C);
       end Get_Location;
 
    begin
@@ -1312,6 +1317,7 @@ package body VCS_View_API is
             ChangeLog_File : constant Virtual_File :=
               Get_ChangeLog_From_File (Kernel, File);
             Already_Open   : Boolean;
+            Line, Column   : Natural;
          begin
             Already_Open := Is_Open (Kernel, ChangeLog_File);
             Open_File_Editor (Kernel, ChangeLog_File);
@@ -1320,16 +1326,19 @@ package body VCS_View_API is
             --  file for the current data into the ChangeLog file. Set the
             --  cursor location at the right position.
 
+            Get_Location (File, ChangeLog_File, Line, Column);
+
             declare
-               Result : constant String :=
-                 Execute_GPS_Shell_Command
-                   (Kernel,
-                    "Editor.edit " &
-                    Full_Name (ChangeLog_File).all &
-                    Get_Location (File, ChangeLog_File));
-               pragma Unreferenced (Result);
+               L_Img              : aliased String := Image (Line);
+               C_Img              : aliased String := Image (Column);
+               ChangeLog_Filename : aliased String :=
+                 Full_Name (ChangeLog_File).all;
             begin
-               null;
+               Execute_GPS_Shell_Command
+                 (Kernel,
+                  "Editor.edit",
+                  (ChangeLog_Filename'Unchecked_Access,
+                   L_Img'Unchecked_Access, C_Img'Unchecked_Access));
             end;
 
             if not Already_Open then
