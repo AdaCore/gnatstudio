@@ -267,21 +267,13 @@ package body Debugger.Gdb is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Command_Type := Hidden) return String is
+      Mode            : Command_Type := Hidden) return String
+   is
+      S : constant String :=
+        Send_Full (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode);
    begin
-      Send
-        (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode => Mode);
-
-      if Wait_For_Prompt then
-         declare
-            S : String := Expect_Out (Get_Process (Debugger));
-         begin
-            if S'Length > Prompt_Length then
-               return S (S'First .. S'Last - Prompt_Length - 1);
-            else
-               return "";
-            end if;
-         end;
+      if S'Length > Prompt_Length then
+         return S (S'First .. S'Last - Prompt_Length - 1);
       else
          return "";
       end if;
@@ -341,10 +333,9 @@ package body Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
-      S     : constant String := Send (Debugger, "print " & Entity,
-                                       Mode => Internal);
+      S : constant String :=
+        Send (Debugger, "print " & Entity, Mode => Internal);
       Index : Natural := S'First;
-
    begin
       --  The value is valid only if it starts with '$'
 
@@ -695,14 +686,16 @@ package body Debugger.Gdb is
    -----------
 
    procedure Start
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden)
+     (Debugger  : access Gdb_Debugger;
+      Arguments : String := "";
+      Mode      : Command_Type := Hidden)
    is
       Cmd   : constant String := Start (Get_Language (Debugger));
       First : Positive;
       Last  : Positive := Cmd'First;
 
    begin
+      Send (Debugger, "set args " & Arguments, Mode => Mode);
       if Cmd /= "" then
          while Last <= Cmd'Last loop
             First := Last;
@@ -915,7 +908,7 @@ package body Debugger.Gdb is
               new String' (S (Matched (6).First .. Matched (6).Last));
          end if;
 
-         First := Matched (0).Last;
+         First := Matched (0).Last + 2;
       end loop;
    end Parse_Backtrace_Info;
 
@@ -928,10 +921,7 @@ package body Debugger.Gdb is
       Value    : out Backtrace_Array;
       Len      : out Natural) is
    begin
-      Send (Debugger, "where");
-      Parse_Backtrace_Info
-        (Expect_Out (Get_Process (Debugger)),
-         Value, Len);
+      Parse_Backtrace_Info (Send (Debugger, "where"), Value, Len);
    end Backtrace;
 
    ----------------------
@@ -1065,20 +1055,16 @@ package body Debugger.Gdb is
       Line_String : String := Positive'Image (Line);
       --  Use a temporary variable to remove the leading space.
 
+      S : constant String :=
+        Send (Debugger, "info line "
+              & Base_File_Name (File)
+              & ':' &
+              Line_String (Line_String'First + 1 .. Line_String'Last),
+              Mode => Internal);
    begin
-      Send (Debugger, "info line "
-            & Base_File_Name (File)
-            & ':' &
-            Line_String (Line_String'First + 1 .. Line_String'Last),
-            Mode => Internal);
-
-      if Index
-        (Expect_Out (Get_Process (Debugger)), "starts at address") /= 0
-      then
+      if Index (S, "starts at address") /= 0 then
          return Have_Code;
-      elsif Index
-        (Expect_Out (Get_Process (Debugger)), "out of range") /= 0
-      then
+      elsif Index (S, "out of range") /= 0 then
          return No_More_Code;
       else
          return No_Code;
@@ -1706,8 +1692,8 @@ package body Debugger.Gdb is
       --  be closer to what the user would expect.
 
       Set_Parse_File_Name (Get_Process (Debugger), False);
-      Send (Debugger, "frame", Mode => Internal);
-      Parse_Backtrace_Info (Expect_Out (Get_Process (Debugger)), Bt, Len);
+      Parse_Backtrace_Info
+        (Send (Debugger, "frame", Mode => Internal), Bt, Len);
       Set_Parse_File_Name (Get_Process (Debugger), True);
 
       if Len >= 1 then
@@ -1730,49 +1716,44 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger)
      return Odd.Types.Exception_Array
    is
+      S : String := Send (Debugger, "info exceptions", Mode => Internal);
+      Nums  : Natural := 0;
    begin
-      Send (Debugger, "info exceptions", Mode => Internal);
+      --  Count the number of exceptions listed
+      for J in S'Range loop
+         if S (J) = ASCII.LF then
+            Nums := Nums + 1;
+         end if;
+      end loop;
+
+      --  Ignore the first line ("All defined exceptions")
+      Nums := Nums - 1;
 
       declare
-         S     : String := Expect_Out (Get_Process (Debugger));
-         Nums  : Natural := 0;
+         Arr : Exception_Array (1 .. Nums);
+         Index : Natural := S'First;
+         Num   : Natural := 1;
+         Start : Natural;
       begin
-         --  Count the number of exceptions listed
-         for J in S'Range loop
-            if S (J) = ASCII.LF then
-               Nums := Nums + 1;
-            end if;
-         end loop;
+         if Nums <= 0 then
+            return Arr;
+         end if;
 
-         --  Ignore the first line ("All defined exceptions")
-         Nums := Nums - 1;
+         Skip_To_Char (S, Index, ASCII.LF);
+         Index := Index + 1;
 
-         declare
-            Arr : Exception_Array (1 .. Nums);
-            Index : Natural := S'First;
-            Num   : Natural := 1;
-            Start : Natural;
-         begin
-            if Nums <= 0 then
-               return Arr;
-            end if;
-
+         while Index <= S'Last
+           and then Num <= Nums
+         loop
+            Start := Index;
+            Skip_To_Char (S, Index, ':');
+            Arr (Num).Name := new String'(S (Start .. Index - 1));
             Skip_To_Char (S, Index, ASCII.LF);
             Index := Index + 1;
+            Num := Num + 1;
+         end loop;
 
-            while Index <= S'Last
-              and then Num <= Nums
-            loop
-               Start := Index;
-               Skip_To_Char (S, Index, ':');
-               Arr (Num).Name := new String'(S (Start .. Index - 1));
-               Skip_To_Char (S, Index, ASCII.LF);
-               Index := Index + 1;
-               Num := Num + 1;
-            end loop;
-
-            return Arr;
-         end;
+         return Arr;
       end;
    end List_Exceptions;
 

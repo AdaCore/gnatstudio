@@ -29,7 +29,7 @@ with Odd.Process;       use Odd.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Gtk.Window;
+with Gtk.Window;        use Gtk.Window;
 
 package body Debugger is
 
@@ -37,6 +37,24 @@ package body Debugger is
 
    Remote_Protocol : constant String := "rsh";
    --  How to run a process on a remote machine ?
+
+   procedure Send_Internal_Pre
+     (Debugger         : access Debugger_Root'Class;
+      Cmd              : String;
+      Empty_Buffer     : Boolean := True;
+      Mode             : Command_Type := Hidden);
+   --  Internal procedure used by Send. This takes care of sending the
+   --  command to the debugger, but doesn't parse or even read the output.
+   --  The command is displayed in the command window and added to the
+   --  history if necessary
+
+   procedure Send_Internal_Post
+     (Debugger         : access Debugger_Root'Class;
+      Cmd              : String;
+      Wait_For_Prompt  : Boolean;
+      Mode             : Command_Type := Hidden);
+   --  Internal procedure used by Send. This takes care of processing the
+   --  output of the debugger, but it doesn't read it.
 
    ----------
    -- Free --
@@ -242,26 +260,24 @@ package body Debugger is
       return A;
    end Source_Files_List;
 
-   ----------
-   -- Send --
-   ----------
+   -----------------------
+   -- Send_Internal_Pre --
+   -----------------------
 
-   procedure Send
+   procedure Send_Internal_Pre
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
       Empty_Buffer     : Boolean := True;
-      Wait_For_Prompt  : Boolean := True;
       Mode             : Command_Type := Hidden)
    is
       use type Gtk.Window.Gtk_Window;
       Data : History_Data;
    begin
-
-      Data.Mode := Mode;
-
       if Mode = Internal then
          Push_Internal_Command_Status (Get_Process (Debugger), True);
       end if;
+
+      --  Display the command in the output window if necessary
 
       if Mode = User and then Debugger.Window /= null then
          Text_Output_Handler
@@ -269,10 +285,13 @@ package body Debugger is
             Cmd & ASCII.LF, True);
       end if;
 
+      --  Append the command to the history if necessary
+
       if Index_Non_Blank (Cmd) /= 0
         and then Debugger.Window /= null
         and then Mode /= Internal
       then
+         Data.Mode := Mode;
          Data.Debugger_Num := Integer (Get_Num
                                        (Convert (Debugger.Window, Debugger)));
          Data.Command := new String'
@@ -282,12 +301,23 @@ package body Debugger is
                  Data);
       end if;
 
+      --  Send the command to the debugger
+
       Send (Get_Process (Debugger), Cmd, Empty_Buffer);
       Send_Completed (Debugger, Cmd);
+   end Send_Internal_Pre;
 
+   ------------------------
+   -- Send_Internal_Post --
+   ------------------------
+
+   procedure Send_Internal_Post
+     (Debugger         : access Debugger_Root'Class;
+      Cmd              : String;
+      Wait_For_Prompt  : Boolean;
+      Mode             : Command_Type := Hidden) is
+   begin
       if Wait_For_Prompt then
-         Wait_Prompt (Debugger);
-
          --  Not in text mode (for testing purposes...)
 
          if Debugger.Window /= null then
@@ -313,7 +343,53 @@ package body Debugger is
       if Mode = Internal then
          Pop_Internal_Command_Status (Get_Process (Debugger));
       end if;
+   end Send_Internal_Post;
+
+   ----------
+   -- Send --
+   ----------
+
+   procedure Send
+     (Debugger         : access Debugger_Root'Class;
+      Cmd              : String;
+      Empty_Buffer     : Boolean := True;
+      Wait_For_Prompt  : Boolean := True;
+      Mode             : Command_Type := Hidden)
+   is
+   begin
+      Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+      if Wait_For_Prompt then
+         Wait_Prompt (Debugger);
+      end if;
+      Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
    end Send;
+
+   ---------------
+   -- Send_Full --
+   ---------------
+
+   function Send_Full
+     (Debugger        : access Debugger_Root'Class;
+      Cmd             : String;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True;
+      Mode            : Command_Type := Hidden) return String
+   is
+   begin
+      Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+      if Wait_For_Prompt then
+         Wait_Prompt (Debugger);
+         declare
+            S : String := Expect_Out (Get_Process (Debugger));
+         begin
+            Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
+            return S;
+         end;
+      else
+         Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
+         return "";
+      end if;
+   end Send_Full;
 
    --------------------
    -- Send_Completed --

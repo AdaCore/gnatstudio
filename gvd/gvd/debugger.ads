@@ -121,14 +121,28 @@ package Debugger is
    --  If Is_Internal is true, then the output of the command won't be shown
    --  in the command window.
 
+   function Send_Full
+     (Debugger        : access Debugger_Root'Class;
+      Cmd             : String;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True;
+      Mode            : Command_Type := Hidden) return String;
+   --  Same as above, but also returns the output of the debugger. The full
+   --  output is returned, ie this includes the final prompt. You should
+   --  rather use the function Send
+   --  The empty string is returned if Wait_For_Prompt is False.
+   --  You should always use this function instead of using Expect_Out
+   --  yourself after calling the procedure Send, since some intermediate
+   --  hidden calls to the debugger might have taken place in the meanwhile.
+
    function Send
      (Debugger        : access Debugger_Root;
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
       Mode            : Command_Type := Hidden) return String is abstract;
-   --  Same as above, but also returns the output of the debugger.
-   --  The empty string is returned if Wait_For_Prompt is False.
+   --  Same as above, but return a clean version of the output, ie it deletes
+   --  the final prompt if any, depending on the debugger type.
 
    procedure Send_Completed
      (Debugger : access Debugger_Root;
@@ -323,7 +337,6 @@ package Debugger is
       Mode      : Command_Type := Hidden) is abstract;
    --  Start the execution of the executable.
    --  Arguments is a string passed on the command line to run
-   --  The arguments must have been set by a call to Set_Arguments.
    --  Note that this command does not wait for the prompt, and returns
    --  immediately.
    --  See above for details on Display.
@@ -331,8 +344,10 @@ package Debugger is
 
    procedure Start
      (Debugger : access Debugger_Root;
+      Arguments : String := "";
       Mode     : Command_Type := Hidden) is abstract;
    --  Start the execution of the executable and stop at the first user line.
+   --  Arguments is a string passed on the command line to run
    --  The arguments must have been set by a call to Set_Arguments.
    --  See above for details on Display.
    --  GDB_COMMAND: "begin"

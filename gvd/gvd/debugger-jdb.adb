@@ -266,6 +266,8 @@ package body Debugger.Jdb is
       Send (Debugger, "where", Wait_For_Prompt => False);
       Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, -1);
 
+      --  ??? Shouldn't be using Expect_Out here, but the functional version
+      --  of Send.
       if Matches (2) /= No_Match then
          declare
             S : String := Expect_Out (Get_Process (Debugger));
@@ -301,8 +303,10 @@ package body Debugger.Jdb is
    -- Start --
    -----------
 
-   procedure Start (Debugger : access Jdb_Debugger;
-                    Mode     : Command_Type := Hidden) is
+   procedure Start
+     (Debugger  : access Jdb_Debugger;
+      Arguments : String := "";
+      Mode      : Command_Type := Hidden) is
    begin
       Send (Debugger, "stop in " & Debugger.Main_Class.all & '.' &
          Debugger.Main_Class.all, Mode => Mode);
@@ -460,43 +464,39 @@ package body Debugger.Jdb is
    procedure Backtrace
      (Debugger : access Jdb_Debugger;
       Value    : out Backtrace_Array;
-      Len      : out Natural) is
+      Len      : out Natural)
+   is
+      S       : String := Send (Debugger, "wherei");
+      Matched : Match_Array (0 .. 6);
+      First   : Positive := S'First;
    begin
-      Send (Debugger, "wherei");
+      Len := 0;
 
-      declare
-         S       : String := Expect_Out (Get_Process (Debugger));
-         Matched : Match_Array (0 .. 6);
-         First   : Positive := S'First;
-      begin
-         Len := 0;
+      while Len /= Value'Length loop
+         Match
+           (Frame_Pattern, S (First .. S'Last), Matched);
 
-         while Len /= Value'Length loop
-            Match
-              (Frame_Pattern, S (First .. S'Last), Matched);
+         exit when Matched (0) = No_Match;
 
-            exit when Matched (0) = No_Match;
+         Len := Len + 1;
+         Value (Len).Frame_Id :=
+           Natural'Value (S (Matched (1).First .. Matched (1).Last));
 
-            Len := Len + 1;
-            Value (Len).Frame_Id :=
-              Natural'Value (S (Matched (1).First .. Matched (1).Last));
+         Value (Len).Program_Counter :=
+           new String' (S (Matched (4).First .. Matched (4).Last));
 
-            Value (Len).Program_Counter :=
-              new String' (S (Matched (4).First .. Matched (4).Last));
+         Value (Len).Subprogram :=
+           new String' (S (Matched (2).First .. Matched (2).Last));
 
-            Value (Len).Subprogram :=
-              new String' (S (Matched (2).First .. Matched (2).Last));
+         if Matched (3) = No_Match then
+            Value (Len).Source_Location := new String' ("");
+         else
+            Value (Len).Source_Location :=
+              new String' (S (Matched (3).First .. Matched (3).Last));
+         end if;
 
-            if Matched (3) = No_Match then
-               Value (Len).Source_Location := new String' ("");
-            else
-               Value (Len).Source_Location :=
-                 new String' (S (Matched (3).First .. Matched (3).Last));
-            end if;
-
-            First := Matched (0).Last;
-         end loop;
-      end;
+         First := Matched (0).Last;
+      end loop;
    end Backtrace;
 
    ----------------------
@@ -803,27 +803,21 @@ package body Debugger.Jdb is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Command_Type := Hidden) return String is
+      Mode            : Command_Type := Hidden) return String
+   is
+      S : constant String :=
+        Send_Full (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode);
+      Index : Positive := S'Last;
    begin
-      Send (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt,
-            Mode => Mode);
-
-      if Wait_For_Prompt then
-         declare
-            S : String := Expect_Out (Get_Process (Debugger));
-            Index : Positive := S'Last;
-         begin
-            while Index >= S'First
-              and then S (Index) /= ASCII.LF
-            loop
-               Index := Index - 1;
-            end loop;
-
-            return S (S'First .. Index - 1);
-         end;
-
-      else
+      if S = "" then
          return "";
+      else
+         while Index >= S'First
+           and then S (Index) /= ASCII.LF
+         loop
+            Index := Index - 1;
+         end loop;
+         return S (S'First .. Index - 1);
       end if;
    end Send;
 
