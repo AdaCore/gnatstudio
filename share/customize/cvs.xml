@@ -65,6 +65,10 @@
       <shell output="">echo "Committing file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
       <external>cvs commit -F "%1" "$2-"</external>
+      <on-failure>
+         <shell output="">echo "CVS error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
       <shell>delete "%2"</shell>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
