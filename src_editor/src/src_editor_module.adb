@@ -45,7 +45,6 @@ with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Glide_Main_Window;         use Glide_Main_Window;
-with Interactive_Consoles;      use Interactive_Consoles;
 with Basic_Types;               use Basic_Types;
 with GVD.Status_Bar;            use GVD.Status_Bar;
 with Gtk.Box;                   use Gtk.Box;
@@ -389,10 +388,6 @@ package body Src_Editor_Module is
       File   : String);
    --  Add an entry for File to the Recent menu, if needed.
 
-   function Console_Has_Focus
-     (Kernel : access Kernel_Handle_Record'Class) return Boolean;
-   --  Return True if the focus MDI child is an interactive console.
-
    function Find_Mark (Identifier : String) return Mark_Identifier_Record;
    --  Find the mark corresponding to Identifier, or return an empty
    --  record.
@@ -472,26 +467,6 @@ package body Src_Editor_Module is
          return "";
       end if;
    end Get_Filename;
-
-   -----------------------
-   -- Console_Has_Focus --
-   -----------------------
-
-   function Console_Has_Focus
-     (Kernel : access Kernel_Handle_Record'Class) return Boolean
-   is
-      Child  : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-      Widget : Gtk_Widget;
-   begin
-      if Child = null then
-         return False;
-      else
-         Widget := Get_Widget (Child);
-
-         return Widget.all in Interactive_Console_Record'Class
-           and then Is_Editable (Interactive_Console (Widget));
-      end if;
-   end Console_Has_Focus;
 
    ----------
    -- Free --
@@ -1658,7 +1633,7 @@ package body Src_Editor_Module is
 
       if File_Exists then
          Load_File (Editor, File,
-                    Force_Focus => not Console_Has_Focus (Kernel),
+                    Force_Focus => True,
                     Success     => Success);
 
          if not Success then
@@ -1810,7 +1785,7 @@ package body Src_Editor_Module is
       if D.Line /= 0 and then Is_Valid_Location (D.Edit, D.Line) then
          Set_Screen_Location
            (D.Edit, D.Line, D.Column,
-            not (Console_Has_Focus (D.Kernel)));
+            True);
 
          if D.Column_End /= 0
            and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
@@ -2702,22 +2677,10 @@ package body Src_Editor_Module is
                   No_Location := True;
                end if;
 
-               if Console_Has_Focus (Kernel) then
-                  --  Only grab again the focus on Child (in Location_Callback)
-                  --  if the focus was changed by Open_File, and an interactive
-                  --  console had the focus previousely.
-
-                  Child := Get_Focus_Child (Get_MDI (Kernel));
-               end if;
-
                Source := Open_File
                  (Kernel, File,
                   Create_New => New_File,
-                  Focus      => (not No_Location) and then (Child = null));
-
-               if Child /= null then
-                  Set_Focus_Child (Child);
-               end if;
+                  Focus      => not No_Location);
 
                if Source /= null then
                   Edit := Source.Editor;
