@@ -67,7 +67,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "csc_html_allow_font_switch");
 
    begin
-      Internal (Get_Object (HTML), To_Gboolean (Allow));
+      Internal (Get_Object (HTML), Boolean'Pos (Allow));
    end Allow_Font_Switch;
 
    ---------------------
@@ -84,7 +84,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "csc_html_allow_selection");
 
    begin
-      Internal (Get_Object (HTML), To_Gboolean (Allow));
+      Internal (Get_Object (HTML), Boolean'Pos (Allow));
    end Allow_Selection;
 
    ----------
@@ -125,7 +125,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "csc_html_enable_debug");
 
    begin
-      Internal (Get_Object (HTML), To_Gboolean (Debug));
+      Internal (Get_Object (HTML), Boolean'Pos (Debug));
    end Enable_Debug;
 
    ------------
@@ -137,7 +137,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "html_engine_frozen");
 
    begin
-      return To_Boolean (Internal (Engine));
+      return Internal (Engine) /= 0;
    end Frozen;
 
    ---------------------------
@@ -163,7 +163,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "csc_html_get_editable");
 
    begin
-      return To_Boolean (Internal (Get_Object (HTML)));
+      return Internal (Get_Object (HTML)) /= 0;
    end Get_Editable;
 
    ----------------
@@ -310,7 +310,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "csc_html_jump_to_anchor");
 
    begin
-      return To_Boolean (Internal (Get_Object (HTML), Anchor & ASCII.NUL));
+      return Internal (Get_Object (HTML), Anchor & ASCII.NUL) /= 0;
    end Jump_To_Anchor;
 
    ----------------
@@ -386,13 +386,13 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "html_engine_search");
 
    begin
-      return To_Boolean
-        (Internal
+      return
+        Internal
           (Engine,
            Text & ASCII.NUL,
-           To_Gboolean (Case_Sensitive),
-           To_Gboolean (Forward),
-           To_Gboolean (Regular)));
+           Boolean'Pos (Case_Sensitive),
+           Boolean'Pos (Forward),
+           Boolean'Pos (Regular)) /= 0;
    end Search;
 
    -----------------
@@ -404,7 +404,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "html_engine_search_next");
 
    begin
-      return To_Boolean (Internal (Engine));
+      return Internal (Engine) /= 0;
    end Search_Next;
 
    ------------------------
@@ -416,7 +416,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "html_engine_search_incremental");
 
    begin
-      return To_Boolean (Internal (Engine));
+      return Internal (Engine) /= 0;
    end Search_Incremental;
 
    ----------------------------------
@@ -467,7 +467,7 @@ package body Csc_HTML_Widget is
       pragma Import (C, Internal, "csc_html_set_editable");
 
    begin
-      Internal (Get_Object (HTML), To_Gboolean (Editable));
+      Internal (Get_Object (HTML), Boolean'Pos (Editable));
    end Set_Editable;
 
    --------------------
