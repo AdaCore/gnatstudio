@@ -535,7 +535,7 @@ package body Debugger.Gdb is
       Num : Expect_Match;
    begin
       --  Wait for initial output and prompt (and display it in the window)
-      Wait (Get_Process (Debugger), Num, "(.+).*$", Timeout => -1);
+      Wait (Get_Process (Debugger), Num, "\(.+\).*$", Timeout => -1);
 
       --  Make sure that the prompt is what we are expecting.
       Send (Debugger, "set prompt (gdb) ", Mode => Internal);
