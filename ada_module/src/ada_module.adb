@@ -813,10 +813,9 @@ package body Ada_Module is
    begin
       Set_Indentation_Parameters
         (Ada_Lang,
-         Indent_Style  => Indentation_Kind'Val
+         Indent_Style => Indentation_Kind'Val
             (Get_Pref (K, Ada_Automatic_Indentation)),
-         Use_Tabs      => Get_Pref (K, Ada_Use_Tabs),
-         Params        =>
+         Params       =>
            (Indent_Level      =>
               Integer (Get_Pref (K, Ada_Indentation_Level)),
             Indent_Continue   =>
@@ -824,7 +823,11 @@ package body Ada_Module is
             Indent_Decl       =>
               Integer (Get_Pref (K, Ada_Declaration_Level)),
             Tab_Width         => Integer (Get_Pref (K, Tab_Width)),
-            Indent_Case_Extra => Get_Pref (K, Ada_Indent_Case_Extra)));
+            Indent_Case_Extra => Get_Pref (K, Ada_Indent_Case_Extra),
+            Reserved_Casing   => Unchanged,
+            Ident_Casing      => Unchanged,
+            Format_Operators  => False,
+            Use_Tabs          => Get_Pref (K, Ada_Use_Tabs)));
    end On_Preferences_Changed;
 
    ---------------------

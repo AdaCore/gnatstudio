@@ -18,15 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Generic_Stack;
 with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNAT.IO;                 use GNAT.IO;
 with Glib.Unicode;            use Glib.Unicode;
-with Ada.Unchecked_Deallocation;
+with Indent_Stack;            use Indent_Stack;
 
 package body Ada_Analyzer is
-
-   use Basic_Types;
 
    pragma Suppress (All_Checks);
    --  For efficiency
@@ -34,6 +32,158 @@ package body Ada_Analyzer is
    -----------------
    -- Local types --
    -----------------
+
+   type Token_Type is
+     (
+      --  Token name          Token type   Class(es)
+
+      Tok_Integer_Literal, -- numeric lit  Literal, Lit_Or_Name
+
+      Tok_String_Literal,  -- string lit   Literal. Lit_Or_Name
+
+      Tok_Char_Literal,    -- char lit     Name, Literal. Lit_Or_Name
+
+      Tok_Operator_Symbol, -- op symbol    Name, Literal, Lit_Or_Name, Desig
+
+      Tok_Identifier,      -- identifer    Name, Lit_Or_Name, Desig
+
+      Tok_Double_Asterisk, -- **
+
+      Tok_Minus,           -- -            Binary_Addop, Unary_Addop
+      Tok_Plus,            -- +            Binary_Addop, Unary_Addop
+
+      Tok_Asterisk,        -- *            Mulop
+      Tok_Slash,           -- /            Mulop
+
+      Tok_Dot,             -- .            Namext
+      Tok_Apostrophe,      -- '            Namext
+
+      Tok_Right_Paren,     -- )            Sterm
+      Tok_Comma,           -- ,            Sterm
+
+      Tok_Less,            -- <            Relop, Sterm
+      Tok_Equal,           -- =            Relop, Sterm
+      Tok_Greater,         -- >            Relop, Sterm
+      Tok_Not_Equal,       -- /=           Relop, Sterm
+      Tok_Greater_Equal,   -- >=           Relop, Sterm
+      Tok_Less_Equal,      -- <=           Relop, Sterm
+
+      Tok_Box,             -- <>           Relop, Eterm, Sterm
+      Tok_Colon_Equal,     -- :=           Eterm, Sterm
+
+      Tok_Abstract,        -- ABSTRACT     Eterm, Sterm
+      Tok_Access,          -- ACCESS       Eterm, Sterm
+      Tok_Aliased,         -- ALIASED      Eterm, Sterm
+      Tok_All,             -- ALL          Eterm, Sterm
+      Tok_Array,           -- ARRAY        Eterm, Sterm
+      Tok_At,              -- AT           Eterm, Sterm
+
+      Tok_Mod,             -- MOD          Mulop
+      Tok_Rem,             -- REM          Mulop
+
+      Tok_And,             -- AND          Logop, Sterm
+
+      Tok_Delta,           -- DELTA        Atkwd, Sterm, Consk
+      Tok_Digits,          -- DIGITS       Atkwd, Sterm, Consk
+      Tok_Range,           -- RANGE        Atkwd, Sterm, Consk
+
+      Tok_Abs,             -- ABS
+      Tok_New,             -- NEW
+      Tok_Null,            -- NULL
+      Tok_Others,          -- OTHERS
+
+      Tok_In,              -- IN           Relop, Sterm
+      Tok_Not,             -- NOT          Relop, Sterm
+
+      Tok_Or,              -- OR           Logop, Sterm
+      Tok_Xor,             -- XOR          Logop, Sterm
+
+      Tok_Body,            -- BODY         Eterm, Sterm
+      Tok_Constant,        -- CONSTANT     Eterm, Sterm
+      Tok_Limited,         -- LIMITED      Eterm, Sterm
+      Tok_Of,              -- OF           Eterm, Sterm
+      Tok_Out,             -- OUT          Eterm, Sterm
+      Tok_Renames,         -- RENAMES      Eterm, Sterm
+      Tok_Reverse,         -- REVERSE      Eterm, Sterm
+      Tok_Tagged,          -- TAGGED       Eterm, Sterm
+
+      Tok_Case,            -- CASE         Eterm, Sterm, After_SM
+      Tok_Delay,           -- DELAY        Eterm, Sterm, After_SM
+
+      Tok_Accept,          -- ACCEPT       Eterm, Sterm, After_SM
+      Tok_Elsif,           -- ELSIF        Eterm, Sterm, After_SM
+      Tok_End,             -- END          Eterm, Sterm, After_SM
+      Tok_Exit,            -- EXIT         Eterm, Sterm, After_SM
+      Tok_Goto,            -- GOTO         Eterm, Sterm, After_SM
+      Tok_If,              -- IF           Eterm, Sterm, After_SM
+      Tok_Pragma,          -- PRAGMA       Eterm, Sterm, After_SM
+      Tok_Raise,           -- RAISE        Eterm, Sterm, After_SM
+      Tok_Requeue,         -- REQUEUE      Eterm, Sterm, After_SM
+      Tok_Return,          -- RETURN       Eterm, Sterm, After_SM
+      Tok_Terminate,       -- TERMINATE    Eterm, Sterm, After_SM
+      Tok_Until,           -- UNTIL        Eterm, Sterm, After_SM
+      Tok_When,            -- WHEN         Eterm, Sterm, After_SM
+
+      Tok_For,             -- FOR          Eterm, Sterm, After_SM, Labeled_Stmt
+      Tok_While,           -- WHILE        Eterm, Sterm, After_SM, Labeled_Stmt
+
+      Tok_Separate,        -- SEPARATE     Eterm, Sterm, Cunit, After_SM
+
+      Tok_Entry,           -- ENTRY        Eterm, Sterm, Declk, Deckn, After_SM
+      Tok_Protected,       -- PROTECTED    Eterm, Sterm, Declk, Deckn, After_SM
+      Tok_Task,            -- TASK         Eterm, Sterm, Declk, Deckn, After_SM
+      Tok_Type,            -- TYPE         Eterm, Sterm, Declk, Deckn, After_SM
+      Tok_Subtype,         -- SUBTYPE      Eterm, Sterm, Declk, Deckn, After_SM
+      Tok_Use,             -- USE          Eterm, Sterm, Declk, Deckn, After_SM
+
+      Tok_Generic,         -- GENERIC      Eterm, Sterm, Cunit, Declk, After_SM
+
+      Tok_Function,        -- FUNCTION     Eterm, Sterm, Cunit, Declk, After_SM
+      Tok_Package,         -- PACKAGE      Eterm, Sterm, Cunit, Declk, After_SM
+      Tok_Procedure,       -- PROCEDURE    Eterm, Sterm, Cunit, Declk, After_SM
+
+      Tok_Do,              -- DO           Eterm, Sterm
+      Tok_Is,              -- IS           Eterm, Sterm
+      Tok_Record,          -- RECORD       Eterm, Sterm
+      Tok_Then,            -- THEN         Eterm, Sterm
+
+      Tok_Abort,           -- ABORT        Eterm, Sterm, After_SM
+      Tok_Else,            -- ELSE         Eterm, Sterm, After_SM
+      Tok_Exception,       -- EXCEPTION    Eterm, Sterm, After_SM
+
+      Tok_Select,          -- SELECT       Eterm, Sterm, After_SM
+
+      Tok_Begin,           -- BEGIN        Eterm, Sterm, After_SM, Labeled_Stmt
+      Tok_Declare,         -- DECLARE      Eterm, Sterm, After_SM, Labeled_Stmt
+      Tok_Loop,            -- LOOP         Eterm, Sterm, After_SM, Labeled_Stmt
+
+      Tok_Private,         -- PRIVATE      Eterm, Sterm, Cunit, After_SM
+      Tok_With,            -- WITH         Eterm, Sterm, Cunit, After_SM
+
+      Tok_Semicolon,       -- ;            Eterm, Sterm, Cterm
+
+      Tok_Left_Paren,      -- (            Namext, Consk
+
+      Tok_Ampersand,       -- &            Binary_Addop
+
+      Tok_Vertical_Bar,    -- |            Cterm, Sterm, Chtok
+
+      Tok_Less_Less,       -- <<           Eterm, Sterm, After_SM
+      Tok_Greater_Greater, -- >>           Eterm, Sterm
+
+      Tok_Pound,           -- # sign, used by the preprocessor
+
+      Tok_Colon,           -- :            Eterm, Sterm
+
+      Tok_Arrow,           -- =>           Sterm, Cterm, Chtok
+
+      Tok_Dot_Dot,         -- ..           Sterm, Chtok
+
+      No_Token);
+      --  No_Token is used for initializing Token values to indicate that
+      --  no value has been set yet.
+
+   subtype Reserved_Token_Type is Token_Type range Tok_Abstract .. Tok_With;
 
    subtype Token_Class_Literal is
      Token_Type range Tok_Integer_Literal .. Tok_Operator_Symbol;
@@ -46,6 +196,61 @@ package body Ada_Analyzer is
    subtype Token_Class_No_Cont is Token_Type range Tok_Function .. Tok_Colon;
    --  Do not allow a following continuation line
 
+   Max_Identifier : constant := 256;
+   --  Maximum length of an identifier.
+
+   type Extended_Token is record
+      Token         : Token_Type := No_Token;
+      --  Enclosing token
+
+      Declaration   : Boolean := False;
+      --  Are we inside a declarative part ?
+
+      Record_Start_New_Line : Boolean := False;
+      --  For a Tok_Record, set to True if the keyword "record" was found on
+      --  its own line (only used internally).
+
+      Type_Declaration : Boolean := False;
+      --  Is it a type declaration ?
+
+      Package_Declaration : Boolean := False;
+      --  Is it a package declaration ?
+
+      --  ??? It would be nice to merge the fields Declaration,
+      --  Type_Declaration and Package_Declaration at some point.
+
+      Record_Type   : Boolean := False;
+      --  Is it a record type definition ?
+
+      Tagged_Type   : Boolean := False;
+      --  Is it a tagged type definition ?
+
+      Identifier    : String (1 .. Max_Identifier);
+      --  Name of the enclosing token
+      --  The actual name is Identifier (1 .. Ident_Len)
+
+      Ident_Len     : Natural := 0;
+      --  Actual length of Indentifier
+
+      Profile_Start : Natural := 0;
+      --  Position in the buffer where the profile of the current subprogram
+      --  starts.
+
+      Profile_End   : Natural := 0;
+      --  Position in the buffer where the profile of the current subprogram
+      --  ends.
+
+      Sloc          : Source_Location;
+      --  Source location for this entity
+
+      Sloc_Name     : Source_Location;
+      --  Source location for the name of this entity, if relevant
+   end record;
+   --  Extended information for a token
+
+   package Token_Stack is new Generic_Stack (Extended_Token);
+   use Token_Stack;
+
    ----------------------
    -- Local procedures --
    ----------------------
@@ -57,13 +262,6 @@ package body Ada_Analyzer is
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package.
 
-   procedure Replace_Text
-     (Buffer  : in out Extended_Line_Buffer;
-      First   : Natural;
-      Last    : Natural;
-      Replace : String);
-   --  Replace the slice First .. Last - 1 in Buffer by Replace.
-
    ---------------
    -- Get_Token --
    ---------------
@@ -71,7 +269,11 @@ package body Ada_Analyzer is
    function Get_Token (S : String) return Token_Type is
    begin
       if S'Length = 1 then
-         return Tok_Identifier;
+         if Is_Control (S (S'First)) then
+            return No_Token;
+         else
+            return Tok_Identifier;
+         end if;
       end if;
 
       --  Use a case statement instead of a loop for efficiency
@@ -339,24 +541,18 @@ package body Ada_Analyzer is
 
    procedure Analyze_Ada_Source
      (Buffer           : String;
-      New_Buffer       : in out Extended_Line_Buffer;
       Indent_Params    : Indent_Parameters;
-      Reserved_Casing  : Casing_Type           := Lower;
-      Ident_Casing     : Casing_Type           := Mixed;
-      Format_Operators : Boolean               := True;
-      Indent           : Boolean               := True;
+      Format           : Boolean               := True;
+      From, To         : Natural               := 0;
+      Replace          : Replace_Text_Callback := null;
       Constructs       : Construct_List_Access := null;
-      Current_Indent   : out Natural;
-      Prev_Indent      : out Natural;
-      Callback         : Entity_Callback := null)
+      Callback         : Entity_Callback       := null)
    is
       ---------------
       -- Constants --
       ---------------
 
       None   : constant := -1;
-      Spaces : constant String (1 .. 512) := (others => ' ');
-      --  Use to handle indentation in procedure Do_Indent below.
 
       Default_Extended : Extended_Token;
       pragma Warnings (Off, Default_Extended);
@@ -370,8 +566,14 @@ package body Ada_Analyzer is
       Indent_When        : constant := 5;
       Indent_Record      : Natural renames Indent_Params.Indent_Level;
       Indent_Case_Extra  : Boolean renames Indent_Params.Indent_Case_Extra;
+      Reserved_Casing    : Casing_Type renames Indent_Params.Reserved_Casing;
+      Ident_Casing       : Casing_Type renames Indent_Params.Ident_Casing;
+      Use_Tabs           : Boolean renames Indent_Params.Use_Tabs;
+      Tab_Width          : Natural renames Indent_Params.Tab_Width;
+      Format_Operators   : constant Boolean :=
+        Format and then Indent_Params.Format_Operators;
 
-      Buffer_Last      : constant Natural := Buffer'Last;
+      Buffer_Last        : constant Natural := Buffer'Last;
 
       ---------------
       -- Variables --
@@ -384,10 +586,8 @@ package body Ada_Analyzer is
       Prec                : Natural           := Buffer'First;
       Start_Of_Line       : Natural;
       Prev_Line           : Natural;
-      Prev_Spaces         : Integer           := 0;
       Num_Spaces          : Integer           := 0;
       Continuation_Val    : Integer           := 0;
-      Indent_Padding      : Integer;
       Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
       Index_Ident         : Natural;
@@ -406,6 +606,8 @@ package body Ada_Analyzer is
       Top_Token           : Token_Stack.Generic_Type_Access;
       Casing              : Casing_Type;
       Terminated          : Boolean := False;
+      Last_Replace_Line   : Natural := 0;
+      Padding             : Integer := 0;
 
       function Handle_Reserved_Word (Reserved : Token_Type) return Boolean;
       --  Handle reserved words.
@@ -426,15 +628,6 @@ package body Ada_Analyzer is
 
       function End_Of_Word (P : Natural) return Natural;
       --  Return the end of the word pointed by P.
-
-      function Line_Start (P : Natural) return Natural;
-      --  Return the start of the line pointed by P.
-
-      function Line_End (P : Natural) return Natural;
-      --  Return the end of the line pointed by P.
-
-      function Next_Line (P : Natural) return Natural;
-      --  Return the start of the next line.
 
       function End_Of_Identifier (P : Natural) return Natural;
       --  Starting from P, scan for the end of the identifier.
@@ -475,6 +668,12 @@ package body Ada_Analyzer is
       function Prev_Char (P : Natural) return Natural;
       --  Return the previous char in buffer. P is the current character.
       pragma Inline (Prev_Char);
+
+      procedure Replace_Text
+        (First : Natural;
+         Last  : Natural;
+         Str   : String);
+      --  Wrapper for Replace.all, taking (From, To) into account.
 
       --------------------
       -- Stack Routines --
@@ -519,11 +718,11 @@ package body Ada_Analyzer is
          Index       : Natural;
 
       begin
-         if Indent_Done then
+         if Indent_Done or not Format then
             return;
          end if;
 
-         Start := Line_Start (Prec);
+         Start := Line_Start (Buffer, Prec);
          Index := Start;
 
          loop
@@ -558,14 +757,10 @@ package body Ada_Analyzer is
             Continuation_Val := 0;
          end if;
 
-         if Indent then
-            Replace_Text
-              (New_Buffer, Start, Index, Spaces (1 .. Indentation));
-         end if;
-
-         Indent_Done    := True;
-         Prev_Spaces    := Indentation;
-         Indent_Padding := Indentation - (Index - Start);
+         Replace_Text
+           (Start, Index,
+            Blank_Slice (Indentation, Use_Tabs, Tab_Width));
+         Indent_Done := True;
       end Do_Indent;
 
       ----------------------------
@@ -588,7 +783,7 @@ package body Ada_Analyzer is
             Do_Indent
               (Prec,
                Top_Token.Profile_Start -
-                 Line_Start (Top_Token.Profile_Start) + 1);
+                 Line_Start (Buffer, Top_Token.Profile_Start) + 1);
          end if;
       end Indent_Function_Return;
 
@@ -742,15 +937,6 @@ package body Ada_Analyzer is
          Start     : Natural;
          New_Lines : Natural;
 
-         function Is_Blank (C : Character) return Boolean;
-         pragma Inline (Is_Blank);
-         --  Return True if C is a blank character: LF, HT or ' '
-
-         function Is_Blank (C : Character) return Boolean is
-         begin
-            return C = ' ' or else C = ASCII.LF or else C = ASCII.HT;
-         end Is_Blank;
-
       begin
          loop
             New_Lines := 0;
@@ -812,51 +998,6 @@ package body Ada_Analyzer is
 
          return Prev;
       end End_Of_Identifier;
-
-      ----------------
-      -- Line_Start --
-      ----------------
-
-      function Line_Start (P : Natural) return Natural is
-      begin
-         for J in reverse Buffer'First .. P loop
-            if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
-               return J + 1;
-            end if;
-         end loop;
-
-         return Buffer'First;
-      end Line_Start;
-
-      --------------
-      -- Line_End --
-      --------------
-
-      function Line_End (P : Natural) return Natural is
-      begin
-         for J in P .. Buffer_Last loop
-            if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
-               return J - 1;
-            end if;
-         end loop;
-
-         return Buffer_Last;
-      end Line_End;
-
-      ---------------
-      -- Next_Line --
-      ---------------
-
-      function Next_Line (P : Natural) return Natural is
-      begin
-         for J in P .. Buffer_Last - 1 loop
-            if Buffer (J) = ASCII.LF then
-               return J + 1;
-            end if;
-         end loop;
-
-         return Buffer_Last;
-      end Next_Line;
 
       --------------
       -- Look_For --
@@ -929,7 +1070,7 @@ package body Ada_Analyzer is
              (Value.Token /= Tok_Case or else Top (Stack).Token /= Tok_Record)
            and then (Value.Token /= Tok_Type or else not In_Generic)
          then
-            Column             := Prec - Line_Start (Prec) + 1;
+            Column             := Prec - Line_Start (Buffer, Prec) + 1;
             Info               := Constructs.Current;
             Constructs.Current := new Construct_Information;
 
@@ -1025,7 +1166,8 @@ package body Ada_Analyzer is
             case Constructs.Current.Category is
                when Cat_Variable | Cat_Local_Variable |
                     Cat_Declare_Block | Cat_Simple_Block |
-                    Enclosing_Entity_Category =>
+                    Cat_Type | Cat_Subtype | Enclosing_Entity_Category
+               =>
                   --  Adjust the Sloc_End to the next semicolon for enclosing
                   --  entities and variable declarations.
 
@@ -1059,7 +1201,7 @@ package body Ada_Analyzer is
 
       begin
          Temp.Token       := Reserved;
-         Start_Of_Line    := Line_Start (Prec);
+         Start_Of_Line    := Line_Start (Buffer, Prec);
          Temp.Sloc.Line   := Line_Count;
          Temp.Sloc.Column := Prec - Start_Of_Line + 1;
          Temp.Sloc.Index  := Prec;
@@ -1502,14 +1644,12 @@ package body Ada_Analyzer is
          Spaces          : String := "    ";
          End_Of_Line     : Natural;
          Start_Of_Line   : Natural;
-         Prev_Start_Line : Natural;
          Long            : Natural;
          First           : Natural;
          Last            : Natural;
          Offs            : Natural;
          Insert_Spaces   : Boolean;
          Char            : Character;
-         Padding         : Integer := 0;
          Prev_Prev_Token : Token_Type;
          Top_Token       : Token_Stack.Generic_Type_Access;
 
@@ -1519,6 +1659,10 @@ package body Ada_Analyzer is
 
          procedure Handle_Two_Chars (Second_Char : Character);
          --  Handle a two char operator, whose second char is Second_Char.
+
+         procedure Preprocessor_Directive;
+         --  Handle preprocessor directive.
+         --  Assume that Buffer (P) = '#'
 
          procedure Skip_Blank_Lines;
          --  Skip empty lines
@@ -1594,10 +1738,13 @@ package body Ada_Analyzer is
                   P := Next_Char (P);
                end loop;
 
+               if Buffer (P) = ASCII.LF then
+                  New_Line (Line_Count);
+               end if;
+
                Start_Of_Line := P;
-               Padding       := 0;
                Indent_Done   := False;
-               End_Of_Line   := Line_End (Start_Of_Line);
+               End_Of_Line   := Line_End (Buffer, Start_Of_Line);
             end if;
          end Skip_Blank_Lines;
 
@@ -1606,6 +1753,8 @@ package body Ada_Analyzer is
          -------------------
 
          function Skip_Comments return Boolean is
+            Prev_Start_Line : Natural;
+            Line            : Natural;
          begin
             if Buffer (P) = '-' and then Buffer (Next_Char (P)) = '-' then
                Prev_Start_Line := Start_Of_Line;
@@ -1625,22 +1774,25 @@ package body Ada_Analyzer is
                   --     --  comment
 
                   Do_Indent (P, Num_Spaces);
-                  P := Next_Line (Next_Char (P));
+                  P := Next_Line (Buffer, Next_Char (P));
                   New_Line (Line_Count);
                end loop;
 
-               if P < Buffer_Last then
-                  Last := Prev_Char (P);
+               if Buffer (P - 1) = ASCII.LF then
+                  Last := P - 1;
+                  Line := Line_Count - 1;
+
                else
                   Last := P;
+                  Line := Line_Count;
                end if;
 
-               if P <= Buffer_Last and then Buffer (P) = ASCII.LF then
+               if Buffer (P) = ASCII.LF then
                   P := Last;
                end if;
 
                Start_Of_Line := P;
-               End_Of_Line   := Line_End (P);
+               End_Of_Line   := Line_End (Buffer, P);
                Padding       := 0;
                Indent_Done   := False;
 
@@ -1648,7 +1800,7 @@ package body Ada_Analyzer is
                   if Callback
                     (Comment_Text,
                        (Prev_Line, First - Prev_Start_Line + 1, First),
-                       (Line_Count - 1, Last - Line_Start (Last) + 1, Last),
+                       (Line, Last - Line_Start (Buffer, Last) + 1, Last),
                      False)
                   then
                      Terminated := True;
@@ -1662,20 +1814,30 @@ package body Ada_Analyzer is
             return False;
          end Skip_Comments;
 
-      begin  --  Next_Word
-         Start_Of_Line := Line_Start (P);
-         End_Of_Line   := Line_End (Start_Of_Line);
-         Terminated    := False;
+         ----------------------------
+         -- Preprocessor_Directive --
+         ----------------------------
 
-         if New_Buffer.Current /= null then
-            if New_Buffer.Current.Line'First = Start_Of_Line then
-               Padding :=
-                 New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
-            else
-               Padding := 0;
-               Indent_Done := False;
-            end if;
-         end if;
+         procedure Preprocessor_Directive is
+         begin
+            --  Skip line
+
+            while P < Buffer'Last
+              and then Buffer (P + 1) /= ASCII.LF
+            loop
+               P := P + 1;
+            end loop;
+
+            --  Mark this line as indented, so that the current indentation is
+            --  kept.
+
+            Indent_Done := True;
+         end Preprocessor_Directive;
+
+      begin  --  Next_Word
+         Start_Of_Line := Line_Start (Buffer, P);
+         End_Of_Line   := Line_End (Buffer, Start_Of_Line);
+         Terminated    := False;
 
          loop
             loop
@@ -1704,6 +1866,10 @@ package body Ada_Analyzer is
                when '#' =>
                   Prev_Token := Tok_Pound;
 
+                  if Is_Letter (Buffer (P + 1)) then
+                     Preprocessor_Directive;
+                  end if;
+
                when '(' =>
                   Prev_Token := Tok_Left_Paren;
                   Char := Buffer (Prev_Char (P));
@@ -1715,8 +1881,7 @@ package body Ada_Analyzer is
                        and then Char /= '''
                      then
                         Spaces (2) := Buffer (P);
-                        Replace_Text (New_Buffer, P, P + 1, Spaces (1 .. 2));
-                        Padding := Padding + 1;
+                        Replace_Text (P, P + 1, Spaces (1 .. 2));
                      end if;
 
                   else
@@ -1728,8 +1893,6 @@ package body Ada_Analyzer is
                      else
                         Do_Indent (P, Num_Spaces, Continuation => True);
                      end if;
-
-                     Padding := Indent_Padding;
                   end if;
 
                   if Num_Parens = 0
@@ -1993,8 +2156,7 @@ package body Ada_Analyzer is
                       or else Long /= Last - P + 1)
                   then
                      Replace_Text
-                       (New_Buffer, First, Last,
-                        Spaces (Offs .. Offs + Long - 1));
+                       (First, Last, Spaces (Offs .. Offs + Long - 1));
                   end if;
 
                when ',' | ';' =>
@@ -2051,7 +2213,8 @@ package body Ada_Analyzer is
                            Val.Token := Top_Token.Token;
                            Pop (Tokens);
                            Val.Sloc.Line   := Line_Count;
-                           Val.Sloc.Column := Prec - Line_Start (Prec) + 2;
+                           Val.Sloc.Column :=
+                             Prec - Line_Start (Buffer, Prec) + 2;
                            Val.Sloc.Index  := Prec + 1;
                            Val.Ident_Len := 0;
                            Push (Tokens, Val);
@@ -2059,13 +2222,13 @@ package body Ada_Analyzer is
                      end if;
                   end if;
 
-                  Char := Buffer (Next_Char (P));
+                  Char := Buffer (P + 1);
 
                   if Format_Operators
                     and then Char /= ' ' and then P /= End_Of_Line
                   then
                      Comma (1) := Buffer (P);
-                     Replace_Text (New_Buffer, P, P + 1, Comma (1 .. 2));
+                     Replace_Text (P, P + 1, Comma (1 .. 2));
                   end if;
 
                when ''' =>
@@ -2130,6 +2293,35 @@ package body Ada_Analyzer is
          Terminated := False;
       end Next_Word;
 
+      ------------------
+      -- Replace_Text --
+      ------------------
+
+      procedure Replace_Text
+        (First : Natural;
+         Last  : Natural;
+         Str   : String)
+      is
+         Start : Natural;
+      begin
+         if Replace /= null
+           and then (To = 0 or else Line_Count in From .. To)
+         then
+            if Last_Replace_Line /= Line_Count then
+               Last_Replace_Line := Line_Count;
+               Padding := 0;
+            end if;
+
+            Start := Line_Start (Buffer, First);
+            Replace
+              (Line_Count,
+               Padding + First - Start + 1,
+               Padding + Last - Start + 1, Str);
+
+            Padding := Padding + Str'Length - (Last - First);
+         end if;
+      end Replace_Text;
+
    begin  --  Analyze_Ada_Source
       --  Push a dummy token so that stack will never be empty.
       Push (Tokens, Default_Extended);
@@ -2146,7 +2338,7 @@ package body Ada_Analyzer is
       Current := End_Of_Word (Prec);
 
       Main_Loop :
-      while Current < Buffer_Last loop
+      while Prec <= Buffer_Last loop
          Str_Len := Current - Prec + 1;
 
          for J in Prec .. Current loop
@@ -2159,22 +2351,25 @@ package body Ada_Analyzer is
             --  Handle dotted names, e.g Foo.Bar.X
 
             Prev_Line := Line_Count;
-            Index_Ident := End_Of_Identifier (Current + 1);
 
-            if Index_Ident /= Current then
-               --  We have a dotted name, update indexes.
+            if Current < Buffer_Last then
+               Index_Ident := End_Of_Identifier (Current + 1);
 
-               Str_Len := Index_Ident - Prec + 1;
+               if Index_Ident /= Current then
+                  --  We have a dotted name, update indexes.
 
-               for J in Current + 1 .. Index_Ident loop
-                  Str (J - Prec + 1) := To_Lower (Buffer (J));
-               end loop;
+                  Str_Len := Index_Ident - Prec + 1;
 
-               Current := Index_Ident;
+                  for J in Current + 1 .. Index_Ident loop
+                     Str (J - Prec + 1) := To_Lower (Buffer (J));
+                  end loop;
+
+                  Current := Index_Ident;
+               end if;
             end if;
 
             Top_Token := Top (Tokens);
-            Start_Of_Line := Line_Start (Prec);
+            Start_Of_Line := Line_Start (Buffer, Prec);
 
             if Top_Token.Ident_Len = 0
               and then (Top_Token.Token in Token_Class_Declk
@@ -2220,7 +2415,9 @@ package body Ada_Analyzer is
                exit Main_Loop when Callback
                  (Identifier_Text,
                   (Prev_Line, Prec - Start_Of_Line + 1, Prec),
-                  (Line_Count, Current - Line_Start (Current) + 1, Current),
+                  (Line_Count,
+                   Current - Line_Start (Buffer, Current) + 1,
+                   Current),
                   False);
             end if;
 
@@ -2233,7 +2430,7 @@ package body Ada_Analyzer is
             Casing := Ident_Casing;
 
             if Callback /= null then
-               Start_Of_Line := Line_Start (Prec);
+               Start_Of_Line := Line_Start (Buffer, Prec);
 
                exit Main_Loop when Callback
                  (Identifier_Text,
@@ -2242,6 +2439,8 @@ package body Ada_Analyzer is
                   False);
             end if;
 
+         elsif Token = No_Token then
+            Casing := Unchanged;
          else
             Casing := Reserved_Casing;
 
@@ -2257,19 +2456,16 @@ package body Ada_Analyzer is
                   Str (J) := To_Upper (Str (J));
                end loop;
 
-               Replace_Text
-                 (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
+               Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
 
             when Lower =>
                --  Str already contains lowercase characters.
 
-               Replace_Text
-                 (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
+               Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
 
             when Mixed =>
                Mixed_Case (Str (1 .. Str_Len));
-               Replace_Text
-                 (New_Buffer, Prec, Current + 1, Str (1 .. Str_Len));
+               Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
          end case;
 
          if Started then
@@ -2287,18 +2483,6 @@ package body Ada_Analyzer is
 
          Current := End_Of_Word (Prec);
       end loop Main_Loop;
-
-      if Prev_Spaces < 0 then
-         Prev_Indent := 0;
-      else
-         Prev_Indent := Prev_Spaces;
-      end if;
-
-      if Indents = null or else Top (Indents).all = None then
-         Current_Indent := Num_Spaces;
-      else
-         Current_Indent := Top (Indents).all;
-      end if;
 
       --  Try to register partial constructs, friendlier
 
@@ -2320,141 +2504,8 @@ package body Ada_Analyzer is
          --  expected that exceptions (e.g. Constraint_Error) may be raised,
          --  and we do not want to behave unexpectedly in such cases.
 
-         Prev_Indent    := 0;
-         Current_Indent := 0;
          Clear (Tokens);
          Clear (Indents);
    end Analyze_Ada_Source;
-
-   --------------------
-   -- To_Line_Buffer --
-   --------------------
-
-   function To_Line_Buffer (Buffer : String) return Extended_Line_Buffer is
-      B     : Extended_Line_Buffer;
-      Index : Natural := Buffer'First;
-      First : Natural;
-      Tmp   : Line_Buffer;
-      Prev  : Line_Buffer;
-      pragma Warnings (Off, Prev);
-      --  GNAT will issue a "warning: "Prev" may be null" which cannot occur
-      --  since Prev is set to Tmp at the end of each iteration.
-
-   begin
-      loop
-         exit when Index >= Buffer'Length;
-
-         First := Index;
-         Skip_To_Char (Buffer, Index, ASCII.LF);
-         Tmp := new Line_Buffer_Record;
-
-         if First = Buffer'First then
-            B.First   := Tmp;
-            B.Current := B.First;
-
-         else
-            Prev.Next := Tmp;
-         end if;
-
-         if Index < Buffer'Length and then Buffer (Index + 1) = ASCII.CR then
-            Index := Index + 1;
-         end if;
-
-         Tmp.Line := new String'(Buffer (First .. Index));
-         Tmp.Len  := Tmp.Line'Length;
-
-         Index := Index + 1;
-         Prev := Tmp;
-      end loop;
-
-      return B;
-   end To_Line_Buffer;
-
-   -----------
-   -- Print --
-   -----------
-
-   procedure Print (Buffer : Extended_Line_Buffer) is
-      Tmp : Line_Buffer := Buffer.First;
-   begin
-      loop
-         exit when Tmp = null;
-         Put (Tmp.Line.all);
-         Tmp := Tmp.Next;
-      end loop;
-   end Print;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Buffer : in out Extended_Line_Buffer) is
-      Tmp  : Line_Buffer := Buffer.First;
-      Prev : Line_Buffer;
-
-   begin
-      loop
-         exit when Tmp = null;
-         Prev := Tmp;
-         Tmp := Tmp.Next;
-         Free (Prev.Line);
-         Free (Prev);
-      end loop;
-   end Free;
-
-   ------------------
-   -- Replace_Text --
-   ------------------
-
-   procedure Replace_Text
-     (Buffer  : in out Extended_Line_Buffer;
-      First   : Natural;
-      Last    : Natural;
-      Replace : String)
-   is
-      S          : String_Access;
-      F, L       : Natural;
-      Line_First : Natural;
-      Line_Last  : Natural;
-      Padding    : Integer;
-
-   begin
-      if Buffer.First = null then
-         --  No replacing actually requested
-         return;
-      end if;
-
-      if Buffer.Current.Line'First + Buffer.Current.Len - 1 < First then
-         loop
-            Buffer.Current := Buffer.Current.Next;
-
-            exit when Buffer.Current.Line'First + Buffer.Current.Len > First;
-         end loop;
-      end if;
-
-      Padding := Buffer.Current.Line'Length - Buffer.Current.Len;
-      F       := First + Padding;
-      L       := Last  + Padding;
-
-      if Last - First = Replace'Length then
-         --  Simple case, no need to reallocate buffer
-
-         Buffer.Current.Line (F .. L - 1) := Replace;
-
-      else
-         Line_First := Buffer.Current.Line'First;
-         Line_Last  := Buffer.Current.Line'Last;
-
-         S := new String
-           (Line_First .. Line_Last - ((Last - First) - Replace'Length));
-         S (Line_First .. F - 1) := Buffer.Current.Line (Line_First .. F - 1);
-         S (F .. F + Replace'Length - 1) := Replace;
-         S (F + Replace'Length .. S'Last) :=
-           Buffer.Current.Line (L .. Buffer.Current.Line'Last);
-
-         Free (Buffer.Current.Line);
-         Buffer.Current.Line := S;
-      end if;
-   end Replace_Text;
 
 end Ada_Analyzer;
