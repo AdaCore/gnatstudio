@@ -218,7 +218,7 @@ package body Builder_Module is
          Cmd := new String' (Data.File);
       else
          Cmd := new String'
-           ("-P" & Project_Name (Data.Project) & " " &
+           ("-P" & Project_Path (Data.Project) & " " &
               Scenario_Variables_Cmd_Line (K) & " " & Data.File);
       end if;
 
