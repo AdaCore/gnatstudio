@@ -127,12 +127,14 @@ package Codefix.GPS_Io is
    --  compilator has found.
 
    procedure Set_Regexp
-     (This : in out Compilation_Output;
-      File_Location_Regexp : GNAT.Regpat.Pattern_Matcher;
-      File_Index_In_Regexp : Integer;
-      Line_Index_In_Regexp : Integer;
-      Col_Index_In_Regexp  : Integer;
-      Msg_Index_In_Regexp  : Integer);
+     (This                    : in out Compilation_Output;
+      File_Location_Regexp    : GNAT.Regpat.Pattern_Matcher;
+      File_Index_In_Regexp    : Integer;
+      Line_Index_In_Regexp    : Integer;
+      Col_Index_In_Regexp     : Integer;
+      Msg_Index_In_Regexp     : Integer;
+      Style_Index_In_Regexp   : Integer;
+      Warning_Index_In_Regexp : Integer);
    --  Set the regular expression used to parse error messages
 
    procedure Set_Last_Output
@@ -185,6 +187,7 @@ private
       Kernel        : Kernel_Handle;
       File_Regexp : GNAT.Expect.Pattern_Matcher_Access;
       File_Index, Line_Index, Col_Index, Msg_Index : Integer;
+      Style_Index, Warning_Index : Integer;
    end record;
 
 end Codefix.GPS_Io;

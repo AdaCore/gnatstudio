@@ -451,14 +451,16 @@ package body Codefix.GPS_Io is
       Skip_To_Char (This.Errors_Buffer.all, This.Current_Index, ASCII.LF);
       Initialize
         (Current,
-         Kernel     => This.Kernel,
-         Error_Line =>
+         Kernel        => This.Kernel,
+         Error_Line    =>
            This.Errors_Buffer (Last_Index .. This.Current_Index - 1),
-         Regexp     => This.File_Regexp.all,
-         File_Index => This.File_Index,
-         Line_Index => This.Line_Index,
-         Col_Index  => This.Col_Index,
-         Msg_Index  => This.Msg_Index);
+         Regexp        => This.File_Regexp.all,
+         File_Index    => This.File_Index,
+         Line_Index    => This.Line_Index,
+         Col_Index     => This.Col_Index,
+         Msg_Index     => This.Msg_Index,
+         Style_Index   => This.Style_Index,
+         Warning_Index => This.Warning_Index);
 
       This.Current_Index := This.Current_Index + 1;
    end Get_Direct_Message;
@@ -494,19 +496,23 @@ package body Codefix.GPS_Io is
    ----------------
 
    procedure Set_Regexp
-     (This                 : in out Compilation_Output;
-      File_Location_Regexp : GNAT.Regpat.Pattern_Matcher;
-      File_Index_In_Regexp : Integer;
-      Line_Index_In_Regexp : Integer;
-      Col_Index_In_Regexp  : Integer;
-      Msg_Index_In_Regexp  : Integer) is
+     (This                    : in out Compilation_Output;
+      File_Location_Regexp    : GNAT.Regpat.Pattern_Matcher;
+      File_Index_In_Regexp    : Integer;
+      Line_Index_In_Regexp    : Integer;
+      Col_Index_In_Regexp     : Integer;
+      Msg_Index_In_Regexp     : Integer;
+      Style_Index_In_Regexp   : Integer;
+      Warning_Index_In_Regexp : Integer) is
    begin
       Unchecked_Free (This.File_Regexp);
-      This.File_Regexp := new Pattern_Matcher'(File_Location_Regexp);
-      This.File_Index  := File_Index_In_Regexp;
-      This.Line_Index  := Line_Index_In_Regexp;
-      This.Col_Index   := Col_Index_In_Regexp;
-      This.Msg_Index   := Msg_Index_In_Regexp;
+      This.File_Regexp   := new Pattern_Matcher'(File_Location_Regexp);
+      This.File_Index    := File_Index_In_Regexp;
+      This.Line_Index    := Line_Index_In_Regexp;
+      This.Col_Index     := Col_Index_In_Regexp;
+      This.Msg_Index     := Msg_Index_In_Regexp;
+      This.Style_Index   := Style_Index_In_Regexp;
+      This.Warning_Index := Warning_Index_In_Regexp;
    end Set_Regexp;
 
 end Codefix.GPS_Io;
