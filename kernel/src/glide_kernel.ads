@@ -714,7 +714,7 @@ private
    type Selection_Context is tagged record
       Kernel  : Kernel_Handle;
       Creator : Module_ID;
-      Ref_Count : Natural;
+      Ref_Count : Natural := 1;
    end record;
 
    procedure Free (Module : in out Module_ID);
