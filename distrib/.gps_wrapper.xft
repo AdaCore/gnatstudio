@@ -29,5 +29,5 @@ else
    GPS_DOC_PATH=$GPS_DOC_PATH:$root/doc/gnat/html:$root/doc/gnat-cross/html
 fi
 
-export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH FONTCONFIG_FILE PYTHONHOME
+export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH FONTCONFIG_FILE
 exec $root/bin/${prog}_exe "$@"
