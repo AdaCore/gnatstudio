@@ -167,7 +167,7 @@ package body C_Analyzer is
 
    subtype Cpp_Token is Token_Type range Tok_Abstract .. Tok_Wchar_t;
 
-   subtype Type_Token is Token_Type range Tok_Char .. Tok_Void;
+   subtype Type_Token is Token_Type range Tok_Char .. Tok_Unsigned;
 
    subtype Storage_Token is Token_Type range Tok_Auto .. Tok_Volatile;
 
@@ -209,8 +209,8 @@ package body C_Analyzer is
    procedure Top
      (Stack : in out Token_Stack.Simple_Stack;
       Item  : out Token_Stack.Generic_Type_Access);
-   --  Returns first token from Stack that is not an identifier. This item
-   --  is not removed from the stack.
+   --  Returns first token from Stack that is not an identifier nor a
+   --  type or storage token kind. This Item is not removed from the stack.
 
    function Get_Token (S : String) return Token_Type;
    --  Return a Token_Type given a string.
@@ -225,7 +225,9 @@ package body C_Analyzer is
    begin
       loop
          Item := Top (Stack);
-         exit when Item.Token /= Tok_Identifier;
+         exit when Item.Token /= Tok_Identifier
+           and then Item.Token not in Type_Token
+           and then Item.Token not in Storage_Token;
          Pop (Stack);
       end loop;
    end Top;
@@ -652,7 +654,9 @@ package body C_Analyzer is
             end if;
 
             Token_Stack.Pop (Stack, Value);
-            exit when Value.Token /= Tok_Identifier;
+            exit when Value.Token /= Tok_Identifier
+              and then Value.Token not in Type_Token
+              and then Value.Token not in Storage_Token;
          end loop;
 
          --  Build next entry of Constructs if needed.
@@ -1288,7 +1292,9 @@ package body C_Analyzer is
                --  Get identifier just before the parent, this is the name
                --  of the function (if this is a function definition).
 
-               Tok_Ident := Token_Stack.Top (Tokens).all;
+               if Paren_Level = 0 then
+                  Tok_Ident := Token_Stack.Top (Tokens).all;
+               end if;
 
                Top (Tokens, Top_Token);
 
