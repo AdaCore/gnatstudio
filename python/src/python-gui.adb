@@ -332,9 +332,20 @@ package body Python.GUI is
       Grab_Widget    : Gtk_Widget;
       use type Gdk_Window;
 
-      Default_Console : constant Interactive_Console := Interpreter.Console;
+      Ignored : Boolean;
+      pragma Unreferenced (Ignored);
 
+      Default_Console : constant Interactive_Console := Interpreter.Console;
    begin
+      --  Make sure that the output to sys.stdout is properly hidden. This is
+      --  in particular required when doing completion, since the result of
+      --  the command to get completions would be output in the middle of the
+      --  command the user is typing.
+
+      if Hide_Output then
+         Ignored := PyRun_SimpleString ("__gps_hide_output()");
+      end if;
+
       Trace (Me, "Running command: " & Cmd);
 
       if not Hide_Output and then Show_Command then
@@ -480,6 +491,10 @@ package body Python.GUI is
          if Default_Console /= null then
             Unref (Default_Console);
          end if;
+      end if;
+
+      if Hide_Output then
+         Ignored := PyRun_SimpleString ("__gps_restore_output()");
       end if;
 
       return Result;

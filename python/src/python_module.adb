@@ -653,7 +653,8 @@ package body Python_Module is
    is
       Ignored : Integer;
       Result  : PyObject;
-      pragma Unreferenced (Ignored, Result);
+      Tmp     : Boolean;
+      pragma Unreferenced (Ignored, Result, Tmp);
       N       : Node_Ptr;
       Errors  : aliased Boolean;
 
@@ -693,6 +694,25 @@ package body Python_Module is
 
       Python_Module_Id.Script.GPS_Module := Py_InitModule
         (GPS_Module_Name, Doc => "Interface with the GPS environment");
+
+      --  Register functions used to provide support for hiding the output
+      --  of commands
+
+      Tmp := PyRun_SimpleString
+        ("def __gps_no_write (*args): pass" & ASCII.LF
+         & "__gps_saved_stdout=None" & ASCII.LF
+         & "def __gps_hide_output ():" & ASCII.LF
+         & "   global __gps_saved_stdout" & ASCII.LF
+         & "   __gps_saved_stdout=sys.stdout.write" & ASCII.LF
+         & "   try: sys.stdout.write=__gps_no_write" & ASCII.LF
+         & "   except: pass" & ASCII.LF
+         & ASCII.LF
+         & "def __gps_restore_output():" & ASCII.LF
+         & "   if sys.stdout.write == __gps_no_write:" & ASCII.LF
+         & "      try: sys.stdout.write = __gps_saved_stdout" & ASCII.LF
+         & "      except: pass" & ASCII.LF
+         & ASCII.LF);
+
       Result := Run_Command
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
