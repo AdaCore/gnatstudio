@@ -3316,7 +3316,7 @@ package body Prj_API is
       Project     : Project_Node_Id;
       No_Scenario : constant Project_Node_Array (1 .. 0) :=
         (others => Empty_Node);
-      Values      : Argument_List (1 .. 2);
+      Values      : Argument_List (1 .. 1);
 
    begin
       Project := Create_Project (Name, Path);
@@ -3336,7 +3336,12 @@ package body Prj_API is
          Value              => ".");
 
       Values (1) := new String'("-g");
-      Values (2) := new String'("-s");
+
+      --  ??? gnatmake -s is apparently not fully functionnal, so disable this
+      --  default setting for now.
+
+      --  Values (2) := new String'("-s");
+
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
@@ -3345,7 +3350,7 @@ package body Prj_API is
          Attribute_Index    => Ada_String,
          Pkg_Name           => "builder");
       Free (Values (1));
-      Free (Values (2));
+      --  Free (Values (2));
 
       return Project;
    end Create_Default_Project;
