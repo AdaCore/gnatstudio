@@ -149,7 +149,7 @@ package body VCS_View_Pkg is
 
    function Copy_Context
      (Context : Selection_Context_Access)
-     return Selection_Context_Access;
+      return Selection_Context_Access;
    --  Copy the information in Context that are relevant to the explorer,
    --  and create a new context containing them.
 
@@ -1214,7 +1214,7 @@ package body VCS_View_Pkg is
 
    function Copy_Context
      (Context : Selection_Context_Access)
-     return Selection_Context_Access
+      return Selection_Context_Access
    is
       Result : Selection_Context_Access;
       File   : File_Selection_Context_Access;
@@ -1222,7 +1222,9 @@ package body VCS_View_Pkg is
       File_Info      : String_Access;
       Directory_Info : String_Access;
    begin
-      if Context.all in File_Selection_Context'Class then
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
          Result := new File_Selection_Context;
          File := File_Selection_Context_Access (Context);
 
@@ -1264,7 +1266,7 @@ package body VCS_View_Pkg is
 
    function Get_Current_Context
      (Explorer : access VCS_View_Record)
-     return Selection_Context_Access is
+      return Selection_Context_Access is
    begin
       return Copy_Context (Explorer.Context);
    end Get_Current_Context;
@@ -1275,8 +1277,7 @@ package body VCS_View_Pkg is
 
    procedure Set_Current_Context
      (Explorer : access VCS_View_Record;
-      Context  : Selection_Context_Access)
-   is
+      Context  : Selection_Context_Access) is
    begin
       if Explorer.Context /= null then
          Free (Explorer.Context);
