@@ -141,9 +141,14 @@ package body Language is
          Ind := Ada.Strings.Fixed.Index
            (Extensions (First .. Extensions'Last), ";");
 
-         exit when Ind = 0;
+         if Ind = 0 then
+            Ind := Extensions'Last + 1;
+         end if;
 
          Add_File_Extension (Lang, To_Regexp (Extensions (First .. Ind - 1)));
+
+         exit when Ind > Extensions'Last;
+
          First := Ind + 1;
       end loop;
    end Add_File_Extensions;
