@@ -4846,7 +4846,7 @@ package body Src_Editor_Buffer is
          procedure Add_Word (Word : String) is
             Space : constant String := (1 => ' ');
          begin
-            --  Does this word fits on the line
+            --  Does this word fit on the line
 
             if Line_Size + Word'Length + 1 > Max then
                --  +1 for the space before the word
