@@ -375,6 +375,8 @@ package body Project_Explorers_Files is
       use Src_Info;
 
       N          : Gtk_Tree_Iter;
+      pragma Unreferenced (N);
+
       Lang       : Language_Access;
       Constructs : Construct_List;
       Category   : Language_Category;
@@ -603,6 +605,8 @@ package body Project_Explorers_Files is
 
                declare
                   Success   : Boolean;
+                  pragma Unreferenced (Success);
+
                   Path      : Gtk_Tree_Path;
                   Expanding : constant Boolean := D.Explorer.Expanding;
                begin
@@ -625,6 +629,8 @@ package body Project_Explorers_Files is
                then
                   declare
                      Success   : Boolean;
+                     pragma Unreferenced (Success);
+
                      Path      : Gtk_Tree_Path;
                      Expanding : constant Boolean := D.Explorer.Expanding;
                   begin
@@ -763,6 +769,7 @@ package body Project_Explorers_Files is
       Text_Rend     : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
       Dummy         : Gint;
+      pragma Unreferenced (Dummy);
 
    begin
       Gtk_New (Text_Rend);
@@ -1019,6 +1026,7 @@ package body Project_Explorers_Files is
         Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
+      pragma Unreferenced (Success);
 
    begin
       if T.Expanding then
@@ -1562,7 +1570,7 @@ package body Project_Explorers_Files is
          False);
 
       Register_Menu
-        (Kernel, Project, -"Files View", "", On_Open_Explorer'Access);
+        (Kernel, Project, -"File View", "", On_Open_Explorer'Access);
 
    end Register_Module;
 
