@@ -62,10 +62,10 @@ package body GVD.Tooltips is
    --  Free memory used by tooltip.
 
    --------------------
-   -- Mouse_Moved_Cb --
+   -- Mouse_Event_Cb --
    --------------------
 
-   function Mouse_Moved_Cb
+   function Mouse_Event_Cb
      (Widget  : access Widget_Type'Class;
       Event   : Gdk.Event.Gdk_Event;
       Tooltip : Tooltips) return Boolean
@@ -74,37 +74,7 @@ package body GVD.Tooltips is
    begin
       Set_Tooltip (Tooltip);
       return False;
-   end Mouse_Moved_Cb;
-
-   --------------------
-   -- Mouse_Enter_Cb --
-   --------------------
-
-   function Mouse_Enter_Cb
-     (Widget  : access Widget_Type'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Tooltip : Tooltips) return Boolean
-   is
-      pragma Unreferenced (Widget, Event);
-   begin
-      Set_Tooltip (Tooltip);
-      return False;
-   end Mouse_Enter_Cb;
-
-   --------------------
-   -- Mouse_Leave_Cb --
-   --------------------
-
-   function Mouse_Leave_Cb
-     (Widget  : access Widget_Type'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Tooltip : Tooltips) return Boolean
-   is
-      pragma Unreferenced (Widget, Event);
-   begin
-      Remove_Tooltip (Tooltip);
-      return False;
-   end Mouse_Leave_Cb;
+   end Mouse_Event_Cb;
 
    -----------------
    -- Set_Timeout --
@@ -153,16 +123,20 @@ package body GVD.Tooltips is
          Y              => 0,
          Area           => Area);
       Tooltip_Handler.Connect
+        (Widget, "button_press_event",
+         Tooltip_Handler.To_Marshaller (Mouse_Event_Cb'Access),
+         User_Data => Tooltip);
+      Tooltip_Handler.Connect
         (Widget, "motion_notify_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Moved_Cb'Access),
+         Tooltip_Handler.To_Marshaller (Mouse_Event_Cb'Access),
          User_Data => Tooltip);
       Tooltip_Handler.Connect
         (Widget, "focus_in_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Enter_Cb'Access),
+         Tooltip_Handler.To_Marshaller (Mouse_Event_Cb'Access),
          User_Data => Tooltip);
       Tooltip_Handler.Connect
         (Widget, "focus_out_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Leave_Cb'Access),
+         Tooltip_Handler.To_Marshaller (Mouse_Event_Cb'Access),
          User_Data => Tooltip);
    end New_Tooltip;
 
