@@ -60,6 +60,7 @@ package Interactive_Consoles is
         return String_List.List;
    --  This function should return a list of adequate elements that all
    --  begin with Input, or a list containing only Input.
+   --  The list if freed automatically by the interactive console.
 
    procedure Gtk_New
      (Console      : out Interactive_Console;
