@@ -23,7 +23,7 @@ with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Odd;   use Callbacks_Odd;
+with GVD.Callbacks;   use GVD.Callbacks;
 with GPS.Intl;      use GPS.Intl;
 with Memory_View_Pkg.Callbacks; use Memory_View_Pkg.Callbacks;
 

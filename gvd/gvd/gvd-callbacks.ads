@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package provides instantiations of Gtk.Handlers.Callback that
+--  are shared among GVD packages.
+
 with Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Button; use Gtk.Button;
@@ -28,7 +31,7 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Text; use Gtk.Text;
 
-package Callbacks_Odd is
+package GVD.Callbacks is
 
    package Button_Callback is new
      Gtk.Handlers.Callback (Gtk_Button_Record);
@@ -51,4 +54,4 @@ package Callbacks_Odd is
    package Text_Callback is new
      Gtk.Handlers.Callback (Gtk_Text_Record);
 
-end Callbacks_Odd;
+end GVD.Callbacks;

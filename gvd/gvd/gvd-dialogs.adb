@@ -24,7 +24,7 @@ with Gtk.Enums;             use Gtk.Enums;
 with Gtkada.Types;          use Gtkada.Types;
 with GVD;                   use GVD;
 with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
-with Callbacks_Odd;         use Callbacks_Odd;
+with GVD.Callbacks;         use GVD.Callbacks;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Interfaces.C;          use Interfaces.C;
 with Interfaces.C.Strings;
