@@ -56,6 +56,7 @@ with Interfaces.C;              use Interfaces.C;
 
 with Prj_API;       use Prj_API;
 with Prj_Normalize; use Prj_Normalize;
+with Project_Trees; use Project_Trees;
 with Glide_Kernel;  use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 
@@ -259,6 +260,10 @@ package body Project_Viewers is
 
    function To_Argument_List (Value : Variable_Value) return Argument_List;
    --  Convert a variable value to a list of arguments.
+
+   procedure Explorer_Selection_Changed
+     (Viewer : access Gtk_Widget_Record'Class);
+   --  Called every time the selection has changed in the tree
 
    -------------------------
    -- Find_In_Source_Dirs --
@@ -656,7 +661,7 @@ package body Project_Viewers is
       pragma Assert (Dir_Name /= No_String);
 
       if Directory_Filter /= No_Filter
-        and then String_Equal (Directory_Filter, Dir_Name)
+        and then not String_Equal (Directory_Filter, Dir_Name)
       then
          return;
       end if;
@@ -769,16 +774,36 @@ package body Project_Viewers is
       end if;
    end Select_Row;
 
+   --------------------------------
+   -- Explorer_Selection_Changed --
+   --------------------------------
+
+   procedure Explorer_Selection_Changed
+     (Viewer : access Gtk_Widget_Record'Class)
+   is
+      View : Project_Viewer := Project_Viewer (Viewer);
+      Project : Project_Id := Get_Selected_Project (View.Explorer);
+      Dir : String_Id;
+   begin
+      Clear (View);  --  ??? Should delete selectively
+
+      if Project /= No_Project then
+         Dir := Get_Selected_Directory (View.Explorer);
+         Show_Project (View, Project, Dir);
+      end if;
+   end Explorer_Selection_Changed;
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
      (Viewer  : out Project_Viewer;
-      Kernel  : access Kernel_Handle_Record'Class) is
+      Kernel  : access Kernel_Handle_Record'Class;
+      Explorer : access Project_Trees.Project_Tree_Record'Class) is
    begin
       Viewer := new Project_Viewer_Record;
-      Project_Viewers.Initialize (Viewer, Kernel);
+      Project_Viewers.Initialize (Viewer, Kernel, Explorer);
    end Gtk_New;
 
    ----------------
@@ -787,7 +812,8 @@ package body Project_Viewers is
 
    procedure Initialize
      (Viewer : access Project_Viewer_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Explorer : access Project_Trees.Project_Tree_Record'Class)
    is
       Label : Gtk_Label;
       Color : Gdk_Color;
@@ -795,6 +821,7 @@ package body Project_Viewers is
    begin
       Gtk.Notebook.Initialize (Viewer);
       Viewer.Kernel := Kernel_Handle (Kernel);
+      Viewer.Explorer := Project_Tree (Explorer);
 
       for View in View_Type'Range loop
          Gtk_New (Scrolled);
@@ -813,6 +840,15 @@ package body Project_Viewers is
       end loop;
 
       Widget_Callback.Connect (Viewer, "switch_page", Switch_Page'Access);
+
+      Widget_Callback.Object_Connect
+        (Explorer, "tree_select_row",
+         Widget_Callback.To_Marshaller (Explorer_Selection_Changed'Access),
+         Viewer);
+      --  Widget_Callback.Object_Connect
+      --    (Explorer, "tree_unselect_row",
+      --     Widget_Callback.To_Marshaller (Explorer_Selection_Changed'Access),
+      --     Viewer);
 
       Color := Parse (Default_Switches_Color);
       Alloc (Get_Default_Colormap, Color);

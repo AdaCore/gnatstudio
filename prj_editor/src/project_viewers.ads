@@ -34,6 +34,7 @@ with Prj;
 with Types;
 
 with Glide_Kernel;
+with Project_Trees;
 
 package Project_Viewers is
 
@@ -46,12 +47,16 @@ package Project_Viewers is
 
    procedure Gtk_New
      (Viewer  : out Project_Viewer;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Explorer : access Project_Trees.Project_Tree_Record'Class);
    --  Create a new project viewer.
+   --  Every time the selection in Explorer changes, the info displayed in
+   --  the viewer is changed.
 
    procedure Initialize
      (Viewer : access Project_Viewer_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Explorer : access Project_Trees.Project_Tree_Record'Class);
    --  Internal subprogram for creating widgets
 
    procedure Show_Project
@@ -89,6 +94,7 @@ private
       --  level, rather than file specific
 
       Kernel  : Glide_Kernel.Kernel_Handle;
+      Explorer : Project_Trees.Project_Tree;
 
       Project_Filter : Prj.Project_Id := Prj.No_Project;
    end record;
