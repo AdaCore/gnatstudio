@@ -1287,14 +1287,9 @@ package body Builder_Module is
          Gtk_New (Menu);
       end if;
 
-      --  Remove all existing menus and dynamic accelerators
-
-      if Set_Shortcut
-        and then Builder_Module.Build_Item /= null
-      then
-         Remove_Accelerator (Builder_Module.Build_Item, Group, GDK_F4, 0);
-         Builder_Module.Build_Item := null;
-      end if;
+      --  Accelerators were removed when the menu items were destroyed (just
+      --  before the update)
+      Builder_Module.Build_Item := null;
 
       for M in Mains'Range loop
          Gtk_New (Mitem, Mains (M).all);
@@ -1385,7 +1380,6 @@ package body Builder_Module is
       Menu1 : Gtk_Menu renames Builder_Module.Make_Menu;
       Menu2 : Gtk_Menu renames Builder_Module.Run_Menu;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
-
    begin
       --  Only add the shortcuts for the root project
       --  Special case: if the root project is an extending project (which is
@@ -1440,6 +1434,9 @@ package body Builder_Module is
          Builder_Module.Build_Item := Mitem;
       end if;
 
+      --  ??? gtk+ bug: mitem is created with a refcount of 2, and therefore
+      --  never destroyed later on. As a result, the keybinding will remaining
+      --  active for the whole life of GPS.
       Gtk_New (Mitem, -"All main units");
       Append (Menu1, Mitem);
       Set_Accel_Path (Mitem, "<gps>/Build/Make/<All main units>", Group);
