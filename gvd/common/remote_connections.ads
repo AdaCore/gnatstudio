@@ -126,14 +126,14 @@ package Remote_Connections is
       Local_Full_Name : Glib.UTF8_String)
       return Ada.Calendar.Time is abstract;
    --  Return the timestamp for this file.
-   --  If the Connection doesn't support this operation, it should return a
-   --  date of 00000, so as to force, when possible, a read operation from
-   --  the caller.
+   --  If the Connection doesn't support this operation, or the file
+   --  doesn't exists, it should return a date of No_Time, so as to force, when
+   --  possible, a read operation from the caller.
 
    procedure Write
      (Connection      : access Remote_Connection_Record;
       Local_Full_Name : Glib.UTF8_String;
-      Contents        : String) is abstract;
+      Temporary_File  : String) is abstract;
    --  Overwrite the contents of Local_Full_Name with Contents.
 
    procedure Set_Writable
