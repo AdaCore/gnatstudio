@@ -472,9 +472,6 @@ package Docgen is
       --  Line_In_Body is used only for subprograms to create not regular
       --  links (in this case it is not the line number of the declaration
       --  which is needed, but the line of the definition in the body.
-      --  If Do_Check_Pack is set, the procedure will check if a link
-      --  should be set to First_Package_Line or link it to its declaration
-      --  line. ??? What is Do_Check_Pack
 
       procedure Format_Link
         (B                : access Backend;
@@ -495,7 +492,8 @@ package Docgen is
          Process_Body     : Boolean;
          Loc_End          : Natural;
          Loc_Start        : Natural;
-         Entity_Info      : Entity_Information) is abstract;
+         Entity_Info      : Entity_Information;
+         Entity_Abstract  : in out Boolean) is abstract;
       --  Generate a link for the element Entity_Info on its declaration.
       --  Even if the format of the documentation doesn't use links, it's
       --  necessary to override Format_Link with an empty body.
@@ -524,8 +522,9 @@ package Docgen is
       procedure Set_Last_Index (B : in out Backend'Class; Value : Natural);
       procedure Set_Last_Line (B : in out Backend'Class; Value : Natural);
       --  Getters ans setters of the 2 private fields.
-      --  ??? What are these two private fields used for
-
+      --  Having private fields is a way to get rid of global variable.
+      --  Fields used for formatting the text. There are moving bounds
+      --  in a string.
    private
 
       type Backend is abstract tagged record
@@ -561,7 +560,7 @@ package Docgen is
       Text             : String;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
-      Line_In_Body     : Natural;
+      Line_In_Body     : in out Natural;
       Source_File_List : Type_Source_File_List.List;
       Link_All         : Boolean;
       Is_Body          : Boolean;
