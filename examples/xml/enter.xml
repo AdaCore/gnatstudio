@@ -5,7 +5,7 @@
   inserts a newline character, but not do auto-reindent the
   current line first, as opposed to what Return does.
 
-  One the uses is if you want some parts of your code to have some
+  One usage is if you want some parts of your code to have some
   special indentation that doesn't match what the automatic
   indentation engine tries to do.
 
@@ -25,5 +25,5 @@
       <filter id="Source editor" />
    </action>
 
-   <key action="newline no auto-indent">shift-return</key>
+   <key action="newline no auto-indent">shift-Return</key>
 </enter>
