@@ -162,6 +162,11 @@ package body Vsearch_Ext is
       Event   : Gdk_Event) return Boolean;
    --  Called when a key is pressed in the pattern field.
 
+   function Key_Press_Replace
+     (Vsearch : access Gtk_Widget_Record'Class;
+      Event   : Gdk_Event) return Boolean;
+   --  Called when a key is pressed in the replacement field.
+
    procedure Register_Default_Search
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the default search function
@@ -887,6 +892,24 @@ package body Vsearch_Ext is
    end Key_Press;
 
    -----------------------
+   -- Key_Press_Replace --
+   -----------------------
+
+   function Key_Press_Replace
+     (Vsearch : access Gtk_Widget_Record'Class;
+      Event   : Gdk_Event) return Boolean is
+   begin
+      if Get_Key_Val (Event) = GDK_Return
+        or else Get_Key_Val (Event) = GDK_KP_Enter
+      then
+         Grab_Focus (Vsearch_Extended (Vsearch).Search_Replace_Button);
+         On_Search_Replace (Vsearch);
+         return True;
+      end if;
+      return False;
+   end Key_Press_Replace;
+
+   -----------------------
    -- Selection_Changed --
    -----------------------
 
@@ -1078,6 +1101,9 @@ package body Vsearch_Ext is
       Return_Callback.Object_Connect
         (Vsearch.Pattern_Entry, "key_press_event",
          Return_Callback.To_Marshaller (Key_Press'Access), Vsearch);
+      Return_Callback.Object_Connect
+        (Vsearch.Replace_Entry, "key_press_event",
+         Return_Callback.To_Marshaller (Key_Press_Replace'Access), Vsearch);
       Kernel_Callback.Connect
         (Vsearch.Pattern_Entry, "changed",
          Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
