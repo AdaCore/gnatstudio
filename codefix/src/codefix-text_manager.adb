@@ -67,15 +67,15 @@ package body Codefix.Text_Manager is
 
    function "<" (Left, Right : Text_Cursor) return Boolean is
    begin
-      return Left.Line < Right.Line or else
-        (Left.Line = Right.Line and then Left.Col < Right.Col);
+      return Left.Line < Right.Line
+        or else (Left.Line = Right.Line and then Left.Col < Right.Col);
    end "<";
 
    ---------
    -- ">" --
    ---------
 
-   function ">" (Left, Right : Text_Cursor) return Boolean is
+   function ">" (Left, Right : Text_Cursor'Class) return Boolean is
    begin
       return not (Left < Right) and then Left /= Right;
    end ">";
@@ -97,6 +97,17 @@ package body Codefix.Text_Manager is
       end if;
 
    end "=";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left, Right : File_Cursor) return Boolean is
+   begin
+      return Left.File_Name.all < Right.File_Name.all
+        or else (Left.File_Name.all = Right.File_Name.all
+                 and then Text_Cursor (Left) < Text_Cursor (Right));
+   end "<";
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator

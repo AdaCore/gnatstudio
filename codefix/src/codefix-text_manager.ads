@@ -46,7 +46,7 @@ package Codefix.Text_Manager is
    function "<" (Left, Right : Text_Cursor) return Boolean;
    --  Return True when Left is before Right.
 
-   function ">" (Left, Right : Text_Cursor) return Boolean;
+   function ">" (Left, Right : Text_Cursor'Class) return Boolean;
    --  Return True when Left is after Right.
 
    type File_Cursor is new Text_Cursor with record
@@ -57,6 +57,9 @@ package Codefix.Text_Manager is
 
    function "=" (Left, Right : File_Cursor) return Boolean;
    --  Return true when Left is in the same position than rigth.
+
+   function "<" (Left, Right : File_Cursor) return Boolean;
+   --  Return True when Left is before Right.
 
    procedure Free (This : in out File_Cursor);
    --  Frees the memory used by fields of File_Cursor.
