@@ -1413,8 +1413,8 @@ package body Prj_API is
       Set_First_With_Clause_Of (Project, With_Clause);
 
       Set_With_Clause_Path
-        (With_Clause, Imported_Project_Location, Imported_Project,
-         Project, Use_Relative_Path);
+        (With_Clause, Normalize_Pathname (Imported_Project_Location),
+         Imported_Project, Project, Use_Relative_Path);
 
       if Has_Circular_Dependencies (Project) then
          Set_First_With_Clause_Of (Project, Next_With_Clause_Of (With_Clause));
