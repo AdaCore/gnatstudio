@@ -20,12 +20,11 @@
 
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Macros;  use GPS.Kernel.Macros;
 
 with Glib;                 use Glib;
 with Glib.Xml_Int;         use Glib.Xml_Int;
@@ -41,17 +40,11 @@ with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Size_Group;       use Gtk.Size_Group;
 with Gtk.Spin_Button;      use Gtk.Spin_Button;
 
-with Basic_Types;          use Basic_Types;
-with Projects;             use Projects;
-with Projects.Registry;    use Projects.Registry;
 with String_Utils;         use String_Utils;
-with VFS;                  use VFS;
 with Interactive_Consoles; use Interactive_Consoles;
 
 with Ada.Exceptions;       use Ada.Exceptions;
-with Ada.Text_IO;          use Ada.Text_IO;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Traces;               use Traces;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
@@ -128,15 +121,10 @@ package body Commands.Custom is
    --  This widget is used to graphically edit an external component
 
    procedure Check_Save_Output
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Command          : access Custom_Command'Class;
-      Save_Output      : out Boolean_Array;
-      Context          : Selection_Context_Access;
-      Context_Is_Valid : out Boolean);
+     (Command          : access Custom_Command'Class;
+      Save_Output      : out Boolean_Array);
    --  Compute whether we should save the output of each commands. This depends
    --  on whether later commands reference this output through %1, %2,...
-   --  This also checks that the context contains information for possible
-   --  %p, %f,.. parameters (Set Context_Is_Valid otherwise).
 
    procedure Clear_Consoles
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -146,12 +134,6 @@ package body Commands.Custom is
    --  This is used so that the new output isn't mix with the output of
    --  previous run.
    --  The default GPS console is never cleared.
-
-   function Project_From_Param
-     (Param : String; Context : Selection_Context_Access) return Project_Type;
-   --  Return the project from the parameter. Parameter is the string
-   --  following the '%' sign. No_Project is returned if the context doesn't
-   --  contain this information
 
    pragma Warnings (Off);
    --  These 2 UCs are safe aliasing-wise, so kill warning
@@ -166,23 +148,6 @@ package body Commands.Custom is
 
    procedure Store_Command_Output (Data : Process_Data; Output : String);
    --  Store the output of the current command
-
-   type Parameters_Filter_Record is new Action_Filter_Record with record
-      Need_File, Need_Directory : Boolean := False;
-      Need_Project : Character := ' ';
-      Need_Entity : Boolean := False;
-   end record;
-   type Parameters_Filter is access all Parameters_Filter_Record'Class;
-   --  Check that the current context contains enough information to satisfy
-   --  the requirements for a custom command.
-   --  Need_Project is 'p' is a current project is needed, 'P' is a root
-   --  project is needed, different from the default project loaded by GPS at
-   --  startup, and any other character if no project is needed.
-
-   function Filter_Matches_Primitive
-     (Filter  : access Parameters_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean;
-   --  See doc for inherited subprogram.
 
    procedure Free (Execution : in out Custom_Command_Execution);
    --  Free Execution and its contents
@@ -210,57 +175,6 @@ package body Commands.Custom is
    --  This properly takes into account the on-failure components.
    --  Return -1 if no Ref is invalid.
 
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   function Filter_Matches_Primitive
-     (Filter  : access Parameters_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean
-   is
-      Project : Project_Type;
-   begin
-      if Filter.Need_Project = 'p'
-        or else Filter.Need_Project = 'P'
-      then
-         Project := Project_From_Param
-           (Filter.Need_Project & ' ', Selection_Context_Access (Context));
-         if Project = No_Project then
-            return False;
-         end if;
-      end if;
-
-      if Filter.Need_File then
-         if Context.all not in File_Selection_Context'Class
-           or else not Has_File_Information
-             (File_Selection_Context_Access (Context))
-         then
-            return False;
-         end if;
-      end if;
-
-      if Filter.Need_Directory then
-         if Context.all not in File_Selection_Context'Class
-           or else not Has_Directory_Information
-             (File_Selection_Context_Access (Context))
-         then
-            return False;
-         end if;
-      end if;
-
-      if Filter.Need_Entity then
-         if Context.all not in Entity_Selection_Context'Class
-           or else not Has_Entity_Name_Information
-             (Entity_Selection_Context_Access (Context))
-         then
-            return False;
-         end if;
-      end if;
-
-      return True;
-   end Filter_Matches_Primitive;
-
    -------------------
    -- Create_Filter --
    -------------------
@@ -268,66 +182,14 @@ package body Commands.Custom is
    function Create_Filter
      (Command : Glib.Xml_Int.Node_Ptr) return Action_Filter
    is
-      Filter : Parameters_Filter;
-
-      function Substitution
-        (Param  : String;
-         Quoted : Boolean) return String;
-      --  Check whether the command has a '%' + digit parameter
-
-      function Substitution
-        (Param  : String;
-         Quoted : Boolean) return String
-      is
-         pragma Unreferenced (Quoted);
-      begin
-         if Param = "f" or else Param = "F" then
-            if Filter = null then
-               Filter := new Parameters_Filter_Record;
-            end if;
-            Filter.Need_File := True;
-
-         elsif Param = "d" then
-            if Filter = null then
-               Filter := new Parameters_Filter_Record;
-            end if;
-            Filter.Need_Directory := True;
-
-         elsif Param = "e" then
-            if Filter = null then
-               Filter := new Parameters_Filter_Record;
-            end if;
-            Filter.Need_Entity := True;
-
-         elsif Param (Param'First) = 'p' or else Param (Param'First) = 'P' then
-            if Param /= "pps" and then Param /= "PPs" then
-               if Filter = null then
-                  Filter := new Parameters_Filter_Record;
-               end if;
-               Filter.Need_Project := Param (Param'First);
-            end if;
-         end if;
-
-         return "";
-      end Substitution;
-
       use type Glib.String_Ptr;
+      Filter : Macro_Filter;
       N : Node_Ptr := Command;
    begin
       while N /= null loop
          if N.Value /= null then
-            declare
-               Tmp : constant String := Substitute
-                 (N.Value.all,
-                  Substitution_Char => '%',
-                  Callback          => Substitution'Unrestricted_Access,
-                  Recursive         => False);
-               pragma Unreferenced (Tmp);
-            begin
-               null;
-            end;
+            Filter := Create_Filter (N.Value.all, Filter);
          end if;
-
          N := N.Next;
       end loop;
 
@@ -526,11 +388,8 @@ package body Commands.Custom is
    -----------------------
 
    procedure Check_Save_Output
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Command          : access Custom_Command'Class;
-      Save_Output      : out Boolean_Array;
-      Context          : Selection_Context_Access;
-      Context_Is_Valid : out Boolean)
+     (Command          : access Custom_Command'Class;
+      Save_Output      : out Boolean_Array)
    is
       Index : Natural;
 
@@ -546,45 +405,8 @@ package body Commands.Custom is
          pragma Unreferenced (Quoted);
          Sub_Index, Ref_Index : Integer;
       begin
-         if Param = "f" or else Param = "F" then
-            if Context = null
-              or else Context.all not in File_Selection_Context'Class
-              or else not Has_File_Information
-                (File_Selection_Context_Access (Context))
-            then
-               Context_Is_Valid := False;
-               Insert (Kernel,
-                       -"Command not executed: file required",
-                       Mode => Error);
-               raise Invalid_Substitution;
-            end if;
-
-         elsif Param = "d" then
-            if Context = null
-              or else Context.all not in File_Selection_Context'Class
-              or else not Has_Directory_Information
-                (File_Selection_Context_Access (Context))
-            then
-               Context_Is_Valid := False;
-               Insert (Kernel,
-                       -"Command not executed: directory required",
-                       Mode => Error);
-               raise Invalid_Substitution;
-            end if;
-
-         elsif Param (Param'First) = 'p' or else Param (Param'First) = 'P' then
-            if Param /= "pps" and then Param /= "PPs" then
-               if Project_From_Param (Param, Context) = No_Project then
-                  Context_Is_Valid := False;
-                  Insert (Kernel,
-                            -"Command not executed: project required",
-                          Mode => Error);
-                  raise Invalid_Substitution;
-               end if;
-            end if;
-
-         else
-            Sub_Index := Safe_Value (Param, Default => 0);
+         Sub_Index := Safe_Value (Param, Default => 0);
+         if Sub_Index /= 0 then
             Ref_Index := Output_Substitution
               (Command, Index, Sub_Index);
 
@@ -597,7 +419,6 @@ package body Commands.Custom is
       end Substitution;
 
    begin
-      Context_Is_Valid := True;
       Save_Output := (others => False);
 
       Index := Command.Components'First;
@@ -605,12 +426,12 @@ package body Commands.Custom is
          declare
             S : constant String := String_Utils.Substitute
               (Command.Components (Index).Component.Command.all,
-               Substitution_Char => '%',
+               Substitution_Char => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
                Recursive         => False);
             pragma Unreferenced (S);
          begin
-            exit when not Context_Is_Valid;
+            null;
          end;
 
          Index := Index + 1;
@@ -896,44 +717,6 @@ package body Commands.Custom is
       Item.Components := From_XML (Kernel, Command, Name);
    end Create;
 
-   ------------------------
-   -- Project_From_Param --
-   ------------------------
-
-   function Project_From_Param
-     (Param   : String;
-      Context : Selection_Context_Access) return Project_Type
-   is
-      File : File_Selection_Context_Access;
-      Project : Project_Type := No_Project;
-   begin
-      if Param (Param'First) = 'P' then
-         Project := Get_Project (Get_Kernel (Context));
-
-      elsif Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_Project_Information
-          (File_Selection_Context_Access (Context))
-      then
-         File := File_Selection_Context_Access (Context);
-         Project := Project_Information (File);
-
-      elsif Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (Context))
-      then
-         --  Since the editor doesn't provide the project, we emulate it
-         --  here
-         Project := Get_Project_From_File
-           (Project_Registry (Get_Registry (Get_Kernel (Context)).all),
-            File_Information (File_Selection_Context_Access (Context)),
-            Root_If_Not_Found => False);
-      end if;
-
-      return Project;
-   end Project_From_Param;
-
    -------------
    -- Execute --
    -------------
@@ -944,17 +727,14 @@ package body Commands.Custom is
    is
       Success  : Boolean := True;
 
-      function Substitution
-        (Param  : String;
-         Quoted : Boolean) return String;
-      --  Substitution function for the various '%...' parameters
-      --  Index is the number of the current command we are executing
-      --  ??? What is the meaning of the comment about Index ?
-
       function Dollar_Substitution
         (Param  : String;
          Quoted : Boolean) return String;
       --  Substitution function for the "$1" .. "$N", "$*", "$@" parameters.
+
+      function Substitution
+        (Param  : String; Quoted : Boolean) return String;
+      --  Substitution function for '%1', '%2',...
 
       function Execute_Simple_Command
         (Component : Custom_Component) return Boolean;
@@ -1084,207 +864,64 @@ package body Commands.Custom is
         (Param  : String;
          Quoted : Boolean) return String
       is
-         File    : File_Selection_Context_Access;
-         Project : Project_Type := No_Project;
          Num     : Integer;
-         Index   : Integer;
-         Recurse, List_Dirs, List_Sources : Boolean;
+         Macro   : constant String := Substitute
+           (Param, Command.Execution.Context, Quoted);
       begin
-         if Param = "f" or else Param = "F" then
-            --  We know from Check_Save_Output that the context is valid
-            File := File_Selection_Context_Access (Command.Execution.Context);
-
-            if Param = "f" then
-               return String_Utils.Protect
-                 (Base_Name (File_Information (File)),
-                  Protect_Quotes => Quoted);
-            else
-               return String_Utils.Protect
-                 (Full_Name (File_Information (File)).all,
-                  Protect_Quotes => Quoted);
-            end if;
-
-         elsif Param = "d" then
-            --  We know from Check_Save_Output that the context is valid
-            File := File_Selection_Context_Access (Command.Execution.Context);
-            return String_Utils.Protect
-              (Directory_Information (File), Protect_Quotes => Quoted);
-
-         elsif Param = "e" then
-            return String_Utils.Protect
-              (Entity_Name_Information
-                 (Entity_Selection_Context_Access
-                    (Command.Execution.Context)));
-
-         elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
-            Project := Project_From_Param (Param, Command.Execution.Context);
-
-            if Param = "pps" or else Param = "PPs" then
-               if Project = No_Project then
-                  return "";
-               else
-                  return String_Utils.Protect
-                    ("-P" & Project_Path (Project), Protect_Quotes => Quoted);
-               end if;
-            end if;
-
-            if Project = No_Project then
-               Success := False;
-               raise Invalid_Substitution;
-            end if;
-
-            if Param = "p" or else Param = "P" then
-               return String_Utils.Protect
-                 (Project_Name (Project), Protect_Quotes => Quoted);
-
-            elsif Param = "pp" or else Param = "PP" then
-               return String_Utils.Protect
-                 (Project_Path (Project), Protect_Quotes => Quoted);
-
-            else
-               Recurse := Param (Param'First + 1) = 'r';
-
-               if Recurse then
-                  Index := Param'First + 2;
-               else
-                  Index := Param'First + 1;
-               end if;
-
-               if Index <= Param'Last then
-                  List_Dirs    := Param (Index) = 'd';
-                  List_Sources := Param (Index) = 's';
-
-                  if Index < Param'Last and then Param (Index + 1) = 'f' then
-                     --  Append the list to a file.
-                     declare
-                        File : File_Type;
-                        Files_List : File_Array_Access;
-                        List : String_Array_Access;
-                     begin
-                        Create (File);
-
-                        if List_Dirs then
-                           List := Source_Dirs (Project, Recurse);
-                           if List /= null then
-                              for K in List'Range loop
-                                 Put_Line (File, List (K).all);
-                              end loop;
-                              Free (List);
-                           end if;
-                        end if;
-
-                        if List_Sources then
-                           Files_List := Get_Source_Files (Project, Recurse);
-                           if Files_List /= null then
-                              for K in Files_List'Range loop
-                                 Put_Line
-                                   (File, Full_Name (Files_List (K)).all);
-                              end loop;
-                              Unchecked_Free (Files_List);
-                           end if;
-                        end if;
-
-                        declare
-                           N : constant String := Name (File);
-                        begin
-                           Close (File);
-                           return String_Utils.Protect
-                             (N, Protect_Quotes => Quoted);
-                        end;
-                     end;
-
-                  else
-                     declare
-                        Result : Unbounded_String;
-                        List : String_Array_Access;
-                        Files_List : File_Array_Access;
-                     begin
-                        if List_Dirs then
-                           List := Source_Dirs (Project, Recurse);
-                           if List /= null then
-                              for K in List'Range loop
-                                 Append (Result, '"' & List (K).all & """ ");
-                              end loop;
-                              Free (List);
-                           end if;
-                        end if;
-
-                        if List_Sources then
-                           Files_List := Get_Source_Files (Project, Recurse);
-                           if Files_List /= null then
-                              for K in Files_List'Range loop
-                                 Append
-                                   (Result,
-                                    '"'
-                                    & Full_Name (Files_List (K)).all & """ ");
-                              end loop;
-                              Unchecked_Free (Files_List);
-                           end if;
-                        end if;
-
-                        return String_Utils.Protect
-                          (To_String (Result), Protect_Quotes => Quoted);
-                     end;
-                  end if;
-               end if;
-            end if;
-
-         else
-            Num := Safe_Value (Param, Default => 0);
-
-            --  Remove surrounding quotes if any. This is needed so that
-            --  for instance of the function get_attributes_as_string
-            --  from Python can be used to call an external tool with
-            --  switches propertly interpreted.
-
-            declare
-               Output_Index : constant Integer := Output_Substitution
-                 (Command, Command.Execution.Cmd_Index, Num);
-               Output  : GNAT.OS_Lib.String_Access;
-               Last   : Integer;
-            begin
-               if Output_Index = -1 then
-                  return "";
-               end if;
-
-               Output := Command.Execution.Outputs (Output_Index);
-
-               if Output = null or else Output.all = "" then
-                  return "";
-               end if;
-
-               Last := Output'Last;
-               while Last >= Output'First
-                 and then Output (Last) = ASCII.LF
-               loop
-                  Last := Last - 1;
-               end loop;
-
-               if Output (Output'First) = '''
-                 and then Output (Last) = '''
-               then
-                  return String_Utils.Protect
-                    (Output (Output'First + 1 .. Last - 1),
-                     Protect_Quotes => Quoted);
-
-               elsif Output (Output'First) = '"'
-                 and then Output (Output'Last) = '"'
-               then
-                  return String_Utils.Protect
-                    (Output (Output'First + 1 .. Last - 1),
-                     Protect_Quotes => Quoted);
-
-               else
-                  return String_Utils.Protect
-                    (Output (Output'First .. Last),
-                     Protect_Quotes => Quoted);
-               end if;
-            end;
+         if Macro /= "" then
+            return Macro;
          end if;
 
-         --  Keep the percent sign, since this might be useful for the shell
-         --  itself
-         return '%' & Param;
+         Num := Safe_Value (Param, Default => 0);
+
+         --  Remove surrounding quotes if any. This is needed so that
+         --  for instance of the function get_attributes_as_string
+         --  from Python can be used to call an external tool with
+         --  switches propertly interpreted.
+
+         declare
+            Output_Index : constant Integer := Output_Substitution
+              (Command, Command.Execution.Cmd_Index, Num);
+            Output  : GNAT.OS_Lib.String_Access;
+            Last   : Integer;
+         begin
+            if Output_Index = -1 then
+               return "";
+            end if;
+
+            Output := Command.Execution.Outputs (Output_Index);
+
+            if Output = null or else Output.all = "" then
+               return "";
+            end if;
+
+            Last := Output'Last;
+            while Last >= Output'First
+              and then Output (Last) = ASCII.LF
+            loop
+               Last := Last - 1;
+            end loop;
+
+            if Output (Output'First) = '''
+              and then Output (Last) = '''
+            then
+               return String_Utils.Protect
+                 (Output (Output'First + 1 .. Last - 1),
+                  Protect_Quotes => Quoted);
+
+            elsif Output (Output'First) = '"'
+              and then Output (Output'Last) = '"'
+            then
+               return String_Utils.Protect
+                 (Output (Output'First + 1 .. Last - 1),
+                  Protect_Quotes => Quoted);
+
+            else
+               return String_Utils.Protect
+                 (Output (Output'First .. Last),
+                  Protect_Quotes => Quoted);
+            end if;
+         end;
       end Substitution;
 
       ----------------------------
@@ -1303,7 +940,7 @@ package body Commands.Custom is
             Recursive         => False);
          Subst_Cmd_Line : constant String := Substitute
            (Subst_Percent,
-            Substitution_Char => '%',
+            Substitution_Char => GPS.Kernel.Macros.Special_Character,
             Callback          => Substitution'Unrestricted_Access,
             Recursive         => False);
          Console        : Interactive_Console;
@@ -1571,9 +1208,7 @@ package body Commands.Custom is
          Ref (Command.Execution.Context);
 
          Check_Save_Output
-           (Command.Kernel, Command,
-            Command.Execution.Save_Output.all,
-            Command.Execution.Context, Success);
+           (Command, Command.Execution.Save_Output.all);
          Clear_Consoles (Command.Kernel, Command);
 
          if Context.Dir /= null then

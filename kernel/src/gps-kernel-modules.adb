@@ -50,9 +50,8 @@ with Gtkada.MDI;        use Gtkada.MDI;
 with Projects;          use Projects;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
-with Entities;          use Entities;
 with GPS.Intl;        use GPS.Intl;
-with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.Macros;   use GPS.Kernel.Macros;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
@@ -127,8 +126,9 @@ package body GPS.Kernel.Modules is
 
    type Contextual_Label_Parameters is new Contextual_Menu_Label_Creator_Record
       with record
-         Label  : GNAT.OS_Lib.String_Access;
-         Custom : Custom_Expansion;
+      Label  : GNAT.OS_Lib.String_Access;
+      Custom : Custom_Expansion;
+      Filter : Macro_Filter;
       end record;
    type Contextual_Label_Param is access Contextual_Label_Parameters'Class;
    function Get_Label
@@ -213,95 +213,27 @@ package body GPS.Kernel.Modules is
       ------------------
 
       function Substitution (Param : String; Quoted : Boolean) return String is
-         pragma Unreferenced (Quoted);
-         Entity : Entity_Information;
       begin
-         if Param = "f"
-           and then Context.all in File_Selection_Context'Class
-           and then Has_File_Information
-             (File_Selection_Context_Access (Context))
-         then
-            return Base_Name
-              (File_Information (File_Selection_Context_Access (Context)));
-
-         elsif Param = "d"
-           and then Context.all in File_Selection_Context'Class
-           and then Has_Directory_Information
-             (File_Selection_Context_Access (Context))
-         then
-            return Directory_Information
-              (File_Selection_Context_Access (Context));
-
-         elsif Param = "p"
-           and then Context.all in File_Selection_Context'Class
-           and then Has_Project_Information
-             (File_Selection_Context_Access (Context))
-         then
-            return Project_Name
-              (Project_Information (File_Selection_Context_Access (Context)));
-
-         elsif Param = "l"
-           and then Context.all in File_Selection_Context'Class
-           and then Has_Line_Information
-             (File_Selection_Context_Access (Context))
-         then
-            return Image
-              (Line_Information (File_Selection_Context_Access (Context)));
-
-         elsif Param = "c"
-           and then Context.all in File_Selection_Context'Class
-           and then Has_Column_Information
-             (File_Selection_Context_Access (Context))
-         then
-            return Image
-              (Column_Information
-                 (File_Selection_Context_Access (Context)));
-
-         elsif Param = "a"
-           and then Context.all in Message_Context'Class
-           and then Has_Category_Information
-             (Message_Context_Access (Context))
-         then
-            return Category_Information
-              (Message_Context_Access (Context));
-
-         elsif Param = "e"
-           and then Context.all in Entity_Selection_Context'Class
-           and then Has_Entity_Name_Information
-             (Entity_Selection_Context_Access (Context))
-         then
-            Entity := Get_Entity (Entity_Selection_Context_Access (Context));
-            if Entity /= null then
-               --  Get the name from the context, to have the proper casing
-               return Krunch (Entity_Name_Information
-                                (Entity_Selection_Context_Access (Context)));
+         if Param = "C" then
+            if Creator.Custom /= null then
+               declare
+                  Result : constant String := Creator.Custom (Context);
+               begin
+                  if Result = "" then
+                     Has_Error := True;
+                     return "";
+                  else
+                     return Result;
+                  end if;
+               end;
             end if;
-
-         elsif Param = "i"
-           and then Context.all in File_Selection_Context'Class
-         then
-            if Importing_Project_Information
-              (File_Selection_Context_Access (Context)) /=
-              Project_Information
-                (File_Selection_Context_Access (Context))
-            then
-               return Project_Name
-                 (Importing_Project_Information
-                    (File_Selection_Context_Access (Context)));
-            end if;
-
-         elsif Param = "C"
-           and then Creator.Custom /= null
-         then
+         else
             declare
-               Result : constant String := Creator.Custom (Context);
+               Tmp : constant String := GPS.Kernel.Macros.Substitute
+                 (Param, Selection_Context_Access (Context), Quoted);
             begin
-               if Result = "" then
-                  Has_Error := True;
-                  return "";
-               else
-                  return Result;
-               end if;
+               Has_Error := Tmp = "";
+               return Tmp;
             end;
          end if;
 
@@ -309,16 +241,23 @@ package body GPS.Kernel.Modules is
          return "";
       end Substitution;
 
-      Tmp : constant String := Substitute
-        (Creator.Label.all,
-         Substitution_Char => '%',
-         Callback          => Substitution'Unrestricted_Access,
-         Recursive         => False);
    begin
-      if Has_Error then
-         return "";
+      if Filter_Matches (Action_Filter (Creator.Filter), Context) then
+         declare
+            Tmp : constant String := Substitute
+              (Creator.Label.all,
+               Substitution_Char => GPS.Kernel.Macros.Special_Character,
+               Callback          => Substitution'Unrestricted_Access,
+               Recursive         => False);
+         begin
+            if Has_Error then
+               return "";
+            else
+               return Tmp;
+            end if;
+         end;
       else
-         return Tmp;
+         return "";
       end if;
    end Get_Label;
 
@@ -1511,6 +1450,7 @@ package body GPS.Kernel.Modules is
          T        := new Contextual_Label_Parameters;
          T.Label  := new String'(Label);
          T.Custom := Custom;
+         T.Filter := Create_Filter (Label);
       end if;
 
       if Stock_Image /= "" then
@@ -1635,6 +1575,7 @@ package body GPS.Kernel.Modules is
          T        := new Contextual_Label_Parameters;
          T.Label  := new String'(Label);
          T.Custom := Custom;
+         T.Filter := Create_Filter (Label);
       end if;
 
       if Stock_Image /= "" then
@@ -1735,6 +1676,7 @@ package body GPS.Kernel.Modules is
          T        := new Contextual_Label_Parameters;
          T.Label  := new String'(Label);
          T.Custom := null;
+         T.Filter := Create_Filter (Label);
       end if;
 
       Add_Contextual_Menu
