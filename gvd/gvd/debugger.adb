@@ -257,20 +257,32 @@ package body Debugger is
          end if;
       else
          declare
-            Real_Arguments : Argument_List (1 .. Arguments'Length + 2);
+            Remote_Args : Argument_List_Access :=
+              Argument_String_To_List (Get_Pref (GVD_Prefs, Remote_Protocol));
+            Real_Arguments : Argument_List
+              (1 .. Arguments'Length + 1 + Remote_Args'Length);
          begin
-            Real_Arguments (1) := new String'(Remote_Machine);
-            Real_Arguments (2) := new String'(Debugger_Name);
-            Real_Arguments (3 .. Real_Arguments'Last) := Arguments;
+            Real_Arguments (1 .. Remote_Args'Length - 1) :=
+              Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last);
+            Real_Arguments (Remote_Args'Length) := new String'(Remote_Machine);
+            Real_Arguments (Remote_Args'Length + 1) :=
+              new String'(Debugger_Name);
+            Real_Arguments (Remote_Args'Length + 2 .. Real_Arguments'Last) :=
+              Arguments;
 
             Non_Blocking_Spawn
               (Descriptor.all,
-               Get_Pref (GVD_Prefs, Remote_Protocol),
+               Remote_Args (Remote_Args'First).all,
                Real_Arguments,
                Buffer_Size => 0,
                Err_To_Out => True);
-            Free (Real_Arguments (1));
-            Free (Real_Arguments (2));
+
+            for J in Remote_Args'Length .. Remote_Args'Length + 1 loop
+               Free (Real_Arguments (J));
+            end loop;
+
+            Free (Remote_Args);
+
          exception
             when Invalid_Process =>
                declare
@@ -715,19 +727,6 @@ package body Debugger is
          Close_Debugger (Process);
          return "";
    end Send_Full;
-
-   ------------------------------
-   -- Variable_Name_With_Frame --
-   ------------------------------
-
-   function Variable_Name_With_Frame
-     (Debugger : access Debugger_Root;
-      Var      : String) return String
-   is
-      pragma Unreferenced (Debugger);
-   begin
-      return Var;
-   end Variable_Name_With_Frame;
 
    ---------------------
    -- List_Exceptions --
