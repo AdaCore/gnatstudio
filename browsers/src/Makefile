@@ -6,6 +6,6 @@ MAIN=make_browsers
 
 # List of modules we depend on (Check ../../Makefile.common for list of
 # supported modules)
-MODULES=gtkada kernel common debugger_common prj_editor widgets
+MODULES=gtkada kernel common debugger_common vsearch prj_editor widgets
 
 include ../../Makefile.common
