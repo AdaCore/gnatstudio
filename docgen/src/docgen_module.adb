@@ -24,6 +24,7 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;               use Glide_Intl;
 with Glib.Object;              use Glib.Object;
 with VFS;                      use VFS;
@@ -41,7 +42,7 @@ with Docgen;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Docgen_Backend_HTML;       use Docgen_Backend_HTML;
+with Docgen.Backend.HTML;       use Docgen.Backend.HTML;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body Docgen_Module is
@@ -86,7 +87,7 @@ package body Docgen_Module is
       Options : All_Options;
       --  Group all the preferences
 
-      HTML_Backend : Docgen.Docgen_Backend.Backend_Handle;
+      HTML_Backend : Docgen.Backend.Backend_Handle;
       --  A backend suitable for generating HTML output
    end record;
    type Docgen_Module is access all Docgen_Module_Record'Class;
@@ -177,13 +178,13 @@ package body Docgen_Module is
    -- main procedure for the documentation --
    ------------------------------------------
 
-   function Get_Backend return Docgen.Docgen_Backend.Backend_Handle;
+   function Get_Backend return Docgen.Backend.Backend_Handle;
    --  Return the backend to use given the current options
 
    procedure Generate
      (Kernel : Kernel_Handle;
       List   : in out Type_Source_File_Table.HTable;
-      Backend : access Docgen.Docgen_Backend.Backend'Class);
+      Backend : access Docgen.Backend.Backend'Class);
    --  With the list of source files, it generates the documentation
 
    --------------
@@ -421,7 +422,7 @@ package body Docgen_Module is
    is
       Sources : VFS.File_Array_Access;
       Source_File_List : Type_Source_File_Table.HTable;
-      B       : constant Docgen.Docgen_Backend.Backend_Handle := Get_Backend;
+      B       : constant Docgen.Backend.Backend_Handle := Get_Backend;
       P       : Project_Type := Project;
       Context : Selection_Context_Access;
 
@@ -448,7 +449,7 @@ package body Docgen_Module is
 
       Sources := Get_Source_Files (P, Recursive);
       Array2List (Kernel, Sources, Source_File_List,
-                  Docgen.Docgen_Backend.Get_Extension (B));
+                  Docgen.Backend.Get_Extension (B));
       Generate (Kernel, Source_File_List, B);
       VFS.Unchecked_Free (Sources);
       Type_Source_File_Table.Reset (Source_File_List);
@@ -497,9 +498,9 @@ package body Docgen_Module is
       Process_Body     : constant Boolean :=
          Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files;
       Source           : Source_File;
-      B         : constant Docgen.Docgen_Backend.Backend_Handle := Get_Backend;
+      B         : constant Docgen.Backend.Backend_Handle := Get_Backend;
       Doc_Suffix       : constant String :=
-         Docgen.Docgen_Backend.Get_Extension (B);
+         Docgen.Backend.Get_Extension (B);
 
    begin
       if not Is_Spec and then not Process_Body then
@@ -556,7 +557,7 @@ package body Docgen_Module is
    -- Get_Backend --
    -----------------
 
-   function Get_Backend return Docgen.Docgen_Backend.Backend_Handle is
+   function Get_Backend return Docgen.Backend.Backend_Handle is
    begin
       case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
          when HTML =>
@@ -578,9 +579,9 @@ package body Docgen_Module is
    procedure Generate
      (Kernel : Kernel_Handle;
       List   : in out Type_Source_File_Table.HTable;
-      Backend : access Docgen.Docgen_Backend.Backend'Class)
+      Backend : access Docgen.Backend.Backend'Class)
    is
-      use Docgen.Docgen_Backend;
+      use Docgen.Backend;
    begin
       Push_State (Kernel, Busy);
 
@@ -601,8 +602,15 @@ package body Docgen_Module is
          Docgen_Module (Docgen_Module_ID).Options);
       Type_Source_File_Table.Reset (List);
 
-      --  ??? Since <frameset> not supported by internal html viewer, the
-      --  generated is not open by GPS itself anymore.
+      --  <frameset> is not supported by internal HTML viewer. Users will
+      --  have to configure GPS so that it uses an external browser if they
+      --  want a sooth docgen integration.
+      Open_Html
+        (Kernel,
+         Filename => Create
+           (Full_Filename =>
+              Get_Doc_Directory (Backend, Kernel)
+            & "index" & Get_Extension (Backend)));
 
       Pop_State (Kernel);
 
@@ -729,13 +737,16 @@ package body Docgen_Module is
          Param_Spec (Docgen_Module (Docgen_Module_ID).Show_References),
          -"Documentation");
 
+      --  ??? docgen cannot generate texinfo at this time so the following call
+      --  is a bit anticipated.
+
       Docgen_Module (Docgen_Module_ID).One_Document_File := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "Doc-Texi-Single",
-           Default => False,
-           Blurb   =>
-             -("Whether Docgen should generate doc in one file (TexInfo"),
-           Nick    => -"Single file (for TexInfo)"));
+           (Name    => "Doc-Texi-Single",
+            Default => False,
+            Blurb   =>
+              -("Whether Docgen should generate doc in one file (TexInfo"),
+            Nick    => -"Single file (for TexInfo)"));
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_ID).One_Document_File),
