@@ -861,7 +861,7 @@ automatically created if you have activated the dynamic key bindings feature
 
    @item $HOME/.gps/preferences
 Contains all the preferences in XML format, as specified in the
-preferences menu. See also @file{<prefix>/etc/gps/preferences}.
+preferences menu.
 
    @item $HOME/.gps/window_settings
 Contains all the settings of the windows (window sizes, pane
@@ -903,9 +903,6 @@ The pango (generic font handling) configuration file.
 
    @item @i{prefix}/etc/gps/pangox.aliases
 File defining font aliases to X font set.
-
-   @item @i{prefix}/etc/gps/preferences
-Global preferences in XML format. See also @file{$HOME/.gps/preferences}.
 
    @item @i{prefix}/lib
 This directory contains the shared libraries used by GPS.
