@@ -39,6 +39,7 @@ with Stringt;   use Stringt;
 with Sinput;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Unchecked_Deallocation;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Prj_API is
 
@@ -46,10 +47,20 @@ package body Prj_API is
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Array_Index : String_Id := No_String;
+      Item_Kind : Project_Node_Kind := N_Attribute_Declaration;
       Kind : Variable_Kind := List)
       return Project_Node_Id;
    --  Internal version for Get_Or_Create_Attribute. If Array_Index is not
    --  No_String, then the variable is defined for a specific index.
+
+   function String_As_Expression (Value : String_Id) return Project_Node_Id;
+   --  Return an N_Expression node that represents the simple string Value.
+
+   procedure Set_Expression
+     (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id);
+   --  Set Var as the expression to use for the value of Var. This
+   --  properly handles standard variables and variables defined through
+   --  references to external environment variables.
 
    --------------------
    -- Create_Project --
@@ -99,10 +110,12 @@ package body Prj_API is
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Array_Index : String_Id := No_String;
+      Item_Kind : Project_Node_Kind := N_Attribute_Declaration;
       Kind : Variable_Kind := List)
       return Project_Node_Id
    is
       Decl, Decl_Item, Var : Project_Node_Id;
+      Previous_Decl : Project_Node_Id := Empty_Node;
       N : Name_Id;
    begin
       pragma Assert
@@ -134,11 +147,17 @@ package body Prj_API is
 
       while Decl_Item /= Empty_Node loop
          Var := Project_Nodes.Table (Decl_Item).Field1;
-         if Project_Nodes.Table (Var).Kind = N_Variable_Declaration
+         if (Project_Nodes.Table (Var).Kind = N_Variable_Declaration
+             or else Project_Nodes.Table (Var).Kind = N_Attribute_Declaration
+             or else
+             Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration)
            and then Project_Nodes.Table (Var).Name = N
          then
+            pragma Assert (Project_Nodes.Table (Var).Kind = Item_Kind);
+            pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Kind);
             return Var;
          end if;
+         Previous_Decl := Decl_Item;
          Decl_Item := Project_Nodes.Table (Decl_Item).Field2;
       end loop;
 
@@ -149,30 +168,37 @@ package body Prj_API is
 
       --  Insert it in the appropriate list
 
-      case Project_Nodes.Table (Prj_Or_Pkg).Kind is
-         when N_Project =>
-            Project_Nodes.Table (Decl_Item).Field2 :=
-              Project_Nodes.Table (Decl).Field1;
-            Project_Nodes.Table (Decl).Field1 := Decl_Item;
+      if Previous_Decl /= Empty_Node then
+         Project_Nodes.Table (Previous_Decl).Field2 := Decl_Item;
 
-         when N_Package_Declaration =>
-            Project_Nodes.Table (Decl_Item).Field2 :=
-              Project_Nodes.Table (Prj_Or_Pkg).Field2;
-            Project_Nodes.Table (Prj_Or_Pkg).Field2 := Decl_Item;
+      else
+         case Project_Nodes.Table (Prj_Or_Pkg).Kind is
+            when N_Project =>
+               Project_Nodes.Table (Decl_Item).Field2 :=
+                 Project_Nodes.Table (Decl).Field1;
+               Project_Nodes.Table (Decl).Field1 := Decl_Item;
 
-         when others =>
-            null;
-      end case;
+            when N_Package_Declaration =>
+               Project_Nodes.Table (Decl_Item).Field2 :=
+                 Project_Nodes.Table (Prj_Or_Pkg).Field2;
+               Project_Nodes.Table (Prj_Or_Pkg).Field2 := Decl_Item;
+
+            when others =>
+               null;
+         end case;
+      end if;
 
       --  Create the variable
 
-      Project_Nodes.Append
-        (Default_Project_Node (N_Attribute_Declaration, Kind));
+      Project_Nodes.Append (Default_Project_Node (Item_Kind, Kind));
       Var := Project_Nodes.Last;
       Project_Nodes.Table (Decl_Item).Field1 := Var;
 
       Project_Nodes.Table (Var).Name := N;
-      Project_Nodes.Table (Var).Value := Array_Index;
+
+      if Array_Index /= No_String then
+         Project_Nodes.Table (Var).Value := Array_Index;
+      end if;
 
       if Kind = Prj.List then
          Project_Nodes.Append
@@ -182,19 +208,19 @@ package body Prj_API is
       return Var;
    end Internal_Get_Or_Create_Attribute;
 
-   -----------------------------
-   -- Get_Or_Create_Attribute --
-   -----------------------------
+   ----------------------------
+   -- Get_Or_Create_Variable --
+   ----------------------------
 
-   function Get_Or_Create_Attribute
+   function Get_Or_Create_Variable
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Kind : Variable_Kind := List)
       return Project_Node_Id is
    begin
       return Internal_Get_Or_Create_Attribute
-        (Prj_Or_Pkg, Name, No_String, Kind);
-   end Get_Or_Create_Attribute;
+        (Prj_Or_Pkg, Name, No_String, N_Variable_Declaration, Kind);
+   end Get_Or_Create_Variable;
 
    -----------------------------
    -- Get_Or_Create_Attribute --
@@ -203,15 +229,85 @@ package body Prj_API is
    function Get_Or_Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
-      Index_Name : String;
+      Index_Name : String := "";
       Kind : Variable_Kind := List)
-     return Project_Node_Id is
+      return Project_Node_Id is
    begin
-      Start_String;
-      Store_String_Chars (Index_Name);
-      return Internal_Get_Or_Create_Attribute
-        (Prj_Or_Pkg, Name, End_String, Kind);
+      if Index_Name /= "" then
+         Start_String;
+         Store_String_Chars (Index_Name);
+         return Internal_Get_Or_Create_Attribute
+           (Prj_Or_Pkg, Name, End_String, N_Attribute_Declaration, Kind);
+      else
+         return Internal_Get_Or_Create_Attribute
+           (Prj_Or_Pkg, Name, No_String, N_Attribute_Declaration, Kind);
+      end if;
    end Get_Or_Create_Attribute;
+
+   ------------------------
+   -- Get_Or_Create_Type --
+   ------------------------
+
+   function Get_Or_Create_Type
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String)
+      return Project_Node_Id is
+   begin
+      return Internal_Get_Or_Create_Attribute
+        (Prj_Or_Pkg, Name, No_String, N_String_Type_Declaration, Undefined);
+   end Get_Or_Create_Type;
+
+   ----------------------------------
+   -- Get_Or_Create_Typed_Variable --
+   ----------------------------------
+
+   function Get_Or_Create_Typed_Variable
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String;
+      Typ  : Project_Node_Id)
+      return Project_Node_Id
+   is
+      V : Project_Node_Id;
+   begin
+      pragma Assert
+        (Project_Nodes.Table (Typ).Kind = N_String_Type_Declaration);
+      V := Internal_Get_Or_Create_Attribute
+        (Prj_Or_Pkg, Name, No_String, N_Typed_Variable_Declaration, Single);
+      Project_Nodes.Table (V).Field2 := Typ;
+      return V;
+   end Get_Or_Create_Typed_Variable;
+
+   ------------------------
+   -- Add_Possible_Value --
+   ------------------------
+
+   procedure Add_Possible_Value (Typ : Project_Node_Id; Choice : String) is
+      Str, S2 : Project_Node_Id;
+      S   : String_Id;
+   begin
+      pragma Assert
+        (Project_Nodes.Table (Typ).Kind = N_String_Type_Declaration);
+
+      Start_String;
+      Store_String_Chars (Choice);
+      S := End_String;
+
+      Project_Nodes.Append (Default_Project_Node (N_Literal_String, Single));
+      S2 := Project_Nodes.Last;
+      Project_Nodes.Table (S2).Value := S;
+
+      Str := Project_Nodes.Table (Typ).Field1;
+
+      if Str = Empty_Node then
+         Project_Nodes.Table (Typ).Field1 := S2;
+
+      else
+         while Project_Nodes.Table (Str).Field1 /= Empty_Node loop
+            Str := Project_Nodes.Table (Str).Field1;
+         end loop;
+         Project_Nodes.Table (Str).Field1 := S2;
+      end if;
+   end Add_Possible_Value;
 
    ---------------------------
    -- Get_Or_Create_Package --
@@ -309,30 +405,20 @@ package body Prj_API is
       Project_Nodes.Table (Str).Value := End_String;
    end Append_To_List;
 
-   ---------------
-   -- Set_Value --
-   ---------------
+   --------------------------
+   -- String_As_Expression --
+   --------------------------
 
-   procedure Set_Value (Var : Project_Node_Id; Value : String) is
+   function String_As_Expression (Value : String_Id) return Project_Node_Id is
       Expr, Term, Str : Project_Node_Id;
    begin
-      pragma Assert (Var /= Empty_Node);
-      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.Single);
-
       --  Create the expression if required
-      Expr := Project_Nodes.Table (Var).Field1;
-      if Expr = Empty_Node then
-         Project_Nodes.Append (Default_Project_Node (N_Expression));
-         Expr := Project_Nodes.Last;
-         Project_Nodes.Table (Var).Field1 := Expr;
-      else
-         pragma Assert (Project_Nodes.Table (Expr).Kind = N_Expression);
-         null;
-      end if;
-
+      Project_Nodes.Append (Default_Project_Node (N_Expression));
+      Expr := Project_Nodes.Last;
       Project_Nodes.Table (Expr).Field2 := Empty_Node; --  No next in the list
 
-      --  Create the term
+      --  Create the term (??? test is kept in case we manage to reuse an
+      --  existing unused expression node).
       Term := Project_Nodes.Table (Expr).Field1;
       if Term = Empty_Node then
          Project_Nodes.Append (Default_Project_Node (N_Term));
@@ -348,11 +434,175 @@ package body Prj_API is
       Project_Nodes.Table (Term).Field1 := Str;
       Project_Nodes.Table (Term).Field2 := Empty_Node;
 
-      Start_String;
-      Store_String_Chars (Value);
-      Project_Nodes.Table (Str).Value := End_String;
+      Project_Nodes.Table (Str).Value := Value;
+      return Expr;
+   end String_As_Expression;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Var : Project_Node_Id; Value : String) is
+      Str : Project_Node_Id;
+   begin
+      pragma Assert (Var /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.Single);
+
+      --  ??? Should reuse the existing N_Expression for the variable, instead
+      --  of creating a new one.
+
+      case Project_Nodes.Table (Var).Kind is
+         when N_Typed_Variable_Declaration =>
+            pragma Assert (Project_Nodes.Table (Var).Field2 /= Empty_Node);
+            Str :=
+              Project_Nodes.Table (Project_Nodes.Table (Var).Field2).Field1;
+
+            --  Checl that the value is valid, and reuse the string_id.
+            while Str /= Empty_Node loop
+               String_To_Name_Buffer (Project_Nodes.Table (Str).Value);
+               if Name_Buffer (Name_Buffer'First .. Name_Len) = Value then
+                  Set_Expression
+                    (Var,
+                     String_As_Expression (Project_Nodes.Table (Str).Value));
+                  return;
+               end if;
+               Str := Project_Nodes.Table (Str).Field1;
+            end loop;
+
+            raise Invalid_Value;
+
+         when N_Variable_Declaration =>
+            Start_String;
+            Store_String_Chars (Value);
+            Set_Expression (Var, String_As_Expression (End_String));
+
+         when others => null;
+            raise Program_Error;
+      end case;
    end Set_Value;
 
+   ---------------------------
+   -- Set_Value_As_External --
+   ---------------------------
+
+   procedure Set_Value_As_External
+     (Var : Project_Node_Id; External_Name : String; Default : String := "")
+   is
+      Ext : Project_Node_Id;
+   begin
+      pragma Assert (Var /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.Single);
+
+      --  Create the expression if required
+      Project_Nodes.Append (Default_Project_Node (N_External_Value, Single));
+      Ext := Project_Nodes.Last;
+      Project_Nodes.Table (Var).Field1 := Ext;
+
+      Start_String;
+      Store_String_Chars (External_Name);
+      Project_Nodes.Table (Ext).Field1 := String_As_Expression (End_String);
+
+      --  Always set the default value if we have a typed variable, so that
+      --  we can check if this is a valid value.
+      if Default /= ""
+        or else Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration
+      then
+         Set_Value (Var, Default);
+      end if;
+   end Set_Value_As_External;
+
+   --------------------
+   -- Get_Expression --
+   --------------------
+
+   function Get_Expression
+     (Var_Or_Attribute : Project_Node_Id) return Project_Node_Id
+   is
+      E : Project_Node_Id;
+   begin
+      pragma Assert (Var_Or_Attribute /= Empty_Node);
+      E := Project_Nodes.Table (Var_Or_Attribute).Field1;
+      case Project_Nodes.Table (E).Kind is
+         when N_Expression => return E;
+         when N_External_Value => return Project_Nodes.Table (E).Field2;
+         when others => raise Program_Error;
+      end case;
+   end Get_Expression;
+
+   --------------------
+   -- Set_Expression --
+   --------------------
+
+   procedure Set_Expression
+     (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id) is
+      E : Project_Node_Id;
+   begin
+      pragma Assert (Var_Or_Attribute /= Empty_Node);
+      E := Project_Nodes.Table (Var_Or_Attribute).Field1;
+
+      if E = Empty_Node then
+         Project_Nodes.Table (Var_Or_Attribute).Field1 := Expr;
+
+      else
+         case Project_Nodes.Table (E).Kind is
+            when N_Expression =>
+               Project_Nodes.Table (Var_Or_Attribute).Field1 := Expr;
+            when N_External_Value =>
+               Project_Nodes.Table (E).Field2 := Expr;
+            when others =>
+               Put_Line ("Set_Expression: Invalid contents for variable: "
+                         & Project_Nodes.Table (E).Kind'Img);
+               raise Program_Error;
+         end case;
+      end if;
+   end Set_Expression;
+
+   ---------------------
+   -- Get_Environment --
+   ---------------------
+
+   function Get_Environment (Var_Or_Attribute : Project_Node_Id)
+      return String_Id
+   is
+      Ext : Project_Node_Id;
+   begin
+      pragma Assert (Var_Or_Attribute /= Empty_Node);
+
+      Ext := Project_Nodes.Table (Var_Or_Attribute).Field1;
+      pragma Assert (Ext /= Empty_Node);
+
+      if Project_Nodes.Table (Ext).Kind = N_External_Value then
+         Ext := Project_Nodes.Table (Ext).Field1;
+         case Project_Nodes.Table (Ext).Kind is
+            when N_Expression =>
+               Ext := Project_Nodes.Table (Ext).Field1; --  N_Term
+               case Project_Nodes.Table (Ext).Kind is
+                  when N_Term =>
+                     Ext := Project_Nodes.Table (Ext).Field1;
+                     if Project_Nodes.Table (Ext).Kind = N_Literal_String then
+                        return Project_Nodes.Table (Ext).Value;
+                     else
+                        raise Program_Error;
+                     end if;
+
+                  when N_Literal_String =>
+                     return Project_Nodes.Table (Ext).Value;
+
+                  when others =>
+                     raise Program_Error;
+               end case;
+
+            when N_Literal_String =>
+               return Project_Nodes.Table (Ext).Value;
+
+            when others =>
+               raise Program_Error;
+         end case;
+
+      else
+         return No_String;
+      end if;
+   end Get_Environment;
 
 
    --  To be removed below --

@@ -47,28 +47,54 @@ package Prj_API is
    --  Create (or get) the declaration associated with project
    --  This returns a N_Project_Declaration
 
+   function Get_Or_Create_Variable
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String;
+      Kind : Variable_Kind := List)
+      return Project_Node_Id;
+   --  Create a variable inside the package or the project Prj_Or_Pkg.
+   --  This creates an internal untyped variable.
+
+   function Get_Or_Create_Type
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String)
+      return Project_Node_Id;
+   --  Create type. By default, there is no possible value, you
+   --  must add some with Add_Possible_Value.
+
+   procedure Add_Possible_Value (Typ : Project_Node_Id; Choice : String);
+   --  Add a new choice in the list of possible values for the type Typ.
+
+   function Get_Or_Create_Typed_Variable
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String;
+      Typ  : Project_Node_Id)
+      return Project_Node_Id;
+   --  Create a new variable of a specific type Typ.
+
    function Get_Or_Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
+      Index_Name : String := "";
       Kind : Variable_Kind := List)
       return Project_Node_Id;
    --  Create (or get an existing) variable by Name. This should be used
    --  only for the standard variables (for Var_Name use ...)
    --  The new variable will be added either to the project (global variable)
    --  or in one of its packages, both are specified in Prj_Or_Pkg.
+   --  If Index_Name is not "", then if creates an attribute value for a
+   --  specific index
    --
-   --  The variable is added before the others in the list of declarations.
    --  If the variable is a list, it also creates the associated
    --  N_Literal_String_List node.
 
-   function Get_Or_Create_Attribute
-     (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
-      Index_Name : String;
-      Kind : Variable_Kind := List)
-      return Project_Node_Id;
-   --  Create an attribute ("Var_Name (Index_Name) :=...") either in the
-   --  project or in the package Prj_Or_Pkg.
+   function Get_Or_Create_Package
+     (Project : Project_Node_Id; Pkg : String) return Project_Node_Id;
+   --  Create (or get an existing) package in project.
+
+   ---------------------
+   -- Variable values --
+   ---------------------
 
    procedure Append_To_List (Var : Project_Node_Id; Value : String);
    --  Append a simple string to Var.
@@ -77,10 +103,31 @@ package Prj_API is
 
    procedure Set_Value (Var : Project_Node_Id; Value : String);
    --  Set the value for a variable. Var mustn't be a list.
+   --  If Var is a typed variable, the value is checked against the list
+   --  of possible values (Invalid_Value raised).
+   --  For variables defined as references to environment variables, this
+   --  changes the default value.
 
-   function Get_Or_Create_Package
-     (Project : Project_Node_Id; Pkg : String) return Project_Node_Id;
-   --  Create (or get an existing) package in project.
+   procedure Set_Value_As_External
+     (Var : Project_Node_Id; External_Name : String; Default : String := "");
+   --  Set the value of the variable as a reference to the environment variable
+   --  External_Name. Var must be a single value, not a string.
+   --  If Var is a typed variable, the default value is checked against the
+   --  list of possible values (Invalid_Value raised if not).
+
+   function Get_Expression
+     (Var_Or_Attribute : Project_Node_Id) return Project_Node_Id;
+   --  Return the expression associated with the current value of a variable
+   --  or an attribute. For a variable whose value is defined through an
+   --  external reference, this is the default value.
+
+   function Get_Environment (Var_Or_Attribute : Project_Node_Id)
+      return Types.String_Id;
+   --  Return the name of the environment variable associated with
+   --  Var_Or_Attribute. No_String is returned in case there is no such
+   --  variable.
+
+   Invalid_Value : exception;
 
 
    ---------------------------------------
