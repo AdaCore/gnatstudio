@@ -41,6 +41,7 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -431,18 +432,31 @@ procedure GPS is
          end loop;
 
          Close (Directory);
-      end if;
 
-      --  Load the project selected by the user
+         --  Load the project selected by the user
 
-      if Project_Name = null then
-         Gtk_New (Screen, GPS.Kernel, "");
+         if Project_Name = null then
+            Gtk_New (Screen, GPS.Kernel, "");
+         else
+            Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+         end if;
+
+         --  Remove the splash screen, since it conflicts with the welcome
+         --  dialog.
+         if Splash /= null then
+            Destroy (Splash);
+            Splash := null;
+         end if;
+
+         Run (Screen);
+         Destroy (Screen);
+
       else
-         Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+         Load_Project (GPS.Kernel, Project_Name.all);
+         Project_Viewers.Add_To_Reopen
+           (GPS.Kernel, Normalize_Pathname
+              (Project_Name.all, Resolve_Links => False));
       end if;
-
-      Run (Screen);
-      Destroy (Screen);
 
       --  Do the Show_All before loading the desktop, in case some of the
       --  widgets automatically loaded have something to hide
