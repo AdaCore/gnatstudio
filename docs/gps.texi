@@ -2456,18 +2456,27 @@ above.
 @cindex case exceptions
 @c --------------------------------------------------------------------
 
-GPS keeps a set of case exceptions that is used by all non
-case-sensitive languages. When editing or reformatting a buffer for
+@c ??? Seems strange to have a section entitled '... for Editing Files'
+@c and only talk about casing.  Add more menus/xref here:
+@c @xref{Contextual Menus for Source Navigation}
+@c Edit with external editor
+@c Dependency Browser
+@c Entity Browser
+@c The Project Explorer
+@c The Version Control Contextual Menu
+
+GPS keeps a set of case exceptions that is used by all
+case insensitive languages. When editing or reformatting a buffer for
 such a language the case exception dictionary will be checked
-first. If an exception is found for this word, it will be used
+first. If an exception is found for this word, it will be used;
 otherwise the specified casing for keywords or identifiers is used.
 
 Note that this feature is not activated for entities (keywords or
 identifiers) for which the casing is set to @code{Unchanged}. See 
 @pxref{The Preferences Dialog}.
 
-A contextual menu named @b{Casing} is accessible for non
-case-sensitive languages:
+A contextual menu named @b{Casing} is accessible for case
+insensitive languages:
 
 @table @b
 @item Add exception for ...
@@ -4433,7 +4442,7 @@ Clicking on the left arrow in the title bar will display the list of
 files that depend on the selected file.
 
 This browser is accessible through the contextual menu in the
-explorer, by selecting one of the following items:
+explorer and the source editor, by selecting one of the following items:
 
 @table @command
 @item Show dependencies for @i{file}
@@ -4559,7 +4568,7 @@ The list of all the entities declared in that package is displayed
 @end ifhtml
 
 This browser is accessible through the contextual menu in the
-explorer, when clicking on an entity:
+explorer and source editor, when clicking on an entity:
 
 @table @command
 @item Examine entity @i{entity}
