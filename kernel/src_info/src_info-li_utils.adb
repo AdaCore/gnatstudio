@@ -820,8 +820,6 @@ package body Src_Info.LI_Utils is
                 & Name.all & ')');
          Destroy (File);
          File := null;
-      else
-         Trace (Me, "Successfully inserted and parsed " & Name.all);
       end if;
    end Create_LI_File;
 

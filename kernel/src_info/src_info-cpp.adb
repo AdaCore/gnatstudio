@@ -1213,7 +1213,7 @@ package body Src_Info.CPP is
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 
    begin
-      Info ("Fu_To_Cl_Handler: " & Ref_Id);
+      --  Info ("Fu_To_Cl_Handler: " & Ref_Id);
 
       Find_Class
         (Type_Name      => Ref_Id,
@@ -1315,10 +1315,11 @@ package body Src_Info.CPP is
       Scope        : E_Scope := Global_Scope;
       Attributes   : SN_Attributes;
       Sym          : FIL_Table;
+
    begin
-      Info ("Fu_To_Con_Handler: "
-            & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                  Ref.Referred_Symbol_Name.Last));
+      --  Info ("Fu_To_Con_Handler: "
+      --        & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+      --              Ref.Referred_Symbol_Name.Last));
 
       --  we need declaration's location
       Var := Find (Handler.SN_Table (CON),
@@ -1474,9 +1475,9 @@ package body Src_Info.CPP is
       Enum_Def  : E_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
-   begin
 
-      Info ("Fu_To_E_Handler: " & Ref_Id);
+   begin
+      --  Info ("Fu_To_E_Handler: " & Ref_Id);
 
       Find_Enum
         (Type_Name      => Ref_Id,
@@ -1575,9 +1576,9 @@ package body Src_Info.CPP is
       Enum_Const : EC_Table;
       Ref_Id     : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-   begin
 
-      Info ("Fu_To_EC_Handler: " & Ref_Id);
+   begin
+      --  Info ("Fu_To_EC_Handler: " & Ref_Id);
 
       Enum_Const := Find (Handler.SN_Table (EC), Ref_Id);
 
@@ -1677,9 +1678,9 @@ package body Src_Info.CPP is
       Filename       : Segment;
       Return_Type    : Segment;
       Start_Position : Point;
-   begin
 
-      Info ("Fu_To_Fu_Handler: " & Ref_Id);
+   begin
+      --  Info ("Fu_To_Fu_Handler: " & Ref_Id);
 
       if Is_Open (Handler.SN_Table (FD)) then
          Set_Cursor (Handler.SN_Table (FD), By_Key, Ref_Id, False);
@@ -1906,7 +1907,7 @@ package body Src_Info.CPP is
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Sym          : FIL_Table;
    begin
-      Info ("Fu_To_GV_Handler: " & Ref_Id);
+      --  Info ("Fu_To_GV_Handler: " & Ref_Id);
 
       --  we need declaration's location
       Var := Find (Handler.SN_Table (GV), Ref_Id);
@@ -2059,7 +2060,7 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      Info ("Fu_To_Ma: " & Ref_Id);
+      --  Info ("Fu_To_Ma: " & Ref_Id);
 
       Macro := Find (Handler.SN_Table (MA), Ref_Id);
 
@@ -2201,8 +2202,7 @@ package body Src_Info.CPP is
       end Find_Method;
 
    begin
-
-      Info ("Fu_To_Mi_Handler: " & Ref_Id);
+      --  Info ("Fu_To_Mi_Handler: " & Ref_Id);
 
       Set_Cursor
         (Handler.SN_Table (MD),
@@ -2475,7 +2475,7 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      Info ("Fu_To_T: " & Ref_Id);
+      --  Info ("Fu_To_T: " & Ref_Id);
 
       Typedef := Find (Handler.SN_Table (T), Ref_Id);
 
@@ -2670,9 +2670,9 @@ package body Src_Info.CPP is
       Union_Def  : UN_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
-   begin
 
-      Info ("Fu_To_Un_Handler: " & Ref_Id);
+   begin
+      --  Info ("Fu_To_Un_Handler: " & Ref_Id);
 
       Find_Union
         (Type_Name      => Ref_Id,
@@ -2757,6 +2757,8 @@ package body Src_Info.CPP is
    --------------------
    -- Sym_CL_Handler --
    --------------------
+   --  Note: this handler is called from Find_Or_Create_Class function as
+   --  well
 
    procedure Sym_CL_Handler
      (Sym     : FIL_Table;
@@ -2776,11 +2778,9 @@ package body Src_Info.CPP is
       Super_Def  : CL_Table;
       Super_Desc : CType_Description;
    begin
-      --  Note: this handler is called from Find_Or_Create_Class function as
-      --  well
-      Info ("Sym_CL_Hanlder: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & """");
+      --  Info ("Sym_CL_Hanlder: """
+      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+      --        & """");
 
       Find_Class
         (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
@@ -2878,9 +2878,9 @@ package body Src_Info.CPP is
       Attributes        : SN_Attributes;
       Scope             : E_Scope := Global_Scope;
    begin
-      Info ("Sym_CON_Handler: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & """");
+      --  Info ("Sym_CON_Handler: """
+      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+      --        & """");
 
       if not Is_Open (Handler.SN_Table (CON)) then
          --  CON table does not exist, nothing to do ...
@@ -2984,11 +2984,11 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced
-        (Handler, File, List, Project_View, Module_Type_Defs);
+        (Sym, Handler, File, List, Project_View, Module_Type_Defs);
    begin
-      Info ("Sym_Default_Hanlder: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & """ : " & Symbol_Type'Image (Sym.Symbol));
+      --  Info ("Sym_Default_Hanlder: """
+      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+      --        & """ : " & Symbol_Type'Image (Sym.Symbol));
       null;
    end Sym_Default_Handler;
 
@@ -3008,9 +3008,9 @@ package body Src_Info.CPP is
       Decl_Info : E_Declaration_Info_List;
       E_Id      : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
-   begin
 
-      Info ("Sym_E_Hanlder: """ & E_Id & """");
+   begin
+      --  Info ("Sym_E_Hanlder: """ & E_Id & """");
 
       Insert_Declaration
         (Handler           => Handler,
@@ -3043,9 +3043,9 @@ package body Src_Info.CPP is
         (Sym.Identifier.First ..  Sym.Identifier.Last);
       Desc      : CType_Description;
       Has_Enum  : Boolean := False;
-   begin
 
-      Info ("Sym_EC_Hanlder: '" & Ec_Id & "'");
+   begin
+      --  Info ("Sym_EC_Hanlder: '" & Ec_Id & "'");
 
       --  looking for enum, which contains given enum constant (EC)
       if Is_Open (Handler.SN_Table (EC))
@@ -3122,10 +3122,11 @@ package body Src_Info.CPP is
       Attributes   : SN_Attributes;
       IsStatic     : Boolean;
       Match        : Boolean;
+
    begin
-      Info ("Sym_FD_Hanlder: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & """");
+      --  Info ("Sym_FD_Hanlder: """
+      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+      --        & """");
 
       --  Find this symbol
       FD_Tab := Find
@@ -3208,7 +3209,8 @@ package body Src_Info.CPP is
             Sym.Start_Position,
             Reference);
       else
-         Fail ("Sym_FD_Handler: Invalid start position");
+         Fail ("Sym_FD_Handler: Invalid start position for "
+               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
       end if;
    exception
       when DB_Error | Not_Found =>
@@ -3245,10 +3247,10 @@ package body Src_Info.CPP is
         (Sym.Identifier.First .. Sym.Identifier.Last);
 
    begin
-      Info ("Sym_FU_Hanlder: """
-            & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
-            & Fu_Id
-            & """");
+      --  Info ("Sym_FU_Hanlder: """
+      --        & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
+      --        & Fu_Id
+      --        & """");
 
       if Sym.Symbol = MI then
          declare
@@ -3497,10 +3499,11 @@ package body Src_Info.CPP is
       Decl_Info         : E_Declaration_Info_List;
       Attributes        : SN_Attributes;
       Scope             : E_Scope := Global_Scope;
+
    begin
-      Info ("Sym_GV_Handler: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & """");
+      --  Info ("Sym_GV_Handler: """
+      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+      --        & """");
 
       if not Is_Open (Handler.SN_Table (GV)) then
          --  GV table does not exist, nothing to do ...
@@ -3608,10 +3611,10 @@ package body Src_Info.CPP is
          Predefined_Path => "");
 
    begin
-      Info ("Sym_IU_Handler: """
-            & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-            & " depends on " & Full_Included
-            & """");
+      --  Info ("Sym_IU_Handler: """
+      --        & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
+      --        & " depends on " & Full_Included
+      --        & """");
       if Full_Included = "" then
          Info ("File not found on path: "
                & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
@@ -3652,9 +3655,9 @@ package body Src_Info.CPP is
       Success         : Boolean;
       Desc            : CType_Description;
    begin
-      Info ("Sym_IV_Handler: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & """");
+      --  Info ("Sym_IV_Handler: """
+      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+      --        & """");
 
       if not Is_Open (Handler.SN_Table (IV)) then
          --  IV table does not exist, nothing to do ...
@@ -3753,9 +3756,9 @@ package body Src_Info.CPP is
       pragma Unreferenced (Project_View, Module_Type_Defs);
       tmp_ptr    : E_Declaration_Info_List;
    begin
-      Info ("Sym_MA_Handler: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & """");
+      --  Info ("Sym_MA_Handler: """
+      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+      --        & """");
 
       Insert_Declaration
         (Handler           => Handler,
@@ -3793,11 +3796,11 @@ package body Src_Info.CPP is
       use DB_Structures.Segment_Vector;
 
    begin
-      Info ("Sym_MD_Hanlder: """
-            & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "::"
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & " "
-            & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-            & """");
+      --  Info ("Sym_MD_Hanlder: """
+      --        & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "::"
+      --       & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & " "
+      --        & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
+      --        & """");
 
       --  Find this symbol
       MD_Tab := Find
@@ -3934,9 +3937,9 @@ package body Src_Info.CPP is
       Success    : Boolean;
       Identifier : constant String :=
         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last);
-   begin
 
-      Info ("Sym_T_Hanlder: """ & Identifier & """");
+   begin
+      --  Info ("Sym_T_Hanlder: """ & Identifier & """");
 
       if not Is_Open (Handler.SN_Table (T)) then
          --  .t table does not exist, nothing to do
@@ -4030,11 +4033,11 @@ package body Src_Info.CPP is
       Desc      : CType_Description;
       Union_Def : UN_Table;
       Success   : Boolean;
-   begin
 
-      Info ("Sym_UN_Hanlder: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-            & """");
+   begin
+      --  Info ("Sym_UN_Hanlder: """
+      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+      --        & """");
 
       Find_Union
         (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
