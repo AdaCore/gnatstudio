@@ -689,6 +689,9 @@ package Debugger is
      array (Positive range <>) of Thread_Information;
    --  List of thread information.
 
+   subtype PD_Information_Array is Thread_Information_Array;
+   --  List of protection domains information
+
    procedure Free (Info : in out Thread_Information_Array);
    --  Free the dyamic memory associated with each element of the array.
 
@@ -706,6 +709,13 @@ package Debugger is
    --  Switch to a specified thread.
    --  GDB_COMMAND: "thread"
 
+   procedure PD_Switch
+     (Debugger : access Debugger_Root;
+      PD       : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Switch to a specified protection domain.
+   --  GDB_COMMAND: "pd <pd_id>"
+
    procedure Info_Tasks
      (Debugger : access Debugger_Root;
       Info     : out Thread_Information_Array;
@@ -719,6 +729,20 @@ package Debugger is
       Len      : out Natural) is abstract;
    --  Return the current list of threads.
    --  GDB_COMMAND: "info threads"
+
+   procedure Info_PD
+     (Debugger : access Debugger_Root;
+      Info     : out PD_Information_Array;
+      Len      : out Natural) is abstract;
+   --  Return the current list of protection domains.
+   --  GDB_COMMAND: "info pds"
+
+   procedure Info_WTX
+     (Debugger : access Debugger_Root;
+      Version  : out Natural) is abstract;
+   --  Return the version of the wtx protocol used by the debugger, or
+   --  0 if the protocol is not supported.
+   --  GDB_COMMAND: "info wtx"
 
    -----------------------------
    -- Source Related Commands --
