@@ -20,7 +20,7 @@
 
 with Generic_List;
 with String_List;
-with Gtk.Widget;
+with Glib.Object;
 
 package VCS is
 
@@ -42,8 +42,22 @@ package VCS is
 
    type VCS_Access is access all VCS_Record'Class;
 
+   function Get_VCS_From_Id (Id : String) return VCS_Access;
+   --  Browse through all VCS identifiers that are registered and return
+   --  a VCS reference to an appropriate system, if any.
+   --  If no satisfying system was found, Null is returned.
+   --  VCS identifiers are registered using Register_VCS_Identifier.
+
+   type VCS_Id_Identifier is access
+     function (Id : in String) return VCS_Access;
+
+   procedure Register_VCS_Identifier (Identifier : VCS_Id_Identifier);
+   --  Add an identifier to the list of known identifiers.
+   --  See Get_VCS_From_Id above.
+
    procedure Free (Ref : access VCS_Record);
-   --  ???
+   --  Free memory associated with Ref.
+   --  ??? is this the correct way to do it ?
 
    type File_Status is
      (Unknown,
@@ -199,38 +213,20 @@ package VCS is
 
    --  ??? The following two functions make this package thread-unsafe.
 
-   function Success (Rep : access VCS_Record) return Boolean is abstract;
-   --  Return True iff the last operation was successful.
-
-   function Get_Message (Rep : access VCS_Record) return String is abstract;
-   --  Return the last message given by the VCS software (useful for
-   --  transmitting error messages back to the user).
-   --
-   --  This function must return an empty string whenever an operation succeeds
-   --  and a non-empty string whenever an operation fails.
-
-   --  ??? this needs to be documented.
-   --  ??? this needs to be made generic.
-   --    generic
-   --       type Data_Type is private;
-   --    package Idle Is
-
    type Idle_Function is access procedure;
 
    procedure Register_Idle_Function
-     (Rep     : access VCS_Record;
-      Func    : Idle_Function;
-      Timeout : Integer := 100) is abstract;
+     (Func    : Idle_Function;
+      Timeout : Integer := 200);
    --  ???
 
    type Error_Function is access
      procedure (Error_Message : String;
-                User_Data     : Gtk.Widget.Gtk_Widget);
+                Caller_Widget : Glib.Object.GObject);
 
    procedure Register_Error_Function
-     (Rep  : access VCS_Record;
-      Func : Error_Function;
-      Data : Gtk.Widget.Gtk_Widget);
+     (Func : Error_Function;
+      Data : Glib.Object.GObject);
    --  ???
 
    procedure Set_Error
@@ -245,8 +241,12 @@ package VCS is
    --  other version
 
 private
-   type VCS_Record is abstract tagged limited record
-      Local_Error_Function : Error_Function := null;
-      User_Data            : Gtk.Widget.Gtk_Widget;
-   end record;
+
+   The_Error_Function : Error_Function := null;
+   The_Idle_Function  : Idle_Function := null;
+   Caller_Widget      : Glib.Object.GObject;
+   Timeout            : Integer := 200;
+
+   type VCS_Record is abstract tagged limited null record;
+
 end VCS;
