@@ -78,6 +78,7 @@ with Histories;                   use Histories;
 with Aliases_Module;              use Aliases_Module;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with VFS;                         use VFS;
+with Casing_Exceptions;           use Casing_Exceptions;
 
 with Gtkada.Types;                use Gtkada.Types;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
@@ -3485,7 +3486,8 @@ package body Src_Editor_Module is
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Source_Editor_Contextual'Access,
          Default_Context_Factory => Default_Factory'Access,
-         Save_Function           => Save_Function'Access);
+         Save_Function           => Save_Function'Access,
+         Customization_Handler   => Casing_Customize'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -4288,6 +4290,10 @@ package body Src_Editor_Module is
         (Kernel, -"Directory of current file", 'd',
          Expand_Aliases_Entities'Access);
 
+      --  Register the casing feature
+
+      Casing_Initialize (Kernel);
+
       --  Register the editor hooks
 
       Register_Editor_Hooks (Kernel);
@@ -4407,6 +4413,7 @@ package body Src_Editor_Module is
 
    procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
+      Casing_Finalize (Id.Kernel);
       String_List_Utils.String_List.Free (Id.Unopened_Files);
       Mark_Identifier_List.Free (Id.Stored_Marks);
 
