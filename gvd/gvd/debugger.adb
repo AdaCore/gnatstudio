@@ -430,6 +430,7 @@ package body Debugger is
    is
       Process : Debugger_Process_Tab := Convert (Debugger.Window, Debugger);
    begin
+      Set_Command_In_Process (Get_Process (Debugger), False);
       Process_Post_Processes (Get_Process (Debugger));
 
       --  Not an internal command, not in text mode (for testing purposes...)
@@ -448,7 +449,6 @@ package body Debugger is
            (Process, Force => Is_Break_Command (Debugger, Cmd));
       end if;
 
-      Set_Command_In_Process (Get_Process (Debugger), False);
       Set_Busy_Cursor (Process, False);
       Unregister_Dialog (Process);
    end Send_Internal_Post;
@@ -517,6 +517,14 @@ package body Debugger is
       Wait_For_Prompt : Boolean := True;
       Mode            : Invisible_Command := Hidden) return String is
    begin
+      --  ??? We should always avoid concurrent calls to Wait, or the exact
+      --  behavior of the application will depend on specific timing, which is
+      --  not reliable.
+
+      if Command_In_Process (Get_Process (Debugger)) then
+         Put_Line ("!!! already running a Wait command!!");
+      end if;
+
       --  Block if the global lock is set
       --  if Command_In_Process (Convert (Debugger.Window, Debugger)) then
       --     return;
