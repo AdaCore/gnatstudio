@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -221,8 +221,8 @@ package body External_Editor_Module is
    procedure External_Timeout_Destroy (D : in out Process_Data);
    --  Called when the timeout for the external editors is terminated.
 
-   function Blocking_Spawn (Command : String; Args : Argument_List)
-      return Integer;
+   function Blocking_Spawn
+     (Command : String; Args : Argument_List) return Integer;
    --  Spawn a new process, and waits for its termination. It hides both its
    --  standard output and standard error.
 
@@ -308,8 +308,8 @@ package body External_Editor_Module is
       end if;
 
       --  ??? Should we check that DISPLAY is defined if the command doesn't
-      --  ??? need a terminal ? It is necessary when we spawn Emacs, but not if
-      --  ??? we simply use emacsclient or gnuclient.
+      --  need a terminal ? It is necessary when we spawn Emacs, but not if
+      --  we simply use emacsclient or gnuclient.
    end Select_Client;
 
    ----------------
@@ -541,8 +541,8 @@ package body External_Editor_Module is
    -- Blocking_Spawn --
    --------------------
 
-   function Blocking_Spawn (Command : String; Args : Argument_List)
-      return Integer
+   function Blocking_Spawn
+     (Command : String; Args : Argument_List) return Integer
    is
       Status : Integer;
       Result : Expect_Match;
@@ -582,6 +582,7 @@ package body External_Editor_Module is
       Success   : Boolean;
       Path      : GNAT.OS_Lib.String_Access;
       Args      : Argument_List_Access;
+
    begin
       if Extended_Lisp /= ""
         and then Clients (Current_Client.Client).Lisp_Command_Name
@@ -611,6 +612,8 @@ package body External_Editor_Module is
 
       if Path = null then
          Trace (Me, Args (Args'First).all & " not found on PATH");
+         Free (Args.all);
+         Unchecked_Free (Args);
          return;
       end if;
 
@@ -629,6 +632,7 @@ package body External_Editor_Module is
         and then Clients (Current_Client.Client).Server_Start_Command /= null
       then
          Spawn_Server (Kernel, Current_Client, Success);
+
          if Success then
             --  Give Emacs some time to start the server, and try a number of
             --  times.
@@ -657,14 +661,15 @@ package body External_Editor_Module is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File : File_Selection_Context_Access :=
+
+      File           : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Line   : Integer := 1;
-      Column : Integer := 1;
+      Line           : Integer := 1;
+      Column         : Integer := 1;
       Current_Client : External_Client_Information_Access;
+
    begin
       Push_State (Get_Kernel (File), Busy);
-
       Trace (Me, "Edit file with external editor " & File_Information (File));
 
       if Context.all in Entity_Selection_Context'Class then
@@ -682,7 +687,6 @@ package body External_Editor_Module is
          File   => Directory_Information (File) & File_Information (File),
          Line   => Line,
          Column => Column);
-
       Pop_State (Get_Kernel (File));
 
    exception
@@ -701,8 +705,10 @@ package body External_Editor_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
+
       File  : File_Selection_Context_Access;
       Mitem : Gtk_Menu_Item;
+
    begin
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -735,9 +741,10 @@ package body External_Editor_Module is
    begin
       if Mime_Type = Mime_Source_File then
          declare
-            File      : constant String  := Get_String (Data (Data'First));
-            Line      : constant Gint    := Get_Int (Data (Data'First + 1));
-            Column    : constant Gint    := Get_Int (Data (Data'First + 2));
+            File   : constant String  := Get_String (Data (Data'First));
+            Line   : constant Gint    := Get_Int (Data (Data'First + 1));
+            Column : constant Gint    := Get_Int (Data (Data'First + 2));
+
          begin
             if Is_Regular_File (File) then
                Push_State (Kernel_Handle (Kernel), Processing);
@@ -766,14 +773,15 @@ package body External_Editor_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Priority_Modifier : Module_Priority := 0;
+      Priority       : Module_Priority := Default_Priority;
       Current_Client : External_Client_Information_Access;
+
    begin
       --  Memory is never freed, but is only allocated once per kernel.
       Current_Client := new External_Client_Information;
 
       if Get_Pref (Kernel, Always_Use_External_Editor) then
-         Priority_Modifier := 1;
+         Priority := Priority + 1;
       end if;
 
       Select_Client (Kernel, Current_Client.all);
@@ -782,13 +790,12 @@ package body External_Editor_Module is
          External_Editor_Module_Id := Register_Module
            (Kernel                  => Kernel,
             Module_Name             => External_Editor_Module_Name,
-            Priority                => Default_Priority + Priority_Modifier,
+            Priority                => Priority,
             Contextual_Menu_Handler => External_Editor_Contextual'Access,
             Mime_Handler            => Mime_Action'Access);
       end if;
 
       Client_User_Data.Set (Kernel, Current_Client, External_Editor_User_Data);
-
    end Register_Module;
 
 end External_Editor_Module;
