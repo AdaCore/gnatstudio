@@ -32,7 +32,7 @@ with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with GPS.Intl;            use GPS.Intl;
 with GVD.Process;           use GVD.Process;
 with Debugger;              use Debugger;
-with GVD.Main_Window;       use GVD.Main_Window;
+with GPS.Main_Window;       use GPS.Main_Window;
 with GVD.Types;             use GVD.Types;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Regpat;           use GNAT.Regpat;
@@ -57,8 +57,8 @@ package body GVD.Dialogs.Callbacks is
       Str         : constant String :=
         Get_Text (Gtk_Clist (Object), Index, 0);
       Top         : constant GVD_Dialog := GVD_Dialog (Get_Toplevel (Object));
-      Main_Window : constant GVD_Main_Window :=
-        GVD_Main_Window (Top.Main_Window);
+      Main_Window : constant GPS_Window :=
+        GPS_Window (Top.Main_Window);
       Process     : constant Visual_Debugger :=
         Get_Current_Process (Main_Window);
       Matched     : Match_Array (0 .. 0);
@@ -305,8 +305,8 @@ package body GVD.Dialogs.Callbacks is
    is
       History_Dialog : constant History_Dialog_Access :=
         History_Dialog_Access (Get_Toplevel (Object));
-      Top  : constant GVD_Main_Window :=
-        GVD_Main_Window (History_Dialog.Window);
+      Top  : constant GPS_Window :=
+        GPS_Window (History_Dialog.Window);
       Tab  : constant Visual_Debugger := Get_Current_Process (Top);
       List : constant Gtk_List :=
         History_Dialog_Access (Get_Toplevel (Object)).List;

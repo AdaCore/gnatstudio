@@ -20,15 +20,15 @@
 
 with Gtk.Widget; use Gtk.Widget;
 
-package GVD.Main_Window.Utils is
+package GPS.Main_Window.Utils is
 
    procedure Set_Toolbar
-     (Main_Window : access GVD_Main_Window_Record'Class;
+     (Main_Window : access GPS_Window_Record'Class;
       Toolbar     : access Gtk_Widget_Record'Class);
    --  Set the main window's toolbar
 
    procedure Update_External_Dialogs
-     (Window   : access GVD_Main_Window_Record'Class;
+     (Window   : access GPS_Window_Record'Class;
       Debugger : Glib.Object.GObject := null);
    --  Update the contents of all the dialogs associated with the window
    --  (backtrace, threads, ...) if they are visible.
@@ -44,22 +44,22 @@ package GVD.Main_Window.Utils is
    --  No_Such_Item is raised if no matching command is found.
 
    procedure Preferences_Changed
-     (Window : access GVD_Main_Window_Record'Class);
+     (Window : access GPS_Window_Record'Class);
    --  Emit the "preferences_changed" signal, which indicates a change in
    --  the preferences. The exact change is not accessible as a parameter.
 
    procedure Prepare_Cleanup_Debuggers
-     (Window : access GVD_Main_Window_Record'Class);
+     (Window : access GPS_Window_Record'Class);
    --  Prepare call to Cleanup_Debuggers below by stopping all the debuggers
    --  contained in the main window.
 
-   procedure Cleanup_Debuggers (Window : access GVD_Main_Window_Record'Class);
+   procedure Cleanup_Debuggers (Window : access GPS_Window_Record'Class);
    --  Close all the debuggers associated with a given main debug window.
 
    procedure Switch_Debugger
-     (Window   : access GVD_Main_Window_Record'Class;
+     (Window   : access GPS_Window_Record'Class;
       Debugger : Glib.Object.GObject);
    --  Set the current debugger associated with Window to Debugger.
    --  Update any associated dialogs (e.g. Task window) accordingly.
 
-end GVD.Main_Window.Utils;
+end GPS.Main_Window.Utils;

@@ -52,8 +52,8 @@ with Items;                     use Items;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Call_Stack;            use GVD.Call_Stack;
 with Std_Dialogs;               use Std_Dialogs;
-with GVD.Main_Window;           use GVD.Main_Window;
-with GVD.Main_Window.Utils;     use GVD.Main_Window.Utils;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Main_Window.Utils;     use GPS.Main_Window.Utils;
 with GVD.Memory_View;           use GVD.Memory_View;
 with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
@@ -2270,7 +2270,7 @@ package body GVD_Module is
       Prev   : Boolean;
 
    begin
-      GVD.Main_Window.Utils.Preferences_Changed (Top);
+      GPS.Main_Window.Utils.Preferences_Changed (Top);
 
       if Id.Initialized then
          Prev   := Id.Show_Lines_With_Code;

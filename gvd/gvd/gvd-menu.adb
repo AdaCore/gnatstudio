@@ -35,7 +35,7 @@ with GVD.Call_Stack;      use GVD.Call_Stack;
 with GVD.Canvas;          use GVD.Canvas;
 with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Types;           use GVD.Types;
-with GVD.Main_Window;     use GVD.Main_Window;
+with GPS.Main_Window;     use GPS.Main_Window;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Basic_Types;         use Basic_Types;
 with Std_Dialogs;         use Std_Dialogs;
@@ -414,8 +414,8 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Top  : constant GVD_Main_Window :=
-        GVD_Main_Window (Get_Toplevel (Object));
+      Top  : constant GPS_Window :=
+        GPS_Window (Get_Toplevel (Object));
       Tab  : constant Visual_Debugger := Get_Current_Process (Top);
 
       use String_History;
@@ -453,7 +453,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top       : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Top       : constant GPS_Window := GPS_Window (Object);
       Process   : Visual_Debugger;
       Child     : MDI_Child;
       Button    : Message_Dialog_Buttons;
@@ -508,7 +508,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Top    : constant GPS_Window := GPS_Window (Object);
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Action, Widget, Button);
@@ -546,7 +546,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Top    : constant GPS_Window := GPS_Window (Object);
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Action, Widget, Button);
@@ -584,7 +584,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Top    : constant GPS_Window := GPS_Window (Object);
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Action, Widget, Button);
@@ -623,7 +623,7 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Top     : constant GPS_Window := GPS_Window (Object);
       Process : constant Visual_Debugger := Get_Current_Process (Object);
       Button  : Message_Dialog_Buttons;
       pragma Unreferenced (Action, Widget, Button);
@@ -656,7 +656,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Top         : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Top         : constant GPS_Window := GPS_Window (Object);
       Memory_View : GVD_Memory_View;
    begin
       if Top.Memory_View = null then

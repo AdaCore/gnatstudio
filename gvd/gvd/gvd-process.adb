@@ -76,8 +76,8 @@ with GUI_Utils;                  use GUI_Utils;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
-with GVD.Main_Window;            use GVD.Main_Window;
-with GVD.Main_Window.Utils;      use GVD.Main_Window.Utils;
+with GPS.Main_Window;            use GPS.Main_Window;
+with GPS.Main_Window.Utils;      use GPS.Main_Window.Utils;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
@@ -104,7 +104,7 @@ package body GVD.Process is
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
    function To_Main_Debug_Window is new
-     Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
+     Ada.Unchecked_Conversion (System.Address, GPS_Window);
    pragma Warnings (On);
 
    --  This pointer will keep a pointer to the C 'class record' for
@@ -508,7 +508,7 @@ package body GVD.Process is
    -------------
 
    function Convert
-     (Main_Debug_Window : access GVD_Main_Window_Record'Class;
+     (Main_Debug_Window : access GPS_Window_Record'Class;
       Descriptor        : GNAT.Expect.Process_Descriptor'Class)
       return Visual_Debugger
    is
@@ -549,7 +549,7 @@ package body GVD.Process is
       Debugger          : access Debugger_Root'Class)
       return Visual_Debugger is
    begin
-      return Convert (GVD_Main_Window (Main_Debug_Window),
+      return Convert (GPS_Window (Main_Debug_Window),
                       Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
 
@@ -916,7 +916,7 @@ package body GVD.Process is
 
    procedure Gtk_New
      (Process : out Visual_Debugger;
-      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor) is
    begin
       Process := new Visual_Debugger_Record;
@@ -1084,7 +1084,7 @@ package body GVD.Process is
 
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
-      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor)
    is
       Debugger_List : Debugger_List_Link;
@@ -1199,8 +1199,8 @@ package body GVD.Process is
       Timeout       : constant Guint32 := 50;
 
       Child         : MDI_Child;
-      Window        : constant GVD_Main_Window :=
-        GVD_Main_Window (Process.Window);
+      Window        : constant GPS_Window :=
+        GPS_Window (Process.Window);
       Buttons       : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
 
@@ -1660,7 +1660,7 @@ package body GVD.Process is
    --------------------
 
    procedure Close_Debugger (Debugger : Visual_Debugger) is
-      Top  : constant GVD_Main_Window := Debugger.Window;
+      Top  : constant GPS_Window := Debugger.Window;
       List : Debugger_List_Link;
       use String_History;
 
@@ -1930,7 +1930,7 @@ package body GVD.Process is
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Visual_Debugger is
    begin
-      return Visual_Debugger (GVD_Main_Window (Main_Window).Current_Debugger);
+      return Visual_Debugger (GPS_Window (Main_Window).Current_Debugger);
    end Get_Current_Process;
 
    --------------

@@ -32,14 +32,14 @@ with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
 with GPS.Intl;            use GPS.Intl;
 
-package body GVD.Main_Window.Utils is
+package body GPS.Main_Window.Utils is
 
    -------------------------------
    -- Prepare_Cleanup_Debuggers --
    -------------------------------
 
    procedure Prepare_Cleanup_Debuggers
-     (Window : access GVD_Main_Window_Record'Class)
+     (Window : access GPS_Window_Record'Class)
    is
       Debugger : Visual_Debugger;
       List     : Debugger_List_Link := Window.First_Debugger;
@@ -63,7 +63,7 @@ package body GVD.Main_Window.Utils is
    -----------------------
 
    procedure Cleanup_Debuggers
-     (Window : access GVD_Main_Window_Record'Class)
+     (Window : access GPS_Window_Record'Class)
    is
       Debugger : Visual_Debugger;
       List     : Debugger_List_Link := Window.First_Debugger;
@@ -98,7 +98,7 @@ package body GVD.Main_Window.Utils is
    -----------------
 
    procedure Set_Toolbar
-     (Main_Window : access GVD_Main_Window_Record'Class;
+     (Main_Window : access GPS_Window_Record'Class;
       Toolbar     : access Gtk_Widget_Record'Class)
    is
       Box : Gtk_Hbox;
@@ -114,7 +114,7 @@ package body GVD.Main_Window.Utils is
    -----------------------------
 
    procedure Update_External_Dialogs
-     (Window   : access GVD_Main_Window_Record'Class;
+     (Window   : access GPS_Window_Record'Class;
       Debugger : Glib.Object.GObject := null)
    is
       use type Glib.Object.GObject;
@@ -188,7 +188,7 @@ package body GVD.Main_Window.Utils is
    -------------------------
 
    procedure Preferences_Changed
-     (Window : access GVD_Main_Window_Record'Class)
+     (Window : access GPS_Window_Record'Class)
    is
    begin
       Widget_Callback.Emit_By_Name
@@ -200,7 +200,7 @@ package body GVD.Main_Window.Utils is
    ---------------------
 
    procedure Switch_Debugger
-     (Window   : access GVD_Main_Window_Record'Class;
+     (Window   : access GPS_Window_Record'Class;
       Debugger : Glib.Object.GObject)
    is
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
@@ -253,4 +253,4 @@ package body GVD.Main_Window.Utils is
       end if;
    end Switch_Debugger;
 
-end GVD.Main_Window.Utils;
+end GPS.Main_Window.Utils;

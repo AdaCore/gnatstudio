@@ -19,33 +19,31 @@
 -----------------------------------------------------------------------
 
 with Gdk.Pixbuf;
-with Gtk.Container;            use Gtk.Container;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Basic_Types;              use Basic_Types;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Main_Window;        use GPS.Main_Window;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Basic_Types;               use Basic_Types;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
-with GVD.Process;          use GVD.Process;
-with GVD.Code_Editors;     use GVD.Code_Editors;
-with GVD.Types;            use GVD.Types;
-with GVD_Module;           use GVD_Module;
-with Debugger_Pixmaps;     use Debugger_Pixmaps;
-with String_List_Utils;    use String_List_Utils;
-with VFS;                  use VFS;
+with GVD.Process;               use GVD.Process;
+with GVD.Code_Editors;          use GVD.Code_Editors;
+with GVD.Types;                 use GVD.Types;
+with GVD_Module;                use GVD_Module;
+with Debugger_Pixmaps;          use Debugger_Pixmaps;
+with String_List_Utils;         use String_List_Utils;
+with VFS;                       use VFS;
 
-with GVD.Text_Box.Asm_Editor; use GVD.Text_Box;
+with GVD.Text_Box.Asm_Editor;   use GVD.Text_Box;
 
-with Commands;                use Commands;
-with Commands.Debugger;       use Commands.Debugger;
+with Commands;                  use Commands;
+with Commands.Debugger;         use Commands.Debugger;
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
-with GVD.Preferences;         use GVD.Preferences;
+with GVD.Preferences;           use GVD.Preferences;
 
 package body GVD.Text_Box.Source_Editor.GPS is
 
@@ -58,12 +56,12 @@ package body GVD.Text_Box.Source_Editor.GPS is
    ----------------
 
    procedure Apply_Mode (Editor : access GEdit_Record; Mode : View_Mode) is
-      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
-      Top      : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process  : constant Visual_Debugger := Get_Current_Process (Top);
-      Edit     : constant Code_Editor  := Process.Editor_Text;
-      Assembly : constant Asm_Editor.Asm_Editor := Get_Asm (Edit);
+      Main_Window : constant GPS_Window := GPS_Window (Editor.Window);
+      Kernel      : constant Kernel_Handle := Main_Window.Kernel;
+      Process     : constant Visual_Debugger :=
+        Get_Current_Process (Main_Window);
+      Edit        : constant Code_Editor  := Process.Editor_Text;
+      Assembly    : constant Asm_Editor.Asm_Editor := Get_Asm (Edit);
 
    begin
       if Mode = Get_Mode (Edit) then
@@ -78,31 +76,6 @@ package body GVD.Text_Box.Source_Editor.GPS is
             On_Assembly (Kernel, Kernel);
       end case;
    end Apply_Mode;
-
-   ------------
-   -- Attach --
-   ------------
-
-   procedure Attach
-     (Editor : access GEdit_Record;
-      Parent : access Gtk.Container.Gtk_Container_Record'Class)
-   is
-      pragma Unreferenced (Editor, Parent);
-   begin
-      --  Nothing needed within Glide
-      null;
-   end Attach;
-
-   ------------
-   -- Detach --
-   ------------
-
-   procedure Detach (Editor : access GEdit_Record) is
-      pragma Unreferenced (Editor);
-   begin
-      --  Nothing needed within Glide
-      null;
-   end Detach;
 
    --------------
    -- Get_Line --
@@ -119,7 +92,7 @@ package body GVD.Text_Box.Source_Editor.GPS is
 
    procedure Gtk_New
      (Editor : out GEdit;
-      Window : access GVD.Main_Window.GVD_Main_Window_Record'Class) is
+      Window : access GPS_Window_Record'Class) is
    begin
       Editor := new GEdit_Record;
       Initialize (Editor, Window);
@@ -177,22 +150,6 @@ package body GVD.Text_Box.Source_Editor.GPS is
          Full_Name (Editor.Debugger_Current_File).all);
    end Highlight_Current_Line;
 
-   --------------------
-   -- Highlight_Word --
-   --------------------
-
-   procedure Highlight_Word
-     (Editor   : access GEdit_Record;
-      Line     : Natural;
-      Column   : Natural;
-      Position : Position_Type)
-   is
-      pragma Unreferenced (Editor, Line, Column, Position);
-   begin
-      --  Only needed by the GVD explorer, which is disabled within GPS
-      null;
-   end Highlight_Word;
-
    ------------------------------
    -- Unhighlight_Current_Line --
    ------------------------------
@@ -242,14 +199,14 @@ package body GVD.Text_Box.Source_Editor.GPS is
 
    procedure Initialize
      (Editor : access GEdit_Record'Class;
-      Window : access GVD.Main_Window.GVD_Main_Window_Record'Class)
+      Window : access GPS_Window_Record'Class)
    is
       Kernel : constant Kernel_Handle := GPS_Window (Window).Kernel;
       Args   : GNAT.OS_Lib.Argument_List :=
         (new String'(Highlight_Category), new String'("True"));
 
    begin
-      Editor.Window := GVD.Main_Window.GVD_Main_Window (Window);
+      Editor.Window := GPS_Window (Window);
 
       --  Initialize the color for line highlighting.
 

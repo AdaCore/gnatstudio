@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -20,9 +20,7 @@
 
 with Glib.Object;
 with Gtk.Widget;
-with Gtk.Container;
 with Language;
-with Basic_Types;
 with GVD.Types;
 with VFS;
 
@@ -30,14 +28,6 @@ package GVD.Text_Box.Source_Editor is
 
    type Source_Editor_Record is abstract tagged private;
    type Source_Editor is access all Source_Editor_Record'Class;
-
-   procedure Attach
-     (Editor : access Source_Editor_Record;
-      Parent : access Gtk.Container.Gtk_Container_Record'Class) is abstract;
-   --  Attach Editor to the specified parent, if possible.
-
-   procedure Detach (Editor : access Source_Editor_Record) is abstract;
-   --  Detach Editor from its parent, if possible.
 
    procedure Set_Current_Language
      (Editor : access Source_Editor_Record;
@@ -47,15 +37,6 @@ package GVD.Text_Box.Source_Editor is
    --  new language, this only influences future addition to the editor.
    --
    --  If Lang is null, then no color highlighting will be performed.
-
-   procedure Highlight_Word
-     (Editor   : access Source_Editor_Record;
-      Line     : Natural;
-      Column   : Natural;
-      Position : Basic_Types.Position_Type) is abstract;
-   --  Highlight the word that starts at the given position in the file
-   --  associated with the editor (ie ignoring the line numbers that could
-   --  be displayed).
 
    procedure Update_Breakpoints
      (Editor  : access Source_Editor_Record;

@@ -35,7 +35,7 @@ with Gtk.Main;          use Gtk.Main;
 with Gtk.Window;        use Gtk.Window;
 with Gtkada.Types;      use Gtkada.Types;
 
-with GPS.Intl;        use GPS.Intl;
+with GPS.Intl;          use GPS.Intl;
 with Items;             use Items;
 with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;
@@ -46,7 +46,7 @@ with GVD.Process;       use GVD.Process;
 with String_Utils;      use String_Utils;
 with GVD.Types;         use GVD.Types;
 with Basic_Types;       use Basic_Types;
-with GVD.Main_Window;   use GVD.Main_Window;
+with GPS.Main_Window;   use GPS.Main_Window;
 
 with Gtkada.Dialogs;    use Gtkada.Dialogs;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;

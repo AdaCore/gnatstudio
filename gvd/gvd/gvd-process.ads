@@ -44,7 +44,7 @@ with Pango.Font;
 
 with Process_Proxies;     use Process_Proxies;
 with Debugger;            use Debugger;
-with GVD.Main_Window;
+with GPS.Main_Window;
 with Items;
 with GVD.Code_Editors;
 with GVD.Text_Box.Source_Editor;
@@ -110,7 +110,7 @@ package GVD.Process is
       Debugger                : Debugger_Access;
       --  The underlying debugger process.
 
-      Window                  : GVD.Main_Window.GVD_Main_Window;
+      Window                  : GPS.Main_Window.GPS_Window;
       --  The associated main window.
 
       Delete_Text_Handler_Id  : Gtk.Handlers.Handler_Id;
@@ -207,13 +207,13 @@ package GVD.Process is
 
    procedure Gtk_New
      (Process : out Visual_Debugger;
-      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor);
    --  Create a new debugger page and add it to Window.
 
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
-      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor);
    --  Internal initialize procedure.
 
@@ -270,7 +270,7 @@ package GVD.Process is
    --  Return the number identifying the debugger associated with a process tab
 
    function Convert
-     (Main_Debug_Window : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+     (Main_Debug_Window : access GPS.Main_Window.GPS_Window_Record'Class;
       Descriptor        : GNAT.Expect.Process_Descriptor'Class)
       return Visual_Debugger;
    --  Return the debugger_descriptor associated with a Process_Descriptor.

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;
 with GNAT.Expect;
 with GNAT.Regpat;
 with GVD.Types;
@@ -159,19 +158,6 @@ package Process_Proxies is
       Timeout : Integer := 1000);
    --  In GUI mode, this processes the graphic events between each iteration.
    --  See comments above.
-
-   -------------
-   -- Filters --
-   -------------
-
-   procedure TTY_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
-      Str        : String;
-      Proxy      : System.Address);
-   --  Can be used as a filter to simulate a command line interface.
-   --  This will print to stdout all output received when the process proxy
-   --  is not in internal state.
-   --  Proxy is the address of a Process_Proxy'Class.
 
 private
 

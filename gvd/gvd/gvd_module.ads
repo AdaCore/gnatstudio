@@ -41,6 +41,6 @@ package GVD_Module is
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Display the assembly view.
    --  Used e.g. for implementing menu Debug->Data->Assembly
-   --  Widget paramter is ignored.
+   --  Widget parameter is ignored.
 
 end GVD_Module;

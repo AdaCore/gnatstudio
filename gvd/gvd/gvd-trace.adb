@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GVD.Main_Window;      use GVD.Main_Window;
+with GPS.Main_Window;      use GPS.Main_Window;
 with GVD.Types;            use GVD.Types;
 with Process_Proxies;      use Process_Proxies;
 with Debugger;             use Debugger;
@@ -46,7 +46,7 @@ package body GVD.Trace is
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
    function To_Main_Window is new
-     Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
+     Ada.Unchecked_Conversion (System.Address, GPS_Window);
    pragma Warnings (On);
 
    ------------------
@@ -154,7 +154,7 @@ package body GVD.Trace is
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is
-      Window : constant GVD_Main_Window := To_Main_Window (User_Data);
+      Window : constant GPS_Window := To_Main_Window (User_Data);
    begin
       declare
          Tab : constant Visual_Debugger := Convert (Window, Descriptor);
@@ -176,7 +176,7 @@ package body GVD.Trace is
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is
-      Window : constant GVD_Main_Window := To_Main_Window (User_Data);
+      Window : constant GPS_Window := To_Main_Window (User_Data);
    begin
       declare
          Tab : constant Visual_Debugger := Convert (Window, Descriptor);

@@ -46,7 +46,7 @@ with Items;            use Items;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 
 with GPS.Intl;       use GPS.Intl;
-with GVD.Main_Window;  use GVD.Main_Window;
+with GPS.Main_Window;  use GPS.Main_Window;
 with GVD.Memory_View;  use GVD.Memory_View;
 with GVD.Menu;         use GVD.Menu;
 with GVD.Preferences;  use GVD.Preferences;
@@ -1061,8 +1061,8 @@ package body GVD.Canvas is
    is
       pragma Unreferenced (Widget);
 
-      Top  : constant GVD_Main_Window :=
-        GVD_Main_Window (Visual_Debugger (Item.Canvas.Process).Window);
+      Top  : constant GPS_Window :=
+        GPS_Window (Visual_Debugger (Item.Canvas.Process).Window);
       View : GVD_Memory_View;
 
    begin

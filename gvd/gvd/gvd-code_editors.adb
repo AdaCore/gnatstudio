@@ -235,7 +235,6 @@ package body GVD.Code_Editors is
       Configure (Editor.Asm, Font, Current_Line_Icon, Stop_Icon);
       pragma Assert (Editor.Source = null);
       Editor.Source := Source;
-      Attach (Editor.Source, Editor);
    end Configure;
 
    ----------------------

@@ -32,7 +32,7 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 
 with Gtk.Window;        use Gtk.Window;
 
-with GVD.Main_Window;   use GVD.Main_Window;
+with GPS.Main_Window;   use GPS.Main_Window;
 with OS_Utils;          use OS_Utils;
 with GPS.Intl;        use GPS.Intl;
 with Language;          use Language;
@@ -691,7 +691,7 @@ package body Debugger.Gdb is
 
          --  ??? Should avoid the duplication of this code between debugger-*
 
-         if GVD_Main_Window (Window).Debug_Mode then
+         if GPS_Window (Window).Debug_Mode then
             Add_Filter
               (Get_Descriptor (Debugger.Process).all,
                Output_Filter'Access, Output,
@@ -700,17 +700,6 @@ package body Debugger.Gdb is
               (Get_Descriptor (Debugger.Process).all,
                Input_Filter'Access, Input,
                Window.all'Address);
-         end if;
-
-         if GVD_Main_Window (Window).TTY_Mode then
-            Add_Filter
-              (Get_Descriptor (Debugger.Process).all,
-               TTY_Filter'Access, Output,
-               Debugger.Process.all'Address);
-            Add_Filter
-              (Get_Descriptor (Debugger.Process).all,
-               TTY_Filter'Access, Input,
-               Debugger.Process.all'Address);
          end if;
       end if;
    end Spawn;

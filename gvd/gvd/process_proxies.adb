@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -21,9 +21,6 @@
 with GNAT.Expect;           use GNAT.Expect;
 with Gtk.Main;              use Gtk.Main;
 with GNAT.Regpat;           use GNAT.Regpat;
-with GNAT.IO;               use GNAT.IO;
-with System;                use System;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GVD.Types;             use GVD.Types;
 with Glib.Convert;          use Glib.Convert;
@@ -327,28 +324,5 @@ package body Process_Proxies is
    begin
       Proxy.Internal_Mode := Mode;
    end Set_Command_Mode;
-
-   ----------------
-   -- TTY_Filter --
-   ----------------
-
-   procedure TTY_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
-      Str        : String;
-      Proxy      : System.Address)
-   is
-      pragma Unreferenced (Descriptor);
-
-      pragma Warnings (Off);
-      --  This UC is safe aliasing-wise, so kill warning
-      function To_Proxy is new Ada.Unchecked_Conversion
-        (System.Address, Process_Proxy_Access);
-      pragma Warnings (On);
-
-   begin
-      if Get_Command_Mode (To_Proxy (Proxy)) /= Internal then
-         Put (Str);
-      end if;
-   end TTY_Filter;
 
 end Process_Proxies;

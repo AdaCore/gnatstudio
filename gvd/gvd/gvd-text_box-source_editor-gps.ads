@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                              AdaCoree                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,10 +19,8 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;
-with Gtk.Container;
-with Basic_Types;
 with GVD.Types;
-with GVD.Main_Window;
+with GPS.Main_Window; use GPS.Main_Window;
 
 with String_List_Utils;
 
@@ -36,28 +34,13 @@ package GVD.Text_Box.Source_Editor.GPS is
 
    procedure Gtk_New
      (Editor : out GEdit;
-      Window : access GVD.Main_Window.GVD_Main_Window_Record'Class);
+      Window : access GPS_Window_Record'Class);
    --  Create a new source editor.
 
    procedure Initialize
      (Editor : access GEdit_Record'Class;
-      Window : access GVD.Main_Window.GVD_Main_Window_Record'Class);
+      Window : access GPS_Window_Record'Class);
    --  Internal initialization procedure.
-
-   procedure Attach
-     (Editor : access GEdit_Record;
-      Parent : access Gtk.Container.Gtk_Container_Record'Class);
-   --  See GVD.Text_Box.Source_Editor for more information.
-
-   procedure Detach (Editor : access GEdit_Record);
-   --  See GVD.Text_Box.Source_Editor for more information.
-
-   procedure Highlight_Word
-     (Editor   : access GEdit_Record;
-      Line     : Natural;
-      Column   : Natural;
-      Position : Basic_Types.Position_Type);
-   --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Update_Breakpoints
      (Editor  : access GEdit_Record;
@@ -110,7 +93,7 @@ package GVD.Text_Box.Source_Editor.GPS is
 private
 
    type GEdit_Record is new Source_Editor_Record with record
-      Window : GVD.Main_Window.GVD_Main_Window;
+      Window : GPS_Window;
       Line   : Natural := 0;
 
       Current_Breakpoints : GVD.Types.Breakpoint_Array_Ptr;
