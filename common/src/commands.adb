@@ -121,4 +121,14 @@ package body Commands is
       Execute_Next_Action (Queue);
    end Command_Finished;
 
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute (Command : access Root_Command) is
+      Success : Boolean;
+   begin
+      Success := Execute (Command_Access (Command));
+   end Execute;
+
 end Commands;
