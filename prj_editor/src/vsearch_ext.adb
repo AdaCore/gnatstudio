@@ -557,11 +557,9 @@ package body Vsearch_Ext is
          Add (Align, Box);
          Show_All (Align);
 
-         Set_Sensitive (Vsearch.Find_Menu_Item, False);
          Set_Sensitive (Vsearch.Next_Menu_Item, True);
       else
          Set_Label (Vsearch.Search_Next_Button, Stock_Find);
-         Set_Sensitive (Vsearch.Find_Menu_Item, True);
          Set_Sensitive (Vsearch.Next_Menu_Item, False);
       end if;
    end Set_First_Next_Mode;
@@ -704,7 +702,7 @@ package body Vsearch_Ext is
       --  Add the menus.
       --  ??? This would be more suitable in a Register_Module call
 
-      Vsearch.Find_Menu_Item := Register_Menu
+      Register_Menu
         (Handle, '/' & (-"Edit"), -"Search",
          Stock_Find, Search_Menu_Cb'Access,
          Ref_Item => -"Select All", Add_Before => False,

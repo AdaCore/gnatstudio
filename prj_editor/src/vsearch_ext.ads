@@ -98,7 +98,6 @@ private
       Search_Idle_Handler    : Gtk.Main.Idle_Handler_Id := 0;
       Last_Search_Context    : Find_Utils.Search_Context_Access;
 
-      Find_Menu_Item         : Gtk.Menu_Item.Gtk_Menu_Item;
       Next_Menu_Item         : Gtk.Menu_Item.Gtk_Menu_Item;
 
       Find_Next              : Boolean := False;
