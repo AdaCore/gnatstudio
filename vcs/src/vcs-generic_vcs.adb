@@ -101,7 +101,8 @@ package body VCS.Generic_VCS is
       Files      : String_List.List;
       First_Args : GNAT.OS_Lib.String_List_Access;
       Action     : VCS_Action;
-      Dir_Action : VCS_Action);
+      Dir_Action : VCS_Action;
+      Show_Bar   : Boolean := True);
    --  Launch a generic command corresponding to Action.
    --  User must free Files.
    --  User must free First_Args.
@@ -257,7 +258,8 @@ package body VCS.Generic_VCS is
       Files      : String_List.List;
       First_Args : GNAT.OS_Lib.String_List_Access;
       Action     : VCS_Action;
-      Dir_Action : VCS_Action)
+      Dir_Action : VCS_Action;
+      Show_Bar   : Boolean := True)
    is
       Kernel : Kernel_Handle renames Ref.Kernel;
 
@@ -351,7 +353,7 @@ package body VCS.Generic_VCS is
                  (Kernel,
                   Custom,
                   True,
-                  True,
+                  Show_Bar,
                   Ref.Id.all,
                   True);
             end if;
@@ -368,7 +370,7 @@ package body VCS.Generic_VCS is
                  (Kernel,
                   Custom,
                   True,
-                  True,
+                  Show_Bar,
                   Ref.Id.all,
                   True);
             else
@@ -461,7 +463,7 @@ package body VCS.Generic_VCS is
 
       if Local then
          Generic_Command
-           (Rep, Filenames, Args, Local_Status, Local_Status_Dir);
+           (Rep, Filenames, Args, Local_Status, Local_Status_Dir, False);
       else
          Generic_Command (Rep, Filenames, Args, Status, Status_Dir);
       end if;
