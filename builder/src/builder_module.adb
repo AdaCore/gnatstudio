@@ -203,7 +203,11 @@ package body Builder_Module is
      (Object    : access GObject_Record'Class;
       Context   : access Selection_Context'Class;
       Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries to the contextual menu
+   procedure Run_Contextual
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Add entries to the contextual menu for Build/ or Run/
 
    procedure Insert_And_Launch
      (Kernel          : Kernel_Handle;
@@ -1806,55 +1810,52 @@ package body Builder_Module is
       Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-      Item         : Gtk_Menu_Item;
-      File_Context : File_Selection_Context_Access;
-      Submenu      : Gtk_Menu;
+      File_Context : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+      --  The filter garantees we are on a File_Selection_Context
+
+      Mains : Argument_List := Get_Attribute_Value
+        (Project_Information (File_Context),
+         Attribute => Main_Attribute);
+      M : Gtk_Menu := Gtk_Menu (Menu);
    begin
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File_Context)
-           and then not Has_Directory_Information (File_Context)
-           and then not Has_File_Information (File_Context)
-         then
-            declare
-               Mains : Argument_List := Get_Attribute_Value
-                 (Project_Information (File_Context),
-                  Attribute => Main_Attribute);
-            begin
-               if Mains'Length /= 0 then
-                  Add_Build_Menu
-                    (Menu         => Submenu,
-                     Project      => Project_Information (File_Context),
-                     Kernel       => Get_Kernel (Context),
-                     Set_Shortcut => False,
-                     Mains        => Mains);
-
-                  if Submenu /= null then
-                     Gtk_New (Item, -"Build");
-                     Set_Submenu (Item, Submenu);
-                     Append (Menu, Item);
-                  end if;
-
-                  Submenu := null;
-                  Add_Run_Menu
-                    (Menu         => Submenu,
-                     Project      => Project_Information (File_Context),
-                     Kernel       => Get_Kernel (Context),
-                     Mains        => Mains);
-               end if;
-
-               Free (Mains);
-            end;
-
-            if Submenu /= null then
-               Gtk_New (Item, -"Run");
-               Set_Submenu (Item, Submenu);
-               Append (Menu, Item);
-            end if;
-         end if;
+      if Mains'Length /= 0 then
+         Add_Build_Menu
+           (Menu         => M,
+            Project      => Project_Information (File_Context),
+            Kernel       => Get_Kernel (Context),
+            Set_Shortcut => False,
+            Mains        => Mains);
       end if;
+      Free (Mains);
    end Builder_Contextual;
+
+   --------------------
+   -- Run_Contextual --
+   --------------------
+
+   procedure Run_Contextual
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object);
+      File_Context : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+      --  The filter garantees we are on a File_Selection_Context
+
+      Mains : Argument_List := Get_Attribute_Value
+        (Project_Information (File_Context),
+         Attribute => Main_Attribute);
+      M : Gtk_Menu := Gtk_Menu (Menu);
+   begin
+      Add_Run_Menu
+        (Menu         => M,
+         Project      => Project_Information (File_Context),
+         Kernel       => Get_Kernel (Context),
+         Mains        => Mains);
+      Free (Mains);
+   end Run_Contextual;
 
    ---------------------
    -- Register_Module --
@@ -1874,7 +1875,6 @@ package body Builder_Module is
         (Module       => Builder_Module_ID,
          Kernel       => Kernel,
          Module_Name  => Builder_Module_Name,
-         Contextual_Menu_Handler => Builder_Contextual'Access,
          Priority     => Default_Priority);
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Debug");
@@ -1882,6 +1882,17 @@ package body Builder_Module is
                      On_Check_Syntax'Access);
       Register_Menu (Kernel, Build, -"_Compile File", "",
                      On_Compile'Access, null, GDK_F4, Shift_Mask);
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name    => "Build",
+         Filter  => Lookup_Filter (Kernel, "Project only"),
+         Submenu => Builder_Contextual'Access);
+      Register_Contextual_Submenu
+        (Kernel,
+         Name    => "Run",
+         Filter  => Lookup_Filter (Kernel, "Project only"),
+         Submenu => Run_Contextual'Access);
 
       --  Dynamic make menu
 
