@@ -156,6 +156,12 @@ package body VCS_View_Pkg is
    function Copy (X : Line_Record) return Line_Record;
    --  Return a deep copy of X.
 
+   procedure Append_Sorted
+     (Model  : Gtk_Tree_Store;
+      Iter   : in out Gtk_Tree_Iter;
+      Base   : String);
+   --  Append Iter into Model at a position at which Base is sorted.
+
    ---------------
    -- Callbacks --
    ---------------
@@ -250,6 +256,32 @@ package body VCS_View_Pkg is
       return False;
    end On_Delete;
 
+   -------------------
+   -- Append_Sorted --
+   -------------------
+
+   procedure Append_Sorted
+     (Model  : Gtk_Tree_Store;
+      Iter   : in out Gtk_Tree_Iter;
+      Base   : String)
+   is
+      Sibling : Gtk_Tree_Iter;
+   begin
+      Sibling := Get_Iter_First (Model);
+
+      while Sibling /= Null_Iter
+        and then Get_String (Model, Sibling, Base_Name_Column) < Base
+      loop
+         Next (Model, Sibling);
+      end loop;
+
+      if Sibling = Null_Iter then
+         Append (Model, Iter, Null_Iter);
+      else
+         Insert_Before (Model, Iter, Null_Iter, Sibling);
+      end if;
+   end Append_Sorted;
+
    -------------
    -- Refresh --
    -------------
@@ -278,7 +310,10 @@ package body VCS_View_Pkg is
            and then not (Explorer.Hide_Not_Registered
                            and then Data (L).Status.Status = Not_Registered)
          then
-            Append (Page.Model, Iter, Null_Iter);
+            Append_Sorted
+              (Page.Model, Iter,
+               Base_Name (String_List_Utils.String_List.Head
+                            (Data (L).Status.File_Name)));
             Fill_Info (Page, Iter, Data (L), Success);
 
             if not Success then
@@ -420,7 +455,7 @@ package body VCS_View_Pkg is
             exception
                when E : others =>
                   Trace (Me, "Unexpected exception: "
-                           & Exception_Information (E));
+                         & Exception_Information (E));
             end;
 
             Status_Temp := File_Status_List.Next (Status_Temp);
@@ -544,15 +579,15 @@ package body VCS_View_Pkg is
                if Iter = Null_Iter
                  and then Force_Display
                then
-                  Append (Page.Model, Iter, Null_Iter);
-               end if;
+                  Append_Sorted (Page.Model, Iter, Base_Name (New_File_Name));
 
-               if Iter /= Null_Iter then
-                  Fill_Info (Page, Iter, New_Status, Success);
-               end if;
-            else
-               if Iter /= Null_Iter then
-                  Remove (Page.Model, Iter);
+                  if Iter /= Null_Iter then
+                     Fill_Info (Page, Iter, New_Status, Success);
+                  end if;
+               else
+                  if Iter /= Null_Iter then
+                     Remove (Page.Model, Iter);
+                  end if;
                end if;
             end if;
          end;
