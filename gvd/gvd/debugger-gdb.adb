@@ -1643,15 +1643,19 @@ package body Debugger.Gdb is
 
                   --  Find which part is active
                   --  We simply get the next field name and search for the
-                  --  part that defines it
+                  --  part that defines it. Note that in case with have a
+                  --  'null' part, we have to stop at the closing parens.
 
                   Int := Index;
-                  Skip_To_Char (Type_Str, Int, ' ');
+                  while Int <= Type_Str'Last
+                    and then Type_Str (Int) /= ' '
+                    and then Type_Str (Int) /= ')'
+                  loop
+                     Int := Int + 1;
+                  end loop;
 
                   --  Reset the valid flag, so that only one of the variant
                   --  parts is valid.
-
-                  Set_Valid (R, False);
 
                   declare
                      Repeat_Num : Positive;

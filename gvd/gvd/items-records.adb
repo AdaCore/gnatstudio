@@ -160,7 +160,10 @@ package body Items.Records is
       end loop;
 
       for J in Item.Fields (Field).Variant_Part'Range loop
-         if Item.Fields (Field).Variant_Part (J).Fields (1).Name.all =
+         if (Contains'Length = 0
+             and then Item.Fields (Field).Variant_Part (J).Fields'Length = 0)
+           or else
+           Item.Fields (Field).Variant_Part (J).Fields (1).Name.all =
            Contains
          then
             Item.Fields (Field).Variant_Part (J).Valid := True;
@@ -386,10 +389,36 @@ package body Items.Records is
       Context : Drawing_Context;
       X, Y    : Gint := 0)
    is
+      procedure Print_Field_Name (F : Integer);
+      --  Print the name of the field F and an arrow
+
       Current_Y : Gint := Y + Item.Border_Spacing;
       Arrow_Pos : constant Gint :=
         X + Left_Border + Item.Border_Spacing + Item.Gui_Fields_Width -
         Text_Width (Context.Font, String'(" => "));
+
+      ----------------------
+      -- Print_Field_Name --
+      ----------------------
+
+      procedure Print_Field_Name (F : Integer) is
+      begin
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Font,
+            GC   => Context.GC,
+            X    => X + Left_Border + Item.Border_Spacing,
+            Y    => Current_Y + Get_Ascent (Context.Font),
+            Text => Item.Fields (F).Name.all);
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Font,
+            GC   => Context.GC,
+            X    => Arrow_Pos,
+            Y    => Current_Y + Get_Ascent (Context.Font),
+            Text => " => ");
+      end Print_Field_Name;
+
    begin
       Item.X := X;
       Item.Y := Y;
@@ -403,7 +432,7 @@ package body Items.Records is
 
       --  A null record ?
 
-      if Item.Fields'Length = 0 then
+      if Item.Num_Fields = 0 then
          return;
       end if;
 
@@ -442,28 +471,15 @@ package body Items.Records is
       end if;
 
       for F in Item.Fields'Range loop
-         Draw_Text
-           (Context.Pixmap,
-            Font => Context.Font,
-            GC   => Context.GC,
-            X    => X + Left_Border + Item.Border_Spacing,
-            Y    => Current_Y + Get_Ascent (Context.Font),
-            Text => Item.Fields (F).Name.all);
-         Draw_Text
-           (Context.Pixmap,
-            Font => Context.Font,
-            GC   => Context.GC,
-            X    => Arrow_Pos,
-            Y    => Current_Y + Get_Ascent (Context.Font),
-            Text => " => ");
-
          --  not a variant part ?
 
          if Item.Fields (F).Value /= null then
             Paint
               (Item.Fields (F).Value.all, Context,
-               X + Left_Border + Item.Border_Spacing + Item.Gui_Fields_Width,
+               X + Left_Border + Item.Border_Spacing
+               + Item.Gui_Fields_Width,
                Current_Y);
+            Print_Field_Name (F);
             Current_Y :=
               Current_Y + Item.Fields (F).Value.Height + Line_Spacing;
          end if;
@@ -478,6 +494,9 @@ package body Items.Records is
                      X + Left_Border + Item.Border_Spacing
                      + Item.Gui_Fields_Width,
                      Current_Y);
+                  if Item.Fields (F).Variant_Part (V).Num_Fields > 0 then
+                     Print_Field_Name (F);
+                  end if;
                   Current_Y := Current_Y +
                     Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
                end if;

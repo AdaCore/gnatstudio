@@ -69,6 +69,8 @@ package Items.Records is
    --  Contains.
    --  null is returned if no such part is found.
    --  All variant parts become invalid, except for the one that is returned.
+   --  If Contains is the empty string, this returns the first variant part
+   --  that has a "null" component
 
    procedure Set_Variant_Field
      (Item          : in out Record_Type;
