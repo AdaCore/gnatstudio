@@ -1913,7 +1913,8 @@ package body GVD_Module is
       Name     : constant String := Get_Variable_Name (Context, False);
    begin
       if Name /= "" then
-         Print_Value (Debugger, Name);
+         Send (Debugger, Print_Value_Cmd (Debugger, Name),
+               Mode => GVD.Types.Visible);
       end if;
 
    exception
@@ -1936,7 +1937,8 @@ package body GVD_Module is
       Name     : constant String := Get_Variable_Name (Context, True);
    begin
       if Name /= "" then
-         Print_Value (Debugger, Name);
+         Send (Debugger, Print_Value_Cmd (Debugger, Name),
+               Mode => GVD.Types.Visible);
       end if;
 
    exception
