@@ -67,7 +67,7 @@
                    tip="If set, the use of a prefix of an access type in an indexed component, slice or selected component without an explicit .all will generate a warning. With this warning enabled, access checks occur only at points where an explicit .all appears" />
             <check label="Warnings=Errors" switch="-gnatwe"
                    tip="Causes warning messages to be treated as errors" />
-            <check label="Unreferenced format" switch="-gnatwf"
+            <check label="Unreferenced formal" switch="-gnatwf"
                    tip="Causes warnings to be generated if a formal parameter is not referenced in the body" />
             <check label="Hiding variable" switch="-gnatwh"
                    tip="This switch activates warnings on hiding declarations. A declaration is considered hiding if it is for a non-overloadable entity, and if it declares an entity with the same name as some other entity that is directly or use-visible" />
