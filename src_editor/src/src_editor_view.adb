@@ -44,6 +44,8 @@ with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.Types;                use Gtkada.Types;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Pango.Context;               use Pango.Context;
+with Pango.Enums;                 use Pango.Enums;
 with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 
@@ -78,7 +80,7 @@ package body Src_Editor_View is
    -- Forward declarations --
    --------------------------
 
-   function Connect_Expose (View : in Source_View) return Boolean;
+   function Connect_Expose (View : Source_View) return Boolean;
    --  Connect Expose_Event_Cb to the expose event. Emit an expose event.
 
    procedure Realize_Cb (Widget : access Gtk_Widget_Record'Class);
@@ -257,6 +259,10 @@ package body Src_Editor_View is
 
    procedure Delete (View : access Source_View_Record) is
    begin
+      Unref (View.Side_Column_GC);
+      Unref (View.Side_Background_GC);
+      Unref (View.Default_GC);
+
       if View.Connect_Expose_Id /= 0 then
          Idle_Remove (View.Connect_Expose_Id);
       end if;
@@ -344,16 +350,20 @@ package body Src_Editor_View is
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Left_Window : constant Gdk.Window.Gdk_Window :=
-        Get_Window (View, Text_Window_Left);
+      Window : constant Gdk.Window.Gdk_Window := Get_Window (Event);
 
-      Line_Info  : constant Line_Info_Display_Array_Access :=
+      Window_Type : constant Gtk_Text_Window_Type :=
+        Get_Window_Type (View, Window);
+      Line_Info   : constant Line_Info_Display_Array_Access :=
         Get_Line_Info (Buffer);
-      Real_Lines : Natural_Array_Access := Get_Real_Lines (Buffer);
+      Real_Lines  : Natural_Array_Access := Get_Real_Lines (Buffer);
+      X, Y, Width, Height, Depth : Gint;
+
    begin
       --  If the event applies to the left border window, then redraw
       --  the side window information.
-      if Get_Window (Event) = Left_Window then
+
+      if Window_Type = Text_Window_Left then
          declare
             Top_In_Buffer              : Gint;
             Bottom_In_Buffer           : Gint;
@@ -361,10 +371,9 @@ package body Src_Editor_View is
             Iter                       : Gtk_Text_Iter;
             Top_Line                   : Natural;
             Bottom_Line                : Natural;
-            X, Y, Width, Height, Depth : Gint;
             Info                       : Line_Info_Width;
          begin
-            Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
+            Get_Geometry (Window, X, Y, Width, Height, Depth);
 
             Window_To_Buffer_Coords
               (View, Text_Window_Left,
@@ -440,6 +449,29 @@ package body Src_Editor_View is
          end;
 
          Redraw_Columns (View);
+
+      --  Redraw the line showing the 80th column
+      elsif Window_Type = Text_Window_Text then
+         declare
+            Column  : constant := 80;
+            Rect    : Gdk_Rectangle;
+            Context : constant Pango_Context := Get_Pango_Context (View);
+            --  ??? Should we cache the following two values:
+            Font    : constant Pango_Font := Load_Font
+              (Context, Get_Pref (Get_Kernel (Buffer), Source_Editor_Font));
+            Metrics : constant Pango_Font_Metrics := Get_Metrics (Font);
+            Char_Width : constant Gint :=
+              Get_Approximate_Char_Width (Metrics) / Pango_Scale - 1;
+
+         begin
+            Get_Visible_Rect (View, Rect);
+            Buffer_To_Window_Coords
+              (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
+            X := Column * Char_Width - Rect.X;
+            Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Width);
+            Unref (Metrics);
+            Unref (Font);
+         end;
       end if;
 
       --  Return false, so that the signal is not blocked, and other
@@ -512,6 +544,9 @@ package body Src_Editor_View is
       Gdk_New
         (Source_View (View).Side_Background_GC,
          Get_Window (Source_View (View), Text_Window_Left));
+      Gdk_New
+        (Source_View (View).Default_GC,
+         Get_Window (Source_View (View), Text_Window_Text));
       Color := Parse ("#eeeeee");
       Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
@@ -632,9 +667,9 @@ package body Src_Editor_View is
    -- Connect_Expose --
    --------------------
 
-   function Connect_Expose (View : in Source_View) return Boolean is
-      Win           : constant Gdk.Window.Gdk_Window
-        := Get_Window (View, Text_Window_Left);
+   function Connect_Expose (View : Source_View) return Boolean is
+      Win           : constant Gdk.Window.Gdk_Window :=
+        Get_Window (View, Text_Window_Left);
       X, Y, W, H, D : Gint;
 
    begin
