@@ -78,6 +78,8 @@ package body Custom_Module is
       2 => On_Activate_Cst'Access,
       3 => Ref_Cst'Access,
       4 => Add_Before_Cst'Access);
+   Contextual_Constructor_Params : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
 
    type Subprogram_Type_Menu_Record is new Gtk_Menu_Item_Record with record
       On_Activate : Subprogram_Type;
@@ -97,6 +99,10 @@ package body Custom_Module is
    procedure Menu_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all shell commands for GPS.Menu
+
+   procedure Contextual_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles all shell commands for GPS.Contextual
 
    ---------------
    -- Customize --
@@ -919,6 +925,54 @@ package body Custom_Module is
       end if;
    end Menu_Handler;
 
+   ------------------------
+   -- Contextual_Handler --
+   ------------------------
+
+   procedure Contextual_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Contextual_Class : constant Class_Type :=
+        New_Class (Kernel, "Contextual");
+      Inst       : Class_Instance;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Contextual_Constructor_Params);
+         Inst := Nth_Arg (Data, 1, Contextual_Class);
+         Set_Data (Inst, Contextual_Class,
+                   Value => String'(Nth_Arg (Data, 2)));
+         Free (Inst);
+
+      elsif Command = "show" then
+         Inst := Nth_Arg (Data, 1, Contextual_Class);
+         Set_Contextual_Menu_Visible
+           (Kernel, String'(Get_Data (Inst, Contextual_Class)), True);
+         Free (Inst);
+
+      elsif Command = "hide" then
+         Inst := Nth_Arg (Data, 1, Contextual_Class);
+         Set_Contextual_Menu_Visible
+           (Kernel, String'(Get_Data (Inst, Contextual_Class)), False);
+         Free (Inst);
+
+      elsif Command = "list" then
+         Set_Return_Value_As_List (Data);
+         declare
+            Menus : String_List_Access :=
+              Get_Registered_Contextual_Menus (Kernel);
+         begin
+            if Menus /= null then
+               for M in Menus'Range loop
+                  Set_Return_Value (Data, Menus (M).all);
+               end loop;
+            end if;
+
+            Free (Menus);
+         end;
+      end if;
+   end Contextual_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -928,6 +982,8 @@ package body Custom_Module is
    is
       Menu_Class : constant Class_Type := New_Class
         (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
+      Contextual_Class : constant Class_Type := New_Class
+        (Kernel, "Contextual");
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -967,6 +1023,26 @@ package body Custom_Module is
          Maximum_Args  => 1,
          Class         => Menu_Class,
          Handler       => Menu_Handler'Access);
+
+      Register_Command
+        (Kernel, Constructor_Method,
+         Class   => Contextual_Class,
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler => Contextual_Handler'Access);
+      Register_Command
+        (Kernel, "show",
+         Class => Contextual_Class,
+         Handler => Contextual_Handler'Access);
+      Register_Command
+        (Kernel, "hide",
+         Class => Contextual_Class,
+         Handler => Contextual_Handler'Access);
+      Register_Command
+        (Kernel, "list",
+         Class         => Contextual_Class,
+         Static_Method => True,
+         Handler       => Contextual_Handler'Access);
    end Register_Module;
 
 end Custom_Module;
