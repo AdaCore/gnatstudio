@@ -50,10 +50,12 @@ package Glide_Kernel.Console is
    --  If Add_LF is True, automatically add a line separator.
 
    procedure Parse_File_Locations
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Text      : String;
-      Category  : String;
-      Highlight : Boolean := False);
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Text             : String;
+      Category         : String;
+      Highlight        : Boolean := False;
+      Style_Category   : String := "";
+      Warning_Category : String := "");
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
