@@ -2141,7 +2141,7 @@ Remove the comment delimiters from the current selection or line.
 @item Refill
 @cindex refill
 Refill text on the selection or current line according to the right
-margin as defined by the column highlight. @pxref{Column highlight}.
+margin as defined by the column highlight. @pxref{The Preferences Dialog}.
 
 @item Fold all blocks
 @cindex fold
