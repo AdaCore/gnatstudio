@@ -134,8 +134,9 @@ static int Vw32_start_process_show_window = 0;
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
    are careful about constructing argv arrays, we make this behaviour
-   conditional (on by default). */
-static int Vw32_quote_process_args = 1;
+   conditional (off by default, since a similar operation is already done
+   in g-expect.adb by calling Normalize_Argument). */
+static int Vw32_quote_process_args = 0;
 
 static int
 nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
