@@ -33,25 +33,6 @@ package body VCS is
    --  Global variable to store all the registered handlers.
 
    ----------------------
-   -- Copy_String_List --
-   ----------------------
-
-   function Copy_String_List
-     (S : in String_List.List) return String_List.List
-   is
-      use String_List;
-      Result : String_List.List;
-      Temp   : String_List.List := S;
-   begin
-      while not Is_Empty (Temp) loop
-         Append (Result, Head (Temp));
-         Temp := Next (Temp);
-      end loop;
-
-      return Result;
-   end Copy_String_List;
-
-   ----------------------
    -- Copy_File_Status --
    ----------------------
 
