@@ -44,7 +44,6 @@ with String_List_Utils;
 with System;
 with Ada.Unchecked_Conversion;
 with Default_Preferences;
-with Basic_Types;
 with Histories;
 with Projects.Registry;
 
@@ -166,23 +165,16 @@ package Glide_Kernel is
    --  Return a string containing the GNAT version number.
    --  The string has the form "3.16w (20020610)"
 
-   function Get_Predefined_Source_Files
-     (Handle : access Kernel_Handle_Record)
-      return Basic_Types.String_Array_Access;
-   --  Return the list of sources found in the predefined project (e.g. the Ada
-   --  runtime). Returned memory must be freed by the caller
-
-   function Get_Predefined_Source_Path
-     (Handle : access Kernel_Handle_Record) return String;
-   --  Return the predefined Source_Path associated to the given Kernel Handle.
-   --  Return the current directory if no source path has been set yet.
-
    -------------
    -- Queries --
    -------------
    --  The following programs are provided as proxies for the ones in
    --  Src_Info.Queries. They should be used instead of the other ones so that
    --  the list of parsed LI files can be kept in the kernel
+
+   function Get_LI_File_List (Handle : access Kernel_Handle_Record)
+      return Src_Info.LI_File_List;
+   --  Return the list of all LI file parsed so far.
 
    function Locate_From_Source_And_Complete
      (Handle          : access Kernel_Handle_Record;
@@ -200,44 +192,6 @@ package Glide_Kernel is
    --  is a body or separate, the body if Source_Filename is the spec).
    --  The empty string is returned if the file wasn't found (and error
    --  messages are printed to the console appropriately).
-
-   procedure Find_All_References
-     (Kernel       : access Kernel_Handle_Record;
-      Entity       : Src_Info.Queries.Entity_Information;
-      Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
-      In_File      : String := "";
-      LI_Once      : Boolean := False;
-      Project      : Projects.Project_Type := Projects.No_Project);
-   --  See Src_Info.Queries.
-   --  This function needs to be in this package, since it requires access to
-   --  the list of LI files.
-
-   procedure Next
-     (Kernel   : access Kernel_Handle_Record;
-      Iterator : in out Src_Info.Queries.Entity_Reference_Iterator);
-   --  See Src_Info.Queries.
-
-   procedure Find_Ancestor_Dependencies
-     (Kernel          : access Kernel_Handle_Record;
-      Source_Filename : String;
-      Iterator        : out Src_Info.Queries.Dependency_Iterator;
-      Project         : Projects.Project_Type := Projects.No_Project);
-   --  See Src_Info.Queries.
-   --  This function needs to be in this package, since it requires access to
-   --  the list of LI files.
-
-   procedure Next
-     (Kernel   : access Kernel_Handle_Record;
-      Iterator : in out Src_Info.Queries.Dependency_Iterator);
-   --  See Src_Info.Queries.
-
-   procedure Renaming_Of
-     (Kernel         : access Kernel_Handle_Record;
-      Entity         : Src_Info.Queries.Entity_Information;
-      Is_Renaming    : out Boolean;
-      Renamed_Entity : out Src_Info.Queries.Entity_Information);
-   --  See Src_Info.Queries.
-   --  You must call Destroy on the returned entity.
 
    procedure Find_Declaration_Or_Overloaded
      (Kernel        : access Kernel_Handle_Record;
@@ -730,11 +684,6 @@ private
 
    package Command_List is new Generic_List (Command_Information);
 
-   function Get_Predefined_Object_Path
-     (Handle : access Kernel_Handle_Record) return String;
-   --  Return the predefined Object_Path associated to the given Kernel Handle.
-   --  Return the current directory if no object path has been set yet.
-
    type Module_ID_Information (Name_Length : Natural) is record
       Name            : String (1 .. Name_Length);
       Priority        : Module_Priority;
@@ -786,15 +735,6 @@ private
 
       GNAT_Version : GNAT.OS_Lib.String_Access;
       --  Full GNAT Version, if relevant
-
-      Predefined_Object_Path : GNAT.OS_Lib.String_Access;
-      --  Predefined object path for the runtime library
-
-      Predefined_Source_Path : GNAT.OS_Lib.String_Access;
-      --  Predefined source paths for the runtime library
-
-      Predefined_Source_Files : Basic_Types.String_Array_Access;
-      --  The list of source files in Predefined_Source_Path.
 
       Gnatls_Cache : GNAT.OS_Lib.String_Access;
       --  The name of the gnatls command used to get the predefined source

@@ -59,11 +59,9 @@ with GVD.Main_Window;           use GVD.Main_Window;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 with GUI_Utils;                 use GUI_Utils;
-with File_Utils;                use File_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Basic_Mapper;              use Basic_Mapper;
-with Basic_Types;               use Basic_Types;
 with Histories;                 use Histories;
 
 with Projects.Registry;         use Projects, Projects.Registry;
@@ -117,11 +115,6 @@ package body Glide_Kernel is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Registry'Class, Project_Registry_Access);
-
-   procedure Reset_Source_Info_List
-     (Handle : access Kernel_Handle_Record'Class);
-   --  Re-initialize the Source Info structure.
-   --  ??? Needs more comments.
 
    function Process_Anim (Data : Process_Data) return Boolean;
    --  Process_Timeout callback to handle image animations.
@@ -217,7 +210,7 @@ package body Glide_Kernel is
       --  is more efficient in case the current directory has lots of source
       --  files.
 
-      Reset_Source_Info_List (Handle);
+      Reset (Handle.Source_Info_List);
 
       Gtk_New (Handle.Tooltips);
       Ref (Handle.Tooltips);
@@ -243,65 +236,6 @@ package body Glide_Kernel is
    begin
       return GVD_Main_Window (Handle.Main_Window).Main_Accel_Group;
    end Get_Default_Accelerators;
-
-   --------------------------------
-   -- Get_Predefined_Source_Path --
-   --------------------------------
-
-   function Get_Predefined_Source_Path
-     (Handle : access Kernel_Handle_Record) return String is
-   begin
-      if Handle.Predefined_Source_Path = null then
-         return ".";
-      else
-         return Handle.Predefined_Source_Path.all;
-      end if;
-   end Get_Predefined_Source_Path;
-
-   --------------------------------
-   -- Get_Predefined_Object_Path --
-   --------------------------------
-
-   function Get_Predefined_Object_Path
-     (Handle : access Kernel_Handle_Record) return String is
-   begin
-      if Handle.Predefined_Object_Path = null then
-         return ".";
-      else
-         return Handle.Predefined_Object_Path.all;
-      end if;
-   end Get_Predefined_Object_Path;
-
-   ---------------------------------
-   -- Get_Predefined_Source_Files --
-   ---------------------------------
-
-   function Get_Predefined_Source_Files
-     (Handle : access Kernel_Handle_Record) return String_Array_Access
-   is
-      Result : String_Array_Access;
-   begin
-      --  ??? A nicer way would be to implement this with a predefined project,
-      --  and rely on the project parser to return the source
-      --  files. Unfortunately, this doesn't work with the current
-      --  implementation of this parser, since one cannot have two separate
-      --  project hierarchies at the same time.
-
-      if Handle.Predefined_Source_Files = null then
-         Handle.Predefined_Source_Files := Read_Files_From_Dirs
-           (Handle.Predefined_Source_Path.all);
-      end if;
-
-      --  Make a copy of the result, so that we can keep a cache in the kernel
-
-      Result := new String_Array (Handle.Predefined_Source_Files'Range);
-
-      for S in Handle.Predefined_Source_Files'Range loop
-         Result (S) := new String'(Handle.Predefined_Source_Files (S).all);
-      end loop;
-
-      return Result;
-   end Get_Predefined_Source_Files;
 
    -----------
    -- Setup --
@@ -481,9 +415,7 @@ package body Glide_Kernel is
          File                   => File,
          Source_Filename        => Source_Filename,
          List                   => Handle.Source_Info_List,
-         Project                => Project,
-         Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
-         Predefined_Object_Path => Get_Predefined_Object_Path (Handle));
+         Project                => Project);
       return File;
 
    exception
@@ -493,94 +425,6 @@ package body Glide_Kernel is
                 & Source_Filename);
          return No_LI_File;
    end Locate_From_Source_And_Complete;
-
-   -------------------------
-   -- Find_All_References --
-   -------------------------
-
-   procedure Find_All_References
-     (Kernel       : access Kernel_Handle_Record;
-      Entity       : Src_Info.Queries.Entity_Information;
-      Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
-      In_File      : String := "";
-      LI_Once      : Boolean := False;
-      Project      : Project_Type := No_Project) is
-   begin
-      Find_All_References
-        (Get_Project (Kernel),
-         Get_Language_Handler (Kernel),
-         Entity, Kernel.Source_Info_List,
-         Iterator, Project, LI_Once,
-         In_File,
-         Get_Predefined_Source_Path (Kernel),
-         Get_Predefined_Object_Path (Kernel));
-   end Find_All_References;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next
-     (Kernel : access Kernel_Handle_Record;
-      Iterator : in out Entity_Reference_Iterator) is
-   begin
-      Next (Get_Language_Handler (Kernel), Iterator, Kernel.Source_Info_List);
-   end Next;
-
-   --------------------------------
-   -- Find_Ancestor_Dependencies --
-   --------------------------------
-
-   procedure Find_Ancestor_Dependencies
-     (Kernel          : access Kernel_Handle_Record;
-      Source_Filename : String;
-      Iterator        : out Dependency_Iterator;
-      Project         : Projects.Project_Type := No_Project) is
-   begin
-      Find_Ancestor_Dependencies
-        (Get_Project (Kernel),
-         Get_Language_Handler (Kernel),
-         Source_Filename,
-         Kernel.Source_Info_List, Iterator, Project,
-         Include_Self => False,
-         Predefined_Source_Path => Get_Predefined_Source_Path (Kernel),
-         Predefined_Object_Path => Get_Predefined_Object_Path (Kernel));
-   end Find_Ancestor_Dependencies;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next
-     (Kernel   : access Kernel_Handle_Record;
-      Iterator : in out Src_Info.Queries.Dependency_Iterator) is
-   begin
-      Next (Get_Language_Handler (Kernel), Iterator, Kernel.Source_Info_List);
-   end Next;
-
-   -----------------
-   -- Renaming_Of --
-   -----------------
-
-   procedure Renaming_Of
-     (Kernel         : access Kernel_Handle_Record;
-      Entity         : Entity_Information;
-      Is_Renaming    : out Boolean;
-      Renamed_Entity : out Entity_Information) is
-   begin
-      Renaming_Of
-        (Kernel.Source_Info_List, Entity, Is_Renaming, Renamed_Entity);
-   end Renaming_Of;
-
-   ----------------------------
-   -- Reset_Source_Info_List --
-   ----------------------------
-
-   procedure Reset_Source_Info_List
-     (Handle : access Kernel_Handle_Record'Class) is
-   begin
-      Src_Info.Reset (Handle.Source_Info_List);
-   end Reset_Source_Info_List;
 
    ---------------------
    -- Project_Changed --
@@ -1360,26 +1204,6 @@ package body Glide_Kernel is
       Handle.Logs_Mapper := Mapper;
    end Set_Logs_Mapper;
 
-   ---------------------
-   -- Other_File_Name --
-   ---------------------
-
-   function Other_File_Name
-     (Kernel          : access Kernel_Handle_Record;
-      Source_Filename : String;
-      Full_Name       : Boolean := True) return String
-   is
-      Project : constant Project_Type := Get_Project_From_File
-        (Kernel.Registry.all, Source_Filename);
-      Other : constant String := Other_File_Name (Project, Source_Filename);
-   begin
-      if Full_Name then
-         return Find_On_Path (Project, Other, False);
-      else
-         return Other;
-      end if;
-   end Other_File_Name;
-
    ------------------------------
    -- Parse_All_LI_Information --
    ------------------------------
@@ -1402,9 +1226,7 @@ package body Glide_Kernel is
               (LI,
                Kernel.Source_Info_List,
                In_Directory,
-               Get_Project (Kernel),
-               Get_Predefined_Source_Path (Kernel),
-               Get_Predefined_Object_Path (Kernel));
+               Get_Project (Kernel));
          end if;
       end loop;
    end Parse_All_LI_Information;
@@ -1434,8 +1256,6 @@ package body Glide_Kernel is
            (Glide_Language_Handler (Kernel.Lang_Handler), File_Name),
          Kernel.Source_Info_List,
          Project,
-         Get_Predefined_Source_Path (Kernel),
-         Get_Predefined_Object_Path (Kernel),
          Location, Status);
 
       if Status = Overloaded_Entity_Found then
@@ -1822,5 +1642,39 @@ package body Glide_Kernel is
          Node := Null_Scope_Tree_Node;
       end if;
    end Get_Scope_Tree;
+
+   ---------------------
+   -- Other_File_Name --
+   ---------------------
+
+   function Other_File_Name
+     (Kernel          : access Kernel_Handle_Record;
+      Source_Filename : String;
+      Full_Name       : Boolean := True) return String
+   is
+      Project : constant Project_Type := Get_Project_From_File
+        (Kernel.Registry.all, Source_Filename);
+      Other : constant String := Other_File_Name (Project, Source_Filename);
+   begin
+      if Full_Name then
+         return Get_Full_Path_From_File
+           (Registry        => Get_Registry (Kernel),
+            Filename        => Other,
+            Use_Source_Path => True,
+            Use_Object_Path => False);
+      else
+         return Other;
+      end if;
+   end Other_File_Name;
+
+   ----------------------
+   -- Get_LI_File_List --
+   ----------------------
+
+   function Get_LI_File_List (Handle : access Kernel_Handle_Record)
+      return Src_Info.LI_File_List is
+   begin
+      return Handle.Source_Info_List;
+   end Get_LI_File_List;
 
 end Glide_Kernel;
