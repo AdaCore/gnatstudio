@@ -85,6 +85,28 @@ package Tries is
    procedure Dump (Tree : Trie_Tree);
    --  Dump function for debugging purposes.
 
+
+   --  The functions below are lower-level versions of Get and Insert.
+   --  They should be used with care.
+   --  The idea is to avoid doing two search in the trie tree when checking
+   --  whether an item is already there, and then inserting it in the tree.
+   --  This will only works if the tree hasn't been modified since the return
+   --  of Find_Cell_Child.
+
+   type Cell_Pointer is private;
+
+   procedure Find_Cell_Child
+     (Tree : Trie_Tree; Index : String; Pointer : out Cell_Pointer);
+   --  Access a specific cell in the tree. The result value should only be
+   --  used before the next write-access to the tree, or it becomes obsolete.
+
+   procedure Insert (Index : String; Pointer : Cell_Pointer; Data : Data_Type);
+   --  Insert a new entry in the tree.
+
+   function Get (Pointer : Cell_Pointer) return Data_Type;
+   --  Return the data found in the pointed type
+
+
 private
    --  The structure of the tree is the following: this is n-ary tree. Each
    --  cell in the tree matches a substring of the index.
@@ -117,6 +139,7 @@ private
 
       Num_Children : Natural := 0;
    end record;
+   type Cell_Child_Access is access all Cell_Child;
 
    type Cell_Child_Array is array (Positive) of Cell_Child;
 
@@ -141,6 +164,15 @@ private
       --  The last relevant cell in Cells
 
       Current : Integer := 1;
+   end record;
+
+   type Cell_Pointer is record
+      Cell              : Cell_Child_Access;
+      Cell_Parent       : Cell_Child_Access;
+      Last              : Integer;
+      Index_Length      : Integer;
+      Scenario          : Integer;
+      First_Not_Matched : Character;
    end record;
 
 end Tries;
