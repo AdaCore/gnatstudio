@@ -41,7 +41,6 @@ package Glide_Kernel is
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with private;
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
    --  A kernel handle used to share information throughout Glide.
-   --  ??? Consider whether using a tagged type would be useful.
 
    procedure Gtk_New
      (Handle      : out Kernel_Handle;
