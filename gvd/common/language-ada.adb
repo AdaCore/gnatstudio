@@ -32,17 +32,24 @@ package body Language.Debugger.Ada is
    --  Make_Entry functions for the explorer.
 
    function Make_Entry_Subprogram
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String;
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String;
+
    function Make_Entry_Package
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String;
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String;
+
    function Make_Entry_Type
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String;
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String;
+
    function Make_Entry_Task
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String;
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String;
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
@@ -68,31 +75,31 @@ package body Language.Debugger.Ada is
      ((Name           => new String'("Subprograms"),
        Regexp         => Subprogram_RE'Access,
        Position_Index => 2,
-       Icon           => Subprogram_Xpm'Unrestricted_Access,
+       Icon           => subprogram_xpm'Access,
        Make_Entry     => Make_Entry_Subprogram'Access),
 
       (Name           => new String'("Specs"),
        Regexp         => Subprogram_RE'Access,
        Position_Index => 2,
-       Icon           => subprogram_xpm'Unrestricted_Access,
+       Icon           => subprogram_xpm'Access,
        Make_Entry     => null),
 
       (Name           => new String'("Packages"),
        Regexp         => Package_RE'Access,
        Position_Index => 3,
-       Icon           => package_xpm'Unrestricted_Access,
+       Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Package'Access),
 
       (Name           => new String'("Types"),
        Regexp         => Type_Def_RE'Access,
        Position_Index => 2,
-       Icon           => var_xpm'Unrestricted_Access,
+       Icon           => var_xpm'Access,
        Make_Entry     => Make_Entry_Type'Access),
 
       (Name           => new String'("Tasks"),
        Regexp         => Task_RE'Access,
        Position_Index => 3,
-       Icon           => package_xpm'Unrestricted_Access,
+       Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Task'Access));
 
 

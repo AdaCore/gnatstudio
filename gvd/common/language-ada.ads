@@ -36,9 +36,7 @@ package Language.Debugger.Ada is
    -- Language specific commands --
    --------------------------------
 
-   function Start
-     (Debugger  : access Ada_Language)
-     return String;
+   function Start (Debugger : access Ada_Language) return String;
 
    ------------------
    -- Highlighting --
@@ -54,26 +52,26 @@ package Language.Debugger.Ada is
    -- Explorer --
    --------------
 
-   function Explorer_Regexps (Lang : access Ada_Language)
-                             return Explorer_Categories;
+   function Explorer_Regexps
+     (Lang : access Ada_Language) return Explorer_Categories;
 
    ------------------------
    -- Naming conventions --
    ------------------------
 
-   function Dereference_Name (Lang : access Ada_Language;
-                              Name : String)
-                             return String;
+   function Dereference_Name
+     (Lang : access Ada_Language;
+      Name : String) return String;
 
-   function Array_Item_Name (Lang  : access Ada_Language;
-                             Name  : String;
-                             Index : String)
-                            return String;
+   function Array_Item_Name
+     (Lang  : access Ada_Language;
+      Name  : String;
+      Index : String) return String;
 
-   function Record_Field_Name (Lang  : access Ada_Language;
-                               Name  : String;
-                               Field : String)
-                              return String;
+   function Record_Field_Name
+     (Lang  : access Ada_Language;
+      Name  : String;
+      Field : String) return String;
 
 private
    type Ada_Language is abstract new Language_Debugger with null record;
