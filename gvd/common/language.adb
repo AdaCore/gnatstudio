@@ -22,6 +22,7 @@ with Unchecked_Deallocation;
 with Gtkada.Types; use Gtkada.Types;
 with Odd.Types;    use Odd.Types;
 with GNAT.Regpat;  use GNAT.Regpat;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Language is
 
@@ -80,10 +81,114 @@ package body Language is
      (Lang      : access Language_Root;
       Buffer    : String;
       Entity    : out Language_Entity;
-      Next_Char : out Positive) is
+      Next_Char : out Positive)
+   is
+      Matched : Match_Array (0 .. 1);
+      Context : constant Language_Context :=
+        Get_Language_Context (Language_Access (Lang));
+      Keys : constant Pattern_Matcher := Keywords (Language_Access (Lang));
    begin
+
+      --  Do we have a comment ?
+
+      if Buffer'Length > Context.Comment_Start'Length
+        and then Buffer
+        (Buffer'First .. Buffer'First + Context.Comment_Start_Length - 1)
+        = Context.Comment_Start
+      then
+         Entity := Comment_Text;
+         Next_Char := Buffer'First + Context.Comment_Start_Length;
+         while Next_Char + Context.Comment_End_Length - 1 <= Buffer'Last
+           and then Buffer
+           (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
+           /= Context.Comment_End
+         loop
+            Next_Char := Next_Char + 1;
+         end loop;
+         Next_Char := Next_Char + 1;
+         return;
+      end if;
+
+      --  Do we have a string ?
+
+      if Buffer (Buffer'First) = Context.String_Delimiter then
+         Entity := String_Text;
+         Next_Char := Buffer'First + 1;
+
+         while Next_Char <= Buffer'Last
+           and then
+           (Buffer (Next_Char) /= Context.String_Delimiter
+            or else (Context.Quote_Character /= ASCII.Nul
+                     and then
+                     Buffer (Next_Char - 1) = Context.Quote_Character))
+         loop
+            Next_Char := Next_Char + 1;
+         end loop;
+
+         Next_Char := Next_Char + 1;
+         return;
+      end if;
+
+      --  A constant character
+
+      if Buffer'Length > 3
+        and then Buffer (Buffer'First) = Context.Constant_Character
+        and then Buffer (Buffer'First + 2) = Context.Constant_Character
+      then
+         Entity := String_Text;
+         Next_Char := Buffer'First + 3;
+         return;
+      end if;
+
+      --  Another special character, not part of a word: just skip it, before
+      --  doing some regexp matching
+      --  It is better to return a pointer to the newline, so that the icons
+      --  on the side might be displayed properly.
+
+      if not Is_Letter (Buffer (Buffer'First)) then
+         Entity := Normal_Text;
+         Next_Char := Buffer'First + 1;
+
+         while Next_Char <= Buffer'Last
+           and then Buffer (Next_Char) /= ' '
+           and then Buffer (Next_Char) /= ASCII.LF
+           and then Buffer (Next_Char) /= ASCII.HT
+           and then Buffer (Next_Char) /= Context.String_Delimiter
+           and then Buffer (Next_Char) /=
+              Context.Comment_Start (Context.Comment_Start'First)
+           and then Buffer (Next_Char) /= Context.Constant_Character
+           and then not Is_Letter (Buffer (Next_Char))
+         loop
+            Next_Char := Next_Char + 1;
+         end loop;
+
+         return;
+      end if;
+
+      --  Do we have a keyword ?
+
+      Match (Keys, Buffer, Matched);
+
+      if Matched (0) /= No_Match then
+         Next_Char := Matched (0).Last + 1;
+         Entity := Keyword_Text;
+         return;
+      end if;
+
+      --  If no, skip to the next meaningful character. we know we are
+      --  starting with a letter
+
       Next_Char := Buffer'First + 1;
       Entity := Normal_Text;
+
+      --  Skip the current word
+
+      while Next_Char <= Buffer'Last
+        and then (Is_Letter (Buffer (Next_Char))
+                  or else Buffer (Next_Char) = '_')
+      loop
+         Next_Char := Next_Char + 1;
+      end loop;
    end Looking_At;
 
    ----------------------

@@ -64,6 +64,11 @@ package Language is
    --  Next_Char should be set to the index of the first character after the
    --  entity.
 
+   function Keywords (Lang : access Language_Root)
+                     return GNAT.Regpat.Pattern_Matcher is abstract;
+   --  Return a regular expression that matches the keywords for the current
+   --  language.
+
    ------------------------
    -- Naming conventions --
    ------------------------
@@ -249,6 +254,39 @@ package Language is
 
    procedure Free (Info : in out Thread_Information_Array);
    --  Free the dyamic memory associated with each element of the array.
+
+   ----------------------
+   -- Language_Context --
+   ----------------------
+
+   type Language_Context
+     (Comment_Start_Length : Positive;
+      Comment_End_Length : Positive)
+   is record
+      Comment_Start : String (1 .. Comment_Start_Length);
+      --  How comments start for this language
+
+      Comment_End : String (1 .. Comment_End_Length);
+      --  How comments end for this language
+
+      String_Delimiter : Character;
+      --  How strings start and end
+
+      Quote_Character : Character;
+      --  The character used to quote (protect) the following one.  If this is
+      --  set to ASCII.Nul, then there is no such character in the
+      --  language. For instance, it should be set to \ for C.
+
+      Constant_Character : Character;
+      --  The character that starts and ends constant characters
+   end record;
+   --  This record describes the syntax of the language (for color
+   --  highlighting purposes). All the fields in this record are language
+   --  specific, and do not depend on the debugger used.
+
+   function Get_Language_Context
+     (Lang : access Language_Root) return Language_Context is abstract;
+   --  Return the context to use for a specific language
 
 private
    type Language_Root is abstract tagged null record;
