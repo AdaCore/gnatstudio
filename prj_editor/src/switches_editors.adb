@@ -71,7 +71,7 @@ package body Switches_Editors is
    procedure Destroy_Pages
      (Editor : access Switches_Edit_Record; Pages : Page_Filter) is
    begin
-      Editor.Pages := Pages;
+      Editor.Pages := not Pages;
 
       if (Pages and Gnatmake_Page) /= 0 then
          Destroy (Editor.Make_Switches);
