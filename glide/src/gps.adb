@@ -4,14 +4,14 @@ with Gtk; use Gtk;
 with Gtk.Main;
 with Glide_Page;
 with Glide_Menu;
-with GVD.Main_Window;
+with Glide_Main_Window;
 
 procedure Glide2 is
-   use GVD.Main_Window;
+   use Glide_Main_Window;
 
    X_Border      : constant := 9;
    Y_Border      : constant := 86;
-   Glide         : GVD_Main_Window;
+   Glide         : Glide_Window;
    Page          : Glide_Page.Glide_Page;
    X, Y          : Gint;
    Width, Height : Gint;
