@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -133,6 +133,12 @@ package VCS_View_Pkg is
       File     : VFS.Virtual_File);
    --  Refresh the "Log" column for File.
 
+   function Get_Cached_Status
+     (Explorer : access VCS_View_Record;
+      File     : VFS.Virtual_File;
+      Ref      : VCS_Access) return File_Status_Record;
+   --  Return the cached status corresponding to File.
+   --  User must not free the result.
 
 private
    type Line_Record is record

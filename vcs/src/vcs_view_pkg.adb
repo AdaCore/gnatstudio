@@ -1551,4 +1551,31 @@ package body VCS_View_Pkg is
       return VCS_View.Kernel;
    end Get_Kernel;
 
+   -----------------------
+   -- Get_Cached_Status --
+   -----------------------
+
+   function Get_Cached_Status
+     (Explorer : access VCS_View_Record;
+      File     : VFS.Virtual_File;
+      Ref      : VCS_Access) return File_Status_Record
+   is
+      Node   : List_Node;
+      Page   : constant VCS_Page_Access :=
+        Get_Page_For_Identifier (Explorer, Ref);
+      Result : File_Status_Record;
+   begin
+      Node := First (Page.Cached_Status);
+
+      while Node /= Null_Node loop
+         if Data (Node).Status.File = File then
+            return Data (Node).Status;
+         end if;
+
+         Node := Next (Node);
+      end loop;
+
+      return Result;
+   end Get_Cached_Status;
+
 end VCS_View_Pkg;
