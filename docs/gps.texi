@@ -438,7 +438,7 @@ It is thus expected that for large projects, this phase can take a
 significant amount of cpu to proceed.
 
 In some cases, GPS won't be able to determine the exact function involved
-in a cross reference. This will typically occurs for overloaded functions,
+in a cross reference. This will typically occur for overloaded functions,
 or if multiple functions with the same name, but under different
 @code{#ifdef} sections, are defined. In this case, GPS will display a
 dialog listing the possible choices to resolve the ambiguity.
