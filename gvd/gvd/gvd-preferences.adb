@@ -76,16 +76,26 @@ package body GVD.Preferences is
 
       if Page_Prefix = "" then
          Source_Flags := Source_Flags or Param_Writable;
+         Default_Font := Param_Spec_Font
+           (Gnew_Font
+              (Name      => XML_Prefix & "Default-Font",
+               Nick      => -"Default font",
+               Blurb     => -"Default font",
+               Default   => GVD.Default_Font));
+         Register_Property (Prefs, Param_Spec (Default_Font), General);
+
+         Fixed_Font := Param_Spec_Font
+           (Gnew_Font
+              (Name      => XML_Prefix & "Fixed-Font",
+               Nick      => -"Fixed font",
+               Blurb     =>
+                 -"Fixed font used to display e.g. debugger commands",
+               Default   => "Courier 10"));
+         Register_Property (Prefs, Param_Spec (Fixed_Font), General);
+
       else
          External_Flags := External_Flags or Param_Writable;
       end if;
-
-      Fixed_Font := Param_Spec_Font (Gnew_Font
-        (Name      => XML_Prefix & "Fixed-Font",
-         Nick      => -"Fixed font",
-         Blurb     => -"Fixed font used to display e.g. debugger commands",
-         Default   => "Courier 10"));
-      Register_Property (Prefs, Param_Spec (Fixed_Font), General);
 
       Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Debugger-Highlight-Color",
@@ -181,8 +191,14 @@ package body GVD.Preferences is
          Blurb     => -("True if dots should be shown in the editor for lines"
                         & " that contain code"),
          Default   => False));
-      Register_Property
-        (Prefs, Param_Spec (Editor_Show_Line_With_Code), Source);
+
+      if XML_Prefix = "" then
+         Register_Property
+           (Prefs, Param_Spec (Editor_Show_Line_With_Code), Source);
+      else
+         Register_Property
+           (Prefs, Param_Spec (Editor_Show_Line_With_Code), General);
+      end if;
 
       Do_Color_Highlighting := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Do-Color-Highlighting",
@@ -338,36 +354,15 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Title-Font",
          Nick     => -"Item name",
          Blurb    => -"Font used for the name of the variables",
-         Default  => "Sans Bold 10"));
+         Default  => "Sans Bold 9"));
       Register_Property (Prefs, Param_Spec (Title_Font), Data);
-
-      Value_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Value-Font",
-         Nick     => -"Item value",
-         Blurb    => -"Font used for the value of the variables",
-         Default  => "Sans 10"));
-      Register_Property (Prefs, Param_Spec (Value_Font), Data);
-
-      Command_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Command-Font",
-         Nick     => -"Debugger output",
-         Blurb    => -"Font used for the result of ""display any expression""",
-         Default  => "Courier 10"));
-      Register_Property (Prefs, Param_Spec (Command_Font), Data);
 
       Type_Font := Param_Spec_Font (Gnew_Font
         (Name     => XML_Prefix & "Type-Font",
          Nick     => -"Item type",
          Blurb    => -"Font used for the type of the variables",
-         Default  => "Sans Oblique 10"));
+         Default  => "Sans Oblique 9"));
       Register_Property (Prefs, Param_Spec (Type_Font), Data);
-
-      Annotation_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Annotation-Font",
-         Nick     => -"Annotations",
-         Blurb    => -"Font used for the links between two variables",
-         Default  => "Sans 7"));
-      Register_Property (Prefs, Param_Spec (Annotation_Font), Data);
 
       Hide_Big_Items := Param_Spec_Boolean (Gnew_Boolean
         (Name     => XML_Prefix & "Hide-Big-Items",
@@ -426,14 +421,6 @@ package body GVD.Preferences is
          Default  => "#FF0000"));
       Register_Property
         (Prefs, Param_Spec (Memory_Selected_Color), Memory);
-
-      Memory_Modified_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Memory-Modified-Color",
-         Nick     => -"Modified",
-         Blurb    => -"Color used for modified items",
-         Default  => "#FF0000"));
-      Register_Property
-        (Prefs, Param_Spec (Memory_Modified_Color), Memory);
 
       List_Processes := Param_Spec_String (Gnew_String
         (Name     => XML_Prefix & "List-Processes",

@@ -65,6 +65,7 @@ package GVD.Preferences is
    --  preferences should be used for.
 
    -- General Preferences --
+   Default_Font                  : Param_Spec_Font;
    Fixed_Font                    : Param_Spec_Font;
    Break_On_Exception            : Param_Spec_Boolean;
    Hide_Delay                    : Param_Spec_Int;
@@ -101,10 +102,7 @@ package GVD.Preferences is
    Thaw_Bg_Color                 : Param_Spec_Color;
    Freeze_Bg_Color               : Param_Spec_Color;
    Title_Font                    : Param_Spec_Font;
-   Value_Font                    : Param_Spec_Font;
-   Command_Font                  : Param_Spec_Font;
    Type_Font                     : Param_Spec_Font;
-   Annotation_Font               : Param_Spec_Font;
    Hide_Big_Items                : Param_Spec_Boolean;
    Big_Item_Height               : Param_Spec_Int;
    Default_Detect_Aliases        : Param_Spec_Boolean;
@@ -118,7 +116,6 @@ package GVD.Preferences is
    Memory_View_Color             : Param_Spec_Color;
    Memory_Highlighted_Color      : Param_Spec_Color;
    Memory_Selected_Color         : Param_Spec_Color;
-   Memory_Modified_Color         : Param_Spec_Color;
 
    -- Helpers --
    List_Processes                : Param_Spec_String;
