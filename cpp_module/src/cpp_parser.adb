@@ -3123,8 +3123,11 @@ package body CPP_Parser is
         (Handler         => Handler,
          Source_Filename => File_Name);
 
+      --  ??? Do not regenerate the DB if it is not up-to-date, since that
+      --  is too slow. When we can remove the need for dbimp, reconsider this
+      --  decision
       if Source = null
-        or else not Is_Up_To_Date (Source)
+--  ???      or else not Is_Up_To_Date (Source)
       then
          --  If we do not have any LI information, parse the database for the
          --  project. Otherwise, do nothing to save time.
