@@ -541,7 +541,7 @@ package body Glide_Kernel.Preferences is
       Warning_Src_Highlight := Param_Spec_Color (Gnew_Color
         (Name    => "Warnings-Src-Highlight-Color",
          Nick    => -"Warnings highlighting",
-         Blurb   => -"Color used to highlight warningss in the source editors",
+         Blurb   => -"Color used to highlight warnings in the source editors",
          Default => "#FFB46D"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Warning_Src_Highlight), -"Messages");
