@@ -1343,7 +1343,10 @@ package body Display_Items is
         and then Get_Event_Type (Event) = Button_Press
       then
          Popup
-           (Contextual_Background_Menu (Canvas),
+           (Contextual_Background_Menu
+             (Canvas,
+              Debugger_Process_Tab
+               (Get_Process (Canvas)).Window.GVD_Accel_Group),
             Button            => Get_Button (Event),
             Activate_Time     => Get_Time (Event));
       end if;
