@@ -2033,55 +2033,58 @@ package body Debugger.Gdb is
       Start_Address   : String := "";
       End_Address     : String := "")
    is
-      Index : Natural;
-      Tmp   : Natural;
+      Disassembled : constant String := Send
+        (Debugger, "disassemble " & Start_Address & " " & End_Address,
+         Mode => Internal);
+      Tmp,
+      Start_Index,
+      End_Index   : Natural;
 
    begin
-      Code := new String'
-        (Send
-         (Debugger, "disassemble " & Start_Address & " " & End_Address,
-          Mode => Internal));
+      Start_Index := Disassembled'First;
+      Skip_To_Char (Disassembled, Start_Index, ASCII.LF);
+      Start_Index := Start_Index + 1;
 
-      if Start_Address /= "" then
-         Range_Start_Len := Start_Address'Length;
-         Range_Start (1 .. Range_Start_Len) := Start_Address;
+      End_Index := Disassembled'Last;
+      Skip_To_Char (Disassembled, End_Index, ASCII.LF, Step => -1);
+      End_Index := End_Index - 1;
+
+      --  Gdb always return a leading and tailing line, which we don't want
+      --  to return.
+
+      Code := new String' (Disassembled (Start_Index .. End_Index));
+
+      --  Always read the actual start and end address from the output of
+      --  gdb, in case gdb didn't start disassembling at the exact location,
+
+      Tmp := Start_Index;
+      Skip_To_Char (Disassembled, Tmp, ' ');
+
+      if Start_Index < Disassembled'Last
+        and then Disassembled (Start_Index .. Start_Index + 1) = "0x"
+      then
+         Range_Start_Len := Tmp - Start_Index;
+         Range_Start (1 .. Range_Start_Len) :=
+           Disassembled (Start_Index .. Tmp - 1);
       else
-         Index := Code'First;
-         Skip_To_Char (Code.all, Index, ASCII.LF);
-         Index := Index + 1;
-         Tmp := Index;
-         Skip_To_Char (Code.all, Tmp, ' ');
-
-         if Index < Code'Last
-           and then Code (Index .. Index + 1) = "0x"
-         then
-            Range_Start_Len := Tmp - Index;
-            Range_Start (1 .. Tmp - Index) := Code (Index .. Tmp - 1);
-         else
-            Range_Start_Len := 0;
-         end if;
+         Range_Start_Len := 0;
       end if;
 
-      if End_Address /= "" then
-         Range_End_Len := End_Address'Length;
-         Range_End (1 .. Range_End_Len) := End_Address;
-      else
-         Index := Code'Last;
-         Skip_To_Char (Code.all, Index, ASCII.LF, Step => -1);
-         Index := Index - 1;
-         Skip_To_Char (Code.all, Index, ASCII.LF, Step => -1);
-         Index := Index + 1;
-         Tmp := Index;
-         Skip_To_Char (Code.all, Tmp, ' ');
+      --  Get the actual end address, in case the disassembled zone doesn't end
+      --  exactly on End_Address.
 
-         if Index < Code'Last
-           and then Code (Index .. Index + 1) = "0x"
-         then
-            Range_End_Len := Tmp - Index;
-            Range_End (1 .. Tmp - Index) := Code (Index .. Tmp - 1);
-         else
-            Range_End_Len := 0;
-         end if;
+      Skip_To_Char (Disassembled, End_Index, ASCII.LF, Step => -1);
+      End_Index := End_Index + 1;
+      Tmp := End_Index;
+      Skip_To_Char (Disassembled, Tmp, ' ');
+
+      if End_Index < Disassembled'Last
+        and then Disassembled (End_Index .. End_Index + 1) = "0x"
+      then
+         Range_End_Len := Tmp - End_Index;
+         Range_End (1 .. Range_End_Len) := Disassembled (End_Index .. Tmp - 1);
+      else
+         Range_End_Len := 0;
       end if;
    end Get_Machine_Code;
 
