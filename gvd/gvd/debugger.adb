@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -402,7 +402,7 @@ package body Debugger is
       --  indirectly call the output filter.
 
       if Wait_Prompt (Debugger, Timeout => 1) then
-         Process.Continuation_Line := False;
+         Debugger.Continuation_Line := False;
          Timeout_Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
          Mode := Get_Command_Mode (Get_Process (Debugger));
@@ -632,13 +632,12 @@ package body Debugger is
          else
             Send_Internal_Pre
               (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
-            Process := Convert (Debugger.Window, Debugger);
 
             case Mode is
                when Invisible_Command =>
                   if Last > Cmd'Last and then Wait_For_Prompt then
                      Wait_Prompt (Debugger);
-                     Process.Continuation_Line := False;
+                     Debugger.Continuation_Line := False;
                      Send_Internal_Post
                        (Debugger, Cmd (First .. Last - 1), Mode);
                   end if;
@@ -649,7 +648,7 @@ package body Debugger is
                         --  Synchronous handling of commands, simple case
 
                         Wait_Prompt (Debugger);
-                        Process.Continuation_Line := False;
+                        Debugger.Continuation_Line := False;
                         Send_Internal_Post
                           (Debugger, Cmd (First .. Last - 1), Mode);
 
@@ -657,6 +656,7 @@ package body Debugger is
                         --  Asynchronous handling of commands, install a
                         --  callback on the debugger's output file descriptor.
 
+                        Process := Convert (Debugger.Window, Debugger);
                         Process.Current_Command :=
                           new String'(Cmd (First .. Last - 1));
 
@@ -714,14 +714,13 @@ package body Debugger is
       Cmd      : String;
       Mode     : Invisible_Command := Hidden) return String
    is
-      Process : constant Visual_Debugger :=
-        Convert (Debugger.Window, Debugger);
+      Process : Visual_Debugger;
    begin
       pragma Assert (not Command_In_Process (Get_Process (Debugger)));
 
       Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
       Wait_Prompt (Debugger);
-      Process.Continuation_Line := False;
+      Debugger.Continuation_Line := False;
 
       declare
          S : constant String := Expect_Out (Get_Process (Debugger));
@@ -738,9 +737,14 @@ package body Debugger is
    exception
       when Process_Died =>
          Set_Command_In_Process (Get_Process (Debugger), False);
-         Set_Busy (Process, False);
-         Unregister_Dialog (Process);
-         Close_Debugger (Process);
+
+         if Debugger.Window /= null then
+            Process := Convert (Debugger.Window, Debugger);
+            Set_Busy (Convert (Debugger.Window, Debugger), False);
+            Unregister_Dialog (Process);
+            Close_Debugger (Process);
+         end if;
+
          return "";
    end Send_Full;
 
@@ -991,5 +995,15 @@ package body Debugger is
    begin
       raise Unknown_Command;
    end Set_TTY;
+
+   -----------------------
+   -- Continuation_Line --
+   -----------------------
+
+   function Continuation_Line
+     (Debugger : access Debugger_Root) return Boolean is
+   begin
+      return Debugger.Continuation_Line;
+   end Continuation_Line;
 
 end Debugger;
