@@ -54,6 +54,7 @@ with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Mark;              use Gtk.Text_Mark;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
@@ -876,7 +877,8 @@ package body Src_Editor_Box is
    begin
       if Box.Buffer_Info_Frames /= null then
          for J in Box.Buffer_Info_Frames'Range loop
-            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J));
+            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Frame);
+            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Separator);
          end loop;
 
          Unchecked_Free (Box.Buffer_Info_Frames);
@@ -895,14 +897,21 @@ package body Src_Editor_Box is
             Gtk_New (Label);
          end if;
 
-         Gtk_New (Box.Buffer_Info_Frames (J));
-         Set_Shadow_Type (Box.Buffer_Info_Frames (J), Shadow_None);
+         Gtk_New (Box.Buffer_Info_Frames (J).Frame);
+         Set_Shadow_Type (Box.Buffer_Info_Frames (J).Frame, Shadow_None);
 
-         Add (Box.Buffer_Info_Frames (J), Label);
+         Gtk_New_Vseparator (Box.Buffer_Info_Frames (J).Separator);
+         Pack_End
+           (Box.Label_Box,
+            Box.Buffer_Info_Frames (J).Separator,
+            Expand => False,
+            Fill => False);
+
+         Add (Box.Buffer_Info_Frames (J).Frame, Label);
 
          Pack_End
            (Box.Label_Box,
-            Box.Buffer_Info_Frames (J),
+            Box.Buffer_Info_Frames (J).Frame,
             Expand  => False,
             Fill    => True,
             Padding => 0);
@@ -1019,6 +1028,7 @@ package body Src_Editor_Box is
       Drawing_Area   : Gtk_Drawing_Area;
       Data           : Editor_Tooltip_Data;
       Hbox           : Gtk_Hbox;
+      Separator      : Gtk_Vseparator;
 
    begin
       Glib.Object.Initialize (Box);
@@ -1097,6 +1107,8 @@ package body Src_Editor_Box is
          Box);
 
       --  Modified file area...
+      Gtk_New_Vseparator (Separator);
+      Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
@@ -1104,6 +1116,8 @@ package body Src_Editor_Box is
       Add (Frame, Box.Modified_Label);
 
       --  Read only file area...
+      Gtk_New_Vseparator (Separator);
+      Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
@@ -1117,6 +1131,8 @@ package body Src_Editor_Box is
          Box);
 
       --  Insert/Overwrite label
+      Gtk_New_Vseparator (Separator);
+      Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
