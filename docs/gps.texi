@@ -4,7 +4,7 @@
 @settitle Using the GNAT Programming System
 @syncodeindex fn cp
 
-@set GPSVersion 1.0.0
+@set GPSVersion 1.0.1
 
 @titlepage
 
