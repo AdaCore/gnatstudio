@@ -138,7 +138,7 @@ win32_realpath(char* p,char *realnm)
 	ret=realpath (p, temp_realnm);
 
 	/* Convert path to Win32 */
-	cygwin32_conv_to_full_win32_path(temp_realnm,realnm);
+	/* cygwin32_conv_to_full_win32_path(temp_realnm,realnm); */
 
 	/*
 	 * Convert "\" to "/" (just now!)
