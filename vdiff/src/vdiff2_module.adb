@@ -352,6 +352,8 @@ package body Vdiff2_Module is
       PixMap  : Gdk_Pixmap;
 
    begin
+      VDiff2_Module (Vdiff_Module_ID).Is_Active := true;
+
       Append_Space (Toolbar);
 
       Create_From_Xpm_D
@@ -391,4 +393,15 @@ package body Vdiff2_Module is
 
    end VDiff_Toolbar;
 
+   --------------------------
+   -- Remove_VDiff_Toolbar --
+   --------------------------
+
+   procedure Remove_VDiff_Toolbar
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      pragma Unreferenced (Kernel);
+   begin
+      null;
+      --  VDiff2_Module (Vdiff_Module_ID).Is_Active := false;
+   end Remove_VDiff_Toolbar;
 end Vdiff2_Module;

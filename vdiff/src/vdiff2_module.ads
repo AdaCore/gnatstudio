@@ -47,6 +47,10 @@ package Vdiff2_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register all vdiff button in gps toolbar
 
+   procedure Remove_VDiff_Toolbar
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Unregister all vdiff button in gps toolbar
+
    procedure Init_Prev_Diff_Cmd (Diff : Diff_Head);
    --  Initialize for each command the last selected diff
 
