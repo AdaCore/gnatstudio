@@ -1515,11 +1515,11 @@ package body Src_Editor_Module is
       Button         : Message_Dialog_Buttons;
    begin
       if Force then
-         if Modified (Box) then
+         if Needs_To_Be_Saved (Box) then
             Save_To_File (Box, Success => Success);
          end if;
 
-      elsif Modified (Box) then
+      elsif Needs_To_Be_Saved (Box) then
          Button := Message_Dialog
            (Msg            =>
               (-"Do you want to save file ") & Get_Filename (Box) & " ?",
