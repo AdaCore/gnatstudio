@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -214,10 +214,13 @@ package body Glide_Kernel.Custom is
    is
       --  Add a valid prefix and toplevel node, since the string won't
       --  contain any
+
       Node : Node_Ptr;
       N    : Node_Ptr;
+
    begin
-      --  Don't do this at elabortation, we want to catch exceptions
+      --  Don't do this at declaration time, since we want to catch exceptions
+
       Node := Parse_Buffer
         ("<?xml version=""1.0""?><Root>" & Customization & "</Root>");
 
@@ -258,6 +261,7 @@ package body Glide_Kernel.Custom is
    exception
       when E : others =>
          --  This is purely internal error for programmers, no need for console
+
          Trace (Me, "Could not parse custom string " & Customization
                 & ' ' & Exception_Message (E));
    end Add_Customization_String;
