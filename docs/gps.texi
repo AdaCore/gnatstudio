@@ -9,7 +9,7 @@
 
 @titlepage
 
-@title Using the GNAT Programming System
+@title{Using the GNAT Programming System}
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
@@ -49,7 +49,7 @@ unmodified in any copy.
 * Description of the Main Windows::
 * Integrated Help::
 * Multiple Document Interface::
-* Editing File::
+* Editing Files::
 * Source Navigation::
 * Project Handling::
 * Searching and Replacing::
@@ -85,15 +85,18 @@ Multiple Document Interface
 * Floating Windows::
 * Moving Windows::
 
-Editing File
+Editing Files
 * General Information::
-* Navigation in the Source Editor::
+* Editing Sources::
+* The File Selector::
+* Menu Items::
 * Using an External Editor::
 * Using the Clipboard::
 
 Source Navigation
 * Support for Cross References::
-* Spec/Body::
+* The Navigate Menu::
+* Source Navigation Contextual Menus::
 
 
 Project Handling
@@ -112,6 +115,9 @@ Compilation/Build
 
 Source Browsing
 * General Issues::
+* Call Graph::
+* Dependency Browser::
+* Entity Browser::
 
 
 Debugging
@@ -126,6 +132,9 @@ Debugging
 
 
 Version Control System
+* The VCS Explorer::
+* The VCS Menu::
+* The Version Control Contextual Menu::
 
 
 Working in a cross environment
@@ -153,6 +162,7 @@ Environment
 @c --------------------------------------------------------------------
 @node Introduction
 @chapter Introduction
+@cindex introduction
 @c --------------------------------------------------------------------
 
 @noindent
@@ -164,6 +174,8 @@ some instabilities or some missing features. For this reason we will
 particularly welcome bug reports, as well as suggestions for possible
 improvements (see @ref{Reporting Suggestions and Bugs}).
 
+@cindex HTML
+@cindex help
 GPS gives access to built-in file editing; HTML based help system;
 complete compile/build/run cycle; intelligent source navigation;
 project management; general graph technology giving access to many different
@@ -173,6 +185,7 @@ for inclusion in GPS; generic version control system, providing access
 to CVS, ClearCase, and possibly others in the future; many other tools
 such as a visual comparison, automatic generation of files, source reformatting.
 
+@cindex customization
 GPS is fully customizable, providing several levels of customizations:
 a first level, available through the preferences dialog (see
 @ref{Customization}); a second level, which allows you to
@@ -180,12 +193,15 @@ customize your menu items, tool bar and key bindings (see @ref{Customization}),
 and a third level, which allows any kind of very specific or tight
 integration, due to the open nature of GPS, and to its architecture.
 
+@cindex editor
+@cindex emacs
 GPS also integrates with existing editors such as Emacs and Vi, see
 @ref{Using an External Editor}.
 
 @c --------------------------------------------------------------------
 @node Description of the Main Windows
 @chapter Description of the Main Windows
+@cindex main windows
 @c --------------------------------------------------------------------
 
 @menu
@@ -204,17 +220,21 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 @c --------------------------------------------------------------------
 @node The Welcome Dialog
 @section The Welcome Dialog
+@cindex welcome dialog
 @c --------------------------------------------------------------------
-@noindent
 
+@noindent
 When starting GPS, a welcome dialog is displayed by default, giving the
 following choices:
 
 @table @b
 @item Start with default project
+@cindex project
 If you select this option and click on the @code{OK} button, GPS will create a
 default internal project with the following properties:
 
+@cindex Ada
+@cindex GNAT
   The project supports Ada files only, using the default GNAT
   naming scheme: @code{.ads} for spec files, @code{.adb} for body files.
 
@@ -227,21 +247,23 @@ default internal project with the following properties:
   be put, corresponding also to the current directory.
 
 @item Create new project with wizard
+@cindex project
 Selecting this option and clicking on the @code{OK} button will start a
 wizard allowing you to specify most of the properties for a new project. Once
 the project is created, GPS will save it and load it automatically.
-@c See ??? for more details on the project wizard.
+See @ref{The project wizard} for more details on the project wizard.
 
 @item Open existing project
+@cindex project
 You can select an existing project by clicking on the @code{Browse} button,
-or by using a previousely loaded project listed in the combo box. When a
+or by using a previously loaded project listed in the combo box. When a
 project is selected, clicking on the @code{OK} button will load this
 project and open the main window.
 
 @item Always show this dialog when GPS starts
 If unset, the welcome dialog won't be shown in future sessions.
 In this case, GPS will behave as follows: it will first look for a
-@code{-P} switch on the command line, and load the coresponding project if
+@code{-P} switch on the command line, and load the corresponding project if
 present.
 Then, it will look for a project file in the current directory and will
 load the first project file found.
@@ -249,13 +271,15 @@ load the first project file found.
 If no project file can be found in the current directory, GPS will start
 with the default project.
 
-To reset this properties, you can go to the menu @code{Edit->Preferences}.
-@c See ???.
+To reset this property, go to the menu @code{Edit->Preferences}.
+@cindex preferences
+@xref{The Preferences Dialog}.
 
 @item Quit
 If you click on this button, GPS will terminate immediately.
 @end table
 
+@cindex command line
 When you specify a -P switch on the command line, or if there is only one
 project file in the current directory, GPS will start immediately with
 the project file specified, instead of displaying the welcome dialog.
@@ -263,9 +287,10 @@ the project file specified, instead of displaying the welcome dialog.
 @c --------------------------------------------------------------------
 @node The Menu Bar
 @section The Menu Bar
+@cindex menu bar
 @c --------------------------------------------------------------------
-@noindent
 
+@noindent
 This is a standard menu bar that gives access to all the global
 functionalities of GPS. It is usually easier to access a given functionality
 using the various contextual menus provided throughout GPS: these menus
@@ -276,20 +301,26 @@ pop up when the right mouse button is clicked.
 @c --------------------------------------------------------------------
 @node The Tool Bar
 @section The Tool Bar
+@cindex tool bar
 @c --------------------------------------------------------------------
-@noindent
 
-The toolbar provides shortcuts via buttons to some typical actions:
+@noindent
+The tool bar provides shortcuts via buttons to some typical actions:
 creating a new file, opening a file, saving the current file;
 undo/redo last editing;
+@cindex clipboard
 cut to clipboard, copy to clipboard, paste from clipboard;
 go to previous/next location;
+@cindex debugger
 start/continue the debugging session, step/next execution, finish
 current procedure.
 
 @c --------------------------------------------------------------------
 @node The Work Space
 @section The Work Space
+@cindex work space
+@cindex MDI
+@cindex Multiple Document Interface
 @c --------------------------------------------------------------------
 
 The whole work space is based on a multiple document interface,
@@ -298,15 +329,19 @@ The whole work space is based on a multiple document interface,
 @c --------------------------------------------------------------------
 @node The Project Explorer
 @section The Project Explorer
+@cindex project explorer
+@cindex project
 @c --------------------------------------------------------------------
-@noindent
 
+@noindent
 The project explorer is composed of multiple views which can be accessed
 by default by clicking on the corresponding pages, or if they are not shown
 by using the @code{Project} menu items.
 
 @subsection The explorer views
+@cindex explorer views
 
+@noindent
 The explorer views are
 initially displayed on the left side of the GPS window. Their goal is to
 show a full view of the various components of your projects. These
@@ -316,10 +351,12 @@ The following snapshot displays the two pages side-by-side: on the
 left, the @code{Project View}, and on the right the @code{File View}.
 
 @iftex
+@cindex screen shot
 @image{explorer-views, 12.7cm}
 @end iftex
 
 @ifhtml
+@cindex screen shot
 @image{explorer-views, 12.7cm}
 @end ifhtml
 
@@ -328,6 +365,7 @@ following:
 
 @table @b
 @item projects
+@cindex project view
 As mentioned before, all the sources you are working with are put under
 control of projects. These projects are a way to store the switches to
 use for the various tools, as well as a number of other properties.
@@ -354,13 +392,17 @@ by right-clicking on it. GPS will remind you to save it before any
 compilation.
 
 @item directories
+@cindex directory
+@cindex Windows
 The files inside a project can be organized into several physical
 directories on the disk. These directories are displayed under each
 project node in the @code{Project View}, or directly mimicking their
-physical organization on the disk (including windows drives) in the
+physical organization on the disk (including Windows drives) in the
 @code{File View}.
 
 @item files
+@cindex file
+@cindex file view
 The source files themselves are stored in the directories, and
 displayed under the corresponding nodes. Note that in the
 @code{Project View}, only the source files that actually belong to the
@@ -374,6 +416,7 @@ A given file might appear multiple times in the @code{Project View},
 if the project it belongs to is imported by several other projects.
 
 @item entities
+@cindex entity
 If you open the node for a source file, the file is parsed by one of the
 fast parsers integrated in GPS so that all entities declared in
 the project can be shown. These entities are grouped into various
@@ -386,11 +429,15 @@ Double-clicking on an file, or simple clicking on any entity will open
 a source editor and display respectively the first line in this file
 or the line on which the entity is defined.
 
+@cindex search
+@cindex find
 If you open the search dialog through the @code{Navigate->Find...}
 menu, you have the possibility to search for anything in the explorer,
 either a file or an entity. Note that searching for an entity might be
 a little slow if you have lots of files.
 
+@cindex explorer
+@cindex locate in explorer
 A contextual menu, named @code{Locate in Explorer}, is also provided when
 inside a source editor. This will automatically search for the first entry for
 this file in the explorer. This contextual menu is also available in other
@@ -398,7 +445,14 @@ modules, e.g. when selecting a file in the @code{Dependency Browser}.
 
 
 @subsection The configuration variables
+@cindex configuration variable
+@cindex project variable
+@cindex variable
 
+@cindex GNAT
+@cindex project file
+@cindex project
+@noindent
 As described in the GNAT User's Guide, the project files can be
 configured through external variables (typically environment
 variables). This means that e.g. the exact list of source files, or the
@@ -412,9 +466,10 @@ the same set of project files.
 
 A combo box is displayed in this area for each environment
 variable the project depends on. The current value of the variable can
-be set simply by selecting it from the popdown window that appears
+be set simply by selecting it from the pop-down window that appears
 when you click on the arrow on the right of the variable name
 
+@cindex project view
 New variables can be added through the contextual menu @code{Add
 Configuration Variable} in the @code{Project View}. The list of
 possible values for a variable can be changed by clicking on the
@@ -430,9 +485,13 @@ according to the new setup.
 @c --------------------------------------------------------------------
 @node The Messages Window
 @section The Messages Window
+@cindex messages
+@cindex messages window
 @c --------------------------------------------------------------------
-@noindent
 
+@cindex build
+@cindex errors
+@noindent
 The Messages window is used by GPS to display information and feedback
 about operations, such as build output, information about processes
 launched, error messages.
@@ -440,15 +499,23 @@ launched, error messages.
 This is a read-only window, which means that only output is available,
 no input is possible.
 
+@cindex execution window
+@cindex execution
+@cindex shell window
+@cindex shell
 For an input/output window, see @ref{The Execution Window} and also
 @ref{The Shell Window}.
 
 @c --------------------------------------------------------------------
 @node The Shell Window
 @section The Shell Window
+@cindex shell
+@cindex shell window
+@cindex interactive command
+@cindex command
 @c --------------------------------------------------------------------
-@noindent
 
+@noindent
 This window gives access to a shell specific to GPS, that allows you to
 type commands such as editing a file, compiling without using the menu
 items or the mouse.
@@ -458,6 +525,7 @@ available. To get the full list of currently available commands, simply
 type @code{help} at the prompt, or @code{help} followed by the name of a
 command, to get more information about a specific command.
 
+@cindex key
 You can use the @key{up} and @key{down} arrows to navigate through the
 history of commands.
 
@@ -469,42 +537,62 @@ generation of graphs, @dots{}
 @c --------------------------------------------------------------------
 @node The Locations Tree
 @section The Locations Tree
+@cindex location
+@cindex locations tree
 @c --------------------------------------------------------------------
-@noindent
 
+@cindex search
+@cindex compilation
+@cindex build
+@noindent
 The Location Tree is filled whenever GPS needs to display a list of
 locations in the source files (typically, when performing a global
 search, compilation results, and so on).
 
 @iftex
+@cindex screen shot
 @image{locations-view, 12.7cm}
 @end iftex
 
 @ifhtml
+@cindex screen shot
 @image{locations-view, 12.7cm}
 @end ifhtml
 
+@cindex category
+@cindex file
 The Location Tree shows a hierarchy of categories, which contain
 files, which contain locations. Clicking on a location item will bring
 up a file editor at the requested place. Right-clicking on file or
 category items brings up a contextual menu allowing you to remove the
 corresponding node from the view.
 
+@cindex key
+@cindex menu
+To navigate through the next and previous location (also called @code{Tag}),
+you can use the menu items @code{Navigate->Previous Tag} and
+@code{Navigate->Next Tag}, or the corresponding key bindings.
+
 @c --------------------------------------------------------------------
 @node The Execution Window
 @section The Execution Window
+@cindex execution
+@cindex execution window
 @c --------------------------------------------------------------------
-@noindent
 
+@cindex run
+@noindent
 Each time a program is launched using the menu @code{Build->Run}, a new
 execution window is created to provide input and output for this program.
 
 In order to allow post mortem analysis and copy/pasting, the execution
 windows are not destroyed when the application terminates.
 
+@cindex key
+@cindex menu
 To close an execution window, click on the arrow icon on the top right corner
-of the window, or use the menu @code{File->Close}, or the menu @code{Window->Close}
-or the key binding @key{Ctrl-W}.
+of the window, or use the menu @code{File->Close}, or the menu
+@code{Window->Close} or the key binding @key{Ctrl-W}.
 
 If you close the execution window while the application is still running,
 a dialog window is displayed, asking whether you want to kill the application,
@@ -513,24 +601,34 @@ or to cancel the close operation.
 @c --------------------------------------------------------------------
 @node The Status Line
 @section The Status Line
+@cindex status
+@cindex status line
+@cindex status bar
+@cindex progress bar
 @c --------------------------------------------------------------------
-@noindent
 
+@noindent
 The status line is composed of two areas: on the left a status bar and
 on the right a progress bar.
 
+@cindex messages
 The status bar is used to display temporary information about GPS
 operations. Note that most of the information GPS displays can be found
 in the @code{Messages} window.
 
+@cindex build
 The progress bar is used to display information about on going operations
 such as builds.
 
 @c --------------------------------------------------------------------
 @node Integrated Help
 @chapter Integrated Help
+@cindex integrated help
+@cindex help
+@cindex HTML
 @c --------------------------------------------------------------------
 
+@noindent
 By default when you start GPS, the working area contains a help window
 displaying HTML help files. On-line help for the GNAT tools is available
 from the @code{Help} menu item.
@@ -552,6 +650,10 @@ display.
 @c --------------------------------------------------------------------
 @node Multiple Document Interface
 @chapter Multiple Document Interface
+@cindex MDI
+@cindex Multiple Document Interface
+@cindex window manager
+@cindex work space
 @c --------------------------------------------------------------------
 
 @menu
@@ -564,7 +666,6 @@ display.
 @end menu
 
 @noindent
-
 All the windows that are part of the GPS environment are under control
 of what is commonly called a multiple document interface (MDI for
 short). This is a common paradigm on windowing systems, where related
@@ -577,6 +678,7 @@ one window (On Windows systems, the task bar shows only one
 icon). However, you can organize the GPS windows exactly the way you
 want, all inside the GPS main window.
 
+@cindex iconify
 For instance, you can choose to iconify some windows which are
 temporarily useless to you; you can choose to put some windows on top
 of others; you can resize all the windows to the size you want; and so
@@ -593,20 +695,23 @@ menu @code{Window}.
 @c --------------------------------------------------------------------
 @node Closing Windows
 @section Closing Windows
+@cindex close
 @c --------------------------------------------------------------------
 
+@cindex title bar
 @noindent
-
 Wherever the windows are displayed, they are always closed in the same
 manner. In the right side of the title bar of the window, three small
 buttons are displayed. The rightmost button is a cross. Clicking on
 this button will close the window
 
 @iftex
+@cindex screen shot
 @image{mdi-title-bar, 12.7cm}
 @end iftex
 
 @ifhtml
+@cindex screen shot
 @image{mdi-title-bar, 12.7cm}
 @end ifhtml
 
@@ -616,10 +721,11 @@ its title bar, and then select the menu @code{Window->Close}
 @c --------------------------------------------------------------------
 @node Maximized and Iconified Windows
 @section Maximized and Iconified Windows
+@cindex maximized
+@cindex iconified
 @c --------------------------------------------------------------------
 
 @noindent
-
 The MDI is initially split into three parts: one window to the left,
 one to the bottom, and a bigger one that occupies the remaining space.
 
@@ -639,13 +745,16 @@ on the right of the tabs. Clicking on these arrows will show the
 remaining tabs.
 
 @iftex
+@cindex screen shot
 @image{mdi-scroll-tabs, 12.7cm}
 @end iftex
 
 @ifhtml
+@cindex screen shot
 @image{mdi-scroll-tabs, 12.7cm}
 @end ifhtml
 
+@cindex menu
 You can go back to this maximized state in two ways: either select the
 menu @code{Window->Maximize All}, or click on the middle button on the
 right of the title bar of any window (this button shows two small
@@ -653,6 +762,8 @@ squares, and will toggle between maximized and unmaximized states.
 
 
 @item unmaximized windows
+@cindex unmaximized
+@cindex menu
 As opposed to putting all the windows inside a notebook, GPS can also
 let you organize them freely when they are unmaximized. Select the
 menu @code{Window->Unmaximize All}, or click again in the middle
@@ -668,45 +779,50 @@ the others.
 
 To make it easier to get to these standard organizations, GPS provides
 a few shortcuts through menus:
+@cindex menu
 
 @table @code
 @item Window->Cascade
+@cindex cascade
 All the windows will be resized to the same size, and be moved one on
 top of the other, so that the top and left sides of all windows are
 visible. This way, you can easily select any window
 
-@ifhtml
-@image{mdi-cascade, 12.7cm}
-@end ifhtml
-
 @item Window->Tile Horizontally
+@cindex title
 All the windows are resized to the same dimensions, and are put side
 by side, from left to right. No window will overlap any other.
 
 @iftex
-@image{mdi-tile-horizontal, 12.7cm}
+@cindex screen shot
+@image{mdi-tile-horizontal}
 @end iftex
 
 @ifhtml
-@image{mdi-tile-horizontal, 12.7cm}
+@cindex screen shot
+@image{mdi-tile-horizontal}
 @end ifhtml
 
 @item Window->Tile Vertically
+@cindex title
 All the windows are resized to the same dimensions, and are put side
 by side, from top to bottom. No window will overlap any other.
 
 @iftex
-@image{mdi-tile-vertical, 12.7cm}
+@cindex screen shot
+@image{mdi-tile-vertical}
 @end iftex
 
 @ifhtml
-@image{mdi-tile-vertical, 12.7cm}
+@cindex screen shot
+@image{mdi-tile-vertical}
 @end ifhtml
 
 @end table
 
 
-@item iconified windows
+@item Iconified windows
+@cindex iconified
 When the windows are unmaximized, you can also choose to temporarily
 iconify some of them. This is done by clicking on the leftmost button
 in the title bar (the one that shows a single line).
@@ -720,10 +836,12 @@ When de-iconified, a window will restore the size and position it had
 before it was iconified.
 
 @iftex
+@cindex screen shot
 @image{mdi-icons, 12.7cm}
 @end iftex
 
 @ifhtml
+@cindex screen shot
 @image{mdi-icons, 12.7cm}
 @end ifhtml
 
@@ -732,11 +850,13 @@ before it was iconified.
 @c --------------------------------------------------------------------
 @node Docked Windows
 @section Docked Windows
+@cindex docked
+@cindex docked window
+@cindex work space
 @c --------------------------------------------------------------------
 
 @noindent
-
-As mentioned before, the GPS workspace is initially split into three
+As mentioned before, the GPS work space is initially split into three
 windows. The one on the left and the one at the bottom are called
 @b{docking area}.
 
@@ -755,6 +875,7 @@ However, you can still choose precisely the dimension you want for
 this docking area (either its width for the left and right areas, or
 its height for the top and bottom ones).
 
+@cindex handle
 Between each docking area and the central one, there is a small handle
 (on which a series of dots are drawn), that you can move interactively
 with the mouse, to resize the docking areas). By default, when you
@@ -763,10 +884,12 @@ GPS to show you the new position the docking area will have when you
 release the mouse. You can set up a preference (menu
 @code{Edit->Preferences}) to indicate that you want the resizing to be
 opaque, which might give more intuitive results.
+@cindex preferences
 
 Note that when a window is @b{docked} (i.e. put in a docking area), some
-of the buttons in its title bar are greyed out and inactive.
+of the buttons in its title bar are grayed out and inactive.
 
+@cindex menu
 A simple way to dock a window is to select it, and then select the
 menu @code{Window->Docked}. We will see in @ref{Moving Windows} that
 there is a more intuitive way to do the same thing.
@@ -780,10 +903,11 @@ messages or console window.
 @c --------------------------------------------------------------------
 @node Floating Windows
 @section Floating Windows
+@cindex floating
+@cindex top level
 @c --------------------------------------------------------------------
 
 @noindent
-
 Although the MDI, as described so far, is already extremely flexible,
 it is possible that you prefer to have several top-level windows under
 direct control of your system or window manager. This would be the
@@ -792,16 +916,18 @@ that your system might provide (virtual desktops, different window
 decoration depending on the window's type, transparent windows,@dots{}).
 
 GPS is fully compatible with this behavior, since windows can also be
-@b{floating windows}. Any window that is currenty embedded in the MDI
+@b{floating windows}. Any window that is currently embedded in the MDI
 can be made floating at any time, simply by selecting the window and
 then selecting the menu @code{Window->Floating}. The window will then
 be detached, and can be moved anywhere on your screen, even outside of
 GPS's main window.
 
+@cindex menu
 There are two ways to put a floating window back under control of GPS.
 The more general method is to select the window through its title in
 the menu @code{Window}, and then select @code{Window->Floating}.
 
+@cindex preferences
 The second method assumes that the preference @b{Destroy Floats} in
 the menu @code{Edit->Preferences} has been set to false. Then, you can
 simply close the floating window by clicking in the appropriate title
@@ -812,17 +938,22 @@ its title bar.
 @c --------------------------------------------------------------------
 @node Moving Windows
 @section Moving Windows
+@cindex moving
 @c --------------------------------------------------------------------
 
+@cindex maximized
+@cindex unmaximized
+@cindex floating
 @noindent
-
 As we have seen, the windows' state can be changed at any time, from
 maximized to unmaximized to docked and floating and back, in any
 order.
 
+@cindex menu
 In all cases, the changes are done either through the buttons in the
 title bar or through the menu @code{Window}.
 
+@cindex drag-n-drop
 On some systems, a more intuitive method is also provided, based on
 the drag-and-drop paradigm. The idea is simply to select a window,
 wherever it is, and then, by clicking on it and moving the mouse while
@@ -835,9 +966,9 @@ this would work for unmaximized items, since the title bar is then
 used to move them around. In that case, you need to press the
 @key{control} key in addition to the left mouse button.
 
-A third possibily can be used for maximized or docked windows: click
+A third possibility can be used for maximized or docked windows: click
 with the left mouse button in the notebook tab that contains their
-name.
+name. This third option is not available under Windows systems.
 
 It is important to note that some widgets in GPS have their own
 drag-and-drop support, and will not react when you drop a window on
@@ -846,15 +977,17 @@ operations. Therefore, dropping a window on them will result in a
 failed operation. In that case, it always works to drop the window in
 the title bar of another window to adopt the same state.
 
-
 Here are the various places where a window can be dropped:
 
 @table @b
 @item The central area
+@cindex central area
 The window you are dropping will get the same state as the other
 windows already in this area (maximized or unmaximized).
 
 @item Docking areas
+@cindex docked
+@cindex docking area
 The window will immediately be adopted by this dropping area, and a
 new notebook will be created as needed. Once again, since the message
 window has its own handling of drag-and-drop, you can not drop items
@@ -875,12 +1008,14 @@ Under systems that support it, if you drop a window outside of GPS (for
 instance, on the background of your screen), the window will be floated.
 
 @item Sides of the GPS window
+@cindex side
 On each side of the GPS window, a small zone (a few pixels high or
 wide) is set up as a drop-area. If you drop a window on these zone
 (they are briefly highlighted while the mouse stays on them), then the
 window will be added to the dock on that side. If there is no dock
 area on that side, one will be created.
 
+@cindex drag-n-drop
 This is especially useful if you want to put two editor windows side
 by side. Drag one of them on the drop area on the right side.
 
@@ -888,44 +1023,184 @@ by side. Drag one of them on the drop area on the right side.
 
 
 @c --------------------------------------------------------------------
-@node Editing File
-@chapter Editing File
+@node Editing Files
+@chapter Editing Files
+@cindex editing
 @c --------------------------------------------------------------------
 
 @menu
 * General Information::
-* Navigation in the Source Editor::
+* Editing Sources::
+* The File Selector::
+* Menu Items::
 * Using an External Editor::
 * Using the Clipboard::
 @end menu
 
+@c --------------------------------------------------------------------------
 @node General Information
 @section General Information
+@c --------------------------------------------------------------------------
+
 @noindent
+Source editing is one of the central parts of GPS, giving in turn access
+to many other functionalities, including extended source navigation and
+source analyzing tools.
 
-@c ??? No tooltips if there are no LI files
+The integrated source editor provides all the usual capabilities found in
+integrated environments, including:
 
-@node Navigation in the Source Editor
-@section Navigation in the Source Editor
-@noindent
-
-It is also possible to specify additional or alternate key bindings,
-in particular the standard Emacs key bindings can be used in the source
-editor, see @ref{Changing Colors Fonts and Key Bindings}.
-
-@subsection Editing
 @table @b
-@item Ctrl-x
+@item A title bar
+Showing the full name of the file including path information.
+
+@item Line number information
+This is the left area of the source editor. Line numbers can be disabled
+from the preferences. @xref{The Preferences Dialog}.
+Note that this area can also display additional information, such as
+the current line of execution when debugging, or cvs annotations.
+
+@item A scrollbar
+Located on the right of the editor, it allows you to scroll through the source
+file.
+
+@item A status bar
+Giving information about the file.
+The first box on the left shows the writable state of the file.
+You can change this state by clicking on the label directly: this will
+switch between @i{writable} and @i{read-only}.
+
+The second box shows whether the file has been modified since the last
+save. The three possible states are:
+
+@table @i
+@item Unmodified
+The file has not been modified since the file has been loaded or saved.
+
+@item Modified
+The file has been modified since last load or save. Note that if you undo all
+the editing operations until the last save operation, this label will change
+to @i{Unmodified}.
+
+@item Saved
+The file has been saved and not modified since.
+
+@end table
+
+The third box displays the position of the cursor in the file by a line and
+a column number.
+
+@item A contextual menu
+Displayed when you right-click on any area of the source editor.
+See in particular @ref{Source Navigation Contextual Menus}
+for more details.
+
+@item Syntax highlighting
+Based on the programming language associated with the file, reserved words
+and languages constructs such as comments and strings are highlighted in
+different colors and fonts. See @ref{The Preferences Dialog} for a list of
+settings that can be customized.
+
+@item Automatic indentation
+@cindex indentation
+When enabled, lines are automatically indented each time you press the
+@key{Enter} key, or by pressing the indentation key.
+The indentation key is @key{Ctrl-Tab} by default, and can be changed in the
+preferences dialog, @xref{The Preferences Dialog}.
+
+If a set of lines is selected when you press the indentation key, this whole
+set of lines will be indented.
+
+@item Tooltips
+@cindex tooltip
+When you leave the mouse over a word in the source editor, a small window
+will automatically pop up if there are relevant contextual information to
+display about the word.
+
+The kind of information displayed depends on the current state of GPS.
+
+In normal mode, the kind of entity and where it is declared is displayed when
+this information is available. That is, when the the cross reference
+information about the current file has been generated. If there is no relevant
+information, no tooltip is displayed.
+See @ref{Support for Cross References} for more information.
+
+In debugging mode, the value of the variable under the mouse is displayed in
+the pop up window if the variable is known to the debugger, in the right frame,
+and if the program being debugged is in the right state. If one of these
+conditions is not met, the normal mode information is displayed.
+
+You can disable the automatic pop up of tooltips in the Editor section of
+the preferences dialog. @xref{The Preferences Dialog}.
+
+@item Word completion
+@cindex completion
+It is useful when editing a file and using often the same words to get
+automatic word completion. This is possible by typing the @key{Ctrl-/} key
+combination (customizable through the preferences dialog) after a partial
+word: the next possible completion will be inserted in the editor. Typing this
+key again will cycle through the list of possible completions.
+
+Completions are searched in the edited source file, by first looking at the
+closest words and then looking further in the source as needed.
+
+@item Delimiter highlighting
+@cindex delimiter
+When the cursor is moved before an opening delimiter or after a closing
+delimiter, then both delimiters will be highlighted. The following characters
+are considered delimiters: ()[]@{@}.
+You can disable highlighting of delimiters in the preferences.
+
+You can also jump to a corresponding delimiter by using the @key{Ctrl-'} key,
+that can be configured in the preferences. Typing twice on this key will move
+the cursor back to its original position.
+
+@end table
+
+@cindex emacs
+GPS also integrates with existing third party editors such as
+@code{Emacs}. @xref{Using an External Editor}.
+
+@c --------------------------------------------------------------------------
+@node Editing Sources
+@section Editing Sources
+@cindex editing
+@cindex source file
+@c --------------------------------------------------------------------------
+
+@subsection Key bindings
+@cindex key
+@noindent
+In addition to the standard keys used to navigate in the editor (up, down,
+right, left, page up, page down), the integrated editor provides a number of
+key bindings allowing easy navigation in the file.
+
+The key bindings are listed below in two sections: the common key bindings,
+always available; the Emacs key bindings, available as an option.
+
+@table @b
+@item Common key bindings
+@cindex key
+
+@table @key
+@item Ctrl-Shift-
+@cindex hexadecimal
+@cindex ASCII
+Pressing these two keys allow you to enter characters using their hexadecimal
+value. For example, pressing @key{Ctrl-Shift-2-0} will insert a space
+character (ASCII 32, which is 20 in hexadecimal).
+
+@item Ctrl-x / Shift-delete
 Cut to clipboard
 
-@item Ctrl-c
+@item Ctrl-c / Ctrl-insert
 Copy to clipboard
+
+@item Ctrl-v / Shift-insert
+Paste from clipboard
 
 @item Ctrl-s
 Save file to disk
-
-@item Ctrl-v
-Paste from clipboard
 
 @item Ctrl-z
 Undo previous insertion/deletion
@@ -935,31 +1210,374 @@ Redo previous insertion/deletion
 
 @item Insert
 Toggle overwrite mode
+
+@item Ctrl-a
+Select the whole file
+
+@item Home / Ctrl-Pgup
+Go to the beginning of the line
+
+@item End / Ctrl-Pgdown
+Go to the end of the line
+
+@item Ctrl-Home
+Go to the beginning of the file
+
+@item Ctrl-End
+Go to the end of the file
+
+@item Ctrl-up
+Go to the beginning of the line, or to the previous line if already at the
+beginning of the line.
+
+@item Ctrl-down
+Go to the end of the line, or to the beginning of the next line if already at
+the end of the line.
+
+@item Ctrl-delete
+Delete end of the current word.
+
+@item Ctrl-backspace
+Delete beginning of the current word.
+
 @end table
 
-@subsubsection Indentation
+@item Emacs key bindings
+@cindex emacs
+@cindex key
+The following key bindings are activated if you select the @i{Emacs} key theme
+in the preferences dialog (@xref{The Preferences Dialog}.), and may override
+common keys (e.g. @key{Ctrl-a}).
+
+@table @key
+@item Ctrl-b
+Move the cursor one character on the left
+
+@c @item Ctrl-f  overridden by find
+
+@c @item Alt-b  overridden by Build menu
+
+@item Shift-Alt-b
+Select the previous word (backward).
+
+@c @item Alt-f  overridden by File menu
+
+@item Shift-Alt-f
+Select the next word (forward).
+
+@item Ctrl-a
+Go to the beginning of the line
+
+@item Ctrl-e
+Go to the end of the line
+
+@item Ctrl-d
+Delete the next character
+
+@c @item Alt-d  overridden by Debug menu
+@c Delete to the end of the word
+
+@item Ctrl-k
+Delete the end of the line. If the cursor is already at the end of the line,
+remove the line separator.
+
+@item Alt-\
+Delete all space characters around the cursor.
+
+@item Alt-space
+Replace all space characters around the cursor by a single space.
+
+@item Alt-<
+Go to the beginning of the file
+
+@item Alt->
+Go to the end of the file
+
+@c @item Ctrl-p overridden by find previous
+
+@item Shift-Ctrl-p
+Select from cursor to one line up.
+
+@c @item Ctrl-n  overridden by find next
+
+@item Shift-Ctrl-n
+Select from cursor to one line down.
+
+@item Ctrl-j
+Join the current and the next lines and leave a single space between the
+two. This is similar to the @key{J} key in the @i{vi} editor.
+This is a useful extension compared to the default Emacs key bindings.
+@end table
+
+@end table
+
+@c --------------------------------------------------------------------------
+@node The File Selector
+@section The File Selector
+@cindex file selector
+@c --------------------------------------------------------------------------
+
+@cindex Windows
+@noindent
+The file selector is a dialog used to select a file. Under Windows, the
+default is to use the standard file selection widget. Under other platforms,
+the file selector is a built-in dialog. @c providing the following capabilities.
+
+@c ??? add screen shot
+@c ??? incomplete
+
+@c --------------------------------------------------------------------------
+@node Menu Items
+@section Menu Items
+@cindex menu
+@c --------------------------------------------------------------------------
+
+@noindent
+The main menus that give access to extended functionalities related to
+source editing are described in this section.
+
+@subsection The File Menu
 @noindent
 
-@subsubsection Word completion
+@table @b
+@item New
+@cindex new file
+Open a new untitled source editor.
+No syntax highlighting is performed until the file is saved, since GPS needs
+to know the file name in order to choose the programming language associated
+with a file.
+
+@cindex Ada
+When you save a new file for the first time, GPS will ask you to enter the
+name of the file. In case you have started typing Ada code, GPS will try
+to guess based on the first main entity in the editor and on the current
+naming scheme, what should be the default name of this new file.
+
+@item New View
+@cindex new view
+@cindex view
+Create a new view of the current editor. The new view shares the same
+contents: if you modify one of the source views, the other view is updated
+at the same time. This is particularly useful when you want to display two
+separate parts of the same file, for example a function spec and its body.
+
+@item Open...
+@cindex open
+@cindex Windows
+Open a file selection dialog where you can select a file to edit.
+Under Windows, this is the standard file selector. Under other platforms,
+this is a built-in file selector described in @ref{The File Selector}.
+
+@item Open From Project...
+@cindex open
+@cindex project
+Open a dialog where you can easily and rapidly select a source file from your
+project.
+
+@c ??? add screen shot
+
+The first text area allows you to type a file name. You can start the beginning
+of a file name, and use the @key{Tab} key to complete the file name. If there
+are several possible completions, the common prefix will be displayed, and
+a list of all possible completions will be displayed in the second text area.
+
+@cindex key
+You can then either complete the name by typing it, or continue hitting the
+@key{Tab} key to cycle through the possible completions, or click on one of the
+completions in the list displayed.
+
+You can also directly access the previous file names typed in this dialog
+by clicking on the @i{down} arrow on the right of the first text area.
+
+Once you have made your choice, click on the @code{OK} button to validate.
+Clicking on @code{Cancel} or hitting the @key{Esc} key will cancel the
+operation and close the dialog.
+
+@item Recent
+@cindex recent
+Open a sub menu containing a list of the ten most recent files opened in GPS,
+so that you can reopen them easily.
+
+@item Save
+@cindex save
+Save the current source editor if needed.
+
+@item Save...
+@cindex save
+Give access to extra save capabilities.
+
+@table @i
+@item File As...
+@cindex save as
+Same current file under a different name, using the file selector dialog.
+@xref{The File Selector}.
+
+@c @item All Editors
+@c Save all modified source editors.
+
+@item All
+@cindex save all
+Save all items, including projects, etc...
+
+@item Desktop
+@cindex save desktop
+Save the desktop to a file. The desktop includes information about
+files, graphs, ... and their window size and position in GPS. The desktop
+is saved per top level project.
+
+@end table
+
+@item Change Directory...
+@cindex directory
+Open a directory selection dialog that lets you change the current working
+directory.
+
+@item Messages
+@cindex messages
+This sub menu gives access to functionalities related to the Messages window.
+@xref{The Messages Window}.
+
+@table @i
+@item Clear
+@cindex messages
+@cindex clear
+Clear the contents of the Messages window.
+
+@item Save As...
+@cindex save as
+Save the contents of the Messages window to a file. A file selector is
+displayed to choose the name and location of the file.
+
+@item Load Contents...
+@cindex load
+Open a file selector to load the contents of a file in the Messages
+window. Source locations are identified and loaded in the Locations Tree.
+@xref{The Locations Tree}.
+
+@end table
+
+@item Close
+@cindex close
+Close the current window. This applies to all GPS windows, not only source
+editors.
+
+@c @item Close All
+@c Close all windows.
+
+@item Print
+@cindex print
+Print the current file by first saving it interactively if needed (if it has
+been modified), and then by launching the command defined in the preferences.
+@xref{Print Command}.
+
+@item Exit
+@cindex exit
+@cindex quit
+Exit GPS after confirmation and if needed, confirmation about saving modified
+windows and editors.
+
+@end table
+
+@subsection The Edit Menu
+@cindex menu
+@cindex edit
 @noindent
 
-@subsubsection Jump to delimiter
-@noindent
+@table @b
+@item Undo
+@cindex undo
+Undo previous insertion/deletion in the current editor.
+
+@item Redo
+@cindex redo
+Redo previous insertion/deletion in the current editor.
+
+@item Cut
+@cindex cut
+Cut the current selection and store it in the clipboard.
+
+@item Copy
+@cindex copy
+Copy the current selection to the clipboard.
+
+@item Paste
+@cindex paste
+Paste the contents of the clipboard to the current cursor position.
+
+@item Select All
+@cindex select all
+Select the whole contents of the current source editor.
+
+@item Comment Lines
+@cindex comment
+Comment the current selection or line based on the current programming
+language syntax.
+
+@item Uncomment Lines
+@cindex uncomment
+Remove the comment delimiters from the current selection or line.
+
+@item Generate Body
+@cindex gnatstub
+@cindex generate body
+Generate Ada body stub for the current source editor by calling the
+external tool @code{gnatstub}.
+
+@item Pretty Print
+@cindex gnatpp
+@cindex pretty print
+Pretty print the current source editor by calling the external tool
+@code{gnatpp}. It is possible to specify @code{gnatpp} switches in the
+switch editor. @c ??? @xref{}.
+
+@item Unit Testing
+@cindex AUnit
+@cindex unit testing
+@cindex testing
+This sub menu gives access to dialogs that make it easy to generate
+AUnit stubs. AUnit is an Ada unit testing frame work.
+
+@table @i
+@item New Test Case...
+Create a new test case. See AUnit documentation for more details.
+
+@c @item Add Routine...
+@c Add a new routine in the current test. See AUnit documentation for more details.
+
+@item New Test Suite...
+Create a new test suite. See AUnit documentation for more details.
+
+@item New Test Harness...
+Create a new harness. See AUnit documentation for more details.
+
+@end table
+
+@item Preferences
+@cindex preferences
+Give access to the preferences dialog. @xref{The Preferences Dialog}.
+@end table
+
+@c --------------------------------------------------------------------------
 
 @c --------------------------------------------------------------------------
 @node Using an External Editor
 @section Using an External Editor
+@cindex editor
+@cindex external editor
+@cindex emacs
+@cindex vi
 @c --------------------------------------------------------------------------
 
 @noindent
-
 GPS is fully integrated with a number of external editors, in
 particular @file{Emacs} and @file{vi}. The choice of the default
-external editor is done in the preferences. The following values are
-recognized:
+external editor is done in the preferences. @xref{The Preferences Dialog}.
+@cindex preferences
+The following values are recognized:
 
 @table @file
 @item gnuclient
+@cindex gnuclient
 This is the recommended client. It is based on Emacs, but needs an
 extra package to be installed. This is the only client that provides a
 full integration in GPS, since any extended lisp command can be sent
@@ -970,20 +1588,24 @@ that is opened. You might want to add the following code to your
 @file{.emacs} file (create one if needed) so that the same Emacs frame
 is reused every time:
 
+@cindex example
 @smallexample
    (setq gnuserv-frame (car (frame-list)))
 @end smallexample
 
+@cindex url
 See @url{http://www.hpl.hp.co.uk/people/ange/gnuserv/} for more information.
 
 
 @item emacsclient
+@cindex emacsclient
 This is a program that is always available if you have installed
 Emacs. As opposed to starting a new Emacs every time, it will reuse an
 existing Emacs session. It is then extremely fast to open a file.
 
 
 @item emacs
+@cindex emacs
 This client will start a new Emacs session every time a file needs to
 be opened. You should use @file{emacsclient} instead, since it is much
 faster, and makes it easier to copy and paste between multiple
@@ -992,6 +1614,7 @@ your system doesn't support @file{emacsclient}.
 
 
 @item vim
+@cindex vim
 @file{Vim} is a vi-like editor that provides a number of enhancements,
 for instance syntax highlighting for all the languages supported by
 GPS. Selecting this external editor will start an xterm (or command
@@ -1002,11 +1625,13 @@ Note that one limitation of this editor is that if GPS needs to open
 the same file a second time, it will open a new editor, instead of
 reusing the existing one.
 
+@cindex Windows
 To enable this capability, the xterm executable must found in the PATH,
 and thus is not currently supported on Windows systems.
 
 
 @item vi
+@cindex vi
 This editor works exactly like vim, but uses the standard @file{vi}
 command instead of @file{vim}.
 
@@ -1026,10 +1651,12 @@ that if you load a new project in GPS, or modify the paths of the current
 project, you should kill any running Emacs, so that a new one is spawned
 by GPS with the appropriate project.
 
+@cindex menu
 Of course, you can alternatively reload explicitly the project from
 Emacs itself by using the menu @code{Project->Load}
 
 
+@cindex preferences
 In the preferences, there are two settings that allow you to select
 the external editor (if left to an empty string, GPS will
 automatically select the first editor available on your system) and
@@ -1040,13 +1667,19 @@ menu to open the external editor.
 @c --------------------------------------------------------------------------
 @node Using the Clipboard
 @section Using the Clipboard
+@cindex clipboard
+@cindex cut
+@cindex copy
+@cindex paste
+@cindex X-Window
 @c --------------------------------------------------------------------------
 
+@noindent
 This section concerns X-Window users who are used to cutting and
 pasting with the middle mouse button. In the GPS text editor, as in
 many recent X applications, the @i{GPS clipboard} is set by explicit
 cut/copy/paste actions, either through menu items or keyboard
-shorcuts, and the @i{primary clipboard} (i.e. the ``middle button''
+shortcuts, and the @i{primary clipboard} (i.e. the ``middle button''
 clipboard) is set by the current selection.
 
 Therefore, copy/paste between GPS and other X applications using the
@@ -1054,30 +1687,36 @@ Therefore, copy/paste between GPS and other X applications using the
 text currently selected. The @i{GPS clipboard}, when set, will
 override the @i{primary clipboard}.
 
+@cindex url
 See @url{http://www.freedesktop.org/standards/clipboards.txt} for more
 information.
 
 @c --------------------------------------------------------------------
 @node Source Navigation
 @chapter Source Navigation
+@cindex source navigation
+@cindex navigation
 @c --------------------------------------------------------------------
 
 @menu
 * Support for Cross References::
-* Spec/Body::
+* The Navigate Menu::
+* Source Navigation Contextual Menus::
 @end menu
 
 @node Support for Cross References
 @section Support for Cross References
+@cindex cross references
 @noindent
-
 GPS provides cross-references for most of the entities defined in your
 application, as well as some advanced browsers like a call graph.
 For this to work, it needs some help from external tools, specific to
 each of the supported languages.
 
-@table @command
+@table @b
 @item Ada
+@cindex Ada
+@cindex GNAT
 The GNAT compiler itself is used to generate the cross-references
 information. This means that you need to compile your application to
 get access to this feature or the various graphs. GPS doesn't provide
@@ -1085,6 +1724,8 @@ automatic recompilation at the moment, although this is a planned
 feature. If your sources have been modified, you should recompile the
 modified files.
 
+@cindex -gnatQ
+@cindex -k
 If you need to navigate through sources that are not fully compilable
 (e.g after heavy modifications, or while porting an application), GNAT
 can still generate partial information if you specify the @code{-gnatQ}
@@ -1092,17 +1733,20 @@ compilation option. Along with the @code{-k} option of gnatmake, it is
 then possible to generate as much relevant information as possible for a
 complete set of non compilable sources.
 
+@cindex ALI
 There are a few special cases where GPS can not find the external file
 (called @file{ALI file}) that contains the cross-reference
 information. Most likely, this is either because you haven't compiled
 your sources yet, or because the source code has changed since the
 @file{ALI file} was generated.
 
+@cindex project
 It could also be that you haven't included in the project the object
 directories that contain the @file{ALI files}.
 
+@cindex separate unit
 In addition, one special case can not be handled automatically. This
-is for separate units, whose file names have been krunched through the
+is for separate units, whose file names have been crunched through the
 @file{gnatkr} command. To handle this, you should force GPS to parse
 all the @file{ALI files} in the appropriate object directory. This is
 done by right-clicking on the object directory in the explorer
@@ -1110,6 +1754,8 @@ done by right-clicking on the object directory in the explorer
 all xref information".
 
 @item C/C++
+@cindex C
+@cindex C++
 To enable the navigation features for C and C++ source files, you need
 to first generate a database of symbol references, by going through the
 menu Build->Recompute C/C++ Xref info. Messages in the console window
@@ -1117,18 +1763,22 @@ will indicate the state of the processing. Due to the nature of these
 languages, in order to provide accurate cross references, GPS needs to
 generate the database in two phases: a first pass parses all the files
 that have been modified since the previous parsing, and a second pass
-generates global cross references by analysing the complete database.
+generates global cross references by analyzing the complete database.
 It is thus expected that for large projects, this phase can take a
-significant amount of cpu to proceed.
+significant amount of CPU to proceed.
 
+@cindex overloaded
+@cindex #ifdef
 In some cases, GPS won't be able to determine the exact function involved
 in a cross reference. This will typically occur for overloaded functions,
 or if multiple functions with the same name, but under different
 @code{#ifdef} sections, are defined. In this case, GPS will display a
 dialog listing the possible choices to resolve the ambiguity.
 
-In addition, the C/C++ parser has the following limitations: namespaces
-are currently ignored (no specific processing is done for namespaces);
+@cindex name space
+@cindex macro
+In addition, the C/C++ parser has the following limitations: name spaces
+are currently ignored (no specific processing is done for name spaces);
 no attempt is made to process the macros and other preprocessor defines.
 Macros are considered as special entities, so it is possible to navigate
 from a macro use to its definition, but the macro content is ignored,
@@ -1137,9 +1787,157 @@ won't be detected.
 
 @end table
 
-@node Spec/Body
-@section Spec/Body
+@node The Navigate Menu
+@section The Navigate Menu
+@cindex navigate
 @noindent
+
+@table @b
+@item Find/Replace...
+@cindex find
+@cindex search
+@cindex replace
+Open the find and replace dialog. @xref{Searching and Replacing}.
+
+@item Find Next
+@cindex find next
+Find next occurrence of the current search. @xref{Searching and Replacing}.
+
+@item Find Previous
+@cindex find previous
+Find previous occurrence of the current search.
+@xref{Searching and Replacing}.
+
+@item Goto Declaration
+@cindex goto declaration
+Go to the declaration/spec of the current entity. The current entity is
+determined by the word located around the cursor.
+This item is also accessible through the editor's contextual menu directly.
+This capability requires support for cross references.
+
+@item Goto Body
+@cindex goto body
+Go to the body/implementation of the current entity.
+This item is also accessible through the editor's contextual menu directly.
+This capability requires support for cross references.
+
+@item Goto Line...
+@cindex goto line
+Open a dialog where you can type a line number,  in order to jump to a specific
+location in the current source editor.
+
+@item Goto File Spec<->Body
+@cindex goto file spec/body
+@cindex Ada
+Open the corresponding spec file if the current edited file is a body file,
+or body file otherwise. This option is only available for the Ada language.
+This item is also accessible through the editor's contextual menu
+
+@c @item Goto Parent Unit
+@c @cindex goto parent unit
+@c This item is also accessible through the editor's contextual menu
+
+@item Find All References
+@anchor{Find All References}
+@cindex find all references
+Find all the references to the current entity in the project. The search
+is based on the semantic information extracted from the sources, this is not
+a simple text search. The result of the search is displayed in the location
+window, see @ref{The Locations Tree}.
+
+This capability requires support for cross references.
+This item is also accessible through the editor's contextual menu
+
+@c @item Start Of Statement
+@c @item End Of Statement
+@c @item Next Procedure
+@c @item Previous Procedure
+
+@item Previous Tag
+@cindex tag
+@cindex previous tag
+@cindex locations tree
+Go to previous tag/location. @xref{The Locations Tree}.
+
+@item Next Tag
+@cindex tag
+@cindex next tag
+@cindex locations tree
+Go to next tag/location. @xref{The Locations Tree}.
+
+@end table
+
+@node Source Navigation Contextual Menus
+@section Source Navigation Contextual Menus
+@cindex contextual menu
+@noindent
+This contextual menu is available from any source editor by right-clicking.
+If you right click over an entity, or first select text, the contextual
+menu will apply to this selection or entity.
+
+@table @b
+@item Goto declaration of @i{entity}
+@cindex goto declaration
+Go to the declaration/spec of @i{entity}. The current entity is
+determined by the word located around the cursor or by the current selection
+if any.
+This capability requires support for cross references.
+
+@item Goto body of @i{entity}
+@cindex goto body
+Go to the body/implementation of @i{entity}.
+This capability requires support for cross references.
+
+@item Goto file spec/body
+@cindex goto file spec/body
+@cindex Ada
+Open the corresponding spec file if the current edited file is a body file,
+or body file otherwise. This option is only available for the Ada language.
+
+@item References
+@cindex references
+This item gives access to different capabilities related to listing or
+displaying references to the current entity or selection.
+
+@table @command
+@item @i{Entity} calls
+@cindex call graph
+@cindex calls
+Open or raise the call graph browser on the specified entity and display all
+the functions called by @i{entity}.
+@c ??? @ref{}
+
+@item @i{Entity} is called by
+@cindex call graph
+@cindex called by
+Open or raise the call graph browser on the specified entity and display all
+the functions calling @i{entity}.
+@c ??? @ref{}
+Note that this capability requires a global look up in the project cross
+references, which may take a significant amount of time the first time.
+After a global look up, information is cached in memory, so that further
+global queries will be faster.
+
+@item Find all references to @i{entity}
+@cindex find all references
+@xref{Find All References}.
+
+@item Find all local references to @i{entity}
+@cindex find all local references
+@c ??? incomplete
+
+@item Find all writes to @i{entity}
+@cindex find all writes
+@c ??? incomplete
+
+@item Find all reads of @i{entity}
+@cindex find all reads
+@c ??? incomplete
+
+@end table
+
+@end table
+
 
 @c --------------------------------------------------------------------
 @c Project Handling
@@ -1150,34 +1948,45 @@ won't be detected.
 @c --------------------------------------------------------------------
 @node Searching and Replacing
 @chapter Searching and Replacing
+@cindex find
+@cindex search
+@cindex replace
 @c --------------------------------------------------------------------
 
+@noindent
 GPS provides extensive search capabilities among its different
 elements. For instance, it is possible to search in the currently
 edited source file, or in all the source files belonging to the
 project, even those that are not currently open. It is also possible
 to search in the project explorer (on the left side of the main GPS
 window), or the help modules,@dots{}
+@cindex project explorer
 
+@cindex menu
+@cindex key
+@cindex search context
 All these search contexts are grouped into a single graphical window,
-that you can open either through the menu @code{Navigate->Find}, or
-the shortcut @key{Control-F}.
+that you can open either through the menu @code{Navigate->Find/Replace...}, or
+the shortcut @key{Ctrl-F}.
 
 Selecting either of these two options will pop up a dialog on the
 screen, similar to the following:
 
 @iftex
-@image{search-hide, 12.7cm}
+@cindex screen shot
+@image{search-hide}
 @end iftex
 
 @ifhtml
-@image{search-hide, 12.7cm}
+@cindex screen shot
+@image{search-hide}
 @end ifhtml
 
-On this screenshot, you can see three entry fields:
+On this screen shot, you can see three entry fields:
 
 @table @b
 @item @code{"Search for"}
+@cindex search for
 This is the location where you type the string or pattern you are
 looking for. The search widget supports two modes, either fixed strings
 or regular expressions. You can commute between the two modes by
@@ -1190,14 +1999,18 @@ top two ones are empty patterns, that automatically set up the
 appropriate fixed strings/regular expression mode. The other regular
 expressions are language-specific, and will match patterns like Ada
 type definition, C++ method declaration,@dots{}
+@cindex C++
+@cindex Ada
 
 @item @code{"Replace with"}
+@cindex replace with
 This field should contain the string that will replace the occurrences
 of the pattern defined above.
 The combo box provides a history of previously used replacement
 strings.
 
 @item @code{"Look in"}
+@cindex look in
 This field defines the context in which the search should
 occur. Clicking on the arrow on the right will display the list of all
 possible contexts. The exact list will depend on what modules were
@@ -1213,6 +2026,7 @@ scope is provided. This is used to avoid matching on comments when you
 are only interested in actual code, or to only search strings and
 comments, and ignore the code.
 
+@cindex search context
 GPS will automatically select the most appropriate context when you
 open the search dialog, depending on which component currently has the
 focus. However, you can of course change the context to the one you
@@ -1225,21 +2039,24 @@ The second part of the window is a row of buttons, to start the search
 it is taking too long, or to display the options.
 
 @iftex
-@image{search-options, 12.0cm}
+@cindex screen shot
+@image{search-options}
 @end iftex
 
 @ifhtml
-@image{search-options, 12.7cm}
+@cindex screen shot
+@image{search-options}
 @end ifhtml
 
 There are four check boxes in this options box.
 
 @table @b
 @item @code{"Search All Occurrences"}
+@cindex search all occurrences
 The default mode for the search widget is interactive searching: its
-stops as soon as one occurence of the pattern is found. You then have
+stops as soon as one occurrence of the pattern is found. You then have
 to press the @code{Next} button (or the equivalent shortcut
-@key{Control-N}) to go to the next occurrence.
+@key{Ctrl-N}) to go to the next occurrence.
 
 However, if you enable this check box, the search widget will start
 searching for all occurrences right away, and put the results in a new
@@ -1248,25 +2065,31 @@ the GPS window). You can interrupt the search at any time by pressing
 the @code{Stop} button: this will stop when the next occurrence is found.
 
 @item @code{"Case Sensitive"}
+@cindex case sensitive
 By default, patterns are case insensitive (upper-case letters and
 lower-case letters are considered as equivalent). You can change this
 behavior by clicking on this check box.
 
 @item @code{"Whole Word Only"}
+@cindex whole word
 If activated, this check box will force the search engine to ignore
 substrings. "sensitive" will no longer match "insensitive".
 
 @item @code{"Regular Expression"}
+@cindex regular expression
 This button commutes between fixed string patterns and regular
 expressions. As mentioned above, you can also commute between these two modes
 by selecting the arrow on the right of the @code{Search for:} field.
 
 @end table
 
+@cindex MDI
+@cindex Multiple Document Interface
 As most GPS components, the search window is under control of the
 multiple document interface, and can thus be integrated into the main
 GPS window instead of being an external window.
 
+@cindex menu
 To force this behavior, open the menu @code{Window}, select
 @code{Search} in the list at the bottom of the menu, and then select
 either @code{Floating} or @code{Docked}.
@@ -1279,7 +2102,11 @@ started next time.
 @c --------------------------------------------------------------------
 @node Compilation/Build
 @chapter Compilation/Build
+@cindex compilation
+@cindex build
 @c --------------------------------------------------------------------
+
+@c ??? incomplete
 
 @menu
 * Ada Compilation and Build::
@@ -1290,10 +2117,13 @@ started next time.
 
 @node Ada Compilation and Build
 @section Ada Compilation and Build
+@cindex Ada
 @noindent
 
 @node C/C++ Compilation and Build
 @section C/C++ Compilation and Build
+@cindex C
+@cindex C++
 @noindent
 
 @node Multi-language Build
@@ -1303,31 +2133,34 @@ started next time.
 @node Integrating existing build procedures with the GPS build system
 @section Integrating existing build procedures with the GPS build system
 @noindent
-
-Since the build system provided by GPS is based on makefiles, it is possible
-to integrate existing build scripts and makefiles. In the following section,
-we will call such projects that integrate with existing build procedures a
-@i{foreign project}.
+Since the multi-language build system provided by GPS is based on makefiles,
+it is possible to integrate existing build scripts and makefiles. In the
+following section, we will call such projects that integrate with existing
+build procedures a @i{foreign project}.
 
 You first need to provide your own @code{Makefile.<project>} file, that will
 provide stubs to the real build commands.
 
 Then to tell GPS that it should not generate automatically the makefile
 corresponding to a given project, set the read-only attribute on the
-makefile, e.g under unix:
+makefile, e.g under Unix:
+@cindex Unix
 
+@cindex example
 @smallexample
 $ chmod -w Makefile.<project>
 @end smallexample
 
+@cindex Windows
 or under Windows:
 
 @smallexample
+@cindex example
 > attrib +r Makefile.<project>
 @end smallexample
 
 This way when saving the project, GPS knows that the existing makefile
-should not be overriden.
+should not be overridden.
 
 Depending on your project, you will need to define some or all of the
 following targets in the makefile stub:
@@ -1342,18 +2175,23 @@ This is an optional rule, used to clean the temporary files, e.g. the
 object files generated during the build.
 
 @item SRC_DIRS
+Blank separated list of source directories.
 
 @item LDFLAGS
+Linker options.
 
 @item LIBS
+Additional libraries that this foreign project uses.
 
 @item DEPS_PROJECTS
+List of projects (foreign or non foreign) that this project depends upon.
 
 @end table
 
 For example, suppose we have a foreign project called @code{Foo},
 with an existing makefile, here is how Makefile.foo would look like:
 
+@cindex example
 @smallexample
 ifeq ($(FOO_PROJECT),)
 FOO_PROJECT=True
@@ -1393,19 +2231,42 @@ endif
 @c --------------------------------------------------------------------
 @node Source Browsing
 @chapter Source Browsing
+@cindex source browsing
 @c --------------------------------------------------------------------
+
+@c ??? incomplete
 
 @menu
 * General Issues::
+* Call Graph::
+* Dependency Browser::
+* Entity Browser::
 @end menu
 
 @node General Issues
 @section General Issues
 @noindent
 
+@node Call Graph
+@section Call Graph
+@cindex call graph
+@noindent
+
+@node Dependency Browser
+@section Dependency Browser
+@cindex dependency browser
+@noindent
+
+@node Entity Browser
+@section Entity Browser
+@cindex entity browser
+@noindent
+
 @c --------------------------------------------------------------------
 @node Debugging
 @chapter Debugging
+@cindex debugger
+@cindex debugging
 @c --------------------------------------------------------------------
 
 @noindent
@@ -1413,6 +2274,7 @@ Debugging is tightly integrated with the other components of GPS. For
 example, it is possible to edit files and navigate through your sources
 while debugging.
 
+@cindex menu
 To start a debug session, go to the menu @code{Debug->Initialize}, and choose
 either the name of your executable, if you have specified the name of
 your main program(s) in the project properties, or start an empty debug
@@ -1425,9 +2287,10 @@ the data window (in the top of the working area), and the debugger console
 All the menus under @code{Debugger}
 are now also accessible, and you also have access to additional contextual
 menus, in particular in the source editor where it is possible to easily
-display variables, set breakpoints, and get automatic display (via @i{tooltips})
-of object values.
+display variables, set breakpoints, and get automatic display
+(via @i{tool tips}) of object values.
 
+@cindex menu
 When you want to quit the debugger without quitting GPS, go to the menu
 @code{Debug->Terminate}, which will terminate your debug session.
 
@@ -1446,12 +2309,163 @@ When you want to quit the debugger without quitting GPS, go to the menu
 @c --------------------------------------------------------------------
 @node Version Control System
 @chapter Version Control System
+@cindex version control
 @c --------------------------------------------------------------------
+
+@menu
+* The VCS Explorer::
+* The VCS Menu::
+* The Version Control Contextual Menu::
+@end menu
+
+@c ??? add introduction to VCS here
+@c what is provided. integration with other components. how different VCS
+@c are handled, list of VCS currently supported, ...
+
+@node The VCS Explorer
+@section The VCS Explorer
+@cindex VCS explorer
+@cindex version control
+@noindent
+@c ??? incomplete
+@c add screen shot
+@c explain how the explorer works
+@c columns: Status, Log, File name, Working rev. Head rev.
+@c explain sorting on columns
+@c explain single and multiple selections
+@c mention contextual menu and @xref{The Version Control Contextual Menu}.
+
+@node The VCS Menu
+@section The VCS Menu
+@cindex version control
+@cindex menu
+@noindent
+@c ??? incomplete
+@c explain that the menus apply to the current context/selection, ...
+@c mention that it is usually simpler to use contextual menus.
+@c @xref{The Version Control Contextual Menu}.
+
+@table @b
+@item Explorer
+Open or raise the VCS Explorer. @xref{The VCS Explorer}.
+
+@item Update all projects
+
+@item Query status for all projects
+
+@item Update
+
+@item Start Editing
+
+@item View revision history
+
+@item Compare
+@cindex compare
+@anchor{Compare}
+
+@table @i
+@item Against head revision
+@item Against working revision
+@item Working revision against head revision
+@end table
+
+@item Annotate
+@anchor{Annotate}
+
+@item Remove annotations
+@item Edit changelog
+@item Commit
+@anchor{Commit}
+@c explain what actions are performed when a commit is made:
+@c ci_check, log_check, status update, ...
+
+@c @item Revert
+@item Add to repository
+@item Remove from repository
+@end table
+
+@node The Version Control Contextual Menu
+@section The Version Control Contextual Menu
+@noindent
+This section describes the version control contextual menu displayed when you
+right-click on an entity (e.g. a file, a directory, a project) from various
+parts of GPS, including the project explorer, the source editor and the VCS
+Explorer.
+@c ??? incomplete
+
+Depending on the context, some of the items described in this section won't
+be shown, which means that they are not relevant to the current context.
+
+@table @b
+@item Query status
+@item Update
+@item Start editing
+@item View revision history
+@item Compare
+@cindex compare
+Compare selected files. @xref{Compare}.
+
+@item Annotate
+@cindex annotate
+Enable annotations for the selected files.
+@xref{Annotate}.
+
+@item Remove annotations
+@item Edit revision log
+@item Commit via revision log
+This menu item is titled @i{Commit} when a revision log has already been
+created.
+@xref{Commit}.
+
+@item Remove revision log
+@item Add to repository
+@item Remove from repository
+@item Directory
+Only available when the current context contains directory information
+
+@table @i
+@item Query status for directory
+@item Query status for directory recursively
+@item Update directory
+@item Update directory recursively
+@end table
+
+@item Project
+Only available when the current context contains project information
+
+@table @i
+@item List all files in project
+@item Query status for project
+@item Update project
+@item List all files in project and subprojects
+@item Query status for project and subprojects
+@item Update project and subprojects
+@end table
+
+@item Hide up-to-date files
+@anchor{Hide up-to-date files}
+@cindex filter
+Only available from the VCS Explorer.
+Filter out up-to-date files, that is files that have not been modified locally
+and that do not need to be updated.
+
+@item Hide non registered files
+@anchor{Hide non registered files}
+@cindex filter
+Only available from the VCS Explorer.
+Filter out non registered files, that is files unknown to the version control
+system, or whose information could not be retrieved (e.g. the version control
+server is temporarily unavailable).
+
+@end table
 
 @c --------------------------------------------------------------------
 @node Working in a cross environment
 @chapter Working in a cross environment
+@cindex cross environment
 @c --------------------------------------------------------------------
+
+@c ??? incomplete
 
 @menu
 * Customizing your projects::
@@ -1460,15 +2474,18 @@ When you want to quit the debugger without quitting GPS, go to the menu
 
 @node Customizing your projects
 @section Customizing your projects
+@cindex project
 @noindent
 
 @node Debugger issues
 @section Debugger issues
+@cindex debugger
 @noindent
 
 @c --------------------------------------------------------------------
 @node Customization
 @chapter Customization
+@cindex customization
 @c --------------------------------------------------------------------
 
 @menu
@@ -1479,21 +2496,599 @@ When you want to quit the debugger without quitting GPS, go to the menu
 
 @node The Preferences Dialog
 @section The Preferences Dialog
+@cindex preferences
 @noindent
+This dialog, available through the menu @code{Edit->Preferences}, allows you to
+modify the global preferences of GPS.
+To enable the new preferences, you simply need to confirm by pressing
+the @code{OK} button. To test your changes, you can use the @code{Apply}
+button. Pressing the @code{Cancel} button will undo all your changes.
+
+Each preference is composed of a label displaying the name of the
+preference, and an editing area to modify its value. If you leave to mouse
+over the label, a tool tip will be displayed giving an on-line help on the
+preference.
+
+The preferences dialog is composed of nine areas, accessible through the
+tabs at the left of the dialog, labeled @i{General}, @i{Messages},
+@i{Visual diff}, @i{Editor}, @i{Languages}, @i{Project}, @i{Browsers},
+@i{Debugger}, @i{Helpers}. Each page corresponds to a section of preferences.
+
+@table @b
+@item General
+
+The general preferences are composed of two pages available at the top of the
+right area: @i{General} and @i{MDI}
+
+@table @i
+@item General
+
+@table @b
+@item Default font
+@cindex font
+The default font used in GPS
+
+@item Key theme
+@cindex key theme
+@cindex emacs
+Name of key theme to use. The key themes determines the key bindings used by
+the various widgets, in particular the source editor.
+Values currently supported are @code{Emacs} and @code{Default}
+
+@item Character set
+@cindex character set
+@cindex ISO-8859-1
+Name of character set to use for displaying text. The default value is
+ISO-8859-1, which corresponds to Latin-1 (Western European) characters.
+
+@item Dynamic key bindings
+@cindex key binding
+@cindex dynamic key binding
+@anchor{Dynamic key bindings}
+Whether the menu key bindings can be changed interactively.
+@xref{Redefining key bindings}.
+
+@item Display splash screen
+@cindex splash screen
+Whether a splash screen should be displayed when starting GPS.
+
+@item Start maximized
+@cindex maximized
+Whether the GPS window should start in maximized state.
+
+@item Display welcome window
+@cindex welcome dialog
+Whether GPS should display the welcome window for the selection of the project
+to use.
+
+@item Show text in tool bar
+@cindex tool bar
+Whether the tool bar should show both text and icons, or only icons.
+
+@end table
+
+@item MDI
+@cindex MDI
+@cindex Multiple Document Interface
+This section specifies preferences that apply to the @i{Multiple Document
+Interface} described in @ref{Multiple Document Interface}.
+
+@table @b
+@item Opaque
+@cindex opaque
+If True, items will be resized or moved opaquely when not maximized.
+
+@item Destroy floats
+@cindex float
+If False, closing the window associated with a floating item will put the item
+back in the main GPS window, but will not destroy it. If True, the item is
+destroyed.
+
+@item Title font
+@cindex font
+Font used in the title bar of the items.
+
+@item Background color
+@cindex color
+Color to use for the background of the MDI.
+
+@item Title bar color
+@cindex color
+Color to use for the title bar of unselected items.
+
+@item Selected title bar color
+@cindex color
+Color to use for the title bar of selected items.
+
+@end table
+
+@end table
+
+@item Messages
+@cindex messages
+@table @i
+@item Color highlighting
+@cindex color
+Color used to highlight text in the messages window
+
+@item Show build progress
+@cindex build
+@cindex build progress
+Whether the progress bar should show progress during builds
+
+@item File pattern
+@cindex file pattern
+@cindex location
+Pattern used to detect file locations from the messages window.
+This is particularly useful when using an external tool such as a compiler
+or a search tool, so that GPS will highlight and allow navigation through source
+locations. This is a standard system V regular expression containing two
+or three parenthesized subexpressions corresponding to the file, line and
+column patterns.
+
+@item File index
+@cindex file index
+Index of filename in the file pattern
+
+@item Line index
+@cindex line index
+Index of the line number in the file pattern
+
+@item Column index
+@cindex column index
+Index of the column number in the file pattern
+@end table
+
+@item Visual diff
+@cindex visual diff
+@cindex file comparison
+@table @i
+@item Context length
+@cindex context length
+The number of lines displayed before and after each chunk of differences.
+Specifying -1 will display the whole file.
+
+@item Diff command
+@cindex diff
+@cindex -u
+@cindex -c
+Command used to compute differences between two files.
+Arguments can also be specified. The visual diff expects a standard diff
+output with no context (that is, no @code{-c} nor @code{-u} switch).
+Arguments of interest may include (this will depend on the version of diff
+used):
+
+@table @b
+@item -b
+Ignore changes in amount of white space.
+
+@item -B
+Ignore changes that just insert or delete blank lines.
+
+@item -i
+Ignore changes in case; consider upper and lower case letters equivalent.
+
+@item -w
+Ignore white space when comparing lines.
+
+@end table
+
+@item Patch command
+@cindex patch
+Command used to apply a patch. Arguments can also be specified.
+@end table
+
+@item Editor
+@cindex editor
+@table @i
+@item General
+
+@table @b
+@item Strip blanks
+@cindex strip blanks
+Whether the editor should remove trailing blanks when saving a file.
+
+@item Display line numbers
+@cindex display lilne numbers
+Whether the line numbers should be displayed in file editors.
+
+@item Tooltips
+@cindex tooltip
+Whether tool tips should be displayed automatically.
+
+@item Autosave delay
+@cindex autosave delay
+The period (in seconds) after which a source editor is automatically saved.
+0 if none.
+
+Each modified file is saved under a file called @code{.#filename}, which is
+removed on the next explicit save operation.
+
+@item Auto-indentation
+@cindex indentation
+Key used for auto-indenting lines or block of lines.
+
+@item Completion
+@cindex completion
+Key used for automatic completion of identifiers.
+
+@item Jump to delimiter
+@cindex delimiter
+Key used for moving the cursor to the corresponding delimiter.
+Delimiters include parentheses, brackets, and braces.
+
+@item External editor
+@cindex external editor
+The default external editor to use.
+
+@item Always use external editor
+True if all editions should be done with the external editor. This will
+deactivate completely the internal editor. False if the external editor
+needs to be explicitly called by the user.
+
+@end table
+
+@item Fonts & Colors
+@cindex font
+@cindex color
+
+@table @b
+@item Keyword color
+@cindex color
+Color for highlighting keywords.
+
+@item Comment color
+@cindex color
+Color for highlighting comments.
+
+@item String color
+@cindex color
+Color for highlighting strings.
+
+@item Line highlighting color
+@cindex color
+Color for highlighting lines.
+
+@item Default font
+@cindex font
+The font used in the source editor.
+
+@item Keyword font
+@cindex font
+The font used to display keywords.
+
+@item Comment font
+@cindex font
+The font used to display comments.
+
+@item String font
+@cindex font
+The font used to display strings.
+
+@item Tooltip font
+@cindex font
+The font used to display tool tips in the source editor.
+
+@end table
+
+@end table
+
+@item Languages
+@cindex language
+Provide preferences specific to a programming language.
+
+@table @i
+@item Ada
+@cindex Ada
+
+@table @b
+@item Auto indentation
+@cindex indentation
+Whether the editor should indent automatically Ada sources.
+
+@item Use tabulations
+@cindex tabulation
+Whether the editor should use tabulations when indenting.
+
+@item Default indentation
+@cindex indentation level
+The number of spaces for the default Ada indentation.
+
+@item Continuation lines
+@cindex continuation line
+The number of extra spaces for continuation lines.
+
+@item Declaration lines
+@cindex declaration line
+The number of extra spaces for multiple line declarations.
+For example, using a value of 4, here is how the following code would be
+indented:
+
+@cindex example
+@smallexample
+variable1,
+    variable2,
+    variable3 : Integer;
+@end smallexample
+
+@item RM style case indentation
+@cindex case indentation
+Whether GPS should indent case statements with an extra level, as used in the
+Ada Reference Manual, e.g:
+
+@cindex example
+@smallexample
+case Value is
+   when others =>
+      null;
+end case;
+@end smallexample
+
+If this preference is set to @code{False}, this would be indented as:
+
+@cindex example
+@smallexample
+case Value is
+when others =>
+   null;
+end case;
+@end smallexample
+
+@end table
+
+@item C/C++
+@cindex C
+@cindex C++
+
+@table @b
+@item Auto indentation
+@cindex indentation
+Whether the editor should indent automatically C/C++ sources.
+
+@item Use tabulations
+@cindex tabulation
+Whether the editor should use tabulations when indenting. If True,
+the editor will replace each occurrence of eight characters by a tabulation
+character.
+
+@item Default indentation
+@cindex indentation
+The number of spaces for the default indentation.
+
+@end table
+
+@end table
+
+@item Project
+@cindex project
+@table @i
+@item Relative paths
+@cindex relative path
+Whether paths should be absolute or relative when the projects are modified.
+
+@item Show project hierarchy
+@cindex project hierarchy
+Whether the list of projects to modify through the project properties dialog
+should be displayed as a hierarchy of projects, or a simple sorted list.
+
+@end table
+
+@item Browsers
+@cindex browsers
+@table @i
+@item General
+
+@table @b
+@item Links font
+@cindex font
+Font used to draw the links between items.
+
+@item Link color
+@cindex color
+Color used to draw the links between unselected items.
+
+@item Selected link color
+@cindex color
+Color to use for links between selected items.
+
+@item Ancestor items color
+@cindex color
+Color to use for the background of the items linked to the selected item.
+
+@item Offspring items color
+@cindex color
+Color to use for the background of the items linked from the selected item.
+
+@item Vertical layout
+@cindex vertical layout
+Whether the layout of the graph should be vertical (@i{True}) or
+horizontal (@i{False}).
+
+@item Selected item color
+@cindex color
+Color to use to draw the selected item.
+
+@end table
+
+@item File Dependencies
+
+@table @b
+@item Show system files
+@cindex Ada
+@cindex C
+Whether the system files (Ada runtime or standard C include files) should be
+visible in the browser.
+
+@item Show implicit dependencies
+@cindex implicit dependency
+@cindex dependency
+If False, then only the explicit dependencies are shown in the browser.
+Otherwise, all dependencies, even implicit, are displayed.
+
+@end table
+
+@end table
+
+@item VCS
+@cindex version control
+@table @i
+@item Hide up-to-date files
+Whether up-to-date files should be hidden by default in the VCS Explorer.
+@xref{Hide up-to-date files}.
+
+@item Hide non registered files
+Whether non registered files should be hidden by default in the VCS
+Explorer. @xref{Hide non registered files}.
+
+@end table
+
+@item Debugger
+@cindex debugger
+@table @i
+@item General
+
+@table @b
+@item Fixed font
+@cindex font
+@cindex fixed font
+Set the font used for displaying text in the data window, memory view and
+the debugger console.
+
+@item Color highlighting
+@cindex color
+Color used for highlighting in the debugger console.
+
+@item Break on exceptions
+@cindex breakpoint
+@cindex exception
+Specifies whether a breakpoint on all exceptions should be set by default
+when loading a program.
+
+@end table
+
+@item Source
+
+@table @b
+@item Show lines with code
+Specifies whether blue dots should be displayed in the source editor for lines
+that contain code. If set to @i{False}, gray dots will be displayed instead
+on each line, allowing breakpoint on any line. Disabling this option provides
+a faster feedback, since GPS does not need to query the debugger about which
+lines contain code.
+
+@end table
+
+@item Assembly
+@cindex assembly
+@table @b
+@item Current assembly line
+Color used to highlight the assembly code for the current line.
+
+@item Range size
+@cindex range size
+Number of assembly lines to display in the initial display of the assembly
+window. If the size is 0, then the whole subprogram is displayed, but this
+can take a very long time on slow machines.
+
+@end table
+
+@item Data
+@cindex data
+Lets you change the preferences of the @i{Data Window}, in particular
+the fonts and colors used to display the data graphically.
+
+@table @b
+@item Clickable item
+Indicates color to be used for the items that are click-able (e.g pointers).
+
+@item Changed data
+Indicates color to be used to highlight fields that have changed since the last update.
+
+@item Item name
+Indicates font to be used for the name of the item.
+
+@item Item value
+Indicates font to be used to display the value of the item.
+
+@item Debugger output
+
+@item Item type
+Indicates font to be used to display the type of the item.
+
+@item Annotations
+Font used for the links between two items.
+
+@item Detect aliases
+@cindex aliases
+If enabled, do not create new items when an item with the same address is
+already present on the canvas.
+
+@end table
+
+@item Memory
+@cindex memory view
+@table @b
+@item Default color
+Color used by default in the memory view window.
+
+@item Color highlighting
+Color used for highlighted items.
+
+@item Selection
+Color used for selected items.
+
+@item Modified
+Color used for modified items.
+
+@end table
+
+@end table
+
+@item Helpers
+@cindex helper
+@table @i
+@item List processes
+Command used to list processes running on the machine.
+
+@item Remote shell
+@cindex remote shell
+Program used to run a process on a remote machine. You can specify arguments,
+e.g. @code{rsh -l user}
+
+@item Remote copy
+@cindex remote copy
+Program used to copy a file from a remote machine. You can specify arguments,
+e.g. @code{rcp -l user}
+
+@item Execute command
+@cindex execution
+Program used to execute commands externally.
+
+@item Print command
+@cindex print
+@anchor{Print Command}
+Program used to print files.
+
+@end table
+
+@end table
 
 @node Customizing the Menu Bar and the Tool Bar
 @section Customizing the Menu Bar and the Tool Bar
+@cindex customization
 @noindent
-
 You can customize the GPS menu bar in two different ways: you can
 redefine or add new key bindings to the existing menu items, and
 you can define new menu items.
 
 @subsection Redefining key bindings
+@cindex key
+@cindex key binding
+@anchor{Redefining key bindings}
 @noindent
 In order to define or redefine key bindings, you first need to enable
-the @i{dynamic key binding} feature in the @code{preferences} dialog,
-in the general section.
+the @i{dynamic key binding} feature in the Preferences dialog.
+@xref{Dynamic key bindings}.
 
 Then, you can simply navigate through the menus, and type the key binding
 you want to associate to a particular item. To remove a key binding, use
@@ -1502,13 +3097,18 @@ Your changes will be saved when GPS exits, in a file called
 @file{$HOME/.gps/custom_keys}.
 
 @subsection Adding menu and button items
+@cindex menu
+@cindex tool bar
 @noindent
 The GPS menu bar can be customized through an XML file called
 @file{custom} in the gps home directory (@file{$HOME/.gps} on Unix
 systems, @file{%HOME%\.gps} on Windows systems).
+@cindex Unix
+@cindex Windows
 
 Here is an example for such a file:
 
+@cindex example
 @smallexample
 <?xml version="1.0"?>
 
@@ -1542,16 +3142,19 @@ Here is an example for such a file:
 </Custom>
 @end smallexample
 
-The example above creates two toplevel menus, named @file{custom menu}
+The example above creates two top-level menus, named @file{custom menu}
 and @file{custom menu number 2}. The first one contains a menu item named
 @file{item 1}, which is associated to the shell command @file{shell command
-1}, and a submenu named @file{other menu}, and so on.
+1}, and a sub menu named @file{other menu}, and so on.
 
+@cindex shell
+@cindex interactive command
 As well as shell commands, you can use custom menu items to invoke GPS
-shell commands. The following example shows how to create menus to
+commands. The following example shows how to create menus to
 invoke the @file{help} interactive command and to open the file
 @file{main.c}.
 
+@cindex example
 @smallexample
 <Submenu>
    <Title>Edit</Title>
@@ -1570,10 +3173,11 @@ You can define the accelerator keys for your menus, using underscores
 in the titles. Thus, if you want an accelerator on the first letter in
 a menu named @file{File}, set its title as @file{_File}.
 
-You can add items or submenus to existing menus, using titles for
+You can add items or sub menus to existing menus, using titles for
 menus that already exist. For example, this adds an item named
 @file{Robert} to the @file{Edit} menu.
 
+@cindex example
 @smallexample
 <Submenu>
   <Title>Edit</Title>
@@ -1583,10 +3187,11 @@ menus that already exist. For example, this adds an item named
 </Submenu>
 @end smallexample
 
-Use the @file{/} separator to identify the submenu in a menu. For
-example, this adds a submenu named @file{Olga} containing an item named
+Use the @file{/} separator to identify the sub menu in a menu. For
+example, this adds a sub menu named @file{Olga} containing an item named
 @file{Item} to the @file{Edit} menu.
 
+@cindex example
 @smallexample
 <Submenu>
   <Title>Edit/Olga</Title>
@@ -1600,13 +3205,18 @@ Adding an item with an empty title or no title at all inserts a
 menu separator.
 
 As an alternative to creating new menu items, you can create new
-buttons on the toolbar, with exactly the same syntax, by using
+buttons on the tool bar, with exactly the same syntax, by using
 the @file{<Toolbar_Item>} tag in place of the @file{<Menu_Item>} tag.
+@cindex jpeg
+@cindex png
+@cindex gif
+@cindex xpm
 Within this tag, the tag @file{<Pixmap>} can be used to indicate
 the location of an image file (of the type @file{jpeg}, @file{png}, @file{gif}
 or @file{xpm}) to be used as icon for the button. An empty @file{<Toolbar_Item>}
-tag indicates a separator in the toolbar.
+tag indicates a separator in the tool bar.
 
+@cindex example
 @smallexample
 <Submenu>
    <Title>Toolbar Items</Title>
@@ -1647,7 +3257,7 @@ P : the project is the root project
 p : the project is the current project
 
 r : indicates that the listing should be project-recursive, i.e. that
-sub-projects should be listed as well, and their subprojects, and so
+sub-projects should be listed as well, and their sub projects, and so
 on.
 
 d : list the source directories
@@ -1658,7 +3268,8 @@ f : output the list into a file and substitute the parameter with the
 name of that file.
 @end table
 
-Examples :
+@cindex example
+Examples:
 
 @table @file
 
@@ -1667,18 +3278,21 @@ Replaced by a list of source files in the root project.
 
 @item %prs
 Replaced by a list of files in the current project, and all imported
-subprojects, recursively.
+sub projects, recursively.
 
 @item %prdf
 Replaced by the name of a file that contains a list of source
-directories in the current project, and all imported subprojects,
+directories in the current project, and all imported sub projects,
 recursively.
 @end table
 
 @node Changing Colors Fonts and Key Bindings
 @section Changing Colors Fonts and Key Bindings
-@noindent
 
+@cindex Gtk+
+@cindex gtkrc
+@cindex Unix
+@noindent
 In addition to the preferences dialog, GPS can be configured through the
 Gtk+ mechanism of @file{rc files}. You can create a text file called
 @file{gtkrc} in the gps home directory (@file{~/.gps} on Unix systems), or as
@@ -1692,6 +3306,7 @@ pressed. It will also set a background pixmap when it is not pressed.
 The style also inherits from the one above, so that the buttons also
 use the default font.
 
+@cindex example
 @smallexample
 pixmap_path "<directory_that_contains_the_pixmap>"
 style "button" = "default" @{
@@ -1712,6 +3327,7 @@ parameter should be one of @option{pages}, @option{paragraphs},
 @option{logical-positions}. The second parameter is the number of
 such units to skip
 
+@cindex example
 @smallexample
 binding "custombind" @{
    bind "<ctrl>v" @{ "move_cursor" (pages, 1, 0) @}
@@ -1725,6 +3341,7 @@ easier, since you can specify it directly in the preferences dialog.
 @c --------------------------------------------------------------------
 @node Environment
 @chapter Environment
+@cindex environment
 @c --------------------------------------------------------------------
 
 @menu
@@ -1737,7 +3354,10 @@ easier, since you can specify it directly in the preferences dialog.
 
 @node Command Line Options
 @section Command Line Options
+@cindex command line
+@cindex options
 
+@cindex example
 @smallexample
 Usage:
    gps [-Pproject-file] [source1] [source2] ...
@@ -1749,11 +3369,11 @@ Source files are searched everywhere on the project's source path
 
 @end smallexample
 
-@noindent
-
 @c --------------------------------------------------------------------
 @node Environment Variables
 @section Environment Variables
+@cindex environment
+@cindex environment variables
 @c --------------------------------------------------------------------
 
 @noindent
@@ -1762,12 +3382,15 @@ settings in GPS:
 
 @table @samp
    @item GPS_ROOT
+@cindex GPS_ROOT
 Override the default root directory specified when GPS
 is built (during the @i{configure} process, see the file @code{INSTALL} in
 the GPS sources for more details) to access information such as the location
 of the translation files.
 
    @item GPS_HOME
+@cindex GPS_HOME
+@cindex Windows
 Override the variable HOME if present. All the configuration files and
 directories used by GPS are either relative to $HOME/.gps (%HOME%\.gps
 under Windows) if GPS_HOME is not set, or to $GPS_HOME/.gps (respectively
@@ -1775,31 +3398,37 @@ under Windows) if GPS_HOME is not set, or to $GPS_HOME/.gps (respectively
 
 @c Currently disabled, since this is not well supported yet
 @c    @item GDK_USE_XFT
+@c @cindex GDK_USE_XFT
 @c If this variable is set to 1, then the fonts used in most parts of gps will be
 @c anti-aliased fonts, provided your Xserver supports the Xft extension, and you
-@c have installed anti-aliased fonts on your system, like the truetype fonts
+@c have installed anti-aliased fonts on your system, like the true-type fonts
 @c available at @url{http://keithp.com/~keithp/truetype.tar.gz}
+@c @cindex url
 
 @end table
 
 @c --------------------------------------------------------------------
 @node Files
 @section Files
+@cindex files
 @c --------------------------------------------------------------------
 
 @noindent
 
 @table @file
    @item $HOME/.gps
+@cindex Windows
+@cindex HOME
 GPS state directory. Defaults to C:\.gps under Windows systems if HOME is not
 defined.
 
    @item $HOME/.gps/log
+@cindex log
 @anchor{log file}
 Log file created automatically by GPS
 
    @item $HOME/.gps/custom
-You can edit this file to add your own menu and toolbar entries in GPS.
+You can edit this file to add your own menu and tool-bar entries in GPS.
 @xref{Customizing the Menu Bar and the Tool Bar}.
 
    @item $HOME/.gps/custom_key
@@ -1807,11 +3436,18 @@ Contains all the key bindings defined in GPS. This file is
 automatically created if you have activated the dynamic key bindings feature
 (@xref{Customizing the Menu Bar and the Tool Bar}.
 
+   @item $HOME/.gps/debugger.log
+@cindex log
+@cindex debugger
+Log file created by the integrated debugger to trace of communication between
+GPS and gdb.
+
    @item $HOME/.gps/desktop
 Desktop file in XML format (using the menu @code{File->Save...->Desktop}),
 loaded automatically if found.
 
    @item $HOME/.gps/preferences
+@cindex preferences
 Contains all the preferences in XML format, as specified in the
 preferences menu.
 
@@ -1829,6 +3465,8 @@ Contains all the histories for the combo boxes and the @code{File->Reopen} and
 @code{Project->Reopen} menus.
 
    @item $HOME/.gps/gtkrc
+@cindex Gtk+
+@cindex gtkrc
 The theme used by the gtk+ library on which gps is based. It allows you
 to configure the colors and fonts used in your
 application. @xref{Changing Colors Fonts and Key Bindings}.
@@ -1839,7 +3477,7 @@ Each file in the @code{sessions} directory represents a particular session
 saved by the user.
 
    @item $HOME/.gps/traces.cfg
-Default configuration for the system traces. These traces are used to analyse
+Default configuration for the system traces. These traces are used to analyze
 problems with GPS. By default, they are sent to the file @file{$HOME/.gps/log}.
 
    @item @i{prefix}
@@ -1852,6 +3490,8 @@ The directory containing the GPS executables.
 The directory containing global configuration files for GPS.
 
    @item @i{prefix}/etc/gps/gtkrc
+@cindex Gtk+
+@cindex gtkrc
 The global theme used by the gtk+ library. See also @file{$HOME/.gps/gtkrc}.
 
    @item @i{prefix}/etc/gps/pangorc
@@ -1870,17 +3510,22 @@ GPS will look for all the documentation files under this directory.
 This directory contains source code examples.
 
    @item @i{prefix}/doc/gps/examples/tutorial
+@cindex url
 This directory contains the sources used by the GPS tutorial
 (@url{gps-tutorial.html}).
 
    @item @i{prefix}/share/gps/gps-animation.gif
+@cindex gif
 Animated image displayed in the top right corner of GPS to indicate that
 actions (e.g compilation) are going on.
 
    @item @i{prefix}/share/gps/gps-splash.jpg
+@cindex jpeg
 Splash screen displayed by default when GPS is started.
 
    @item @i{prefix}/share/themes
+@cindex Gtk+
+@cindex theme
 Directory containing the Gtk+ predefined themes.
 
    @item @i{prefix}/share/make
@@ -1895,6 +3540,8 @@ Directory used to retrieve the translation files, when relevant.
 @c --------------------------------------------------------------------
 @node Reporting Suggestions and Bugs
 @section Reporting Suggestions and Bugs
+@cindex suggestions
+@cindex submitting bugs
 @c --------------------------------------------------------------------
 
 @noindent
@@ -1905,7 +3552,7 @@ reports recommendations as explained in the file README.GNATPRO.
 Please try to include a detailed description of the problem, including
 sources to reproduce it if possible/needed, and/or a scenario describing the
 actions performed to reproduce the problem, as well as the tools (e.g
-@i{debugger}, @i{compiler}) involved.
+@i{debugger}, @i{compiler}, @i{call graph}) involved.
 
 The files @file{$HOME/.gps/log} and @file{$HOME/.gps/debugger.log} may also
 bring some useful information when reporting a bug.
@@ -1913,15 +3560,17 @@ bring some useful information when reporting a bug.
 @c --------------------------------------------------------------------
 @node Solving Problems
 @section Solving Problems
+@cindex problems
+@cindex solving problems
 @c --------------------------------------------------------------------
 
 @noindent
-This section addresses some common problems that arise when installing GPS
-on a new machine.
+This section addresses some common problems that may arise when using or
+installing GPS.
 
 @table @samp
 
-@item Non-priviledged users cannot start GPS
+@item Non-privileged users cannot start GPS
 Q: I have installed GPS originally as super user, and ran GPS successfully,
 but normal users can't.
 
@@ -1935,6 +3584,7 @@ changing @i{Courier} by @i{Courier Medium}, and @i{Helvetica} by @i{Sans}
 should solve the problem.
 
 @item GPS refuses to start the debugger
+@cindex debugger
 If GPS cannot properly initialize the debugger (using the menu
 @code{Debug->Initialize}), it is usually because the underlying debugger
 (gdb) cannot be launched properly. To verify this, try to launch the
@@ -1943,20 +3593,58 @@ a shell, it usually means that you are using a wrong version of gdb
 (e.g a version of gdb built for Solaris 8, but run on Solaris 2.6).
 
 @item GPS is frozen during a debugging session
+@cindex debugger
 If GPS is no longer responding while debugging an application you should
 first wait a little bit, since some communications between GPS and gdb
 can take a long time to finish. If GPS is still not responding after a
 few minutes, you can usually get the control back in GPS by either typing
 @key{Ctrl-C} in the shell where you've started GPS: this should unblock it;
 if it does not work, you can kill the gdb process launched by GPS using the
-@code{ps} and @code{kill}, or the @code{top} command under unix,
+@code{ps} and @code{kill}, or the @code{top} command under Unix,
+@cindex Unix
+@cindex Windows
 and the @code{Task Manager} under Windows: this will terminate your debugging
 session, and will unblock GPS.
 
+@item My Ada program fails during elaboration. How can I debug it ?
+@cindex -g
+@cindex gnatmake
+If your program was compiled with GNAT, the main program is
+generated by the binder. This program is an ordinary Ada (or C if the
+@option{-C} switch was used) program, compiled in the usual manner,
+and fully debuggable provided that the @option{-g} switch is used on
+the @command{gnatlink} command (or @option{-g} is used in the
+@command{gnatmake} command itself).
+
+The name of this package containing the main program is
+@file{b~xxx.ads/adb} where xxx is the name of the Ada main unit given
+in the gnatbind command, and you can edit and debug this file in the
+normal manner. You will see a series of calls to the elaboration
+routines of the packages, and you can debug these in the usual manner,
+just as if you were debugging code in your application.
+
+@item How can I debug the Ada run-time library ?
+The run time distributed in binary versions of GNAT hasn't been
+compiled with debug information. Thus, it needs to be recompiled
+before you can actually debug it.
+
+The simplest is to recompile your application by adding the switches
+@option{-a} and @option{-f} to the @command{gnatmake} command
+line. This extra step is then no longer required, assuming that you
+keep the generated object and ali files corresponding to the GNAT run time
+available.
+
+Another possibility on Unix systems is to use the file @file{Makefile.adalib}
+that can be found in the adalib directory of your GNAT installation and
+specify e.g @option{-g -O2} for the @option{CFLAGS} switches.
+
 @end table
 
-@c @printindex cp
+@c --------------------------------------------------------------------
+@unnumbered Index
+@printindex cp
 
+@c --------------------------------------------------------------------
 @contents
 
 @bye
