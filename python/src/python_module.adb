@@ -26,6 +26,7 @@ with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Python.GUI;               use Python, Python.GUI;
 with Python.Ada;               use Python.Ada;
@@ -48,6 +49,8 @@ package body Python_Module is
 
    GPS_Data_Attr : constant String := "__gps_data__";
    --  Internal name of the attributes reserved for GPS
+
+   Python_Language_Name : constant String := "Python";
 
    ----------------------
    -- Python_scripting --
@@ -74,7 +77,8 @@ package body Python_Module is
    procedure Register_Command
      (Script       : access Python_Scripting_Record;
       Command      : String;
-      Usage        : String;
+      Params       : String;
+      Return_Value : String;
       Description  : String;
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
@@ -227,9 +231,9 @@ package body Python_Module is
      with null record;
    type Interpreter_View is access all Interpreter_View_Record'Class;
 
-   procedure Create_Python_Console
+   function Create_Python_Console
      (Script : access Python_Scripting_Record'Class;
-      Kernel : Kernel_Handle);
+      Kernel : Kernel_Handle) return MDI_Child;
    --  Create the python console if it doesn't exist yet.
 
    function First_Level (Self, Args, Kw : PyObject) return PyObject;
@@ -257,6 +261,15 @@ package body Python_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Open a new python console if none exists
 
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr;
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Support functions for saving the desktop
+
    ----------------
    -- Trace_Dump --
    ----------------
@@ -278,9 +291,9 @@ package body Python_Module is
    -- Create_Python_Console --
    ---------------------------
 
-   procedure Create_Python_Console
+   function Create_Python_Console
      (Script : access Python_Scripting_Record'Class;
-      Kernel : Kernel_Handle)
+      Kernel : Kernel_Handle) return MDI_Child
    is
       Child   : MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Interpreter_View_Record'Tag);
@@ -303,8 +316,10 @@ package body Python_Module is
            (Script.Interpreter, View, Grab_Widget => Gtk_Widget (Console));
 
          Child := Put
-           (Get_MDI (Kernel), Console,
-            Focus_Widget => Gtk_Widget (View));
+           (Kernel, Console,
+            Focus_Widget        => Gtk_Widget (View),
+            Module              => Python_Module_Id,
+            Desktop_Independent => True);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Python");
          Set_Dock_Side (Child, Bottom);
@@ -314,7 +329,46 @@ package body Python_Module is
          Set_Console (Script.Interpreter, Gtk_Text_View (Get_Child (Console)));
          Raise_Child (Child);
       end if;
+
+      return Child;
    end Create_Python_Console;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+      Script : Scripting_Language;
+   begin
+      if Node.Tag.all = "Python_Console" then
+         Script := Lookup_Scripting_Language (User, Python_Language_Name);
+         return Create_Python_Console (Python_Scripting (Script), User);
+      end if;
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in Interpreter_View_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Python_Console");
+         return N;
+      end if;
+      return null;
+   end Save_Desktop;
 
    ---------------------
    -- Register_Module --
@@ -325,12 +379,15 @@ package body Python_Module is
    is
       Ignored      : Integer;
       pragma Unreferenced (Ignored);
+      N      : Node_Ptr;
    begin
       Python_Module_Id := new Python_Module_Record;
       Register_Module
         (Module      => Module_ID (Python_Module_Id),
          Kernel      => Kernel,
          Module_Name => "Python");
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
 
       Python_Module_Id.Script := new Python_Scripting_Record;
       Python_Module_Id.Script.Kernel := Kernel_Handle (Kernel);
@@ -339,7 +396,15 @@ package body Python_Module is
       Python_Module_Id.Script.Interpreter := new Python_Interpreter_Record;
       Initialize (Python_Module_Id.Script.Interpreter, Get_History (Kernel));
 
-      Create_Python_Console (Python_Module_Id.Script, Kernel_Handle (Kernel));
+      N     := new Node;
+      N.Tag := new String'("Python_Console");
+      Add_Default_Desktop_Item
+        (Kernel, N,
+         10, 10,
+         400, 100,
+         "Python", "Python Console",
+         Docked, Bottom,
+         True, True);
 
       --  Create the GPS module, in which all functions and classes are
       --  registered
@@ -372,9 +437,10 @@ package body Python_Module is
    procedure Open_Python_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
+      Child : MDI_Child;
+      pragma Unreferenced (Widget, Child);
    begin
-      Create_Python_Console (Python_Module_Id.Script, Kernel);
+      Child := Create_Python_Console (Python_Module_Id.Script, Kernel);
    end Open_Python_Console;
 
    --------------------------
@@ -483,13 +549,33 @@ package body Python_Module is
    procedure Register_Command
      (Script       : access Python_Scripting_Record;
       Command      : String;
-      Usage        : String;
+      Params       : String;
+      Return_Value : String;
       Description  : String;
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
       Handler      : Module_Command_Function;
       Class        : Class_Type := No_Class)
    is
+      function Profile return String;
+      --  Return a printable version of the profile
+
+      function Profile return String is
+      begin
+         if Params = "" then
+            if Return_Value = "" then
+               return "() -> None";
+            else
+               return "() -> " & Return_Value;
+            end if;
+         elsif Return_Value = "" then
+            return Params & " -> None";
+         else
+            return Params & " -> " & Return_Value;
+         end if;
+      end Profile;
+
+
       H   : constant Handler_Data_Access := new Handler_Data'
         (Length       => Command'Length,
          Command      => Command,
@@ -508,7 +594,7 @@ package body Python_Module is
            (Module => Script.GPS_Module,
             Func   => Create_Method_Def
               (Command, First_Level'Access,
-               Command & ' ' & Usage & ASCII.LF & ASCII.LF & Description),
+               Command & ' ' & Profile & ASCII.LF & ASCII.LF & Description),
             Self   => User_Data);
 
       else
@@ -517,12 +603,13 @@ package body Python_Module is
          if Command = Constructor_Method then
             Def := Create_Method_Def
               ("__init__", First_Level'Access,
-               Get_Name (Class) & ' ' & Usage
+               Get_Name (Class) & ' ' & Profile
                & ASCII.LF & ASCII.LF & Description);
          else
             Def := Create_Method_Def
               (Command, First_Level'Access,
-               Command & ' ' & Usage & ASCII.LF & ASCII.LF & Description);
+               Command & ' ' & Profile
+               & ASCII.LF & ASCII.LF & Description);
          end if;
 
          Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
@@ -581,8 +668,10 @@ package body Python_Module is
       Display_In_Console : Boolean := True)
    is
       Cmd : constant String := "execfile (""" & Filename & """)";
+      Child : MDI_Child;
+      pragma Unreferenced (Child);
    begin
-      Create_Python_Console (Script, Get_Kernel (Script));
+      Child := Create_Python_Console (Script, Get_Kernel (Script));
       Insert_Text (Script.Interpreter, Cmd & ASCII.LF);
       Execute_Command (Script, Cmd, Display_In_Console);
    end Execute_File;
@@ -594,7 +683,7 @@ package body Python_Module is
    function Get_Name (Script : access Python_Scripting_Record) return String is
       pragma Unreferenced (Script);
    begin
-      return "Python";
+      return Python_Language_Name;
    end Get_Name;
 
    ----------------
