@@ -68,22 +68,10 @@ package body Src_Editor_Buffer.Hooks is
          Box := Get_Source_Box_From_MDI
            (Find_Editor (Data.Kernel, Data.File));
          if Box /= null then
-            declare
-               Name : constant String := Get_Subprogram_Name
-                 (Box, Editable_Line_Type (Data.Line));
-            begin
-               if Name /= "" then
-                  Data.Parent_Entity := Get_Or_Create
-                    (Name   => Name,
-                     File   => Get_Or_Create
-                       (Db    => Get_Database (Data.Kernel),
-                        File  => Data.File),
-                     Line   => Data.Line,
-                     Column => Data.Column);
-               end if;
-            end;
+            Data.Parent_Entity := Get_Subprogram
+              (Box, Editable_Line_Type (Data.Line));
+            Ref (Data.Parent_Entity);
          end if;
-         Ref (Data.Parent_Entity);
       end if;
 
       return Data.Parent_Entity;
