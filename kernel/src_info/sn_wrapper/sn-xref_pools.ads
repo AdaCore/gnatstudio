@@ -106,10 +106,11 @@ private
    Null_Xref_Elmt : constant Xref_Elmt_Ptr := null;
 
    procedure Set_Next (Xref : Xref_Elmt_Ptr; Next : Xref_Elmt_Ptr);
-   function Next (Xref : Xref_Elmt_Ptr) return Xref_Elmt_Ptr;
-   function Get_Key (Xref : Xref_Elmt_Ptr) return GNAT.OS_Lib.String_Access;
-   function Hash (Key : GNAT.OS_Lib.String_Access) return Hash_Range;
-   function Equal (K1, K2 : GNAT.OS_Lib.String_Access) return Boolean;
+   function Next      (Xref : Xref_Elmt_Ptr) return Xref_Elmt_Ptr;
+   function Get_Key   (Xref : Xref_Elmt_Ptr) return GNAT.OS_Lib.String_Access;
+   function Hash      (Key : GNAT.OS_Lib.String_Access) return Hash_Range;
+   function Equal     (K1, K2 : GNAT.OS_Lib.String_Access) return Boolean;
+   procedure Free     (Xref : in out Xref_Elmt_Ptr);
 
    package STable is new HTables.Static_HTable
      (Header_Num  => Hash_Range,
@@ -120,7 +121,8 @@ private
       Key         => GNAT.OS_Lib.String_Access,
       Get_Key     => Get_Key,
       Hash        => Hash,
-      Equal       => Equal);
+      Equal       => Equal,
+      Free_Elmt_Ptr => Free);
 
    type Xref_Pool_Record is record
       HTable  : STable.HTable;

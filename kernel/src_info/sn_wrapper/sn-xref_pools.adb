@@ -53,8 +53,17 @@ package body SN.Xref_Pools is
    procedure Free is new Ada.Unchecked_Deallocation
      (String, String_Access);
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Xref_Elmt_Record, Xref_Elmt_Ptr);
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Xref : in out Xref_Elmt_Ptr) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Xref_Elmt_Record, Xref_Elmt_Ptr);
+   begin
+      Free (Xref.Source_Filename);
+      Unchecked_Free (Xref);
+   end Free;
 
    --------------
    -- Set_Next --
@@ -62,13 +71,6 @@ package body SN.Xref_Pools is
 
    procedure Set_Next (Xref : Xref_Elmt_Ptr; Next : Xref_Elmt_Ptr) is
    begin
-      --  ??? Should we free the memory at this point ?
-      --  Note that this is never called by Reset anyway
---        if Xref.Next /= null then
---           Free (Xref.Next.Source_Filename);
---           Free (Xref.Next);
---        end if;
-
       Xref.Next := Next;
    end Set_Next;
 
@@ -241,27 +243,12 @@ package body SN.Xref_Pools is
    procedure Free (Pool : in out Xref_Pool) is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (Xref_Pool_Record, Xref_Pool);
-
-      Iter : STable.Iterator;
-      E    : Xref_Elmt_Ptr;
-
    begin
       if Pool = null then
          return;
       end if;
 
-      STable.Get_First (Pool.HTable, Iter);
-
-      loop
-         E := STable.Get_Element (Iter);
-         exit when E = Null_Xref_Elmt;
-
-         STable.Remove (Pool.HTable, E.Source_Filename);
-         Free (E.Source_Filename);
-         Free (E);
-         STable.Get_Next (Pool.HTable, Iter);
-      end loop;
-
+      STable.Reset (Pool.HTable);
       Internal_Free (Pool);
    end Free;
 
