@@ -800,7 +800,7 @@ allocate_pty ()
   PTY_ITERATION
 #else
   for (c = FIRST_PTY_LETTER; c <= 'z'; c++)
-    for (i = 0; i < 16; i++)
+    for (i = 15; i >= 0; i--)
 #endif
       {
 #ifdef PTY_NAME_SPRINTF
@@ -922,6 +922,13 @@ child_setup_tty (out)
 #ifdef HPUX
   s.main.c_cflag = (s.main.c_cflag & ~CBAUD) | B9600; /* baud rate sanity */
 #endif /* HPUX */
+
+#ifdef OSF1
+  /* ??? For some unknown reason, Control-C character is set to Ctrl-D, so
+     force settings to a known value */
+  s.main.c_cc[VQUIT] = '\\'&037;      /* Control-\ */
+  s.main.c_cc[VINTR] = 'C'&037;       /* Control-C */
+#endif
 
 #ifdef AIX
 /* AIX enhanced edit loses NULs, so disable it */
