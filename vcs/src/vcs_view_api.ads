@@ -27,46 +27,67 @@ package VCS_View_API is
    procedure Open
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  Open the selected files.
+
+   procedure Get_Status
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+   --  Query status for the selected files.
 
    procedure Update
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  Update the selected files.
 
    procedure View_Diff
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  Launch a visual comparison for the selected files.
 
    procedure View_Log
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  View the changelog for the selected files.
 
    procedure View_Annotate
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  View annotations for the selected files.
 
    procedure Edit_Log
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  Launch a log editor for the selected files.
 
    procedure Commit
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  Commit the selected files.
 
    procedure Add
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  Add the selected files to the project repository.
 
    procedure Remove
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  Remove the selected files from the project repository.
 
    procedure Revert
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
+   --  Revert the selected files.
 
    procedure VCS_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Complete Menu with the commands related to the VCS module,
+   --  according to the information in Context.
+
+   procedure Open_Explorer
+     (Kernel : Kernel_Handle);
+   --  If the VCS Explorer is not displayed, display it.
 
 end VCS_View_API;
