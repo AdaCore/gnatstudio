@@ -462,14 +462,20 @@ package body Project_Viewers is
    procedure On_Reopen
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Item  : constant Gtk_Menu_Item := Gtk_Menu_Item (Widget);
-      Label : constant Gtk_Label := Gtk_Label (Get_Child (Item));
+      Item     : constant Gtk_Menu_Item := Gtk_Menu_Item (Widget);
+      Label    : constant Gtk_Label := Gtk_Label (Get_Child (Item));
       Filename : constant String := Get_Text (Label);
+      Dir      : constant String := Dir_Name (Filename);
+
    begin
-      Change_Dir (Dir_Name (Filename));
+      Change_Dir (Dir);
       Load_Project (Kernel, Filename);
 
    exception
+      when Directory_Error =>
+         Console.Insert (Kernel, -"Invalid directory " & Dir,
+                         Mode => Console.Error);
+
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Reopen;
