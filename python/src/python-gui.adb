@@ -34,8 +34,10 @@ with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
 with Gdk.Event;         use Gdk.Event;
+with Gdk.Main;          use Gdk.Main;
 with Gdk.Types;         use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Window;        use Gdk.Window;
 with Glib;              use Glib;
 with Glib.Properties;   use Glib.Properties;
 with Histories;         use Histories;
@@ -110,6 +112,10 @@ package body Python.GUI is
    begin
       --  Process all gtk+ events, so that the text becomes visible
       --  immediately, even if the python program hasn't finished executing
+
+      --  Note: since we have grabed the mouse and keyboards, events will only
+      --  be sent to the python console, thus avoiding recursive loops inside
+      --  GPS.
 
       while Gtk.Main.Events_Pending loop
          Dead := Gtk.Main.Main_Iteration;
@@ -404,6 +410,9 @@ package body Python.GUI is
         and then (Command (Command'First) = ASCII.HT
                   or else Command (Command'First) = ' ');
       Cmd : constant String := Interpreter.Buffer.all & Command & ASCII.LF;
+      Status : Gdk_Grab_Status;
+      pragma Unreferenced (Status);
+      use type Gdk_Window;
    begin
       if Cmd = "" & ASCII.LF then
          if not Hide_Output then
@@ -416,9 +425,31 @@ package body Python.GUI is
 
       --  If code compiled just fine
       if Code /= null and then not Indented_Input then
+         --  Grab the mouse, keyboard,... so as to avoid recursive loops in
+         --  GPS (user selecting a menu while python is running)
+         if Get_Window (Interpreter.Console) /= null then
+            Gtk.Main.Grab_Add (Interpreter.Console);
+            Status := Pointer_Grab
+              (Window     => Get_Window (Interpreter.Console),
+               Event_Mask =>
+                 Button_Press_Mask
+                 or Button_Motion_Mask
+                 or Button_Release_Mask,
+               Time       => 0);
+            Status := Keyboard_Grab
+              (Window     => Get_Window (Interpreter.Console),
+               Time       => 0);
+         end if;
+
          Obj := PyEval_EvalCode
            (Code, Interpreter.Globals, Interpreter.Globals);
          Py_DECREF (PyObject (Code));
+
+         if Get_Window (Interpreter.Console) /= null then
+            Gtk.Main.Grab_Remove (Interpreter.Console);
+            Pointer_Ungrab (0);
+            Keyboard_Ungrab (0);
+         end if;
 
          if Obj = null then
             PyErr_Print;
