@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1323,10 +1323,10 @@ package body Src_Editor_Box is
       --  is popped up on the screen, and since it is modal, the button
       --  release event is never sent to the editor, and there is a drag
       --  selection taking place.
-      
+
       if not B.Check_Timestamp_Registered then
          B.Check_Timestamp_Registered := True;
-         B.Check_Timestamp_Id := 
+         B.Check_Timestamp_Id :=
            Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
       end if;
 
