@@ -164,11 +164,23 @@ package body Browsers.Call_Graph is
    end record;
    package Entity_Iterator_Idle is new Gtk.Main.Idle (Entity_Idle_Data);
 
+   type Examine_Callback is record
+      --  The following three fields are only set for graphical callbacks
+      Browser        : Call_Graph_Browser;
+      Item           : Entity_Item;
+      Link_From_Item : Boolean;
+   end record;
+   type Execute_Callback is access procedure
+     (Cb     : Examine_Callback;
+      Entity : Entity_Information;
+      Is_Renaming : Boolean);
+
    type Examine_Ancestors_Idle_Data is record
-      Iter    : Entity_Reference_Iterator_Access;
-      Browser : Call_Graph_Browser;
-      Item    : Entity_Item;
-      Entity  : Entity_Information;
+      Iter     : Entity_Reference_Iterator_Access;
+      Entity   : Entity_Information;
+      Kernel   : Kernel_Handle;
+      Callback : Examine_Callback;
+      Execute  : Execute_Callback;
    end record;
    package Examine_Ancestors_Idle is new Gtk.Main.Idle
      (Examine_Ancestors_Idle_Data);
@@ -188,6 +200,18 @@ package body Browsers.Call_Graph is
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information);
    --  Display the list of subprograms that call Entity.
+
+   procedure Examine_Ancestors_Call_Graph_Iterator
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Entity          : Entity_Information;
+      Callback        : Examine_Callback;
+      Execute         : Execute_Callback;
+      Background_Mode : Boolean);
+   --  Same as Examine_Ancestors_Call_Graph, and calls Callback for each
+   --  matching entity. If Background_Mode is true, this is executed in an
+   --  idle loop.
+   --  If Callback.Browser is null, then Background_Mode is ignored, and the
+   --  query is processed synchronously
 
    function Examine_Ancestors_Call_Graph_Idle
      (Data : Examine_Ancestors_Idle_Data) return Boolean;
@@ -274,6 +298,12 @@ package body Browsers.Call_Graph is
      (Browser : access Call_Graph_Browser_Record'Class;
       Node    : Scope_Tree_Node) return Entity_Item;
    --  Same as above
+
+   procedure Add_Entity_And_Link
+     (Cb     : Examine_Callback;
+      Entity : Entity_Information;
+      Is_Renaming : Boolean);
+   --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
 
    procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data);
    --  Called when the idle loop is destroyed.
@@ -638,15 +668,20 @@ package body Browsers.Call_Graph is
 
       procedure Clean is
       begin
-         Data.Browser.Idle_Id := 0;
          Destroy (Data.Iter);
          Destroy (Data.Entity);
-         Pop_State (Get_Kernel (Data.Browser));
+
+         if Data.Callback.Browser /= null then
+            Data.Callback.Browser.Idle_Id := 0;
+            Pop_State (Get_Kernel (Data.Callback.Browser));
+         end if;
       end Clean;
 
    begin
-      Layout (Data.Browser, Force => False);
-      Refresh_Canvas (Get_Canvas (Data.Browser));
+      if Data.Callback.Browser /= null then
+         Layout (Data.Callback.Browser, Force => False);
+         Refresh_Canvas (Get_Canvas (Data.Callback.Browser));
+      end if;
       Clean;
 
    exception
@@ -670,24 +705,16 @@ package body Browsers.Call_Graph is
       --------------
 
       procedure Add_Item (Node : Scope_Tree_Node; Is_Renaming : Boolean) is
-         Child  : Entity_Item;
          Parent : Scope_Tree_Node;
-         Link   : Browser_Link;
+         E      : Entity_Information;
       begin
          if Is_Subprogram (Node) then
 
             --  A renaming entity ? Create a special link
             if Is_Renaming then
-               Child := Add_Entity_If_Not_Present (Data.Browser, Node);
-               if not Has_Link
-                 (Get_Canvas (Data.Browser), Child, Data.Item)
-               then
-                  Link := new Renaming_Link_Record;
-                  Add_Link
-                    (Get_Canvas (Data.Browser), Link => Link,
-                     Src => Child, Dest => Data.Item,
-                     Arrow => Both_Arrow);
-               end if;
+               E := Get_Entity (Node);
+               Data.Execute (Data.Callback, E, Is_Renaming => True);
+               Destroy (E);
 
                --  An entity that calls our entity.
             else
@@ -699,23 +726,15 @@ package body Browsers.Call_Graph is
                end loop;
 
                if Parent /= Null_Scope_Tree_Node then
-                  Child := Add_Entity_If_Not_Present (Data.Browser, Parent);
-
-                  if not Has_Link
-                    (Get_Canvas (Data.Browser), Child, Data.Item)
-                  then
-                     Link := new Browser_Link_Record;
-                     Add_Link
-                       (Get_Canvas (Data.Browser), Link => Link,
-                        Src => Child, Dest => Data.Item);
-                  end if;
+                  E := Get_Entity (Parent);
+                  Data.Execute (Data.Callback, E, Is_Renaming => False);
+                  Destroy (E);
                end if;
             end if;
          end if;
       end Add_Item;
 
       Tree : Scope_Tree;
-      Kernel : constant Kernel_Handle := Get_Kernel (Data.Browser);
    begin
       if Get (Data.Iter.all) = No_Reference then
          return False;
@@ -729,8 +748,8 @@ package body Browsers.Call_Graph is
                Free (Tree);
             end if;
 
-            Next (Get_Language_Handler (Kernel), Data.Iter.all,
-                  Get_LI_File_List (Kernel));
+            Next (Get_Language_Handler (Data.Kernel), Data.Iter.all,
+                  Get_LI_File_List (Data.Kernel));
             return True;
 
          exception
@@ -743,46 +762,26 @@ package body Browsers.Call_Graph is
       end if;
    end Examine_Ancestors_Call_Graph_Idle;
 
-   ----------------------------------
-   -- Examine_Ancestors_Call_Graph --
-   ----------------------------------
+   -------------------------------------------
+   -- Examine_Ancestors_Call_Graph_Iterator --
+   -------------------------------------------
 
-   procedure Examine_Ancestors_Call_Graph
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information)
+   procedure Examine_Ancestors_Call_Graph_Iterator
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Entity          : Entity_Information;
+      Callback        : Examine_Callback;
+      Execute         : Execute_Callback;
+      Background_Mode : Boolean)
    is
-      Browser       : Call_Graph_Browser;
-      Item          : Entity_Item;
-      Child         : Entity_Item;
-      Child_Browser : MDI_Child;
       Data          : Examine_Ancestors_Idle_Data;
       Rename        : Entity_Information;
-      Link          : Browser_Link;
       Is_Renaming   : Boolean;
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-
-      --  Create the browser if it doesn't exist
-      Child_Browser := Open_Call_Graph_Browser (Kernel);
-      Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
-
-      --  Look for an existing item corresponding to entity
-      Item := Add_Entity_If_Not_Present (Browser, Entity);
-      Set_Parents_Shown (Item, True);
-      Redraw_Title_Bar (Item);
-
       --  If we have a renaming, add the entry for the renamed entity
       Renaming_Of (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
       if Is_Renaming and then Rename /= No_Entity_Information then
-         Child := Add_Entity_If_Not_Present (Browser, Rename);
-         if not Has_Link (Get_Canvas (Browser), Item, Child) then
-            Link := new Renaming_Link_Record;
-            Add_Link
-              (Get_Canvas (Browser), Link => Link,
-               Src => Item, Dest => Child, Arrow => Both_Arrow);
-         end if;
+         Execute (Callback, Rename, Is_Renaming => False);
          Destroy (Rename);
-
       elsif Is_Renaming then
          Insert (Kernel,
                  Get_Name (Entity)
@@ -790,10 +789,11 @@ package body Browsers.Call_Graph is
                  Mode => Error);
       end if;
 
-      Data := (Iter    => new Entity_Reference_Iterator,
-               Browser => Browser,
-               Entity  => Copy (Entity),
-               Item    => Item);
+      Data := (Iter     => new Entity_Reference_Iterator,
+               Entity   => Copy (Entity),
+               Kernel   => Kernel_Handle (Kernel),
+               Callback => Callback,
+               Execute  => Execute);
       Find_All_References
         (Get_Project (Kernel),
          Get_Language_Handler (Kernel),
@@ -802,14 +802,88 @@ package body Browsers.Call_Graph is
          Data.Iter.all,
          LI_Once => True);
 
-      Browser.Idle_Id := Examine_Ancestors_Idle.Add
-        (Cb       => Examine_Ancestors_Call_Graph_Idle'Access,
-         D        => Data,
-         Priority => Priority_Low_Idle,
-         Destroy  => Destroy_Idle'Access);
+      if Background_Mode and then Callback.Browser /= null then
+         Callback.Browser.Idle_Id := Examine_Ancestors_Idle.Add
+           (Cb       => Examine_Ancestors_Call_Graph_Idle'Access,
+            D        => Data,
+            Priority => Priority_Low_Idle,
+            Destroy  => Destroy_Idle'Access);
+      else
+         while Examine_Ancestors_Call_Graph_Idle (Data) loop
+            null;
+         end loop;
+         Destroy_Idle (Data);
+      end if;
+   end Examine_Ancestors_Call_Graph_Iterator;
 
-      --  All memory is freed at the end of
-      --  Examine_Ancestors_Call_Graph_Idle
+   -------------------------
+   -- Add_Entity_And_Link --
+   -------------------------
+
+   procedure Add_Entity_And_Link
+     (Cb     : Examine_Callback;
+      Entity : Entity_Information;
+      Is_Renaming : Boolean)
+   is
+      Child : Entity_Item;
+      Link  : Browser_Link;
+   begin
+      Child := Add_Entity_If_Not_Present (Cb.Browser, Entity);
+
+      if Cb.Link_From_Item then
+         if not Has_Link (Get_Canvas (Cb.Browser), Cb.Item, Child) then
+            if Is_Renaming then
+               Link := new Renaming_Link_Record;
+               Add_Link (Get_Canvas (Cb.Browser), Link => Link,
+                         Src => Cb.Item, Dest => Child, Arrow => Both_Arrow);
+            else
+               Link := new Browser_Link_Record;
+               Add_Link (Get_Canvas (Cb.Browser), Link => Link,
+                         Src => Cb.Item, Dest => Child);
+            end if;
+         end if;
+      else
+         if not Has_Link (Get_Canvas (Cb.Browser), Child, Cb.Item) then
+            if Is_Renaming then
+               Link := new Renaming_Link_Record;
+               Add_Link (Get_Canvas (Cb.Browser), Link => Link,
+                         Src => Child, Dest => Cb.Item, Arrow => Both_Arrow);
+            else
+               Link := new Browser_Link_Record;
+               Add_Link (Get_Canvas (Cb.Browser), Link => Link,
+                         Src => Child, Dest => Cb.Item);
+            end if;
+         end if;
+      end if;
+   end Add_Entity_And_Link;
+
+   ----------------------------------
+   -- Examine_Ancestors_Call_Graph --
+   ----------------------------------
+
+   procedure Examine_Ancestors_Call_Graph
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : Entity_Information)
+   is
+      Child_Browser : MDI_Child;
+      Cb            : Examine_Callback;
+   begin
+      Push_State (Kernel_Handle (Kernel), Busy);
+
+      --  Create the browser if it doesn't exist
+      Child_Browser := Open_Call_Graph_Browser (Kernel);
+      Cb.Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
+
+      --  Look for an existing item corresponding to entity
+      Cb.Item := Add_Entity_If_Not_Present (Cb.Browser, Entity);
+      Set_Parents_Shown (Cb.Item, True);
+      Redraw_Title_Bar (Cb.Item);
+
+      Cb.Link_From_Item := False;
+
+      Examine_Ancestors_Call_Graph_Iterator
+        (Kernel, Entity, Cb, Add_Entity_And_Link'Access,
+         Background_Mode => True);
 
    exception
       when E : others =>
@@ -1544,10 +1618,26 @@ package body Browsers.Call_Graph is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
+      procedure Add_To_List
+        (Cb     : Examine_Callback;
+         Entity : Entity_Information;
+         Is_Renaming : Boolean);
+
+      procedure Add_To_List
+        (Cb     : Examine_Callback;
+         Entity : Entity_Information;
+         Is_Renaming : Boolean)
+      is
+         pragma Unreferenced (Cb, Is_Renaming);
+      begin
+         Set_Return_Value (Data, Create_Entity (Get_Script (Data), Entity));
+      end Add_To_List;
+
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Instance   : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
       Entity     : constant Entity_Information := Get_Data (Instance);
+      Cb         : constant Examine_Callback := (null, null, False);
    begin
       if Command = "find_all_refs" then
          Find_All_References_Internal
@@ -1558,7 +1648,10 @@ package body Browsers.Call_Graph is
       elsif Command = "calls" then
          Examine_Entity_Call_Graph (Kernel, Entity);
       elsif Command = "called_by" then
-         Examine_Ancestors_Call_Graph (Kernel, Entity);
+         Set_Return_Value_As_List (Data);
+         Examine_Ancestors_Call_Graph_Iterator
+           (Kernel, Entity, Cb, Add_To_List'Unrestricted_Access,
+            Background_Mode => False);
       end if;
 
    exception
