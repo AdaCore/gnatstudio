@@ -27,8 +27,14 @@ with GVD.Types;             use GVD.Types;
 package GVD.Memory_View is
 
    type Display_Type is (Hex, Decimal, Octal, Text);
+   --  The current display mode
+   --  Note that any change in this type needs to be coordinated in
+   --  Update_Display.
 
    type Data_Size is (Byte, Halfword, Word);
+   --  The size of the data to display
+   --  Note that any change in this type needs to be coordinated in
+   --  Update_Display.
 
    type GVD_Memory_View_Record is new Memory_View_Record with record
       Window : Gtk_Widget;
