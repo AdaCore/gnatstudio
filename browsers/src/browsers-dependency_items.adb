@@ -498,10 +498,11 @@ package body Browsers.Dependency_Items is
       else
          Browser := Create_Dependency_Browser (Kernel);
          Child := Put
-           (Get_MDI (Kernel), Browser,
+           (Kernel, Browser,
             Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module => Dependency_Browser_Module_ID);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Dependency Browser");
       end if;
@@ -861,6 +862,7 @@ package body Browsers.Dependency_Items is
 
       if Context /= null
         and then Context.all in File_Selection_Context'Class
+        and then Has_File_Information (File_Selection_Context_Access (Context))
       then
          Examine_Dependencies
            (Kernel,
@@ -1048,7 +1050,6 @@ package body Browsers.Dependency_Items is
          Module_Name             => Dependency_Browser_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
-         MDI_Child_Tag           => Dependency_Browser_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
@@ -1059,7 +1060,6 @@ package body Browsers.Dependency_Items is
       Register_Command
         (Kernel,
          Command      => "uses",
-         Usage        => "() -> None",
          Description  =>
            -("Display in the dependency browser the list of files that"
              & " file_name depends on."),
@@ -1070,7 +1070,6 @@ package body Browsers.Dependency_Items is
       Register_Command
         (Kernel,
          Command      => "used_by",
-         Usage        => "() -> None",
          Description  =>
            -("Display in the dependency browser the list of files that"
              & " depends on file_name."),
@@ -1312,13 +1311,16 @@ package body Browsers.Dependency_Items is
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child is
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
    begin
       if Node.Tag.all = "Dependency_Browser" then
          return Put
-           (MDI, Gtk_Widget (Create_Dependency_Browser (User)),
+           (User, Gtk_Widget (Create_Dependency_Browser (User)),
             Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height));
+            Default_Height => Get_Pref (User, Default_Widget_Height),
+            Module => Dependency_Browser_Module_ID);
       end if;
 
       return null;

@@ -647,10 +647,11 @@ package body Browsers.Projects is
       else
          Browser := Create_Project_Browser (Kernel);
          Child := Put
-           (Get_MDI (Kernel), Browser,
+           (Kernel, Browser,
             Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module => Project_Browser_Module_ID);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Project Browser");
       end if;
@@ -698,13 +699,16 @@ package body Browsers.Projects is
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child is
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
    begin
       if Node.Tag.all = "Project_Browser" then
          return Put
-           (MDI, Gtk_Widget (Create_Project_Browser (User)),
+           (User, Gtk_Widget (Create_Project_Browser (User)),
             Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height));
+            Default_Height => Get_Pref (User, Default_Widget_Height),
+            Module         => Project_Browser_Module_ID);
       end if;
 
       return null;
@@ -851,7 +855,6 @@ package body Browsers.Projects is
          Module_Name             => Project_Browser_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
-         MDI_Child_Tag           => Project_Browser_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);

@@ -430,7 +430,6 @@ package body Browsers.Entities is
          Kernel                  => Kernel,
          Module_Name             => "Entity_Browser",
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
-         MDI_Child_Tag           => Type_Browser_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
@@ -442,7 +441,6 @@ package body Browsers.Entities is
       Register_Command
         (Kernel,
          Command      => "show",
-         Usage        => "() -> None",
          Description  =>
            -("Display in the type browser the informations known about the"
              & " entity: list of fields for records, list of primitive"
@@ -454,7 +452,7 @@ package body Browsers.Entities is
       Register_Command
         (Kernel,
          Command      => "discriminants",
-         Usage        => "() -> list",
+         Return_Value => "list",
          Description  =>
            -("Return the list of discriminants for entity. This is a list"
              & " of entities, empty if the type has no discriminant or if this"
@@ -466,7 +464,7 @@ package body Browsers.Entities is
       Register_Command
         (Kernel,
          Command      => "fields",
-         Usage        => "() -> list",
+         Return_Value => "list",
          Description  =>
            -("Return the list of fields for entity. This is a list of entities"
              & ", if the type has no field. This applies to Ada record and"
@@ -641,10 +639,11 @@ package body Browsers.Entities is
       else
          Browser := Open_Type_Browser (Kernel);
          Child := Put
-           (Get_MDI (Kernel), Browser,
+           (Kernel, Browser,
             Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module => Entity_Browser_Module);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Entity Browser");
       end if;
@@ -1587,13 +1586,16 @@ package body Browsers.Entities is
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child is
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
    begin
       if Node.Tag.all = "Entities_Browser" then
          return Put
-           (MDI, Gtk_Widget (Open_Type_Browser (User)),
+           (User, Gtk_Widget (Open_Type_Browser (User)),
             Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height));
+            Default_Height => Get_Pref (User, Default_Widget_Height),
+            Module => Entity_Browser_Module);
       end if;
 
       return null;
