@@ -56,6 +56,7 @@ package Language is
       Comment_Text,
       Character_Text,
       String_Text);
+   pragma Convention (C, Language_Entity);
    --  The entities found in a language, and that can have a different scheme
    --  for colors highlighting.
 
@@ -199,8 +200,10 @@ package Language is
    --  highlighting purposes). All the fields in this record are language
    --  specific, and do not depend on the debugger used.
 
+   type Language_Context_Access is access all Language_Context;
+
    function Get_Language_Context
-     (Lang : access Language_Root) return Language_Context is abstract;
+     (Lang : access Language_Root) return Language_Context_Access is abstract;
    --  Return the context to use for a specific language
 
    ----------------------
@@ -229,6 +232,7 @@ package Language is
       Index  : Natural := 0;
       --  Index in the buffer for this entity
    end record;
+   pragma Convention (C, Source_Location);
 
    type Indent_Parameters is record
       Indent_Level      : Natural;
@@ -240,12 +244,13 @@ package Language is
       Ident_Casing      : Casing_Type;
       Format_Operators  : Boolean;
       Use_Tabs          : Boolean;
+      Align_On_Colons   : Boolean;
+      Align_On_Arrows   : Boolean;
       --  ??? Missing alignment parameters:
-      --      - colons in declarations
       --      - assignments in declarations
       --      - assignments in assignment statements
-      --      - arrow delimiters in associations
    end record;
+   pragma Convention (C, Indent_Parameters);
    --  Define all parameters to indent a source code.
    --  Note that some of these parameters will be ignored, depending on the
    --  actual language.
@@ -260,6 +265,8 @@ package Language is
    --  Format_Operators  whether operators should be reformatted (e.g. spaces
    --                    added around "<")
    --  Use_Tabs          whether tabs should be used instead of spaces.
+   --  Align_On_Colons   perform alignment on colons in declarations
+   --  Align_On_Arrows   perform alignment on arrows in associations
 
    Default_Indent_Parameters : constant Indent_Parameters :=
      (Indent_Level      => 3,
@@ -270,7 +277,9 @@ package Language is
       Reserved_Casing   => Unchanged,
       Ident_Casing      => Unchanged,
       Format_Operators  => False,
-      Use_Tabs          => False);
+      Use_Tabs          => False,
+      Align_On_Colons   => False,
+      Align_On_Arrows   => False);
 
    type Indentation_Kind is (None, Simple, Extended);
    for Indentation_Kind'Size use Integer'Size;
@@ -378,34 +387,34 @@ package Language is
    type Construct_Access is access Construct_Information;
 
    type Construct_Information is record
-      Category        : Language_Category;
+      Category       : Language_Category;
       --  Define the kind of construct
 
-      Name            : Basic_Types.String_Access;
+      Name           : Basic_Types.String_Access;
       --  Name of the enclosing token. Null if not relevant for Token.
 
-      Profile         : Basic_Types.String_Access;
+      Profile        : Basic_Types.String_Access;
       --  Subprogram profile, if Category is in Subprogram_Category.
       --  Note that even for Subprogram_Category, Profile can be null if the
       --  subprogram does not have any parameter.
 
-      Sloc_Start      : Source_Location;
+      Sloc_Start     : Source_Location;
       --  Location of beginning of the construct
 
-      Sloc_Entity     : Source_Location;
+      Sloc_Entity    : Source_Location;
       --  Location of beginning of the name of the entity. Only relevant if
       --  Name is non null. This is different from Sloc_Start since Sloc_Start
       --  is the beginning of the construct itself, e.g for
       --  "procedure Foo;", Sloc_Start will point to the first character, while
       --  Sloc_Entity will point to the 11th character.
 
-      Sloc_End        : Source_Location;
+      Sloc_End       : Source_Location;
       --  Location of end of the construct
 
-      Is_Declaration  : Boolean;
+      Is_Declaration : Boolean;
       --  Is this a declaration (e.g function specification) ?
 
-      Prev, Next      : Construct_Access;
+      Prev, Next     : Construct_Access;
       --  Links to the previous and the next construct info
    end record;
    --  Information needed to define a language construct (e.g procedure,
@@ -478,9 +487,9 @@ package Language is
    --  If Callback returns True, the parsing should be stopped.
 
    procedure Parse_Entities
-     (Lang          : access Language_Root;
-      Buffer        : String;
-      Callback      : Entity_Callback);
+     (Lang     : access Language_Root;
+      Buffer   : String;
+      Callback : Entity_Callback);
    --  Parse entities (as defined by Language_Entity) contained in buffer.
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
