@@ -120,6 +120,7 @@ procedure GPS is
    Target                 : String_Access;
    Protocol               : String_Access;
    Debugger_Name          : String_Access;
+   Startup_Dir            : String_Access;
    About_Contents         : GNAT.OS_Lib.String_Access;
    Splash                 : Gtk_Window;
    User_Directory_Existed : Boolean;
@@ -273,6 +274,8 @@ procedure GPS is
    begin
       OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
       Projects.Registry.Initialize;
+
+      Startup_Dir := new String'(Get_Current_Dir);
 
       Gtk.Main.Init;
 
@@ -713,7 +716,8 @@ procedure GPS is
             if As_File then
                Execute_File
                  (Script             => Script,
-                  Filename           => Batch (J + 1 .. Batch'Last),
+                  Filename           => Normalize_Pathname
+                    (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
                   Display_In_Console => True);
             else
                Execute_Command
@@ -1238,6 +1242,7 @@ procedure GPS is
       Free (Home);
       Free (Dir);
       Free (Prefix);
+      Free (Startup_Dir);
    end Do_Cleanups;
 
 begin
