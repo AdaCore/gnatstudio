@@ -15,6 +15,9 @@
       <shell>scenario_variables_cmd_line -X</shell>
       <external output="" 
                 on-failure="locations_parse &quot;&quot;&quot;%1 &quot;&quot;&quot; gnatstub" >gnat stub %pps %1 %F %d</external>
+      <shell>Project.root %p</shell>
+      <shell>Project.recompute %1</shell>
+      <shell>echo FOO</shell>
       <shell>File %F</shell>
       <shell>File.other_file %1</shell>
       <shell>File.name %1</shell>
