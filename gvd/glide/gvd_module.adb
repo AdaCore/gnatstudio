@@ -108,6 +108,8 @@ package body GVD_Module is
 
    Me : constant Debug_Handle := Create ("Debugger");
 
+   Debugger_Started : constant String := "debugger_started";
+
    Max_Tooltip_Width : constant := 400;
    --  Maximum size to use for the tooltip windows
 
@@ -1706,6 +1708,8 @@ package body GVD_Module is
          Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
          Top);
 
+      Run_Hook (K, Debugger_Started);
+
       Id.Initialized := True;
       Pop_State (K);
 
@@ -2683,6 +2687,12 @@ package body GVD_Module is
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Handler       => Debugger_Command_Handler'Access);
+
+      --  Hooks
+
+      Register_Hook
+        (Kernel, Debugger_Started,
+         -("Hook called when a new debugger has been started."));
 
       Init_Graphics;
    end Register_Module;
