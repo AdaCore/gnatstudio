@@ -105,22 +105,19 @@ package body Vdiff_Utils is
    is
       use Gdk.Event;
 
-      Context : constant File_Location_Context_Access :=
-        new File_Location_Context;
+      Context : constant File_Selection_Context_Access :=
+        new File_Selection_Context;
       Vdiff   : constant Vdiff_Info_Access := Vdiff_Info_Access (Object);
       List    : constant Gtk_Clist := Gtk_Clist (Event_Widget);
       Row     : Gint;
       Column  : Gint;
       Valid   : Boolean := False;
+      L, C    : Integer := 0;
 
       pragma Unreferenced (Menu);
 
    begin
       Set_Context_Information (Context, Kernel, Vdiff_Module_ID);
-      Set_File_Information
-        (Context,
-         Dir_Name (Vdiff.File.all),
-         Base_Name (Vdiff.File.all));
 
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Selection_Info
@@ -132,10 +129,8 @@ package body Vdiff_Utils is
                S : constant String := Get_Text (List, Row, 0);
             begin
                if S /= "" then
-                  Set_Location_Information
-                    (Context,
-                     Line   => Integer'Value (S),
-                     Column => 1);
+                  L := Integer'Value (S);
+                  C := 1;
                end if;
             exception
                when Constraint_Error =>
@@ -143,6 +138,13 @@ package body Vdiff_Utils is
             end;
          end if;
       end if;
+
+      Set_File_Information
+        (Context,
+         Dir_Name (Vdiff.File.all),
+         Base_Name (Vdiff.File.all),
+         Line   => L,
+         Column => C);
 
       return Selection_Context_Access (Context);
 
