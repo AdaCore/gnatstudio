@@ -66,7 +66,8 @@ package body Glide_Menu is
    Me : Debug_Handle := Create ("Menu");
 
    type Help_Context is
-     (GVD_Help,
+     (Welcome_Help,
+      GVD_Help,
       GNAT_UG_Help,
       GNAT_RM_Help,
       ARM95_Help,
@@ -682,6 +683,10 @@ package body Glide_Menu is
       Top : constant Glide_Window := Glide_Window (Object);
    begin
       case Help_Context'Val (Action) is
+         when Welcome_Help =>
+            Display_Help (Top.Kernel,
+              Top.Prefix_Directory.all & "/doc/html/glide-welcome.html");
+
          when GVD_Help =>
             Display_Help (Top.Kernel,
               Top.Prefix_Directory.all & "/doc/html/gvd.html");
@@ -846,6 +851,9 @@ package body Glide_Menu is
 
          Gtk_New (Window),
 
+         Gtk_New (Help & (-"Welcome"),
+                  Callback => On_Manual'Access,
+                  Callback_Action => Help_Context'Pos (Welcome_Help)),
          Gtk_New (Help & (-"Using the GNU Visual Debugger"), "",
                   Callback => On_Manual'Access,
                   Callback_Action => Help_Context'Pos (GVD_Help)),
