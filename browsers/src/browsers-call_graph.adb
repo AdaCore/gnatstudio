@@ -51,7 +51,6 @@ with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
-with Language;         use Language;
 
 with Ada.Exceptions;   use Ada.Exceptions;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
@@ -915,7 +914,7 @@ package body Browsers.Call_Graph is
          File_Name   => File_Information (C),
          Entity_Name => Entity_Name_Information (C),
          Line        => Line_Information (C),
-         Column      => Column_Information (C),
+         Column      => Entity_Column_Information (C),
          Location    => Location,
          Status      => Status);
 
@@ -925,7 +924,7 @@ package body Browsers.Call_Graph is
            (Get_Kernel (Context),
             File_Information (C),
             Line   => Line_Information (C),
-            Column => Column_Information (C),
+            Column => Entity_Column_Information (C),
             From_Path => True);
       else
          Open_File_Editor
@@ -1353,10 +1352,11 @@ package body Browsers.Call_Graph is
             Set_Submenu (Item, Gtk_Widget (Submenu));
             Append (Menu, Item);
 
-            if not Has_Category_Information (Entity_Context)
-              or else Category_Information (Entity_Context) in
-                Subprogram_Category
-            then
+            --  Check the entity right away. This will return False if either
+            --  the entity isn't a subprogram, or we couldn't find the
+            --  declaration. In both cases, we wouldn't be able to draw the
+            --  callgraph anyway.
+            if Is_Subprogram (Get_Entity (Entity_Context)) then
                Gtk_New (Item, Label =>
                           Locale_To_UTF8
                             (Krunch (Entity_Name_Information (Entity_Context)))
@@ -1453,16 +1453,15 @@ package body Browsers.Call_Graph is
             Set_File_Information
               (File_Selection_Context_Access (Context),
                Directory    => Dir_Name (Filename),
-               File_Name    => Base_Name (Filename));
+               File_Name    => Base_Name (Filename),
+               Line         => Get_Declaration_Line_Of (Item.Entity));
          end;
       end if;
 
       Set_Entity_Information
         (Entity_Selection_Context_Access (Context),
-         Entity_Name => Get_Name (Item.Entity),
-         Line        => Get_Declaration_Line_Of (Item.Entity),
-         Column      => Get_Declaration_Column_Of (Item.Entity),
-         Category    => Language.Cat_Procedure);
+         Entity_Name   => Get_Name (Item.Entity),
+         Entity_Column => Get_Declaration_Column_Of (Item.Entity));
 
       if Menu /= null then
          declare
