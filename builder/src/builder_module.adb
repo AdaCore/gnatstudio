@@ -37,6 +37,7 @@ with Glide_Kernel.Timeout;    use Glide_Kernel.Timeout;
 with Glide_Main_Window;       use Glide_Main_Window;
 
 with GVD.Dialogs;             use GVD.Dialogs;
+with String_Utils;            use String_Utils;
 
 with GNAT.Expect;             use GNAT.Expect;
 pragma Warnings (Off);
@@ -214,6 +215,7 @@ package body Builder_Module is
       when Invalid_Process =>
          Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
          Pop_State (Kernel);
+         Set_Sensitive_Menus (Kernel, True);
          Free (Args);
          Free (Fd);
 
@@ -276,6 +278,7 @@ package body Builder_Module is
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
             Pop_State (Kernel);
+            Set_Sensitive_Menus (Kernel, True);
             Free (Args);
             Free (Fd);
       end;
@@ -360,6 +363,7 @@ package body Builder_Module is
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
             Pop_State (Kernel);
+            Set_Sensitive_Menus (Kernel, True);
             Free (Args);
             Free (Fd);
       end;
@@ -416,6 +420,7 @@ package body Builder_Module is
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
             Pop_State (Kernel);
+            Set_Sensitive_Menus (Kernel, True);
             Free (Args);
             Free (Fd);
       end;
@@ -527,7 +532,7 @@ package body Builder_Module is
 
          Close (Fd.all, Status);
          Console.Insert
-           (Kernel, -"process exited with status" & Status'Img);
+           (Kernel, -"process exited with status " & Image (Status));
 
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
