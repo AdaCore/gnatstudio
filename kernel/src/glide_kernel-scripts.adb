@@ -91,6 +91,21 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "create_project" command
 
+   Name_Cst       : aliased constant String := "name";
+   File_Cst       : aliased constant String := "file";
+   Line_Cst       : aliased constant String := "line";
+   Col_Cst        : aliased constant String := "column";
+   Shared_Lib_Cst : aliased constant String := "shared_lib";
+   Module_Cst     : aliased constant String := "module";
+   Project_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
+   Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
+     (1 => Shared_Lib_Cst'Access, 2 => Module_Cst'Access);
+   Entity_Cmd_Parameters   : constant Cst_Argument_List :=
+     (Name_Cst'Access, File_Cst'Access, Line_Cst'Access, Col_Cst'Access);
+   File_Cmd_Parameters     : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
+
    ----------
    -- Free --
    ----------
@@ -386,6 +401,7 @@ package body Glide_Kernel.Scripts is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = "insmod" then
+         Name_Parameters (Data, Insmod_Cmd_Parameters);
          declare
             Shared  : constant String := Nth_Arg (Data, 1);
             Module  : constant String := Nth_Arg (Data, 2);
@@ -427,38 +443,43 @@ package body Glide_Kernel.Scripts is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
-      Name   : constant String  := Nth_Arg (Data, 2);
-      File   : constant String  := Nth_Arg (Data, 3);
-      L      : constant Integer := Nth_Arg (Data, 4, Default => 1);
-      C      : constant Integer := Nth_Arg (Data, 5, Default => 1);
-      Status : Find_Decl_Or_Body_Query_Status;
-      Entity : Entity_Information;
-      Lib_Info : LI_File_Ptr;
    begin
-      Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
-      if Lib_Info = No_LI_File then
-         Set_Error_Msg (Data, -"File not found " & File);
-         return;
-      end if;
+      Name_Parameters (Data, Entity_Cmd_Parameters);
 
-      Find_Declaration_Or_Overloaded
-        (Kernel      => Kernel,
-         Lib_Info    => Lib_Info,
-         File_Name   => File,
-         Entity_Name => Name,
-         Line        => L,
-         Column      => C,
-         Entity      => Entity,
-         Status      => Status);
+      declare
+         Instance : constant Class_Instance :=
+           Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+         Name   : constant String  := Nth_Arg (Data, 2);
+         File   : constant String  := Nth_Arg (Data, 3);
+         L      : constant Integer := Nth_Arg (Data, 4, Default => 1);
+         C      : constant Integer := Nth_Arg (Data, 5, Default => 1);
+         Status : Find_Decl_Or_Body_Query_Status;
+         Entity : Entity_Information;
+         Lib_Info : LI_File_Ptr;
+      begin
+         Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
+         if Lib_Info = No_LI_File then
+            Set_Error_Msg (Data, -"File not found: " & File);
+            return;
+         end if;
 
-      if Status /= Success and then Status /= Fuzzy_Match then
-         Set_Error_Msg (Data, -"Entity not found");
-      else
-         Set_Data (Instance, Entity);
-         Destroy (Entity);
-      end if;
+         Find_Declaration_Or_Overloaded
+           (Kernel      => Kernel,
+            Lib_Info    => Lib_Info,
+            File_Name   => File,
+            Entity_Name => Name,
+            Line        => L,
+            Column      => C,
+            Entity      => Entity,
+            Status      => Status);
+
+         if Status /= Success and then Status /= Fuzzy_Match then
+            Set_Error_Msg (Data, -"Entity not found");
+         else
+            Set_Data (Instance, Entity);
+            Destroy (Entity);
+         end if;
+      end;
    end Create_Entity_Command_Handler;
 
    ---------------------------------
@@ -470,11 +491,12 @@ package body Glide_Kernel.Scripts is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_File_Class (Kernel));
-      Name     : constant String := Nth_Arg (Data, 2);
-      Info     : File_Info := (Name => new String'(Name));
+      Instance : Class_Instance;
+      Info     : File_Info;
    begin
+      Name_Parameters (Data, File_Cmd_Parameters);
+      Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
+      Info     := (Name => new String'(Nth_Arg (Data, 2)));
       Set_Data (Instance, Info);
       Free (Info);
    end Create_File_Command_Handler;
@@ -488,14 +510,17 @@ package body Glide_Kernel.Scripts is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
-      Name     : constant String := Nth_Arg (Data, 2);
-      Project  : constant Project_Type := Get_Project_From_Name
-        (Project_Registry (Get_Registry (Kernel)), Get_String (Name));
+      Instance : Class_Instance;
+      Project  : Project_Type;
    begin
+      Name_Parameters (Data, Project_Cmd_Parameters);
+      Instance := Nth_Arg (Data, 1, Get_Project_Class (Kernel));
+      Project  := Get_Project_From_Name
+        (Project_Registry (Get_Registry (Kernel)),
+         Get_String (Nth_Arg (Data, 2)));
+
       if Project = No_Project then
-         Set_Error_Msg (Data, -"No such project: " & Name);
+         Set_Error_Msg (Data, -"No such project: " & Nth_Arg (Data, 2));
       else
          Set_Data (Instance, Project);
       end if;
@@ -521,7 +546,8 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "insmod",
-         Usage        => "(shared-lib, module) -> None",
+         Usage        =>
+           Parameter_Names_To_Usage (Insmod_Cmd_Parameters, "None"),
          Description  => -"Dynamically register from shared-lib a new module.",
          Minimum_Args => 2,
          Maximum_Args => 2,
@@ -540,7 +566,7 @@ package body Glide_Kernel.Scripts is
         (Kernel,
          Command      => Constructor_Method,
          Usage        =>
-           "(entity_name, file_name, [line], [column]) -> entity",
+           Parameter_Names_To_Usage (Entity_Cmd_Parameters, "entity"),
          Description  =>
            -"Create a new entity, from any of its references.",
          Minimum_Args => 2,
@@ -551,7 +577,8 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
-         Usage        => "(file_name) -> file",
+         Usage        =>
+           Parameter_Names_To_Usage (File_Cmd_Parameters, "file"),
          Description  => -"Create a new file, from its name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -561,7 +588,8 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
-         Usage        => "(name) -> project",
+         Usage        =>
+           Parameter_Names_To_Usage (Project_Cmd_Parameters,  "project"),
          Description  => -"Create a project handle, from its name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -755,5 +783,53 @@ package body Glide_Kernel.Scripts is
          return Nth_Arg (Callback_Data'Class (Data), N, Class);
       end if;
    end Nth_Arg;
+
+   ------------------------------
+   -- Parameter_Names_To_Usage --
+   ------------------------------
+
+   function Parameter_Names_To_Usage
+     (Parameters            : Cst_Argument_List;
+      Return_Type           : String  := "None";
+      Optional_Params_Count : Natural := 0) return String
+   is
+      Length : Natural := 0;
+   begin
+      for P in Parameters'Range loop
+         Length := Length + Parameters (P)'Length + 2;
+      end loop;
+
+      Length := Length + Optional_Params_Count * 2;
+
+      declare
+         Usage : String (1 .. Length + 4 + Return_Type'Length);
+         Index : Natural := Usage'First + 1;
+      begin
+         Usage (Usage'First) := '(';
+         for P in Parameters'Range loop
+            if Parameters'Last - P < Optional_Params_Count then
+               Usage (Index) := '[';
+               Index := Index + 1;
+            end if;
+
+            Usage (Index .. Index + Parameters (P)'Length - 1) :=
+              Parameters (P).all;
+            Index := Index + Parameters (P)'Length;
+
+            if Parameters'Last - P < Optional_Params_Count then
+               Usage (Index) := ']';
+               Index := Index + 1;
+            end if;
+
+            if P /= Parameters'Last then
+               Usage (Index .. Index + 1) := ", ";
+               Index := Index + 2;
+            end if;
+         end loop;
+
+         Usage (Index .. Usage'Last) := ") -> " & Return_Type;
+         return Usage;
+      end;
+   end Parameter_Names_To_Usage;
 
 end Glide_Kernel.Scripts;

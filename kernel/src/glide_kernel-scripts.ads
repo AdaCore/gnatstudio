@@ -35,6 +35,9 @@ package Glide_Kernel.Scripts is
    type Scripting_Language_Record is abstract tagged private;
    type Scripting_Language is access all Scripting_Language_Record'Class;
 
+   type Cst_String_Access is access constant String;
+   type Cst_Argument_List is array (Natural range <>) of Cst_String_Access;
+
    -----------------
    -- Class types --
    -----------------
@@ -81,6 +84,30 @@ package Glide_Kernel.Scripts is
    --  Return the number of arguments passed to that callback. The number of
    --  arguments has already been check before the transfer to your own
    --  subprogram.
+
+   procedure Name_Parameters
+     (Data  : in out Callback_Data; Names : Cst_Argument_List)
+      is abstract;
+   --  Name the parameters, for languages which support it.
+   --  For instance, the following call:
+   --     Name_Parameters (Data, (1 => new String'("a"),
+   --                             2 => new String'("b"),
+   --                             3 => new String'("c")));
+   --  will provide support for the following python calls:
+   --     func (1, 2, 3)
+   --     func (1, c=3, b=2)
+   --  This call has no effect for languages which do not support name
+   --  parameters.
+   --  After calling this procedure, the parameters are reordered so that no
+   --  matter what order the user specified them in, calling Nth_Arg (2) will
+   --  always return the value for b.
+   --  You should pass a default value to Nth_Arg, since otherwise if a
+   --  parameter was not given on the command line, even if later parameters
+   --  were given, Nth_Arg will raise Invalid_Parameter.
+   --
+   --  It is recommended that Names be a global constant, which you can also
+   --  use when registering the command, through Parameter_Names_To_Usage, so
+   --  that the documentation remains up-to-date.
 
    function Get_Kernel (Data : Callback_Data) return Kernel_Handle is abstract;
    --  Return the GPS kernel
@@ -300,6 +327,15 @@ package Glide_Kernel.Scripts is
    --  Add the standard script commands.
    --  This subprogram should be called only after all scripting languages
    --  have been registered.
+
+   function Parameter_Names_To_Usage
+     (Parameters            : Cst_Argument_List;
+      Return_Type           : String  := "None";
+      Optional_Params_Count : Natural := 0) return String;
+   --  From the list of parameters used for Name_Parameters, create a suitable
+   --  Usage string for Register_Command.
+   --  Optional_Params_Count is the number of parameters in Parameters that are
+   --  optional. These have to be the last entries in Parameters.
 
    procedure Register_Command
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
