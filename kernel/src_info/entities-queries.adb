@@ -315,9 +315,10 @@ package body Entities.Queries is
    --------------------
 
    procedure Find_Next_Body
-     (Entity           : Entity_Information;
-      Current_Location : File_Location := No_File_Location;
-      Location         : out File_Location)
+     (Entity               : Entity_Information;
+      Current_Location     : File_Location := No_File_Location;
+      Location             : out File_Location;
+      No_Location_If_First : Boolean := False)
    is
       Ref     : E_Reference;
       First   : Entity_Reference_Arrays.Index_Type :=
@@ -346,7 +347,9 @@ package body Entities.Queries is
          end if;
       end loop;
 
-      if First = Entity_Reference_Arrays.First - 1 then
+      if No_Location_If_First
+        or else First = Entity_Reference_Arrays.First - 1
+      then
          Location := No_File_Location;
       else
          Location := Entity.References.Table (First).Location;
@@ -366,22 +369,29 @@ package body Entities.Queries is
    is
       Deps : Dependency_Iterator;
       F    : Source_File := In_File;
-      Loc  : File_Location;
+      Loc  : File_Location := No_File_Location;
       Start, Last : Integer;
    begin
       Assert (Me, Entity /= null,
               "No Entity specified to Find_All_References");
 
       if In_Scope /= null then
-         Find_Next_Body (In_Scope, Location => Loc);
-         if Loc = No_File_Location then
-            F := Entity.Declaration.File;
-         else
-            F := Loc.File;
-         end if;
+         loop
+            Find_Next_Body (In_Scope, Loc, Location => Loc,
+                            No_Location_If_First => True);
+            if Loc = No_File_Location then
+               F := Entity.Declaration.File;
+               Start := Get_Start_Of_Scope_In_File (In_Scope, F).Line;
+               Last  := Get_End_Of_Scope_In_File   (In_Scope, F).Line;
+               exit;
+            else
+               F := Loc.File;
+               Start := Get_Start_Of_Scope_In_File (In_Scope, F).Line;
+               Last  := Get_End_Of_Scope_In_File   (In_Scope, F).Line;
+               exit when Last /= 0;
+            end if;
+         end loop;
 
-         Start := Get_Start_Of_Scope_In_File (In_Scope, F).Line;
-         Last  := Get_End_Of_Scope_In_File   (In_Scope, F).Line;
       else
          Start := 1;
          Last  := Integer'Last;
@@ -1246,15 +1256,19 @@ package body Entities.Queries is
    function Get_All_Called_Entities
      (Entity : Entity_Information) return Calls_Iterator
    is
-      Loc : File_Location;
+      Loc : File_Location := No_File_Location;
       Iter : Entities_Tries.Iterator;
    begin
-      Find_Next_Body (Entity, Location => Loc);
-      if Loc = No_File_Location then
-         Compute_Callers_And_Called (Entity.Declaration.File);
-      else
-         Compute_Callers_And_Called (Loc.File);
-      end if;
+      loop
+         Find_Next_Body
+           (Entity, Loc, Location => Loc, No_Location_If_First => True);
+         if Loc = No_File_Location then
+            Compute_Callers_And_Called (Entity.Declaration.File);
+            exit;
+         else
+            Compute_Callers_And_Called (Loc.File);
+         end if;
+      end loop;
 
       Iter := Start (Entity.Called_Entities, "");
 

@@ -55,15 +55,18 @@ package Entities.Queries is
    --  any other kind of reference.
 
    procedure Find_Next_Body
-     (Entity           : Entity_Information;
-      Current_Location : File_Location := No_File_Location;
-      Location         : out File_Location);
+     (Entity               : Entity_Information;
+      Current_Location     : File_Location := No_File_Location;
+      Location             : out File_Location;
+      No_Location_If_First : Boolean := False);
    --  Find the location for one of the bodies of the entities. If the
    --  current location is not a body, the first body found is returned.
    --  Otherwise, the first one different from Current_Location is returned.
    --  Calling this subprogram multiple times will eventually return all the
    --  bodies.
    --  This also returns completion for incomplete types.
+   --  If No_Location_If_First is True, then this iterator will not loop
+   --  to the first body on reaching the last.
 
    --------------
    -- Entities --
