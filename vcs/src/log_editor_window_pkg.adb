@@ -148,7 +148,6 @@ package body Log_Editor_Window_Pkg is
       Set_Child_Ipadding (Hbuttonbox1, 7, 0);
       Pack_Start (Vbox1, Hbuttonbox1, False, False, 3);
 
-      --  Gtk_New_From_Stock (Log_Editor_Window.Ok_Button, Stock_Ok);
       Gtk_New (Log_Editor_Window.Ok_Button, -"Commit");
       Set_Relief (Log_Editor_Window.Ok_Button, Relief_Normal);
       Set_Flags (Log_Editor_Window.Ok_Button, Can_Default);
