@@ -202,6 +202,9 @@ package body Odd.Source_Editors is
       Data.Lang := Editor.Lang;
       Data.Box  := Source_Editor (Editor);
       Editor_Tooltips.New_Tooltip (Get_Child (Editor), Data, Editor.Tooltip);
+
+      Editor.Highlight_Color := Parse (Editor_Highlight_Color);
+      Alloc (Get_System, Editor.Highlight_Color);
    end Initialize;
 
    -------------------
@@ -1371,5 +1374,25 @@ package body Odd.Source_Editors is
    exception
       when Language.Unexpected_Type | Constraint_Error => null;
    end Draw_Tooltip;
+
+   ----------------------------
+   -- Highlight_Current_Line --
+   ----------------------------
+
+   procedure Highlight_Current_Line (Editor : access Source_Editor_Record) is
+      Index : Natural;
+      Index_End : Natural;
+   begin
+      if Editor_Highlight_Current_Line
+        and then Get_Buffer (Editor) /= null
+      then
+         Index := Index_From_Line (Editor, Get_Line (Editor));
+         Index_End := Index;
+         Skip_To_Char (Get_Buffer (Editor).all, Index_End, ASCII.LF);
+         Highlight_Range
+           (Editor, Gint (Index), Gint (Index_End), Get_Line (Editor),
+            Back => Editor.Highlight_Color);
+      end if;
+   end Highlight_Current_Line;
 
 end Odd.Source_Editors;

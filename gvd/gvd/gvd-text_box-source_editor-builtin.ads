@@ -147,7 +147,11 @@ package Odd.Source_Editors is
      (Editor    : access Source_Editor_Record;
       File_Name : String);
    --  Report a file not found.
-   --  This delete the currently displayed file, and display a warning message.
+   --  This delete the currently displayed file, and display a warning
+   --  message.
+
+   procedure Highlight_Current_Line (Editor : access Source_Editor_Record);
+   --  Highlight the current line in the editor, if required by the user.
 
 private
    type Editor_Tooltip_Data is record
@@ -206,6 +210,8 @@ private
       Tooltip : Editor_Tooltips.Tooltips;
       --  Those tooltips display the value of variables pointed to by the
       --  mouse.
+
+      Highlight_Color     : Gdk.Color.Gdk_Color;
    end record;
 
 end Odd.Source_Editors;
