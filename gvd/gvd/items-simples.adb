@@ -690,6 +690,10 @@ package body Items.Simples is
          Free (V);
       end if;
 
+      V := Item.Value;
+      Item.Value := new String'(Do_Tab_Expansion (Item.Value.all));
+      Free (V);
+
       Item.Valid := True;
    end Set_Value;
 
