@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,15 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils;              use String_Utils;
-with Ada.Text_IO;               use Ada.Text_IO;
-with Projects;                  use Projects;
-
+with String_Utils;            use String_Utils;
+with Ada.Text_IO;             use Ada.Text_IO;
+with Projects;                use Projects;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with String_Utils; use String_Utils;
-with Ada_Analyzer; use Ada_Analyzer;
-with Basic_Types;  use Basic_Types;
-with Language;         use Language;
+with String_Utils;            use String_Utils;
+with Language.Ada;            use Language.Ada;
+with Basic_Types;             use Basic_Types;
+with Language;                use Language;
 
 package body Aunit_Filters is
    subtype String_Access is Basic_Types.String_Access;
@@ -40,17 +39,13 @@ package body Aunit_Filters is
       Package_Name : out GNAT.OS_Lib.String_Access;
       Suite_Name   : out GNAT.OS_Lib.String_Access)
    is
-      Index       : Integer;
-      F           : File_Descriptor;
-      Length      : Integer;
-      Indent      : Natural;
-      Next_Indent : Natural;
-      File_Buffer : String_Access;
-      New_Buffer  : Extended_Line_Buffer;
-      Constructs  : aliased Construct_List;
+      Index             : Integer;
+      F                 : File_Descriptor;
+      Length            : Integer;
+      File_Buffer       : String_Access;
+      Constructs        : aliased Construct_List;
       Current_Construct : Construct_Access;
-
-      Found       : Boolean := False;
+      Found             : Boolean := False;
 
    begin
       if not Is_Regular_File (File_Name)
@@ -67,18 +62,7 @@ package body Aunit_Filters is
       Length      := Read (F, File_Buffer.all'Address, File_Buffer'Length);
       Close (F);
 
-      Analyze_Ada_Source
-        (File_Buffer (1 .. Length),
-         New_Buffer,
-         Default_Indent_Parameters,
-         Reserved_Casing  => Unchanged,
-         Ident_Casing     => Unchanged,
-         Format_Operators => False,
-         Indent           => False,
-         Constructs       => Constructs'Unchecked_Access,
-         Current_Indent   => Next_Indent,
-         Prev_Indent      => Indent);
-
+      Parse_Constructs (Ada_Lang, File_Buffer (1 .. Length), Constructs);
       Current_Construct := Constructs.First;
 
       --  Find the name of the suite or test case.
@@ -146,8 +130,10 @@ package body Aunit_Filters is
       --  Find the name of the main unit.
 
       if Found then
-         Package_Name := GNAT.OS_Lib.String_Access (Constructs.Last.Name);
+         Package_Name := new String'(Constructs.Last.Name.all);
       end if;
+
+      Free (Constructs);
 
    exception
       when Use_Error =>
