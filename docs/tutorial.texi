@@ -545,7 +545,7 @@ and modify any project settings (e.g switches, sources, ...) based on the
 values of configuration variables. These variables can also take any
 number of different values.
 
-The code{Build} variable shows a typical @code{Debug/Production} configuration,
+The @code{Build} variable shows a typical @code{Debug/Production} configuration,
 where we've set different switches for the two modes.
 
 Click on the arrow at the right of the @code{Build DEBUG} entry, and look at
