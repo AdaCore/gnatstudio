@@ -718,7 +718,6 @@ package body VCS_View_Pkg is
          end;
       end if;
 
-      Destroy (Context.all);
       String_List.Free (Files);
 
       Gtk_New (Check, Label => -"Hide up-to-date files");
