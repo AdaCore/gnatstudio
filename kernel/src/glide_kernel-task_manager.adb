@@ -18,6 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GVD.Status_Bar;           use GVD.Status_Bar;
+
+with Glide_Main_Window;        use Glide_Main_Window;
+
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Task_Manager;             use Task_Manager;
 with Task_Manager.GUI;         use Task_Manager.GUI;
@@ -211,6 +215,11 @@ package body Glide_Kernel.Task_Manager is
          Priority     => Default_Priority);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Set_Progress_Area
+        (Get_Task_Manager (Kernel),
+         Get_Progress_Area
+           (Glide_Window (Get_Main_Window (Kernel)).Statusbar));
 
       Register_Menu
         (Kernel,
