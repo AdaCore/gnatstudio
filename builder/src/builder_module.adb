@@ -24,6 +24,7 @@ with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gtk.Enums;
 with Gtk.Main;                use Gtk.Main;
+with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Stock;               use Gtk.Stock;
 
@@ -36,17 +37,21 @@ with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;    use Glide_Kernel.Timeout;
+with Prj_API;                 use Prj_API;
+with Prj;                     use Prj;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 
 with GVD.Dialogs;             use GVD.Dialogs;
 with String_Utils;            use String_Utils;
+with GUI_Utils;               use GUI_Utils;
 
 with GNAT.Expect;             use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Traces;                  use Traces;
@@ -59,6 +64,14 @@ package body Builder_Module is
    --  Timeout in millisecond to check the build process
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
+
+   type Builder_Module_ID_Record is new Module_ID_Record with record
+      Make_Menu : Gtk_Menu;
+      Run_Menu  : Gtk_Menu;
+      --  The build menu, updated automatically every time the list of main
+      --  units changes.
+   end record;
+   --  Data stored with the module id.
 
    function Idle_Build (Data : Process_Data) return Boolean;
    --  Called by the Gtk main loop when idle.
@@ -86,7 +99,7 @@ package body Builder_Module is
    --  Build->Compile menu
 
    procedure On_Build
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  Build->Make menu
 
    procedure On_Custom
@@ -94,12 +107,17 @@ package body Builder_Module is
    --  Build->Custom... menu
 
    procedure On_Run
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  Build->Run menu
 
    procedure On_Stop_Build
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Stop Build menu
+
+   procedure On_View_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called every time the project view has changed, ie potentially the list
+   --  of main units.
 
    ----------
    -- Free --
@@ -149,58 +167,38 @@ package body Builder_Module is
    --------------
 
    procedure On_Build
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      pragma Unreferenced (Widget);
+      K : Kernel_Handle := Kernel_Handle (Kernel);
 
       Top     : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+        Glide_Window (Get_Main_Window (K));
       Fd      : Process_Descriptor_Access;
       Args    : Argument_List_Access;
-      File    : String_Access;
-      Project : String_Access;
       Cmd     : String_Access;
       Id      : Timeout_Handler_Id;
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Tmp     : Boolean;
 
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File := new String'
-           (File_Information (File_Selection_Context_Access (Context)));
-         Project := new String' (Get_Subproject_Name (Kernel, File.all));
+      --  Are we using the default internal project ?
+      if Get_Project_File_Name (K) = "" then
+         Cmd := new String' (Data.File);
+      else
          Cmd := new String'
-           ("gnatmake -P" & Project.all & " " &
-            Scenario_Variables_Cmd_Line (Kernel) & " ");
-
-      else
-         return;
+           ("-P" & Project_Name (Data.Project) & " " &
+              Scenario_Variables_Cmd_Line (K) & " " & Data.File);
       end if;
 
-      if File.all = "" then
-         return;
-      end if;
+      --  Ask for saving sources/projects before building
+      Tmp := Save_All_MDI_Children (K, Force => False);
+      Console.Clear (K);
+      Console.Insert (K, "gnatmake " & Cmd.all, False);
 
-      --  ??? Ask for saving sources/projects before building
+      Push_State (K, Processing);
+      Set_Sensitive_Menus (K, False);
 
-      Push_State (Kernel, Processing);
-      Console.Clear (Kernel);
-      Set_Sensitive_Menus (Kernel, False);
+      Args := Argument_String_To_List ("gnatmake -d " & Cmd.all);
 
-      if Project.all = "" then
-         --  This is the default internal project
-
-         Args := Argument_String_To_List ("gnatmake -d " & File.all);
-         Console.Insert (Kernel, "gnatmake " & File.all, False);
-
-      else
-         Args := Argument_String_To_List (Cmd.all & File.all & " -d");
-         Console.Insert (Kernel, Cmd.all & File.all, False);
-      end if;
-
-      Free (File);
-      Free (Project);
       Free (Cmd);
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
@@ -212,13 +210,13 @@ package body Builder_Module is
          Err_To_Out  => True);
       Free (Args);
       Id := Process_Timeout.Add
-        (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+        (Timeout, Idle_Build'Access, (K, Fd, null));
 
    exception
       when Invalid_Process =>
-         Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
-         Pop_State (Kernel);
-         Set_Sensitive_Menus (Kernel, True);
+         Console.Insert (K, -"Invalid command.", False, Mode => Error);
+         Pop_State (K);
+         Set_Sensitive_Menus (K, True);
          Free (Args);
          Free (Fd);
 
@@ -562,12 +560,13 @@ package body Builder_Module is
    ------------
 
    procedure On_Run
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Data);
+      K : Kernel_Handle := Kernel_Handle (Kernel);
 
       Arguments : constant String := Simple_Entry_Dialog
-        (Parent  => Get_Main_Window (Kernel),
+        (Parent  => Get_Main_Window (K),
          Title   => -"Arguments Selection",
          Message => -"Enter the arguments to your application:",
          Key     => "gps_run_arguments");
@@ -598,6 +597,88 @@ package body Builder_Module is
    end On_Stop_Build;
 
    ---------------------
+   -- On_View_Changed --
+   ---------------------
+
+   procedure On_View_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (K);
+      Mitem : Gtk_Menu_Item;
+      Menu1 : Gtk_Menu renames
+        Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu;
+      Menu2 : Gtk_Menu renames
+        Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu;
+      Iter : Imported_Project_Iterator := Start (Get_Project (Kernel));
+   begin
+      --  Remove all existing menus
+      Remove_All_Children (Menu1);
+      Remove_All_Children (Menu2);
+
+      --  No main program ?
+      if Current (Iter) = No_Project then
+         Gtk_New (Mitem, "<none>");
+         Append (Menu1, Mitem);
+         Set_Sensitive (Mitem, False);
+
+      else
+         --  Add all the main units from all the imported projects.
+         while Current (Iter) /= No_Project loop
+            declare
+               Mains : Argument_List := Get_Attribute_Value
+                 (Current (Iter), Attribute_Name => Main_Attribute);
+            begin
+               for M in Mains'Range loop
+                  Gtk_New (Mitem, Mains (M).all);
+                  Append (Menu1, Mitem);
+                  File_Project_Cb.Object_Connect
+                    (Mitem, "activate",
+                     File_Project_Cb.To_Marshaller (On_Build'Access),
+                     Slot_Object => Kernel,
+                     User_Data => File_Project_Record'
+                       (Length  => Mains (M)'Length,
+                        Project => Current (Iter),
+                        File    => Mains (M).all));
+
+                  declare
+                     Exec : constant String := Base_Name (Mains (M).all,
+                        GNAT.Directory_Operations.File_Extension
+                           (Mains (M).all));
+                  begin
+                     Gtk_New (Mitem, Exec);
+                     Append (Menu2, Mitem);
+                     File_Project_Cb.Object_Connect
+                       (Mitem, "activate",
+                        File_Project_Cb.To_Marshaller (On_Run'Access),
+                        Slot_Object => Kernel,
+                        User_Data => File_Project_Record'
+                          (Length  => Exec'Length,
+                           Project => Current (Iter),
+                           File    => Exec));
+                  end;
+               end loop;
+               Free (Mains);
+            end;
+
+            Next (Iter);
+         end loop;
+      end if;
+
+      --  Should be able to run any program
+      Gtk_New (Mitem, "any...");
+      Append (Menu2, Mitem);
+      Set_Sensitive (Mitem, False);
+
+      Show_All (Menu1);
+      Show_All (Menu2);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: "
+                & Exception_Information (E));
+   end On_View_Changed;
+
+   ---------------------
    -- Register_Module --
    ---------------------
 
@@ -606,9 +687,13 @@ package body Builder_Module is
    is
       Build : constant String := '/' & (-"Build") & '/';
       Mitem : Gtk_Menu_Item;
+      Menu  : Gtk_Menu;
    begin
-      Builder_Module_ID := Register_Module
-        (Kernel       => Kernel,
+      --  This memory is allocated once, and lives as long as the application.
+      Builder_Module_ID := new Builder_Module_ID_Record;
+      Register_Module
+        (Module       => Builder_Module_ID,
+         Kernel       => Kernel,
          Module_Name  => Builder_Module_Name,
          Priority     => Default_Priority);
 
@@ -617,21 +702,39 @@ package body Builder_Module is
                      On_Check_Syntax'Access);
       Register_Menu (Kernel, Build, -"Compile File", "",
                      On_Compile'Access, GDK_F4, Shift_Mask);
-      Register_Menu (Kernel, Build, -"Make", "", On_Build'Access, GDK_F4);
+
+      --  Dynamic make menu
+      Mitem := Register_Menu (Kernel, Build, -"Make", "", null, GDK_F4);
+      Gtk_New (Menu);
+      Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu := Menu;
+      Set_Submenu (Mitem, Menu);
+
       Register_Menu (Kernel, Build, -"Custom...", "",
                      On_Custom'Access, GDK_F9);
+
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
-      Set_Sensitive
-        (Register_Menu
-          (Kernel, Build, -"Run...", Stock_Execute, On_Run'Access),
-         False);
+
+      --  Dynamic run menu
+      Mitem := Register_Menu
+        (Kernel, Build, -"Run...", Stock_Execute, null);
+      Set_Sensitive (Mitem, False);
+      Gtk_New (Menu);
+      Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
+      Set_Submenu (Mitem, Menu);
+
+
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
       Set_Sensitive
         (Register_Menu
           (Kernel, Build, -"Stop Build", Stock_Stop, On_Stop_Build'Access),
          False);
+
+      Kernel_Callback.Connect
+        (Kernel, "project_view_changed",
+         Kernel_Callback.To_Marshaller (On_View_Changed'Access),
+         User_Data => Kernel_Handle (Kernel));
    end Register_Module;
 
 end Builder_Module;
