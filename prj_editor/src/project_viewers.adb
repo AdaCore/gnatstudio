@@ -2020,6 +2020,7 @@ package body Project_Viewers is
                Value              => New_Dir.all);
          end if;
 
+         Trace (Me, "Object directory changed");
          Changed := True;
       end if;
 
@@ -2042,6 +2043,7 @@ package body Project_Viewers is
                Value              => Exec_Dir.all);
          end if;
 
+         Trace (Me, "Exec directory changed");
          Changed := True;
       end if;
 
