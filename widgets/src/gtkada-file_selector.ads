@@ -96,6 +96,7 @@ package Gtkada.File_Selector is
       Base_Directory    : String  := "";
       File_Pattern      : String  := "";
       Pattern_Name      : String  := "";
+      Default_Name      : String  := "";
       Use_Native_Dialog : Boolean := False;
       History           : Histories.History := null) return String;
    --  Create a file selection dialog, display it, and return the absolute file
@@ -107,6 +108,7 @@ package Gtkada.File_Selector is
    --  (e.g. "{*.htm,*.html}"), or null for no filter.
    --  If Pattern_Name is not null, use this parameter instead of File_Pattern
    --  as the filter name.
+   --  Default_Name is a default value entered in the text entry.
    --  If Use_Native_Dialog is True, this function will use the native file
    --  selection widget instead of a GtkAda based one. This option has
    --  currently no effect, but will provide in the future support for e.g.
