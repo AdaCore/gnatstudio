@@ -51,6 +51,9 @@ package GVD is
    Default_Font_Size : constant := @FONT_SIZE@;
    --  Default font size used in Preferences for text.
 
+   Color_Selection : constant String := "@COLOR_SELECTION@";
+   --  Color used to select items in the data window.
+
    Need_To_Strip_CR : constant Boolean := @STRIP_CR@;
    --  True on systems where lines are separated by both LF and CR.
 
