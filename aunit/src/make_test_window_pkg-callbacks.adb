@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -39,7 +39,9 @@ package body Make_Test_Window_Pkg.Callbacks is
 
    function On_Make_Test_Window_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean is
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      pragma Unreferenced (Params);
    begin
       Hide (Get_Toplevel (Object));
       Main_Quit;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -557,6 +557,7 @@ package body Find_Utils is
       Name : String)
       return Match_Result_Array_Access
    is
+      pragma Unreferenced (Kernel);
       Result : Match_Result_Array_Access := null;
       Count  : Natural := 0;
 
@@ -775,6 +776,7 @@ package body Find_Utils is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
+      pragma Unreferenced (Kernel, Extra_Information);
    begin
       return null;
    end Current_File_Factory;
@@ -788,6 +790,7 @@ package body Find_Utils is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
+      pragma Unreferenced (Extra_Information);
       Context : Files_Project_Context_Access;
    begin
       Context := new Files_Project_Context;
@@ -806,6 +809,7 @@ package body Find_Utils is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
+      pragma Unreferenced (Kernel);
       Context : Files_Context_Access;
       Extra : Files_Extra_Info_Access := Files_Extra_Info_Access
         (Extra_Information);
@@ -838,7 +842,9 @@ package body Find_Utils is
    function Search
      (Context         : access Files_Project_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean is
+      Search_Backward : Boolean) return Boolean
+   is
+      pragma Unreferenced (Search_Backward);
    begin
       --  IF there are still some matches in the current file that we haven't
       --  returned , do it now.
@@ -889,6 +895,7 @@ package body Find_Utils is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
+      pragma Unreferenced (Search_Backward);
       use Directory_List;
       File_Name : String (1 .. Max_Path_Len);
       Last      : Natural;
@@ -992,7 +999,9 @@ package body Find_Utils is
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean) return Boolean is
+      Search_Backward : Boolean) return Boolean
+   is
+      pragma Unreferenced (Context, Kernel, Replace_String, Search_Backward);
    begin
       return False;
    end Replace;
