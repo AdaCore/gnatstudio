@@ -1697,7 +1697,6 @@ package body Help_Module is
          Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
          Priority                => Glide_Kernel.Default_Priority - 20,
-         Contextual_Menu_Handler => null,
          Customization_Handler   => Customize'Access,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
