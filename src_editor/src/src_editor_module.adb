@@ -955,6 +955,8 @@ package body Src_Editor_Module is
       Mitem   : Gtk_Menu_Item;
       Button  : Gtk_Button;
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+
+      Undo_Redo : Undo_Redo_Information;
    begin
       Src_Editor_Module_Id := Register_Module
         (Kernel                  => Kernel,
@@ -987,10 +989,13 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, File, -"Save As...",  Stock_Save_As,
                      On_Save_As'Access, Ref_Item => -"Close");
 
-      Register_Menu (Kernel, Edit, -"Undo",  Stock_Undo,
-                     On_Undo'Access, Ref_Item => -"Preferences");
-      Register_Menu (Kernel, Edit, -"Redo",  Stock_Redo,
-                     On_Redo'Access, Ref_Item => -"Preferences");
+      Undo_Redo.Undo_Menu_Item
+        := Register_Menu (Kernel, Edit, -"Undo",  Stock_Undo,
+                          On_Undo'Access, Ref_Item => -"Preferences");
+
+      Undo_Redo.Redo_Menu_Item
+        := Register_Menu (Kernel, Edit, -"Redo",  Stock_Redo,
+                          On_Redo'Access, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu
@@ -1049,12 +1054,12 @@ package body Src_Editor_Module is
          Kernel_Handle (Kernel));
 
       Insert_Space (Toolbar, Position => 3);
-      Button := Insert_Stock
+      Undo_Redo.Undo_Button := Insert_Stock
         (Toolbar, Stock_Undo, -"Undo Previous Action", Position => 4);
-      Set_Sensitive (Button, False);
-      Button := Insert_Stock
+      Set_Sensitive (Undo_Redo.Undo_Button, False);
+      Undo_Redo.Redo_Button := Insert_Stock
         (Toolbar, Stock_Redo, -"Redo Previous Action", Position => 5);
-      Set_Sensitive (Button, False);
+      Set_Sensitive (Undo_Redo.Redo_Button, False);
 
       Insert_Space (Toolbar, Position => 6);
       Button := Insert_Stock
@@ -1063,6 +1068,8 @@ package body Src_Editor_Module is
         (Toolbar, Stock_Copy, -"Copy to Clipboard", Position => 8);
       Button := Insert_Stock
         (Toolbar, Stock_Paste, -"Paste from Clipboard", Position => 9);
+
+      Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
    end Register_Module;
 
 end Src_Editor_Module;
