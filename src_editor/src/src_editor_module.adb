@@ -545,8 +545,9 @@ package body Src_Editor_Module is
       Set_Return_Value_As_List (Data);
 
       while Search
-        (Context => Context,
-         Kernel  => Kernel,
+        (Context  => Context,
+         Handler  => Get_Language_Handler (Kernel),
+         Kernel   => Kernel,
          Callback => Callback'Unrestricted_Access)
       loop
          --  No need to delay, since the search is done in same process.
