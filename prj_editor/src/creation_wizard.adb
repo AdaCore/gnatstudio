@@ -792,9 +792,13 @@ package body Creation_Wizard is
 
       --  Append the source directories
       Var := Get_Or_Create_Attribute (Project, "source_dirs", Kind => List);
-      for J in 0 .. Num_Src_Dir - 1 loop
-         Append_To_List (Var, Get_Text (Wiz.Src_Dir_List, J, 0));
-      end loop;
+      if Num_Src_Dir > 0 then
+         for J in 0 .. Num_Src_Dir - 1 loop
+            Append_To_List (Var, Get_Text (Wiz.Src_Dir_List, J, 0));
+         end loop;
+      else
+         Append_To_List (Var, ".");
+      end if;
 
       --  Append the build directory
       Var := Get_Or_Create_Attribute (Project, "object_dir", Kind => Single);
