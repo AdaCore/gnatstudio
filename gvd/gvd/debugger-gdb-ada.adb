@@ -122,6 +122,16 @@ package body Debugger.Gdb.Ada is
                raise Unexpected_Type;
             end if;
 
+         when 'd' =>
+
+            --  A delta type, as for "Duration" types (delta 1e-09)
+
+            if Looking_At (Type_Str, Index, "delta ") then
+               Result := New_Simple_Type;
+            else
+               raise Unexpected_Type;
+            end if;
+
          when 'm' =>
 
             --  Modular types
