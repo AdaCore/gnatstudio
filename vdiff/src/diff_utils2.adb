@@ -678,6 +678,7 @@ package body Diff_Utils2 is
       null;
       --  In the list of Diff_Head the memory is free manualy
    end Free;
+   --  This procedure must be never used
 
    --------------
    -- Free_All --
