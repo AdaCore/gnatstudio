@@ -260,6 +260,10 @@ package body Src_Info.Queries is
    --  Process the list of parent locations for a given entity. Only the first
    --  parent location whose kind matches is processed.
 
+   procedure Internal_Next (Iter : in out Child_Type_Iterator);
+   --  Internal version of Next, which doesn't move Iter.Current if it
+   --  matches.
+
    -------------------------
    -- Search_Is_Completed --
    -------------------------
@@ -307,6 +311,8 @@ package body Src_Info.Queries is
       --  same column.
 
    begin
+      --  ??? Could be faster by avoiding the function returning unconstrained
+      --  type.
       if Location.File = No_Source_File
         or else Get_Source_Filename (Location.File) /= File_Name
       then
@@ -3401,7 +3407,7 @@ package body Src_Info.Queries is
      (Lib_Info        : LI_File_Ptr;
       Subprogram_Type : Entity_Information) return Entity_Information is
    begin
-      return Process_Parents (Lib_Info, Subprogram_Type, Parent_Type);
+      return Process_Parents (Lib_Info, Subprogram_Type, Returned_Type);
    end Returned_Type;
 
    ----------------------
@@ -3525,5 +3531,144 @@ package body Src_Info.Queries is
    begin
       return Node.Typ = Declaration;
    end Is_Declaration;
+
+   ------------------------
+   -- Get_Children_Types --
+   ------------------------
+
+   function Get_Children_Types
+     (Lib_Info : LI_File_Ptr; Entity : Entity_Information)
+      return Child_Type_Iterator
+   is
+      Iter : Child_Type_Iterator;
+   begin
+      Iter.Lib_Info := Lib_Info;
+      Iter.File     := null;
+      Iter.Entity   := Copy (Entity);
+
+      if Lib_Info.LI.Spec_Info /= null
+        and then Lib_Info.LI.Spec_Info.Declarations /= null
+      then
+         Iter.Part     := Unit_Spec;
+         Iter.Current  := Lib_Info.LI.Spec_Info.Declarations;
+
+      elsif Lib_Info.LI.Body_Info /= null
+        and then Lib_Info.LI.Body_Info.Declarations /= null
+      then
+         Iter.Part     := Unit_Body;
+         Iter.Current  := Lib_Info.LI.Body_Info.Declarations;
+
+      else
+         Iter.Part := Unit_Separate;
+         Iter.File := Lib_Info.LI.Separate_Info;
+         while Iter.File /= null
+           and then Iter.File.Value.Declarations = null
+         loop
+            Iter.File := Iter.File.Next;
+         end loop;
+
+         if Iter.File /= null then
+            Iter.Current := Iter.File.Value.Declarations;
+         end if;
+      end if;
+      Internal_Next (Iter);
+      return Iter;
+   end Get_Children_Types;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Child_Type_Iterator) is
+   begin
+      Destroy (Iter.Entity);
+   end Destroy;
+
+   -------------------
+   -- Internal_Next --
+   -------------------
+
+   procedure Internal_Next (Iter : in out Child_Type_Iterator) is
+      Parent : File_Location_List;
+   begin
+      if Iter.Current /= null then
+         loop
+            if Iter.Current /= null
+              and then Iter.Current.Value.Declaration.Kind.Is_Type
+            then
+               --  Any parent matches ?
+               Parent := Iter.Current.Value.Declaration.Parent_Location;
+               while Parent /= null loop
+                  if Parent.Kind = Parent_Type
+                    and then Location_Matches
+                    (Parent.Value,
+                     Get_Declaration_File_Of (Iter.Entity),
+                     Get_Declaration_Line_Of (Iter.Entity),
+                     Get_Declaration_Column_Of (Iter.Entity)) = 0
+                  then
+                     return;
+                  end if;
+
+                  Parent := Parent.Next;
+               end loop;
+            end if;
+
+            Iter.Current := Iter.Current.Next;
+
+            if Iter.Current = null then
+               case Iter.Part is
+                  when Unit_Spec =>
+                     Iter.Part := Unit_Body;
+                     if Iter.Lib_Info.LI.Body_Info /= null then
+                        Iter.Current :=
+                          Iter.Lib_Info.LI.Body_Info.Declarations;
+                     end if;
+
+                  when Unit_Body =>
+                     Iter.Part := Unit_Separate;
+                     Iter.File := Iter.Lib_Info.LI.Separate_Info;
+                     if Iter.File /= null then
+                        Iter.Current := Iter.File.Value.Declarations;
+                     else
+                        return;
+                     end if;
+
+                  when Unit_Separate =>
+                     Iter.File := Iter.File.Next;
+                     if Iter.File /= null then
+                        Iter.Current := Iter.File.Value.Declarations;
+                     else
+                        return;
+                     end if;
+               end case;
+            end if;
+         end loop;
+      end if;
+   end Internal_Next;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Child_Type_Iterator) is
+   begin
+      if Iter.Current /= null then
+         Iter.Current := Iter.Current.Next;
+         Internal_Next (Iter);
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Child_Type_Iterator) return Entity_Information is
+   begin
+      if Iter.Current = null then
+         return No_Entity_Information;
+      else
+         return Create (Iter.Current.Value.Declaration);
+      end if;
+   end Get;
 
 end Src_Info.Queries;

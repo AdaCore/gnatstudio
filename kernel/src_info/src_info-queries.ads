@@ -357,6 +357,29 @@ package Src_Info.Queries is
    --  Return the current parent of the entity. No_Entity_Information is
    --  returned if there are no more parents
 
+   --------------------
+   -- Children types --
+   --------------------
+
+   type Child_Type_Iterator is private;
+
+   function Get_Children_Types
+     (Lib_Info : LI_File_Ptr; Entity : Entity_Information)
+      return Child_Type_Iterator;
+   --  Return the first type that derives from Entity in the files associated
+   --  with Lib_Info. The iterator must be destroyed to prevent memory leaks.
+   --  Entity must be destroyed by the caller
+
+   procedure Next (Iter : in out Child_Type_Iterator);
+   --  Move the next child type
+
+   function Get (Iter : Child_Type_Iterator) return Entity_Information;
+   --  Return the current child of the entity, or No_Entity_Information if
+   --  there are no more children.
+
+   procedure Destroy (Iter : in out Child_Type_Iterator);
+   --  Free the memory used by the iterator.
+
    --------------------------------------
    -- Methods and primitive operations --
    --------------------------------------
@@ -885,6 +908,14 @@ private
    type Parent_Iterator is record
       Lib_Info    : LI_File_Ptr;
       Current     : File_Location_List;
+   end record;
+
+   type Child_Type_Iterator is record
+      Lib_Info    : LI_File_Ptr;
+      Part        : Unit_Part;
+      File        : File_Info_Ptr_List;
+      Entity      : Entity_Information;
+      Current     : E_Declaration_Info_List;
    end record;
 
    type Primitive_Iterator is record
