@@ -213,10 +213,13 @@ package Language is
 
    type Source_Location is record
       Line   : Natural := 0;
-      --  Line number for this entity
+      --  Line number for this entity. Line numbers start at 1.
 
       Column : Natural := 0;
-      --  Column number for this entity
+      --  Column number for this entity. This is an index in bytes, not
+      --  characters. This is set to 0 if the end is on the last character of
+      --  the previous line.
+      --  Column numbers start at 1 otherwise.
 
       Index  : Natural := 0;
       --  Index in the buffer for this entity
