@@ -1,5 +1,16 @@
 Known Problems fixed in GPS 2.0.1
 
+- Initial selection in File View is not always the current directory
+  Problem:    The directory initialy selected in the File View is not the
+              current directory. Getting to the latter might require expanding
+              nodes on Windows
+  Workaround: Manually select the directory you want to access
+
+- File View filters fail on Windows: Show Files From Project Only
+  Problem:    The contextual menu's filter Show Files From Project Only
+              doesn't work on windows, where only one directory is shown
+  Workaround: Deactivate this filter, and scroll to the project's directory
+
 - D528-004 Directory names always absolute in project files on Windows
   Problem:    If you add directories to a project file through the "Edit
               project properties" dialog, the generated project file will in
