@@ -199,9 +199,9 @@ begin
    --  Register the supported languages
 
    Handler := Glide_Language_Handler (Get_Language_Handler (Glide.Kernel));
-   Register_Language (Handler, "ada", Ada_Lang);
+   Register_Language (Handler, "Ada", Ada_Lang);
    Add_Language_Info
-     (Handler, "ada",
+     (Handler, "Ada",
       LI                  => new Src_Info.ALI.ALI_Handler_Record,
       Default_Spec_Suffix => ".ads",
       Default_Body_Suffix => ".adb");
