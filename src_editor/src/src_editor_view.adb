@@ -264,6 +264,10 @@ package body Src_Editor_View is
       Unref (View.Current_Line_GC);
       Unref (View.Current_Block_GC);
 
+      if View.Side_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (View.Side_Column_Buffer);
+      end if;
+
       Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
 
       if View.Connect_Expose_Id /= 0 then
@@ -1241,6 +1245,7 @@ package body Src_Editor_View is
                return True;
             end if;
 
+
          when GDK_Linefeed | GDK_Tab |
            GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End | GDK_Begin |
            GDK_Up | GDK_Down | GDK_Left | GDK_Right
@@ -1266,76 +1271,73 @@ package body Src_Editor_View is
    procedure Redraw_Columns (View : access Source_View_Record'Class) is
       Left_Window : Gdk.Window.Gdk_Window;
 
-      Top_In_Buffer              : Gint;
-      Bottom_In_Buffer           : Gint;
-      Dummy_Gint                 : Gint;
-      Iter                       : Gtk_Text_Iter;
-
       X, Y, Width, Height, Depth : Gint;
-
-      Buffer                     : Gdk.Pixmap.Gdk_Pixmap;
       Layout                     : Pango_Layout;
 
       Src_Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Columns_Config : constant Line_Info_Display_Array_Access :=
-        Get_Columns_Info (Src_Buffer);
 
       Total_Width : Gint;
 
    begin
-      Total_Width := 2;
+      Total_Width := Gint (Get_Total_Column_Width (Src_Buffer));
 
-      if Columns_Config = null then
-         Set_Border_Window_Size (View, Enums.Text_Window_Left, 0);
+      if Total_Width = 0 then
+         Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
          return;
       end if;
 
-      --  ??? Should be optimized !
-      for J in Columns_Config'Range loop
-         Total_Width := Total_Width + Gint (Columns_Config (J).Width) + 2;
-      end loop;
-
       Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
+
+      --  If the cache corresponds to the lines, redraw it.
 
       --  Create the graphical elements.
       Left_Window := Get_Window (View, Text_Window_Left);
-      Layout := Create_Pango_Layout (View);
-      Set_Font_Description (Layout, View.Pango_Font);
 
-      Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
+      if View.Side_Column_Buffer /= null
+        and then View.Top_Line = View.Buffer_Top_Line
+        and then View.Bottom_Line = View.Buffer_Bottom_Line
+      then
+         Draw_Pixmap
+           (Drawable => Left_Window,
+            Src      => View.Side_Column_Buffer,
+            Gc       => View.Side_Column_GC,
+            Xsrc     => 0,
+            Ysrc     => 0,
+            Xdest    => 0,
+            Ydest    => 0);
+      else
+         if View.Side_Column_Buffer /= null then
+            Gdk.Pixmap.Unref (View.Side_Column_Buffer);
+         end if;
 
-      Gdk_New (Buffer, Left_Window, Width, Height);
-      Draw_Rectangle
-        (Buffer, View.Side_Background_GC, True, X, Y, Width, Height);
+         Layout := Create_Pango_Layout (View);
+         Set_Font_Description (Layout, View.Pango_Font);
 
-      Window_To_Buffer_Coords
-        (View, Text_Window_Left,
-         Window_X => 0, Window_Y => Y,
-         Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
-      Window_To_Buffer_Coords
-        (View, Text_Window_Left,
-         Window_X => 0, Window_Y => Y + Height,
-         Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+         Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 
-      Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+         Gdk_New (View.Side_Column_Buffer, Left_Window, Width, Height);
+         Draw_Rectangle
+           (View.Side_Column_Buffer,
+            View.Side_Background_GC,
+            True, X, Y, Width, Height);
 
-      Draw_Line_Info
-        (Src_Buffer, View.Top_Line, View.Bottom_Line,
-         Gtk_Text_View (View), View.Side_Column_GC,
-         Layout, Buffer);
+         Draw_Line_Info
+           (Src_Buffer, View.Top_Line, View.Bottom_Line,
+            Gtk_Text_View (View), View.Side_Column_GC,
+            Layout, View.Side_Column_Buffer);
 
-      Unref (Layout);
+         Draw_Pixmap
+           (Drawable => Left_Window,
+            Src      => View.Side_Column_Buffer,
+            Gc       => View.Side_Column_GC,
+            Xsrc     => 0,
+            Ysrc     => 0,
+            Xdest    => 0,
+            Ydest    => 0);
 
-      Draw_Pixmap
-        (Drawable => Left_Window,
-         Src      => Buffer,
-         Gc       => View.Side_Column_GC,
-         Xsrc     => 0,
-         Ysrc     => 0,
-         Xdest    => 0,
-         Ydest    => 0);
+         Unref (Layout);
+      end if;
 
-      Gdk.Pixmap.Unref (Buffer);
    end Redraw_Columns;
 
 end Src_Editor_View;
