@@ -45,7 +45,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with Debugger;              use Debugger;
 with Language;              use Language;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;       use GVD.Main_Window;
 with Process_Proxies;       use Process_Proxies;
 
 with GVD.Canvas;            use GVD.Canvas;
@@ -595,7 +595,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       --  Editor specific items
 
       Gtk_New (Check, Label => -"Display Line Numbers");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Show_Line_Nums (Source.Editor));
       Append (Source.Editor.Contextual_Menu, Check);
       Check_Editor_Handler.Connect
@@ -604,7 +603,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Source.Editor);
 
       Gtk_New (Check, Label => -"Show Lines with Code");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Show_Lines_With_Code (Source.Editor));
       Append (Source.Editor.Contextual_Menu, Check);
       Check_Editor_Handler.Connect
@@ -823,7 +821,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       --  Set the adjustment directly, so that the text is not scrolled
       --  on the screen (which is too slow for big files)
 
-      Set_Value (Get_Vadj (Text), Gfloat (Pixels_From_Line (Edit, Line)));
+      Set_Value
+        (Get_Vadj (Text), Grange_Float (Pixels_From_Line (Edit, Line)));
       Changed (Get_Vadj (Text));
 
       --  Change the cursor position, and highlight the entity.
@@ -904,7 +903,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       --  Save the currently displayed line
 
-      Value : constant Gfloat :=
+      Value : constant Grange_Float :=
         Get_Value (Get_Vadj (Get_Child (Edit)));
 
    begin
@@ -1079,7 +1078,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         Builtin_Text_Box (Editor.Widget);
       Pix       : Gtk_Pixmap;
       Num_Lines : Natural := 0;
-      Value     : Gfloat;
+      Value     : Grange_Float;
 
    begin
       if Is_Empty (Edit) then
@@ -1270,7 +1269,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record)
    is
-      Top  : constant Main_Debug_Window_Access := Br.Process.Window;
+      Top  : constant GVD_Main_Window := Br.Process.Window;
       View : constant GVD_Memory_View := Top.Memory_View;
    begin
       if not Visible_Is_Set (View) then
@@ -1563,7 +1562,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
                (1 + Value'Length / Chars_Per_Line) * Height + 2);
          else
             Width := Gint'Min
-              (Max_Tooltip_Width, Text_Width (Context.Font, Value.all) + 4);
+              (Max_Tooltip_Width, String_Width (Context.Font, Value.all) + 4);
          end if;
       end if;
 
@@ -1605,7 +1604,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
                   + Get_Ascent (Context.Font),
                   Value (Index .. Max));
                W := Gint'Max
-                 (W, Text_Width (Context.Font, Value (Index .. Max)));
+                 (W, String_Width (Context.Font, Value (Index .. Max)));
                Index := Max + 1;
                Line := Line + 1;
             end loop;
@@ -1716,7 +1715,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         Builtin_Text_Box (Editor.Widget);
 
       --  Save the currently displayed line
-      Value     : constant Gfloat := Get_Value (Get_Vadj (Get_Child (Edit)));
+      Value     : constant Grange_Float :=
+        Get_Value (Get_Vadj (Get_Child (Edit)));
       File_Name : constant String := Get_Current_File (Editor);
 
    begin
