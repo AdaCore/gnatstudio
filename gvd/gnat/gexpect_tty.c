@@ -58,6 +58,7 @@ int is_cygnus_app = 0;
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>		/* some typedefs are used in sys/file.h */
 #ifdef HAVE_UNISTD_H
