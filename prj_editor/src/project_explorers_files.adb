@@ -35,6 +35,7 @@ with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
@@ -410,6 +411,10 @@ package body Project_Explorers_Files is
                         D.Explorer.Path, False);
                      D.Explorer.Expanding := Expanding;
 
+                     Select_Path
+                       (Get_Selection (D.Explorer.File_Tree),
+                        D.Explorer.Path);
+
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
                           C_Proxy (Open_Pixbufs (Directory_Node)));
                      D.Explorer.Scroll_To_Directory := True;
@@ -507,7 +512,8 @@ package body Project_Explorers_Files is
            (Name_As_Directory ((Normalize_Pathname (Dir))));
       end if;
 
-      D.Norm_Dest     := new String'(Normalize_Pathname (Append_To_Dir));
+      D.Norm_Dest     := new String'
+        (Name_As_Directory (Normalize_Pathname (Append_To_Dir)));
       D.Depth         := Depth;
       D.Base          := Base;
       D.Explorer      := Project_Explorer_Files (Explorer);
