@@ -1914,10 +1914,12 @@ package body Project_Explorers is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Explorer_Module_ID := Register_Module
-        (Module_Name             => Explorer_Module_Name,
+        (Kernel                  => Kernel,
+         Module_Name             => Explorer_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => null);
