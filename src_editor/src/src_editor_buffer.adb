@@ -1609,6 +1609,11 @@ package body Src_Editor_Buffer is
          end if;
 
          Line := Gint (Buffer_Line - 1) + Slice_Offset_Line;
+
+         if not Is_Valid_Position (Buffer, Line, Col) then
+            return False;
+         end if;
+
          Get_Iter_At_Line_Index (Buffer, Entity_Start, Line, Col);
 
          --  If the column is 0, the entity really ended on the end of the
