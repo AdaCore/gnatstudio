@@ -210,8 +210,8 @@ package body Glide_Kernel.Console is
       Category : String;
       File     : String;
       Text     : String;
-      Line     : Natural;
-      Column   : Natural;
+      Line     : Positive;
+      Column   : Positive;
       Length   : Natural := 0)
    is
       View : constant Result_View := Get_Result_View (Kernel);

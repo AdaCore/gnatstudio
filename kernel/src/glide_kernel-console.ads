@@ -56,8 +56,8 @@ package Glide_Kernel.Console is
       Category : String;
       File     : String;
       Text     : String;
-      Line     : Natural;
-      Column   : Natural;
+      Line     : Positive;
+      Column   : Positive;
       Length   : Natural := 0);
    --  Insert a new location in the result view.
 
