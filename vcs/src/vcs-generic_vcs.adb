@@ -18,31 +18,31 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib;                        use Glib;
+with Glib.Convert;                use Glib.Convert;
+with Glib.Xml_Int;                use Glib.Xml_Int;
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
-with Commands.Custom;           use Commands.Custom;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Commands;                    use Commands;
+with Commands.Interactive;        use Commands.Interactive;
+with Commands.Custom;             use Commands.Custom;
 
-with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Intl;                  use Glide_Intl;
+with Glide_Kernel.Actions;        use Glide_Kernel.Actions;
+with Glide_Kernel.Console;        use Glide_Kernel.Console;
+with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel;                use Glide_Kernel;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-with VCS_Module;                use VCS_Module;
-with Traces;                    use Traces;
-with VFS;                       use VFS;
+with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
+with VCS_Module;                  use VCS_Module;
+with Traces;                      use Traces;
+with VFS;                         use VFS;
 
-with Basic_Types;               use Basic_Types;
-with GNAT.Regpat;               use GNAT.Regpat;
+with Basic_Types;                 use Basic_Types;
+with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations;
 with GNAT.Strings;

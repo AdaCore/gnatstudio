@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -167,8 +167,8 @@ package Glide_Kernel.Contexts is
    type Entity_Selection_Context_Access is access all Entity_Selection_Context;
 
    procedure Set_Entity_Information
-     (Context     : access Entity_Selection_Context;
-      Entity_Name : String := "";
+     (Context       : access Entity_Selection_Context;
+      Entity_Name   : String := "";
       Entity_Column : Integer := 0);
    --  Set the information in the context.
    --  Entity_Column should be the column on which the entity starts, not the
@@ -205,7 +205,6 @@ package Glide_Kernel.Contexts is
 
    procedure Destroy (Context : in out Entity_Selection_Context);
    --  Destroy the memory associated with the entity
-
 
 private
 

@@ -18,22 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Radio_Button;          use Gtk.Radio_Button;
-with Gtk.Table;                 use Gtk.Table;
-with Gtk.Tooltips;              use Gtk.Tooltips;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Glib;                        use Glib;
+with Glib.Object;                 use Glib.Object;
+with Glib.Xml_Int;                use Glib.Xml_Int;
+with Gtk.Box;                     use Gtk.Box;
+with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Event_Box;               use Gtk.Event_Box;
+with Gtk.GEntry;                  use Gtk.GEntry;
+with Gtk.Frame;                   use Gtk.Frame;
+with Gtk.Label;                   use Gtk.Label;
+with Gtk.Menu;                    use Gtk.Menu;
+with Gtk.Menu_Item;               use Gtk.Menu_Item;
+with Gtk.Radio_Button;            use Gtk.Radio_Button;
+with Gtk.Table;                   use Gtk.Table;
+with Gtk.Tooltips;                use Gtk.Tooltips;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtkada.MDI;                  use Gtkada.MDI;
 
 with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Console;        use Glide_Kernel.Console;
@@ -45,24 +45,24 @@ with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Kernel.Actions;        use Glide_Kernel.Actions;
 with Glide_Intl;                  use Glide_Intl;
 
-with Traces;                    use Traces;
+with Traces;                      use Traces;
 
-with VCS;                       use VCS;
-with VCS_View_API;              use VCS_View_API;
-with VCS_View_Pkg;              use VCS_View_Pkg;
-with Basic_Types;               use Basic_Types;
-with Commands.VCS;              use Commands.VCS;
+with VCS;                         use VCS;
+with VCS_View_API;                use VCS_View_API;
+with VCS_View_Pkg;                use VCS_View_Pkg;
+with Basic_Types;                 use Basic_Types;
+with Commands.VCS;                use Commands.VCS;
 
-with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
-with VCS.Generic_VCS;           use VCS.Generic_VCS;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Projects;                  use Projects;
-with Projects.Editor;           use Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
-with VFS;                       use VFS;
-with Project_Viewers;           use Project_Viewers;
+with VCS.Unknown_VCS;             use VCS.Unknown_VCS;
+with VCS.Generic_VCS;             use VCS.Generic_VCS;
+with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with Projects;                    use Projects;
+with Projects.Editor;             use Projects.Editor;
+with Projects.Registry;           use Projects.Registry;
+with VFS;                         use VFS;
+with Project_Viewers;             use Project_Viewers;
 
 with String_List_Utils;
 with Log_Utils;
