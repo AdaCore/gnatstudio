@@ -80,6 +80,15 @@ package Language_Handlers.Glide is
    --  Project is the project that contains Source_Filename, or No_Project if
    --  it is unknown.
 
+   function Languages_Count (Handler : access Glide_Language_Handler_Record)
+      return Natural;
+   --  Return the number of languages declared in Handler
+
+   function Get_Nth_Handler
+     (Handler : access Glide_Language_Handler_Record;
+      Num     : Positive) return Src_Info.LI_Handler;
+   --  Return the handler for the Num-th language
+
    Unsupported_Language : exception;
    --  Raised when a file name can not be associated with one of the handlers.
 

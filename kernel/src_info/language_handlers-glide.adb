@@ -278,4 +278,35 @@ package body Language_Handlers.Glide is
       end if;
    end Get_LI_Handler_From_File;
 
+   ---------------------
+   -- Languages_Count --
+   ---------------------
+
+   function Languages_Count (Handler : access Glide_Language_Handler_Record)
+      return Natural is
+   begin
+      if Handler.Languages = null then
+         return 0;
+      else
+         return Handler.Languages'Length;
+      end if;
+   end Languages_Count;
+
+   ---------------------
+   -- Get_Nth_Handler --
+   ---------------------
+
+   function Get_Nth_Handler
+     (Handler : access Glide_Language_Handler_Record;
+      Num     : Positive) return Src_Info.LI_Handler is
+   begin
+      if Handler.Languages = null
+        or else Num > Handler.Languages'Length
+      then
+         return null;
+      else
+         return Handler.Languages (Num).Handler;
+      end if;
+   end Get_Nth_Handler;
+
 end Language_Handlers.Glide;
