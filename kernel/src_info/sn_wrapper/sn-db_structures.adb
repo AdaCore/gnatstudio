@@ -92,29 +92,30 @@ package body SN.DB_Structures is
 
    procedure Copy
      (To   : out Buffer_String;
-      From : Interfaces.C.Strings.chars_ptr);
+      From : Interfaces.C.Strings.chars_ptr;
+      Size : Natural);
    --  Copy From C key or data pointer to To. Note that we do not have to care
    --  about the string ending. The fields indexes are computed using the C
    --  pointer From in the Parse_Pair procedures and they will be used to
    --  reference the To Buffer_String. We just want to use the C convention
    --  for the Buffer_String (i.e. start index is 0).
 
-   ---------
-   -- Dup --
-   ---------
+   ----------
+   -- Copy --
+   ----------
 
    procedure Copy
      (To   : out Buffer_String;
-      From : Interfaces.C.Strings.chars_ptr)
+      From : Interfaces.C.Strings.chars_ptr;
+      Size : Natural)
    is
       use Interfaces.C.Strings;
 
       procedure strcpy (To : Address; From : Interfaces.C.Strings.chars_ptr);
       pragma Import (C, strcpy);
 
-      Len : constant Natural := Natural (Strlen (From));
    begin
-      if Len >= Buffer_String_Size then
+      if Size >= Buffer_String_Size then
          To (To'First) := ASCII.Nul;
       else
          strcpy (To'Address, From);
@@ -367,8 +368,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
@@ -387,8 +388,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
@@ -410,8 +411,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position (Data, 1, Tab.Data, Tab.End_Position);
@@ -429,8 +430,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
@@ -449,8 +450,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
@@ -473,8 +474,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Get_Field    (Key, 1, Tab.File_Name);
       Get_Position (Key, 2, Tab.Key, Tab.Start_Position);
@@ -499,8 +500,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
@@ -521,8 +522,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Num_Of_Fields := Get_Field_Count (Key);
 
@@ -559,8 +560,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key   (Key,  Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
@@ -582,8 +583,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key
         (Key, Tab.Key, Tab.Base_Class, Tab.File_Name, Tab.Start_Position, 2);
@@ -602,7 +603,7 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Key, Key);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
 
       Get_Field    (Key, 1, Tab.Included_File);
       Get_Field    (Key, 3, Tab.Included_From_File);
@@ -620,8 +621,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key
         (Key,  Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
@@ -642,8 +643,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
       Get_Field       (Key,  1, Tab.Function_Name);
@@ -668,8 +669,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position (Data, 1, Tab.Data, Tab.End_Position);
@@ -687,8 +688,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
       Get_Field       (Key,  1, Tab.Class);
@@ -712,8 +713,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key   (Key,  Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
@@ -735,8 +736,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key
         (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
@@ -761,8 +762,8 @@ package body SN.DB_Structures is
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
-      Copy (Tab.Key, Key_Data_Pair.Key);
-      Copy (Tab.Data, Key_Data_Pair.Data);
+      Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Get_Field       (Key,  1, Tab.Class);
       Get_Field       (Key,  2, Tab.Symbol_Name);
