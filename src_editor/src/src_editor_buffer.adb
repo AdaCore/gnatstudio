@@ -4382,24 +4382,24 @@ package body Src_Editor_Buffer is
       end if;
    end Execute;
 
-   ---------------------
-   -- Get_Description --
-   ---------------------
+   --------------
+   -- Get_Name --
+   --------------
 
-   function Get_Description
-     (Context : access Src_Editor_Key_Context) return String
+   function Get_Name
+     (Context : access Src_Editor_Action_Context) return String
    is
       pragma Unreferenced (Context);
    begin
-      return -"Source editor";
-   end Get_Description;
+      return "Source editor";
+   end Get_Name;
 
    ---------------------
    -- Context_Matches --
    ---------------------
 
    function Context_Matches
-     (Context : access Src_Editor_Key_Context;
+     (Context : access Src_Editor_Action_Context;
       Kernel  : access Kernel_Handle_Record'Class) return Boolean
    is
       pragma Unreferenced (Context);

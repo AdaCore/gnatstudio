@@ -632,12 +632,12 @@ package Src_Editor_Buffer is
       return Command_Return_Type;
    --  This command reindents the current line
 
-   type Src_Editor_Key_Context is new Glide_Kernel.Key_Context_Record
+   type Src_Editor_Action_Context is new Glide_Kernel.Action_Context_Record
       with null record;
-   function Get_Description
-     (Context : access Src_Editor_Key_Context) return String;
+   function Get_Name
+     (Context : access Src_Editor_Action_Context) return String;
    function Context_Matches
-     (Context : access Src_Editor_Key_Context;
+     (Context : access Src_Editor_Action_Context;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
      return Boolean;
    --  A key context that matches if the current widget is a source editor
