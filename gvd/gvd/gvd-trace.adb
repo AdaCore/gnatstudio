@@ -45,6 +45,7 @@ package body GVD.Trace is
    procedure Output_Message
      (Process : Debugger_Process_Tab;
       Str     : String;
+      Mode    : Command_Type;
       Kind    : IO_Kind := Input_Kind)
    is
       N      : Integer;
@@ -53,6 +54,10 @@ package body GVD.Trace is
       Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
 
    begin
+      if Mode < Process.Window.Log_Level then
+         return;
+      end if;
+
       if Kind = Input_Kind then
          N := Write (File, Prefix'Address, Prefix'Length);
          N := Write (File, Input_String'Address, Input_String'Length);
@@ -99,11 +104,9 @@ package body GVD.Trace is
       declare
          Tab : constant Debugger_Process_Tab := Convert (Window, Descriptor);
       begin
-         if Get_Command_Mode (Get_Process (Tab.Debugger)) >=
-           Window.Log_Level
-         then
-            Output_Message (Tab, Str, Input_Kind);
-         end if;
+         Output_Message
+           (Tab, Str,
+            Get_Command_Mode (Get_Process (Tab.Debugger)), Input_Kind);
       exception
          when Debugger_Not_Found => null;
       end;
@@ -123,11 +126,9 @@ package body GVD.Trace is
       declare
          Tab : constant Debugger_Process_Tab := Convert (Window, Descriptor);
       begin
-         if Get_Command_Mode (Get_Process (Tab.Debugger)) >=
-           Window.Log_Level
-         then
-            Output_Message (Tab, Str, Output_Kind);
-         end if;
+         Output_Message
+           (Tab, Str,
+            Get_Command_Mode (Get_Process (Tab.Debugger)), Output_Kind);
       exception
          when Debugger_Not_Found => null;
       end;

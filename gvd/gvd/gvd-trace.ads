@@ -20,6 +20,7 @@
 
 with GNAT.Expect; use GNAT.Expect;
 with GVD.Process; use GVD.Process;
+with GVD.Types; use GVD.Types;
 with System;
 
 package GVD.Trace is
@@ -32,6 +33,7 @@ package GVD.Trace is
    procedure Output_Message
      (Process : Debugger_Process_Tab;
       Str     : String;
+      Mode    : Command_Type;
       Kind    : IO_Kind := Input_Kind);
    --  Write on the log file associated with Process.
    --  Replace ASCII.LF by "\n" and ASCII.HT by "\t", and put lines in quotes.
