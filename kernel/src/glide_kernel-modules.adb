@@ -1037,7 +1037,7 @@ package body Glide_Kernel.Modules is
      (Widget  : access GObject_Record'Class;
       Command : Command_Access)
    is
-      Dummy : Boolean;
+      Dummy : Command_Return_Type;
       pragma Unreferenced (Widget, Dummy);
    begin
       Dummy := Execute (Command);
