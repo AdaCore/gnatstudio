@@ -1084,8 +1084,7 @@ package body Glide_Kernel.Modules is
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String;
       Identifier     : String;
-      Info           : Line_Information_Data)
-   is
+      Info           : Line_Information_Data) is
    begin
       General_Line_Information (Kernel, File, Identifier, Info);
    end Add_Line_Information;
@@ -1096,8 +1095,7 @@ package body Glide_Kernel.Modules is
 
    procedure Clear_Highlighting
      (Kernel   : access Kernel_Handle_Record'Class;
-      Filename : String)
-   is
+      Filename : String) is
    begin
       if Is_Open (Kernel, Filename) then
          Open_File_Editor
