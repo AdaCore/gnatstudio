@@ -1464,7 +1464,8 @@ package body GVD.Process is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "")
+      Debugger_Name   : String := "";
+      Success         : out Boolean)
    is
       Child         : MDI_Child;
       Widget        : Gtk_Widget;
@@ -1599,12 +1600,17 @@ package body GVD.Process is
       --  file.
 
       Initialize (Process.Debugger);
+      Success := True;
 
    exception
       when Process_Died =>
          Buttons :=
            Message_Dialog
              (-"Could not launch the debugger", Error, Button_OK, Button_OK);
+         Process.Debugger := null;
+         Close (Process.Process_Mdi, Process.Command_Scrolledwindow);
+         Close (Process.Process_Mdi, Process.Data_Paned);
+         Success := False;
    end Configure;
 
    ---------------------

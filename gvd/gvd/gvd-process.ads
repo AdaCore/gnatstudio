@@ -229,7 +229,8 @@ package GVD.Process is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "");
+      Debugger_Name   : String := "";
+      Success         : out Boolean);
    --  Configure a process tab.
    --  Kind specifies which debugger should be launched.
    --  Currently, only gdb and jdb are supported.
@@ -243,6 +244,8 @@ package GVD.Process is
    --
    --  See Debugger.Spawn for a documentation on Remote_Host, Remote_Target,
    --  Remote_Protocol and Debugger_Name.
+   --
+   --  Success is set to true is the debugger could be successfully started.
 
    procedure Setup_Data_Window
      (Process : access Debugger_Process_Tab_Record'Class);
