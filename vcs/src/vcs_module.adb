@@ -242,7 +242,7 @@ package body VCS_Module is
 
          if Project /= No_Project
            and then To_Lower (Systems (S).all) = To_Lower
-           (Get_Attribute_Value (Project, Vcs_Kind_Attribute, Ide_Package))
+             (Get_Attribute_Value (Project, Vcs_Kind_Attribute, Ide_Package))
          then
             Set_Active (Radio, True);
             Main.Selected := Radio;
@@ -333,10 +333,10 @@ package body VCS_Module is
       if (Project = No_Project
           and then Get_Label (Selector.Selected) /= -Auto_Detect)
         or else
-        (Project /= No_Project
-         and then To_Lower (Get_Label (Selector.Selected)) /= VCS_Kind
-         and then (VCS_Kind /= ""
-                   or else Get_Label (Selector.Selected) /= -Auto_Detect))
+          (Project /= No_Project
+           and then To_Lower (Get_Label (Selector.Selected)) /= VCS_Kind
+           and then (VCS_Kind /= ""
+                     or else Get_Label (Selector.Selected) /= -Auto_Detect))
       then
          if Get_Label (Selector.Selected) /= -Auto_Detect then
             Update_Attribute_Value_In_Scenario
@@ -352,6 +352,7 @@ package body VCS_Module is
                Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Vcs_Kind_Attribute);
          end if;
+
          Trace (Me, "Vcs_Kind is different");
          Changed := True;
       end if;
@@ -380,7 +381,7 @@ package body VCS_Module is
 
       if Project = No_Project
         or else Get_Text (Selector.File_Checker) /= Get_Attribute_Value
-        (Project, Vcs_File_Check, Ide_Package)
+          (Project, Vcs_File_Check, Ide_Package)
       then
          if Get_Text (Selector.File_Checker) /= "" then
             Update_Attribute_Value_In_Scenario
