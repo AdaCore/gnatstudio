@@ -10,7 +10,7 @@
 @set GPS
 @set GPSVersion 2.0.0
 
-@c @set python
+@set python
 
 @titlepage
 
@@ -74,11 +74,7 @@ unmodified in any copy.
 * Tools::
 * Working in a Cross Environment::
 * Customizing and Extending GPS::
-* Scripting GPS::
 * Environment::
-@ifset python
-* Python Commands::
-@end ifset
 
 @detailmenu
 
@@ -182,13 +178,11 @@ Customizing and Extending GPS
 * GPS Themes::
 * The Key Manager Dialog::
 * Customizing through XML files::
-* Adding Support for New Languages::
-* Defining Text Aliases::
 * Adding support for new tools::
-* Defining New Styles and Key Bindings::
+* Customization examples::
+* Scripting GPS::
 
 Customizing through XML files
-* Customization files::
 * Defining Actions::
 * Macro arguments::
 * Filtering actions::
@@ -199,21 +193,18 @@ Customizing through XML files
 * Setting preferences in custom files::
 * Creating themes::
 * Defining new search patterns::
-* Full example::
+* Adding support for new languages::
+* Defining text aliases::
 
 Adding support for new tools
 * Defining supported languages::
+* Defining default command line::
 * Defining tool switches::
 * Executing external tools::
-* Full tool example::
 
-Executing external tools
-* Chaining commands::
-* Saving open windows::
-* Querying project switches::
-* Querying switches interactively::
-* Redirecting the command output::
-* Processing the tool output::
+Customization examples
+* Menu example::
+* Tool example::
 
 Scripting GPS
 * Scripts::
@@ -505,8 +496,13 @@ left, the @code{Project View}, and on the right the @code{File View}.
 @cindex interactive search
 Each view provides an interactive search capability allowing you to quickly
 search in the information currently displayed. The default key
-to start an interactive search is @key{Ctrl-i}. See @ref{Interactive Search}
-for more details.
+to start an interactive search is @key{Ctrl-i}.
+@anchor{Interactive Search}
+This will open a small window
+at the bottom of the explorer where you can interactively type names.
+The first matching name in the tree will be selected while you type it.
+You can then also use the @key{up} and @key{down} keys to navigate through
+all the items matching the current text.
 
 The various components that are displayed in these explorers are the
 following:
@@ -1519,10 +1515,10 @@ file.
 
 @item A Speed Column
 This column, when visible, is located on the left of the editor. It allows you
-to view all the highlighted lines in a files, at a glance. For example, all the
+to view all the highlighted lines in a file, at a glance. For example, all the
 lines containing compilation errors are displayed in the Speed Column.
 See @ref{The Preferences Dialog} for information on how to customize the
-behaviour of the Speed Column.
+behavior of the Speed Column.
 
 @item A status bar
 Giving information about the file.
@@ -1681,7 +1677,7 @@ The key bindings are listed below in two sections: the common key bindings,
 always available; the Emacs key bindings, available as an option.
 
 In addition, there are several ways to define new key bindings, see
-@ref{Defining Text Aliases} and @ref{Defining new key bindings}.
+@ref{Defining text aliases} and @ref{Binding actions to keys}.
 
 @table @b
 @item Common key bindings
@@ -2998,7 +2994,7 @@ this project knows about. GPS support any number of language, with any name
 you choose. However, advanced support is only provided by default for some
 languages (Ada, C and C++), and you can specify other properties of the
 languages through customization files
-(@pxref{Adding Support for New Languages}).
+(@pxref{Adding support for new languages}).
 
 By default, the graphical interface will only give you a choice of languages
 among the ones that are known to GPS at that point, either through the default
@@ -5462,11 +5458,15 @@ machine, you can specify the name of this machine by setting the
 * GPS Themes::
 * The Key Manager Dialog::
 * Customizing through XML files::
-* Adding Support for New Languages::
-* Defining Text Aliases::
 * Adding support for new tools::
-* Defining New Styles and Key Bindings::
+* Customization examples::
+* Scripting GPS::
 @end menu
+
+@noindent
+GPS provides several levels of customization, from simple preferences dialog
+to powerful scripting capability through the @code{python} language.
+This chapters describes each of these capabilities.
 
 @node The Preferences Dialog
 @section The Preferences Dialog
@@ -5532,11 +5532,19 @@ Name of character set to use for displaying text. The default value is
 ISO-8859-1, which corresponds to Latin-1 (Western European) characters.
 
 @item Dynamic key bindings
+@cindex key
 @cindex key binding
 @cindex dynamic key binding
 @anchor{Dynamic key bindings}
 Whether the menu key bindings can be changed interactively.
-@xref{Redefining key bindings}.
+
+When this preference is enabled, you can navigate through the menus, and type
+the key binding you want to associate to a particular item.
+To remove a key binding, use the @key{Backspace} key.
+Your changes will be saved when GPS exits, in a file called
+@file{$HOME/.gps/custom_keys}. In particular, this means that if for some
+reason you need to edit the file manually, you need to do it outside of
+GPS, or save the file under a different name, and rename it after exiting GPS.
 
 @item Display splash screen
 @cindex splash screen
@@ -6252,7 +6260,6 @@ items yet.
 @c -----------------------------------------------------------------
 
 @menu
-* Customization files::
 * Defining Actions::
 * Macro arguments::
 * Filtering actions::
@@ -6263,53 +6270,32 @@ items yet.
 * Setting preferences in custom files::
 * Creating themes::
 * Defining new search patterns::
-* Full example::
+* Adding support for new languages::
+* Defining text aliases::
 @end menu
 
 @noindent
-You can customize the GPS menu bar in two different ways: you can
-redefine or add new key bindings to the existing menu items, and
-you can define new menu items.
+You can customize lots of capabilities in GPS using XML files that are
+loaded by GPS at start up.
 
-@subsection Redefining key bindings
-@cindex key
-@cindex key binding
-@anchor{Redefining key bindings}
-@noindent
-In order to define or redefine key bindings, you first need to enable
-the @i{dynamic key binding} feature in the Preferences dialog.
-@xref{Dynamic key bindings}.
+For example, you can add items in the menu and tool bars, as well as
+defining new key bindings, new languages, new tools, @dots{}
 
-Then, you can simply navigate through the menus, and type the key binding
-you want to associate to a particular item. To remove a key binding, use
-the @key{Backspace} key.
-Your changes will be saved when GPS exits, in a file called
-@file{$HOME/.gps/custom_keys}. In particular, this means that if for some
-reason you need to edit the file manually, you need to do it outside of
-GPS, or save the file under a different name, and rename it after exiting
-GPS.
-
-@c ------------------------------------------------------------------------
-@node Customization files
-@subsection Customization files
-@c ------------------------------------------------------------------------
-
-@noindent
-The GPS menu bar can be customized through XML files. These files are found
-through three possible mechanisms, described here in the order in which they
-are searched. Files with the @file{.xml} extension found through
+XML files are found through three mechanisms, described here in the order in
+which they are searched. Files with the @file{.xml} extension found through
 @code{GPS_CUSTOM_PATH} or the user's directory can override any setup found in
 the system directory. Likewise, files found in the user's directory can
 override any file found in the @code{GPS_CUSTOM_PATH} directories.
 
-Note that only files with the @file{.xml} extension are considered.
+Note that only files with the @file{.xml} extension are considered, other
+files are ignored.
 
 @itemize @bullet
 @item System wide customization
 
 The @file{INSTALL/share/gps/customize} directory, where
 @file{INSTALL} is the name of the GPS installation directory, should contain
-the files that will always be loaded whenever GPS is loaded, by any user on
+the files that will always be loaded whenever GPS is started, by any user on
 the system.
 
 @item @code{GPS_CUSTOM_PATH}
@@ -6330,16 +6316,12 @@ The directory @file{$HOME/.gps/customize} on Unix
 systems, and @file{%HOME%\.gps\customize} on Windows systems, can also contain
 customization files which are parsed at startup. This is a convenient way for
 users to define their own customization, that they want to load no matter which
-project they are working on.
+project they are working on. Note that you can use the environment variable
+@code{GPS_HOME} to override the value of the @code{HOME} variable.
 @end itemize
 
-The format of these files have changed in GPS 1.3.0. A conversion program
-is provided that will automatically convert all files in the customization
-directory to the new format. This conversion tool is called
-@file{gps2custom-1.3}, and must be run manually.
-
-These files must be utf8-encoded by default. However, you can specify any
-encoding you wish through the standard @code{<?xml encoding="..." ?>}
+XML files must be utf8-encoded by default. In addition, you can specify any
+specific encoding through the standard @code{<?xml encoding="..." ?>}
 declaration, as in the following example:
 
 @smallexample
@@ -6364,10 +6346,8 @@ left to your consideration. The general format is therefore
 </root_node>
 @end smallexample
 
-XML comments are not supported in these files.
-
 The list of valid XML child nodes that can be specified under <root> is
-described in later sections. This includes:
+described in later sections. It includes:
 
 @table @code
 @item <action>
@@ -6379,9 +6359,9 @@ described in later sections. This includes:
 @item <pref>
  (@pxref{Setting preferences in custom files})
 @item <alias>
-(@pxref{Defining Text Aliases})
+(@pxref{Defining text aliases})
 @item <language>
-  (@pxref{Adding Support for New Languages})
+  (@pxref{Adding support for new languages})
 @item <button>
   (@pxref{Adding tool bar buttons})
 @item <vsearch-pattern>
@@ -6405,8 +6385,8 @@ described in later sections. This includes:
 @c -----------------------------------------------------------------------
 
 @noindent
-These files distinguish the actions from their associated menus or
-key bindings. These actions can take on several forms: external commands,
+This facility distinguishes the actions from their associated menus or
+key bindings. Actions can take several forms: external commands,
 shell commands and predefined commands, as will be explained in more details
 below.
 
@@ -6645,8 +6625,8 @@ whether the context is properly defined.
 Base name of the currently opened file.
 
 @ifset python
+Python equivalent:
 @smallexample
-# python equivalent
 import os.path
 os.path.basename (GPS.current_context().file().name())
 @end smallexample
@@ -6656,8 +6636,8 @@ os.path.basename (GPS.current_context().file().name())
 Absolute name of the currently opened file.
 
 @ifset python
+Python equivalent:
 @smallexample
-# python equivalent
 GPS.current_context().file().name()
 @end smallexample
 @end ifset
@@ -6666,8 +6646,8 @@ GPS.current_context().file().name()
 The currently directory.
 
 @ifset python
+Python equivalent:
 @smallexample
-# python equivalent
 GPS.current_context().directory()
 @end smallexample
 @end ifset
@@ -6676,8 +6656,8 @@ GPS.current_context().directory()
 The current project. This is the name of the project, not the project file.
 
 @ifset python
+Python equivalent:
 @smallexample
-# python equivalent
 GPS.current_context().project().name()
 @end smallexample
 @end ifset
@@ -6686,8 +6666,8 @@ GPS.current_context().project().name()
 The root project. This is the name of the project, not the project file.
 
 @ifset python
+Python equivalent:
 @smallexample
-# python equivalent
 GPS.Project.root().name()
 @end smallexample
 @end ifset
@@ -6697,8 +6677,8 @@ The current project file pathname. If a file is selected, this is the project
 file to which the source file belongs.
 
 @ifset python
+Python equivalent:
 @smallexample
-# python equivalent
 GPS.current_context().project().file().name()
 @end smallexample
 @end ifset
@@ -6707,8 +6687,8 @@ GPS.current_context().project().file().name()
 The root project pathname.
 
 @ifset python
+Python equivalent:
 @smallexample
-# python equivalent
 GPS.Project.root().file().name()
 @end smallexample
 @end ifset
@@ -6720,8 +6700,8 @@ current source file doesn't belong to any project. This is mostly for use with
 the GNAT command line tools.
 
 @ifset python
+Python equivalent:
 @smallexample
-# python equivalent
 if GPS.current_context().project():
    return "-P" & GPS.current_context().project().path()
 @end smallexample
@@ -6752,7 +6732,7 @@ sub projects, etc@dots{}
 list the source directories.
 
 @ifset python
-Python equivalent
+Python equivalent:
 @smallexample
 GPS.current_context().project().source_dirs()
 @end smallexample
@@ -6762,7 +6742,7 @@ GPS.current_context().project().source_dirs()
 list the source files.
 
 @ifset python
-Python equivalent
+Python equivalent:
 @smallexample
 GPS.current_context().project().sources()
 @end smallexample
@@ -7208,12 +7188,12 @@ Creating themes}).
 @c ----------------------------------------------------------------
 
 @noindent
-Although GPS comes with a number of predefined themes, you can create
-your own themes, and distribute them to others. They can then selectively
+In addition to the predefined themes that come with GPS, you can create
+your own themes and share them between users. You can then selectively
 chose which themes they want to activate through the preferences dialog
 (@pxref{GPS Themes}).
 
-Creating new themes is done as usual in the customization files, through
+Creating new themes is done in the customization files through
 the @code{<theme>} tag.
 
 This tag accepts a number of attributes:
@@ -7259,10 +7239,10 @@ own GPS directory.
 @c ----------------------------------------------------------------
 
 @noindent
-The search dialog contains a number of predefined search patterns for Ada
-and C. These are generally complex regular expressions, presented in the dialog
-with a more descriptive name. This includes for instance "Ada assignment",
-which will match all such assignments.
+The search dialog contains a number of predefined search patterns for Ada, C
+and C++. These are generally complex regular expressions, presented in the
+dialog with a more descriptive name. This includes for instance
+"Ada assignment", which will match all such assignments.
 
 You can define your own search patterns in the customization files. This is
 done through the @code{<vsearch-pattern>} tag. This tag can have a number of
@@ -7309,55 +7289,9 @@ defined.
 </vsearch-pattern>
 @end smallexample
 
-@c ----------------------------------------------------------------
-@node Full example
-@subsection Full example
-@c ----------------------------------------------------------------
-
-@noindent
-The following example is a full example for one of the files in the
-customization directory. The only thing that hasn't been described before is
-the first line of the file, which is required to make it a valid XML file.
-
-@smallexample
-<?xml version="1.0"?>
-<Custom>
-  <action name="action1">
-    <external>external-command 1</external>
-  </action>
-
-  <action name="action2">
-    <shell>edit %f</shell>
-  </action>
-
-  <submenu>
-    <title>custom menu</title>
-    <menu action="action1">
-      <title>item 1</title>
-    </menu>
-
-    <submenu>
-      <title>other menu</title>
-      <menu action="action2">
-        <title> (etc..)
-      </menu>
-
-      <submenu>
-        (...)
-      </submenu>
-    </submenu>
-  </submenu>
-</Custom>
-@end smallexample
-
-The example above creates a top-level menu named @code{custom menu}.
-This menu contains a menu item named @code{item 1}, which is associated to the
-external command @code{external-command 1}, a sub menu named @code{other menu},
-etc@dots{}
-
 @c --------------------------------------------------------------------------
-@node Adding Support for New Languages
-@section Adding Support for New Languages
+@node Adding support for new languages
+@subsection Adding support for new languages
 @cindex <Language>
 @c --------------------------------------------------------------------------
 
@@ -7607,8 +7541,8 @@ Here is an example of a language definition for the GPS project files:
 @end smallexample
 
 @c --------------------------------------------------------------------------
-@node Defining Text Aliases
-@section Defining Text Aliases
+@node Defining text aliases
+@subsection Defining text aliases
 @cindex aliases
 @cindex <alias>
 @c --------------------------------------------------------------------------
@@ -7753,7 +7687,7 @@ definition. This can be used for instance to create project or system wide
 aliases. All the customization files will be parsed to look for aliases
 definition.
 
-However, all these customization files are considered as read-only by GPS,
+All these customization files are considered as read-only by GPS,
 and therefore cannot be edited through the graphical interface. It is
 possible to override some of the aliases in your own custom files.
 
@@ -7762,10 +7696,10 @@ is the file @file{$HOME/.gps/aliases}. Whenever you edit aliases graphically,
 or create new ones, they are stored in this file, which is the only one that
 GPS will ever modify automatically.
 
-The system files are loaded first, and aliases defined in them can be
+The system files are loaded first, and aliases defined there can be
 overridden by the user-defined file.
 
-These files are standard customization files, @xref{Customization files}.
+These files are standard XML customization files.
 The specific XML tag to use is @i{<alias>}, one per new alias.
 The following example contains a standalone customization file, but you might
 wish to merge the @i{<alias>} tag in any other customization file.
@@ -7817,6 +7751,13 @@ end %(p);</text>
 @cindex <tool>
 @c --------------------------------------------------------------------------
 
+@menu
+* Defining supported languages::
+* Defining default command line::
+* Defining tool switches::
+* Executing external tools::
+@end menu
+
 @noindent
 Support for external tools can be provided through GPS. Typically, this
 would be done to specify different compilers, but it can also apply to a wide
@@ -7835,8 +7776,8 @@ the following things need to be achieved to successfully use a tool:
 
 Each of these points is discussed in further sections. In all these cases, most
 of the work can be done statically through XML customization files.
-These files have the same format as other customization files
-(@pxref{Customization files}), and the tool descriptions are found in
+These files have the same format as other XML customization files
+(@pxref{Customizing through XML files}), and the tool descriptions are found in
 @code{<tool>} tags.
 
 This tag accepts the following attributes:
@@ -7877,17 +7818,8 @@ This tag accepts the following children, described in separate sections:
 @item <language>
    (@pxref{Defining supported languages})
 @item <default-cmd-line>
-   (@pxref{Defining the default command line})
+   (@pxref{Defining default command line})
 @end table
-
-
-@menu
-* Defining supported languages::
-* Defining the default command line::
-* Defining tool switches::
-* Executing external tools::
-* Full tool example::
-@end menu
 
 @c --------------------------------------------------------------------------
 @node Defining supported languages
@@ -7914,8 +7846,8 @@ displayed if that language is supported by the project.
 @end smallexample
 
 @c --------------------------------------------------------------------------
-@node Defining the default command line
-@subsection Defining the default command line
+@node Defining default command line
+@subsection Defining default command line
 @cindex <initial-cmd-line>
 @c --------------------------------------------------------------------------
 
@@ -8198,12 +8130,8 @@ for "'gnaty3", one for "-gnatya",@dots{}.
 
 @noindent
 The user has now specified the default switches he wants to use for the
-external tool. Spawning the external tool can be done in two ways:
-
-@itemize @bullet
-@item From a menu
-@item As a result of a key press
-@end itemize
+external tool. Spawning the external tool can be done either from a menu
+item, or as a result of a key press.
 
 Both cases are described in an XML customization file, as described previously,
 and both are setup to execute what GPS calls an action, i.e. a set of commands
@@ -8267,23 +8195,12 @@ dialog should be displayed for the user.
 Since this command aborts when the user presses cancel, you can
 simply put it in its own @code{<shell>} command, as in:
 
-@ifset python
-@smallexample
-<action name="test save children">
-  <shell lang="python">GPS.save_all (force=0)</shell>
-  <external>echo Run unless Cancel was pressed</external>
-</action>
-@end smallexample
-@end ifset
-
-@ifclear python
 @smallexample
 <action name="test save children">
   <shell>save_all 0</shell>
   <external>echo Run unless Cancel was pressed</external>
 </action>
 @end smallexample
-@end ifclear
 
 
 @c --------------------------------------------------------------------------
@@ -8311,7 +8228,7 @@ help Project.get_attribute_as_list
 @end smallexample
 
 The following is a short example on how to query the switches for the tool
-"Find" from the project, @xref{Full tool example}. It first creates an object
+"Find" from the project, @xref{Tool example}. It first creates an object
 representing the current project, then passes this object as the first
 argument of the @code{get_tool_switches_as_string} command. The last external
 command is a simple output of these switches
@@ -8449,7 +8366,8 @@ further integration of the tool in GPS.
 @enumerate
 @item Parsing error messages
 @cindex locations_parse
-Most often, external tools can display error messages for the user, and these
+
+External tools can usually display error messages for the user that
 are associated with specific files and locations in these files. This is for
 instance the way the GPS builder itself analyzes the output of @code{make}.
 
@@ -8482,19 +8400,9 @@ with a quote.
 </action>
 @end smallexample
 
-@ifset python
-
-@smallexample
-<action name="make example" >
-   <external>make</external>
-   <shell lang="python" >locations_parse """%1 """ make_example</shell>
-</action>
-@end smallexample
-
-@end ifset
-
 @item Auto-correcting errors
 @cindex Codefix.parse
+
 GPS has support for automatically correcting errors for some of the languages.
 You can get access to this auto-fixing feature through the @code{Codefix.parse}
 shell command, which takes the same arguments as for @code{locations_parse}.
@@ -8512,13 +8420,15 @@ active sessions can be retrieved through the @code{Codefix.sessions()} command.
 @cindex Codefix.errors
 @cindex CodefixError.fix
 @cindex CodefixError.possible_fixes
-If you need to manipulate the fixable errors for a given session, you must
-first get a handle on that section, as shown in the example below. You can then
-get the list of fixable errors through the @code{errors} command.
+If support for python is enabled, you can also manipulate the fixable errors
+for a given session.
+To do so, you must first get a handle on that section, as shown in the example
+below. You can then get the list of fixable errors through the @code{errors}
+command.
 
-Each of this error is of the class @code{CodefixError}, which has one important
-method @code{fix} which allows you to force an automatic fixing for that error.
-The list of possible fixes is retrieved through @code{possible_fixes}.
+Each error is of the class @code{CodefixError}, which has one important
+method @code{fix} which allows you to perform an automatic fixing for that
+error. The list of possible fixes is retrieved through @code{possible_fixes}.
 
 @smallexample
 print GPS.Codefix.sessions ()
@@ -8532,11 +8442,63 @@ errors [0].fix ()
 
 @end enumerate
 
+@c ----------------------------------------------------------------
+@node Customization examples
+@section Customization examples
+@c ----------------------------------------------------------------
 
-@c --------------------------------------------------------------------------
-@node Full tool example
-@subsection Full tool example
-@c --------------------------------------------------------------------------
+@menu
+* Menu example::
+* Tool example::
+@end menu
+
+@c ----------------------------------------------------------------
+@node Menu example
+@subsection Menu example
+@c ----------------------------------------------------------------
+
+@noindent
+This section provides a full example of a customization file.
+It creates a top-level menu named @code{custom menu}.
+This menu contains a menu item named @code{item 1}, which is associated to the
+external command @code{external-command 1}, a sub menu named @code{other menu},
+etc@dots{}
+
+@smallexample
+<?xml version="1.0"?>
+<Custom>
+  <action name="action1">
+    <external>external-command 1</external>
+  </action>
+
+  <action name="action2">
+    <shell>edit %f</shell>
+  </action>
+
+  <submenu>
+    <title>custom menu</title>
+    <menu action="action1">
+      <title>item 1</title>
+    </menu>
+
+    <submenu>
+      <title>other menu</title>
+      <menu action="action2">
+        <title> (etc..)
+      </menu>
+
+      <submenu>
+        (...)
+      </submenu>
+    </submenu>
+  </submenu>
+</Custom>
+@end smallexample
+
+@c ----------------------------------------------------------------
+@node Tool example
+@subsection Tool example
+@c ----------------------------------------------------------------
 
 @noindent
 This section provides an example that defines a new tool. This is only a short
@@ -8582,497 +8544,9 @@ user interactively for the name of the file to search.
 </toolexample>
 @end smallexample
 
-
-@c --------------------------------------------------------------------------
-@node Defining New Styles and Key Bindings
-@section Defining New Styles and Key Bindings
-@c --------------------------------------------------------------------------
-
-@cindex Gtk+
-@cindex gtkrc
-@cindex resource file
-@cindex Unix
-@noindent
-In addition to the GPS specific mechanisms described previously, GPS can be
-configured through the low level Gtk+ mechanism of @file{RC files}.
-
-As more customization capabilities are added in GPS, this mechanism will
-become less useful and built-in GPS capabilities should be preferred.
-
-You can create a text file called
-@file{gtkrc} in the gps home directory (@file{~/.gps} on Unix systems), or as
-a global change, in the directory etc/gps in the GPS installation.
-
-This file follows the Gtk+ resource file syntax and gives the possibility in
-particular to define a number of styles and key bindings and attach them to
-particular visual objects such as text editors, menu items, @dots{}
-
-For example, you can set @key{Ctrl-v} in the source editors to scroll forward
-one page. The following code defines this new key binding:
-
-@cindex example
-@smallexample
-
-# Create new key bindings for text editors
-binding "custom-text-key"
-@{
-   # define Ctrl-v to scroll forward one page
-   bind "<ctrl>v" @{ "move-cursor" (pages, 1, 0) @}
-@}
-
-# Associate the new binding created above with text editors
-class "GtkTextView" binding "custom-text-key"
-
-@end smallexample
-
-@subsection Toplevel declarations
-@noindent
-An RC file is a text file which is composed of a sequence of declarations.
-All the literals are case sensitive;
-@code{#} characters delimit comments and the portion of a line after a
-@code{#} is ignored when parsing an RC file.
-The syntax of the top level declarations is described below.
-Opening/closing brackets on the same line (@{ ... @}) are used to represent
-a sequence of 0 or more elements. Brackets on their own line are real bracket
-characters.
-
-@smallexample
-toplevel-declarations ::=
-   @{ declaration @}
-
-declaration ::=
-   include-file | pixmap-path | style-definition | binding-definition |
-   enable-resource
-
-include-file ::=
-   @b{include} string_literal
-
-pixmap-path ::=
-   @b{pixmap_path} string_literal
-
-style-definition ::=
-   @b{style} resource-name [ = parent ]
-   @{
-      sequence-of-style
-   @}
-
-binding-definition ::=
-   @b{binding} resource-name
-   @{
-      sequence-of-binding
-   @}
-
-enable-resource ::=
-   @b{class} "widget-name" (@b{binding} | @b{style}) resource-name
-
-resource-name ::=
-   string_literal
-
-@end smallexample
-
-@noindent
-The table below describes the meaning of each of these toplevel declarations:
-
-@table @command
-@item include @i{filename}
-Parses another file at this point. If filename is not an absolute filename, it
-is searched in the directories of the currently open RC file.
-
-@item pixmap_path @i{path}
-Sets a path (a list of directories separated by colons) that will be searched
-for pixmaps referenced in RC files.
-
-@item style @i{name} [ = @i{parent} ] @{ ... @}
-Declares a style. If @i{parent} is specified, @i{name} inherits its
-default attributes from @i{parent}. You can specify @i{"default"} to designate
-the default style, e.g:
-
-@smallexample
-style "my-style" = "default" @{ ... @}
-@end smallexample
-
-See @ref{Defining new styles} for more details.
-
-@item binding name @{ ... @}
-Declares a binding set.
-See @ref{Defining new key bindings} for more details.
-
-@item class @i{widget-name} (binding | style) @i{name}
-Specifies a binding or style set for a particular set of visual objects.
-
-@item resource-name
-An arbitrary user defined name.
-
-@end table
-
-@subsection Defining new styles
-@anchor{Defining new styles}
-@noindent
-A RC style is specified by a style declaration in a RC file, and then bound to
-visual objects with a class declaration.
-Within each type of declaration, later declarations override earlier ones.
-
-For example, the following code will change the background color of any button,
-when it is pressed. It will also set a background pixmap when it is not
-pressed. The style also inherits from the one above, so that the buttons also
-use the default font.
-
-@cindex example
-@smallexample
-
-pixmap_path "@i{directory_that_contains_the_pixmap}"
-style "custom-button" = "default"
-@{
-  bg_pixmap[NORMAL]="@i{pixmap_file}"
-  bg[ACTIVE]="blue"
-@}
-class "GtkButton" style "custom-button"
-
-@end smallexample
-
-@noindent
-Here is the syntax for defining styles:
-
-@smallexample
-
-sequence-of-style ::=
-   @{ style | property @}
-
-style ::=
-   style-name[state] = string_literal
-
-style-name ::=
-   @i{bg | fg | base | text | bg_pixmap | font_name}
-
-state ::=
-   @i{NORMAL | ACTIVE | PRELIGHT | SELECTED | INSENSITIVE}
-
-property ::=
-   widget-name::widget-property = value
-
-widget-property ::=
-   @i{cursor-aspect-ratio | cursor-color }
-
-@end smallexample
-
-@noindent
-The table below describes the meaning of each of these elements:
-
-@table @command
-@item bg[@i{state}] = @i{color}
-Sets the color used for the background of most visual objects.
-
-@item fg[@i{state}] = @i{color}
-Sets the color used for the foreground of most visual objects.
-
-@item base[@i{state}] = @i{color}
-Sets the color used for foreground of visual objects displaying editable
-text (e.g. source editors), using base for the background color.
-
-@item text[@i{state}] = @i{color}
-Sets the color used for the background of visual objects displaying editable
-text, for instance the text editor in GPS.
-
-@item bg_pixmap[@i{state}] = @i{pixmap}
-Sets a background pixmap to be used in place of the bg color. The special
-value @i{"<parent>"} may be used to indicate that the visual object should use
-the same background pixmap as its parent. The special value @i{"<none>"} may be
-used to indicate no background pixmap.
-
-@item font_name = @i{font}
-Sets the font for a visual object.
-Font is a font name as listed in the font selector in the preferences dialog,
-e.g. @i{"Sans Italic 10"}.
-
-@item GtkTextView::cursor-aspect-ratio = @i{value}
-Width ratio with which to draw the insertion cursor. @i{Value} is a float value
-between 0.0 and 1.0. The default value is 0.04.
-
-@item GtkTextView::cursor-color = @i{color}
-Color with which to draw insertion cursor
-
-@end table
-
-@noindent
-The colors and background pixmaps are specified as a function of the state of
-the visual object. The states are:
-
-@table @command
-@item NORMAL
-A color used for a visual object in its normal state.
-
-@item ACTIVE
-A variant of the NORMAL color used when the visual object is in the active
-state, and also for the trough of a ScrollBar, tabs of a
-NoteBook other than the current tab and similar areas. Frequently, this should
-be a darker variant of the NORMAL color.
-
-@item PRELIGHT
-A color used for visual objects in the PRELIGHT state. This state is
-used for Buttons and MenuItems that have the mouse cursor over them, and for
-their children.
-
-@item SELECTED
-A color used to highlight data selected by the user. For instance, the
-selected items in a list object, and the selection in an editable object.
-
-@item INSENSITIVE
-A color used for the background of visual objects that have been set
-insensitive.
-@end table
-
-Colors can be specified as a string containing a color name (under Unix
-systems, GTK+ knows all names from the X color database /usr/lib/X11/rgb.txt),
-in one of the hexadecimal forms @code{#rrrrggggbbbb}, @code{#rrrgggbbb},
-@code{#rrggbb}, or @code{#rgb}, where r, g and b
-are hex digits, or they can be specified as a triplet @code{@{r, g, b@}}, where
-r, g and b are either integers in the range 0-65535 or floats in the range
-0.0-1.0.
-
-@subsection Defining new key bindings
-@anchor{Defining new key bindings}
-@noindent
-Key bindings allow you to specify actions to be taken on a given key
-press. The syntax to define new key bindings is described below.
-
-@smallexample
-
-sequence-of-binding ::=
-   @{ binding @}
-
-binding ::=
-   @b{bind} "key-name"
-   @{
-      sequence-of-commands
-   @}
-
-sequence-of-commands ::=
-   @{ command @}
-
-command ::=
-   "command-kind" (parameters)
-
-parameters ::=
-   [first-parameter @{, number@}]
-
-widget-name ::=
-   @i{GtkButton | GtkDialog | GtkEntry | GtkMenuItem |}
-   @i{GtkMenuShell | GtkTextView | GtkTreeView}
-
-command-kind ::=
-   @i{move-cursor | page-horizontally | set-anchor | insert-at-cursor |}
-   @i{delete-from-cursor | cut-clipboard | copy-clipboard | paste-clipboard |}
-   @i{toggle-overwrite | move-focus | activate | select-all | unselect-all |}
-   @i{select-cursor-row | toggle-cursor-row | expand-collapse-cursor-row |}
-   @i{select-cursor-parent | start-interactive-search | clicked | close |}
-   @i{move-current}
-
-first-parameter ::=
-   @i{movement-step | count | extend-selection | delete-type | start-editing |}
-   @i{logical | expand | expand-all | menu-direction |} string_litteral
-
-number ::=
-   [-|+]digit@{digit@}
-
-key-name ::=
-   @{modifier@}key
-
-modifier ::=
-   <ctrl> | <alt> | <shift>
-
-key ::=
-   letter | digit |
-   @i{BackSpace | Tab | Return | Pause | Scroll_Lock | Sys_Req | Escape |}
-   @i{Delete | Home | Left | Up | Right | Down | Page_Up | Page_Down | End |}
-   @i{Insert | Break | Num_Lock |}
-   @i{F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 |}
-   @i{Caps_Lock | space | exclam | quotedbl | numbersign | dollar | percent |}
-   @i{ampersand | apostrophe | quoteright | parenleft | parenright | asterisk |}
-   @i{plus | comma | minus | period | slash | colon | semicolon | less |}
-   @i{equal | greater | question | at | bracketleft | backslash |}
-   @i{bracketright | underscore | grave | quoteleft | braceleft | bar |}
-   @i{braceright}
-
-@end smallexample
-
-@noindent
-The list of valid @command{command-kind} values and their parameters depend on
-the widget name:
-
-@table @command
-@item GtkButton
-   Applies to buttons.
-   @table @command
-   @item clicked ()
-      Generate a button click event.
-   @end table
-
-@item GtkDialog
-   Applies to dialog windows.
-   @table @command
-   @item close ()
-      Close the current dialog box.
-   @end table
-
-@item GtkEntry
-   Applies to single line text entries.
-   @table @command
-   @item activate ()
-      Activate the text entry.
-   @item move-cursor (movement-step, count, extend-selection)
-      Move insertion point by count steps. If extend-selection is true,
-      create or extend the selection.
-   @item insert-at-cursor (string)
-      Insert a given text string at the cursor.
-   @item delete-from-cursor (delete-type, count)
-      Delete count units from the cursor.
-   @item cut-clipboard ()
-      Cut the current selection to the clipboard.
-   @item copy-clipboard ()
-      Copy the current selection to the clipboard.
-   @item paste-clipboard ()
-      Paste the contents of the clipboard.
-   @item toggle-overwrite ()
-      Toggle the current overwrite mode.
-   @end table
-
-@item GtkMenuItem
-   Applies to menu items.
-   @table @command
-   @item activate ()
-      Activate the menu item.
-   @end table
-
-@item GtkMenuShell
-   Applies to menus.
-   @table @command
-   @item move-current (menu-direction)
-      Move the current menu entry to the given direction.
-   @end table
-
-@item GtkTextView
-   Applies to source and text editors.
-   @table @command
-   @item move-cursor (movement-step, count, extend-selection)
-      Move insertion point by count steps. If extend-selection is true,
-      create or extend the selection.
-   @item page-horizontally (count, extend-selection)
-      Move cursor to the beginning (count=-1) or the end (count=1) of the
-      current line.
-   @item set-anchor ()
-      Move the anchor to the cursor position.
-   @item insert-at-cursor (string)
-      Insert a given text string at the cursor.
-   @item delete-from-cursor (delete-type, count)
-      Delete count units from the cursor.
-   @item cut-clipboard ()
-      Cut the current selection to the clipboard.
-   @item copy-clipboard ()
-      Copy the current selection to the clipboard.
-   @item paste-clipboard ()
-      Paste the contents of the clipboard.
-   @item toggle-overwrite ()
-      Toggle the current overwrite mode.
-   @end table
-
-@item GtkTreeView
-   Applies to tree and list objects, in particular the Location Tree, the
-   Project View, the File View and the VCS Explorer.
-   @table @command
-   @item move-cursor (movement-step, count)
-      Move insertion point.
-   @item select-all ()
-      Select all rows.
-   @item unselect-all ()
-      Unselect all rows.
-   @item select-cursor-row (start-editing)
-      Select or unselect the current row.
-   @item toggle-cursor-row ()
-      Toggle the selection of the current row.
-   @item expand-collapse-cursor-row (logical, expand, expand-all)
-      Expand (expand=1) or collapse (expand=0) the current row.
-      If expand-all=1, also expand all children recursively.
-      Parameter logical currently ignored.
-   @item select-cursor-parent ()
-      Select the parent row of the current selection.
-   @item start-interactive-search ()
-   @cindex interactive search
-   @anchor{Interactive Search}
-      Start interactive search on the tree view. This will open a small window
-      at the bottom of the tree view where you can interactively type names.
-      The first matching name in the tree will be selected while you type it.
-      You can then also use the @key{up} and @key{down} keys to navigate through
-      all the items matching the current text.
-   @end table
-@end table
-
-@noindent
-The possible values of the parameters listed above are:
-
-@table @command
-@item count
-   Signed integer value.
-
-@item string
-   Quoted string, e.g @i{"text"}.
-
-@item extend-selection, start-editing, logical, expand, expand-all:
-   Boolean value. 0 means false, 1 means true.
-
-@item delete-type
-   @table @command
-   @item chars
-      Delete a given amount of characters.
-   @item word-ends
-      Delete only the portion of the word to the left/right of cursor if we're
-      in the middle of a word.
-   @item paragraph-ends
-      Delete between cursor and the end (count=1) or beginning (count=-1) of
-      current line.
-   @item paragraphs
-      Delete whole line.
-   @item whitespace
-      Delete all white spaces around the cursor.
-   @end table
-
-@item menu-direction
-   @table @command
-   @item parent
-      Select the parent menu item.
-   @item child
-      Select the first child menu item.
-   @item next
-      Select the next (sibling) menu item.
-   @item prev
-      Select the previous (sibling) menu item.
-   @end table
-
-@item movement-step
-   @table @command
-   @item logical-positions
-      Move by forward/back graphemes.
-   @item visual-positions
-      Move by left/right graphemes.
-   @item words
-      Move by forward/back words.
-   @item display-lines
-      Move up/down lines (wrapped lines).
-   @item display-line-ends
-      Move to either end of a line (wrapped lines).
-   @item paragraphs
-      Move up/down paragraphs (newline-ended lines).
-   @item paragraph-ends
-      Move to either end of a paragraph.
-   @item pages
-      Move by pages.
-   @item buffer-ends
-      Move to the end (count=1) or to the beginning (count=-1) of the file.
-   @end table
-@end table
-
 @c --------------------------------------------------------------------
 @node Scripting GPS
-@chapter Scripting GPS
+@section Scripting GPS
 @cindex scripts
 @c --------------------------------------------------------------------
 
@@ -9088,7 +8562,7 @@ The possible values of the parameters listed above are:
 
 @c ---------------------------------------------------------------------
 @node Scripts
-@section Scripts
+@subsection Scripts
 @c ---------------------------------------------------------------------
 
 @noindent
@@ -9163,7 +8637,7 @@ shortcuts to shell commands.
 
 @c --------------------------------------------------------------------
 @node Scripts and GPS actions
-@section Scripts and GPS actions
+@subsection Scripts and GPS actions
 @cindex execute_action
 @c --------------------------------------------------------------------
 
@@ -9201,7 +8675,7 @@ The list of actions known to GPS can be found through the
 
 @c ------------------------------------------------------------------------
 @node The GPS Shell
-@section The GPS Shell
+@subsection The GPS Shell
 @cindex gps shell
 @c ------------------------------------------------------------------------
 
@@ -9281,12 +8755,11 @@ languages such as @code{Python}.
 
 @ifset python
 @node The Python Interpreter
-@section The Python Interpreter
+@subsection The Python Interpreter
 @cindex python
 @c ------------------------------------------------------------------------
 
 @noindent
-
 Python is an interpreted object-oriented language, created by Guido
 Van Rossum. It is similar in its capabilities to languages such as
 Perl, Tcl or Lisp. This section is not a tutorial on python
@@ -9298,8 +8771,7 @@ If python support has been enabled, the python shell is accessible through the
 display it by using the menu @file{Tools->Python Console}.
 
 You can type @code{help(GPS)} in the python console to see the list of
-functions exported by GPS to python. This list is also given in
-@ref{Python Commands}.
+functions exported by GPS to python.
 
 The same example that was used to show the GPS shell follows, now using
 python. As you can notice, the name of the commands is
@@ -9440,8 +8912,7 @@ be extended from Python.
 If your script doesn't do what you expect it to do, there are several
 ways to debug it, among which the easiest is probably to add some "print"
 statements. Since some output of the scripts is sometimes hidden by GPS
-(for instance for interactive commands), you might not see this output
-however.
+(for instance for interactive commands), you might not see this output.
 
 In this case, you can reuse the tracing facility embedded in GPS itself.
 Modify the file @file{$HOME/.gps/traces.cfg}, and add the following line:
@@ -9451,14 +8922,14 @@ PYTHON.OUT=yes
 @end smallexample
 
 This will put in the file @file{$HOME/.gps/log} all the output from
-python, among other traces. However, it will also slow down GPS somewhat
-since there might be a lot of output going on.
+python, among other traces. However, it will also slow down GPS when
+there are a lot of output to process.
 
 @end ifset
 
 @c --------------------------------------------------------------------
 @node Hooks
-@section Hooks
+@subsection Hooks
 @cindex hooks
 @c --------------------------------------------------------------------
 
@@ -9508,7 +8979,7 @@ As before, you can more information for each of these type through a call to
 
 
 @c ----------------------------------
-@subsection Adding commands to hooks
+@subsubsection Adding commands to hooks
 @c ----------------------------------
 
 @noindent
@@ -9575,7 +9046,7 @@ declared.
 
 @ifset python
 @c ----------------------------------
-@subsection Action hooks
+@subsubsection Action hooks
 @cindex hooks, action_hooks
 @cindex hooks, open_file_action_hook
 @c ----------------------------------
@@ -9629,7 +9100,7 @@ GPS.add_hook ("open_file_action_hook", "my_foo_handler")
 @end ifset
 
 @c --------------------------------------------------------------------
-@subsection Running hooks
+@subsubsection Running hooks
 @cindex hooks, run_hook
 @c --------------------------------------------------------------------
 
@@ -9673,7 +9144,7 @@ GPS> run_hook "open_file_action_hook" %1 100 1 0 true true true
 @end ifclear
 
 @c --------------------------------------------------------------------
-@subsection Creating new hooks
+@subsubsection Creating new hooks
 @cindex hooks, creating
 @cindex hooks, register_hook
 @c --------------------------------------------------------------------
@@ -9884,7 +9355,7 @@ file.
 
    @item $HOME/.gps/aliases
 @cindex aliases
-File containing the user-defined aliases (@pxref{Defining Text Aliases}).
+File containing the user-defined aliases (@pxref{Defining text aliases}).
 
    @item $HOME/.gps/customize
 Directory containing files with user-defined customizations.
@@ -9892,12 +9363,12 @@ All files found under this directory are loaded by GPS during start up.
 You can create/edit these files to add your own menu/tool-bar entries in GPS,
 or define support for new languages.
 @pxref{Customizing through XML files} and
-@pxref{Adding Support for New Languages}.
+@pxref{Adding support for new languages}.
 
    @item $HOME/.gps/custom_key
 Contains all the menu shortcuts defined in GPS. This file is
 automatically created if you have activated the dynamic key bindings feature
-(@pxref{Customizing through XML files}).
+(@pxref{Dynamic key bindings}).
 
    @item $HOME/.gps/keys.xml
 Contains all the key bindings for the actions defined in GPS or in the
@@ -9913,14 +9384,6 @@ GPS and gdb.
    @item $HOME/.gps/desktop
 Desktop file in XML format (using the menu @code{File->Save More->Desktop}),
 loaded automatically if found.
-
-   @item $HOME/.gps/gtkrc
-@cindex Gtk+
-@cindex gtkrc
-The theme used by the gtk+ library on which gps is based. It allows you
-to configure the colors and fonts used in your
-application. @xref{Defining New Styles and Key Bindings}.
-See also @file{<prefix>/etc/gps/gtkrc}.
 
    @item $HOME/.gps/history
 @cindex history
@@ -9957,11 +9420,6 @@ The directory containing the GPS executables.
    @item @i{prefix}/etc/gps
 The directory containing global configuration files for GPS.
 
-   @item @i{prefix}/etc/gps/gtkrc
-@cindex Gtk+
-@cindex gtkrc
-The global theme used by the gtk+ library. See also @file{$HOME/.gps/gtkrc}.
-
    @item @i{prefix}/lib
 This directory contains the shared libraries used by GPS.
 
@@ -9973,7 +9431,7 @@ This directory contains source code examples.
 
    @item @i{prefix}/doc/gps/examples/language
 This directory contains sources showing how to provide a shared library to
-dynamically define a new language. See @ref{Adding Support for New Languages}.
+dynamically define a new language. See @ref{Adding support for new languages}.
 
    @item @i{prefix}/doc/gps/examples/tutorial
 This directory contains the sources used by the GPS tutorial.
@@ -9984,8 +9442,8 @@ See @url{gps-tutorial.html}.
 
    @item @i{prefix}/share/gps/customize
 Directory containing files with system-wide customizations
-(see @ref{Adding Support for New Languages} and
- @ref{Defining Text Aliases}).
+(see @ref{Adding support for new languages} and
+ @ref{Defining text aliases}).
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
@@ -10019,9 +9477,8 @@ Directory used to retrieve the translation files, when relevant.
 
 @noindent
 If you would like to make suggestions about GPS, or if you encountered a bug,
-please report it to @uref{mailto:report@@gnat.com} following the usual GNAT
-reports recommendations as explained in the file README.GNATPRO for supported
-users, and in gnatinfo.txt for non supported users.
+please report it to @uref{mailto:report@@gnat.com} if you are a supported
+user, and to @uref{mailto:gps-devel@@lists.act-europe.fr} otherwise.
 
 Please try to include a detailed description of the problem, including
 sources to reproduce it if possible/needed, and/or a scenario describing the
@@ -10129,6 +9586,18 @@ is, and cannot reliably guess which occurrence to use.
 There are several solutions to handle this issue:
 
 @itemize @bullet
+@item Put all duplicate files in the same project
+
+There is one specific case where a project is allowed to have duplicate source
+files: if the list of source directories is specified explicitly. All
+duplicate files must be in the same project. With these conditions, there is
+no ambiguity for GPS and the GNAT tools which file to use, and the first
+file found on the source path is the one hiding all the others. GPS only
+shows the first file.
+
+You can then have a scenario variable that changes the order of source
+directories to give visibility on one of the other duplicate files.
+
 @item Use scenario variables in the project
 
 The idea is that you define various scenarios in your project (For
@@ -10151,48 +9620,9 @@ source files from the common build/source setup (if you are working
 on a small part of the whole system, you may not want to have a complete
 copy of the code on your local machine).
 
-@item Put all duplicate files in the same project
-
-There is one specific case where a project is allowed to have duplicate source
-files: if the list of source directories is specified explicitly. All
-duplicate files must be in the same project. With these conditions, there is
-no ambiguity for GPS and the GNAT tools which file to use, and the first
-file found on the source path is the one hiding all the others. GPS only
-shows the first file.
-
-You can then have a scenario variable that changes the order of source
-directories to give visibility on one of the other duplicate files.
-
 @end itemize
 
 @end table
-
-@ifset python
-@c --------------------------------------------------------------------
-@node Python Commands
-@appendix Python Commands
-@c --------------------------------------------------------------------
-
-@noindent
-This section lists all functions that GPS exports to python. This is
-the result of interactively running the following commands in the
-python interpreter:
-
-@smallexample
->>> e=file("/tmp/foo", "w")
->>> sys.stdout=e
->>> help(GPS)
->>> e.flush()
->>> sys.stdout=sys.__stdout__
-@end smallexample
-
-@c Here is the list:
-
-@c ??? incomplete
-@c @example
-@c @end example
-
-@end ifset
 
 @c --------------------------------------------------------------------
 @unnumbered Index
