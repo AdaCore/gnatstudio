@@ -449,7 +449,12 @@ package Src_Editor_Box is
    function Get_Ref_Count
      (Editor : access Source_Editor_Box_Record)
       return Integer;
-   --  Return the total number of times the Source_Buffer is referenced.
+   --  Return the total number of current references to this buffer.
+
+   function Get_Total_Ref_Count
+     (Editor : access Source_Editor_Box_Record)
+      return Integer;
+   --  Return the total number of times the Source_Buffer was referenced.
 
    ---------------------
    -- Contextual menu --
@@ -573,6 +578,14 @@ private
       --  source buffer.
 
       Buffer_Info_Frames   : Frames_Array_Access := null;
+
+      Primary              : Boolean := False;
+      --  Indicates whether the box is the primary editor of Source_Buffer.
+      --  Only the primary editor needs to be saved.
+      --  When closing a Primary editor, other editors will be looked up
+      --  and another editor becomes Primary.
+      --  This attribute is used mainly for determining whether the user
+      --  should be prompted for saving the contents.
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
