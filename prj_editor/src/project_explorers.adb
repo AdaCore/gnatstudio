@@ -191,8 +191,10 @@ package body Project_Explorers is
    function Add_Project_Node
      (Explorer     : access Project_Explorer_Record'Class;
       Project      : Project_Type;
-      Parent_Node  : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter;
+      Parent_Node  : Gtk_Tree_Iter := Null_Iter;
+      Name_Suffix  : String := "") return Gtk_Tree_Iter;
    --  Add a new project node in the tree.
+   --  Name_Suffix is added to the node's name in addition to the project name.
    --  Parent_Node is the parent of the project in the tree. If this is null,
    --  the new node is added at the root level of the tree.
    --  The new node is initially closed, and its contents will only be
@@ -793,7 +795,8 @@ package body Project_Explorers is
    function Add_Project_Node
      (Explorer     : access Project_Explorer_Record'Class;
       Project      : Project_Type;
-      Parent_Node  : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
+      Parent_Node  : Gtk_Tree_Iter := Null_Iter;
+      Name_Suffix  : String := "") return Gtk_Tree_Iter
    is
       N         : Gtk_Tree_Iter;
       Ref       : Gtk_Tree_Iter := Null_Iter;
@@ -841,10 +844,10 @@ package body Project_Explorers is
       if Extending_Project (Project) /= No_Project then
          --  ??? We could use a different icon instead
          Set (Explorer.Tree.Model, N, Base_Name_Column,
-              Locale_To_UTF8 (Node_Text) & " (extended)");
+              Locale_To_UTF8 (Node_Text) & " (extended)" & Name_Suffix);
       else
          Set (Explorer.Tree.Model, N, Base_Name_Column,
-              Locale_To_UTF8 (Node_Text));
+              Locale_To_UTF8 (Node_Text & Name_Suffix));
       end if;
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
@@ -1334,7 +1337,6 @@ package body Project_Explorers is
       pragma Unreferenced (Success);
       Area_Rect : Gdk_Rectangle;
       Path2    : Gtk_Tree_Path;
-      H        : Gint;
    begin
       if T.Expanding then
          return;
@@ -1861,7 +1863,10 @@ package body Project_Explorers is
       end loop;
 
       for Im in Imported'Range loop
-         if Imported (Im) /= No_Project then
+         if Imported (Im) = Get_Project (Explorer.Kernel) then
+            Iter2 := Add_Project_Node (Explorer, Imported (Im), Null_Iter,
+                                       Name_Suffix => " (root project)");
+         elsif Imported (Im) /= No_Project then
             Iter2 := Add_Project_Node (Explorer, Imported (Im), Null_Iter);
          end if;
       end loop;
