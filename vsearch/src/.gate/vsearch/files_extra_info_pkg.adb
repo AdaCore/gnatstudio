@@ -101,6 +101,7 @@ begin
      0, 0);
 
    Gtk_New (Files_Extra_Info.Browse_Button, -"Browse");
+   Set_Relief (Files_Extra_Info.Browse_Button, Relief_Normal);
    Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Browse_Button, 1, 2, 2, 3,
      Fill, 0,
      0, 0);

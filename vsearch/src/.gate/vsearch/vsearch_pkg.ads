@@ -20,6 +20,8 @@ package Vsearch_Pkg is
       Replace_Entry : Gtk_Entry;
       Context_Combo : Gtk_Combo;
       Context_Entry : Gtk_Entry;
+      Pattern_Combo : Gtk_Combo;
+      Pattern_Entry : Gtk_Entry;
       Buttons_Hbox : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
       Options_Vbox : Gtk_Vbox;
@@ -31,8 +33,6 @@ package Vsearch_Pkg is
       Case_Check : Gtk_Check_Button;
       Whole_Word_Check : Gtk_Check_Button;
       Regexp_Check : Gtk_Check_Button;
-      Pattern_Combo : Gtk_Combo;
-      Pattern_Entry : Gtk_Entry;
    end record;
    type Vsearch_Access is access all Vsearch_Record'Class;
 

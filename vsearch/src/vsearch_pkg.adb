@@ -41,8 +41,8 @@ pragma Suppress (All_Checks);
    Replace_Combo_Items : String_List.Glist;
    Tooltips : Gtk_Tooltips;
    Context_Combo_Items : String_List.Glist;
-   Scope_Combo_Items : String_List.Glist;
    Pattern_Combo_Items : String_List.Glist;
+   Scope_Combo_Items : String_List.Glist;
 
 begin
    Gtk.Window.Initialize (Vsearch, Window_Toplevel);
@@ -54,7 +54,7 @@ begin
    Gtk_New_Vbox (Vsearch.Vbox_Search, False, 0);
    Add (Vsearch, Vsearch.Vbox_Search);
 
-   Gtk_New (Vsearch.Table, 6, 2, False);
+   Gtk_New (Vsearch.Table, 3, 2, False);
    Set_Row_Spacings (Vsearch.Table, 2);
    Set_Col_Spacings (Vsearch.Table, 3);
    Pack_Start (Vsearch.Vbox_Search, Vsearch.Table, True, True, 0);
@@ -124,16 +124,30 @@ begin
    Set_Visibility (Vsearch.Context_Entry, True);
    Set_Tip (Tooltips, Vsearch.Context_Entry, -"The context of the search");
 
-   Gtk_New_Hbox (Vsearch.Buttons_Hbox, False, 3);
-   Attach (Vsearch.Table, Vsearch.Buttons_Hbox, 0, 2, 3, 4,
-     Fill, 0,
+   Gtk_New (Vsearch.Pattern_Combo);
+   Set_Case_Sensitive (Vsearch.Pattern_Combo, False);
+   Set_Use_Arrows (Vsearch.Pattern_Combo, True);
+   Set_Use_Arrows_Always (Vsearch.Pattern_Combo, False);
+   --  String_List.Append (Pattern_Combo_Items, -"");
+   --  Combo.Set_Popdown_Strings (Vsearch.Pattern_Combo, Pattern_Combo_Items);
+   Free_String_List (Pattern_Combo_Items);
+   Attach (Vsearch.Table, Vsearch.Pattern_Combo, 1, 2, 0, 1,
+     Expand or Fill, 0,
      2, 0);
+
+   Vsearch.Pattern_Entry := Get_Entry (Vsearch.Pattern_Combo);
+   Set_Editable (Vsearch.Pattern_Entry, True);
+   Set_Max_Length (Vsearch.Pattern_Entry, 0);
+   Set_Text (Vsearch.Pattern_Entry, -"");
+   Set_Visibility (Vsearch.Pattern_Entry, True);
+   Set_Tip (Tooltips, Vsearch.Pattern_Entry, -"The searched word or pattern");
+
+   Gtk_New_Hbox (Vsearch.Buttons_Hbox, False, 0);
+   Pack_Start (Vsearch.Vbox_Search, Vsearch.Buttons_Hbox, True, True, 0);
 
    Gtk_New (Vsearch.Options_Frame, -"Options");
    Set_Shadow_Type (Vsearch.Options_Frame, Shadow_Etched_In);
-   Attach (Vsearch.Table, Vsearch.Options_Frame, 0, 2, 5, 6,
-     Fill, 0,
-     2, 0);
+   Pack_Start (Vsearch.Vbox_Search, Vsearch.Options_Frame, True, True, 0);
 
    Gtk_New_Vbox (Vsearch.Options_Vbox, False, 0);
    Add (Vsearch.Options_Frame, Vsearch.Options_Vbox);
@@ -183,25 +197,6 @@ begin
    Gtk_New (Vsearch.Regexp_Check, -"Regular expression");
    Set_Active (Vsearch.Regexp_Check, False);
    Pack_Start (Vsearch.Options_Vbox, Vsearch.Regexp_Check, True, True, 0);
-
-   Gtk_New (Vsearch.Pattern_Combo);
-   Set_Case_Sensitive (Vsearch.Pattern_Combo, False);
-   Set_Use_Arrows (Vsearch.Pattern_Combo, True);
-   Set_Use_Arrows_Always (Vsearch.Pattern_Combo, False);
-   --  String_List.Append (Pattern_Combo_Items, -"");
-   --  Combo.Set_Popdown_Strings (Vsearch.Pattern_Combo, Pattern_Combo_Items);
-   Free_String_List (Pattern_Combo_Items);
-   Attach (Vsearch.Table, Vsearch.Pattern_Combo, 1, 2, 0, 1,
-     Expand or Fill, 0,
-     2, 0);
-
-   Vsearch.Pattern_Entry := Get_Entry (Vsearch.Pattern_Combo);
-   Set_Editable (Vsearch.Pattern_Entry, True);
-   Set_Max_Length (Vsearch.Pattern_Entry, 0);
-   Set_Text (Vsearch.Pattern_Entry, -"");
-   Set_Visibility (Vsearch.Pattern_Entry, True);
-   Set_Tip (Tooltips, Vsearch.Pattern_Entry, -"The searched word or pattern");
-
 end Initialize;
 
 end Vsearch_Pkg;
