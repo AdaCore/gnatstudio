@@ -1,5 +1,6 @@
 
 with Ada.Unchecked_Deallocation;
+with File_Utils;                use File_Utils;
 with Glide_Intl;                use Glide_Intl;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -2511,7 +2512,7 @@ package body Projects.Editor is
       --  Cleanup the name
 
       Name := Get_String
-        (Base_Name  (Project_Name (Imported_Project), Project_File_Extension));
+        (Base_Name (Project_Name (Imported_Project), Project_File_Extension));
 
       if With_Clause /= Empty_Node
         and then Prj.Tree.Name_Of (With_Clause) = Name
@@ -2527,6 +2528,7 @@ package body Projects.Editor is
                Set_Next_With_Clause_Of
                  (With_Clause, Next_With_Clause_Of (Next));
             end if;
+
             With_Clause := Next;
          end loop;
       end if;
@@ -2610,8 +2612,9 @@ package body Projects.Editor is
       Dep_Name := Tree_Private_Part.Projects_Htable.Get (Dep_ID);
 
       if Dep_Name /= No_Project_Name_And_Node then
-         if Format_Pathname (Get_String (Path_Name_Of (Dep_Name.Node))) /=
-           Imported
+         if not File_Equal
+           (Format_Pathname (Get_String (Path_Name_Of (Dep_Name.Node))),
+            Imported)
          then
             if Report_Errors /= null then
                Report_Errors
