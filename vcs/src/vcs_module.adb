@@ -33,6 +33,8 @@ with Gtkada.MDI;              use Gtkada.MDI;
 
 with VCS_View_Pkg;            use VCS_View_Pkg;
 
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body VCS_Module is
 
    VCS_Module_ID : Module_ID;
@@ -63,8 +65,10 @@ package body VCS_Module is
       Params  : GValues;
       Kernel  : Kernel_Handle)
    is
+--       Context : Selection_Context_Access
+--         := To_Selection_Context_Access (Get_Address (Nth (Params, 1)));
    begin
-      null;
+      Put_Line ("context changed");
    end On_Context_Changed;
 
    -----------------------

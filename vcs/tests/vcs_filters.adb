@@ -2,7 +2,7 @@ with VCS;     use VCS;
 
 package body VCS_Filters is
 
-   use String_List;
+   use VCS.String_List;
    use File_Status_List;
 
    ---------------------
@@ -11,15 +11,15 @@ package body VCS_Filters is
 
    procedure Use_File_Filter
      (Filter    : access Filter_VCS;
-      Win       : in File_Selector_Window_Access;
-      Dir       : in String;
-      File      : in String;
+      Win       : access File_Selector_Window_Record'Class;
+      Dir       : String;
+      File      : String;
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out String_Access)
    is
-      Files  : String_List.List;
+      Files  : VCS.String_List.List;
       Result : File_Status_Record;
 
       Temp_Status_List : File_Status_List.List;
@@ -36,7 +36,7 @@ package body VCS_Filters is
          Free (Filter.Current_Status);
          declare
             Status_List : File_Status_List.List;
-            File_List   : String_List.List;
+            File_List   : VCS.String_List.List;
          begin
             Append (Files, Dir & File);
             Status_List := Local_Get_Status (Filter.VCS_Id, Files);
@@ -46,7 +46,7 @@ package body VCS_Filters is
 
             while not Is_Empty (Temp_Status_List) loop
                Prepend (File_List, Head (Head (Temp_Status_List).File_Name));
-               Temp_Status_List := Tail (Temp_Status_List);
+               Temp_Status_List := Next (Temp_Status_List);
             end loop;
 
             Filter.Current_Status := Get_Status (Filter.VCS_Id, File_List);
@@ -68,7 +68,7 @@ package body VCS_Filters is
            and then not Is_Empty (Head (Temp_Status_List).File_Name)
            and then Head (Head (Temp_Status_List).File_Name) /= Dir & File
          loop
-            Temp_Status_List := Tail (Temp_Status_List);
+            Temp_Status_List := Next (Temp_Status_List);
          end loop;
 
          if not Is_Empty (Temp_Status_List)

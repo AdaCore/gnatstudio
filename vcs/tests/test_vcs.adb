@@ -20,7 +20,7 @@ procedure Test_VCS is
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
-   Gtk_New (File_Selector_Window, "");
+   Gtk_New (File_Selector_Window, "", "bla", "bla");
 
 --    Create_From_Xpm_D
 --      (Filter.Not_Registered_Pixmap,

@@ -46,9 +46,9 @@ package VCS_Filters is
 
    procedure Use_File_Filter
      (Filter    : access Filter_VCS;
-      Win       : in File_Selector_Window_Access;
-      Dir       : in String;
-      File      : in String;
+      Win       : access File_Selector_Window_Record'Class;
+      Dir       : String;
+      File      : String;
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
