@@ -519,6 +519,8 @@ package body Display_Items is
 
       --  Parse the value
 
+      Set_Internal_Command (Get_Process (Entity.Debugger.Debugger), True);
+
       Parse_Value (Entity.Debugger.Debugger, Entity.Name.all,
                    Entity.Entity, Value_Found);
       Set_Valid (Entity.Entity, Value_Found);
@@ -538,6 +540,8 @@ package body Display_Items is
       Update_Display (Entity);
       Item_Resized (Canvas, Item);
 
+      Set_Internal_Command (Get_Process (Entity.Debugger.Debugger), False);
+
       return True;
 
       --  If we got an exception while parsing the value, we register the new
@@ -545,6 +549,7 @@ package body Display_Items is
    exception
       when Language.Unexpected_Type | Constraint_Error =>
          Set_Valid (Entity.Entity, False);
+         Set_Internal_Command (Get_Process (Entity.Debugger.Debugger), False);
          return True;
    end Update;
 
