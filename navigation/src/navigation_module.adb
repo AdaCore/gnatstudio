@@ -344,9 +344,9 @@ package body Navigation_Module is
    procedure On_Back
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Data    : constant Navigation_Module :=
+      Data   : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
-      Result  : Command_Return_Type;
+      Result : Command_Return_Type;
       pragma Unreferenced (Widget, Result);
 
    begin
@@ -376,7 +376,7 @@ package body Navigation_Module is
    procedure On_Forward
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Data    : constant Navigation_Module :=
+      Data   : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
       Result : Command_Return_Type;
       pragma Unreferenced (Widget, Result);
@@ -416,9 +416,9 @@ package body Navigation_Module is
 
       File : Virtual_File;
 
-      Line      : Natural;           -- Current line being processed.
-      B_Start   : Natural;           -- Block's first line.
-      B_Type    : Language_Category; -- Block's category
+      Line    : Natural;           -- Current line being processed.
+      B_Start : Natural;           -- Block's first line.
+      B_Type  : Language_Category; -- Block's category
 
    begin
       if Context /= null
@@ -709,10 +709,10 @@ package body Navigation_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar       : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Button        : Gtk_Button;
-      Navigate      : constant String := "/_" & (-"Navigate");
-      Menu_Item     : Gtk_Menu_Item;
+      Toolbar   : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Button    : Gtk_Button;
+      Navigate  : constant String := "/_" & (-"Navigate");
+      Menu_Item : Gtk_Menu_Item;
    begin
       Navigation_Module_ID := new Navigation_Module_Record;
 
