@@ -16,19 +16,17 @@ Known Problems fixed in GPS 2.1.0
               buttons, those buttons are not displayed.
   Workaround: use the XML files mechanism to create toolbar buttons.
 
-- D802-017 GPS scrolls back to line 1 when opening an already opened file
-  Problem:    If you double-click on a file name in the explorer (or
-              select it in the Open From Project menu), and the file is
-              already opened, GPS will show the file but scroll back to
-              line 1
-  Workaround: Select the file through the Window menu
-
 - D914-023 Sort order in Project View now kept when scenario changes
   Problem:    If you change the value of the environment variables that
               describe the current scenario, the list of directories in the
               project view will change appropriately, but the new directories
               are appended at the end, instead of keeping the sort order.
   Workaround: Close and reopen the project view to force a refresh
+
+- D914-015 MDI docks size incorrectly restored when loading desktop
+  Problem:    When a desktop file is read, the size of the docks (on each
+              side of the main GPS window) is incorrectly restored
+  Workaround: Resize them manually by drag-and-dropping the separator
 
 - Directories in Project View contain no file after a change of scenario
   Problem:    If you select a new value for the scenario variables at the
@@ -51,11 +49,6 @@ Known Problems fixed in GPS 2.1.0
   Workaround: Edit the file with File->Open. This doesn't impact the build
               mechanism
 
-- D914-015 MDI docks size incorrectly restored when loading desktop
-  Problem:    When a desktop file is read, the size of the docks (on each
-              side of the main GPS window) is incorrectly restored
-  Workaround: Resize them manually by drag-and-dropping the separator
-
 - D817-008 Closing the Run window does not always terminate execution.
   Problem:    In particular under Windows, and with multi-threaded programs,
               closing the Run window does not terminate the execution.
@@ -77,6 +70,13 @@ Known Problems fixed in GPS 2.1.0
               window grabs the focus, the editor is stuck in selection mode and
               GPS might crash when closing this editor.
   Workaround: There is no workaround for this problem.
+
+- D802-017 GPS scrolls back to line 1 when opening an already opened file
+  Problem:    If you double-click on a file name in the explorer (or
+              select it in the Open From Project menu), and the file is
+              already opened, GPS will show the file but scroll back to
+              line 1
+  Workaround: Select the file through the Window menu
 
 - D721-004 Typing in floating read-only editors writes in other editors
   Problem:    When you type characters in a read-only floating editor, the
