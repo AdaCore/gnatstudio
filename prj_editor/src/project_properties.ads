@@ -55,7 +55,10 @@ private
    procedure Generate_Project
      (Editor             : access Root_Attribute_Editor_Record;
       Project            : Projects.Project_Type;
-      Scenario_Variables : Projects.Scenario_Variable_Array) is abstract;
-   --  Generate the project entry for the attribute edited by the attribute
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project_Changed    : in out Boolean) is abstract;
+   --  Generate the project entry for the attribute edited by the attribute.
+   --  Project_Changed is set to True if the project is modified, unmodified
+   --  otherwise.
 
 end Project_Properties;
