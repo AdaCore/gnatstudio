@@ -12,6 +12,7 @@ CP = cp -p
 IMAGES = gps_title.jpg *.gif
 
 TEXI2HTML_FLAGS=-split_chapter -menu
+TEXI=gps.texi projects.texi
 
 all: cp_gvd doc tutorial clean-temp-files
 non-ps: common clean-temp-files
@@ -31,10 +32,10 @@ doc: gps.txt gps.html gps.info gps.ps
 gps-tutorial.html: tutorial.texi
 	perl ./texi2html tutorial.texi -out_file gps-tutorial.html
 
-gps.html: gps.texi
+gps.html: ${TEXI}
 	perl ./texi2html ${TEXI2HTML_FLAGS} gps.texi
 
-gps.info: gps.texi
+gps.info: ${TEXI}
 ifneq (${MAKEINFO},)
 	${MAKEINFO} --force -o gps.info gps.texi
 else
@@ -43,7 +44,7 @@ else
 	@echo "----------------------------------------------------"
 endif
 
-gps.txt: gps.texi
+gps.txt: ${TEXI}
 ifneq (${MAKEINFO},)
 	${MAKEINFO} --force --no-headers --no-split -o gps.txt gps.texi
 else
@@ -52,7 +53,7 @@ else
 	@echo "----------------------------------------------------"
 endif
 
-gps.ps: gps.texi
+gps.ps: ${TEXI}
 ifneq (${TEX},)
 	echo x | ${TEX} gps.texi
 	texindex gps.cp
