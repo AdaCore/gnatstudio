@@ -2129,13 +2129,13 @@ package body Project_Explorers is
       Categories : Ctree_Node_Array := (others => null);
 
    begin
-      Push_State (Explorer.Kernel, Busy);
       F := Open_Read (File_Name, Binary);
 
       if F = Invalid_FD then
          return;
       end if;
 
+      Push_State (Explorer.Kernel, Busy);
       Freeze (Explorer.Tree);
 
       Buffer := new String (1 .. Integer (File_Length (F)));
