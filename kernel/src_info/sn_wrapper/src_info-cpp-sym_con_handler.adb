@@ -28,10 +28,10 @@ begin
    Type_Name_To_Kind (Var.Buffer
       (Var.Value_Type.First .. Var.Value_Type.Last), Desc, Success);
 
-   if not Success or Type_To_Object (Desc.Kind) = Overloaded_Entity then
-      Free (Var);
-      Free (Desc);
-      return; -- type not found, ignore errors
+   if not Success then -- type not found
+      --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global variables
+      --  with unknown type?
+      Desc.Kind := Unresolved_Entity;
    end if;
 
    Attributes := SN_Attributes (Var.Attributes);
