@@ -4,7 +4,6 @@ sharedir = $(prefix)/share/gps
 
 DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
-TEXI2HTML= @TEXI2HTML@
 TEX= @TEX@
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
@@ -20,12 +19,7 @@ static:
 doc: gps.txt gps.html gps.info gps.ps
 
 gps.html: gps.texi
-ifneq (${TEXI2HTML},)
-	perl ${TEXI2HTML} ${TEXI2HTML_FLAGS} gps.texi
-else
-	@echo "----------------------------------------------------"
-	@echo "texi2html not found, cannot build HTML documentation"
-	@echo "----------------------------------------------------"
+	perl ./texi2html ${TEXI2HTML_FLAGS} gps.texi
 endif
 
 gps.info: gps.texi
