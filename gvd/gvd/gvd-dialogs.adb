@@ -88,6 +88,7 @@ package body GVD.Dialogs is
       Key             : Histories.History_Key := "") return String;
    --  Internal version of Simple_Entry_Dialog, where Dialog is already
    --  created.
+   --  Dialog is not destroyed on exit, it is your responsability to do so.
 
    function Delete_Dialog
      (Dialog : access Gtk_Widget_Record'Class) return Boolean;
@@ -775,12 +776,9 @@ package body GVD.Dialogs is
       Key             : Histories.History_Key := "") return String
    is
       use Widget_List;
-
       Button   : Gtk_Widget;
       Box      : Gtk_Box;
       Vbox     : Gtk_Box;
-      Item     : Gtk_List_Item;
-      Children : Widget_List.Glist;
 
    begin
       Set_Transient_For (Dialog, Parent);
@@ -807,7 +805,7 @@ package body GVD.Dialogs is
          Dialog);
 
       if Key /= "" and then History /= null then
-         Get_History (History.all,  Key, Dialog.Entry_Field);
+         Get_History (History.all, Key, Dialog.Entry_Field);
       end if;
 
       if Extra_Box /= null then
@@ -827,18 +825,6 @@ package body GVD.Dialogs is
 
       Set_Title (Dialog, Title);
 
-      Children := Last (Get_Children (Get_List (Dialog.Entry_Field)));
-
-      if Children /= Null_List then
-         Item := Gtk_List_Item (Get_Data (Children));
-         Set_Text (Get_Entry (Dialog.Entry_Field),
-                   Get (Gtk_Label (Get_Child (Item))));
-         Select_Region (Get_Entry (Dialog.Entry_Field), 0);
-
-      else
-         Set_Text (Get_Entry (Dialog.Entry_Field), "");
-      end if;
-
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
@@ -849,12 +835,10 @@ package body GVD.Dialogs is
                Add_To_History (History.all, Key, S);
             end if;
 
-            Destroy (Dialog);
             return S;
          end;
       end if;
 
-      Destroy (Dialog);
       return (1 => ASCII.NUL);
    end Internal_Simple_Entry_Dialog;
 
@@ -875,9 +859,14 @@ package body GVD.Dialogs is
       Dialog := new Simple_Entry_Dialog_Record;
       Initialize (Dialog);
 
-      return Internal_Simple_Entry_Dialog
-        (Dialog, Parent, null, null, Title,
-         Message, Position, History, Key);
+      declare
+         S : constant String := Internal_Simple_Entry_Dialog
+           (Dialog, Parent, null, null, Title,
+            Message, Position, History, Key);
+      begin
+         Destroy (Dialog);
+         return S;
+      end;
    end Simple_Entry_Dialog;
 
    --------------------------
@@ -920,6 +909,7 @@ package body GVD.Dialogs is
             Button2_Active.all := Get_Active (Dialog.Check2);
          end if;
 
+         Destroy (Dialog);
          return S;
       end;
    end Display_Entry_Dialog;
