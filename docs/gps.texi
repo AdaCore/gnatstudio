@@ -6945,7 +6945,10 @@ menu after which the new menu should be inserted.
 @end table
 
 It should also have one XML child called @code{<title>} which specifies the
-label of the menu
+label of the menu. This is really a path to a menu, and thus you can define
+submenus by specifying something like "/Parent1/Parent2/Menu" in the title
+to automatically create the parent menus if they don't exist yet.
+
 You can define the accelerator keys for your menus, using underscores
 in the titles. Thus, if you want an accelerator on the first letter in
 a menu named @code{File}, set its title as @code{_File}.
@@ -6965,6 +6968,14 @@ For example, this adds an item named @code{mymenu} to the standard
      <title>mymenu</title>
   </menu>
 </submenu>
+@end smallexample
+
+The above has the same result as
+
+@smallexample
+<menu aciton="current file uses">
+   <title>/Edit/mymenu</title>
+</menu>
 @end smallexample
 
 Use the @code{/} separator to identify the submenu in a menu. For
@@ -7001,7 +7012,9 @@ execute, and must be defined elsewhere in one of the customization files.
 
 It accepts one child tag, @code{<Title>} which specifies the name of the
 menu entry. If this child is not specified, the menu entry will use the name
-of the action itself.
+of the action itself. The title is in fact the full path to the new menu entry.
+Therefore, you can create submenus by using a title of the form
+"Parent1/Parent2/Menu".
 
 The new contextual menu will only be shown if the filters associated with the
 action match the current context.
