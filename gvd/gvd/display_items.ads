@@ -148,6 +148,16 @@ package Display_Items is
                              return Items.Display_Mode;
    --  Get the display mode for item
 
+   procedure Update_Resize_Display
+     (Item        : access Display_Item_Record'Class;
+      Was_Visible : Boolean := False;
+      Hide_Big    : Boolean := False);
+   --  Recompute the size and update the contents of item.
+   --  Was_Visible indicates whether the item was initially visible
+   --  It also warns the canvas that the item has changed.
+   --  If Hide_Big_Items, then components higher than a specific limit are
+   --  forced to hidden state.
+
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record

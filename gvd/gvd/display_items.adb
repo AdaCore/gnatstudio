@@ -177,13 +177,6 @@ package body Display_Items is
    --  Redraw the contents of item.
    --  It also warns the canvas that the item has changed.
 
-   procedure Update_Resize_Display
-     (Item : access Display_Item_Record'Class;
-      Was_Visible : Boolean := False);
-   --  Recompute the size and update the contents of item.
-   --  Was_Visible indicates whether the item was initially visible
-   --  It also warns the canvas that the item has changed.
-
    procedure Update_Component
      (Item : access Display_Item_Record'Class;
       Component : Generic_Type_Access := null);
@@ -804,7 +797,7 @@ package body Display_Items is
          Set_Valid (Item.Entity, Value_Found);
       end if;
 
-      Update_Resize_Display (Item, Was_Visible);
+      Update_Resize_Display (Item, Was_Visible, Hide_Big_Items);
       Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
 
       --  If we got an exception while parsing the value, we register the new
@@ -820,8 +813,9 @@ package body Display_Items is
    ---------------------------
 
    procedure Update_Resize_Display
-     (Item : access Display_Item_Record'Class;
-      Was_Visible : Boolean := False)
+     (Item        : access Display_Item_Record'Class;
+      Was_Visible : Boolean := False;
+      Hide_Big    : Boolean := False)
    is
    begin
       --  Update graphically.
@@ -837,7 +831,7 @@ package body Display_Items is
                           Font        => Font,
                           Type_Font   => Type_Font,
                           Mode        => Item.Mode),
-         Hide_Big_Items => Hide_Big_Items);
+         Hide_Big_Items => Hide_Big);
 
       --  Make sure we don't hide the item, unless it was already hidden.
       --  It could have been hidden automatically if it is now too high.
@@ -1067,17 +1061,7 @@ package body Display_Items is
         and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
       then
          Set_Visibility (Component.all, not Get_Visibility (Component.all));
-         Size_Request
-           (Item.Entity.all,
-            Drawing_Context'(Pixmap      => Pixmap (Item),
-                             GC          => Black_GC,
-                             Xref_GC     => Xref_GC,
-                             Modified_GC => Change_GC,
-                             Font        => Font,
-                             Type_Font   => Type_Font,
-                             Mode        => Item.Mode));
-         Update_Display (Item);
-         Item_Resized (Item.Debugger.Data_Canvas, Item);
+         Update_Resize_Display (Item, Was_Visible => False, Hide_Big => False);
 
       --  Selecting a component
 
@@ -1629,7 +1613,8 @@ package body Display_Items is
    is
    begin
       Item.Mode := Mode;
-      Update_Resize_Display (Item, Get_Visibility (Item.Entity.all));
+      Update_Resize_Display
+        (Item, Get_Visibility (Item.Entity.all), Hide_Big_Items);
    end Set_Display_Mode;
 
    ----------------------
