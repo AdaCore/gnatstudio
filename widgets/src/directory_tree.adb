@@ -50,6 +50,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 
+with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
 
 package body Directory_Tree is
@@ -691,14 +692,14 @@ package body Directory_Tree is
          Select_Row (Selector.Directory, Selected_Row, Selected_Col);
 
          Gtk_New (Selector.Tree_Contextual_Menu);
-         Gtk_New (Item, "Add directory recursive");
+         Gtk_New (Item, -"Add directory recursive");
          Widget_Callback.Object_Connect
            (Item, "activate",
             Widget_Callback.To_Marshaller (Add_Directory_Cb'Access),
             Selector);
          Append (Selector.Tree_Contextual_Menu, Item);
 
-         Gtk_New (Item, "Add directory");
+         Gtk_New (Item, -"Add directory");
          Widget_Callback.Object_Connect
            (Item, "activate",
             Widget_Callback.To_Marshaller
@@ -740,7 +741,7 @@ package body Directory_Tree is
       end if;
 
       Gtk_New (Selector.List_Contextual_Menu);
-      Gtk_New (Item, "Remove directory recursive");
+      Gtk_New (Item, -"Remove directory recursive");
       Widget_Callback.Object_Connect
         (Item, "activate",
          Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
@@ -748,7 +749,7 @@ package body Directory_Tree is
       Set_Sensitive (Item, Is_Valid);
       Append (Selector.List_Contextual_Menu, Item);
 
-      Gtk_New (Item, "Remove directory");
+      Gtk_New (Item, -"Remove directory");
       Widget_Callback.Object_Connect
         (Item, "activate",
          Widget_Callback.To_Marshaller
