@@ -58,9 +58,10 @@ package GPS.Kernel is
    package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);
 
    procedure Gtk_New
-     (Handle      : out Kernel_Handle;
-      Main_Window : Gtk.Window.Gtk_Window;
-      Home_Dir    : String);
+     (Handle           : out Kernel_Handle;
+      Main_Window      : Gtk.Window.Gtk_Window;
+      Home_Dir         : String;
+      Prefix_Directory : String);
    --  Create a new GPS kernel.
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
@@ -254,7 +255,10 @@ package GPS.Kernel is
    --  nothing.
 
    function Get_Name (Module : Module_ID) return String;
-   --  return the name of the module
+   --  Return the name of the module
+
+   function Get_Kernel (ID : Module_ID_Record'Class) return Kernel_Handle;
+   --  Return the kernel associated with Module
 
    function Get_Current_Module
      (Kernel : access Kernel_Handle_Record) return Module_ID;
@@ -732,12 +736,13 @@ private
    end record;
 
    type Module_ID_Information (Name_Length : Natural) is record
-      Name                  : String (1 .. Name_Length);
+      Kernel                : Kernel_Handle;
       Priority              : Module_Priority;
       Default_Factory       : Module_Default_Context_Factory;
       Save_Function         : Module_Save_Function;
       Tooltip_Handler       : Module_Tooltip_Handler;
       Customization_Handler : Module_Customization_Handler;
+      Name                  : String (1 .. Name_Length);
    end record;
 
    type Module_ID_Information_Access is access Module_ID_Information;
@@ -846,10 +851,13 @@ private
       --  management reasons.
 
       Home_Dir : GNAT.OS_Lib.String_Access;
-      --  The home directory (e.g ~/.gps).
+      --  The home directory (e.g ~/.gps)
+
+      Prefix : GNAT.OS_Lib.String_Access;
+      --  Prefix directory (e.g. /opt/gps)
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;
-      --  Mapping between files and logs.
+      --  Mapping between files and logs
 
       Lang_Handler : Language_Handlers.Language_Handler;
       --  The type used to convert from file names to languages
