@@ -388,8 +388,8 @@ Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 @code{References->Sdc calls...}: this will open a new window titled
 @i{Call graph browser}.
 
-Double click on the right arrow of @code{Process} (one of the first items on
-the right). Also double click on the right arrow of @code{error_msg}.
+Double click on the down arrow of @code{Process} (one of the first items on
+the right). Also double click on the down arrow of @code{error_msg}.
 
 Select @code{Orthogonal links} in the contextual menu of the graph to change the
 way links are displayed in the graph.
@@ -402,16 +402,16 @@ be useful when the graph becomes complex, to hide some parts. If you go back to
 the contextual menu, you can now select @code{Show links} to show the links
 again.
 
-Double click on right arrow of @code{process} (@file{instructions.ads:12},
+Double click on down arrow of @code{process} (@file{instructions.ads:12},
 the item at the top right of the graph).
 
 The items can also be moved: move @code{msg} item down.
 
-Double click on left arrow of @code{msg}
+Double click on up arrow of @code{msg}
 to display who is calling @code{msg}. Notice that @code{view} (on the left
 of the graph) calls @code{msg}.
 
-Double click on left arrow of @code{view}: the arrow disappears, and no
+Double click on up arrow of @code{view}: the arrow disappears, and no
 new items are created, which means that @code{view} isn't called by anyone,
 so we're now going to remove this procedure.
 
