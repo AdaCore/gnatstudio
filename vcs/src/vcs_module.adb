@@ -50,8 +50,6 @@ package body VCS_Module is
 
    Me : Debug_Handle := Create ("Vcs_Module");
 
-   Current_Ref : VCS_Access;
-
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Initialization function for the module
@@ -75,86 +73,24 @@ package body VCS_Module is
       Kernel  : Kernel_Handle);
    --  Updates all the files in the current directory.
 
-   procedure On_Open
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   procedure On_View_Diff
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   procedure On_Edit_Log
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-
-   function Get_Current_Dir
-     (Kernel : access Kernel_Handle_Record'Class)
-     return String;
+   function Get_Current_Dir (Kernel : Kernel_Handle) return String;
    --  Convenience function to get the current directory.
-
-   function Get_Current_File (Kernel : Kernel_Handle) return String;
-   --  Convenience function to get the current file.
-
-   function Get_Current_Ref
-     (Kernel : access Kernel_Handle_Record'Class)
-     return VCS_Access;
-   --  Convenience function to get the current file.
-
-   function Get_Selected_Files (Kernel : Kernel_Handle) return List;
-   --  Return the currently selected files, as a list.
-   --  Caller must free this list afterwards.
-
-   ---------------------
-   -- Get_Current_Ref --
-   ---------------------
-
-   function Get_Current_Ref
-     (Kernel : access Kernel_Handle_Record'Class)
-     return VCS_Access
-   is
-   begin
-      return Current_Ref;
-   end Get_Current_Ref;
-
-   ------------------------
-   -- Get_Selected_Files --
-   ------------------------
-
-   function Get_Selected_Files (Kernel : Kernel_Handle) return List is
-      Child   : MDI_Child;
-      Result  : List;
-   begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), VCS_View_Record'Tag);
-
-      if Child = null then
-         if Get_Current_File (Kernel) = "" then
-            return Result;
-         end if;
-
-         Append (Result, Get_Current_File (Kernel));
-      else
-         Result := Get_Selected_Files (VCS_View_Access (Get_Widget (Child)));
-      end if;
-
-      return Result;
-   end Get_Selected_Files;
 
    ---------------------
    -- Get_Current_Dir --
    ---------------------
 
-   function Get_Current_Dir
-     (Kernel : access Kernel_Handle_Record'Class)
-     return String
+   function Get_Current_Dir (Kernel : Kernel_Handle) return String
    is
-      Context : Selection_Context_Access :=
-        Get_Current_Explorer_Context (Kernel);
+      Context : Selection_Context_Access
+        := Get_Current_Explorer_Context (Kernel);
       File    : File_Selection_Context_Access := null;
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
+      if Context = null then
+         return "";
+      end if;
+
+      if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
          if Has_Directory_Information (File) then
             return Directory_Information (File);
@@ -163,72 +99,6 @@ package body VCS_Module is
 
       return "";
    end Get_Current_Dir;
-
-   ----------------------
-   -- Get_Current_File --
-   ----------------------
-
-   function Get_Current_File (Kernel : Kernel_Handle) return String is
-      Context : Selection_Context_Access :=
-        Get_Current_Explorer_Context (Kernel);
-      File    : File_Selection_Context_Access := null;
-   begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File := File_Selection_Context_Access (Context);
-         if Has_File_Information (File) then
-            return Directory_Information (File) & File_Information (File);
-         end if;
-      end if;
-
-      return "";
-   end Get_Current_File;
-
-   -------------
-   -- On_Open --
-   -------------
-
-   procedure On_Open
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
-   is
-      Files : List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
-   begin
-      Open_Files (null, Kernel, Files, Ref);
-      Free (Files);
-   end On_Open;
-
-   ------------------
-   -- On_View_Diff --
-   ------------------
-
-   procedure On_View_Diff
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
-   is
-      Files : List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
-   begin
-      Diff_Files (null, Kernel, Files, Ref);
-      Free (Files);
-   end On_View_Diff;
-
-   -----------------
-   -- On_Edit_Log --
-   -----------------
-
-   procedure On_Edit_Log
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
-   is
-      Files : List := Get_Selected_Files (Kernel);
-      Ref   : VCS_Access := Get_Current_Ref (Kernel);
-   begin
-      Edit_Log (null, Kernel, Files, Ref);
-      Free (Files);
-   end On_Edit_Log;
 
    ------------------------
    -- On_Context_Changed --
@@ -267,12 +137,13 @@ package body VCS_Module is
       Files   : List;
       Dirs    : List;
       Status  : File_Status_List.List;
-      Ref     : VCS_Access := Get_Current_Ref (Kernel);
+      Ref     : VCS_Access;
       Child   : MDI_Child;
 
       Dir     : String := Get_Current_Dir (Kernel);
    begin
       if Dir /= "" then
+         Ref := Get_Ref_From_Directory (Dir);
          Append (Dirs, Dir);
 
          Status := Local_Get_Status (Ref, Dirs);
@@ -361,9 +232,6 @@ package body VCS_Module is
       VCS       : constant String := -"VCS";
 
    begin
-      Current_Ref := Get_Ref_From_Directory (Get_Current_Dir (Kernel));
-      --  ??? This must be updated whenever the directory/project changes.
-
       Register_Menu
         (Kernel, "/_" & VCS, Ref_Item => -"Navigate", Add_Before => False);
 
@@ -381,100 +249,12 @@ package body VCS_Module is
          Kernel_Callback.To_Marshaller (On_Update_All'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, -"List open files in project");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (List_Open_Files'Access),
---          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item);
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
-
-      Gtk_New (Menu_Item, -"Query status for current directory");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
-
       Gtk_New (Menu_Item, -"Update current directory");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item);
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
-
-      Gtk_New (Menu_Item, -"Open");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Open'Access),
-         Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"View Diff");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_View_Diff'Access),
-         Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Edit log");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Edit_Log'Access),
-         Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Commit");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Annotate");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"View Changelog");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Revert");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Add to repository");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Remove from repository");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
-
---       Register_Contextual_Menu
---         (Kernel          => Kernel,
---          Event_On_Widget =>
-
    end Initialize_Module;
 
    ---------------------
