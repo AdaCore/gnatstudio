@@ -64,7 +64,7 @@ package Browsers.Entities is
    -- Parent link --
    -----------------
 
-   type Parent_Link_Record is new Browsers.Canvas.Browser_Link_Record
+   type Parent_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
      with null record;
    type Parent_Link is access all Parent_Link_Record'Class;
 
@@ -107,11 +107,12 @@ private
    type Type_Item_Record is new Browsers.Canvas.Browser_Item_Record with record
       Entity : Src_Info.Queries.Entity_Information;
       Parents_Computed, Children_Computed : Boolean := False;
+      Inherited_Primitives : Boolean := False;
    end record;
 
    type Type_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with record
-      Up_Arrow, Down_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
+      Up_Arrow, Down_Arrow, Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
 end Browsers.Entities;

@@ -240,6 +240,11 @@ package body Browsers.Entities is
       Item  : access Browser_Item_Record'Class);
    --  Display the children types for the item
 
+   procedure Hide_Show_Inherited
+     (Event : Gdk_Event;
+      Item  : access Browser_Item_Record'Class);
+   --  Change the status of inherited primitive operations (shown or hidden)
+
    procedure Add_Type
      (List     : in out Xref_List;
       Item     : access Type_Item_Record'Class;
@@ -248,6 +253,10 @@ package body Browsers.Entities is
       Prefix   : String);
    --  Add a new line in List, starting with prefix and followed by the an
    --  hyper link for the type of Entity.
+
+   function Entity_As_Link (Ent : Entity_Information) return String;
+   --  Return a string that contains the entity name, as an hyper link. If
+   --  Entity is in fact a predefined entity, no link is setup.
 
    ----------
    -- Call --
@@ -643,6 +652,8 @@ package body Browsers.Entities is
         (Browser, Stock_Go_Up, Icon_Size_Menu);
       Browser.Down_Arrow := Render_Icon
         (Browser, Stock_Go_Down, Icon_Size_Menu);
+      Browser.Primitive_Button := Render_Icon
+        (Browser, Stock_Properties, Icon_Size_Menu);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -742,6 +753,19 @@ package body Browsers.Entities is
       return Get_Name (E1) < Get_Name (E2);
    end "<";
 
+   --------------------
+   -- Entity_As_Link --
+   --------------------
+
+   function Entity_As_Link (Ent : Entity_Information) return String is
+   begin
+      if Is_Predefined_Entity (Ent) then
+         return Get_Name (Ent);
+      else
+         return '@' & Get_Name (Ent) & '@';
+      end if;
+   end Entity_As_Link;
+
    ------------------------------
    -- Add_Primitive_Operations --
    ------------------------------
@@ -752,8 +776,6 @@ package body Browsers.Entities is
       Item     : access Type_Item_Record'Class;
       Lib_Info : LI_File_Ptr)
    is
-      Hide_Inherited : constant Boolean := True;
-
       Prim : Primitive_Iterator := Get_Primitive_Operations
         (Lib_Info => Lib_Info, Entity => Item.Entity);
       L : constant Natural := Length (Prim);
@@ -791,7 +813,10 @@ package body Browsers.Entities is
 
       Entity_Sort.Sort (L);
 
-      if Hide_Inherited then
+      Trace (Me, "Add_Primitive_Operations: Inherited_Primitives="
+             & Item.Inherited_Primitives'Img);
+
+      if not Item.Inherited_Primitives then
          --  For each inherited operation, remove it from the list of
          --  operations to display.
          Parent_Iter := Get_Parent_Types (Lib_Info, Item.Entity);
@@ -824,14 +849,13 @@ package body Browsers.Entities is
             Destroy (Parent);
             Next (Parent_Iter);
          end loop;
-
       end if;
 
       for E in 1 .. L loop
          if Arr (E) /= No_Entity_Information then
             Add_Line
               (List,
-               '@' & Get_Name (Arr (E)) & "@ ("
+               Entity_As_Link (Arr (E)) & " ("
                & (-Kind_To_String (Get_Kind (Arr (E)))) & ')',
                Callback => Build (Item, Arr (E)));
             --  Do not free Arr (E), it's needed for callbacks
@@ -867,7 +891,7 @@ package body Browsers.Entities is
          Add_Line
            (List,
             Get_Name (Parameter) & ": "
-            & Image (Get_Type (Subs)) & " @" & Get_Name (Typ) & '@',
+            & Image (Get_Type (Subs)) & " " & Entity_As_Link (Typ),
             Length1 => Get_Name (Parameter)'Length + 1,
             Callback => Build (Item, Typ));
          --  Do not free Typ, it is needed for callbacks
@@ -879,7 +903,7 @@ package body Browsers.Entities is
       if Returned /= No_Entity_Information then
          Add_Line
            (List,
-            "return @" & Get_Name (Returned) & '@',
+            "return " & Entity_As_Link (Returned),
             Length1 => 7,
             Callback => Build (Item, Returned));
          --  Do not free Returned, it is needed for calbacks.
@@ -899,7 +923,7 @@ package body Browsers.Entities is
         Get_Parent_Package (Lib_Info, Item.Entity);
    begin
       if Parent /= No_Entity_Information then
-         Add_Line (List, "Parent: @" & Get_Name (Parent) & '@',
+         Add_Line (List, "Parent: " & Entity_As_Link (Parent),
                    Callback => Build (Item, Parent));
          --  Do not destroy parent, needed for callbacks
       end if;
@@ -974,7 +998,7 @@ package body Browsers.Entities is
       else
          Add_Line
            (List,
-            Prefix & " @" & Get_Name (Typ) & '@',
+            Prefix & ' ' & Entity_As_Link (Typ),
             Length1 => Prefix'Length + 1,
             Callback => Build (Item, Typ, Prefix));
          --  Do not free Typ, needed for callbacks
@@ -994,7 +1018,7 @@ package body Browsers.Entities is
       Canvas   : constant Interactive_Canvas :=
         Get_Canvas (Get_Browser (Item));
       New_Item : Type_Item;
-      Link     : Browser_Link;
+      Link     : Canvas_Link;
    begin
       New_Item := Add_Or_Select_Item
         (Type_Browser (Get_Browser (Item)), Entity);
@@ -1005,7 +1029,7 @@ package body Browsers.Entities is
             Add_Link (Canvas, Link, New_Item, Item, Descr => Link_Name,
                       Arrow => No_Arrow);
          else
-            Link := new Browser_Link_Record;
+            Link := new Canvas_Link_Record;
             Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name);
          end if;
       end if;
@@ -1060,6 +1084,25 @@ package body Browsers.Entities is
       null;
    end Find_Children_Types;
 
+   -------------------------
+   -- Hide_Show_Inherited --
+   -------------------------
+
+   procedure Hide_Show_Inherited
+     (Event : Gdk_Event;
+      Item  : access Browser_Item_Record'Class)
+   is
+      It : Type_Item := Type_Item (Item);
+   begin
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Release
+      then
+         It.Inherited_Primitives := not It.Inherited_Primitives;
+         Refresh (It);
+         Item_Updated (Get_Canvas (Get_Browser (It)), It);
+      end if;
+   end Hide_Show_Inherited;
+
    ---------------------
    -- Resize_And_Draw --
    ---------------------
@@ -1078,6 +1121,7 @@ package body Browsers.Entities is
       Lib_Info : LI_File_Ptr;
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
       Layout : Pango_Layout;
+      Show_Primitive_Button : Boolean := False;
    begin
       Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity));
 
@@ -1119,15 +1163,10 @@ package body Browsers.Entities is
 
                --  Could be null if the access type is really a subtyping
                if Parent /= No_Entity_Information then
-                  if Is_Predefined_Entity (Parent) then
-                     Add_Line (Attr_Lines, "access to " & Get_Name (Parent));
-                     Destroy (Parent);
-                  else
-                     Add_Line
-                       (Attr_Lines, "access to @" & Get_Name (Parent) & '@',
-                        Callback => Build (Item, Parent));
-                     --  Do not destroy Parent, needed for callbacks
-                  end if;
+                  Add_Line
+                    (Attr_Lines, "access to " & Entity_As_Link (Parent),
+                     Callback => Build (Item, Parent));
+                  --  Do not destroy Parent, needed for callbacks
                end if;
 
             when Array_Kind =>
@@ -1135,15 +1174,10 @@ package body Browsers.Entities is
 
                --  Could be null if the array type is really a subtyping
                if Parent /= No_Entity_Information then
-                  if Is_Predefined_Entity (Parent) then
-                     Add_Line (Attr_Lines, "array of " & Get_Name (Parent));
-                     Destroy (Parent);
-                  else
-                     Add_Line
-                       (Attr_Lines, "array of @" & Get_Name (Parent) & '@',
-                        Callback => Build (Item, Parent));
+                  Add_Line
+                    (Attr_Lines, "array of " & Entity_As_Link (Parent),
+                     Callback => Build (Item, Parent));
                      --  Do not destroy Parent, needed for callbacks
-                  end if;
                end if;
 
             when Class_Wide
@@ -1153,6 +1187,7 @@ package body Browsers.Entities is
               | Task_Kind =>
                Add_Primitive_Operations (Meth_Lines, Kernel, Item, Lib_Info);
                Add_Fields (Kernel, Attr_Lines, Item, Lib_Info);
+               Show_Primitive_Button := True;
 
             when Entry_Or_Entry_Family
               | Function_Or_Operator
@@ -1210,10 +1245,20 @@ package body Browsers.Entities is
       Display_Lines (Item, Meth_Lines, Margin + Xoffset, Y,
                      Meth_Layout_W1, Layout);
 
-      if not Item.Parents_Computed then
+      if Show_Primitive_Button then
+         --  ??? Should use a different icon depending on
+         --  Item.Inherited_Primitives.
          Draw_Title_Bar_Button
            (Item,
             Num    => Get_Last_Button_Number (Item),
+            Pixbuf => Type_Browser (Get_Browser (Item)).Primitive_Button,
+            Cb     => Build (Hide_Show_Inherited'Access, Item));
+      end if;
+
+      if not Item.Parents_Computed then
+         Draw_Title_Bar_Button
+           (Item,
+            Num    => Get_Last_Button_Number (Item) - 1,
             Pixbuf => Type_Browser (Get_Browser (Item)).Up_Arrow,
             Cb     => Build (Find_Parent_Types'Access, Item));
       end if;
@@ -1221,7 +1266,7 @@ package body Browsers.Entities is
       if not Item.Children_Computed then
          Draw_Title_Bar_Button
            (Item,
-            Num    => Get_Last_Button_Number (Item) - 1,
+            Num    => Get_Last_Button_Number (Item) - 2,
             Pixbuf => Type_Browser (Get_Browser (Item)).Down_Arrow,
             Cb     => Build (Find_Children_Types'Access, Item));
       end if;
@@ -1397,7 +1442,7 @@ package body Browsers.Entities is
       return Gint is
    begin
       return Get_Last_Button_Number (Browser_Item_Record (Item.all)'Access)
-        + 2;
+        + 3;
    end Get_Last_Button_Number;
 
    ------------------------
