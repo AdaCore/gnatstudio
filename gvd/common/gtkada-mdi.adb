@@ -322,8 +322,19 @@ package body Gtkada.MDI is
    ----------------
 
    procedure Initialize (MDI : access MDI_Window_Record'Class) is
+      Style     : Gtk_Style;
+      Color     : Gdk_Color;
    begin
       Gtk.Layout.Initialize (MDI, Null_Adjustment, Null_Adjustment);
+
+      --  ??? Maybe we should paint directly the background color,
+      --  ??? instead of relying on the styles to do that.
+      Color := Parse (MDI_Background_Color);
+      Alloc (Get_Default_Colormap, Color);
+      Style := Copy (Get_Style (MDI));
+      Set_Background (Style, State_Normal, Color);
+      Set_Style (MDI, Style);
+
       Widget_Callback.Connect
         (MDI, "realize",
          Widget_Callback.To_Marshaller (Realize_MDI'Access));
@@ -1296,7 +1307,7 @@ package body Gtkada.MDI is
       Return_Callback.Connect
         (Child, "motion_notify_event",
          Return_Callback.To_Marshaller (Button_Motion'Access));
-      Widget_Callback.Connect (Child, "draw", Draw_Child'Access);
+      --  Widget_Callback.Connect (Child, "draw", Draw_Child'Access);
       Widget_Callback.Connect
         (Child, "destroy",
          Widget_Callback.To_Marshaller (Destroy_Child'Access));
@@ -1915,7 +1926,8 @@ package body Gtkada.MDI is
             Child.X := Constrain_X (Child.MDI, Child.X);
             Child.Y := Constrain_Y (Child.MDI, Child.Y);
             Gtk.Layout.Put
-              (Gtk_Layout_Record (Child.MDI.all)'Access, Child, Child.X, Child.Y);
+              (Gtk_Layout_Record (Child.MDI.all)'Access,
+               Child, Child.X, Child.Y);
          end if;
 
          Show_All (Child);
