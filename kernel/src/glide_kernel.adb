@@ -67,6 +67,7 @@ with GVD.Main_Window;           use GVD.Main_Window;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 with GUI_Utils;                 use GUI_Utils;
+with String_Utils;              use String_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Basic_Mapper;              use Basic_Mapper;
@@ -2112,12 +2113,12 @@ package body Glide_Kernel is
       Name        : String;
       Command     : access Commands.Interactive.Interactive_Command'Class;
       Description : String := "";
-      Context     : Action_Context := null) is
+      Filter      : Action_Filter := null) is
    begin
       Set (Kernel.Actions,
            Name,
            (Commands.Interactive.Interactive_Command_Access (Command),
-            Context,
+            Filter,
             new String'(Description)));
    end Register_Action;
 
@@ -2356,5 +2357,175 @@ package body Glide_Kernel is
    begin
       return Tools_Htable.String_Hash_Table.Get (Kernel.Tools, Tool_Name);
    end Get_Tool_Properties;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Language : String := "";
+      Action   : String := "";
+      Context  : Action_Context := null) return Action_Filter
+   is
+      F : Action_Filter := new Action_Filter_Record (Standard_Filter);
+   begin
+      if Language /= "" then
+         F.Language := new String'(Language);
+      end if;
+
+      if Action /= "" then
+         F.Action := new String'(Action);
+      end if;
+
+      F.Context := Context;
+
+      return F;
+   end Create;
+
+   -----------
+   -- "and" --
+   -----------
+
+   function "and" (Filter1, Filter2 : Action_Filter) return Action_Filter is
+   begin
+      return new Action_Filter_Record'
+        (Kind => Filter_And, Error_Msg => null,
+         And1 => Filter1, And2 => Filter2);
+   end "and";
+
+   ----------
+   -- "or" --
+   ----------
+
+   function "or"  (Filter1, Filter2 : Action_Filter) return Action_Filter is
+   begin
+      return new Action_Filter_Record'
+        (Kind => Filter_Or, Error_Msg => null,
+         Or1  => Filter1, Or2 => Filter2);
+   end "or";
+
+   -----------------
+   -- Get_Context --
+   -----------------
+
+   function Get_Context (Filter : Action_Filter) return Action_Context is
+   begin
+      if Filter /= null
+        and then Filter.Kind = Standard_Filter
+      then
+         return Filter.Context;
+      else
+         return null;
+      end if;
+   end Get_Context;
+
+   -----------------------
+   -- Set_Error_Message --
+   -----------------------
+
+   procedure Set_Error_Message (Filter : Action_Filter; Msg : String) is
+   begin
+      Free (Filter.Error_Msg);
+      Filter.Error_Msg := new String'(Msg);
+   end Set_Error_Message;
+
+   -----------------------
+   -- Get_Error_Message --
+   -----------------------
+
+   function Get_Error_Message (Filter : Action_Filter) return String is
+   begin
+      if Filter.Error_Msg /= null then
+         return Filter.Error_Msg.all;
+      else
+         return "";
+      end if;
+   end Get_Error_Message;
+
+   --------------------
+   -- Filter_Matches --
+   --------------------
+
+   function Filter_Matches
+     (Filter : Action_Filter;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean
+   is
+      Context : Selection_Context_Access;
+      Result  : Boolean := True;
+   begin
+      if Filter = null then
+         return True;
+      else
+         case Filter.Kind is
+            when Standard_Filter =>
+               Context := Get_Current_Context (Kernel);
+               Ref (Context);
+
+               if Filter.Language /= null then
+                  if Context = null
+                    or else Context.all not in File_Selection_Context'Class
+                    or else VFS.No_File = File_Information
+                      (File_Selection_Context_Access (Context))
+                  then
+                     Result := False;
+
+                  else
+                     declare
+                        File : constant File_Selection_Context_Access :=
+                          File_Selection_Context_Access (Context);
+                        Lang : constant String := Get_Language_From_File
+                          (Get_Language_Handler (Kernel),
+                           File_Information (File));
+                     begin
+                        if not Case_Insensitive_Equal
+                          (Lang, Filter.Language.all)
+                        then
+                           Result := False;
+                        end if;
+                     end;
+                  end if;
+               end if;
+
+               Result := Result
+                 and then (Filter.Context = null
+                           or else Context_Matches (Filter.Context, Kernel));
+
+               --  Will be implemented in next check in
+--                 if Result and then Filter.Action /= null then
+--                    declare
+--                       Act : constant Action_Record := Lookup_Action
+--                         (Kernel, Filter.Action.all);
+--                    begin
+--                       if Act = No_Action then
+--                          Result := False;
+--                       else
+--                        --  Execute action and its filters, avoiding infinite
+--                          --  recursion
+--
+--                          if Filter_Matches (Act.Filter, Kernel) then
+--                             Launch_Background_Command
+--                              (Kernel, Act.Command, Destroy_On_Exit => False,
+--                                Active => True, Queue_Id => "");
+--
+--                           --  ??? Wait for result and compare with "true" or
+--                             --  "1".
+--                          end if;
+--                       end if;
+--                    end;
+--                 end if;
+
+               Unref (Context);
+               return Result;
+
+            when Filter_And =>
+               return Filter_Matches (Filter.And1, Kernel)
+                 and then Filter_Matches (Filter.And2, Kernel);
+
+            when Filter_Or =>
+               return Filter_Matches (Filter.Or1, Kernel)
+                 or else Filter_Matches (Filter.Or2, Kernel);
+         end case;
+      end if;
+   end Filter_Matches;
 
 end Glide_Kernel;

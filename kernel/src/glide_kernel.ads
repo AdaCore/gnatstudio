@@ -512,8 +512,8 @@ package Glide_Kernel is
    function Context_Matches
      (Context : access Action_Context_Record;
       Kernel  : access Kernel_Handle_Record'Class)
-     return Boolean is abstract;
-   --  Whether the current widget in Event matches the context
+      return Boolean is abstract;
+   --  Whether the current context matches Context
 
    procedure Register_Context
      (Kernel  : access Kernel_Handle_Record;
@@ -542,6 +542,43 @@ package Glide_Kernel is
    function Get (Iter : Action_Context_Iterator) return Action_Context;
    --  Return the current context
 
+   --------------------
+   -- Action filters --
+   --------------------
+
+   type Action_Filter_Record (<>) is private;
+   type Action_Filter is access all Action_Filter_Record;
+
+   function Create
+     (Language  : String := "";
+      Action    : String := "";
+      Context   : Action_Context := null) return Action_Filter;
+   --  Create a new filter.
+   --  It does a logical AND for all its attributes specified as parameters.
+   --  The default values for the parameters indicate that no special filter
+   --  is done for this particular parameter.
+
+   function "and" (Filter1, Filter2 : Action_Filter) return Action_Filter;
+   function "or"  (Filter1, Filter2 : Action_Filter) return Action_Filter;
+   --  Execute logical operations between filters
+
+   function Get_Context (Filter : Action_Filter) return Action_Context;
+   --  Return the context which applies to the filter.
+   --  If this is a simple filter created with Create, this is the context
+   --  passed in argument. If this is a compound filter created through
+   --  logical operations, null is returned.
+
+   procedure Set_Error_Message (Filter : Action_Filter; Msg : String);
+   --  Set the error message to display if Filter doesn't match
+
+   function Get_Error_Message (Filter : Action_Filter) return String;
+   --  Return the error message to display if the filter doesn't match.
+
+   function Filter_Matches
+     (Filter : Action_Filter;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean;
+   --  Whether the current context matches Filter
+
    --------------
    -- Actions --
    -------------
@@ -550,7 +587,7 @@ package Glide_Kernel is
 
    type Action_Record is record
       Command     : Commands.Interactive.Interactive_Command_Access;
-      Context     : Action_Context;
+      Filter      : Action_Filter;
       Description : GNAT.OS_Lib.String_Access;
    end record;
    No_Action : constant Action_Record := (null, null, null);
@@ -565,7 +602,7 @@ package Glide_Kernel is
       Name        : String;
       Command     : access Commands.Interactive.Interactive_Command'Class;
       Description : String := "";
-      Context     : Action_Context := null);
+      Filter      : Action_Filter := null);
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.
@@ -915,6 +952,24 @@ package Glide_Kernel is
      "search_functions_changed";
 
 private
+
+   type Filter_Type is (Filter_And, Filter_Or, Standard_Filter);
+
+   type Action_Filter_Record (Kind : Filter_Type) is record
+      Error_Msg : GNAT.OS_Lib.String_Access;
+      case Kind is
+         when Standard_Filter =>
+            Language : GNAT.OS_Lib.String_Access;
+            Context  : Action_Context;
+            Action   : GNAT.OS_Lib.String_Access;
+
+         when Filter_And =>
+            And1, And2 : Action_Filter;
+
+         when Filter_Or =>
+            Or1, Or2 : Action_Filter;
+      end case;
+   end record;
 
    type Module_ID_Information (Name_Length : Natural) is record
       Name                  : String (1 .. Name_Length);
