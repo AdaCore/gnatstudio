@@ -433,6 +433,11 @@ package Glide_Kernel.Scripts is
       Base   : Class_Type := No_Class) is abstract;
    --  Create a new class in the interpreter
 
+   procedure Block_Commands
+     (Script : access Scripting_Language_Record;
+      Block  : Boolean) is abstract;
+   --  If Block is true, no command can be executed for this scripting language
+
    procedure Execute_Command
      (Script       : access Scripting_Language_Record;
       Command      : String;
@@ -587,6 +592,11 @@ package Glide_Kernel.Scripts is
    --
    --  If the command has some graphical output (dialog,...), it must run in
    --  a separate main loop (Gtk.Main.Gtk_Main or modal dialogs).
+
+   procedure Block_Commands
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Block  : Boolean);
+   --  Block all execution of shell commands if Block is true
 
    procedure Register_Scripting_Language
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;

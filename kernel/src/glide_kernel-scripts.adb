@@ -316,6 +316,23 @@ package body Glide_Kernel.Scripts is
       end;
    end Get_Scripting_Languages;
 
+   --------------------
+   -- Block_Commands --
+   --------------------
+
+   procedure Block_Commands
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Block  : Boolean)
+   is
+      Tmp : Scripting_Language_List :=
+        Scripting_Data (Kernel.Scripts).Scripting_Languages;
+   begin
+      while Tmp /= null loop
+         Block_Commands (Tmp.Script, Block);
+         Tmp := Tmp.Next;
+      end loop;
+   end Block_Commands;
+
    ----------------------
    -- Register_Command --
    ----------------------
