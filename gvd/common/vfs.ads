@@ -91,17 +91,14 @@ package VFS is
    --  If file names are case insensitive, the normalized name will always
    --  be all lower cases.
 
-   function URL_File_Name (File : Virtual_File) return String;
-   --  Return the file name as an URL. Local files do not use the URL
-   --  notation, and their full name is returned instead
-
    function File_Extension (File : Virtual_File) return UTF8_String;
    --  Return the extension of the file, or the empty string if there is no
    --  extension. This extension includes the last dot and all the following
    --  characters;
 
    function Dir_Name (File : Virtual_File) return Cst_UTF8_String_Access;
-   --  Return the directory name for File
+   --  Return the directory name for File. This includes any available
+   --  on the protocol, so that relative files names are properly found
 
    function Read_File (File : Virtual_File) return GNAT.OS_Lib.String_Access;
    --  Return the contents of an entire file, encoded with the locale encoding.
@@ -212,11 +209,15 @@ private
 
    type Contents_Record is record
       Connection      : Remote_Connections.Remote_Connection;
+      Start_Of_Path   : Integer;
       Ref_Count       : Natural := 1;
       Full_Name       : GNAT.OS_Lib.String_Access;
       Normalized_Full : GNAT.OS_Lib.String_Access;
       Dir_Name        : GNAT.OS_Lib.String_Access;
    end record;
+   --  Start_Of_Path is the index in Full_Name where the remote path starts.
+   --  For local files, this is Full_Name'First, for remote file it points
+   --  after the protocol description.
 
    type Contents_Access is access Contents_Record;
 

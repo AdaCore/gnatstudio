@@ -105,10 +105,11 @@ package body VFS is
    ------------
 
    function Create (Full_Filename : UTF8_String) return Virtual_File is
-      Protocol, User, Host, Path : String_Access;
+      Protocol, User, Host : String_Access;
       Connection : Remote_Connection;
+      Start      : Integer;
    begin
-      Parse_URL (Full_Filename, Protocol, User, Host, Path);
+      Parse_URL (Full_Filename, Protocol, User, Host, Start);
 
       if Protocol /= null then
          Connection := Get_Connection (Protocol.all, User.all, Host.all);
@@ -117,26 +118,22 @@ package body VFS is
          Free (Host);
 
          if Connection /= null then
-            if Path = null then
-               raise Program_Error;
-            end if;
-
             return (Ada.Finalization.Controlled with
                     Value => new Contents_Record'
                       (Connection      => Connection,
+                       Start_Of_Path   => Start,
                        Ref_Count       => 1,
-                       Full_Name       => Path,
+                       Full_Name       => new String'(Full_Filename),
                        Normalized_Full => null,
                        Dir_Name        => null));
          else
-            Free (Path);
-
             --  Behave as if we have a local file, although nobody will be
             --  able to open it
 
             return (Ada.Finalization.Controlled with
                     Value => new Contents_Record'
                       (Connection      => null,
+                       Start_Of_Path   => Full_Filename'First,
                        Ref_Count       => 1,
                        Full_Name       => new String'(Full_Filename),
                        Normalized_Full => null,
@@ -147,6 +144,7 @@ package body VFS is
          return (Ada.Finalization.Controlled with
                  Value => new Contents_Record'
                    (Connection      => null,
+                    Start_Of_Path   => Full_Filename'First,
                     Ref_Count       => 1,
                     Full_Name       => new String'(Full_Filename),
                     Normalized_Full => null,
@@ -163,6 +161,7 @@ package body VFS is
       return (Ada.Finalization.Controlled with
                 Value => new Contents_Record'
                 (Connection      => null,
+                 Start_Of_Path   => Base_Name'First,
                  Ref_Count       => 1,
                  Full_Name       => new String'(Base_Name),
                  Normalized_Full => null,
@@ -222,7 +221,9 @@ package body VFS is
          --  Since we can't ensure that Prefix will be the same in two
          --  successive calls, we have to reallocate the string every time.
 
-         return Base_Name (File.Value.Full_Name.all, Suffix);
+         return Base_Name
+           (File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last), Suffix);
       end if;
    end Base_Name;
 
@@ -241,28 +242,12 @@ package body VFS is
          Ensure_Normalized (File);
          return Cst_UTF8_String_Access (File.Value.Normalized_Full);
 
+      elsif File.Value.Connection /= null then
+         return Cst_UTF8_String_Access (File.Value.Full_Name);
       else
          return Cst_UTF8_String_Access (File.Value.Full_Name);
       end if;
    end Full_Name;
-
-   -------------------
-   -- URL_File_Name --
-   -------------------
-
-   function URL_File_Name (File : Virtual_File) return String is
-   begin
-      if File.Value = null or else File.Value.Connection = null then
-         return Full_Name (File).all;
-      else
-         return Get_Protocol (File.Value.Connection)
-         & "://"
-         & Get_User (File.Value.Connection)
-         & '@'
-         & Get_Host (File.Value.Connection)
-         & Full_Name (File).all;
-      end if;
-   end URL_File_Name;
 
    --------------
    -- Dir_Name --
@@ -292,7 +277,10 @@ package body VFS is
       elsif File.Value.Connection = null then
          return Read_File (Full_Name (File).all);
       else
-         return Read_File (File.Value.Connection, File.Value.Full_Name.all);
+         return Read_File
+           (File.Value.Connection,
+            File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
       end if;
    end Read_File;
 
@@ -306,7 +294,9 @@ package body VFS is
       if File.Value.Connection = null then
          Delete_File (Locale_Full_Name (File), Success);
       else
-         Delete (File.Value.Connection, File.Value.Full_Name.all);
+         Delete (File.Value.Connection,
+                 File.Value.Full_Name
+                   (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
       end if;
    end Delete;
 
@@ -346,7 +336,9 @@ package body VFS is
          return Is_Regular_File (Locale_Full_Name (File));
       else
          return Is_Regular_File
-           (File.Value.Connection, File.Value.Full_Name.all);
+           (File.Value.Connection,
+            File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
       end if;
    end Is_Regular_File;
 
@@ -370,7 +362,10 @@ package body VFS is
       if File.Value = null then
          return False;
       elsif File.Value.Connection /= null then
-         return Is_Writable (File.Value.Connection, File.Value.Full_Name.all);
+         return Is_Writable
+           (File.Value.Connection,
+            File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
       else
          return Is_Writable_File (Locale_Full_Name (File));
       end if;
@@ -385,7 +380,10 @@ package body VFS is
       if File.Value = null then
          return False;
       elsif File.Value.Connection /= null then
-         return Is_Directory (File.Value.Connection, File.Value.Full_Name.all);
+         return Is_Directory
+           (File.Value.Connection,
+            File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
       else
          return Is_Directory (Locale_Full_Name (File));
       end if;
@@ -397,7 +395,9 @@ package body VFS is
 
    function Is_Absolute_Path (File : Virtual_File) return Boolean is
    begin
-      return Is_Absolute_Path (Full_Name (File).all);
+      return Is_Absolute_Path
+        (File.Value.Full_Name
+           (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
    end Is_Absolute_Path;
 
    --------------------
@@ -406,7 +406,9 @@ package body VFS is
 
    function File_Extension (File : Virtual_File) return UTF8_String is
    begin
-      return File_Extension (Full_Name (File).all);
+      return File_Extension
+        (File.Value.Full_Name
+           (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
    end File_Extension;
 
    ----------------
@@ -489,7 +491,10 @@ package body VFS is
    begin
       if File.File.Value.Connection /= null then
          Write (File.File.Value.Connection,
-                File.File.Value.Full_Name.all, File.Filename.all);
+                File.File.Value.Full_Name
+                  (File.File.Value.Start_Of_Path
+                   .. File.File.Value.Full_Name'Last),
+                File.Filename.all);
          Close (File.FD);
          Delete_File (File.Filename.all, Success);
       else
@@ -513,7 +518,10 @@ package body VFS is
            (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Writable));
       else
          Set_Writable
-           (File.Value.Connection, File.Value.Full_Name.all, Writable);
+           (File.Value.Connection,
+            File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last),
+            Writable);
       end if;
    end Set_Writable;
 
@@ -531,7 +539,10 @@ package body VFS is
            (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Readable));
       else
          Set_Readable
-           (File.Value.Connection, File.Value.Full_Name.all, Readable);
+           (File.Value.Connection,
+            File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last),
+            Readable);
       end if;
    end Set_Readable;
 
@@ -547,7 +558,9 @@ package body VFS is
          return File_Utils.File_Time_Stamp (Locale_Full_Name (File));
       else
          return File_Time_Stamp
-           (File.Value.Connection, File.Value.Full_Name.all);
+           (File.Value.Connection,
+            File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
       end if;
    end File_Time_Stamp;
 
