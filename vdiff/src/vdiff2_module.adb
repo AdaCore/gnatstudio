@@ -108,8 +108,6 @@ package body Vdiff2_Module is
 
    procedure Destroy (Id : in out VDiff2_Module_Record);
 
-
-
    ---------------------------
    -- On_Compare_Tree_Files --
    ---------------------------
@@ -337,6 +335,7 @@ package body Vdiff2_Module is
             end;
          end;
       end;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -466,11 +465,13 @@ package body Vdiff2_Module is
                         Parent      => Get_Main_Window (Kernel));
                      return False;
                   end if;
-                  Item := (List => Result,
-                           File1 => new String'(Ref_File),
-                           File2 => new String'(New_File),
-                           File3 => null,
-                           Current_Diff => Result);
+
+                  Item :=
+                    (List => Result,
+                     File1 => new String'(Ref_File),
+                     File2 => new String'(New_File),
+                     File3 => null,
+                     Current_Diff => Result);
                   Append (Id.List_Diff.all, Item);
                   Show_Differences (Kernel, Item);
                   Delete_File (Ref_File, Success);
@@ -517,14 +518,15 @@ package body Vdiff2_Module is
                      Parent      => Get_Main_Window (Kernel));
                   return False;
                end if;
-               Item := (List => Result,
-                        File1 => new String'(Orig_File),
-                        File2 => new String'(New_File),
-                        File3 => null,
-                        Current_Diff => Result);
+
+               Item :=
+                 (List => Result,
+                  File1 => new String'(Orig_File),
+                  File2 => new String'(New_File),
+                  File3 => null,
+                  Current_Diff => Result);
                Append (Id.List_Diff.all, Item);
-               Show_Differences
-                 (Kernel, Item);
+               Show_Differences (Kernel, Item);
             end if;
 
             return True;
