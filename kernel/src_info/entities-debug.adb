@@ -35,6 +35,7 @@ package body Entities.Debug is
    procedure Dump (Kind : E_Kind);
    procedure Dump (Ref  : Entity_Reference);
    procedure Dump (File : Virtual_File);
+   procedure Dump_Entities_From_Files (Files : in out Files_HTable.HTable);
    --  Dump various parts of the system
 
    procedure Low_Level_Dump is new Entities_Tries.Dump (GNAT.IO.Put, Dump);
@@ -385,6 +386,26 @@ package body Entities.Debug is
       end if;
    end Dump;
 
+   ------------------------------
+   -- Dump_Entities_From_Files --
+   ------------------------------
+
+   procedure Dump_Entities_From_Files (Files : in out Files_HTable.HTable) is
+      Iter  : Files_HTable.Iterator;
+      File  : Source_File;
+   begin
+      Put_Line ("====== Entities from files =====");
+      Get_First (Files, Iter);
+      loop
+         File := Get_Element (Iter);
+         exit when File = null;
+
+         Dump (File.Entities, Full => True, Name => "");
+         Get_Next (Files, Iter);
+      end loop;
+
+   end Dump_Entities_From_Files;
+
    ----------
    -- Dump --
    ----------
@@ -394,7 +415,12 @@ package body Entities.Debug is
       if Db /= null then
          Dump (Db.LIs);
          Dump (Db.Files);
-         Dump (Db.Entities, Full => True, Name => "");
+
+         if Db.Entities = Entities_Tries.Empty_Trie_Tree then
+            Dump_Entities_From_Files (Db.Files);
+         else
+            Dump (Db.Entities, Full => True, Name => "");
+         end if;
 
          --  Low_Level_Dump (Db.Entities);
       end if;
