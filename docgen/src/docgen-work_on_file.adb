@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Projects;                  use Projects;
@@ -44,8 +43,8 @@ package body Docgen.Work_On_File is
    package TRL  renames Type_Reference_List;
 
    procedure Process_One_File
-     (B                             : Backend_Handle;
-      Doc_File                      : File_Type;
+     (B                             : Docgen_Backend.Backend_Handle;
+      Doc_File                      : File_Descriptor;
       Kernel                        : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Source_Filename               : Virtual_File;
@@ -62,10 +61,9 @@ package body Docgen.Work_On_File is
       Private_Type_Index_List       : in out Type_Entity_List.List;
       Private_Tagged_Types_List     : in out Type_List_Tagged_Element.List;
       All_Tagged_Types_List         : in out List_Entity_Handle.List;
-      Converter                     : Docgen.Doc_Subprogram_Type;
       Doc_Directory                 : String;
       Doc_Suffix                    : String;
-      Still_Warned                  : in out Boolean);
+      Warned                        : in out Boolean);
    --  Called by Process_Files for each file from the given list
    --  will examine that file and call the function Work_On_Source
    --  from Docgen.Work_On_File.
@@ -93,9 +91,7 @@ package body Docgen.Work_On_File is
    --  All_Tagged_Types_List    : contains all the tagged types. Those that
    --  are declared in the processed files but also the parents and the
    --  children even if they aren't declared in the processed files.
-   --  Converter : indicates what format the documentation should be generated
-   --  in.
-   --  Still_Warned   : indicate that a message still has been put on the
+   --  Warned          : indicate that a message still has been put on the
    --  console.
    --  All_Scope_Tree : hash table which contains the scope trees built. This
    --  hash table is shared by all files and finally destroyed at the end of
@@ -106,12 +102,11 @@ package body Docgen.Work_On_File is
    -------------------
 
    procedure Process_Files
-     (B                : Backend_Handle;
+     (B                : Docgen_Backend.Backend_Handle;
       Source_File_List : in out Docgen.Type_Source_File_List.List;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options;
-      Doc_Suffix       : String;
-      Converter        : Docgen.Doc_Subprogram_Type)
+      Doc_Suffix       : String)
    is
       use Type_List_Tagged_Element;
       use List_Entity_Handle;
@@ -119,7 +114,7 @@ package body Docgen.Work_On_File is
 
       J                             : Natural;
       Source_File_Node              : Type_Source_File_List.List_Node;
-      Doc_File                      : File_Type;
+      Doc_File                      : File_Descriptor;
       Next_Package                  : GNAT.OS_Lib.String_Access;
       Prev_Package                  : GNAT.OS_Lib.String_Access;
       Subprogram_Index_List         : Type_Entity_List.List;
@@ -129,10 +124,9 @@ package body Docgen.Work_On_File is
       Private_Type_Index_List       : Type_Entity_List.List;
       Private_Tagged_Types_List     : Type_List_Tagged_Element.List;
       All_Tagged_Types_List         : List_Entity_Handle.List;
-      Unused                        : List_Reference_In_File.List;
       Doc_Directory_Root            : constant String :=
-        Get_Doc_Directory (B, Kernel_Handle (Kernel));
-      Still_Warned                  : Boolean;
+        Docgen_Backend.Get_Doc_Directory (B, Kernel_Handle (Kernel));
+      Warned                        : Boolean := False;
       Level                         : Natural := 1;
 
       function Find_Next_Package
@@ -212,9 +206,8 @@ package body Docgen.Work_On_File is
       end Find_Prev_Package;
 
    begin
-      Still_Warned := False;
-
       --  Sort the list of the files first
+
       Sort_List_Name (Source_File_List);
       Source_File_Node := TSFL.First (Source_File_List);
 
@@ -225,7 +218,7 @@ package body Docgen.Work_On_File is
               (TSFL.Data (Source_File_Node).File_Name,
                Doc_Directory_Root, Doc_Suffix);
          begin
-            Create (Doc_File, Out_File, File_Name);
+            Doc_File := Create_File (File_Name, Binary);
 
             --  Find the next and the previous package name (used for TexInfo)
 
@@ -251,10 +244,9 @@ package body Docgen.Work_On_File is
                Private_Type_Index_List,
                Private_Tagged_Types_List,
                All_Tagged_Types_List,
-               Converter,
                Doc_Directory_Root,
                Doc_Suffix,
-               Still_Warned);
+               Warned);
 
             Source_File_Node := TSFL.Next (Source_File_Node);
             J := J + 1;
@@ -274,24 +266,26 @@ package body Docgen.Work_On_File is
 
       --  Create the index doc files for the packages
       Process_Unit_Index
-        (B, Kernel, Source_File_List, Unused, Options, Converter,
+        (B, Kernel, Source_File_List, Options,
            Doc_Directory_Root, Doc_Suffix, Level);
       Process_Subprogram_Index
         (B, Kernel, Subprogram_Index_List, Private_Subprogram_Index_List,
-         Unused, Options, Converter, Doc_Directory_Root, Doc_Suffix, Level);
+         Options, Doc_Directory_Root, Doc_Suffix);
       Process_Type_Index
         (B, Kernel, Type_Index_List, Private_Type_Index_List,
-         Unused,  Options, Converter, Doc_Directory_Root, Doc_Suffix, Level);
+         Options, Doc_Directory_Root, Doc_Suffix);
 
       if Options.Tagged_Types then
          Sort_List_Name (Tagged_Types_List);
+
          if Options.Show_Private then
             Sort_List_Name (Private_Tagged_Types_List);
          end if;
+
          Process_Tagged_Type_Index
            (B, Kernel, Tagged_Types_List, Private_Tagged_Types_List,
-            Unused, Source_File_List, Options, Converter, Doc_Directory_Root,
-            Doc_Suffix, Level);
+            Source_File_List, Options, Doc_Directory_Root,
+            Doc_Suffix);
       end if;
 
       TEL.Free (Subprogram_Index_List);
@@ -305,27 +299,27 @@ package body Docgen.Work_On_File is
    ----------------------
 
    procedure Process_One_File
-     (B                     : Backend_Handle;
-      Doc_File              : File_Type;
-      Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Source_Filename       : Virtual_File;
-      Package_Name          : String;
-      Next_Package          : GNAT.OS_Lib.String_Access;
-      Prev_Package          : GNAT.OS_Lib.String_Access;
-      Source_File_List      : in out Type_Source_File_List.List;
-      Options               : All_Options;
-      Process_Body_File     : Boolean;
-      Subprogram_Index_List : in out Type_Entity_List.List;
-      Type_Index_List       : in out Type_Entity_List.List;
-      Tagged_Types_List     : in out Type_List_Tagged_Element.List;
+     (B                             : Docgen_Backend.Backend_Handle;
+      Doc_File                      : File_Descriptor;
+      Kernel                        : access
+        Glide_Kernel.Kernel_Handle_Record'Class;
+      Source_Filename               : Virtual_File;
+      Package_Name                  : String;
+      Next_Package                  : GNAT.OS_Lib.String_Access;
+      Prev_Package                  : GNAT.OS_Lib.String_Access;
+      Source_File_List              : in out Type_Source_File_List.List;
+      Options                       : All_Options;
+      Process_Body_File             : Boolean;
+      Subprogram_Index_List         : in out Type_Entity_List.List;
+      Type_Index_List               : in out Type_Entity_List.List;
+      Tagged_Types_List             : in out Type_List_Tagged_Element.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
       Private_Type_Index_List       : in out Type_Entity_List.List;
       Private_Tagged_Types_List     : in out Type_List_Tagged_Element.List;
-      All_Tagged_Types_List : in out List_Entity_Handle.List;
-      Converter             : Docgen.Doc_Subprogram_Type;
-      Doc_Directory         : String;
-      Doc_Suffix            : String;
-      Still_Warned          : in out Boolean)
+      All_Tagged_Types_List         : in out List_Entity_Handle.List;
+      Doc_Directory                 : String;
+      Doc_Suffix                    : String;
+      Warned                        : in out Boolean)
    is
       LI_Unit          : LI_File_Ptr;
       Entity_Iter      : Local_Entities_Iterator;
@@ -362,6 +356,7 @@ package body Docgen.Work_On_File is
       Tag_Elem_Child   : Tagged_Element_Handle;
       Entity_Is_Tagged : Boolean := False;
       Found_Global     : Boolean := False;
+      Is_Spec          : Boolean;
       LI               : LI_File_Ptr;
       --  The 16 variables above are used to find tagged types, their children
       --  and their parents
@@ -371,6 +366,12 @@ package body Docgen.Work_On_File is
       --  processing types, subprograms...
 
       use List_Reference_In_File;
+
+      function Is_Operator (Name : String) return Boolean;
+      --  Return True is Name is an operator
+
+      procedure Process_New_Entity;
+      --  Handle an entity referenced fir the first time.
 
       procedure Process_Subprogram
         (Source_Filename : Virtual_File;
@@ -411,6 +412,9 @@ package body Docgen.Work_On_File is
       --  children declared in other ali files.
       --  Iter            : if found_global is True, it points on children
       --  declared in other ali files.
+
+      procedure Process_Tagged_Types;
+      --  Process tagged types in the current file.
 
       --------------------------
       -- Add_Calls_References --
@@ -617,6 +621,7 @@ package body Docgen.Work_On_File is
       begin
          --  If defined in a spec file => add to the Type_Index_List
          Entity_Node.Kind := Type_Entity;
+
          if Is_Spec_File (Kernel, Source_Filename)
            and then Source_Filename = Entity_File
          then
@@ -716,16 +721,914 @@ package body Docgen.Work_On_File is
          end if;
       end Is_Tagged_Type;
 
-   begin  -- Process_One_File
-      --  ??? This procedure is huge and contains too many nested ifs and
-      --  loops. It should be split into smaller subprograms for clarity.
+      --------------------------
+      -- Process_Tagged_Types --
+      --------------------------
 
+      procedure Process_Tagged_Types is
+      begin
+         Entity_Is_Tagged := False;
+         Found_Global     := False;
+         Is_Tagged_Type
+           (Entity_Is_Tagged, Found_Global, Children_Iter, Info, LI_Unit);
+
+         if not Entity_Is_Tagged then
+            return;
+         end if;
+
+         Me_Info := Find_In_List (All_Tagged_Types_List, Info);
+
+         if Me_Info /= null then
+            --  This tagged type has still been met.
+            --  During the update of the lists, the local
+            --  son or parent which is added doesn't still
+            --  exist in the list
+
+            --  Search of fathers
+            Parent := Get_Parent_Types (LI_Unit, Me_Info.all);
+
+            loop
+               Father := Get (Parent);
+               exit when Father = No_Entity_Information;
+
+               --  New father
+               Father_Info := Find_In_List (All_Tagged_Types_List, Father);
+
+               if Father_Info = null then
+                  --  Father seen for the first time
+                  Father_Info := new Entity_Information'(Father);
+                  List_Entity_Handle.Append
+                    (All_Tagged_Types_List, Father_Info);
+
+                  Tag_Elem_Parent := new Tagged_Element;
+                  Tag_Elem_Parent.Me := Father_Info;
+                  Tag_Elem_Parent.Number_Of_Children := 0;
+                  Tag_Elem_Parent.Number_Of_Parents := 0;
+
+                  if Source_File_In_List
+                    (Source_File_List,
+                     Get_Declaration_File_Of (Father_Info.all))
+                  then
+                     --  If this tagged type is declared, we
+                     --  indicate that we must print it in
+                     --  the doc file
+
+                     Tag_Elem_Parent.Print_Me := True;
+
+                  else
+                     Tag_Elem_Parent.Print_Me := False;
+                  end if;
+
+                  if Options.Process_Body_Files
+                    and then
+                      not Is_Spec_File
+                        (Kernel, Get_Declaration_File_Of (Father_Info.all))
+                  then
+                     --  In this case, the parent won't be
+                     --  analised as an entity, so we must
+                     --  fill its list of children
+                     --  First time we met this father, so
+                     --  no need to check if Me_Info  still
+                     --  exist in list
+
+                     Tag_Elem_Parent.Number_Of_Children := 1;
+                     List_Entity_Handle.Append
+                       (Tag_Elem_Parent.My_Children, Me_Info);
+                  end if;
+
+                  if Options.Show_Private
+                    and then Get_Scope (Father_Info.all) /= Global_Scope
+                  then
+                     Type_List_Tagged_Element.Append
+                       (Private_Tagged_Types_List,
+                        Tag_Elem_Parent.all);
+                  else
+                     Type_List_Tagged_Element.Append
+                       (Tagged_Types_List,
+                        Tag_Elem_Parent.all);
+                  end if;
+               else
+                  if Options.Process_Body_Files
+                    and then
+                      not Is_Spec_File
+                        (Kernel, Get_Declaration_File_Of (Father_Info.all))
+                  then
+                     if Options.Show_Private
+                       and then Get_Scope (Father_Info.all) /= Global_Scope
+                     then
+                        Add_Child (Private_Tagged_Types_List,
+                                   Father_Info,
+                                   Me_Info);
+                     else
+                        Add_Child (Tagged_Types_List, Father_Info, Me_Info);
+                     end if;
+                  end if;
+               end if;
+
+               if Options.Show_Private
+                 and then Get_Scope (Me_Info.all) /= Global_Scope
+               then
+                  Add_Parent (Private_Tagged_Types_List, Me_Info, Father_Info);
+               else
+                  Add_Parent (Tagged_Types_List, Me_Info, Father_Info);
+               end if;
+
+               --  Update of the list of parents with the
+               --  local parent.
+               --  Update also the number of parents
+               Next (Parent);
+            end loop;
+
+            Destroy (Parent);
+
+            --  Search for children
+
+            Child := Get_Children_Types (LI_Unit, Me_Info.all);
+
+            loop
+               Son := Get (Child);
+               exit when Son = No_Entity_Information;
+
+               --  New child
+               Son_Info := Find_In_List (All_Tagged_Types_List, Son);
+
+               if Son_Info = null then
+                  --  Child seen for the first time
+
+                  Son_Info := new Entity_Information'(Son);
+                  List_Entity_Handle.Append
+                    (All_Tagged_Types_List, Son_Info);
+
+                  Tag_Elem_Child := new Tagged_Element;
+                  Tag_Elem_Child.Me := Son_Info;
+                  Tag_Elem_Child.Number_Of_Children := 0;
+                  Tag_Elem_Child.Number_Of_Parents := 0;
+
+                  if Source_File_In_List
+                    (Source_File_List, Get_Declaration_File_Of (Son_Info.all))
+                  then
+                     --  If this tagged type is declared, we
+                     --  indicate that we must print it in
+                     --  the doc file
+                     Tag_Elem_Child.Print_Me := True;
+                  else
+                     Tag_Elem_Child.Print_Me := False;
+                  end if;
+
+                  if Options.Process_Body_Files
+                    and then
+                      not Is_Spec_File
+                        (Kernel, Get_Declaration_File_Of (Son_Info.all))
+                  then
+                     --  In this case, the son won't be
+                     --  analysed as an entity, so we must
+                     --  fill its list of parents
+                     --  First time we met this child, so
+                     --  no need to check if this Me_Info
+                     --  still put in the list
+
+                     Tag_Elem_Child.Number_Of_Parents := 1;
+                     List_Entity_Handle.Append
+                       (Tag_Elem_Child.My_Parents, Me_Info);
+                  end if;
+
+                  if Options.Show_Private and then
+                    Get_Scope (Son_Info.all) /= Global_Scope
+                  then
+                     Type_List_Tagged_Element.Append
+                       (Private_Tagged_Types_List,
+                        Tag_Elem_Child.all);
+                  else
+                     Type_List_Tagged_Element.Append
+                       (Tagged_Types_List,
+                        Tag_Elem_Child.all);
+                  end if;
+               else
+                  if Options.Process_Body_Files
+                    and then
+                      not Is_Spec_File
+                        (Kernel, Get_Declaration_File_Of (Son_Info.all))
+                  then
+                     if Options.Show_Private
+                       and then Get_Scope (Son_Info.all) /= Global_Scope
+                     then
+                        Add_Parent
+                          (Private_Tagged_Types_List,
+                           Son_Info,
+                           Me_Info);
+                     else
+                        Add_Parent (Tagged_Types_List, Son_Info, Me_Info);
+                     end if;
+                  end if;
+               end if;
+
+               if Options.Show_Private
+                 and then Get_Scope (Me_Info.all) /= Global_Scope
+               then
+                  Add_Child
+                    (Private_Tagged_Types_List,
+                     Me_Info,
+                     Son_Info);
+               else
+                  Add_Child (Tagged_Types_List, Me_Info, Son_Info);
+               end if;
+               --  Update of the list of children with the
+               --  local child.
+               --  Update also the number of children
+
+               Next (Child);
+            end loop;
+
+            --  Search for all children (those who don't
+            --  appear in current file)
+
+            if Found_Global then
+               while Get (Children_Iter) /= No_Reference loop
+                  LI := Get_LI (Children_Iter);
+
+                  Global_Child := Get_Children_Types (LI, Info);
+
+                  loop
+                     Global_Son := Get (Global_Child);
+
+                     exit when Global_Son = No_Entity_Information;
+
+                     --  New child
+                     Son_Info := Find_In_List
+                       (All_Tagged_Types_List, Global_Son);
+
+                     if Son_Info = null then
+                        --  Child seen for the first time
+                        Son_Info := new Entity_Information'(Global_Son);
+                        List_Entity_Handle.Append
+                          (All_Tagged_Types_List, Son_Info);
+
+                        Tag_Elem_Child := new Tagged_Element;
+                        Tag_Elem_Child.Me := Son_Info;
+                        Tag_Elem_Child.Number_Of_Children := 0;
+                        Tag_Elem_Child.Number_Of_Parents := 0;
+
+                        if Source_File_In_List
+                          (Source_File_List,
+                           Get_Declaration_File_Of
+                             (Son_Info.all))
+                        then
+                           --  This tagged type is declared,
+                           --  we indicate that we must print
+                           --  it in the doc file
+                           Tag_Elem_Child.Print_Me := True;
+                        else
+                           Tag_Elem_Child.Print_Me := False;
+                        end if;
+
+                        if Options.Process_Body_Files
+                          and then
+                            not Is_Spec_File
+                              (Kernel, Get_Declaration_File_Of (Son_Info.all))
+                        then
+                           --  In this case, the son won't
+                           --  be analysed as an entity, so
+                           --  we must fill its list of
+                           --  parents
+                           --  First time we met this child,
+                           --  so no need to check if
+                           --  Me_Info still put in the list
+                           Tag_Elem_Child.Number_Of_Parents := 1;
+                           List_Entity_Handle.Append
+                             (Tag_Elem_Child.My_Parents,
+                              Me_Info);
+                        end if;
+
+                        if Options.Show_Private
+                          and then Get_Scope (Son_Info.all) /= Global_Scope
+                        then
+                           Type_List_Tagged_Element.Append
+                             (Private_Tagged_Types_List,
+                              Tag_Elem_Child.all);
+                        else
+                           Type_List_Tagged_Element.Append
+                             (Tagged_Types_List,
+                              Tag_Elem_Child.all);
+                        end if;
+                     else
+                        if Options.Process_Body_Files
+                          and then
+                            not Is_Spec_File
+                              (Kernel, Get_Declaration_File_Of (Son_Info.all))
+                        then
+                           if Options.Show_Private
+                             and then Get_Scope (Son_Info.all) /= Global_Scope
+                           then
+                              Add_Parent
+                                (Private_Tagged_Types_List,
+                                 Son_Info,
+                                 Me_Info);
+                           else
+                              Add_Parent (Tagged_Types_List,
+                                          Son_Info,
+                                          Me_Info);
+                           end if;
+                        end if;
+                     end if;
+
+                     if Options.Show_Private
+                       and then Get_Scope (Me_Info.all) /= Global_Scope
+                     then
+                        Add_Child
+                          (Private_Tagged_Types_List, Me_Info, Son_Info);
+                     else
+                        Add_Child (Tagged_Types_List, Me_Info, Son_Info);
+                     end if;
+
+                     --  Update of the list of children
+                     --  with the local child.
+                     --  Update also the number of children
+
+                     Next (Global_Child);
+                  end loop;
+
+                  Destroy (Global_Child);
+                  Next (Get_Language_Handler (Kernel), Children_Iter);
+               end loop;
+            end if;
+
+         else
+            --  First met with this tagged type.
+            --  So, we don't need to do an update!
+
+            Tag_Elem_Me := new Tagged_Element;
+            Me_Info :=  new Entity_Information'(Copy (Info));
+            List_Entity_Handle.Append
+              (All_Tagged_Types_List, Me_Info);
+            Tag_Elem_Me.Me := Me_Info;
+            Tag_Elem_Me.Number_Of_Children := 0;
+            Tag_Elem_Me.Number_Of_Parents := 0;
+
+            if Source_File_In_List
+              (Source_File_List,
+               Get_Declaration_File_Of (Me_Info.all))
+            then
+               --  If this tagged type is declared, we
+               --  indicate that we must print it in
+               --  the doc file
+               Tag_Elem_Me.Print_Me := True;
+            else
+               Tag_Elem_Me.Print_Me := False;
+            end if;
+
+            --  Search of fathers
+            Parent := Get_Parent_Types (LI_Unit, Me_Info.all);
+            loop
+               Father := Get (Parent);
+               exit when Father = No_Entity_Information;
+
+               --  New father
+               Father_Info := Find_In_List
+                 (All_Tagged_Types_List, Father);
+
+               if Father_Info = null then
+                  --  Father seen for the first time
+                  Father_Info := new Entity_Information'(Father);
+                  List_Entity_Handle.Append
+                    (All_Tagged_Types_List, Father_Info);
+
+                  Tag_Elem_Parent := new Tagged_Element;
+                  Tag_Elem_Parent.Me := Father_Info;
+                  Tag_Elem_Parent.Number_Of_Children := 0;
+                  Tag_Elem_Parent.Number_Of_Parents := 0;
+
+                  if Source_File_In_List
+                    (Source_File_List,
+                     Get_Declaration_File_Of (Father_Info.all))
+                  then
+                     --  If this tagged type is declared, we
+                     --  indicate that we must print it in
+                     --  the doc file
+                     Tag_Elem_Parent.Print_Me := True;
+                  else
+                     Tag_Elem_Parent.Print_Me := False;
+                  end if;
+
+                  if Options.Process_Body_Files
+                    and then
+                      not Is_Spec_File
+                        (Kernel, Get_Declaration_File_Of (Father_Info.all))
+                  then
+                     --  In this case, the parent won't be
+                     --  analised as an entity, so we must
+                     --  fill its list of children
+                     --  First time we met this father, so
+                     --  no need to check if Me_Info
+                     --  still put in the list
+
+                     Tag_Elem_Parent.Number_Of_Children := 1;
+                     List_Entity_Handle.Append
+                       (Tag_Elem_Parent.My_Children, Me_Info);
+                  end if;
+
+                  if Options.Show_Private
+                    and then Get_Scope (Father_Info.all) /= Global_Scope
+                  then
+                     Type_List_Tagged_Element.Append
+                       (Private_Tagged_Types_List,
+                        Tag_Elem_Parent.all);
+                  else
+                     Type_List_Tagged_Element.Append
+                       (Tagged_Types_List,
+                        Tag_Elem_Parent.all);
+                  end if;
+
+               else
+                  if Options.Process_Body_Files
+                    and then
+                      not Is_Spec_File
+                        (Kernel, Get_Declaration_File_Of (Father_Info.all))
+                  then
+                     if Options.Show_Private
+                       and then Get_Scope (Father_Info.all) /= Global_Scope
+                     then
+                        Add_Child
+                          (Private_Tagged_Types_List, Father_Info, Me_Info);
+                     else
+                        Add_Child (Tagged_Types_List, Father_Info, Me_Info);
+                     end if;
+                  end if;
+               end if;
+
+               --  First time we met this tagged type, so
+               --  no need to check if this father still
+               --  put in the list
+               List_Entity_Handle.Append (Tag_Elem_Me.My_Parents, Father_Info);
+               --  Update of the list of parents with the
+               --  local parent.
+
+               Tag_Elem_Me.Number_Of_Parents :=
+                 Tag_Elem_Me.Number_Of_Parents + 1;
+               --  Update of the number of parents
+
+               Next (Parent);
+            end loop;
+
+            Destroy (Parent);
+
+            --  Search of children
+            Child := Get_Children_Types (LI_Unit, Me_Info.all);
+
+            loop
+               Son := Get (Child);
+               exit when Son = No_Entity_Information;
+
+               --  New Child
+               Son_Info := Find_In_List (All_Tagged_Types_List, Son);
+
+               if Son_Info = null then
+                  --  Child seen for the first time
+                  Son_Info := new Entity_Information'(Son);
+                  List_Entity_Handle.Append
+                    (All_Tagged_Types_List, Son_Info);
+
+                  Tag_Elem_Child := new Tagged_Element;
+                  Tag_Elem_Child.Me := Son_Info;
+                  Tag_Elem_Child.Number_Of_Children := 0;
+                  Tag_Elem_Child.Number_Of_Parents := 0;
+
+                  if Source_File_In_List
+                    (Source_File_List, Get_Declaration_File_Of (Son_Info.all))
+                  then
+                     --  If this tagged type is declared, we
+                     --  indicate that we must print it in
+                     --  the doc file
+                     Tag_Elem_Child.Print_Me := True;
+                  else
+                     Tag_Elem_Child.Print_Me := False;
+                  end if;
+
+                  if Options.Process_Body_Files
+                    and then
+                      not Is_Spec_File
+                        (Kernel, Get_Declaration_File_Of (Son_Info.all))
+                  then
+                     --  In this case, the child won't be
+                     --  analysed as an entity, so we must
+                     --  fill its list of parents
+                     --  First time we met this child, so
+                     --  no need to check if Me_Info
+                     --  still put in the list
+
+                     Tag_Elem_Child.Number_Of_Parents := 1;
+                     List_Entity_Handle.Append
+                       (Tag_Elem_Child.My_Parents, Me_Info);
+                  end if;
+
+                  if Options.Show_Private and then
+                    Get_Scope (Son_Info.all) /= Global_Scope
+                  then
+                     Type_List_Tagged_Element.Append
+                       (Private_Tagged_Types_List,
+                        Tag_Elem_Child.all);
+                  else
+                     Type_List_Tagged_Element.Append
+                       (Tagged_Types_List,
+                        Tag_Elem_Child.all);
+                  end if;
+
+                  --  We don't need to indicate now
+                  --  information about the father of this
+                  --  child (in fact, Me_Info is one)
+                  --  because this field will be updated
+                  --  when the child will be studied as
+                  --  main tagged type (not as a son or
+                  --  parent)
+
+               else
+                  if Options.Process_Body_Files
+                    and then
+                      not Is_Spec_File
+                        (Kernel, Get_Declaration_File_Of (Son_Info.all))
+                  then
+                     if Options.Show_Private
+                       and then Get_Scope (Son_Info.all) /= Global_Scope
+                     then
+                        Add_Parent
+                          (Private_Tagged_Types_List,
+                           Son_Info,
+                           Me_Info);
+                     else
+                        Add_Parent (Tagged_Types_List, Son_Info, Me_Info);
+                     end if;
+                  end if;
+               end if;
+
+               List_Entity_Handle.Append (Tag_Elem_Me.My_Children, Son_Info);
+               --  Update of the list of parents with the
+               --  local parent.
+
+               Tag_Elem_Me.Number_Of_Children :=
+                 Tag_Elem_Me.Number_Of_Children + 1;
+               --  Update of the number of parents
+
+               Next (Child);
+            end loop;
+
+            --  Search for all children (those who don't
+            --  appear in current file)
+
+            if Found_Global then
+               while Get (Children_Iter) /= No_Reference loop
+                  LI := Get_LI (Children_Iter);
+
+                  Global_Child := Get_Children_Types (LI, Info);
+
+                  loop
+                     Global_Son := Get (Global_Child);
+
+                     exit when Global_Son = No_Entity_Information;
+
+                     --  New Child
+                     Son_Info := Find_In_List
+                       (All_Tagged_Types_List, Global_Son);
+
+                     if Son_Info = null then
+                        --  Child seen for the first time
+                        Son_Info := new Entity_Information'(Global_Son);
+                        List_Entity_Handle.Append
+                          (All_Tagged_Types_List, Son_Info);
+
+                        Tag_Elem_Child := new Tagged_Element;
+                        Tag_Elem_Child.Me := Son_Info;
+                        Tag_Elem_Child.Number_Of_Children := 0;
+                        Tag_Elem_Child.Number_Of_Parents := 0;
+
+                        if Source_File_In_List
+                          (Source_File_List,
+                           Get_Declaration_File_Of (Son_Info.all))
+                        then
+                           --  This tagged type is declared,
+                           --  we indicate that we must print
+                           --  it in the doc file
+                           Tag_Elem_Child.Print_Me := True;
+                        else
+                           Tag_Elem_Child.Print_Me := False;
+                        end if;
+
+                        if Options.Process_Body_Files
+                          and then
+                            not Is_Spec_File
+                              (Kernel, Get_Declaration_File_Of (Son_Info.all))
+                        then
+                           --  In this case, the child won't
+                           --  be analysed as an entity, so
+                           --  we must fill its list of
+                           --  parents
+                           --  First time we met this child,
+                           --  so no need to check if
+                           --  Me_Info still put in the list
+
+                           Tag_Elem_Child.Number_Of_Parents := 1;
+                           List_Entity_Handle.Append
+                             (Tag_Elem_Child.My_Parents, Me_Info);
+                        end if;
+
+                        if Options.Show_Private
+                          and then Get_Scope (Son_Info.all) /= Global_Scope
+                        then
+                           Type_List_Tagged_Element.Append
+                             (Private_Tagged_Types_List,
+                              Tag_Elem_Child.all);
+                        else
+                           Type_List_Tagged_Element.Append
+                             (Tagged_Types_List,
+                              Tag_Elem_Child.all);
+                        end if;
+
+                        --  We don't need to indicate now
+                        --  information about the father of
+                        --  this child (Me_Info is one)
+                        --  because this field will be update
+                        --  when the child will be studied as
+                        --  main tagged type (not as a son or
+                        --  parent)
+                     else
+                        if Options.Process_Body_Files
+                          and then
+                            not Is_Spec_File
+                              (Kernel, Get_Declaration_File_Of (Son_Info.all))
+                        then
+                           if Options.Show_Private
+                             and then Get_Scope (Son_Info.all) /= Global_Scope
+                           then
+                              Add_Parent
+                                (Private_Tagged_Types_List,
+                                 Son_Info,
+                                 Me_Info);
+                           else
+                              Add_Parent
+                                (Tagged_Types_List, Son_Info, Me_Info);
+                           end if;
+                        end if;
+                     end if;
+
+                     List_Entity_Handle.Append
+                       (Tag_Elem_Me.My_Children, Son_Info);
+                     --  Update of the list of parents with
+                     --  the local parent.
+
+                     Tag_Elem_Me.Number_Of_Children :=
+                       Tag_Elem_Me.Number_Of_Children + 1;
+                     --  Update of the number of parents
+
+                     Next (Global_Child);
+                  end loop;
+
+                  Destroy (Global_Child);
+                  Next (Get_Language_Handler (Kernel), Children_Iter);
+               end loop;
+            end if;
+
+            if Options.Show_Private and then
+              Entity_Node.Is_Private
+            then
+               Type_List_Tagged_Element.Append
+                 (Private_Tagged_Types_List, Tag_Elem_Me.all);
+            else
+               Type_List_Tagged_Element.Append
+                 (Tagged_Types_List, Tag_Elem_Me.all);
+            end if;
+         end if;
+      end Process_Tagged_Types;
+
+      ------------------------
+      -- Process_New_Entity --
+      ------------------------
+
+      procedure Process_New_Entity is
+      begin
+         Ent_Handle := new Entity_Information'(Info);
+         List_Entity_In_File.Append (List_Ent_In_File, Info);
+
+         Entity_Node.Is_Private := Get_Scope (Info) /= Global_Scope;
+         Entity_Node.Public_Declaration := No_Entity_Information;
+
+         Find_Next_Body
+           (Kernel, LI_Unit, Info, Entity_Node.Line_In_Body, Status);
+
+         if Status /= Success then
+            --  Should we really reset Line_In_Body when
+            --  Status = Fuzzy_Match ???
+
+            Entity_Node.Line_In_Body := Null_File_Location;
+
+            if not Warned then
+               Console.Insert
+                 (Kernel,
+                  -("Docgen: xref information is not up-to-date, " &
+                    "output may not be accurate"),
+                  Mode => Verbose);
+               Warned := True;
+               --  The message is print only one time.
+            end if;
+         end if;
+
+         --  Check if the declaration of the entity is in one of the
+         --  files which are in list, if false => no need for
+         --  creating links.
+         --  Also check if it's a private entity and whether they
+         --  should be processed.
+
+         if Source_File_In_List
+           (Source_File_List, Get_Declaration_File_Of (Info))
+           and then (Options.Show_Private
+                     or else not Entity_Node.Is_Private)
+         then
+            --  Get the parameters needed by all entities
+
+            Entity_Node.Name :=
+              new String'(Get_Full_Name (Info, LI_Unit, "."));
+
+            Entity_Node.Entity := Copy (Info);
+
+            --  For all entities which are not subprograms the ref
+            --  lists must be set to null
+
+            if Get_Kind (Info).Kind /= Function_Or_Operator
+              and then Get_Kind (Info).Kind /= Procedure_Kind
+            then
+               Entity_Node.Called_List := TRL.Null_List;
+               Entity_Node.Calls_List  := TRL.Null_List;
+            end if;
+
+            --  Get the entity specific parameters.
+            --  These are the last parameters to gather, after the
+            --  'case' no more changes are allowed, because the
+            --  index lists are created in the subprograms used
+            --  here, so all info must be avaiable.
+
+            case Get_Kind (Info).Kind is
+               when Procedure_Kind | Function_Or_Operator =>
+                  Entity_Node.Kind := Subprogram_Entity;
+                  Process_Subprogram
+                    (Source_Filename,
+                     Get_Declaration_File_Of (Info),
+                     Info);
+
+               when Record_Kind | Enumeration_Kind |
+                    Access_Kind | Array_Kind |
+                    Boolean_Kind | String_Kind | Class_Wide |
+                    Decimal_Fixed_Point |
+                    Floating_Point | Modular_Integer |
+                    Ordinary_Fixed_Point |
+                    Private_Type | Protected_Kind |
+                    Signed_Integer | Named_Number
+               =>
+                  if Get_Kind (Info).Is_Type then
+                     Process_Type
+                       (Source_Filename, Get_Declaration_File_Of (Info));
+
+                     if Options.Show_Private
+                       and then not Entity_Node.Is_Private
+                     then
+                        --  For record/enum, we must search if they
+                        --  have private fields. In this case, we
+                        --  must create a new entity in order have
+                        --  documentation about it. In fact, the
+                        --  record itself is public and if this work
+                        --  isn't done, only the documentation
+                        --  "type X is record with private" is given.
+                        --  The private fiels are forgotten.
+
+                        Get_Scope_Tree (Kernel, Info, Node_Field);
+
+                        Iter_Field := Start (Node_Field);
+                        Found_Private := False;
+
+                        loop
+                           Node_Field := Get (Iter_Field);
+
+                           exit when Node_Field = Null_Scope_Tree_Node;
+
+                           if Is_Declaration (Node_Field) then
+                              Field := Get_Entity (Node_Field);
+
+                              if not Is_Discriminant
+                                (Field, LI_Unit, Info)
+                              then
+                                 if Get_Scope (Field) /=
+                                   Global_Scope
+                                 then
+                                    Found_Private := True;
+                                 end if;
+
+                                 exit when Found_Private;
+                              end if;
+
+                              Destroy (Field);
+                           end if;
+
+                           Next (Iter_Field);
+                        end loop;
+
+                        if Found_Private then
+                           Entity_Complete := new Entity_List_Information;
+                           Entity_Complete.all.Entity := Create
+                             (File   => Get_File (Entity_Node.Line_In_Body),
+                              Line   => Get_Line (Entity_Node.Line_In_Body),
+                              Column => Get_Column (Entity_Node.Line_In_Body),
+                              Name   => Get_Name (Entity_Node.Entity),
+                              Scope  => Get_Scope (Entity_Node.Entity),
+                              Kind   => Get_Kind (Entity_Node.Entity));
+                           Entity_Complete.Name :=
+                             new String'(Get_Full_Name (Info, LI_Unit, "."));
+                           Entity_Complete.Kind := Type_Entity;
+                           Entity_Complete.Is_Private := True;
+                           Entity_Complete.Public_Declaration :=
+                             Copy (Entity_Node.Entity);
+                           Entity_Complete.Line_In_Body :=
+                             Entity_Node.Line_In_Body;
+                           Entity_Complete.Called_List := TRL.Null_List;
+                           Entity_Complete.Calls_List := TRL.Null_List;
+
+                           Type_Entity_List.Prepend
+                             (Entity_List, Entity_Complete.all);
+
+                           if Is_Spec_File (Kernel, Source_Filename)
+                             and then Source_Filename =
+                               Get_Declaration_File_Of (Entity_Complete.Entity)
+                           then
+                              --  Currently, we add the name of the
+                              --  record/enum type. So, this name is
+                              --  duplicated: it appears both in
+                              --  public and private part of the
+                              --  index list. For the future, it
+                              --  would be better to add the fields
+                              --  in the private part.
+                              Type_Entity_List.Append
+                                (Private_Type_Index_List,
+                                 Clone (Entity_Complete.all, False));
+                           end if;
+                        end if;
+                     end if;
+                  else
+                     Entity_Node.Kind := Var_Entity;
+                  end if;
+
+               when Exception_Entity =>
+                  Entity_Node.Kind := Exception_Entity;
+               when Task_Kind =>
+                  Entity_Node.Kind := Entry_Entity;
+               when Package_Kind  =>
+                  Entity_Node.Kind := Package_Entity;
+               when others =>
+                  Entity_Node.Kind := Other_Entity;
+            end case;
+
+            if Options.Tagged_Types then
+               Process_Tagged_Types;
+            end if;
+
+            --  Add to the entity list of this file
+            --  Now, Prepend is used instead of Append (cost o(1))
+            --  Besides the list Entity_List mustn't be sorted.
+            --  For instance, it's necessary in order to respect
+            --  declaration which have the following scheme:
+            --  type X;
+            --  type Y is access X;
+            --  type X is record ..... end record;
+            Type_Entity_List.Prepend (Entity_List, Entity_Node);
+         end if;
+      end Process_New_Entity;
+
+      -----------------
+      -- Is_Operator --
+      -----------------
+
+      function Is_Operator (Name : String) return Boolean is
+      begin
+         return    Name (Name'First) = '='
+           or else Name (Name'First) = '>'
+           or else Name (Name'First) = '+'
+           or else Name (Name'First) = '-'
+           or else Name (Name'First) = '*'
+           or else Name (Name'First) = '/'
+           or else Name (Name'First) = '<'
+           or else Name (Name'First) = '&'
+           or else Name = "/="
+           or else Name = "and"
+           or else Name = "or";
+      end Is_Operator;
+
+   begin  -- Process_One_File
       if Full_Name (Source_Filename) /= null then
          Trace (Me, "File name: " & Full_Name (Source_Filename).all);
       end if;
 
       LI_Unit := Locate_From_Source_And_Complete
         (Kernel, Source_Filename, Check_Timestamp => False);
+
+      if LI_Unit = No_LI_File then
+         Trace (Me, "no LI file for " & Base_Name (Source_Filename));
+         return;
+      end if;
+
       Level := 1;
 
       --  All references of the current file are put in a list.
@@ -735,1117 +1638,107 @@ package body Docgen.Work_On_File is
       --  For spec and body files, we can use this list after during the
       --  linkage process instead of calling a subprogram.
 
-      if not Is_Spec_File (Kernel, Source_Filename) then
-         if LI_Unit /= No_LI_File then
-            Entity_Iter :=
-              Find_All_References_In_File (LI_Unit, Source_Filename);
+      Entity_Iter := Find_All_References_In_File (LI_Unit, Source_Filename);
+      Is_Spec := Is_Spec_File (Kernel, Source_Filename);
 
-            loop
-               Ref_In_File := Get (Entity_Iter);
+      if Is_Spec then
+         loop
+            Ref_In_File := Get (Entity_Iter);
 
-               if Ref_In_File = No_Reference then
-                  --  New entity
-                  Info := Get (Entity_Iter);
-                  exit when Info = No_Entity_Information;
+            if Ref_In_File = No_Reference then
+               --  New entity
 
-                  Ent_Handle := new Entity_Information'(Info);
-                  List_Entity_In_File.Append (List_Ent_In_File, Info);
+               Info := Get (Entity_Iter);
+               exit when Info = No_Entity_Information;
 
-               else
-                  --  New reference on the current entity
+               Process_New_Entity;
 
-                  if Get_Name (Get (Entity_Iter))
-                    (Get_Name (Get (Entity_Iter))'First) /= '='
-                    and then
-                      Get_Name (Get (Entity_Iter))
-                    (Get_Name (Get (Entity_Iter))'First) /= '>'
-                    and then
-                      Get_Name (Get (Entity_Iter))
-                    (Get_Name (Get (Entity_Iter))'First) /= '+'
-                    and then
-                      Get_Name (Get (Entity_Iter))
-                    (Get_Name (Get (Entity_Iter))'First) /= '-'
-                    and then
-                      Get_Name (Get (Entity_Iter))
-                    (Get_Name (Get (Entity_Iter))'First) /= '*'
-                    and then
-                      Get_Name (Get (Entity_Iter))
-                    (Get_Name (Get (Entity_Iter))'First) /= '/'
-                    and then
-                      Get_Name (Get (Entity_Iter))
-                    (Get_Name (Get (Entity_Iter))'First) /= '<'
-                    and then
-                      Get_Name (Get (Entity_Iter))
-                    (Get_Name (Get (Entity_Iter))'First) /= '&'
-                    and then
-                      Get_Name (Get (Entity_Iter)) /= "/="
-                    and then
-                      Get_Name (Get (Entity_Iter)) /= "and"
-                    and then
-                      Get_Name (Get (Entity_Iter)) /= "or"
-                  then
-                     --  ??? Temporary solution: operators are not added.
-                     --  In fact, it seems that Parse_Entity doesn't return
-                     --  them as identifiers. So, if we add them in the
-                     --  references list, they won't be matched and as a
-                     --  consequence all the following references also.
-                     --  NB: for spec file, there isn't this problem because
-                     --  we must search in the whole list of references: so
-                     --  no link is lost (we only have "too much" reference
-                     --  nodes).
-                     --  If there's some operators missing in the test above
-                     --  it will explain the lost of links for body files
+            else
+               --  New reference on the current entity
 
-                     List_Reference_In_File.Append
-                       (List_Ref_In_File,
-                        (Name   =>
-                         new String'(Get_Name (Get (Entity_Iter))),
-                         Line   => Get_Line (Get_Location (Ref_In_File)),
-                         Column => Get_Column (Get_Location (Ref_In_File)),
-                         Entity => Ent_Handle));
-                  end if;
-               end if;
+               List_Reference_In_File.Append
+                 (List_Ref_In_File,
+                  (Name   => new String'(Get_Name (Get (Entity_Iter))),
+                   Line   => Get_Line (Get_Location (Ref_In_File)),
+                   Column => Get_Column (Get_Location (Ref_In_File)),
+                   Entity => Ent_Handle));
+            end if;
 
-               --  Get next entity (or reference) in this file
-               Next (Entity_Iter);
-            end loop;
+            --  Get next entity (or reference) in this file
+            Next (Entity_Iter);
+         end loop;
 
-            Sort_List_By_Line_And_Column (List_Ref_In_File);
-
-            Process_Source
-              (B,
-               Kernel,
-               Doc_File,
-               Next_Package,
-               Prev_Package,
-               Source_File_List,
-               Source_Filename,
-               Package_Name,
-               Entity_List,
-               List_Ref_In_File,
-               Tagged_Types_List,
-               Private_Tagged_Types_List,
-               Process_Body_File,
-               LI_Unit,
-               Options,
-               Converter,
-               Doc_Directory,
-               Doc_Suffix,
-               Level);
-         else
-            Trace (Me, "LI file not found");  --  later Exception?
-         end if;
-
-         TEL.Free (Entity_List);
+         Destroy (Children_Iter);
 
       else
-         --  If a spec file, you have to look in the ALI files
-
-         if LI_Unit /= No_LI_File then
-            Entity_Iter :=
-              Find_All_References_In_File (LI_Unit, Source_Filename);
-
-            loop
-               Ref_In_File := Get (Entity_Iter);
-
-               if Ref_In_File = No_Reference then
-                  --  New entity
-
-                  Info := Get (Entity_Iter);
-                  exit when Info = No_Entity_Information;
-
-                  Ent_Handle := new Entity_Information'(Info);
-                  List_Entity_In_File.Append (List_Ent_In_File, Info);
-
-                  Entity_Node.Is_Private := Get_Scope (Info) /= Global_Scope;
-                  Entity_Node.Public_Declaration := No_Entity_Information;
-
-                  Find_Next_Body
-                    (Kernel, LI_Unit,
-                     Info, Entity_Node.Line_In_Body, Status);
-
-                  if Status /= Success then
-                     --  Should we really reset Line_In_Body when
-                     --  Status = Fuzzy_Match ???
-
-                     Entity_Node.Line_In_Body := Null_File_Location;
-                     if not Still_Warned then
-                        Console.Insert
-                          (Kernel,
-                             -("Docgen: xref information is not up-to-date, " &
-                               "output may not be accurate"),
-                           Mode => Verbose);
-                        Still_Warned := True;
-                        --  The message is print only one time.
-                     end if;
-                  end if;
-
-                  --  Check if the declaration of the entity is in one of the
-                  --  files which are in list, if false => no need for
-                  --  creating links.
-                  --  Also check if it's a private entity and whether they
-                  --  should be processed.
-
-                  if Source_File_In_List
-                    (Source_File_List, Get_Declaration_File_Of (Info))
-                    and then (Options.Show_Private
-                              or else not Entity_Node.Is_Private)
-                  then
-                     --  Get the parameters needed by all entities
-
-                     Entity_Node.Name :=
-                       new String'(Get_Full_Name (Info, LI_Unit, "."));
-
-                     Entity_Node.Entity := Copy (Info);
-
-                     --  For all entities which are not subprograms the ref
-                     --  lists must be set to null
-
-                     if Get_Kind (Info).Kind /= Function_Or_Operator
-                       and then Get_Kind (Info).Kind /= Procedure_Kind
-                     then
-                        Entity_Node.Called_List := TRL.Null_List;
-                        Entity_Node.Calls_List  := TRL.Null_List;
-                     end if;
-
-                     --  Get the entity specific parameters.
-                     --  These are the last parameters to gather, after the
-                     --  CASE no more changes are allowed, because the
-                     --  index lists are created in the subprograms used
-                     --  here, so all info must be avaiable.
-                     case Get_Kind (Info).Kind is
-                        when Procedure_Kind | Function_Or_Operator =>
-                           Entity_Node.Kind := Subprogram_Entity;
-                           Process_Subprogram
-                             (Source_Filename,
-                              Get_Declaration_File_Of (Info),
-                              Info);
-
-                        when Record_Kind | Enumeration_Kind |
-                             Access_Kind | Array_Kind |
-                             Boolean_Kind | String_Kind | Class_Wide |
-                             Decimal_Fixed_Point |
-                             Floating_Point | Modular_Integer |
-                             Ordinary_Fixed_Point |
-                             Private_Type | Protected_Kind |
-                             Signed_Integer | Named_Number
-                        =>
-                           if Get_Kind (Info).Is_Type then
-                              Process_Type
-                                (Source_Filename,
-                                 Get_Declaration_File_Of (Info));
-
-                              if Options.Show_Private
-                                and then
-                                   not Entity_Node.Is_Private
-                              then
-                                 --  For record/enum, we must search if they
-                                 --  have private fields. In this case, we
-                                 --  must create a new entity in order have
-                                 --  documentation about it. In fact, the
-                                 --  record itself is public and if this work
-                                 --  isn't done, only the documentation
-                                 --  "type X is record with private" is given.
-                                 --  The private fiels are forgotten.
-                                 Get_Scope_Tree
-                                   (Kernel, Info, Node_Field);
-
-                                 Iter_Field := Start (Node_Field);
-                                 Found_Private := False;
-                                 loop
-                                    Node_Field := Get (Iter_Field);
-                                    exit when Node_Field =
-                                      Null_Scope_Tree_Node;
-
-                                    if Is_Declaration (Node_Field) then
-                                       Field := Get_Entity (Node_Field);
-
-                                       if not Is_Discriminant
-                                         (Field, LI_Unit, Info)
-                                       then
-                                          if Get_Scope (Field) /=
-                                            Global_Scope
-                                          then
-                                             Found_Private := True;
-                                          end if;
-                                          exit when Found_Private;
-                                       end if;
-                                       Destroy (Field);
-                                    end if;
-
-                                    Next (Iter_Field);
-                                 end loop;
-
-                                 if Found_Private then
-                                    Entity_Complete
-                                      := new Entity_List_Information;
-                                    Entity_Complete.all.Entity
-                                      := Create
-                                        (File   =>
-                                      Get_File (Entity_Node.Line_In_Body),
-                                         Line   =>
-                                      Get_Line (Entity_Node.Line_In_Body),
-                                         Column =>
-                                           Get_Column
-                                             (Entity_Node.Line_In_Body),
-                                         Name   =>
-                                           Get_Name (Entity_Node.Entity),
-                                         Scope  =>
-                                           Get_Scope (Entity_Node.Entity),
-                                         Kind   =>
-                                           Get_Kind (Entity_Node.Entity));
-                                    Entity_Complete.Name :=
-                                      new String'(Get_Full_Name
-                                                    (Info,
-                                                     LI_Unit, "."));
-                                    Entity_Complete.Kind := Type_Entity;
-                                    Entity_Complete.Is_Private := True;
-                                    Entity_Complete.Public_Declaration :=
-                                      Copy (Entity_Node.Entity);
-                                    Entity_Complete.Line_In_Body
-                                      := Entity_Node.Line_In_Body;
-                                    Entity_Complete.Called_List
-                                      := TRL.Null_List;
-                                    Entity_Complete.Calls_List
-                                      := TRL.Null_List;
-
-                                    Type_Entity_List.Prepend
-                                      (Entity_List, Entity_Complete.all);
-
-                                    if Is_Spec_File (Kernel, Source_Filename)
-                                      and then Source_Filename
-                                        = Get_Declaration_File_Of
-                                          (Entity_Complete.Entity)
-                                    then
-                                       --  Currently, we add the name of the
-                                       --  record/enum type. So, this name is
-                                       --  duplicated: it appears both in
-                                       --  public and private part of the
-                                       --  index list. For the future, it
-                                       --  would be better to add the fields
-                                       --  in the private part.
-                                       Type_Entity_List.Append
-                                         (Private_Type_Index_List,
-                                          Clone (Entity_Complete.all, False));
-                                    end if;
-                                 end if;
-                              end if;
-
-                           else
-                              Entity_Node.Kind := Var_Entity;
-                           end if;
-
-                        when Exception_Entity =>
-                           Entity_Node.Kind := Exception_Entity;
-                        when Task_Kind =>
-                           Entity_Node.Kind := Entry_Entity;
-                        when Package_Kind  =>
-                           Entity_Node.Kind := Package_Entity;
-                        when others =>
-                           Entity_Node.Kind := Other_Entity;
-                     end case;
-
-                     if Options.Tagged_Types then
-                        Entity_Is_Tagged := False;
-                        Found_Global     := False;
-                        Is_Tagged_Type (Entity_Is_Tagged,
-                                        Found_Global,
-                                        Children_Iter,
-                                        Info, LI_Unit);
-                        if Entity_Is_Tagged then
-
-                           Me_Info := Find_In_List (All_Tagged_Types_List,
-                                                    Info);
-                           if Me_Info /= null then
-                              --  This tagged type has still been met.
-                              --  During the update of the lists, the local
-                              --  son or parent which is added doesn't still
-                              --  exist in the list
-
-                              --  Search of fathers
-                              Parent :=
-                                Get_Parent_Types (LI_Unit, Me_Info.all);
-                              loop
-                                 Father := Get (Parent);
-                                 exit when Father = No_Entity_Information;
-
-                                 --  New father
-                                 Father_Info := Find_In_List
-                                   (All_Tagged_Types_List, Father);
-                                 if Father_Info = null then
-                                    --  Father seen for the first time
-                                    Father_Info
-                                      := new Entity_Information'(Father);
-                                    List_Entity_Handle.Append
-                                      (All_Tagged_Types_List, Father_Info);
-
-                                    Tag_Elem_Parent := new Tagged_Element;
-                                    Tag_Elem_Parent.Me := Father_Info;
-                                    Tag_Elem_Parent.Number_Of_Children := 0;
-                                    Tag_Elem_Parent.Number_Of_Parents := 0;
-
-                                    if Source_File_In_List
-                                      (Source_File_List,
-                                       Get_Declaration_File_Of
-                                         (Father_Info.all))then
-                                       --  If this tagged type is declared, we
-                                       --  indicate that we must print it in
-                                       --  the doc file
-                                       Tag_Elem_Parent.Print_Me := True;
-                                    else
-                                       Tag_Elem_Parent.Print_Me := False;
-                                    end if;
-
-                                    if Options.Process_Body_Files
-                                      and then
-                                        not Is_Spec_File
-                                          (Kernel, Get_Declaration_File_Of
-                                                 (Father_Info.all))
-                                    then
-                                       --  In this case, the parent won't be
-                                       --  analised as an entity, so we must
-                                       --  fill its list of children
-                                       --  First time we met this father, so
-                                       --  no need to check if Me_Info  still
-                                       --  exist in list
-                                       Tag_Elem_Parent.Number_Of_Children
-                                         := 1;
-                                       List_Entity_Handle.Append
-                                         (Tag_Elem_Parent.My_Children,
-                                          Me_Info);
-                                    end if;
-
-                                    if Options.Show_Private and then
-                                      Get_Scope (Father_Info.all)
-                                      /= Global_Scope
-                                    then
-                                       Type_List_Tagged_Element.Append
-                                         (Private_Tagged_Types_List,
-                                          Tag_Elem_Parent.all);
-                                    else
-                                       Type_List_Tagged_Element.Append
-                                         (Tagged_Types_List,
-                                          Tag_Elem_Parent.all);
-                                    end if;
-                                 else
-                                    if Options.Process_Body_Files
-                                      and then
-                                        not Is_Spec_File
-                                          (Kernel, Get_Declaration_File_Of
-                                                 (Father_Info.all))
-                                    then
-                                       if Options.Show_Private and then
-                                         Get_Scope (Father_Info.all)
-                                         /= Global_Scope
-                                       then
-                                          Add_Child (Private_Tagged_Types_List,
-                                                     Father_Info,
-                                                     Me_Info);
-                                       else
-                                          Add_Child (Tagged_Types_List,
-                                                     Father_Info,
-                                                     Me_Info);
-                                       end if;
-                                    end if;
-                                 end if;
-
-                                 if Options.Show_Private and then
-                                   Get_Scope (Me_Info.all)
-                                   /= Global_Scope
-                                 then
-                                    Add_Parent
-                                      (Private_Tagged_Types_List, Me_Info,
-                                       Father_Info);
-                                 else
-                                    Add_Parent
-                                      (Tagged_Types_List, Me_Info,
-                                       Father_Info);
-                                 end if;
-
-                                 --  Update of the list of parents with the
-                                 --  local parent.
-                                 --  Update also the number of parents
-                                 Next (Parent);
-                              end loop;
-
-                              Destroy (Parent);
-
-                              --  Search for children
-
-                              Child :=
-                                Get_Children_Types (LI_Unit, Me_Info.all);
-
-                              loop
-                                 Son := Get (Child);
-                                 exit when Son = No_Entity_Information;
-
-                                 --  New child
-                                 Son_Info := Find_In_List
-                                   (All_Tagged_Types_List, Son);
-
-                                 if Son_Info = null then
-                                    --  Child seen for the first time
-                                    Son_Info := new Entity_Information'(Son);
-                                    List_Entity_Handle.Append
-                                      (All_Tagged_Types_List, Son_Info);
-
-                                    Tag_Elem_Child := new Tagged_Element;
-                                    Tag_Elem_Child.Me := Son_Info;
-                                    Tag_Elem_Child.Number_Of_Children := 0;
-                                    Tag_Elem_Child.Number_Of_Parents := 0;
-
-                                    if Source_File_In_List
-                                      (Source_File_List,
-                                       Get_Declaration_File_Of
-                                         (Son_Info.all))then
-                                       --  If this tagged type is declared, we
-                                       --  indicate that we must print it in
-                                       --  the doc file
-                                       Tag_Elem_Child.Print_Me := True;
-                                    else
-                                       Tag_Elem_Child.Print_Me := False;
-                                    end if;
-
-                                    if Options.Process_Body_Files
-                                      and then
-                                        not Is_Spec_File
-                                          (Kernel, Get_Declaration_File_Of
-                                                 (Son_Info.all))
-                                    then
-                                       --  In this case, the son won't be
-                                       --  analysed as an entity, so we must
-                                       --  fill its list of parents
-                                       --  First time we met this child, so
-                                       --  no need to check if this Me_Info
-                                       --  still put in the list
-                                       Tag_Elem_Child.Number_Of_Parents
-                                         := 1;
-                                       List_Entity_Handle.Append
-                                         (Tag_Elem_Child.My_Parents, Me_Info);
-                                    end if;
-
-                                    if Options.Show_Private and then
-                                      Get_Scope (Son_Info.all) /= Global_Scope
-                                    then
-                                       Type_List_Tagged_Element.Append
-                                         (Private_Tagged_Types_List,
-                                          Tag_Elem_Child.all);
-                                    else
-                                       Type_List_Tagged_Element.Append
-                                         (Tagged_Types_List,
-                                          Tag_Elem_Child.all);
-                                    end if;
-                                 else
-                                    if Options.Process_Body_Files
-                                      and then
-                                        not Is_Spec_File
-                                          (Kernel, Get_Declaration_File_Of
-                                                 (Son_Info.all))
-                                    then
-                                       if Options.Show_Private and then
-                                         Get_Scope (Son_Info.all)
-                                         /= Global_Scope
-                                       then
-                                          Add_Parent
-                                            (Private_Tagged_Types_List,
-                                             Son_Info,
-                                             Me_Info);
-                                       else
-                                          Add_Parent (Tagged_Types_List,
-                                                      Son_Info,
-                                                      Me_Info);
-                                       end if;
-                                    end if;
-                                 end if;
-
-                                 if Options.Show_Private and then
-                                   Get_Scope (Me_Info.all)
-                                   /= Global_Scope
-                                 then
-                                    Add_Child
-                                      (Private_Tagged_Types_List,
-                                       Me_Info,
-                                       Son_Info);
-                                 else
-                                    Add_Child
-                                      (Tagged_Types_List, Me_Info, Son_Info);
-                                 end if;
-                                 --  Update of the list of children with the
-                                 --  local child.
-                                 --  Update also the number of children
-
-                                 Next (Child);
-                              end loop;
-
-                              --  Search for all children (those who don't
-                              --  appear in current file)
-
-                              if Found_Global then
-                                 while Get (Children_Iter) /= No_Reference loop
-                                    LI := Get_LI (Children_Iter);
-
-                                    Global_Child := Get_Children_Types (LI,
-                                                                        Info);
-                                    loop
-                                       Global_Son := Get (Global_Child);
-                                       exit when Global_Son
-                                         = No_Entity_Information;
-
-                                       --  New child
-                                       Son_Info := Find_In_List
-                                         (All_Tagged_Types_List, Global_Son);
-
-                                       if Son_Info = null then
-                                          --  Child seen for the first time
-                                          Son_Info
-                                            := new Entity_Information'
-                                              (Global_Son);
-                                          List_Entity_Handle.Append
-                                            (All_Tagged_Types_List, Son_Info);
-
-                                          Tag_Elem_Child := new Tagged_Element;
-                                          Tag_Elem_Child.Me := Son_Info;
-                                          Tag_Elem_Child.Number_Of_Children
-                                            := 0;
-                                          Tag_Elem_Child.Number_Of_Parents
-                                            := 0;
-
-                                          if Source_File_In_List
-                                            (Source_File_List,
-                                             Get_Declaration_File_Of
-                                               (Son_Info.all))then
-                                             --  This tagged type is declared,
-                                             --  we indicate that we must print
-                                             --  it in the doc file
-                                             Tag_Elem_Child.Print_Me := True;
-                                          else
-                                             Tag_Elem_Child.Print_Me := False;
-                                          end if;
-
-                                          if Options.Process_Body_Files
-                                            and then
-                                              not Is_Spec_File
-                                                (Kernel,
-                                                 Get_Declaration_File_Of
-                                                   (Son_Info.all))
-                                          then
-                                             --  In this case, the son won't
-                                             --  be analysed as an entity, so
-                                             --  we must fill its list of
-                                             --  parents
-                                             --  First time we met this child,
-                                             --  so no need to check if
-                                             --  Me_Info still put in the list
-                                             Tag_Elem_Child.Number_Of_Parents
-                                               := 1;
-                                             List_Entity_Handle.Append
-                                               (Tag_Elem_Child.My_Parents,
-                                                Me_Info);
-                                          end if;
-
-                                          if Options.Show_Private and then
-                                            Get_Scope (Son_Info.all)
-                                            /= Global_Scope
-                                          then
-                                             Type_List_Tagged_Element.Append
-                                               (Private_Tagged_Types_List,
-                                                Tag_Elem_Child.all);
-                                          else
-                                             Type_List_Tagged_Element.Append
-                                               (Tagged_Types_List,
-                                                Tag_Elem_Child.all);
-                                          end if;
-                                       else
-                                          if Options.Process_Body_Files
-                                            and then
-                                              not Is_Spec_File
-                                                (Kernel,
-                                                 Get_Declaration_File_Of
-                                                   (Son_Info.all))
-                                          then
-                                             if Options.Show_Private and then
-                                               Get_Scope (Son_Info.all)
-                                               /= Global_Scope
-                                             then
-                                                Add_Parent
-                                                  (Private_Tagged_Types_List,
-                                                   Son_Info,
-                                                   Me_Info);
-                                             else
-                                                Add_Parent (Tagged_Types_List,
-                                                            Son_Info,
-                                                            Me_Info);
-                                             end if;
-
-                                          end if;
-                                       end if;
-
-                                       if Options.Show_Private and then
-                                         Get_Scope (Me_Info.all)
-                                         /= Global_Scope
-                                       then
-                                          Add_Child
-                                            (Private_Tagged_Types_List,
-                                             Me_Info,
-                                             Son_Info);
-                                       else
-                                          Add_Child
-                                            (Tagged_Types_List, Me_Info,
-                                             Son_Info);
-                                       end if;
-                                       --  Update of the list of children
-                                       --  with the local child.
-                                       --  Update also the number of children
-
-                                       Next (Global_Child);
-                                    end loop;
-
-                                    Destroy (Global_Child);
-                                    Next (Get_Language_Handler (Kernel),
-                                          Children_Iter);
-                                 end loop;
-
-                              end if;
-
-                           else
-                              --  First met with this tagged type.
-                              --  So, we don't need to do an update!
-                              Tag_Elem_Me := new Tagged_Element;
-                              Me_Info :=  new Entity_Information'(Copy (Info));
-                              List_Entity_Handle.Append
-                                (All_Tagged_Types_List, Me_Info);
-                              Tag_Elem_Me.Me := Me_Info;
-                              Tag_Elem_Me.Number_Of_Children := 0;
-                              Tag_Elem_Me.Number_Of_Parents := 0;
-
-                              if Source_File_In_List
-                                (Source_File_List,
-                                 Get_Declaration_File_Of (Me_Info.all))
-                              then
-                                 --  If this tagged type is declared, we
-                                 --  indicate that we must print it in
-                                 --  the doc file
-                                 Tag_Elem_Me.Print_Me := True;
-                              else
-                                 Tag_Elem_Me.Print_Me := False;
-                              end if;
-
-                              --  Search of fathers
-                              Parent :=
-                                Get_Parent_Types (LI_Unit, Me_Info.all);
-                              loop
-                                 Father := Get (Parent);
-                                 exit when Father = No_Entity_Information;
-
-                                 --  New father
-                                 Father_Info := Find_In_List
-                                   (All_Tagged_Types_List, Father);
-                                 if Father_Info = null then
-                                    --  Father seen for the first time
-                                    Father_Info
-                                      := new Entity_Information'(Father);
-                                    List_Entity_Handle.Append
-                                      (All_Tagged_Types_List, Father_Info);
-
-                                    Tag_Elem_Parent := new Tagged_Element;
-                                    Tag_Elem_Parent.Me := Father_Info;
-                                    Tag_Elem_Parent.Number_Of_Children := 0;
-                                    Tag_Elem_Parent.Number_Of_Parents := 0;
-
-                                    if Source_File_In_List
-                                      (Source_File_List,
-                                       Get_Declaration_File_Of
-                                         (Father_Info.all))then
-                                       --  If this tagged type is declared, we
-                                       --  indicate that we must print it in
-                                       --  the doc file
-                                       Tag_Elem_Parent.Print_Me := True;
-                                    else
-                                       Tag_Elem_Parent.Print_Me := False;
-                                    end if;
-
-                                    if Options.Process_Body_Files
-                                      and then
-                                        not Is_Spec_File
-                                          (Kernel, Get_Declaration_File_Of
-                                                 (Father_Info.all))
-                                    then
-                                       --  In this case, the parent won't be
-                                       --  analised as an entity, so we must
-                                       --  fill its list of children
-                                       --  First time we met this father, so
-                                       --  no need to check if Me_Info
-                                       --  still put in the list
-                                       Tag_Elem_Parent.Number_Of_Children
-                                         := 1;
-                                       List_Entity_Handle.Append
-                                         (Tag_Elem_Parent.My_Children,
-                                          Me_Info);
-                                    end if;
-
-                                    if Options.Show_Private and then
-                                      Get_Scope (Father_Info.all)
-                                      /= Global_Scope
-                                    then
-                                       Type_List_Tagged_Element.Append
-                                         (Private_Tagged_Types_List,
-                                          Tag_Elem_Parent.all);
-                                    else
-                                       Type_List_Tagged_Element.Append
-                                         (Tagged_Types_List,
-                                          Tag_Elem_Parent.all);
-                                    end if;
-
-                                 else
-                                    if Options.Process_Body_Files
-                                      and then
-                                        not Is_Spec_File
-                                          (Kernel, Get_Declaration_File_Of
-                                                 (Father_Info.all))
-                                    then
-                                       if Options.Show_Private and then
-                                         Get_Scope (Father_Info.all)
-                                         /= Global_Scope
-                                       then
-                                          Add_Child
-                                            (Private_Tagged_Types_List,
-                                             Father_Info,
-                                             Me_Info);
-                                       else
-                                          Add_Child
-                                            (Tagged_Types_List,
-                                             Father_Info,
-                                             Me_Info);
-                                       end if;
-
-                                    end if;
-                                 end if;
-
-                                 --  First time we met this tagged type, so
-                                 --  no need to check if this father still
-                                 --  put in the list
-                                 List_Entity_Handle.Append
-                                   (Tag_Elem_Me.My_Parents, Father_Info);
-                                 --  Update of the list of parents with the
-                                 --  local parent.
-
-                                 Tag_Elem_Me.Number_Of_Parents :=
-                                   Tag_Elem_Me.Number_Of_Parents + 1;
-                                 --  Update of the number of parents
-
-                                 Next (Parent);
-                              end loop;
-
-                              Destroy (Parent);
-
-                              --  Search of children
-                              Child :=
-                                Get_Children_Types (LI_Unit, Me_Info.all);
-                              loop
-                                 Son := Get (Child);
-                                 exit when Son = No_Entity_Information;
-
-                                 --  New Child
-                                 Son_Info := Find_In_List
-                                   (All_Tagged_Types_List, Son);
-                                 if Son_Info = null then
-                                    --  Child seen for the first time
-                                    Son_Info := new Entity_Information'(Son);
-                                    List_Entity_Handle.Append
-                                      (All_Tagged_Types_List, Son_Info);
-
-                                    Tag_Elem_Child := new Tagged_Element;
-                                    Tag_Elem_Child.Me := Son_Info;
-                                    Tag_Elem_Child.Number_Of_Children := 0;
-                                    Tag_Elem_Child.Number_Of_Parents := 0;
-
-                                    if Source_File_In_List
-                                      (Source_File_List,
-                                       Get_Declaration_File_Of
-                                         (Son_Info.all))then
-                                       --  If this tagged type is declared, we
-                                       --  indicate that we must print it in
-                                       --  the doc file
-                                       Tag_Elem_Child.Print_Me := True;
-                                    else
-                                       Tag_Elem_Child.Print_Me := False;
-                                    end if;
-
-                                    if Options.Process_Body_Files
-                                      and then
-                                        not Is_Spec_File
-                                          (Kernel, Get_Declaration_File_Of
-                                                 (Son_Info.all))
-                                    then
-                                       --  In this case, the child won't be
-                                       --  analysed as an entity, so we must
-                                       --  fill its list of parents
-                                       --  First time we met this child, so
-                                       --  no need to check if Me_Info
-                                       --  still put in the list
-                                       Tag_Elem_Child.Number_Of_Parents
-                                         := 1;
-                                       List_Entity_Handle.Append
-                                         (Tag_Elem_Child.My_Parents, Me_Info);
-                                    end if;
-
-                                    if Options.Show_Private and then
-                                      Get_Scope (Son_Info.all) /= Global_Scope
-                                    then
-                                       Type_List_Tagged_Element.Append
-                                         (Private_Tagged_Types_List,
-                                          Tag_Elem_Child.all);
-                                    else
-                                       Type_List_Tagged_Element.Append
-                                         (Tagged_Types_List,
-                                          Tag_Elem_Child.all);
-                                    end if;
-                                    --  We don't need to indicate now
-                                    --  information about the father of this
-                                    --  child (in fact, Me_Info is one)
-                                    --  because this field will be updated
-                                    --  when the child will be studied as
-                                    --  main tagged type (not as a son or
-                                    --  parent)
-
-                                 else
-                                    if Options.Process_Body_Files
-                                      and then
-                                        not Is_Spec_File
-                                          (Kernel, Get_Declaration_File_Of
-                                                 (Son_Info.all))
-                                    then
-                                       if Options.Show_Private and then
-                                         Get_Scope (Son_Info.all)
-                                         /= Global_Scope
-                                       then
-                                          Add_Parent
-                                            (Private_Tagged_Types_List,
-                                             Son_Info,
-                                             Me_Info);
-                                       else
-                                          Add_Parent (Tagged_Types_List,
-                                                      Son_Info,
-                                                      Me_Info);
-                                       end if;
-                                    end if;
-                                 end if;
-
-                                 List_Entity_Handle.Append
-                                   (Tag_Elem_Me.My_Children, Son_Info);
-                                 --  Update of the list of parents with the
-                                 --  local parent.
-
-                                 Tag_Elem_Me.Number_Of_Children :=
-                                   Tag_Elem_Me.Number_Of_Children + 1;
-                                 --  Update of the number of parents
-
-                                 Next (Child);
-                              end loop;
-
-                              --  Search for all children (those who don't
-                              --  appear in current file)
-
-                              if Found_Global then
-                                 while Get (Children_Iter) /= No_Reference loop
-                                    LI := Get_LI (Children_Iter);
-
-                                    Global_Child := Get_Children_Types (LI,
-                                                                        Info);
-                                    loop
-                                       Global_Son := Get (Global_Child);
-                                       exit when Global_Son
-                                         = No_Entity_Information;
-
-                                       --  New Child
-                                       Son_Info := Find_In_List
-                                         (All_Tagged_Types_List, Global_Son);
-                                       if Son_Info = null then
-                                          --  Child seen for the first time
-                                          Son_Info
-                                            := new Entity_Information'
-                                              (Global_Son);
-                                          List_Entity_Handle.Append
-                                            (All_Tagged_Types_List, Son_Info);
-
-                                          Tag_Elem_Child := new Tagged_Element;
-                                          Tag_Elem_Child.Me := Son_Info;
-                                          Tag_Elem_Child.Number_Of_Children
-                                            := 0;
-                                          Tag_Elem_Child.Number_Of_Parents
-                                            := 0;
-
-                                          if Source_File_In_List
-                                            (Source_File_List,
-                                             Get_Declaration_File_Of
-                                               (Son_Info.all))then
-                                             --  This tagged type is declared,
-                                             --  we indicate that we must print
-                                             --  it in the doc file
-                                             Tag_Elem_Child.Print_Me := True;
-                                          else
-                                             Tag_Elem_Child.Print_Me := False;
-                                          end if;
-
-                                          if Options.Process_Body_Files
-                                            and then
-                                              not Is_Spec_File
-                                                (Kernel,
-                                                 Get_Declaration_File_Of
-                                                   (Son_Info.all))
-                                          then
-                                             --  In this case, the child won't
-                                             --  be analysed as an entity, so
-                                             --  we must fill its list of
-                                             --  parents
-                                             --  First time we met this child,
-                                             --  so no need to check if
-                                             --  Me_Info still put in the list
-                                             Tag_Elem_Child.Number_Of_Parents
-                                               := 1;
-
-                                             List_Entity_Handle.Append
-                                               (Tag_Elem_Child.My_Parents,
-                                                Me_Info);
-                                          end if;
-
-                                          if Options.Show_Private and then
-                                            Get_Scope (Son_Info.all)
-                                            /= Global_Scope
-                                          then
-                                             Type_List_Tagged_Element.Append
-                                               (Private_Tagged_Types_List,
-                                                Tag_Elem_Child.all);
-                                          else
-                                             Type_List_Tagged_Element.Append
-                                               (Tagged_Types_List,
-                                                Tag_Elem_Child.all);
-                                          end if;
-
-                                          --  We don't need to indicate now
-                                          --  information about the father of
-                                          --  this child (Me_Info is one)
-                                          --  because this field will be update
-                                          --  when the child will be studied as
-                                          --  main tagged type (not as a son or
-                                          --  parent)
-                                       else
-                                          if Options.Process_Body_Files
-                                            and then
-                                              not Is_Spec_File
-                                                (Kernel,
-                                                 Get_Declaration_File_Of
-                                                   (Son_Info.all))
-                                          then
-                                             if Options.Show_Private and then
-                                               Get_Scope (Son_Info.all)
-                                               /= Global_Scope
-                                             then
-                                                Add_Parent
-                                                  (Private_Tagged_Types_List,
-                                                   Son_Info,
-                                                   Me_Info);
-                                             else
-                                                Add_Parent (Tagged_Types_List,
-                                                            Son_Info,
-                                                            Me_Info);
-                                             end if;
-                                          end if;
-                                       end if;
-
-                                       List_Entity_Handle.Append
-                                         (Tag_Elem_Me.My_Children, Son_Info);
-                                       --  Update of the list of parents with
-                                       --  the local parent.
-
-                                       Tag_Elem_Me.Number_Of_Children :=
-                                         Tag_Elem_Me.Number_Of_Children + 1;
-                                       --  Update of the number of parents
-
-                                       Next (Global_Child);
-                                    end loop;
-
-                                    Destroy (Global_Child);
-                                    Next (Get_Language_Handler (Kernel),
-                                          Children_Iter);
-                                 end loop;
-
-                              end if;
-
-                              if Options.Show_Private and then
-                                Entity_Node.Is_Private
-                              then
-                                 Type_List_Tagged_Element.Append
-                                   (Private_Tagged_Types_List,
-                                    Tag_Elem_Me.all);
-                              else
-                                 Type_List_Tagged_Element.Append
-                                   (Tagged_Types_List, Tag_Elem_Me.all);
-                              end if;
-                           end if;
-                        end if;
-                     end if;
-
-                     --  Add to the entity list of this file
-                     --  Now, Prepend is used instead of Append (cost o(1))
-                     --  Besides the list Entity_List mustn't be sorted.
-                     --  For instance, it's necessary in order to respect
-                     --  declaration which have the following scheme:
-                     --  type X;
-                     --  type Y is access X;
-                     --  type X is record ..... end record;
-                     Type_Entity_List.Prepend (Entity_List, Entity_Node);
-                  end if;
-               else
-                  --  New reference on the current entity
+         --  Body file
+
+         loop
+            Ref_In_File := Get (Entity_Iter);
+
+            if Ref_In_File = No_Reference then
+               --  New entity
+               Info := Get (Entity_Iter);
+               exit when Info = No_Entity_Information;
+
+               Ent_Handle := new Entity_Information'(Info);
+               List_Entity_In_File.Append (List_Ent_In_File, Info);
+
+            else
+               --  New reference on the current entity
+
+               if not Is_Operator (Get_Name (Get (Entity_Iter))) then
+                  --  ??? Temporary solution: operators are not added.
+                  --  In fact, it seems that Parse_Entity doesn't return
+                  --  them as identifiers. So, if we add them in the
+                  --  references list, they won't be matched and as a
+                  --  consequence all the following references also.
+                  --  NB: for spec file, there isn't this problem because
+                  --  we must search in the whole list of references: so
+                  --  no link is lost (we only have "too much" reference
+                  --  nodes).
+                  --  If there's some operators missing in the test above
+                  --  it will explain the lost of links for body files
 
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
-                     (Name   =>
-                      new String'(Get_Name (Get (Entity_Iter))),
+                     (Name   => new String'(Get_Name (Get (Entity_Iter))),
                       Line   => Get_Line (Get_Location (Ref_In_File)),
                       Column => Get_Column (Get_Location (Ref_In_File)),
                       Entity => Ent_Handle));
                end if;
+            end if;
 
-               --  Get next entity (or reference) in this file
-               Next (Entity_Iter);
-            end loop;
+            --  Get next entity (or reference) in this file
+            Next (Entity_Iter);
+         end loop;
+      end if;
 
-            Destroy (Children_Iter);
+      Sort_List_By_Line_And_Column (List_Ref_In_File);
 
-            Sort_List_By_Line_And_Column (List_Ref_In_File);
+      --  Process the documentation of this file
+      Process_Source
+        (B,
+         Kernel,
+         Doc_File,
+         Next_Package,
+         Prev_Package,
+         Source_File_List,
+         Source_Filename,
+         Package_Name,
+         Entity_List,
+         List_Ref_In_File,
+         Tagged_Types_List,
+         Private_Tagged_Types_List,
+         Process_Body_File,
+         LI_Unit,
+         Options,
+         Doc_Directory,
+         Doc_Suffix,
+         Level);
 
-            --  Process the documentation of this file
-            Process_Source
-              (B,
-               Kernel,
-               Doc_File,
-               Next_Package,
-               Prev_Package,
-               Source_File_List,
-               Source_Filename,
-               Package_Name,
-               Entity_List,
-               List_Ref_In_File,
-               Tagged_Types_List,
-               Private_Tagged_Types_List,
-               Process_Body_File,
-               LI_Unit,
-               Options,
-               Converter,
-               Doc_Directory,
-               Doc_Suffix,
-               Level);
-         else
-            Trace (Me, "LI file not found: "
-                   & Base_Name (Source_Filename));  --  later Exception?
-         end if;
-
-         --  If body files are not being processed, free directly here
-         if not Options.Process_Body_Files then
-            TEL.Free (Entity_List);
-         end if;
+      if not Is_Spec or else not Options.Process_Body_Files then
+         TEL.Free (Entity_List);
       end if;
 
       List_Entity_In_File.Free (List_Ent_In_File, True);
