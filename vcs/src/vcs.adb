@@ -18,13 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Unchecked_Deallocation;
+
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Generic_List;
-with Unchecked_Deallocation;
-with Commands;             use Commands;
-with Commands.VCS;         use Commands.VCS;
+with Commands;                  use Commands;
+with Commands.VCS;              use Commands.VCS;
 
 package body VCS is
 
@@ -123,9 +124,9 @@ package body VCS is
    ---------------
 
    procedure Set_Error
-     (Rep            : access VCS_Record;
-      Message        : String;
-      Add_LF         : Boolean := True) is
+     (Rep     : access VCS_Record;
+      Message : String;
+      Add_LF  : Boolean := True) is
    begin
       if Rep.Kernel = null then
          return;
@@ -206,9 +207,9 @@ package body VCS is
    -----------------------
 
    procedure Parse_Annotations
-     (Rep   : access VCS_Record;
-      File  : VFS.Virtual_File;
-      Text  : String)
+     (Rep  : access VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String)
    is
       pragma Unreferenced (Rep, File, Text);
    begin

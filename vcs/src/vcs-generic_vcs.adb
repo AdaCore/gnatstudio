@@ -681,7 +681,7 @@ package body VCS.Generic_VCS is
       Filenames : String_List.List;
       Log       : String)
    is
-      Args   : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.OS_Lib.String_List_Access;
 
    begin
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
@@ -725,7 +725,7 @@ package body VCS.Generic_VCS is
       Filenames : String_List.List;
       Log       : String)
    is
-      Args   : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.OS_Lib.String_List_Access;
 
    begin
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
@@ -745,7 +745,7 @@ package body VCS.Generic_VCS is
       Filenames : String_List.List;
       Log       : String)
    is
-      Args   : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.OS_Lib.String_List_Access;
 
    begin
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
@@ -824,7 +824,7 @@ package body VCS.Generic_VCS is
       File : VFS.Virtual_File;
       Rev  : String)
    is
-      Args   : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.OS_Lib.String_List_Access;
 
    begin
       if Rev /= "" then
