@@ -53,7 +53,6 @@ package body Docgen.Work_On_File is
       Prev_Package                  : GNAT.OS_Lib.String_Access;
       Source_File_List              : in out Type_Source_File_List.List;
       Options                       : All_Options;
-      Process_Body_File             : Boolean;
       Subprogram_Index_List         : in out Type_Entity_List.List;
       Type_Index_List               : in out Type_Entity_List.List;
       Tagged_Types_List             : in out Type_List_Tagged_Element.List;
@@ -76,7 +75,6 @@ package body Docgen.Work_On_File is
    --  source file list) in the package Docgen.Work_On_File.
    --  Source_File_List : list of source files that must be processed.
    --  Options          : options set by preferences.
-   --  Process_Body_File: indicate if body files are also processed.
    --  Type_Index_List  : list of all public types contained in all files.
    --  Private_Type_Index_List  : list of all private types contained in all
    --  files.
@@ -222,7 +220,9 @@ package body Docgen.Work_On_File is
             Data      : constant TSFL.Data_Access :=
               TSFL.Data_Ref (Source_File_Node);
             File_Name : constant String := Get_Doc_File_Name
-              (Data.File_Name, Doc_Directory_Root, Doc_Suffix);
+              (Data.File_Name'Unchecked_Access,
+               Doc_Directory_Root,
+               Doc_Suffix);
 
          begin
             Doc_File := Create_File (File_Name, Binary);
@@ -242,8 +242,6 @@ package body Docgen.Work_On_File is
                Prev_Package,
                Source_File_List,
                Options,
-               Options.Process_Body_Files and then
-               Data.Other_File_Found,
                Subprogram_Index_List,
                Type_Index_List,
                Tagged_Types_List,
@@ -316,7 +314,6 @@ package body Docgen.Work_On_File is
       Prev_Package                  : GNAT.OS_Lib.String_Access;
       Source_File_List              : in out Type_Source_File_List.List;
       Options                       : All_Options;
-      Process_Body_File             : Boolean;
       Subprogram_Index_List         : in out Type_Entity_List.List;
       Type_Index_List               : in out Type_Entity_List.List;
       Tagged_Types_List             : in out Type_List_Tagged_Element.List;
@@ -443,11 +440,7 @@ package body Docgen.Work_On_File is
 
             Entity := Get_Entity (Child_Node);
 
-            if Get_Kind (Entity).Kind = Function_Or_Operator
-              or else Get_Kind (Entity).Kind =  Procedure_Kind
-            --  Is_Subprogram (Child_Node) was the previous instruction.
-            --  ??? For this function package are subprograms.
-            then
+            if Is_Subprogram (Child_Node) then
                Type_Reference_List.Append
                  (Calls_List,
                   (Entity   => Entity,
@@ -459,8 +452,7 @@ package body Docgen.Work_On_File is
                      (Get_Scope (Entity) = Global_Scope
                       or else Options.Show_Private
                       or else (Options.Process_Body_Files
-                               and then
-                               not Is_Spec_File
+                               and then not Is_Spec_File
                                  (Kernel,
                                   Get_Declaration_File_Of (Entity))))));
             else
@@ -485,6 +477,7 @@ package body Docgen.Work_On_File is
          Local_Ref_List       : Type_Reference_List.List;
          Local_Calls_List     : Type_Reference_List.List;
          Entity_Tree_Node     : Scope_Tree_Node;
+         File                 : aliased Virtual_File;
 
          procedure Tree_Called_Callback
            (Node        : Scope_Tree_Node;
@@ -580,9 +573,9 @@ package body Docgen.Work_On_File is
             while Get (Reference_Iter) /= No_Reference loop
                --  Set the global variable: is the file known, where the
                --  declaration of the reference can be found?
+               File := Get_File (Get_Location (Get (Reference_Iter)));
                Decl_Found := Source_File_In_List
-                 (Source_File_List,
-                  Get_File (Get_Location (Get (Reference_Iter))));
+                 (Source_File_List, File'Unchecked_Access);
 
                Find_Entity_References
                  (Get_LI (Reference_Iter),
@@ -607,9 +600,7 @@ package body Docgen.Work_On_File is
          if Is_Spec_File (Kernel, Source_Filename)
            and then Source_Filename = Entity_File
          then
-            if Options.Show_Private and then
-              Entity_Node.Is_Private
-            then
+            if Options.Show_Private and then Entity_Node.Is_Private then
                Type_Entity_List.Append
                  (Private_Subprogram_Index_List, Clone (Entity_Node, False));
             else
@@ -793,7 +784,7 @@ package body Docgen.Work_On_File is
                         (Kernel, Get_Declaration_File_Of (Father_Info.all))
                   then
                      --  In this case, the parent won't be
-                     --  analised as an entity, so we must
+                     --  analysed as an entity, so we must
                      --  fill its list of children
                      --  First time we met this father, so
                      --  no need to check if Me_Info  still
@@ -1475,7 +1466,7 @@ package body Docgen.Work_On_File is
                   Entity_Node.Kind := Subprogram_Entity;
                   Process_Subprogram
                     (Source_Filename,
-                     Get_Declaration_File_Of (Info),
+                     Get_Declaration_File_Of (Info).all,
                      Info);
 
                when Record_Kind | Enumeration_Kind |
@@ -1489,7 +1480,7 @@ package body Docgen.Work_On_File is
                =>
                   if Get_Kind (Info).Is_Type then
                      Process_Type
-                       (Source_Filename, Get_Declaration_File_Of (Info));
+                       (Source_Filename, Get_Declaration_File_Of (Info).all);
 
                      if Options.Show_Private
                        and then not Entity_Node.Is_Private
@@ -1735,7 +1726,6 @@ package body Docgen.Work_On_File is
          List_Ref_In_File,
          Tagged_Types_List,
          Private_Tagged_Types_List,
-         Process_Body_File,
          LI_Unit,
          Options,
          Doc_Directory,
