@@ -52,6 +52,7 @@ with GUI_Utils;       use GUI_Utils;
 package body Python.GUI is
 
    Me : constant Debug_Handle := Create ("Python.GUI");
+   Me_Out : constant Debug_Handle := Create ("Python.Out", Default => Off);
 
    Timeout_Threshold : constant Duration := 0.2;   --  in seconds
    --  Timeout between two checks of the gtk+ event queue
@@ -172,6 +173,7 @@ package body Python.GUI is
       Buffer : Gtk_Text_Buffer;
       Iter   : Gtk_Text_Iter;
    begin
+      Trace (Me_Out, Text);
       if not Interpreter.Hide_Output then
          if Console /= null then
             Insert (Console, Text, Add_LF => False, Highlight => Highlight);
