@@ -90,6 +90,8 @@ package Glide_Kernel.Project is
       Project   : Prj.Tree.Project_Node_Id;
       Modified  : Boolean);
    --  See Project_Hash.Set_Project_Modified.
+   --  Note: this has not graphical effect on the explorer. You must call
+   --  Recompute_View for the icons to be changed.
 
    function Project_Modified
      (Kernel    : access Kernel_Handle_Record'Class;

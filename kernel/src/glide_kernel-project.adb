@@ -568,6 +568,10 @@ package body Glide_Kernel.Project is
    begin
       Kernel.Project_Is_Default := False;
       Save_Project (Project, Kernel.Projects_Data, Recursive);
+
+      --  Force a change in the icons in the explorer.
+      --  ??? Probably not very efficient, however.
+      Project_View_Changed (Kernel);
    end Save_Project;
 
    ------------------------------
