@@ -174,10 +174,6 @@ package body GVD_Module is
    procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger the module, and kill the underlying debugger.
 
-   function Delete_Asm
-     (Widget : access Gtk_Widget_Record'Class) return Boolean;
-   --  Callback for the "delete_event" signal of the assembly view.
-
    procedure GVD_Contextual
      (Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -235,6 +231,11 @@ package body GVD_Module is
    procedure Preferences_Changed
      (Kernel : access GObject_Record'Class; User : GObject);
    --  Called when the preferences are changed in the GPS kernel
+
+   function Delete_Asm
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+   --  Callback for the "delete_event" signal of the assembly view.
+   --  Widget is a Code_Editor.
 
    procedure Debug_Terminate (Kernel : Kernel_Handle);
    --  Terminate the debugging session
@@ -358,10 +359,6 @@ package body GVD_Module is
 
    procedure On_PD is new Generic_Debug_Command (GVD.Menu.On_PD);
    --  Debug->Data->Protection Domains
-
-   procedure On_Assembly
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Assembly
 
    procedure On_Edit_Breakpoints is new
      Generic_Debug_Command (GVD.Menu.On_Edit_Breakpoints);
@@ -1284,10 +1281,13 @@ package body GVD_Module is
    ---------------------
 
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
-      Top   : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
-      Page  : constant GPS_Debugger :=
+      Top    : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
+      Page   : constant GPS_Debugger :=
         GPS_Debugger (Get_Current_Process (Top));
-      Id    : constant GVD_Module   := GVD_Module (GVD_Module_ID);
+      Id     : constant GVD_Module   := GVD_Module (GVD_Module_ID);
+      Editor : constant Code_Editor  := Page.Editor_Text;
+
       use Debugger;
 
    begin
@@ -1356,6 +1356,10 @@ package body GVD_Module is
 
       if Page.Breakpoints /= null then
          Free (Page.Breakpoints);
+      end if;
+
+      if Get_Mode (Editor) /= Source then
+         Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
       end if;
 
       Remove_Debugger_Columns (Kernel, "");
