@@ -61,27 +61,6 @@ package Glide_Result_View is
    --  Return the results view widget. Create it if it doesn't exist and
    --  Allow_Creation is true.
 
-   procedure Insert
-     (View               : access Result_View_Record'Class;
-      Identifier         : String;
-      Source_File        : VFS.Virtual_File;
-      Source_Line        : Positive;
-      Source_Column      : Positive;
-      Message            : String;
-      Length             : Natural;
-      Highlight          : Boolean := False;
-      Highlight_Category : String := "";
-      Quiet              : Boolean := False);
-   --  Insert a new location item for the category corresponding to
-   --  Identifier. Message is the text that will be displayed next to the
-   --  file location. If necessary, the category corresponding to Identifier
-   --  is created.
-   --  If Highlight is True, the corresponding line will be highlighted in
-   --  the editor with the highlighting category identified by
-   --  Highlight_Category.
-   --  If Quiet is True, the locations window will not be raised and the
-   --  cursor will not jump to the first location.
-
    procedure Insert_Result
      (Kernel             : access Kernel_Handle_Record'Class;
       Category           : String;
