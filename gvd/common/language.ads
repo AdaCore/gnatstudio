@@ -63,8 +63,9 @@ package Language is
    --  Next_Char should be set to the index of the first character after the
    --  entity.
 
-   function Keywords (Lang : access Language_Root)
-                     return GNAT.Regpat.Pattern_Matcher is abstract;
+   function Keywords
+     (Lang : access Language_Root)
+      return GNAT.Regpat.Pattern_Matcher is abstract;
    --  Return a regular expression that matches the keywords for the current
    --  language.
 
@@ -115,8 +116,7 @@ package Language is
    type Make_Entry_Func is access function
      (Str      : String;
       Matched  : GNAT.Regpat.Match_Array;
-      Category : access Category_Index)
-     return String;
+      Category : access Category_Index) return String;
    --  Function that builds the string to be inserted in the tree.
    --  It is possible for the function to change the category used for the
    --  item (for instance when subprograms declarations and bodies have
@@ -145,10 +145,10 @@ package Language is
    --  If Make_Entry is null, then the regexp is never tested against the
    --  source code. You can only add items to this category by modifying the
    --  Category parameter of another category's Make_Entry (see
-   --  language-debugger-ada.adb).
+   --  language-ada.adb).
 
-   type Explorer_Categories is array (Category_Index range <>)
-     of Explorer_Category;
+   type Explorer_Categories is
+     array (Category_Index range <>) of Explorer_Category;
    --  A list of categories. Each category is assigned an internal number which
    --  is the index in this table, and is passed to each Make_Entry_Func
    --  functions.
@@ -159,7 +159,7 @@ package Language is
    --  By default, no category is defined, and thus the explorer is empty.
 
    function Is_System_File
-     (Lang : access Language_Root;
+     (Lang      : access Language_Root;
       File_Name : String) return Boolean;
    --  Return True if File_Name is the name of a system file (standard include
    --  files in C or run-time file in Ada). These files are displayed
@@ -201,8 +201,8 @@ package Language is
    ----------------------
 
    type Language_Context
-     (Comment_Start_Length : Natural;
-      Comment_End_Length   : Natural;
+     (Comment_Start_Length          : Natural;
+      Comment_End_Length            : Natural;
       New_Line_Comment_Start_Length : Natural) is
    --  Set any of the length to 0 if there is no such comment
    record
@@ -220,8 +220,8 @@ package Language is
       --  How strings start and end
 
       Quote_Character : Character;
-      --  The character used to quote (protect) the following one.  If this is
-      --  set to ASCII.Nul, then there is no such character in the
+      --  The character used to quote (protect) the following one. If this is
+      --  set to ASCII.NUL, then there is no such character in the
       --  language. For instance, it should be set to \ for C.
 
       Constant_Character : Character;
