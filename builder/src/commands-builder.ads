@@ -41,7 +41,7 @@ package Commands.Builder is
    --  See comments for Create.
 
    function Name (Command : access Build_Command) return String;
-   --  Return Command.Description.all
+   --  Return a description of the command.
 
 private
 
