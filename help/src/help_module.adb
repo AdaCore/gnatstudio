@@ -1041,7 +1041,7 @@ package body Help_Module is
       On_ARM95_Help.Register_Menu (Kernel, -"_Ada 95 Reference Manual");
       On_GDB_Help.Register_Menu (Kernel, -"Using the GNU _Debugger");
       On_GCC_Help.Register_Menu (Kernel, -"Using _GCC");
-      Register_Menu (Kernel, Help, -"A_bout...", "", On_About'Access);
+      Register_Menu (Kernel, Help, -"A_bout", "", On_About'Access);
    end Register_Module;
 
 end Help_Module;
