@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                     use Glib;
-with Glib.Xml_Int;             use Glib.Xml_Int;
 with Gdk.Pixmap;               use Gdk.Pixmap;
 with Gdk.Rectangle;            use Gdk.Rectangle;
 
@@ -108,12 +107,6 @@ package VCS_View_Pkg is
    --  Return the currently selected files, as a list.
    --  Caller must free this list afterwards.
 
-   function Get_Explorer
-     (Kernel      : Kernel_Handle;
-      Raise_Child : Boolean := True) return VCS_View_Access;
-   --  Return the vcs explorer, if created, null otherwise.
-   --  If Raise_Child is True, the MDI_Child is raised.
-
    function Get_Current_Ref
      (Explorer : access VCS_View_Record) return VCS_Access;
    --  Return the VCS reference currently being viewed in Explorer.
@@ -136,16 +129,6 @@ package VCS_View_Pkg is
       Ref      : VCS_Access) return File_Status_Record;
    --  Return the cached status corresponding to File.
    --  User must not free the result.
-
-   procedure Save_State
-     (Explorer : VCS_View_Access;
-      Node     : Node_Ptr);
-   --  Save the state of the explorer in Node.
-
-   procedure Load_State
-     (Explorer : VCS_View_Access;
-      Node     : Node_Ptr);
-   --  Load the state of the explorer from Node.
 
 private
    type Line_Record is record
