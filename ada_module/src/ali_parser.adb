@@ -435,7 +435,7 @@ package body ALI_Parser is
             --  ??? Check the original file name for gnatchoped files:
             --  Dep.Rfile and Dep.Start_Line
             Sfile := (Sunits (Current_Unit),
-                      Is_Separate => False,
+                      Is_Separate => Is_Separate,
                       Is_Unit     => True);
             return;
          end if;
@@ -641,8 +641,9 @@ package body ALI_Parser is
       pragma Import (C, Unchecked_Free, "free");
 
    begin
-      --  Ignore labels for now. GNAT no longer outputs them anyway, and their
+      --  Ignore labels for now. GNAT no longer outputs them anyway, and they
       --  do not work in the callgraph browser
+
       if Kind.Kind = Label_On_Block
         or else Kind.Kind = Label_On_Statement
         or else Kind.Kind = Label_On_Loop
@@ -1028,13 +1029,35 @@ package body ALI_Parser is
       Sfiles : Sdep_To_Sfile_Table (New_ALI.First_Sdep .. New_ALI.Last_Sdep);
       Imported_Projects : Project_Type_Array
         (1 .. Imported_Projects_Count (Get_Project (LI)));
+      Is_ALI_For_Separate : Boolean;
+
    begin
       Get_Imported_Projects (Get_Project (LI), Imported_Projects);
 
       Process_Units (LI, New_ALI, Sunits);
       Process_Sdeps (LI, New_ALI, Sunits, Sfiles);
-      Process_Withs (Sunits, Sfiles, Imported_Projects);
-      Process_Xrefs (Handler, LI, Sfiles, First_Sect, Last_Sect);
+
+      --  We do not want to generate xref information if we are parsing the
+      --  LI file for a separate unit, since such ALI files can only exist when
+      --  the user has manually compiled the source, and parsing these would
+      --  result in duplicate references, in particular for bodies (and thus
+      --  we end up with infinite loop in Find_Body, see D804-012)
+
+      if Sunits'Length /= 1 then
+         Is_ALI_For_Separate := False;
+      else
+         for Dep in Sfiles'Range loop
+            if Sfiles (Dep).File = Sunits (Sunits'First) then
+               Is_ALI_For_Separate := Sfiles (Dep).Is_Separate;
+               exit;
+            end if;
+         end loop;
+      end if;
+
+      if not Is_ALI_For_Separate then
+         Process_Withs (Sunits, Sfiles, Imported_Projects);
+         Process_Xrefs (Handler, LI, Sfiles, First_Sect, Last_Sect);
+      end if;
    end Create_New_ALI;
 
    -----------------------
