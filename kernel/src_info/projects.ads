@@ -224,47 +224,55 @@ package Projects is
    ----------------
    -- Attributes --
    ----------------
-   --  ??? Attribute names should directly contain the package name, would be
-   --  more portable and less low-level.
 
-   Ide_Package                : constant String := "ide";
    Builder_Package            : constant String := "builder";
    Compiler_Package           : constant String := "compiler";
    Linker_Package             : constant String := "linker";
    Binder_Package             : constant String := "binder";
    Naming_Package             : constant String := "naming";
 
-   Gnatlist_Attribute         : constant String := "gnatlist";
-   Compiler_Command_Attribute : constant String := "compiler_command";
-   Debugger_Command_Attribute : constant String := "debugger_command";
-   Remote_Host_Attribute      : constant String := "remote_host";
-   Program_Host_Attribute     : constant String := "program_host";
-   Protocol_Attribute         : constant String := "communication_protocol";
-   Main_Attribute             : constant String := "main";
-   Vcs_File_Check             : constant String := "vcs_file_check";
-   Vcs_Log_Check              : constant String := "vcs_log_check";
-   Obj_Dir_Attribute          : constant String := "obj_dir";
-   Vcs_Kind_Attribute         : constant String := "vcs_kind";
-   Global_Pragmas_Attribute   : constant String :=
-     "global_configuration_pragmas";
-   Local_Pragmas_Attribute   : constant String :=
-     "local_configuration_pragmas";
+   type Attribute_Pkg (<>) is private;
+
+   function Build (Package_Name, Attribute_Name : String)
+      return Attribute_Pkg;
+   --  Build an attribute reference
+
+   Source_Dirs_Attribute      : constant Attribute_Pkg;
+   Gnatlist_Attribute         : constant Attribute_Pkg;
+   Compiler_Command_Attribute : constant Attribute_Pkg;
+   Debugger_Command_Attribute : constant Attribute_Pkg;
+   Remote_Host_Attribute      : constant Attribute_Pkg;
+   Program_Host_Attribute     : constant Attribute_Pkg;
+   Protocol_Attribute         : constant Attribute_Pkg;
+   Main_Attribute             : constant Attribute_Pkg;
+   Vcs_File_Check             : constant Attribute_Pkg;
+   Vcs_Log_Check              : constant Attribute_Pkg;
+   Obj_Dir_Attribute          : constant Attribute_Pkg;
+   Vcs_Kind_Attribute         : constant Attribute_Pkg;
+   Global_Pragmas_Attribute   : constant Attribute_Pkg;
+   Local_Pragmas_Attribute    : constant Attribute_Pkg;
 
    --  Naming package
-   Casing_Attribute           : constant String := "casing";
-   Separate_Suffix_Attribute  : constant String := "separate_suffix";
-   Spec_Suffix_Attribute      : constant String := "spec_suffix";
-   Impl_Suffix_Attribute      : constant String := "body_suffix";
-   Dot_Replacement_Attribute  : constant String := "dot_replacement";
-   Specification_Attribute    : constant String := "spec";
-   Implementation_Attribute   : constant String := "body";
-   Spec_Exception_Attribute   : constant String := "specification_exceptions";
-   Impl_Exception_Attribute   : constant String := "implementation_exceptions";
+   Casing_Attribute                : constant Attribute_Pkg;
+   Specification_Suffix_Attribute  : constant Attribute_Pkg;
+   Implementation_Suffix_Attribute : constant Attribute_Pkg;
+   Separate_Suffix_Attribute       : constant Attribute_Pkg;
+   Spec_Suffix_Attribute           : constant Attribute_Pkg;
+   Impl_Suffix_Attribute           : constant Attribute_Pkg;
+   Dot_Replacement_Attribute       : constant Attribute_Pkg;
+   Specification_Attribute         : constant Attribute_Pkg;
+   Implementation_Attribute        : constant Attribute_Pkg;
+   Spec_Exception_Attribute        : constant Attribute_Pkg;
+   Impl_Exception_Attribute        : constant Attribute_Pkg;
 
    --  The following attributes should be read through specialized subprograms
    --  (Get_Languages,...)
-   Languages_Attribute        : constant String := "languages";
-   Exec_Dir_Attribute         : constant String := "exec_dir";
+   Languages_Attribute                 : constant Attribute_Pkg;
+   Exec_Dir_Attribute                  : constant Attribute_Pkg;
+   Builder_Default_Switches_Attribute  : constant Attribute_Pkg;
+   Compiler_Default_Switches_Attribute : constant Attribute_Pkg;
+   Linker_Default_Switches_Attribute   : constant Attribute_Pkg;
+   Executable_Attribute       : constant Attribute_Pkg;
 
    type Associative_Array_Element is record
       Index : Types.Name_Id;
@@ -273,21 +281,20 @@ package Projects is
    type Associative_Array is array (Natural range <>)
      of Associative_Array_Element;
 
-
    function Get_Attribute_Value
      (Project        : Project_Type;
-      Attribute_Name : String;
-      Package_Name   : String := "";
+      Attribute      : Attribute_Pkg;
       Default        : String := "";
       Index          : String := "") return String;
    --  Return the value for a single-string attribute.
    --  Default is returned if the attribute wasn't set by the user and
    --  has no default value.
+   --  Attribute_Pkg should be of the form:  "Package#Attribute" or
+   --  "Attribute" if there is no package.
 
    function Get_Attribute_Value
      (Project        : Project_Type;
-      Attribute_Name : String;
-      Package_Name   : String := "";
+      Attribute      : Attribute_Pkg;
       Index          : String := "") return GNAT.OS_Lib.Argument_List;
    --  Same as above, but for an attribute whose value is a list. An empty
    --  array is returned if the attribute isn't defined.
@@ -295,8 +302,7 @@ package Projects is
 
    function Get_Attribute_Value
      (Project        : Project_Type;
-      Attribute_Name : String;
-      Package_Name   : String := "") return Associative_Array;
+      Attribute      : Attribute_Pkg) return Associative_Array;
    --  Same as above when the attribute is an associative array.
 
    function Get_Languages
@@ -308,6 +314,11 @@ package Projects is
    --  The returned value must be freed by the user.
    --  If Recursive is true, then all the languages supported by Project
    --  or its imported projects will be returned.
+
+   function Get_Executable_Name
+     (Project : Project_Type; File : String) return String;
+   --  Return the name of the executable, either read from the project or
+   --  computed from File
 
    function Is_Main_File
      (Project : Project_Type; File : String) return Boolean;
@@ -536,6 +547,12 @@ private
    --  Returns the name of the external variable referenced by Var.
    --  No_String is returned if Var doesn't reference an external variable.
 
+   function Split_Package (Attribute : Attribute_Pkg) return Natural;
+   --  Return the index in Attribute_Name of the '#' separator.
+   --  Attribute_Name is of the form "Package#Attribute" or "Attribute".
+   --  A value less than Attribute_Name'First is returned if there is no
+   --  package indicator
+
    procedure Get_Unit_Part_And_Name_From_Filename
      (Filename  : String;
       Project   : Prj.Project_Id;
@@ -578,6 +595,60 @@ private
       Current_Cache : Project_Type;
       --  Cached value for the current project (avoid recomputing every time)
    end record;
+
+   type Attribute_Pkg is new String;
+   Source_Dirs_Attribute      : constant Attribute_Pkg := "source_dirs";
+   Gnatlist_Attribute         : constant Attribute_Pkg := "ide#gnatlist";
+   Compiler_Command_Attribute : constant Attribute_Pkg :=
+     "ide#compiler_command";
+   Debugger_Command_Attribute : constant Attribute_Pkg :=
+     "ide#debugger_command";
+   Remote_Host_Attribute     : constant Attribute_Pkg := "ide#remote_host";
+   Program_Host_Attribute    : constant Attribute_Pkg := "ide#program_host";
+   Protocol_Attribute        : constant Attribute_Pkg :=
+     "ide#communication_protocol";
+   Main_Attribute            : constant Attribute_Pkg := "main";
+   Vcs_File_Check            : constant Attribute_Pkg := "ide#vcs_file_check";
+   Vcs_Log_Check             : constant Attribute_Pkg := "ide#vcs_log_check";
+   Obj_Dir_Attribute         : constant Attribute_Pkg := "object_dir";
+   Vcs_Kind_Attribute        : constant Attribute_Pkg := "ide#vcs_kind";
+   Global_Pragmas_Attribute  : constant Attribute_Pkg :=
+     "builder#global_configuration_pragmas";
+   Local_Pragmas_Attribute   : constant Attribute_Pkg :=
+     "compiler#local_configuration_pragmas";
+   Builder_Default_Switches_Attribute : constant Attribute_Pkg :=
+     "builder#default_switches";
+   Compiler_Default_Switches_Attribute : constant Attribute_Pkg :=
+     "compiler#default_switches";
+   Linker_Default_Switches_Attribute : constant Attribute_Pkg :=
+     "linker#default_switches";
+   Executable_Attribute       : constant Attribute_Pkg :=
+     "builder#executable";
+
+   --  Naming package
+   Casing_Attribute           : constant Attribute_Pkg := "naming#casing";
+   Specification_Suffix_Attribute : constant Attribute_Pkg :=
+     "naming#specification_suffix";
+   Implementation_Suffix_Attribute : constant Attribute_Pkg :=
+     "naming#implementation_suffix";
+   Separate_Suffix_Attribute  : constant Attribute_Pkg :=
+     "naming#separate_suffix";
+   Spec_Suffix_Attribute      : constant Attribute_Pkg := "naming#spec_suffix";
+   Impl_Suffix_Attribute      : constant Attribute_Pkg := "naming#body_suffix";
+   Dot_Replacement_Attribute  : constant Attribute_Pkg :=
+     "naming#dot_replacement";
+   Specification_Attribute    : constant Attribute_Pkg := "naming#spec";
+   Implementation_Attribute   : constant Attribute_Pkg := "naming#body";
+   Spec_Exception_Attribute   : constant Attribute_Pkg :=
+     "naming#specification_exceptions";
+   Impl_Exception_Attribute   : constant Attribute_Pkg :=
+     "naming#implementation_exceptions";
+
+   --  The following attributes should be read through specialized subprograms
+   --  (Get_Languages,...)
+   Languages_Attribute        : constant Attribute_Pkg := "languages";
+   Exec_Dir_Attribute         : constant Attribute_Pkg := "exec_dir";
+
 
    pragma Inline (Project_Name, Project_Path, Project_Directory);
 end Projects;

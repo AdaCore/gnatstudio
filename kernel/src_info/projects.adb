@@ -918,8 +918,7 @@ package body Projects is
 
    function Get_Attribute_Value
      (Project        : Project_Type;
-      Attribute_Name : String;
-      Package_Name   : String := "";
+      Attribute      : Attribute_Pkg;
       Default        : String := "";
       Index          : String := "") return String
    is
@@ -933,14 +932,14 @@ package body Projects is
       --  Special case for the naming scheme, since we need to get access to
       --  the default registered values for foreign languages
 
-      if Attribute_Name = Spec_Suffix_Attribute then
+      if Attribute = Spec_Suffix_Attribute then
          Name_Len := Index'Length;
          Name_Buffer (1 .. Name_Len) := Index;
          Value := Value_Of
            (Index    => Name_Find,
             In_Array => Prj.Projects.Table (View).Naming.Spec_Suffix);
 
-      elsif Attribute_Name = Impl_Suffix_Attribute then
+      elsif Attribute = Impl_Suffix_Attribute then
          Name_Len := Index'Length;
          Name_Buffer (1 .. Name_Len) := Index;
          Value := Value_Of
@@ -948,15 +947,14 @@ package body Projects is
             In_Array => Prj.Projects.Table (View).Naming.Body_Suffix);
 
       else
-         Value := Get_Attribute_Value
-           (Project, Attribute_Name, Package_Name, Index);
+         Value := Get_Attribute_Value (Project, Attribute, Index);
       end if;
 
       case Value.Kind is
          when Undefined => return Default;
          when Single    => return Value_Of (Value, Default);
          when List      =>
-            Trace (Me, "Attribute " & Attribute_Name
+            Trace (Me, "Attribute " & String (Attribute)
                    & " is not a single string");
             return Default;
       end case;
@@ -968,9 +966,13 @@ package body Projects is
 
    function Get_Attribute_Value
      (Project        : Project_Type;
-      Attribute_Name : String;
-      Package_Name   : String := "") return Associative_Array
+      Attribute      : Attribute_Pkg) return Associative_Array
    is
+      Sep : constant Natural := Split_Package (Attribute);
+      Pkg_Name : constant String :=
+        String (Attribute (Attribute'First .. Sep - 1));
+      Attribute_Name : constant String :=
+        String (Attribute (Sep + 1 .. Attribute'Last));
       Pkg : Package_Id := No_Package;
       Arr : Array_Id;
       Elem, Elem2 : Array_Element_Id;
@@ -982,9 +984,9 @@ package body Projects is
          return (1 .. 0 => (No_Name, Nil_Variable_Value));
       end if;
 
-      if Package_Name /= "" then
+      if Pkg_Name /= "" then
          Pkg := Value_Of
-           (Get_String (Package_Name),
+           (Get_String (Pkg_Name),
             In_Packages => Prj.Projects.Table (Project_View).Decl.Packages);
          if Pkg = No_Package then
             return (1 .. 0 => (No_Name, Nil_Variable_Value));
@@ -1025,13 +1027,12 @@ package body Projects is
 
    function Get_Attribute_Value
      (Project        : Project_Type;
-      Attribute_Name : String;
-      Package_Name   : String := "";
+      Attribute      : Attribute_Pkg;
       Index          : String := "") return GNAT.OS_Lib.Argument_List
    is
       No_Value : Argument_List (1 .. 0);
       Value    : constant Variable_Value := Get_Attribute_Value
-        (Project, Attribute_Name, Package_Name, Index);
+        (Project, Attribute, Index);
       Val : String_List_Id;
    begin
       case Value.Kind is
@@ -1039,7 +1040,7 @@ package body Projects is
             return No_Value;
 
          when Single =>
-            Trace (Me, "Attribute " & Attribute_Name & " is not a list");
+            Trace (Me, "Attribute " & String (Attribute) & " is not a list");
             return No_Value;
 
          when List =>
@@ -1140,7 +1141,7 @@ package body Projects is
      (Project : Project_Type; File : String) return Boolean
    is
       Value : Argument_List := Get_Attribute_Value
-        (Project, Attribute_Name => Main_Attribute);
+        (Project, Attribute => Main_Attribute);
    begin
       if Filenames_Are_Case_Sensitive then
          for V in Value'Range loop
@@ -1173,7 +1174,7 @@ package body Projects is
 
    function Executables_Directory (Project : Project_Type) return String is
       Exec : constant String := Get_Attribute_Value
-        (Project, Attribute_Name => Exec_Dir_Attribute);
+        (Project, Attribute => Exec_Dir_Attribute);
    begin
       if Exec /= "" then
          return Name_As_Directory (Exec);
@@ -1903,8 +1904,8 @@ package body Projects is
       if File /= "" then
          Value := Get_Attribute_Value
            (Project        => Project,
-            Attribute_Name => Get_String (Name_Switches),
-            Package_Name   => In_Pkg,
+            Attribute      =>
+              Attribute_Pkg (In_Pkg & '#' & Get_String (Name_Switches)),
             Index          => File);
 
          if Value /= Nil_Variable_Value then
@@ -1915,8 +1916,8 @@ package body Projects is
 
       Value := Get_Attribute_Value
         (Project        => Project,
-         Attribute_Name => Get_String (Name_Default_Switches),
-         Package_Name   => In_Pkg,
+         Attribute      =>
+           Attribute_Pkg (In_Pkg & '#' & Get_String (Name_Default_Switches)),
          Index          => Get_String (Language));
 
       Is_Default_Value := True;
@@ -2111,5 +2112,50 @@ package body Projects is
       return Project.Data.Is_Default
         or else Project.Data.View_Is_Complete;
    end View_Is_Complete;
+
+   -------------------
+   -- Split_Package --
+   -------------------
+
+   function Split_Package (Attribute : Attribute_Pkg) return Natural is
+   begin
+      for N in Attribute'Range loop
+         if Attribute (N) = '#' then
+            return N;
+         end if;
+      end loop;
+      return Attribute'First - 1;
+   end Split_Package;
+
+   -----------
+   -- Build --
+   -----------
+
+   function Build (Package_Name, Attribute_Name : String)
+      return Attribute_Pkg is
+   begin
+      return Attribute_Pkg (Package_Name & '#' & Attribute_Name);
+   end Build;
+
+   -------------------------
+   -- Get_Executable_Name --
+   -------------------------
+
+   function Get_Executable_Name
+     (Project : Project_Type; File : String) return String
+   is
+      Base : constant String := Base_Name (File);
+      Default_Exec : constant String := Base
+        (Base'First .. Delete_File_Suffix (Base, Project));
+      From_Project : constant String := Get_Attribute_Value
+        (Project, Executable_Attribute,
+         Index => File, Default => Default_Exec);
+   begin
+      --  If the executable name was uninitialized
+      if From_Project = "" then
+         return Default_Exec;
+      end if;
+      return From_Project;
+   end Get_Executable_Name;
 
 end Projects;
