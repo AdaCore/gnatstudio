@@ -1077,27 +1077,6 @@ package body Glide_Kernel is
       end if;
    end Pop_State;
 
-   -----------------------
-   -- Set_Search_Module --
-   -----------------------
-
-   procedure Set_Search_Module
-     (Handle : access Kernel_Handle_Record;
-      Search : access Gtk_Widget_Record'Class) is
-   begin
-      Handle.Search := Gtk_Widget (Search);
-   end Set_Search_Module;
-
-   -----------------------
-   -- Get_Search_Module --
-   -----------------------
-
-   function Get_Search_Module
-     (Handle : access Kernel_Handle_Record) return Gtk_Widget is
-   begin
-      return Handle.Search;
-   end Get_Search_Module;
-
    ------------------
    -- Get_Home_Dir --
    ------------------
@@ -1472,11 +1451,6 @@ package body Glide_Kernel is
 
       if Handle.Last_Context_For_Contextual /= null then
          Free (Handle.Last_Context_For_Contextual);
-      end if;
-
-      --  Free the register search functions
-      if Handle.Search /= null then
-         Destroy (Handle.Search);
       end if;
 
       Command_List.Free (Handle.Commands_List);
