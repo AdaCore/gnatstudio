@@ -20,7 +20,9 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Main;                  use Gtk.Main;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
@@ -39,10 +41,11 @@ with GVD.Process;               use GVD.Process;
 with GVD.Main_Window;           use GVD.Main_Window;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
-with OS_Utils;                  use OS_Utils;
+with GUI_Utils;                 use GUI_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.ALI;
 
+with Glide_Kernel.Timeout;
 with Prj_API;                  use Prj_API;
 with Generic_List;
 
@@ -72,50 +75,10 @@ package body Glide_Kernel is
    package Object_Callback is new Gtk.Handlers.Callback
      (Glib.Object.GObject_Record);
 
-   function Get_Home_Directory return String;
-   --  Return the home directory in which glide's user files should be stored
-   --  (preferences, log, ...)
-
    procedure Reset_Source_Info_List
      (Handle : access Kernel_Handle_Record'Class);
    --  Re-initialize the Source Info structure.
    --  ??? Needs more comments.
-
-   ------------------------
-   -- Get_Home_Directory --
-   ------------------------
-
-   function Get_Home_Directory return String is
-      Home, Dir : String_Access;
-   begin
-      Home := Getenv ("GLIDE_HOME");
-
-      if Home.all = "" then
-         Free (Home);
-         Home := Getenv ("HOME");
-      end if;
-
-      if Home.all /= "" then
-         if Is_Directory_Separator (Home (Home'Last)) then
-            Dir := new String' (Home (Home'First .. Home'Last - 1) &
-              Directory_Separator & ".glide");
-         else
-            Dir := new String' (Home.all & Directory_Separator & ".glide");
-         end if;
-
-      else
-         --  Default to /
-         Dir := new String'(Directory_Separator & ".glide");
-      end if;
-
-      declare
-         D : constant String := Dir.all;
-      begin
-         Free (Home);
-         Free (Dir);
-         return D;
-      end;
-   end Get_Home_Directory;
 
    -------------
    -- Gtk_New --
@@ -123,7 +86,8 @@ package body Glide_Kernel is
 
    procedure Gtk_New
      (Handle      : out Kernel_Handle;
-      Main_Window : Gtk.Window.Gtk_Window)
+      Main_Window : Gtk.Window.Gtk_Window;
+      Home_Dir    : String)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 .. 2 | 4 => (1 => GType_None),
@@ -131,6 +95,7 @@ package body Glide_Kernel is
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Main_Window := Main_Window;
+      Handle.Home_Dir := new String' (Home_Dir);
       Glib.Object.Initialize (Handle);
       Initialize_Class_Record
         (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
@@ -152,7 +117,7 @@ package body Glide_Kernel is
       --  these values from the output of gnatls -v...
 
       Load_Preferences
-        (Handle, Get_Home_Directory & Directory_Separator & "preferences");
+        (Handle, Home_Dir & Directory_Separator & "preferences");
 
       --  ??? Shouldn't use naming schemes instead ? This duplicates the
       --  ??? information uselessly.
@@ -393,7 +358,7 @@ package body Glide_Kernel is
       Create
         (File,
          Mode => Out_File,
-         Name => Get_Home_Directory & Directory_Separator & "desktop");
+         Name => Handle.Home_Dir.all & Directory_Separator & "desktop");
       Set_Output (File);
 
       Print (Glide_Kernel.Kernel_Desktop.Save_Desktop (MDI));
@@ -413,7 +378,7 @@ package body Glide_Kernel is
         (Get_Current_Process (Handle.Main_Window)).Process_Mdi;
       Node : Node_Ptr;
       File : constant String :=
-        Get_Home_Directory & Directory_Separator & "desktop";
+        Handle.Home_Dir.all & Directory_Separator & "desktop";
 
    begin
       if Is_Regular_File (File) then
@@ -562,5 +527,51 @@ package body Glide_Kernel is
    begin
       return Glide_Window (Handle.Main_Window).Toolbar;
    end Get_Toolbar;
+
+   --------------
+   -- Set_Busy --
+   --------------
+
+   procedure Set_Busy
+     (Handle : Kernel_Handle;
+      Busy   : Boolean := True)
+   is
+      Window : Glide_Window;
+   begin
+      if Handle = null then
+         return;
+      end if;
+
+      Window := Glide_Window (Handle.Main_Window);
+
+      --  The tests below are somewhat redundant, but we prefer to be over
+      --  cautious rather than letting Glide in an inconsistent state.
+
+      if Busy then
+         if Window.Busy_Level = 0 then
+            Set_Busy_Cursor (Get_Window (Window), True, True);
+
+            if Window.Timeout_Id = 0 then
+               Window.Timeout_Id := Glide_Kernel.Timeout.Add
+                 (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
+                  Anim_Cb'Access, Kernel_Handle (Handle));
+            end if;
+         end if;
+
+         Window.Busy_Level := Window.Busy_Level + 1;
+
+      elsif Window.Busy_Level > 0 then
+         Window.Busy_Level := Window.Busy_Level - 1;
+
+         if Window.Busy_Level = 0 then
+            if Window.Timeout_Id /= 0 then
+               Timeout_Remove (Window.Timeout_Id);
+               Window.Timeout_Id := 0;
+            end if;
+
+            Set_Busy_Cursor (Get_Window (Window), False, False);
+         end if;
+      end if;
+   end Set_Busy;
 
 end Glide_Kernel;
