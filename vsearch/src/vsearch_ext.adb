@@ -411,16 +411,14 @@ package body Vsearch_Ext is
          end if;
 
          declare
-            Replace_Text : constant String
-              := Get_Text (Vsearch.Replace_Entry);
+            Replace_Text : constant String := Get_Text (Vsearch.Replace_Entry);
          begin
             Add_Unique_Combo_Entry (Vsearch.Replace_Combo, Replace_Text);
+            Add_To_History
+              (Get_History (Vsearch.Kernel).all, Replace_Hist_Key,
+               Replace_Text);
             Set_Text (Vsearch.Replace_Entry, Replace_Text);
          end;
-
-         Add_To_History
-           (Get_History (Vsearch.Kernel).all, Replace_Hist_Key,
-            Get_Text (Vsearch.Replace_Entry));
       end if;
 
       if Vsearch.Last_Search_Context /= null then
@@ -846,11 +844,6 @@ package body Vsearch_Ext is
       Vsearch_Pkg.Initialize (Vsearch, Handle);
       Vsearch.Kernel := Handle;
 
-      Get_History
-        (Get_History (Handle).all, Pattern_Hist_Key, Vsearch.Pattern_Combo);
-      Get_History
-        (Get_History (Handle).all, Replace_Hist_Key, Vsearch.Replace_Combo);
-
       --  Create the widget
 
       Widget_Callback.Object_Connect
@@ -974,7 +967,15 @@ package body Vsearch_Ext is
          Kernel_Callback.To_Marshaller (New_Predefined_Regexp'Access),
          Slot_Object => Vsearch, User_Data => Handle);
       New_Predefined_Regexp (Vsearch, Handle);
-      Set_Text (Vsearch.Pattern_Entry, "");
+
+      --  Fill the replace combo first, so that the selection remains in
+      --  the pattern combo
+      Get_History
+        (Get_History (Handle).all, Replace_Hist_Key, Vsearch.Replace_Combo,
+         Clear_Combo => False);
+      Get_History
+        (Get_History (Handle).all, Pattern_Hist_Key, Vsearch.Pattern_Combo,
+         Clear_Combo => False);
    end Initialize;
 
    ---------------------------
@@ -1060,8 +1061,12 @@ package body Vsearch_Ext is
       --  itself
 
       Vsearch := Get_Or_Create_Vsearch (Kernel, Raise_Widget => True);
-      Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, "");
-      Set_Text (Vsearch_Module_Id.Search.Replace_Entry, "");
+
+      --  ??? Temporarily: reset the entry. The correct fix would be to
+      --  separate the find and replace tabs, so that having a default
+      --  entry in this combo doesn't look strange when the combo is
+      --  insensitive.
+      Set_Text (Get_Entry (Vsearch.Replace_Combo), "");
 
       if Module /= null then
          declare
