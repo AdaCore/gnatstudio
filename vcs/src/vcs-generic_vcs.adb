@@ -773,11 +773,15 @@ package body VCS.Generic_VCS is
       Args   : GNAT.OS_Lib.String_List_Access;
 
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
-      Args (1) := new String'(Rev);
+      if Rev /= "" then
+         Args := new GNAT.OS_Lib.String_List (1 .. 1);
+         Args (1) := new String'(Rev);
 
-      Generic_Command (Rep, File, Args, History);
-      GNAT.Strings.Free (Args);
+         Generic_Command (Rep, File, Args, History_Revision);
+         GNAT.Strings.Free (Args);
+      else
+         Generic_Command (Rep, File, Args, History);
+      end if;
    end Log;
 
    --------------
