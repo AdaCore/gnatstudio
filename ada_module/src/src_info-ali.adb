@@ -21,6 +21,7 @@
 with ALI;                       use ALI;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Glib.Convert;              use Glib.Convert;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Krunch;
@@ -538,7 +539,7 @@ package body Src_Info.ALI is
       File             : out Source_File)
    is
       Source : constant Virtual_File := Create_From_Base
-        (Get_String (Source_Filename));
+        (Locale_To_UTF8 (Get_String (Source_Filename)));
       Prj : Project_Type;
    begin
       --  Search algorithm:
@@ -600,7 +601,8 @@ package body Src_Info.ALI is
       else
          Get_Subunit_Source_File
            (Handler, List, Source,
-            Create_From_Base (Get_String (New_ALI.Sfile)), Project,
+            Create_From_Base (Locale_To_UTF8 (Get_String (New_ALI.Sfile))),
+            Project,
             Subunit_Name, File);
       end if;
    end Get_Source_File;
@@ -747,7 +749,7 @@ package body Src_Info.ALI is
            (Value => null, Next => File.LI.LI.Separate_Info);
          Create_File_Info
            (File.LI.LI.Separate_Info.Value, Source_Filename,
-            Unit_Name => Get_String (Subunit_Name));
+            Unit_Name => Locale_To_UTF8 (Get_String (Subunit_Name)));
       end if;
 
    exception
@@ -842,8 +844,10 @@ package body Src_Info.ALI is
       Create_File_Info
         (Fi_Ptr         => New_File_Info,
          Full_Filename  =>
-           Create (Full_Filename => Get_String (Current_Unit.Sfile)),
-         Unit_Name  => Strip_Unit_Part (Get_String (Current_Unit.Uname)),
+           Create (Full_Filename =>
+                     Locale_To_UTF8 (Get_String (Current_Unit.Sfile))),
+         Unit_Name  => Strip_Unit_Part
+           (Locale_To_UTF8 (Get_String (Current_Unit.Uname))),
          Set_Time_Stamp => False);
 
       --  Now save it in the proper place in New_LI_File
@@ -896,14 +900,14 @@ package body Src_Info.ALI is
 
       elsif New_LI_File.LI.Spec_Info /= null
         and then New_LI_File.LI.Spec_Info.Source_Filename.all =
-                   Get_String (Dep.Sfile)
+                   Locale_To_UTF8 (Get_String (Dep.Sfile))
       then
          Process_Sdep_As_Self
            (New_LI_File, Id, New_LI_File.LI.Spec_Info, Sfiles);
 
       elsif New_LI_File.LI.Body_Info /= null
         and then New_LI_File.LI.Body_Info.Source_Filename.all =
-                   Get_String (Dep.Sfile)
+                   Locale_To_UTF8 (Get_String (Dep.Sfile))
       then
          Process_Sdep_As_Self
            (New_LI_File, Id, New_LI_File.LI.Body_Info, Sfiles);
@@ -932,7 +936,8 @@ package body Src_Info.ALI is
       Finfo.File_Timestamp := To_Timestamp (Dep.Stamp);
 
       if Dep.Rfile /= Dep.Sfile then
-         Finfo.Original_Filename := new String'(Get_String (Dep.Rfile));
+         Finfo.Original_Filename := new String'
+           (Locale_To_UTF8 (Get_String (Dep.Rfile)));
          Finfo.Original_Line := Integer (Dep.Start_Line);
       end if;
 
@@ -974,7 +979,8 @@ package body Src_Info.ALI is
         (Handler, List, New_ALI, Dep.Sfile, Dep.Subunit_Name,
          Project, Sfile);
       Assert
-        (Me, Base_Name (Get_Source_Filename (Sfile)) = Get_String (Dep.Sfile),
+        (Me, Base_Name (Get_Source_Filename (Sfile)) =
+           Locale_To_UTF8 (Get_String (Dep.Sfile)),
          "Process_Sdep_As_External, invalid source file " &
          Base_Name (Get_Source_Filename (Sfile)) & ' '
          & Get_String (Dep.Sfile));
@@ -1041,13 +1047,13 @@ package body Src_Info.ALI is
       --  much faster (no need to parse the naming scheme), and would handle
       --  krunch names correctly.
       Source          : Virtual_File := Get_Source_Filename (W.Uname, Project);
-      Current_Sep      : File_Info_Ptr_List;
-      Current_Dep      : Dependency_File_Info_List;
-      Finfo            : File_Info_Ptr;
+      Current_Sep     : File_Info_Ptr_List;
+      Current_Dep     : Dependency_File_Info_List;
+      Finfo           : File_Info_Ptr;
    begin
       if Source = VFS.No_File then
          declare
-            N : constant String := Get_String (W.Uname);
+            N : constant String := Locale_To_UTF8 (Get_String (W.Uname));
             --  Need to do a copy, since Name_Buffer is modified afterward
          begin
             Source := Get_Source_Filename
@@ -1109,8 +1115,8 @@ package body Src_Info.ALI is
                --  Update the unit name if not present
 
                if Finfo.Unit_Name = null then
-                  Finfo.Unit_Name :=
-                    new String'(Strip_Unit_Part (Get_String (W.Uname)));
+                  Finfo.Unit_Name := new String'
+                    (Locale_To_UTF8 (Strip_Unit_Part (Get_String (W.Uname))));
                end if;
 
                --  Update the Depends_From_Spec/Body flags
@@ -1132,7 +1138,7 @@ package body Src_Info.ALI is
          --  raise the ALI_Internal_Error exception to signal the error.
 
          Trace (Me, "Process_With: file " & Withed_File_Name
-                & ' ' & Get_String (W.Uname)
+                & ' ' & Locale_To_UTF8 (Get_String (W.Uname))
                 & " " & Krunch_Name
                 & " from project "
                 & Project_Name (Project)
@@ -1238,7 +1244,7 @@ package body Src_Info.ALI is
 
       Current_Sfile : Source_File;
       Ent           : constant String :=
-        To_Lower (Get_String (Xref_Ent.Entity));
+        Locale_To_UTF8 (To_Lower (Get_String (Xref_Ent.Entity)));
       Col           : Natural := Natural (Xref_Ent.Col);
       Is_Operator   : constant Boolean := Ent (Ent'First) = '"';
 
@@ -1552,7 +1558,7 @@ package body Src_Info.ALI is
             Body_Info                => null,
             Separate_Info            => null,
             LI_Timestamp             => To_Timestamp
-              (File_Time_Stamp (Full_Name (Full_ALI_Filename))),
+              (File_Time_Stamp (Full_ALI_Filename)),
             Compilation_Errors_Found => New_ALI.Compile_Errors,
             Dependencies_Info        => null);
       end if;
@@ -1637,19 +1643,21 @@ package body Src_Info.ALI is
             while Last >= Short_ALI_Filename'First loop
                declare
                   Path : constant String := Object_Path (P, False);
+                  File : constant String :=
+                    Locale_From_UTF8
+                      (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
+                       & Extension);
                begin
                   --  ??? Not really efficient to always search
                   --  Predefined_Object_Path and Current_Dir_Name.
                   if Path /= "" then
                      Dir := Locate_Regular_File
-                       (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
-                        & Extension, Path & Path_Separator &
+                       (File, Path & Path_Separator &
                         Predefined_Object_Path
                         & Path_Separator & Current_Dir_Name);
                   else
                      Dir := Locate_Regular_File
-                       (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
-                        & Extension,
+                       (File,
                         Predefined_Object_Path
                         & Path_Separator & Current_Dir_Name);
                   end if;
@@ -1859,7 +1867,7 @@ package body Src_Info.ALI is
       if Full_Ali_File /= VFS.No_File then
          if File = No_LI_File
            or else Is_Incomplete (File)
-           or else To_Timestamp (File_Time_Stamp (Full_Name (Full_Ali_File))) >
+           or else To_Timestamp (File_Time_Stamp (Full_Ali_File)) >
              File.LI.LI_Timestamp
          then
             Trace (Me, "Creating/Updating LI file: "
