@@ -375,27 +375,37 @@ package body Prj.PP is
                   Output_Name (Name_Of (Node));
 
                when N_Case_Construction =>
-                  --  Write_Empty_Line.all;
-                  Start_Line (Indent);
-                  Write_Str ("case ");
-                  Print (Case_Variable_Reference_Of (Node), Indent);
-                  Write_Line (" is");
-
                   declare
                      Case_Item : Project_Node_Id := First_Case_Item_Of (Node);
-
+                     Is_Non_Empty : Boolean := False;
                   begin
                      while Case_Item /= Empty_Node loop
-                        pragma Assert (Kind_Of (Case_Item) = N_Case_Item);
-                        Print (Case_Item, Indent + Increment);
+                        if First_Declarative_Item_Of (Case_Item) /= Empty_Node
+                          or else not Eliminate_Null_Statements
+                        then
+                           Is_Non_Empty := True;
+                           exit;
+                        end if;
                         Case_Item := Next_Case_Item (Case_Item);
                      end loop;
-                  end;
 
-                  --  Write_Empty_Line.all;
-                  Start_Line (Indent);
-                  Write_Line ("end case;");
-                  --  Write_Empty_Line.all;
+                     if Is_Non_Empty then
+                        Start_Line (Indent);
+                        Write_Str ("case ");
+                        Print (Case_Variable_Reference_Of (Node), Indent);
+                        Write_Line (" is");
+
+                        Case_Item := First_Case_Item_Of (Node);
+                        while Case_Item /= Empty_Node loop
+                           pragma Assert (Kind_Of (Case_Item) = N_Case_Item);
+                           Print (Case_Item, Indent + Increment);
+                           Case_Item := Next_Case_Item (Case_Item);
+                        end loop;
+
+                        Start_Line (Indent);
+                        Write_Line ("end case;");
+                     end if;
+                  end;
 
                when N_Case_Item =>
                   if First_Declarative_Item_Of (Node) /= Empty_Node
