@@ -47,6 +47,7 @@ with GVD.Strings;       use GVD.Strings;
 with GVD.Dialogs;       use GVD.Dialogs;
 with GVD.Types;         use GVD.Types;
 with GVD.Trace;         use GVD.Trace;
+with Basic_Types;       use Basic_Types;
 with Items;             use Items;
 with Items.Simples;     use Items.Simples;
 with Items.Arrays;      use Items.Arrays;
@@ -268,9 +269,9 @@ package body Debugger.Gdb is
          return;
       end if;
 
-      --  Index is positioned to the last LF character
+      --  Index is positioned to the last LF character: "[0] ...\n> "
 
-      Index := Matched (0).Last - 3;
+      Index := Matched (0).Last - 2;
 
       while Last < Index loop
          --  Skips the choice number ("[n] ")
@@ -1683,7 +1684,7 @@ package body Debugger.Gdb is
    -----------------------
 
    function Source_Files_List
-     (Debugger : access Gdb_Debugger) return GVD.Types.String_Array
+     (Debugger : access Gdb_Debugger) return String_Array
    is
       S         : constant String :=
         Send (Debugger, "info sources", Mode => Internal);
@@ -1709,7 +1710,7 @@ package body Debugger.Gdb is
       Num_Files := Num_Files + 2;
 
       declare
-         Result : GVD.Types.String_Array (1 .. Num_Files);
+         Result : String_Array (1 .. Num_Files);
          Num    : Natural := 1;
          Index  : Positive := S'First;
          Start  : Positive;
@@ -2443,7 +2444,7 @@ package body Debugger.Gdb is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out GVD.Types.String_Access;
+      Code            : out Basic_Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "")
    is
@@ -2679,7 +2680,7 @@ package body Debugger.Gdb is
 
    function Complete
      (Debugger  : access Gdb_Debugger;
-      Beginning : in String) return GVD.Types.String_Array
+      Beginning : in String) return String_Array
    is
       S           : constant String :=
         Send (Debugger, "complete " & Beginning, Mode => Internal);
@@ -2705,7 +2706,7 @@ package body Debugger.Gdb is
 
       --  Fill the string array with the proper values.
       declare
-         Result : GVD.Types.String_Array (1 .. Num);
+         Result : String_Array (1 .. Num);
       begin
          for Index in 1 .. Num loop
             while S (Last_Index) /= ASCII.LF and then Last_Index < S'Last loop
