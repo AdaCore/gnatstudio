@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2001-2004                      --
+--                            ACT-Europe                             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,8 @@
 --  Typical use of this package includes: source highlighting, block folding,
 --  source reformatting, ...
 
-with Language; use Language;
+with Language;      use Language;
+with Case_Handling; use Case_Handling;
 
 package Ada_Analyzer is
 
@@ -38,10 +39,13 @@ package Ada_Analyzer is
       From, To         : Natural               := 0;
       Replace          : Replace_Text_Callback := null;
       Constructs       : Construct_List_Access := null;
-      Callback         : Entity_Callback       := null);
+      Callback         : Entity_Callback       := null;
+      Case_Exceptions  : Casing_Exceptions     := No_Casing_Exception);
    --  Analyze a given Ada source in Buffer, and perform source reformatting
    --  between lines From .. To if Format is True.
    --  If Constructs is not null, store the list of constructs analyzed.
    --  If Callback is not null, call it for each Source_Entity_Kind.
+   --  Case_Exceptions is the handler containing all the casing exceptions
+   --  to be used while reformatting the code.
 
 end Ada_Analyzer;
