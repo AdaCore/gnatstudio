@@ -18,9 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions;          use Ada.Exceptions;
---  with String_Utils;            use String_Utils;
 
 with GNAT.Regpat;             use GNAT.Regpat;
 
@@ -134,99 +132,6 @@ package body Codefix.Formal_Errors is
    begin
       Free (This, True);
    end Free;
-
-   -----------------
-   -- Delete_With --
-   -----------------
-
-   function Delete_With
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class;
-      Name         : String;
-      Move_To      : File_Cursor := Null_File_Cursor) return Text_Command'Class
-   is
-      pragma Unreferenced (Current_Text, Cursor, Name, Move_To);
-      Command : Insert_Word_Cmd;
-   begin
-      return Command;
---      Extract_Use, New_Extract  : Ada_List;
---      Temp_Extract              : Extract;
---      Use_Info, Pkg_Info        : Construct_Information;
---      Cursor_Use                : File_Cursor := File_Cursor (Cursor);
---      Success                   : Boolean := True;
---      Index_Name, Prev_Index    : Natural := 0;
---   begin
---      Pkg_Info := Search_Unit
---        (Current_Text, Cursor.File_Name.all, Cat_With, Name);
-
---      if Pkg_Info.Category = Cat_Unknown then
---         Pkg_Info := Search_Unit
---           (Current_Text, Cursor.File_Name.all, Cat_Package, Name);
---         Get_Unit (Current_Text, Cursor, Ada_Instruction (New_Extract));
---         Remove_Instruction (New_Extract);
---         Set_Caption
---           (New_Extract,
---            "Delete instantiation and use clauses of unit """ & Name & """");
---      else
---         Get_Unit (Current_Text, Cursor, New_Extract);
---         Remove_Elements (New_Extract, Name);
---         Set_Caption
---           (New_Extract,
---            "Delete with and use clauses for unit """ & Name & """");
-
---         if Move_To /= Null_File_Cursor then
---          Add_Line (New_Extract, Move_To, "with " & Pkg_Info.Name.all & ";");
---         end if;
---      end if;
-
---      loop
---         Index_Name := Index_Name + 1;
---         Skip_To_Char (Pkg_Info.Name.all, Index_Name, '.');
---         exit when Index_Name > Pkg_Info.Name'Last + 1;
-
---         Use_Info := Search_Unit
---           (Current_Text,
---            Cursor.File_Name.all,
---            Cat_Use,
---            Pkg_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
-
---         if Use_Info.Category /= Cat_Unknown then
---            Cursor_Use.Col := Use_Info.Sloc_Start.Column;
---            Cursor_Use.Line := Use_Info.Sloc_Start.Line;
---            Get_Unit (Current_Text, Cursor_Use, Extract_Use);
-
---            if Move_To /= Null_File_Cursor then
---               Add_Line
---                 (New_Extract, Move_To, "use " & Use_Info.Name.all & ";");
---            end if;
-
---            Remove_Elements (Extract_Use, Name);
---            Unchecked_Assign (Temp_Extract, New_Extract);
---            Unchecked_Free (New_Extract);
---            Merge
---              (New_Extract,
---               Temp_Extract,
---               Extract_Use,
---               Current_Text,
---               Success);
-
---            Set_Caption (New_Extract, Get_Caption (Temp_Extract));
-
---            Free (Temp_Extract);
---            Free (Extract_Use);
---            exit when not Success;
---         end if;
-
---         Prev_Index := Index_Name;
---      end loop;
-
---      if not Success then
---         null; --  ???
---      end if;
-
---      return New_Extract;
-
-   end Delete_With;
 
    ---------------
    -- Should_Be --
@@ -824,53 +729,35 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Solution_List
    is
-      pragma Unreferenced (Current_Text, Cursor);
---      Spec_Extract         : Ada_List;
---      Body_Info, With_Info : Construct_Information;
---      Last_With            : File_Cursor;
---      Body_Name            : Dynamic_String;
+      Result      : Solution_List;
+      New_Command : Remove_Pkg_Clauses_Cmd;
+      With_Cursor : Word_Cursor;
+      Body_Name   : Dynamic_String;
    begin
-      return Command_List.Null_List;
---      With_Info := Search_Unit
---        (Current_Text,
---         Cursor.File_Name.all,
---         Cat_With);
 
---      Assign
---        (Body_Name,
---         Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
+      Assign
+        (Body_Name, Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
 
---      Body_Info := Search_Unit
---        (Current_Text,
---         Body_Name.all,
---         Cat_With,
---         With_Info.Name.all);
+      With_Cursor :=
+        (File_Cursor (Cursor) with
+         String_Match => null,
+         Mode         => Text_Ascii);
 
---      if Body_Info.Category = Cat_Unknown then
---         Assign (Last_With.File_Name, Body_Name.all);
+      Initialize
+        (New_Command,
+         Current_Text,
+         With_Cursor,
+         Body_Name.all);
 
+      Set_Caption
+        (New_Command,
+         "Move with clause from """ & Cursor.File_Name.all &
+         """ to """ & Body_Name.all & """");
 
---         Last_With.Col := 1;
---         Last_With.Line := 1;
+      Append (Result, New_Command);
 
---         Body_Info := Get_Unit (Current_Text, Last_With, After, Cat_Package);
+      return Result;
 
---         Last_With.Line := Body_Info.Sloc_Start.Line - 1;
-
---         Spec_Extract := Delete_With
---           (Current_Text, Cursor, With_Info.Name.all, Last_With);
---      else
---         Spec_Extract := Delete_With
---           (Current_Text, Cursor, With_Info.Name.all);
---      end if;
-
---      Set_Caption
---        (Spec_Extract,
---         "Move with clause from """ & Cursor.File_Name.all &
---           """ to """ & Body_Name.all & """");
-
---      Free (Body_Name);
---      return Spec_Extract;
    end Move_With_To_Body;
 
 end Codefix.Formal_Errors;
