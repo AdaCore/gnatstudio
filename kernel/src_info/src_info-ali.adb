@@ -269,12 +269,12 @@ package body Src_Info.ALI is
    --  is left unconnected to the LI_File_List.
 
    function Locate_Load_And_Scan_ALI
-     (ALI_Filename      : String;
-      Project           : Prj.Project_Id;
-      Extra_Object_Path : String)
+     (ALI_Filename           : String;
+      Project                : Prj.Project_Id;
+      Predefined_Object_Path : String)
      return ALI_Id;
    --  Try to locate ALI_Filename inside the Project object path, then
-   --  in Extra_Object_Path, and finally in the current directory. Then
+   --  in Predefined_Object_Path, and finally in the current directory. Then
    --  scan the ALI file if found.
 
    -------------
@@ -1565,9 +1565,9 @@ package body Src_Info.ALI is
    ------------------------------
 
    function Locate_Load_And_Scan_ALI
-     (ALI_Filename      : String;
-      Project           : Prj.Project_Id;
-      Extra_Object_Path : String)
+     (ALI_Filename           : String;
+      Project                : Prj.Project_Id;
+      Predefined_Object_Path : String)
      return ALI_Id
    is
       Current_Dir_Name   : constant Character := '.';
@@ -1581,11 +1581,11 @@ package body Src_Info.ALI is
          Dir := Locate_Regular_File
            (Short_ALI_Filename,
             Prj.Env.Ada_Objects_Path (Project).all & Path_Separator &
-            Extra_Object_Path & Path_Separator & Current_Dir_Name);
+            Predefined_Object_Path & Path_Separator & Current_Dir_Name);
       else
          Dir := Locate_Regular_File
            (Short_ALI_Filename,
-            Extra_Object_Path & Path_Separator & Current_Dir_Name);
+            Predefined_Object_Path & Path_Separator & Current_Dir_Name);
       end if;
 
       --  Abort if we did not find the ALI file.
@@ -1614,16 +1614,17 @@ package body Src_Info.ALI is
    --------------------
 
    procedure Parse_ALI_File
-      (ALI_Filename      : String;
-       Project           : Prj.Project_Id;
-       Extra_Source_Path : String;
-       Extra_Object_Path : String;
-       List              : in out LI_File_List;
-       Unit              : out LI_File_Ptr;
-       Success           : out Boolean)
+      (ALI_Filename           : String;
+       Project                : Prj.Project_Id;
+       Predefined_Source_Path : String;
+       Predefined_Object_Path : String;
+       List                   : in out LI_File_List;
+       Unit                   : out LI_File_Ptr;
+       Success                : out Boolean)
    is
       New_ALI_Id    : constant ALI_Id :=
-        Locate_Load_And_Scan_ALI (ALI_Filename, Project, Extra_Object_Path);
+        Locate_Load_And_Scan_ALI
+          (ALI_Filename, Project, Predefined_Object_Path);
    begin
       if New_ALI_Id = No_ALI_Id then
          Unit    := null;
@@ -1632,7 +1633,7 @@ package body Src_Info.ALI is
       end if;
 
       Create_New_ALI
-        (Unit, ALIs.Table (New_ALI_Id), Project, Extra_Source_Path, List);
+        (Unit, ALIs.Table (New_ALI_Id), Project, Predefined_Source_Path, List);
       Success := True;
 
    exception
@@ -1649,9 +1650,9 @@ package body Src_Info.ALI is
    ------------------------------
 
    function ALI_Filename_From_Source
-     (Source_Filename : String;
-      Project         : Prj.Project_Id;
-      Source_Path     : String)
+     (Source_Filename        : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String)
       return String
    is
       Prj_Data       : Project_Data renames Prj.Projects.Table (Project);
@@ -1698,7 +1699,9 @@ package body Src_Info.ALI is
 
          --  Still not found, seach in the source path
          Filename := Get_Body_Filename (Get_Unit_Name (Spec_Id), Naming);
-         Dir := Locate_Regular_File (Get_Name_String (Filename), Source_Path);
+         Dir :=
+           Locate_Regular_File
+             (Get_Name_String (Filename), Predefined_Source_Path);
          if Dir /= null then
             Free (Dir);
             return Get_ALI_Filename (Filename);
@@ -1752,7 +1755,9 @@ package body Src_Info.ALI is
 
          --  Search the body filename in the source path
          Filename := Get_Body_Filename (Unit_Name, Naming);
-         Dir := Locate_Regular_File (Get_Name_String (Filename), Source_Path);
+         Dir :=
+           Locate_Regular_File
+             (Get_Name_String (Filename), Predefined_Source_Path);
          if Dir /= null then
             Free (Dir);
             return Get_ALI_Filename (Filename);
@@ -1768,12 +1773,12 @@ package body Src_Info.ALI is
    ------------------------
 
    procedure Locate_From_Source
-     (List              : in out LI_File_List;
-      Source_Filename   : String;
-      Project           : Prj.Project_Id;
-      Extra_Source_Path : String;
-      Extra_Object_Path : String;
-      File              : out LI_File_Ptr)
+     (List                   : in out LI_File_List;
+      Source_Filename        : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String;
+      File                   : out LI_File_Ptr)
    is
       Lib_Info : LI_File_Ptr;
       Success  : Boolean;
@@ -1785,12 +1790,13 @@ package body Src_Info.ALI is
       if Lib_Info = No_LI_File then
          declare
             Ali_File : constant String := ALI_Filename_From_Source
-              (Source_Filename, Project, Extra_Source_Path);
+              (Source_Filename, Project, Predefined_Source_Path);
             Full_File : constant String := Find_Object_File
-              (Project, Ali_File, Extra_Object_Path);
+              (Project, Ali_File, Predefined_Object_Path);
          begin
             Parse_ALI_File
-              (Full_File, Project, Extra_Source_Path, Extra_Object_Path,
+              (Full_File, Project,
+               Predefined_Source_Path, Predefined_Object_Path,
                List, Lib_Info, Success);
 
             if not Success then
