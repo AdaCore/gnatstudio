@@ -31,6 +31,7 @@ with Projects.Registry;       use Projects.Registry;
 with File_Utils;              use File_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Glide_Intl;              use Glide_Intl;
+with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -1662,7 +1663,13 @@ package body Entities is
 
    function Is_Up_To_Date (File : Source_File) return Boolean is
    begin
-      return Get_Time_Stamp (File) /= File.Timestamp;
+      if Active (Assert_Me) then
+         Trace (Assert_Me, "Is_Up_To_Date: "
+                & Base_Name (Get_Filename (File))
+                & " file time:" & Image (Get_Time_Stamp (File), "%D-%T")
+                & " memory: " & Image (File.Timestamp, "%D-%T"));
+      end if;
+      return Get_Time_Stamp (File) = File.Timestamp;
    end Is_Up_To_Date;
 
    ------------------------
