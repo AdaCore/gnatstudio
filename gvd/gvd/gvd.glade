@@ -10,7 +10,17 @@
   <language>Ada 95</language>
   <gnome_support>False</gnome_support>
   <gettext_support>True</gettext_support>
+  <use_widget_names>False</use_widget_names>
   <output_main_file>False</output_main_file>
+  <output_support_files>True</output_support_files>
+  <output_build_files>True</output_build_files>
+  <backup_source_files>True</backup_source_files>
+  <main_source_file>interface.c</main_source_file>
+  <main_header_file>interface.h</main_header_file>
+  <handler_source_file>callbacks.c</handler_source_file>
+  <handler_header_file>callbacks.h</handler_header_file>
+  <support_source_file>support.c</support_source_file>
+  <support_header_file>support.h</support_header_file>
 </project>
 
 <widget>
@@ -1875,11 +1885,14 @@
     </widget>
 
     <widget>
-      <class>GtkHandleBox</class>
-      <name>handlebox1</name>
-      <shadow_type>GTK_SHADOW_OUT</shadow_type>
-      <handle_position>GTK_POS_LEFT</handle_position>
-      <snap_edge>GTK_POS_TOP</snap_edge>
+      <class>GtkToolbar</class>
+      <name>toolbar1</name>
+      <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
+      <type>GTK_TOOLBAR_ICONS</type>
+      <space_size>5</space_size>
+      <space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
+      <relief>GTK_RELIEF_NORMAL</relief>
+      <tooltips>True</tooltips>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
@@ -1887,152 +1900,144 @@
       </child>
 
       <widget>
-	<class>GtkToolbar</class>
-	<name>toolbar1</name>
-	<orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
-	<type>GTK_TOOLBAR_ICONS</type>
-	<space_size>5</space_size>
-	<space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
-	<relief>GTK_RELIEF_NORMAL</relief>
-	<tooltips>True</tooltips>
+	<class>GtkLabel</class>
+	<name>label53</name>
+	<label> ( ): </label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+
+      <widget>
+	<class>GtkCombo</class>
+	<name>combo6</name>
+	<value_in_list>False</value_in_list>
+	<ok_if_empty>True</ok_if_empty>
+	<case_sensitive>False</case_sensitive>
+	<use_arrows>True</use_arrows>
+	<use_arrows_always>False</use_arrows_always>
+	<items></items>
 
 	<widget>
-	  <class>GtkLabel</class>
-	  <name>label1</name>
-	  <label> ( ): </label>
-	  <justify>GTK_JUSTIFY_CENTER</justify>
-	  <wrap>False</wrap>
-	  <xalign>0.5</xalign>
-	  <yalign>0.5</yalign>
-	  <xpad>0</xpad>
-	  <ypad>0</ypad>
+	  <class>GtkEntry</class>
+	  <child_name>GtkCombo:entry</child_name>
+	  <name>entry15</name>
+	  <can_focus>True</can_focus>
+	  <editable>True</editable>
+	  <text_visible>True</text_visible>
+	  <text_max_length>0</text_max_length>
+	  <text></text>
 	</widget>
+      </widget>
 
-	<widget>
-	  <class>GtkCombo</class>
-	  <name>combo1</name>
-	  <value_in_list>False</value_in_list>
-	  <ok_if_empty>True</ok_if_empty>
-	  <case_sensitive>False</case_sensitive>
-	  <use_arrows>True</use_arrows>
-	  <use_arrows_always>False</use_arrows_always>
-	  <items></items>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button62</name>
+	<tooltip>Lookup () in the source</tooltip>
+	<label></label>
+	<icon>lookup.xpm</icon>
+      </widget>
 
-	  <widget>
-	    <class>GtkEntry</class>
-	    <child_name>GtkCombo:entry</child_name>
-	    <name>entry1</name>
-	    <can_focus>True</can_focus>
-	    <editable>True</editable>
-	    <text_visible>True</text_visible>
-	    <text_max_length>0</text_max_length>
-	    <text></text>
-	  </widget>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button63</name>
+	<label></label>
+	<icon>findfwd.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button12</name>
-	  <tooltip>Lookup () in the source</tooltip>
-	  <label></label>
-	  <icon>lookup.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button64</name>
+	<tooltip>Set/Delete breakpoint at ()</tooltip>
+	<label></label>
+	<icon>breakat.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button13</name>
-	  <label></label>
-	  <icon>findfwd.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button65</name>
+	<tooltip>Stop whenever () changes</tooltip>
+	<label></label>
+	<icon>watch.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button14</name>
-	  <tooltip>Set/Delete breakpoint at ()</tooltip>
-	  <label></label>
-	  <icon>breakat.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button66</name>
+	<tooltip>Print ()</tooltip>
+	<label></label>
+	<icon>print.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button15</name>
-	  <tooltip>Stop whenever () changes</tooltip>
-	  <label></label>
-	  <icon>watch.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button67</name>
+	<tooltip>Display ()</tooltip>
+	<label></label>
+	<icon>display.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button16</name>
-	  <tooltip>Print ()</tooltip>
-	  <label></label>
-	  <icon>print.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button68</name>
+	<tooltip>Plot ()</tooltip>
+	<label></label>
+	<icon>plot.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button17</name>
-	  <tooltip>Display ()</tooltip>
-	  <label></label>
-	  <icon>display.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button69</name>
+	<label></label>
+	<icon>show.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button18</name>
-	  <tooltip>Plot ()</tooltip>
-	  <label></label>
-	  <icon>plot.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button70</name>
+	<label></label>
+	<icon>rotate.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button19</name>
-	  <label></label>
-	  <icon>show.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button71</name>
+	<tooltip>Set the value of ()</tooltip>
+	<label></label>
+	<icon>set.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button20</name>
-	  <label></label>
-	  <icon>rotate.xpm</icon>
-	</widget>
-
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button21</name>
-	  <tooltip>Set the value of ()</tooltip>
-	  <label></label>
-	  <icon>set.xpm</icon>
-	</widget>
-
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button22</name>
-	  <label></label>
-	  <icon>undisplay.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button72</name>
+	<label></label>
+	<icon>undisplay.xpm</icon>
       </widget>
     </widget>
 
     <widget>
-      <class>GtkHandleBox</class>
-      <name>handlebox2</name>
-      <shadow_type>GTK_SHADOW_OUT</shadow_type>
-      <handle_position>GTK_POS_LEFT</handle_position>
-      <snap_edge>GTK_POS_TOP</snap_edge>
+      <class>GtkToolbar</class>
+      <name>toolbar2</name>
+      <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
+      <type>GTK_TOOLBAR_ICONS</type>
+      <space_size>5</space_size>
+      <space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
+      <relief>GTK_RELIEF_NORMAL</relief>
+      <tooltips>True</tooltips>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
@@ -2040,131 +2045,120 @@
       </child>
 
       <widget>
-	<class>GtkToolbar</class>
-	<name>toolbar2</name>
-	<orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
-	<type>GTK_TOOLBAR_ICONS</type>
-	<space_size>5</space_size>
-	<space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
-	<relief>GTK_RELIEF_NORMAL</relief>
-	<tooltips>True</tooltips>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button49</name>
+	<tooltip>Start the debugged program</tooltip>
+	<label></label>
+	<icon>run.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button23</name>
-	  <tooltip>Start the debugged program</tooltip>
-	  <label></label>
-	  <icon>run.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button50</name>
+	<tooltip>Start the debugged program, stopping at the beginning of the main procedure</tooltip>
+	<label></label>
+	<icon>start.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button24</name>
-	  <tooltip>Start the debugged program, stopping at the beginning of the main procedure</tooltip>
-	  <label></label>
-	  <icon>start.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button52</name>
+	<tooltip>Step program until it reaches a different source line</tooltip>
+	<label></label>
+	<icon>step.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button25</name>
-	  <tooltip>Interrupt debugged program</tooltip>
-	  <label></label>
-	  <icon>interrupt.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button53</name>
+	<tooltip>Step one instruction exactly</tooltip>
+	<label></label>
+	<icon>stepi.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button26</name>
-	  <tooltip>Step program until it reaches a different source line</tooltip>
-	  <label></label>
-	  <icon>step.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button54</name>
+	<tooltip>Step program, proceeding through subroutine calls</tooltip>
+	<label></label>
+	<icon>next.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button27</name>
-	  <tooltip>Step one instruction exactly</tooltip>
-	  <label></label>
-	  <icon>stepi.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button55</name>
+	<tooltip>Step one instruction, but proceed through subroutine calls</tooltip>
+	<label></label>
+	<icon>nexti.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button28</name>
-	  <tooltip>Step program, proceeding through subroutine calls</tooltip>
-	  <label></label>
-	  <icon>next.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button56</name>
+	<tooltip>Execute until the program reaches a source line greater than the current</tooltip>
+	<label></label>
+	<icon>until.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button29</name>
-	  <tooltip>Step one instruction, but proceed through subroutine calls</tooltip>
-	  <label></label>
-	  <icon>nexti.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button58</name>
+	<tooltip>Continue program being debugged, after signal or breakpoint</tooltip>
+	<label></label>
+	<icon>cont.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button30</name>
-	  <tooltip>Execute until the program reaches a source line greater than the current</tooltip>
-	  <label></label>
-	  <icon>until.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button60</name>
+	<tooltip>Select and print stack frame that called this one</tooltip>
+	<label></label>
+	<icon>up.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button31</name>
-	  <tooltip>Execute until selected stack frame returns</tooltip>
-	  <label></label>
-	  <icon>finish.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button61</name>
+	<tooltip>Select and print stack frame called by this one</tooltip>
+	<label></label>
+	<icon>down.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button32</name>
-	  <tooltip>Continue program being debugged, after signal or breakpoint</tooltip>
-	  <label></label>
-	  <icon>cont.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button57</name>
+	<tooltip>Execute until selected stack frame returns</tooltip>
+	<label></label>
+	<icon>finish.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button33</name>
-	  <tooltip>Kill execution of program being debugged</tooltip>
-	  <label></label>
-	  <icon>kill.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button51</name>
+	<tooltip>Interrupt debugged program</tooltip>
+	<label></label>
+	<icon>interrupt.xpm</icon>
+      </widget>
 
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button34</name>
-	  <tooltip>Select and print stack frame that called this one</tooltip>
-	  <label></label>
-	  <icon>up.xpm</icon>
-	</widget>
-
-	<widget>
-	  <class>GtkButton</class>
-	  <child_name>Toolbar:button</child_name>
-	  <name>button35</name>
-	  <tooltip>Select and print stack frame called by this one</tooltip>
-	  <label></label>
-	  <icon>down.xpm</icon>
-	</widget>
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button59</name>
+	<tooltip>Kill execution of program being debugged</tooltip>
+	<label></label>
+	<icon>kill.xpm</icon>
       </widget>
     </widget>
 
