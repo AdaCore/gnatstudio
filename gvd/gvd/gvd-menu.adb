@@ -51,6 +51,8 @@ with Process_Proxies;     use Process_Proxies;
 with Breakpoints_Editor;  use Breakpoints_Editor;
 with Display_Items;       use Display_Items;
 
+with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+
 package body GVD.Menu is
 
    use GVD;
