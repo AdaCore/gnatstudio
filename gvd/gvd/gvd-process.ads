@@ -198,7 +198,8 @@ package GVD.Process is
         Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
       Kind            : GVD.Types.Debugger_Type;
       Executable      : String;
-      Params          : Argument_List;
+      Debugger_Args   : Argument_List;
+      Executable_Args : String;
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
@@ -212,7 +213,9 @@ package GVD.Process is
    --  Executable is the name of the executable module to debug.
    --  This function returns a Process_Tab_Access.
    --
-   --  Params are the optional parameters for the underlying debugger.
+   --  Debugger_Args are the optional parameters for the underlying debugger.
+   --
+   --  Executable_Args are the optional parameters for the debuggee.
    --
    --  See Debugger.Spawn for a documentation on Remote_Host, Remote_Target,
    --  Remote_Protocol and Debugger_Name.

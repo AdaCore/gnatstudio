@@ -568,7 +568,8 @@ package body GVD.Process is
         Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
       Kind            : Debugger_Type;
       Executable      : String;
-      Params          : Argument_List;
+      Debugger_Args   : Argument_List;
+      Executable_Args : String;
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
@@ -697,7 +698,8 @@ package body GVD.Process is
          Spawn
            (Process.Debugger,
             Executable,
-            Params,
+            Debugger_Args,
+            Executable_Args,
             new Gui_Process_Proxy,
             Window.all'Access,
             Remote_Host,
@@ -706,7 +708,8 @@ package body GVD.Process is
             Debugger_Name);
       else
          Spawn
-           (Process.Debugger, "", Params, new Gui_Process_Proxy,
+           (Process.Debugger, "", Debugger_Args, Executable_Args,
+            new Gui_Process_Proxy,
             Window.all'Access, Remote_Host, Remote_Target,
             Remote_Protocol, Debugger_Name);
          Print_Message
