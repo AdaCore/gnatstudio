@@ -41,6 +41,7 @@ with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
 with GVD.Status_Bar;   use GVD.Status_Bar;
 with GVD.Types;        use GVD.Types;
+with GVD.Trace;        use GVD.Trace;
 
 package body Display_Items is
 
@@ -225,6 +226,15 @@ package body Display_Items is
       Value_Found : Boolean := False;
       Alias_Item  : Display_Item;
 
+      procedure Output_Error (Msg : String);
+      --  Output an error message on the status bar and in the log file.
+
+      procedure Output_Error (Msg : String) is
+      begin
+         Print_Message (Debugger.Window.Statusbar1, Error, Msg);
+         Output_Line (Debugger.Window, "# " & Msg);
+      end Output_Error;
+
    begin
       if Default_Entity = null then
          declare
@@ -253,9 +263,8 @@ package body Display_Items is
                Entity := Parse_Type (Debugger.Debugger, Variable_Name);
 
                if Entity = null then
-                  Print_Message
-                    (Debugger.Window.Statusbar1,
-                     Error, (-"Could not get the type of ") & Variable_Name);
+                  Output_Error
+                    ((-"Could not get the type of ") & Variable_Name);
                   return;
                else
                   Parse_Value
@@ -263,9 +272,8 @@ package body Display_Items is
                end if;
 
                if Entity = null then
-                  Print_Message
-                    (Debugger.Window.Statusbar1,
-                     Error, (-"Could not get the value of ") & Variable_Name);
+                  Output_Error
+                    ((-"Could not get the value of ") & Variable_Name);
                end if;
 
                Item := new Display_Item_Record;
@@ -281,10 +289,8 @@ package body Display_Items is
 
             exception
                when Language.Unexpected_Type | Constraint_Error =>
-                  Print_Message
-                    (Debugger.Window.Statusbar1,
-                     Error,
-                     (-"Could not parse type or value for ") & Variable_Name);
+                  Output_Error
+                    ((-"Could not parse type or value for ") & Variable_Name);
                   return;
             end;
 
