@@ -75,6 +75,6 @@ package Codefix is
    procedure Free is new Ada.Unchecked_Deallocation (String, Dynamic_String);
 
    function Clone (This : Dynamic_String) return Dynamic_String;
-   --  ???
+   --  Duplicate all information contained in This, allocated in the pool.
 
 end Codefix;

@@ -134,20 +134,22 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Name         : String) return Ada_List;
-   --  ???
+   --  Add 'constant' to the declaration of the variable Name. Create a new
+   --  declaration if needed.
 
    function Resolve_Ambiguity
      (Current_Text    : Text_Navigator_Abstr'Class;
       Error_Cursor    : File_Cursor'Class;
       Solution_Cursor : File_Cursor'Class;
       Name            : String) return Extract;
-   --  ???
+   --  Add to the object Name the prefix of the package declared at the
+   --  position Solution_Cursor.
 
    function Remove_Conversion
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Object_Name   : String) return Ada_Instruction;
-   --  ???
+      Object_Name  : String) return Ada_Instruction;
+   --  Remove the conversion at made at Cursor position.
 
 private
 
