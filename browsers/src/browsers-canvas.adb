@@ -103,6 +103,12 @@ package body Browsers.Canvas is
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
    --  Toggle the display of links for the item
 
+   procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
+   --  Toggle the layout of links.
+
+   function On_Expose
+     (Browser : access Gtk_Widget_Record'Class) return Boolean;
+
    ----------------
    -- Initialize --
    ----------------
@@ -121,6 +127,8 @@ package body Browsers.Canvas is
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, False);
 
+      Set_Orthogonal_Links (Browser.Canvas, True);
+
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
          Widget_Callback.To_Marshaller (Realized'Access), Browser);
@@ -129,7 +137,32 @@ package body Browsers.Canvas is
         (Browser.Canvas, "key_press_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
          Browser);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Browser.Canvas, "expose_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller (On_Expose'Access),
+         Browser, After => True);
    end Initialize;
+
+   ---------------
+   -- On_Expose --
+   ---------------
+
+   function On_Expose
+     (Browser : access Gtk_Widget_Record'Class) return Boolean
+   is
+      B : Glide_Browser := Glide_Browser (Browser);
+   begin
+      --  Redraw the selected links if needed.
+      --  IF we don't do that, then it might happen that unselected links
+      --  overlap selected links.
+      if B.Selected_Item /= null
+        and then Get_Orthogonal_Links (Get_Canvas (B))
+      then
+         Update_Links (Get_Canvas (B), B.Selected_Item);
+      end if;
+      return False;
+   end On_Expose;
 
    ---------------
    -- Key_Press --
@@ -275,6 +308,16 @@ package body Browsers.Canvas is
            (Mitem, "activate",
             Widget_Callback.To_Marshaller (On_Refresh'Access), B);
 
+         if Get_Orthogonal_Links (Get_Canvas (B)) then
+            Gtk_New (Mitem, Label => -"Straight links");
+         else
+            Gtk_New (Mitem, Label => -"Orthogonal links");
+         end if;
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Widget_Callback.To_Marshaller (Toggle_Orthogonal'Access), B);
+
          Gtk_New (Mitem, Label => -"Zoom in");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
@@ -339,6 +382,18 @@ package body Browsers.Canvas is
       Layout (Get_Canvas (B), Force => False, Vertical_Layout => True);
       Refresh_Canvas (Get_Canvas (B));
    end On_Refresh;
+
+   -----------------------
+   -- Toggle_Orthogonal --
+   -----------------------
+
+   procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class) is
+      B : Glide_Browser := Glide_Browser (Browser);
+   begin
+      Set_Orthogonal_Links
+        (Get_Canvas (B), not Get_Orthogonal_Links (Get_Canvas (B)));
+      Refresh_Canvas (Get_Canvas (B));
+   end Toggle_Orthogonal;
 
    -------------
    -- Zoom_In --
