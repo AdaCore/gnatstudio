@@ -1090,6 +1090,7 @@ package body GVD.Source_Editors is
       --  cancel the Idle loop
 
       if Get_Process (Debug) = null
+        or else Editor.Current_File_Cache = null
         or else Editor.Current_File_Cache.Line_Parsed = null
       then
          Editor.Idle_Id := 0;
