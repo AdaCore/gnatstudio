@@ -2947,22 +2947,30 @@ package body CPP_Parser is
    ---------------------
 
    function Set_Executables
-     (Handler : access Entities.LI_Handler_Record'Class) return String
+     (System_Dir : String;
+      Handler    : access Entities.LI_Handler_Record'Class) return String
    is
       H : constant CPP_Handler := CPP_Handler (Handler);
    begin
       Free (H.DBIMP_Path);
       Free (H.CBrowser_Path);
 
-      H.DBIMP_Path    := Locate_Exec_On_Path (DBIMP);
-      if H.DBIMP_Path = null then
+      H.DBIMP_Path := new String'
+        (Name_As_Directory (System_Dir) & "bin" & Directory_Separator & DBIMP);
+      H.CBrowser_Path := new String'
+        (Name_As_Directory (System_Dir) & "bin"
+         & Directory_Separator & CBrowser);
+
+      if not Is_Regular_File (H.DBIMP_Path.all) then
+         Free (H.DBIMP_Path);
+         Free (H.CBrowser_Path);
          return DBIMP
            & " not found on the path. C/C++ browsing is not available";
       end if;
 
-      H.CBrowser_Path := Locate_Exec_On_Path (CBrowser);
-      if H.CBrowser_Path = null then
+      if not Is_Regular_File (H.CBrowser_Path.all) then
          Free (H.DBIMP_Path);
+         Free (H.CBrowser_Path);
          return CBrowser
            & " not found on the path. C/C++ browsing is not available";
       end if;

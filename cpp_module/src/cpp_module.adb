@@ -158,7 +158,8 @@ package body Cpp_Module is
         (Get_Language_Handler (Kernel));
       LI      : LI_Handler := Create_CPP_Handler
         (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));
-      Msg     : constant String := Set_Executables (LI);
+      Msg     : constant String :=
+        Set_Executables (Get_System_Dir (Kernel), LI);
 
    begin
       if Msg /= "" then

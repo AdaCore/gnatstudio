@@ -30,10 +30,12 @@ package CPP_Parser is
    --  Create a new ALI handler
 
    function Set_Executables
-     (Handler : access Entities.LI_Handler_Record'Class) return String;
+     (System_Dir : String;
+      Handler    : access Entities.LI_Handler_Record'Class) return String;
    --  Locate the external executables required by C and C++ handling.
    --  Return an error message to display in the console (or the empty string
    --  if all executables where correctly located).
+   --  System_Dir is the installation directory of GPS.
 
    procedure On_Project_View_Changed
      (Handler : access Entities.LI_Handler_Record'Class);
