@@ -2538,9 +2538,16 @@ package body GVD_Module is
             begin
                Process_User_Command
                  (Process,
-                  Glide_Kernel.Scripts.Nth_Arg (Data, 1),
+                  Glide_Kernel.Scripts.Nth_Arg (Data, 2),
                   Output_Command => True);
             end;
+
+         elsif Command = Glide_Kernel.Scripts.Constructor_Method then
+            --  Nothing to do for now. The plan, ultimately, is to be able to
+            --  control which debugger the commands will apply to by selecting
+            --  a debugger from the constructor, for instance by passing a name
+            --  to the constructor
+            null;
          end if;
       end if;
    end Debugger_Command_Handler;
@@ -2681,9 +2688,13 @@ package body GVD_Module is
       --  Commands
 
       Glide_Kernel.Scripts.Register_Command
+        (Kernel, Glide_Kernel.Scripts.Constructor_Method,
+         Class         => Debugger_Class,
+         Handler       => Debugger_Command_Handler'Access);
+
+      Glide_Kernel.Scripts.Register_Command
         (Kernel, "send",
          Class         => Debugger_Class,
-         Static_Method => True,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Handler       => Debugger_Command_Handler'Access);
