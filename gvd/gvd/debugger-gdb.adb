@@ -551,11 +551,15 @@ package body Debugger.Gdb is
 
       --  Connect to the remote target if needed.
 
-      if Debugger.Target_Command /= null and then Debugger.Window /= null then
-         Output_Text
-           (Convert (Debugger.Window, Debugger),
-            Send (Debugger, Debugger.Target_Command.all, Mode => Internal) &
-            ASCII.LF);
+      if Debugger.Target_Command /= null then
+         if Debugger.Window = null then
+            Send (Debugger, Debugger.Target_Command.all, Mode => Internal);
+         else
+            Output_Text
+              (Convert (Debugger.Window, Debugger),
+               Send (Debugger, Debugger.Target_Command.all, Mode => Internal) &
+               ASCII.LF);
+         end if;
       end if;
 
       --  Load the module to debug, if any.
