@@ -145,8 +145,7 @@ Change the background color of the @code{Keywords} by clicking on the last
 down arrow, at the right of the @code{Keywords} line.
 
 Choose a color, e.g a light green. When you're done with the color
-selection, simply click again on the arrow, or anywhere outside the
-color selection area.
+selection, simply click again on the arrow.
 
 Click on the @code{Apply} button and look at the effects in the source
 editor. If you like the new display, click on @code{OK} to confirm the
@@ -604,6 +603,9 @@ Now, let's take a look at the switches set in the project.
 
 Select the menu item @code{Project->Edit File Switches}: a global
 switch editor is displayed in the working area.
+
+Now click on the @code{sdc} project in the project explorer: switches
+associated with each file of the project are displayed.
 
 The editor lists the switches associated with each file in the project and
 the gray area shows the default (global) switches; you will also notice
