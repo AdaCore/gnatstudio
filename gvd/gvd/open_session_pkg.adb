@@ -36,7 +36,6 @@ pragma Suppress (All_Checks);
 --  Checks are expensive (in code size) in this unit, and not needed,
 --  since the following code is generated automatically.
 
-
 procedure Gtk_New (Open_Session : out Open_Session_Access) is
 begin
    Open_Session := new Open_Session_Record;
@@ -153,7 +152,6 @@ begin
 
 end Initialize;
 
-
 procedure Open_Session
   (Open   : in out Open_Session_Access;
    File   : out Odd.Types.String_Access;
@@ -183,8 +181,8 @@ begin
 
    --  Retrieve the label associated with the selected option menu
 
-   Menu  := Get_Object (Get_Active (Get_Menu (Open.Launch_Menu)));
-   Menu1 := Children (Get_Menu (Open.Launch_Menu));
+   Menu   := Get_Object (Get_Active (Get_Menu (Open.Launch_Menu)));
+   Menu1  := Children (Get_Menu (Open.Launch_Menu));
    Launch := Launch_Method'Succ (None);
 
    while Get_Object (Get_Data (Menu1)) /= Menu loop

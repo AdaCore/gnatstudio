@@ -67,19 +67,20 @@ package Process_Proxies is
    --  Go back to status preceeding the last call to
    --  Push_Internal_Command_Status.
 
-   procedure Set_Parse_File_Name (Proxy : access Process_Proxy;
-                                  Parse : Boolean);
+   procedure Set_Parse_File_Name
+     (Proxy : access Process_Proxy;
+      Parse : Boolean);
    --  Indicate whether we should parse file names/line pattern in the output
    --  of the debugger.
 
-   function Get_Parse_File_Name (Proxy : access Process_Proxy)
-                                return Boolean;
+   function Get_Parse_File_Name
+     (Proxy : access Process_Proxy) return Boolean;
    --  Indicate whether we should parse file names/line pattern in the output
    --  of the debugger.
 
    function Get_Descriptor
      (Proxy : access Process_Proxy)
-     return GNAT.Expect.Process_Descriptor_Access;
+      return GNAT.Expect.Process_Descriptor_Access;
    --  Returns the associated Process_Descriptor, so that all the functions of
    --  GNAT.Expect can be applied to it.
    --  You should not use Expect directly, but rather Wait below.
@@ -125,9 +126,10 @@ package Process_Proxies is
       Timeout : Integer := 20);
    --  Same, but the regular expression is given a string.
 
-   procedure Send (Proxy : access Process_Proxy;
-                   Cmd   : String;
-                   Empty_Buffer : Boolean := False);
+   procedure Send
+     (Proxy : access Process_Proxy;
+      Cmd   : String;
+      Empty_Buffer : Boolean := False);
    --  Send a command to the underlying process.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
@@ -171,9 +173,8 @@ package Process_Proxies is
    --  It is possible, at any time, to register some post-processing commands
    --  that will be executed after the current (or next, if there is no
    --  current) call to Wait.
-   --  These post-processing commands should be used so that not two
-   --  concurrent Wait calls can occur at the same time on a given
-   --  Process_Proxy.
+   --  These post-processing commands should be used so that no concurrent Wait
+   --  call can occur on a given Process_Proxy.
 
    type Post_Process_Cmd is access procedure (User_Data : System.Address);
 
