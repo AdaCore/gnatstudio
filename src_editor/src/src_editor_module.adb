@@ -830,12 +830,12 @@ package body Src_Editor_Module is
       Grab_Focus (D.Edit);
 
       if Is_Valid_Location (D.Edit, D.Line, D.Column) then
+         Set_Cursor_Location (D.Edit, D.Line, D.Column);
+
          if D.Column_End /= 0
            and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
          then
             Select_Region (D.Edit, D.Line, D.Column, D.Line, D.Column_End);
-         else
-            Set_Cursor_Location (D.Edit, D.Line, D.Column);
          end if;
 
       elsif Is_Valid_Location (D.Edit, D.Line) then
