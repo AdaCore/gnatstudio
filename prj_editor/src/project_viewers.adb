@@ -529,6 +529,10 @@ package body Project_Viewers is
    begin
       Edit_Switches_For_Context
         (Selection_Context_Access (Context), Force_Default => False);
+
+   exception
+      when E : others =>
+        Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Edit_Switches_Callback;
 
    --------------------------------
@@ -1428,8 +1432,7 @@ package body Project_Viewers is
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Switches'Access),
+               Context_Callback.To_Marshaller (Edit_Switches'Access),
                Selection_Context_Access (Context));
          end if;
       end if;
@@ -1520,6 +1523,10 @@ package body Project_Viewers is
          Project_Information (File),
          Names);
       Free (Names);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
    end Edit_Multiple_Switches;
 
    -------------------
