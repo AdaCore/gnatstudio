@@ -53,7 +53,7 @@ begin
    Set_Policy (Main_Debug_Window, False, True, False);
    Set_Position (Main_Debug_Window, Win_Pos_None);
    Set_Modal (Main_Debug_Window, False);
-   Set_Default_Size (Main_Debug_Window, 750, 600);
+   Set_Default_Size (Main_Debug_Window, 700, 700);
 
    Gtk_New_Vbox (Main_Debug_Window.Vbox1, False, 0);
    Add (Main_Debug_Window, Main_Debug_Window.Vbox1);
@@ -74,9 +74,9 @@ begin
    Add_Accel_Group (Main_Debug_Window, The_Accel_Group);
    Add_Accelerator (Main_Debug_Window.Open_Program1, "activate",
      The_Accel_Group, GDK_O, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Open_Program1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Open_Program1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Open_Program1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Program1);
    Set_Right_Justify (Main_Debug_Window.Open_Program1, False);
 
@@ -429,54 +429,54 @@ begin
    Gtk_New (Main_Debug_Window.Step1, -"Step");
    Add_Accelerator (Main_Debug_Window.Step1, "activate",
      The_Accel_Group, GDK_F5, 0, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Step1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Step1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Step1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Step1);
    Set_Right_Justify (Main_Debug_Window.Step1, False);
 
    Gtk_New (Main_Debug_Window.Step_Instruction1, -"Step Instruction");
    Add_Accelerator (Main_Debug_Window.Step_Instruction1, "activate",
      The_Accel_Group, GDK_F5, Gdk.Types.Shift_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Step_Instruction1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Step_Instruction1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Step_Instruction1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Step_Instruction1);
    Set_Right_Justify (Main_Debug_Window.Step_Instruction1, False);
 
    Gtk_New (Main_Debug_Window.Next1, -"Next");
    Add_Accelerator (Main_Debug_Window.Next1, "activate",
      The_Accel_Group, GDK_F6, 0, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Next1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Next1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Next1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Next1);
    Set_Right_Justify (Main_Debug_Window.Next1, False);
 
    Gtk_New (Main_Debug_Window.Next_Instruction1, -"Next Instruction");
    Add_Accelerator (Main_Debug_Window.Next_Instruction1, "activate",
      The_Accel_Group, GDK_F6, Gdk.Types.Shift_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Next_Instruction1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Next_Instruction1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Next_Instruction1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Next_Instruction1);
    Set_Right_Justify (Main_Debug_Window.Next_Instruction1, False);
 
    Gtk_New (Main_Debug_Window.Until1, -"Until");
    Add_Accelerator (Main_Debug_Window.Until1, "activate",
      The_Accel_Group, GDK_F7, 0, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Until1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Until1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Until1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Until1);
    Set_Right_Justify (Main_Debug_Window.Until1, False);
 
    Gtk_New (Main_Debug_Window.Finish1, -"Finish");
    Add_Accelerator (Main_Debug_Window.Finish1, "activate",
      The_Accel_Group, GDK_F8, 0, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Finish1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Finish1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Finish1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Finish1);
    Set_Right_Justify (Main_Debug_Window.Finish1, False);
 
@@ -487,9 +487,9 @@ begin
    Gtk_New (Main_Debug_Window.Continue1, -"Continue");
    Add_Accelerator (Main_Debug_Window.Continue1, "activate",
      The_Accel_Group, GDK_F9, 0, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Continue1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Continue1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Continue1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Continue1);
    Set_Right_Justify (Main_Debug_Window.Continue1, False);
 
@@ -518,9 +518,9 @@ begin
    Gtk_New (Main_Debug_Window.Interrupt1, -"Interrupt");
    Add_Accelerator (Main_Debug_Window.Interrupt1, "activate",
      The_Accel_Group, GDK_Escape, 0, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Interrupt1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Interrupt1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Interrupt1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Interrupt1);
    Set_Right_Justify (Main_Debug_Window.Interrupt1, False);
 
@@ -718,18 +718,18 @@ begin
    Gtk_New (Main_Debug_Window.Up1, -"Up");
    Add_Accelerator (Main_Debug_Window.Up1, "activate",
      The_Accel_Group, GDK_Up, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Up1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Up1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Up1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Up1);
    Set_Right_Justify (Main_Debug_Window.Up1, False);
 
    Gtk_New (Main_Debug_Window.Down1, -"Down");
    Add_Accelerator (Main_Debug_Window.Down1, "activate",
      The_Accel_Group, GDK_Down, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Down1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Down1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Down1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Down1);
    Set_Right_Justify (Main_Debug_Window.Down1, False);
 
@@ -740,7 +740,7 @@ begin
    Gtk_New (Main_Debug_Window.Source1_Menu);
    Set_Submenu (Main_Debug_Window.Source1, Main_Debug_Window.Source1_Menu);
 
-   Gtk_New (Main_Debug_Window.Edit_Breakpoints1, -"Edit Breakpoints");
+   Gtk_New (Main_Debug_Window.Edit_Breakpoints1, -"Edit Breakpoints...");
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Edit_Breakpoints1, "activate",
       Menu_Item_Callback.To_Marshaller (On_Edit_Breakpoints1_Activate'Access));
@@ -1090,11 +1090,11 @@ begin
    Set_Right_Justify (Main_Debug_Window.About_Odd1, False);
 
    Gtk_New (Main_Debug_Window.Toolbar1, Orientation_Horizontal, Toolbar_Icons);
-   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Toolbar1, False, False, 0);
+   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Toolbar1, False, True, 0);
    Set_Space_Size (Main_Debug_Window.Toolbar1, 5);
-   Set_Space_Style (Main_Debug_Window.Toolbar1, Toolbar_Space_Empty);
+   Set_Space_Style (Main_Debug_Window.Toolbar1, Toolbar_Space_Line);
    Set_Tooltips (Main_Debug_Window.Toolbar1, True);
-   Set_Button_Relief (Main_Debug_Window.Toolbar1, Relief_Normal);
+   Set_Button_Relief (Main_Debug_Window.Toolbar1, Relief_None);
 
    Gtk_New (Main_Debug_Window.Label53, -("( ): "));
    Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Label53);
@@ -1141,6 +1141,8 @@ begin
       Text => -"",
       Tooltip_Text => -"Print ()",
       Icon => Gtk_Widget (Create_Pixmap (print_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button66, "clicked", On_Print1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button67 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
@@ -1210,66 +1212,80 @@ begin
       Text => -"",
       Tooltip_Text => -"Step program until it reaches a different source line",
       Icon => Gtk_Widget (Create_Pixmap (step_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button52, "clicked", Widget_Callback.To_Marshaller (On_Step1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button53 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step one instruction exactly",
       Icon => Gtk_Widget (Create_Pixmap (stepi_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button53, "clicked", Widget_Callback.To_Marshaller (On_Step_Instruction1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button54 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step program, proceeding through subroutine calls",
       Icon => Gtk_Widget (Create_Pixmap (next_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button54, "clicked", Widget_Callback.To_Marshaller (On_Next1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button55 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Step one instruction, but proceed through subroutine calls",
       Icon => Gtk_Widget (Create_Pixmap (nexti_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button55, "clicked", Widget_Callback.To_Marshaller (On_Next_Instruction1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button56 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Execute until the program reaches a source line greater than the current",
       Icon => Gtk_Widget (Create_Pixmap (until_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button56, "clicked", Widget_Callback.To_Marshaller (On_Until1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button58 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Continue program being debugged, after signal or breakpoint",
       Icon => Gtk_Widget (Create_Pixmap (cont_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button58, "clicked", Widget_Callback.To_Marshaller (On_Continue1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button60 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Select and print stack frame that called this one",
       Icon => Gtk_Widget (Create_Pixmap (up_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button60, "clicked", Widget_Callback.To_Marshaller (On_Up1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button61 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Select and print stack frame called by this one",
       Icon => Gtk_Widget (Create_Pixmap (down_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button61, "clicked", Widget_Callback.To_Marshaller (On_Down1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button57 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Execute until selected stack frame returns",
       Icon => Gtk_Widget (Create_Pixmap (finish_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button57, "clicked", Widget_Callback.To_Marshaller (On_Finish1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button51 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Interrupt debugged program",
       Icon => Gtk_Widget (Create_Pixmap (interrupt_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button59 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Kill execution of program being debugged",
-      Icon => Gtk_Widget (Create_Pixmap (kill_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button51, "clicked", Widget_Callback.To_Marshaller (On_Interrupt1_Activate'Access), Main_Debug_Window);
 
    Gtk_New (Main_Debug_Window.Frame7);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Frame7, True, True, 0);
