@@ -18,49 +18,51 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-with Gtk.Accel_Group;         use Gtk.Accel_Group;
-with Gdk.Types;               use Gdk.Types;
-with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Gtk.Accel_Group;           use Gtk.Accel_Group;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;
-with Gtk.Main;                use Gtk.Main;
-with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Stock;               use Gtk.Stock;
+with Gtk.Main;                  use Gtk.Main;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Stock;                 use Gtk.Stock;
 
-with Glide_Intl;              use Glide_Intl;
+with Glide_Intl;                use Glide_Intl;
 
-with GVD.Status_Bar;          use GVD.Status_Bar;
+with GVD.Preferences;           use GVD.Preferences;
+with GVD.Status_Bar;            use GVD.Status_Bar;
 
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Console;    use Glide_Kernel.Console;
-with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
-with Glide_Kernel.Project;    use Glide_Kernel.Project;
-with Glide_Kernel.Timeout;    use Glide_Kernel.Timeout;
-with Language_Handlers;       use Language_Handlers;
-with Language_Handlers.Glide; use Language_Handlers.Glide;
-with Prj_API;                 use Prj_API;
-with Prj;                     use Prj;
-with Src_Info;                use Src_Info;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Language_Handlers;         use Language_Handlers;
+with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Prj_API;                   use Prj_API;
+with Prj;                       use Prj;
+with Src_Info;                  use Src_Info;
 
-with Glide_Main_Window;       use Glide_Main_Window;
+with Glide_Main_Window;         use Glide_Main_Window;
 
 with Basic_Types;
-with GVD.Dialogs;             use GVD.Dialogs;
-with String_Utils;            use String_Utils;
-with GUI_Utils;               use GUI_Utils;
+with GVD.Dialogs;               use GVD.Dialogs;
+with String_Utils;              use String_Utils;
+with GUI_Utils;                 use GUI_Utils;
 
-with GNAT.Expect;             use GNAT.Expect;
+with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
-with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Traces;                  use Traces;
-with Ada.Exceptions;          use Ada.Exceptions;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 package body Builder_Module is
@@ -101,7 +103,6 @@ package body Builder_Module is
      (Compute_Xref_Data, Compute_Xref_Data_Access);
 
    package Xref_Timeout is new Gtk.Main.Timeout (Compute_Xref_Data_Access);
-
 
    procedure Timeout_Xref_Destroy (D : in out Compute_Xref_Data_Access);
    --  Destroy the memory associated with an Xref_Timeout.
@@ -280,7 +281,7 @@ package body Builder_Module is
         (Kernel, Build & (-"Compile File")), Sensitive);
       Set_Sensitive (Find_Menu_Item (Kernel, Build & (-"Make")), Sensitive);
       Set_Sensitive (Find_Menu_Item
-        (Kernel, Build & (-"Stop Build")), not Sensitive);
+        (Kernel, Build & (-"Interrupt")), not Sensitive);
    end Set_Sensitive_Menus;
 
    --------------
@@ -343,7 +344,8 @@ package body Builder_Module is
          --  There is no current file, so we can't compile anything
          else
             Console.Insert
-              (K, -"No file selected, cannot build.", Mode => Error);
+              (K, -"No file selected, cannot build", Mode => Error);
+            return;
          end if;
 
       else
@@ -356,7 +358,7 @@ package body Builder_Module is
 
                when Make_Syntax =>
                   Console.Insert
-                    (K, -"You must save the project file before building.",
+                    (K, -"You must save the project file before building",
                      Mode => Error);
                   return;
             end case;
@@ -389,7 +391,8 @@ package body Builder_Module is
 
       for J in Args'First .. Args'Last - 1 loop
          Console.Insert
-           (K, " " & Args (J).all, Highlight_Sloc => False, Add_LF => False);
+           (K, " " & Args (J).all,
+            Highlight_Sloc => False, Add_LF => False);
       end loop;
 
       Console.Insert
@@ -411,7 +414,7 @@ package body Builder_Module is
 
    exception
       when Invalid_Process =>
-         Console.Insert (K, -"Invalid command.", False, Mode => Error);
+         Console.Insert (K, -"Invalid command", False, Mode => Error);
          Pop_State (K);
          Set_Sensitive_Menus (K, True);
          Free (Cmd);
@@ -442,7 +445,7 @@ package body Builder_Module is
         or else not (Context.all in File_Selection_Context'Class)
       then
          Console.Insert
-           (Kernel, -"No file selected, cannot check syntax.", Mode => Error);
+           (Kernel, -"No file selected, cannot check syntax", Mode => Error);
          return;
       end if;
 
@@ -464,7 +467,7 @@ package body Builder_Module is
       begin
          if File = "" then
             Console.Insert
-              (Kernel, -"No file name, cannot check syntax.", Mode => Error);
+              (Kernel, -"No file name, cannot check syntax", Mode => Error);
             return;
          end if;
 
@@ -472,7 +475,7 @@ package body Builder_Module is
 
          if Lang /= "ada" then
             Console.Insert
-              (Kernel, -"Syntax check of non Ada file not yet supported.",
+              (Kernel, -"Syntax check of non Ada file not yet supported",
                Mode => Error);
             return;
          end if;
@@ -500,7 +503,7 @@ package body Builder_Module is
 
       exception
          when Invalid_Process =>
-            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
             Pop_State (Kernel);
             Set_Sensitive_Menus (Kernel, True);
             Free (Args);
@@ -528,7 +531,7 @@ package body Builder_Module is
         or else not (Context.all in File_Selection_Context'Class)
       then
          Console.Insert
-           (Kernel, -"No file selected, cannot compile.", Mode => Error);
+           (Kernel, -"No file selected, cannot compile", Mode => Error);
          return;
       end if;
 
@@ -552,14 +555,14 @@ package body Builder_Module is
       begin
          if File = "" then
             Console.Insert
-              (Kernel, -"No file name, cannot compile.", Mode => Error);
+              (Kernel, -"No file name, cannot compile", Mode => Error);
          end if;
 
          Lower_Case (Lang);
 
          if Lang /= "ada" then
             Console.Insert
-              (Kernel, -"Compilation of non Ada file not yet supported.",
+              (Kernel, -"Compilation of non Ada file not yet supported",
                Mode => Error);
          end if;
 
@@ -604,7 +607,7 @@ package body Builder_Module is
 
       exception
          when Invalid_Process =>
-            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
             Pop_State (Kernel);
             Set_Sensitive_Menus (Kernel, True);
             Free (Args);
@@ -665,7 +668,7 @@ package body Builder_Module is
 
       exception
          when Invalid_Process =>
-            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
             Pop_State (Kernel);
             Set_Sensitive_Menus (Kernel, True);
             Free (Args);
@@ -902,19 +905,77 @@ package body Builder_Module is
    procedure On_Run
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      pragma Unreferenced (Data);
-      K : constant Kernel_Handle := Kernel_Handle (Kernel);
-
-      Arguments : constant String := Simple_Entry_Dialog
-        (Parent  => Get_Main_Window (K),
-         Title   => -"Arguments Selection",
-         Message => -"Enter the arguments to your application:",
-         Key     => "gps_run_arguments");
+      K       : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Active  : aliased Boolean := False;
+      Args    : Argument_List_Access;
+      Exec    : String_Access;
+      Success : Boolean;
 
    begin
-      if Arguments = "" or else Arguments (Arguments'First) /= ASCII.NUL then
-         null;
-         --  ???
+      if Data.Length = 0 then
+         declare
+            Command : constant String := Display_Entry_Dialog
+              (Parent        => Get_Main_Window (K),
+               Title         => -"Run Command",
+               Message       => -"Enter the command to run:",
+               Check_Msg     => -"Use external terminal",
+               Key           => "gps_run_cmd",
+               Button_Active => Active'Unchecked_Access);
+
+         begin
+            if Command = ""
+              or else Command (Command'First) = ASCII.NUL
+            then
+               return;
+            else
+               if Active then
+                  Args := Argument_String_To_List
+                    (Get_Pref (K, Execute_Command) & ' ' & Command);
+               else
+                  Args := Argument_String_To_List (Command);
+               end if;
+
+               Exec := Locate_Exec_On_Path (Args (1).all);
+               Launch_Process
+                 (K, Exec.all, Args (2 .. Args'Last), null, "", Success);
+               Free (Exec);
+               Free (Args);
+            end if;
+         end;
+
+      else
+         declare
+            Arguments : constant String := Display_Entry_Dialog
+              (Parent        => Get_Main_Window (K),
+               Title         => -"Arguments Selection",
+               Message       => -"Enter the arguments to your application:",
+               Check_Msg     => -"Use external terminal",
+               Key           => "gps_run_args",
+               Button_Active => Active'Unchecked_Access);
+
+         begin
+            if Arguments = ""
+              or else Arguments (Arguments'First) /= ASCII.NUL
+            then
+               if Active then
+                  Args := Argument_String_To_List
+                    (Get_Pref (K, Execute_Command) & ' ' &
+                     Executables_Directory (Data.Project) & Data.File & ' ' &
+                     Arguments);
+                  Launch_Process
+                    (K, Args (1).all, Args (2 .. Args'Last),
+                     null, "", Success);
+
+               else
+                  Args := Argument_String_To_List (Arguments);
+                  Launch_Process
+                    (K, Executables_Directory (Data.Project) & Data.File,
+                     Args.all, null, "", Success);
+               end if;
+
+               Free (Args);
+            end if;
+         end;
       end if;
 
    exception
@@ -957,6 +1018,7 @@ package body Builder_Module is
       Remove_All_Children (Menu2);
 
       --  Add all the main units from all the imported projects.
+
       while Current (Iter) /= No_Project loop
          declare
             Mains : Argument_List := Get_Attribute_Value
@@ -1008,6 +1070,7 @@ package body Builder_Module is
       end loop;
 
       --  No main program ?
+
       Gtk_New (Mitem, -"<current file>");
       Append (Menu1, Mitem);
       File_Project_Cb.Object_Connect
@@ -1036,9 +1099,15 @@ package body Builder_Module is
          GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
 
       --  Should be able to run any program
-      Gtk_New (Mitem, -"Any...");
+
+      Gtk_New (Mitem, -"Custom...");
       Append (Menu2, Mitem);
-      Set_Sensitive (Mitem, False);
+      File_Project_Cb.Object_Connect
+        (Mitem, "activate",
+         File_Project_Cb.To_Marshaller (On_Run'Access),
+         Slot_Object => Kernel,
+         User_Data   => File_Project_Record'
+           (Length => 0, Project => Current (Iter), File => ""));
 
       Show_All (Menu1);
       Show_All (Menu2);
@@ -1091,8 +1160,7 @@ package body Builder_Module is
 
       --  Dynamic run menu
       Mitem := Register_Menu
-        (Kernel, Build, -"Run...", Stock_Execute, null);
-      Set_Sensitive (Mitem, False);
+        (Kernel, Build, -"Run", Stock_Execute, null);
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
@@ -1102,7 +1170,7 @@ package body Builder_Module is
       Register_Menu (Kernel, Build, Mitem);
       Set_Sensitive
         (Register_Menu
-          (Kernel, Build, -"Stop Build", Stock_Stop, On_Stop_Build'Access),
+          (Kernel, Build, -"Interrupt", Stock_Stop, On_Stop_Build'Access),
          False);
 
       Kernel_Callback.Connect
