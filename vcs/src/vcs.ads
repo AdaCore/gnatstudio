@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Generic_List;
-with String_List;
+with String_List_Utils; use String_List_Utils;
 
 with Commands;
 
@@ -112,10 +112,6 @@ package VCS is
 
       --  ???  We need to put additional info here : date, etc.
    end record;
-
-   function Copy_String_List
-     (S : in String_List.List) return String_List.List;
-   --  Return a deep copy of S.
 
    function Copy_File_Status
      (F : in File_Status_Record) return File_Status_Record;
