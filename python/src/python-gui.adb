@@ -310,6 +310,10 @@ package body Python.GUI is
 
       Interpreter.History := History;
 
+      --  Only remember the last 100 commands.
+      Set_Max_Length (History.all, 100, Python_Key);
+      Allow_Duplicates (History.all, Python_Key, True, True);
+
       --  We need to set the program name, or some import commands will raise
       --  errors
       Py_SetProgramName ("Python_Interpreter");
