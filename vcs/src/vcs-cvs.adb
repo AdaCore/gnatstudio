@@ -42,7 +42,7 @@ package body VCS.CVS is
 
    VCS_CVS_Module_Name : constant String := "CVS_Connectivity";
    VCS_CVS_Module_ID   : Module_ID;
-   CVS_Identifier      : constant String := "cvs";
+   CVS_Identifier      : constant String := "CVS";
 
    -----------------------
    -- Local Subprograms --
@@ -1178,11 +1178,14 @@ package body VCS.CVS is
    ------------------
 
    function Identify_VCS (S : String) return VCS_Access is
-      Id : String := S;
+      Id         : String := S;
+      Identifier : String := CVS_Identifier;
+
    begin
       Lower_Case (Id);
+      Lower_Case (Identifier);
 
-      if Strip_Quotes (Id) = CVS_Identifier then
+      if Strip_Quotes (Id) = Identifier then
          return CVS_Reference;
       end if;
 
