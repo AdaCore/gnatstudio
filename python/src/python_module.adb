@@ -66,6 +66,7 @@ package body Python_Module is
 
    type Python_Scripting_Record is new Scripting_Language_Record with record
       Kernel                   : Glide_Kernel.Kernel_Handle;
+      Blocked                  : Boolean := False;
       Interpreter              : Python_Interpreter;
       GPS_Exception            : PyObject;
       GPS_Module               : PyObject;
@@ -86,6 +87,8 @@ package body Python_Module is
    --  Called when the module is destroyed
 
    procedure Destroy (Script : access Python_Scripting_Record);
+   procedure Block_Commands
+     (Script : access Python_Scripting_Record; Block  : Boolean);
    procedure Register_Command
      (Script        : access Python_Scripting_Record;
       Command       : String;
@@ -123,7 +126,8 @@ package body Python_Module is
       Command : String;
       Args    : Callback_Data'Class) return Boolean;
    function Execute_Command
-     (Command : PyObject;
+     (Script  : access Python_Scripting_Record'Class;
+      Command : PyObject;
       Args    : Callback_Data'Class) return Boolean;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
@@ -425,6 +429,16 @@ package body Python_Module is
       Module := PyObject_GetAttrString (Klass, "__name__");
       return "__gps_data__" & PyString_AsString (Module);
    end GPS_Data_Attr;
+
+   --------------------
+   -- Block_Commands --
+   --------------------
+
+   procedure Block_Commands
+     (Script : access Python_Scripting_Record; Block  : Boolean) is
+   begin
+      Script.Blocked := Block;
+   end Block_Commands;
 
    ----------------
    -- Trace_Dump --
@@ -1450,13 +1464,18 @@ package body Python_Module is
       Result : PyObject;
       pragma Unreferenced (Result);
    begin
-      Result := Run_Command
-        (Script.Interpreter, Command,
-         Console      => Console,
-         Hide_Output  => Hide_Output,
-         Show_Command => Show_Command,
-         Errors       => E'Unrestricted_Access);
-      Errors := E;
+      if Script.Blocked then
+         Errors := True;
+         Insert (Script.Kernel, "A command is already executing");
+      else
+         Result := Run_Command
+           (Script.Interpreter, Command,
+            Console      => Console,
+            Hide_Output  => Hide_Output,
+            Show_Command => Show_Command,
+            Errors       => E'Unrestricted_Access);
+         Errors := E;
+      end if;
    end Execute_Command;
 
    ---------------------
@@ -1473,11 +1492,17 @@ package body Python_Module is
    is
       pragma Unreferenced (Show_Command);
    begin
-      return Run_Command
-        (Script.Interpreter, Command,
-         Console     => Console,
-         Hide_Output => Hide_Output,
-         Errors      => Errors);
+      if Script.Blocked then
+         Errors.all := True;
+         Insert (Script.Kernel, "A command is already executing");
+         return "";
+      else
+         return Run_Command
+           (Script.Interpreter, Command,
+            Console     => Console,
+            Hide_Output => Hide_Output,
+            Errors      => Errors);
+      end if;
    end Execute_Command;
 
    ---------------------
@@ -1493,13 +1518,19 @@ package body Python_Module is
    is
       Obj : PyObject;
    begin
-      Obj := Run_Command
-        (Script.Interpreter, Command, Console, False, Hide_Output, Errors);
-      return Obj /= null
-        and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
-                  or else
-                    (PyString_Check (Obj)
-                     and then PyString_AsString (Obj) = "true"));
+      if Script.Blocked then
+         Errors.all := True;
+         Insert (Script.Kernel, "A command is already executing");
+         return False;
+      else
+         Obj := Run_Command
+           (Script.Interpreter, Command, Console, False, Hide_Output, Errors);
+         return Obj /= null
+           and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
+                     or else
+                       (PyString_Check (Obj)
+                        and then PyString_AsString (Obj) = "true"));
+      end if;
    end Execute_Command;
 
    ---------------------
@@ -1515,19 +1546,25 @@ package body Python_Module is
       Errors : aliased Boolean;
 
    begin
-      Obj := Run_Command
-        (Script.Interpreter,
-         Command     => Command,
-         Hide_Output => True,
-         Errors      => Errors'Unrestricted_Access);
-
-      if Obj /= null and then PyFunction_Check (Obj) then
-         return Execute_Command (Obj, Args);
-      else
-         Trace (Me, Command & " is not a function");
-         Insert (Script.Kernel,
-                 Command & (-" is not a function, when called from a hook"));
+      if Script.Blocked then
+         Insert (Script.Kernel, "A command is already executing");
          return False;
+      else
+         Obj := Run_Command
+           (Script.Interpreter,
+            Command     => Command,
+            Hide_Output => True,
+            Errors      => Errors'Unrestricted_Access);
+
+         if Obj /= null and then PyFunction_Check (Obj) then
+            return Execute_Command (Script, Obj, Args);
+         else
+            Trace (Me, Command & " is not a function");
+            Insert
+              (Script.Kernel,
+               Command & (-" is not a function, when called from a hook"));
+            return False;
+         end if;
       end if;
    end Execute_Command;
 
@@ -1536,7 +1573,8 @@ package body Python_Module is
    ---------------------
 
    function Execute_Command
-     (Command : PyObject;
+     (Script  : access Python_Scripting_Record'Class;
+      Command : PyObject;
       Args    : Callback_Data'Class) return Boolean
    is
       Obj   : PyObject;
@@ -1544,6 +1582,11 @@ package body Python_Module is
       Size  : Integer;
       Item, Cmd  : PyObject;
    begin
+      if Script.Blocked then
+         Insert (Script.Kernel, "A command is already executing");
+         return False;
+      end if;
+
       --  Bound methods: we need to explicitly pass the instance as the first
       --  argument.
       if PyMethod_Check (Command) then
@@ -2311,21 +2354,6 @@ package body Python_Module is
       else
          raise Invalid_Parameter;
       end if;
---
---        if Item /= null and then PyFunction_Check (Item) then
---           Py_INCREF (Item);
---           return new Python_Subprogram_Record'
---             (Subprogram_Record with Subprogram => Item);
---
---        elsif Item /= null and then PyMethod_Check (Item) then
---           Item := PyMethod_Function (Item);
---           Py_INCREF (Item);
---           return new Python_Subprogram_Record'
---             (Subprogram_Record with Subprogram => Item);
-
---        else
---           raise Invalid_Parameter;
---        end if;
    end Nth_Arg;
 
    -------------
@@ -2339,7 +2367,8 @@ package body Python_Module is
       Tmp : Boolean;
    begin
       Tmp := Execute_Command
-        (Command => Subprogram.Subprogram,
+        (Script  => Python_Module_Id.Script,
+         Command => Subprogram.Subprogram,
          Args    => Args);
       return Tmp;
    end Execute;

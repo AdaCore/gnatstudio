@@ -32,6 +32,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
@@ -145,6 +146,7 @@ package body Shell_Script is
 
    type Shell_Scripting_Record is new Scripting_Language_Record with record
       Kernel    : Glide_Kernel.Kernel_Handle;
+      Blocked   : Boolean := False;
       Console   : Shell_Console;
       Instances : Instances_List.List;
       --  All the instances that were created
@@ -167,6 +169,8 @@ package body Shell_Script is
      (Script        : access Shell_Scripting_Record;
       Name          : String;
       Base          : Class_Type := No_Class);
+   procedure Block_Commands
+     (Script : access Shell_Scripting_Record; Block : Boolean);
    procedure Execute_Command
      (Script        : access Shell_Scripting_Record;
       Command       : String;
@@ -409,6 +413,16 @@ package body Shell_Script is
    procedure Console_Destroyed
      (Console : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the console is destroyed
+
+   --------------------
+   -- Block_Commands --
+   --------------------
+
+   procedure Block_Commands
+     (Script : access Shell_Scripting_Record; Block : Boolean) is
+   begin
+      Script.Blocked := Block;
+   end Block_Commands;
 
    ------------------------
    -- Name_From_Instance --
@@ -1149,6 +1163,14 @@ package body Shell_Script is
       Shell    : Shell_Scripting;
 
    begin
+      Shell := Shell_Scripting
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
+      if Shell.Blocked then
+         Errors.all := True;
+         Insert (Kernel, -"A command is already executing");
+         return "";
+      end if;
+
       Errors.all := False;
 
       if Shell_Module_Id = null then
@@ -1162,8 +1184,6 @@ package body Shell_Script is
          if Data.Minimum_Args <= Args'Length
            and then Args'Length <= Data.Maximum_Args
          then
-            Shell := Shell_Scripting
-              (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
             Callback.Script := Shell;
 
             if Data.Short_Command.all = Constructor_Method then
