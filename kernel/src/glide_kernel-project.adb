@@ -336,6 +336,49 @@ package body Glide_Kernel.Project is
       return Sources;
    end Get_Source_Files;
 
+   ------------------------------
+   -- Directory_In_Source_Path --
+   ------------------------------
+
+   function Directory_In_Source_Path
+     (Handle         : access Kernel_Handle_Record'Class;
+      Directory_Name : String) return Boolean
+   is
+      Dir : String_List_Id := Projects.Table (Handle.Project_View).Source_Dirs;
+   begin
+      while Dir /= Nil_String loop
+         String_To_Name_Buffer (String_Elements.Table (Dir).Value);
+         if Directory_Name = Name_Buffer (1 .. Name_Len) then
+            return True;
+         end if;
+
+         Dir := String_Elements.Table (Dir).Next;
+      end loop;
+      return False;
+   end Directory_In_Source_Path;
+
+   --------------------------
+   -- File_In_Project_View --
+   --------------------------
+
+   function File_In_Project_View
+     (Handle          : access Kernel_Handle_Record'Class;
+      Short_File_Name : String) return Boolean
+   is
+      Src : String_List_Id := Projects.Table (Handle.Project_View).Sources;
+   begin
+      while Src /= Nil_String loop
+         String_To_Name_Buffer (String_Elements.Table (Src).Value);
+         if Short_File_Name = Name_Buffer (1 .. Name_Len) then
+            return True;
+         end if;
+
+         Src := String_Elements.Table (Src).Next;
+      end loop;
+
+      return False;
+   end File_In_Project_View;
+
    ---------------------------------
    -- Scenario_Variables_Cmd_Line --
    ---------------------------------
