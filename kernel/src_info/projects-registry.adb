@@ -719,7 +719,7 @@ package body Projects.Registry is
             if Ext = ".ads" or else Ext = ".adb" then
                return Name_Ada;
 
-            else
+            elsif Get_Root_Project (Registry) /= No_Project then
                --  Try with the top-level project. This contains the default
                --  registered extensions when the languages were registered.
                --  At least, we might be able to display files that don't
@@ -733,6 +733,9 @@ package body Projects.Registry is
                   Unit_Name => Unit,
                   Lang      => Lang);
                return Lang;
+
+            else
+               return No_Name;
             end if;
          end;
       else
@@ -944,8 +947,10 @@ package body Projects.Registry is
 
          if GNAT.Directory_Operations.File_Extension (Filename) =
            Project_File_Extension
+           and then Get_Root_Project (Registry) /= No_Project
          then
             Iterator := Start (Get_Root_Project (Registry));
+
             loop
                Project := Current (Iterator);
                exit when Project = No_Project;
@@ -979,19 +984,21 @@ package body Projects.Registry is
             end if;
          end if;
 
-         if Path = null and then Use_Source_Path then
-            Path := Locate_Regular_File
-              (Filename,
-               Include_Path (Get_Root_Project (Registry), True)
-               & Path_Separator & Get_Predefined_Source_Path (Registry)
-               & Path_Separator & ".");
-         end if;
+         if Get_Root_Project (Registry) /= No_Project then
+            if Path = null and then Use_Source_Path then
+               Path := Locate_Regular_File
+                 (Filename,
+                  Include_Path (Get_Root_Project (Registry), True)
+                  & Path_Separator & Get_Predefined_Source_Path (Registry)
+                  & Path_Separator & ".");
+            end if;
 
-         if Path = null and then Use_Object_Path then
-            Path := Locate_Regular_File
-              (Filename,
-               Object_Path (Get_Root_Project (Registry), True)
-               & Path_Separator & Get_Predefined_Object_Path (Registry));
+            if Path = null and then Use_Object_Path then
+               Path := Locate_Regular_File
+                 (Filename,
+                  Object_Path (Get_Root_Project (Registry), True)
+                  & Path_Separator & Get_Predefined_Object_Path (Registry));
+            end if;
          end if;
 
          if Path /= null then
