@@ -3,7 +3,7 @@ cat << EOF
 GVD is now integrated in GPS - the GNAT Programming System - and cannot be
 built separately.
 
-See http://libre.act-europe.fr/gps
+See http://libre.adacore.com/gps
 
 Use the branch-1_2_2 for the last stable version of GVD.
 EOF
