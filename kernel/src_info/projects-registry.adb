@@ -285,6 +285,7 @@ package body Projects.Registry is
             return "";
          end if;
       end Extension;
+
    begin
       return Normalize_Pathname (Path, Resolve_Links => False) & Extension;
    end Normalize_Project_Path;
