@@ -238,8 +238,11 @@ package body VCS_Module is
          then
             Set_Active (Radio, True);
             Main.Selected := Radio;
+         elsif S = Systems'First then
+            Main.Selected := Radio;
+            Set_Active (Radio, True);
          else
-            Set_Active (Radio, S = Systems'First);
+            Set_Active (Radio, False);
          end if;
          Pack_Start (Box, Radio);
 
