@@ -171,7 +171,7 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Refresh1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Overview1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
@@ -197,6 +197,10 @@ package Main_Debug_Window_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args);
 
    procedure On_Down1_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+
+   procedure On_Process_Notebook_Switch_Page
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 

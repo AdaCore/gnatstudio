@@ -23,21 +23,24 @@ with Gtk.Main;            use Gtk.Main;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Gtkada.Handlers;     use Gtkada.Handlers;
+--  with Gtkada.Handlers;     use Gtkada.Handlers;
 with Odd_Intl;            use Odd_Intl;
 with Odd.Process;         use Odd.Process;
-with Odd.Dialogs.Callbacks; use Odd.Dialogs.Callbacks;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
-with Language;            use Language;
 with Breakpoints_Pkg;     use Breakpoints_Pkg;
 with Odd.Process;         use Odd.Process;
 with GNAT.Expect;         use GNAT.Expect;
 with Ada.Text_IO;         use Ada.Text_IO;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Odd.Types;           use Odd.Types;
+with Display_Items;       use Display_Items;
+with Gtkada.Canvas;       use Gtkada.Canvas;
+with Odd.Canvas;          use Odd.Canvas;
+with Odd.Dialogs;         use Odd.Dialogs;
+with Gtkada.Types;        use Gtkada.Types;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -128,16 +131,23 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Program1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      S   : constant String := File_Selection_Dialog;
-      Tab : Debugger_Process_Tab;
-
+      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if S /= "" then
-         Tab := Get_Current_Process (Object);
-         Set_Executable (Tab.Debugger, S, Mode => Hidden);
-         Free (Tab.Descriptor.Program);
-         Tab.Descriptor.Program := new String' (S);
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
       end if;
+
+      declare
+         S   : constant String := File_Selection_Dialog;
+      begin
+         if S /= "" then
+            Set_Executable (Tab.Debugger, S, Mode => Hidden);
+            Free (Tab.Descriptor.Program);
+            Tab.Descriptor.Program := new String' (S);
+         end if;
+      end;
    end On_Open_Program1_Activate;
 
    --------------------------------
@@ -225,6 +235,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Mode         : Command_Type;
 
    begin
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
       Open_Session (Top.Open_Session, Top.Sessions_Dir.all, S);
 
       if S /= null
@@ -355,7 +371,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab         : Debugger_Process_Tab;
       Hist_Length : Integer;
    begin
-
       Num_Pages := Gint
         (Page_List.Length (Get_Children (Top.Process_Notebook)));
 
@@ -438,7 +453,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Command_In_Process (Get_Process (Tab.Debugger)) then
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
          return;
       end if;
 
@@ -468,7 +485,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Command_In_Process (Get_Process (Tab.Debugger)) then
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
          return;
       end if;
 
@@ -486,6 +505,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Tab = null then
+         return;
+      end if;
+
       declare
          Dir : constant String := File_Selection_Dialog
            (Title       => "Directory Selection",
@@ -638,22 +661,31 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Command_In_Process (Get_Process (Tab.Debugger)) then
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
          return;
       end if;
 
       declare
-         Arguments : constant String := Simple_Entry_Dialog
+         Is_Start  : aliased Boolean;
+         Arguments : constant String := Display_Entry_Dialog
            (Parent  => Tab.Window,
             Title   => -"Arguments Selection",
-            Message => -"Enter the arguments to your application:",
-            Key     => "odd_run_arguments");
+            Message => -"Enter the arguments to your application::",
+            Key     => "odd_run_arguments",
+            Check_Msg => -"Stop at beginning of main subprogram",
+            Button_Active => Is_Start'Access);
       begin
          if Arguments = ""
            or else Arguments (Arguments'First) /= ASCII.NUL
          then
             Set_Busy_Cursor (Tab, True);
-            Run (Tab.Debugger, Arguments, Mode => User);
+            if Is_Start then
+               Start (Tab.Debugger, Arguments, Mode => User);
+            else
+               Run (Tab.Debugger, Arguments, Mode => User);
+            end if;
             Set_Busy_Cursor (Tab, False);
          end if;
       end;
@@ -668,6 +700,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
       Set_Busy_Cursor (Tab, True);
       Step_Into (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
@@ -682,6 +720,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
       Set_Busy_Cursor (Tab, True);
       Step_Into_Instruction (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
@@ -696,6 +740,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
       Set_Busy_Cursor (Tab, True);
       Step_Over (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
@@ -710,6 +760,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
       Set_Busy_Cursor (Tab, True);
       Step_Over_Instruction (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
@@ -724,6 +780,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
       Set_Busy_Cursor (Tab, True);
       Finish (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
@@ -738,7 +800,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Command_In_Process (Get_Process (Tab.Debugger)) then
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
          return;
       end if;
 
@@ -780,6 +844,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tmp : Boolean;
 
    begin
+      if Tab = null then
+         return;
+      end if;
+
       --  Give some visual feedback to the user
       Text_Output_Handler (Tab, "<^C>" & ASCII.LF, Is_Command => True);
 
@@ -868,26 +936,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Top      : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
       Tab      : constant Debugger_Process_Tab := Get_Current_Process (Top);
-      Bt       : Backtrace_Array (1 .. Max_Frame);
-      Len      : Natural;
-      Internal : Boolean;
 
    begin
-      Internal := Is_Internal_Command (Get_Process (Tab.Debugger));
-      Push_Internal_Command_Status (Get_Process (Tab.Debugger), True);
-      Backtrace (Tab.Debugger, Bt, Len);
-      Pop_Internal_Command_Status (Get_Process (Tab.Debugger));
-
-      if Top.Backtrace_Dialog = null then
-         Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object), Bt (1 .. Len));
-         Widget_Callback.Connect
-           (Gtk_Widget (Tab), "context_changed",
-            On_Backtrace_Process_Stopped'Access);
-      else
-         Update (Top.Backtrace_Dialog, Bt (1 .. Len));
+      if Tab = null then
+         return;
       end if;
 
-      Free (Bt (1 .. Len));
+      if Top.Backtrace_Dialog = null then
+         Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object));
+      end if;
+
+      Update (Top.Backtrace_Dialog, Tab);
       Show_All (Top.Backtrace_Dialog);
    end On_Backtrace1_Activate;
 
@@ -901,28 +960,16 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Top      : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
       Tab      : constant Debugger_Process_Tab := Get_Current_Process (Object);
-      Internal : Boolean;
-
    begin
-      Internal := Is_Internal_Command (Get_Process (Tab.Debugger));
-      Push_Internal_Command_Status (Get_Process (Tab.Debugger), True);
+      if Tab = null then
+         return;
+      end if;
 
-      declare
-         Info : Thread_Information_Array := Info_Threads (Tab.Debugger);
-      begin
-         if Top.Task_Dialog = null then
-            Gtk_New (Top.Task_Dialog, Gtk_Window (Object), Info);
-            Widget_Callback.Connect
-              (Gtk_Widget (Tab), "process_stopped",
-               On_Task_Process_Stopped'Access);
-         else
-            Update (Top.Task_Dialog, Info);
-         end if;
+      if Top.Task_Dialog = null then
+         Gtk_New (Top.Task_Dialog, Gtk_Window (Object));
+      end if;
 
-         Free (Info);
-      end;
-
-      Pop_Internal_Command_Status (Get_Process (Tab.Debugger));
+      Update (Top.Task_Dialog, Tab);
       Show_All (Top.Task_Dialog);
    end On_Threads1_Activate;
 
@@ -957,10 +1004,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Top : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
+      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      Breakpoint_Editor
-        (Breakpoints_Access (Top.Breakpoints_Editor),
-         Get_Current_Process (Top));
+      if Process /= null then
+         Breakpoint_Editor
+           (Breakpoints_Access (Top.Breakpoints_Editor), Process);
+      end if;
    end On_Edit_Breakpoints1_Activate;
 
    --------------------------------
@@ -994,10 +1043,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      Process_User_Command
-        (Process,
-         "graph display `" & Info_Locals (Process.Debugger) & '`',
-         Output_Command => True);
+      if Process /= null then
+         Process_User_Command
+           (Process,
+            "graph display `" & Info_Locals (Process.Debugger) & '`',
+            Output_Command => True);
+      end if;
    end On_Display_Local_Variables1_Activate;
 
    ------------------------------------
@@ -1009,10 +1060,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      Process_User_Command
-        (Process,
-         "graph display `" & Info_Args (Process.Debugger) & '`',
-         Output_Command => True);
+      if Process /= null then
+         Process_User_Command
+           (Process,
+            "graph display `" & Info_Args (Process.Debugger) & '`',
+            Output_Command => True);
+      end if;
    end On_Display_Arguments1_Activate;
 
    ------------------------------------
@@ -1024,14 +1077,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Command_In_Process (Get_Process (Process.Debugger)) then
-         return;
+      if Process /= null
+        and then not Command_In_Process (Get_Process (Process.Debugger))
+      then
+         Process_User_Command
+           (Process,
+            "graph display `" & Info_Registers (Process.Debugger) & '`',
+            Output_Command => True);
       end if;
-
-      Process_User_Command
-        (Process,
-         "graph display `" & Info_Registers (Process.Debugger) & '`',
-         Output_Command => True);
    end On_Display_Registers1_Activate;
 
    -------------------------------------
@@ -1043,7 +1096,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Command_In_Process (Get_Process (Tab.Debugger)) then
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
          return;
       end if;
 
@@ -1054,7 +1109,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Title   => -"Expression Selection",
             Message => -"Enter an expression to display:",
             Key     => "odd_display_expression_dialog",
-            Is_Func => Is_Func'Access);
+            Check_Msg => -"Expression is a subprogram call",
+            Button_Active => Is_Func'Access);
       begin
          if Expression /= ""
            and then Expression (Expression'First) /= ASCII.NUL
@@ -1090,10 +1146,38 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --------------------------
 
    procedure On_Refresh1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      function Internal_Update_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class)
+        return Boolean;
+      --  Update the value for a specific item
+
+      --------------------------
+      -- Internal_Update_Item --
+      --------------------------
+
+      function Internal_Update_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class)
+        return Boolean
+      is
+      begin
+         Display_Items.Update
+           (Odd_Canvas (Canvas),
+            Display_Item (Item),
+            Redisplay_Canvas => False);
+         return True;
+      end Internal_Update_Item;
+
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
+      if Tab /= null then
+         Odd.Canvas.For_Each_Item
+           (Tab.Data_Canvas, Internal_Update_Item'Unrestricted_Access);
+         Refresh_Canvas (Tab.Data_Canvas);
+      end if;
    end On_Refresh1_Activate;
 
    ---------------------------
@@ -1169,13 +1253,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Command_In_Process (Get_Process (Tab.Debugger)) then
-         return;
+      if Tab /= null
+        and then not Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         Set_Busy_Cursor (Tab, True);
+         Start (Tab.Debugger, Mode => User);
+         Set_Busy_Cursor (Tab, False);
       end if;
-
-      Set_Busy_Cursor (Tab, True);
-      Start (Tab.Debugger, Mode => User);
-      Set_Busy_Cursor (Tab, False);
    end On_Start1_Activate;
 
    ---------------------
@@ -1188,9 +1272,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      Set_Busy_Cursor (Tab, True);
-      Stack_Up (Tab.Debugger, Mode => User);
-      Set_Busy_Cursor (Tab, False);
+      if Tab /= null
+        and then not Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         Set_Busy_Cursor (Tab, True);
+         Stack_Up (Tab.Debugger, Mode => User);
+         Set_Busy_Cursor (Tab, False);
+      end if;
    end On_Up1_Activate;
 
    -----------------------
@@ -1203,9 +1291,38 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      Set_Busy_Cursor (Tab, True);
-      Stack_Down (Tab.Debugger, Mode => User);
-      Set_Busy_Cursor (Tab, False);
+      if Tab /= null
+        and then not Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         Set_Busy_Cursor (Tab, True);
+         Stack_Down (Tab.Debugger, Mode => User);
+         Set_Busy_Cursor (Tab, False);
+      end if;
    end On_Down1_Activate;
+
+   -------------------------------------
+   -- On_Process_Notebook_Switch_Page --
+   -------------------------------------
+
+   procedure On_Process_Notebook_Switch_Page
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+--        Arg1 : Address := To_Address (Params, 1);
+      Arg2 : Guint := To_Guint (Params, 2);
+      --  Number of the page that will be displayed
+
+      Page : Gtk_Widget := Get_Nth_Page
+        (Main_Debug_Window_Access (Object).Process_Notebook, Gint (Arg2));
+   begin
+      Update_External_Dialogs
+        (Main_Debug_Window_Access (Object),
+         Gtk_Widget (Process_User_Data.Get (Page)));
+
+   exception
+      --  The page wasn't associated with a debugger yet
+      when Gtkada.Types.Data_Error =>
+         null;
+   end On_Process_Notebook_Switch_Page;
 
 end Main_Debug_Window_Pkg.Callbacks;
