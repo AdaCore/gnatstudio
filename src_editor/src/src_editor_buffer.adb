@@ -3876,7 +3876,7 @@ package body Src_Editor_Buffer is
       --  Where is the cursor (so we can keep it on the same line)
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
       Cursor_Line   := Get_Line (Iter);
-      Cursor_Offset := Get_Offset (Iter);
+      Cursor_Offset := Get_Line_Offset (Iter);
 
       --  What should we indent (current line or current selection) ?
 
@@ -3908,7 +3908,7 @@ package body Src_Editor_Buffer is
 
          if Current_Line = Cursor_Line then
             Skip_To_First_Non_Blank (Iter);
-            Cursor_Offset := Cursor_Offset - Get_Offset (Iter);
+            Cursor_Offset := Cursor_Offset - Get_Line_Offset (Iter);
          end if;
 
          if not Ends_Line (Iter) then
@@ -3946,7 +3946,7 @@ package body Src_Editor_Buffer is
          --  and more user friendly generally.
 
          if Current_Line = Cursor_Line then
-            Get_Iter_At_Line_Offset (Buffer, Iter, Current_Line);
+            Get_Iter_At_Line (Buffer, Iter, Current_Line);
             Skip_To_First_Non_Blank (Iter);
             if Cursor_Offset > 0 then
                Forward_Chars (Iter, Cursor_Offset, Result);
