@@ -47,7 +47,7 @@ package body GNAT.Expect is
    procedure Create_Pipe (Pipe : access Pipe_Type);
    pragma Import (C, Create_Pipe, "pipe");
 
-   function Fork return GNAT.OS_Lib.Process_Id;
+   function Fork return Process_Id;
    pragma Import (C, Fork);
 
    procedure Execvp (File : String; Args : System.Address);

@@ -318,10 +318,13 @@ private
          Next   : Filter_List := null;
       end record;
 
+   type Process_Id is new Integer;
+   Invalid_Pid : constant Process_Id := -1;
+   Null_Pid    : constant Process_Id := 0;
+
    type Pipes_Id is
       record
-         Pid              : GNAT.OS_Lib.Process_Id
-           := GNAT.OS_Lib.Invalid_Pid;
+         Pid              : Process_Id := Invalid_Pid;
          Input_Fd         : GNAT.OS_Lib.File_Descriptor
            := GNAT.OS_Lib.Invalid_FD;
          Output_Fd        : GNAT.OS_Lib.File_Descriptor
