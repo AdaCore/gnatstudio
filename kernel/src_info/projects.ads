@@ -517,7 +517,6 @@ private
    --  Reset the project after the view has been recomputed
 
    function Get_View (Project : Project_Type) return Prj.Project_Id;
-   pragma Inline (Get_View);
    --  Return the view of the project
 
    procedure Create_From_Node
@@ -660,5 +659,5 @@ private
    Exec_Dir_Attribute         : constant Attribute_Pkg := "exec_dir";
 
 
-   pragma Inline (Project_Name, Project_Path, Project_Directory);
+   pragma Inline (Project_Name, Project_Path);
 end Projects;
