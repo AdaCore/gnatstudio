@@ -69,8 +69,8 @@ package Prj_API is
      (Name : Types.Name_Id) return Project_Node_Id;
    --  Return the project, from its name
 
-   function Get_Project_View_From_Project (Project : Project_Node_Id)
-      return Project_Id;
+   function Get_Project_View_From_Project
+     (Project : Project_Node_Id) return Project_Id;
    --  Return the current project view
 
    function Get_Project_From_File
