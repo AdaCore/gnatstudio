@@ -36,12 +36,15 @@ with Gtk.Handlers;
 with Gtk.Window;
 with Src_Info;
 with Gint_Xml;
+with Gtkada.MDI;
 
 package Glide_Kernel is
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with private;
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
    --  A kernel handle used to share information throughout Glide.
+
+   package Kernel_Sessions is new Gtkada.MDI.Sessions (Kernel_Handle);
 
    procedure Gtk_New
      (Handle      : out Kernel_Handle;
@@ -88,6 +91,15 @@ package Glide_Kernel is
       Success      : out Boolean);
    --  Parse the given ALI file and return the new LI_File_Ptr created if
    --  the parsing was successful.
+
+   procedure Save_Session
+     (Handle : access Kernel_Handle_Record);
+   --  Save the current session
+
+   function Load_Session
+     (Handle : access Kernel_Handle_Record) return Boolean;
+   --  Reload a saved session.
+   --  Return False if no session could be loaded.
 
    ---------------------
    -- Signal emission --
