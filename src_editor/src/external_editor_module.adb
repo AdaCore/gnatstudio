@@ -266,12 +266,16 @@ package body External_Editor_Module is
    --  Spawn a new process, and waits for its termination. It hides both its
    --  standard output and standard error.
 
+   procedure Preferences_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the preferences have changed.
+
    -------------------
    -- Select_Client --
    -------------------
 
    procedure Select_Client
-     (Kernel         : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
       Path  : GNAT.OS_Lib.String_Access;
       Args  : Argument_List_Access;
@@ -744,7 +748,9 @@ package body External_Editor_Module is
       Mitem : Gtk_Menu_Item;
 
    begin
-      if Context.all in File_Selection_Context'Class then
+      if External_Editor_Module_Id.Client /= Auto
+        and then Context.all in File_Selection_Context'Class
+      then
          File := File_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File)
@@ -772,7 +778,9 @@ package body External_Editor_Module is
    is
       pragma Unreferenced (Mode);
    begin
-      if Mime_Type = Mime_Source_File then
+      if External_Editor_Module_Id.Client /= Auto
+        and then Mime_Type = Mime_Source_File
+      then
          declare
             File   : constant String  := Get_String (Data (Data'First));
             Line   : constant Gint    := Get_Int (Data (Data'First + 1));
@@ -796,6 +804,28 @@ package body External_Editor_Module is
       return False;
    end Mime_Action;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (K);
+      Priority : Module_Priority := Default_Priority;
+
+   begin
+      if Get_Pref (Kernel, Always_Use_External_Editor) then
+         Priority := Priority + 1;
+      end if;
+
+      if Priority /= Get_Priority (External_Editor_Module_Id) then
+         Set_Priority (Kernel, External_Editor_Module_Id, Priority);
+      end if;
+
+      Select_Client (Kernel);
+   end Preferences_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -803,7 +833,6 @@ package body External_Editor_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Priority       : Module_Priority := Default_Priority;
    begin
       External_Editor_Module_Id := new External_Editor_Module_Record;
 
@@ -830,21 +859,20 @@ package body External_Editor_Module is
       Register_Property
         (Kernel, Param_Spec (Always_Use_External_Editor), -"Editor");
 
-      if Get_Pref (Kernel, Always_Use_External_Editor) then
-         Priority := Priority + 1;
-      end if;
+      Register_Module
+        (Module                  => Module_ID (External_Editor_Module_Id),
+         Kernel                  => Kernel,
+         Module_Name             => External_Editor_Module_Name,
+         Priority                => Default_Priority,
+         Contextual_Menu_Handler => External_Editor_Contextual'Access,
+         Mime_Handler            => Mime_Action'Access);
 
-      Select_Client (Kernel);
+      Preferences_Changed (Kernel, Kernel_Handle (Kernel));
 
-      if External_Editor_Module_Id.Client /= Auto then
-         Register_Module
-           (Module                  => Module_ID (External_Editor_Module_Id),
-            Kernel                  => Kernel,
-            Module_Name             => External_Editor_Module_Name,
-            Priority                => Priority,
-            Contextual_Menu_Handler => External_Editor_Contextual'Access,
-            Mime_Handler            => Mime_Action'Access);
-      end if;
+      Kernel_Callback.Connect
+        (Kernel, Preferences_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
+         User_Data   => Kernel_Handle (Kernel));
    end Register_Module;
 
 end External_Editor_Module;
