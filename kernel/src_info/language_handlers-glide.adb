@@ -110,20 +110,12 @@ package body Language_Handlers.Glide is
       return Unknown_Lang;
    end Get_Language_From_File;
 
-   ----------------------------
-   -- Get_Language_From_File --
-   ----------------------------
-
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
       Source_Filename : String) return Language.Language_Access is
    begin
       return Get_Language_From_File (Handler, Source_Filename, No_Project);
    end Get_Language_From_File;
-
-   ----------------------------
-   -- Get_Language_From_File --
-   ----------------------------
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
@@ -132,10 +124,6 @@ package body Language_Handlers.Glide is
       return Get_Language_From_File (Handler, Source_Filename, No_Project);
    end Get_Language_From_File;
 
-   ----------------------------
-   -- Get_Language_From_File --
-   ----------------------------
-
    function Get_Language_From_File
      (Handler         : access Glide_Language_Handler_Record;
       Source_Filename : String;
@@ -143,21 +131,20 @@ package body Language_Handlers.Glide is
    is
       --  ??? Could be optimized, since both Get_Project_From_File and
       --  Get_Language_Of traverse the project structure
-      Proj : Project_Id := Project_View;
+      Prj  : Project_Id := Project_View;
       Lang : Name_Id;
 
    begin
-      if Proj = No_Project then
-         Proj := Get_Project_From_File
-           (Handler.Project_View, Source_Filename);
+      if Prj = No_Project then
+         Prj := Get_Project_From_File (Handler.Project_View, Source_Filename);
 
-         if Proj = No_Project then
+         if Prj = No_Project then
             --  ??? Should use the default file extensions instead
-            Proj := Handler.Project_View;
+            Prj := Handler.Project_View;
          end if;
       end if;
 
-      Lang := Get_Language_Of (Proj, Base_Name (Source_Filename));
+      Lang := Get_Language_Of (Prj, Base_Name (Source_Filename));
 
       if Lang = No_Name then
          return "";
