@@ -143,6 +143,15 @@ package body Codefix.Errors_Manager is
       return Data (Memorized_Corrections.List_Node (This)).Message;
    end Get_Error_Message;
 
+   ------------------
+   -- Get_Category --
+   ------------------
+
+   function Get_Category (This : Error_Id) return String is
+   begin
+      return Data (Memorized_Corrections.List_Node (This)).Category.all;
+   end Get_Category;
+
    ----------
    -- Free --
    ----------
@@ -151,6 +160,7 @@ package body Codefix.Errors_Manager is
    begin
       Free (This.Message);
       Codefix.Formal_Errors.Free (This.Solutions);
+      Free (This.Category);
    end Free;
 
    -------------
@@ -166,7 +176,7 @@ package body Codefix.Errors_Manager is
       Current_Message : Error_Message;
       Solutions       : Solution_List;
       New_Error       : Error_Id;
-
+      Category        : Dynamic_String;
    begin
       while not No_More_Messages (Errors_List) loop
          Get_Message (Errors_List, Source_Text, Current_Message);
@@ -175,10 +185,15 @@ package body Codefix.Errors_Manager is
 
             Solutions := Solution_List (Command_List.Null_List);
             Get_Solutions
-              (Source_Text, Errors_List, Current_Message, Solutions);
+              (Source_Text,
+               Errors_List,
+               Current_Message,
+               Category,
+               Solutions);
 
             if Length (Solutions) > 0 then
-               Add_Error (This, Current_Message, Solutions, New_Error);
+               Add_Error
+                 (This, Current_Message, Solutions, Category.all, New_Error);
 
                if Callback /= null then
                   Callback
@@ -189,6 +204,8 @@ package body Codefix.Errors_Manager is
                      This);
                end if;
             end if;
+
+            Free (Category);
          end if;
 
          Free (Current_Message);
@@ -311,6 +328,7 @@ package body Codefix.Errors_Manager is
      (This      : in out Correction_Manager;
       Message   : Error_Message;
       Solutions : Solution_List;
+      Category  : String;
       New_Error : out Error_Id) is
 
       New_Error_Record : Error_Id_Record;
@@ -318,6 +336,7 @@ package body Codefix.Errors_Manager is
    begin
       New_Error_Record.Solutions := Solutions;
       New_Error_Record.Message := Clone (Message);
+      Assign (New_Error_Record.Category, Category);
       Append (This.Potential_Corrections, New_Error_Record);
       New_Error := Last (This.Potential_Corrections);
    end Add_Error;
@@ -464,5 +483,53 @@ package body Codefix.Errors_Manager is
 --      Free (Little_Fix_List);
 
 --   end Update_Changes;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out State_Node) is
+   begin
+      Free (This.Error);
+   end Free;
+
+   ---------------------
+   -- Set_Error_State --
+   ---------------------
+
+   procedure Set_Error_State
+     (List : in out State_List; Error : String; State : Error_State)
+   is
+      Node : State_Lists.List_Node := First (List);
+   begin
+      while Node /= State_Lists.Null_Node loop
+         if Data (Node).Error.all = Error then
+            Set_Data (Node, (new String'(Error), State));
+            return;
+         end if;
+         Node := Next (Node);
+      end loop;
+
+      Append (List, (new String'(Error), State));
+   end Set_Error_State;
+
+   ---------------------
+   -- Get_Error_State --
+   ---------------------
+
+   function Get_Error_State
+     (List : State_List; Error : String) return Error_State
+   is
+      Node : State_Lists.List_Node := First (List);
+   begin
+      while Node /= State_Lists.Null_Node loop
+         if Data (Node).Error.all = Error then
+            return Data (Node).State;
+         end if;
+         Node := Next (Node);
+      end loop;
+
+      return Unknown;
+   end Get_Error_State;
 
 end Codefix.Errors_Manager;
