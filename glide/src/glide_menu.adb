@@ -156,6 +156,12 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Edit->Search in Files menu
 
+   procedure On_Goto_Declaration_Or_Body
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Search->Goto Declaration<->Body
+
    procedure On_Open_Project
      (Object : Data_Type_Access;
       Action : Guint;
@@ -522,6 +528,24 @@ package body Glide_Menu is
       --  Id := Push (Top.Statusbar, 1, "end of search.");
       Print_Message (Top.Statusbar, Help, "end of search.");
    end On_Search_Files;
+
+   ---------------------------------
+   -- On_Goto_Declaration_Or_Body --
+   ---------------------------------
+
+   procedure On_Goto_Declaration_Or_Body
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top  : constant Glide_Window := Glide_Window (Object);
+   begin
+      if not Focus_Is_Editor (Top.Kernel) then
+         --  Nothing to do, since no editor has the focus
+         return;
+      end if;
+      Goto_Declaration_Or_Body (Top.Kernel);
+   end On_Goto_Declaration_Or_Body;
 
    --------------
    -- On_Build --
@@ -1021,7 +1045,8 @@ package body Glide_Menu is
                   Stock_Find_And_Replace, null),
          Gtk_New (-"/_Search/sep1", Item_Type => Separator),
          Gtk_New (-"/_Search/Goto Line...", "", Stock_Jump_To, null),
-         Gtk_New (-"/_Search/Goto Declaration<->Body", "", Stock_Home, null),
+         Gtk_New (-"/_Search/Goto Declaration<->Body", "", Stock_Home,
+                  On_Goto_Declaration_Or_Body'Access),
          Gtk_New (-"/_Search/Goto File Spec<->Body", "", Stock_Convert, null),
          Gtk_New (-"/_Search/Goto Previous Reference", "", Stock_Undo, null),
          Gtk_New (-"/_Search/Goto Parent Unit", "", Stock_Go_Up, null),
