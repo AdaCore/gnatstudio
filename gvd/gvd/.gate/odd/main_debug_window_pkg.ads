@@ -139,13 +139,10 @@ package Main_Debug_Window_Pkg is
       Print_1 : Gtk_Menu_Item;
       Display_1 : Gtk_Menu_Item;
       Separator25 : Gtk_Menu_Item;
-      Detect_Aliases1 : Gtk_Check_Menu_Item;
-      Separator26 : Gtk_Menu_Item;
-      Display_Local_Variables1 : Gtk_Check_Menu_Item;
+      Display_Local_Variables1 : Gtk_Menu_Item;
       Display_Arguments1 : Gtk_Menu_Item;
       More_Status_Display1 : Gtk_Menu_Item;
       Separator27 : Gtk_Menu_Item;
-      Align_On_Grid1 : Gtk_Menu_Item;
       Rotate_Graph1 : Gtk_Menu_Item;
       Layout_Graph1 : Gtk_Menu_Item;
       Separator28 : Gtk_Menu_Item;

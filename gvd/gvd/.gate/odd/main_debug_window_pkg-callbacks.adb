@@ -850,23 +850,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Display_1_Activate;
 
-   ---------------------------------
-   -- On_Detect_Aliases1_Activate --
-   ---------------------------------
-
-   procedure On_Detect_Aliases1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Detect_Aliases1_Activate;
-
    ------------------------------------------
    -- On_Display_Local_Variables1_Activate --
    ------------------------------------------
 
    procedure On_Display_Local_Variables1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -877,7 +866,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------------
 
    procedure On_Display_Arguments1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -893,17 +882,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_More_Status_Display1_Activate;
-
-   --------------------------------
-   -- On_Align_On_Grid1_Activate --
-   --------------------------------
-
-   procedure On_Align_On_Grid1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Align_On_Grid1_Activate;
 
    -------------------------------
    -- On_Rotate_Graph1_Activate --

@@ -1544,31 +1544,7 @@
 	  </widget>
 
 	  <widget>
-	    <class>GtkCheckMenuItem</class>
-	    <name>detect_aliases1</name>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_A</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_detect_aliases1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:43:27 GMT</last_modification_time>
-	    </signal>
-	    <label>Detect Aliases</label>
-	    <active>False</active>
-	    <always_show_toggle>False</always_show_toggle>
-	  </widget>
-
-	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>separator26</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckMenuItem</class>
 	    <name>display_local_variables1</name>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
@@ -1578,6 +1554,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_display_local_variables1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:43:40 GMT</last_modification_time>
 	    </signal>
 	    <label>Display Local Variables</label>
@@ -1596,6 +1573,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_display_arguments1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:44:11 GMT</last_modification_time>
 	    </signal>
 	    <label>Display Arguments</label>
@@ -1618,23 +1596,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>separator27</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>align_on_grid1</name>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_G</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_align_on_grid1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:44:35 GMT</last_modification_time>
-	    </signal>
-	    <label>Align on Grid</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
