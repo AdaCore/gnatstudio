@@ -38,6 +38,7 @@ with VCS_Module;                use VCS_Module;
 with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
 with Commands.Console;          use Commands.Console;
+with Commands.Locations;        use Commands.Locations;
 
 package body VCS.ClearCase is
 
@@ -370,9 +371,93 @@ package body VCS.ClearCase is
       Filenames : String_List.List;
       User_Name : String := "")
    is
-      pragma Unreferenced (Rep, Filenames, User_Name);
+      pragma Unreferenced (User_Name);
+
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      File_Node : List_Node := First (Filenames);
    begin
-      null;
+      while File_Node /= Null_Node loop
+         declare
+            Args     : List;
+            Head     : List;
+            File     : constant String := Data (File_Node);
+
+            Checkout_File_Command : External_Command_Access;
+
+            Fail_Message    : Console_Command_Access;
+            Success_Message : Console_Command_Access;
+
+            Open_File_Command : Source_Location_Command;
+
+         begin
+            Insert (Kernel,
+                    -"Clearcase: Checking out element: "
+                      & File & " ...",
+                    False, True, Info);
+
+            --  Create the end of the message.
+
+            Create (Fail_Message,
+                    Kernel,
+                    -("Checkout of ") & File & (-" failed."),
+                    False,
+                    True,
+                    Info);
+
+            Create (Success_Message,
+                    Kernel,
+                    -"... done.",
+                    False,
+                    True,
+                    Info);
+
+            Append (Args, "co");
+            Append (Args, "-c");
+
+            --  ??? Must provide a way for the user to change this
+            --  log message !
+            Append (Args, -"Checking out " & File);
+            Append (Args, File);
+
+            Append (Head, -"ClearCase error: could not checkout " & File);
+
+            Create (Checkout_File_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Checkout_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  Create the "Open File" command that will be executed
+            --  after the checkout is made.
+
+            Create (Open_File_Command,
+                    Kernel,
+                    File,
+                    Highlight_Line => False);
+
+            --  Enqueue the actions.
+
+            Add_Consequence_Action
+              (Checkout_File_Command,
+               Success_Message);
+
+            Add_Alternate_Action
+              (Checkout_File_Command,
+               Fail_Message);
+
+            Enqueue (Rep.Queue, Checkout_File_Command);
+            Enqueue (Rep.Queue, Open_File_Command);
+         end;
+
+         File_Node := Next (File_Node);
+      end loop;
    end Open;
 
    ------------
@@ -384,9 +469,80 @@ package body VCS.ClearCase is
       Filenames : String_List.List;
       Logs      : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames, Logs);
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      File_Node : List_Node := First (Filenames);
+      Logs_Node : List_Node := First (Logs);
    begin
-      null;
+      while File_Node /= Null_Node loop
+         declare
+            Args     : List;
+            Head     : List;
+            File     : constant String := Data (File_Node);
+
+            Checkin_File_Command : External_Command_Access;
+
+            Fail_Message    : Console_Command_Access;
+            Success_Message : Console_Command_Access;
+
+         begin
+            Insert (Kernel,
+                    -"Clearcase: Checking-in element: "
+                      & File & " ...",
+                    False, True, Info);
+
+            --  Create the end of the message.
+
+            Create (Fail_Message,
+                    Kernel,
+                    -("check-in of ") & File & (-" failed."),
+                    False,
+                    True,
+                    Info);
+
+            Create (Success_Message,
+                    Kernel,
+                    -"... done.",
+                    False,
+                    True,
+                    Info);
+
+            Append (Args, "ci");
+            Append (Args, "-c");
+
+            Append (Args, Data (Logs_Node));
+            Append (Args, File);
+
+            Append (Head, -"ClearCase error: could not check-in " & File);
+
+            Create (Checkin_File_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Checkin_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  Enqueue the actions.
+
+            Add_Consequence_Action
+              (Checkin_File_Command,
+               Success_Message);
+
+            Add_Alternate_Action
+              (Checkin_File_Command,
+               Fail_Message);
+
+            Enqueue (Rep.Queue, Checkin_File_Command);
+         end;
+
+         File_Node := Next (File_Node);
+         Logs_Node := Next (Logs_Node);
+      end loop;
    end Commit;
 
    ------------
