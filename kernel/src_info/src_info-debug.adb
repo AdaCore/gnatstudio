@@ -45,13 +45,13 @@ package body Src_Info.Debug is
 
    procedure Dump_D_Line
      (Filename       : String;
-      Timestamp      : Types.Time_Stamp_Type;
+      Ts             : Timestamp;
       Show_Timestamp : Boolean := True);
    --  Print a 'D' line with the filename and the timestamp.
 
    procedure Dump_D_Line
      (SF             : Source_File;
-      Timestamp      : Types.Time_Stamp_Type;
+      Ts             : Timestamp;
       Show_Timestamp : Boolean := True);
    --  Print a 'D' line for a dependency to Source_File with the given
    --  Timestamp.
@@ -96,26 +96,26 @@ package body Src_Info.Debug is
 
    procedure Dump_D_Line
      (Filename       : String;
-      Timestamp      : Types.Time_Stamp_Type;
+      Ts             : Timestamp;
       Show_Timestamp : Boolean := True) is
    begin
       Put ("D " & Filename);
       if Show_Timestamp then
-         Put (' ' & String (Timestamp));
+         Put (Ts'Img);
       end if;
       New_Line;
    end Dump_D_Line;
 
    procedure Dump_D_Line
      (SF             : Source_File;
-      Timestamp      : Types.Time_Stamp_Type;
+      Ts             : Timestamp;
       Show_Timestamp : Boolean := True)
    is
       FI : File_Info_Ptr := Get_File_Info (SF);
    begin
       Put ("D " & FI.Source_Filename.all);
       if Show_Timestamp then
-         Put (' ' & String (Timestamp));
+         Put (Ts'Img);
       end if;
 
       --  If the unit we're depending on is a subunit, print its name
@@ -299,8 +299,8 @@ package body Src_Info.Debug is
               (' ' & FI.Original_Filename.all &
                ':' & Image (FI.Original_Line));
          end if;
-         if FI.File_Timestamp /= Types.Empty_Time_Stamp then
-            Put (' ' & String (FI.File_Timestamp));
+         if FI.File_Timestamp /= 0 then
+            Put (FI.File_Timestamp'Img);
          end if;
       end if;
       New_Line;
@@ -330,8 +330,8 @@ package body Src_Info.Debug is
          if DFI.Dep_Info.Depends_From_Body then
             Put (" (Body)");
          end if;
-         if DFI.File_Timestamp /= Types.Empty_Time_Stamp then
-            Put (' ' & String (DFI.File_Timestamp));
+         if DFI.File_Timestamp /= 0 then
+            Put (DFI.File_Timestamp'Img);
          end if;
       end if;
       New_Line;
