@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2004-2005                       --
---                            AdaCore                                --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,10 +39,6 @@ with Wizards;                  use Wizards;
 with Creation_Wizard;          use Creation_Wizard;
 
 package body Creation_Wizard.Selector is
-
-   From_Sources_Label : constant String := "From existing Ada sources";
-   From_Scratch_Label : constant String := "From scratch";
-   From_Adp_Label     : constant String := "From .adp file";
 
    type Wizard_Selector_Page is new Project_Wizard_Page_Record with record
       Last_Selected : Integer := -1;
@@ -126,10 +122,11 @@ package body Creation_Wizard.Selector is
    begin
       Gtk_New (Wiz, Kernel);
       P := new Wizard_Selector_Page;
-      Add_Page (Wiz,
-                Page        => P,
-                Description => -"Select the type of project to create",
-                Toc         => -"Project type");
+      Add_Page
+        (Wiz,
+         Page        => P,
+         Description => -"Select the type of project(s) to create",
+         Toc         => -"Project type");
 
       P.Name_And_Loc := Add_Name_And_Location_Page (Wiz);
 
@@ -168,7 +165,23 @@ package body Creation_Wizard.Selector is
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
 
-      Gtk_New (Page.From_Existing, Label => -From_Sources_Label);
+      Gtk_New (Page.From_Scratch, Label => -"Single Project");
+      Pack_Start (Box, Page.From_Scratch, Expand => False);
+      Gtk_New
+        (Label,
+         -("Create a new project file, where you can specify its"
+           & ASCII.LF
+           & "properties, like the set of source directories, the object"
+           & ASCII.LF
+           & "directory, compiler switches,..."));
+      Set_Padding (Label, 20, 5);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New_Hseparator (Separator);
+      Pack_Start (Box, Separator, Expand => False);
+
+      Gtk_New
+        (Page.From_Existing, Get_Group (Page.From_Scratch), -"Project Tree");
       Pack_Start (Box, Page.From_Existing, Expand => False);
       Gtk_New
         (Label,
@@ -187,34 +200,20 @@ package body Creation_Wizard.Selector is
       Gtk_New_Hseparator (Separator);
       Pack_Start (Box, Separator, Expand => False);
 
-      Gtk_New (Page.From_Scratch, Get_Group (Page.From_Existing),
-               -From_Scratch_Label);
-      Pack_Start (Box, Page.From_Scratch, Expand => False);
       Gtk_New
-        (Label,
-         -("Create a new project file, where you can specify each of its"
-           & ASCII.LF
-           & "properties, like the set of source directories, its object"
-           & ASCII.LF
-           & "directory, compiler switches,..."));
-      Set_Padding (Label, 20, 5);
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New_Hseparator (Separator);
-      Pack_Start (Box, Separator, Expand => False);
-
-      Gtk_New (Page.From_Adp, Get_Group (Page.From_Existing),
-               -From_Adp_Label);
+        (Page.From_Adp,
+         Get_Group (Page.From_Scratch),
+         -"Convert GLIDE Project (.adp)");
       Pack_Start (Box, Page.From_Adp, Expand => False);
       Gtk_New
         (Label,
-         -(".adp files are the project files used in the AdaCore's Glide"
+         -(".adp files are simple project files used in the Emacs based"
            & ASCII.LF
-           & "environment, based on Emacs. It is a very simple project."
+           & "GLIDE environment."
            & ASCII.LF
-           & "This wizard will allow you to easily convert such a file to"
+           & "This option will allow you to convert such a file to a set"
            & ASCII.LF
-           & "GPS's own format"));
+           & "of GPS project files."));
       Set_Padding (Label, 20, 5);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
