@@ -593,22 +593,20 @@ package body Gtkada.File_Selector is
 
    procedure Change_Directory
      (Win : access File_Selector_Window_Record'Class;
-      Dir : String)
-   is
-      New_Dir : String := Normalize_Pathname (Dir);
+      Dir : String) is
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
 
-      if New_Dir /= ""
-        and then Win.Current_Directory.all /= New_Dir
+      if Dir /= ""
+        and then Win.Current_Directory.all /= Normalize_Pathname (Dir)
       then
          Free (Win.Current_Directory);
 
          if Dir = -"Drives" then
             Win.Current_Directory := new String' ("");
          else
-            Win.Current_Directory := new String' (New_Dir);
+            Win.Current_Directory := new String' (Normalize_Pathname (Dir));
          end if;
 
          --  If we are currently moving through the history,
@@ -623,24 +621,23 @@ package body Gtkada.File_Selector is
             Set_Sensitive (Win.Back_Button);
             Set_Sensitive (Win.Forward_Button, False);
 
-            Add_Unique_Combo_Entry
-              (Win.Location_Combo, New_Dir);
+            Add_Unique_Combo_Entry (Win.Location_Combo, Dir);
          end if;
 
-         if Get_Text (Win.Location_Combo_Entry) /= New_Dir then
-            Set_Text (Win.Location_Combo_Entry, New_Dir);
+         if Get_Text (Win.Location_Combo_Entry) /= Dir then
+            Set_Text (Win.Location_Combo_Entry, Dir);
          end if;
 
          --  If the new directory is not the one currently shown
          --  in the Explorer_Tree, then update the Explorer_Tree.
 
-         if New_Dir /= Get_Selection (Win.Explorer_Tree) then
-            Show_Directory (Win.Explorer_Tree, New_Dir, Get_Window (Win));
+         if Dir /= Get_Selection (Win.Explorer_Tree) then
+            Show_Directory (Win.Explorer_Tree, Dir, Get_Window (Win));
          end if;
 
          if Win.File_List = null then
-            Set_Text (Win.Selection_Entry, New_Dir);
-            Set_Position (Win.Selection_Entry, New_Dir'Length);
+            Set_Text (Win.Selection_Entry, Dir);
+            Set_Position (Win.Selection_Entry, Dir'Length);
          else
             Refresh_Files (Win);
          end if;
@@ -1176,7 +1173,7 @@ package body Gtkada.File_Selector is
 
                if Is_Directory (Win.Current_Directory.all
                                 & Best_Match (1 .. Suffix_Length))
-                 and then Normalize_Pathname (Win.Current_Directory.all)
+                 and then Win.Current_Directory.all
                  /= Normalize_Pathname (Win.Current_Directory.all
                                         & Best_Match (1 .. Suffix_Length))
                then
