@@ -20,6 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Maps.Constants;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 
 with Basic_Types;                 use Basic_Types;
 with GNAT.Regpat;                 use GNAT.Regpat;
@@ -381,37 +382,29 @@ package body Language is
    is
       Start_Of_Line : Natural := Block'First;
       End_Of_Line   : Natural := Line_End (Block, Start_Of_Line);
-
-      New_Block     : String_Access := new String'
+      New_Block     : Unbounded_String := To_Unbounded_String
         (Comment_Line
            (Language_Access (Lang),
             Block (Start_Of_Line .. End_Of_Line),
             Comment,
             Clean));
-      Tmp           : String_Access;
+
    begin
       loop
          Start_Of_Line := Next_Line (Block, Start_Of_Line);
          exit when Start_Of_Line = Block'Last;
          End_Of_Line := Line_End (Block, Start_Of_Line);
 
-         Tmp       := New_Block;
-         New_Block := new String'
-           (New_Block.all & ASCII.LF &
-            Comment_Line
-              (Language_Access (Lang),
-               Block (Start_Of_Line .. End_Of_Line),
-               Comment,
-               Clean));
-         Free (Tmp);
+         Append (New_Block, ASCII.LF);
+         Append
+           (New_Block,
+            Comment_Line (Language_Access (Lang),
+            Block (Start_Of_Line .. End_Of_Line),
+            Comment,
+            Clean));
       end loop;
 
-      declare
-         Result : constant String := New_Block.all;
-      begin
-         Free (New_Block);
-         return Result;
-      end;
+      return To_String (New_Block);
    end Comment_Block;
 
    ----------------------
