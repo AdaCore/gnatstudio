@@ -1543,6 +1543,7 @@ package body Src_Editor_Buffer.Line_Information is
       BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
       Command : Command_Access;
+
    begin
       if BL.all = null then
          return;
@@ -1550,7 +1551,6 @@ package body Src_Editor_Buffer.Line_Information is
 
       for Col in BL.all'Range loop
          if BL.all (Col).Identifier.all = Block_Info_Column then
-
             for Line in Buffer_Lines'Range loop
                if Buffer_Lines (Line).Side_Info_Data /= null
                  and then Buffer_Lines (Line).Side_Info_Data (Col).Info /= null
@@ -1558,6 +1558,7 @@ package body Src_Editor_Buffer.Line_Information is
                   Command :=
                     Buffer_Lines (Line).Side_Info_Data
                     (Col).Info.Associated_Command;
+
                   if Command /= null then
                      if Command.all in Hide_Editable_Lines_Type'Class then
                         if Execute (Command) = Success then
@@ -1569,6 +1570,7 @@ package body Src_Editor_Buffer.Line_Information is
                   end if;
                end if;
             end loop;
+
             exit;
          end if;
       end loop;
@@ -1589,7 +1591,6 @@ package body Src_Editor_Buffer.Line_Information is
 
       for Col in BL.all'Range loop
          if BL.all (Col).Identifier.all = Block_Info_Column then
-
             for Line in Buffer_Lines'Range loop
                if Buffer_Lines (Line).Side_Info_Data /= null
                  and then Buffer_Lines (Line).Side_Info_Data (Col).Info /= null
@@ -1597,6 +1598,7 @@ package body Src_Editor_Buffer.Line_Information is
                   Command :=
                     Buffer_Lines (Line).Side_Info_Data
                     (Col).Info.Associated_Command;
+
                   if Command /= null then
                      if Command.all in Unhide_Editable_Lines_Type'Class then
                         if Execute (Command) = Success then
@@ -1608,6 +1610,7 @@ package body Src_Editor_Buffer.Line_Information is
                   end if;
                end if;
             end loop;
+
             exit;
          end if;
       end loop;
