@@ -1817,6 +1817,8 @@ package body Src_Editor_Buffer.Line_Information is
       Column         : Integer := -1;
       Buffer_Line    : Buffer_Line_Type;
    begin
+      --  ??? This should be optimized (Column should be cached).
+
       for Col in BL.all'Range loop
          if BL.all (Col).Identifier.all = Block_Info_Column then
 
@@ -1832,7 +1834,7 @@ package body Src_Editor_Buffer.Line_Information is
       while Editable_Lines (Line).Where /= In_Buffer loop
          --  Find the command unfolding the enclosing block.
 
-         for L in reverse Line .. Editable_Lines'First loop
+         for L in reverse Editable_Lines'First .. Line loop
             if Editable_Lines (L).Where = In_Buffer then
                Buffer_Line := Get_Buffer_Line (Buffer, L);
 
