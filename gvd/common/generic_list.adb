@@ -418,7 +418,10 @@ package body Generic_List is
 
    function Head (L : List) return Data_Type is
    begin
-      if L.First.all = null or else L.First.all.Element = null then
+      if L.First = null
+        or else L.First.all = null
+        or else L.First.all.Element = null
+      then
          raise List_Empty;
       else
          return L.First.all.Element.all;
