@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.2.0
 
+- BC09-010 repeated warnings in message window.
+  Problem:    In the Locations Tree, the same message could appear multiple
+              times. This is most likely to happen when loading messages from
+              a file.
+  Workaround: Manually edit the extra entries, or filter the file to remove
+              unwanted messages.
+
 - C105-001, C127-015, C202-001 Mismatch between files and VCS logs.
   Problem:    In some cases, the VCS log files do not correspond to the right
               files, or GPS cannot read the mapping file, and therefore
