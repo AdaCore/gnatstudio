@@ -80,7 +80,7 @@ package body Language.Custom is
      (Lang : access Custom_Language'Class;
       Top  : Glib.Xml_Int.Node_Ptr)
    is
-      Node          : Node_Ptr;
+      N, Node       : Node_Ptr;
       Parent        : Node_Ptr;
       Comment_Start : String_Ptr;
       Comment_End   : String_Ptr;
@@ -90,7 +90,7 @@ package body Language.Custom is
       Comment_Start_Length,
       Comment_End_Length,
       New_Line_Comment_Start_Length : Natural := 0;
-      Keywords      : Unbounded_String;
+      Str           : Unbounded_String;
 
       procedure Parse_Character
         (Node          : Node_Ptr;
@@ -184,15 +184,15 @@ package body Language.Custom is
 
          exit when Node = null;
 
-         Append (Keywords, Node.Value.all);
+         Append (Str, Node.Value.all);
          Node := Node.Next;
       end loop;
 
       declare
-         KW : constant String := To_String (Keywords);
+         Keywords : constant String := To_String (Str);
       begin
-         if KW /= "" then
-            Lang.Keywords := new Pattern_Matcher'(Compile (KW));
+         if Keywords /= "" then
+            Lang.Keywords := new Pattern_Matcher'(Compile (Keywords));
          end if;
       end;
 
@@ -296,12 +296,28 @@ package body Language.Custom is
       for J in 1 .. Num_Categories loop
          pragma Assert (Node.Tag.all = "Category");
 
+         --  Concatenate all Pattern tags
+
+         Str := To_Unbounded_String (0);
+         N := Node.Child;
+
+         loop
+            N := Find_Tag (N, "Pattern");
+
+            exit when N = null;
+
+            Append (Str, N.Value.all);
+            N := N.Next;
+         end loop;
+
+         declare
+            Pattern : constant String := To_String (Str);
          begin
             Lang.Categories (J) :=
               (Category       => Language_Category'Value
                  ("Cat_" & Get_Field (Node, "Name").all),
                Regexp         => new Pattern_Matcher'
-                 (Compile (Get_Field (Node, "Pattern").all, Flags)),
+                 (Compile (Pattern, Flags)),
                Position_Index =>
                  Integer'Value (Get_Field (Node, "Index").all),
                Icon           => null,  -- ??? subprogram_xpm'Access,
