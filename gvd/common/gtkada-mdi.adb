@@ -654,7 +654,7 @@ package body Gtkada.MDI is
            (M.Handles (Top), Get_Black_GC (Get_Style (M)),
             First, Handle_Size - 1, Last, Handle_Size - 1);
       end if;
-      return True;
+      return False;
    end Expose_MDI;
 
    ------------------------
@@ -1126,7 +1126,6 @@ package body Gtkada.MDI is
       return Boolean is
    begin
       Draw_Child (MDI_Child (Child), Get_Area (Event));
-      Gtk.Handlers.Emit_Stop_By_Name (Child, "expose_event");
       return True;
    end Draw_Child;
 
@@ -1664,6 +1663,7 @@ package body Gtkada.MDI is
       Gtk.Event_Box.Initialize (Child);
       Child.Initial := Gtk_Widget (Widget);
       Child.Uniconified_Width := -1;
+      Set_Flags (Child, App_Paintable);
 
       Child.State := Normal;
 
@@ -1690,7 +1690,7 @@ package body Gtkada.MDI is
          Return_Callback.To_Marshaller (Leave_Child'Access));
       Return_Callback.Connect
         (Child, "expose_event",
-         Return_Callback.To_Marshaller (Draw_Child'Access));
+         Return_Callback.To_Marshaller (Draw_Child'Access), After => True);
 
       Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
       Add (Child, Box);
