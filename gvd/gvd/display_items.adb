@@ -127,7 +127,6 @@ package body Display_Items is
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
-      Win           : Gdk.Window.Gdk_Window;
       Variable_Name : String;
       Auto_Refresh  : Boolean := True);
    --  Item.Entity must have been parsed already.
@@ -239,7 +238,6 @@ package body Display_Items is
 
    procedure Gtk_New
      (Item           : out Display_Item;
-      Win            : Gdk.Window.Gdk_Window;
       Variable_Name  : String;
       Debugger       : access Debugger_Process_Tab_Record'Class;
       Auto_Refresh   : Boolean := True;
@@ -352,7 +350,7 @@ package body Display_Items is
       Set_Valid (Item.Entity, Value_Found);
       Item.Id := Id;
 
-      Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
+      Display_Items.Initialize (Item, Variable_Name, Auto_Refresh);
 
       if Link_From /= null then
          Item.Is_Dereference := True;
@@ -367,7 +365,6 @@ package body Display_Items is
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
-      Win           : Gdk.Window.Gdk_Window;
       Variable_Name : String;
       Auto_Refresh  : Boolean := True)
    is
@@ -834,9 +831,8 @@ package body Display_Items is
    begin
       if not Has_Link (Canvas, From, To, Name) then
          L := new GVD_Link_Record;
-         Configure (L, From, To, Arrow, Name);
          L.Alias_Link := Alias_Link;
-         Add_Link (Canvas, L);
+         Add_Link (Canvas, L, From, To, Arrow, Name);
       end if;
    end Create_Link;
 
@@ -859,8 +855,10 @@ package body Display_Items is
          Visible, F);
 
       if Visible and F then
-         Xpos := Gfloat (X) / Gfloat (Get_Coord (Get_Src (Link)).Width);
-         Ypos := Gfloat (Y) / Gfloat (Get_Coord (Get_Src (Link)).Height);
+         Xpos := Gfloat (X)
+           / Gfloat (Get_Coord (Canvas_Item (Get_Src (Link))).Width);
+         Ypos := Gfloat (Y)
+           / Gfloat (Get_Coord (Canvas_Item (Get_Src (Link))).Height);
          Set_Src_Pos (Link, Xpos, Ypos);
 
       else
@@ -1137,7 +1135,7 @@ package body Display_Items is
         (Canvas : access Interactive_Canvas_Record'Class;
          Link   : access Canvas_Link_Record'Class) return Boolean is
       begin
-         if Get_Src (Link) = Canvas_Item (Item)
+         if Canvas_Item (Get_Src (Link)) = Canvas_Item (Item)
            and then GVD_Link (Link).Source_Component /= null
          then
             Compute_Link_Pos (GVD_Link (Link));
@@ -1535,16 +1533,16 @@ package body Display_Items is
 
       begin
          if not GVD_Link (Link).Alias_Link then
-            Src := Get_Src (Link);
-            Dest := Get_Dest (Link);
+            Src := Canvas_Item (Get_Src (Link));
+            Dest := Canvas_Item (Get_Dest (Link));
             Replace := False;
 
-            if Get_Src (Link) = Canvas_Item (Item) then
+            if Canvas_Item (Get_Src (Link)) = Canvas_Item (Item) then
                Src := Canvas_Item (Display_Item (Item).Is_Alias_Of);
                Replace := True;
             end if;
 
-            if Get_Dest (Link) = Canvas_Item (Item) then
+            if Canvas_Item (Get_Dest (Link)) = Canvas_Item (Item) then
                Dest := Canvas_Item (Display_Item (Item).Is_Alias_Of);
                Replace := True;
             end if;

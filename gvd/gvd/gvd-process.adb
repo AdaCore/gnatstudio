@@ -1234,7 +1234,7 @@ package body GVD.Process is
 
                if Dependent_On_First = Natural'Last then
                   Gtk_New
-                    (Item, Get_Window (Process.Data_Canvas),
+                    (Item,
                      Variable_Name  => Expr,
                      Debugger       => Process,
                      Auto_Refresh   => Enable,
@@ -1243,7 +1243,7 @@ package body GVD.Process is
 
                else
                   Gtk_New
-                    (Item, Get_Window (Process.Data_Canvas),
+                    (Item,
                      Variable_Name  => Expr,
                      Debugger       => Process,
                      Auto_Refresh   => Enable,
@@ -1284,7 +1284,7 @@ package body GVD.Process is
             if Dependent_On_First = Natural'Last then
                if Enable_Block_Search then
                   Gtk_New
-                    (Item, Get_Window (Process.Data_Canvas),
+                    (Item,
                      Variable_Name =>
                        Variable_Name_With_Frame
                          (Process.Debugger, Cmd (First .. Last)),
@@ -1299,7 +1299,7 @@ package body GVD.Process is
 
                if Item = null then
                   Gtk_New
-                    (Item, Get_Window (Process.Data_Canvas),
+                    (Item,
                      Variable_Name => Cmd (First .. Last),
                      Debugger      => Process,
                      Auto_Refresh  =>
@@ -1322,7 +1322,7 @@ package body GVD.Process is
 
                if Enable_Block_Search then
                   Gtk_New
-                    (Item, Get_Window (Process.Data_Canvas),
+                    (Item,
                      Variable_Name => Variable_Name_With_Frame
                      (Process.Debugger, Cmd (First .. Last)),
                      Debugger      => Process,
@@ -1333,7 +1333,7 @@ package body GVD.Process is
 
                if Item = null then
                   Gtk_New
-                    (Item, Get_Window (Process.Data_Canvas),
+                    (Item,
                      Variable_Name => Cmd (First .. Last),
                      Debugger      => Process,
                      Auto_Refresh  => Enable,

@@ -40,7 +40,6 @@ package Display_Items is
 
    procedure Gtk_New
      (Item           : out Display_Item;
-      Win            : Gdk.Window.Gdk_Window;
       Variable_Name  : String;
       Debugger       : access GVD.Process.Debugger_Process_Tab_Record'CLass;
       Auto_Refresh   : Boolean := True;
