@@ -34,6 +34,12 @@ package GVD is
    Max_Column_Width : constant := 200;
    --  Maximum width (in pixels) for a column in a list.
 
+   Default_Link_Font_Size : constant := @LINK_SIZE@;
+   --  Default font size used in Preferences for links.
+
+   Default_Font_Size : constant := @FONT_SIZE@;
+   --  Default font size used in Preferences for text.
+
    Need_To_Strip_Control_M : constant Boolean := @STRIP_CR@;
    --  True on systems where lines are separated by both LF and CR.
 
