@@ -125,6 +125,7 @@ package body GVD.Dialogs.Callbacks is
       S         : Unbounded_String;
       Tmp       : Gint_List.Glist := Gint_List.First (Selection);
       Button    : Message_Dialog_Buttons;
+      Debugger  : constant Debugger_Process_Tab :=                                      Convert (Dialog.Main_Window, Dialog.Debugger);
 
    begin
       while Tmp /= Gint_List.Null_List loop
@@ -141,7 +142,11 @@ package body GVD.Dialogs.Callbacks is
          return;
       end if;
 
-      --  The dialog will be unregistered by Send.
+      --  Unregister the dialog, since Send will not take care of it when
+      --  Wait_For_Prompt is false
+
+      Unregister_Dialog (Debugger);
+      Set_Busy_Cursor (Debugger, False);
 
       Send (Dialog.Debugger,
             To_String (S),
