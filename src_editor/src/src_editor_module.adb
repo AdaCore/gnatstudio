@@ -1613,7 +1613,7 @@ package body Src_Editor_Module is
       Kernel : constant Kernel_Handle :=
         Get_Kernel (Source_Box (Widget).Editor);
    begin
-      return Get_Ref_Count (Source_Box (Widget).Editor) = 1
+      return Get_Ref_Count (Get_Buffer (Source_Box (Widget).Editor)) = 1
         and then not Save_MDI_Children
           (Kernel,
            Children => (1 => Find_MDI_Child (Get_MDI (Kernel), Widget)),
@@ -1919,7 +1919,8 @@ package body Src_Editor_Module is
          Set_Focus_Child (Child);
 
          declare
-            Im : constant String := Image (Get_Total_Ref_Count (Editor));
+            Im : constant String := Image
+              (Get_Total_Ref_Count (Get_Buffer (Editor)));
          begin
             Set_Title
               (Child,
@@ -3503,12 +3504,13 @@ package body Src_Editor_Module is
         (Kernel,
          Command      => "edit",
          Params       => Parameter_Names_To_Usage (Edit_Cmd_Parameters, 4),
-         Description  => -"Open a file editor for file_name." & ASCII.LF
-           & (-"Length is the number of characters to select after the"
-              & " cursor. If line and column are set to 0 (the default),"
-              & " then the location of the cursor is not changed if the file"
-              & " is already opened in an editor. If force is set to true,"
-              & " a reload is forced in case the file is already open."),
+         Description  =>
+          -("Open a file editor for file_name."
+            & "Length is the number of characters to select after the"
+            & " cursor. If line and column are set to 0 (the default),"
+            & " then the location of the cursor is not changed if the file"
+            & " is already opened in an editor. If force is set to true,"
+            & " a reload is forced in case the file is already open."),
          Minimum_Args => 1,
          Maximum_Args => 5,
          Handler      => Edit_Command_Handler'Access);
@@ -4044,7 +4046,7 @@ package body Src_Editor_Module is
                  Kernel);
 
             declare
-               Files : VFS.File_Array := Open_Files (Kernel);
+               Files : constant VFS.File_Array := Open_Files (Kernel);
             begin
                for Node in Files'Range loop
                   Create_Line_Information_Column
