@@ -251,69 +251,6 @@
 </widget>
 
 <widget>
-  <class>GtkWindow</class>
-  <name>Gen_Proposition</name>
-  <title>window1</title>
-  <type>GTK_WINDOW_TOPLEVEL</type>
-  <position>GTK_WIN_POS_NONE</position>
-  <modal>False</modal>
-  <allow_shrink>False</allow_shrink>
-  <allow_grow>True</allow_grow>
-  <auto_shrink>False</auto_shrink>
-
-  <widget>
-    <class>GtkVBox</class>
-    <name>Choices_Box</name>
-    <homogeneous>False</homogeneous>
-    <spacing>0</spacing>
-
-    <widget>
-      <class>GtkScrolledWindow</class>
-      <name>scrolledwindow4</name>
-      <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
-      <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
-      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
-
-      <widget>
-	<class>GtkText</class>
-	<name>Old_Text</name>
-	<can_focus>True</can_focus>
-	<editable>False</editable>
-	<text></text>
-      </widget>
-    </widget>
-
-    <widget>
-      <class>GtkScrolledWindow</class>
-      <name>scrolledwindow5</name>
-      <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
-      <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
-      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
-
-      <widget>
-	<class>GtkText</class>
-	<name>New_Text</name>
-	<can_focus>True</can_focus>
-	<editable>False</editable>
-	<text></text>
-      </widget>
-    </widget>
-  </widget>
-</widget>
-
-<widget>
   <class>GtkDialog</class>
   <name>Final_Window</name>
   <title>No more errors</title>
