@@ -227,6 +227,10 @@ package body Task_Manager.GUI is
               (Manager.Queues (Index).Bar,
                Name_String.all & " " & Progress_String.all);
 
+            if Progress.Total <= 0 then
+               Progress.Total := 1;
+            end if;
+
             Fraction := Gdouble (Progress.Current)
               / Gdouble (Progress.Total);
 
