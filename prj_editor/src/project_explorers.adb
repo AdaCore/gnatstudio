@@ -2237,7 +2237,7 @@ package body Project_Explorers is
          Gtk_New (Files, Kernel);
          Child := Put (Get_MDI (Kernel), Files);
          Set_Title
-           (Child, -"Project Explorer - Files View",  -"Files View");
+           (Child, -"Project Explorer - File View",  -"File View");
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
       else
