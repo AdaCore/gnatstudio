@@ -202,6 +202,10 @@ package body Src_Editor_Module is
    --  The current editor is the focus child in the MDI. If the focus child
    --  is not an editor, nothing happens.
 
+   function Find_Current_Editor
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
+   --  Return the top-most MDI child that is an internal editor
+
    ------------------
    -- Load_Desktop --
    ------------------
@@ -260,14 +264,23 @@ package body Src_Editor_Module is
    function Find_Current_Editor
      (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box
    is
-      Child : MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Source_Box_Record'Tag);
+      Child : MDI_Child := Find_Current_Editor (Kernel);
    begin
       if Child = null then
          return null;
       else
          return Source_Box (Get_Widget (Child)).Editor;
       end if;
+   end Find_Current_Editor;
+
+   -------------------------
+   -- Find_Current_Editor --
+   -------------------------
+
+   function Find_Current_Editor
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child is
+   begin
+      return Find_MDI_Child_By_Tag (Get_MDI (Kernel), Source_Box_Record'Tag);
    end Find_Current_Editor;
 
    -------------
@@ -441,13 +454,18 @@ package body Src_Editor_Module is
       Name    : String := "";
       Success : out Boolean)
    is
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Child : MDI_Child := Find_Current_Editor (Kernel);
+      Source : Source_Editor_Box;
    begin
-      if Source = null then
+      if Child = null then
          return;
       end if;
 
+      Source := Source_Box (Get_Widget (Child)).Editor;
       Save_To_File (Source, Name, Success);
+
+      --  Update the title, in case "save as..." was used.
+      Set_Title (Child, Base_Name (Get_Filename (Source)));
    end Save_To_File;
 
    -------------------------
