@@ -45,6 +45,12 @@ with Snames; use Snames;
 
 package body Src_Info.CPP is
 
+   DBIMP    : constant String := "dbimp";
+   --  SN database engine
+
+   CBrowser : constant String := "cbrowser";
+   --  SN C and C++ parser
+
    Info_Stream : Debug_Handle := Create ("CPP.Info");
    Warn_Stream : Debug_Handle := Create ("CPP.Warn");
    Fail_Stream : Debug_Handle := Create ("CPP.Fail");
@@ -499,7 +505,13 @@ package body Src_Info.CPP is
       end loop;
 
       Close (Tmp_File);
-      SN.Browse.Browse (HI.List_Filename.all, Handler.DB_Dir.all, HI.PD);
+
+      SN.Browse.Browse
+        (File_Name     => HI.List_Filename.all,
+         DB_Directory  => Handler.DB_Dir.all,
+         DBIMP_Path    => Handler.DBIMP_Path.all,
+         Cbrowser_Path => Handler.CBrowser_Path.all,
+         PD            => HI.PD);
       HI.State := Analyze_Files;
       return HI;
    end Generate_LI_For_Project;
@@ -534,9 +546,10 @@ package body Src_Info.CPP is
             --  All files processed, start generating of xrefs
             Iterator.State := Process_Xrefs;
             Browse.Generate_Xrefs
-              (Iterator.Handler.DB_Dir.all,
-               Iterator.Tmp_Filename,
-               Iterator.PD);
+              (DB_Directory  => Iterator.Handler.DB_Dir.all,
+               DBIMP_Path    => Iterator.Handler.DBIMP_Path.all,
+               Temp_Name     => Iterator.Tmp_Filename,
+               PD            => Iterator.PD);
 
          when Process_Xrefs =>
             --  If we haven't finished the second phase, keep waiting.
@@ -666,6 +679,32 @@ package body Src_Info.CPP is
          --  exception
          raise;
    end Process_File;
+
+   ---------------------
+   -- Set_Executables --
+   ---------------------
+
+   function Set_Executables
+     (Handler : access CPP_LI_Handler_Record) return String is
+   begin
+      Free (Handler.DBIMP_Path);
+      Free (Handler.CBrowser_Path);
+
+      Handler.DBIMP_Path    := Locate_Exec_On_Path (DBIMP);
+      if Handler.DBIMP_Path = null then
+         return DBIMP
+           & " not found on the path. C/C++ browsing is not be available";
+      end if;
+
+      Handler.CBrowser_Path := Locate_Exec_On_Path (CBrowser);
+      if Handler.CBrowser_Path = null then
+         Free (Handler.DBIMP_Path);
+         return CBrowser
+           & " not found on the path. C/C++ browsing is not be available";
+      end if;
+
+      return "";
+   end Set_Executables;
 
    -----------
    -- Reset --

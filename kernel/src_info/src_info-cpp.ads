@@ -33,6 +33,13 @@ package Src_Info.CPP is
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with private;
    --  An iterator to generate the LI database for a set of source files.
 
+   function Set_Executables
+     (Handler : access CPP_LI_Handler_Record) return String;
+   --  Compute the location of the external source navigator executables on the
+   --  path. If they are not found, this function should return an error
+   --  message to print in the GPS console.
+   --  The empty string is returned if all went well.
+
    procedure Reset
      (Handler : access CPP_LI_Handler_Record'Class;
       Project : Prj.Project_Id);
@@ -109,9 +116,14 @@ private
       Done);         -- updating done
 
    type CPP_LI_Handler_Record is new LI_Handler_Record with record
-      Xrefs           : SN.Xref_Pools.Xref_Pool;
-      DB_Dir          : GNAT.OS_Lib.String_Access;
-      SN_Table        : Src_Info.Type_Utils.SN_Table_Array;
+      Xrefs          : SN.Xref_Pools.Xref_Pool;
+      DB_Dir         : GNAT.OS_Lib.String_Access;
+      SN_Table       : Src_Info.Type_Utils.SN_Table_Array;
+      DBIMP_Path     : GNAT.OS_Lib.String_Access := null;
+      --  full path to dbimp (found in PATH) or null, if DBIMP is not in PATH
+      CBrowser_Path  : GNAT.OS_Lib.String_Access := null;
+      --  full path to CBrowser (found in PATH) or null, if CBrowser is not in
+      --  PATH
    end record;
    --  The fields above are always initialized after calling Reset.
 
