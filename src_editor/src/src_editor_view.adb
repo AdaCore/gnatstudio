@@ -76,6 +76,10 @@ package body Src_Editor_View is
    Speed_Column_Width : constant := 10;
    --  The width of the speed column
 
+   Speed_Column_Timeout : constant Guint32 := 1000;
+   --  The time (in milliseconds) after which the speed column should be hidden
+   --  when the preference is auto-hide and there are no more lines.
+
    Margin : constant := 3;
    --  The margin left of the text.
 
@@ -254,6 +258,9 @@ package body Src_Editor_View is
    function Scroll_Timeout (View : Source_View) return Boolean;
    --  Scroll to View.Scroll_To_Value;
 
+   function Hide_Speed_Column_Timeout (View : Source_View) return Boolean;
+   --  Hide the speed column.
+
    function Speed_Bar_Expose_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -291,6 +298,17 @@ package body Src_Editor_View is
       View.Scroll_Requested := False;
       return False;
    end Scroll_Timeout;
+
+   -------------------------------
+   -- Hide_Speed_Column_Timeout --
+   -------------------------------
+
+   function Hide_Speed_Column_Timeout (View : Source_View) return Boolean is
+   begin
+      Set_Size_Request (View.Area, 1, -1);
+      View.Speed_Column_Hide_Registered := False;
+      return False;
+   end Hide_Speed_Column_Timeout;
 
    -------------------------
    -- Cursor_Is_On_Screen --
@@ -394,6 +412,10 @@ package body Src_Editor_View is
 
       if View.Scroll_Requested then
          Timeout_Remove (View.Scroll_Timeout);
+      end if;
+
+      if View.Speed_Column_Hide_Registered then
+         Timeout_Remove (View.Speed_Column_Hide_Timeout);
       end if;
    end Delete;
 
@@ -2063,18 +2085,25 @@ package body Src_Editor_View is
          end loop;
 
          if Info_Exists then
+            if View.Speed_Column_Hide_Registered then
+               View.Speed_Column_Hide_Registered := False;
+               Timeout_Remove (View.Speed_Column_Hide_Timeout);
+            end if;
+
             if Width = 1
               and then View.Speed_Column_Mode /= Never
             then
                Set_Size_Request (View.Area, Speed_Column_Width, -1);
             end if;
-         else
-            if Width = Speed_Column_Width
-              and then View.Speed_Column_Mode /= Always
-            then
-               Set_Size_Request (View.Area, 1, -1);
-               return;
-            end if;
+
+         elsif Width = Speed_Column_Width
+           and then View.Speed_Column_Mode /= Always
+           and then not View.Speed_Column_Hide_Registered
+         then
+            View.Speed_Column_Hide_Registered := True;
+            View.Speed_Column_Hide_Timeout := Source_View_Timeout.Add
+              (Speed_Column_Timeout, Hide_Speed_Column_Timeout'Access,
+               Source_View (View));
          end if;
       end if;
 
