@@ -156,7 +156,7 @@ package body Glide_Kernel.Timeout is
      (Input     : in String;
       User_Data : access GObject_Record'Class) return String
    is
-      Console : Console_Process := Console_Process (User_Data);
+      Console : constant Console_Process := Console_Process (User_Data);
    begin
       if not Console.Died then
          Send (Console.D.Descriptor.all, Input);
