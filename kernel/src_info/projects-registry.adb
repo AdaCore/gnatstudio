@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with ALI;
 with Atree;
@@ -29,6 +28,7 @@ with Errout;
 with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with Glide_Intl;                use Glide_Intl;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
@@ -430,9 +430,16 @@ package body Projects.Registry is
       Errors   : Projects.Error_Report)
    is
       Set_As_Incomplete_When_Errors : Boolean := True;
+      Language : constant Name_Id :=
+        Get_String (String (Languages_Attribute));
 
       procedure Report_Error (S : String; Project : Project_Id);
       --  Handler called when the project parser finds an error
+
+      procedure Normalize_View (Project : Project_Type);
+      --  Normalize the view of the project. In particular, make sure the
+      --  languages attribute is lower case.
+      --  ??? Should this be done directly by the GNAT parser ?
 
       procedure Report_Error (S : String; Project : Project_Id) is
          P    : Project_Type;
@@ -473,6 +480,28 @@ package body Projects.Registry is
          end if;
       end Report_Error;
 
+      --------------------
+      -- Normalize_View --
+      --------------------
+
+      procedure Normalize_View (Project : Project_Type) is
+         Var : constant Variable_Id :=
+           Prj.Projects.Table (Get_View (Project)).Decl.Attributes;
+         Value : constant Variable_Value := Value_Of (Language, Var);
+         Lang : String_List_Id;
+      begin
+         if Value /= Nil_Variable_Value then
+            Lang := Value.Values;
+            while Lang /= Nil_String loop
+               Get_Name_String (String_Elements.Table (Lang).Value);
+               To_Lower (Name_Buffer (1 .. Name_Len));
+               String_Elements.Table (Lang).Value := Name_Find;
+
+               Lang := String_Elements.Table (Lang).Next;
+            end loop;
+         end if;
+      end Normalize_View;
+
       View    : Project_Id;
       Success : Boolean;
       Iter    : Imported_Project_Iterator := Start (Registry.Data.Root);
@@ -493,6 +522,14 @@ package body Projects.Registry is
       Prj.Proc.Process
         (View, Success, Registry.Data.Root.Node,
          Report_Error'Unrestricted_Access);
+
+      --  Lower case the languages attribute
+
+      Iter := Start (Registry.Data.Root);
+      while Current (Iter) /= No_Project loop
+         Normalize_View (Current (Iter));
+         Next (Iter);
+      end loop;
 
       --  Do not set the project as incomplete if no sources existed for a
       --  given language. Otherwise, a dialog is displayed when editing the
@@ -731,7 +768,7 @@ package body Projects.Registry is
       end File_In_Sources;
 
       Languages  : Argument_List := Get_Languages (Project);
-      Languages2 : Argument_List := Languages;
+      Languages2 : Name_Id_Array (Languages'Range);
       Dirs      : String_Array_Access;
       Dir       : Dir_Type;
       Length    : Natural;
@@ -775,6 +812,7 @@ package body Projects.Registry is
          Sources : constant Variable_Value :=
            Prj.Util.Value_Of (Name_Source_Files, Data.Decl.Attributes);
          File : String_List_Id := Sources.Values;
+         Src  : Source_File_Data;
 
       begin
          if not Sources.Default then
@@ -783,12 +821,20 @@ package body Projects.Registry is
                Get_Name_String (String_Elements.Table (File).Value);
                Canonical_Case_File_Name (Name_Buffer (1 .. Name_Len));
 
-               if Get (Registry.Data.Sources, Name_Buffer (1 .. Name_Len)).Lang
-                 = No_Name
-               then
+               Src := Get (Registry.Data.Sources, Name_Buffer (1 .. Name_Len));
+               if Src.Lang = No_Name then
                   Set (Registry.Data.Sources,
                        K => Name_Buffer (1 .. Name_Len),
                        E => (No_Project, Unknown_Language, No_Name));
+               elsif Src.Project /= No_Project then
+                  Errors (-("Warning, duplicate source file ")
+                          & Name_Buffer (1 .. Name_Len)
+                          & " (already in "
+                          & Project_Name (Src.Project) & ')',
+                          Get_View (Project));
+               else
+                  Errors (-("Warning, duplicate source file ")
+                          & Name_Buffer (1 .. Name_Len), Get_View (Project));
                end if;
                File := String_Elements.Table (File).Next;
             end loop;
@@ -806,6 +852,7 @@ package body Projects.Registry is
          File : Prj.Util.Text_File;
          Line : String (1 .. 2000);
          Last : Natural;
+         Src  : Source_File_Data;
 
       begin
          if not Source_List_File.Default then
@@ -826,12 +873,20 @@ package body Projects.Registry is
                      then
                         Canonical_Case_File_Name (Line (1 .. Last));
 
-                        if Get (Registry.Data.Sources,
-                                Line (1 .. Last)).Lang = No_Name
-                        then
+                        Src := Get (Registry.Data.Sources, Line (1 .. Last));
+                        if Src.Lang = No_Name then
                            Set (Registry.Data.Sources,
                                 K => Line (1 .. Last),
                                 E => (No_Project, Unknown_Language, No_Name));
+                        elsif Src.Project /= No_Project then
+                           Errors (-("Warning, duplicate source file ")
+                                   & Line (1 .. Last)
+                                   & " (already in "
+                                   & Project_Name (Src.Project) & ')',
+                                   Get_View (Project));
+                        else
+                           Errors (-("Warning, duplicate source file ")
+                                   & Line (1 .. Last), Get_View (Project));
                         end if;
                      end if;
                   end loop;
@@ -850,6 +905,10 @@ package body Projects.Registry is
 
       --  Parse all directories to find the files that match the naming
       --  scheme.
+
+      for L in Languages'Range loop
+         Languages2 (L) := Get_String (Languages (L).all);
+      end loop;
 
       Dirs := Source_Dirs (Project, False);
 
@@ -883,7 +942,7 @@ package body Projects.Registry is
 
                Get_Unit_Part_And_Name_From_Filename
                  (Filename  => Buffer (1 .. Length),
-                  Project   => Get_View (Project),
+                  Project   => Project,
                   Part      => Part,
                   Unit_Name => Unit,
                   Lang      => Lang);
@@ -891,29 +950,25 @@ package body Projects.Registry is
                --  Check if the returned language belongs to the supported
                --  languages for the project
 
-               if Lang /= No_Name then
-                  Get_Name_String (Lang);
-                  for C in 1 .. Name_Len loop
-                     Name_Buffer (C) := To_Lower (Name_Buffer (C));
-                  end loop;
+               if Lang /= No_Name
+                 and then Lang /= Name_Ada
+               then
+                  Record_Source (Buffer (1 .. Length), Lang);
+                  Has_File := True;
 
-                  if Name_Buffer (1 .. Name_Len) /= Ada_String then
-                     for Index in Languages'Range loop
-                        if Languages (Index).all =
-                          Name_Buffer (1 .. Name_Len)
-                        then
-                           Record_Source (Buffer (1 .. Length), Lang);
-                           Has_File := True;
-                           Languages2 (Index) := null;
-                           exit;
-                        end if;
-                     end loop;
-                  end if;
+                  for Index in Languages2'Range loop
+                     if Languages2 (Index) = Lang then
+                        Languages2 (Index) := No_Name;
+                        exit;
+                     end if;
+                  end loop;
                end if;
             end if;
          end loop;
 
-         Update_Directory_Cache (Project, Dirs (D).all, Has_File);
+         if Has_File then
+            Update_Directory_Cache (Project, Dirs (D).all, Has_File);
+         end if;
 
          Close (Dir);
       end loop;
@@ -922,10 +977,10 @@ package body Projects.Registry is
 
       Length := 0;
       for L in Languages2'Range loop
-         if Languages2 (L) /= null
-           and then Languages2 (L).all /= Ada_String
+         if Languages2 (L) /= No_Name
+           and then Languages2 (L) /= Name_Ada
          then
-            Length := Length + Languages2 (L)'Length + 2;
+            Length := Length + Languages (L)'Length + 2;
          end if;
       end loop;
 
@@ -935,12 +990,12 @@ package body Projects.Registry is
             Index : Natural := Error'First;
          begin
             for L in Languages2'Range loop
-               if Languages2 (L) /= null
-                 and then Languages2 (L).all /= Ada_String
+               if Languages2 (L) /= No_Name
+                 and then Languages2 (L) /= Name_Ada
                then
-                  Error (Index .. Index + Languages2 (L)'Length + 1) :=
-                    Languages2 (L).all & ", ";
-                  Index := Index + Languages2 (L)'Length + 2;
+                  Error (Index .. Index + Languages (L)'Length + 1) :=
+                    Languages (L).all & ", ";
+                  Index := Index + Languages (L).all'Length + 2;
                end if;
             end loop;
 
@@ -1066,7 +1121,7 @@ package body Projects.Registry is
 
                Get_Unit_Part_And_Name_From_Filename
                  (Filename  => Source_Filename,
-                  Project   => Get_View (Get_Root_Project (Registry)),
+                  Project   => Get_Root_Project (Registry),
                   Part      => Part,
                   Unit_Name => Unit,
                   Lang      => Lang);
