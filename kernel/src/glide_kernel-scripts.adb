@@ -644,8 +644,9 @@ package body Glide_Kernel.Scripts is
              Dialog_Type   => Confirmation,
              Parent        => Get_Main_Window (Kernel)) = Button_Yes);
 
-      elsif Command = "save_windows" then
+      elsif Command = "save_all" then
          Name_Parameters (Data, Save_Windows_Parameters);
+
          if not Save_MDI_Children
            (Kernel, No_Children, Nth_Arg (Data, 1, False))
          then
@@ -1330,7 +1331,7 @@ package body Glide_Kernel.Scripts is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "save_windows",
+         Command      => "save_all",
          Params       => Parameter_Names_To_Usage (Save_Windows_Parameters),
          Description  =>
            -("Save all currently unsaved windows. This includes open editors,"
@@ -1338,8 +1339,7 @@ package body Glide_Kernel.Scripts is
              & " save callbacks." & ASCII.LF
              & "If the force parameter is false, then a confirmation dialog"
              & " is displayed so that the user can select which windows"
-             & " to save." & ASCII.LF
-             & "It raises an exception if the user pressed Cancel"),
+             & " to save."),
          Minimum_Args => 0,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
