@@ -283,7 +283,7 @@
       <commit             action="generic_cvs_commit"         label="Commit"/>
       <history            action="generic_cvs_history"        label="View entire revision history"/>
       <history_revision   action="generic_cvs_history_rev"    label="View specific revision history"/>
-      <annotate           action="generic_cvs_annotate"       label="Annotate"/>
+      <annotate           action="generic_cvs_annotate"       label="Annotations"/>
       <add                action="generic_cvs_add"            label="Add"/>
       <remove             action="generic_cvs_remove"         label="Remove"/>
       <revert             action="generic_cvs_revert"         label="Revert"/>
