@@ -112,7 +112,15 @@ procedure GVD_Main is
       end if;
 
       if Home.all /= "" then
-         Dir := new String' (Home.all & Directory_Separator & ".gvd");
+         if Home (Home'Last) = '/'
+           or else Home (Home'Last) = Directory_Separator
+         then
+            Dir := new String' (Home (Home'First .. Home'Last - 1) &
+              Directory_Separator & ".gvd");
+         else
+            Dir := new String' (Home.all & Directory_Separator & ".gvd");
+         end if;
+
       else
          Dir := new String'(Directory_Separator & ".gvd"); -- ??? Is this right
       end if;
