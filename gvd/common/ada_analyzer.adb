@@ -19,6 +19,8 @@ package body Source_Analyzer is
 
       Declaration : Boolean := False;
       --  Are we inside a declarative part ?
+      --  For a Tok_Record, set to True if the keyword "record" was found on
+      --  its own line.
 
       Identifier  : String (1 .. Max_Identifier);
       --  Name of the enclosing token
@@ -500,6 +502,7 @@ package body Source_Analyzer is
       Indent_Return   : Natural renames Indent_Params.Indent_Return;
       Indent_With     : Natural renames Indent_Params.Indent_With;
       Indent_Use      : Natural renames Indent_Params.Indent_Use;
+      Indent_Record   : Natural renames Indent_Params.Indent_Record;
 
       ---------------
       -- Variables --
@@ -817,6 +820,14 @@ package body Source_Analyzer is
                   when Tok_Case =>
                      Num_Spaces := Num_Spaces - Indent_Level;
 
+                  when Tok_Record =>
+                     --  If the "record" keyword was on its own line
+
+                     if Top (Tokens).Declaration then
+                        Do_Indent (Prec, Num_Spaces - Indent_Level);
+                        Num_Spaces := Num_Spaces - Indent_Record;
+                     end if;
+
                   when others =>
                      null;
                end case;
@@ -897,7 +908,20 @@ package body Source_Analyzer is
                      end if;
 
                   elsif Reserved = Tok_Record then
+                     --  Is "record" the first keyword on the line ?
+                     --  If True, we are in a case like:
+                     --     type A is
+                     --        record    --  from Indent_Record
+                     --           null;
+                     --        end record;
+
+                     if not Indent_Done then
+                        Temp.Declaration := True;
+                        Num_Spaces := Num_Spaces + Indent_Record;
+                     end if;
+
                      Push (Tokens, Temp);
+
                   else
                      Num_Spaces := Num_Spaces - Indent_Level;
                   end if;
