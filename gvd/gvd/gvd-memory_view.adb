@@ -56,7 +56,7 @@ package body GVD.Memory_View is
    use Long_Int_IO;
 
    package Memory_View_Register is new Register_Generic
-     (Long_Long_Integer, Odd_Memory_View_Record);
+     (Long_Long_Integer, GVD_Memory_View_Record);
 
    ---------------------
    -- Local constants --
@@ -83,7 +83,7 @@ package body GVD.Memory_View is
    -----------------------
 
    function Is_Highlighted
-     (View     : access Odd_Memory_View_Record'Class;
+     (View     : access GVD_Memory_View_Record'Class;
       Position : Gint) return Boolean;
    --  Tells whether a given position in the view should be highlighted or not.
 
@@ -102,7 +102,7 @@ package body GVD.Memory_View is
    --  Conversion from a Long_Long_Integer to a based representation.
    --  Output is truncated to Trunc_At characters if Trunc_At /= -1.
 
-   procedure Clear_View (View : access Odd_Memory_View_Record'Class);
+   procedure Clear_View (View : access GVD_Memory_View_Record'Class);
    --  Removes everything from the view.
 
    --------------------
@@ -110,7 +110,7 @@ package body GVD.Memory_View is
    --------------------
 
    function Is_Highlighted
-     (View     : access Odd_Memory_View_Record'Class;
+     (View     : access GVD_Memory_View_Record'Class;
       Position : Gint) return Boolean
    is
       Row_Length : Integer;
@@ -141,7 +141,7 @@ package body GVD.Memory_View is
    -----------------------
 
    function Position_To_Index
-     (View     : access Odd_Memory_View_Record'Class;
+     (View     : access GVD_Memory_View_Record'Class;
       Position : in Gint) return Integer
    is
       Row_Length : Integer;
@@ -230,7 +230,7 @@ package body GVD.Memory_View is
    -- Clear_View --
    ----------------
 
-   procedure Clear_View (View : access Odd_Memory_View_Record'Class) is
+   procedure Clear_View (View : access GVD_Memory_View_Record'Class) is
    begin
       Delete_Text (View.View);
    end Clear_View;
@@ -292,7 +292,7 @@ package body GVD.Memory_View is
    --  Update_Display --
    ---------------------
 
-   procedure Update_Display (View : access Odd_Memory_View_Record'Class) is
+   procedure Update_Display (View : access GVD_Memory_View_Record'Class) is
       Index      : Integer;
       Width      : Gint;
       Height     : Gint;
@@ -434,7 +434,7 @@ package body GVD.Memory_View is
    --------------------
 
    procedure Display_Memory
-     (View    : access Odd_Memory_View_Record'Class;
+     (View    : access GVD_Memory_View_Record'Class;
       Address : Long_Long_Integer)
    is
       Process : constant Debugger_Process_Tab
@@ -468,7 +468,7 @@ package body GVD.Memory_View is
    --------------------
 
    procedure Display_Memory
-     (View : access Odd_Memory_View_Record'Class;
+     (View : access GVD_Memory_View_Record'Class;
       Address : String)
    is
       Real_Address : Long_Long_Integer;
@@ -513,7 +513,7 @@ package body GVD.Memory_View is
    -- Apply_Changes --
    -------------------
 
-   procedure Apply_Changes (View : access Odd_Memory_View_Record'Class) is
+   procedure Apply_Changes (View : access GVD_Memory_View_Record'Class) is
    begin
       for J in 1 .. View.Number_Of_Bytes loop
          Put_Memory_Byte
@@ -536,10 +536,10 @@ package body GVD.Memory_View is
    -------------
 
    procedure Gtk_New
-     (View   : out Odd_Memory_View;
+     (View   : out GVD_Memory_View;
       Window : in Gtk_Widget) is
    begin
-      View := new Odd_Memory_View_Record;
+      View := new GVD_Memory_View_Record;
       Initialize (View);
       Init_Graphics (Get_Window (Window));
       View.Window := Window;
@@ -550,7 +550,7 @@ package body GVD.Memory_View is
    -- Page_Up --
    -------------
 
-   procedure Page_Up (View : access Odd_Memory_View_Record'Class) is
+   procedure Page_Up (View : access GVD_Memory_View_Record'Class) is
    begin
       Display_Memory
         (View, View.Starting_Address -
@@ -561,7 +561,7 @@ package body GVD.Memory_View is
    -- Page_Down --
    ---------------
 
-   procedure Page_Down (View : access Odd_Memory_View_Record'Class) is
+   procedure Page_Down (View : access GVD_Memory_View_Record'Class) is
    begin
       Display_Memory
         (View, View.Starting_Address +
@@ -573,7 +573,7 @@ package body GVD.Memory_View is
    ------------
 
    procedure Update
-     (View : access Odd_Memory_View_Record'Class;
+     (View : access GVD_Memory_View_Record'Class;
       Process : Gtk_Widget)
    is
       Tab : Debugger_Process_Tab := Debugger_Process_Tab (Process);
@@ -595,7 +595,7 @@ package body GVD.Memory_View is
    -----------------
 
    procedure Move_Cursor
-     (View : access Odd_Memory_View_Record'Class;
+     (View : access GVD_Memory_View_Record'Class;
       Where : in Dir)
    is
       Move     : Gint := 0;
@@ -648,7 +648,7 @@ package body GVD.Memory_View is
    ------------
 
    procedure Insert
-     (View : access Odd_Memory_View_Record'Class;
+     (View : access GVD_Memory_View_Record'Class;
       Char : String)
    is
       Prefix      : String (1 .. 3);

@@ -30,7 +30,7 @@ package GVD.Memory_View is
 
    type Data_Size is (Byte, Halfword, Word);
 
-   type Odd_Memory_View_Record is new Memory_View_Record with record
+   type GVD_Memory_View_Record is new Memory_View_Record with record
       Window : Gtk_Widget;
       --  The associated main window;
 
@@ -76,58 +76,58 @@ package GVD.Memory_View is
       --  Locates the cursor position within the values array;
    end record;
 
-   type Odd_Memory_View is access all Odd_Memory_View_Record'Class;
+   type GVD_Memory_View is access all GVD_Memory_View_Record'Class;
 
    procedure Gtk_New
-     (View   : out Odd_Memory_View;
+     (View   : out GVD_Memory_View;
       Window : in Gtk_Widget);
    --  Create a new memory view.
 
    procedure Display_Memory
-     (View    : access Odd_Memory_View_Record'Class;
+     (View    : access GVD_Memory_View_Record'Class;
       Address : Long_Long_Integer);
    --  Display the contents of the memory into the text area.
 
    procedure Display_Memory
-     (View    : access Odd_Memory_View_Record'Class;
+     (View    : access GVD_Memory_View_Record'Class;
       Address : String);
    --  Display the contents of the memory into the text area.
    --  Address is a string that represents an address in hexadecimal,
    --  it should be made of the "0x" prefix followed by hexadecimal.
 
-   procedure Apply_Changes (View : access Odd_Memory_View_Record'Class);
+   procedure Apply_Changes (View : access GVD_Memory_View_Record'Class);
    --  Write the changes into memory.
 
-   procedure Page_Down (View : access Odd_Memory_View_Record'Class);
-   procedure Page_Up (View : access Odd_Memory_View_Record'Class);
+   procedure Page_Down (View : access GVD_Memory_View_Record'Class);
+   procedure Page_Up (View : access GVD_Memory_View_Record'Class);
    --  Move up or down one page in the view.
 
    procedure Init_Graphics (Window : Gdk.Window.Gdk_Window);
    --  Initialize fonts and graphics used for this widget.
 
    procedure Update
-     (View    : access Odd_Memory_View_Record'Class;
+     (View    : access GVD_Memory_View_Record'Class;
       Process : Gtk_Widget);
    --  Updates the dialog.
    --  Process is the new Debugger_Process_Tab.
 
-   procedure Update_Display (View : access Odd_Memory_View_Record'Class);
+   procedure Update_Display (View : access GVD_Memory_View_Record'Class);
    --  Refreshes the view.
 
    function Position_To_Index
-     (View     : access Odd_Memory_View_Record'Class;
+     (View     : access GVD_Memory_View_Record'Class;
       Position : in Gint) return Integer;
    --  Returns the position of a value in View.Values from a position in
    --  View.View.
 
    type Dir is (Up, Down, Left, Right);
    procedure Move_Cursor
-     (View  : access Odd_Memory_View_Record'Class;
+     (View  : access GVD_Memory_View_Record'Class;
       Where : in Dir);
    --  Moves the cursor.
 
    procedure Insert
-     (View : access Odd_Memory_View_Record'Class;
+     (View : access GVD_Memory_View_Record'Class;
       Char : String);
    --  Inserts string at the current location.
 
