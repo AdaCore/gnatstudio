@@ -1,7 +1,42 @@
-This file lists a summary of the new features introduced in GPS. For more
-details, please see the documentation.
+This file lists a summary of the new features introduced in GPS.
+For more details, please see the documentation.
 
 New features in GPS 2.1.0
+
+- New shell commands, to ease writing of GPS scripts. See 'help' in the
+  GPS shell for a full list of GPS commands, in particular:
+  new classes GPS.Process, GPS.Toolbar, GPS.GUI, GPS.Menu, GPS.Console,
+     GPS.Combo, GPS.Button, GPS.MDIWindow
+  API change for GPS.Preference (import GPS_old.py for the old API)
+
+- New project attributes and preferences can be defined in XML files
+
+- New multi-language build tool: gprmake
+  This tool replaces the gpr2make tool. This is a preliminary version,
+  still under development.
+
+- New preference "Multi language build" to choose between gnatmake and gprmake
+  to build projects with Ada and C/C++.
+
+- New menu Help->Python Extensions
+  Improved documentation for python scripting, including more examples
+
+- Improved indentation of C/C++ struct, class, union constructs
+
+- New command refill to wrap text or comment according to the right margin as
+  defined by the column highlight editor's preference.
+
+- GPS can recompute the indentation for an alias after its expansion
+
+- DA17-004 It is now possible to define an empty switch for <radio-entry>
+  in XML files, to indicate the default meaning.
+
+- DA13-006 New menu Help->GNAT Runtime
+
+- DA13-002 It is now possible to remove or gray out buttons in the toolbar
+
+- DA07-011 GPS.Locations.parse can now specify the highlighting colors to use
+  in the editor (similar to what is done for standard build failures)
 
 - Documentation can now be downloaded from the web through http
 
@@ -9,82 +44,36 @@ New features in GPS 2.1.0
 
 - New switch --host to specify the tools host of the project
 
-- DA17-004 It is now possible to define an empty switch for <radio-entry>
-  in XML files, to indicate the default meaning.
+- New preferences to choose cursor width and color
+
+- New preferences to modify the Windows title bars and tabs appearance
+
+- D930-017: New preference to chose whether the toolbar should be displayed
 
 - D930-007 Add support for substring case exceptions
-
-- New preferences to choose cursor width and color
 
 - D625-008 AUnit integration has been enhanced. It is now possible to select
   the directory in which the generated code is saved. The generated code is
   now following the GNAT Style convention so it can be compiled with the
   standard -gnaty switch.
 
-- DA13-006 New menu Help->GNAT Runtime
-
-- DA07-011 GPS.Locations.parse can now specify the highlighting colors to use
-  in the editor (similar to what is done for standard build failures)
-
 - Relative paths in Project View: use absolute paths if the only common part
   of the path is the root directory of the file system
-
-- D930-017: New preference to chose whether the toolbar should be displayed
-
-- Customability enhancements: New project attributes and new preferences can
-  now be defined in XML files
-
-- New preference "Multi language build" to choose between gnatmake and gprmake
-  to build projects with Ada and C/C++.
-
-- New multi-language build tool: gprmake
-  This tool replaces the gpr2make tool. This is a preliminary version,
-  still under development.
 
 - Minor updates in python support: GPS.Hook.add now takes a subprogram as a
   parameter, instead of a string. This is the more usual syntax for python
   users
 
-- DA13-002 It is now possible to remove or gray out buttons in the toolbar
-
-- Script updates:
-  new classes GPS.Process, GPS.Toolbar, GPS.GUI, GPS.Menu, GPS.Console,
-     GPS.Combo, GPS.Button, GPS.MDIWindow
-  API change for GPS.Preference (import GPS_old.py for the old API)
-
-- New menu Help->Python Extensions
-  Improved documentation for python scripting, including more examples
-
-- Basic support added for several languages (source highlighting,...)
-
-- New project attributes can be defined through XML files
-
 - D802-011 New contextual menu "Go to type declaration of"
+
+- D617-014 Python commands' output can now be redirected to any GPS window
 
 - D607-009 USERPROFILE taken into account
   In particular under Windows, this environment variable is defined in place
   of HOME under Unix. GPS now takes it into account for storing information.
-
-- D617-014 Python commands' output can now be redirected to any GPS window
-
-- GPS can recompute the indentation for an alias after its expansion
-
-- Improved indentation of C/C++ struct, class, union constructs
 
 - D525-015 New preference for indentation of variable declaration
   So that it is possible to choose whether alignment of continuation lines
   for variable delcaration is performed based on the 'colon' character, or
   based on the first non blank character.
 
-- New command refill to wrap text or comment according to the right margin as
-  defined by the column highlight editor's preference.
-
-- New shell commands, to ease writing of GPS scripts. See 'help' in the
-  GPS shell for a full list of GPS commands.
-
-[ Note: the following two entries are only provided when GPS is built with
-  XML/Ada ]
-
-- Better error messages when parsing customization XML files.
-
-- Full support of XML features in XML customization files (entities,...)
