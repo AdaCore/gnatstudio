@@ -1298,7 +1298,7 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-GPS_VERSION=1.4.0
+GPS_VERSION=2.0.0w
 GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 CAN_OUTPUT=True
