@@ -130,13 +130,13 @@ package body Odd.Code_Editors is
       Set_Line (Editor.Source, Line, Set_Current);
       if Set_Current then
          Set_Current_Line (Editor.Explorer, Line);
-      end if;
 
-      --  If the assembly code is displayed, highlight the code for the
-      --  current line
+         --  If the assembly code is displayed, highlight the code for the
+         --  current line
 
-      if Editor.Mode = Asm_Only or else Editor.Mode = Source_Asm then
-         Highlight_Address_Range (Editor.Asm, Line);
+         if Editor.Mode = Asm_Only or else Editor.Mode = Source_Asm then
+            Highlight_Address_Range (Editor.Asm, Line);
+         end if;
       end if;
    end Set_Line;
 
@@ -158,17 +158,6 @@ package body Odd.Code_Editors is
    begin
       return Editor.Process;
    end Get_Process;
-
-   ------------------
-   -- Get_Explorer --
-   ------------------
-
-   function Get_Explorer (Editor : access Code_Editor_Record'Class)
-                         return Odd.Explorer.Explorer_Access
-   is
-   begin
-      return Editor.Explorer;
-   end Get_Explorer;
 
    ----------------
    -- Get_Source --
@@ -377,5 +366,23 @@ package body Odd.Code_Editors is
          Set_Address (Editor.Asm, Pc);
       end if;
    end Set_Address;
+
+   ---------------------------
+   -- On_Executable_Changed --
+   ---------------------------
+
+   procedure On_Executable_Changed
+     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Edit : Code_Editor := Code_Editor (Editor);
+   begin
+      Odd.Explorer.On_Executable_Changed (Edit.Explorer);
+
+      --  Always clear the cache for the assembly editor, even if it is not
+      --  displayed.
+      if Edit.Asm /= null then
+         Odd.Asm_Editors.On_Executable_Changed (Edit.Asm);
+      end if;
+   end On_Executable_Changed;
 
 end Odd.Code_Editors;

@@ -120,10 +120,6 @@ package Odd.Code_Editors is
                         return Gtk.Widget.Gtk_Widget;
    --  Return the process tab in which the editor is inserted.
 
-   function Get_Explorer (Editor : access Code_Editor_Record'Class)
-                         return Odd.Explorer.Explorer_Access;
-   --  Return the explorer associated with this editor.
-
    function Get_Source (Editor : access Code_Editor_Record'Class)
                        return Odd.Source_Editors.Source_Editor;
    --  Return the widget used to display the source code
@@ -148,6 +144,10 @@ package Odd.Code_Editors is
    --  Append some general items to the contextual Menu.
    --  These items do not depend on whether the source code or the assembly
    --  code is currently displayed, and are not specific to either.
+
+   procedure On_Executable_Changed
+     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when the executable associated with the editor has changed.
 
 private
 
