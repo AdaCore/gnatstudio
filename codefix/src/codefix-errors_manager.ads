@@ -92,20 +92,18 @@ package Codefix.Errors_Manager is
    --  is call.
 
    procedure Validate
-     (This         : in out Correction_Manager;
-      Error        : Error_Id;
-      Choice       : Natural;
-      Later_Update : Boolean := True);
+     (This   : in out Correction_Manager;
+      Error  : Error_Id;
+      Choice : Natural);
    --  Specify a choice between the differents correction'possibilities
-   --  of a message;
+   --  of a message.
 
    procedure Validate
-     (This         : in out Correction_Manager;
-      Error        : Error_Id;
-      Choice       : Extract;
-      Later_Update : Boolean := True);
+     (This   : in out Correction_Manager;
+      Error  : Error_Id;
+      Choice : Extract);
    --  Specify a choice between the differents correction'possibilities
-   --  of a message;
+   --  of a message.
 
    subtype Alternative_Choice is Natural range 0 .. 2;
 
@@ -116,7 +114,7 @@ package Codefix.Errors_Manager is
    --  Is called when ambiguities appears. If Delete_Choice is 0, no solution
    --  are chosen and the ambiguity stay. Otherwise, the choice is deleted.
 
-   procedure Update
+   procedure Commit
      (This         : in out Correction_Manager;
       Success      : out Boolean;
       Current_Text : in out Text_Navigator_Abstr'Class;
@@ -145,6 +143,12 @@ package Codefix.Errors_Manager is
    --  Return the Error_Id contained in the correction manager correspondant to
    --  the message. If this error does not exist, Null_Error_Id is returned.
 
+   procedure Update_Changes
+     (This         : Correction_Manager;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Object       : in out Extract'Class;
+      Success      : out Boolean);
+
 private
 
    type Errors_Interface is abstract tagged null record;
@@ -167,6 +171,7 @@ private
    type Correction_Manager is record
       Potential_Corrections : Memorized_Corrections.List;
       Valid_Corrections     : Solution_List;
+      Offset_Line           : Integer := 0;
    end record;
 
    procedure Add_Error
