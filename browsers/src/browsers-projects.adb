@@ -278,7 +278,10 @@ package body Browsers.Projects is
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
 
-         if Has_Project_Information (File_Context) then
+         if Has_Project_Information (File_Context)
+           and then not Has_Directory_Information (File_Context)
+           and then not Has_File_Information (File_Context)
+         then
             Gtk_New (Item, Label =>
                      -"Examine project hierarchy for "
                      & Project_Name (Project_Information (File_Context)));
