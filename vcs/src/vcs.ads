@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001 - 2002                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -20,6 +20,9 @@
 
 with Generic_List;
 with String_List;
+
+with Commands;
+
 with Glide_Kernel; use Glide_Kernel;
 
 package VCS is
@@ -233,6 +236,7 @@ package VCS is
 private
    type VCS_Record is abstract tagged limited record
       Kernel : Glide_Kernel.Kernel_Handle;
+      Queue  : Commands.Command_Queue;
    end record;
 
 end VCS;
