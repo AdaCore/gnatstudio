@@ -31,7 +31,6 @@ with Gtk;                 use Gtk;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Text;            use Gtk.Text;
 with Gtk.Menu;            use Gtk.Menu;
@@ -1566,7 +1565,7 @@ package body GVD.Process is
             end if;
 
             Reparent (Widget, Process);
-            Reparent (Process.Editor_Frame, Process.Process_Paned);
+            Reparent (Process.Editor_Label, Process.Process_Paned);
             Show_All (Process);
          else
             Hide (Process);
@@ -1581,12 +1580,33 @@ package body GVD.Process is
 
             --  Put back the Data into the paned
             Reparent (Widget, Process.Data_Editor_Paned);
-            Reparent (Process.Editor_Frame, Process.Data_Editor_Paned);
+            Reparent (Process.Editor_Label, Process.Data_Editor_Paned);
             Add (Process.Process_Paned, Process.Data_Editor_Paned);
             Unref (Process.Data_Editor_Paned);
             Show_All (Process.Process_Paned);
          end if;
       end if;
    end Preferences_Changed;
+
+   -------------------------
+   -- Update_Editor_Frame --
+   -------------------------
+
+   procedure Update_Editor_Frame
+     (Process : access Debugger_Process_Tab_Record)
+   is
+      --  Align : Gfloat;
+   begin
+      --  Set the label text.
+      Set_Text (Process.Editor_Label,
+                Base_File_Name (Get_Current_File (Process.Editor_Text)));
+
+      --  Align the label on top of the source editor.
+      Set_USize (Gtk_Widget (Process.Explorer_Separator),
+                 Gint (Get_Allocation_Width (Process.Editor_Text))
+                 - Get_Window_Size (Process.Editor_Text),
+                 0);
+
+   end Update_Editor_Frame;
 
 end GVD.Process;
