@@ -25,6 +25,9 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Font;         use Gdk.Font;
+with Gdk.Pixmap;       use Gdk.Pixmap;
+with Gdk.Bitmap;       use Gdk.Bitmap;
+with Gdk.Window;       use Gdk.Window;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Generic_Values;   use Generic_Values;
 with Odd.Process;      use Odd.Process;
@@ -33,6 +36,7 @@ with Debugger;         use Debugger;
 with Language;         use Language;
 with Gdk.Types;        use Gdk.Types;
 with Gdk.Event;        use Gdk.Event;
+with Odd.Pixmaps;      use Odd.Pixmaps;
 
 with Ada.Text_IO;      use Ada.Text_IO;
 
@@ -54,7 +58,7 @@ package body Display_Items is
    Spacing : constant Gint := 2;
    --  Space on each sides of the title.
 
-   Buttons_Size : constant Gint := 8;
+   Buttons_Size : constant Gint := 15;
    --  Size of the buttons in the title bar of the items
 
    Border_Spacing : constant Gint := 2;
@@ -101,6 +105,11 @@ package body Display_Items is
    Title_Font : Gdk.Font.Gdk_Font;
    Refresh_Button_Gc : Gdk.GC.Gdk_GC;
 
+   Close_Pixmap  : Gdk_Pixmap;
+   Close_Mask    : Gdk_Bitmap;
+   Locked_Pixmap : Gdk_Pixmap;
+   Locked_Mask   : Gdk_Bitmap;
+
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
       Win           : Gdk.Window.Gdk_Window;
@@ -123,6 +132,12 @@ package body Display_Items is
                          Id     : String)
                         return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
+
+   procedure Create_Link (Canvas : access Interactive_Canvas_Record'Class;
+                          From, To : access Display_Item_Record'Class;
+                          Name : String);
+   --  Add a new link between two items.
+   --  The link is not created if there is already a similar one.
 
    -------------
    -- Gtk_New --
@@ -200,6 +215,8 @@ package body Display_Items is
    is
       use type Gdk.GC.Gdk_GC;
       Color  : Gdk_Color;
+      Box_Pixmap    : Gdk_Pixmap;
+      Box_Mask      : Gdk_Bitmap;
 
    begin
       Item.Name         := new String'(Variable_Name);
@@ -226,6 +243,14 @@ package body Display_Items is
 
          Font := Get_Gdkfont (Value_Font_Name, Value_Font_Size);
          Title_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Size);
+
+         Create_From_Xpm_D
+           (Close_Pixmap, Win, Close_Mask, Null_Color, cancel_xpm);
+         Create_From_Xpm_D
+           (Locked_Pixmap, Win, Locked_Mask, Null_Color, lock_xpm);
+         Create_From_Xpm_D (Box_Pixmap, Win, Box_Mask, Null_Color, box_xpm);
+
+         Set_Hidden_Pixmap (Box_Pixmap, Box_Mask);
       end if;
 
       Update_Display (Item);
@@ -338,25 +363,20 @@ package body Display_Items is
 
       --  Second button
 
-      Draw_Rectangle (Pixmap (Item),
-                      GC     => Black_GC,
-                      Filled => False,
-                      X      => Alloc_Width - Buttons_Size - Spacing,
-                      Y      => Spacing,
-                      Width  => Buttons_Size - 1,
-                      Height => Buttons_Size - 1);
-      Draw_Line (Pixmap (Item),
-                 GC   => Black_GC,
-                 X1   => Alloc_Width - Buttons_Size - Spacing,
-                 Y1   => Spacing,
-                 X2   => Alloc_Width - Spacing - 1,
-                 Y2   => Spacing + Buttons_Size - 1);
-      Draw_Line (Pixmap (Item),
-                 GC   => Black_GC,
-                 X1   => Alloc_Width - Buttons_Size - Spacing,
-                 Y1   => Spacing + Buttons_Size - 1,
-                 X2   => Alloc_Width - Spacing - 1,
-                 Y2   => Spacing);
+      Set_Clip_Mask (Black_Gc, Close_Mask);
+      Set_Clip_Origin (Black_Gc,
+                       Alloc_Width - Buttons_Size - Spacing,
+                       Spacing);
+      Draw_Pixmap (Pixmap (Item),
+                   GC     => Black_Gc,
+                   Src    => Close_Pixmap,
+                   Xsrc   => 0,
+                   Ysrc   => 0,
+                   Xdest  => Alloc_Width - Buttons_Size - Spacing,
+                   Ydest  => Spacing);
+      Set_Clip_Mask (Black_Gc, Null_Pixmap);
+      Set_Clip_Origin (Black_Gc, 0, 0);
+
 
       if Item.Entity /= null then
          Paint (Item.Entity.all, Black_GC, Xref_Gc, Font,
@@ -405,6 +425,20 @@ package body Display_Items is
       return Alias_Item;
    end Search_Item;
 
+   -----------------
+   -- Create_Link --
+   -----------------
+
+   procedure Create_Link (Canvas : access Interactive_Canvas_Record'Class;
+                          From, To : access Display_Item_Record'Class;
+                          Name : String)
+   is
+   begin
+      if not Has_Link (Canvas, From, To) then
+         Add_Link (Canvas, From, To, End_Arrow, Name);
+      end if;
+   end Create_Link;
+
    ----------------------
    -- Dereference_Item --
    ----------------------
@@ -440,18 +474,12 @@ package body Display_Items is
                   Variable_Name => New_Name,
                   Debugger      => Item.Debugger,
                   Auto_Refresh  => Item.Auto_Refresh);
-         Add_Link (Item.Debugger.Data_Canvas,
-                   Src   => Item,
-                   Dest  => New_Item,
-                   Arrow => End_Arrow,
-                   Descr => Link_Name);
-         Put (Item.Debugger.Data_Canvas, New_Item);
+         if New_Item /= null then
+            Create_Link (Item.Debugger.Data_Canvas, Item, New_Item, Link_Name);
+            Put (Item.Debugger.Data_Canvas, New_Item);
+         end if;
       else
-         Add_Link (Item.Debugger.Data_Canvas,
-                   Src   => Item,
-                   Dest  => New_Item,
-                   Arrow => End_Arrow,
-                   Descr => Link_Name);
+         Create_Link (Item.Debugger.Data_Canvas, Item, New_Item, Link_Name);
       end if;
    end Dereference_Item;
 
@@ -572,29 +600,47 @@ package body Display_Items is
    begin
       Item.Auto_Refresh := Auto_Refresh;
 
-      Draw_Rectangle (Pixmap (Item),
-                      GC     => Black_GC,
-                      Filled => False,
-                      X      => Width - 2 * Buttons_Size - 2 * Spacing,
-                      Y      => Spacing,
-                      Width  => Buttons_Size - 1,
-                      Height => Buttons_Size - 1);
-
       if Item.Auto_Refresh then
+         Draw_Rectangle (Pixmap (Item),
+                         GC     => Black_GC,
+                         Filled => False,
+                         X      => Width - 2 * Buttons_Size - 2 * Spacing,
+                         Y      => Spacing,
+                         Width  => Buttons_Size - 1,
+                         Height => Buttons_Size - 1);
          Color := Parse ("green");
-      else
-         Color := Parse ("red");
-      end if;
-      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-      Set_Foreground (Refresh_Button_Gc, Color);
+         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+         Set_Foreground (Refresh_Button_Gc, Color);
 
-      Draw_Rectangle (Pixmap (Item),
-                      GC     => Refresh_Button_Gc,
-                      Filled => True,
-                      X      => Width - 2 * Buttons_Size - 2 * Spacing + 1,
-                      Y      => Spacing + 1,
-                      Width  => Buttons_Size - 2,
-                      Height => Buttons_Size - 2);
+         Draw_Rectangle (Pixmap (Item),
+                         GC     => Refresh_Button_Gc,
+                         Filled => True,
+                         X      => Width - 2 * Buttons_Size - 2 * Spacing + 1,
+                         Y      => Spacing + 1,
+                         Width  => Buttons_Size - 2,
+                         Height => Buttons_Size - 2);
+      else
+         Draw_Rectangle (Pixmap (Item),
+                         GC     => Grey_Gc,
+                         Filled => True,
+                         X      => Width - 2 * Buttons_Size - 2 * Spacing,
+                         Y      => Spacing,
+                         Width  => Buttons_Size,
+                         Height => Buttons_Size);
+         Set_Clip_Mask (Black_Gc, Locked_Mask);
+         Set_Clip_Origin (Black_Gc,
+                          Width - 2 * Buttons_Size - 2 * Spacing,
+                          Spacing);
+         Draw_Pixmap (Pixmap (Item),
+                      GC     => Black_Gc,
+                      Src    => Locked_Pixmap,
+                      Xsrc   => 0,
+                      Ysrc   => 0,
+                      Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
+                      Ydest  => Spacing);
+         Set_Clip_Mask (Black_Gc, Null_Pixmap);
+         Set_Clip_Origin (Black_Gc, 0, 0);
+      end if;
    end Set_Auto_Refresh;
 
    ----------
