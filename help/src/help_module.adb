@@ -108,6 +108,9 @@ package body Help_Module is
    end record;
    type Help_Module_ID_Access is access all Help_Module_ID_Record'Class;
 
+   procedure Destroy (Module : in out Help_Module_ID_Record);
+   --  Destroy the memory associated with Module
+
    Help_Module_ID   : Help_Module_ID_Access;
    Help_Module_Name : constant String := "Help_Viewer";
 
@@ -240,6 +243,15 @@ package body Help_Module is
       Kernel : Kernel_Handle;
    end record;
    procedure Activate (Callback : access On_Recent; Item : String);
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Module : in out Help_Module_ID_Record) is
+   begin
+      Free (Module.Categories);
+   end Destroy;
 
    ---------------------
    -- Command_Handler --
