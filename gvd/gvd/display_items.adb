@@ -338,6 +338,7 @@ package body Display_Items is
                   Variable_Name => Variable_Name,
                   Debugger      => Debugger,
                   Auto_Refresh  => Auto_Refresh);
+         Item.Is_Dereference := True;
 
          if Item /= null then
             Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
