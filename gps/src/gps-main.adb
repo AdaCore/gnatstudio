@@ -190,7 +190,7 @@ procedure GPS.Main is
    Server_Mode            : Boolean := False;
    Port_Number            : Natural := 0;
    Hide_GPS               : Boolean := False;
-
+   Program_Args           : String_Access;
 
    Started                : Boolean := False;
    --  Whether the main loop is started.
@@ -658,18 +658,17 @@ procedure GPS.Main is
                   when 'd' =>
                      --  --debug
                      if Full_Switch = "-debug" then
-                        Free (GPS_Main.Program_Args);
-                        GPS_Main.Program_Args :=
-                          new String'(Clean_Parameter);
+                        Free (Program_Args);
+                        Program_Args := new String'(Clean_Parameter);
 
                      else
                         --  --debugger
                         Free (Debugger_Name);
                         Debugger_Name := new String'(Parameter);
 
-                        if GPS_Main.Program_Args = null then
+                        if Program_Args = null then
                            --  --debugger implies --debug
-                           GPS_Main.Program_Args := new String'("");
+                           Program_Args := new String'("");
                         end if;
                      end if;
 
@@ -1359,7 +1358,7 @@ procedure GPS.Main is
       --  If no project has been specified on the command line, try to open
       --  the first one in the current directory (if any).
 
-      if GPS_Main.Program_Args /= null then
+      if Program_Args /= null then
          --  --debug has been specified
          --  Load project, and set debugger-related project properties
 
@@ -1401,11 +1400,11 @@ procedure GPS.Main is
          Execute_Batch (Batch_File.all, As_File => True);
       end if;
 
-      if GPS_Main.Program_Args /= null then
+      if Program_Args /= null then
          --  Initialize the debugger after having executed scripts if any,
          --  so that it is possible to set up the environment before starting
          --  a debug session.
-         GVD_Module.Initialize_Debugger (GPS_Main.Kernel);
+         GVD_Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
       end if;
 
       --  Load the preferences set when creating the kernel.
