@@ -77,6 +77,9 @@ package body Builder_Module is
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
+   All_Files : constant String := "<all>";
+   --  String id used to represent all files.
+
    type Builder_Module_ID_Record is new Module_ID_Record with record
       Make_Menu  : Gtk_Menu;
       Run_Menu   : Gtk_Menu;
@@ -217,14 +220,20 @@ package body Builder_Module is
       Output : String)
    is
       File_Location : constant Pattern_Matcher :=
-        Compile (Get_Pref (Kernel, File_Pattern), Multiple_Lines);
-      Matched   : Match_Array (0 .. 3);
-      Start     : Natural := Output'First;
-      Last      : Natural;
-      Real_Last : Natural;
+        Compile (Get_Pref (Kernel, File_Pattern));
+      File_Index : constant Integer :=
+        Integer (Get_Pref (Kernel, File_Pattern_Index));
+      Line_Index : constant Integer :=
+        Integer (Get_Pref (Kernel, Line_Pattern_Index));
+      Col_Index  : constant Integer :=
+        Integer (Get_Pref (Kernel, Column_Pattern_Index));
+      Matched    : Match_Array (0 .. 9);
+      Start      : Natural := Output'First;
+      Last       : Natural;
+      Real_Last  : Natural;
+      Line       : Natural := 1;
+      Column     : Natural := 1;
 
-      Line      : Natural := 1;
-      Column    : Natural := 1;
    begin
       Insert (Kernel, Output, Add_LF => False);
       String_List_Utils.String_List.Append
@@ -232,55 +241,65 @@ package body Builder_Module is
          Output);
 
       while Start <= Output'Last loop
+         --  Parse output line by line and look for file locations
+
          while Start < Output'Last
-           and then Output (Start) = ASCII.LF
+           and then (Output (Start) = ASCII.CR
+                     or else Output (Start) = ASCII.LF)
          loop
             Start := Start + 1;
          end loop;
 
-         Match (File_Location, Output (Start .. Output'Last),
-                Matched);
-         exit when Matched (0) = No_Match;
-
-         if Matched (2) /= No_Match then
-            Line := Integer'Value
-              (Output (Matched (2).First .. Matched (2).Last));
-
-            if Line <= 0 then
-               Line := 1;
-            end if;
-         end if;
-
-         if Matched (3) = No_Match then
-            Last := Matched (2).Last;
-         else
-            Last := Matched (3).Last;
-            Column := Integer'Value
-              (Output (Matched (3).First .. Matched (3).Last));
-
-            if Column <= 0 then
-               Column := 1;
-            end if;
-         end if;
-
-         --  Strip the last ASCII.LF if needed.
-         Real_Last := Last;
+         Real_Last := Start;
 
          while Real_Last < Output'Last
+           and then Output (Real_Last + 1) /= ASCII.CR
            and then Output (Real_Last + 1) /= ASCII.LF
          loop
             Real_Last := Real_Last + 1;
          end loop;
 
-         Insert_Result
-           (Kernel,
-            -"Builder Results",
-            Output (Matched (1).First .. Matched (1).Last),
-            Output (Last + 1 .. Real_Last),
-            Positive (Line), Positive (Column), 0);
+         Match (File_Location, Output (Start .. Real_Last), Matched);
+
+         if Matched (0) /= No_Match then
+            if Matched (Line_Index) /= No_Match then
+               Line := Integer'Value
+                 (Output
+                    (Matched (Line_Index).First .. Matched (Line_Index).Last));
+
+               if Line <= 0 then
+                  Line := 1;
+               end if;
+            end if;
+
+            if Matched (Col_Index) = No_Match then
+               Last := Matched (Line_Index).Last;
+            else
+               Last := Matched (Col_Index).Last;
+               Column := Integer'Value
+                 (Output (Matched (Col_Index).First ..
+                          Matched (Col_Index).Last));
+
+               if Column <= 0 then
+                  Column := 1;
+               end if;
+            end if;
+
+            Insert_Result
+              (Kernel,
+               -"Builder Results",
+               Output
+                 (Matched (File_Index).First .. Matched (File_Index).Last),
+               Output (Last + 1 .. Real_Last),
+               Positive (Line), Positive (Column), 0);
+         end if;
 
          Start := Real_Last + 1;
       end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Parse_Compiler_Output;
 
    -----------------------
@@ -299,11 +318,18 @@ package body Builder_Module is
           (Scenario_Variables_Cmd_Line (Kernel, Syntax));
       Build_Progress : constant Boolean :=
         Get_Pref (Kernel, Show_Build_Progress);
+      File_Arg       : String_Access;
 
    begin
       case Syntax is
          when GNAT_Syntax =>
             --  gnatmake -d -Pproject main -XVAR1=value1 ...
+
+            if File = All_Files then
+               File_Arg := new String'("");
+            else
+               File_Arg := new String'(File);
+            end if;
 
             if Build_Progress then
                Result := new Argument_List'
@@ -337,16 +363,21 @@ package body Builder_Module is
                   --  ??? Should set these values also if Ada is part of the
                   --  supported languages.
 
+                  if File = All_Files then
+                     File_Arg := new String'("");
+                  else
+                     File_Arg :=
+                       new String'("ADA_SOURCES=" & Base_Name (File));
+                  end if;
+
                   if Build_Progress then
                      Result := new Argument_List'
                        (List &
-                        new String'("ADA_SOURCES=" & Base_Name (File)) &
+                        File_Arg &
                         new String'("ADAFLAGS=-d"));
 
                   else
-                     Result := new Argument_List'
-                       (List &
-                        new String'("ADA_SOURCES=" & Base_Name (File)));
+                     Result := new Argument_List'(List & File_Arg);
                   end if;
 
                else
@@ -459,6 +490,7 @@ package body Builder_Module is
             end if;
 
          --  There is no current file, so we can't compile anything
+
          else
             Console.Insert
               (K, -"No file selected, cannot build", Mode => Error);
@@ -1220,11 +1252,11 @@ package body Builder_Module is
 
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
-      Mitem     : Gtk_Menu_Item;
-      Menu1     : Gtk_Menu renames Builder_Module.Make_Menu;
-      Menu2     : Gtk_Menu renames Builder_Module.Run_Menu;
-      Iter      : Imported_Project_Iterator := Start (Get_Project (Kernel));
-      Has_Child : Boolean := False;
+      Mitem        : Gtk_Menu_Item;
+      Menu1        : Gtk_Menu renames Builder_Module.Make_Menu;
+      Menu2        : Gtk_Menu renames Builder_Module.Run_Menu;
+      Iter         : Imported_Project_Iterator := Start (Get_Project (Kernel));
+      Has_Child    : Boolean := False;
 
    begin
       --  Remove all existing menus and dynamic accelerators
@@ -1301,9 +1333,9 @@ package body Builder_Module is
          File_Project_Cb.To_Marshaller (On_Build'Access),
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
-         (Length  => 0,
-          Project => No_Project,
-          File    => ""));
+           (Length  => 0,
+            Project => No_Project,
+            File    => ""));
 
       if not Has_Child then
          Add_Accelerator
@@ -1311,6 +1343,17 @@ package body Builder_Module is
             GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
          Builder_Module.Build_Item := Mitem;
       end if;
+
+      Gtk_New (Mitem, -"All");
+      Append (Menu1, Mitem);
+      File_Project_Cb.Object_Connect
+        (Mitem, "activate",
+         File_Project_Cb.To_Marshaller (On_Build'Access),
+         Slot_Object => Kernel,
+         User_Data => File_Project_Record'
+           (Length  => All_Files'Length,
+            Project => Get_Project_View (Kernel),
+            File    => All_Files));
 
       Gtk_New (Mitem, -"Custom...");
       Append (Menu1, Mitem);
