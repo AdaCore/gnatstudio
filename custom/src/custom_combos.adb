@@ -19,285 +19,226 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
-with Glib.Values;               use Glib.Values;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.List_Item;             use Gtk.List_Item;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Commands.Interactive;      use Commands.Interactive;
 with Custom_Module;             use Custom_Module;
-with Commands;                  use Commands;
 with GUI_Utils;                 use GUI_Utils;
 
 with Gtk.List;                  use Gtk.List;
+with System;                    use System;
+with Ada.Unchecked_Conversion;
 
 package body Custom_Combos is
 
-   Entry_Cst         : aliased constant String := "id";
+   Id_Cst            : aliased constant String := "id";
+   Entry_Cst         : aliased constant String := "entry";
    Label_Cst         : aliased constant String := "label";
    Choice_Cst        : aliased constant String := "choice";
    On_Select         : aliased constant String := "on_selected";
    On_Changed        : aliased constant String := "on_changed";
    Add_Args : constant Cst_Argument_List :=
-     (Entry_Cst'Access, Choice_Cst'Access, On_Select'Access);
+     (Choice_Cst'Access, On_Select'Access);
    Create_Args : constant Cst_Argument_List :=
-     (Entry_Cst'Access, Label_Cst'Access, On_Changed'Access);
+     (Id_Cst'Access, On_Changed'Access);
    Remove_Args : constant Cst_Argument_List :=
-     (Entry_Cst'Access, Choice_Cst'Access);
+     (1 => Choice_Cst'Access);
    Set_Text_Args : constant Cst_Argument_List :=
-     (Entry_Cst'Access, Choice_Cst'Access);
-   Simple_Args : constant Cst_Argument_List := (1 => Entry_Cst'Access);
+     (1 => Choice_Cst'Access);
+   Simple_Args : constant Cst_Argument_List := (1 => Id_Cst'Access);
+   Append_Args : constant Cst_Argument_List :=
+     (Entry_Cst'Access, Label_Cst'Access);
+
+   type Custom_Combo_Record is new Gtk_Combo_Record with record
+      Id                   : String_Access;
+      On_Change_Subprogram : Glide_Kernel.Scripts.Subprogram_Type;
+   end record;
+   type Custom_Combo is access all Custom_Combo_Record'Class;
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Custom_Combo);
+   function Convert is new Ada.Unchecked_Conversion
+     (Custom_Combo, System.Address);
 
    -----------------------
    -- Local subprograms --
    -----------------------
 
-   package GPS_Combo_Handler is new User_Callback
-     (Gtk_Entry_Record, GPS_Combo_Access);
+   type Item_Callback is record
+      Combo       : Custom_Combo;
+      On_Selected : Glide_Kernel.Scripts.Subprogram_Type;
+   end record;
 
-   function Lookup_GPS_Combo (S : String) return GPS_Combo_Access;
+   package Item_Handlers is new Gtk.Handlers.User_Return_Callback
+     (Widget_Type => Gtk_List_Item_Record,
+      Return_Type => Boolean,
+      User_Type   => Item_Callback);
+
+   function Create_Combo
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Id         : String;
+      On_Changed : Subprogram_Type) return Custom_Combo;
+   --  Create a new combo
+
+   procedure Add_Combo_Entry
+     (Combo       : access Custom_Combo_Record'Class;
+      Label       : String;
+      On_Selected : Glide_Kernel.Scripts.Subprogram_Type);
+   --  Add a combo entry and a command that should be
+   --  executed whenever this entry is selected.
+   --  On_Selected is also executed when the entry is selected
+
+   procedure Custom_Entry_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the commands dealing with ToolbarEntry class
+
+   procedure Custom_Toolbar_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the commands dealing with Toolbar class
+
+   function Lookup_Custom_Combo
+     (Kernel : access Kernel_Handle_Record'Class;
+      Id     : String) return Custom_Combo;
    --  Return a registered combo with label S. If no combo was found,
    --  return null.
 
-   function Lookup_Entry
-     (Combo : GPS_Combo_Access;
-      Label : String) return Entry_Action_Record;
-   --  Return the label in Combo, if it exists. Otherwise return (null, null).
+   function Item_Selected
+     (Item  : access Gtk_List_Item_Record'Class;
+      Data  : Item_Callback) return Boolean;
+   --  Called when an item is selected
 
    procedure Combo_Changed
-     (Ent       : access Gtk_Entry_Record'Class;
-      Values    : GValues;
-      GPS_Combo : GPS_Combo_Access);
+     (Combo_Box : access Gtk_Widget_Record'Class);
    --  Called whenever the text in GPS_Combo is changed.
 
-   procedure Execute_Combo_Action
-     (Command : Action_Record_Access;
-      Title   : String;
-      Text    : String);
-   --  Execute a command with the parameters Title and Text.
-
    function Get_Combo_Text
-     (Kernel : access Kernel_Handle_Record'Class;
-      Id     : String) return String;
+     (Combo  : access Custom_Combo_Record'Class) return String;
    --  Return the text currently being displayed in the
    --  combo entry identified by Id.
 
    procedure Set_Combo_Text
-     (Kernel : access Kernel_Handle_Record'Class;
-      Id     : String;
+     (Combo  : access Custom_Combo_Record'Class;
       Text   : String);
    --  Set the text in combo identified by Id to Text.
 
    procedure Clear_Combo
-     (Kernel : access Kernel_Handle_Record'Class;
-      Id     : String);
+     (Combo  : access Custom_Combo_Record'Class);
    --  Clear the combo from all its items.
 
    procedure Remove_Combo_Item
-     (Kernel : access Kernel_Handle_Record'Class;
-      Id     : String;
+     (Combo  : access Custom_Combo_Record'Class;
       Label  : String);
    --  Remove choice identified by Label from combo identified by Id.
-
-   procedure Set_Combo_Changed_Action
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Id      : String;
-      Command : Subprogram_Type);
-   --  Set the callback to call when the content of the combo is changed
 
    -----------------------
    -- Remove_Combo_Item --
    -----------------------
 
    procedure Remove_Combo_Item
-     (Kernel : access Kernel_Handle_Record'Class;
-      Id     : String;
+     (Combo  : access Custom_Combo_Record'Class;
       Label  : String)
    is
-      use Entry_List;
-
-      Found     : Boolean := False;
-      Node      : List_Node;
-      Prev      : List_Node := Null_Node;
-      GPS_Combo : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
+      use Gtk.Widget.Widget_List;
+      Entries : constant Glist := Get_Children (Get_List (Combo));
+      Tmp     : Glist := Entries;
    begin
-      if GPS_Combo = null then
-         Insert
-           (Kernel, -"Entry not registered: " & Id,
-            Mode => Error);
-         return;
-      end if;
-
-      --  Find the node and remove it.
-
-      Node := First (GPS_Combo.Entries);
-
-      while Node /= Null_Node loop
-         if Data (Node).Label.all = Label then
-            Remove_Nodes (GPS_Combo.Entries, Prev, Node);
-            Found := True;
+      while Tmp /= Null_List loop
+         if Get_Text (Gtk_Label (Get_Data (Tmp))) = Label then
+            Remove (Get_List (Combo), Get_Data (Tmp));
             exit;
          end if;
 
-         Prev := Node;
-         Node := Next (Node);
+         Tmp := Next (Tmp);
       end loop;
-
-      --  If a node was actually removed, regenerate the list
-      --  of entries.
-
-      if Found then
-         declare
-            Selected : constant String :=
-              Get_Text (Get_Entry (GPS_Combo.Combo));
-         begin
-            Clear_Items (Get_List (GPS_Combo.Combo), 0, -1);
-
-            Node := First (GPS_Combo.Entries);
-
-            while Node /= Null_Node loop
-               Add_Unique_Combo_Entry
-                 (GPS_Combo.Combo, Data (Node).Label.all);
-               Node := Next (Node);
-            end loop;
-
-            if Selected /= Label then
-               Set_Text (Get_Entry (GPS_Combo.Combo), Selected);
-            else
-               Set_Text (Get_Entry (GPS_Combo.Combo), "");
-            end if;
-         end;
-      else
-         Insert
-           (Kernel, -"Entry choice not found: " & Label,
-            Mode => Error);
-      end if;
    end Remove_Combo_Item;
 
    -----------------
    -- Clear_Combo --
    -----------------
 
-   procedure Clear_Combo
-     (Kernel : access Kernel_Handle_Record'Class;
-      Id     : String)
-   is
-      use Entry_List;
-      GPS_Combo : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
+   procedure Clear_Combo (Combo  : access Custom_Combo_Record'Class) is
    begin
-      if GPS_Combo = null then
-         Insert
-           (Kernel, -"Entry not registered: " & Id,
-            Mode => Error);
-         return;
-      end if;
-
-      Free (GPS_Combo.Entries);
-      Clear_Items (Get_List (GPS_Combo.Combo), 0, -1);
+      Clear_Items (Get_List (Combo), 0, -1);
    end Clear_Combo;
 
-   ------------------
-   -- Lookup_Entry --
-   ------------------
+   -------------------------
+   -- Lookup_Custom_Combo --
+   -------------------------
 
-   function Lookup_Entry
-     (Combo : GPS_Combo_Access;
-      Label : String) return Entry_Action_Record
+   function Lookup_Custom_Combo
+     (Kernel : access Kernel_Handle_Record'Class;
+      Id     : String) return Custom_Combo
    is
-      use Entry_List;
-
-      Node : List_Node;
+      use Gtk.Widget.Widget_List;
+      Toolbar  : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Children : Glist := Get_Children (Toolbar);
+      Tmp      : Glist := Children;
+      Child    : Gtk_Widget;
    begin
-      Node := First (Combo.Entries);
-
-      while Node /= Null_Node loop
-         if Data (Node).Label.all = Label then
-            return Data (Node);
+      while Tmp /= Null_List loop
+         Child := Get_Data (Tmp);
+         if Child.all in Custom_Combo_Record'Class
+           and then Custom_Combo (Child).Id.all = Id
+         then
+            Free (Children);
+            return Custom_Combo (Child);
          end if;
 
-         Node := Next (Node);
+         Tmp := Next (Tmp);
       end loop;
 
-      return (null, null, null);
-   end Lookup_Entry;
-
-   --------------------------
-   -- Execute_Combo_Action --
-   --------------------------
-
-   procedure Execute_Combo_Action
-     (Command : Action_Record_Access;
-      Title   : String;
-      Text    : String)
-   is
-      Custom : Command_Access;
-      Args   : GNAT.OS_Lib.String_List_Access;
-   begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 2);
-      Args (1) := new String'(Title);
-      Args (2) := new String'(Text);
-
-      Custom := Create_Proxy
-        (Command.Command,
-         (null,
-          null,
-          null,
-          Args,
-          new String'(Title)));
-
-      Launch_Background_Command
-        (Custom_Module_ID.Kernel,
-         Custom,
-         True,
-         True,
-         "",
-         True);
-   end Execute_Combo_Action;
-
-   ----------------------
-   -- Lookup_GPS_Combo --
-   ----------------------
-
-   function Lookup_GPS_Combo (S : String) return GPS_Combo_Access is
-      Node : Combo_List.List_Node;
-
-      use Combo_List;
-   begin
-      Node := First (Custom_Module_ID.Combos);
-
-      while Node /= Null_Node loop
-         if Data (Node).Label.all = S then
-            return Data (Node);
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
+      Free (Children);
       return null;
-   end Lookup_GPS_Combo;
+   end Lookup_Custom_Combo;
+
+   -------------------
+   -- Item_Selected --
+   -------------------
+
+   function Item_Selected
+     (Item  : access Gtk_List_Item_Record'Class;
+      Data  : Item_Callback) return Boolean
+   is
+      Text : constant String := Get_Text (Gtk_Label (Get_Child (Item)));
+   begin
+      if Data.On_Selected /= null then
+         declare
+            D : Callback_Data'Class := Create
+              (Get_Script (Data.On_Selected.all),
+               Arguments_Count => 2);
+            Tmp : Boolean;
+            pragma Unreferenced (Tmp);
+         begin
+            Set_Nth_Arg (D, 1, Data.Combo.Id.all);
+            Set_Nth_Arg (D, 2, Text);
+            Tmp := Execute (Data.On_Selected, D);
+            Free (D);
+         end;
+      end if;
+
+      return False;
+   end Item_Selected;
 
    -------------------
    -- Combo_Changed --
    -------------------
 
    procedure Combo_Changed
-     (Ent       : access Gtk_Entry_Record'Class;
-      Values    : GValues;
-      GPS_Combo : GPS_Combo_Access)
+     (Combo_Box : access Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Ent, Values);
-
-      Combo_Text : constant String := Get_Text
-        (Get_Entry (GPS_Combo.Combo));
-
-      Combo_Entry : Entry_Action_Record;
+      Combo       : constant Custom_Combo := Custom_Combo (Combo_Box);
+      Combo_Text  : constant String := Get_Text (Get_Entry (Combo));
    begin
       --  Do not react on empty string.
 
@@ -305,185 +246,76 @@ package body Custom_Combos is
          return;
       end if;
 
-      --  Execute the action to call whenever changing, if any.
-      if GPS_Combo.On_Change_Action /= null then
-         Execute_Combo_Action
-           (GPS_Combo.On_Change_Action,
-            GPS_Combo.Label.all,
-            Combo_Text);
-      end if;
+      --  Execute the actions to call whenever changing, if any.
 
-      if GPS_Combo.On_Change_Subprogram /= null then
+      if Combo.On_Change_Subprogram /= null then
          declare
             D : Callback_Data'Class := Create
-              (Get_Script (GPS_Combo.On_Change_Subprogram.all),
+              (Get_Script (Combo.On_Change_Subprogram.all),
                Arguments_Count => 2);
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
          begin
-            Set_Nth_Arg (D, 1, GPS_Combo.Label.all);
+            Set_Nth_Arg (D, 1, Combo.Id.all);
             Set_Nth_Arg (D, 2, Combo_Text);
-            Tmp := Execute (GPS_Combo.On_Change_Subprogram, D);
-            Free (D);
-         end;
-      end if;
-
-      --  Attempt to find an item in the registered items.
-      --  If such an item is found, execute the associated action.
-
-      Combo_Entry := Lookup_Entry (GPS_Combo, Combo_Text);
-
-      if Combo_Entry.Label /= null
-        and then Combo_Entry.Command /= null
-      then
-         Execute_Combo_Action
-           (Combo_Entry.Command,
-            GPS_Combo.Label.all,
-            Combo_Text);
-      end if;
-
-      if Combo_Entry.On_Selected /= null then
-         declare
-            D : Callback_Data'Class := Create
-              (Get_Script (Combo_Entry.On_Selected.all),
-               Arguments_Count => 2);
-            Tmp : Boolean;
-            pragma Unreferenced (Tmp);
-         begin
-            Set_Nth_Arg (D, 1, GPS_Combo.Label.all);
-            Set_Nth_Arg (D, 2, Combo_Text);
-            Tmp := Execute (Combo_Entry.On_Selected, D);
+            Tmp := Execute (Combo.On_Change_Subprogram, D);
             Free (D);
          end;
       end if;
    end Combo_Changed;
 
-   --------------------
-   -- Register_Combo --
-   --------------------
+   ------------------
+   -- Create_Combo --
+   ------------------
 
-   procedure Register_Combo
-     (Kernel : access Kernel_Handle_Record'Class;
-      Title  : String;
-      Id     : String)
+   function Create_Combo
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Id         : String;
+      On_Changed : Subprogram_Type) return Custom_Combo
    is
-      GPS_Combo : GPS_Combo_Access;
-      Label     : Gtk_Label;
-
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Combo   : Custom_Combo := Lookup_Custom_Combo (Kernel, Id);
    begin
-      if Lookup_GPS_Combo (Title) /= null then
+      if Combo /= null then
          Insert
-           (Kernel, -"Entry already registered: " & Title,
+           (Kernel, -"Entry already registered: " & Id,
             Mode => Error);
-         return;
+         return Combo;
       end if;
 
-      if Title /= "" then
-         Gtk_New (Label, Title & " ");
-         Append_Widget (Toolbar, Label, "", "");
-         Show_All (Label);
-      end if;
+      Combo := new Custom_Combo_Record;
+      Gtk.Combo.Initialize (Combo);
+      Set_Editable (Get_Entry (Combo), False);
 
-      GPS_Combo := new GPS_Combo_Record;
-      GPS_Combo.Label := new String'(Id);
+      Widget_Callback.Object_Connect
+        (Get_Entry (Combo), "changed",
+         Widget_Callback.To_Marshaller (Combo_Changed'Access),
+         Slot_Object => Combo,
+         After       => True);
 
-      Gtk_New (GPS_Combo.Combo);
-      Set_Editable (Get_Entry (GPS_Combo.Combo), False);
-
-      GPS_Combo_Handler.Connect
-        (Get_Entry (GPS_Combo.Combo), "changed",
-         Combo_Changed'Access,
-         GPS_Combo,
-         After => True);
-
-      Append_Widget (Toolbar, GPS_Combo.Combo, Title, Title);
-      Show_All (GPS_Combo.Combo);
-
-      Combo_List.Append (Custom_Module_ID.Combos, GPS_Combo);
-   end Register_Combo;
-
-   ------------------------------
-   -- Set_Combo_Changed_Action --
-   ------------------------------
-
-   procedure Set_Combo_Changed_Action
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Id      : String;
-      Command : Subprogram_Type)
-   is
-      GPS_Combo : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
-   begin
-      if GPS_Combo = null then
-         Insert
-           (Kernel, -"Entry not registered: " & Id,
-            Mode => Error);
-         return;
-      end if;
-
-      GPS_Combo.On_Change_Subprogram := Command;
-   end Set_Combo_Changed_Action;
-
-   ------------------------------
-   -- Set_Combo_Changed_Action --
-   ------------------------------
-
-   procedure Set_Combo_Changed_Action
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Id      : String;
-      Command : Action_Record_Access)
-   is
-      GPS_Combo : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
-   begin
-      if GPS_Combo = null then
-         Insert
-           (Kernel, -"Entry not registered: " & Id,
-            Mode => Error);
-         return;
-      end if;
-
-      GPS_Combo.On_Change_Action := Command;
-   end Set_Combo_Changed_Action;
+      Combo.Id := new String'(Id);
+      Combo.On_Change_Subprogram := On_Changed;
+      return Combo;
+   end Create_Combo;
 
    ---------------------
    -- Add_Combo_Entry --
    ---------------------
 
    procedure Add_Combo_Entry
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Id      : String;
-      Label   : String;
-      Command : Action_Record_Access;
+     (Combo       : access Custom_Combo_Record'Class;
+      Label       : String;
       On_Selected : Glide_Kernel.Scripts.Subprogram_Type)
    is
-      GPS_Combo   : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
-      Combo_Entry : Entry_Action_Record;
+      Item  : constant Gtk_List_Item := Add_Unique_Combo_Entry (Combo, Label);
    begin
-      if GPS_Combo = null then
-         Insert
-           (Kernel, -"Entry not registered: " & Id,
-            Mode => Error);
-         return;
+      if On_Selected /= null then
+         Item_Handlers.Connect
+           (Item, "button_release_event",
+            Item_Handlers.To_Marshaller (Item_Selected'Access),
+            User_Data   => (Combo       => Custom_Combo (Combo),
+                            On_Selected => On_Selected),
+            After => True);
       end if;
-
-      Combo_Entry := Lookup_Entry (GPS_Combo, Label);
-
-      if Combo_Entry.Label /= null then
-         Insert
-           (Kernel, -"Entry choice already registered: " & Label,
-            Mode => Error);
-         return;
-      end if;
-
-      Combo_Entry.Label       := new String'(Label);
-      Combo_Entry.Command     := Command;
-      Combo_Entry.On_Selected := On_Selected;
-
-      Entry_List.Append
-        (GPS_Combo.Entries,
-         Combo_Entry);
-
-      Add_Unique_Combo_Entry (GPS_Combo.Combo, Label);
    end Add_Combo_Entry;
 
    --------------------
@@ -491,20 +323,9 @@ package body Custom_Combos is
    --------------------
 
    function Get_Combo_Text
-     (Kernel : access Kernel_Handle_Record'Class;
-      Id     : String)
-      return String
-   is
-      GPS_Combo   : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
+     (Combo  : access Custom_Combo_Record'Class) return String is
    begin
-      if GPS_Combo = null then
-         Insert
-           (Kernel, -"Entry not registered: " & Id,
-            Mode => Error);
-         return "";
-      end if;
-
-      return Get_Text (Get_Entry (GPS_Combo.Combo));
+      return Get_Text (Get_Entry (Combo));
    end Get_Combo_Text;
 
    --------------------
@@ -512,21 +333,63 @@ package body Custom_Combos is
    --------------------
 
    procedure Set_Combo_Text
-     (Kernel : access Kernel_Handle_Record'Class;
-      Id     : String;
-      Text   : String)
-   is
-      GPS_Combo   : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
+     (Combo  : access Custom_Combo_Record'Class;
+      Text   : String) is
    begin
-      if GPS_Combo = null then
-         Insert
-           (Kernel, -"Entry not registered: " & Id,
-            Mode => Error);
-         return;
+      Set_Text (Get_Entry (Combo), Text);
+   end Set_Combo_Text;
+
+   ----------------------------
+   -- Custom_Toolbar_Handler --
+   ----------------------------
+
+   procedure Custom_Toolbar_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel    : constant Kernel_Handle := Custom_Module_ID.Kernel;
+      Class     : constant Class_Type := New_Class (Kernel, "Toolbar");
+      EntClass  : constant Class_Type := New_Class (Kernel, "ToolbarEntry");
+      Inst      : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      EntInst   : Class_Instance;
+      Combo     : Custom_Combo;
+   begin
+      if Command = Constructor_Method then
+         null;
+
+      elsif Command = "entry" then
+         Name_Parameters (Data, Simple_Args);
+         Combo := Lookup_Custom_Combo (Kernel, Nth_Arg (Data, 2));
+         if Combo = null then
+            Set_Error_Msg (Data, -"Entry not found: " & Nth_Arg (Data, 2));
+         else
+            EntInst := New_Instance (Get_Script (Data), EntClass);
+            Set_Data (EntInst, Convert (Combo));
+            Set_Return_Value (Data, EntInst);
+         end if;
+
+      elsif Command = "append" then
+         Name_Parameters (Data, Append_Args);
+
+         declare
+            Title : constant String := Nth_Arg (Data, 3, "");
+            Label : Gtk_Label;
+         begin
+            if Title /= "" then
+               Gtk_New (Label, Title & " ");
+               Append_Widget (Get_Toolbar (Kernel), Label, "", "");
+               Show_All (Label);
+            end if;
+
+            EntInst := Nth_Arg (Data, 2, EntClass);
+            Combo   := Convert (Get_Data (EntInst));
+            Append_Widget (Get_Toolbar (Kernel), Combo, Tooltip_Text => Title);
+            Free (EntInst);
+            Show_All (Combo);
+         end;
       end if;
 
-      Set_Text (Get_Entry (GPS_Combo.Combo), Text);
-   end Set_Combo_Text;
+      Free (Inst);
+   end Custom_Toolbar_Handler;
 
    --------------------------
    -- Custom_Entry_Handler --
@@ -536,49 +399,105 @@ package body Custom_Combos is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel    : constant Kernel_Handle := Custom_Module_ID.Kernel;
-      Callback  : Subprogram_Type;
+      Class     : constant Class_Type := New_Class (Kernel, "ToolbarEntry");
+      Inst      : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      Combo     : Custom_Combo;
    begin
-      if Command = "entry_add" then
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Create_Args);
+         Combo := Create_Combo
+           (Kernel, Id => Nth_Arg (Data, 2),
+            On_Changed => Nth_Arg (Data, 3, null));
+         Set_Data (Inst, Convert (Combo));
+
+      elsif Command = "add" then
          Name_Parameters (Data, Add_Args);
          Add_Combo_Entry
-           (Kernel,
-            Nth_Arg (Data, 2),
-            Nth_Arg (Data, 3),
-            Command     => null,
-            On_Selected => Nth_Arg (Data, 4, null));
+           (Combo       => Convert (Get_Data (Inst)),
+            Label       => Nth_Arg (Data, 2),
+            On_Selected => Nth_Arg (Data, 3, null));
 
-      elsif Command = "entry_create" then
-         Name_Parameters (Data, Create_Args);
-         declare
-            Id : constant String := Nth_Arg (Data, 2);
-         begin
-            Register_Combo
-              (Kernel,
-               Title => Nth_Arg (Data, 3, ""),
-               Id    => Id);
-            Callback := Nth_Arg (Data, 4, null);
-            if Callback /= null then
-               Set_Combo_Changed_Action
-                 (Kernel, Id => Id, Command => Callback);
-            end if;
-         end;
-
-      elsif Command = "entry_remove" then
+      elsif Command = "remove" then
          Name_Parameters (Data, Remove_Args);
-         Remove_Combo_Item (Kernel, Nth_Arg (Data, 2), Nth_Arg (Data, 3));
+         Remove_Combo_Item
+           (Combo => Convert (Get_Data (Inst)),
+            Label => Nth_Arg (Data, 2));
 
-      elsif Command = "entry_clear" then
+      elsif Command = "clear" then
          Name_Parameters (Data, Simple_Args);
-         Clear_Combo (Kernel, Nth_Arg (Data, 2));
+         Clear_Combo (Combo => Convert (Get_Data (Inst)));
 
-      elsif Command = "entry_get_text" then
+      elsif Command = "get_text" then
          Name_Parameters (Data, Simple_Args);
-         Set_Return_Value (Data, Get_Combo_Text (Kernel, Nth_Arg (Data, 2)));
+         Set_Return_Value
+           (Data, Get_Combo_Text (Convert (Get_Data (Inst))));
 
-      elsif Command = "entry_set_text" then
+      elsif Command = "set_text" then
          Name_Parameters (Data, Set_Text_Args);
-         Set_Combo_Text (Kernel, Nth_Arg (Data, 2), Nth_Arg (Data, 3));
+         Set_Combo_Text (Convert (Get_Data (Inst)), Nth_Arg (Data, 2));
       end if;
+
+      Free (Inst);
    end Custom_Entry_Handler;
+
+   -----------------------
+   -- Register_Commands --
+   -----------------------
+
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+      Toolbar_Class : constant Class_Type := New_Class (Kernel, "Toolbar");
+      Toolbar_Entry_Class : constant Class_Type :=
+        New_Class (Kernel, "ToolbarEntry");
+   begin
+      Register_Command
+        (Kernel, "entry",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Toolbar_Class,
+         Handler       => Custom_Toolbar_Handler'Access);
+      Register_Command
+        (Kernel, Constructor_Method,
+         Class         => Toolbar_Class,
+         Handler       => Custom_Toolbar_Handler'Access);
+      Register_Command
+        (Kernel, "append",
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Toolbar_Class,
+         Handler       => Custom_Toolbar_Handler'Access);
+
+      Register_Command
+        (Kernel, Constructor_Method,
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
+         Class         => Toolbar_Entry_Class,
+         Handler       => Custom_Entry_Handler'Access);
+      Register_Command
+        (Kernel, "remove",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Toolbar_Entry_Class,
+         Handler       => Custom_Entry_Handler'Access);
+      Register_Command
+        (Kernel, "add",
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
+         Class         => Toolbar_Entry_Class,
+         Handler       => Custom_Entry_Handler'Access);
+      Register_Command
+        (Kernel, "clear",
+         Class         => Toolbar_Entry_Class,
+         Handler       => Custom_Entry_Handler'Access);
+      Register_Command
+        (Kernel, "get_text",
+         Class         => Toolbar_Entry_Class,
+         Handler       => Custom_Entry_Handler'Access);
+      Register_Command
+        (Kernel, "set_text",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Toolbar_Entry_Class,
+         Handler       => Custom_Entry_Handler'Access);
+   end Register_Commands;
 
 end Custom_Combos;

@@ -21,37 +21,10 @@
 --  This package is used to define custom combo entries in the GPS toolbar
 
 with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Actions; use Glide_Kernel.Actions;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 package Custom_Combos is
 
-   procedure Register_Combo
-     (Kernel : access Kernel_Handle_Record'Class;
-      Title  : String;
-      Id     : String);
-   --  Register a button bar combo entry.
-   --  Title serves both as label and identifier.
-
-   procedure Set_Combo_Changed_Action
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Id      : String;
-      Command : Action_Record_Access);
-   --  Set an action to be executed when the value in the
-   --  combo identified by Id changes.
-
-   procedure Add_Combo_Entry
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Id      : String;
-      Label   : String;
-      Command : Action_Record_Access;
-      On_Selected : Glide_Kernel.Scripts.Subprogram_Type);
-   --  Add a combo entry and a command that should be
-   --  executed whenever this entry is selected.
-   --  On_Selected is also executed when the entry is selected
-
-   procedure Custom_Entry_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for the commands dealing with toolbar combos.
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the shell commands associated with this module
 
 end Custom_Combos;
