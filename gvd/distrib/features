@@ -1,5 +1,8 @@
 New features in GVD 2.0.0
 
+- General stabilization and improvements in error/warning messages.
+- Better handling of VxWorks targets.
+- [9417-007] New menu: File->Add Symbols, particularly useful under VxWorks.
 - [9403-007] GVD shows the main source file in the explorer when it opens.
 - [9305-023] The columns size and visibility for the stack window are now
   memorized from one session to another.
