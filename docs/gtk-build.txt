@@ -1,5 +1,5 @@
 Here is the complete procedures to build Gtk+ 2.0.2 from scratch
-(systems tested are Redhat 7.1, Solaris 2.8).
+(systems tested are Redhat 7.1, Solaris 2.8, Tru64 5.1a).
 
 Note that these instructions are provided as is, and do not represent a
 100% guaranteed method. This is merely an empirical list of steps that
@@ -40,7 +40,8 @@ export C_INCLUDE_PATH
 ############
 # libiconv #
 ############
-# This step isn't needed on Linux nor Solaris
+# This step isn't needed on Linux nor Solaris nor Tru64 5.1
+# It is needed under HP-UX
 
 tar xzvf libiconv-1.7.tar.gz
 cd libiconv-1.7
@@ -51,6 +52,9 @@ make install
 ########
 # zlib #
 ########
+
+# Not needed on Tru64 5.1
+
 tar xzvf zlib-1.1.4.tar.gz
 ln -s zlib-* zlib
 cd zlib
@@ -89,8 +93,8 @@ cd ..
 # gettext #
 ###########
 
-# This step is only needed under HP-UX
-# Solaris & Linux provide a suitable implementation of gettext
+# This step is not needed under Solaris & Linux
+# It is needed under HP-UX, Tru64 5.1
 
 tar xzvf gettext-0.11.1.tar.gz
 cd gettext-0.11.1
@@ -103,7 +107,7 @@ make install
 ########
 tar xzvf glib-2.0.3.tar.gz
 cd glib-2.0.3
-# on Linux and Solaris:
+# on Linux, Solaris and Tru64:
 ./configure --prefix=$prefix --enable-debug=minimum
 # on other systems:
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
@@ -136,6 +140,13 @@ cd pango-1.0.2
 # devanagari-x,myanmar-x
 
 ./configure --prefix=$prefix --with-included-modules=basic-x
+
+# Under Tru64, the command above fails with
+# checking modules to link statically... basic-x
+# configure: error: the specified module basic-x does not exist
+# Use instead:
+# ./configure --prefix=$prefix
+
 make
 make install
 cd ..
@@ -148,6 +159,13 @@ cd gtk+-2.0.3
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
   --enable-debug=minimum
+
+# Under Tru64, the command above fails with
+# checking pixbuf loaders to build... xpm,png,gif,jpeg
+# configure: error: the specified loader xpm does not exist
+# Use instead:
+# ./configure --prefix=$prefix --without-libtiff --enable-debug=minimum
+
 make
 make install
 cd ..
