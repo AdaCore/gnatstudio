@@ -740,6 +740,11 @@ package Src_Editor_Buffer is
    --  Return whether the blocks stored in the buffer are valid.
    --  (Ie if the text has not been modified since the last computation).
 
+   function Get_String
+     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access;
+   --  Return the entire editable string.
+   --  The caller is responsible for freeing the returned value.
+
 private
 
    procedure Highlight_Slice
@@ -926,11 +931,6 @@ private
    type Columns_Config_Access is access Line_Info_Display_Array_Access;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Info_Display_Array_Access, Columns_Config_Access);
-
-   function Get_String
-     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access;
-   --  Return the entire editable string.
-   --  The caller is responsible for freeing the returned value.
 
    --------------------------
    -- Source_Buffer_Record --
