@@ -44,24 +44,14 @@
 --  hierarchy (imported projects, modified projects,...) can not change when
 --  the view changes.
 
-with Prj;
-with Prj_API;
-with Prj.Tree;
 with GNAT.OS_Lib;
+with Projects.Registry;
 
 package Glide_Kernel.Project is
 
    -------------------
    -- Project files --
    -------------------
-
-   function Get_Project_File_Name
-     (Kernel : access Kernel_Handle_Record'Class) return String;
-   --  Return the name of the current project, as should be used on the command
-   --  line for all the tools that support projects
-   --  The returned string includes the directory name for the project.
-   --  If the current project is the default project (ie no other project was
-   --  loaded by the user), then the empty string ("") is returned.
 
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'Class; Project : String);
@@ -80,7 +70,7 @@ package Glide_Kernel.Project is
 
    procedure Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id;
+      Project   : Projects.Project_Type;
       Recursive : Boolean := False);
    --  Save Project to a file. If Recursive is True, all the imported projects
    --  are saved at the same time.
@@ -93,7 +83,7 @@ package Glide_Kernel.Project is
 
    procedure Save_Single_Project
      (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id;
+      Project   : Projects.Project_Type;
       Langs     : GNAT.OS_Lib.Argument_List);
    --  Save project, but none of its imported projects. As opposed to
    --  Save_Project, the project doesn't need to have an associated view in
@@ -113,48 +103,17 @@ package Glide_Kernel.Project is
    --  False is returned if the user has selected the "Cancel" button in the
    --  popup dialog.
 
-   procedure Set_Project_Modified
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id;
-      Modified  : Boolean);
-   --  See Project_Hash.Set_Project_Modified.
-   --  Note: this has not graphical effect on the explorer. You must call
-   --  Recompute_View for the icons to be changed.
-
-   function Project_Modified
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id;
-      Recursive : Boolean := False) return Boolean;
-   --  See Project_Hash.Project_Modified.
-
-   function Project_Uses_Relative_Paths
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id) return Boolean;
-   --  Return true if relative paths should be used for the project.
-
-   procedure Set_Project_Uses_Relative_Paths
-     (Kernel             : access Kernel_Handle_Record'Class;
-      Project            : Prj.Tree.Project_Node_Id;
-      Use_Relative_Paths : Boolean);
-   --  Indicates whether future modifications of the project should use
-   --  relative paths. This doesn't actually change the project.
-
-   function Get_Subproject_Name
-     (Handle    : access Kernel_Handle_Record'Class;
-      File_Name : String) return String;
-   --  Return the absolute path to the project containing File_Name.
-
    function Get_Project
-     (Handle : access Kernel_Handle_Record'Class)
-      return Prj.Tree.Project_Node_Id;
+     (Handle : access Kernel_Handle_Record'Class) return Projects.Project_Type;
    --  Return the current project tree. This tree can be fully manipulated, and
    --  extended. However, you should reevaluate the view after you have
    --  finished your changes, so as to report the changes to all the other
    --  tools.
 
-   function Get_Project_View
-     (Handle : access Kernel_Handle_Record'Class) return Prj.Project_Id;
-   --  Return the current project view
+   function Get_Registry
+     (Handle : access Kernel_Handle_Record'Class)
+      return Projects.Registry.Project_Registry'Class;
+   --  Return the projects registry
 
    procedure Recompute_View (Handle  : access Kernel_Handle_Record'Class);
    --  Recompute the view of the project, based on the current value of all
@@ -184,19 +143,6 @@ package Glide_Kernel.Project is
    --  This is the equivalent function of Find_Source_File for object files.
    --  This also works for ali files.
 
-   function Directory_In_Source_Path
-     (Handle         : access Kernel_Handle_Record'Class;
-      Directory_Name : String) return Boolean;
-   --  Return True if Directory_Name belongs to the source path defined for the
-   --  current view of the project.
-
-   function File_In_Project_View
-     (Handle          : access Kernel_Handle_Record'Class;
-      Short_File_Name : String) return Boolean;
-   --  Return True if Short_File_Name belongs to the current view of the
-   --  project.
-   --  Short_File_Name shouldn't include any directory specification.
-
    procedure Change_Project_Dir
      (Handle : access Kernel_Handle_Record'Class;
       Dir    : String);
@@ -209,7 +155,7 @@ package Glide_Kernel.Project is
 
    function Scenario_Variables
      (Kernel : access Kernel_Handle_Record'Class)
-      return Prj_API.Project_Node_Array;
+      return Projects.Scenario_Variable_Array;
    --  Return a list of all the scenario variables. This list is cached, so
    --  that future calls are fast.
    --  See also the signal "variable_changed" for the kernel.

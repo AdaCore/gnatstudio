@@ -18,17 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Prj;         use Prj;
-with Prj.Part;    use Prj.Part;
-with Prj.Proc;    use Prj.Proc;
-with Prj.Env;     use Prj.Env;
-with Prj.Ext;     use Prj.Ext;
-with Prj.Tree;    use Prj.Tree;
-with Errout;      use Errout;
-with Namet;       use Namet;
-with Stringt;     use Stringt;
-with Types;       use Types;
-with Output;      use Output;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Expect;               use GNAT.Expect;
 
@@ -42,22 +31,18 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Gtkada.Dialogs; use Gtkada.Dialogs;
 
-with Prj_API;            use Prj_API;
+with Projects;           use Projects;
+with Projects.Registry;  use Projects.Registry;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
-with Prj_Normalize;      use Prj_Normalize;
-with Project_Hash;       use Project_Hash;
 with String_Utils;       use String_Utils;
 with Basic_Types;
 
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 
 package body Glide_Kernel.Project is
-
-   use Project_Hash.Project_Htable;
 
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class);
@@ -100,11 +85,11 @@ package body Glide_Kernel.Project is
       then
          return Find_File
            (Short_File_Name,
-            Ada_Include_Path (Kernel.Project_View).all,
+            Include_Path (Get_Project (Kernel), True),
             Get_Predefined_Source_Path (Kernel));
       else
          return Find_File
-           (Short_File_Name, Ada_Include_Path (Kernel.Project_View).all, "");
+           (Short_File_Name, Include_Path (Get_Project (Kernel), True), "");
       end if;
    end Find_Source_File;
 
@@ -123,52 +108,13 @@ package body Glide_Kernel.Project is
       then
          return Find_File
            (Short_File_Name,
-            Ada_Objects_Path (Kernel.Project_View).all,
+            Object_Path (Get_Project (Kernel), True),
             Get_Predefined_Object_Path (Kernel));
       else
          return Find_File
-           (Short_File_Name, Ada_Objects_Path (Kernel.Project_View).all, "");
+           (Short_File_Name, Object_Path (Get_Project (Kernel), True), "");
       end if;
    end Find_Object_File;
-
-   ---------------------------
-   -- Get_Project_File_Name --
-   ---------------------------
-
-   function Get_Project_File_Name
-     (Kernel : access Kernel_Handle_Record'Class) return String is
-   begin
-      if Kernel.Project_Is_Default then
-         return "";
-      else
-         return Get_String (Directory_Of (Kernel.Project))
-           & Get_String (Prj.Tree.Name_Of (Kernel.Project));
-      end if;
-   end Get_Project_File_Name;
-
-   -------------------------
-   -- Get_Subproject_Name --
-   -------------------------
-
-   function Get_Subproject_Name
-     (Handle    : access Kernel_Handle_Record'Class;
-      File_Name : String) return String
-   is
-      Project : Project_Node_Id;
-   begin
-      if Handle.Project_Is_Default then
-         return "";
-      else
-         Project := Get_Project_From_View
-           (Get_Project_From_File (Handle.Project_View, File_Name));
-         if Project = Empty_Node then
-            return "";
-         else
-            return Get_String (Directory_Of (Project))
-              & Get_String (Prj.Tree.Name_Of (Project));
-         end if;
-      end if;
-   end Get_Subproject_Name;
 
    ------------------------------
    -- Compute_Predefined_Paths --
@@ -217,7 +163,7 @@ package body Glide_Kernel.Project is
       Fd          : TTY_Process_Descriptor;
       Result      : Expect_Match;
       Gnatls      : constant String := Get_Attribute_Value
-        (Get_Project_View (Handle), Gnatlist_Attribute,
+        (Get_Project (Handle), Gnatlist_Attribute,
          Ide_Package, Default => "gnatls");
       Gnatls_Args : Argument_List_Access :=
         Argument_String_To_List (Gnatls & " -v");
@@ -297,13 +243,11 @@ package body Glide_Kernel.Project is
          return;
       end if;
 
-      Kernel.Project := Create_Default_Project
-        ("default", Normalize_Pathname (Directory, Resolve_Links => False));
-      Kernel.Project_Is_Default := True;
-      Kernel.Project_View := No_Project;
+      Load_Default_Project
+        (Kernel.Registry.all,
+         Normalize_Pathname (Directory, Resolve_Links => False));
       Project_Changed (Kernel);
       Recompute_View (Kernel);
-      Reset_Normalized_Flag (Kernel.Project);
 
       --  Reload the default desktop
 
@@ -323,79 +267,38 @@ package body Glide_Kernel.Project is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the glide console.
 
-      ------------------
-      -- Report_Error --
-      ------------------
-
       procedure Report_Error (S : String) is
       begin
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
       end Report_Error;
 
-      New_Project : Project_Node_Id;
       Had_Project_Desktop : Boolean;
+      New_Project_Loaded : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
 
    begin
-      if not Is_Regular_File (Project) then
-         Console.Insert (Kernel, Project & (-" is not a regular file"),
-                         Mode => Console.Error);
-         Recompute_View (Kernel);
-         return;
-      end if;
-
-      if Project = Get_Project_File_Name (Kernel) then
-         --  nothing to do
-         return;
-      end if;
-
-      --  Save all open children, and close everything. A new desktop will be
-      --  open in the end anway
-
       if not Save_All_MDI_Children (Kernel, Force => False) then
          return;
       end if;
 
-      Output.Set_Special_Output (Report_Error'Unrestricted_Access);
-      Prj.Ext.Reset;
-      Free (Kernel.Scenario_Variables);
+      Load (Registry           => Kernel.Registry.all,
+            Root_Project_Path  => Project,
+            Errors             => Report_Error'Unrestricted_Access,
+            New_Project_Loaded => New_Project_Loaded);
 
-      --  Reset the internal table, so that a project with the same name can be
-      --  loaded. Otherwise, GNAT reports a message "duplicate project name".
-      Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
-
-      Prj.Part.Parse (New_Project, Project, True);
-
-      if New_Project /= Empty_Node then
-         Kernel.Project := New_Project;
-         Kernel.Project_Is_Default := False;
-      else
-         Console.Insert (Kernel, -"Couldn't parse the project " & Project);
-         Console.Insert (Kernel, -"Using default project instead");
-         Kernel.Project := Create_Default_Project ("default", Get_Current_Dir);
-         Kernel.Project_Is_Default := True;
+      if not New_Project_Loaded then
+         return;
       end if;
 
-      Kernel.Project_View := No_Project;
       Project_Changed (Kernel);
       Recompute_View (Kernel);
-      Reset_Normalized_Flag (Kernel.Project);
-      Output.Set_Special_Output (null);
-
-      --  Clear the projects data table. Note that we do not need to reset the
-      --  Modified fields to False, since this is the default. Entries will be
-      --  created on demand.
-      Reset (Kernel.Projects_Data);
 
       --  Reload the desktop, in case there is a project-specific setup already
-
       Close_All_Children (Kernel);
       Had_Project_Desktop := Load_Desktop (Kernel);
 
-   exception
-      when others =>
-         Output.Set_Special_Output (null);
-         raise;
+      Set_Registry
+        (Glide_Language_Handler (Kernel.Lang_Handler), Kernel.Registry);
    end Load_Project;
 
    -----------------
@@ -403,195 +306,29 @@ package body Glide_Kernel.Project is
    -----------------
 
    function Get_Project (Handle : access Kernel_Handle_Record'Class)
-      return Prj.Tree.Project_Node_Id is
+      return Project_Type is
    begin
-      return Handle.Project;
+      return Get_Root_Project (Handle.Registry.all);
    end Get_Project;
-
-   ----------------------
-   -- Get_Project_View --
-   ----------------------
-
-   function Get_Project_View
-     (Handle : access Kernel_Handle_Record'Class) return Prj.Project_Id is
-   begin
-      return Handle.Project_View;
-   end Get_Project_View;
 
    --------------------
    -- Recompute_View --
    --------------------
 
    procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
-      procedure Report_Error
-        (S       : String;
-         Project : Project_Id);
+      procedure Report_Error (S : String);
       --  Handler called when the project parser finds an error.
 
-      ------------------
-      -- Report_Error --
-      ------------------
-
-      procedure Report_Error
-        (S       : String;
-         Project : Project_Id) is
+      procedure Report_Error (S : String) is
       begin
-         if Project = No_Project then
-            Console.Insert (Handle, S, Mode => Console.Error);
-
-         elsif not Handle.Project_Is_Default then
-            Console.Insert
-              (Handle,
-               Project_Name (Project) & ": " & S,
-               Mode => Console.Error);
-         end if;
+         Console.Insert (Handle, S, Mode => Console.Error);
       end Report_Error;
 
-      Scenario_Vars : constant Project_Node_Array :=
-        Scenario_Variables (Handle);
-      Ext_Ref : String_Id;
-
    begin
-      --  To avoid any problem with invalid variable values, we need to provide
-      --  a current value when no default value is provided by the user.
-      --  This is needed at least for hand written projects.
-
-      for J in Scenario_Vars'Range loop
-         if External_Default (Scenario_Vars (J)) = Empty_Node then
-            Ext_Ref := External_Reference_Of (Scenario_Vars (J));
-            pragma Assert
-              (Ext_Ref /= No_String,
-               "Scenario variable is not an external reference");
-            String_To_Name_Buffer (Ext_Ref);
-
-            declare
-               Name : constant String :=
-                 Name_Buffer (Name_Buffer'First .. Name_Len);
-            begin
-               if Prj.Ext.Value_Of (Name_Find) = No_String then
-                  String_To_Name_Buffer
-                    (String_Value_Of (First_Literal_String
-                      (String_Type_Of (Scenario_Vars (J)))));
-                  Prj.Ext.Add
-                    (Name, Name_Buffer (Name_Buffer'First .. Name_Len));
-               end if;
-            end;
-         end if;
-      end loop;
-
-      --  Evaluate the current project
-
-      Prj.Reset;
-      Errout.Initialize;
-      Prj.Proc.Process
-        (Handle.Project_View, Handle.Project,
-         Report_Error'Unrestricted_Access);
-
-      if Handle.Project_View = No_Project then
-         --  Parsing was not successful: revert to the default project
-
-         Load_Default_Project (Handle, Get_Current_Dir, False);
-         return;
-      end if;
-
-      --  Parse the list of source files for languages other than Ada.
-      --  At the same time, check that the gnatls attribute is coherent between
-      --  all projects and subprojects
-
-      declare
-         Iter : Imported_Project_Iterator := Start (Handle.Project, True);
-         Gnatls : constant String := Get_Attribute_Value
-           (Get_Project_View (Handle), Gnatlist_Attribute, Ide_Package);
-      begin
-         while Current (Iter) /= No_Project loop
-            declare
-               Ls : constant String := Get_Attribute_Value
-                 (Current (Iter), Gnatlist_Attribute, Ide_Package);
-            begin
-               if Ls /= "" and then Ls /= Gnatls then
-                  Insert (Handle,
-                          "gnatls attribute is not the same in the "
-                          & "subproject """ & Project_Name (Current (Iter))
-                          & """ as in the root project."
-                          & " It will be ignored in the subproject.");
-               end if;
-            end;
-
-            declare
-               Error : constant String :=
-                 Add_Foreign_Source_Files (Current (Iter));
-            begin
-               if Error'Length /= 0 then
-                  Insert (Handle, Error);
-               end if;
-            end;
-
-            Next (Iter);
-         end loop;
-      end;
-
-      --  Check that all the environment variables have values defined through
-      --  Prj.Ext. If this is not the case, then their default value should be
-      --  put there.
-      --  We need to do this only after evaluation the project view, so that if
-      --  the default value is defined through other variables these are
-      --  already evaluated.
-
-      for J in Scenario_Vars'Range loop
-         Ensure_External_Value (Handle.Project, Scenario_Vars (J));
-      end loop;
-
+      Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
       Compute_Predefined_Paths (Handle);
-
-      Set_Project_View
-        (Glide_Language_Handler (Handle.Lang_Handler), Handle.Project_View);
-
-      --  Report the change to every listener
       Project_View_Changed (Handle);
    end Recompute_View;
-
-   ------------------------------
-   -- Directory_In_Source_Path --
-   ------------------------------
-
-   function Directory_In_Source_Path
-     (Handle         : access Kernel_Handle_Record'Class;
-      Directory_Name : String) return Boolean
-   is
-      Dir : String_List_Id := Projects.Table (Handle.Project_View).Source_Dirs;
-   begin
-      while Dir /= Nil_String loop
-         String_To_Name_Buffer (String_Elements.Table (Dir).Value);
-         if Directory_Name = Name_Buffer (1 .. Name_Len) then
-            return True;
-         end if;
-
-         Dir := String_Elements.Table (Dir).Next;
-      end loop;
-      return False;
-   end Directory_In_Source_Path;
-
-   --------------------------
-   -- File_In_Project_View --
-   --------------------------
-
-   function File_In_Project_View
-     (Handle          : access Kernel_Handle_Record'Class;
-      Short_File_Name : String) return Boolean
-   is
-      Src : String_List_Id := Projects.Table (Handle.Project_View).Sources;
-   begin
-      while Src /= Nil_String loop
-         String_To_Name_Buffer (String_Elements.Table (Src).Value);
-         if Short_File_Name = Name_Buffer (1 .. Name_Len) then
-            return True;
-         end if;
-
-         Src := String_Elements.Table (Src).Next;
-      end loop;
-
-      return False;
-   end File_In_Project_View;
 
    ---------------------------------
    -- Scenario_Variables_Cmd_Line --
@@ -601,7 +338,7 @@ package body Glide_Kernel.Project is
      (Handle : access Kernel_Handle_Record'Class;
       Syntax : Command_Syntax) return String
    is
-      Scenario_Vars : constant Project_Node_Array :=
+      Scenario_Vars : constant Scenario_Variable_Array :=
         Scenario_Variables (Handle);
 
       function Concat
@@ -609,37 +346,19 @@ package body Glide_Kernel.Project is
       --  Concat the command line line for the Index-nth variable and the
       --  following ones to Current, and return the result.
 
-      ------------
-      -- Concat --
-      ------------
-
       function Concat
-        (Current : String; Index : Natural; Set_Var : String) return String
-      is
-         Ext_Ref : String_Id;
+        (Current : String; Index : Natural; Set_Var : String) return String is
       begin
          if Index > Scenario_Vars'Last then
             return Current;
          end if;
 
-         Ext_Ref := External_Reference_Of (Scenario_Vars (Index));
-         String_To_Name_Buffer (Ext_Ref);
-
-         declare
-            Name : constant String :=
-              Name_Buffer (Name_Buffer'First .. Name_Len);
-            Value : String_Id;
-         begin
-            Value := Prj.Ext.Value_Of (Name_Find);
-            String_To_Name_Buffer (Value);
-
-            return Concat
-              (Current
-               & Set_Var & Name
-               & "=" & Name_Buffer (Name_Buffer'First .. Name_Len) & " ",
-               Index + 1,
-               Set_Var);
-         end;
+         return Concat
+           (Current
+            & Set_Var & External_Reference_Of (Scenario_Vars (Index))
+            & "=" & Value_Of (Scenario_Vars (Index)) & " ",
+            Index + 1,
+            Set_Var);
       end Concat;
 
    begin
@@ -660,13 +379,9 @@ package body Glide_Kernel.Project is
    ------------------------
 
    function Scenario_Variables (Kernel : access Kernel_Handle_Record'Class)
-      return Project_Node_Array is
+      return Scenario_Variable_Array is
    begin
-      if Kernel.Scenario_Variables = null then
-         Kernel.Scenario_Variables := new Project_Node_Array'
-           (Find_Scenario_Variables (Get_Project (Kernel)));
-      end if;
-      return Kernel.Scenario_Variables.all;
+      return Scenario_Variables (Kernel.Registry.all);
    end Scenario_Variables;
 
    ------------------
@@ -675,16 +390,14 @@ package body Glide_Kernel.Project is
 
    procedure Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Project_Node_Id;
+      Project   : Project_Type;
       Recursive : Boolean := False)
    is
-      Iter    : Imported_Project_Iterator := Start (Project, Recursive);
+      Iter : Imported_Project_Iterator := Start (Project, Recursive);
    begin
-      Kernel.Project_Is_Default := False;
-
-      while Current (Iter) /= Empty_Node loop
+      while Current (Iter) /= No_Project loop
          declare
-            Langs   : Argument_List := Get_Languages (Current (Iter));
+            Langs : Argument_List := Get_Languages (Current (Iter));
          begin
             Save_Single_Project (Kernel, Current (Iter), Langs);
             Basic_Types.Free (Langs);
@@ -705,7 +418,7 @@ package body Glide_Kernel.Project is
 
    procedure Save_Single_Project
      (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id;
+      Project   : Project_Type;
       Langs     : GNAT.OS_Lib.Argument_List)
    is
       procedure Report_Error (Msg : String);
@@ -732,15 +445,12 @@ package body Glide_Kernel.Project is
       if Langs'Length > 1
         or else Langs (Langs'First).all /= "ada"
       then
-         if Project_Modified (Kernel.Projects_Data, Project) then
-            Save_Project
-              (Project, Kernel.Projects_Data, False,
-               Report_Error'Unrestricted_Access);
+         if Project_Modified (Project) then
+            Save_Project (Project, Report_Error'Unrestricted_Access);
             Args (1) := new String'("-R");
 
             declare
-               Name : constant String := Get_String
-                 (Prj.Tree.Path_Name_Of (Project));
+               Name : constant String := Project_Path (Project);
             begin
                if not Is_Regular_File (Name)
                  or else Is_Writable_File (Name)
@@ -759,8 +469,7 @@ package body Glide_Kernel.Project is
          end if;
 
       else
-         Save_Project (Project, Kernel.Projects_Data, False,
-                       Report_Error'Unrestricted_Access);
+         Save_Project (Project, Report_Error'Unrestricted_Access);
       end if;
    end Save_Single_Project;
 
@@ -777,9 +486,7 @@ package body Glide_Kernel.Project is
       if Force then
          Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
 
-      elsif Project_Modified
-        (Kernel.Projects_Data, Get_Project (Kernel), Recursive => True)
-      then
+      elsif Project_Modified (Get_Project (Kernel), Recursive => True) then
          Button := Message_Dialog
            (Msg            => -"Do you want to save the projects ?",
             Dialog_Type    => Confirmation,
@@ -790,8 +497,7 @@ package body Glide_Kernel.Project is
 
          case Button is
             when Button_Yes =>
-               Save_Project
-                 (Kernel, Get_Project (Kernel), Recursive => True);
+               Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
                return Saved;
 
             when Button_No =>
@@ -799,7 +505,9 @@ package body Glide_Kernel.Project is
 
             when Button_All =>
                Save_Project
-                 (Kernel, Get_Project (Kernel), Recursive => True);
+                 (Kernel    => Kernel,
+                  Project   => Get_Project (Kernel),
+                  Recursive => True);
                return Save_All;
 
             when others =>
@@ -809,67 +517,15 @@ package body Glide_Kernel.Project is
       return Saved;
    end Save_Project_Conditional;
 
-   --------------------------
-   -- Set_Project_Modified --
-   --------------------------
+   ------------------
+   -- Get_Registry --
+   ------------------
 
-   procedure Set_Project_Modified
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id;
-      Modified  : Boolean) is
+   function Get_Registry
+     (Handle : access Kernel_Handle_Record'Class)
+      return Projects.Registry.Project_Registry'Class is
    begin
-      Set_Project_Modified (Kernel.Projects_Data, Project, Modified);
-   end Set_Project_Modified;
-
-   ----------------------
-   -- Project_Modified --
-   ----------------------
-
-   function Project_Modified
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id;
-      Recursive : Boolean := False) return Boolean is
-   begin
-      return Project_Modified (Kernel.Projects_Data, Project, Recursive);
-   end Project_Modified;
-
-   ---------------------------------
-   -- Project_Uses_Relative_Paths --
-   ---------------------------------
-
-   function Project_Uses_Relative_Paths
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Prj.Tree.Project_Node_Id) return Boolean is
-   begin
-      case Get (Kernel.Projects_Data, Project).Paths_Type is
-         when Relative =>
-            return True;
-
-         when Absolute =>
-            return False;
-
-         when From_Pref =>
-            return Get_Pref (Kernel, Generate_Relative_Paths);
-      end case;
-   end Project_Uses_Relative_Paths;
-
-   -------------------------------------
-   -- Set_Project_Uses_Relative_Paths --
-   -------------------------------------
-
-   procedure Set_Project_Uses_Relative_Paths
-     (Kernel             : access Kernel_Handle_Record'Class;
-      Project            : Prj.Tree.Project_Node_Id;
-      Use_Relative_Paths : Boolean)
-   is
-      Rec : Project_Data_Record := Get (Kernel.Projects_Data, Project);
-   begin
-      if Use_Relative_Paths then
-         Rec.Paths_Type := Relative;
-      else
-         Rec.Paths_Type := Absolute;
-      end if;
-      Set (Kernel.Projects_Data, Project, Rec);
-   end Set_Project_Uses_Relative_Paths;
+      return Handle.Registry.all;
+   end Get_Registry;
 
 end Glide_Kernel.Project;
