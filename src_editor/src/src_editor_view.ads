@@ -29,7 +29,6 @@ with Gdk.GC;
 with Gdk.Event;
 with Gdk.Font;
 
-with Gtk.Text_Mark;
 with Gtk.Text_View;
 
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
@@ -163,7 +162,9 @@ private
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
    record
-      Saved_Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Saved_Cursor_Line   : Gint;
+      Saved_Cursor_Column : Gint;
+
       Pango_Font          : Pango.Font.Pango_Font_Description;
       Font                : Gdk.Font.Gdk_Font;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
