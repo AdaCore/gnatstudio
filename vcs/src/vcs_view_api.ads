@@ -19,11 +19,12 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget;
-with Glib.Object;       use Glib.Object;
-with Glide_Kernel;      use Glide_Kernel;
-with Gtk.Menu;          use Gtk.Menu;
-with VCS;               use VCS;
-with Projects;          use Projects;
+with Glib.Object;          use Glib.Object;
+with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with Gtk.Menu;             use Gtk.Menu;
+with VCS;                  use VCS;
+with Projects;             use Projects;
 with Gtkada.MDI;
 
 package VCS_View_API is
@@ -171,5 +172,10 @@ package VCS_View_API is
       Status : File_Status_Record);
    --  Display a label corresponding to the file. If the file is not open,
    --  do nothing.
+
+   procedure VCS_Command_Handler
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String);
+   --  Handler for VCS commands.
 
 end VCS_View_API;
