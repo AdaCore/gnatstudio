@@ -79,6 +79,11 @@ package Odd.Dialogs is
    --  The information is read from Debugger (which is in fact a
    --  Debugger_Process_Tab).
 
+   procedure On_Task_Process_Stopped
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Callback function connected to the "process_stopped" signal.
+   --  It will update the task window associated with a given tab.
+
    procedure Gtk_New
      (Backtrace_Dialog : out Backtrace_Dialog_Access;
       Main_Window      : Gtk_Window);
@@ -96,6 +101,11 @@ package Odd.Dialogs is
    --  Update the contents of the backtrace dialog.
    --  The information is read from Debugger (which is in fact a
    --  Debugger_Process_Tab).
+
+   procedure On_Backtrace_Process_Stopped
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Callback function connected to the "process_stopped" signal.
+   --  It will update the call stack window associated with a given tab.
 
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
