@@ -1,5 +1,5 @@
-Here is the complete procedure to build Gtk+ 2.0.0 from scratch
-(systems tested are Redhat 7.1, Solaris 2.8, HP-UX 11.00).
+Here is the complete procedure to build Gtk+ 2.0.2 from scratch
+(systems tested are Redhat 7.1, Solaris 2.8).
 
 On linux systems, you can skip the steps from libiconv to libjpeg, and
 ignore the special comments.
@@ -88,10 +88,14 @@ make install
 ########
 # glib #
 ########
-tar xzvf glib-2.0.0.tar.gz
-cd glib-2.0.0
+tar xzvf glib-2.0.1.tar.gz
+cd glib-2.0.1
+# on linux:
+./configure --prefix=$prefix --enable-debug=minimum
+# on other systems:
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
 # --enable-gc-friendly --disable-mem-pools --with-threads=posix
+
 make
 make install
 cd ..
@@ -99,8 +103,8 @@ cd ..
 #######
 # atk #
 #######
-tar xzvf atk-1.0.0.tar.gz
-cd atk-1.0.0
+tar xzvf atk-1.0.1.tar.gz
+cd atk-1.0.1
 ./configure --prefix=$prefix
 make
 make install
@@ -109,8 +113,8 @@ cd ..
 #########
 # pango #
 #########
-tar xzvf pango-1.0.0.tar.gz
-cd pango-1.0.0
+tar xzvf pango-1.0.1.tar.gz
+cd pango-1.0.1
 
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. Other modules are:
@@ -126,8 +130,8 @@ cd ..
 #######
 # gtk #
 #######
-tar xzvf gtk+-2.0.0.tar.gz
-cd gtk+-2.0.0
+tar xzvf gtk+-2.0.2.tar.gz
+cd gtk+-2.0.2
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
   --enable-debug=minimum
