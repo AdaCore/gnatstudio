@@ -25,16 +25,24 @@
 with Gdk.Event;
 with GNAT.OS_Lib;
 with Glide_Kernel;
+with Gtk.Widget;
 
 package Commands.Interactive is
 
-   type Interactive_Command is abstract new Root_Command with private;
-   type Interactive_Command_Access is access all Interactive_Command'Class;
+   type Component_Iterator_Record is abstract tagged null record;
+   type Component_Iterator is access all Component_Iterator_Record'Class;
+
+   ---------------------------------
+   -- Interactive_Command_Context --
+   ---------------------------------
 
    type Interactive_Command_Context is record
       Event   : Gdk.Event.Gdk_Event := null;
       Context : Glide_Kernel.Selection_Context_Access;
+
       Dir     : GNAT.OS_Lib.String_Access;
+      --  The directory in which the execution should take place
+
       Args    : GNAT.OS_Lib.String_List_Access;
       Label   : GNAT.OS_Lib.String_Access;
    end record;
@@ -49,18 +57,53 @@ package Commands.Interactive is
    procedure Free (X : in out Interactive_Command_Context);
    --  Free memory associated to X.
 
+   ------------------------
+   --  Command_Component --
+   ------------------------
+
+   type Command_Component_Record is abstract tagged private;
+   type Command_Component is access all Command_Component_Record'Class;
+   --  A command is usually a succession of small steps to reach a specific
+   --  goal. These steps can be defined in a number of ways: either they are
+   --  coded in the GPS source code itself or in a module programmed in Ada,
+   --  or they are defined by the user in customization files, and are the
+   --  result of executing GPS shell or Python scripts, or running external
+   --  applications.
+
+   function Component_Editor
+     (Component : access Command_Component_Record)
+      return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return a graphical widget that can be used to edit Component.
+   --  This widget should provide all the fields to edit the contents of the
+   --  component.
+   --  The result will be destroyed automatically when its parent container
+   --  is destroyed.
+
+   procedure Update_From_Editor
+     (Component : access Command_Component_Record;
+      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class) is abstract;
+   --  This function is passed the Editor created by Component_Editor, and
+   --  should update the component accordingly.
+
+   -------------------------
+   -- Interactive_Command --
+   -------------------------
+
+   type Interactive_Command is abstract new Root_Command with private;
+   type Interactive_Command_Access is access all Interactive_Command'Class;
+
    function Execute
      (Command : access Interactive_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type is abstract;
    --  Execute the command.
-   --  If Event is null, it should be executed non-interactively. Otherwise,
-   --  Event is set to the event that started the execution (a Gdk_Key_Event
+   --  Context is the current context when the command is started. Its Event
+   --  field is the event that started the execution (a Gdk_Key_Event
    --  if started from a key, a Gtk_Button_Event if started from a menu,...)
 
    function Execute (Command : access Interactive_Command)
       return Command_Return_Type;
-   --  Execute the command non-interactively
+   --  Execute the command non-interactively, with a Null_Context
 
    procedure Launch_Synchronous_Interactive
      (Command : access Interactive_Command'Class;
@@ -70,6 +113,59 @@ package Commands.Interactive is
    --  This is similar to Commands.Lauch_Synchronous, except it also propagates
    --  the Event parameter.
 
+   function Start
+     (Command : access Interactive_Command) return Component_Iterator;
+   --  Return the first component that makes up the command. Such commands are
+   --  used mostly for graphical description of the command.
+   --  By default, the command is considered as internal, and thus contains
+   --  only one component, not editable graphically.
+   --  Returned value must be freed by the caller.
+
+   function Command_Editor
+     (Command : access Interactive_Command) return Gtk.Widget.Gtk_Widget;
+   --  Return a widget to edit the general properties of the command.
+   --  This editor should include the various command_components, which are
+   --  edited separately. For instance, the return widget should be used to
+   --  edit the default window in which the output of the command goes,
+   --  whether it applies to such or such module,...
+   --  null should be returned if there is no specific property to edit for
+   --  this command. This is the default.
+
+   procedure Update_From_Editor
+     (Command : access Interactive_Command;
+      Editor  : Gtk.Widget.Gtk_Widget);
+   --  Edit the properties of the command from the editor returned by
+   --  Command_Editor
+
+   -------------------------
+   --  Component_Iterator --
+   -------------------------
+
+   function Get
+     (Iter : access Component_Iterator_Record)
+      return Command_Component is abstract;
+   --  Return the current component, or null if there are no more components.
+   --  The return value mustn't be freed by the caller.
+   --  It still exists while the action exists
+
+   procedure Next (Iter : access Component_Iterator_Record) is abstract;
+   --  Move to the next component
+
+   procedure Free (Iter : in out Component_Iterator_Record);
+   procedure Free (Iter : in out Component_Iterator);
+   --  Free the iterator. Does nothing by default
+
+   function On_Failure
+     (Iter : access Component_Iterator_Record) return Component_Iterator;
+   --  Return a new iterator for the components to execute in case of failure
+   --  of the current component.
+   --  By default, this returns null to indicate that nothing will happen
+   --  in this case, except that the command will stop executing
+
+   -------------------------------
+   -- Interactive_Command_Proxy --
+   -------------------------------
+
    type Interactive_Command_Proxy is new Root_Command with record
       Command : Interactive_Command_Access;
       Context : Interactive_Command_Context;
@@ -78,7 +174,7 @@ package Commands.Interactive is
       is access Interactive_Command_Proxy'Class;
    --  This acts as a proxy for Interactive_Command, so that they can be called
    --  with an event. This should be used when one need to execute a procedure
-   --  that expects a Root_Action.
+   --  that expects a Root_Command.
    --  The command is freed when the proxy is freed
 
    function Create_Proxy
@@ -90,10 +186,9 @@ package Commands.Interactive is
       return Command_Return_Type;
    function Name (Command : access Interactive_Command_Proxy) return String;
    procedure Free (X : in out Interactive_Command_Proxy);
-   --  See doc for inherited subprogram
+   --  See doc from inherited subprogram
 
 private
-
    type Interactive_Command is abstract new Root_Command with null record;
-
+   type Command_Component_Record is abstract tagged null record;
 end Commands.Interactive;

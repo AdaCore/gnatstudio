@@ -21,8 +21,134 @@
 with Gdk.Event;   use Gdk.Event;
 with Glide_Intl;  use Glide_Intl;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Gtk.Label;   use Gtk.Label;
+with Ada.Unchecked_Deallocation;
 
 package body Commands.Interactive is
+
+   type Internal_Component_Iterator is new Component_Iterator_Record with
+      record
+         At_End : Boolean := False;
+      end record;
+
+   function Get
+     (Iter : access Internal_Component_Iterator) return Command_Component;
+   procedure Next (Iter : access Internal_Component_Iterator);
+   --  See docs from inherited subprograms
+
+   type Internal_Component_Record is new Command_Component_Record
+      with null record;
+
+   function Component_Editor
+     (Component : access Internal_Component_Record)
+      return Gtk.Widget.Gtk_Widget;
+   procedure Update_From_Editor
+     (Component : access Internal_Component_Record;
+      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  See docs for inherited subprograms
+
+
+   Internal_Component : aliased Internal_Component_Record;
+   --  Used for all internal components, ie that can't be edited graphically
+
+
+   ----------------
+   -- On_Failure --
+   ----------------
+
+   function On_Failure
+     (Iter : access Component_Iterator_Record) return Component_Iterator
+   is
+      pragma Unreferenced (Iter);
+   begin
+      return null;
+   end On_Failure;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Iter : in out Component_Iterator_Record) is
+      pragma Unreferenced (Iter);
+   begin
+      null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Iter : in out Component_Iterator) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Component_Iterator_Record'Class, Component_Iterator);
+   begin
+      Free (Iter.all);
+      Unchecked_Free (Iter);
+   end Free;
+
+   ----------------------
+   -- Component_Editor --
+   ----------------------
+
+   function Component_Editor
+     (Component : access Internal_Component_Record)
+      return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Component);
+      Label : Gtk_Label;
+   begin
+      Gtk_New (Label, -"Built-in command");
+      return Gtk.Widget.Gtk_Widget (Label);
+   end Component_Editor;
+
+   ------------------------
+   -- Update_From_Editor --
+   ------------------------
+
+   procedure Update_From_Editor
+     (Component : access Internal_Component_Record;
+      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Component, Editor);
+   begin
+      null;
+   end Update_From_Editor;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start
+     (Command : access Interactive_Command) return Component_Iterator
+   is
+      pragma Unreferenced (Command);
+   begin
+      return new Internal_Component_Iterator'
+        (Component_Iterator_Record with At_End => False);
+   end Start;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Iter : access Internal_Component_Iterator) return Command_Component is
+   begin
+      if Iter.At_End then
+         return null;
+      else
+         return Internal_Component'Access;
+      end if;
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : access Internal_Component_Iterator) is
+   begin
+      Iter.At_End := True;
+   end Next;
 
    -------------
    -- Execute --
@@ -124,5 +250,30 @@ package body Commands.Interactive is
       Free (X.Dir);
       Free (X.Label);
    end Free;
+
+   --------------------
+   -- Command_Editor --
+   --------------------
+
+   function Command_Editor
+     (Command : access Interactive_Command) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Command);
+   begin
+      return null;
+   end Command_Editor;
+
+   ------------------------
+   -- Update_From_Editor --
+   ------------------------
+
+   procedure Update_From_Editor
+     (Command : access Interactive_Command;
+      Editor  : Gtk.Widget.Gtk_Widget)
+   is
+      pragma Unreferenced (Command, Editor);
+   begin
+      null;
+   end Update_From_Editor;
 
 end Commands.Interactive;
