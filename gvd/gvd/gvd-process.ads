@@ -264,7 +264,7 @@ package Odd.Process is
    --  If Is_Command is True, then the string is displayed in the highlighting
    --  color, used for user commands.
    --  If Set_Position is True, then the cursor position after the text has
-   --  been inserted is consideredas the beginning of a new command. The user
+   --  been inserted is considered as the beginning of a new command. The user
    --  will be able to delete text back to that position, but not before, and
    --  when <enter> is pressed, the text from the position onwards is sent to
    --  the debugger.
