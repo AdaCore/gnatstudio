@@ -6,6 +6,10 @@ snsrc :
 src :
 	$(MAKE) -C src
 
+clean :
+	$(MAKE) -C src clean
+	$(MAKE) -C snsrc clean
+
 distclean : uninstall
 	$(RM) Makefile config.cache include/config.h config.log config.status
 	$(MAKE) -C src distclean
