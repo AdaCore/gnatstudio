@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,31 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Gtk.Enums; use Gtk.Enums;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Main; use Gtk.Main;
-with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Clist; use Gtk.Clist;
-with Ada.Text_IO; use Ada.Text_IO;
+with Glib;            use Glib;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtk.Main;        use Gtk.Main;
+with Gtk.GEntry;      use Gtk.GEntry;
+with Gtk.Clist;       use Gtk.Clist;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Ada.Text_IO;     use Ada.Text_IO;
+with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with Gtkada.Dialogs; use Gtkada.Dialogs;
-with String_Utils; use String_Utils;
+with Gtkada.Dialogs;  use Gtkada.Dialogs;
+with File_Utils;      use File_Utils;
+with String_Utils;    use String_Utils;
 
-with Pixmaps_IDE; use Pixmaps_IDE;
+with Pixmaps_IDE;     use Pixmaps_IDE;
 
-with Aunit_Filters; use Aunit_Filters;
+with Aunit_Filters;   use Aunit_Filters;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtkada.Types; use Gtkada.Types;
+with Gtkada.Types;    use Gtkada.Types;
 
-with Row_Data; use Row_Data;
-with VFS;      use VFS;
+with Row_Data;        use Row_Data;
+with VFS;             use VFS;
 
-with Glide_Intl; use Glide_Intl;
-with Gdk.Pixbuf; use Gdk.Pixbuf;
+with Glide_Intl;      use Glide_Intl;
+with Gdk.Pixbuf;      use Gdk.Pixbuf;
 
 package body Make_Suite_Window_Pkg.Callbacks is
    use Gtk.Arguments;
