@@ -361,6 +361,7 @@ package body Process_Tab_Pkg.Callbacks is
                   Is_Command => True);
                Set_Position
                  (Top.Debugger_Text, Gint (Get_Length (Top.Debugger_Text)));
+               return True;
 
             exception
                when No_Such_Item =>
@@ -464,6 +465,8 @@ package body Process_Tab_Pkg.Callbacks is
 
                Free (S);
             end;
+
+            return True;
 
          when others =>
             null;
