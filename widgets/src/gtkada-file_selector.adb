@@ -192,10 +192,10 @@ package body Gtkada.File_Selector is
       Filter_A  : Filter_Show_All_Access := new Filter_Show_All;
       File_Selector_Window : File_Selector_Window_Access;
    begin
-      Gtk.Main.Init;
       Gtk_New (File_Selector_Window, Base_Directory);
 
       Register_Filter (File_Selector_Window, Filter_A);
+      Set_Modal (File_Selector_Window, True);
 
       Show_All (File_Selector_Window);
 
@@ -208,7 +208,12 @@ package body Gtkada.File_Selector is
 
       Gtk.Main.Main;
 
-      return Get_Selection (File_Selector_Window);
+      declare
+         File : constant String := Get_Selection (File_Selector_Window);
+      begin
+         Destroy (File_Selector_Window);
+         return File;
+      end;
    end Select_File;
 
    -------------
@@ -1194,9 +1199,13 @@ package body Gtkada.File_Selector is
 
       Widget_Callback.Connect
         (File_Selector_Window, "realize", Realize'Access);
-      Widget_Callback.Connect
-        (File_Selector_Window, "destroy",
-         Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
+
+      --  ??? temporarily commented out: If this is left, then Select_File
+      --  ??? won't work, since on exit it destroys the dialog, and thus exists
+      --  ??? a second main loop
+      --  Widget_Callback.Connect
+      --    (File_Selector_Window, "destroy",
+      --     Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
    end Initialize;
 
 end Gtkada.File_Selector;
