@@ -35,15 +35,15 @@ with Language.Cpp;
 with Language.Java;
 with Entities;
 with Dummy_Parser;              use Dummy_Parser;
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Intl;                  use GPS.Intl;
 with Project_Viewers;           use Project_Viewers;
 with Naming_Editors;            use Naming_Editors;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 
 package body Language.Custom is
 
@@ -740,8 +740,10 @@ package body Language.Custom is
    function Comment_Line
      (Lang    : access Custom_Language;
       Line    : String;
-      Comment : Boolean := True) return String
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String
    is
+      pragma Unreferenced (Clean);
       procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
       pragma Import (C, C_Free, "free");
    begin
