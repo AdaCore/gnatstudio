@@ -403,7 +403,7 @@ package body Glide_Kernel.Console is
       Raise_Child (Child);
 
       Gtk_New (Interactive_Console,
-               "GPS> ",
+               ASCII.LF & "GPS> ",
                Interpret_Command_Handler'Access,
                GObject (Kernel),
                Get_Pref (Kernel, Source_Editor_Font),
