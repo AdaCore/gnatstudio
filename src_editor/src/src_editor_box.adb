@@ -2574,7 +2574,11 @@ package body Src_Editor_Box is
 
       while L > 1 loop
          if Block.Block_Type in Enclosing_Entity_Category then
-            return Block.Name.all;
+            if Block.Name /= null then
+               return Block.Name.all;
+            else
+               return "";
+            end if;
          end if;
 
          if Block.First_Line > 1 then
