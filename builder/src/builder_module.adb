@@ -190,7 +190,6 @@ package body Builder_Module is
       end if;
 
       --  Ask for saving sources/projects before building
-      --  ??? This should probably be interactive
 
       Tmp := Save_All_MDI_Children (K, Force => False);
       Console.Clear (K);
