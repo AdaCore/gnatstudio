@@ -28,6 +28,7 @@ with Gdk.Window;            use Gdk.Window;
 with Gdk.Rectangle;         use Gdk.Rectangle;
 with Gtk.Adjustment;        use Gtk.Adjustment;
 with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
+with Gtk.Container;         use Gtk.Container;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Layout;            use Gtk.Layout;
@@ -38,6 +39,7 @@ with Gtk.Pixmap;            use Gtk.Pixmap;
 with Gtk.Text;              use Gtk.Text;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Types;          use Gtkada.Types;
+with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with Debugger;              use Debugger;
 with Language;              use Language;
@@ -46,11 +48,9 @@ with Process_Proxies;       use Process_Proxies;
 
 with GVD.Canvas;            use GVD.Canvas;
 with GVD.Code_Editors;      use GVD.Code_Editors;
-with GVD.Explorer;          use GVD.Explorer;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
 with GVD.Strings;           use GVD.Strings;
-with GVD.Text_Boxes;        use GVD.Text_Boxes;
 with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
 with Display_Items;         use Display_Items;
@@ -62,7 +62,7 @@ with GVD.Status_Bar;        use GVD.Status_Bar;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.Types; use Gdk.Types;
 
-package body GVD.Source_Editors is
+package body GVD.Text_Box.Source_Editor.Builtin is
 
    ---------------------
    -- Local Constants --
@@ -81,6 +81,34 @@ package body GVD.Source_Editors is
    Max_Tooltip_Width : constant := 400;
    Max_Tooltip_Height : constant := 300;
    --  Maximum size to use for the tooltip windows
+
+   type Builtin_Text_Box_Record is new GVD_Text_Box_Record with record
+      Editor : Builtin;
+   end record;
+   type Builtin_Text_Box is access all Builtin_Text_Box_Record'Class;
+   
+   function On_Pixmap_Clicked
+     (Editor : access Builtin_Text_Box_Record;
+      Button : Natural;
+      Line   : Natural) return Boolean;
+   --  See GVD.Text_Box for documentation
+
+   function Invisible_Column_Width
+     (Editor : access Builtin_Text_Box_Record) return Glib.Gint;
+   --  See GVD.Text_Box for documentation
+
+   function Child_Contextual_Menu
+     (Source : access Builtin_Text_Box_Record;
+      Line   : Natural;
+      Entity : String) return Gtk.Menu.Gtk_Menu;
+   --  See GVD.Text_Box for documentation
+
+   procedure Insert_Buffer
+     (Editor : access Builtin_Text_Box_Record;
+      Buffer : String);
+   --  Insert the contents of the buffer in the editor. Color highlighting is
+   --  provided, and line numbers may or may not be added.
+   --  See also GVD.Text_Box.
 
    --------------------
    -- Local packages --
@@ -102,14 +130,13 @@ package body GVD.Source_Editors is
    use Contextual_Register;
 
    package Check_Editor_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Check_Menu_Item_Record, Source_Editor);
+     (Gtk_Check_Menu_Item_Record, Builtin);
    package Widget_Breakpoint_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Contextual_Data_Record);
-   package Editor_Idle is new Gtk.Main.Idle (Source_Editor);
-   package Editor_Cb is new Gtk.Handlers.Callback (Source_Editor_Record);
+   package Editor_Idle is new Gtk.Main.Idle (Builtin);
 
    procedure Update_Buttons
-     (Editor : access Source_Editor_Record'Class;
+     (Editor : access Builtin_Record'Class;
       Reset_Line : Boolean := True);
    --  Update the display of line-breaks buttons.
    --  If this feature is disabled for the editor, then they are all removed.
@@ -128,7 +155,7 @@ package body GVD.Source_Editors is
 
    procedure Change_Line_Nums
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Source_Editor);
+      Editor : Builtin);
    --  Callback for the "show line numbers" contextual menu item.
 
    procedure Print_Variable
@@ -143,36 +170,35 @@ package body GVD.Source_Editors is
 
    procedure Change_Lines_With_Code
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Source_Editor);
+      Editor : Builtin);
    --  Callback for the "show lines with code" contextual menu item.
 
-   procedure Show_Current_Line_Menu
-     (Editor : access Source_Editor_Record'Class);
+   procedure Show_Current_Line_Menu (Box : access Gtk_Widget_Record'Class);
    --  Display the current file and current line in the editor.
 
    procedure Is_Breakpoint
-     (Editor : access Source_Editor_Record'Class;
+     (Editor : access Builtin_Record'Class;
       Line   : Integer;
       Result : out Boolean;
       Num    : out Integer);
    --  Tell if a breakpoint is set at a specific line.
    --  If it is the case, return the number of the breakpoint.
 
-   function Idle_Compute_Lines (Editor : Source_Editor) return Boolean;
+   function Idle_Compute_Lines (Editor : Builtin) return Boolean;
    --  Idle function called to compute the lines with code in the editor
 
    function Check_Single_Line
-     (Editor : access Source_Editor_Record'Class;
+     (Editor : access Builtin_Record'Class;
       Line   : Natural) return Boolean;
    --  Check whether Line contains executable code, and put an icon for it
    --  in the button toolbar if needed.
    --  Returns False if no line after Line contains code.
 
-   procedure Destroy_Cb (Editor : access Source_Editor_Record'Class);
+   procedure Destroy_Cb (Box : access Gtk_Widget_Record'Class);
    --  Free the memory occupied by the editor and the buttons layout, as well
    --  as all the associated pixmaps.
 
-   procedure Activate_Computation (Editor : access Source_Editor_Record'Class);
+   procedure Activate_Computation (Box : access Gtk_Widget_Record'Class);
    --  Reactivate the computation of lines with code, after the text was
    --  scrolled.
 
@@ -181,13 +207,23 @@ package body GVD.Source_Editors is
    -------------
 
    procedure Gtk_New
-     (Editor  : out Source_Editor;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
+     (Editor            : out Builtin;
+      Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
+      TTY_Mode          : Boolean;
+      Ps_Font_Name      : String;
+      Font_Size         : Glib.Gint;
+      Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
+      Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
+      Comments_Color    : Gdk.Color.Gdk_Color;
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keywords_Color    : Gdk.Color.Gdk_Color) is
    begin
-      Editor := new Source_Editor_Record;
-      Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
-      Editor.Show_Lines_With_Code := Get_Pref (Editor_Show_Line_With_Code);
-      Initialize (Editor, Process);
+      Editor := new Builtin_Record;
+      Text_Box.Source_Editor.Builtin.Initialize
+        (Editor, Process, TTY_Mode, Ps_Font_Name, Font_Size,
+         Default_Icon, Current_Line_Icon, Stop_Icon, Comments_Color,
+         Strings_Color, Keywords_Color);
    end Gtk_New;
 
    ----------------
@@ -195,52 +231,111 @@ package body GVD.Source_Editors is
    ----------------
 
    procedure Initialize
-     (Editor  : access Source_Editor_Record'Class;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Editor            : access Builtin_Record'Class;
+      Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
+      TTY_Mode          : Boolean;
+      Ps_Font_Name      : String;
+      Font_Size         : Glib.Gint;
+      Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
+      Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
+      Comments_Color    : Gdk.Color.Gdk_Color;
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keywords_Color    : Gdk.Color.Gdk_Color)
    is
       Data : Editor_Tooltip_Data;
-   begin
-      GVD.Text_Boxes.Initialize (Editor);
-      Editor.Process := Gtk_Widget (Process);
-      Editor_Cb.Connect
-        (Editor, "destroy", Editor_Cb.To_Marshaller (Destroy_Cb'Access));
-      Show_All (Editor);
+      Box  : Builtin_Text_Box;
 
-      Data.Lang := Editor.Lang;
-      Data.Box  := Source_Editor (Editor);
-      Editor_Tooltips.New_Tooltip (Get_Child (Editor), Data, Editor.Tooltip);
+   begin
+      Box := new Builtin_Text_Box_Record;
+      GVD.Text_Box.Initialize (Box);
+
+      Box.Editor := Builtin (Editor);
+      Editor.Widget := Gtk_Widget (Box);
+      Ref (Editor.Widget);
+      Editor.Process := Gtk_Widget (Process);
+      Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
+      Editor.Show_Lines_With_Code := Get_Pref (Editor_Show_Line_With_Code);
+      Widget_Callback.Connect
+        (Box, "destroy", Widget_Callback.To_Marshaller (Destroy_Cb'Access));
+      Show_All (Box);
+
+      Data.Box := Builtin (Editor);
+      Editor_Tooltips.New_Tooltip (Get_Child (Box), Data, Editor.Tooltip);
 
       Editor.Highlight_Color := Get_Pref (Editor_Highlight_Color);
 
-      Editor_Cb.Object_Connect
-        (Get_Vadj (Get_Child (Editor)), "value_changed",
-         Editor_Cb.To_Marshaller (Activate_Computation'Access),
-         Slot_Object => Editor);
-      Editor_Cb.Object_Connect
-        (Get_Vadj (Get_Child (Editor)), "changed",
-         Editor_Cb.To_Marshaller (Activate_Computation'Access),
-         Slot_Object => Editor);
+      Widget_Callback.Object_Connect
+        (Get_Vadj (Get_Child (Box)), "value_changed",
+         Widget_Callback.To_Marshaller (Activate_Computation'Access),
+         Slot_Object => Editor.Widget);
+      Widget_Callback.Object_Connect
+        (Get_Vadj (Get_Child (Box)), "changed",
+         Widget_Callback.To_Marshaller (Activate_Computation'Access),
+         Slot_Object => Editor.Widget);
+
+      Configure (Box, Ps_Font_Name, Font_Size, Current_Line_Icon);
+      Create_From_Xpm_D
+        (Editor.Default_Pixmap,
+         Null_Window,
+         Get_System,
+         Editor.Default_Mask,
+         White (Get_System),
+         Default_Icon);
+      Create_From_Xpm_D
+        (Editor.Stop_Pixmap,
+         Null_Window,
+         Get_System,
+         Editor.Stop_Mask,
+         White (Get_System),
+         Stop_Icon);
+
+      Editor.Colors (Comment_Text) := Comments_Color;
+      Editor.Colors (String_Text)  := Strings_Color;
+      Editor.Colors (Keyword_Text) := Keywords_Color;
    end Initialize;
 
    --------------------------
    -- Activate_Computation --
    --------------------------
 
-   procedure Activate_Computation
-     (Editor : access Source_Editor_Record'Class) is
+   procedure Activate_Computation (Box : access Gtk_Widget_Record'Class) is
+      Editor : constant Builtin := Builtin (Builtin_Text_Box (Box).Editor);
    begin
       if Editor.Show_Lines_With_Code then
          Editor.Idle_Id := Editor_Idle.Add
-           (Idle_Compute_Lines'Access, Source_Editor (Editor));
+           (Idle_Compute_Lines'Access, Builtin (Editor));
       end if;
    end Activate_Computation;
+
+   ------------
+   -- Attach --
+   ------------
+
+   procedure Attach
+     (Editor : access Builtin_Record;
+      Parent : access Gtk_Container_Record'Class) is
+   begin
+      Add (Parent, Editor.Widget);
+      Unref (Editor.Widget);
+   end Attach;
+
+   ------------
+   -- Detach --
+   ------------
+
+   procedure Detach (Editor : access Builtin_Record) is
+   begin
+      Ref (Editor.Widget);
+      Remove (Gtk_Container (Get_Parent (Editor.Widget)), Editor.Widget);
+   end Detach;
 
    -------------------
    -- Is_Breakpoint --
    -------------------
 
    procedure Is_Breakpoint
-     (Editor : access Source_Editor_Record'Class;
+     (Editor : access Builtin_Record'Class;
       Line   : Integer;
       Result : out Boolean;
       Num    : out Integer)
@@ -267,69 +362,30 @@ package body GVD.Source_Editors is
       Result := False;
    end Is_Breakpoint;
 
-   ---------------
-   -- Configure --
-   ---------------
-
-   procedure Configure
-     (Editor            : access Source_Editor_Record;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
-      Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
-      Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Comments_Color    : Gdk.Color.Gdk_Color;
-      Strings_Color     : Gdk.Color.Gdk_Color;
-      Keywords_Color    : Gdk.Color.Gdk_Color) is
-   begin
-      Configure (Editor, Ps_Font_Name, Font_Size, Current_Line_Icon);
-
-      Create_From_Xpm_D
-        (Editor.Default_Pixmap,
-         Null_Window,
-         Get_System,
-         Editor.Default_Mask,
-         White (Get_System),
-         Default_Icon);
-      Create_From_Xpm_D
-        (Editor.Stop_Pixmap,
-         Null_Window,
-         Get_System,
-         Editor.Stop_Mask,
-         White (Get_System),
-         Stop_Icon);
-
-      Editor.Colors (Comment_Text) := Comments_Color;
-      Editor.Colors (String_Text)  := Strings_Color;
-      Editor.Colors (Keyword_Text) := Keywords_Color;
-   end Configure;
-
    -----------------------
    -- On_Pixmap_Clicked --
    -----------------------
 
    function On_Pixmap_Clicked
-     (Editor : access Source_Editor_Record;
+     (Editor : access Builtin_Text_Box_Record;
       Button : Natural;
       Line   : Natural) return Boolean
    is
       Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+        Debugger_Process_Tab (Editor.Editor.Process);
       Result  : Boolean;
       Num     : Integer;
 
    begin
-      if Editor.Current_File /= null
-        and then Button = 1
-      then
-         Is_Breakpoint (Editor, Line, Result, Num);
+      if Editor.Editor.Current_File /= null and then Button = 1 then
+         Is_Breakpoint (Editor.Editor, Line, Result, Num);
 
          if Result then
             Remove_Breakpoint
               (Process.Debugger, Num, Mode => GVD.Types.Visible);
          else
             Break_Source
-              (Process.Debugger, Editor.Current_File.all,
+              (Process.Debugger, Editor.Editor.Current_File.all,
                Line, Mode => GVD.Types.Visible);
          end if;
       end if;
@@ -342,9 +398,9 @@ package body GVD.Source_Editors is
    ----------------------------
 
    function Invisible_Column_Width
-     (Editor : access Source_Editor_Record) return Glib.Gint is
+     (Editor : access Builtin_Text_Box_Record) return Glib.Gint is
    begin
-      if Editor.Show_Line_Nums then
+      if Editor.Editor.Show_Line_Nums then
          return Gint (Line_Numbers_Width);
       else
          return 0;
@@ -356,37 +412,37 @@ package body GVD.Source_Editors is
    ---------------------------
 
    function Child_Contextual_Menu
-     (Source : access Source_Editor_Record;
+     (Source : access Builtin_Text_Box_Record;
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu
    is
       Mitem : Gtk_Menu_Item;
       Check : Gtk_Check_Menu_Item;
 
-      File_Length : Natural := Get_Current_File (Source)'Length;
+      File_Length : Natural := Get_Current_File (Source.Editor)'Length;
       Data  : Contextual_Data_Record :=
         (Name_Length  => Entity'Length,
           File_Length  => File_Length,
           Name         => Entity,
           Auto_Refresh => False,
-          File         => Get_Current_File (Source),
+          File         => Get_Current_File (Source.Editor),
           Line         => Line,
-          Process      => Debugger_Process_Tab (Source.Process));
+          Process      => Debugger_Process_Tab (Source.Editor.Process));
 
    begin
       --  Destroy the previous menu (which we couldn't do earlier because
       --  of the call to popup. It will change every item anyway.
 
-      if Source.Contextual_Menu /= null then
-         Destroy (Source.Contextual_Menu);
+      if Source.Editor.Contextual_Menu /= null then
+         Destroy (Source.Editor.Contextual_Menu);
       end if;
 
       --  Create a new menu
 
-      Gtk_New (Source.Contextual_Menu);
+      Gtk_New (Source.Editor.Contextual_Menu);
 
       Gtk_New (Mitem, Label => -"Print " & Entity);
-      Append (Source.Contextual_Menu, Mitem);
+      Append (Source.Editor.Contextual_Menu, Mitem);
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Print_Variable'Access),
@@ -397,7 +453,7 @@ package body GVD.Source_Editors is
       end if;
 
       Gtk_New (Mitem, Label => -"Display " & Entity);
-      Append (Source.Contextual_Menu, Mitem);
+      Append (Source.Editor.Contextual_Menu, Mitem);
       Data.Auto_Refresh := True;
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
@@ -411,13 +467,13 @@ package body GVD.Source_Editors is
       --  Display a separator
 
       Gtk_New (Mitem);
-      Append (Source.Contextual_Menu, Mitem);
+      Append (Source.Editor.Contextual_Menu, Mitem);
 
       --  Line specific items
 
       Gtk_New
         (Mitem, Label => -"Set Breakpoint on Line" & Integer'Image (Line));
-      Append (Source.Contextual_Menu, Mitem);
+      Append (Source.Editor.Contextual_Menu, Mitem);
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Set_Breakpoint'Access),
@@ -425,54 +481,54 @@ package body GVD.Source_Editors is
 
       Gtk_New
         (Mitem, Label => -"Continue Until Line" & Integer'Image (Line));
-      Append (Source.Contextual_Menu, Mitem);
+      Append (Source.Editor.Contextual_Menu, Mitem);
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Till_Breakpoint'Access),
          Data);
 
       Gtk_New (Mitem);
-      Append (Source.Contextual_Menu, Mitem);
+      Append (Source.Editor.Contextual_Menu, Mitem);
 
       Gtk_New (Mitem, Label => -"Show Current Location");
-      Append (Source.Contextual_Menu, Mitem);
-      Editor_Cb.Object_Connect
+      Append (Source.Editor.Contextual_Menu, Mitem);
+      Widget_Callback.Object_Connect
         (Mitem, "activate",
-         Editor_Cb.To_Marshaller (Show_Current_Line_Menu'Access),
+         Widget_Callback.To_Marshaller (Show_Current_Line_Menu'Access),
          Source);
       Set_Sensitive
-        (Mitem, Source.Debugger_Current_File /= null
-         and then Source.Debugger_Current_File.all /= "");
+        (Mitem, Source.Editor.Debugger_Current_File /= null
+         and then Source.Editor.Debugger_Current_File.all /= "");
 
       Gtk_New (Mitem);
-      Append (Source.Contextual_Menu, Mitem);
+      Append (Source.Editor.Contextual_Menu, Mitem);
 
       --  Editor specific items
 
       Gtk_New (Check, Label => -"Display Line Numbers");
       Set_Always_Show_Toggle (Check, True);
-      Set_Active (Check, Get_Show_Line_Nums (Source));
-      Append (Source.Contextual_Menu, Check);
+      Set_Active (Check, Get_Show_Line_Nums (Source.Editor));
+      Append (Source.Editor.Contextual_Menu, Check);
       Check_Editor_Handler.Connect
         (Check, "activate",
          Check_Editor_Handler.To_Marshaller (Change_Line_Nums'Access),
-         Source_Editor (Source));
+         Source.Editor);
 
       Gtk_New (Check, Label => -"Show Lines with Code");
       Set_Always_Show_Toggle (Check, True);
-      Set_Active (Check, Get_Show_Lines_With_Code (Source));
-      Append (Source.Contextual_Menu, Check);
+      Set_Active (Check, Get_Show_Lines_With_Code (Source.Editor));
+      Append (Source.Editor.Contextual_Menu, Check);
       Check_Editor_Handler.Connect
         (Check, "activate",
          Check_Editor_Handler.To_Marshaller (Change_Lines_With_Code'Access),
-         Source_Editor (Source));
+         Source.Editor);
 
       Append_To_Contextual_Menu
-        (Debugger_Process_Tab (Source.Process).Editor_Text,
-         Source.Contextual_Menu);
+        (Debugger_Process_Tab (Source.Editor.Process).Editor_Text,
+         Source.Editor.Contextual_Menu);
 
-      Show_All (Source.Contextual_Menu);
-      return Source.Contextual_Menu;
+      Show_All (Source.Editor.Contextual_Menu);
+      return Source.Editor.Contextual_Menu;
    end Child_Contextual_Menu;
 
    -------------------
@@ -480,7 +536,7 @@ package body GVD.Source_Editors is
    -------------------
 
    procedure Insert_Buffer
-     (Editor : access Source_Editor_Record;
+     (Editor : access Builtin_Text_Box_Record;
       Buffer : String)
    is
       function Line_Number_String (Line : Positive) return String;
@@ -509,7 +565,7 @@ package body GVD.Source_Editors is
         Get_Pref (Do_Color_Highlighting);
 
    begin
-      if Editor.Show_Line_Nums then
+      if Editor.Editor.Show_Line_Nums then
          Insert (Editor, Chars => Line_Number_String (1));
       end if;
 
@@ -530,15 +586,13 @@ package body GVD.Source_Editors is
                Line_Start := Index;
                Line_Start_Position := Get_Length (Get_Child (Editor));
 
-               if Editor.Show_Line_Nums then
+               if Editor.Editor.Show_Line_Nums then
                   Insert (Editor, Chars => Line_Number_String (Line));
                end if;
 
             when ASCII.HT =>
                if not Do_Highlighting then
-                  Insert
-                    (Editor,
-                     Chars => Buffer (Line_Start .. Index - 1));
+                  Insert (Editor, Chars => Buffer (Line_Start .. Index - 1));
                end if;
 
                declare
@@ -547,16 +601,17 @@ package body GVD.Source_Editors is
                      - 1 + Guint (Invisible_Column_Width (Editor)))
                     mod Guint (Get_Tab_Size);
                begin
-                  Insert (Editor, Chars => (1 .. Integer (Offset + 1) => ' '));
+                  Insert
+                    (Editor, Chars => (1 .. Integer (Offset + 1) => ' '));
                   Index := Index + 1;
                   Line_Start := Index;
                end;
 
             when others =>
                if Do_Highlighting then
-                  if Editor.Lang /= null then
+                  if Editor.Editor.Lang /= null then
                      Looking_At
-                       (Editor.Lang,
+                       (Editor.Editor.Lang,
                         Buffer (Index .. Buffer'Last),
                         Entity, Next_Char);
 
@@ -579,7 +634,7 @@ package body GVD.Source_Editors is
                      if Buffer (J) = ASCII.LF then
                         Insert
                           (Editor,
-                           Editor.Colors (Entity),
+                           Editor.Editor.Colors (Entity),
                            Chars => Buffer (Line_Start .. J));
 
                         Line := Line + 1;
@@ -587,7 +642,7 @@ package body GVD.Source_Editors is
                         Line_Start_Position :=
                           Get_Length (Get_Child (Editor));
 
-                        if Editor.Show_Line_Nums then
+                        if Editor.Editor.Show_Line_Nums then
                            Insert
                              (Editor, Chars => Line_Number_String (Line));
                         end if;
@@ -595,7 +650,7 @@ package body GVD.Source_Editors is
                      elsif Buffer (J) = ASCII.HT then
                         Insert
                           (Editor,
-                           Editor.Colors (Entity),
+                           Editor.Editor.Colors (Entity),
                            Chars => Buffer (Line_Start .. J - 1));
 
                         declare
@@ -617,7 +672,7 @@ package body GVD.Source_Editors is
 
                   Insert
                     (Editor,
-                     Editor.Colors (Entity),
+                     Editor.Editor.Colors (Entity),
                      Null_Color,
                      Buffer (Line_Start .. Next_Char - 1));
                   Index := Next_Char;
@@ -629,34 +684,21 @@ package body GVD.Source_Editors is
       end loop;
    end Insert_Buffer;
 
-   --------------------------
-   -- Set_Current_Language --
-   --------------------------
-
-   procedure Set_Current_Language
-     (Editor : access Source_Editor_Record;
-      Lang   : Language.Language_Access) is
-   begin
-      Free (Editor.Lang);
-
-      if Lang /= null then
-         Editor.Lang := new Language_Root'Class' (Lang.all);
-      end if;
-   end Set_Current_Language;
-
    --------------------
    -- Highlight_Word --
    --------------------
 
    procedure Highlight_Word
-     (Editor   : access Source_Editor_Record;
-      Position : GVD.Explorer.Position_Type)
+     (Editor   : access Builtin_Record;
+      Position : GVD.Types.Position_Type)
    is
       Last     : Positive;
-      Text     : constant Gtk_Text := Get_Child (Editor);
-      Index    : Gint := Invisible_Column_Width (Editor);
+      Edit     : constant Builtin_Text_Box :=
+        Builtin_Text_Box (Editor.Widget);
+      Text     : constant Gtk_Text := Get_Child (Edit);
+      Index    : Gint := Invisible_Column_Width (Edit);
       Col      : Natural := 1;
-      Buffer   : constant GVD.Types.String_Access := Get_Buffer (Editor);
+      Buffer   : constant GVD.Types.String_Access := Get_Buffer (Edit);
       Line     : Natural := 1;
       Tab_Size : Integer := Integer (Get_Tab_Size);
 
@@ -667,7 +709,7 @@ package body GVD.Source_Editors is
       for Text_Pos in Buffer'First .. Natural (Position) loop
          if Buffer (Text_Pos) = ASCII.LF then
             Col := 1;
-            Index := Index + Invisible_Column_Width (Editor) + 1;
+            Index := Index + Invisible_Column_Width (Edit) + 1;
             Line := Line + 1;
 
          elsif Buffer (Text_Pos) = ASCII.HT
@@ -692,7 +734,7 @@ package body GVD.Source_Editors is
       --  Set the adjustment directly, so that the text is not scrolled
       --  on the screen (which is too slow for big files)
 
-      Set_Value (Get_Vadj (Text), Gfloat (Pixels_From_Line (Editor, Line)));
+      Set_Value (Get_Vadj (Text), Gfloat (Pixels_From_Line (Edit, Line)));
       Changed (Get_Vadj (Text));
 
       --  Change the cursor position, and highlight the entity.
@@ -714,12 +756,13 @@ package body GVD.Source_Editors is
    ------------------------
 
    procedure Update_Breakpoints
-     (Editor    : access Source_Editor_Record;
+     (Editor    : access Builtin_Record;
       Br        : GVD.Types.Breakpoint_Array)
    is
       use Gtk.Widget.Widget_List;
-      Tmp : Glist := Editor.Breakpoint_Buttons;
-      Pix : Gtk_Pixmap;
+      Tmp  : Glist := Editor.Breakpoint_Buttons;
+      Pix  : Gtk_Pixmap;
+      Edit : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
 
    begin
       if Editor.Current_File = null then
@@ -730,8 +773,8 @@ package body GVD.Source_Editors is
          Base_File : constant String :=
            Base_File_Name (Editor.Current_File.all);
       begin
-         Freeze (Get_Buttons (Editor));
-         Hide_All (Get_Buttons (Editor));
+         Freeze (Get_Buttons (Edit));
+         Hide_All (Get_Buttons (Edit));
 
          --  Remove all existing breakpoints
 
@@ -749,14 +792,14 @@ package body GVD.Source_Editors is
               and then Br (B).File.all = Base_File
             then
                Gtk_New (Pix, Editor.Stop_Pixmap, Editor.Stop_Mask);
-               Put (Get_Buttons (Editor), Pix,
-                    0, Pixels_From_Line (Editor, Br (B).Line));
+               Put (Get_Buttons (Edit), Pix,
+                    0, Pixels_From_Line (Edit, Br (B).Line));
                Prepend (Editor.Breakpoint_Buttons, Gtk_Widget (Pix));
             end if;
          end loop;
 
-         Show_All (Get_Buttons (Editor));
-         Thaw (Get_Buttons (Editor));
+         Show_All (Get_Buttons (Edit));
+         Thaw (Get_Buttons (Edit));
       end;
    end Update_Breakpoints;
 
@@ -765,23 +808,25 @@ package body GVD.Source_Editors is
    ------------------------
 
    procedure Set_Show_Line_Nums
-     (Editor : access Source_Editor_Record;
+     (Editor : access Builtin_Record;
       Show   : Boolean := False)
    is
+      Edit  : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
+
       --  Save the currently displayed line
 
       Value : constant Gfloat :=
-        Get_Value (Get_Vadj (Get_Child (Editor)));
+        Get_Value (Get_Vadj (Get_Child (Edit)));
 
    begin
       if Show /= Editor.Show_Line_Nums then
          --  Pretend we have changed the contents of the buffer. This removes
          --  all highlighting of the current line, and reset any marker we
          --  might have
-         Set_Buffer (Editor, Get_Buffer (Editor), Clear_Previous => False);
+         Set_Buffer (Edit, Get_Buffer (Edit), Clear_Previous => False);
          Editor.Show_Line_Nums := Show;
-         Update_Child (Editor);
-         Set_Value (Get_Vadj (Get_Child (Editor)), Value);
+         Update_Child (Edit);
+         Set_Value (Get_Vadj (Get_Child (Edit)), Value);
          Highlight_Current_Line (Editor);
       end if;
    end Set_Show_Line_Nums;
@@ -791,7 +836,7 @@ package body GVD.Source_Editors is
    ------------------------
 
    function Get_Show_Line_Nums
-     (Editor : access Source_Editor_Record) return Boolean is
+     (Editor : access Builtin_Record) return Boolean is
    begin
       return Editor.Show_Line_Nums;
    end Get_Show_Line_Nums;
@@ -801,7 +846,7 @@ package body GVD.Source_Editors is
    ------------------------------
 
    procedure Set_Show_Lines_With_Code
-     (Editor : access Source_Editor_Record;
+     (Editor : access Builtin_Record;
       Show   : Boolean) is
    begin
       if Show /= Editor.Show_Lines_With_Code then
@@ -823,34 +868,22 @@ package body GVD.Source_Editors is
    ------------------------------
 
    function Get_Show_Lines_With_Code
-     (Editor : access Source_Editor_Record) return Boolean is
+     (Editor : access Builtin_Record) return Boolean is
    begin
       return Editor.Show_Lines_With_Code;
    end Get_Show_Lines_With_Code;
-
-   ----------------------
-   -- Get_Current_File --
-   ----------------------
-
-   function Get_Current_File
-     (Editor : access Source_Editor_Record) return String is
-   begin
-      if Editor.Current_File = null then
-         return "";
-      else
-         return Editor.Current_File.all;
-      end if;
-   end Get_Current_File;
 
    ---------------
    -- Load_File --
    ---------------
 
    procedure Load_File
-     (Editor      : access Source_Editor_Record;
+     (Editor      : access Builtin_Record;
       File_Name   : String;
       Set_Current : Boolean := True)
    is
+      Edit      : constant Builtin_Text_Box :=
+        Builtin_Text_Box (Editor.Widget);
       Process   : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
       Contents  : GVD.Types.String_Access;
@@ -877,7 +910,7 @@ package body GVD.Source_Editors is
       Load_File (Contents, Error_Msg, Editor.Current_File_Cache,
                  Process.Descriptor.Remote_Host);
 
-      Set_Buffer (Editor, Contents);
+      Set_Buffer (Edit, Contents);
 
       if Contents = null then
          Print_Message (Process.Window.Statusbar1, Error, Error_Msg.all);
@@ -886,7 +919,7 @@ package body GVD.Source_Editors is
          return;
       end if;
 
-      Update_Child (Editor);
+      Update_Child (Edit);
 
       Update_Buttons (Editor, True);
 
@@ -914,20 +947,22 @@ package body GVD.Source_Editors is
    --------------------
 
    procedure File_Not_Found
-     (Editor    : access Source_Editor_Record;
+     (Editor    : access Builtin_Record;
       File_Name : String)
    is
+      Edit : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
+
       use Gtk.Widget.Widget_List;
    begin
       --  Clear the old file
-      Delete_Text (Get_Child (Editor));
-      Hide_Current_Line_Button (Editor);
-      Forall (Get_Buttons (Editor), Gtk.Widget.Destroy_Cb'Access);
+      Delete_Text (Get_Child (Edit));
+      Hide_Current_Line_Button (Edit);
+      Forall (Get_Buttons (Edit), Gtk.Widget.Destroy_Cb'Access);
       Free (Editor.Breakpoint_Buttons);
       Editor.Breakpoint_Buttons := Null_List;
 
       --  Print a warning message
-      Insert (Editor, Chars => File_Name & (-": File not found"));
+      Insert (Edit, Chars => File_Name & (-": File not found"));
    end File_Not_Found;
 
    --------------------
@@ -935,26 +970,29 @@ package body GVD.Source_Editors is
    --------------------
 
    procedure Update_Buttons
-     (Editor     : access Source_Editor_Record'Class;
+     (Editor     : access Builtin_Record'Class;
       Reset_Line : Boolean := True)
    is
+      Edit      : constant Builtin_Text_Box :=
+        Builtin_Text_Box (Editor.Widget);
       Pix       : Gtk_Pixmap;
       Num_Lines : Natural := 0;
       Value     : Gfloat;
+
    begin
-      if Is_Empty (Editor) then
+      if Is_Empty (Edit) then
          return;
       end if;
 
       --  Clear the existing buttons.
 
-      Freeze (Get_Buttons (Editor));
-      Hide_Current_Line_Button (Editor);
+      Freeze (Get_Buttons (Edit));
+      Hide_Current_Line_Button (Edit);
 
       --  Remove all existing buttons
       Gtk.Widget.Widget_List.Free (Editor.Breakpoint_Buttons);
       Editor.Breakpoint_Buttons := Gtk.Widget.Widget_List.Null_List;
-      Forall (Get_Buttons (Editor), Gtk.Widget.Destroy_Cb'Access);
+      Forall (Get_Buttons (Edit), Gtk.Widget.Destroy_Cb'Access);
 
       --  Display the breakpoint icons
 
@@ -963,23 +1001,23 @@ package body GVD.Source_Editors is
       end if;
 
       if Editor.Show_Lines_With_Code then
-         Activate_Computation (Editor);
+         Activate_Computation (Editor.Widget);
 
          --  Show the breakpoints we already know about
          if Editor.Current_File_Cache.Line_Has_Code /= null then
             for Line in Editor.Current_File_Cache.Line_Has_Code'Range loop
                if Editor.Current_File_Cache.Line_Has_Code (Line) then
                   Gtk_New (Pix, Editor.Default_Pixmap, Editor.Default_Mask);
-                  Put (Get_Buttons (Editor), Pix,
+                  Put (Get_Buttons (Edit), Pix,
                        X => 0,
-                       Y => Pixels_From_Line (Editor, Line));
+                       Y => Pixels_From_Line (Edit, Line));
                end if;
             end loop;
          end if;
 
          --  Allocate the arrays if required
          if Editor.Current_File_Cache.Line_Has_Code = null then
-            Num_Lines := Lines_Count (Editor);
+            Num_Lines := Lines_Count (Edit);
 
             Editor.Current_File_Cache.Line_Has_Code :=
               new Packed_Boolean_Array (1 .. Num_Lines);
@@ -990,16 +1028,16 @@ package body GVD.Source_Editors is
          end if;
       end if;
 
-      Value := Get_Value (Get_Vadj (Get_Child (Editor)));
+      Value := Get_Value (Get_Vadj (Get_Child (Edit)));
       Set_Line (Editor, Get_Line (Editor), Set_Current => False);
 
       if not Reset_Line then
-         Set_Value (Get_Vadj (Get_Child (Editor)), Value);
-         Value_Changed (Get_Vadj (Get_Child (Editor)));
+         Set_Value (Get_Vadj (Get_Child (Edit)), Value);
+         Value_Changed (Get_Vadj (Get_Child (Edit)));
       end if;
 
-      Show_All (Get_Buttons (Editor));
-      Thaw (Get_Buttons (Editor));
+      Show_All (Get_Buttons (Edit));
+      Thaw (Get_Buttons (Edit));
    end Update_Buttons;
 
    ----------------------------
@@ -1008,7 +1046,7 @@ package body GVD.Source_Editors is
 
    procedure Change_Lines_With_Code
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Source_Editor) is
+      Editor : Builtin) is
    begin
       Set_Show_Lines_With_Code (Editor, Get_Active (Item));
    end Change_Lines_With_Code;
@@ -1093,7 +1131,7 @@ package body GVD.Source_Editors is
 
    procedure Change_Line_Nums
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Source_Editor) is
+      Editor : Builtin) is
    begin
       Set_Show_Line_Nums (Editor, Get_Active (Item));
    end Change_Line_Nums;
@@ -1103,10 +1141,11 @@ package body GVD.Source_Editors is
    ----------------------------
 
    procedure Show_Current_Line_Menu
-     (Editor : access Source_Editor_Record'Class)
+     (Box : access Gtk_Widget_Record'Class)
    is
-      Name : constant String := Editor.Debugger_Current_File.all;
-      Lang : Language_Access;
+      Editor : constant Builtin := Builtin_Text_Box (Box).Editor;
+      Name   : constant String := Editor.Debugger_Current_File.all;
+      Lang   : Language_Access;
 
    begin
       if Name /= "" then
@@ -1124,7 +1163,9 @@ package body GVD.Source_Editors is
    -- Idle_Compute_Lines --
    ------------------------
 
-   function Idle_Compute_Lines (Editor : Source_Editor) return Boolean is
+   function Idle_Compute_Lines (Editor : Builtin) return Boolean is
+      Edit     : constant Builtin_Text_Box :=
+        Builtin_Text_Box (Editor.Widget);
       Process  : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
       Debug    : Debugger_Access := Process.Debugger;
@@ -1149,14 +1190,14 @@ package body GVD.Source_Editors is
       end if;
 
       Line := Line_From_Pixels
-        (Editor, Gint (Get_Value (Get_Vadj (Get_Child (Editor)))));
+        (Edit, Gint (Get_Value (Get_Vadj (Get_Child (Edit)))));
 
       if Line <= Editor.Current_File_Cache.Line_Parsed'First then
          Line := Editor.Current_File_Cache.Line_Parsed'First;
       end if;
 
       Line_Max := Line + Line_From_Pixels
-        (Editor, Gint (Get_Allocation_Height (Editor)));
+        (Edit, Gint (Get_Allocation_Height (Edit)));
 
       while Line <= Line_Max
         and Line <= Editor.Current_File_Cache.Line_Parsed'Last
@@ -1188,9 +1229,10 @@ package body GVD.Source_Editors is
    -----------------------
 
    function Check_Single_Line
-     (Editor     : access Source_Editor_Record'Class;
-      Line       : Natural) return Boolean
+     (Editor : access Builtin_Record'Class;
+      Line   : Natural) return Boolean
    is
+      Edit    : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
       Kind    : Line_Kind;
       Pix     : Gtk_Pixmap;
       Process : constant Debugger_Process_Tab :=
@@ -1214,17 +1256,17 @@ package body GVD.Source_Editors is
       end if;
 
       if Kind = Have_Code then
-         Freeze (Get_Buttons (Editor));
-         Hide_All (Get_Buttons (Editor));
+         Freeze (Get_Buttons (Edit));
+         Hide_All (Get_Buttons (Edit));
 
          Editor.Current_File_Cache.Line_Has_Code (Line) := True;
          Gtk_New (Pix, Editor.Default_Pixmap, Editor.Default_Mask);
-         Put (Get_Buttons (Editor), Pix,
+         Put (Get_Buttons (Edit), Pix,
               X => 0,
-              Y => Pixels_From_Line (Editor, Line));
+              Y => Pixels_From_Line (Edit, Line));
 
-         Show_All (Get_Buttons (Editor));
-         Thaw (Get_Buttons (Editor));
+         Show_All (Get_Buttons (Edit));
+         Thaw (Get_Buttons (Edit));
       end if;
 
       return True;
@@ -1234,7 +1276,8 @@ package body GVD.Source_Editors is
    -- Destroy_Cb --
    ----------------
 
-   procedure Destroy_Cb (Editor : access Source_Editor_Record'Class) is
+   procedure Destroy_Cb (Box : access Gtk_Widget_Record'Class) is
+      Editor : constant Builtin := Builtin_Text_Box (Box).Editor;
    begin
       Gdk.Pixmap.Unref (Editor.Default_Pixmap);
       Gdk.Bitmap.Unref (Editor.Default_Mask);
@@ -1251,6 +1294,8 @@ package body GVD.Source_Editors is
       Width, Height : out Glib.Gint;
       Area          : out Gdk_Rectangle)
    is
+      Edit          : constant GVD_Text_Box := GVD_Text_Box (Data.Box.Widget);
+
       use type Items.Generic_Type_Access;
       Entity        : Items.Generic_Type_Access;
       Value_Found   : Boolean;
@@ -1286,12 +1331,12 @@ package body GVD.Source_Editors is
       --  (ie ignoring the borders around the Gtk_Text), or there will be a
       --  small offset.
 
-      Get_Pointer (Get_Text_Area (Get_Child (Data.Box)), X, Y, Mask2, Win);
+      Get_Pointer (Get_Text_Area (Get_Child (Edit)), X, Y, Mask2, Win);
 
       declare
          Variable_Name : GVD.Types.String_Access;
       begin
-         Get_Entity_Area (Data.Box, X, Y, Area, Variable_Name);
+         Get_Entity_Area (Edit, X, Y, Area, Variable_Name);
 
          if Variable_Name = null then
             return;
@@ -1423,8 +1468,10 @@ package body GVD.Source_Editors is
    -- Highlight_Current_Line --
    ----------------------------
 
-   procedure Highlight_Current_Line (Editor : access Source_Editor_Record) is
-      Buffer       : constant GVD.Types.String_Access := Get_Buffer (Editor);
+   procedure Highlight_Current_Line (Editor : access Builtin_Record) is
+      Edit         : constant Builtin_Text_Box :=
+        Builtin_Text_Box (Editor.Widget);
+      Buffer       : constant GVD.Types.String_Access := Get_Buffer (Edit);
       Index        : Natural := 0;
       Current_Line : Natural := 1;
       Col          : Natural := 1;
@@ -1473,7 +1520,7 @@ package body GVD.Source_Editors is
             Text_Pos := Text_Pos + 1;
          end loop;
 
-         Index := Index + Line * Natural (Invisible_Column_Width (Editor));
+         Index := Index + Line * Natural (Invisible_Column_Width (Edit));
          Text_Pos_End := Text_Pos;
          Skip_To_Char (Buffer.all, Text_Pos_End, ASCII.LF);
 
@@ -1482,7 +1529,7 @@ package body GVD.Source_Editors is
          --  numbers, we temporarily disable that.
          Editor.Show_Line_Nums := False;
          Highlight_Range
-           (Editor, Gint (Text_Pos), Gint (Text_Pos_End), Gint (Index),
+           (Edit, Gint (Text_Pos), Gint (Text_Pos_End), Gint (Index),
             Back => Editor.Highlight_Color);
          Editor.Show_Line_Nums := Show_Line_Nums;
       end if;
@@ -1492,12 +1539,13 @@ package body GVD.Source_Editors is
    -- Preferences_Changed --
    -------------------------
 
-   procedure Preferences_Changed
-     (Editor : access Source_Editor_Record'Class)
-   is
+   procedure Preferences_Changed (Editor : access Builtin_Record) is
+      Edit      : constant Builtin_Text_Box :=
+        Builtin_Text_Box (Editor.Widget);
+
       --  Save the currently displayed line
-      Value : constant Gfloat :=
-        Get_Value (Get_Vadj (Get_Child (Editor)));
+      Value     : constant Gfloat :=
+        Get_Value (Get_Vadj (Get_Child (Edit)));
       File_Name : constant String := Get_Current_File (Editor);
 
    begin
@@ -1505,7 +1553,7 @@ package body GVD.Source_Editors is
       Editor.Colors (String_Text) := Get_Pref (Strings_Color);
       Editor.Colors (Keyword_Text) := Get_Pref (Keywords_Color);
       Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
-      Set_Font (Editor, Get_Pref (Editor_Font), Get_Pref (Editor_Font_Size));
+      Set_Font (Edit, Get_Pref (Editor_Font), Get_Pref (Editor_Font_Size));
 
       --  Pretend we have changed the contents of the buffer. This removes
       --  all highlighting of the current line, and reset any marker we
@@ -1514,7 +1562,7 @@ package body GVD.Source_Editors is
       Clear_Cache (Debugger_Process_Tab (Editor.Process).Window,
                    Force => False);
       Load_File (Editor, File_Name, False);
-      Set_Value (Get_Vadj (Get_Child (Editor)), Value);
+      Set_Value (Get_Vadj (Get_Child (Edit)), Value);
 
       --  If the file is the one containing the current location, go to that
       --  line, otherwise go to line 1.
@@ -1536,4 +1584,25 @@ package body GVD.Source_Editors is
       --  this is check dynamically before displaying the tooltips.
    end Preferences_Changed;
 
-end GVD.Source_Editors;
+   --------------
+   -- Set_Line --
+   --------------
+
+   procedure Set_Line
+     (Editor      : access Builtin_Record;
+      Line        : Natural;
+      Set_Current : Boolean := True) is
+   begin
+      Set_Line (Builtin_Text_Box (Editor.Widget), Line, Set_Current);
+   end Set_Line;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (Editor : access Builtin_Record) return Natural is
+   begin
+      return Get_Line (Builtin_Text_Box (Editor.Widget));
+   end Get_Line;
+
+end GVD.Text_Box.Source_Editor.Builtin;

@@ -29,30 +29,19 @@ with Gtk.Widget;
 with Gtkada.Types;
 with Language;
 with GVD.Types;
-with GVD.Explorer;
-with GVD.Text_Boxes;
 with GVD.Tooltips;
 with Items;
 with Gtk.Text;
 
-package GVD.Source_Editors is
+package GVD.Text_Box.Source_Editor.Builtin is
 
-   type Source_Editor_Record is new GVD.Text_Boxes.GVD_Text_Box_Record with
-     private;
-   type Source_Editor is access all Source_Editor_Record'Class;
+   type Builtin_Record is new Source_Editor_Record with private;
+   type Builtin is access all Builtin_Record'Class;
 
    procedure Gtk_New
-     (Editor  : out Source_Editor;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Create a new asm editor.
-
-   procedure Initialize
-     (Editor  : access Source_Editor_Record'Class;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Internal procedure.
-
-   procedure Configure
-     (Editor            : access Source_Editor_Record;
+     (Editor            : out Builtin;
+      Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
+      TTY_Mode          : Boolean;
       Ps_Font_Name      : String;
       Font_Size         : Glib.Gint;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
@@ -61,48 +50,41 @@ package GVD.Source_Editors is
       Comments_Color    : Gdk.Color.Gdk_Color;
       Strings_Color     : Gdk.Color.Gdk_Color;
       Keywords_Color    : Gdk.Color.Gdk_Color);
-   --  See GVD.Code_Editors for more information
+   --  Create a new source editor.
+   --  See GVD.Code_Editors.Configure for more information on the font, color
+   --  and icon parameters.
 
-   function On_Pixmap_Clicked
-     (Editor : access Source_Editor_Record;
-      Button : Natural;
-      Line   : Natural) return Boolean;
-   --  See GVD.Text_Boxes for documentation
+   procedure Initialize
+     (Editor            : access Builtin_Record'Class;
+      Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
+      TTY_Mode          : Boolean;
+      Ps_Font_Name      : String;
+      Font_Size         : Glib.Gint;
+      Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
+      Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
+      Comments_Color    : Gdk.Color.Gdk_Color;
+      Strings_Color     : Gdk.Color.Gdk_Color;
+      Keywords_Color    : Gdk.Color.Gdk_Color);
+   --  Internal procedure.
 
-   function Invisible_Column_Width
-     (Editor : access Source_Editor_Record) return Glib.Gint;
-   --  See GVD.Text_Boxes for documentation
+   procedure Attach
+     (Editor : access Builtin_Record;
+      Parent : access Gtk.Container.Gtk_Container_Record'Class);
+   --  Attach Editor to the specified parent.
 
-   function Child_Contextual_Menu
-     (Source : access Source_Editor_Record;
-      Line   : Natural;
-      Entity : String) return Gtk.Menu.Gtk_Menu;
-   --  See GVD.Text_Boxes for documentation
-
-   procedure Insert_Buffer
-     (Editor : access Source_Editor_Record;
-      Buffer : String);
-   --  Insert the contents of the buffer in the editor. Color highlighting is
-   --  provided, and line numbers may or may not be added.
-
-   procedure Set_Current_Language
-     (Editor : access Source_Editor_Record;
-      Lang   : Language.Language_Access);
-   --  Change the current language for the editor.
-   --  The text already present in the editor is not re-highlighted for the
-   --  new language, this only influences future addition to the editor.
-   --
-   --  If Lang is null, then no color highlighting will be performed.
+   procedure Detach (Editor : access Builtin_Record);
+   --  Detach Editor from its parent.
 
    procedure Highlight_Word
-     (Editor   : access Source_Editor_Record;
-      Position : GVD.Explorer.Position_Type);
+     (Editor   : access Builtin_Record;
+      Position : GVD.Types.Position_Type);
    --  Highlight the word that starts at the given position in the file
    --  associated with the editor (ie ignoring the line numbers that could
    --  be displayed).
 
    procedure Update_Breakpoints
-     (Editor : access Source_Editor_Record;
+     (Editor : access Builtin_Record;
       Br     : GVD.Types.Breakpoint_Array);
    --  Change the list of breakpoints to highlight in the editor.
    --  All the breakpoints that previously existed are removed from the screen,
@@ -110,28 +92,25 @@ package GVD.Source_Editors is
    --  The breakpoints that do not apply to the current file are ignored.
 
    procedure Set_Show_Line_Nums
-     (Editor : access Source_Editor_Record;
+     (Editor : access Builtin_Record;
       Show   : Boolean := False);
    --  Indicate whether line numbers should be displayed or not.
 
    function Get_Show_Line_Nums
-     (Editor : access Source_Editor_Record) return Boolean;
+     (Editor : access Builtin_Record) return Boolean;
    --  Return the state of line numbers in the editor
 
    procedure Set_Show_Lines_With_Code
-     (Editor : access Source_Editor_Record;
+     (Editor : access Builtin_Record;
       Show   : Boolean);
+
    function Get_Show_Lines_With_Code
-     (Editor : access Source_Editor_Record) return Boolean;
+     (Editor : access Builtin_Record) return Boolean;
    --  Indicate whether lines where a user can set a breakpoint have a small
    --  dot displayed on the side.
 
-   function Get_Current_File
-     (Editor : access Source_Editor_Record) return String;
-   --  See GVD.Code_Editors for more information
-
    procedure Load_File
-     (Editor      : access Source_Editor_Record;
+     (Editor      : access Builtin_Record;
       File_Name   : String;
       Set_Current : Boolean := True);
    --  Load and append a file in the editor.
@@ -142,27 +121,34 @@ package GVD.Source_Editors is
    --  debugger (ie the one that contains the current execution line).
 
    procedure File_Not_Found
-     (Editor    : access Source_Editor_Record;
+     (Editor    : access Builtin_Record;
       File_Name : String);
    --  Report a file not found.
    --  This delete the currently displayed file, and display a warning
    --  message.
 
-   procedure Highlight_Current_Line (Editor : access Source_Editor_Record);
+   procedure Highlight_Current_Line (Editor : access Builtin_Record);
    --  Highlight the current line in the editor, if required by the user.
    --  If the edited file is not the one that contains the current line,
    --  this procedure does nothing.
 
-   procedure Preferences_Changed
-     (Editor : access Source_Editor_Record'Class);
+   procedure Preferences_Changed (Editor : access Builtin_Record);
    --  Called when the preferences have changed, and the editor should be
    --  redisplayed with the new setup.
 
+   procedure Set_Line
+     (Editor      : access Builtin_Record;
+      Line        : Natural;
+      Set_Current : Boolean := True);
+   --  See GVD.Text_Boxes.Source_Editor for more information.
+
+   function Get_Line (Editor : access Builtin_Record) return Natural;
+   --  See GVD.Text_Boxes.Source_Editor for more information.
+
 private
    type Editor_Tooltip_Data is record
-      Box  : Source_Editor;
+      Box  : Builtin;
       Mode : Items.Display_Mode := Items.Value;
-      Lang : Language.Language_Access;
    end record;
 
    procedure Draw_Tooltip
@@ -179,22 +165,14 @@ private
    type Color_Array is array (Language.Language_Entity'Range) of
      Gdk.Color.Gdk_Color;
 
-   type Source_Editor_Record is new GVD.Text_Boxes.GVD_Text_Box_Record with
-   record
-      Process : Gtk.Widget.Gtk_Widget;
+   type Builtin_Record is new Source_Editor_Record with record
+      Process              : Gtk.Widget.Gtk_Widget;
 
       Show_Line_Nums       : Boolean;
       Show_Lines_With_Code : Boolean;
       --  Whether the lines where one can set a breakpoint have a small dot
       --  on the side.
 
-      Current_File : GVD.Types.String_Access;
-
-      Debugger_Current_File : GVD.Types.String_Access;
-      --  The file/line on which the debugger is stopped (ie these were set
-      --  when the Set_Current parameter is True for Set_line and Load_File)
-
-      Lang           : Language.Language_Access;
       Default_Pixmap : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
       Default_Mask   : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
       Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
@@ -219,4 +197,4 @@ private
       Contextual_Menu     : Gtk.Menu.Gtk_Menu;
    end record;
 
-end GVD.Source_Editors;
+end GVD.Text_Box.Source_Editor.Builtin;
