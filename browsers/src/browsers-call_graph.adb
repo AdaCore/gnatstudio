@@ -228,10 +228,13 @@ package body Browsers.Call_Graph is
       Item.Layout   := Create_Pango_Layout (Browser);
       Set_Font_Description
         (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
+
       if Get_Declaration_File_Of (Entity) /= "" then
-         Set_Text (Item.Layout, Get_Name (Entity) & ASCII.LF
-                   & Get_Declaration_File_Of (Entity)
-                   & ':' & Image (Get_Declaration_Line_Of (Entity)));
+         Set_Text
+           (Item.Layout, Get_Name (Entity) & ASCII.LF
+            & Get_Declaration_File_Of (Entity)
+            & ':' & Image (Get_Declaration_Line_Of (Entity)));
+
       else
          Set_Text
            (Item.Layout, Get_Name (Entity) & ASCII.LF & (-"<Unresolved>"));
