@@ -217,6 +217,9 @@ msgstr "       [--dargs [options du debogueur]] "
 msgid  "Data"
 msgstr "Donnée"
 
+msgid  "Date: "
+msgstr "Date: "
+
 msgid  "DBX"
 msgstr "DBX"
 

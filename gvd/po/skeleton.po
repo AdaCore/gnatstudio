@@ -223,6 +223,9 @@ msgstr "       [--dargs [debugger options]] "
 msgid  "Data"
 msgstr "Data"
 
+msgid  "Date: "
+msgstr "Date: "
+
 msgid  "DBX"
 msgstr "DBX"
 
