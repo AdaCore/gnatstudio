@@ -532,14 +532,11 @@ package body Traces is
 
    begin
       if File_Name /= "" then
-         declare
-            C_Name : aliased constant String := File_Name & ASCII.NUL;
-         begin
-            F := Open_Read (C_Name'Address, Text);
-            if F = Invalid_FD then
-               return;
-            end if;
-         end;
+         F := Open_Read (C_Name, Text);
+
+         if F = Invalid_FD then
+            return;
+         end if;
 
          Length := File_Length (F);
          Buffer := new String (1 .. Positive (Length));
