@@ -413,8 +413,10 @@ package body VCS_View_API is
             end;
 
          else
-            Log_Exists := Get_Log_From_File
-              (Kernel, File_Information (File_Name), False) /= VFS.No_File;
+            Log_Exists :=
+              File_Name /= null and then
+              Get_Log_From_File
+                (Kernel, File_Information (File_Name), False) /= VFS.No_File;
             Add_Action (Status, On_Menu_Get_Status'Access);
             Add_Action (Update, On_Menu_Update'Access);
             Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
