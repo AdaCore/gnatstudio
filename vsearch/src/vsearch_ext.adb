@@ -172,8 +172,9 @@ package body Vsearch_Ext is
    --  Create the search context based on the current contents of the GUI.
    --  This is stored in Vsearch.Last_Search_Context.
 
-   procedure On_Destroy (Search : access Gtk_Widget_Record'Class);
-   --  Called when the search widget is destroyed
+   function On_Delete (Search : access Gtk_Widget_Record'Class)
+      return Boolean;
+   --  Called when the search widget is about to be destroyed.
 
    ---------------
    -- Callbacks --
@@ -1050,15 +1051,25 @@ package body Vsearch_Ext is
          Clear_Combo => False);
    end Initialize;
 
-   ----------------
-   -- On_Destroy --
-   ----------------
+   ---------------
+   -- On_Delete --
+   ---------------
 
-   procedure On_Destroy (Search : access Gtk_Widget_Record'Class) is
-      pragma Unreferenced (Search);
+   function On_Delete (Search : access Gtk_Widget_Record'Class)
+      return Boolean
+   is
+      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Search);
    begin
+      --  the extra information mustn't be destroyed, since it will be reused
+      --  the next time a vsearch is displayed.
+      if Vsearch.Extra_Information /= null then
+         Ref (Vsearch.Extra_Information);
+         Remove (Vsearch.Table, Vsearch.Extra_Information);
+      end if;
       Vsearch_Module_Id.Search := null;
-   end On_Destroy;
+
+      return False;
+   end On_Delete;
 
    ---------------------------
    -- Get_Or_Create_Vsearch --
@@ -1084,11 +1095,12 @@ package body Vsearch_Ext is
             --  keep a reference on it so that it isn't destroyed when the MDI
             --  child is destroyed.
 
-            Widget_Callback.Connect
-              (Vsearch_Module_Id.Search, "destroy",
-               Widget_Callback.To_Marshaller (On_Destroy'Access));
-
             Ref (Vsearch_Module_Id.Search);
+
+
+            Return_Callback.Connect
+              (Vsearch_Module_Id.Search, "delete_event",
+               Return_Callback.To_Marshaller (On_Delete'Access));
          end if;
 
          --  Temporarily remove the options frame, to avoid immediate resizing
