@@ -31,6 +31,8 @@ with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with Odd.Pixmaps; use Odd.Pixmaps;
 with Odd.Types;   use Odd.Types;
+with Odd.Dialogs; use Odd.Dialogs;
+with Odd.Process; use Odd.Process;
 
 package body Main_Debug_Window_Pkg is
 
@@ -575,9 +577,9 @@ begin
    Gtk_New (Main_Debug_Window.Refresh1, -"Refresh");
    Add_Accelerator (Main_Debug_Window.Refresh1, "activate",
      The_Accel_Group, GDK_L, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Refresh1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Refresh1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Refresh1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Refresh1);
    Set_Right_Justify (Main_Debug_Window.Refresh1, False);
 
@@ -740,6 +742,8 @@ begin
    Set_Shadow_Type (Main_Debug_Window.Frame7, Shadow_Etched_In);
 
    Gtk_New (Main_Debug_Window.Process_Notebook);
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Process_Notebook, "switch_page", On_Process_Notebook_Switch_Page'Access, Main_Debug_Window);
    Add (Main_Debug_Window.Frame7, Main_Debug_Window.Process_Notebook);
    Set_Scrollable (Main_Debug_Window.Process_Notebook, True);
    Set_Show_Border (Main_Debug_Window.Process_Notebook, True);
@@ -751,6 +755,12 @@ begin
    Gtk_New (Main_Debug_Window.Statusbar1);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Statusbar1, False, False, 0);
 
+--     Attach (The_Accel_Group, Main_Debug_Window.File1);
+--     Attach (The_Accel_Group, Main_Debug_Window.Attach_To_Process1);
+--     Lock_Accelerators (Main_Debug_Window.Menubar1);
+--     Lock_Accelerators (Main_Debug_Window.File1);
+   Lock_Accelerators (Main_Debug_Window);
+   Lock (The_Accel_Group);
 end Initialize;
 
    -------------------
@@ -779,5 +789,28 @@ end Initialize;
          Next      => Window.File_Caches);
       return Window.File_Caches.Cache;
    end Find_In_Cache;
+
+   -----------------------------
+   -- Update_External_Dialogs --
+   -----------------------------
+
+   procedure Update_External_Dialogs
+     (Window : access Main_Debug_Window_Record'Class;
+      Debugger : Gtk.Widget.Gtk_Widget := null)
+   is
+      Tab : Debugger_Process_Tab := Debugger_Process_Tab (Debugger);
+   begin
+      if Debugger = null then
+         Tab := Get_Current_Process (Window);
+      end if;
+
+      if Tab /= null and then Window.Backtrace_Dialog /= null then
+         Update (Window.Backtrace_Dialog, Tab);
+      end if;
+
+      if Tab /= null and then Window.Task_Dialog /= null then
+         Update (Window.Task_Dialog, Tab);
+      end if;
+   end Update_External_Dialogs;
 
 end Main_Debug_Window_Pkg;

@@ -192,6 +192,14 @@ package Main_Debug_Window_Pkg is
    --  If no data was previously cached for that file, then a new File_Cache
    --  is returned.
 
+   procedure Update_External_Dialogs
+     (Window : access Main_Debug_Window_Record'Class;
+      Debugger : Gtk.Widget.Gtk_Widget := null);
+   --  Update the contents of all the dialogs associated with the window
+   --  (backtrace, threads, ...) if they are visible.
+   --  Their contents is updated based on the current debugger, unless
+   --  Debugger is not null.
+
 private
 
    type Cache_List_Record is record
