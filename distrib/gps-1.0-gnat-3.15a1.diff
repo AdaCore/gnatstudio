@@ -1,5 +1,5 @@
 Index: common/src/stubs.c
-*** gps-1.0.0/common/src/stubs.c	Sat Mar 24 05:37:44 2001
+*** gps-1.0.1/common/src/stubs.c	Sat Mar 24 05:37:44 2001
 --- common/src/stubs.c	Fri May 31 20:02:56 2002
 ***************
 *** 0 ****
@@ -9,7 +9,7 @@ Index: common/src/stubs.c
 + const int __gnat_vmsp = 0;
 + 
 + int get_gcc_version () { return 2; }
-*** gps-1.0.0/gvd/gvd_common.gpr	Tue Apr 16 12:10:06 2002
+*** gps-1.0.1/gvd/gvd_common.gpr	Tue Apr 16 12:10:06 2002
 --- gvd/gvd_common.gpr	Fri May 31 18:02:42 2002
 ***************
 *** 1,5 ****
@@ -20,7 +20,7 @@ Index: common/src/stubs.c
   
   project GVD_Common is
   
-*** gps-1.0.0/Makefile.gnat	Thu May 16 18:50:48 2002
+*** gps-1.0.1/Makefile.gnat	Thu May 16 18:50:48 2002
 --- Makefile.gnat	Fri May 31 19:50:04 2002
 ***************
 *** 22,27 ****
@@ -48,21 +48,20 @@ Index: common/src/stubs.c
     gnatvsn.ads \
     hostparm.ads \
     krunch.ads \
-*** gps-1.0.0/glide/gps.gpr	Wed Apr 24 11:15:52 2002
---- glide/gps.gpr	Thu Jul 11 16:07:25 2002
+*** gps-1.0.1/glide/gps.gpr	Wed Apr 24 11:15:52 2002
+--- gps.gpr	2 Aug 2002 12:07:49 -0000
 ***************
-*** 34,46 ****
+*** 35,46 ****
              for Default_Switches ("Ada") use
                ("-m", "-a", "-g", "-gnata", "-gnatVa", "-gnatQ", 
-                "-gnatwk", "-gnatwr", "-j2");
+                "-gnatwk", "-gnatwr");
 -            for Global_Configuration_Pragmas use "gnat_debug.adc";
   
-           when others =>
+           when "Production" =>
              for Default_Switches ("Ada") use
-               ("-m", "-a", "-g", "-gnatQ", 
-                "-gnatwk", "-gnatwr", "-j2");
+               ("-m", "-a", "-g", "-gnatQ", "-gnatwk", "-gnatwr");
 -            for Global_Configuration_Pragmas use "gnat.adc";
         end case;
      end Builder;
   
---- 34,44 ----
+--- 35,44 ----
