@@ -144,7 +144,7 @@ package body Odd.Process is
       --  still valid.
 
       if Pid /= null then
-         Expect (Pid.all, Result, ".*", 0);
+         Expect (Pid.all, Result, ".+", Timeout => 0);
       end if;
    end Output_Available;
 
@@ -194,7 +194,14 @@ package body Odd.Process is
       Add_Output_Filter (Get_Process (Process.Debugger.all).all,
                          Text_Output_Handler'Access);
 --        Add_Input_Filter (Get_Process (Process.Debugger.all).all,
---                          Text_Output_Handler'Access);
+      --                          Text_Output_Handler'Access);
+      Id := My_Input.Add
+        (To_Gint (Get_Output_Fd
+                  (Get_Process (Process.Debugger.all).all)),
+         Gdk.Types.Input_Read,
+         Output_Available'Access,
+         My_Input.Data_Access (Process));
+
       Initialize (Process.Debugger);
 
       Open (Infile, In_File, "odd_main.adb");
@@ -221,13 +228,6 @@ package body Odd.Process is
          end loop;
       end;
       Close (Infile);
-
-      Id := My_Input.Add
-        (To_Gint (Get_Output_Fd
-                  (Get_Process (Process.Debugger.all).all)),
-         Gdk.Types.Input_Read,
-         Output_Available'Access,
-         My_Input.Data_Access (Process));
 
       return Process;
    end Create_Debugger;
