@@ -1071,9 +1071,18 @@ package body GPS.Kernel.Preferences is
          Html_Browser := Param_Spec_String (Gnew_String
            (Name  => "Helpers-HTML-Browser",
             Nick  => -"HTML browser",
-            Blurb => -("Program used to browse HTML pages. " &
-                       "No value means automatically try to find a suitable " &
-                       "browser"),
+            Blurb =>
+            -("Program used to browse HTML pages. " &
+              "No value means automatically try to find a suitable browser."
+              & ASCII.LF
+              & "The special parameter %u will be replaced by the URL. If it"
+              & " isn't specified, the URL will be appended at the end of"
+              & " the command."
+              & ASCII.LF
+              & "If you wish to automatically open a new tab in the firefox"
+              & " browser, instead of replacing the current one, you could set"
+              & " this command to" & ASCII.LF
+              & "    firefox -remote ""openURL(%u,new-tab)"""),
             Default => ""));
          Register_Property
            (Kernel.Preferences,
