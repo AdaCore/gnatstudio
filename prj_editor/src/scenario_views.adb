@@ -244,6 +244,9 @@ package body Scenario_Views is
             end loop;
          end;
 
+         --  Recompute the view so that the explorer is updated graphically.
+         Recompute_View (Data.View.Kernel);
+
          Trace (Me, "Delete_Variable: " & Ext_Variable);
       end if;
    end Delete_Variable;
