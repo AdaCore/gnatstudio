@@ -20,6 +20,7 @@
 
 with Find_Utils;
 with Glide_Kernel;
+with Glib.Object;
 with Gtk.Button;
 with Gtk.Main;
 with Gtk.Toggle_Button;
@@ -59,7 +60,8 @@ package Vsearch_Ext is
    --  This will be available under the title Label in the search combo box.
    --  If Extra_Information is not null, then it will be displayed every time
    --  this label is selected. It can be used for instance to ask for more
-   --  information like a list of files to search.
+   --  information like a list of files to search. See also Reset_Search
+   --  below.
    --  When the user then selects "Find", the function Factory is called to
    --  create the factory. The options and searched string or regexp will be
    --  set automatically on return of Factory, so you do not need to handle
@@ -71,6 +73,14 @@ package Vsearch_Ext is
    procedure Register_Default_Search
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the default search function
+
+   procedure Reset_Search
+     (Object : access Glib.Object.GObject_Record'Class;
+      Kernel : Glide_Kernel.Kernel_Handle);
+   --  Callback that resets the Find First / Find Next mode to Find First.
+   --  This should be called every time the contents of the widget in
+   --  Extra_Information has changed.
+   --  Object can be anything, and is ignored.
 
 private
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record
@@ -84,6 +94,8 @@ private
       Extra_Information      : Gtk.Widget.Gtk_Widget;
       Search_Idle_Handler    : Gtk.Main.Idle_Handler_Id := 0;
       Last_Search_Context    : Find_Utils.Search_Context_Access;
+
+      Find_Next              : Boolean := False;
    end record;
 
 end Vsearch_Ext;
