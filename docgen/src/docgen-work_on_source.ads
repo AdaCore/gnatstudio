@@ -39,7 +39,6 @@
 --  an output package (like Docgen.Html_Output or Docgen.Texi_Output).
 
 with GNAT.OS_Lib;
-with Src_Info;
 with VFS;
 with Glide_Kernel;
 
@@ -55,6 +54,7 @@ package Docgen.Work_On_Source is
       Source_Filename    : VFS.Virtual_File;
       Package_Name       : String;
       Entity_List        : in out Type_Entity_List.List;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Process_Body_File  : Boolean;
       LI_Unit            : LI_File_Ptr;
       Options            : All_Options;
@@ -71,6 +71,7 @@ package Docgen.Work_On_Source is
      (B                : Backend_Handle;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
       Options          : Docgen.All_Options;
       Converter        : Docgen.Doc_Subprogram_Type;
       Doc_Directory    : String;
@@ -81,6 +82,7 @@ package Docgen.Work_On_Source is
      (B                     : Backend_Handle;
       Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
       Subprogram_Index_List : Docgen.Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
       Options               : Docgen.All_Options;
       Converter             : Docgen.Doc_Subprogram_Type;
       Doc_Directory         : String;
@@ -91,6 +93,7 @@ package Docgen.Work_On_Source is
      (B               : Backend_Handle;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Type_Index_List : Docgen.Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
       Options         : All_Options;
       Converter       : Doc_Subprogram_Type;
       Doc_Directory   : String;
