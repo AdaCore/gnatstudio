@@ -274,11 +274,10 @@ package Language is
 
    type Language_Context
      (Comment_Start_Length : Natural;
-      Comment_End_Length : Natural;
-      New_Line_Comment_Start_Length : Natural)
-     --  Set any of the length to 0 if there is no such comment
-
-   is record
+      Comment_End_Length   : Natural;
+      New_Line_Comment_Start_Length : Natural) is
+   --  Set any of the length to 0 if there is no such comment
+   record
       Comment_Start : String (1 .. Comment_Start_Length);
       --  How comments start for this language. This is for comments that
       --  do not end on Newline, but with Comment_End.
