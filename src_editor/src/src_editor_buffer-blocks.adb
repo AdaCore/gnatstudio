@@ -134,13 +134,8 @@ package body Src_Editor_Buffer.Blocks is
          --  Fill the folding information.
          --  ??? This needs to be optimized.
 
-         --  ??? Packages should also be foldable. Right now they are left
-         --  unfoldable so that the fold/unfold menus have a more interesting
-         --  effect than simply folding the whole file. This will be solved
-         --  when the notion of block nesting level is introduced.
-
          if Buffer.Block_Folding
-           and then Current.Category in Subprogram_Category
+           and then Current.Category not in Cat_Subtype .. Cat_Include
            and then Current.Sloc_End.Line /= Current.Sloc_Start.Line
          then
             --  Do nothing if the block is folded.
