@@ -56,6 +56,10 @@ package body Generic_Values is
    Hidden_Width  : Gint;
    --  pixmap used when items are hidden
 
+   Unknown_Pixmap : Gdk_Pixmap;
+   Unknown_Mask   : Gdk_Bitmap;
+   Unknown_Height : Gint;
+   Unknown_Width  : Gint;
 
    function Index_String (Item    : Array_Type;
                           Index   : Long_Integer;
@@ -63,6 +67,13 @@ package body Generic_Values is
                          return String;
    --  Return the string indicating the coordinates in the array, for the
    --  element at Index.
+
+   procedure Display_Pixmap (On_Pixmap : Gdk_Pixmap;
+                             GC        : Gdk_GC;
+                             Pixmap    : Gdk_Pixmap;
+                             Mask      : Gdk_Bitmap;
+                             X, Y      : Gint);
+   --  Display a masked pixmap at specific coordinates.
 
    procedure Free_Internal is new Unchecked_Deallocation
      (Generic_Type'Class, Generic_Type_Access);
@@ -79,6 +90,19 @@ package body Generic_Values is
       Hidden_Mask   := Mask;
       Get_Size (Hidden_Pixmap, Hidden_Width, Hidden_Height);
    end Set_Hidden_Pixmap;
+
+   ------------------------
+   -- Set_Unknown_Pixmap --
+   ------------------------
+
+   procedure Set_Unknown_Pixmap (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                                 Mask   : Gdk.Bitmap.Gdk_Bitmap)
+   is
+   begin
+      Unknown_Pixmap := Pixmap;
+      Unknown_Mask   := Mask;
+      Get_Size (Unknown_Pixmap, Unknown_Width, Unknown_Height);
+   end Set_Unknown_Pixmap;
 
    ------------------
    -- Index_String --
@@ -147,6 +171,18 @@ package body Generic_Values is
       return Item.Y;
    end Get_Y;
 
+   ---------------
+   -- Set_Valid --
+   ---------------
+
+   procedure Set_Valid (Item  : access Generic_Type;
+                        Valid : Boolean := True)
+   is
+   begin
+      Item.Valid := Valid;
+   end Set_Valid;
+
+
    --------------------
    -- Set_Visibility --
    --------------------
@@ -195,6 +231,7 @@ package body Generic_Values is
          Free (Item.Value);
       end if;
       Item.Value := new String'(Value);
+      Item.Valid := True;
    end Set_Value;
 
    --------------------
@@ -212,6 +249,7 @@ package body Generic_Values is
                              Max      => Max,
                              Width    => 0,
                              Height   => 0,
+                             Valid    => False,
                              X        => -1,
                              Y        => -1);
    end New_Range_Type;
@@ -225,9 +263,10 @@ package body Generic_Values is
       return new Mod_Type'(Value    => null,
                            Modulo   => Modulo,
                            Visible  => True,
-                           Selected => True,
+                           Selected => False,
                            Width    => 0,
                            Height   => 0,
+                           Valid    => False,
                            X        => -1,
                            Y        => -1);
    end New_Mod_Type;
@@ -349,6 +388,7 @@ package body Generic_Values is
          Item.Values (Item.Last_Value) :=
            Array_Item'(Index => Elem_Index,
                        Value => Generic_Type_Access (Elem_Value));
+         Elem_Value.Valid := True;
       else
          Item.Values (Item.Last_Value) :=
            Array_Item'(Index => Elem_Index,
@@ -356,7 +396,8 @@ package body Generic_Values is
                          (Repeat_Num => Repeat_Num,
                           Value      => Generic_Type_Access (Elem_Value),
                           Visible    => True,
-                          Selected   => True,
+                          Selected   => False,
+                          Valid      => True,
                           Width      => 0,
                           Height     => 0,
                           X          => -1,
@@ -409,8 +450,13 @@ package body Generic_Values is
    function New_Record_Type (Num_Fields : Natural)
                             return Generic_Type_Access
    is
+      R : Generic_Type_Access := new Record_Type (Num_Fields);
    begin
-      return new Record_Type (Num_Fields);
+      --  A null record is always valid.
+      if Num_Fields = 0 then
+         R.Valid := True;
+      end if;
+      return R;
    end New_Record_Type;
 
    ----------------
@@ -478,6 +524,9 @@ package body Generic_Values is
          Item.Fields (Index).Variant_Part (Variant_Index) :=
            Record_Type_Access (Value);
       end if;
+
+      --  If there is at least one field, the record is valid.
+      Item.Valid := True;
    end Set_Variant_Field;
 
    -----------------------
@@ -531,8 +580,12 @@ package body Generic_Values is
                Free (Item.Fields (J).Value, Only_Value => False);
             end if;
             Item.Fields (J).Value := Generic_Type_Access (Value);
+            Item.Fields (J).Value.Valid := True;
          end if;
       end loop;
+
+      --  If there is at least one field, the record is valid.
+      Item.Valid := True;
    end Set_Value;
 
    ---------------
@@ -548,6 +601,9 @@ package body Generic_Values is
          Free (Item.Fields (Field).Value, Only_Value => False);
       end if;
       Item.Fields (Field).Value := Generic_Type_Access (Value);
+      Item.Fields (Field).Value.Valid := True;
+      --  If there is at least one field, the record is valid.
+      Item.Valid := True;
    end Set_Value;
 
    ---------------
@@ -612,6 +668,8 @@ package body Generic_Values is
    begin
       pragma Assert (Num <= Item.Num_Ancestors);
       Item.Ancestors (Num) := Ancestor;
+      Item.Valid := True;
+      Item.Ancestors (Num).Valid := True;
    end Add_Ancestor;
 
    ---------------
@@ -1111,6 +1169,24 @@ package body Generic_Values is
       return Generic_Type_Access (R);
    end Clone;
 
+   --------------------
+   -- Display_Pixmap --
+   --------------------
+
+   procedure Display_Pixmap (On_Pixmap : Gdk_Pixmap;
+                             GC        : Gdk_GC;
+                             Pixmap    : Gdk_Pixmap;
+                             Mask      : Gdk_Bitmap;
+                             X, Y      : Gint)
+   is
+   begin
+      Set_Clip_Mask (GC, Mask);
+      Set_Clip_Origin (GC, X, Y);
+      Draw_Pixmap (On_Pixmap, GC, Pixmap, 0, 0, X, Y);
+      Set_Clip_Mask (GC, Null_Pixmap);
+      Set_Clip_Origin (GC, 0, 0);
+   end Display_Pixmap;
+
    -----------
    -- Paint --
    -----------
@@ -1125,6 +1201,12 @@ package body Generic_Values is
    begin
       Item.X := X;
       Item.Y := Y;
+
+      if not Item.Valid or else Item.Value = null then
+         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
+                         X + Border_Spacing, Y + Border_Spacing);
+         return;
+      end if;
 
       if Item.Selected then
          Draw_Rectangle (Pixmap,
@@ -1163,6 +1245,12 @@ package body Generic_Values is
    begin
       Item.X := X;
       Item.Y := Y;
+
+      if not Item.Valid then
+         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
+                         X + Border_Spacing, Y + Border_Spacing);
+         return;
+      end if;
 
       if Item.Selected then
         Draw_Rectangle (Pixmap,
@@ -1205,14 +1293,19 @@ package body Generic_Values is
       Item.X := X;
       Item.Y := Y;
 
+      if Item.Dimensions (1).First > Item.Dimensions (1).Last then
+         return;
+      end if;
+
+      if not Item.Valid then
+         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
+                         X + Left_Border, Current_Y);
+         return;
+      end if;
+
       if not Item.Visible then
-         Set_Clip_Mask (GC, Hidden_Mask);
-         Set_Clip_Origin (GC, X + Left_Border, Current_Y);
-         Draw_Pixmap (Pixmap, GC, Hidden_Pixmap, 0, 0,
-                      Xdest => X + Left_Border,
-                      Ydest => Current_Y);
-         Set_Clip_Mask (GC, Null_Pixmap);
-         Set_Clip_Origin (GC, 0, 0);
+         Display_Pixmap (Pixmap, GC, Hidden_Pixmap, Hidden_Mask,
+                         X + Left_Border, Current_Y);
          return;
       end if;
 
@@ -1227,30 +1320,28 @@ package body Generic_Values is
         Set_Function (GC, Copy_Invert);
       end if;
 
-      if Item.Values /= null then
-         for V in Item.Values'Range loop
+      for V in Item.Values'Range loop
 
-            Draw_Text (Pixmap,
-                       Font => Font,
-                       GC   => GC,
-                       X    => X + Left_Border + Border_Spacing,
-                       Y    => Current_Y + Get_Ascent (Font),
-                       Text => Index_String (Item,
-                                             Item.Values (V).Index,
-                                             Item.Num_Dimensions));
-            Draw_Text (Pixmap,
-                       Font => Font,
-                       GC   => GC,
-                       X    => Arrow_Pos,
-                       Y    => Current_Y + Get_Ascent (Font),
-                       Text => " => ");
-            Paint (Item.Values (V).Value.all, GC, Xref_Gc, Font, Pixmap,
-                   X + Left_Border + Border_Spacing + Item.Index_Width,
-                   Current_Y);
-            Current_Y :=
-              Current_Y + Item.Values (V).Value.Height + Line_Spacing;
-         end loop;
-      end if;
+         Draw_Text (Pixmap,
+                    Font => Font,
+                    GC   => GC,
+                    X    => X + Left_Border + Border_Spacing,
+                    Y    => Current_Y + Get_Ascent (Font),
+                    Text => Index_String (Item,
+                                          Item.Values (V).Index,
+                                          Item.Num_Dimensions));
+         Draw_Text (Pixmap,
+                    Font => Font,
+                    GC   => GC,
+                    X    => Arrow_Pos,
+                    Y    => Current_Y + Get_Ascent (Font),
+                    Text => " => ");
+         Paint (Item.Values (V).Value.all, GC, Xref_Gc, Font, Pixmap,
+                X + Left_Border + Border_Spacing + Item.Index_Width,
+                Current_Y);
+         Current_Y :=
+           Current_Y + Item.Values (V).Value.Height + Line_Spacing;
+      end loop;
 
       --  Draw a border
       Draw_Rectangle (Pixmap,
@@ -1285,6 +1376,12 @@ package body Generic_Values is
       Item.X := X;
       Item.Y := Y;
 
+      if not Item.Valid then
+         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
+                         X + Left_Border, Current_Y);
+         return;
+      end if;
+
       --  A null record ?
 
       if Item.Fields'Length = 0 then
@@ -1292,12 +1389,8 @@ package body Generic_Values is
       end if;
 
       if not Item.Visible then
-         Set_Clip_Mask (GC, Hidden_Mask);
-         Set_Clip_Origin (GC, X + Left_Border, Current_Y);
-         Draw_Pixmap (Pixmap, GC, Hidden_Pixmap, 0, 0,
-                      Xdest => X + Left_Border, Ydest => Current_Y);
-         Set_Clip_Mask (GC, Null_Pixmap);
-         Set_Clip_Origin (GC, 0, 0);
+         Display_Pixmap (Pixmap, GC, Hidden_Pixmap, Hidden_Mask,
+                         X + Left_Border, Current_Y);
          return;
       end if;
 
@@ -1381,6 +1474,12 @@ package body Generic_Values is
       Item.X := X;
       Item.Y := Y;
 
+      if not Item.Valid then
+         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
+                         X + Border_Spacing, Y + Border_Spacing);
+         return;
+      end if;
+
       if Item.Selected then
         Draw_Rectangle (Pixmap,
                         GC,
@@ -1400,7 +1499,7 @@ package body Generic_Values is
                  Text => Str);
 
       Paint (Item.Value.all, GC, Xref_Gc, Font, Pixmap,
-             X + Text_Width (Font, Str), Y);
+             X + Text_Width (Font, Str), Y + Border_Spacing);
 
       --  Draw a border
       Draw_Rectangle (Pixmap,
@@ -1432,13 +1531,18 @@ package body Generic_Values is
       Item.X := X;
       Item.Y := Y;
 
+      if not Item.Valid
+        or else (Item.Ancestors'Length = 0
+                 and then not Item.Child.Valid)
+      then
+         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
+                         X + Left_Border, Y + Border_Spacing);
+         return;
+      end if;
+
       if not Item.Visible then
-         Set_Clip_Mask (GC, Hidden_Mask);
-         Set_Clip_Origin (GC, X, Current_Y);
-         Draw_Pixmap (Pixmap, GC, Hidden_Pixmap, 0, 0,
-                      Xdest => X, Ydest => Current_Y);
-         Set_Clip_Mask (GC, Null_Pixmap);
-         Set_Clip_Origin (GC, 0, 0);
+         Display_Pixmap (Pixmap, GC, Hidden_Pixmap, Hidden_Mask,
+                         X + Left_Border, Current_Y);
          return;
       end if;
 
@@ -1488,12 +1592,13 @@ package body Generic_Values is
       Hide_Big_Items : Boolean := False)
    is
    begin
-      if Item.Value /= null then
+      if Item.Valid and then Item.Value /= null then
          Item.Width  := Text_Width (Font, Item.Value.all);
+         Item.Height := Get_Ascent (Font) + Get_Descent (Font);
       else
-         Item.Width := 20;
+         Item.Width := Unknown_Width;
+         Item.Height := Unknown_Height;
       end if;
-      Item.Height := Get_Ascent (Font) + Get_Descent (Font);
    end Size_Request;
 
    ------------------
@@ -1507,23 +1612,34 @@ package body Generic_Values is
    is
       Total_Height, Total_Width : Gint := 0;
    begin
+      if not Item.Valid then
+         Item.Width := Unknown_Width;
+         Item.Height := Unknown_Height;
+         return;
+      end if;
+
+      --  Empty arrays
+      if Item.Dimensions (1).First > Item.Dimensions (1).Last then
+         Item.Width := 20;
+         Item.Height := 0;
+         return;
+      end if;
+
       if Item.Visible then
          Item.Index_Width := 20;  --  minimal width
-         if Item.Values /= null then
-            for V in Item.Values'Range loop
-               Size_Request (Item.Values (V).Value.all, Font, Hide_Big_Items);
-               Total_Width  :=
-                 Gint'Max (Total_Width, Item.Values (V).Value.Width);
-               Total_Height := Total_Height + Item.Values (V).Value.Height;
-               Item.Index_Width :=
-                 Gint'Max (Item.Index_Width, String_Width
-                           (Font,
-                            Index_String (Item, Item.Values (V).Index,
-                                          Item.Num_Dimensions)));
-            end loop;
-            Total_Height :=
-              Total_Height + (Item.Values'Length - 1) * Line_Spacing;
-         end if;
+         for V in Item.Values'Range loop
+            Size_Request (Item.Values (V).Value.all, Font, Hide_Big_Items);
+            Total_Width  :=
+              Gint'Max (Total_Width, Item.Values (V).Value.Width);
+            Total_Height := Total_Height + Item.Values (V).Value.Height;
+            Item.Index_Width :=
+              Gint'Max (Item.Index_Width, String_Width
+                        (Font,
+                         Index_String (Item, Item.Values (V).Index,
+                                       Item.Num_Dimensions)));
+         end loop;
+         Total_Height :=
+           Total_Height + (Item.Values'Length - 1) * Line_Spacing;
 
          Item.Index_Width :=
            Item.Index_Width + Text_Width (Font, String'(" => "));
@@ -1559,6 +1675,13 @@ package body Generic_Values is
       Total_Height, Total_Width : Gint := 0;
       Largest_Name : String_Access := null;
    begin
+
+      if not Item.Valid then
+         Item.Width := Unknown_Width;
+         Item.Height := Unknown_Height;
+         return;
+      end if;
+
       --  null record ?
 
       if Item.Fields'Length = 0 then
@@ -1643,12 +1766,17 @@ package body Generic_Values is
    is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
    begin
-      Size_Request (Item.Value.all, Font, Hide_Big_Items);
-      Item.Width :=
-        Item.Value.Width + Text_Width (Font, Str) + 2 * Border_Spacing;
-      Item.Height :=
-        Gint'Max (Item.Value.Height, Get_Ascent (Font) + Get_Descent (Font))
-        + 2 * Border_Spacing;
+      if not Item.Valid then
+         Item.Width := Unknown_Width;
+         Item.Height := Unknown_Height;
+      else
+         Size_Request (Item.Value.all, Font, Hide_Big_Items);
+         Item.Width :=
+           Item.Value.Width + Text_Width (Font, Str) + 2 * Border_Spacing;
+         Item.Height :=
+           Gint'Max (Item.Value.Height, Get_Ascent (Font) + Get_Descent (Font))
+           + 2 * Border_Spacing;
+      end if;
    end Size_Request;
 
    ------------------
@@ -1662,6 +1790,13 @@ package body Generic_Values is
    is
       Total_Height, Total_Width : Gint := 0;
    begin
+
+      if not Item.Valid then
+         Item.Width := Unknown_Width;
+         Item.Height := Unknown_Height;
+         return;
+      end if;
+
       if Item.Visible then
          for A in Item.Ancestors'Range loop
             if Item.Ancestors (A) /= null then
@@ -1866,7 +2001,7 @@ package body Generic_Values is
       Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Index_Width;
    begin
-      if not Item.Visible then
+      if not Item.Valid or else not Item.Visible then
          return Generic_Type_Access (Item);
       end if;
 
@@ -1961,7 +2096,7 @@ package body Generic_Values is
       Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
    begin
-      if not Item.Visible then
+      if not Item.Valid or else not Item.Visible then
          return Generic_Type_Access (Item);
       end if;
 
@@ -2036,7 +2171,7 @@ package body Generic_Values is
    is
       Total_Height : Gint := 0;
    begin
-      if not Item.Visible then
+      if not Item.Valid or else not Item.Visible then
          return Generic_Type_Access (Item);
       end if;
 

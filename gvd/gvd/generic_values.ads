@@ -50,6 +50,11 @@ package Generic_Values is
    --  Set the pixmap used for hidden items.
    --  This must be called, or hidden items will not be displayed at all.
 
+   procedure Set_Unknown_Pixmap (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                                 Mask   : Gdk.Bitmap.Gdk_Bitmap);
+   --  Set the pixmap used when the value of an item is unknown.
+   --  This must be called.
+
    ------------------
    -- Generic_Type --
    ------------------
@@ -161,6 +166,11 @@ package Generic_Values is
 
    function Get_Selected (Item : access Generic_Type) return Boolean;
    --  Return the selected status of Item.
+
+   procedure Set_Valid (Item  : access Generic_Type;
+                        Valid : Boolean := True);
+   --  Indicate whether the value given in Item is valid (ie there was no
+   --  error when getting the value from the debugger, ...)
 
    -----------------
    -- Simple_Type --
@@ -456,6 +466,10 @@ private
 
       Selected : Boolean := False;
       --  Whether the item is selected.
+
+      Valid    : Boolean := False;
+      --  Whether the value stored is valid, ie there was no error from the
+      --  debugger when we got it.
    end record;
 
    type Simple_Type is new Generic_Type with record
