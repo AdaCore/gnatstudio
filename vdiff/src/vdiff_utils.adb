@@ -474,9 +474,6 @@ package body Vdiff_Utils is
    -- Fill_Diff_Lists --
    ---------------------
 
-   --  ??? This function is not yet terminated. It is working with a virtual
-   --  Kernel.
-
    procedure Fill_Diff_Lists
      (Kernel     : access Kernel_Handle_Record'Class;
       List1      : access Gtk_Clist_Record'Class;
@@ -499,6 +496,8 @@ package body Vdiff_Utils is
       Current_Line     : Text_Iterator_Access;
       Offset_Line      : Integer := 0;
       Last_Line_Number : Natural;
+      Desc             : constant Pango_Font_Description :=
+        Get_Pref (Kernel, Source_Editor_Font);
 
       procedure Add_Line
         (List   : access Gtk_Clist_Record'Class;
@@ -540,23 +539,9 @@ package body Vdiff_Utils is
          On_Destroy'Access,
          Info_1);
 
---      Register_Contextual_Menu
---        (Kernel,
---         List1,
---         Info_1,
---         Vdiff_Module_ID,
---         Context_Factory'Access);
-
---      Register_Contextual_Menu
---        (Kernel,
---         List2,
---         Info_2,
---         Vdiff_Module_ID,
---         Context_Factory'Access);
-
       --  ??? When are these styles freed ?
       Default_Style := Copy (Get_Style (List1));
---      Set_Font_Description (Default_Style, Desc);
+      Set_Font_Description (Default_Style, Desc);
 
       Old_Style     := Copy (Default_Style);
       Append_Style  := Copy (Default_Style);
