@@ -33,7 +33,8 @@ package body Codefix.Text_Manager is
 
    function "<" (Left, Right : Text_Cursor) return Boolean is
    begin
-      return Left.Line < Right.Line or else Left.Col < Right.Col;
+      return Left.Line < Right.Line or else
+        (Left.Line = Right.Line and then Left.Col < Right.Col);
    end "<";
 
    function ">" (Left, Right : Text_Cursor) return Boolean is
@@ -57,12 +58,18 @@ package body Codefix.Text_Manager is
    --------------
 
    function Get_Unit
-     (Current_Text : Text_Navigator_Abstr;
-      Cursor       : File_Cursor'Class) return Construct_Information is
+     (Current_Text           : Text_Navigator_Abstr;
+      Cursor                 : File_Cursor'Class;
+      Position               : Relative_Position := Specified;
+      Category_1, Category_2 : Language_Category := Cat_Unknown)
+     return Construct_Information is
    begin
       return Get_Unit
         (Get_File (Current_Text, Cursor.File_Name.all).all,
-         Text_Cursor (Cursor));
+         Text_Cursor (Cursor),
+         Position,
+         Category_1,
+         Category_2);
    end Get_Unit;
 
    -----------------
@@ -157,6 +164,28 @@ package body Codefix.Text_Manager is
          Current_Indent => Next_Indent,
          Prev_Indent => Indent,
          Callback => null);
+
+--      declare
+--         Current : Construct_Access := New_Text.Tokens_List.First;
+--      begin
+--         while Current /= null loop
+--            if Current.Name /= null then
+--               Put (Current.Name.all & ": ");
+--            end if;
+--            Put (Current.Category'Img);
+--            Put (", " & Current.Sloc_Entity.Line'Img & ", ");
+--            Put (Current.Sloc_End.Line'Img);
+--            Put (" (");
+--            if Current.Is_Declaration then
+--               Put ("spec");
+--            else
+--               Put ("body");
+--            end if;
+--            Put (")");
+--            New_Line;
+--            Current := Current.Next;
+--         end loop;
+--      end;
 
       Free (Buffer);
 
@@ -319,24 +348,80 @@ package body Codefix.Text_Manager is
    --------------
 
    function Get_Unit
-     (Current_Text : Text_Interface;
-      Cursor       : Text_Cursor'Class) return Construct_Information
+     (Current_Text           : Text_Interface;
+      Cursor                 : Text_Cursor'Class;
+      Position               : Relative_Position := Specified;
+      Category_1, Category_2 : Language_Category := Cat_Unknown)
+     return Construct_Information
    is
+
+      function Nearer return Boolean;
+      --  Return True when Current_Info is nearer Cursor than Info_Saved.
+
       Current_Info : Construct_Access;
+      Info_Saved   : Construct_Access;
+
+      function Nearer return Boolean is
+         D_Current_Line, D_Current_Col : Integer;
+         D_Old_Line, D_Old_Col : Integer;
+      begin
+         D_Current_Line := Current_Info.Sloc_Start.Line - Cursor.Line;
+         D_Current_Col := Current_Info.Sloc_Start.Column - Cursor.Col;
+
+         case Position is
+            when Before =>
+               if D_Current_Line > 0
+                 or else (D_Current_Line = 0 and then D_Current_Col > 0)
+               then
+                  return False;
+               end if;
+            when After =>
+               if D_Current_Line > 0
+                 or else (D_Current_Line = 0 and then D_Current_Col > 0)
+               then
+                  return False;
+               end if;
+            when others =>
+               return False;
+         end case;
+
+         if Info_Saved = null then return True; end if;
+
+         D_Old_Line := Info_Saved.Sloc_Start.Line - Cursor.Line;
+         D_Old_Col := Info_Saved.Sloc_Start.Column - Cursor.Col;
+
+         return (abs D_Old_Line) >  (abs D_Current_Line) or else
+           (D_Old_Line = D_Current_Line and then
+            (abs D_Old_Col) > (abs D_Current_Col));
+
+      end Nearer;
+
    begin
       Current_Info := Current_Text.Tokens_List.First;
 
       while Current_Info /= null loop
-         if (Current_Info.Sloc_Start.Line = Cursor.Line
-             and then Current_Info.Sloc_Start.Column = Cursor.Col)
-           or else (Current_Info.Sloc_Entity.Line = Cursor.Line
-                    and then Current_Info.Sloc_Entity.Column = Cursor.Col)
+
+         if Current_Info.Category = Cat_Unknown
+           or else Current_Info.Category = Category_1
+           or else Current_Info.Category = Category_2
          then
-            return Current_Info.all;
+            if (Current_Info.Sloc_Start.Line = Cursor.Line
+             and then Current_Info.Sloc_Start.Column = Cursor.Col)
+              or else (Current_Info.Sloc_Entity.Line = Cursor.Line
+                    and then Current_Info.Sloc_Entity.Column = Cursor.Col)
+            then
+               return Current_Info.all;
+            elsif Position /= Specified and then Nearer then
+               Info_Saved := Current_Info;
+            end if;
          end if;
 
          Current_Info := Current_Info.Next;
       end loop;
+
+      if Info_Saved /= null then
+         return Info_Saved.all;
+      end if;
 
       Raise_Exception
         (Codefix_Panic'Identity,
@@ -386,48 +471,60 @@ package body Codefix.Text_Manager is
          New_Sloc       : Source_Location;
       begin
          while Current_Info /= null loop
-            --  Test de fin d'encapsulation
-            if Current_Info.Sloc_End.Line < Stop.Line
-              or else (Current_Info.Sloc_End.Line = Stop.Line
+
+            if Current_Info.Category not in Construct_Category then
+
+               --  Is it the end of the scope ?
+               if Current_Info.Sloc_End.Line < Stop.Line
+                 or else (Current_Info.Sloc_End.Line = Stop.Line
                        and then Current_Info.Sloc_End.Column < Stop.Column)
-            then
-               return;
-            end if;
-
-            if not Current_Info.Is_Declaration and then --  test id body
-              Current_Info.Name.all = Spec.Name.all and then
-              Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
-            then
-               Result := Current_Info;
-            end if;
-
-            --  Test de debut d'encapsulation
-
-            if not Current_Info.Is_Declaration and then
-              Current_Info.Category in Enclosing_Entity_Category
-            then
-               Current_Result := Result;
-               New_Sloc := Current_Info.Sloc_Start;
-               Current_Info := Current_Info.Prev;
-               Current_Result := Result;
-               Seeker (New_Sloc);
-
-               if Found then
+               then
                   return;
-               else
-                  Result := Current_Result;
                end if;
 
-            elsif Current_Info.Is_Declaration and then  --  test id spec
-              Current_Info.Name.all = Spec.Name.all and then
-              Current_Info.Sloc_Start = Spec.Sloc_Start and then
-              Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
-            then
-               Found := True;
-               return;
+               --  Does this body have the rigth profile ?
+               if not Current_Info.Is_Declaration and then
+               Current_Info.Name.all = Spec.Name.all and then
+               Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
+               then
+                  Result := Current_Info;
+               end if;
+
+
+               --  Is it the beginnig of a scope ?
+               if not Current_Info.Is_Declaration and then
+               Current_Info.Category in Enclosing_Entity_Category
+               then
+                  Current_Result := Result;
+                  New_Sloc := Current_Info.Sloc_Start;
+                  Current_Info := Current_Info.Prev;
+                  Current_Result := Result;
+                  Seeker (New_Sloc);
+
+                  if Found then
+                     return;
+                  else
+                     Result := Current_Result;
+                  end if;
+
+                  --  Is this spec the rigth one ?
+               elsif Current_Info.Is_Declaration and then
+               Current_Info.Name.all = Spec.Name.all and then
+               Current_Info.Sloc_Start = Spec.Sloc_Start and then
+               Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
+               then
+                  Found := True;
+                  return;
+               else
+                  Current_Info := Current_Info.Prev;
+               end if;
+
             else
+
                Current_Info := Current_Info.Prev;
+
             end if;
+
          end loop;
       end Seeker;
 
@@ -457,20 +554,67 @@ package body Codefix.Text_Manager is
       return Get_Line (This, Cursor)'Length;
    end Line_Length;
 
+   -------------------
+   -- Search_String --
+   -------------------
 
    function Search_String
      (This         : Text_Interface'Class;
-      Cursor       : File_Cursor'Class;
+      Cursor       : Text_Cursor'Class;
       Searched     : String;
       Step         : Step_Way := Normal_Step;
       Jump_String  : Boolean := True)
      return File_Cursor'Class is
+
+      Last, Increment    : Integer;
+      Ext_Red            : Extract_Line;
+      New_Cursor, Result : File_Cursor;
+      Old_Col            : Integer;
+
    begin
-      --  Soon programmed
+      New_Cursor := File_Cursor (Cursor);
+
+      case Step is
+         when Normal_Step =>
+            Last := Line_Max (This);
+            Increment := 1;
+            Get_Line (This, New_Cursor, Ext_Red);
+         when Reverse_Step =>
+            Last := 1;
+            Increment := -1;
+            Old_Col := New_Cursor.Col;
+            New_Cursor.Col := 1;
+            Get (This, New_Cursor, Old_Col, Ext_Red);
+            New_Cursor.Col := Old_Col;
+      end case;
+
+
+      loop
+         Result := File_Cursor (Search_String
+                                  (Ext_Red,
+                                   New_Cursor,
+                                   Searched,
+                                   Step,
+                                   Jump_String));
+
+         if Result /= Null_File_Cursor then
+            return Result;
+         end if;
+
+         exit when New_Cursor.Line = Last;
+
+         New_Cursor.Col := 1;
+         New_Cursor.Line := New_Cursor.Line + Increment;
+         Get_Line (This, New_Cursor, Ext_Red);
+         if Step = Reverse_Step then
+            New_Cursor.Col := 0;
+         end if;
+
+      end loop;
+
+
       return Null_File_Cursor;
    end Search_String;
-   --  Search a string in the text and returns a cursor at the beginning. If
-   --  noting is found, then the cursor is Null_Cursor.
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -634,7 +778,7 @@ package body Codefix.Text_Manager is
 
       case Step is
          when Normal_Step =>
-            for J in Result.Col .. This.Content.all'Length -
+            for J in Result.Col .. This.Content.all'Last -
               Searched'Length + 1
             loop
                if This.Content.all (J .. J + Searched'Length - 1) =
@@ -645,7 +789,8 @@ package body Codefix.Text_Manager is
                end if;
             end loop;
          when Reverse_Step =>
-            for J in reverse 1 .. Result.Col - Searched'Length + 1 loop
+            for J in reverse This.Content.all'First ..
+              Result.Col - Searched'Length + 1 loop
                if This.Content.all (J .. J + Searched'Length - 1) =
                  Searched
                then
@@ -658,6 +803,54 @@ package body Codefix.Text_Manager is
       return Null_File_Cursor;
 
    end Search_String;
+
+   ---------
+   -- Get --
+   ---------
+
+   procedure Get
+     (This        : Text_Interface'Class;
+      Cursor      : File_Cursor'Class;
+      Len         : Natural;
+      Destination : in out Extract_Line) is
+   begin
+      Destination := (Original_Line, File_Cursor (Cursor), Len,
+        new String'(Get (This, Cursor, Len)), null);
+   end Get;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   procedure Get_Line
+     (This        : Text_Navigator_Abstr'Class;
+      Cursor      : File_Cursor'Class;
+      Destination : in out Extract_Line) is
+
+      Str : Dynamic_String;
+
+   begin
+      Str := new String'(Get_Line (This, Cursor));
+      Destination := (Original_Line, File_Cursor (Cursor), Str.all'Length,
+        Str, null);
+   end Get_Line;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   procedure Get_Line
+     (This        : Text_Interface'Class;
+      Cursor      : File_Cursor'Class;
+      Destination : in out Extract_Line) is
+
+      Str : Dynamic_String;
+
+   begin
+      Str := new String'(Get_Line (This, Cursor));
+      Destination := (Original_Line, File_Cursor (Cursor), Str.all'Length,
+        Str, null);
+   end Get_Line;
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -797,7 +990,7 @@ package body Codefix.Text_Manager is
    -----------------------
 
    procedure Put_Line_Original
-     (This          : Extract;
+     (This         : Extract;
       Current_Text : Text_Navigator_Abstr'Class)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
@@ -837,45 +1030,32 @@ package body Codefix.Text_Manager is
    -- Get_Record --
    ----------------
 
-   --  ??? C pas beau la levee de l'exception. A changer.
-
    function Get_Record
      (This : Extract; Number : Natural) return Ptr_Extract_Line
    is
       Current_Extract : Ptr_Extract_Line := This.First;
+      Iterator        : Integer;
+
    begin
-      if Current_Extract = null then
-         Raise_Exception
-           (Text_Manager_Error'Identity, "record" &
-              Natural'Image (Number) & " not found in an extract");
-      end if;
 
-      for J in 1 .. Number - 1 loop
-         Current_Extract := Current_Extract.Next;
-
+      Iterator := 1;
+      loop
          if Current_Extract = null then
             Raise_Exception
               (Text_Manager_Error'Identity,
                "record" & Natural'Image (Number) & " not found in an extract");
          end if;
+
+
+         exit when Iterator = Number; --  Why did I write - 1 ???
+
+         Iterator := Iterator + 1;
+         Current_Extract := Current_Extract.Next;
+
       end loop;
 
       return Current_Extract;
    end Get_Record;
-
-   ---------
-   -- Get --
-   ---------
-
-   procedure Get
-     (This        : Text_Interface'Class;
-      Cursor      : File_Cursor'Class;
-      Len         : Natural;
-      Destination : in out Extract_Line) is
-   begin
-      Destination := (Original_Line, File_Cursor (Cursor), Len,
-        new String'(Get (This, Cursor, Len)), null);
-   end Get;
 
    --------------
    -- Put_Line --
@@ -1111,31 +1291,44 @@ package body Codefix.Text_Manager is
       Jump_String  : Boolean := True)
      return File_Cursor'Class is
 
-      Current : Ptr_Extract_Line;
-      Result  : File_Cursor := Null_File_Cursor;
+      Current                 : Ptr_Extract_Line;
+      Result, Current_Cursor  : File_Cursor := Null_File_Cursor;
 
    begin
 
       Current := Get_Line (This, Cursor);
+      Current_Cursor := File_Cursor (Cursor);
 
-      while Result = Null_File_Cursor and then Current /= null loop
+      loop
+
+         if Current = null then return Null_File_Cursor; end if;
+
          Result := File_Cursor (Search_String
                                   (Current.all,
-                                   Result,
+                                   Current_Cursor,
                                    Searched,
                                    Step,
                                    Jump_String));
+
+         if Result /= Null_File_Cursor then
+            Result.Line := Get_Cursor (Current.all).Line;
+            return Result;
+         end if;
+
+         exit when Current = null;
+
          case Step is
             when Normal_Step =>
                Current := Current.Next;
-               Result.Col := 1;
+               Current_Cursor.Col := 1;
             when Reverse_Step =>
                Current := Previous (This, Current);
-               Result.Col := 0;
+               Current_Cursor.Col := 0;
          end case;
+
       end loop;
 
-      return Result;
+      return Null_File_Cursor;
 
    end Search_String;
 
@@ -1149,6 +1342,8 @@ package body Codefix.Text_Manager is
       Current : Ptr_Extract_Line := Container.First;
 
    begin
+      if Current = Node then return null; end if;
+
       while Current.Next /= Node loop
          Current := Current.Next;
          if Current = null then
