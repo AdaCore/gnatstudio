@@ -26,6 +26,7 @@ with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with GVD.Process;          use GVD.Process;
 with GNAT.IO;              use GNAT.IO;
+with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
@@ -185,7 +186,10 @@ package body Glide_Kernel.Console is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Console : constant String := '/' & (-"File") & '/' & (-"Console");
+      File    : constant String := '/' & (-"File");
+      Console : constant String := File & '/' & (-"Console");
+      Mitem   : Gtk_Menu_Item;
+
    begin
       Register_Module
         (Module       => Console_Module_Id,
@@ -203,6 +207,8 @@ package body Glide_Kernel.Console is
       Register_Menu
         (Kernel, Console, -"Load Contents...", "", null, Sensitive => False);
       --             On_Load_To_Console'Access);
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
    end Register_Module;
 
 end Glide_Kernel.Console;
