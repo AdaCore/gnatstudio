@@ -10,7 +10,7 @@
               error="Body generation for non Ada files not yet supported" />
 
       <!-- Generate and load the body -->
-      <shell>save_windows</shell>
+      <shell>save_all</shell>
       <shell>scenario_variables_cmd_line -X</shell>
       <external output="" >gnat stub %pps %1 %F %d</external>
       <shell>File %F</shell>
