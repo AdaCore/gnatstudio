@@ -604,10 +604,6 @@ package body Src_Info.CPP is
          False, -- no recursion
          Languages => (1 => Name_C, 2 => Name_C_Plus_Plus));
 
-      if Iterator.List_Filename /= null then
-         Free (Iterator.List_Filename);
-      end if;
-
       Iterator.List_Filename := new String'(DB_Dir & "gps_list");
 
       --  If there is at least one source file, make sure the database
@@ -661,8 +657,11 @@ package body Src_Info.CPP is
          Next_Source_File (Iterator);
       end loop;
 
-      if Num_Source_Files > 0 then
+      if Is_Open (Tmp_File) then
          Close (Tmp_File);
+      end if;
+
+      if Num_Source_Files > 0 then
          Iterator.State := Analyze_Files;
          Close_DB_Files (Iterator.Handler.SN_Table);
          SN.Browse.Browse
@@ -773,6 +772,11 @@ package body Src_Info.CPP is
                return;
             end if;
 
+            if Iterator.List_Filename /= null then
+               Delete_File (Iterator.List_Filename.all, Success);
+               Free (Iterator.List_Filename);
+            end if;
+
             Trace (Info_Stream, "Starting the dbimp process");
             --  All files processed, start generating of xrefs
 
@@ -809,11 +813,6 @@ package body Src_Info.CPP is
 
       if Iterator.State = Done then
          Trace (Info_Stream, "Processing is finished");
-         if Iterator.List_Filename /= null then
-            Delete_File (Iterator.List_Filename.all, Success);
-         end if;
-
-         Free (Iterator.List_Filename);
          Free (Iterator.Prj_Iterator);
          Finished := True;
       end if;
