@@ -538,6 +538,9 @@ package body Debugger.Gdb is
          --  file in the code editor.
          --  This should be done only after we have detected the current
          --  language, or no color highlighting will be provided.
+         --
+         --  Note that we need to send the "list" command first, otherwise
+         --  info line will not work.
 
          Send (Debugger, "list", Mode => Internal);
          Send (Debugger, "info line", Mode => Internal);
