@@ -147,19 +147,15 @@ package body Builder_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top       : constant Glide_Window :=
+      Top     : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Fd        : Process_Descriptor_Access;
-      Args      : Argument_List_Access;
-      Title     : String_Access;
-      --  ??? Should get the name of the real main
-      Project   : constant String := Get_Project_File_Name (Kernel);
-      Cmd       : constant String :=
-        "gnatmake -P" & Project & " "
-        & Scenario_Variables_Cmd_Line (Kernel)
-        & " ";
-      Id        : Timeout_Handler_Id;
-      Context   : Selection_Context_Access := Get_Current_Context (Kernel);
+      Fd      : Process_Descriptor_Access;
+      Args    : Argument_List_Access;
+      Title   : String_Access;
+      Project : String_Access;
+      Cmd     : String_Access;
+      Id      : Timeout_Handler_Id;
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
 
    begin
       if Context /= null
@@ -167,6 +163,11 @@ package body Builder_Module is
       then
          Title := new String'
            (File_Information (File_Selection_Context_Access (Context)));
+         Project := new String' (Get_Subproject_Name (Kernel, Title.all));
+         Cmd := new String'
+           ("gnatmake -P" & Project.all & " " &
+            Scenario_Variables_Cmd_Line (Kernel) & " ");
+
       else
          return;
       end if;
@@ -177,18 +178,20 @@ package body Builder_Module is
       Console.Clear (Kernel);
       Set_Sensitive_Menus (Kernel, False);
 
-      if Project = "" then
+      if Project.all = "" then
          --  This is the default internal project
 
          Args := Argument_String_To_List ("gnatmake -d " & Title.all);
          Console.Insert (Kernel, "gnatmake " & Title.all, False);
 
       else
-         Args := Argument_String_To_List (Cmd & Title.all & " -d");
-         Console.Insert (Kernel, Cmd & Title.all, False);
+         Args := Argument_String_To_List (Cmd.all & Title.all & " -d");
+         Console.Insert (Kernel, Cmd.all & Title.all, False);
       end if;
 
       Free (Title);
+      Free (Project);
+      Free (Cmd);
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
       Non_Blocking_Spawn
