@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;             use Glib.Object;
-with Glib.Xml_Int;            use Glib.Xml_Int;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
@@ -38,13 +37,9 @@ with Ada.Exceptions;          use Ada.Exceptions;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Custom;      use Glide_Kernel.Custom;
 with Glib.Object;              use Glib, Glib.Object;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
-with Switches_Editors;         use Switches_Editors;
-with Gtk.Frame;                use Gtk.Frame;
-with Gtk.Box;                  use Gtk.Box;
 with Naming_Editors;           use Naming_Editors;
 with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
 with Snames;                   use Snames;
@@ -60,25 +55,6 @@ package body Cpp_Module is
    C_Use_Tabs                : Param_Spec_Boolean;
    C_Indentation_Level       : Param_Spec_Int;
 
-   --  The following constants are defined to avoid allocating dynamic memory
-   --  in Gtk_New. This should eventually be integrated in the kernel.
-   --  The comments are there so that the script to handle internationalization
-   --  properly finds the constants.
-
-   Cst_No_Optimization : aliased constant String := "No optimization";
-   --  -"No optimization"
-   Cst_Some_Optimization : aliased constant String := "Some optimization";
-   --  -"Some optimization"
-   Cst_Full_Optimization : aliased constant String := "Full optimization";
-   --  -"Full optimization"
-   Cst_Full_Inline_Optimization : aliased constant String :=
-     "Full + Automatic inline";
-   --  -"Full + Automatic inline"
-   Cst_Zero     : aliased constant String := "0";
-   Cst_One      : aliased constant String := "1";
-   Cst_Two      : aliased constant String := "2";
-   Cst_Three    : aliased constant String := "3";
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (CPP_LI_Handler_Record'Class, CPP_LI_Handler);
 
@@ -90,18 +66,6 @@ package body Cpp_Module is
    procedure On_Preferences_Changed
      (Kernel : access GObject_Record'Class; K : Kernel_Handle);
    --  Called when the preferences have changed
-
-   type C_Switches is new Switches_Page_Creator_Record with null record;
-   function Create
-     (Creator : access C_Switches;
-      Kernel : access Kernel_Handle_Record'Class)
-      return Switches_Editor_Page;
-
-   type Cpp_Switches is new Switches_Page_Creator_Record with null record;
-   function Create
-     (Creator : access Cpp_Switches;
-      Kernel : access Kernel_Handle_Record'Class)
-      return Switches_Editor_Page;
 
    function C_Naming_Scheme_Editor
      (Kernel : access Kernel_Handle_Record'Class)
@@ -140,209 +104,6 @@ package body Cpp_Module is
       Gtk_New (Naming, Get_String (Cpp_String));
       return Language_Naming_Editor (Naming);
    end Cpp_Naming_Scheme_Editor;
-
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (Creator : access C_Switches;
-      Kernel : access Kernel_Handle_Record'Class)
-      return Switches_Editor_Page
-   is
-      pragma Unreferenced (Creator);
-      Frame  : Gtk_Frame;
-      Box    : Gtk_Box;
-      Page   : Switches_Editor_Page;
-   begin
-      Gtk_New (Page, "C", Compiler_Package, C_String, C_String, 2, 2,
-               Get_Tooltips (Kernel));
-
-      Gtk_New (Frame, -"Code generation");
-      Set_Border_Width (Frame, 5);
-      Attach (Page, Frame, 0, 1, 0, 1);
-      Gtk_New_Vbox (Box, False, 0);
-      Add (Frame, Box);
-      Pack_Start
-        (Box, Create_Combo
-         (Page, "",
-          Switch               => "-O",
-          Default_No_Switch    => "0",
-          Default_No_Digit     => "1",
-          Buttons => (1 => (Cst_No_Optimization'Access,
-                            Cst_Zero'Access),
-                      2 => (Cst_Some_Optimization'Access,
-                            Cst_One'Access),
-                      3 => (Cst_Full_Optimization'Access,
-                            Cst_Two'Access),
-                      4 => (Cst_Full_Inline_Optimization'Access,
-                            Cst_Three'Access)),
-          Tip     => -"Optimization level"),
-         False, False);
-      Create_Check
-        (Page, Box, -"Unroll loops", "-funroll-loops",
-         -("Perform the optimization of loop unrolling. This is only"
-           & " done for loops whose number of iterations can be"
-           & " determined at compile time or run time"));
-      Create_Check
-        (Page, Box, -"Position independent code", "-fPIC",
-         -("If supported for the target machine, emit"
-           & " position-independent code, suitable for dynamic"
-           & " linking and avoiding any limit of the size of the"
-           & " global offset table"));
-      Create_Check
-        (Page, Box, -"Profiling", "-pg",
-         -("Generate extra code to write profile information suitable"
-           & " for the analysis program gprof"));
-      Create_Check
-        (Page, Box, -"Code coverage", "-ftest-coverage",
-         -"Create data files for the gcov code-coverage utility");
-      Create_Check
-        (Page, Box, -"Instrument arcs", "-fprofile-arcs",
-         -("Instrument arcs during compilation. For each function of"
-           & " your program, gcc creates a program flow graph, then"
-           & " finds a spanning tree for the graph. Only arcs that"
-           & " are not on the spanning tree have to be instrumented:"
-           & " the compiler adds code to count the number of times"
-           & " that these arcs are executed"));
-      Add_Dependency (Page,
-                      Master_Page    => "C",
-                      Master_Switch  => "-ftest-coverage",
-                      Master_Status  => False,
-                      Slave_Page     => "C",
-                      Slave_Switch   => "-fprofile-arcs",
-                      Slave_Activate => False);
-
-      Gtk_New (Frame, -"Debugging");
-      Set_Border_Width (Frame, 5);
-      Attach (Page, Frame, 1, 2, 0, 1);
-      Gtk_New_Vbox (Box, False, 0);
-      Add (Frame, Box);
-      Create_Check
-        (Page, Box, -"Debug information", "-g",
-         -("Produce debugging information in the operating system's"
-           & " native format"));
-
-      Gtk_New (Frame, -"Messages");
-      Set_Border_Width (Frame, 5);
-      Attach (Page, Frame, 0, 2, 1, 2);
-      Gtk_New_Vbox (Box, False, 0);
-      Add (Frame, Box);
-      Create_Check
-        (Page, Box, -"All warnings", "-Wall",
-         -("This enables all the warnings about constructions that"
-           & " some users consider questionable, and that are easy"
-           & " to avoid"));
-      Create_Check
-        (Page, Box, -"Strict ANSI", "-ansi",
-         -("In C mode, support all ANSI standard C programs"));
-      return Page;
-   end Create;
-
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (Creator : access Cpp_Switches;
-      Kernel : access Kernel_Handle_Record'Class)
-      return Switches_Editor_Page
-   is
-      pragma Unreferenced (Creator);
-      Frame  : Gtk_Frame;
-      Box    : Gtk_Box;
-      Page   : Switches_Editor_Page;
-   begin
-      Gtk_New (Page, "C++", Compiler_Package, Cpp_String, Cpp_String, 2, 2,
-               Get_Tooltips (Kernel));
-
-      Gtk_New (Frame, -"Code generation");
-      Set_Border_Width (Frame, 5);
-      Attach (Page, Frame, 0, 1, 0, 1);
-      Gtk_New_Vbox (Box, False, 0);
-      Add (Frame, Box);
-      Pack_Start
-        (Box, Create_Combo
-         (Page, "",
-          Switch               => "-O",
-          Default_No_Switch    => "0",
-          Default_No_Digit     => "1",
-          Buttons => (1 => (Cst_No_Optimization'Access,
-                            Cst_Zero'Access),
-                      2 => (Cst_Some_Optimization'Access,
-                            Cst_One'Access),
-                      3 => (Cst_Full_Optimization'Access,
-                            Cst_Two'Access),
-                      4 => (Cst_Full_Inline_Optimization'Access,
-                            Cst_Three'Access)),
-          Tip     => -"Optimization level"),
-         False, False);
-      Create_Check
-        (Page, Box, -"Unroll loops", "-funroll-loops",
-         -("Perform the optimization of loop unrolling. This is only"
-           & " done for loops whose number of iterations can be"
-           & " determined at compile time or run time"));
-      Create_Check
-        (Page, Box, -"Position independent code", "-fPIC",
-         -("If supported for the target machine, emit"
-           & " position-independent code, suitable for dynamic"
-           & " linking and avoiding any limit of the size of the"
-           & " global offset table"));
-      Create_Check
-        (Page, Box, -"Profiling", "-pg",
-         -("Generate extra code to write profile information suitable"
-           & " for the analysis program gprof"));
-      Create_Check
-        (Page, Box, -"Code coverage", "-ftest-coverage",
-         -"Create data files for the gcov code-coverage utility");
-      Create_Check
-        (Page, Box, -"Instrument arcs", "-fprofile-arcs",
-         -("Instrument arcs during compilation. For each function of"
-           & " your program, gcc creates a program flow graph, then"
-           & " finds a spanning tree for the graph. Only arcs that"
-           & " are not on the spanning tree have to be instrumented:"
-           & " the compiler adds code to count the number of times"
-           & " that these arcs are executed"));
-      Add_Dependency (Page,
-                      Master_Page    => "C++",
-                      Master_Switch  => "-ftest-coverage",
-                      Master_Status  => False,
-                      Slave_Page     => "C++",
-                      Slave_Switch   => "-fprofile-arcs",
-                      Slave_Activate => False);
-      Create_Check
-        (Page, Box, -"Elide constructor", "-felide-constructor");
-      Create_Check
-        (Page, Box, -"Conserve space", "-fconserve-space",
-         -("Put uninitialized or runtime-initialized global variables"
-           & " into the common segment. This saves space in the"
-           & " executable at the cost of not diagnosing duplicate"
-           & " definitions"));
-
-      Gtk_New (Frame, -"Debugging");
-      Set_Border_Width (Frame, 5);
-      Attach (Page, Frame, 1, 2, 0, 1);
-      Gtk_New_Vbox (Box, False, 0);
-      Add (Frame, Box);
-      Create_Check
-        (Page, Box, -"Debug information", "-g",
-         -("Produce debugging information in the operating system's"
-           & " native format"));
-
-      Gtk_New (Frame, -"Messages");
-      Set_Border_Width (Frame, 5);
-      Attach (Page, Frame, 0, 2, 1, 2);
-      Gtk_New_Vbox (Box, False, 0);
-      Add (Frame, Box);
-      Create_Check
-        (Page, Box, -"All warnings", "-Wall",
-         -("This enables all the warnings about constructions that"
-           & " some users consider questionable, and that are easy"
-           & " to avoid"));
-      Create_Check
-        (Page, Box, -"Overloaded virtual", "-Woverloaded-virtual");
-      return Page;
-   end Create;
 
    ----------------------------
    -- On_Preferences_Changed --
@@ -415,7 +176,6 @@ package body Cpp_Module is
         (Get_Language_Handler (Kernel));
       LI      : CPP_LI_Handler := new Src_Info.CPP.CPP_LI_Handler_Record;
       Msg     : constant String := Set_Executables (LI);
-      Creator : Switches_Page_Creator;
 
    begin
       if Msg /= "" then
@@ -446,71 +206,6 @@ package body Cpp_Module is
          LI                  => LI_Handler (LI),
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cpp");
-
-      Add_Customization_String
-        (Kernel,
-         "<vsearch-pattern>"
-         & "<name>" & Protect ("C: ->MEMBER") & "</name>"
-         & "<regexp>" & Protect ("\s*(\w+)\s*[^(]")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>" & Protect ("C: ->MEMBER(") & "</name>"
-         & "<regexp>" & Protect ("->\s*(\w+)\s*(")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>C assignment</name>"
-         & "<regexp>"
-         & Protect ("(\b(\w+)\s*(([-+*/%&|^]|<<|>>)?=[^=]|\+\+|--))|"
-                    & "((\+\+|--)\s*(\w+))")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>C call</name>"
-         & "<regexp>" & Protect ("\b(\w+)\s*(")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>C++ CLASS::member</name>"
-         & "<regexp>" & Protect ("\b(\w+)\s*::\s*\w+\s*[^(]")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>C++ class::MEMBER</name>"
-         & "<regexp>" & Protect ("\b\w+\s*::\s*(\w+)\s*[^(]")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>C++ CLASS::member(</name>"
-         & "<regexp>" & Protect ("\b(\w+)\s*::\s*\w+\s*\(")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>C++ class::MEMBER(</name>"
-         & "<regexp>" & Protect ("\b\w+\s*::\s*(\w+)\s*\(")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>" & Protect ("C++ CLASS<...>") & "</name>"
-         & "<regexp>" & Protect ("\b(\w+)<[\w,\s]+>")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>C comparison</name>"
-         & "<regexp>" & Protect ("\b(\w+)\s*(==|!=|>=|<=|>[^>]|<[^<])|" &
-                                 "(==|!=|[^>]>=|[^<]<=|[^->]>|[^<]<)\s*(\w+)")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>" & Protect ("C++ OBJECT->member") & "</name>"
-         & "<regexp>" & Protect ("\b(\w+)\s*->\s*\w+\s*[^(]")
-         & "</regexp></vsearch-pattern>"
-
-         & "<vsearch-pattern>"
-         & "<name>" & Protect ("C++ OBJECT->member(") & "</name>"
-         & "<regexp>" & Protect ("\b(\w+)\s*->\s*\w+\s*\(")
-         & "</regexp></vsearch-pattern>");
 
       C_Automatic_Indentation := Param_Spec_Enum
         (Indentation_Properties.Gnew_Enum
@@ -548,12 +243,6 @@ package body Cpp_Module is
          Kernel_Handle (Kernel));
 
       On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
-
-      Creator := new C_Switches;
-      Register_Switches_Page (Kernel, Creator);
-
-      Creator := new Cpp_Switches;
-      Register_Switches_Page (Kernel, Creator);
 
       Register_Naming_Scheme_Editor
         (Kernel, C_String, C_Naming_Scheme_Editor'Access);
