@@ -355,6 +355,7 @@ package body VCS_View_API is
       end Add_Separator;
 
       Log_File   : Boolean := False;
+      Log_Action : VCS_Action;
       Log_Exists : Boolean;
 
    begin
@@ -393,9 +394,32 @@ package body VCS_View_API is
             File_S : constant String :=
               Full_Name (File_Information (File_Name)).all;
          begin
-            if File_S'Length > 4
+            if File_S'Length > 5
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
             then
+               --  By default, the log is a "commit" log.
+               Log_Action := Commit;
+
+               declare
+                  Index  : Natural;
+               begin
+                  --  Attempt to read Action from the name of the log file
+
+                  Index := File_S'Last - 4;
+                  Skip_To_Char (File_S, Index, '$', -1);
+
+                  if Index - 1 in File_S'Range then
+                     Log_Action := VCS_Action'Value
+                       (File_S (Index + 1 .. File_S'Last - 4));
+                  end if;
+
+               exception
+                  when others =>
+                     --  If the log does not describe a valid action, leave
+                     --  the log action to Commit.
+                     null;
+               end;
+
                Log_File := True;
             end if;
          end;
@@ -419,15 +443,33 @@ package body VCS_View_API is
                      Original,
                      Get_Project_From_File (Get_Registry (Kernel), Original));
 
-                  Gtk_New (Item, Label => Actions (Commit).all & " ("
+                  Gtk_New (Item, Label => Actions (Log_Action).all & " ("
                            & Krunch (Base_Name (Original)) & ")");
 
                   Append (Menu, Item);
-                  Context_Callback.Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                       (On_Menu_Commit'Access),
-                     Selection_Context_Access (File_Name));
+
+                  case Log_Action is
+                     when Add =>
+                        Context_Callback.Connect
+                          (Item, "activate",
+                           Context_Callback.To_Marshaller
+                             (On_Menu_Add'Access),
+                           Selection_Context_Access (File_Name));
+
+                     when Remove =>
+                        Context_Callback.Connect
+                          (Item, "activate",
+                           Context_Callback.To_Marshaller
+                             (On_Menu_Remove'Access),
+                           Selection_Context_Access (File_Name));
+
+                     when others =>
+                        Context_Callback.Connect
+                          (Item, "activate",
+                           Context_Callback.To_Marshaller
+                             (On_Menu_Commit'Access),
+                           Selection_Context_Access (File_Name));
+                  end case;
                end if;
             end;
 
@@ -1158,7 +1200,9 @@ package body VCS_View_API is
                Log_Check_Script  : constant String := Get_Attribute_Value
                  (Project, Vcs_Log_Check);
                Log_File  : constant Virtual_File :=
-                 Get_Log_From_File (Kernel, File, True);
+                             Get_Log_From_File
+                               (Kernel, File, True,
+                                Suffix => "$" & Action'Img & "$log");
                File_Args         : String_List.List;
                Log_Args          : String_List.List;
                Head_List         : String_List.List;
@@ -1396,6 +1440,7 @@ package body VCS_View_API is
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
       File           : Virtual_File;
+      Suffix         : constant String := "$" & Action'Img & "$log";
 
       use String_List;
       use type String_List.List_Node;
@@ -1443,12 +1488,13 @@ package body VCS_View_API is
          File := Create (Full_Filename => String_List.Data (Files_Temp));
 
          if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
-            Get_Log_From_ChangeLog (Kernel, File);
+            Get_Log_From_ChangeLog (Kernel, File, Suffix);
             All_Logs_Exist := False;
 
             declare
                Log_File     : constant Virtual_File :=
-                 Get_Log_From_File (Kernel, File, True);
+                                Get_Log_From_File
+                                  (Kernel, File, True, Suffix);
                Already_Open : Boolean;
             begin
                Already_Open := Is_Open (Kernel, Log_File);
