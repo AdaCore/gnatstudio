@@ -722,6 +722,7 @@ package body Debugger.Gdb.C is
       End_On    : String)
    is
       pragma Unreferenced (End_On);
+
       Num_Fields : Natural := 0;
       Field      : Natural := 1;
       Initial    : constant Natural := Index;

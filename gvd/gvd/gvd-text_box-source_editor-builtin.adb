@@ -263,6 +263,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Keywords_Color    : Gdk.Color.Gdk_Color)
    is
       pragma Unreferenced (TTY_Mode);
+
       Data : Editor_Tooltip_Data;
       Box  : Builtin_Text_Box;
 
@@ -784,6 +785,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Position : Position_Type)
    is
       pragma Unreferenced (Column);
+
       Last     : Positive;
       Edit     : constant Builtin_Text_Box :=
         Builtin_Text_Box (Editor.Widget);
@@ -1171,6 +1173,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Br     : Contextual_Data_Record)
    is
       pragma Unreferenced (Widget);
+
       Num : Breakpoint_Identifier;
    begin
       Num := Break_Source
@@ -1186,6 +1189,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Br     : Contextual_Data_Record)
    is
       pragma Unreferenced (Widget);
+
       Num : Breakpoint_Identifier;
    begin
       Num := Break_Subprogram
@@ -1201,6 +1205,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Br     : Contextual_Data_Record)
    is
       pragma Unreferenced (Widget);
+
       Num : Breakpoint_Identifier;
    begin
       Num := Break_Source
@@ -1291,6 +1296,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Br     : Contextual_Data_Record)
    is
       pragma Unreferenced (Widget);
+
       Top  : constant GVD_Main_Window := Br.Process.Window;
       View : constant GVD_Memory_View := Top.Memory_View;
    begin
@@ -1491,6 +1497,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Area          : out Gdk_Rectangle)
    is
       pragma Unreferenced (Widget);
+
       Edit          : constant GVD_Text_Box := GVD_Text_Box (Data.Box.Widget);
 
       use type Items.Generic_Type_Access;

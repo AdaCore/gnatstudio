@@ -399,6 +399,7 @@ package body GVD.Text_Box.Asm_Editor is
       Entity : String) return Gtk.Menu.Gtk_Menu
    is
       pragma Unreferenced (Line, Entity);
+
       Menu  : Gtk_Menu;
       Mitem : Gtk_Menu_Item;
    begin

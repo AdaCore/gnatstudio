@@ -586,6 +586,7 @@ package body Debugger.Gdb.Cpp is
      (Lang : access Gdb_Cpp_Language) return Language_Debugger_Context
    is
       pragma Unreferenced (Lang);
+
       Lang_C : aliased Gdb_C_Language;
    begin
       return Get_Language_Debugger_Context (Lang_C'Access);
@@ -601,6 +602,7 @@ package body Debugger.Gdb.Cpp is
       Value    : String) return String
    is
       pragma Unreferenced (Lang);
+
       Lang_C : aliased Gdb_C_Language;
    begin
       return Set_Variable (Lang_C'Access, Var_Name, Value);
@@ -612,6 +614,7 @@ package body Debugger.Gdb.Cpp is
 
    function Start (Debugger : access Gdb_Cpp_Language) return String is
       pragma Unreferenced (Debugger);
+
       Lang_C : aliased Gdb_C_Language;
    begin
       return Start (Lang_C'Access);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -18,23 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
+with Glib;                      use Glib;
 with Gtk.Main;
-with Gtk;           use Gtk;
-with Gtk.GEntry;    use Gtk.GEntry;
-with Gtk.Box;       use Gtk.Box;
-with Gtk.Widget;    use Gtk.Widget;
-with Gtk.List;      use Gtk.List;
-with Gtk.List_Item; use Gtk.List_Item;
+with Gtk;                       use Gtk;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.List;                  use Gtk.List;
+with Gtk.List_Item;             use Gtk.List_Item;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Ada.Text_IO; use Ada.Text_IO;
-with Debugger; use Debugger;
-with GVD.Process; use GVD.Process;
-with String_Utils; use String_Utils;
-with GVD.Types; use GVD.Types;
-with GVD.Main_Window; use GVD.Main_Window;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Text_IO;               use Ada.Text_IO;
+with Debugger;                  use Debugger;
+with GVD.Process;               use GVD.Process;
+with GVD.Process.Standalone;    use GVD.Process.Standalone;
+with String_Utils;              use String_Utils;
+with GVD.Types;                 use GVD.Types;
+with GVD.Main_Window;           use GVD.Main_Window;
 
 with Ada.Unchecked_Deallocation;
 
