@@ -143,7 +143,7 @@ package Glide_Kernel is
    --  Undo previous state.
 
    function Get_Home_Dir (Handle : access Kernel_Handle_Record) return String;
-   --  Return the Home directory. (eg ~/.gps).
+   --  Return the Home directory. (eg ~/.gps/).
    --  The directory ends with a directory separator
 
    function Get_System_Dir
