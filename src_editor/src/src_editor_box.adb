@@ -1135,6 +1135,17 @@ package body Src_Editor_Box is
       return False;
    end Check_Timestamp_Idle;
 
+   -------------------
+   -- Get_Ref_Count --
+   -------------------
+
+   function Get_Ref_Count
+     (Editor : access Source_Editor_Box_Record)
+      return Integer is
+   begin
+      return Get_Ref_Count (Editor.Source_Buffer);
+   end Get_Ref_Count;
+
    ---------------------
    -- Check_Timestamp --
    ---------------------

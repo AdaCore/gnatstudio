@@ -385,6 +385,11 @@ package Src_Editor_Buffer is
    --  If it was the last reference on Buffer, then free the memory associated
    --  to Buffer.
 
+   function Get_Ref_Count
+     (Buffer : access Source_Buffer_Record)
+      return Integer;
+   --  Return the number of times the buffer was referenced.
+
    procedure Do_Completion (Buffer : access Source_Buffer_Record);
    --  Complete the current insertion, or continue the current completion.
 
@@ -631,6 +636,9 @@ private
 
       References     : Integer := 0;
       --  The number of objects viewing the buffer.
+
+      Total_References : Integer := 0;
+      --  The total number of times the buffer was referenced.
 
       Modified_Auto  : Boolean := False;
       --  Whether the buffer has been modified since last auto save.

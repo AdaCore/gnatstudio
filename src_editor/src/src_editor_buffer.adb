@@ -2657,6 +2657,7 @@ package body Src_Editor_Buffer is
    procedure Ref (Buffer : access Source_Buffer_Record) is
    begin
       Buffer.References := Buffer.References + 1;
+      Buffer.Total_References := Buffer.Total_References + 1;
    end Ref;
 
    -----------
@@ -2671,6 +2672,17 @@ package body Src_Editor_Buffer is
          Buffer_Destroy (Buffer);
       end if;
    end Unref;
+
+   -------------------
+   -- Get_Ref_Count --
+   -------------------
+
+   function Get_Ref_Count
+     (Buffer : access Source_Buffer_Record)
+      return Integer is
+   begin
+      return Buffer.Total_References;
+   end Get_Ref_Count;
 
    -------------------
    -- Do_Completion --

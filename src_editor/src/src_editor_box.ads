@@ -437,6 +437,11 @@ package Src_Editor_Box is
    --     - if the file was modified, bring up a dialog asking
    --       confirmation.
 
+   function Get_Ref_Count
+     (Editor : access Source_Editor_Box_Record)
+      return Integer;
+   --  Return the total number of times the Source_Buffer is referenced.
+
    ---------------------
    -- Contextual menu --
    ---------------------
