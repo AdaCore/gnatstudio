@@ -151,6 +151,13 @@ package body Prj_API is
      (File : String; List : Array_Element_Id) return Array_Element_Id;
    --  Check whether File is in the List. Return the index in the list
 
+   function Get_Attribute_Value
+     (Project_View   : Project_Id;
+      Attribute_Name : String;
+      Package_Name   : String := "";
+      Index          : String := "") return Variable_Value;
+   --  Internal version of Get_Attribute_Value
+
    ----------------
    -- Get_String --
    ----------------
@@ -3770,8 +3777,7 @@ package body Prj_API is
      (Project_View   : Project_Id;
       Attribute_Name : String;
       Package_Name   : String := "";
-      Default        : String := "";
-      Index          : String := "") return String
+      Index          : String := "") return Variable_Value
    is
       Pkg : Package_Id := No_Package;
       Value : Variable_Value := Nil_Variable_Value;
@@ -3786,7 +3792,7 @@ package body Prj_API is
            (Name_Find,
             In_Packages => Projects.Table (Project_View).Decl.Packages);
          if Pkg = No_Package then
-            return Default;
+            return Nil_Variable_Value;
          end if;
          Var := Packages.Table (Pkg).Decl.Attributes;
          Arr := Packages.Table (Pkg).Decl.Arrays;
@@ -3809,6 +3815,23 @@ package body Prj_API is
          Value := Value_Of (Name_Find, Var);
       end if;
 
+      return Value;
+   end Get_Attribute_Value;
+
+   -------------------------
+   -- Get_Attribute_Value --
+   -------------------------
+
+   function Get_Attribute_Value
+     (Project_View   : Project_Id;
+      Attribute_Name : String;
+      Package_Name   : String := "";
+      Default        : String := "";
+      Index          : String := "") return String
+   is
+      Value : Variable_Value := Get_Attribute_Value
+        (Project_View, Attribute_Name, Package_Name, Index);
+   begin
       case Value.Kind is
          when Undefined =>
             return Default;
@@ -3820,6 +3843,53 @@ package body Prj_API is
             Trace (Me, "Attribute " & Attribute_Name
                      & " is not a single string");
             return Default;
+      end case;
+   end Get_Attribute_Value;
+
+   -------------------------
+   -- Get_Attribute_Value --
+   -------------------------
+
+   function Get_Attribute_Value
+     (Project_View   : Project_Id;
+      Attribute_Name : String;
+      Package_Name   : String := "";
+      Index          : String := "") return GNAT.OS_Lib.Argument_List
+   is
+      No_Value : Argument_List (1 .. 0);
+      Value : Variable_Value := Get_Attribute_Value
+        (Project_View, Attribute_Name, Package_Name, Index);
+      Val : String_List_Id;
+      Num : Natural := 0;
+   begin
+      case Value.Kind is
+         when Undefined =>
+            return No_Value;
+
+         when Single =>
+            Trace (Me, "Attribute " & Attribute_Name & " is not a list");
+            return No_Value;
+
+         when List =>
+            Val := Value.Values;
+            while Val /= Nil_String loop
+               Num := Num + 1;
+               Val := String_Elements.Table (Val).Next;
+            end loop;
+
+            declare
+               Result : Argument_List (1 .. Num);
+            begin
+               Val := Value.Values;
+               Num := Result'First;
+               while Val /= Nil_String loop
+                  Result (Num) := new String'
+                    (Get_String (String_Elements.Table (Val).Value));
+                  Num := Num + 1;
+                  Val := String_Elements.Table (Val).Next;
+               end loop;
+               return Result;
+            end;
       end case;
    end Get_Attribute_Value;
 

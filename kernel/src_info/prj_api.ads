@@ -266,22 +266,6 @@ package Prj_API is
       return Project_Node_Id;
    --  Create a literal string whose value is Str.
 
-   Ide_Package                : constant String := "ide";
-   Gnatlist_Attribute         : constant String := "gnatlist";
-   Compiler_Command_Attribute : constant String := "compiler_command";
-   Debugger_Command_Attribute : constant String := "debugger_command";
-   Remote_Host_Attribute      : constant String := "remote_host";
-
-   function Get_Attribute_Value
-     (Project_View   : Project_Id;
-      Attribute_Name : String;
-      Package_Name   : String := "";
-      Default        : String := "";
-      Index          : String := "") return String;
-   --  Return the value for a single-string attribute.
-   --  Default is returned if the attribute wasn't set by the user and
-   --  has no default value.
-
    -----------------------
    -- Imported projects --
    -----------------------
@@ -487,6 +471,33 @@ package Prj_API is
       Value              : String;
       Attribute_Index    : String := "");
    --  Same as above, but for an attribute that contains a single value.
+
+   Ide_Package                : constant String := "ide";
+   Gnatlist_Attribute         : constant String := "gnatlist";
+   Compiler_Command_Attribute : constant String := "compiler_command";
+   Debugger_Command_Attribute : constant String := "debugger_command";
+   Remote_Host_Attribute      : constant String := "remote_host";
+
+   Languages_Attribute        : constant String := "languages";
+
+   function Get_Attribute_Value
+     (Project_View   : Project_Id;
+      Attribute_Name : String;
+      Package_Name   : String := "";
+      Default        : String := "";
+      Index          : String := "") return String;
+   --  Return the value for a single-string attribute.
+   --  Default is returned if the attribute wasn't set by the user and
+   --  has no default value.
+
+   function Get_Attribute_Value
+     (Project_View   : Project_Id;
+      Attribute_Name : String;
+      Package_Name   : String := "";
+      Index          : String := "") return GNAT.OS_Lib.Argument_List;
+   --  Same as above, but for an attribute whose value is a list. An empty
+   --  array is returned if the attribute isn't defined.
+   --  It is the responsability of the called to free the memory.
 
    -----------
    -- Files --
