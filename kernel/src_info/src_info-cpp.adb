@@ -590,8 +590,9 @@ package body Src_Info.CPP is
       Success          : Boolean;
       Xref_File_Name   : String_Access;
    begin
-      --  Do nothing if we couldn't find out the object directory
+      --  Skip project if we couldn't find out the object directory
       if DB_Dir = "" then
+         Iterator.State := Skip_Project;
          return;
       end if;
 
