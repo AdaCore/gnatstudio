@@ -92,6 +92,7 @@ package body Codefix.Graphics is
       Graphic_Codefix.Corrector := Corrector;
       Graphic_Codefix.Fixed_Cb := Fixed_Cb;
       Graphic_Codefix.Unfixed_Cb := Unfixed_Cb;
+      Graphic_Codefix.Fixes_List := Error_Id_Lists.Null_List;
 
       Remove_Page (Graphic_Codefix.Choices_Proposed, 0);
 
@@ -107,6 +108,7 @@ package body Codefix.Graphics is
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class) is
    begin
       Free (Graphic_Codefix.Vdiff_List);
+      Free (Graphic_Codefix.Fixes_List);
       Destroy (Graphic_Codefix);
    end Free;
 
@@ -128,6 +130,16 @@ package body Codefix.Graphics is
    begin
       null;
    end Free;
+
+   -------------
+   -- No_Free --
+   -------------
+
+   procedure No_Free (This : in out Error_Id) is
+      pragma Unreferenced (This);
+   begin
+      null;
+   end No_Free;
 
    -----------------
    -- Next_Choice --
@@ -208,6 +220,8 @@ package body Codefix.Graphics is
           (Graphic_Codefix.Automatic_Fix,
            Get_Category (Graphic_Codefix.Current_Error)) = Enabled
       then
+         Prepend (Graphic_Codefix.Fixes_List, Graphic_Codefix.Current_Error);
+
          Validate_And_Commit
            (Graphic_Codefix.Corrector.all,
             Graphic_Codefix.Current_Text.all,
@@ -477,6 +491,8 @@ package body Codefix.Graphics is
          end if;
       end loop;
 
+      Prepend (Graphic_Codefix.Fixes_List, Graphic_Codefix.Current_Error);
+
       Validate_And_Commit
         (Graphic_Codefix.Corrector.all,
          Graphic_Codefix.Current_Text.all,
@@ -516,11 +532,11 @@ package body Codefix.Graphics is
       return Current_Number;
    end Get_Nth_Solution;
 
-   ---------------------
-   -- Undo_Last_Error --
-   ---------------------
+   -------------------
+   -- Undo_Last_Fix --
+   -------------------
 
-   procedure Undo_Last_Error
+   procedure Undo_Last_Fix
      (Graphic_Codefix : access Graphic_Codefix_Record'Class)
    is
       Success : Boolean;
@@ -529,8 +545,13 @@ package body Codefix.Graphics is
          return;
       end if;
 
-      Graphic_Codefix.Current_Error := Get_Previous_Error
-        (Graphic_Codefix.Corrector.all, Graphic_Codefix.Current_Error);
+      Graphic_Codefix.Current_Error := Data
+        (First (Graphic_Codefix.Fixes_List));
+
+      Remove_Nodes
+        (Graphic_Codefix.Fixes_List,
+         Error_Id_Lists.Null_Node,
+         First (Graphic_Codefix.Fixes_List));
 
       Undo (Graphic_Codefix.Current_Error, Graphic_Codefix.Current_Text.all);
 
@@ -542,6 +563,23 @@ package body Codefix.Graphics is
          raise Codefix_Panic;
       end if;
 
-   end Undo_Last_Error;
+   end Undo_Last_Fix;
+
+   ----------------------
+   -- Cancel_All_Fixes --
+   ----------------------
+
+   procedure Cancel_All_Fixes
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class)
+   is
+      Node : Error_Id_Lists.List_Node := First (Graphic_Codefix.Fixes_List);
+   begin
+      while Node /= Error_Id_Lists.Null_Node loop
+         Undo
+           (Data (Node), Graphic_Codefix.Current_Text.all);
+         Graphic_Codefix.Unfixed_Cb (Data (Node));
+         Node := Next (Node);
+      end loop;
+   end Cancel_All_Fixes;
 
 end Codefix.Graphics;
