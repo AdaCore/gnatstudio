@@ -3,9 +3,20 @@ with "../gtkada/gtkada";
 with "../kernel/kernel";
 with "../gvd/gvd_common";
 
+with "../widgets/widgets";
+with "../src_editor/src_editor";
+
 project Prj_Editor is
 
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
+      for Switches ("naming_scheme_editor_pkg.adb") use ("-g", "-O2");
+      for Switches ("new_variable_editor_pkg.adb") use ("-g", "-O2");
+      for Switches ("switches_editor_pkg.adb") use ("-g", "-O2");
+      for Switches ("wizard_window_pkg.adb") use ("-g", "-O2");
+   end Compiler;
 
 end Prj_Editor;
