@@ -215,7 +215,7 @@ package body Shell_Script is
    ----------------------
 
    type Shell_Subprogram_Record is new Subprogram_Record with record
-      Action : Action_Record_Access;
+      Action_Name : GNAT.OS_Lib.String_Access;
    end record;
    --  subprograms in GPS shell are just GPS actions
 
@@ -290,6 +290,8 @@ package body Shell_Script is
      (Data : Shell_Callback_Data; N : Positive; Value : Boolean);
    procedure Set_Nth_Arg
      (Data : Shell_Callback_Data; N : Positive; Value : Class_Instance);
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : Subprogram_Type);
    --  See doc from inherited subprogram
 
    -------------------------
@@ -1455,6 +1457,18 @@ package body Shell_Script is
    -----------------
 
    procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : Subprogram_Type) is
+   begin
+      Free (Data.Args (N - 1 + Data.Args'First));
+      Data.Args (N - 1 + Data.Args'First) :=
+        new String'(Shell_Subprogram_Record (Value.all).Action_Name.all);
+   end Set_Nth_Arg;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
      (Data : Shell_Callback_Data; N : Positive; Value : String) is
    begin
       Free (Data.Args (N - 1 + Data.Args'First));
@@ -1942,9 +1956,11 @@ package body Shell_Script is
    is
       D    : Shell_Callback_Data := Shell_Callback_Data (Args);
       Custom : Command_Access;
+      A    : constant Action_Record_Access := Lookup_Action
+        (Get_Kernel (Args), Subprogram.Action_Name.all);
    begin
       Custom := Create_Proxy
-        (Subprogram.Action.Command,
+        (A.Command,
          (null,
           null,
           null,
@@ -1965,9 +1981,8 @@ package body Shell_Script is
    ----------
 
    procedure Free (Subprogram : in out Shell_Subprogram_Record) is
-      pragma Unreferenced (Subprogram);
    begin
-      null;
+      Free (Subprogram.Action_Name);
    end Free;
 
    -------------
@@ -1977,14 +1992,16 @@ package body Shell_Script is
    function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive) return Subprogram_Type
    is
-      A : Action_Record_Access;
+      A    : Action_Record_Access;
+      Name : constant String := Nth_Arg (Data, N);
    begin
-      A := Lookup_Action (Get_Kernel (Data), Nth_Arg (Data, N));
+      A := Lookup_Action (Get_Kernel (Data), Name);
       if A = null then
          raise Invalid_Parameter;
       else
          return new Shell_Subprogram_Record'
-           (Subprogram_Record with Action => A);
+           (Subprogram_Record with
+            Action_Name => new String'(Name));
       end if;
    end Nth_Arg;
 

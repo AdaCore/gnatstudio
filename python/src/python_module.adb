@@ -242,6 +242,8 @@ package body Python_Module is
      (Data : Python_Callback_Data; N : Positive; Value : Boolean);
    procedure Set_Nth_Arg
      (Data : Python_Callback_Data; N : Positive; Value : Class_Instance);
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : Subprogram_Type);
    --  See inherited documentation
 
    ---------------------------
@@ -1085,6 +1087,17 @@ package body Python_Module is
       Py_INCREF (Callback.Kw);
       return Callback;
    end Create;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : Subprogram_Type) is
+   begin
+      PyTuple_SetItem (Data.Args, N - 1,
+                       Python_Subprogram_Record (Value.all).Subprogram);
+   end Set_Nth_Arg;
 
    -----------------
    -- Set_Nth_Arg --
