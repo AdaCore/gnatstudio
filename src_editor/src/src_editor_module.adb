@@ -1741,13 +1741,36 @@ package body Src_Editor_Module is
       end;
 
       if Run (Open_File_Dialog) = Gtk_Response_OK then
+
+         --  Look for the file in the project. If the file cannot be found,
+         --  display an error message in the console.
+
          declare
             Text : constant String :=
               Get_Text (Get_Entry (Get_Combo (Open_File_Entry)));
+            Full : constant String :=
+              Get_Full_Path_From_File
+                (Get_Registry (Kernel), Text,
+                 Use_Source_Path => True,
+                 Use_Object_Path => False);
          begin
-            Add_To_History
-              (Get_History (Kernel).all, Open_From_Path_History,  Text);
-            Open_File_Editor (Kernel, Text, From_Path => True);
+            if Full /= "" and then Is_Regular_File (Full) then
+               Add_To_History
+                 (Get_History (Kernel).all, Open_From_Path_History,  Text);
+
+               Open_File_Editor
+                 (Kernel, Full,
+                  Enable_Navigation => True,
+                  New_File          => False,
+                  From_Path         => False);
+
+            else
+               Insert
+                 (Kernel,
+                    -"Could not find source file """ & Text &
+                      (-""" in currently loaded project."),
+                  Mode => Error);
+            end if;
          end;
       end if;
 
