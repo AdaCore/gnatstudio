@@ -51,6 +51,7 @@ with Types;               use Types;
 with Prj;                 use Prj;
 with Prj.Tree;            use Prj.Tree;
 with Snames;              use Snames;
+with Switch.M;            use Switch.M;
 
 package body Switches_Editors is
 
@@ -189,7 +190,7 @@ package body Switches_Editors is
    is
       Cmd_Line           : Gtk_Entry;
       Null_Argument_List : Argument_List (1 .. 0);
-      List               : Argument_List_Access;
+      List, Tmp          : Argument_List_Access;
 
    begin
       case Tool is
@@ -206,6 +207,36 @@ package body Switches_Editors is
       begin
          if Str /= "" then
             List := Argument_String_To_List (Str);
+
+            --  For Ada switches, use the functions provided by GNAT that
+            --  provide the splitting of composite switches like "-gnatwue"
+            --  into "-gnatwu -gnatwe"
+
+            if Tool = Ada_Compiler then
+               for Index in List'Range loop
+                  declare
+                     Arr : constant Argument_List :=
+                       Normalize_Compiler_Switches (List (Index).all);
+                  begin
+                     if Arr'Length > 1 then
+                        Free (List (Index));
+                        List (Index) := new String' (Arr (Arr'First).all);
+
+                        Tmp := new Argument_List
+                          (1 .. List'Length + Arr'Length - 1);
+                        Tmp (1 .. List'Length) := List.all;
+
+                        for J in Arr'First + 1 .. Arr'Last loop
+                           Tmp (List'Length + J - Arr'First) :=
+                             new String' (Arr (J).all);
+                        end loop;
+
+                        Internal_Free (List);
+                        List := Tmp;
+                     end if;
+                  end;
+               end loop;
+            end if;
 
             declare
                Ret : Argument_List := List.all;
@@ -847,7 +878,7 @@ package body Switches_Editors is
    procedure Update_Cmdline
      (Editor : access Switches_Edit_Record; Tool : Tool_Names)
    is
-      Cmd_Line : Gtk_Entry;
+      Cmd_Line           : Gtk_Entry;
    begin
       --  Don't do anything if the callbacks were blocked, to avoid infinite
       --  loops while we are updating the command line, and it is updating
@@ -866,17 +897,10 @@ package body Switches_Editors is
       end case;
 
       declare
-         Str     : constant String := Get_Text (Cmd_Line);
          Arr     : Argument_List := Get_Switches_From_GUI (Editor, Tool);
-         Current : Argument_List_Access;
+         Current : Argument_List := Get_Switches (Editor, Tool);
 
       begin
-         if Str'Length = 0 then
-            Current := new Argument_List (1 .. 0);
-         else
-            Current := Argument_String_To_List (Str);
-         end if;
-
          Editor.Block_Refresh := True;
          Set_Text (Cmd_Line, "");
 
@@ -886,7 +910,7 @@ package body Switches_Editors is
 
          --  Keep the switches set manually by the user
 
-         Filter_Switches (Editor, Tool, Current.all);
+         Filter_Switches (Editor, Tool, Current);
 
          for K in Current'Range loop
             if Current (K) /= null then
@@ -906,30 +930,17 @@ package body Switches_Editors is
    -----------------------------
 
    procedure Update_Gui_From_Cmdline
-     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
-   is
-      Cmd_Line : Gtk_Entry;
+     (Editor : access Switches_Edit_Record; Tool : Tool_Names) is
    begin
       if Editor.Block_Refresh then
          return;
       end if;
 
-      case Tool is
-         when Gnatmake     => Cmd_Line := Editor.Make_Switches_Entry;
-         when Ada_Compiler => Cmd_Line := Editor.Ada_Switches_Entry;
-         when C_Compiler   => Cmd_Line := Editor.C_Switches_Entry;
-         when Cpp_Compiler => Cmd_Line := Editor.Cpp_Switches_Entry;
-         when Binder       => Cmd_Line := Editor.Binder_Switches_Entry;
-         when Linker       => Cmd_Line := Editor.Linker_Switches_Entry;
-      end case;
-
       declare
-         Arg : Argument_List_Access :=
-           Argument_String_To_List (Get_Text (Cmd_Line));
-
+         Arg : Argument_List := Get_Switches (Editor, Tool);
       begin
          Editor.Block_Refresh := True;
-         Set_Switches (Editor, Tool, Arg.all);
+         Set_Switches (Editor, Tool, Arg);
          Free (Arg);
          Editor.Block_Refresh := False;
       end;
