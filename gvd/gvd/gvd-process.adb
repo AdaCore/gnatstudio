@@ -806,7 +806,7 @@ package body GVD.Process is
          Match
            (Current_Filter.Regexp.all,
             Process.Current_Output
-              (Process.Last_Match + 1 .. Process.Current_Output'Last),
+              (Process.Last_Match + 1 .. Process.Current_Output_Pos),
             Matched);
 
          if Matched (0) /= No_Match then
@@ -815,7 +815,9 @@ package body GVD.Process is
             end if;
 
             Current_Filter.Filter
-              (Process, Process.Current_Output.all, Matched);
+              (Process,
+               Process.Current_Output (1 .. Process.Current_Output_Pos),
+               Matched);
          end if;
 
          Current_Filter := Current_Filter.Next;
