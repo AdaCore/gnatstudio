@@ -22,6 +22,8 @@ pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
 pragma Warnings (On);
 
+with Gdk.Event; use Gdk.Event;
+
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.IO;               use GNAT.IO;
 with Gtk.Main;              use Gtk.Main;
@@ -184,7 +186,7 @@ package body Process_Proxies is
       Matched : out GNAT.Regpat.Match_Array;
       Timeout : Integer := 20)
    is
-      Tmp        : Boolean;
+      Event : Gdk_Event;
       Num        : Integer := 1;
       Num_Events : Positive;
       Max_Events : constant := 30;
@@ -204,10 +206,6 @@ package body Process_Proxies is
          Expect
            (Proxy.Descriptor.all, Result, Pattern, Matched, Timeout => 10);
 
-         exit when Timeout = 0 or else Num = Timeout;
-
-         Num := Num + 1;
-
          case Result is
             when Expect_Full_Buffer =>
                --  If the buffer was already full, we simply exit as if there
@@ -217,22 +215,33 @@ package body Process_Proxies is
 
             when Expect_Timeout =>
                --  Process the X events, and loop again.
-               --  For efficiency, we stop after a certain number. Otherwise,
-               --  it sometimes happens that we keep getting events (input
-               --  events ?), and we never exit this loop.
-               --  ??? This might not be the best workaround.
+               --  We do not use Gtk.Main.Main_Iteration since this would also
+               --  process Gdk_Input events, and thus would recurse (since
+               --  Main_Iteration would detect input, which would call Wait,..)
+               --  Instead, we handle the events ourselves.
+               --  Note that we simply drop the input events, since we are
+               --  already processing the input anyway.
+               --  We limit the number of events processed so as to preserve
+               --  efficiency.
 
                Num_Events := 1;
-
                while Gtk.Main.Events_Pending
                  and then Num_Events <= Max_Events
                loop
-                  Tmp := Gtk.Main.Main_Iteration;
+                  Get (Event);
+                  if Event /= null then
+                     Do_Event (Event);
+                  end if;
                   Num_Events := Num_Events + 1;
                end loop;
 
-            when others =>
                --  It matched, we can simply return.
+               --  ??? Arno thinks this might be better moved before the case
+               --  statement, we'll have to look at when this Wait is called.
+               exit when Timeout = 0 or else Num = Timeout;
+               Num := Num + 1;
+
+            when others =>
                exit;
          end case;
       end loop;
