@@ -1323,7 +1323,8 @@ package body Src_Editor_View is
          --  the "is_word_break" behaviour of the underscore.
 
          --  Here we send a button_release_event before selecting the word, so
-         --  that ??? missing end of sentence
+         --  that we can stop propagating the "button_press_event" without
+         --  entering the selection-drag mode.
 
          Result := Return_Callback.Emit_By_Name
            (Widget, "button_release_event", Event);
