@@ -98,21 +98,13 @@ package Src_Info.Prj_Utils is
 
    function Get_Unit_Name
      (Filename : File_Name_Type;
-      Naming   : Prj.Naming_Data)
+      Project  : Prj.Project_Id)
       return Name_Id;
    --  Compute the Unit Name associated to the given Filename using the
    --  Naming information, whithout taking the exceptions into account.
    --  ??? Note that this function does not handles krunched filenames
    --  ??? at all (and will probably never do, since it does not have
    --  ??? enough information to do so).
-
-   function Extension_Matches
-     (Filename  : File_Name_Type;
-      Extension : Name_Id)
-      return Boolean;
-   --  Return true if the given filename has the given extension.
-   --  Note that this function also return False when Filename = Extension
-   --  as this does not make sense for a source filename.
 
    function Find_Object_File
      (Project_View    : Prj.Project_Id;
