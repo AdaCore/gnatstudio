@@ -119,8 +119,9 @@ procedure GVD_Main is
          end if;
       end if;
 
-      Bind_Text_Domain ("gvd", Prefix.all & Directory_Separator & "share" &
-        Directory_Separator & "locale");
+      Bind_Text_Domain
+        ("gvd", Prefix.all & GNAT.OS_Lib.Directory_Separator & "share" &
+         Directory_Separator & "locale");
 
       if Home.all /= "" then
          if Is_Directory_Separator (Home (Home'Last)) then
