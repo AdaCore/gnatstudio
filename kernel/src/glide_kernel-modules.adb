@@ -930,10 +930,10 @@ package body Glide_Kernel.Modules is
       Line              : Natural := 0;
       Column            : Natural := 0;
       Highlight_Line    : Boolean := True;
-      Enable_Navigation : Boolean := True)
+      Enable_Navigation : Boolean := True;
+      New_File          : Boolean := True)
    is
-      Value         : GValue_Array (1 .. 5);
-
+      Value : GValue_Array (1 .. 6);
    begin
       Init (Value (1), Glib.GType_String);
 
@@ -967,6 +967,9 @@ package body Glide_Kernel.Modules is
 
       Init (Value (5), Glib.GType_Boolean);
       Set_Boolean (Value (5), Enable_Navigation);
+
+      Init (Value (6), Glib.GType_Boolean);
+      Set_Boolean (Value (6), New_File);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
          Trace (Me, "No file editor was registered");
