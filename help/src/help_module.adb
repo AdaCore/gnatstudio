@@ -26,7 +26,6 @@ with GVD;
 with Csc_HTML_Widget;              use Csc_HTML_Widget;
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
-with Glide_Main_Window;            use Glide_Main_Window;
 with Glide_Kernel;                 use Glide_Kernel;
 with Glide_Kernel.Console;         use Glide_Kernel.Console;
 with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
@@ -46,7 +45,6 @@ with Gtkada.Handlers;              use Gtkada.Handlers;
 with Glide_Intl;                   use Glide_Intl;
 with Traces;                       use Traces;
 with OS_Utils;                     use OS_Utils;
-with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Find_Utils;                   use Find_Utils;
 with Gtk.Clipboard;                use Gtk.Clipboard;
@@ -81,22 +79,11 @@ package body Help_Module is
    --  Called when loading a url as part of another page display (e.g an
    --  image).
 
-   procedure On_Url
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Handler for the on_url signal
-
    procedure Link_Clicked
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Kernel : Kernel_Handle);
    --  Handler for the link_clicked signal
-
-   procedure Display_Url
-     (Kernel : access Kernel_Handle_Record'Class;
-      Html   : access Help_Browser_Record'Class;
-      Url    : String);
-   --  Display Url in Html.
 
    procedure Title_Changed
      (Object : access Glib.Object.GObject_Record'Class;
@@ -125,9 +112,9 @@ package body Help_Module is
       return Help_Browser;
    --  Create a new html editor that edits File.
 
-   procedure Display_Help
+   function Display_Help
      (Kernel    : access Kernel_Handle_Record'Class;
-      Help_File : String);
+      Help_File : String) return Help_Browser;
    --  Display HTML Help file
 
    function Key_Press
@@ -152,22 +139,15 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Help->Zoom in
 
-   generic
+   procedure On_Load_HTML
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Load HMTL_File in the HTML/Help widget
+
+   procedure Register_Menu
+     (Kernel    : access Kernel_Handle_Record'Class;
       HTML_File : String;
-   package HTML_Loader is
-      procedure On_Load_HTML
-        (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-      --  Load HMTL_File in the HTML/Help widget
-
-      function File_Name (Kernel : access Kernel_Handle_Record'Class)
-         return String;
-      --  Return the full file name for the help file
-
-      procedure Register_Menu
-        (Kernel : access Kernel_Handle_Record'Class;
-         Name   : String);
-      --  Register the menu in the GPS menubar
-   end HTML_Loader;
+      Name      : String);
+   --  Register the menu in the GPS menubar
 
    procedure On_Open_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -187,6 +167,16 @@ package body Help_Module is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  The contextual menu for HTML viewers.
+
+   procedure On_About
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Menu Help->About...
+
+   type String_Menu_Item_Record (Length : Natural) is new Gtk_Menu_Item_Record
+     with record
+        File : String (1 .. Length);
+     end record;
+   type String_Menu_Item is access all String_Menu_Item_Record'Class;
 
    ---------------------
    -- Help_Contextual --
@@ -235,87 +225,50 @@ package body Help_Module is
       return Selection_Context_Access (Context);
    end Default_Factory;
 
-   -----------------
-   -- HTML_Loader --
-   -----------------
+   ------------------
+   -- On_Load_HTML --
+   ------------------
 
-   package body HTML_Loader is
-      ------------------
-      -- On_Load_HTML --
-      ------------------
+   procedure On_Load_HTML
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Item : constant String_Menu_Item := String_Menu_Item (Widget);
+   begin
+      Open_Html (Kernel, Item.File);
 
-      procedure On_Load_HTML
-        (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-      is
-         pragma Unreferenced (Widget);
-      begin
-         Open_Html (Kernel, File_Name (Kernel));
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Load_HTML;
 
-      exception
-         when E : others =>
-            Trace (Me, "Unexpected exception: " & Exception_Information (E));
-      end On_Load_HTML;
+   -------------------
+   -- Register_Menu --
+   -------------------
 
-      ---------------
-      -- File_Name --
-      ---------------
+   procedure Register_Menu
+     (Kernel    : access Kernel_Handle_Record'Class;
+      HTML_File : String;
+      Name      : String)
+   is
+      Help : constant String := "/_" & (-"Help") & '/';
+      File : constant String := Locate_Html_File (Kernel, HTML_File);
+      Item : String_Menu_Item;
+   begin
+      Item := new String_Menu_Item_Record (HTML_File'Length);
+      Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Name);
+      Item.File := HTML_File;
 
-      function File_Name (Kernel : access Kernel_Handle_Record'Class)
-         return String
-      is
-         Top  : constant Glide_Window := Glide_Window
-           (Get_Main_Window (Kernel));
-      begin
-         return Format_Pathname
-           (Top.Prefix_Directory.all & "/doc/gps/html/" & HTML_File);
-      end File_Name;
+      Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Help,
+         Item        => Gtk_Menu_Item (Item));
+      Set_Sensitive (Item, File /= "");
 
-      -------------------
-      -- Register_Menu --
-      -------------------
-
-      procedure Register_Menu
-        (Kernel : access Kernel_Handle_Record'Class;
-         Name   : String)
-      is
-         Help : constant String := "/_" & (-"Help") & '/';
-      begin
-         Register_Menu
-           (Kernel, Help, Name, "", On_Load_HTML'Access,
-            Sensitive => Is_Regular_File (File_Name (Kernel)));
-      end Register_Menu;
-   end HTML_Loader;
-
-   package On_Welcome is new HTML_Loader ("gps-welcome.html");
-   --  Menu Help->Welcome
-
-   package On_GPS_Tutorial is new HTML_Loader ("gps-tutorial.html");
-   --  Menu Help->GPS Tutorial
-
-   package On_GPS_Help is new HTML_Loader ("gps.html");
-   --  Menu Help->Using GPS
-
-   package On_GVD_Help is new HTML_Loader ("gvd.html");
-   --  Menu Help->Using the GNU Visual Debugger
-
-   package On_GNAT_UG_Help is new HTML_Loader ("gnat_ug.html");
-   --  Menu Help->GNAT User's Guide
-
-   package On_GNAT_RM_Help is new HTML_Loader ("gnat_rm.html");
-   --  Menu Help->GNAT Reference Manual
-
-   package On_ARM95_Help is new HTML_Loader ("arm95.html");
-   --  Menu Help->Ada 95 Reference Manual
-
-   package On_GDB_Help is new HTML_Loader ("gdb.html");
-   --  Menu Help->Using the GNU Debugger
-
-   package On_GCC_Help is new HTML_Loader ("gcc.html");
-   --  Menu Help->Using GCC
-
-   procedure On_About
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Menu Help->About...
+      Kernel_Callback.Connect
+        (Item, "activate",
+         Kernel_Callback.To_Marshaller (On_Load_HTML'Access),
+         Kernel_Handle (Kernel));
+   end Register_Menu;
 
    ---------------
    -- Load_File --
@@ -377,7 +330,6 @@ package body Help_Module is
       Trace (Me, "url requested: " & Url);
 
       if Is_Absolute_Path (Url) then
-         Trace (Me, "Absolute path");
          Buffer := Read_File (Url);
       else
          declare
@@ -401,72 +353,6 @@ package body Help_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Url_Requested;
 
-   ------------
-   -- On_Url --
-   ------------
-
-   procedure On_Url
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      pragma Unreferenced (Object);
-      --  Html     : Help_Browser := Help_Browser (Object);
-      Url : constant String := Get_String (Nth (Params, 1));
-   begin
-      Trace (Me, "On_Url: " & Url);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Url;
-
-   -----------------
-   -- Display_Url --
-   -----------------
-
-   procedure Display_Url
-     (Kernel : access Kernel_Handle_Record'Class;
-      Html   : access Help_Browser_Record'Class;
-      Url    : String)
-   is
-      Anchor   : Natural := Index (Url, "#");
-      Result   : Boolean := True;
-   begin
-      if Anchor = 0 then
-         Anchor := Url'Last + 1;
-      end if;
-
-      if Is_Absolute_Path (Url) then
-         if Url /= Html.Current_Help_File.all then
-            Result := Load_File
-              (Kernel, Html, Url (Url'First .. Anchor - 1));
-         end if;
-      else
-         declare
-            Base_Dir : constant String :=
-              Dir_Name (Html.Current_Help_File.all);
-            Basename : constant String :=
-              Base_Name (Html.Current_Help_File.all);
-
-         begin
-            if Url (Url'First .. Anchor - 1) /= Basename then
-               Result := Load_File
-                 (Kernel, Html,
-                  Base_Dir & Url (Url'First .. Anchor - 1));
-            end if;
-         end;
-      end if;
-
-      if Result and then Anchor < Url'Last then
-         Push_State (Kernel_Handle (Kernel), Busy);
-         Trace (Me, "jumping to anchor " & Url (Anchor .. Url'Last));
-         Result := Jump_To_Anchor
-           (Html.Csc, Url (Anchor + 1 .. Url'Last));
-         Pop_State (Kernel_Handle (Kernel));
-      end if;
-
-   end Display_Url;
-
    ------------------
    -- Link_Clicked --
    ------------------
@@ -480,6 +366,7 @@ package body Help_Module is
       Url : constant String := Get_String (Nth (Params, 1));
 
    begin
+      Trace (Me, "Link_Clicked: " & Url);
       Open_Html (Kernel, Url);
    exception
       when E : others =>
@@ -691,8 +578,6 @@ package body Help_Module is
         (Html.Csc, "link_clicked",
          Link_Clicked'Access, User_Data => Kernel_Handle (Kernel),
          Slot_Object => Html);
-      Widget_Callback.Object_Connect
-        (Html.Csc, "on_url", On_Url'Access, Slot_Object => Html);
       Kernel_Callback.Object_Connect
         (Html.Csc, "title_changed",
          Title_Changed'Access, User_Data => Kernel_Handle (Kernel),
@@ -725,9 +610,9 @@ package body Help_Module is
    -- Display_Help --
    ------------------
 
-   procedure Display_Help
+   function Display_Help
      (Kernel    : access Kernel_Handle_Record'Class;
-      Help_File : String)
+      Help_File : String) return Help_Browser
    is
       MDI      : constant MDI_Window := Get_MDI (Kernel);
       Scrolled : Help_Browser;
@@ -738,7 +623,7 @@ package body Help_Module is
    begin
       if not Is_Regular_File (Help_File) then
          Insert (Kernel, Help_File & (-": File not found"), Mode => Error);
-         return;
+         return null;
       end if;
 
       Child := Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
@@ -766,6 +651,8 @@ package body Help_Module is
 
          Raise_Child (Child);
       end if;
+
+      return Scrolled;
    end Display_Help;
 
    ------------------
@@ -841,21 +728,15 @@ package body Help_Module is
    begin
       if Mime_Type = Mime_Html_File then
          declare
-            File  : constant String := Get_String (Data (Data'First));
-            MDI   : constant MDI_Window := Get_MDI (Kernel);
-            Child : constant MDI_Child := Find_MDI_Child_By_Tag
-              (MDI, Help_Browser_Record'Tag);
-            Html  : Help_Browser;
+            File   : constant String := Get_String (Data (Data'First));
+            Anchor : constant String := Get_String (Data (Data'First + 2));
+            Html  : constant Help_Browser := Display_Help (Kernel, File);
+            Result : Boolean;
+            pragma Unreferenced (Result);
          begin
-            if Child = null then
-               Display_Help (Kernel, File);
-
-               return True;
+            if Html /= null and then Anchor /= "" then
+               Result := Jump_To_Anchor (Html.Csc, Anchor);
             end if;
-
-            Html := Help_Browser (Get_Widget (Child));
-            Display_Url (Kernel, Html, File);
-            Raise_Child (Child);
          end;
 
          return True;
@@ -981,8 +862,10 @@ package body Help_Module is
    procedure Show_Tutorial
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      On_GPS_Tutorial.On_Load_HTML
-        (Get_Main_Window (Kernel), Kernel_Handle (Kernel));
+      Open_Html (Kernel, "gps-tutorial.html");
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Show_Tutorial;
 
    ---------------------
@@ -1030,17 +913,19 @@ package body Help_Module is
 
       Register_Menu
         (Kernel, Help, -"_Open HTML File...", "", On_Open_HTML'Access);
-      On_Welcome.Register_Menu (Kernel, -"_Welcome");
-      On_GPS_Tutorial.Register_Menu
-        (Kernel, -"GNAT Programming System _Tutorial");
-      On_GPS_Help.Register_Menu
-        (Kernel, -"Using the GNAT _Programming System");
-      On_GVD_Help.Register_Menu (Kernel, -"Using the GNU _Visual Debugger");
-      On_GNAT_UG_Help.Register_Menu (Kernel, -"GNAT _User's Guide");
-      On_GNAT_RM_Help.Register_Menu (Kernel, -"GNAT _Reference Manual");
-      On_ARM95_Help.Register_Menu (Kernel, -"_Ada 95 Reference Manual");
-      On_GDB_Help.Register_Menu (Kernel, -"Using the GNU _Debugger");
-      On_GCC_Help.Register_Menu (Kernel, -"Using _GCC");
+
+      Register_Menu (Kernel, "gps-welcome.html", -"_Welcome");
+      Register_Menu
+        (Kernel, "gps-tutorial.html", -"GNAT Programming System _Tutorial");
+      Register_Menu
+        (Kernel, "gps.html", -"Using the GNAT _Programming System");
+      Register_Menu
+        (Kernel, "gvd.html", -"Using the GNU _Visual Debugger");
+      Register_Menu (Kernel, "gnat_ugn.html", -"GNAT _User's Guide");
+      Register_Menu (Kernel, "gnat_rm.html", -"GNAT _Reference Manual");
+      Register_Menu (Kernel, "arm95.html", -"_Ada 95 Reference Manual");
+      Register_Menu (Kernel, "gdb.html", -"Using the GNU _Debugger");
+      Register_Menu (Kernel, "gcc.html", -"Using _GCC");
       Register_Menu (Kernel, Help, -"A_bout", "", On_About'Access);
    end Register_Module;
 
