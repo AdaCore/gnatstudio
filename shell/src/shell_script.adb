@@ -1245,6 +1245,7 @@ package body Shell_Script is
       First, Last  : Integer;
       Tmp          : GNAT.OS_Lib.String_Access;
       Quoted       : Boolean;
+      Triple_Quoted : Boolean;
    begin
       if Command /= "" then
          First := Command'First;
@@ -1262,14 +1263,23 @@ package body Shell_Script is
 
             Last := First;
             Quoted := False;
+            Triple_Quoted := False;
 
             while Last <= Command'Last loop
                exit when not Quoted
+                 and then not Triple_Quoted
                  and then (Command (Last) = ';'
                            or else Command (Last) = ASCII.LF);
 
                if Command (Last) = '"' then
-                  Quoted := not Quoted;
+                  if Last <= Command'Last - 2
+                    and then Command (Last + 1) = '"'
+                    and then Command (Last + 2) = '"'
+                  then
+                     Triple_Quoted := not Triple_Quoted;
+                  elsif not Triple_Quoted then
+                     Quoted := not Quoted;
+                  end if;
 
                elsif Command (Last) = '\'
                  and then Last < Command'Last
