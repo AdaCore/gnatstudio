@@ -111,7 +111,7 @@ package body Vdiff_Utils is
       List    : constant Gtk_Clist := Gtk_Clist (Event_Widget);
       Row     : Gint;
       Column  : Gint;
-      Valid   : Boolean;
+      Valid   : Boolean := False;
 
       pragma Unreferenced (Menu);
 
@@ -122,23 +122,26 @@ package body Vdiff_Utils is
          Dir_Name (Vdiff.File.all),
          Base_Name (Vdiff.File.all));
 
-      Get_Selection_Info
-        (List, Gint (Get_X (Event)), Gint (Get_Y (Event)), Row, Column, Valid);
+      if Get_Event_Type (Event) in Button_Press .. Button_Release then
+         Get_Selection_Info
+           (List, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            Row, Column, Valid);
 
-      if Valid then
-         declare
-            S : constant String := Get_Text (List, Row, 0);
-         begin
-            if S /= "" then
-               Set_Location_Information
-                 (Context,
-                  Line   => Integer'Value (S),
-                  Column => 1);
-            end if;
-         exception
-            when Constraint_Error =>
-               null;
-         end;
+         if Valid then
+            declare
+               S : constant String := Get_Text (List, Row, 0);
+            begin
+               if S /= "" then
+                  Set_Location_Information
+                    (Context,
+                     Line   => Integer'Value (S),
+                     Column => 1);
+               end if;
+            exception
+               when Constraint_Error =>
+                  null;
+            end;
+         end if;
       end if;
 
       return Selection_Context_Access (Context);
