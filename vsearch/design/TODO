@@ -25,20 +25,28 @@
 
   * [Yeti] Obtaining the project file list
 
-  * [Yeti] Don't scan empty comments /**/ and empty string "" for the pattern ?
+  * [Yeti] Don't scan empty comments /**/ and empty string "" ?
     Incompatible for patterns matching empty string.
 
   * [Yeti] Scan empty lines ?
     Only useful when pattern matches empty string.
 
-  * [Yeti] Speed
-    Searching in all recognized lexical elements is quite as searching with no
-    context. Difference is that syntactic delimiters ( /* " -- */ ) can't be
-    matched in current context-with implementation.
-
   * [Yeti] Move the abort flag and the callback access in HG_Window_Record.
 
   * [Yeti] Desactivate Stop when not searching, Start when searching.
+
+  * [Yeti] Scan in syntactic delimiters also ( /* " -- */ ) ?
+
+-----------
+-- Speed --
+-----------
+
+  * [Yeti] Comments and string and statements = no context (quite)
+    Difference is that syntactic delimiters ( /* " -- */ ) can't be matched in
+    current context-with implementation.
+
+  * [Yeti] Merge Scan_File_with_Context and Scan_Line_With_Context
+    Avoids many calls, but add indentation levels.
 
 ----------
 -- Bugs --
