@@ -248,6 +248,19 @@ package body Src_Editor_Buffer is
       --  changed.
 
       if Get_Object (Mark) /= Get_Object (Buffer.Insert_Mark) then
+
+         --  If the mark corresponds to a cursor position, set the stored
+         --  Insert_Mark accordingly.
+         declare
+            Mark_Name : String := Get_Name (Mark);
+         begin
+            if Mark_Name = "insert"
+              or else Mark_Name = "gtk_drag_target"
+            then
+               Buffer.Insert_Mark := Mark;
+            end if;
+         end;
+
          Get_Cursor_Position (Buffer, Line, Col);
          Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
       end if;
@@ -405,7 +418,13 @@ package body Src_Editor_Buffer is
             Replace_Cmd  : Editor_Replace_Slice;
 
          begin
-            if Length = 1 and then Text (1) = ASCII.LF then
+            if Length = 1
+              and then Text (1) = ASCII.LF
+
+            --  If the current insertion is due to a selection-drag, do not
+            --  do any automatic indentation.
+              and then not (Get_Name (Buffer.Insert_Mark) = "gtk_drag_target")
+            then
                Copy (Pos, Iter);
 
                --  Go to last char of the line pointed by Pos
@@ -488,6 +507,7 @@ package body Src_Editor_Buffer is
                      (1 .. Next_Indent => ' ') &
                      Slice (Blanks .. Slice_Length));
                   Enqueue (Buffer.Queue, Replace_Cmd);
+
                   Indented := True;
 
                   --  Need to recompute iter, since the slice replacement that
@@ -528,9 +548,14 @@ package body Src_Editor_Buffer is
                False,
                Natural (Get_Line (Pos)),
                Natural (Get_Line_Offset (Pos)));
+
+            Buffer.Inserting := True;
             Enqueue (Buffer.Queue, Command);
+            Buffer.Inserting := False;
+
             Add_Text (Command, Text);
             Buffer.Current_Command := Command_Access (Command);
+
          end if;
 
       elsif Get_Mode (Command) = Insertion then
@@ -545,14 +570,14 @@ package body Src_Editor_Buffer is
                False,
                Natural (Get_Line (Pos)),
                Natural (Get_Line_Offset (Pos)));
-            Enqueue (Buffer.Queue, Command);
-            Add_Text (Command, Text);
-            Buffer.Current_Command := Command_Access (Command);
 
-         else
-            Add_Text (Command, Text);
-            Buffer.Current_Command := Command_Access (Command);
+            Buffer.Inserting := True;
+            Enqueue (Buffer.Queue, Command);
+            Buffer.Inserting := False;
          end if;
+
+         Add_Text (Command, Text);
+         Buffer.Current_Command := Command_Access (Command);
 
       else
          End_Action (Buffer);
@@ -672,7 +697,10 @@ package body Src_Editor_Buffer is
                     Natural (Get_Line (Start_Iter)),
                     Natural (Get_Line_Offset (Start_Iter)),
                     Direction);
+
+            Buffer.Inserting := True;
             Enqueue (Buffer.Queue, Command);
+            Buffer.Inserting := False;
 
          else
             Direction := Get_Direction (Command);
@@ -1259,10 +1287,12 @@ package body Src_Editor_Buffer is
               "Invalid position for Set_Cursor_Position "
               & Get_Filename (Buffer) & Line'Img & Column'Img);
 
-      --  At this point, we know that the (Line, Column) position is
-      --  valid, so we can safely get the iterator at this position.
-      Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
-      Place_Cursor (Buffer, Iter);
+      if not Buffer.Inserting then
+         --  At this point, we know that the (Line, Column) position is
+         --  valid, so we can safely get the iterator at this position.
+         Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
+         Place_Cursor (Buffer, Iter);
+      end if;
    end Set_Cursor_Position;
 
    -------------------------
