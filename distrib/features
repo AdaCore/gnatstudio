@@ -1,5 +1,8 @@
 New features in GPS 1.2.0
 
+- New documentation can now be added through simple XML index files
+  A new menu Help->Contents provides a list of all registered documentation.
+
 New features in GPS 1.1.0
 
 - Project explorer has new contextual menus: "show files from project only"
