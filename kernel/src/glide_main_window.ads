@@ -26,7 +26,6 @@ with Gtk.Image; use Gtk.Image;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Toolbar; use Gtk.Toolbar;
 with Gtk.Main;
-with Gdk.Types;
 
 package Glide_Main_Window is
 
@@ -43,12 +42,6 @@ package Glide_Main_Window is
       Busy_Level           : Integer := 0;
       Interrupted          : Boolean := False;
       Desktop_Loaded       : Boolean := False;
-
-      MDI_Modifier         : Gdk.Types.Gdk_Modifier_Type;
-      MDI_Key              : Gdk.Types.Gdk_Key_Type;
-      MDI_Reverse_Key      : Gdk.Types.Gdk_Key_Type;
-      --  The keys used to change the current child in the MDI, cached for
-      --  efficiency
    end record;
    type Glide_Window is access all Glide_Window_Record'Class;
 
@@ -72,6 +65,9 @@ package Glide_Main_Window is
       Home_Dir         : String;
       Prefix_Directory : String);
    --  Internal initialization function.
+
+   procedure Register_Keys (Main_Window : access Glide_Window_Record'Class);
+   --  Register the key bindings associated with the window
 
    function Anim_Cb (Kernel : Glide_Kernel.Kernel_Handle) return Boolean;
    --  Function called when the GPS animation needs to be updated.

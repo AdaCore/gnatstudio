@@ -45,6 +45,7 @@ with Projects;                  use Projects;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glib.Values;               use Glib.Values;
+with Commands;                  use Commands;
 
 package body Glide_Main_Window is
 
@@ -63,7 +64,15 @@ package body Glide_Main_Window is
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
    --  Called when the the main window is destroyed
 
-   function Check_MDI_Selection (Data : Event_Data) return Boolean;
+   type MDI_Child_Selection_Command is new Root_Command with record
+      Kernel : Kernel_Handle;
+      Move_To_Next : Boolean;
+   end record;
+   type MDI_Child_Selection_Command_Access is access all
+     MDI_Child_Selection_Command'Class;
+   function Execute
+     (Command : access MDI_Child_Selection_Command)
+      return Command_Return_Type;
    --  Check whether Event should activate the selection dialog for MDI
    --  children.
 
@@ -187,21 +196,6 @@ package body Glide_Main_Window is
 
       Set_All_Floating_Mode
         (Get_MDI (Kernel), Get_Pref (Kernel, MDI_All_Floating));
-
-      --  ??? Approximate algorithm, maybe we should simply use a preference,
-      --  but previous and next need to have the same modifier
-
-      Get_Pref (Kernel, MDI_Switch_Child, Main.MDI_Modifier, Main.MDI_Key);
-
-      if Main.MDI_Key = GDK_Tab then
-         Main.MDI_Reverse_Key := GDK_ISO_Left_Tab;
-      elsif Main.MDI_Key in GDK_A .. GDK_Z then
-         Main.MDI_Reverse_Key := Main.MDI_Key + (GDK_LC_a - GDK_A);
-      elsif Main.MDI_Key in GDK_LC_a .. GDK_LC_z then
-         Main.MDI_Reverse_Key := Main.MDI_Key - (GDK_LC_a - GDK_A);
-      else
-         Main.MDI_Reverse_Key := Main.MDI_Key; -- no going backward
-      end if;
    end Preferences_Changed;
 
    ----------------
@@ -271,23 +265,52 @@ package body Glide_Main_Window is
          Delete_Callback'Access,
          Gtk_Widget (Main_Window),
          After => False);
-
-      Register_Key_Handlers (Main_Window.Kernel, Check_MDI_Selection'Access);
    end Initialize;
 
-   -------------------------
-   -- Check_MDI_Selection --
-   -------------------------
+   -------------------
+   -- Register_Keys --
+   -------------------
 
-   function Check_MDI_Selection (Data : Event_Data) return Boolean is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Event  : constant Gdk_Event := Get_Event (Data);
-      Win : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+   procedure Register_Keys (Main_Window : access Glide_Window_Record'Class) is
+      Command : MDI_Child_Selection_Command_Access;
    begin
-      return Check_Interactive_Selection_Dialog
-        (Get_MDI (Kernel), Event,
-         Win.MDI_Modifier, Win.MDI_Key, Win.MDI_Reverse_Key);
-   end Check_MDI_Selection;
+      Command              := new MDI_Child_Selection_Command;
+      Command.Kernel       := Main_Window.Kernel;
+      Command.Move_To_Next := True;
+      Register_Key
+        (Handler        => Get_Key_Handler (Main_Window.Kernel),
+         Name           => "Move to next window",
+         Default_Key    => GDK_Tab,
+         Default_Mod    => Control_Mask,
+         Command        => Command);
+
+      Command              := new MDI_Child_Selection_Command;
+      Command.Kernel       := Main_Window.Kernel;
+      Command.Move_To_Next := False;
+      Register_Key
+        (Handler        => Get_Key_Handler (Main_Window.Kernel),
+         Name           => "Move to previous window",
+         Default_Key    => GDK_ISO_Left_Tab,
+         Default_Mod    => Control_Mask + Shift_Mask,
+         Command        => Command);
+   end Register_Keys;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access MDI_Child_Selection_Command)
+      return Command_Return_Type
+   is
+      Data   : constant Event_Data := Get_Current_Event_Data (Command.Kernel);
+      Event  : constant Gdk_Event := Get_Event (Data);
+   begin
+      Check_Interactive_Selection_Dialog
+        (Get_MDI (Command.Kernel), Event,
+         Move_To_Next => Command.Move_To_Next);
+      return Success;
+   end Execute;
 
    ----------------
    -- On_Destroy --
