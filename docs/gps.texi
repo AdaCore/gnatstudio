@@ -4315,15 +4315,19 @@ in GPS:
 @table @code
 @item --debug
 Automatically start a debug session, as done by GVD.
-you can also specify a program name and its arguments, so this
+You can also specify a program name and its arguments, so this
 option replaces the @code{--pargs} and @code{executable-file} arguments in GVD.
 
 @item --debugger
 Equivalent to the same GVD option, with the difference that
 arguments can be specified as well, replacing the @code{--dargs} option.
+This option is only relevant @code{--debug} is specified, it is ignored
+otherwise.
 
 @item --target
 Same as in GVD.
+This option is only relevant @code{--debug} is specified, it is ignored
+otherwise.
 @end table
 
 For example, the equivalent of the following command line:
@@ -7322,6 +7326,8 @@ Options:
    --eval=lang:file    Execute an in-line script written in the language lang
 
 Source files are searched everywhere on the project's source path
+The --debugger and --target options are only relevant if --debug is also
+specified.
 @end smallexample
 
 @c --------------------------------------------------------------------
