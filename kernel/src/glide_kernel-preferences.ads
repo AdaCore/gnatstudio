@@ -94,6 +94,7 @@ package Glide_Kernel.Preferences is
    -- General --
    Default_Font          : Param_Spec_Font;
    Key_Theme_Name        : Param_Spec_String;
+   Use_Native_Dialogs    : Param_Spec_Boolean;
    Can_Change_Accels     : Param_Spec_Boolean;
    Default_Charset       : Param_Spec_String;
    Default_Widget_Width  : Param_Spec_Int;

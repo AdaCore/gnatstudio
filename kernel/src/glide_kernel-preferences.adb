@@ -93,6 +93,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Animated_Image), -"General");
 
+      Use_Native_Dialogs := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Use-Native-Dialogs",
+         Nick    => -"Native dialogs",
+         Blurb   =>
+           -"If true use OS native dialogs, otherwise use portable dialogs",
+         Default => True));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Use_Native_Dialogs), -"General");
+
       Can_Change_Accels := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Can-Change-Accels",
          Nick    => -"Dynamic key bindings",
