@@ -396,7 +396,7 @@ package body Src_Editor_Buffer is
                Result.Read_Only := True;
                Result.Contents  := To_Unchecked_String
                  (Buffer.Editable_Lines (Line).Text.all'Address);
-               Result.Length    := Result.Contents'Length;
+               Result.Length    := Buffer.Editable_Lines (Line).Text'Length;
             end if;
       end case;
 
