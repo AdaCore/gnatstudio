@@ -154,7 +154,7 @@ package body Src_Info.CPP is
       List                   : in out LI_File_List;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
-      Predefined_Object_Path : String) 
+      Predefined_Object_Path : String)
    is
       pragma Unreferenced (Handler);
       pragma Unreferenced (List);
