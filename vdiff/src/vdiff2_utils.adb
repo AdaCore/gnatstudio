@@ -25,9 +25,8 @@ with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
 
 with String_Utils;              use String_Utils;
-with Basic_Types;               use Basic_Types;
-
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Basic_Types;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 package body Vdiff2_Utils is
@@ -103,7 +102,7 @@ package body Vdiff2_Utils is
          end if;
       end if;
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
-      Free (Args_edit);
+      Basic_Types.Free (Args_edit);
    end Show_Merge;
 
    ----------------------
@@ -125,10 +124,10 @@ package body Vdiff2_Utils is
    begin
       Register_Highlighting (Kernel);
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
-      Free (Args_edit);
+      Basic_Types.Free (Args_edit);
       Args_edit := (1 => new String'(File2));
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
-      Free (Args_edit);
+      Basic_Types.Free (Args_edit);
 
       while Link /= null loop
          case Link.Action is
@@ -183,28 +182,32 @@ package body Vdiff2_Utils is
    procedure Hide_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Diff   : Diff_Occurrence_Link;
-      File1  : String;
-      File2  : String;
-      File3  : String := "") is
+      File1  : String_Access;
+      File2  : String_Access;
+      File3  : String_Access := null) is
       pragma Unreferenced (Diff);
    begin
-      Unhighlight_Line (Kernel, File1, 0, Default_Style);
-      Unhighlight_Line (Kernel, File1, 0, Old_Style);
-      Unhighlight_Line (Kernel, File1, 0, Append_Style);
-      Unhighlight_Line (Kernel, File1, 0, Remove_Style);
-      Unhighlight_Line (Kernel, File1, 0, Change_Style);
-
-      Unhighlight_Line (Kernel, File2, 0, Default_Style);
-      Unhighlight_Line (Kernel, File2, 0, Old_Style);
-      Unhighlight_Line (Kernel, File2, 0, Append_Style);
-      Unhighlight_Line (Kernel, File2, 0, Remove_Style);
-      Unhighlight_Line (Kernel, File2, 0, Change_Style);
-
-      Unhighlight_Line (Kernel, File3, 0, Default_Style);
-      Unhighlight_Line (Kernel, File3, 0, Old_Style);
-      Unhighlight_Line (Kernel, File3, 0, Append_Style);
-      Unhighlight_Line (Kernel, File3, 0, Remove_Style);
-      Unhighlight_Line (Kernel, File3, 0, Change_Style);
+      if File1 /= null then
+         Unhighlight_Line (Kernel, File1.all, 0, Default_Style);
+         Unhighlight_Line (Kernel, File1.all, 0, Old_Style);
+         Unhighlight_Line (Kernel, File1.all, 0, Append_Style);
+         Unhighlight_Line (Kernel, File1.all, 0, Remove_Style);
+         Unhighlight_Line (Kernel, File1.all, 0, Change_Style);
+      end if;
+      if File2 /= null then
+         Unhighlight_Line (Kernel, File2.all, 0, Default_Style);
+         Unhighlight_Line (Kernel, File2.all, 0, Old_Style);
+         Unhighlight_Line (Kernel, File2.all, 0, Append_Style);
+         Unhighlight_Line (Kernel, File2.all, 0, Remove_Style);
+         Unhighlight_Line (Kernel, File2.all, 0, Change_Style);
+      end if;
+      if File3 /= null then
+         Unhighlight_Line (Kernel, File3.all, 0, Default_Style);
+         Unhighlight_Line (Kernel, File3.all, 0, Old_Style);
+         Unhighlight_Line (Kernel, File3.all, 0, Append_Style);
+         Unhighlight_Line (Kernel, File3.all, 0, Remove_Style);
+         Unhighlight_Line (Kernel, File3.all, 0, Change_Style);
+      end if;
    end Hide_Differences;
 
 
@@ -247,7 +250,7 @@ package body Vdiff2_Utils is
       Res : constant String :=  Execute_GPS_Shell_Command
                        (Kernel, "add_blank_lines", Args_Line);
    begin
-      Free (Args_Line);
+      Basic_Types.Free (Args_Line);
       return Res;
    end Add_Line;
 
@@ -283,7 +286,7 @@ package body Vdiff2_Utils is
          Execute_GPS_Shell_Command (Kernel, "highlight", Args_Highlight);
          Free (Args_Highlight (3));
       end loop;
-      Free (Args_Highlight);
+      Basic_Types.Free (Args_Highlight);
    end Highlight_Line;
 
    ----------------------
@@ -301,7 +304,7 @@ package body Vdiff2_Utils is
                                          3 => new String'(Image (Pos)));
    begin
       Execute_GPS_Shell_Command (Kernel, "unhighlight", Args_Highlight);
-      Free (Args_Highlight);
+      Basic_Types.Free (Args_Highlight);
    end Unhighlight_Line;
 
    ---------------------
@@ -319,7 +322,7 @@ package body Vdiff2_Utils is
       Res : constant String := Execute_GPS_Shell_Command
         (Kernel, "create_mark", Args);
    begin
-      Free (Args);
+      Basic_Types.Free (Args);
       return Res;
    end Mark_Diff_Block;
 
@@ -340,23 +343,23 @@ package body Vdiff2_Utils is
    begin
       --  <preferences>
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Free (Args);
+      Basic_Types.Free (Args);
       Args := (1 => new String'(Append_Style),
                2 => new String'(Append_Color));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Free (Args);
+      Basic_Types.Free (Args);
       Args := (1 => new String'(Old_Style),
                2 => new String'(Old_Color));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Free (Args);
+      Basic_Types.Free (Args);
       Args := (1 => new String'(Remove_Style),
                2 => new String'(Remove_Color));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Free (Args);
+      Basic_Types.Free (Args);
       Args := (1 => new String'(Change_Style),
                2 => new String'(Change_Color));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Free (Args);
+      Basic_Types.Free (Args);
 
    end Register_Highlighting;
 end Vdiff2_Utils;
