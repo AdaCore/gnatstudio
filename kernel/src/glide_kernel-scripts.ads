@@ -189,6 +189,36 @@ package Glide_Kernel.Scripts is
    --  When storing a Class_Instance, the Callback_Data takes control of the
    --  instance, and will be in charge of freeing it.
 
+   procedure Set_Return_Value_Key
+     (Data : in out Callback_Data; Key : String; Append : Boolean := False)
+      is abstract;
+   procedure Set_Return_Value_Key
+     (Data : in out Callback_Data; Key : Integer; Append : Boolean := False)
+      is abstract;
+   procedure Set_Return_Value_Key
+     (Data   : in out Callback_Data;
+      Key    : Class_Instance;
+      Append : Boolean := False) is abstract;
+   --  Move the current value of Data, as set by Set_Return_Value into a
+   --  htable. Set_Return_Value_As_Htable must have been called first.
+   --  Typical usage would be:
+   --     Set_Return_Value (Data, 12);
+   --     Set_Return_Value_Key (Data, "key1");
+   --
+   --     Set_Return_Value_As_List (Data);
+   --     Set_Return_Value (Data, 1);
+   --     Set_Return_Value (Data, 2);
+   --     Set_Return_Value_Key (Data, "key2");
+   --  will create a htable containing (key1 => 12, key2 => (1, 2))
+   --
+   --  If Append is true and there is already a value set for Key, then the new
+   --  value is append to it (a list is created if necessary). This might not
+   --  be supported for languages that do not explicitly support htables like
+   --  the GPS shell.
+   --
+   --  No provision is made for creating htables of htables, although htables
+   --  of lists are supported, or for getting the currently set value for Key.
+
    ---------------------
    -- Class instances --
    ---------------------
