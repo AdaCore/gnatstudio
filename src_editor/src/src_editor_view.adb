@@ -1128,7 +1128,7 @@ package body Src_Editor_View is
             Slice (Index .. Slice_Length - Offset) & ASCII.LF &
             Blank_Slice (Next_Indent, Use_Tabs) &
             Slice (Blanks .. Slice_Length));
-         Enqueue (Get_Queue (Buffer), Replace_Cmd);
+         Enqueue (Buffer, Command_Access (Replace_Cmd));
 
          --  Need to recompute iter, since the slice replacement that
          --  we just did has invalidated iter.
@@ -1183,7 +1183,7 @@ package body Src_Editor_View is
                   Integer (Current_Line), 0,
                   Integer (Current_Line), Offset,
                   Blank_Slice (Indent, Use_Tabs));
-               Enqueue (Get_Queue (Buffer), Replace_Cmd);
+               Enqueue (Buffer, Command_Access (Replace_Cmd));
                Global_Offset := Global_Offset - Offset + Indent;
             end if;
 
