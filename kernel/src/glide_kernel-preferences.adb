@@ -564,16 +564,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Search_Src_Highlight), -"Messages");
 
-      Show_Build_Progress := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Messages-Show-Build-Progress",
-            Nick    => -"Show build progress",
-            Blurb   =>
-              -"True if the progress bar should show progress during builds",
-            Default => True));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Show_Build_Progress), -"Messages");
-
       File_Pattern := Param_Spec_String
         (Gnew_String
            (Name  => "Messages-File-Regexp",
