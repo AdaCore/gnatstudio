@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -109,13 +109,20 @@ package Language.C is
       Case_Exceptions : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception);
 
-   function Comment_Line
+   function Comment_Block
      (Lang    : access C_Language;
-      Line    : String;
-      Comment : Boolean := True) return String;
+      Block   : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String;
 
 private
    type C_Language is new Language_Root with null record;
+
+   function Comment_Line
+     (Lang    : access C_Language;
+      Line    : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String;
 
    C_Lang : constant Language_Access := new C_Language;
 end Language.C;
