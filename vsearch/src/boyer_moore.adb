@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -113,7 +113,7 @@ package body Boyer_Moore is
          Motif.Motif.all := To_Lower (From_String);
       end if;
 
-      Motif.Last_Occurrence (Motif.Motif (Motif_First)) := 2;
+      Motif.Last_Occurrence (Motif.Motif (Motif_First)) := 1;
 
       K := Motif_First - 1;
       Prefix_Func (Motif_First) := K;
@@ -124,7 +124,7 @@ package body Boyer_Moore is
 
          --  The last occurrence function
 
-         Motif.Last_Occurrence (Motif.Motif (Q)) := Q - Motif_First + 2;
+         Motif.Last_Occurrence (Motif.Motif (Q)) := Q - Motif_First + 1;
 
          --  The prefix function
 
