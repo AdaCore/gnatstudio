@@ -29,6 +29,8 @@ CFLAGS = -g -O2
 
 PROJECT_FILE = vsearch
 
+LIBS := $(LIBS) $(EXTRA_LIBS)
+
 ifneq ($(strip $(VSEARCH_SRCS)),)
    LIBS := $(VSEARCH_OBJ_DIR)/libvsearch$(AR_EXT) $(LIBS)
 endif
