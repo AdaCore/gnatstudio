@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;  use GNAT.Regpat;
-with Odd.Strings;  use Odd.Strings;
 with Odd.Pixmaps;  use Odd.Pixmaps;
 
 package body Language.Debugger.C is
