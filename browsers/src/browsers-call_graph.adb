@@ -173,6 +173,7 @@ package body Browsers.Call_Graph is
    type Execute_Callback is access procedure
      (Cb     : Examine_Callback;
       Entity : Entity_Information;
+      Ref    : E_Reference;
       Is_Renaming : Boolean);
 
    type Examine_Ancestors_Idle_Data is record
@@ -305,6 +306,7 @@ package body Browsers.Call_Graph is
    procedure Add_Entity_And_Link
      (Cb     : Examine_Callback;
       Entity : Entity_Information;
+      Ref    : E_Reference;
       Is_Renaming : Boolean);
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
 
@@ -566,7 +568,8 @@ package body Browsers.Call_Graph is
          while Get (Iter) /= Null_Scope_Tree_Node loop
             if Is_Subprogram (Get (Iter)) then
                Rename := Get_Entity (Get (Iter));
-               Execute (Callback, Rename, Is_Renaming => False);
+               Execute (Callback, Rename,
+                        Get_Reference (Get (Iter)), Is_Renaming => False);
                Destroy (Rename);
 
             --  For a label, do not insert it in the browser, but process
@@ -592,7 +595,7 @@ package body Browsers.Call_Graph is
       Renaming_Of
         (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
       if Is_Renaming and then Rename /= No_Entity_Information then
-         Execute (Callback, Rename, Is_Renaming => True);
+         Execute (Callback, Rename, No_Reference, Is_Renaming => True);
          Destroy (Rename);
       elsif Is_Renaming then
          Insert (Kernel,
@@ -707,7 +710,7 @@ package body Browsers.Call_Graph is
             --  A renaming entity ? Create a special link
             if Is_Renaming then
                E := Get_Entity (Node);
-               Data.Execute (Data.Callback, E, Is_Renaming => True);
+               Data.Execute (Data.Callback, E, No_Reference, True);
                Destroy (E);
 
                --  An entity that calls our entity.
@@ -721,7 +724,8 @@ package body Browsers.Call_Graph is
 
                if Parent /= Null_Scope_Tree_Node then
                   E := Get_Entity (Parent);
-                  Data.Execute (Data.Callback, E, Is_Renaming => False);
+                  Data.Execute
+                    (Data.Callback, E, Get_Reference (Node), False);
                   Destroy (E);
                end if;
             end if;
@@ -774,7 +778,7 @@ package body Browsers.Call_Graph is
       --  If we have a renaming, add the entry for the renamed entity
       Renaming_Of (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
       if Is_Renaming and then Rename /= No_Entity_Information then
-         Execute (Callback, Rename, Is_Renaming => False);
+         Execute (Callback, Rename, No_Reference, Is_Renaming => False);
          Destroy (Rename);
       elsif Is_Renaming then
          Insert (Kernel,
@@ -817,8 +821,10 @@ package body Browsers.Call_Graph is
    procedure Add_Entity_And_Link
      (Cb     : Examine_Callback;
       Entity : Entity_Information;
+      Ref    : E_Reference;
       Is_Renaming : Boolean)
    is
+      pragma Unreferenced (Ref);
       Child : Entity_Item;
       Link  : Browser_Link;
    begin
@@ -1615,17 +1621,32 @@ package body Browsers.Call_Graph is
       procedure Add_To_List
         (Cb     : Examine_Callback;
          Entity : Entity_Information;
+         Ref    : E_Reference;
          Is_Renaming : Boolean);
       --  Add a new entity to the return value
 
       procedure Add_To_List
         (Cb     : Examine_Callback;
          Entity : Entity_Information;
+         Ref    : E_Reference;
          Is_Renaming : Boolean)
       is
          pragma Unreferenced (Cb, Is_Renaming);
       begin
-         Set_Return_Value (Data, Create_Entity (Get_Script (Data), Entity));
+         if Ref /= No_Reference then
+            declare
+               Loc : constant File_Location := Get_Location (Ref);
+               R : constant String := Get_File (Loc) & ':'
+                 & Image (Get_Line (Loc)) & ':'
+                 & Image (Get_Column (Loc));
+            begin
+               Set_Return_Value (Data, R);
+            end;
+         else
+            Set_Return_Value (Data, -"<renaming>");
+         end if;
+         Set_Return_Value_Key
+           (Data, Create_Entity (Get_Script (Data), Entity), Append => True);
       end Add_To_List;
 
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
@@ -1641,11 +1662,9 @@ package body Browsers.Call_Graph is
             Include_Writes => True,
                Include_Reads  => True);
       elsif Command = "calls" then
-         Set_Return_Value_As_List (Data);
          Examine_Entity_Call_Graph_Iterator
            (Kernel, Entity, Cb, Add_To_List'Unrestricted_Access);
       elsif Command = "called_by" then
-         Set_Return_Value_As_List (Data);
          Examine_Ancestors_Call_Graph_Iterator
            (Kernel, Entity, Cb, Add_To_List'Unrestricted_Access,
             Background_Mode => False);
@@ -1700,7 +1719,12 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel,
          Command      => "calls",
-         Description  => -"Display the list of entities called by the entity.",
+         Return_Value => "htable",
+         Description  =>
+           -("Display the list of entities called by the entity. The returned"
+             & " value is a dictionary whose keys are the entities called by"
+             & " this entity, and whose value is a list of locations where"
+             & " the entity is referenced"),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
@@ -1708,7 +1732,12 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel,
          Command      => "called_by",
-         Description  => -"Display the list of entities that call the entity.",
+         Return_Value => "htable",
+         Description  =>
+           -("Display the list of entities that call the entity. The returned"
+             & " value is a dictionary whose keys are the entities which call"
+             & " this entity, and whose value is a list of locations where"
+             & " the entity is referenced"),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
