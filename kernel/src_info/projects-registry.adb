@@ -1879,6 +1879,18 @@ package body Projects.Registry is
       end if;
    end Create;
 
+   ---------------------------------
+   -- Get_Predefined_Project_Path --
+   ---------------------------------
+
+   function Get_Predefined_Project_Path
+     (Registry : Project_Registry) return String
+   is
+      pragma Unreferenced (Registry);
+   begin
+      return Prj.Ext.Project_Path;
+   end Get_Predefined_Project_Path;
+
    ------------------------------
    -- Compute_Predefined_Paths --
    ------------------------------

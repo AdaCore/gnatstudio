@@ -85,7 +85,12 @@ package Projects.Registry is
    function Get_Predefined_Object_Path
      (Registry : Project_Registry) return String;
    --  Return the predefined Object Path.
-   --  Return the current directory if no source path has been set yet.
+   --  Return the current directory if no object path has been set yet.
+
+   function Get_Predefined_Project_Path
+     (Registry : Project_Registry) return String;
+   --  Return the predefined project path, or the current directory if no
+   --  project path has been set yet.
 
    function Get_Predefined_Source_Files
      (Registry : Project_Registry)
