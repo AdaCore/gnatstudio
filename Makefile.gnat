@@ -41,13 +41,6 @@ GNAT_SOURCES= \
   g-os_lib.adb \
   g-string.ads \
   g-string.adb \
-  gpr2make.ads \
-  gpr2make.adb \
-  gprcmd.adb   \
-  bld.ads      \
-  bld.adb      \
-  bld-io.ads   \
-  bld-io.adb   \
   gnatvsn.ads \
   gnatvsn.adb \
   hostparm.ads \
@@ -164,8 +157,8 @@ GNAT_SOURCES= \
   urealp.adb \
   widechar.ads \
   widechar.adb \
-  Makefile.prolog \
-  Makefile.generic
+  gprmake.adb \
+  makegpr.adb
 
 list-sources:
 	@echo $(GNAT_SOURCES)
