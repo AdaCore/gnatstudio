@@ -178,6 +178,11 @@ package body Builder_Module is
       Args    : String_List_Utils.String_List.List) return String;
    --  Command handler for the "compile" command.
 
+   procedure Compile_File
+     (Kernel : Kernel_Handle;
+      File   : String);
+   --  Launch a compilation command for File.
+
    -----------------------
    -- Compute_Arguments --
    -----------------------
@@ -530,10 +535,6 @@ package body Builder_Module is
    ------------------
    -- Compile_File --
    ------------------
-
-   procedure Compile_File
-     (Kernel : Kernel_Handle;
-      File   : String);
 
    procedure Compile_File
      (Kernel : Kernel_Handle;
