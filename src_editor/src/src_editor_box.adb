@@ -871,6 +871,7 @@ package body Src_Editor_Box is
       pragma Unreferenced (Object, Params);
 
    begin
+      Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
 
       if Box.Default_GC /= null then
@@ -979,7 +980,7 @@ package body Src_Editor_Box is
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Frame, Box.Cursor_Loc_Label);
 
-      Box_Callback.Connect
+      Box.Cursor_Handler := Box_Callback.Connect
         (Box.Source_Buffer,
          "cursor_position_changed",
          Cursor_Position_Changed_Handler'Access,
@@ -1151,6 +1152,26 @@ package body Src_Editor_Box is
 
       return False;
    end Check_Timestamp_Idle;
+
+   ---------------------
+   -- Check_Timestamp --
+   ---------------------
+
+   procedure Check_Timestamp
+     (Editor : access Source_Editor_Box_Record)
+   is
+      B : Boolean;
+   begin
+      if Get_Text (Editor.Modified_Label) = (-"Unmodified") then
+         B := Check_Timestamp (Editor.Source_Buffer, Ask_User => False);
+      else
+         B := Check_Timestamp (Editor.Source_Buffer, Ask_User => True);
+
+         if B then
+            Editor.Timestamp_Mode := Check_At_Modify;
+         end if;
+      end if;
+   end Check_Timestamp;
 
    --------------
    -- Focus_In --
@@ -2285,7 +2306,11 @@ package body Src_Editor_Box is
       Identifier    : String;
       Info          : Glide_Kernel.Modules.Line_Information_Data) is
    begin
-      Add_File_Information (Editor.Source_View, Identifier, Info);
+      Add_File_Information
+        (Editor.Source_Buffer,
+         Identifier,
+         Gtk_Widget (Editor.Source_View),
+         Info);
    end Add_File_Information;
 
    ------------------------------------
@@ -2299,7 +2324,7 @@ package body Src_Editor_Box is
       Every_Line     : Boolean) is
    begin
       Create_Line_Information_Column
-        (Editor.Source_View, Identifier, Stick_To_Data, Every_Line);
+        (Editor.Source_Buffer, Identifier, Stick_To_Data, Every_Line);
    end Create_Line_Information_Column;
 
    ------------------------------------
@@ -2311,7 +2336,7 @@ package body Src_Editor_Box is
       Identifier     : String) is
    begin
       Remove_Line_Information_Column
-        (Editor.Source_View, Identifier);
+        (Editor.Source_Buffer, Identifier);
    end Remove_Line_Information_Column;
 
    ------------------------
