@@ -781,7 +781,7 @@ package body Browsers.Projects is
       Imported_By_Command (Command.all).Recursive := True;
       Register_Contextual_Menu
         (Kernel, "Show recursive projects imported",
-         Label  => -"Show all projects imported by %p",
+         Label  => -"Show projects imported by %p recursively",
          Action => Command,
          Filter => Action_Filter
            (Create (Module => Project_Browser_Module_Name)));
@@ -794,8 +794,7 @@ package body Browsers.Projects is
          Label  => -"Show projects depending on %p",
          Stock_Image => Stock_Go_Back,
          Action => Command,
-         Filter => Action_Filter
-           (Create (Module => Project_Browser_Module_Name)));
+         Filter => Lookup_Filter (Kernel, "Project only"));
 
       Find_Utils.Register_Search_Function
         (Kernel => Kernel,
