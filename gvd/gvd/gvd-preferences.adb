@@ -84,14 +84,16 @@ package body GVD.Preferences is
                Default   => GVD.Default_Font));
          Register_Property (Prefs, Param_Spec (Default_Font), -"General");
 
-         Fixed_Font := Param_Spec_Font
-           (Gnew_Font
-              (Name      => XML_Prefix & "Fixed-Font",
-               Nick      => -"Fixed font",
+         Fixed_Style :=
+           Gnew_Style
+              (Name      => XML_Prefix & "Fixed-Style",
+               Nick      => -"Fixed font style",
                Blurb     =>
                  -"Fixed font used to display e.g. debugger commands",
-               Default   => "Courier 10"));
-         Register_Property (Prefs, Param_Spec (Fixed_Font), -"General");
+               Default_Font   => "Courier 10",
+               Default_Fg   => "black",
+               Default_Bg   => "white");
+         Register_Property (Prefs, Param_Spec (Fixed_Style), -"General");
 
       else
          External_Flags := External_Flags or Param_Writable;
