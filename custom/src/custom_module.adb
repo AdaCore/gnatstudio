@@ -900,7 +900,6 @@ package body Custom_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Toolbar_Class : constant Class_Type := New_Class (Kernel, "Toolbar");
-      Process_Class : constant Class_Type := New_Class (Kernel, "Process");
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -913,40 +912,33 @@ package body Custom_Module is
 
       Custom_Module_ID.Kernel := Kernel_Handle (Kernel);
 
+      Custom_Module_ID.Process_Class := New_Class (Kernel, "Process");
+
       Register_Command
-        (Kernel, "spawn",
-         Minimum_Args => 4,
+        (Kernel, Constructor_Method,
+         Minimum_Args => 1,
          Maximum_Args => 4,
-         Class         => Process_Class,
-         Static_Method => True,
+         Class         => Custom_Module_ID.Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "send",
-         Minimum_Args  => 2,
-         Maximum_Args  => 3,
-         Class         => Process_Class,
-         Static_Method => True,
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
+         Class         => Custom_Module_ID.Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "interrupt",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Process_Class,
-         Static_Method => True,
+         Class         => Custom_Module_ID.Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "kill",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Process_Class,
-         Static_Method => True,
+         Class         => Custom_Module_ID.Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "expect",
-         Minimum_Args => 3,
-         Maximum_Args => 3,
-         Class         => Process_Class,
-         Static_Method => True,
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Class         => Custom_Module_ID.Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
 
       Register_Command
@@ -996,7 +988,13 @@ package body Custom_Module is
       Unchecked_Free (X.Pattern);
       Free (X.Unmatched_Output);
       Free (X.Processed_Output);
+      Free (X.On_Exit);
+      Free (X.On_Match);
    end Free;
+
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (X : in out Custom_Action_Access) is
    begin
@@ -1006,15 +1004,27 @@ package body Custom_Module is
       end if;
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (X : in out Expect_Filter) is
    begin
       Unchecked_Free (X.Pattern);
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (X : in out Entry_Action_Record) is
    begin
       Free (X.Label);
    end Free;
+
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (X : in out GPS_Combo_Access) is
    begin
@@ -1025,14 +1035,5 @@ package body Custom_Module is
          Unchecked_Free (X);
       end if;
    end Free;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (K : Integer) return Header_Num is
-   begin
-      return Header_Num ((K mod Integer (Header_Num'Last)) + 1);
-   end Hash;
 
 end Custom_Module;

@@ -101,8 +101,8 @@ with GNAT.Expect;
 with GNAT.Regpat;
 with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Gtk.Combo;                 use Gtk.Combo;
-with HTables;
 with Generic_List;
 
 with Ada.Unchecked_Deallocation;
@@ -119,7 +119,7 @@ package Custom_Module is
 
    type Expect_Filter is record
       Pattern : Pattern_Matcher_Access;
-      Action  : Action_Record_Access;
+      Action  : Glide_Kernel.Scripts.Subprogram_Type;
    end record;
 
    procedure Free (X : in out Expect_Filter);
@@ -128,11 +128,10 @@ package Custom_Module is
    package Expect_Filter_List is new Generic_List (Expect_Filter);
 
    type Custom_Action_Record is record
-      Command_Id : Integer;
       Pattern    : Pattern_Matcher_Access;
       Command    : Argument_List_Access;
-      On_Match   : Action_Record_Access;
-      On_Exit    : Action_Record_Access;
+      On_Match   : Glide_Kernel.Scripts.Subprogram_Type;
+      On_Exit    : Glide_Kernel.Scripts.Subprogram_Type;
       Fd         : GNAT.Expect.Process_Descriptor_Access;
 
       Processed_Output : String_Access;
@@ -145,21 +144,9 @@ package Custom_Module is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Custom_Action_Record, Custom_Action_Access);
 
-   type Header_Num is range 1 .. 1_000;
-
    procedure Free (X : in out Custom_Action_Access);
    procedure Free (X : in out Custom_Action_Record);
    --  Free memory associated to X.
-
-   No_Custom_Action : aliased Custom_Action_Record :=
-     (0, null, null, null, null, null, null, null,
-      Expect_Filter_List.Null_List);
-
-   function Hash (K : Integer) return Header_Num;
-
-   package Processes_Hash is new HTables.Simple_HTable
-     (Header_Num, Custom_Action_Access, Free,
-      No_Custom_Action'Access, Integer, Hash, "=");
 
    ------------------------------------------
    -- Definitions for custom combo entries --
@@ -213,14 +200,10 @@ package Custom_Module is
    ----------------------
 
    type Custom_Module_ID_Record is new Module_ID_Record with record
-      Kernel     : Kernel_Handle;
-
-      Contextual : Contextual_Menu_Access;
-
-      Processes    : Processes_Hash.HTable;
-      Available_Id : Integer := 1;
-
-      Combos       : Combo_List.List;
+      Kernel        : Kernel_Handle;
+      Contextual    : Contextual_Menu_Access;
+      Process_Class : Glide_Kernel.Scripts.Class_Type;
+      Combos        : Combo_List.List;
    end record;
    type Custom_Module_ID_Access is access all Custom_Module_ID_Record'Class;
 

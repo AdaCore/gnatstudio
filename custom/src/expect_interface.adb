@@ -18,38 +18,37 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
-
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Expect;               use GNAT.Expect;
-
-with Glide_Intl;                use Glide_Intl;
-
-with Custom_Module;             use Custom_Module;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
-
-with String_Utils;              use String_Utils;
 with System;
 with Ada.Unchecked_Conversion;
 
+with Glide_Intl;                use Glide_Intl;
+with Custom_Module;             use Custom_Module;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+
 package body Expect_Interface is
 
-   use Processes_Hash;
    use Expect_Filter_List;
+
+   Command_Cst         : aliased constant String := "command";
+   Regexp_Cst          : aliased constant String := "regexp";
+   On_Match_Action_Cst : aliased constant String := "on_match";
+   On_Exit_Action_Cst  : aliased constant String := "on_exit";
+   Add_Lf_Cst          : aliased constant String := "add_lf";
+   Constructor_Args : constant Cst_Argument_List :=
+     (Command_Cst'Access, Regexp_Cst'Access, On_Match_Action_Cst'Access,
+      On_Exit_Action_Cst'Access);
+   Send_Args : constant Cst_Argument_List :=
+     (Command_Cst'Access, Add_Lf_Cst'Access);
+   Expect_Args : constant Cst_Argument_List :=
+     (Regexp_Cst'Access, On_Match_Action_Cst'Access);
 
    -----------------------
    -- Local subprograms --
    -----------------------
-
-   function Get_New_Id return Integer;
-   --  Return an available Id to store a command named Name.
-   --  Return "" if there is no available resource for storing this command.
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer);
    --  Called when an external process has finished running
@@ -63,16 +62,29 @@ package body Expect_Interface is
    function To_String (S : String_Access) return String;
    --  Return the contents of S. if S is null, return "".
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Integer);
-   function Convert is new Ada.Unchecked_Conversion
-     (Integer, System.Address);
+   function Get_Data
+     (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access;
+   --  Get or store some data in an instance of GPS.Process
 
-   procedure Execute_Action_With_Args
-     (Action : Action_Record_Access;
-      Desc   : String;
-      Args   : String_List_Access);
-   --  Execute Action with Args, with Desc as description.
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Custom_Action_Access);
+   function Convert is new Ada.Unchecked_Conversion
+     (Class_Instance, System.Address);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Class_Instance);
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access
+   is
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, N, Custom_Module_ID.Process_Class);
+   begin
+      return Convert (Value);
+   end Get_Data;
 
    ---------------
    -- To_String --
@@ -105,74 +117,31 @@ package body Expect_Interface is
       end if;
    end Concat;
 
-   ------------------------------
-   -- Execute_Action_With_Args --
-   ------------------------------
-
-   procedure Execute_Action_With_Args
-     (Action : Action_Record_Access;
-      Desc   : String;
-      Args   : String_List_Access)
-   is
-      Custom : Command_Access;
-   begin
-      Custom := Create_Proxy
-        (Action.Command,
-         (null,
-          null,
-          null,
-          Args,
-          new String'(Desc)));
-
-      Launch_Background_Command
-        (Custom_Module_ID.Kernel,
-         Custom,
-         True,
-         True,
-         "",
-         True);
-   end Execute_Action_With_Args;
-
    -------------
    -- Exit_Cb --
    -------------
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
-      Id : constant Integer := Convert (Data.Callback_Data);
-      D  : Custom_Action_Access;
-
+      Inst : constant Class_Instance := Convert (Data.Callback_Data);
+      D    : constant Custom_Action_Access := Convert (Get_Data (Inst));
    begin
-      D := Get (Custom_Module_ID.Processes, Id);
-
-      if D = null
-        or else D.all = No_Custom_Action
-      then
-         raise Program_Error;
-      end if;
-
-      --  Execute end action.
-
       if D.On_Exit /= null then
          declare
-            Args   : GNAT.OS_Lib.String_List_Access;
+            C : Callback_Data'Class := Create
+              (Get_Script (Inst), Arguments_Count => 3);
          begin
-            Args := new GNAT.OS_Lib.String_List (1 .. 3);
-            Args (1) := new String'(Image (D.Command_Id));
-            Args (2) := new String'(Image (Status));
-            Args (3) := new String'
-              (To_String (D.Processed_Output)
-               & To_String (D.Unmatched_Output));
-
-            Execute_Action_With_Args
-              (D.On_Exit,
-               D.Command (D.Command'First).all,
-               Args);
+            Set_Nth_Arg (C, 1, Inst);
+            Set_Nth_Arg (C, 2, Status);
+            Set_Nth_Arg (C, 3, To_String (D.Processed_Output)
+                         & To_String (D.Unmatched_Output));
+            Execute (D.On_Exit, C);
+            Free (C);
          end;
       end if;
 
-      --  Remove the process from the table.
-
-      Remove (Custom_Module_ID.Processes, Id);
+      --  Decrement the reference counter for this instance, since the process
+      --  is dead. We have no actual control on when exactly it will be freed
+      Free (Inst);
 
       --  ??? Add exception handler ?
    end Exit_Cb;
@@ -182,25 +151,17 @@ package body Expect_Interface is
    ---------------
 
    procedure Output_Cb (Data : Process_Data; Output : String) is
-      Id        : constant Integer := Convert (Data.Callback_Data);
-      D         : Custom_Action_Access;
+      Inst : constant Class_Instance := Convert (Data.Callback_Data);
+      D    : constant Custom_Action_Access := Convert (Get_Data (Inst));
       Matches   : Match_Array (0 .. Max_Paren_Count);
       Beg_Index : Natural;
       End_Index : Natural;
       Prev_Beg  : Natural;
       Node      : List_Node;
       Prev      : List_Node;
-      Action_To_Execute : Action_Record_Access;
+      Action_To_Execute : Subprogram_Type;
 
    begin
-      D := Get (Custom_Module_ID.Processes, Id);
-
-      if D = null
-        or else D.all = No_Custom_Action
-      then
-         raise Program_Error;
-      end if;
-
       if D.Pattern = null
         and then D.On_Exit = null
       then
@@ -285,19 +246,18 @@ package body Expect_Interface is
             --  We have found a match.
 
             declare
-               Args : String_List_Access;
+               C : Callback_Data'Class := Create
+                 (Get_Script (Inst), Arguments_Count => 3);
             begin
-               Args := new GNAT.OS_Lib.String_List (1 .. 3);
-               Args (1) := new String'(Image (D.Command_Id));
-               Args (2) := new String'
-                 (D.Unmatched_Output (Matches (0).First .. Matches (0).Last));
-               Args (3) := new String'
-                 (D.Unmatched_Output (Beg_Index .. Matches (0).First - 1));
-
-               Execute_Action_With_Args
-                 (Action_To_Execute,
-                  -"Matching " & D.Command (D.Command'First).all,
-                  Args);
+               Set_Nth_Arg (C, 1, Inst);
+               Set_Nth_Arg
+                 (C, 2,
+                  D.Unmatched_Output (Matches (0).First .. Matches (0).Last));
+               Set_Nth_Arg
+                 (C, 3,
+                  D.Unmatched_Output (Beg_Index .. Matches (0).First - 1));
+               Execute (Action_To_Execute, C);
+               Free (C);
             end;
 
             Beg_Index := Matches (0).Last + 1;
@@ -341,22 +301,6 @@ package body Expect_Interface is
       --  ??? Add exception handler ?
    end Output_Cb;
 
-   ----------------
-   -- Get_New_Id --
-   ----------------
-
-   function Get_New_Id return Integer is
-      Result : constant Integer := Custom_Module_ID.Available_Id;
-   begin
-      if Custom_Module_ID.Available_Id = Integer'Last then
-         Custom_Module_ID.Available_Id := 1;
-      else
-         Custom_Module_ID.Available_Id := Custom_Module_ID.Available_Id + 1;
-      end if;
-
-      return Result;
-   end Get_New_Id;
-
    --------------------------
    -- Custom_Spawn_Handler --
    --------------------------
@@ -366,47 +310,16 @@ package body Expect_Interface is
       Command : String)
    is
       Kernel : constant Kernel_Handle := Custom_Module_ID.Kernel;
-
-      function Get_Process_For_Id (Id : Integer) return Custom_Action_Access;
-      --  Return the process for Id. Return null if the process could not be
-      --  found.
-
-      ------------------------
-      -- Get_Process_For_Id --
-      ------------------------
-
-      function Get_Process_For_Id (Id : Integer) return Custom_Action_Access is
-         D : Custom_Action_Access;
-      begin
-         if Id < Integer (Header_Num'First)
-           or else Id > Integer (Header_Num'Last)
-         then
-            Set_Error_Msg
-              (Data, -"Not an ID of a process controlled by GPS:" & Id'Img);
-            return null;
-         end if;
-
-         D := Get (Custom_Module_ID.Processes, Id);
-
-         if D = null
-           or else D.all = No_Custom_Action
-         then
-            Set_Error_Msg (Data, -"Process not found:" & Id'Img);
-            return null;
-         end if;
-
-         return D;
-      end Get_Process_For_Id;
-
+      D : Custom_Action_Access;
    begin
-      if Command = "spawn" then
-         declare
-            Command_Line  : constant String := Nth_Arg (Data, 1);
-            Regexp        : constant String := Nth_Arg (Data, 2);
-            On_Match      : constant String := Nth_Arg (Data, 3);
-            On_Exit       : constant String := Nth_Arg (Data, 4);
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Constructor_Args);
 
-            Custom_Action : Custom_Action_Record;
+         declare
+            Inst : constant Class_Instance :=
+              Nth_Arg (Data, 1, Custom_Module_ID.Process_Class);
+            Command_Line  : constant String := Nth_Arg (Data, 2);
+            Regexp        : constant String := Nth_Arg (Data, 3, "");
             Success       : Boolean;
          begin
             if Command_Line = "" then
@@ -414,134 +327,74 @@ package body Expect_Interface is
                return;
             end if;
 
-            Custom_Action.Command := Argument_String_To_List (Command_Line);
-            Custom_Action.Command_Id := Get_New_Id;
-
-            if On_Exit /= "" then
-               Custom_Action.On_Exit := Lookup_Action (Kernel, On_Exit);
-
-               if Custom_Action.On_Exit = null then
-                  Set_Error_Msg (Data, -"Action not found for on_exit_action");
-                  return;
-               end if;
-            end if;
-
-            if On_Match /= "" then
-               Custom_Action.On_Match := Lookup_Action (Kernel, On_Match);
-
-               if Custom_Action.On_Match = null then
-                  Set_Error_Msg
-                    (Data, -"Action not found for on_match_action");
-                  return;
-               end if;
-            end if;
+            D          := new Custom_Action_Record;
+            D.Command  := Argument_String_To_List (Command_Line);
+            D.On_Match := Nth_Arg (Data, 4, null);
+            D.On_Exit  := Nth_Arg (Data, 5, null);
 
             if Regexp /= "" then
-               Custom_Action.Pattern :=
-                 new Pattern_Matcher'
-                   (Compile (Regexp, Multiple_Lines));
+               D.Pattern :=
+                 new Pattern_Matcher'(Compile (Regexp, Multiple_Lines));
             end if;
 
             --  All the parameters are correct: launch the process.
 
             Launch_Process
-              (Kernel    => Kernel,
-               Command   => Custom_Action.Command
-                 (Custom_Action.Command'First).all,
-               Arguments => Custom_Action.Command
-                 (Custom_Action.Command'First + 1
-                  .. Custom_Action.Command'Last),
-
-               Console   => null,
-               --  ??? Should we add an optional parameter allowing users to
-               --  create a console for their processes ?
-
-               Callback  => Output_Cb'Access,
-               Exit_Cb   => Exit_Cb'Access,
-               Success   => Success,
-
-               Show_Command => False,
-               Callback_Data => Convert (Custom_Action.Command_Id),
-
+              (Kernel        => Kernel,
+               Command       => D.Command (D.Command'First).all,
+               Arguments => D.Command (D.Command'First + 1 .. D.Command'Last),
+               Console       => null,
+               Callback      => Output_Cb'Access,
+               Exit_Cb       => Exit_Cb'Access,
+               Success       => Success,
+               Show_Command  => False,
+               Callback_Data => Convert (Inst),
                Line_By_Line  => False,
                Directory     => "",
-               Fd            => Custom_Action.Fd);
+               Fd            => D.Fd);
 
             if Success then
-               --  Add the process to the HTable of launched processes.
-
-               Set
-                 (Custom_Module_ID.Processes,
-                  Custom_Action.Command_Id,
-                  new Custom_Action_Record'(Custom_Action));
-
-               Set_Return_Value (Data, Custom_Action.Command_Id);
+               Set_Data (Inst, D.all'Address);
             else
-               Free (Custom_Action);
-
+               Free (D);
                Set_Error_Msg
                  (Data, -"Could not launch command """ & Command_Line & """");
-               return;
             end if;
 
+            --  Instance is automatically destroyed when the process exits.
+            Ref (Inst);
          end;
 
       elsif Command = "send" then
-         declare
-            Id           : constant Integer := Nth_Arg (Data, 1);
-            Command_Line : constant String  := Nth_Arg (Data, 2);
-            Add_LF       : constant Boolean := Nth_Arg (Data, 3, True);
-            D            : Custom_Action_Access;
-         begin
-            D := Get_Process_For_Id (Id);
+         Name_Parameters (Data, Send_Args);
+         D := Get_Data (Data, 1);
+         Send (D.Fd.all,
+               Str => Nth_Arg (Data, 2),
+               Add_LF => Nth_Arg (Data, 3, True));
 
-            if D = null then
-               return;
-            end if;
+      elsif Command = "interrupt" then
+         D := Get_Data (Data, 1);
+         Interrupt (D.Fd.all);
 
-            Send (D.Fd.all, Command_Line, Add_LF);
-         end;
-
-      elsif Command = "interrupt" or else Command = "kill" then
-         declare
-            Id : constant Integer := Nth_Arg (Data, 1);
-            D  : Custom_Action_Access;
-            S  : Integer;
-         begin
-            D := Get_Process_For_Id (Id);
-
-            if D = null then
-               return;
-            end if;
-
-            if Command = "kill" then
-               Close (D.Fd.all, S);
-            else
-               Interrupt (D.Fd.all);
-            end if;
-         end;
+      elsif Command = "kill" then
+         D := Get_Data (Data, 1);
+         Close (D.Fd.all);
 
       elsif Command = "expect" then
+         Name_Parameters (Data, Expect_Args);
+         D := Get_Data (Data, 1);
+
          declare
-            Id     : constant Integer := Nth_Arg (Data, 1);
             Regexp : constant String  := Nth_Arg (Data, 2);
-            Action : constant String  := Nth_Arg (Data, 3);
-            D      : Custom_Action_Access;
             Filter : Expect_Filter;
          begin
-            D := Get_Process_For_Id (Id);
-
-            if D = null then
-               return;
-            end if;
-
             if Regexp = "" then
                Set_Error_Msg
                  (Data, -"Cannot register expect for an empty regexp.");
                return;
             end if;
 
-            Filter.Action := Lookup_Action (Custom_Module_ID.Kernel, Action);
+            Filter.Action := Nth_Arg (Data, 3);
 
             if Filter.Action = null then
                Set_Error_Msg (Data, -"Action not found for expect_action");
