@@ -1,13 +1,11 @@
 
-Known Problems fixed in GVD 2.2.3
+Known Problems fixed in GVD 2.0.0
 
 - [9130-004] Explorer doesn't display complete profile for Ada subprograms
   Problem:   The source explorer displays the parameters of the subprograms,
              but doesn't display the returned type.
   Workaround: Click on the entity so that the source_editor displays the
              appropriate source file. The returned type is visible there.
-
-Known Problems fixed in GVD 2.0.0
 
 - [9320-018] Opening an empty file
   Problem:    When opening an empty file (either from the source explorer
