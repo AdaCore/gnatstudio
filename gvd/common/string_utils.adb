@@ -1183,6 +1183,11 @@ package body String_Utils is
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Argument_List, Argument_List_Access);
+      Backslashed   : Boolean;
+      Quoted        : Boolean;
+      Triple_Quoted : Boolean;
+      Has_Triple    : Boolean;
+      Start_Idx     : Integer;
 
    begin
       Idx := Arg_String'First;
@@ -1190,104 +1195,78 @@ package body String_Utils is
       loop
          exit when Idx > Arg_String'Last;
 
-         declare
-            Quoted  : Boolean := False;
-            Backqd  : Boolean := False;
-            Old_Idx : Integer;
-            Triple_Quoted : constant Boolean :=
-              Idx + 2 <= Arg_String'Last
-              and then Arg_String (Idx) = '"'
-              and then Arg_String (Idx + 1) = '"'
-              and then Arg_String (Idx + 2) = '"';
+         Backslashed   := False;
+         Quoted        := False;
+         Triple_Quoted := False;
+         Start_Idx     := Idx;
 
-         begin
-            if Triple_Quoted then
-               Idx := Idx + 3;
-            end if;
-
-            Old_Idx := Idx;
-
-            loop
-               --  An unquoted space is the end of an argument
-
-               if not (Backqd or Quoted or Triple_Quoted)
-                 and then Arg_String (Idx) = ' '
-               then
-                  exit;
-
-               --  Start of a quoted string
-
-               elsif not (Backqd or Quoted or Triple_Quoted)
-                 and then Arg_String (Idx) = '"'
-               then
-                  Quoted := True;
-
-               --  End of a quoted string and end of an argument
-
-               elsif (Quoted and not Backqd)
-                 and then Arg_String (Idx) = '"'
-               then
-                  Idx := Idx + 1;
-                  exit;
-
-               --  End of triple quoted string
-
-               elsif (Triple_Quoted and not Backqd)
-                 and then Idx + 2 <= Arg_String'Last
-                 and then Arg_String (Idx) = '"'
-                 and then Arg_String (Idx + 1) = '"'
-                 and then Arg_String (Idx + 2) = '"'
-               then
-                  Idx := Idx + 3;
-                  exit;
-
-               --  Following character is backquoted
-
-               elsif Arg_String (Idx) = '\' then
-                  Backqd := True;
-
-               --  Turn off backquoting after advancing one character
-
-               elsif Backqd then
-                  Backqd := False;
-
-               end if;
-
-               Idx := Idx + 1;
-               exit when Idx > Arg_String'Last;
-            end loop;
-
-            --  Found an argument
-
-            New_Argc := New_Argc + 1;
-
-            --  Resize the table if needed
-            if New_Argc > Max_Args then
-               declare
-                  New_New_Argv : Argument_List (1 .. Max_Args * 2);
-               begin
-                  New_New_Argv (1 .. Max_Args) := New_Argv.all;
-                  Unchecked_Free (New_Argv);
-                  New_Argv := new Argument_List'(New_New_Argv);
-               end;
-
-               Max_Args := Max_Args * 2;
-            end if;
-
-            if Triple_Quoted then
-               New_Argv (New_Argc) :=
-                 new String'(Arg_String (Old_Idx .. Idx - 4));
+         while Idx <= Arg_String'Last
+           and then (Backslashed
+                     or else Quoted
+                     or else Triple_Quoted
+                     or else Arg_String (Idx) /= ' ')
+         loop
+            if Backslashed then
+               Backslashed := False;
             else
-               New_Argv (New_Argc) :=
-                 new String'(Arg_String (Old_Idx .. Idx - 1));
+               case Arg_String (Idx) is
+                  when '\' =>
+                     Backslashed := True;
+
+                  when '"' =>
+                     if Quoted then
+                        Quoted := False;
+                     else
+                        Has_Triple := Idx + 2 <= Arg_String'Last
+                          and then Arg_String (Idx) = '"'
+                          and then Arg_String (Idx + 1) = '"'
+                          and then Arg_String (Idx + 2) = '"';
+                        if Has_Triple then
+                           Triple_Quoted := not Triple_Quoted;
+                           Idx := Idx + 2;
+                        else
+                           Quoted := True;
+                        end if;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
             end if;
 
-            --  Skip extraneous spaces
+            Idx := Idx + 1;
+         end loop;
 
-            while Idx <= Arg_String'Last and then Arg_String (Idx) = ' ' loop
-               Idx := Idx + 1;
-            end loop;
-         end;
+         --  Found an argument
+
+         New_Argc := New_Argc + 1;
+
+         --  Resize the table if needed
+         if New_Argc > Max_Args then
+            declare
+               New_New_Argv : Argument_List (1 .. Max_Args * 2);
+            begin
+               New_New_Argv (1 .. Max_Args) := New_Argv.all;
+               Unchecked_Free (New_Argv);
+               New_Argv := new Argument_List'(New_New_Argv);
+            end;
+
+            Max_Args := Max_Args * 2;
+         end if;
+
+         if Triple_Quoted then
+            New_Argv (New_Argc) :=
+              new String'(Arg_String (Start_Idx .. Idx - 4));
+         else
+            New_Argv (New_Argc) :=
+              new String'(Arg_String (Start_Idx .. Idx - 1));
+         end if;
+
+         --  Skip extraneous spaces
+
+         while Idx <= Arg_String'Last and then Arg_String (Idx) = ' ' loop
+            Idx := Idx + 1;
+         end loop;
       end loop;
 
       declare
