@@ -146,7 +146,7 @@ package body GVD.Window_Settings is
       Num_Pages : constant Gint :=
         Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
       Widget    : Gtk_Widget;
-      A         : Guint;
+      A         : Gint;
 
    begin
       if Current_Window_Settings = null then
@@ -241,7 +241,7 @@ package body GVD.Window_Settings is
                         & Image (Image'First + 1 .. Image'Last)),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
-                              (Process.Stack_List, 0)) - A),
+                              (Process.Stack_List, 0))) - A,
                        True);
 
                   if Process.Backtrace_Mask / (2 ** 2) = 0 then
@@ -255,7 +255,7 @@ package body GVD.Window_Settings is
                         & Image (Image'First + 1 .. Image'Last)),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
-                              (Process.Stack_List, 1)) - A),
+                              (Process.Stack_List, 1))) - A,
                        True);
 
                   if Process.Backtrace_Mask / (2 ** 3) = 0 then
@@ -269,7 +269,7 @@ package body GVD.Window_Settings is
                         & Image (Image'First + 1 .. Image'Last)),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
-                              (Process.Stack_List, 2)) - A),
+                              (Process.Stack_List, 2))) - A,
                        True);
 
                   if Process.Backtrace_Mask / (2 ** 4) = 0 then
@@ -283,7 +283,7 @@ package body GVD.Window_Settings is
                         & Image (Image'First + 1 .. Image'Last)),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
-                              (Process.Stack_List, 3)) - A),
+                              (Process.Stack_List, 3))) - A,
                        True);
 
                   if Process.Backtrace_Mask / (2 ** 5) = 0 then
@@ -297,7 +297,7 @@ package body GVD.Window_Settings is
                         & Image (Image'First + 1 .. Image'Last)),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
-                              (Process.Stack_List, 4)) - A),
+                              (Process.Stack_List, 4))) - A,
                        True);
 
                   Set (String_Gint
