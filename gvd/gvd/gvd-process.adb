@@ -984,7 +984,7 @@ package body GVD.Process is
 
       if Window.Standalone
         and then Is_Regular_File
-          (Window.Gvd_Home_Dir.all
+          (Window.Home_Dir.all
            & Directory_Separator
            & "window_settings")
       then
