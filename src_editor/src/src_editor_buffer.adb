@@ -2194,13 +2194,15 @@ package body Src_Editor_Buffer is
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean)
    is
-      Contents : GNAT.OS_Lib.String_Access;
-      UTF8     : Gtkada.Types.Chars_Ptr;
-      Ignore   : aliased Natural;
-      Length   : aliased Natural;
-      Last     : Natural;
-      CR_Found : Boolean := False;
-      F, L     : Gtk_Text_Iter;
+      Contents      : GNAT.OS_Lib.String_Access;
+      UTF8          : Gtkada.Types.Chars_Ptr;
+      Ignore        : aliased Natural;
+      Length        : aliased Natural;
+      Last          : Natural;
+      CR_Found      : Boolean := False;
+      F, L          : Gtk_Text_Iter;
+      Valid         : Boolean;
+      First_Invalid : Natural;
 
       File_Is_New : constant Boolean := not Buffer.Original_Text_Inserted;
 
@@ -2303,7 +2305,14 @@ package body Src_Editor_Buffer is
       end if;
 
       Free (Contents);
-      Insert_At_Cursor (Buffer, UTF8, Gint (Length));
+      UTF8_Validate (To_Unchecked_String (UTF8) (1 .. Length),
+                     Valid, First_Invalid);
+
+      if Valid then
+         Insert_At_Cursor (Buffer, UTF8, Gint (Length));
+      else
+         Insert_At_Cursor (Buffer, UTF8, Gint (First_Invalid) - 1);
+      end if;
 
       g_free (UTF8);
 
