@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2004                        --
---                            ACT-Europe                             --
+--                    Copyright (C) 2002-2005                        --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -658,13 +658,14 @@ package body Projects is
       while List /= No_Array_Element loop
          Lang := Tree.Array_Elements.Table (List).Index;
 
+         Get_Name_String (Tree.Array_Elements.Table (List).Value.Value);
+
          --  We first need to check the naming schemes for the supported
          --  languages (in case they redefine some of the predefined naming
-         --  schemes, such as .h for c++ files). In this is not found in the
+         --  schemes, such as .h for c++ files). If this is not found in the
          --  list of supported languages, then return any match we had
 
          L     := Langs;
-         Get_Name_String (Tree.Array_Elements.Table (List).Value.Value);
          if Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len)) then
             while L /= Nil_String loop
                if Tree.String_Elements.Table (L).Value = Lang then
