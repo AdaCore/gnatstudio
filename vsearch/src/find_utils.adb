@@ -191,7 +191,11 @@ package body Find_Utils is
 
          loop
             Match (RE, Buffer, Context.Sub_Matches.all, Pos, End_Index);
-            exit when Context.Sub_Matches (0) = No_Match;
+
+            --  The second test below works around an apparent bug in
+            --  GNAT.Regpat
+            exit when Context.Sub_Matches (0) = No_Match
+              or else Context.Sub_Matches (0).First > Buffer'Last;
 
             Pos := Context.Sub_Matches (0).First;
             To_Line_Column (Pos);
