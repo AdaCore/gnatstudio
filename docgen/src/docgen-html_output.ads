@@ -30,7 +30,6 @@
 
 
 with Ada.Text_IO; use Ada.Text_IO;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package Docgen.Html_Output is
 
@@ -94,15 +93,17 @@ private
       Info   : Doc_Info);
    --  Add a type to the documentation
 
-   function Format_HTML
-     (Entity_List : Type_Entity_List.List;
-      Text        : String;
-      File_Name   : String;
-      Entity_Name : String;
-      Entity_Line : Natural;
-      Is_Body     : Boolean;
-      Do_Checks   : Boolean) return GNAT.OS_Lib.String_Access;
-   --  Return the formatted Text as HTML code
+   procedure Format_HTML
+     (File          : Ada.Text_IO.File_Type;
+      Entity_List   : Type_Entity_List.List;
+      Text          : String;
+      File_Name     : String;
+      Entity_Name   : String;
+      Entity_Line   : Natural;
+      Is_Body       : Boolean;
+      Process_Body  : Boolean;
+      Do_Checks     : Boolean);
+   --  Formatted Text as HTML code and write to the docfile.
 
    procedure Doc_HTML_Header
      (File   : Ada.Text_IO.File_Type;
