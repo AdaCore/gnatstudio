@@ -18,44 +18,51 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-with Gdk.Color;               use Gdk.Color;
-with Gdk.Pixbuf;              use Gdk.Pixbuf;
-with Gdk.Pixmap;              use Gdk.Pixmap;
-with Gdk.Types;               use Gdk.Types;
-with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
-with Gdk.Window;              use Gdk.Window;
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Container;           use Gtk.Container;
-with Gtk.Dialog;              use Gtk.Dialog;
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.GEntry;              use Gtk.GEntry;
-with Gtk.Handlers;            use Gtk.Handlers;
-with Gtk.Image;               use Gtk.Image;
-with Gtk.Label;               use Gtk.Label;
-with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
-with Gtk.Stock;               use Gtk.Stock;
-with Gtk.Table;               use Gtk.Table;
-with Gtk.Toolbar;             use Gtk.Toolbar;
-with Gtk.Widget;              use Gtk.Widget;
-with Gtk.Window;              use Gtk.Window;
-with Gtkada.File_Selector;    use Gtkada.File_Selector;
-with Gtkada.Handlers;         use Gtkada.Handlers;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Factory_Data;            use Factory_Data;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Pixmap;                use Gdk.Pixmap;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gdk.Window;                use Gdk.Window;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Container;             use Gtk.Container;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Table;                 use Gtk.Table;
+with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+with Gtkada.Canvas;             use Gtkada.Canvas;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
 
+with Histories;                 use Histories;
+with List_Select_Pkg;           use List_Select_Pkg;
 with Display_Items;             use Display_Items;
 with Items;                     use Items;
+with Breakpoints_Editor;        use Breakpoints_Editor;
+with GVD.Canvas;                use GVD.Canvas;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Call_Stack;            use GVD.Call_Stack;
+with GVD.Dialogs;               use GVD.Dialogs;
+with GVD.Menu;                  use GVD.Menu;
+with GVD.Proc_Utils;            use GVD.Proc_Utils;
 with Std_Dialogs;               use Std_Dialogs;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
 with GVD.Memory_View;           use GVD.Memory_View;
-with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Text_Box.Asm_Editor;   use GVD.Text_Box.Asm_Editor;
 with GVD.Types;                 use GVD.Types;
@@ -108,6 +115,11 @@ with GPS.Kernel.Scripts;
 package body GVD_Module is
 
    Me : constant Debug_Handle := Create ("Debugger");
+
+   Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
+   --  The key in the history for the arguments to the run command.
+   --  WARNING: this constant is shared with builder_module.adb, since we want
+   --  to have the same history for the run command in GPS.
 
    Debugger_Started : constant String := "debugger_started";
 
@@ -218,15 +230,6 @@ package body GVD_Module is
       State  : Debugger_State);
    --  Change the sensitive state of the debugger menu items and toolbar
    --  buttons
-
-   generic
-      with procedure Debug_Command
-        (Object : Data_Type_Access;
-         Action : Glib.Guint;
-         Widget : Limited_Widget);
-   procedure Generic_Debug_Command
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Generic procedure used for most debugger callbacks.
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
@@ -613,32 +616,6 @@ package body GVD_Module is
       end if;
    end Set_Busy;
 
-   ---------------------------
-   -- Generic_Debug_Command --
-   ---------------------------
-
-   procedure Generic_Debug_Command
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger :=
-        Get_Current_Process (Top);
-      use Debugger;
-
-   begin
-      if Process /= null and then Process.Debugger /= null then
-         Debug_Command (Top.all'Access, 0, Null_Widget);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Generic_Debug_Command;
-
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -663,93 +640,92 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Debug Core File
 
-   procedure On_Attach is new
-     Generic_Debug_Command (GVD.Menu.On_Attach_To_Process);
+   procedure On_Attach
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Attach
 
-   procedure On_Detach is new
-     Generic_Debug_Command (GVD.Menu.On_Detach_Process);
+   procedure On_Detach
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Detach
 
-   procedure On_Kill is new
-     Generic_Debug_Command (GVD.Menu.On_Kill);
+   procedure On_Kill
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Kill
 
-   procedure On_Command_History is new
-     Generic_Debug_Command (GVD.Menu.On_Command_History);
-   --  Debug->Session->Command History
-
-   procedure On_Call_Stack is new
-     Generic_Debug_Command (GVD.Menu.On_Call_Stack);
+   procedure On_Call_Stack
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Call Stack
 
-   procedure On_Threads is new Generic_Debug_Command (GVD.Menu.On_Threads);
+   procedure On_Threads
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Threads
 
-   procedure On_Tasks is new Generic_Debug_Command (GVD.Menu.On_Tasks);
+   procedure On_Tasks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Tasks
 
-   procedure On_PD is new Generic_Debug_Command (GVD.Menu.On_PD);
+   procedure On_PD
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Protection Domains
 
-   procedure On_Edit_Breakpoints is new
-     Generic_Debug_Command (GVD.Menu.On_Edit_Breakpoints);
+   procedure On_Edit_Breakpoints
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Edit Breakpoints
 
-   procedure On_Examine_Memory is new
-     Generic_Debug_Command (GVD.Menu.On_Examine_Memory);
+   procedure On_Examine_Memory
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Examine Memory
 
-   procedure On_Display_Locals is new
-     Generic_Debug_Command (GVD.Menu.On_Display_Local_Variables);
+   procedure On_Display_Locals
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Display Local Variables
 
-   procedure On_Display_Args is new
-     Generic_Debug_Command (GVD.Menu.On_Display_Arguments);
+   procedure On_Display_Args
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Display Arguments
 
-   procedure On_Display_Regs is new
-     Generic_Debug_Command (GVD.Menu.On_Display_Registers);
+   procedure On_Display_Regs
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Display Registers
 
-   procedure On_Display_Expression is new
-     Generic_Debug_Command (GVD.Menu.On_Display_Expression);
+   procedure On_Display_Expression
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Display Any Expression
 
-   procedure On_Data_Refresh is new
-     Generic_Debug_Command (GVD.Menu.On_Refresh);
+   procedure On_Data_Refresh
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Refresh
 
-   procedure On_Start is new
-     Generic_Debug_Command (GVD.Menu.On_Run);
-   --  Debug->On_Start menu
+   procedure On_Start
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Start menu
 
-   procedure On_Step is new
-     Generic_Debug_Command (GVD.Menu.On_Step);
+   procedure On_Step
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Step menu
 
-   procedure On_Step_Instruction is new
-     Generic_Debug_Command (GVD.Menu.On_Step_Instruction);
+   procedure On_Step_Instruction
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Step Instruction menu
 
-   procedure On_Next is new
-     Generic_Debug_Command (GVD.Menu.On_Next);
+   procedure On_Next
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Next menu
 
-   procedure On_Next_Instruction is new
-     Generic_Debug_Command (GVD.Menu.On_Next_Instruction);
+   procedure On_Next_Instruction
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Next Instruction menu
 
-   procedure On_Finish is new
-     Generic_Debug_Command (GVD.Menu.On_Finish);
+   procedure On_Finish
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Finish menu
 
-   procedure On_Continue is new
-     Generic_Debug_Command (GVD.Menu.On_Continue);
+   procedure On_Continue
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Continue menu
 
-   procedure On_Interrupt is new
-     Generic_Debug_Command (GVD.Menu.On_Interrupt);
+   procedure On_Interrupt
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Interrupt
 
    procedure On_Debug_Terminate_Current
@@ -1002,6 +978,862 @@ package body GVD_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Add_Symbols;
+
+   ---------------
+   -- On_Attach --
+   ---------------
+
+   procedure On_Attach
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top           : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process       : constant Visual_Debugger := Get_Current_Process (Top);
+      Process_List  : List_Select_Access;
+      Success       : Boolean;
+      Info          : Process_Info;
+      Button        : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot attach to a task/process while the") & ASCII.LF &
+            (-"underlying debugger is busy.") & ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      Gtk_New (Process_List, Title => -"Process Selection");
+
+      Open_Processes (Process.Debugger);
+
+      loop
+         Next_Process (Process.Debugger, Info, Success);
+
+         exit when not Success;
+
+         Add_Item (Process_List, Info.Id, Info.Info);
+      end loop;
+
+      Close_Processes (Process.Debugger);
+
+      declare
+         Argument : constant String := Show (Process_List);
+      begin
+         if Argument /= "" then
+            Attach_Process
+              (Process.Debugger, Argument, Mode => GVD.Types.Visible);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Attach;
+
+   ---------------
+   -- On_Detach --
+   ---------------
+
+   procedure On_Detach
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot detach the task/process while the") & ASCII.LF &
+            (-"underlying debugger is busy.") & ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+
+      else
+         Detach_Process (Process.Debugger, Mode => GVD.Types.Visible);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Detach;
+
+   -------------
+   -- On_Step --
+   -------------
+
+   procedure On_Step
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Step_Into (Process.Debugger, Mode => GVD.Types.Visible);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Step;
+
+   -------------------------
+   -- On_Step_Instruction --
+   -------------------------
+
+   procedure On_Step_Instruction
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Step_Into_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Step_Instruction;
+
+   -------------
+   -- On_Next --
+   -------------
+
+   procedure On_Next
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Step_Over (Process.Debugger, Mode => GVD.Types.Visible);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Next;
+
+   -------------------------
+   -- On_Next_Instruction --
+   -------------------------
+
+   procedure On_Next_Instruction
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Step_Over_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Next_Instruction;
+
+   ---------------
+   -- On_Finish --
+   ---------------
+
+   procedure On_Finish
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Finish (Process.Debugger, Mode => GVD.Types.Visible);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Finish;
+
+   -----------------
+   -- On_Continue --
+   -----------------
+
+   procedure On_Continue
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Continue (Process.Debugger, Mode => GVD.Types.Visible);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Continue;
+
+   -------------
+   -- On_Kill --
+   -------------
+
+   procedure On_Kill
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Kill_Process (Process.Debugger, Mode => GVD.Types.Visible);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Kill;
+
+   ------------------
+   -- On_Interrupt --
+   ------------------
+
+   procedure On_Interrupt
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      --  Give some visual feedback to the user
+
+      Output_Text (Process, "<^C>" & ASCII.LF, Is_Command => True);
+      Unregister_Dialog (Process);
+
+      --  Need to flush the queue of commands
+      Clear_Queue (Process.Debugger);
+
+      Interrupt (Process.Debugger);
+
+      if not Command_In_Process (Get_Process (Process.Debugger)) then
+         Display_Prompt (Process.Debugger);
+      end if;
+
+      Set_Busy (Process, False);
+
+      --  We used to flush the output here, so that if the program was
+      --  outputting a lot of things, we just stop there.
+      --  However, this is not doable, since it in fact also flushes the
+      --  prompt that the debugger prints after interruption. Calling
+      --  Display_Prompt is also not acceptable, since we might be busy
+      --  processing another command.
+
+      --  Note that doing anything at this point is very unsafe, since we got
+      --  called while handling a command, and this command has not been fully
+      --  handled yet, so we cannot reliably send new commands to the debugger
+      --  without creating a synchronization problem. Also, we should be able
+      --  to clean up properly the current command, which is particularly
+      --  tricky when handling an internal command.
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Interrupt;
+
+   -------------------
+   -- On_Call_Stack --
+   -------------------
+
+   procedure On_Call_Stack
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : Visual_Debugger;
+      Child   : MDI_Child;
+      Button  : Message_Dialog_Buttons;
+      List    : Debugger_List_Link := Top.First_Debugger;
+      pragma Unreferenced (Button);
+
+   begin
+      while List /= null loop
+         Process := Visual_Debugger (List.Debugger);
+
+         if Process.Debugger /= null then
+            if Process.Stack = null then
+               Create_Call_Stack (Process);
+
+               if Command_In_Process (Get_Process (Process.Debugger)) then
+                  Button := Message_Dialog
+                    ((-"Cannot show call stack while the debugger is busy.") &
+                     ASCII.LF &
+                     (-"Interrupt the debugger or wait for its availability."),
+                     Dialog_Type => Warning,
+                     Buttons => Button_OK);
+
+               else
+                  Update_Call_Stack (Process);
+               end if;
+
+            else
+               Child := Find_MDI_Child (Top.MDI, Process.Stack);
+
+               if Child /= null then
+                  Raise_Child (Child);
+               else
+                  --  Something really bad happened: the stack window is not
+                  --  part of the MDI, reset it.
+
+                  Destroy (Process.Stack);
+                  Process.Stack := null;
+                  Create_Call_Stack (Process);
+               end if;
+            end if;
+         end if;
+
+         List := List.Next;
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Call_Stack;
+
+   ----------------
+   -- On_Threads --
+   ----------------
+
+   procedure On_Threads
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+      Dialog : Thread_Dialog_Access;
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot display threads list while the debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      if Top.Thread_Dialog = null then
+         Gtk_New (Dialog, Gtk_Window (Top));
+         Top.Thread_Dialog := Gtk_Dialog (Dialog);
+      end if;
+
+      Show_All (Top.Thread_Dialog);
+      Gdk_Raise (Get_Window (Top.Thread_Dialog));
+      Update (Dialog, Process);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Threads;
+
+   --------------
+   -- On_Tasks --
+   --------------
+
+   procedure On_Tasks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+      Dialog : Task_Dialog_Access;
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot display tasks list while the debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      if Top.Task_Dialog = null then
+         Gtk_New (Dialog, Gtk_Window (Top));
+         Top.Task_Dialog := Gtk_Dialog (Dialog);
+      end if;
+
+      Show_All (Top.Task_Dialog);
+      Gdk_Raise (Get_Window (Top.Task_Dialog));
+      Update (Dialog, Process);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Tasks;
+
+   -----------
+   -- On_PD --
+   -----------
+
+   procedure On_PD
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+      Dialog : PD_Dialog_Access;
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot display protection domain list while the " &
+             "debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      if Top.PD_Dialog = null then
+         Gtk_New (Dialog, Gtk_Window (Top));
+         Top.PD_Dialog := Gtk_Dialog (Dialog);
+      end if;
+
+      Show_All (Top.PD_Dialog);
+      Gdk_Raise (Get_Window (Top.PD_Dialog));
+      Update (Dialog, Process);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_PD;
+
+   -------------------------
+   -- On_Edit_Breakpoints --
+   -------------------------
+
+   procedure On_Edit_Breakpoints
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Button  : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot edit breakpoints while the debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      Breakpoint_Editor
+        (Breakpoint_Editor_Access (Top.Breakpoints_Editor), Process);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Edit_Breakpoints;
+
+   -----------------------
+   -- On_Examine_Memory --
+   -----------------------
+
+   procedure On_Examine_Memory
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top         : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process     : constant Visual_Debugger := Get_Current_Process (Top);
+      Memory_View : GVD_Memory_View;
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Top.Memory_View = null then
+         Gtk_New (Memory_View, Gtk_Widget (Top));
+         Top.Memory_View := Gtk_Window (Memory_View);
+      end if;
+
+      Show_All (Top.Memory_View);
+      Gdk_Raise (Get_Window (Top.Memory_View));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Examine_Memory;
+
+   -----------------------
+   -- On_Display_Locals --
+   -----------------------
+
+   procedure On_Display_Locals
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Process_User_Command
+        (Process,
+         "graph display `" & Info_Locals (Process.Debugger) & '`',
+         Output_Command => True);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Display_Locals;
+
+   ---------------------
+   -- On_Display_Args --
+   ---------------------
+
+   procedure On_Display_Args
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Process_User_Command
+        (Process,
+         "graph display `" & Info_Args (Process.Debugger) & '`',
+         Output_Command => True);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Display_Args;
+
+   ---------------------
+   -- On_Display_Regs --
+   ---------------------
+
+   procedure On_Display_Regs
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Process_User_Command
+        (Process,
+         "graph display `" & Info_Registers (Process.Debugger) & '`',
+         Output_Command => True);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Display_Regs;
+
+   ---------------------------
+   -- On_Display_Expression --
+   ---------------------------
+
+   procedure On_Display_Expression
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Display_Expression (Process);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Display_Expression;
+
+   ---------------------
+   -- On_Data_Refresh --
+   ---------------------
+
+   procedure On_Data_Refresh
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Iter    : Item_Iterator;
+      Item    : Canvas_Item;
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      Iter := Start (Process.Data_Canvas);
+      loop
+         Item := Get (Iter);
+         exit when Item = null;
+
+         Display_Items.Update
+           (GVD_Canvas (Process.Data_Canvas),
+            Display_Item (Item),
+            Redisplay_Canvas => False);
+
+         Next (Iter);
+      end loop;
+
+      Refresh_Canvas (Process.Data_Canvas);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Data_Refresh;
+
+   --------------
+   -- On_Start --
+   --------------
+
+   procedure On_Start
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top         : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
+      Process     : constant Visual_Debugger := Get_Current_Process (Top);
+      Button      : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+      Button2     : Boolean_Access := null;
+      Multitasks  : aliased Boolean := False;
+      Multi_Msg   : aliased String := -"Enable VxWorks multi-tasks mode";
+      No_Msg      : aliased String := "";
+      Msg         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
+      WTX_Version : Natural;
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot rerun while the underlying debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      --  If we are debugging against VxWorks enable the multi-tasks
+      --  mode checkbox
+
+      Info_WTX (Process.Debugger, WTX_Version);
+
+      if WTX_Version = 2 then
+         Button2 := Multitasks'Unchecked_Access;
+         Msg := Multi_Msg'Unchecked_Access;
+      end if;
+
+      declare
+         Is_Start  : aliased Boolean;
+         Arguments : constant String := Display_Entry_Dialog
+           (Parent         => Process.Window,
+            Title          => -"Run/Start",
+            Message        => -"Run arguments:",
+            Key            => Cst_Run_Arguments_History,
+            History        => Get_History (GPS_Window (Process.Window).Kernel),
+            Check_Msg      => -"Stop at beginning of main subprogram",
+            Check_Msg2     => Msg.all,
+            Button_Active  => Is_Start'Access,
+            Button2_Active => Button2,
+            Key_Check      => "stop_beginning_debugger",
+            Key_Check2     => "multitask_mode_debugger");
+      begin
+         if Arguments = ""
+           or else Arguments (Arguments'First) /= ASCII.NUL
+         then
+            if Button2 /= null then
+               if Multitasks then
+                  Process_User_Command
+                    (Process,
+                     "set multi-tasks-mode on",
+                     Output_Command => False);
+               else
+                  Process_User_Command
+                    (Process,
+                     "set multi-tasks-mode off",
+                     Output_Command => False);
+               end if;
+            end if;
+
+            if Is_Start then
+               Start (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
+            else
+               Run (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
+            end if;
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Start;
 
    ----------------
    -- Delete_Asm --
@@ -2569,11 +3401,6 @@ package body GVD_Module is
                      On_Edit_Breakpoints'Access);
       Register_Menu (Kernel, Data_Sub, -"Examine _Memory", "",
                      On_Examine_Memory'Access);
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Data_Sub, Mitem);
-      Register_Menu
-        (Kernel, Data_Sub, -"_Command History", Stock_Index,
-         On_Command_History'Access, Sensitive => False);      Gtk_New (Mitem);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Display _Local Variables", "",
