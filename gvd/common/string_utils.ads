@@ -21,8 +21,6 @@
 --  This package provides a set of subprograms for manipulating and parsing
 --  strings.
 
-with Glib; use Glib;
-
 package String_Utils is
 
    procedure Skip_Blanks
@@ -158,23 +156,16 @@ package String_Utils is
    function Strip_Quotes (S : in String) return String;
    --  Removes the quotes and the spaces at the beginning and end of S.
 
-   function Image (N : Natural) return String;
-   --  Create a string image of the given Natural.
+   function Image (N : Integer) return String;
+   --  Create a string image of the given Integer.
 
-   function Image (N : Gint) return String;
-   --  Create a string image of the given Gint.
+   function Image (N : Integer; Length : Positive) return String;
+   --  Create a string image of the given Integer.
+   --  The returned string is padded with leading spaces to create a string of
+   --  at least length characters.
 
-   function Image (N : Natural; Length : Positive) return String;
-   --  Create a string image of the given Natural. The returned string is
-   --  padded with leading spaces to create a string of at list Length
-   --  characters.
-
-   function Image (N : Gint; Length : Positive) return String;
-   --  Create a string image of the given Gint. The returned string is padded
-   --  with leading spaces to create a string of at list Length characters.
-
-   function Number_Of_Digits (N : Natural) return Natural;
-   --  Return the number of digits for the given Natural number;
+   function Number_Of_Digits (N : Integer) return Natural;
+   --  Return the number of digits for the given Integer number;
 
 private
    pragma Inline (Looking_At);

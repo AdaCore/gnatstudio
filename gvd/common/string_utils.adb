@@ -663,22 +663,12 @@ package body String_Utils is
    -- Image --
    -----------
 
-   function Image (N : Natural) return String is
+   function Image (N : Integer) return String is
    begin
-      return Image (Gint (N));
+      return Ada.Strings.Fixed.Trim (Integer'Image (N), Ada.Strings.Left);
    end Image;
 
-   function Image (N : Gint) return String is
-   begin
-      return Ada.Strings.Fixed.Trim (Gint'Image (N), Ada.Strings.Left);
-   end Image;
-
-   function Image (N : Natural; Length : Positive) return String is
-   begin
-      return Image (Gint (N), Length);
-   end Image;
-
-   function Image (N : Gint; Length : Positive) return String is
+   function Image (N : Integer; Length : Positive) return String is
       Pad         : constant Character := ' ';
       Small_Image : constant String := Image (N);
 
@@ -706,7 +696,7 @@ package body String_Utils is
    -- Number_Of_Digits --
    ----------------------
 
-   function Number_Of_Digits (N : Natural) return Natural is
+   function Number_Of_Digits (N : Integer) return Natural is
    begin
       case N is
          when 0 .. 9 =>
@@ -720,7 +710,7 @@ package body String_Utils is
          when 10_000 .. 99_999 =>
             return 5;
          when others =>
-            return Image (Gint (N))'Length;
+            return Image (N)'Length;
       end case;
    end Number_Of_Digits;
 
