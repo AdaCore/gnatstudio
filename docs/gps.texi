@@ -4864,6 +4864,10 @@ built-in and uses a generic GPS terminology for VCS operations, and the Native
 ClearCase interface, which is fully customizable and uses by default the
 terminology specific to ClearCase.
 
+See @ref{Adding support for new Version Control Systems} for more information
+on how to customize and modify the existing ClearCase and CVS interfaces, as
+well as adding support for new ones.
+
 It is recommended that you first get familiar with the version control
 system that you intend to use in GPS first, since many concepts used in GPS
 assume basic knowledge of the underlying system.
@@ -6444,6 +6448,9 @@ customization files which are parsed at startup. This is a convenient way for
 users to define their own customization, that they want to load no matter which
 project they are working on. Note that you can use the environment variable
 @code{GPS_HOME} to override the value of the @code{HOME} variable.
+
+Alternatively, if none of @code{HOME} and @code{GPS_HOME} are defined,
+@code{USERPROFILE} is also considered.
 @end itemize
 
 XML files must be utf8-encoded by default. In addition, you can specify any
@@ -9847,7 +9854,7 @@ those steps.
 
 GPS is distributed with XML files describing the interfaces to
 ClearCase and CVS. These XML files are located in the directory
-@code{share/customize} in the GPS installation, and can be used as a
+@code{share/gps/customize} in the GPS installation, and can be used as a
 reference for implementing new custom VCS interfaces.
 
 @node Describing a VCS
