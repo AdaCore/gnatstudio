@@ -39,7 +39,7 @@ package DB_API is
    Field_Sep : constant Character := Character'Val (1);
    --  Standard field separator
 
-   type Integer_Array is array (0 .. 15) of Integer;
+   type Integer_Array is array (0 .. 10) of Integer;
 
    type CSF is record
       Num_Of_Fields : Integer;
@@ -122,7 +122,10 @@ package DB_API is
    --  with Position = By_Key then Get_Pair set Result to No_Pair;
    --  Throws DB_Error if DB was not opened or error occurred.
 
-   procedure CSF_Init (Str : Interfaces.C.Strings.chars_ptr; Result : out CSF);
+   procedure CSF_Init
+     (Str        : Interfaces.C.Strings.chars_ptr;
+      Result     : out CSF;
+      Max_Fields : Integer := Integer_Array'Last - 1);
    --  Parses the string Str for later analysis through Get_Field
 
    function Get_Field_Count (The_CSF : CSF) return Natural;
