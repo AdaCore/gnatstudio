@@ -21,7 +21,7 @@
 with Ada.Exceptions;             use Ada.Exceptions;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with Glib.Values;
+with Glib.Values;                use Glib.Values;
 with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
 with Glide_Kernel.Modules;       use Glide_Kernel.Modules;
@@ -72,6 +72,9 @@ with Src_Info.Queries;           use Src_Info.Queries;
 with Traces;                     use Traces;
 with GVD.Dialogs;                use GVD.Dialogs;
 --  ??? Use for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
+
+with Commands;                   use Commands;
+with Commands.Editor;            use Commands.Editor;
 
 package body Src_Editor_Box is
 
@@ -215,6 +218,12 @@ package body Src_Editor_Box is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Callback for the "Goto spec <-> body" contextual menu
+
+   procedure File_Saved
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for "File_Saved_Signal".
 
    ------------------------------
    -- Goto_Declaration_Or_Body --
@@ -764,6 +773,7 @@ package body Src_Editor_Box is
       Hbox           : Gtk_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
       Data           : Editor_Tooltip_Data;
+      Command        : Check_Modified_State;
 
    begin
       Glib.Object.Initialize (Box);
@@ -880,7 +890,45 @@ package body Src_Editor_Box is
          Object          => Box,
          ID              => Src_Editor_Module_Id,
          Context_Func    => Get_Contextual_Menu'Access);
+
+      --  Callback for the File_Saved_Signal
+      Kernel_Callback.Object_Connect
+        (Kernel, File_Saved_Signal,
+         File_Saved'Access,
+         Slot_Object => Box,
+         User_Data   => Kernel_Handle (Kernel));
+
+      --  Create the queue change hook that will be called every
+      --  time the state of the queue associated to the buffer changes.
+
+      Create
+        (Command, Source_Editor_Box (Box), Get_Queue (Box.Source_Buffer));
+      Add_Queue_Change_Hook
+        (Get_Queue (Box.Source_Buffer),
+         Command_Access (Command),
+         "State_Check");
    end Initialize_Box;
+
+   ----------------
+   -- File_Saved --
+   ----------------
+
+   procedure File_Saved
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Kernel);
+      Box  : Source_Editor_Box := Source_Editor_Box (Widget);
+      File : constant String := Get_String (Nth (Args, 1));
+   begin
+      if Get_Filename (Box.Source_Buffer) = File then
+         Box.Saved_Position := Get_Position (Get_Queue (Box.Source_Buffer));
+      end if;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end File_Saved;
 
    ------------------
    -- Box_Scrolled --
@@ -1993,5 +2041,34 @@ package body Src_Editor_Box is
       Remove_Line_Information_Column
         (Editor.Source_View, Identifier);
    end Remove_Line_Information_Column;
+
+   ------------------------
+   -- Get_Saved_Position --
+   ------------------------
+
+   function Get_Saved_Position
+     (Editor : access Source_Editor_Box_Record) return Integer is
+   begin
+      return Editor.Saved_Position;
+   end Get_Saved_Position;
+
+   ------------------------
+   -- Set_Modified_State --
+   ------------------------
+
+   procedure Set_Modified_State
+     (Editor   : access Source_Editor_Box_Record;
+      Modified : Boolean) is
+   begin
+      if Editor.Modified /= Modified then
+         Editor.Modified := Modified;
+
+         if Modified then
+            Set_Text (Editor.Modified_Label, -"Modified");
+         else
+            Set_Text (Editor.Modified_Label, -"Unmodified");
+         end if;
+      end if;
+   end Set_Modified_State;
 
 end Src_Editor_Box;
