@@ -158,7 +158,7 @@ package body Help_Module is
 
    function Create_Html_Editor
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Help_Browser;
+      File   : VFS.Virtual_File) return MDI_Child;
    --  Create a new html editor that edits File.
 
    function Display_Help
@@ -759,9 +759,10 @@ package body Help_Module is
 
    function Create_Html_Editor
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Help_Browser
+      File   : VFS.Virtual_File) return MDI_Child
    is
       Html   : Help_Browser;
+      Child  : MDI_Child;
       Result : Boolean;
       pragma Unreferenced (Result);
 
@@ -801,7 +802,16 @@ package body Help_Module is
          ID              => Module_ID (Help_Module_ID),
          Context_Func    => Help_Contextual'Access);
 
-      return Html;
+      Child := Put
+        (Kernel, Html,
+         Focus_Widget => Gtk_Widget (Html.Csc),
+         Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+         Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+         Module => Help_Module_ID,
+         Desktop_Independent => True);
+      Set_Title (Child, -"Help");
+
+      return Child;
    end Create_Html_Editor;
 
    ------------------
@@ -829,30 +839,19 @@ package body Help_Module is
       Child := Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
 
       if Child = null then
-         Scrolled := Create_Html_Editor (Kernel, Help_File);
-         Child := Put
-           (Kernel, Scrolled,
-            Focus_Widget => Gtk_Widget (Scrolled.Csc),
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module => Help_Module_ID,
-            Desktop_Independent => True);
-         Set_Focus_Child (Child);
-         Set_Title (Child, -"Help");
-         Show_All (Scrolled);
-         Raise_Child (Child);
-
-      else
-         Scrolled := Help_Browser (Get_Widget (Child));
-
-         if Scrolled.Current_Help_File = VFS.No_File
-           or else Help_File /= Scrolled.Current_Help_File
-         then
-            Result := Load_File (Kernel, Scrolled, Help_File);
-         end if;
-
-         Raise_Child (Child);
+         Child := Create_Html_Editor (Kernel, Help_File);
       end if;
+
+      Scrolled := Help_Browser (Get_Widget (Child));
+
+      if Scrolled.Current_Help_File = VFS.No_File
+        or else Help_File /= Scrolled.Current_Help_File
+      then
+         Result := Load_File (Kernel, Scrolled, Help_File);
+      end if;
+
+      Set_Focus_Child (Child);
+      Raise_Child (Child);
 
       return Scrolled;
    end Display_Help;
@@ -867,20 +866,12 @@ package body Help_Module is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
-      Editor : Help_Browser;
       File   : Glib.String_Ptr;
    begin
       if Node.Tag.all = "Help_Browser" then
          File := Get_Field (Node, "File");
          if File /= null then
-            Editor := Create_Html_Editor (User, Create_Html (File.all, User));
-
-            return Put
-              (User, Gtk_Widget (Editor),
-               Default_Width       => Get_Pref (User, Default_Widget_Width),
-               Default_Height      => Get_Pref (User, Default_Widget_Height),
-               Module              => Help_Module_ID,
-               Desktop_Independent => True);
+            return Create_Html_Editor (User, Create_Html (File.all, User));
          else
             return null;
          end if;
