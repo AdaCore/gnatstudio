@@ -2552,7 +2552,7 @@ package body Src_Editor_Box is
       New_L : Buffer_Line_Type;
       Block : Block_Record;
    begin
-      Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => False);
+      Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => True);
 
       if Block.Block_Type = Cat_Unknown
         and then Block.Indentation_Level = 0
