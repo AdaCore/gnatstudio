@@ -22,6 +22,7 @@ package Odd.Pixmaps is
    start_xpm     : Chars_Ptr_Array (0 .. 0);
    step_xpm      : Chars_Ptr_Array (0 .. 0);
    stepi_xpm     : Chars_Ptr_Array (0 .. 0);
+   stop_xpm      : Chars_Ptr_Array (0 .. 0);
    undisplay_xpm : Chars_Ptr_Array (0 .. 0);
    until_xpm     : Chars_Ptr_Array (0 .. 0);
    up_xpm        : Chars_Ptr_Array (0 .. 0);
@@ -48,6 +49,7 @@ private
    pragma Import (C, start_xpm, "start_xpm");
    pragma Import (C, step_xpm, "step_xpm");
    pragma Import (C, stepi_xpm, "stepi_xpm");
+   pragma Import (C, stop_xpm, "stop_xpm");
    pragma Import (C, undisplay_xpm, "undisplay_xpm");
    pragma Import (C, until_xpm, "until_xpm");
    pragma Import (C, up_xpm, "up_xpm");
