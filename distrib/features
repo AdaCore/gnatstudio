@@ -44,8 +44,9 @@ New features in GPS 3.0.0
 
 - New Outline View, showing the content of the current file
 
-- Editing project dependencies is now done through a wizard. It adds support for
-  predefined projects (DB24-011), as well as limited with clauses
+- Editing project dependencies is now done through a wizard.
+  It adds support for predefined projects (DB24-011), as well as limited with
+  clauses.
 
 - Apply button in the project wizard is now clickable as soon as the first
   page has been completed. There is no need to go through all pages
@@ -55,14 +56,16 @@ New features in GPS 3.0.0
 
 - Support for new PTYs (e.g. /dev/ptmx, /dev/ptm/clone, /dev/ptc)
 
-- DC08-016: New contextual menu to find references, where you can select
+- DC08-016 New contextual menu to find references, where you can select
   precisely what type of reference to find and whether to show the context
   at that location.
 
-- DC08-016: Entity references are now displayed in the location window along
+- DC08-016 Entity references are now displayed in the location window along
   with the type of reference.
 
-- DA15-001: Separators can be added in contextual menus, and the order of
+- DB13-008 Support for Ada 2005 constructs in the editor
+
+- DA15-001 Separators can be added in contextual menus, and the order of
   entries can be specified through XML files
 
 - C618-017 Projects can now be created more easily simply by specifing a set of
