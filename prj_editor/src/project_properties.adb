@@ -571,7 +571,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Tools_Host,
          Get_Attribute_Value
-         (Project, Remote_Host_Attribute, Default => ""));
+           (Project, Remote_Host_Attribute, Default => ""));
 
       --  Program host
 
