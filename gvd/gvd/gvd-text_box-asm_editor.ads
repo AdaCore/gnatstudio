@@ -28,13 +28,11 @@ with Gdk.Pixmap;
 with Gtk.Menu;
 with Gtk.Widget;
 with Gtkada.Types;
-with GVD.Text_Boxes;
 with GVD.Types;
 
-package GVD.Asm_Editors is
+package GVD.Text_Box.Asm_Editor is
 
-   type Asm_Editor_Record is new GVD.Text_Boxes.GVD_Text_Box_Record with
-     private;
+   type Asm_Editor_Record is new GVD_Text_Box_Record with private;
    type Asm_Editor is access all Asm_Editor_Record'Class;
 
    procedure Gtk_New
@@ -71,13 +69,13 @@ package GVD.Asm_Editors is
      (Editor : access Asm_Editor_Record;
       Button : Natural;
       Line   : Natural) return Boolean;
-   --  See GVD.Text_Boxes for documentation
+   --  See GVD.Text_Box for documentation
 
    function Child_Contextual_Menu
      (Editor : access Asm_Editor_Record;
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu;
-   --  See GVD.Text_Boxes for documentation
+   --  See GVD.Text_Box for documentation
 
    procedure Update_Breakpoints
      (Editor    : access Asm_Editor_Record;
@@ -115,7 +113,7 @@ private
    --  Some debuggers (gdb) might take a long time to output the assembly code
    --  for a specific region, so it is better to keep it once we have it.
 
-   type Asm_Editor_Record is new GVD.Text_Boxes.GVD_Text_Box_Record with record
+   type Asm_Editor_Record is new GVD_Text_Box_Record with record
       Process         : Gtk.Widget.Gtk_Widget;
       Keywords_Color  : Gdk.Color.Gdk_Color;
       Strings_Color   : Gdk.Color.Gdk_Color;
@@ -128,4 +126,4 @@ private
       Current_Range  : Cache_Data_Access;
    end record;
 
-end GVD.Asm_Editors;
+end GVD.Text_Box.Asm_Editor;

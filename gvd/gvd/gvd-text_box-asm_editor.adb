@@ -43,13 +43,12 @@ with GVD.Process;       use GVD.Process;
 with GVD.Code_Editors;  use GVD.Code_Editors;
 with GVD.Preferences;   use GVD.Preferences;
 with GVD.Strings;       use GVD.Strings;
-with GVD.Text_Boxes;    use GVD.Text_Boxes;
 with GVD.Types;         use GVD.Types;
 with Odd_Intl;          use Odd_Intl;
 
 with GNAT.Regpat;       use GNAT.Regpat;
 
-package body GVD.Asm_Editors is
+package body GVD.Text_Box.Asm_Editor is
 
    package Editor_Cb is new Callback (Asm_Editor_Record);
    package Editor_Event_Cb is new Return_Callback (Asm_Editor_Record, Boolean);
@@ -142,7 +141,7 @@ package body GVD.Asm_Editors is
      (Editor  : access Asm_Editor_Record'Class;
       Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
-      GVD.Text_Boxes.Initialize (Editor);
+      GVD.Text_Box.Initialize (Editor);
       Editor.Process := Gtk_Widget (Process);
       Show_All (Editor);
 
@@ -879,4 +878,5 @@ package body GVD.Asm_Editors is
 
       return False;
    end Key_Press;
-end GVD.Asm_Editors;
+
+end GVD.Text_Box.Asm_Editor;
