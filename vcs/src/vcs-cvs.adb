@@ -913,7 +913,7 @@ package body VCS.CVS is
       String_List.Free (L);
       Close (File);
       Insert (Kernel,
-              -"CVS: Got differences for file " & Current_File & ".",
+              -"CVS: Got comparison for file " & Current_File & ".",
               Highlight_Sloc => False,
               Mode => Verbose);
 
@@ -966,7 +966,7 @@ package body VCS.CVS is
       Append (Command_Head, File);
 
       Insert (Rep.Kernel,
-              -"CVS: Getting differences for file " & File & "...",
+              -"CVS: Getting comparison for file " & File & "...",
               Highlight_Sloc => False,
               Mode => Verbose);
 
