@@ -8,9 +8,9 @@
    <!-- CVS status -->
    <!---------------->
 
-   <action name="generic_cvs_status" show-command="true" output="">
-      <shell>echo "Querying status for $2-"</shell>
-      <external output="none">cvs status "$2-"</external>
+   <action name="generic_cvs_status" show-command="true" output="none">
+      <shell output="">echo "Querying status for $2-"</shell>
+      <external>cvs status "$2-"</external>
       <shell>VCS.status_parse "Custom CVS" "%1" "$1" FALSE</shell>
    </action>
 
@@ -18,9 +18,9 @@
    <!-- CVS status dir -->
    <!-------------------->
 
-   <action name="generic_cvs_status_dir" show-command="true" output="">
-      <shell>echo "Querying status for directory"</shell>
-      <shell>pwd</shell>
+   <action name="generic_cvs_status_dir" show-command="true" output="none">
+      <shell output="">echo "Querying status for directory:"</shell>
+      <shell output="">pwd</shell>
       <external>cvs status .</external>
       <shell>VCS.status_parse "Custom CVS" "%1" "$1" FALSE</shell>
    </action>
@@ -31,8 +31,8 @@
 
    <action name="generic_cvs_annotate" show-command="true" output="">
       <shell>echo "Querying annotations for $1"</shell>
-      <external>cvs annotate "$1"</external>
-      <shell>VCS.annotations_parse "Custom CVS" "$1" "%1"</shell>
+      <external output="none">cvs annotate "$1"</external>
+      <shell output="none">VCS.annotations_parse "Custom CVS" "$1" "%1"</shell>
    </action>
 
    <!---------------------->
@@ -40,7 +40,6 @@
    <!---------------------->
 
    <action name="generic_cvs_local_status" show-command="true" output="none">
-      <shell>echo "Querying local status for $2"</shell>
       <shell>Editor.get_buffer "./CVS/Entries"</shell>
       <shell>VCS.status_parse "Custom CVS" "%1" FALSE TRUE</shell>
    </action>
@@ -49,8 +48,8 @@
    <!-- CVS commit -->
    <!---------------->
 
-   <action name="generic_cvs_commit" show-command="true" output="">
-      <shell>echo "Committing files $2-"</shell>
+   <action name="generic_cvs_commit" show-command="true" output="none">
+      <shell output="">echo "Committing files $2-"</shell>
       <shell>dump "$1" TRUE</shell>
       <external>cvs commit -F "%1" "$2-"</external>
       <shell>delete "%2"</shell>
@@ -62,8 +61,8 @@
    <!-- CVS add -->
    <!------------->
 
-   <action name="generic_cvs_add" show-command="true" output="">
-      <shell>echo "adding files $2-"</shell>
+   <action name="generic_cvs_add" show-command="true" output="none">
+      <shell output="">echo "adding files $2-"</shell>
       <external>cvs add "$2-"</external>
       <shell>dump "$1" TRUE</shell>
       <external>cvs commit -F "%1" "$2-"</external>
@@ -76,8 +75,8 @@
 
    <!-- ??? "delete" should work on multiple files>
 
-   <action name="generic_cvs_remove" show-command="true" output="">
-      <shell>echo "removing files $2-"</shell>
+   <action name="generic_cvs_remove" show-command="true" output="none">
+      <shell output="">echo "removing files $2-"</shell>
       <shell>delete "$2-"</shell>
       <external>cvs remove "$2-"</external>
       <shell>dump "$1" TRUE</shell>
@@ -91,7 +90,7 @@
 
    <!--  ??? Must find a way to query whole history>
 
-   <action name="generic_cvs_history" show-command="true" output="">
+   <action name="generic_cvs_history" show-command="true" output="none">
       <shell output="">echo "Querying history for $2"</shell>
       <external>cvs log -N -r$1 "$2"</external>
       <shell>dump "%1" TRUE</shell>
@@ -104,8 +103,8 @@
    <!-- CVS update -->
    <!---------------->
 
-   <action name="generic_cvs_update" show-command="true" output="">
-      <external>cvs update "$*"</external>
+   <action name="generic_cvs_update" show-command="true" output="none">
+      <external output="">cvs update "$*"</external>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
    </action>
@@ -114,7 +113,7 @@
    <!-- CVS diff -->
    <!-------------->
 
-   <action name="generic_cvs_diff_head" show-command="true" output="">
+   <action name="generic_cvs_diff_head" show-command="true" output="none">
       <external>cvs -f diff -rHEAD "$1"</external>
 
       <on-failure>
@@ -128,7 +127,7 @@
       <shell>MDI.dialog "No differences found."</shell>
    </action>
 
-   <action name="generic_cvs_diff" show-command="true" output="">
+   <action name="generic_cvs_diff" show-command="true" output="none">
       <external>cvs -f diff -r $1 "$2"</external>
 
       <on-failure>
@@ -142,7 +141,7 @@
       <shell>MDI.dialog "No differences found."</shell>
    </action>
 
-   <action name="generic_cvs_diff2" show-command="true" output="">
+   <action name="generic_cvs_diff2" show-command="true" output="none">
       <external>cvs -q update -p -r$2 "$3"</external>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -164,8 +163,8 @@
    <!-- CVS open -->
    <!-------------->
 
-   <action name="generic_cvs_open" show-command="true" output="">
-      <shell>echo "Opening CVS files $2-"</shell>
+   <action name="generic_cvs_open" show-command="true" output="none">
+      <shell output="">echo "Opening CVS files $2-"</shell>
       <external>cvs edit "$2-"</external>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -175,8 +174,8 @@
    <!-- CVS revert -->
    <!---------------->
 
-   <action name="generic_cvs_revert" show-command="true" output="">
-      <external>cvs update -C $*</external>
+   <action name="generic_cvs_revert" show-command="true" output="none">
+      <external output="">cvs update -C $*</external>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
    </action>
