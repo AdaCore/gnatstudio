@@ -160,27 +160,10 @@ package body Odd.Process is
       Infile   : File_Type;
       Top      : Main_Debug_Window_Access renames Main_Debug_Window;
       Label    : Gtk_Label;
-      Next_Tab : Guint;
 
    begin
       Process := new Debugger_Process_Tab_Record;
       Initialize (Process);
-
-      --  Add a new page to the notebook
-
-      Next_Tab := Page_List.Length (Get_Children (Top.Process_Notebook)) + 1;
-
-      if Process_Name = "" then
-         Gtk_New (Label, -("Processus") & Guint'Image (Next_Tab));
-      else
-         Gtk_New (Label, Process_Name);
-      end if;
-
-      Append_Page (Top.Process_Notebook, Process.Process_Paned, Label);
-      Set_Page (Top.Process_Notebook, Gint (Next_Tab));
-      Show_All (Top.Process_Notebook);
-
-      Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       --  Spawn the debugger
       --  ??? This should be a parameter
@@ -188,8 +171,29 @@ package body Odd.Process is
 
       Process.Debugger := new Gdb_Debugger;
 
-      Spawn (Process.Debugger.all, Params, new Gui_Process_Proxy,
-             Remote_Machine => "");
+      Spawn (Process.Debugger.all, Params, new Gui_Process_Proxy, "");
+
+      --  Add a new page to the notebook
+
+      if Process_Name = "" then
+         if Params'Length > 0 then
+            Gtk_New (Label, "Gdb - " & Params (Params'First).all);
+         else
+            Gtk_New (Label, "Gdb -" &
+              Guint'Image (Page_List.Length (Get_Children
+                (Top.Process_Notebook)) + 1));
+         end if;
+      else
+         Gtk_New (Label, Process_Name);
+      end if;
+
+      Append_Page (Top.Process_Notebook, Process.Process_Paned, Label);
+      --  Set_Page (Top.Process_Notebook, Gint (Next_Tab));
+      Show_All (Top.Process_Notebook);
+      Set_Page (Top.Process_Notebook, -1);
+
+      Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
+
       Add_Output_Filter
         (Get_Descriptor (Get_Process (Process.Debugger.all)).all,
          Text_Output_Handler'Access);
