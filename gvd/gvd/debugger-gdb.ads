@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -305,12 +305,10 @@ package Debugger.Gdb is
       Line     : Positive) return Line_Kind;
 
    function List_Breakpoints
-     (Debugger  : access Gdb_Debugger)
-     return GVD.Types.Breakpoint_Array;
+     (Debugger : access Gdb_Debugger) return GVD.Types.Breakpoint_Array;
 
    function List_Exceptions
-     (Debugger : access Gdb_Debugger)
-     return GVD.Types.Exception_Array;
+     (Debugger : access Gdb_Debugger) return GVD.Types.Exception_Array;
 
    procedure Get_Machine_Code
      (Debugger        : access Gdb_Debugger;
