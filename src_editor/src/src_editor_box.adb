@@ -2427,36 +2427,6 @@ package body Src_Editor_Box is
       end if;
    end Scroll_To_Mark;
 
-   --------------
-   -- Get_Line --
-   --------------
-
-   function Get_Line
-     (Editor   : access Source_Editor_Box_Record;
-      Position : Gtk.Text_Mark.Gtk_Text_Mark)
-     return Positive
-   is
-      Iter : Gtk_Text_Iter;
-   begin
-      Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Position);
-      return To_Box_Line (Get_Line (Iter));
-   end Get_Line;
-
-   ----------------
-   -- Get_Column --
-   ----------------
-
-   function Get_Column
-     (Editor   : access Source_Editor_Box_Record;
-      Position : Gtk.Text_Mark.Gtk_Text_Mark)
-     return Positive
-   is
-      Iter : Gtk_Text_Iter;
-   begin
-      Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Position);
-      return To_Box_Column (Get_Line_Offset (Iter));
-   end Get_Column;
-
    -------------------
    -- Get_Last_Line --
    -------------------

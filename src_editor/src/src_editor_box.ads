@@ -336,18 +336,6 @@ package Src_Editor_Box is
       Kernel : Glide_Kernel.Kernel_Handle);
    --  Navigate->Goto Line... menu
 
-   function Get_Line
-     (Editor   : access Source_Editor_Box_Record;
-      Position : Gtk.Text_Mark.Gtk_Text_Mark)
-     return Positive;
-   --  Return the line of Position.
-
-   function Get_Column
-     (Editor   : access Source_Editor_Box_Record;
-      Position : Gtk.Text_Mark.Gtk_Text_Mark)
-     return Positive;
-   --  Return the column of Position.
-
    function Get_Last_Line
      (Editor   : access Source_Editor_Box_Record)
      return Positive;
