@@ -148,6 +148,12 @@ package body Browsers.Canvas is
    --  only once.
    --  The item is not selected.
 
+   procedure Compute_Parents
+     (Event : Gdk_Event; Item : access Browser_Item_Record'Class);
+   procedure Compute_Children
+     (Event : Gdk_Event; Item : access Browser_Item_Record'Class);
+   --  Callbacks for the title bar buttons of Arrow_item
+
    ----------------
    -- Initialize --
    ----------------
@@ -184,10 +190,11 @@ package body Browsers.Canvas is
          Pack_Start (Browser, Browser.Toolbar, Expand => False);
       end if;
 
-      Browser.Left_Arrow := Render_Icon
-        (Browser, Stock_Go_Back, Icon_Size_Menu);
-      Browser.Right_Arrow := Render_Icon
-        (Browser, Stock_Go_Forward, Icon_Size_Menu);
+      --  ??? Should be freed when browser is destroyed.
+      Browser.Up_Arrow := Render_Icon
+        (Browser, Stock_Go_Up, Icon_Size_Menu);
+      Browser.Down_Arrow := Render_Icon
+        (Browser, Stock_Go_Down, Icon_Size_Menu);
       Browser.Close_Pixmap := Render_Icon
         (Browser, Stock_Close, Icon_Size_Menu);
 
@@ -503,7 +510,7 @@ package body Browsers.Canvas is
          end if;
       end loop;
 
-      Reset (Data.Browser, Browser_Item (Data.Item), True, True);
+      Reset (Browser_Item (Data.Item), True, True);
       Refresh (Browser_Item (Data.Item));
 
       Layout (Data.Browser);
@@ -686,7 +693,7 @@ package body Browsers.Canvas is
 
    procedure Highlight (Item : access Browser_Item_Record) is
    begin
-      Refresh (Browser_Item (Item));
+      Redraw_Title_Bar (Browser_Item (Item));
    end Highlight;
 
    -----------------
@@ -798,74 +805,13 @@ package body Browsers.Canvas is
    -----------
 
    procedure Reset
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Browser_Item_Record;
+     (Item    : access Browser_Item_Record;
       Parent_Removed, Child_Removed : Boolean)
    is
-      pragma Unreferenced (Browser, Item, Parent_Removed, Child_Removed);
+      pragma Unreferenced (Item, Parent_Removed, Child_Removed);
    begin
       null;
    end Reset;
-
-   -----------
-   -- Reset --
-   -----------
-
-   procedure Reset
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Text_Item_With_Arrows_Record;
-      Parent_Removed, Child_Removed : Boolean)
-   is
-      pragma Unreferenced (Browser);
-   begin
-      if Parent_Removed then
-         Item.Left_Arrow  := True;
-      end if;
-
-      if Child_Removed then
-         Item.Right_Arrow := True;
-      end if;
-   end Reset;
-
-   --------------------
-   -- Get_Left_Arrow --
-   --------------------
-
-   function Get_Left_Arrow (Item : access Text_Item_With_Arrows_Record)
-      return Boolean is
-   begin
-      return Item.Left_Arrow;
-   end Get_Left_Arrow;
-
-   ---------------------
-   -- Get_Right_Arrow --
-   ---------------------
-
-   function Get_Right_Arrow (Item : access Text_Item_With_Arrows_Record)
-      return Boolean is
-   begin
-      return Item.Right_Arrow;
-   end Get_Right_Arrow;
-
-   --------------------
-   -- Set_Left_Arrow --
-   --------------------
-
-   procedure Set_Left_Arrow
-     (Item : access Text_Item_With_Arrows_Record; Display : Boolean) is
-   begin
-      Item.Left_Arrow := Display;
-   end Set_Left_Arrow;
-
-   ---------------------
-   -- Set_Right_Arrow --
-   ---------------------
-
-   procedure Set_Right_Arrow
-     (Item : access Text_Item_With_Arrows_Record; Display : Boolean) is
-   begin
-      Item.Right_Arrow := Display;
-   end Set_Right_Arrow;
 
    ---------------
    -- Set_Title --
@@ -913,14 +859,14 @@ package body Browsers.Canvas is
          pragma Unreferenced (Canvas);
       begin
          if Get_Src (Link) = Vertex_Access (User) then
-            Reset (B, Browser_Item (Get_Dest (Link)),
+            Reset (Browser_Item (Get_Dest (Link)),
                    Parent_Removed => True,
                    Child_Removed  => False);
             Refresh (Browser_Item (Get_Dest (Link)));
          end if;
 
          if Get_Dest (Link) = Vertex_Access (User) then
-            Reset (B, Browser_Item (Get_Src (Link)),
+            Reset (Browser_Item (Get_Src (Link)),
                    Parent_Removed => False,
                    Child_Removed  => True);
             Refresh (Browser_Item (Get_Src (Link)));
@@ -1011,6 +957,8 @@ package body Browsers.Canvas is
       YThick : constant Gint := Y_Thickness (Get_Style (Item.Browser.Canvas));
    begin
       if Item.Title_Layout /= null then
+         Reset_Active_Areas (Item.all, Other_Areas => False);
+
          Get_Pixel_Size (Item.Title_Layout, W, H);
          Draw_Rectangle
            (Pixmap (Item),
@@ -1058,9 +1006,28 @@ package body Browsers.Canvas is
    -----------------------------
 
    function Get_Title_Background_GC
-     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC is
+     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC
+   is
+      B : constant General_Browser := Get_Browser (Item);
+      Selected : constant Canvas_Item := Selected_Item (B);
    begin
-      return Item.Browser.Title_GC;
+      if Canvas_Item (Item) = Selected then
+         return Get_Selected_Item_GC (B);
+
+      elsif Selected /= null
+        and then Has_Link (Get_Canvas (B), From => Item, To => Selected)
+      then
+         return Get_Parent_Linked_Item_GC (B);
+
+      elsif Selected /= null
+        and then Has_Link (Get_Canvas (B), From => Selected, To => Item)
+      then
+         return Get_Child_Linked_Item_GC (B);
+
+      else
+         --  ??? Should use different color
+         return Item.Browser.Title_GC;
+      end if;
    end Get_Title_Background_GC;
 
    -----------------------
@@ -1070,23 +1037,7 @@ package body Browsers.Canvas is
    function Get_Background_GC
      (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC is
    begin
-      if Canvas_Item (Item) = Selected_Item (Item.Browser) then
-         return Item.Browser.Selected_Item_GC;
-
-      elsif Selected_Item (Item.Browser) /= null
-        and then Has_Link
-          (Item.Browser.Canvas,
-           From => Item, To => Selected_Item (Item.Browser))
-      then
-         return Item.Browser.Parent_Linked_Item_GC;
-      elsif Selected_Item (Item.Browser) /= null
-        and then Has_Link (Item.Browser.Canvas,
-                           From => Selected_Item (Item.Browser), To => Item)
-      then
-         return Item.Browser.Child_Linked_Item_GC;
-      else
-         return Item.Browser.Default_Item_GC;
-      end if;
+      return Item.Browser.Default_Item_GC;
    end Get_Background_GC;
 
    ---------------------
@@ -1097,9 +1048,10 @@ package body Browsers.Canvas is
      (Item             : access Browser_Item_Record;
       Width, Height    : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint)
+      Xoffset, Yoffset : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
    is
-      pragma Unreferenced (Xoffset);
+      pragma Unreferenced (Xoffset, Layout);
       Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
         (Browser_Item (Item));  --  dispatching call
       Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
@@ -1107,6 +1059,8 @@ package body Browsers.Canvas is
       Layout_H : Gint := 0;
       Bg_GC : Gdk_GC;
    begin
+      Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
+
       if Item.Title_Layout /= null then
          Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
          W := Gint'Max
@@ -1148,157 +1102,6 @@ package body Browsers.Canvas is
          Yoffset := Yoffset + Layout_H;
       end if;
    end Resize_And_Draw;
-
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
-
-   procedure Resize_And_Draw
-     (Item             : access Text_Item_Record;
-      Width, Height    : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint)
-   is
-      W, H : Gint;
-   begin
-      Get_Pixel_Size (Item.Layout, W, H);
-      W := Gint'Max (W + 2 * Margin, Width);
-      H := Gint'Max (H + 2 * Margin, Height);
-      Resize_And_Draw
-        (Browser_Item_Record (Item.all)'Access, W, H,
-         Width_Offset, Height_Offset, Xoffset, Yoffset);
-
-      Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Get_Text_GC (Item.Browser),
-         X        => Xoffset + Margin,
-         Y        => Yoffset + Margin,
-         Layout   => Item.Layout);
-   end Resize_And_Draw;
-
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
-
-   procedure Resize_And_Draw
-     (Item             : access Text_Item_With_Arrows_Record;
-      Width, Height    : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint)
-   is
-      X, Y, H : Gint;
-   begin
-      H := Gint'Max (Get_Height (Item.Browser.Left_Arrow), Height);
-      X := Xoffset + Get_Width (Item.Browser.Left_Arrow);
-      Resize_And_Draw
-        (Text_Item_Record (Item.all)'Access,
-         Width, H, Width_Offset + 2 * Get_Width (Item.Browser.Left_Arrow),
-         Height_Offset, X, Yoffset);
-
-      --  Only compute this after calling the parent, since otherwise the item
-      --  might not have been resized yet.
-
-      Y := (Get_Coord (Item).Height - Yoffset
-            - Get_Height (Item.Browser.Left_Arrow)) / 2;
-
-      if Item.Left_Arrow then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => Item.Browser.Left_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Xoffset,
-            Dest_Y          => Y,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-
-      if Item.Right_Arrow then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => Item.Browser.Right_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Xoffset + Gint (Get_Coord (Item).Width)
-            - Get_Width (Item.Browser.Right_Arrow),
-            Dest_Y          => Y,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-   end Resize_And_Draw;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Item    : access Text_Item_Record'Class;
-      Browser : access General_Browser_Record'Class;
-      Text    : String) is
-   begin
-      Initialize (Item, Browser);
-      Item.Layout := Create_Pango_Layout (Browser, Text);
-      Set_Font_Description
-        (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
-   end Initialize;
-
-   --------------
-   -- Set_Text --
-   --------------
-
-   procedure Set_Text
-     (Item    : access Text_Item_Record'Class;
-      Text    : String)
-   is
-   begin
-      Set_Text (Item.Layout, Text);
-
-      --  Force a recomputation of the size next time the item is displayed
-      Set_Screen_Size (Item, 1, 1);
-      Refresh (Browser_Item (Item));
-   end Set_Text;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Item : in out Text_Item_Record) is
-   begin
-      Unref (Item.Layout);
-   end Destroy;
-
-   ---------------------
-   -- On_Button_Click --
-   ---------------------
-
-   procedure On_Button_Click
-     (Item  : access Text_Item_With_Arrows_Record;
-      Event : Gdk.Event.Gdk_Event_Button) is
-   begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-      then
-         if Gint (Get_X (Event)) < Get_Coord (Item).Width / 2 then
-            Button_Click_On_Left (Text_Item_With_Arrows (Item));
-         else
-            Button_Click_On_Right (Text_Item_With_Arrows (Item));
-         end if;
-
-         --  Make sure that the item we clicked on is still visible
-         Show_Item (Get_Canvas (Item.Browser), Item);
-
-      elsif Get_Event_Type (Event) = Button_Press then
-         Select_Item (Item.Browser, Item);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Button_Click;
 
    ---------------------
    -- On_Button_Click --
@@ -1552,31 +1355,66 @@ package body Browsers.Canvas is
    -- Reset_Active_Areas --
    ------------------------
 
-   procedure Reset_Active_Areas (Item : in out Browser_Item_Record) is
+   procedure Reset_Active_Areas
+     (Item            : in out Browser_Item_Record;
+      Title_Bar_Areas : Boolean := True;
+      Other_Areas     : Boolean := True)
+   is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Active_Area_Tree_Record, Active_Area_Tree);
 
+      Title_Bar_Height : Gint;
+      W : Gint;
+
       procedure Free (Area : in out Active_Area_Tree);
-      --  Free Area and its children
+      --  Free Area and its children.
+      --  Area might not be destroyed, depending on Title_Bar_Areas and
+      --  Other_Areas.
 
       procedure Free (Area : in out Active_Area_Tree) is
+         Should_Free : Boolean := True;
+         In_Title : Boolean;
       begin
          if Area.Children /= null then
             for C in Area.Children'Range loop
                Free (Area.Children (C));
+               if Area.Children (C) /= null then
+                  Should_Free := False;
+               end if;
             end loop;
-            Unchecked_Free (Area.Children);
+
+            if Should_Free then
+               Unchecked_Free (Area.Children);
+            end if;
          end if;
 
-         if Area.Callback /= null then
-            Destroy (Area.Callback.all);
-            Unchecked_Free (Area.Callback);
+         In_Title :=
+           Area.Rectangle.Y + Area.Rectangle.Height <= Title_Bar_Height;
+
+         if (In_Title and then Title_Bar_Areas)
+           or else (not In_Title and then Other_Areas)
+         then
+            if Area.Callback /= null then
+               Destroy (Area.Callback.all);
+               Unchecked_Free (Area.Callback);
+            end if;
+         else
+            Should_Free := False;
          end if;
-         Unchecked_Free (Area);
+
+         if Should_Free then
+            Unchecked_Free (Area);
+         end if;
       end Free;
 
    begin
       if Item.Active_Areas /= null then
+         if Item.Title_Layout = null then
+            Title_Bar_Height := 0;
+         else
+            Get_Pixel_Size (Item.Title_Layout, W, Title_Bar_Height);
+         end if;
+
          Free (Item.Active_Areas);
       end if;
    end Reset_Active_Areas;
@@ -1622,9 +1460,17 @@ package body Browsers.Canvas is
 
    procedure Refresh (Item : access Browser_Item_Record'Class) is
       Xoffset, Yoffset : Gint := 0;
+      Layout : Pango_Layout;
    begin
-      Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset);
+      Layout := Create_Pango_Layout (Get_Browser (Item), "");
+      Set_Font_Description
+        (Layout,
+         Get_Pref (Get_Kernel (Get_Browser (Item)), Browsers_Link_Font));
+
+      Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
       Redraw_Title_Bar (Item);
+
+      Unref (Layout);
    end Refresh;
 
    ------------
@@ -1905,5 +1751,160 @@ package body Browsers.Canvas is
          Y := Y + H;
       end loop;
    end Display_Lines;
+
+   -----------------------
+   -- Get_Parents_Arrow --
+   -----------------------
+
+   function Get_Parents_Arrow
+     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf is
+   begin
+      return Browser.Up_Arrow;
+   end Get_Parents_Arrow;
+
+   ------------------------
+   -- Get_Children_Arrow --
+   ------------------------
+
+   function Get_Children_Arrow
+     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf is
+   begin
+      return Browser.Down_Arrow;
+   end Get_Children_Arrow;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Item    : access Arrow_Item_Record'Class;
+      Browser : access General_Browser_Record'Class;
+      Title   : String;
+      Parents_Cb, Children_Cb : Arrow_Item_Callback) is
+   begin
+      Initialize (Item, Browser);
+      Set_Title (Item, Title);
+      Item.Parents_Cb  := Parents_Cb;
+      Item.Children_Cb := Children_Cb;
+   end Initialize;
+
+   -------------------
+   -- Parents_Shown --
+   -------------------
+
+   function Parents_Shown (Item : access Arrow_Item_Record) return Boolean is
+   begin
+      return Item.Parents_Shown;
+   end Parents_Shown;
+
+   --------------------
+   -- Children_Shown --
+   --------------------
+
+   function Children_Shown (Item : access Arrow_Item_Record) return Boolean is
+   begin
+      return Item.Children_Shown;
+   end Children_Shown;
+
+   -----------------------
+   -- Set_Parents_Shown --
+   -----------------------
+
+   procedure Set_Parents_Shown
+     (Item : access Arrow_Item_Record; All_Shown : Boolean) is
+   begin
+      Item.Parents_Shown := All_Shown;
+   end Set_Parents_Shown;
+
+   ------------------------
+   -- Set_Children_Shown --
+   ------------------------
+
+   procedure Set_Children_Shown
+     (Item : access Arrow_Item_Record; All_Shown : Boolean) is
+   begin
+      Item.Children_Shown := All_Shown;
+   end Set_Children_Shown;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset
+     (Item : access Arrow_Item_Record;
+      Parent_Removed, Child_Removed : Boolean) is
+   begin
+      if Parent_Removed then
+         Item.Parents_Shown := False;
+      end if;
+
+      if Child_Removed then
+         Item.Children_Shown := False;
+      end if;
+   end Reset;
+
+   ----------------------------
+   -- Get_Last_Button_Number --
+   ----------------------------
+
+   function Get_Last_Button_Number (Item : access Arrow_Item_Record)
+      return Glib.Gint is
+   begin
+      return Get_Last_Button_Number
+        (Browser_Item_Record (Item.all)'Access) + 2;
+   end Get_Last_Button_Number;
+
+   ---------------------
+   -- Compute_Parents --
+   ---------------------
+
+   procedure Compute_Parents
+     (Event : Gdk_Event; Item : access Browser_Item_Record'Class) is
+   begin
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Release
+      then
+         Arrow_Item (Item).Parents_Cb (Arrow_Item (Item));
+      end if;
+   end Compute_Parents;
+
+   ----------------------
+   -- Compute_Children --
+   ----------------------
+
+   procedure Compute_Children
+     (Event : Gdk_Event; Item : access Browser_Item_Record'Class) is
+   begin
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Release
+      then
+         Arrow_Item (Item).Children_Cb (Arrow_Item (Item));
+      end if;
+   end Compute_Children;
+
+   ----------------------
+   -- Redraw_Title_Bar --
+   ----------------------
+
+   procedure Redraw_Title_Bar (Item : access Arrow_Item_Record) is
+   begin
+      Redraw_Title_Bar (Browser_Item_Record (Item.all)'Access);
+
+      if not Item.Parents_Shown then
+         Draw_Title_Bar_Button
+           (Item,
+            Num    => Get_Last_Button_Number (Item),
+            Pixbuf => Get_Parents_Arrow (Get_Browser (Item)),
+            Cb     => Build (Compute_Parents'Access, Item));
+      end if;
+
+      if not Item.Children_Shown then
+         Draw_Title_Bar_Button
+           (Item,
+            Num    => Get_Last_Button_Number (Item) - 1,
+            Pixbuf => Get_Children_Arrow (Get_Browser (Item)),
+            Cb     => Build (Compute_Children'Access, Item));
+      end if;
+   end Redraw_Title_Bar;
 
 end Browsers.Canvas;

@@ -193,7 +193,8 @@ package Browsers.Canvas is
      (Item                        : access Browser_Item_Record;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset            : in out Glib.Gint);
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
    --  Resize the item, and then redraw it.
    --  The chain of events should be the following:
    --   - Compute the desired size for the item
@@ -219,6 +220,13 @@ package Browsers.Canvas is
    --   - Modify Xoffset, Yoffset to the position that a child of item should
    --     be drawn at. However, it shouldn't redraw the title bar buttons,
    --     which are handled through Redraw_Title_Bar.
+   --
+   --  This procedure doesn't need to reset the active areas, this is done
+   --  automatically.
+   --
+   --  Layout can be modified freely (but not destroyed) to display text. It is
+   --  preconfigured with the correct font, and is passed for efficiency reason
+   --  to avoid creating a layout every time.
 
    procedure Draw_Title_Bar_Button
      (Item   : access Browser_Item_Record;
@@ -251,10 +259,12 @@ package Browsers.Canvas is
    procedure Redraw_Title_Bar (Item : access Browser_Item_Record);
    --  This function should redraw the title bar buttons, after calling the
    --  inherited subprogram.
+   --
+   --  This procedure doesn't need to reset the active areas for the buttons,
+   --  this is done automatically.
 
    procedure Reset
-     (Browser : access General_Browser_Record'Class;
-      Item : access Browser_Item_Record;
+     (Item : access Browser_Item_Record;
       Parent_Removed, Child_Removed : Boolean);
    --  Reset the internal state of the item, as if it had never been expanded,
    --  analyzed,... This is called for instance after the item has been defined
@@ -282,8 +292,15 @@ package Browsers.Canvas is
    --  item. The coordinates returned by Get_X and Get_Y in Event should be
    --  relative to the top-left corner of the Item.
 
-   procedure Reset_Active_Areas (Item : in out Browser_Item_Record);
-   --  Remove all active areas in Item
+   procedure Reset_Active_Areas
+     (Item            : in out Browser_Item_Record;
+      Title_Bar_Areas : Boolean := True;
+      Other_Areas     : Boolean := True);
+   --  Remove all active areas in Item.
+   --  If Title_Bar_Areas is False, then the areas that are in the title bar
+   --  (supposedly buttons) are not removed
+   --  If Other_Areas is False, then the areas that are not in the title bar
+   --  are not removed.
 
    -----------------
    -- Xrefs lists --
@@ -355,66 +372,38 @@ package Browsers.Canvas is
       return Item_Active_Area_Callback'Class;
    --  Build a new callback
 
-   ---------------
-   -- Text_Item --
-   ---------------
+   -----------------
+   -- Arrow_Items --
+   -----------------
+   --  This specialized type of items has a title bar with at least two
+   --  buttons, to show the parents or the children of the items.
+   --  You should override Resize_And_Draw to indicate what the contents of the
+   --  item is.
 
-   type Text_Item_Record is new Browser_Item_Record with private;
-   type Text_Item is access all Text_Item_Record'Class;
-   --  A special kind of item that contains some text. The text is displayed as
-   --  a single block, centered in the item.
+   type Arrow_Item_Record is new Browser_Item_Record with private;
+   type Arrow_Item is access all Arrow_Item_Record'Class;
+
+   type Arrow_Item_Callback is access procedure
+     (Item : access Arrow_Item_Record'Class);
 
    procedure Initialize
-     (Item    : access Text_Item_Record'Class;
+     (Item    : access Arrow_Item_Record'Class;
       Browser : access General_Browser_Record'Class;
-      Text    : String);
-   --  Initialize a new item, that displays Text. Text can be a multi-line text
+      Title   : String;
+      Parents_Cb, Children_Cb : Arrow_Item_Callback);
+   --  Initialize a new item. Title is displayed in the title bar.
+   --  Parents_Cb and Children_Cb are called when the two title bar buttons are
+   --  pressed.
 
-   procedure Set_Text
-     (Item    : access Text_Item_Record'Class;
-      Text    : String);
-   --  Add Text to the current text at the end of the current text. No newline
-   --  is appended between the two.
-   --  The double-buffer for the item is immediately redrawn, but the item is
-   --  not refresh on the screen. You need to call Item_Updated or
-   --  Refresh_Canvas for this.
+   function Parents_Shown (Item : access Arrow_Item_Record) return Boolean;
+   function Children_Shown (Item : access Arrow_Item_Record) return Boolean;
+   --  Return True if either all the parents or all the children are shown
 
-   ---------------------------
-   -- Text_Item with arrows --
-   ---------------------------
-   --  This item is a standard text item, but displays one arrow on each side
-   --  of the text. Clicking on any of these arrow triggers a call to one of
-   --  the primitive subprograms.
-
-   type Text_Item_With_Arrows_Record is abstract new
-     Text_Item_Record with private;
-   type Text_Item_With_Arrows is access all Text_Item_With_Arrows_Record'Class;
-
-   function Get_Left_Arrow (Item : access Text_Item_With_Arrows_Record)
-      return Boolean;
-   --  Return True if the left arrow is displayed for this item
-
-   function Get_Right_Arrow (Item : access Text_Item_With_Arrows_Record)
-      return Boolean;
-   --  Return True if the right arrow is displayed for this item
-
-   procedure Set_Left_Arrow
-     (Item : access Text_Item_With_Arrows_Record; Display : Boolean);
-   --  Change the status of the left arrow
-
-   procedure Set_Right_Arrow
-     (Item : access Text_Item_With_Arrows_Record; Display : Boolean);
-   --  Change the status of the right arrow
-
-   procedure Button_Click_On_Left (Item : access Text_Item_With_Arrows_Record)
-      is abstract;
-   --  Handles button clicks on the left arrow.
-   --  This is not called if you override On_Button_Click
-
-   procedure Button_Click_On_Right (Item : access Text_Item_With_Arrows_Record)
-      is abstract;
-   --  Handles button clicks on the right arrow
-   --  This is not called if you override On_Button_Click
+   procedure Set_Parents_Shown
+     (Item : access Arrow_Item_Record; All_Shown : Boolean);
+   procedure Set_Children_Shown
+     (Item : access Arrow_Item_Record; All_Shown : Boolean);
+   --  Inidicate wether all the parents or all the children are shown.
 
    -----------
    -- Links --
@@ -457,6 +446,16 @@ package Browsers.Canvas is
    --  Return the graphic context for the background of items that are children
    --  of the selectd item.
 
+   function Get_Parents_Arrow
+     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf;
+   --  Return the pixbuf that should be used for the button that displays the
+   --  parents
+
+   function Get_Children_Arrow
+     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf;
+   --  Return the pixbuf that should be used for the button that displays the
+   --  children
+
    ----------------------
    -- Contextual menus --
    ----------------------
@@ -489,7 +488,7 @@ private
       Selected_Item : Gtkada.Canvas.Canvas_Item;
 
       Close_Pixmap : Gdk.Pixbuf.Gdk_Pixbuf;
-      Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
+      Up_Arrow, Down_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
    type Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
@@ -523,38 +522,17 @@ private
       Active_Areas : Active_Area_Tree;
    end record;
 
-   type Text_Item_Record is new Browser_Item_Record  with
-   record
-      Layout : Pango.Layout.Pango_Layout;
+   type Arrow_Item_Record is new Browser_Item_Record with record
+      Parents_Shown, Children_Shown : Boolean := False;
+      Parents_Cb, Children_Cb : Arrow_Item_Callback;
    end record;
 
-   procedure Resize_And_Draw
-     (Item             : access Text_Item_Record;
-      Width, Height    : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint);
-   procedure Destroy (Item : in out Text_Item_Record);
-   --  See doc for inherited subprograms
-
-   type Text_Item_With_Arrows_Record is abstract new
-     Text_Item_Record with
-   record
-      Left_Arrow, Right_Arrow : Boolean := True;
-   end record;
-
-   procedure Resize_And_Draw
-     (Item             : access Text_Item_With_Arrows_Record;
-      Width, Height    : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint);
-   procedure On_Button_Click
-     (Item  : access Text_Item_With_Arrows_Record;
-      Event : Gdk.Event.Gdk_Event_Button);
+   procedure Redraw_Title_Bar (Item : access Arrow_Item_Record);
+   function Get_Last_Button_Number (Item : access Arrow_Item_Record)
+      return Glib.Gint;
    procedure Reset
-     (Browser : access General_Browser_Record'Class;
-      Item : access Text_Item_With_Arrows_Record;
+     (Item : access Arrow_Item_Record;
       Parent_Removed, Child_Removed : Boolean);
-   --  See doc for inherited Reset
 
    type Item_Active_Area_Callback is new Active_Area_Callback with record
       User_Data : Browser_Item;
