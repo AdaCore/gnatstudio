@@ -52,7 +52,6 @@ package VFS is
    --  Return a file, given its full filename.
    --  The latter can be found, for source files, through the functions in
    --  projects-registry.ads.
-   --  The user must call Destroy on the result
 
    function Create_From_Base (Base_Name : UTF8_String) return Virtual_File;
    --  Return a file, given its base name.
