@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
+--                        Copyright (C) 2002-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -149,6 +149,9 @@ private
 
       Cmd_Index   : Natural;
       --  The current command we are executing
+
+      Current_Command : Glib.Xml_Int.Node_Ptr;
+      --  The current command we are executing.
 
       Progress_Matcher  : GNAT.Expect.Pattern_Matcher_Access;
       Current_In_Regexp : Natural;
