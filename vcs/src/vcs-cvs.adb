@@ -39,7 +39,6 @@ with Commands.External;         use Commands.External;
 package body VCS.CVS is
 
    --  ??? Should we make commands customizable ?
-   --  ??? Should we make expect timeouts customizable ?
 
    CVS_Command : constant String := "cvs";
    --  <preferences>
@@ -65,13 +64,7 @@ package body VCS.CVS is
    procedure Handle_Error
      (Rep : access CVS_Record;
       S   : String);
-   --  Appends S at the end of current message.
-
-   function Get_Path (Filename : String) return String;
-   --  Returns the path to Filename.
-   --  Filename is an absolute file name.
-   --  Returns "" if no satisfactory path could be found.
-   --  ??? Maybe this function should be implemented elsewhere.
+   --  Append S at the end of current message.
 
    procedure Real_Get_Status
      (Rep         : access CVS_Record;
@@ -86,14 +79,15 @@ package body VCS.CVS is
    --  empty and that all files in Filenames are from the same directory.
 
    procedure Simple_Action
-     (Rep               : access CVS_Record;
-      Filenames         : String_List.List;
-      Arguments         : String_List.List);
+     (Rep       : access CVS_Record;
+      Filenames : String_List.List;
+      Arguments : String_List.List);
+   --  ???
 
    procedure Real_Simple_Action
-     (Rep               : access CVS_Record;
-      Filenames         : String_List.List;
-      Arguments         : String_List.List);
+     (Rep       : access CVS_Record;
+      Filenames : String_List.List;
+      Arguments : String_List.List);
    --  Just like Simple_Action, but assuming that Filenames is not
    --  empty and that all files in Filenames are from the same directory.
 
@@ -105,7 +99,7 @@ package body VCS.CVS is
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
-   --  Creates a file with the information from List, and display it in an
+   --  Create a file with the information from List, and display it in an
    --  editor.
 
    function Error_Output_Handler
@@ -130,21 +124,6 @@ package body VCS.CVS is
    begin
       null;
    end Free;
-
-   --------------
-   -- Get_Path --
-   --------------
-
-   function Get_Path (Filename : String) return String is
-   begin
-      for J in reverse Filename'First .. Filename'Last loop
-         if Filename (J) = GNAT.OS_Lib.Directory_Separator then
-            return Filename (1 .. J);
-         end if;
-      end loop;
-
-      return "";
-   end Get_Path;
 
    --------------------------
    -- Error_Output_Handler --
@@ -202,7 +181,7 @@ package body VCS.CVS is
       Args            : List;
       Dir             : List;
    begin
-      Append (Dir, Get_Path (Head (Filenames)));
+      Append (Dir, Dir_Name (Head (Filenames)));
 
       declare
          Args_Temp : List := Arguments;
@@ -215,9 +194,7 @@ package body VCS.CVS is
 
       Append (Command, CVS_Command);
 
-      if Head (Filenames)
-        /=  Get_Path (Head (Filenames))
-      then
+      if Head (Filenames) /= Dir_Name (Head (Filenames)) then
          declare
             Files_Temp : List := Filenames;
          begin
@@ -266,11 +243,11 @@ package body VCS.CVS is
 
          --  Extract a list of files that belong to the same directory.
          declare
-            Current_Directory : String := Get_Path (Head (Current_Filename));
+            Current_Directory : String := Dir_Name (Head (Current_Filename));
             Current_List      : List;
          begin
             while not Is_Empty (Current_Filename)
-              and then Get_Path (Head (Current_Filename)) = Current_Directory
+              and then Dir_Name (Head (Current_Filename)) = Current_Directory
             loop
                Append (Current_List, Head (Current_Filename));
                Current_Filename := Next (Current_Filename);
@@ -455,15 +432,15 @@ package body VCS.CVS is
       Args            : List;
       Dir             : List;
    begin
-      Append (Dir, Get_Path (Head (Filenames)));
+      Append (Dir, Dir_Name (Head (Filenames)));
       Append (Command, CVS_Command);
-      Append (Command_Head, Get_Path (Head (Filenames)));
+      Append (Command_Head, Dir_Name (Head (Filenames)));
 
       --  Generate arguments list.
       --  If the first argument is a directory, do a simple query for
       --  all files in that directory.
 
-      if Head (Filenames) = Get_Path (Head (Filenames)) then
+      if Head (Filenames) = Dir_Name (Head (Filenames)) then
          Append (Args, "status");
          Append (Args, "-l");
       else
@@ -505,7 +482,7 @@ package body VCS.CVS is
       Result  : File_Status_List.List;
 
       Old_Dir : Dir_Name_Str := Get_Current_Dir;
-      New_Dir : Dir_Name_Str := Get_Path (Head (Filenames));
+      New_Dir : Dir_Name_Str := Dir_Name (Head (Filenames));
 
       Blank_Status   : File_Status_Record;
       Current_Status : File_Status_Record := Blank_Status;
@@ -637,12 +614,12 @@ package body VCS.CVS is
          --  Extract a list of files that belong to the same directory.
 
          declare
-            Current_Directory : String := Get_Path (Head (Current_Filename));
+            Current_Directory : String := Dir_Name (Head (Current_Filename));
             Current_List      : String_List.List;
 
          begin
             while not Is_Empty (Current_Filename)
-              and then Get_Path (Head (Current_Filename)) = Current_Directory
+              and then Dir_Name (Head (Current_Filename)) = Current_Directory
             loop
                Append (Current_List, Head (Current_Filename));
                Current_Filename := Next (Current_Filename);
@@ -682,12 +659,12 @@ package body VCS.CVS is
 
          --  Extract a list of files that belong to the same directory.
          declare
-            Current_Directory : String := Get_Path (Head (Current_Filename));
+            Current_Directory : String := Dir_Name (Head (Current_Filename));
             Current_List      : String_List.List;
 
          begin
             while not Is_Empty (Current_Filename)
-              and then Get_Path (Head (Current_Filename)) = Current_Directory
+              and then Dir_Name (Head (Current_Filename)) = Current_Directory
             loop
                Append (Current_List, Head (Current_Filename));
                Current_Filename := Next (Current_Filename);
@@ -922,7 +899,7 @@ package body VCS.CVS is
       Args            : List;
       Dir             : List;
    begin
-      Append (Dir, Get_Path (File));
+      Append (Dir, Dir_Name (File));
       Append (Command, CVS_Command);
       Append (Args, "diff");
 
@@ -1014,7 +991,7 @@ package body VCS.CVS is
       Args            : List;
       Dir             : List;
    begin
-      Append (Dir, Get_Path (File));
+      Append (Dir, Dir_Name (File));
       Append (Command, CVS_Command);
       Append (Args, "log");
       Append (Args, Base_Name (File));
@@ -1051,7 +1028,7 @@ package body VCS.CVS is
       Args            : List;
       Dir             : List;
    begin
-      Append (Dir, Get_Path (File));
+      Append (Dir, Dir_Name (File));
       Append (Command, CVS_Command);
       Append (Args, "annotate");
       Append (Args, Base_Name (File));
