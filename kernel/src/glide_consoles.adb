@@ -27,6 +27,7 @@ with Gtk.Text;                 use Gtk.Text;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
+with Glide_Result_View;        use Glide_Result_View;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -101,11 +102,12 @@ package body Glide_Consoles is
    ------------
 
    procedure Insert
-     (Console        : access Glide_Console_Record;
-      Text           : String;
-      Highlight_Sloc : Boolean := True;
-      Add_LF         : Boolean := True;
-      Mode           : Glide_Kernel.Console.Message_Type := Info)
+     (Console             : access Glide_Console_Record;
+      Text                : String;
+      Highlight_Sloc      : Boolean := True;
+      Add_LF              : Boolean := True;
+      Mode                : Message_Type := Info;
+      Location_Identifier : String := "")
    is
       File_Location : constant Pattern_Matcher :=
         Compile (Get_Pref (Console.Kernel, File_Pattern), Multiple_Lines);
@@ -135,6 +137,10 @@ package body Glide_Consoles is
             Matched   : Match_Array (0 .. 3);
             Start     : Natural := New_Text'First;
             Last      : Natural;
+            Real_Last : Natural;
+
+            Line      : Natural := 1;
+            Column    : Natural := 1;
 
          begin
             while Start <= New_Text'Last loop
@@ -157,6 +163,35 @@ package body Glide_Consoles is
                  (Console.Text,
                   Fore  => Highlight,
                   Chars => New_Text (Matched (1).First .. Last));
+
+               if Matched (2) /= No_Match then
+                  Line := Integer'Value
+                    (New_Text (Matched (2).First .. Matched (2).Last));
+               end if;
+
+               if Matched (3) /= No_Match then
+                  Column := Integer'Value
+                    (New_Text (Matched (3).First .. Matched (3).Last));
+               end if;
+
+
+               --  Strip the last ASCII.LF if needed.
+               Real_Last := Last;
+
+               while Real_Last < New_Text'Last
+                 and then New_Text (Real_Last + 1) /= ASCII.LF
+               loop
+                  Real_Last := Real_Last + 1;
+               end loop;
+
+               Insert
+                 (Get_Result_View (Console.Kernel),
+                  Location_Identifier,
+                  New_Text (Matched (1).First .. Matched (1).Last),
+                  Line,
+                  Column,
+                  New_Text (Last + 1 .. Real_Last));
+
                Start := Last + 1;
             end loop;
 
