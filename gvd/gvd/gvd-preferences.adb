@@ -468,7 +468,7 @@ package body GVD.Preferences is
           Nick    => -"Execute command",
           Blurb   => -"Program used to execute commands externally",
           Flags   => External_Flags,
-          Default => "xterm -e"));
+          Default => Exec_Command));
       Register_Property (Prefs, Param_Spec (Execute_Command), Helpers);
 
       Html_Browser := Param_Spec_String (Gnew_String
