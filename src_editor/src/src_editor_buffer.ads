@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -494,14 +494,6 @@ package Src_Editor_Buffer is
       Width         : Integer;
       --  The pixel width of the column.
 
-      Stick_To_Data : Boolean;
-      --  If Stick_To_Data is True, then the column contains information
-      --  that are relative to the file as it was opened in the first
-      --  place: when you insert or remove lines, the information should
-      --  stick to the lines they are associated with.
-      --  If Stick_To_Data is False, then the information "sticks" to
-      --  the line numbers.
-
       Every_Line : Boolean;
       --  If Every_Line is True, then there must be data at every line in
       --  this column.
@@ -671,6 +663,9 @@ package Src_Editor_Buffer is
       Line   : File_Line_Type) return Buffer_Line_Type;
    --  Return the buffer line corresponding to file line Line
 
+   procedure Refresh_Side_Column (Buffer : access Source_Buffer_Record);
+   --  Refresh the side columns in Buffer.
+
 private
 
    procedure Get_Cursor_Position
@@ -766,11 +761,6 @@ private
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type);
-   --  Create blank Side_Info_Data.
-
-   procedure Create_Side_Info
-     (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type);
    --  Create blank Side_Info_Data.
 
@@ -792,16 +782,12 @@ private
       --  Points to the corresponding block, or null if the line doesn't belong
       --  to a block.
 
-      Side_Info_Data : Line_Info_Width_Array_Access;
-      --  The array corresponding to information to be displayed in columns,
-      --  indexed on columns.
-
       File_Line          : File_Line_Type;
       --  The corresponding line in the file corresponding to Buffer.
       --  0 if the line is not in the file.
    end record;
 
-   New_Line_Data : constant Line_Data_Record := (0, null, null, null, null, 0);
+   New_Line_Data : constant Line_Data_Record := (0, null, null, null, 0);
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;
@@ -978,11 +964,6 @@ private
       --  The following is related to information regarding
       --  the side column information.
 
-      Buffer_Line_Info_Columns : Columns_Config_Access;
-      --  The information concerning columns of data that should be displayed
-      --  in the left window.
-      --  Must never be null.
-
       Editable_Line_Info_Columns : Columns_Config_Access;
       --  The information concerning columns of data that should be displayed
       --  in the left window.
@@ -1008,6 +989,9 @@ private
 
       Total_Column_Width : Natural := 0;
       --  Width of the Left Window, in pixels.
+
+      Line_Numbers_Width : Natural := 0;
+      --  Width allocated to line numbers in the Left Window, in pixels
 
       Original_Text_Inserted : Boolean := False;
 
