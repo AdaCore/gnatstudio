@@ -1445,8 +1445,12 @@ package body Browsers.Entities is
          Entity_Name => Get_Name (Item.Entity),
          Line        => Get_Declaration_Line_Of (Item.Entity),
          Column      => Get_Declaration_Column_Of (Item.Entity));
-      --  Do not set the file information, we should really limit to
-      --  entity-related submenus here.
+      Set_File_Information
+        (Context     => Context,
+         File_Name   => Get_Declaration_File_Of (Item.Entity));
+      --  We need to set the file information, even though it will also display
+      --  some contextual menus (file dependencies,...), otherwise the call
+      --  graph will not work.
 
       if Menu /= null then
          Gtk_New (Mitem, -"Show source");
