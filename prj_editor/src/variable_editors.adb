@@ -59,14 +59,12 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Unchecked_Deallocation;
 
 with Pixmaps_IDE;   use Pixmaps_IDE;
+with Pixmaps_Prj;   use Pixmaps_Prj;
 with Prj_API;       use Prj_API;
 with Prj_Manager;   use Prj_Manager;
 with Value_Editors; use Value_Editors;
 
 package body Variable_Editors is
-
-   delete_var_xpm : aliased chars_ptr_array (0 .. 0);
-   pragma Import (C, delete_var_xpm, "delete_var_xpm");
 
    procedure Display_Expr
      (Editable : access Gtk_Text_Record'Class;

@@ -65,11 +65,9 @@ with Directory_Tree;   use Directory_Tree;
 with Switches_Editors; use Switches_Editors;
 with Naming_Editors;   use Naming_Editors;
 with Prj_API;          use Prj_API;
+with Pixmaps_Prj;      use Pixmaps_Prj;
 
 package body Creation_Wizard is
-
-   Logo_Xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, Logo_Xpm, "logo_xpm");
 
    function First_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget;

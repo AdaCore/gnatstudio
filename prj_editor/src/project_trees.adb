@@ -48,6 +48,7 @@ with Types;                use Types;
 
 with Prj_API;              use Prj_API;
 with Prj_Manager;          use Prj_Manager;
+with Pixmaps_IDE;          use Pixmaps_IDE;
 
 package body Project_Trees is
 
@@ -64,12 +65,6 @@ package body Project_Trees is
    --  Number of columns in the ctree.
 
    subtype Tree_Chars_Ptr_Array is Chars_Ptr_Array (1 .. Number_Of_Columns);
-
-   mini_folder_xpm   : aliased Chars_Ptr_Array (0 .. 0);
-   mini_ofolder_xpm  : aliased Chars_Ptr_Array (0 .. 0);
-
-   pragma Import (C, mini_folder_xpm,  "mini_folder_xpm");
-   pragma Import (C, mini_ofolder_xpm, "mini_ofolder_xpm");
 
    type Node_Types is (Project_Node, Directory_Node);
    --  ??? Would be nice if this was extensible (for instance to include symbol
