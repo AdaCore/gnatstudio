@@ -38,6 +38,7 @@ with Gint_Xml;
 package Default_Preferences is
 
    type Property_Color is new Glib.Property;
+   type Property_Font  is new Glib.Property;
 
 
    function Register_Property (Name : String; Default : Glib.Guint)
@@ -48,6 +49,8 @@ package Default_Preferences is
       return Glib.Properties.Property_String;
    function Register_Property (Name : String; Default : String)
       return Property_Color;
+   function Register_Property (Name : String; Default : String)
+      return Property_Font;
    --  Register a new property and its default value.
    --  The returned value should be used later on to retrieve the value of the
    --  property.
