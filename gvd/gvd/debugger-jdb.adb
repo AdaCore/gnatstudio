@@ -28,6 +28,7 @@ with Debugger.Jdb.Java; use Debugger.Jdb.Java;
 with Process_Proxies;   use Process_Proxies;
 with Gtk.Window;        use Gtk.Window;
 with Odd.Process;       use Odd.Process;
+with Odd.Trace;         use Odd.Trace;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 package body Debugger.Jdb is
@@ -130,9 +131,9 @@ package body Debugger.Jdb is
 
       if Main_Debug_Window_Access (Window).Debug_Mode then
          Add_Output_Filter
-           (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
+           (Get_Descriptor (Debugger.Process).all, Output_Filter'Access);
          Add_Input_Filter
-           (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
+           (Get_Descriptor (Debugger.Process).all, Input_Filter'Access);
 
       elsif Main_Debug_Window_Access (Window).TTY_Mode then
          Add_Output_Filter
