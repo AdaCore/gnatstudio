@@ -1534,9 +1534,14 @@ package body GVD.Process is
               (-"Could not launch the debugger"),
               Error, Button_OK, Button_OK);
          Process.Exiting := True;
+
          Close (Window.Process_Mdi, Process.Debugger_Text);
          Close (Window.Process_Mdi, Process.Data_Scrolledwindow);
-         Close (Window.Process_Mdi, Process.Stack_Scrolledwindow);
+
+         if Process.Stack_Scrolledwindow /= null then
+            Close (Window.Process_Mdi, Process.Stack_Scrolledwindow);
+         end if;
+
          Process.Exiting := False;
          Success := False;
 
