@@ -1914,12 +1914,13 @@ package body Src_Info.ALI is
       Predefined_Object_Path : String)
    is
       F : File_Info_Ptr_List;
+      Base : constant String := Base_Name (Source_Filename);
    begin
       Create_Or_Complete_LI
         (Handler                => Handler,
          File                   => File,
          Ali_File               => LI_Filename_From_Source
-           (Handler, Source_Filename, Project, Predefined_Source_Path),
+           (Handler, Base, Project, Predefined_Source_Path),
          List                   => List,
          Project                => Project,
          Predefined_Source_Path => Predefined_Source_Path,
@@ -1933,9 +1934,9 @@ package body Src_Info.ALI is
 
       if File /= No_LI_File then
          if (File.LI.Spec_Info /= null
-             and then File.LI.Spec_Info.Source_Filename.all = Source_Filename)
+             and then File.LI.Spec_Info.Source_Filename.all = Base)
            or else (File.LI.Body_Info /= null
-             and then File.LI.Body_Info.Source_Filename.all = Source_Filename)
+             and then File.LI.Body_Info.Source_Filename.all = Base)
          then
             return;
          end if;
@@ -1943,15 +1944,14 @@ package body Src_Info.ALI is
          F := File.LI.Separate_Info;
          while F /= null loop
             if F.Value /= null
-              and then F.Value.Source_Filename.all = Source_Filename
+              and then F.Value.Source_Filename.all = Base
             then
                return;
             end if;
             F := F.Next;
          end loop;
 
-         Trace (Me, "Parsed LI file didn't contain the info for "
-                & Source_Filename);
+         Trace (Me, "Parsed LI file didn't contain the info for " & Base);
          File := No_LI_File;
       end if;
    end Create_Or_Complete_LI;
@@ -2061,6 +2061,52 @@ package body Src_Info.ALI is
          Trace (Me, "Couldn't open the directory " & In_Directory);
          null;
    end Parse_All_LI_Information;
+
+   ----------------------------
+   -- Generate_LI_For_Source --
+   ----------------------------
+
+   function Generate_LI_For_Source
+     (Handler       : access ALI_Handler_Record;
+      Root_Project  : Prj.Project_Id;
+      File_Project  : Prj.Project_Id;
+      Full_Filename : String) return LI_Handler_Iterator'Class
+   is
+      pragma Unreferenced (Handler, Root_Project, File_Project, Full_Filename);
+      Iterator : ALI_Handler_Iterator;
+   begin
+      return Iterator;
+   end Generate_LI_For_Source;
+
+   -----------------------------
+   -- Generate_LI_For_Project --
+   -----------------------------
+
+   function Generate_LI_For_Project
+     (Handler       : access ALI_Handler_Record;
+      Root_Project  : Prj.Project_Id;
+      Project       : Prj.Project_Id;
+      Recursive     : Boolean := False)
+      return LI_Handler_Iterator'Class
+   is
+      pragma Unreferenced (Handler, Root_Project, Project, Recursive);
+      Iterator : ALI_Handler_Iterator;
+   begin
+      return Iterator;
+   end Generate_LI_For_Project;
+
+   --------------
+   -- Continue --
+   --------------
+
+   procedure Continue
+     (Iterator : in out ALI_Handler_Iterator;
+      Finished : out Boolean)
+   is
+      pragma Unreferenced (Iterator);
+   begin
+      Finished := True;
+   end Continue;
 
 end Src_Info.ALI;
 

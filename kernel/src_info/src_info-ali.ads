@@ -78,4 +78,26 @@ package Src_Info.ALI is
    --  this function could then be used to call ALI_Filename_From_Source
    --  to get the associated ALI filename.
 
+   type ALI_Handler_Iterator is new LI_Handler_Iterator with private;
+
+   function Generate_LI_For_Source
+     (Handler       : access ALI_Handler_Record;
+      Root_Project  : Prj.Project_Id;
+      File_Project  : Prj.Project_Id;
+      Full_Filename : String) return LI_Handler_Iterator'Class;
+
+   function Generate_LI_For_Project
+     (Handler       : access ALI_Handler_Record;
+      Root_Project  : Prj.Project_Id;
+      Project       : Prj.Project_Id;
+      Recursive     : Boolean := False)
+      return LI_Handler_Iterator'Class;
+
+   procedure Continue
+     (Iterator : in out ALI_Handler_Iterator;
+      Finished : out Boolean);
+
+private
+   type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
+
 end Src_Info.ALI;
