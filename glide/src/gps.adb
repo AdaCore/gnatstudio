@@ -559,6 +559,17 @@ procedure GPS is
             when 'P' =>
                Project_Name := new String'
                  (Normalize_Pathname (Parameter));
+
+               if not Is_Regular_File (Project_Name.all)
+                 and then Is_Regular_File
+                   (Project_Name.all & Project_File_Extension)
+               then
+                  Prj := Project_Name;
+                  Project_Name :=
+                    new String'(Prj.all & Project_File_Extension);
+                  Free (Prj);
+               end if;
+
                Trace (Me, "Found project: " & Parameter);
 
             when ASCII.NUL =>
@@ -599,7 +610,10 @@ procedure GPS is
          Put_Line
            (-"   --debugger debugger Specify the debugger's command line");
          Put_Line ((-"   --target=TARG:PRO   ") &
-                   (-"Load program on machine TARG using protocol PRO"));
+                     (-"Load program on machine TARG using protocol PRO"));
+         Put_Line (-"   --log-level=LEVEL   Set the log level used for the");
+         Put_Line (-"                       debugger. 1 is the minium, 4");
+         Put_Line (-"                       is the maximum");
          Put_Line
            (-"   --load=lang:file    Execute an external file written");
          Put_Line (-"                        in the language lang");
@@ -893,10 +907,21 @@ procedure GPS is
 
          File_Opened := True;
          Auto_Load_Project := False;
-         Load_Default_Project
-           (GPS.Kernel, Get_Current_Dir, Load_Default_Desktop => True);
+
+         if Project_Name /= null
+           and then Is_Regular_File (Project_Name.all)
+         then
+            Load_Project (GPS.Kernel, Project_Name.all);
+            Project := Get_Project (GPS.Kernel);
+         else
+            Load_Default_Project
+              (GPS.Kernel, Get_Current_Dir, Load_Default_Desktop => True);
+            Project := Get_Project (GPS.Kernel);
+            Set_Status (Project, From_Executable);
+         end if;
+
+         --  Project will be overriden when the executable is loaded.
          Load_Sources;
-         Project := Get_Project (GPS.Kernel);
 
          if Debugger_Name /= null then
             Update_Attribute_Value_In_Scenario
@@ -1005,14 +1030,6 @@ procedure GPS is
       end if;
 
       if Auto_Load_Project and then Project_Name /= null then
-         if not Is_Regular_File (Project_Name.all)
-           and then Is_Regular_File (Project_Name.all & Project_File_Extension)
-         then
-            Prj := Project_Name;
-            Project_Name := new String'(Prj.all & Project_File_Extension);
-            Free (Prj);
-         end if;
-
          Load_Project (GPS.Kernel, Project_Name.all);
          Load_Sources;
       end if;
