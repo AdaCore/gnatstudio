@@ -56,6 +56,10 @@ package Commands.Editor is
    --  Return True if the command does nothing at all, False otherwise.
 
    function Get_Mode (Command : Editor_Command) return Editor_Command_Mode;
+   --  Return the mode associated with Command.
+
+   function Get_Direction (Command : Editor_Command) return Direction_Type;
+   --  Return the direction associated with Command.
 
    procedure Create
      (Item          : out Editor_Command;
