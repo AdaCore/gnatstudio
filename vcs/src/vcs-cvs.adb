@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -90,6 +90,12 @@ package body VCS.CVS is
       List   : String_List.List) return Boolean;
    --  Create a file with the information from List, and display it in an
    --  editor.
+
+   function Annotation_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Display the annotations for the file.
 
    function Error_Output_Handler
      (Kernel : Kernel_Handle;
@@ -945,6 +951,73 @@ package body VCS.CVS is
       Free (Dir);
    end Diff;
 
+   -------------------------------
+   -- Annotation_Output_Handler --
+   -------------------------------
+
+   function Annotation_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      use String_List;
+
+      L_Temp  : List_Node := First (List);
+      Length  : Integer := String_List.Length (List) - 2;
+
+      Current_File : constant String := String_List.Head (Head);
+
+      A     : Line_Information_Array (1 .. Length);
+      Index : Natural;
+   begin
+      --- ??? This assumes that the file currently opened is identical to the
+      --  file first checked-out from CVS. It would be necessary here to
+      --  force a save of the file, and then to get a diff between that file
+      --  and the one on CVS (which is given in the output of the annotation,
+      --  by the way), and to compute from that diff which lines correspond to
+      --  the annotated ones.
+
+      if Length <= 0 then
+         Insert (Kernel,
+                 -"CVS: No annotations available for file "
+                 & Current_File & ".",
+                 Highlight_Sloc => False,
+                 Mode => Verbose);
+         return False;
+      end if;
+
+      Open_File_Editor (Kernel, Current_File);
+
+      L_Temp := Next (Next (L_Temp));
+
+      declare
+         S : String := Data (L_Temp);
+      begin
+         Index := S'First;
+         Skip_To_String (S, Index, "): ");
+         Index := Index - S'First + 2;
+      end;
+
+      for J in 1 .. Length loop
+         declare
+            S : String := Data (L_Temp);
+         begin
+            A (J).Line := J;
+            A (J).Text := new String' (S (S'First .. S'First + Index));
+         end;
+
+         L_Temp := Next (L_Temp);
+      end loop;
+
+      Add_Line_Information (Kernel,
+                            Current_File,
+                            VCS_CVS_Module_Name,
+                            Index * 6 + 2,
+                            new Line_Information_Array'(A));
+
+      return True;
+   end Annotation_Output_Handler;
+
    -------------------------
    -- Text_Output_Handler --
    -------------------------
@@ -1042,7 +1115,7 @@ package body VCS.CVS is
       Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
       Append (Args, "annotate");
       Append (Args, Base_Name (File));
-      Append (Command_Head, Base_Name (File) & "_annotations");
+      Append (Command_Head, File);
 
       Create
         (C,
@@ -1051,7 +1124,7 @@ package body VCS.CVS is
          Dir,
          Args,
          Command_Head,
-         Text_Output_Handler'Access);
+         Annotation_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
