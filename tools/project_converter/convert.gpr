@@ -7,7 +7,7 @@ project Convert is
    
    package Compiler is
       for Default_Switches ("Ada") use
-         ("-gnaty", "-gnatQ", "-g", "-gnatwjmbeurk");
+         ("-gnaty", "-gnatQ", "-g", "-gnatwjmeurk");
    end Compiler;
 
    package Linker is
