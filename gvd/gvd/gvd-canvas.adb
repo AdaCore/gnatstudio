@@ -42,6 +42,7 @@ with Gtkada.Handlers;  use Gtkada.Handlers;
 
 with Debugger;         use Debugger;
 with Display_Items;    use Display_Items;
+with Factory_Data;
 with Items;            use Items;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 
@@ -211,7 +212,8 @@ package body GVD.Canvas is
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Get_Process (GVD_Canvas (Canvas)));
    begin
-      On_Display_Expression (Process.Window.all'Access);
+      On_Display_Expression
+        (Process.Window.all'Access, 0, Factory_Data.Null_Widget);
    end Display_Expression;
 
    ------------------------
@@ -251,8 +253,9 @@ package body GVD.Canvas is
       Canvas := new GVD_Canvas_Record;
       Canvas.Detect_Aliases := Get_Pref (Default_Detect_Aliases);
       Initialize (Canvas);
+      Align_On_Grid (Canvas, True);
 
-      --  Create the  background contextual menu now, so that the key shortcuts
+      --  Create the background contextual menu now, so that the key shortcuts
       --  are activated
       Menu := Contextual_Background_Menu (Canvas, Accel_Group);
    end Gtk_New;
@@ -416,15 +419,8 @@ package body GVD.Canvas is
    begin
       Realize (C);
       Win := Get_Window (C);
-      Align_On_Grid (C, Get_Pref (Align_Items_On_Grid));
       Set_Detect_Aliases (C, Get_Pref (Default_Detect_Aliases));
       Recompute_All_Aliases (C);
-
-      if Get_Pref (Display_Grid) then
-         Configure (C, Grid_Size => Default_Grid_Size);
-      else
-         Configure (C, Grid_Size => 0);
-      end if;
 
       --  The drawing context for the items
 
@@ -932,6 +928,7 @@ package body GVD.Canvas is
       Item    : Item_Record)
    is
       pragma Unreferenced (Widget);
+
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (Debugger_Process_Tab (Item.Canvas.Process).Window);
       View : constant GVD_Memory_View := Top.Memory_View;
