@@ -24,6 +24,7 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Gtk;                       use Gtk;
 with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -2395,13 +2396,17 @@ package body Src_Editor_Buffer is
 
             Dialog := Create_Gtk_Dialog
               (Msg         => Base_Name (Buffer.Filename.all)
-                 & (-" changed on disk. Really edit ?"),
-               Dialog_Type => Confirmation,
-               Title       => -"File changed on disk",
-               Parent      => Get_Main_Window (Buffer.Kernel));
+                 & (-" changed on disk. Really edit ?")
+                 & ASCII.LF & ASCII.LF
+                 & (-"Clicking on Revert will reload the file from disk.")
+                 & ASCII.LF
+                 & (-"Clicking on Yes will keep the current file in memory."),
+               Dialog_Type   => Confirmation,
+               Title         => -"File changed on disk",
+               Justification => Justify_Left,
+               Parent        => Get_Main_Window (Buffer.Kernel));
 
             Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
-            Button := Add_Button (Dialog, Stock_No, Gtk_Response_No);
             Button := Add_Button
               (Dialog, Stock_Revert_To_Saved, Gtk_Response_Accept);
 
@@ -2410,10 +2415,6 @@ package body Src_Editor_Buffer is
             case Run (Dialog) is
                when Gtk_Response_Yes =>
                   Buffer.Timestamp := New_Timestamp;
-
-               when Gtk_Response_No =>
-                  Destroy (Dialog);
-                  return False;
 
                when Gtk_Response_Accept =>
                   Get_Cursor_Position (Buffer, Line, Column);
