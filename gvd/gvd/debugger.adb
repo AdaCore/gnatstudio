@@ -509,6 +509,12 @@ package body Debugger is
       Set_Command_In_Process (Get_Process (Debugger));
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
+      if not Is_Started (Debugger)
+        and then Is_Execution_Command (Debugger, Cmd)
+      then
+         Set_Is_Started (Debugger, True);
+      end if;
+
       if Debugger.Window /= null then
          Process := Convert (Debugger.Window, Debugger);
 
