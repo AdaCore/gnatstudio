@@ -64,20 +64,11 @@ package body VCS.CVS is
       S   : String);
    --  Appends S at the end of current message.
 
-   procedure Handle_Error
-     (Rep : access CVS_Record;
-      L   : String_List.List);
-   --  Concats L at the end of current message.
-
    function Atomic_Command (D : String_List_And_Handler_Access) return Boolean;
 
-   procedure Command (Rep         : CVS_Access;
-                      New_Command : in out Command_Record);
-   function Command
-     (Rep               : access CVS_Record;
-      Command           : String;
-      Arguments         : Argument_List;
-      Output_To_Message : Boolean := False) return String_List.List;
+   procedure Command
+     (Rep         : CVS_Access;
+      New_Command : in out Command_Record);
    --  Executes command Command with arguments Arguments and returns the result
    --  as a string list with one element per line of output.
 
@@ -191,8 +182,9 @@ package body VCS.CVS is
    -- Command --
    -------------
 
-   procedure Command (Rep         : CVS_Access;
-                      New_Command : in out Command_Record)
+   procedure Command
+     (Rep         : CVS_Access;
+      New_Command : in out Command_Record)
    is
       R  : String_List_And_Handler_Access := new String_List_And_Handler;
       Id : Timeout_Handler_Id;
@@ -244,45 +236,6 @@ package body VCS.CVS is
       end;
 
       Id := String_List_Idle.Add (50, Atomic_Command'Access, R);
-   end Command;
-
-   -------------
-   -- Command --
-   -------------
-
-   function Command
-     (Rep               : access CVS_Record;
-      Command           : String;
-      Arguments         : Argument_List;
-      Output_To_Message : Boolean := False) return String_List.List
-   is
-      Result : String_List.List;
-      Fd     : Process_Descriptor;
-      Match  : Expect_Match := 1;
-
-   begin
-      Non_Blocking_Spawn (Fd, Command, Arguments, Err_To_Out => True);
-
-      begin
-         while Match = 1 loop
-            Expect (Fd, Match, "\n");
-            declare
-               S : String := Expect_Out (Fd);
-            begin
-               if Output_To_Message then
-                  Set_Error (Rep, S (S'First .. S'Last - 1));
-               else
-                  String_List.Prepend (Result, S (S'First .. S'Last - 1));
-               end if;
-            end;
-         end loop;
-      exception
-         when Process_Died =>
-            null;
-      end;
-
-      String_List.Rev (Result);
-      return Result;
    end Command;
 
    --------------------------
@@ -1085,19 +1038,6 @@ package body VCS.CVS is
       S   : String) is
    begin
       Set_Error (Rep, S);
-   end Handle_Error;
-
-   procedure Handle_Error
-     (Rep : access CVS_Record;
-      L   : String_List.List)
-   is
-      Temp_L : String_List.List := L;
-   begin
-      while not String_List.Is_Empty (Temp_L) loop
-         Set_Error (Rep, String_List.Head (Temp_L));
-
-         Temp_L := String_List.Next (Temp_L);
-      end loop;
    end Handle_Error;
 
    ------------------
