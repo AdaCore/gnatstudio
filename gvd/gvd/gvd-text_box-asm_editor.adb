@@ -302,6 +302,29 @@ package body Odd.Asm_Editors is
       Pos_End         : Natural;
 
    begin
+      Get_Line_Address
+        (Debugger_Process_Tab (Editor.Process).Debugger,
+         Source_Line, Range_Start, Range_End, Range_Start_Len, Range_End_Len);
+
+      Pos_Start := Pos_From_Address
+        (Editor, Range_Start (1 .. Range_Start_Len));
+
+      --  No need to get the end address if we could not even find the starting
+      --  line.
+      if Pos_Start /= 0 then
+         Pos_End := Pos_From_Address
+           (Editor, Range_End (1 .. Range_End_Len));
+
+         --  If this range is currently highlighted, do nothing for efficiency
+         if Pos_Start = Editor.Highlight_Start
+           and then Pos_End = Editor.Highlight_End
+         then
+            return;
+         end if;
+      end if;
+
+      --  Restore the previous range tothe default color
+
       if Editor.Highlight_Start /= 0 then
          Delete_Text
            (Get_Child (Editor),
@@ -316,17 +339,8 @@ package body Odd.Asm_Editors is
          Editor.Highlight_Start := 0;
       end if;
 
-      Get_Line_Address
-        (Debugger_Process_Tab (Editor.Process).Debugger,
-         Source_Line, Range_Start, Range_End, Range_Start_Len, Range_End_Len);
-
-      Pos_Start := Pos_From_Address
-        (Editor, Range_Start (1 .. Range_Start_Len));
-
+      --  Highlight the new range
       if Pos_Start /= 0 then
-         Pos_End := Pos_From_Address
-           (Editor, Range_End (1 .. Range_End_Len));
-
          if Pos_End /= 0 then
             Editor.Highlight_Start := Pos_Start;
             Editor.Highlight_End   := Pos_End;
@@ -342,6 +356,11 @@ package body Odd.Asm_Editors is
                Chars => Get_Buffer (Editor)
                (Editor.Highlight_Start .. Editor.Highlight_End - 1));
          end if;
+
+         --  Reset the position, so that the current line is always visible in
+         --  the assembly editor.
+         Set_Position
+           (Get_Child (Editor), Gint (Editor.Highlight_Start));
       end if;
    end Highlight_Address_Range;
 
