@@ -5274,6 +5274,19 @@ The e-mail address of the developer surrounded with '<' and '>' characters.
 Horizontal tabulation (or 8 spaces)
 @end table
 
+The @i{name} and @i{<e-mail>} items can be entered automatically by setting
+the @var{GPS_CHANGELOG_USER} environment variable. Note that there is
+two spaces between the @i{name} and the @i{<e-mail>}.
+
+@smallexample
+On sh shell:
+
+   export GPS_CHANGELOG_USER="John Doe  <john.doe@@home.com>"
+
+On Windows shell:
+   set GPS_CHANGELOG_USER="John Doe  <john.doe@@home.com>"
+@end smallexample
+
 Using the menu entry @b{Edit global ChangeLog} will open the file
 @file{ChangeLog} in the directory where the current selected file is
 and create the corresponding @file{ChangeLog} entry. This means that
@@ -9468,6 +9481,12 @@ more details.
 Contains a list of directories to search for custom files. See
 @ref{Customizing through XML files} for more details.
 
+
+   @item GPS_CHANGELOG_USER
+@cindex GPS_CHANGELOG_USER
+Contains the user and e-mail to use in the global ChangeLog
+files. Note that the common usage is to have two spaces between the
+name and the e-mail. Ex: "John Does  <john.doe@@home.com>"
 
 @c Currently disabled, since this is not well supported yet
 @c    @item GDK_USE_XFT
