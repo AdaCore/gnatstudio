@@ -23,40 +23,40 @@
 
 --  The procedure examines the command line options, creates the list of
 --  source files to be processed and calls the procedure Process_File
---  from the package Docgen.Work_On_File.
+--  from the package Docgen.Work_On_File. The project ALI variables are
+--  created here too, as their are needed to get the unit names of
+--  the source files.
 
 with Ada.Command_Line;          use Ada.Command_Line;
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with String_Utils;              use String_Utils;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Docgen.Work_On_File;       use Docgen.Work_On_File;
 with Docgen;                    use Docgen;
 with Docgen.Html_Output;        use Docgen.Html_Output;
 with Docgen.Texi_Output;        use Docgen.Texi_Output;
+with Docgen.ALI_Utils;          use Docgen.ALI_Utils;
 with Glide_Intl;                use Glide_Intl;
+with Src_Info;                  use Src_Info;
+with Language_Handlers;         use Language_Handlers;
+with Prj.Tree;                  use Prj.Tree;
+with Prj;                       use Prj;
 
 procedure Docgen.Main is
 
    package TSFL renames Type_Source_File_List;
 
    Help_Requested, Command_Line_Error : exception;
+   Project_Not_First                  : exception;
 
    Source_File_List   : Type_Source_File_List.List;
    Prj_File_Name      : String_Access;
+   Handler            : Language_Handler;
+   Project_Tree       : Project_Node_Id;
+   Project_View       : Project_Id;
+   Source_Info_List   : Src_Info.LI_File_List;
    Options            : All_Options;
-
-   type Package_Info is record
-      Package_Name : String_Access;
-      Line         : Integer;
-   end record;
-
-   function Get_Package_Name
-     (File_Name : String) return Package_Info;
-   --  Extract the package name from the given source file
-   --  To be rewritten using the GPS parser ???
 
    procedure Handle_Command_Line
      (Quit : out Boolean);
@@ -70,65 +70,6 @@ procedure Docgen.Main is
      (Source_File_List : TSFL.List) return String;
    --  return the path of the first source file in the list
 
-   ----------------------
-   -- Get_Package_Name --
-   ----------------------
-
-   function Get_Package_Name
-     (File_Name : String) return Package_Info
-   is
-      File                 : File_Type;
-      Last, Index1, Index2 : Natural;
-      Line_Nr              : Integer;
-      Line_From_File       : String (1 .. Max_Line_Length);
-      Package_Name_Found   : Boolean;
-      Result               : Package_Info;
-
-   begin
-      Package_Name_Found := False;
-      Open (File, In_File, File_Name);
-      Line_Nr := 1;
-
-      --  looks for the first string "package " in the file
-      --  which is not in a comment
-      --  and returns the identifier behind
-      --  ??? Should use the GPS parser instead
-
-      while not Package_Name_Found and not End_Of_File (File) loop
-         Ada.Text_IO.Get_Line (File, Line_From_File, Last);
-         declare
-            New_Line : constant String := Line_From_File (1 .. Last);
-         begin
-            Line_Nr := Line_Nr + 1;
-            Index1 := Get_String_Index (To_Lower (New_Line), 1, "package ");
-            Index2 := Get_String_Index (New_Line, 1, "--");
-            if (Index1 > 0) and
-              ((Index2 = 0) or (Index1 < Index2)) then
-               Index1 := Index1 + 7;
-               Skip_Blanks (New_Line, Index1, 1);
-               Index2 := Index1;
-               Skip_To_Char (New_Line, Index2, ' ');
-               if Options.Info_Output then
-                  Put_Line (-"Package name found:   *" &
-                            New_Line (Index1 .. Index2 - 1) & "*");
-               end if;
-
-               Close (File);
-
-               Result :=
-                 (Package_Name =>
-                  new String'(New_Line
-                                (Index1 .. Index2 - 1)), Line => Line_Nr - 1);
-               return Result;
-            end if;
-         end;
-      end loop;
-
-      Close (File);
-      Put_Line (-"ERROR: Package Definition not found!!!");
-      return Result;
-   end Get_Package_Name;
-
    -------------------------
    -- Handle_Command_Line --
    -------------------------
@@ -140,8 +81,7 @@ procedure Docgen.Main is
       J                : Natural;
       N                : constant Natural := Argument_Count;
       Source_File_Node : Source_File_Information;
-      New_Package      : Package_Info;
-
+      LI_Unit          : LI_File_Ptr;
    begin
       --  ??? Should use GNAT.Command_Line instead
       J := 1;
@@ -161,9 +101,19 @@ procedure Docgen.Main is
             Options.Doc_Suffix     := new String'(".htm");
 
             if S = "-h"    or else S = "-?" or else
-              S = "-help" or else S = "--help"
-            then
+              S = "-help" or else S = "--help" then
                raise Help_Requested;
+
+               --  the project file must be the first argement
+            elsif J = 1 then
+               if S (S'Last - 3 .. S'Last) = ".gpr" then
+                  Prj_File_Name := new String'(S);
+                  Options.Project_Name :=
+                    new String'(File_Name (S (S'First .. S'Last - 4)));
+                  Load_Project (S, Handler, Project_Tree, Project_View);
+               else
+                  raise Project_Not_First;
+               end if;
             elsif S = "-texi" then
                Options.Doc_Subprogram := Doc_TEXI_Create'Access;
                Options.Doc_Suffix     := new String'(".texi");
@@ -181,39 +131,27 @@ procedure Docgen.Main is
                Options.Info_Output := True;
             elsif S = "-ref" then
                Options.References := True;
+            elsif S = "-linkall" then
+               Options.Link_All := True;
             elsif S = "-private" then
                Options.Show_Private := True;
             elsif S'Last > 9 and then S (1 .. 9) = "-docpath=" then
-               Options.Doc_Directory := new String '(S (10 .. S'Last));
-            elsif S'Length > 5 then
-               if S (S'Last - 3 .. S'Last) = ".gpr" then
-                  if Prj_File_Name /= null then
-                     raise Help_Requested;
-                  else
-                     Prj_File_Name := new String'(S);
-                     Options.Project_Name :=
-                       new String'(File_Name (S (S'First .. S'Last - 4)));
-                  end if;
-
-               elsif S (S'Last - 3 .. S'Last) = ".ads" then
-                  if Prj_File_Name /= null then
-                     Source_File_Node.File_Name := new String'(S);
-                     Source_File_Node.Prj_File_Name := Prj_File_Name;
-                     New_Package                   := Get_Package_Name (S);
-                     Source_File_Node.Package_Name :=
-                       New_Package.Package_Name;
-                     Source_File_Node.Def_In_Line  := New_Package.Line;
-
-                     Source_File_Node.Other_File_Found := True;
-                     Type_Source_File_List.Append (Source_File_List,
-                                                      Source_File_Node);
-                  else
-                     raise Command_Line_Error;
-                  end if;
-               end if;
+                  Options.Doc_Directory := new String '(S (10 .. S'Last));
+            elsif S'Length > 5 and then S (S'Last - 3 .. S'Last) = ".ads" then
+               Load_LI_File
+                    (Source_Info_List, Handler, Project_View,
+                     S, LI_Unit);
+               Source_File_Node.File_Name := new String'(S);
+               Source_File_Node.Prj_File_Name := Prj_File_Name;
+               Source_File_Node.Package_Name :=
+                 new String'(Get_Unit_Name (LI_Unit, File_Name (S)));
+               Source_File_Node.Other_File_Found := True;
+               Type_Source_File_List.Append (Source_File_List,
+                                             Source_File_Node);
+            else
+               raise Command_Line_Error;
             end if;
          end;
-
          J := J + 1;
       end loop;
 
@@ -236,7 +174,6 @@ procedure Docgen.Main is
                exit when S = "-?"    or else S = "-h" or else
                S = "-help" or else S = "--help";
             end;
-
             J := J + 1;
          end loop;
 
@@ -258,7 +195,7 @@ procedure Docgen.Main is
       New_Node         : Source_File_Information;
       New_Filename     : GNAT.OS_Lib.String_Access;
       Old_Filename     : GNAT.OS_Lib.String_Access;
-      New_Package      : Package_Info;
+      LI_Unit          : LI_File_Ptr;
    begin
       Source_File_Node := TSFL.First (Source_File_List);
 
@@ -277,15 +214,16 @@ procedure Docgen.Main is
             if Options.Info_Output then
                Put_Line (-"Adding file: " & New_Filename.all);
             end if;
-
+            Load_LI_File
+              (Source_Info_List, Handler, Project_View,
+               New_Filename.all, LI_Unit);
             New_Node.File_Name         :=
               new String'(New_Filename.all);
             New_Node.Prj_File_Name     :=
               new String'(TSFL.Data (Source_File_Node).Prj_File_Name.all);
-            New_Package := Get_Package_Name
-              (TSFL.Data (Source_File_Node).File_Name.all);
-            New_Node.Package_Name      := New_Package.Package_Name;
-            New_Node.Def_In_Line       := New_Package.Line;
+            New_Node.Package_Name :=
+              new String'(Get_Unit_Name
+                            (LI_Unit, File_Name (New_Filename.all)));
             Type_Source_File_List.Append (Source_File_List, New_Node);
             Free (New_Filename);
             Free (Old_Filename);
@@ -322,6 +260,14 @@ procedure Docgen.Main is
 
 begin --  DocGen
 
+   --  get the language handler
+   Handler := Create_Lang_Handler;
+   --  get Project_Tree and Project_View
+   Reset (Source_Info_List);
+   --  the project is loaded in Command Line, as soon as the project
+   --  file is known. With this information the unit names of the other
+   --  files can be obtained directly.
+
    Parse_Command_Line :
    declare
       Quit : Boolean;
@@ -341,31 +287,40 @@ begin --  DocGen
    end if;
 
    if not TSFL.Is_Empty (Source_File_List) then
+
       --  if Process_Body (-body) option was set, add all .adb
       --  files to the list
-
       if Options.Process_Body_Files then
          Add_Body_Files (Source_File_List);
       end if;
 
       --  if not path for the doc was set, take the path of the sources
-
       if Options.Doc_Directory = null then
          Options.Doc_Directory :=
            new String '(Get_Source_Dir (Source_File_List));
       end if;
 
       --  Process all files listed or all files from the project file
-
-      Process_Files (Source_File_List, Options);
+      Process_Files (Source_File_List,
+                     Handler,
+                     Project_Tree,
+                     Project_View,
+                     Source_Info_List,
+                     Options);
 
       TSFL.Free (Source_File_List);
    end if;
 
 exception
    when Command_Line_Error =>
+      New_Line (Current_Error);
       Put_Line (Current_Error,
-                -"Type ""docgen -?"" for more information.");
+                  -"Type ""docgen -?"" for more information.");
+
+   when Project_Not_First =>
+      New_Line (Current_Error);
+      Put_Line (Current_Error, -"The project file "".gpr"" must be" &
+                "first argument");
 
    when Help_Requested =>
       New_Line (Current_Error);
@@ -380,7 +335,7 @@ exception
                 "{ .ads-files }"));
       Put_Line (Current_Error, -("   [ -info ] [ -ic ] [ -under]" &
                 "[ -private] [ -texi ] "));
-      Put_Line (Current_Error, -"  [ -ref] [ -docpath=DIR ]");
+      Put_Line (Current_Error, -"  [ -ref] [ -docpath=DIR ] [-linkall]");
       New_Line (Current_Error);
       Put_Line (Current_Error, -"DESCRIPTION");
       New_Line (Current_Error);
@@ -388,7 +343,7 @@ exception
       Put_Line (Current_Error, -"OPTIONS");
       New_Line (Current_Error);
       Put_Line (Current_Error, -"   -help     Shows information about Docgen");
-      Put_Line (Current_Error, -("   -verbose     Gives further information" &
+      Put_Line (Current_Error, -("   -verbose  Gives further information" &
                 " while processing"));
       Put_Line (Current_Error, -("   -body     Create also output files" &
                 " for the body files"));
@@ -405,8 +360,10 @@ exception
       Put_Line (Current_Error, -("             Here a file project.text is" &
                 "  created and"));
       Put_Line (Current_Error, -("             the package files can be" &
-                "  included."));
+                                 "  included."));
       Put_Line (Current_Error, -"   -ref      Search also for the references");
+      Put_Line (Current_Error, -"   -linkall  Link even declaration file not" &
+                " being processed");
       Put_Line (Current_Error, -("   -docpath=DIR   the subdirectory for the" &
                 " doc files"));
       Put_Line (Current_Error, -("                  The last character is" &
