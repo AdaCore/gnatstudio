@@ -53,6 +53,9 @@ package body Help_Module is
 
    Me : constant Debug_Handle := Create ("Glide_Kernel.Help");
 
+   Font_Adjust : Integer;
+   pragma Import (C, Font_Adjust, "_gdk_font_adjust");
+
    type Help_Browser_Record is new Gtk_Scrolled_Window_Record with record
       Kernel : Kernel_Handle;
       Current_Help_File : GNAT.OS_Lib.String_Access;
@@ -508,12 +511,10 @@ package body Help_Module is
    -- On_Zoom_In --
    ----------------
 
-   Font_Adjust : Integer;
-   pragma Import (C, Font_Adjust, "_gdk_font_adjust");
-
    procedure On_Zoom_In
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       MDI   : constant MDI_Window := Get_MDI (Kernel);
       Help  : Help_Browser;
       Child : constant MDI_Child :=
@@ -543,6 +544,7 @@ package body Help_Module is
    procedure On_Zoom_Out
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       MDI   : constant MDI_Window := Get_MDI (Kernel);
       Help  : Help_Browser;
       Child : constant MDI_Child :=
@@ -863,7 +865,7 @@ package body Help_Module is
    procedure Show_Tutorial
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      On_GPS_Tutorial.On_Load_Html
+      On_GPS_Tutorial.On_Load_HTML
         (Get_Main_Window (Kernel), Kernel_Handle (Kernel));
    end Show_Tutorial;
 
