@@ -723,9 +723,17 @@ By default when you start GPS, the working area contains a help window
 displaying HTML help files. On-line help for the GNAT tools is available
 from the @code{Help} menu item.
 
-GPS will look in the @code{<prefix>/doc/gps/html} directory for the default
-help menus, and if the corresponding documentation cannot be found, the
-@code{Help} menu items will be disabled.
+GPS will search for the help files in the list of directories set in
+the environment variable @code{GPS_DOC_PATH} (a colon-separated list
+of directories on Unix systems, or semicolon-separated list of
+directories on Windows systems). If this variable is not set, the
+default directory @code{<prefix>/doc/gps/html} is searched.  If the
+file cannot be found in any of these directories, the corresponding
+menu item will be disabled.
+
+The environment variable @code{GPS_DOC_PATH} can either be set by each
+user in his own environment, or can be set system-wide by modifying
+the small wrapper script gps itself.
 
 Since HTML pages can contain lots of complex information, resizing the
 help window can take some time, making the user interface less responsive.
