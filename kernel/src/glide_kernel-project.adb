@@ -480,6 +480,7 @@ package body Glide_Kernel.Project is
                              Display_Value => Name,
                              Location      => No_Location,
                              Flag          => False,
+                             Index         => 0,
                              Next          => L);
                         L := Prj.String_Elements.Last;
                      end loop;
