@@ -744,7 +744,7 @@ package body Glide_Kernel is
       File_Name    : constant String :=
         String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
       Project_Name : constant String :=
-        Project_Directory (Get_Project (Handle));
+        Project_Path (Get_Project (Handle));
       File  : File_Type;
       N     : Node_Ptr;
       M     : Node_Ptr;
@@ -866,7 +866,7 @@ package body Glide_Kernel is
       File   : constant String :=
         String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
       Project_Name : constant String :=
-        Project_Directory (Get_Project (Handle));
+        Project_Path (Get_Project (Handle));
       Child  : Node_Ptr;
       Desktop_Node : Node_Ptr;
       Width  : Gint := 640;
