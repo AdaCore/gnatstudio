@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Multiple items can now be selected and move at the same time in the browsers
+
 - Separate execution window for debugged programs
 
 - Ability to display debugger values in hex/decimal/octal/binary format
