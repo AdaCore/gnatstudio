@@ -1484,7 +1484,6 @@ package body Src_Editor_Module is
             The_Data  : Source_Editor_Module :=
               Source_Editor_Module (Src_Editor_Module_Id);
 
-
          begin
             if The_Data.Location_Open_Id /= 0 then
                Idle_Remove (The_Data.Location_Open_Id);
