@@ -87,8 +87,6 @@ package body Builder_Module is
    Run_External_Key : constant History_Key := "run_external_terminal";
    --  The key in the history for the check button "run in external terminal"
 
-   Builder_Category : constant String := "Builder Results";
-
    Make_Menu_Prefix : constant String := "<gps>/Build/Make/";
    Run_Menu_Prefix : constant String := "<gps>/Build_Run/";
    --  Prefixes used in the accel path for the various menus
@@ -276,7 +274,11 @@ package body Builder_Module is
    procedure Clear_Compilation_Output (Kernel : Kernel_Handle) is
    begin
       Console.Clear (Kernel);
-      Remove_Result_Category (Kernel, Builder_Category);
+
+      Remove_Result_Category (Kernel, Error_Category);
+      Remove_Result_Category (Kernel, Warning_Category);
+      Remove_Result_Category (Kernel, Style_Category);
+
       String_List_Utils.String_List.Free
         (Builder_Module_ID_Access (Builder_Module_ID).Output);
    end Clear_Compilation_Output;
@@ -1698,12 +1700,26 @@ package body Builder_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (K);
-      Args : Argument_List :=
-        (1 => new String'(Builder_Category),
-         2 => new String'
-           (To_String (Get_Pref (Kernel, Message_Src_Highlight))));
-
+      Args : Argument_List (1 .. 2);
    begin
+      Args :=
+        (1 => new String'(Error_Category),
+         2 => new String'
+           (To_String (Get_Pref (Kernel, Error_Src_Highlight))));
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Free (Args);
+
+      Args :=
+        (1 => new String'(Style_Category),
+         2 => new String'
+           (To_String (Get_Pref (Kernel, Style_Src_Highlight))));
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Free (Args);
+
+      Args :=
+        (1 => new String'(Warning_Category),
+         2 => new String'
+           (To_String (Get_Pref (Kernel, Warning_Src_Highlight))));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Free (Args);
    end Preferences_Changed;
