@@ -1157,7 +1157,7 @@ package body Gtkada.File_Selector is
    begin
       if Get_Key_Val (Event) = GDK_Return then
          declare
-            S : String := Get_Text (Win.Location_Combo_Entry);
+            S : constant String := Get_Text (Win.Location_Combo_Entry);
          begin
             if Is_Directory (S) then
                Change_Directory (Win, S);
