@@ -17,6 +17,15 @@ project Src_Editor is
       for Switches ("files_extra_info_pkg.adb") use ("-g", "-O2");
    end Compiler;
 
+   package Naming is
+      case Shared.OS is
+         when "Windows_NT" =>
+            for Implementation ("src_printing") use "src_printing_win32.adb";
+         when "unix" =>
+            for Implementation ("src_printing") use "src_printing_default.adb";
+      end case;
+   end Naming;
+
    package IDE renames Shared.IDE;
 
 end Src_Editor;
