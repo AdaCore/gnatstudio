@@ -278,4 +278,17 @@ package body Debugger is
       null;
    end Send_Completed;
 
+   ------------------------------
+   -- Variable_Name_With_Frame --
+   ------------------------------
+
+   function Variable_Name_With_Frame
+     (Debugger : access Debugger_Root;
+      Var      : String)
+     return String
+   is
+   begin
+      return Var;
+   end Variable_Name_With_Frame;
+
 end Debugger;
