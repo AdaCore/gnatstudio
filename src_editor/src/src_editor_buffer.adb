@@ -511,6 +511,10 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type) return Buffer_Line_Type is
    begin
+      if not Buffer.Original_Text_Inserted then
+         return Buffer_Line_Type (Line);
+      end if;
+
       if Line in Buffer.Editable_Lines'Range then
          if Buffer.Editable_Lines (Line).Where = In_Buffer then
             return Buffer.Editable_Lines (Line).Buffer_Line;
@@ -1544,8 +1548,9 @@ package body Src_Editor_Buffer is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean
       is
-         Success : Boolean;
-         Col     : Gint;
+         Success     : Boolean;
+         Col         : Gint;
+         Buffer_Line : Buffer_Line_Type;
       begin
          --  Some parsers currently leave line numbers to 0. Don't highlight in
          --  this case, since we cannot use from the byte index due to
@@ -1564,18 +1569,32 @@ package body Src_Editor_Buffer is
             Col := Gint (Sloc_Start.Column) - 1;
          end if;
 
+         Buffer_Line :=
+           Get_Buffer_Line (Buffer, Editable_Line_Type (Sloc_Start.Line));
+
+         if Buffer_Line = 0 then
+            return False;
+         end if;
+
          Get_Iter_At_Line_Index
            (Buffer, Entity_Start,
-            Gint (Sloc_Start.Line) + Slice_Offset_Line - 1,
+            Gint (Buffer_Line - 1) + Slice_Offset_Line,
             Col);
 
          --  If the column is 0, the entity really ended on the end of the
          --  previous line.
 
+         Buffer_Line :=
+           Get_Buffer_Line (Buffer, Editable_Line_Type (Sloc_End.Line));
+
+         if Buffer_Line = 0 then
+            return False;
+         end if;
+
          if Sloc_End.Column = 0 then
             Get_Iter_At_Line_Index
               (Buffer, Entity_End,
-               Gint (Sloc_End.Line) + Slice_Offset_Line,
+               Gint (Buffer_Line - 1) + Slice_Offset_Line + 1,
                0);
             Backward_Char (Entity_End, Success);
 
@@ -1588,7 +1607,7 @@ package body Src_Editor_Buffer is
 
             Get_Iter_At_Line_Index
               (Buffer, Entity_End,
-               Gint (Sloc_End.Line) + Slice_Offset_Line - 1,
+               Gint (Buffer_Line - 1) + Slice_Offset_Line,
                Col);
             Forward_Char (Entity_End, Success);
          end if;
@@ -2357,12 +2376,22 @@ package body Src_Editor_Buffer is
         Get_Buffer_Line (Buffer, Line);
    begin
       if Buffer_Line = 0 then
-         Trace (Me, "invalid buffer line");
-         return False;
-      end if;
+         if Line in Buffer.Editable_Lines'Range
+           and then Buffer.Editable_Lines (Line).Where = In_Mark
+           and then Buffer.Editable_Lines (Line).Text /= null
+           and then Buffer.Editable_Lines (Line).Text'Length >= Column
+         then
+            return True;
 
-      return Is_Valid_Position
-        (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
+         else
+            Trace (Me, "invalid buffer line");
+            return False;
+         end if;
+
+      else
+         return Is_Valid_Position
+           (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
+      end if;
    end Is_Valid_Position;
 
    -------------------------
@@ -2684,9 +2713,11 @@ package body Src_Editor_Buffer is
       Text        : String;
       Enable_Undo : Boolean := True)
    is
-      Buffer_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Buffer, Line);
+      Buffer_Line : Buffer_Line_Type;
    begin
+      Unfold_Line (Buffer, Line);
+      Buffer_Line := Get_Buffer_Line (Buffer, Line);
+
       if Buffer_Line = 0 then
          Trace (Me, "invalid buffer line");
          return;
@@ -2741,10 +2772,12 @@ package body Src_Editor_Buffer is
       Length      : Natural;
       Enable_Undo : Boolean := True)
    is
-      Buffer_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Buffer, Line);
+      Buffer_Line : Buffer_Line_Type;
 
    begin
+      Unfold_Line (Buffer, Line);
+      Buffer_Line := Get_Buffer_Line (Buffer, Line);
+
       if Buffer_Line = 0 then
          Trace (Me, "invalid buffer line");
          return;
@@ -2809,11 +2842,16 @@ package body Src_Editor_Buffer is
       Text         : String;
       Enable_Undo  : Boolean := True)
    is
-      Buffer_Start_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Buffer, Start_Line);
-      Buffer_End_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Buffer, End_Line);
+      Buffer_Start_Line, Buffer_End_Line : Buffer_Line_Type;
+
    begin
+      for J in Start_Line .. End_Line loop
+         Unfold_Line (Buffer, J);
+      end loop;
+
+      Buffer_Start_Line := Get_Buffer_Line (Buffer, Start_Line);
+      Buffer_End_Line := Get_Buffer_Line (Buffer, End_Line);
+
       if Buffer_Start_Line = 0 or else Buffer_End_Line = 0 then
          Trace (Me, "invalid buffer line");
          return;
