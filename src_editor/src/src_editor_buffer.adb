@@ -3950,6 +3950,7 @@ package body Src_Editor_Buffer is
 
       procedure Skip_To_First_Non_Blank (Iter : in out Gtk_Text_Iter) is
          Result : Boolean := True;
+         Offset : Gint := 0;
       begin
          Set_Line_Offset (Iter, 0);
 
@@ -3958,8 +3959,10 @@ package body Src_Editor_Buffer is
            and then Is_Space (Get_Char (Iter))
          loop
             Forward_Char (Iter, Result);
-            Cursor_Offset := Cursor_Offset - 1;
+            Offset := Offset + 1;
          end loop;
+
+         Cursor_Offset := Cursor_Offset - Offset;
       end Skip_To_First_Non_Blank;
 
       -------------------------
@@ -4024,9 +4027,8 @@ package body Src_Editor_Buffer is
          then
             if Line = Cursor_Line then
                --  ??? Need to handle folded lines
-               Get_Iter_At_Line (Buffer, Iter, Gint (Line - 1));
-               Skip_To_First_Non_Blank (Iter);
-               Cursor_Offset := Cursor_Offset - Get_Line_Offset (Iter);
+               Cursor_Offset := Cursor_Offset +
+                 Gint (Replace'Length - (End_Column - Start_Column));
             end if;
 
             Create
