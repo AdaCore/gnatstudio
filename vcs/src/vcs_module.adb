@@ -22,7 +22,6 @@ with Types;                   use Types;
 
 with Glib.Object;             use Glib.Object;
 with Gtk.Widget;              use Gtk.Widget;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Arguments;           use Gtk.Arguments;
 
 with Glide_Kernel;            use Glide_Kernel;
@@ -79,11 +78,11 @@ package body VCS_Module is
    -- Get_Current_Dir --
    ---------------------
 
-   function Get_Current_Dir (Kernel : Kernel_Handle) return String
-   is
-      Context : Selection_Context_Access
-        := Get_Current_Explorer_Context (Kernel);
+   function Get_Current_Dir (Kernel : Kernel_Handle) return String is
+      Context : Selection_Context_Access :=
+        Get_Current_Explorer_Context (Kernel);
       File    : File_Selection_Context_Access := null;
+
    begin
       if Context = null then
          return "";
@@ -107,11 +106,11 @@ package body VCS_Module is
      (Object  : access Gtk_Widget_Record'Class;
       Args    : Gtk_Args)
    is
-      Context      : Selection_Context_Access :=
+      Context  : Selection_Context_Access :=
         To_Selection_Context_Access (To_Address (Args, 1));
-      File         : File_Selection_Context_Access;
+      File     : File_Selection_Context_Access;
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
 
-      Explorer     : VCS_View_Access := VCS_View_Access (Object);
    begin
       if Context = null then
          return;
@@ -228,33 +227,17 @@ package body VCS_Module is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Item : Gtk_Menu_Item;
-      VCS       : constant String := -"VCS";
-
+      VCS : constant String := '/' & (-"VCS") & '/';
    begin
       Register_Menu
-        (Kernel, "/_" & VCS, Ref_Item => -"Navigate", Add_Before => False);
-
-      Gtk_New (Menu_Item, -"Explorer");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Open_Interface'Access),
-         Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Update all files in project");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Update_All'Access),
-         Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Update current directory");
-      Register_Menu (Kernel, "/" & VCS, Menu_Item);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
-         Kernel_Handle (Kernel));
+        (Kernel, "/_" & (-"VCS"),
+         Ref_Item => -"Navigate", Add_Before => False);
+      Register_Menu (Kernel, VCS, -"Explorer", "",
+                     On_Open_Interface'Access);
+      Register_Menu (Kernel, VCS, -"Update all files in project", "",
+                     On_Update_All'Access);
+      Register_Menu (Kernel, VCS, -"Update current directory", "",
+                     Update_Files_In_Current_Dir'Access);
    end Initialize_Module;
 
    ---------------------
