@@ -1041,9 +1041,6 @@ package body Src_Info.CPP is
       Ptr_B : Segment_Vector.Node_Access := Args_B;
    begin
       while Ptr_A /= null and Ptr_B /= null loop
-         Info ("Comparing >" & Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
-            & "< vs. >" & Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) &
-            "<");
          if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
             /= Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) then
             return False;
