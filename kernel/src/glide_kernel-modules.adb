@@ -1433,8 +1433,7 @@ package body Glide_Kernel.Modules is
       File          : String;
       Line          : Integer;
       Column        : Integer;
-      Message       : String)
-   is
+      Message       : String) is
    begin
       Add_Location_Action
         (Kernel, Identifier,
@@ -1454,7 +1453,6 @@ package body Glide_Kernel.Modules is
            (Kernel,
             Filename,
             0, 0,
-            Highlight_Line => False,
             Enable_Navigation => False);
       end if;
    end Clear_Highlighting;
@@ -1469,12 +1467,11 @@ package body Glide_Kernel.Modules is
       Line              : Natural := 1;
       Column            : Natural := 1;
       Column_End        : Natural := 0;
-      Highlight_Line    : Boolean := False;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       From_Path         : Boolean := True)
    is
-      Value      : GValue_Array (1 .. 7);
+      Value      : GValue_Array (1 .. 6);
       File_Found : Boolean := False;
 
    begin
@@ -1512,13 +1509,10 @@ package body Glide_Kernel.Modules is
       Set_Int (Value (4), Gint (Column_End));
 
       Init (Value (5), Glib.GType_Boolean);
-      Set_Boolean (Value (5), Highlight_Line);
+      Set_Boolean (Value (5), Enable_Navigation);
 
       Init (Value (6), Glib.GType_Boolean);
-      Set_Boolean (Value (6), Enable_Navigation);
-
-      Init (Value (7), Glib.GType_Boolean);
-      Set_Boolean (Value (7), New_File);
+      Set_Boolean (Value (6), New_File);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
          Trace (Me, "No file editor was registered");
@@ -1537,7 +1531,7 @@ package body Glide_Kernel.Modules is
      (Kernel   : access Kernel_Handle_Record'Class;
       Filename : String)
    is
-      Value : GValue_Array (1 .. 7);
+      Value : GValue_Array (1 .. 6);
    begin
       Init (Value (1), Glib.GType_String);
       Set_String (Value (1), Filename);
@@ -1556,9 +1550,6 @@ package body Glide_Kernel.Modules is
 
       Init (Value (6), Glib.GType_Boolean);
       Set_Boolean (Value (6), False);
-
-      Init (Value (7), Glib.GType_Boolean);
-      Set_Boolean (Value (7), False);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
          Trace (Me, "No file editor was registered");

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -135,10 +135,8 @@ package body Navigation_Module is
             Line       : constant Gint    := Get_Int (Data (Data'First + 1));
             Column     : constant Gint    := Get_Int (Data (Data'First + 2));
             Column_End : constant Gint    := Get_Int (Data (Data'First + 3));
-            Highlight  : constant Boolean :=
-              Get_Boolean (Data (Data'First + 4));
             Navigate   : constant Boolean :=
-              Get_Boolean (Data (Data'First + 5));
+              Get_Boolean (Data (Data'First + 4));
 
             Context    : Selection_Context_Access;
             Entity     : Entity_Selection_Context_Access;
@@ -192,8 +190,7 @@ package body Navigation_Module is
                                & File_Information (Entity),
                              Line_Information (Entity),
                              Entity_Col,
-                             0,
-                             False);
+                             0);
 
                      if N_Data.Current_Location /= null then
                         Prepend (N_Data.Back, N_Data.Current_Location);
@@ -210,8 +207,7 @@ package body Navigation_Module is
                     File,
                     Integer (Line),
                     Integer (Column),
-                    Integer (Column_End),
-                    Highlight);
+                    Integer (Column_End));
 
             if N_Data.Current_Location /= null then
                Prepend (N_Data.Back, N_Data.Current_Location);

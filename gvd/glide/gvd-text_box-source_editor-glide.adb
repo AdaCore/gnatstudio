@@ -100,8 +100,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
       Open_File_Editor
         (Kernel, Editor.Debugger_Current_File.all,
-         Editor.Line, 1, Highlight_Line => True,
-         Enable_Navigation => False, New_File => False,
+         Editor.Line, 1, Enable_Navigation => False, New_File => False,
          From_Path => False);
       Append (Editor.Highlighted_Files, Editor.Debugger_Current_File.all);
    end Highlight_Current_Line;
@@ -162,7 +161,6 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
          Open_File_Editor
            (Kernel, Editor.Current_File.all, New_File => False,
-            Highlight_Line => False,
             Enable_Navigation => False,
             From_Path => False);
       end if;
@@ -216,7 +214,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Editor.Line := Line;
       Open_File_Editor
         (Kernel, Editor.Current_File.all, Editor.Line, 1,
-         Highlight_Line => True, New_File => False, From_Path => False);
+         New_File => False, From_Path => False);
       Append (Editor.Highlighted_Files, Editor.Debugger_Current_File.all);
 
       if Set_Current then

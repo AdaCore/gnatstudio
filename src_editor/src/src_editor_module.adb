@@ -2592,10 +2592,8 @@ package body Src_Editor_Module is
             Line        : constant Gint    := Get_Int (Data (Data'First + 1));
             Column      : constant Gint    := Get_Int (Data (Data'First + 2));
             Column_End  : constant Gint    := Get_Int (Data (Data'First + 3));
-            Highlight   : constant Boolean :=
-              Get_Boolean (Data (Data'First + 4));
             New_File    : constant Boolean :=
-              Get_Boolean (Data (Data'First + 6));
+              Get_Boolean (Data (Data'First + 5));
             Iter        : Child_Iterator := First_Child (MDI);
             Child       : MDI_Child;
             No_Location : Boolean := False;
@@ -2657,16 +2655,6 @@ package body Src_Editor_Module is
                       Natural (Column),
                       Natural (Column_End),
                       Kernel_Handle (Kernel)));
-
-                  if Highlight then
-                     Highlight_Line (Edit, Natural (Line));
-                  end if;
-               end if;
-
-               if Edit /= null
-                 and then not Highlight
-               then
-                  Cancel_Highlight_Line (Edit);
                end if;
 
                return Edit /= null;

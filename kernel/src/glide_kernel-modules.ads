@@ -412,10 +412,9 @@ package Glide_Kernel.Modules is
    --              is 0
    --     fourth : If non 0, the area between third and fourth arguments should
    --              be selected. (use Get_Int).
-   --     fifth  : True if the line should be highlighted (use Get_Boolean)
-   --     sixth  : True if the location should be stored for navigation
+   --     fifth  : True if the location should be stored for navigation
    --              with Back/Forward.
-   --     seventh: True if a new file should be created if needed.
+   --     sixth  : True if a new file should be created if needed.
    --  See also the function Open_File_Editor.
 
    Mime_File_Line_Info : constant String := "gps/file_info";
@@ -476,7 +475,6 @@ package Glide_Kernel.Modules is
       Line              : Natural := 1;
       Column            : Natural := 1;
       Column_End        : Natural := 0;
-      Highlight_Line    : Boolean := False;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       From_Path         : Boolean := True);

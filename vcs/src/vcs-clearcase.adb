@@ -627,10 +627,7 @@ package body VCS.ClearCase is
             --  Create the "Open File" command that will be executed
             --  after the checkout is made.
 
-            Create (Open_File_Command,
-                    Kernel,
-                    File,
-                    Highlight_Line => False);
+            Create (Open_File_Command, Kernel, File);
 
             --  Enqueue the actions.
 
