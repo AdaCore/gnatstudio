@@ -760,11 +760,11 @@ Decrease the size of the font used to display the help file.
 Open a file selection dialog to load an HTML file.
 
 @item About
-Display a dialog giving information about the versions of GPS and GNAT used.
+Display a dialog giving information about the versions of GPS and GNAT used:
 
 @iftex
 @cindex screen shot
-@image{about} 
+@image{about, 8.7cm} 
 @end iftex
 
 @ifhtml 
@@ -2751,7 +2751,7 @@ saved. This provides a simple way to temporarily tests new values for
 the project attributes.
 Unsaved modified projects are shown with a special icon in the project
 explorer, displaying a red exclamation mark on top of the standard
-icon.
+icon:
 
 @iftex
 @cindex screen shot
