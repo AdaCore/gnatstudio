@@ -206,7 +206,7 @@ begin
    end;
 
    loop
-      case Getopt ("-tty -disable-log -jdb -version -help -host:") is
+      case Getopt ("-tty -disable-log fullname -jdb -version -help -host:") is
          -- long option names --
          when '-' =>
 
@@ -223,6 +223,11 @@ begin
 
                -- --disable-log --
                when 'd' => Main_Debug_Window.Debug_Mode := False;
+
+               -- -fullname --
+               when 'f' => null;
+                  --  supported for backward compatibility only, and
+                  --  compatibility with Emacs' gdb mode
 
                -- --jdb --
                when 'j' => Debug_Type := Debugger.Jdb_Type;
