@@ -310,7 +310,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
          if Arguments = ""
            or else Arguments (Arguments'First) /= ASCII.NUL
          then
-            Set_Busy_Cursor (Tab, True);
             Attach_Process
               (Tab.Debugger, Arguments, Mode => Odd.Types.Visible);
          end if;
@@ -327,7 +326,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Detach_Process (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Detach_Process1_Activate;
@@ -355,7 +353,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       begin
          if Dir /= "" then
-            Set_Busy_Cursor (Tab, True);
             Change_Directory (Tab.Debugger, Dir, Mode => Odd.Types.Visible);
          end if;
       end;
@@ -520,8 +517,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
          if Arguments = ""
            or else Arguments (Arguments'First) /= ASCII.NUL
          then
-            Set_Busy_Cursor (Tab, True);
-
             if Is_Start then
                Start (Tab.Debugger, Arguments, Mode => Odd.Types.Visible);
             else
@@ -541,7 +536,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Step_Into (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Step1_Activate;
@@ -556,7 +550,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Step_Into_Instruction (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Step_Instruction1_Activate;
@@ -571,7 +564,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Step_Over (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Next1_Activate;
@@ -586,7 +578,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Step_Over_Instruction (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Next_Instruction1_Activate;
@@ -601,7 +592,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Finish (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Finish1_Activate;
@@ -616,7 +606,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Continue (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Continue1_Activate;
@@ -1053,7 +1042,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Run (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Run1_Toolbar_Activate;
@@ -1069,7 +1057,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Start (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Start1_Activate;
@@ -1085,7 +1072,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Stack_Up (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Up1_Activate;
@@ -1101,7 +1087,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Set_Busy_Cursor (Tab, True);
          Stack_Down (Tab.Debugger, Mode => Odd.Types.Visible);
       end if;
    end On_Down1_Activate;
