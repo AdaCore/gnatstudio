@@ -87,6 +87,7 @@ dnl
     GTK_PREFIX=`$GTK_CONFIG --prefix`
     GTK_CFLAGS=`$GTK_CONFIG --cflags`
     GTK_LIBS=`$GTK_CONFIG --libs`
+    GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
     gtk_major_version=`$GTK_CONFIG --version | \
            sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
     gtk_minor_version=`$GTK_CONFIG --version | \
@@ -161,11 +162,13 @@ main ()
      fi
      GTK_CFLAGS=""
      GTK_LIBS=""
+     GTK_STATIC_LIBS=""
      ifelse([$3], , :, [$3])
   fi
   AC_SUBST(GTK_PREFIX)
   AC_SUBST(GTK_CFLAGS)
   AC_SUBST(GTK_LIBS)
+  AC_SUBST(GTK_STATIC_LIBS)
   rm -f conf.gtktest
 ])
 
