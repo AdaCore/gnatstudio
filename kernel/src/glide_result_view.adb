@@ -637,6 +637,7 @@ package body Glide_Result_View is
                end if;
 
             elsif Get_Depth (Path) = 3 then
+               Select_Path (Get_Selection (Explorer.Tree), Path);
                Goto_Location (View);
             end if;
 
