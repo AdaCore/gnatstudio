@@ -36,8 +36,10 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Main_Window;         use Glide_Main_Window;
 with GVD.Status_Bar;            use GVD.Status_Bar;
+with GVD.Dialogs;               use GVD.Dialogs;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Main;                  use Gtk.Main;
@@ -169,13 +171,21 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Edit->Select All menu
 
+   procedure On_Goto_Line
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Navigate->Goto Line... menu
+
    procedure On_Goto_Declaration
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Navigate->Goto Declaration
+   --  Navigate->Goto Declaration menu
+   --  Goto the declaration of the entity under the cursor in the current
+   --  editor.
 
    procedure On_Goto_Body
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Goto the next body of the entity under the cursor
+   --  Navigate->Goto Body menu
+   --  Goto the next body of the entity under the cursor in the current
+   --  editor.
 
    procedure On_Generate_Body
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -785,6 +795,44 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_New_View;
 
+   ------------------
+   -- On_Goto_Line --
+   ------------------
+
+   procedure On_Goto_Line
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+
+   begin
+      if Source = null then
+         return;
+      end if;
+
+      declare
+         Str : constant String := Simple_Entry_Dialog
+           (Get_Main_Window (Kernel), -"Goto Line...", -"Enter line number:",
+            Win_Pos_Mouse, "Goto_Line");
+
+      begin
+         if Str = "" or else Str (Str'First) = ASCII.NUL then
+            return;
+         end if;
+
+         Set_Cursor_Location (Source, Positive'Value (Str));
+
+      exception
+         when Constraint_Error =>
+            Console.Insert (Kernel, -"Invalid line number: " & Str);
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Goto_Line;
+
    -------------------------
    -- On_Goto_Declaration --
    -------------------------
@@ -795,6 +843,10 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
    begin
       Goto_Declaration_Or_Body (Kernel, To_Body => False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Declaration;
 
    ------------------
@@ -807,6 +859,10 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
    begin
       Goto_Declaration_Or_Body (Kernel, To_Body => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Body;
 
    ---------------------------
@@ -1003,10 +1059,11 @@ package body Src_Editor_Module is
    ------------------
 
    procedure On_Edit_File
-     (Widget : access GObject_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin
@@ -1070,7 +1127,7 @@ package body Src_Editor_Module is
    is
       File      : constant String := '/' & (-"File") & '/';
       Edit      : constant String := '/' & (-"Edit") & '/';
-      Gotom     : constant String := '/' & (-"Navigate") & '/';
+      Navigate  : constant String := '/' & (-"Navigate") & '/';
       Mitem     : Gtk_Menu_Item;
       Button    : Gtk_Button;
       Toolbar   : constant Gtk_Toolbar := Get_Toolbar (Kernel);
@@ -1147,13 +1204,13 @@ package body Src_Editor_Module is
                      On_Pretty_Print'Access, Ref_Item => -"Preferences",
                      Sensitive => False);
 
-      Register_Menu (Kernel, Gotom, -"Goto Declaration", Stock_Home,
-                     On_Goto_Declaration'Access,
-                     Ref_Item => -"Goto Line...");
-      Register_Menu (Kernel, Gotom, -"Goto Body", "",
-                     On_Goto_Body'Access,
-                     Ref_Item => -"Goto Declaration",
-                     Add_Before => False);
+      Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To,
+                     On_Goto_Line'Access,
+                     Ref_Item => -"Goto File Spec<->Body");
+      Register_Menu (Kernel, Navigate, -"Goto Declaration", Stock_Home,
+                     On_Goto_Declaration'Access, Ref_Item => -"Goto Line...");
+      Register_Menu (Kernel, Navigate, -"Goto Body", "",
+                     On_Goto_Body'Access, Ref_Item => -"Goto Line...");
 
       --  Toolbar buttons
 
