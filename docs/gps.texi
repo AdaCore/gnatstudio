@@ -1307,6 +1307,11 @@ if you are dropping an editor, a new view of the same editor will be created,
 resulting in two views present in GPS: the original one is left at its initial
 location, and a second view is created at the new location.
 
+If you maintain the @key{control} key pressed while dropping the window,
+all the windows that were in the same notebook are moved, instead of the
+single one you selected. This is the fastest way to move a group of windows
+to a new location, instead of moving them one by one.
+
 
 @c --------------------------------------------------------------------
 @node Editing Files
