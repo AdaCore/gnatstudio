@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                      Copyright (C) 2001-2002                      --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -82,7 +82,7 @@ package body Vsearch_Ext is
 
    function Idle_Search (Data : Idle_Search_Data) return Boolean;
    --  Performs the search in an idle loop, so that the user can still interact
-   --  with the rest of Glide2.
+   --  with the rest of GPS.
 
    function Find_Module (Name : String) return Search_Module_Data;
    --  Find the module for name Name.
@@ -134,14 +134,15 @@ package body Vsearch_Ext is
       Extra_Information : Gtk.Widget.Gtk_Widget := null;
       Mask              : Search_Options_Mask)
    is
-      Combo             : Gtk_Combo;
+      Combo : Gtk_Combo;
    begin
-      Prepend (Search_Modules,
-               Search_Module_Data'
-                 (Label             => new String' (Label),
-                  Mask              => Mask,
-                  Factory           => Factory,
-                  Extra_Information => Extra_Information));
+      Prepend
+        (Search_Modules,
+         Search_Module_Data'
+           (Label             => new String' (Label),
+            Mask              => Mask,
+            Factory           => Factory,
+            Extra_Information => Extra_Information));
 
       if Extra_Information /= null then
          Ref (Extra_Information);
