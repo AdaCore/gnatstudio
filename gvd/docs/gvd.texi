@@ -1,0 +1,969 @@
+\input texinfo   @c -*-texinfo-*-
+@c %**start of header
+@setfilename gvd.info
+@settitle Using the GNU Visual Debugger
+@syncodeindex fn cp
+
+@set GVDVersion 1.0.2
+
+@titlepage
+
+@title Using the GNU Visual Debugger
+@subtitle Version @value{GVDVersion}
+@subtitle Document revision level $Revision$
+@subtitle Date: $Date$
+@author A. Charlet
+
+@page
+@vskip 0pt plus 1filll
+
+Copyright @copyright{} 2000, ACT-Europe.
+This document may be copied, in whole or in part, in any form or by any
+means, as is or with alterations, provided that (1) alterations are clearly
+marked as alterations and (2) this copyright notice is included
+unmodified in any copy.
+
+@end titlepage
+
+@ifinfo
+@node Top, Introduction, (dir), (dir)
+@top Using the GNU Visual Debugger
+
+Using the GNU Visual Debugger
+
+GVD, the GNU Visual Debugger
+
+Version @value{GVDVersion}
+
+Date: $Date$
+
+Copyright @copyright{} 2000, ACT-Europe.
+This document may be copied, in whole or in part, in any form or by any
+means, as is or with alterations, provided that (1) alterations are clearly
+marked as alterations and (2) this copyright notice is included
+unmodified in any copy.
+
+@menu
+* Introduction::
+* Description of the main windows::
+* Integrating GVD::
+* Debugging a program remotely::
+* Command Line Options::
+* Environment::
+* Files::
+* Limitations::
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Description of the main windows
+
+* The Menu Bar::
+* The Tool Bar::
+* The Call Stack Window::
+* The Data Window::
+* The Explorer Window::
+* The Source Window::
+* The Debugger Console::
+* The Status Line::
+
+Integrating GVD
+
+* General Information::
+* Using GVD with Glide::
+* Using GVD with Emacs::
+* Using GVD with XEmacs::
+* Using GVD as a Library::
+* Using GVD as a Corba Object::
+
+Debugging a program remotely
+
+* Using GVD with a Remote Debugger::
+* Using GVD with a Remote Program::
+
+Limitations
+
+* General Limitations::
+* Limitations using GDB::
+
+@end detailmenu
+@end menu
+@end ifinfo
+
+@c --------------------------------------------------------------------
+@node Introduction
+@chapter Introduction
+@c --------------------------------------------------------------------
+
+@noindent
+GVD is a graphical front-end for text based debuggers such as GDB.
+A knowledge of the basics of the underlying debugger used by GVD will help
+understanding how GVD works and what kind of functionalities it provides.
+Please refer to the debugger specific documentation (e.g the GDB documentation)
+for more details.
+
+The purpose of a debugger such as GVD is to allow you to see what is going on
+inside another program while it executes, or what another program was doing
+at the moment it crashed.
+
+@c --------------------------------------------------------------------
+@node Description of the main windows
+@chapter Description of the main windows
+@c --------------------------------------------------------------------
+
+@noindent
+
+@menu
+* The Menu Bar::
+* The Tool Bar::
+* The Call Stack Window::
+* The Data Window::
+* The Explorer Window::
+* The Source Window::
+* The Debugger Console::
+* The Status Line::
+@end menu
+
+@iftex
+@image{main-window, 14cm}
+@end iftex
+
+@c --------------------------------------------------------------------
+@node The Menu Bar
+@section The Menu Bar
+@c --------------------------------------------------------------------
+
+The menu bar provides operations that act either at a global level, or on
+a specific debugger. Since GVD can handle multiple debugger at the same
+time, the commands that deal with debugging or a specific module are always
+using the current debugger to perform the various operations provided by the
+menus. Key short cuts are also available for the most common operations, and
+are displayed in the menus themselves.
+Here is a detailed list of the menu items that can be found in the menu bar:
+
+@subsection File
+@itemize @bullet
+   @item Open Program...
+Open a file selection dialog that allows you to choose a program to
+debug. The program to debug is either an executable for native debugging, or
+a partially linked module for cross environments (e.g vxWorks).
+Do not use this menu to edit a source file, use the ???xref
+source explorer or the ???xref Open Source menu instead.
+
+   @item New Debugger...
+Open a dialog to create a new debugger window. The new debugger window will be
+added as a new page in the main window.
+This dialog allows you to specify the name of the executable to debug by
+entering its naming in the @i{Program File entry}, or by clicking on the
+@dots{} button to will open a file selection dialog. You can also select
+the machine on which your underlying debugger (e.g GDB) will run. By default,
+the debugger will run on the current machine (the machine on which GVD is
+running), so you only need to specify a value for remote debugging.
+???xref section remote debugging for more information.
+
+@b{Limitation}: under Windows systems, you can only have one debugger window
+at a time, so use this menu only after having closed the current debugger, and
+launch several GVDs to debug multiple processes.
+See also ???xref the @i{Close} menu to close a debugger window.
+
+   @item Open Core Dump...
+This will open a file selection dialog that allows you to debug a core file
+instead of debugging a running process. Note that you must specify an
+executable to debug before, by either using the ???xref @i{Open File} menu of
+specifying the name of the executable on the command line (???xref).
+
+   @item Edit Source.
+Launch an external editor that will open the file currently displayed in the
+???xref source window. You can specify the name of the external editor by
+using the ???xref @i{Edit->Preferences...} menu.
+
+   @item Open Source...
+Open a file selection dialog that allows you to load a source file in the
+???xref source window. See also ???xref the source explorer for another
+convenient way of open source files.
+
+   @item Open Session...
+Open a dialog giving you the list of sessions that are saved under the
+@code{$HOME/.gvd/sessions} directory under Unix systems, and
+@code{%HOME%\.gvd\sessions} under Windows systems. The @i{Session List} area
+lists all
+such sessions. The @i{Session} field shows the current selection (that can
+be filled either by entering the name on the keyboard, or by clicking in the
+@i{Session List} window). The right area gives you a list of sub session,
+or debuggers launched during a selected session. You can select any of the
+debuggers of a specific session in order to replay one, some or all of them.
+To select the debuggers, either click on the check box on the left of each
+item, or use the @i{Select All} and @i{Unselect All} buttons.
+If you confirm by clicking on the @i{OK} button, GVD will open a new
+debugger (???xref see New Debugger) for each sub session selected and will
+replay all the commands automatically.
+
+???image
+
+   @item Save Session As...
+Open a dialog similar to the @i{Open Session} dialog, allowing you to specify
+the name of the session to save, and what sub sessions/debuggers to save.
+By default, this will save all the sub sessions ran in GVD since start up.
+
+   @item Attach To Process...
+Instead of starting a program to debug, you can instead attach GVD to an
+already running process. To do so, you need to specify the process id
+of the process you want to debug. Note that as for ???xref core files, you need
+to specify an executable before attaching to a process.
+
+   @item Detach Process.
+Detach the currently debugged process from the underlying debugger.
+This means that the executable will continue to run outside GVD. You can use
+the @i{Attach To Process} menu to re-attach later to this process.
+
+   @item Change Directory...
+Open a directory selection dialog to change the directory in the underlying
+debugger. Useful in particular before executing a process, or loading a
+file using a relative path.
+
+   @item Close.
+Close the current debugger. If this is the last debugger, the main window
+will remain visible, but with a gray area instead of the notebook containing
+the Data, Explorer, Source and Debugger windows.
+???xref See also the @i{New Debugger} menu to create a new debugger.
+   @item Exit
+@end itemize
+
+@subsection Edit
+The only item currently available in this menu is the preferences menu.
+
+@subsubsection Preferences...
+Open a dialog window allowing you to modify the global preferences of GVD.
+To enable the new preferences, you simply need to confirm by using the
+@i{OK} button. The preferences will be saved in a file located under
+@code{$HOME/.gvd/preferences} under Unix systems, and
+@code{%HOME%\.gvd\preferences} under Windows systems.
+???image
+The preferences dialog is composed of five pages, accessible through the
+tabs at the top of the dialog, labelled @i{General}, @i{Source}, @i{Data},
+@i{Command}, @i{Helpers}. Each page corresponds to a section of preferences.
+
+@itemize @bullet
+@item General.
+Give access to the general preferences in GVD.
+
+@itemize @bullet
+@item Automatic Display of Variable Values.
+@item Status Bar Time Out.
+@end itemize
+
+@item Source.
+You can modify the preferences for the @i{Explorer}, @i{Source}, and
+@i{Assembly} windows, in particular the font and colors used to highlight
+elements.
+
+@itemize @bullet
+@item Display Explorer Tree.
+@item File Name Background.
+@item Font.
+@item Show Line Numbers.
+@item Show Lines with Code.
+@item Syntax Highlighting.
+@item Comments.
+@item Strings.
+@item Keywords.
+@item Current Line.
+@end itemize
+
+@item Data.
+Enable you to change the preferences of the @i{Data Window}, in particular
+the fonts and colors used to display the data graphically.
+
+@itemize @bullet
+@item Clickable Item.
+@item Title Background.
+@item Changed Data.
+@item Auto-Refreshed.
+@item Frozen.
+@item 3D Look.
+@item Item Name.
+@item Item Value.
+@item Item Type.
+@item Hide Big Items.
+@item Big Item Height
+@item Detect Aliased (shared data structures).
+@item Display Grid Points.
+@item Auto-Align Displays on Nearest Grid Point.
+@end itemize
+
+@item Command.
+Enable you to change the preferences of the @i{Debugger Console}, also
+known as the @i{Command Window}.
+
+@itemize @bullet
+@item Color Highlighting.
+Set the color used to highlight debugger commands and prompts.
+@item Font.
+Set the font name, size and style for the @i{Debugger Console}. Note that it
+is recommended to use a fixed size font such as Courier to get a proportional
+display.
+@end itemize
+
+@item Helpers.
+Helpers are external programs that are used by GVD to perform specific
+actions.
+
+@itemize @bullet
+@item Edit Sources.
+@item Get Core File.
+@item List Processes.
+@item Web Browser.
+@end itemize
+
+@end itemize
+
+@subsection Program
+@itemize @bullet
+   @item Run/Start...
+Open a dialog window allowing you to specify the arguments to pass to the
+program, and whether the program should be stopped at the beginning of the
+main program. If you confirm by clicking on the @i{OK} button, the program
+will be launched according to the arguments entered.
+
+   @item Step.
+Step the program until it reaches a different source line.
+
+   @item Step Instruction.
+Step the program by one machine instruction exactly.
+
+   @item Next
+Step the program, proceeding through subroutine calls.
+
+   @item Next Instruction
+Step the program by one machine instruction but proceed through subroutine
+calls.
+
+   @item Finish
+Continue until selected stack frame returns.
+
+   @item Continue
+Continue the program being debugged.
+
+   @item Interrupt
+Interrupt asynchronously the program being debugged. Note that depending on
+the state of the program, you may stop it in a low level system code that do
+not have debug information, or even in some cases, a coherent state. Use
+of breakpoints is recommended instead to stop programs.
+
+@end itemize
+
+@subsection Command
+@itemize @bullet
+   @item Command History...
+   @item Clear Window
+@end itemize
+
+@subsection Data
+@itemize @bullet
+   @item Call Stack
+   @item Threads...
+      Opens a new window containing the list of threads or tasks (depending on
+      the current language) currently present in the executable. For each
+      thread, it will give information such as internal identifier, name,
+      status. This information is language and debugger dependent. You should
+      refer to the underlying debugger's documentation for more details.
+
+      When supported by the underlying debugger, clicking on a thread will
+      change the context (variables, call stack, source file) displayed by GVD,
+      allowing you to inspect other thread's stacks.
+
+@iftex
+@image{tasks, 14cm}
+@end iftex
+
+@iftex
+@image{breakpoints, 14cm}
+@end iftex
+
+   @item Edit Breakpoints...
+      Opens an advanced window to create any kind of breakpoint. For simple
+      breakpoint creation, see the description of the source window.
+
+   @item Examine Memory...
+      Opens a memory viewer/editor.
+
+   @item Display Local Variables
+   @item Display Arguments
+   @item Display Registers
+   @item Display Any Expression...
+
+   @item Refresh
+@end itemize
+
+@iftex
+@image{memory-view, 14cm}
+@end iftex
+
+@subsection Help
+@itemize @bullet
+   @item About...
+@end itemize
+
+@c --------------------------------------------------------------------
+@node The Tool Bar
+@section The Tool Bar
+@c --------------------------------------------------------------------
+
+@noindent
+   The tool bar can be detached from the main window, using the left area:
+   click on this left gray area, and move your mouse outside the window. The
+   tool bar will be detached and its form will also change from an horizontal
+   bar to a vertical bar with two columns.
+   To move it back to the main window, double click on the left area.
+
+@itemize @bullet
+  @item Run
+  @item Start
+  @item Step/Stepi/Next/Nexti/Finish/Cont
+  @item Up
+  @item Down
+  @item Interrupt
+@end itemize
+
+@c --------------------------------------------------------------------
+@node The Call Stack Window
+@section The Call Stack Window
+@c --------------------------------------------------------------------
+
+@noindent
+   The call stack window gives a list of frames corresponding to the current
+   stack of execution for the current thread/task.
+   The top frame corresponds to the lowest level frame where the thread is
+   currently stopped. The lowest frame corresponds to the first function
+   executed by the current thread (e.g main for the main thread in C).
+   You can click on any frame to switch to the caller's context, this will
+   update the source file in the source window. See also the up and down
+   buttons in the tool bar to go up and down one frame in the call stack.
+
+   The contextual menu (right mouse button) allows you to choose which
+   information you want to display in the call stack window (via check buttons):
+   @itemize @bullet
+      @item Frame number: the debugger frame number (usually starts at 0 or 1)
+      @item Program Counter: the low level address corresponding to the function
+      @item Subprogram Name: name of the subprogram in a given frame
+      @item Parameters: parameters of the subprogram
+      @item File Location: filename and line number information.
+   @end itemize
+
+   By default, the subprogram and parameters are displayed.
+   You can hide the call stack window using the menu Data->Call Stack, and
+   show it again using the same menu (this is menu item is a check button that
+   can be enabled/disabled)
+
+@c --------------------------------------------------------------------
+@node The Data Window
+@section The Data Window
+@c --------------------------------------------------------------------
+
+@noindent
+   The data window will contain all the graphic boxes that can be accessed
+   using the @i{Data->Display} menu items, or the data window
+   @i{Display Expression...} contextual menu, or the source window
+   @i{Print} or @i{Display} contextual menu items, or finally the
+   @i{graph} command in the debugger console.
+   For each of these commands, a box will be displayed in the data window
+   with the following information:
+
+@iftex
+@image{canvas, 14cm}
+@end iftex
+
+   @itemize @bullet
+   @item A title bar containing:
+     @itemize @bullet
+     @item The number of this expression: this is a positive number starting
+       from 1 and incremented for each new box displayed. It represents the
+       internal identifier of the box.
+
+     @item The name of the expression: this is the expression or variable
+       specified when creating the box.
+
+     @item An icon representing either a lamp, or a lock
+       This is a click-able icon that will change the state of the box from
+       automatically updated (the lamp icon) to frozen (the lock icon).
+       When frozen, the value is grayed, and will never change, until you change
+       the state. When updated, the value of the box will be recomputed each
+       time an execution command is sent to the debugger (e.g step, next).
+
+     @item An icon representing an 'X'
+       You can click on this icon to close/delete any box.
+     @end itemize
+
+   @item A main area
+     The main area will display in a hierarchical way the information
+     in a language sensitive way. The canvas knows about data structures
+     of various languages (e.g @code{C}, @code{Ada}, @code{C++}) and will
+     organize them accordingly.
+     For example, each field of a record/struct/class, or each item of an
+     array will be displayed separately. For each subcomponent, a thin box
+     is displayed to separate it from the other components.
+   @end itemize
+
+   A contextual menu, taking into account the current component pointed
+   by the mouse, gives access to the following capabilities:
+   @itemize @bullet
+     @item Hide all @i{component}
+     @item Show all @i{component}
+
+     @item Clone @i{component}
+     @item Set value of @i{component}
+     @item Update Value
+
+     @item Show Value
+     @item Show Type
+     @item Show Value+Type
+   @end itemize
+
+   Colors convey special meaning in the canvas. The default color (can be
+   changed using the menu Edit->Preferences...) are:
+   @itemize @bullet
+     @item Black: default color for printing values
+     @item Blue:  pointers and access types, that can be dereferenced by double
+                  clicking on them
+     @item Red:   values that have changed since last update of the canvas.
+                  For non frozen boxes, only the values/lines that have changed
+                  in a given box are highlighted rather than the whole box.
+   @end itemize
+
+@iftex
+@image{colors, 10cm}
+@end iftex
+
+   A contextual menu can be accessed in the canvas itself (point the mouse to
+   an empty area in the canvas, and click on the right mouse button) with the
+   following entries:
+   @itemize @bullet
+     @item Display Expression...
+     @item Align On Grid
+     @item Detect Aliases
+   @end itemize
+
+@c --------------------------------------------------------------------
+@node The Explorer Window
+@section The Explorer Window
+@c --------------------------------------------------------------------
+
+@noindent
+@iftex
+@image{explorer, 6cm}
+@end iftex
+
+   Note: some items are disabled until an executable is loaded using either the
+   Open Program, Open Core Dump, or Attach Process menu, or the corresponding
+   commands in the debugger console.
+
+   Contextual menu:
+   @itemize @bullet
+     @item Hide System Files
+     @item Display Files in Shared Libraries
+     @item Delete Files Not Found
+     @item Show Current File
+   @end itemize
+
+@c --------------------------------------------------------------------
+@node The Source Window
+@section The Source Window
+@c --------------------------------------------------------------------
+
+@noindent
+   The source window is composed of two main areas: a small column on the left
+   containing the following information:
+   @itemize @bullet
+     @item lines with code
+     @item current line executed
+     @item lines with breakpoints
+   @end itemize
+
+@iftex
+@image{tooltips, 14cm}
+@end iftex
+
+   and a text window on the right that displays with syntax highlighting the
+   source files.
+
+   Contextual menu:
+   @itemize @bullet
+     @item Print @i{selection}
+     @item Display @i{selection}
+
+     @item Set Breakpoint on Line @i{xx}
+     @item Continue Until Line @i{xx}
+
+     @item Show Current Location
+
+     @item Display Line Numbers
+     @item Show Lines with Code
+
+     @item Show Source Code
+     @item Show Asm Code
+     @item Show Asm and Source
+   @end itemize
+
+@iftex
+@image{assembly, 14cm}
+@end iftex
+
+@c --------------------------------------------------------------------
+@node The Debugger Console
+@section The Debugger Console
+@c --------------------------------------------------------------------
+
+@noindent
+
+@c --------------------------------------------------------------------
+@node The Status Line
+@section The Status Line
+@c --------------------------------------------------------------------
+
+@noindent
+
+@c --------------------------------------------------------------------
+@node Integrating GVD
+@chapter Integrating GVD
+@c --------------------------------------------------------------------
+
+@menu
+* General Information::
+* Using GVD with Glide::
+* Using GVD with Emacs::
+* Using GVD with XEmacs::
+* Using GVD as a Library::
+* Using GVD as a Corba Object::
+@end menu
+
+@noindent
+@node General Information
+@section General Information
+     To have GVD run as an inferior in other front-ends, you can either set up
+     your debugger front-end such that @i{gvd --tty} is invoked instead of
+     the inferior debugger, or use GVD as a library.
+     When GVD is invoked using the @i{--tty} option, it enable its TTY
+     interface, taking additional debugger commands from standard input and
+     forwarding debugger output to standard output, just as if the inferior
+     debugger had been invoked directly. All remaining GVD functionalities stay
+     unchanged. Note that the @i{--tty} option is currently not supported
+     under Windows systems.
+
+     The @i{--tty} option also implies the GDB @i{-fullname} option, when
+     GDB is used as the underlying debugger.
+
+     You may also invoke @i{gvd --tty} directly, entering GVD commands from
+     your TTY, or use GVD as the end of a pipe, controlled by a remote program.
+     Be aware, however, that the TTY interface does not support line editing and
+     command completion. Also, do not try to run GVD with GVD as inferior
+     debugger.
+
+@node Using GVD with Glide
+@section Using GVD with Glide
+     Select @i{Ada->Project->Edit Current}, go in the @i{[Ada Menu]}
+     section, in the @i{Debugging the application:} field, enter
+     @i{gvd --tty $@{main@}}.
+     Save. Then launch the debugging session by using the menu
+     @i{Ada->Debug}.
+     In the source window, you can display variables graphically using the
+     contextual menu on top of a variable, or after selecting an expression.
+     The display will be done in GVD's canvas window.
+
+@node Using GVD with Emacs
+@section Using GVD with Emacs
+     Use @i{M-x gdb} to start a debugging session. At the prompt, enter
+     @i{gvd --tty} and the name of the program to be debugged. Process as
+     usual.
+
+@node Using GVD with XEmacs
+@section Using GVD with XEmacs
+     In XEmacs 21 and later, select @i{Tools->Debug (GDB)}. At the prompt,
+     enter @i{gvd --tty} and the name of the program to be debugged.
+     Proceed as usual.
+
+@node Using GVD as a Library
+@section Using GVD as a Library
+     GVD can also be used as a library. Beware that this is still work in
+     progress however. The interface provided by GVD to other programs can
+     be found in the file gvd-api.ads, and gvd-api.h.
+     Note that to integrate GVD code in Ada applications, using the various
+     high level packages provided by GVD directly is the recommended way.
+     The gvd-api.ads file is provided mainly for integrating GVD in other
+     languages. This API is provided as a C API, so that any language that can
+     interface with C can use it. For more information, refer directly to
+     the gvd-api.ads file.
+
+@node Using GVD as a Corba Object
+@section Using GVD as a Corba Object
+     Future development plans of GVD include transforming GVD into a Corba
+     object, so that it can be used by other applications in any language
+     easily, and in particular in the context of the GNOME framework.
+
+@c --------------------------------------------------------------------
+@node Debugging a program remotely
+@chapter Debugging a program remotely
+@c --------------------------------------------------------------------
+
+@menu
+* Using GVD with a Remote Debugger::
+* Using GVD with a Remote Program::
+@end menu
+
+@noindent
+It is possible to have the inferior debugger run on a remote host. This is
+useful when the remote host has a slow network connection or when GVD is
+available on the local host only.
+
+Furthermore, the inferior debugger may support debugging a program on a remote
+host. This is useful when the inferior debugger is not available on the remote
+host - for instance, because the remote system does not have a general purpose
+operating system powerful enough to run a full featured debugger. When
+developing in a cross environment (e.g vxWorks, Lynx OS), you will be in such
+situation.
+
+@node Using GVD with a Remote Debugger
+@section Using GVD with a Remote Debugger
+To debug a program running on a remote machine you have two main options:
+either run GVD on the remote machine, using the remote capabilities of the X
+windowing system;
+or run GVD on the host machine, and run the underlying debugger on the remote
+machine.
+
+For the first option, open a shell on the remote machine (using e.g
+telnet or rlogin), simply set the DISPLAY environment variable to the
+value of your local display, and launch gvd from your remote machine.
+For example, assuming your local machine is called @i{local}, and your display
+is the default display @i{local:0}, your remote machine is called @i{remote}.
+you can do the following (assuming you are using an sh-like shell):
+
+@smallexample
+$ rlogin remote
+$ DISPLAY=local:0
+$ export DISPLAY
+$ gvd
+@end smallexample
+
+You also need to ensure that @i{remote} is allowed to access @i{local:0} by
+e.g using the xhost utility under Unix.
+
+For the second option, gvd will internally use the standard @i{rsh} and
+@i{rcp} utilities. These are standard tools available under all Unix systems and
+under Windows NT/2000 as well.
+
+First make sure that rsh/rcp can be used from your local to your remote machine
+without having to enter a password. This is usually done via the configuration
+of a @i{.rhosts} file in your remote home directory that will typically look
+like:
+
+@smallexample
+local user-name
+@end smallexample
+
+local is the name of the local machine you want to rlogin from, and the .rhosts
+file needs to be present in the home directory on the remote machine.
+
+To check whether you can use gvd in remote mode, try the following using a
+shell window on your local machine:
+
+@smallexample
+$ rsh remote gdb
+@end smallexample
+
+This should launch gdb on the remote machine.
+
+Note that on some systems, rsh is called differently, in particular under
+HPUX, the remote shell capability is called remsh. For those systems, and
+also in order to use other remote utilities such as ssh/scp, you can create
+simple shell scripts called @i{rsh} and @i{rcp} that will, in turn, call e.g
+remsh, or ssh. For example:
+
+@smallexample
+#!/bin/sh
+# Wrapper for rsh defaulting to ssh
+ssh $*
+@end smallexample
+
+And make sure that these scripts can be found in your PATH before the system
+tools.
+
+After ensuring that you have the proper set up in place, to run the debugger on
+a remote host @i{remote}, either invoke GVD as
+
+@smallexample
+gvd --host 'remote' remote-program
+@end smallexample
+
+or use the @i{File->New Debugger...} menu in GVD.
+
+There are a few caveats in remote mode:
+
+  The remote debugger is started in your remote home directory. Hence, you must
+  specify an absolute path name for @i{remote-program} (or a path name relative
+  to your remote home directory). Same applies to remote core files. Also, be
+  sure to specify a remote process id when debugging a running program.
+
+  To access to files remotely, gvd will first try to read the files locally,
+  assuming that you have the remote files mounted locally at the same
+  location (using e.g nfs+symbolic links, or samba), and if it cannot find the
+  files locally, it will then try to copy the file from the remote machine,
+  using rcp. As for rsh, you need to make sure that rcp can be called without
+  having to enter a password, and you can also create wrappers that will
+  default to other remote copy utilities such as scp. Note that the file
+  selection dialogs (change directory, open file,~@dots{}) will scan the local
+  directory, so you will need to enter the paths blindly if your remote files
+  are not mounted on your local host.
+
+@node Using GVD with a Remote Program
+@section Using GVD with a Remote Program
+
+  The GDB debugger allows you to run the @i{debugger program} on a remote
+  machine (called @i{program host}) while GDB runs on the local machine.
+
+  The section @i{Remote debugging} in the GDB documentation contains all the
+  details. Basically, the following steps are required:
+
+  Transfer the executable to the remote target.
+
+  Optionally start gdbserver on the remote target (e.g under Lynx OS). This
+    is not needed for environments such as vxWorks.
+
+  Start GVD using a properly configured cross GDB, e.g powerpc-wrs-vxworks-gdb
+  for a gdb configured for vxWorks PowerPC and specify the name of the remote
+  target, as well as the protocol used to communicate with it. To specify
+  the cross gdb and the remote target, you can use either the --debugger and
+  --target command line options, e.g:
+
+@smallexample
+gvd --debugger powerpc-wrs-vxworks-gdb --target my_target:wtx
+@end smallexample
+
+  or using the @i{Debugger Name}, @i{Program Host} and @i{Protocol} entries in
+  the @i{File->New Debugger} menu item.
+
+@iftex
+@image{process, 14cm}
+@end iftex
+
+Of course, you can also combine GVD remote mode and GDB remote mode, running
+GVD, GDB and the debugged program each on a different machine.
+
+@c --------------------------------------------------------------------
+@node Command Line Options
+@chapter Command Line Options
+@c --------------------------------------------------------------------
+
+@noindent
+@smallexample
+Usage:
+   gvd [options...] executable-file
+Options:
+   --debugger DEBUG  use DEBUG as the underlying debugger.
+   --jdb             assume a Java debugger.
+   --host HOST       Run inferior debugger on HOST.
+   --no-explorer     Do not display explorer window.
+   --target TARG:PRO Load program on machine TARG using protocol PRO.
+   --log-level [0-4] Set level of logging (Default is 3).
+   --tty             Use controlling tty as additional debugger console.
+   --version         Show the GVD version and exit.
+@end smallexample
+
+@c --------------------------------------------------------------------
+@node Environment
+@chapter Environment
+@c --------------------------------------------------------------------
+
+@noindent
+The following environment variables can be set to override some default
+settings in GVD:
+
+@itemize @bullet
+   @item GVD_ROOT.
+Override the default root directory specified when GVD
+is built (during the @i{configure} process, see the file @code{INSTALL} in
+the GVD sources for more details) to access information such as the location
+of the translation files.
+
+   @item GVD_HOME.
+Override the variable HOME if present. All the configuration files and
+directories used by GVD are either relative to $HOME/.gvd (%HOME%\.gvd under
+Windows) if GVD_HOME is not set, or to $GVD_HOME/.gvd (resp. %GVD_HOME%\.gvd)
+if set.
+
+   @item GVD_EDITOR.
+Override the default editor as found in ???xref the @i{Preferences} menu,
+Helpers section.
+
+@end itemize
+
+@c --------------------------------------------------------------------
+@node Files
+@chapter Files
+@c --------------------------------------------------------------------
+
+@noindent
+
+@itemize @bullet
+   @item $HOME/.gvd       GVD state directory
+   @item $HOME/.gvd/log
+   @item $HOME/.gvd/preferences
+   @item $HOME/.gvd/sessions
+   @item $HOME/.gvd/sessions/@i{session}
+   @item $HOME/.gdbinit   GDB initialization file
+@end itemize
+
+@c --------------------------------------------------------------------
+@node Limitations
+@chapter Limitations
+@c --------------------------------------------------------------------
+
+@menu
+* General Limitations::
+* Limitations using GDB::
+@end menu
+
+@noindent
+@node General Limitations
+@section General Limitations
+@noindent
+     If command output is sent to the debugger console, it is impossible for GVD
+     to distinguish between the output of the debugged program and the output
+     of the inferior debugger. This problem can be avoided by running the
+     program in the separate execution window.
+
+     Output that confuses GVD includes:
+
+     @itemize @bullet
+       @item Primary debugger prompts (e.g '(gdb) ')
+       @item Secondary debugger prompts (e.g '>')
+       @item Confirmation prompts (e.g '(y or n)')
+     @end itemize
+
+     If your program outputs any of these strings, you should run it in the
+     separate execution window.
+
+     If the inferior debugger changes the default TTY settings, for instance
+     through a @i{stty} command in its initialization file, GVD will likely
+     become confused. The same applies to debugged program which change the
+     default TTY settings.
+
+@node Limitations using GDB
+@section Limitations using GDB
+@noindent
+     Some GDB settings are essential for GVD to work correctly. These settings
+     with their correct values are:
+
+     @itemize @bullet
+     @item set height 0
+     @item set width 0
+     @item set verbose off
+     @item set prompt (gdb) 
+     @end itemize
+
+     GVD sets these values automatically when invoking GDB; if these values
+     are changed, there may be some malfunctions, especially in the data
+     display.
+
+@c @printindex cp
+@contents
+
+@bye
