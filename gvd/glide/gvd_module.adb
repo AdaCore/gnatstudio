@@ -1449,6 +1449,7 @@ package body GVD_Module is
 
             --  Check whether a breakpoint is set at this location, if so,
             --  set the mode accordingly.
+            --  ??? Maybe we could optimize a little bit here.
 
             for J in Tab.Breakpoints'Range loop
                if Tab.Breakpoints (J).Line = File_Line.Line
