@@ -33,7 +33,9 @@ unmodified in any copy.
 
 @end titlepage
 
+@ifnotinfo
 @contents
+@end ifnotinfo
 
 @ifinfo
 @node Top, Introduction, (dir), (dir)
@@ -7580,5 +7582,9 @@ python interpreter:
 @c --------------------------------------------------------------------
 @unnumbered Index
 @printindex cp
+
+@ifinfo
+@contents
+@end ifinfo
 
 @bye
