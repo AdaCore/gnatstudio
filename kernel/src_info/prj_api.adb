@@ -19,27 +19,27 @@
 -----------------------------------------------------------------------
 
 --  Gnat sources dependencies
-with Prj;           use Prj;
+with Prj;              use Prj;
 pragma Elaborate_All (Prj);
-with Prj.Tree;      use Prj.Tree;
-with Prj.Part;      use Prj.Part;
-with Prj.Attr;      use Prj.Attr;
-with Prj.Util;      use Prj.Util;
-with Prj_Normalize; use Prj_Normalize;
-with Snames;        use Snames;
+with Prj.Tree;         use Prj.Tree;
+with Prj.Part;         use Prj.Part;
+with Prj.Attr;         use Prj.Attr;
+with Prj.Util;         use Prj.Util;
+with Prj_Normalize;    use Prj_Normalize;
+with Snames;           use Snames;
 pragma Elaborate_All (Snames);
-with Namet;         use Namet;
+with Namet;            use Namet;
 pragma Elaborate_All (Namet);
-with Types;         use Types;
-with Csets;         use Csets;
+with Types;            use Types;
+with Csets;            use Csets;
 pragma Elaborate_All (Csets);
-with Stringt;       use Stringt;
-with GNAT.OS_Lib;   use GNAT.OS_Lib;
-with String_Utils;  use String_Utils;
-with Ada.Exceptions; use Ada.Exceptions;
+with Stringt;          use Stringt;
+with GNAT.OS_Lib;      use GNAT.OS_Lib;
+with String_Utils;     use String_Utils;
+with Ada.Exceptions;   use Ada.Exceptions;
+with Project_Browsers; use Project_Browsers;
 
 with Glide_Intl;    use Glide_Intl;
-with Glib.Graphs;   use Glib.Graphs;
 
 with Traces; use Traces;
 
@@ -136,27 +136,6 @@ package body Prj_API is
    --  Remove Node from the declaration list in Parent.
    --  This doesn't search recursively inside nested packages, case
    --  constructions, ...
-
-
-   --  ??? The types below should be moved to a package Browsers.Projects
-
-   type Project_Vertex is new Vertex with record
-      Name : Name_Id;
-      Fully_Parsed : Boolean := False;
-   end record;
-   type Project_Vertex_Access is access all Project_Vertex'Class;
-
-   type Project_Edge is new Edge with null record;
-   type Project_Edge_Access is access all Project_Edge;
-
-   procedure Destroy (E : in out Project_Edge);
-   procedure Destroy (V : in out Project_Vertex);
-   --  Primitive subprograms that must be overriden
-
-   function Has_Circular_Dependencies (Root_Project : Project_Node_Id)
-      return Boolean;
-   --  Return True if there is a circular dependency for the with clauses in
-   --  Root_Project.
 
    ----------------
    -- Get_String --
@@ -1124,108 +1103,6 @@ package body Prj_API is
          return Positive'Last;
       end if;
    end Typed_Values_Count;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (E : in out Project_Edge) is
-   begin
-      null;
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (V : in out Project_Vertex) is
-   begin
-      null;
-   end Destroy;
-
-   ----------------------------------
-   -- Detect_Circular_Dependencies --
-   ----------------------------------
-
-   function Has_Circular_Dependencies (Root_Project : Project_Node_Id)
-      return Boolean
-   is
-      procedure Find_Or_Create_Project_Vertex
-        (G    : in out Graph;
-         Name : Name_Id;
-         V    : out Project_Vertex_Access);
-      --  Return the vertex in G for the project by name Name.
-
-      procedure Process_Project
-        (G : in out Graph; Project : Project_Node_Id);
-      --  Add project and its dependencies, recursively, into the graph.
-
-      -----------------------------------
-      -- Find_Or_Create_Project_Vertex --
-      -----------------------------------
-
-      procedure Find_Or_Create_Project_Vertex
-        (G : in out Graph; Name : Name_Id; V : out Project_Vertex_Access)
-      is
-         Iter : Vertex_Iterator := First (G);
-      begin
-         while not At_End (Iter) loop
-            V := Project_Vertex_Access (Get (Iter));
-            if V.Name = Name then
-               return;
-            end if;
-            Next (Iter);
-         end loop;
-
-         V := new Project_Vertex;
-         V.Fully_Parsed := False;
-         V.Name := Name;
-
-         Add_Vertex (G, V);
-      end Find_Or_Create_Project_Vertex;
-
-      ---------------------
-      -- Process_Project --
-      ---------------------
-
-      procedure Process_Project
-        (G : in out Graph; Project : Project_Node_Id)
-      is
-         With_Clause : Project_Node_Id;
-         Origin, Dest : Project_Vertex_Access;
-         E : Project_Edge_Access;
-      begin
-         Find_Or_Create_Project_Vertex
-           (G, Prj.Tree.Name_Of (Project), Origin);
-
-         if Origin.Fully_Parsed then
-            return;
-         end if;
-
-         Origin.Fully_Parsed := True;
-
-         With_Clause := First_With_Clause_Of (Project);
-         while With_Clause /= Empty_Node loop
-            Find_Or_Create_Project_Vertex
-              (G, Prj.Tree.Name_Of (With_Clause), Dest);
-            E := new Project_Edge;
-            Add_Edge (G, E, Origin, Dest);
-
-            Process_Project (G, Project_Node_Of (With_Clause));
-            With_Clause := Next_With_Clause_Of (With_Clause);
-         end loop;
-      end Process_Project;
-
-
-      G : Graph;
-      Result : Boolean;
-   begin
-      Set_Directed (G, True);
-      Process_Project (G, Root_Project);
-      Result := not Is_Acyclic (G);
-      Destroy (G);
-      return Result;
-   end Has_Circular_Dependencies;
 
    --------------------------
    -- Add_Imported_Project --
