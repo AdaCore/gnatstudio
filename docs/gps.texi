@@ -2811,6 +2811,13 @@ further global queries will be faster.
 @item Find all references to @i{entity}
 @cindex find all references
 @xref{Find All References}.
+Find all references to @i{entity} in all the files in the project
+
+@item Find all references (and implicit use) to @i{entity}
+@cindex find all references and implicit
+Find all references to @i{entity} in all the source files in the project.
+This menu will also include implicit references to the entity, for instance
+when it is used as an implicit parameter in a generic instantiation.
 
 @item Find all local references to @i{entity}
 @cindex find all local references
