@@ -306,14 +306,6 @@ package body GVD.Preferences is
          Default  => "#FF0000"));
       Register_Property (Prefs, Param_Spec (Change_Color), Data);
 
-      Selection_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Selection-Color",
-         Nick     => -"Selection",
-         Blurb    => -"Color used for the selected items",
-         Flags    => Source_Flags,
-         Default  => Color_Selection));
-      Register_Property (Prefs, Param_Spec (Selection_Color), Data);
-
       Thaw_Bg_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Thaw-Bg-Color",
          Nick     => -"Auto-Refreshed",
@@ -476,6 +468,20 @@ package body GVD.Preferences is
          Flags    => Source_Flags,
          Default  => Default_HTML_Browser));
       Register_Property (Prefs, Param_Spec (Html_Browser), Helpers);
+
+      Selected_Item_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Selected-Item-Color",
+         Default => "#888888",
+         Blurb   => -"Color to use to draw the selected item",
+         Nick    => -"Selected item color"));
+
+      if Page_Prefix = "" then
+         Register_Property
+           (Prefs, Param_Spec (Selected_Item_Color), Data);
+      else
+         Register_Property
+           (Prefs, Param_Spec (Selected_Item_Color),  -"Browsers:General");
+      end if;
    end Register_Default_Preferences;
 
 end GVD.Preferences;

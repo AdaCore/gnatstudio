@@ -97,7 +97,6 @@ package GVD.Preferences is
    Xref_Color                    : Param_Spec_Color;
    Title_Color                   : Param_Spec_Color;
    Change_Color                  : Param_Spec_Color;
-   Selection_Color               : Param_Spec_Color;
    Thaw_Bg_Color                 : Param_Spec_Color;
    Freeze_Bg_Color               : Param_Spec_Color;
    Title_Font                    : Param_Spec_Font;
@@ -108,6 +107,7 @@ package GVD.Preferences is
    Hide_Big_Items                : Param_Spec_Boolean;
    Big_Item_Height               : Param_Spec_Int;
    Default_Detect_Aliases        : Param_Spec_Boolean;
+   Selected_Item_Color           : Param_Spec_Color;
 
    -- Command Window --
 
