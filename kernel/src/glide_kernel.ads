@@ -58,20 +58,24 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record) return String;
    --  Return the Source_Path associated to the given Kernel Handle.
    --  Return the empty string if no source path has been set yet.
+   --  ??? Needs more comments.
 
    procedure Set_Object_Path
      (Handle : access Kernel_Handle_Record;
       Path   : String);
    --  Set the Object_Path for the given Kernel Handle.
+   --  ??? Needs more comments.
 
    function Get_Object_Path
      (Handle : access Kernel_Handle_Record) return String;
    --  Return the Object_Path associated to the given Kernel Handle.
    --  Return the empty string if no object path has been set yet.
+   --  ??? Needs more comments.
 
    procedure Reset_Source_Info_List
      (Handle : access Kernel_Handle_Record);
    --  Re-initialize the Source Info structure.
+   --  ??? Needs more comments.
 
    function Get_Source_Info_List
      (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
