@@ -1559,6 +1559,8 @@ package body Ada_Analyzer is
 
          elsif Prev_Token = Tok_Is
            and then Top_Token.Token /= Tok_Type
+           and then Top_Token.Token /= Tok_Task
+           and then Top_Token.Token /= Tok_Protected
            and then Top_Token.Token /= Tok_Subtype
            and then (Reserved = Tok_New
              or else Reserved = Tok_Abstract
