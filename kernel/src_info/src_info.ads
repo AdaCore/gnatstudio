@@ -709,7 +709,7 @@ private
    type Source_File is record
       LI              : LI_File_Ptr;
       Part            : Projects.Unit_Part;
-      Source_Filename : VFS.Virtual_File;
+      Source_Filename : aliased VFS.Virtual_File;
    end record;
    --  A source file is represented by two or three elements:
    --    - its LI_File
