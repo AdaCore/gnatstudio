@@ -351,17 +351,11 @@ package body VFS_Module is
         (Kernel, "ls",
          Maximum_Args => 1,
          Handler      => VFS_Command_Handler'Access);
---        Register_Command
---          (Kernel,
---           Command      => "dump",
---           Params       => "(string)",
---           Return_Value => "string [add_lf]",
---           Description  =>
---           -("Dump string to a temporary file. Return the name of the file."
---               & " If add_lf is TRUE, append a line feed at end of file."),
---           Minimum_Args => 1,
---           Maximum_Args => 2,
---           Handler      => VFS_Command_Handler'Access);
+      Register_Command
+        (Kernel, "dump",
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Handler      => VFS_Command_Handler'Access);
    end Register_Module;
 
 end VFS_Module;
