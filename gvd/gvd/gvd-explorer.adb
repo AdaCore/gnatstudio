@@ -850,35 +850,35 @@ package body GVD.Explorer is
    begin
       --  Get rid of the highlight on the previous current file
 
-      if Tree.Current_File_Node /= null then
-         Node_Set_Row_Style (Tree, Tree.Current_File_Node, Null_Style);
-         Tree.Current_File_Node := null;
+      if Node /= Tree.Current_File_Node then
+         if Tree.Current_File_Node /= null then
+            Node_Set_Row_Style (Tree, Tree.Current_File_Node, Null_Style);
+            Tree.Current_File_Node := null;
+         end if;
+
+         if Node = null then
+            return;
+         end if;
+
+         Tree.Current_File_Node := Node;
+         Create_Current_File_Style (Tree);
+         Node_Set_Row_Style
+           (Tree, Tree.Current_File_Node, Tree.Current_File_Style);
+
+         --  Select the new node (so that selected node in the explorer is the
+         --  file currently displayed in the source)
+         Gtk_Select (Tree, Tree.Current_File_Node);
+
+         --  Expand all the parents to make the node visible
+         if not Is_Viewable (Tree, Tree.Current_File_Node) then
+            Expand (Tree, Row_Get_Parent (Node_Get_Row (Tree.Current_File_Node)));
+         end if;
+
+         --  Scroll to make the node visible
+         if Node_Is_Visible (Tree, Tree.Current_File_Node) /= Visibility_Full then
+            Node_Moveto (Tree, Tree.Current_File_Node, 0, 0.5, 0.0);
+         end if;
       end if;
-
-      if Node = null then
-         return;
-      end if;
-
-      Tree.Current_File_Node := Node;
-      Create_Current_File_Style (Tree);
-      Node_Set_Row_Style
-        (Tree, Tree.Current_File_Node, Tree.Current_File_Style);
-
-      --  Select the new node (so that selected node in the explorer is the
-      --  file currently displayed in the source)
-      Gtk_Select (Tree, Tree.Current_File_Node);
-
-      --  Expand all the parents to make the node visible
-      if not Is_Viewable (Tree, Tree.Current_File_Node) then
-         Expand (Tree, Row_Get_Parent (Node_Get_Row (Tree.Current_File_Node)));
-      end if;
-
-      --  Scroll to make the node visible (??? This does not work, since the
-      --  scrollbar is always displayed at the bottom, even when the current
-      --  file is at the top).
---   if Node_Is_Visible (Tree, Tree.Current_File_Node) /= Visibility_Full then
---      Node_Moveto (Tree, Tree.Current_File_Node, 0, 0.5, 0.0);
---   end if;
    end Set_Current_File;
 
    ---------------------------
