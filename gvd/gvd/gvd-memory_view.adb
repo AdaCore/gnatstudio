@@ -328,7 +328,7 @@ package body GVD.Memory_View is
       View.Highlighted := Get_Pref (GVD_Prefs, Memory_Highlighted_Color);
       View.White_Color := White (Get_Default_Colormap);
       View.Selected    := Get_Pref (GVD_Prefs, Memory_Selected_Color);
-      View.Modified_Color := Get_Pref (GVD_Prefs, Memory_Modified_Color);
+      View.Modified_Color := Get_Pref (GVD_Prefs, Change_Color);
    end Init_Graphics;
 
    ----------------------
