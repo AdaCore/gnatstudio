@@ -97,7 +97,7 @@ package GVD.Main_Window is
       --  True if the gvd main window is used on its own (e.g, not as part
       --  of an integrated environment).
 
-      GVD_Accel_Group     : Gtk_Accel_Group;
+      Main_Accel_Group    : Gtk_Accel_Group;
       --  The default accelerators for the GVD window.
    end record;
    type GVD_Main_Window is access all GVD_Main_Window_Record'Class;

@@ -1346,7 +1346,7 @@ package body Display_Items is
            (Contextual_Background_Menu
              (Canvas,
               Debugger_Process_Tab
-               (Get_Process (Canvas)).Window.GVD_Accel_Group),
+               (Get_Process (Canvas)).Window.Main_Accel_Group),
             Button            => Get_Button (Event),
             Activate_Time     => Get_Time (Event));
       end if;

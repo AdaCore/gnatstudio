@@ -117,12 +117,12 @@ package body GVD.Main_Window is
       Initialize_Class_Record
         (Main_Window, Signals, Class_Record, Type_Name => "GvdMainWindow");
 
-      Gtk_New (Main_Window.GVD_Accel_Group);
-      Add_Accel_Group (Main_Window, Main_Window.GVD_Accel_Group);
-      Gtk_New (Main_Window.Factory, Gtk.Menu_Bar.Get_Type, Key, Main_Window.GVD_Accel_Group);
+      Gtk_New (Main_Window.Main_Accel_Group);
+      Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
+      Gtk_New (Main_Window.Factory, Gtk.Menu_Bar.Get_Type, Key, Main_Window.Main_Accel_Group);
       Factory_Data.Create_Items
         (Main_Window.Factory, Menu_Items, Main_Window.all'Access);
-      Lock (Main_Window.GVD_Accel_Group);
+      Lock (Main_Window.Main_Accel_Group);
       Menu := Get_Widget (Main_Window.Factory, Key);
       Main_Window.Menu_Bar := Gtk_Menu_Bar (Menu);
       Pack_Start (Main_Window.Vbox, Menu, False, False, 0);
@@ -132,8 +132,8 @@ package body GVD.Main_Window is
       Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.History_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Memory_View, Gtk_Widget (Main_Window));
-      Gtk_New (Main_Window.GVD_Accel_Group);
-      Lock (Main_Window.GVD_Accel_Group);
+      Gtk_New (Main_Window.Main_Accel_Group);
+      Lock (Main_Window.Main_Accel_Group);
       Reset_File_Extensions;
       Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
       Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
