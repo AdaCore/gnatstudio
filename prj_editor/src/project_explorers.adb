@@ -39,6 +39,7 @@ with Glib.Values;          use Glib.Values;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
+with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Label;            use Gtk.Label;
@@ -159,6 +160,27 @@ package body Project_Explorers is
    package Project_Row_Data is new Gtk.Ctree.Row_Data (User_Data);
    use Project_Row_Data;
 
+   type Append_Directory_Idle_Data is record
+      Explorer  : Project_Explorer;
+      Norm_Dest : String_Access;
+      Norm_Dir  : String_Access;
+      D         : Dir_Type;
+      Depth     : Integer := 0;
+      Base      : Gtk_Tree_Iter;
+      Dirs      : String_List_Utils.String_List.List;
+      Files     : String_List_Utils.String_List.List;
+      Idle      : Boolean := False;
+   end record;
+   type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
+   --  Custom data for the asynchronous fill function.
+
+   procedure Free is
+      new Unchecked_Deallocation (Append_Directory_Idle_Data,
+                                  Append_Directory_Idle_Data_Access);
+
+   package File_Append_Directory_Idle is
+      new Gtk.Main.Timeout (Append_Directory_Idle_Data_Access);
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -171,6 +193,14 @@ package body Project_Explorers is
    --  Always use this function instead of creating the array yourself, since
    --  this checks that there are as many elements in the array as columns in
    --  the tree
+
+   function Parse_Path
+     (Path : String) return String_List_Utils.String_List.List;
+   --  Parse a path string and return a list of all directories in it.
+
+   function Greatest_Common_Path
+     (L : String_List_Utils.String_List.List) return String;
+   --  Return the greatest common path to a list of directories.
 
    ------------------
    -- Adding nodes --
@@ -253,10 +283,15 @@ package body Project_Explorers is
       Dir       : String;
       Base      : Gtk_Tree_Iter;
       Depth     : Integer := 0;
-      Append_To_Dir : String := "");
+      Append_To_Dir : String := "";
+      Idle      : Boolean := False);
    --  Add to the file view the directory Dir, at node given by Iter.
    --  If Append_To_Dir is not "", and is a sub-directory of Dir, then
    --  the path is expanded recursively all the way to Append_To_Dir.
+
+   function Read_Directory
+     (D : Append_Directory_Idle_Data_Access) return Boolean;
+   --  Called by File_Append_Directory.
 
    ---------------------
    -- Expanding nodes --
@@ -673,6 +708,157 @@ package body Project_Explorers is
       end if;
    end File_Append_File;
 
+   --------------------
+   -- Read_Directory --
+   --------------------
+
+   function Read_Directory
+     (D : Append_Directory_Idle_Data_Access)
+     return Boolean is
+      File       : String (1 .. 255);
+      Last       : Natural;
+      Path_Found : Boolean := False;
+
+      Iter       : Gtk_Tree_Iter;
+
+      use String_List_Utils.String_List;
+   begin
+      Read (D.D, File, Last);
+
+      if Last /= 0 then
+         if not (Last = 1 and then File (1) = '.')
+           and then not (Last = 2 and then File (1 .. 2) = "..")
+         then
+            if Is_Directory (D.Norm_Dir.all & File (File'First .. Last)) then
+               Append (D.Dirs, File (File'First .. Last));
+            else
+               Append (D.Files, File (File'First .. Last));
+            end if;
+         end if;
+
+         return True;
+      end if;
+
+      --  At this point, necessarily, Last = 0.
+
+      Close (D.D);
+
+      Sort (D.Dirs);
+      Sort (D.Files);
+
+      while not Is_Empty (D.Dirs) loop
+         declare
+            Dir : String := Head (D.Dirs);
+         begin
+            Append (D.Explorer.File_Model, Iter, D.Base);
+
+            Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
+                 D.Norm_Dir.all & Dir & Directory_Separator);
+
+            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+                 Dir);
+
+            Set (D.Explorer.File_Model, Iter, Node_Type_Column,
+                 Gint (Node_Types'Pos (Directory_Node)));
+
+            if D.Depth = 0 then
+               exit;
+            end if;
+
+            --  Are we on the path to the target directory ?
+
+            if not Path_Found
+              and then D.Norm_Dir.all'Length + Dir'Length
+              <= D.Norm_Dest.all'Length
+              and then D.Norm_Dest.all
+              (D.Norm_Dest.all'First
+               .. D.Norm_Dest.all'First
+                  + D.Norm_Dir.all'Length + Dir'Length - 1)
+              = D.Norm_Dir.all & Dir
+            then
+               Path_Found := True;
+
+               declare
+                  Success   : Boolean;
+                  Path      : Gtk_Tree_Path;
+                  Expanding : Boolean := D.Explorer.Expanding;
+               begin
+                  if D.Base = Null_Iter then
+                     Path := Gtk_New ("");
+                  else
+                     Path := Get_Path (D.Explorer.File_Model, D.Base);
+                  end if;
+
+                  D.Explorer.Expanding := True;
+                  Success := Expand_Row (D.Explorer.File_Tree, Path, False);
+                  D.Explorer.Expanding := Expanding;
+
+                  if D.Base /= Null_Iter then
+                     Set (D.Explorer.File_Model, D.Base, Icon_Column,
+                          C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+                  end if;
+
+                  Path_Free (Path);
+               end;
+
+               File_Append_Directory
+                 (D.Explorer, D.Norm_Dir.all & Dir
+                  & Directory_Separator, Iter, D.Depth, D.Norm_Dest.all,
+                  D.Idle);
+
+               --  Are we on the target directory ?
+
+               if D.Norm_Dest.all = D.Norm_Dir.all & Dir
+                 & Directory_Separator
+               then
+                  declare
+                     Success   : Boolean;
+                     Path      : Gtk_Tree_Path;
+                     --  Expanding : Boolean := D.Explorer.Expanding;
+                  begin
+                     Path := Get_Path (D.Explorer.File_Model, Iter);
+
+                     --  D.Explorer.Expanding := True;
+                     Success := Expand_Row (D.Explorer.File_Tree, Path, False);
+                     --  D.Explorer.Expanding := Expanding;
+
+                     Set (D.Explorer.File_Model, Iter, Icon_Column,
+                          C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+                     Path_Free (Path);
+                  end;
+               end if;
+
+            else
+               File_Append_Directory
+                 (D.Explorer, D.Norm_Dir.all & Dir
+                  & Directory_Separator, Iter, D.Depth - 1, D.Norm_Dest.all,
+                  D.Idle);
+               Set (D.Explorer.File_Model, Iter, Icon_Column,
+                    C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
+            end if;
+
+            Next (D.Dirs);
+         end;
+      end loop;
+
+      while not Is_Empty (D.Files) loop
+         File_Append_File
+           (D.Explorer, D.Base, D.Norm_Dir.all & Head (D.Files));
+         Next (D.Files);
+      end loop;
+
+      Free (D.Norm_Dir);
+      Free (D.Norm_Dest);
+
+      declare
+         New_D : Append_Directory_Idle_Data_Access := D;
+      begin
+         Free (New_D);
+      end;
+
+      return False;
+   end Read_Directory;
+
    ---------------------------
    -- File_Append_Directory --
    ---------------------------
@@ -682,166 +868,34 @@ package body Project_Explorers is
       Dir       : String;
       Base      : Gtk_Tree_Iter;
       Depth     : Integer := 0;
-      Append_To_Dir : String := "")
+      Append_To_Dir : String := "";
+      Idle      : Boolean := False)
    is
-      Norm_Dest : String := Normalize_Pathname (Append_To_Dir);
-      Norm_Dir  : String := Normalize_Pathname (Dir);
-      D         : Dir_Type;
-      File      : String (1 .. 255);
-      Last      : Natural;
-      Iter      : Gtk_Tree_Iter;
-
-      use String_List_Utils.String_List;
-
-      Dirs      : String_List_Utils.String_List.List;
-      Files     : String_List_Utils.String_List.List;
-
-      Path_Found : Boolean := False;
-
-      procedure Insert_Sorted
-        (L : in out String_List_Utils.String_List.List;
-         S : String);
-      --  Adds S to list L in the right place so that L is ordered.
-      --  L must be sorted before call.
-
-      procedure Insert_Sorted
-        (L : in out String_List_Utils.String_List.List;
-         S : String)
-      is
-         Prev   : String_List_Utils.String_List.List_Node;
-         Node   : String_List_Utils.String_List.List_Node;
-
-      begin
-         Node := First (L);
-         Prev := Null_Node;
-
-         while Node /= Null_Node loop
-            if S < Data (Node) then
-               Append (L, Prev, S);
-               return;
-            end if;
-
-            Prev := Node;
-            Node := Next (Node);
-         end loop;
-
-         Append (L, S);
-      end Insert_Sorted;
+      D  : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
+      Id : Timeout_Handler_Id;
 
    begin
-      --  ??? This could be done in an idle loop.
+      Open (D.D, Dir);
+      D.Norm_Dest := new String' (Normalize_Pathname (Append_To_Dir));
+      D.Norm_Dir  := new String' (Normalize_Pathname (Dir));
+      D.Depth     := Depth;
+      D.Base      := Base;
+      D.Explorer  := Project_Explorer (Explorer);
+      D.Idle      := Idle;
 
-      Open (D, Dir);
-
-      loop
-         Read (D, File, Last);
-         exit when Last = 0;
-
-         if not (Last = 1 and then File (1) = '.')
-           and then not (Last = 2 and then File (1 .. 2) = "..")
-         then
-            if Is_Directory (Norm_Dir & File (File'First .. Last)) then
-               Insert_Sorted (Dirs, File (File'First .. Last));
-            else
-               Insert_Sorted (Files, File (File'First .. Last));
-            end if;
-         end if;
-      end loop;
-
-      Close (D);
-
-      while not Is_Empty (Dirs) loop
-         declare
-            Dir : String := Head (Dirs);
-         begin
-            Append (Explorer.File_Model, Iter, Base);
-
-            Set (Explorer.File_Model, Iter, Absolute_Name_Column,
-                 Norm_Dir & Dir & Directory_Separator);
-
-            Set (Explorer.File_Model, Iter, Base_Name_Column,
-                 Dir);
-
-            Set (Explorer.File_Model, Iter, Node_Type_Column,
-                 Gint (Node_Types'Pos (Directory_Node)));
-
-            if Depth = 0 then
-               exit;
-            end if;
-
-            --  Are we on the path to the target directory ?
-
-            if not Path_Found
-              and then Norm_Dir'Length + Dir'Length <= Norm_Dest'Length
-              and then Norm_Dest
-              (Norm_Dest'First
-               .. Norm_Dest'First + Norm_Dir'Length + Dir'Length - 1)
-              = Norm_Dir & Dir
-            then
-               Path_Found := True;
-
-               declare
-                  Success   : Boolean;
-                  Path      : Gtk_Tree_Path;
-               begin
-                  if Base = Null_Iter then
-                     Path := Gtk_New ("");
-                  else
-                     Path := Get_Path (Explorer.File_Model, Base);
-                  end if;
-
-                  Success := Expand_Row (Explorer.File_Tree, Path, False);
-
-                  if Base /= Null_Iter then
-                     Set (Explorer.File_Model, Base, Icon_Column,
-                          C_Proxy (Explorer.Open_Pixbufs (Directory_Node)));
-                  end if;
-
-                  Path_Free (Path);
-               end;
-
-               File_Append_Directory
-                 (Explorer, Norm_Dir & Dir
-                  & Directory_Separator, Iter, Depth, Norm_Dest);
-
-               --  Are we on the target directory ?
-
-               if Norm_Dest = Norm_Dir & Dir
-                 & Directory_Separator
-               then
-                  declare
-                     Success   : Boolean;
-                     Path      : Gtk_Tree_Path;
-                  begin
-                     Path := Get_Path (Explorer.File_Model, Iter);
-                     Success := Expand_Row (Explorer.File_Tree, Path, False);
-                     Set (Explorer.File_Model, Iter, Icon_Column,
-                          C_Proxy (Explorer.Open_Pixbufs (Directory_Node)));
-
-                     Path_Free (Path);
-                  end;
-               end if;
-
-            else
-               File_Append_Directory
-                 (Explorer, Norm_Dir & Dir
-                  & Directory_Separator, Iter, Depth - 1, Norm_Dest);
-               Set (Explorer.File_Model, Iter, Icon_Column,
-                    C_Proxy (Explorer.Close_Pixbufs (Directory_Node)));
-            end if;
-
-            Next (Dirs);
-         end;
-      end loop;
-
-      while not Is_Empty (Files) loop
-         File_Append_File (Explorer, Base, Norm_Dir & Head (Files));
-         Next (Files);
-      end loop;
+      if Idle then
+         Id := File_Append_Directory_Idle.Add (20, Read_Directory'Access, D);
+      else
+         while Read_Directory (D) loop
+            null;
+         end loop;
+      end if;
 
    exception
       when Directory_Error =>
          --  The directory couldn't be open, probably because of permissions.
+
+         Free (D);
          return;
    end File_Append_Directory;
 
@@ -993,8 +1047,19 @@ package body Project_Explorers is
          ID              => Explorer_Module_ID,
          Context_Func    => Explorer_Context_Factory'Access);
 
-      File_Append_Directory
-        (Explorer, "/", Null_Iter, 1, Get_Current_Dir);
+      declare
+         Inc : String_List_Utils.String_List.List;
+         Obj : String_List_Utils.String_List.List;
+      begin
+         Inc := Parse_Path (Include_Path (Get_Project_View (Kernel), True));
+         Obj := Parse_Path (Object_Path (Get_Project_View (Kernel), True));
+         String_List_Utils.String_List.Concat (Inc, Obj);
+         File_Append_Directory
+           (Explorer,
+            Greatest_Common_Path (Inc),
+            Null_Iter, 1, Get_Current_Dir, True);
+         String_List_Utils.String_List.Free (Inc);
+      end;
 
       Widget_Callback.Object_Connect
         (Explorer.File_Tree, "row_expanded",
@@ -1293,11 +1358,11 @@ package body Project_Explorers is
       end Free_Children;
 
    begin
-      Iter := Get_Iter (T.File_Model, Path);
-
       if T.Expanding then
          return;
       end if;
+
+      Iter := Get_Iter (T.File_Model, Path);
 
       if Iter /= Null_Iter then
          T.Expanding := True;
@@ -2392,8 +2457,25 @@ package body Project_Explorers is
       --  No project view => Clean up the tree
       if Get_Project_View (T.Kernel) = No_Project then
          Remove_Node (T.Tree, null);
+
+         Clear (T.File_Model);
+         --  ??? must free memory associated with entities !
          return;
       end if;
+
+      declare
+         Inc : String_List_Utils.String_List.List;
+         Obj : String_List_Utils.String_List.List;
+      begin
+         Inc := Parse_Path (Include_Path (Get_Project_View (T.Kernel), True));
+         Obj := Parse_Path (Object_Path (Get_Project_View (T.Kernel), True));
+         String_List_Utils.String_List.Concat (Inc, Obj);
+         File_Append_Directory
+           (T,
+            Greatest_Common_Path (Inc),
+            Null_Iter, 1, Get_Current_Dir, True);
+         String_List_Utils.String_List.Free (Inc);
+      end;
 
       Freeze (T.Tree);
 
@@ -2839,5 +2921,101 @@ package body Project_Explorers is
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
       Vsearch_Ext.Register_Default_Search (Kernel);
    end Register_Module;
+
+   ----------------
+   -- Parse_Path --
+   ----------------
+
+   function Parse_Path
+     (Path : String) return String_List_Utils.String_List.List
+   is
+      First : Integer;
+      Index : Integer;
+
+      use String_List_Utils.String_List;
+      Result : String_List_Utils.String_List.List;
+
+   begin
+      First := Path'First;
+      Index := First + 1;
+
+      while Index <= Path'Last loop
+         if Path (Index) = Path_Separator then
+            Append (Result, Path (First .. Index - 1));
+            Index := Index + 1;
+            First := Index;
+         end if;
+
+         Index := Index + 1;
+      end loop;
+
+      if First /= Path'Last then
+         Append (Result, Path (First .. Path'Last));
+      end if;
+
+      return Result;
+   end Parse_Path;
+
+   --------------------------
+   -- Greatest_Common_Path --
+   --------------------------
+
+   function Greatest_Common_Path
+     (L : String_List_Utils.String_List.List) return String
+   is
+      use String_List_Utils.String_List;
+
+      N : List_Node;
+   begin
+      if Is_Empty (L) then
+         return "";
+      end if;
+
+      N := First (L);
+
+      declare
+         Greatest_Prefix        : String := Data (N);
+         Greatest_Prefix_First  : Natural := Greatest_Prefix'First;
+         Greatest_Prefix_Length : Natural := Greatest_Prefix'Length;
+      begin
+         N := Next (N);
+
+         while N /= Null_Node loop
+            declare
+               Challenger : String  := Data (N);
+               First      : Natural := Challenger'First;
+               Index      : Natural := 0;
+               Length     : Natural := Challenger'Length;
+            begin
+               while Index < Greatest_Prefix_Length
+                 and then Index < Length
+                 and then Challenger (First + Index)
+                 = Greatest_Prefix (Greatest_Prefix_First + Index)
+               loop
+                  Index := Index + 1;
+               end loop;
+
+               Greatest_Prefix_Length := Index;
+            end;
+
+            if Greatest_Prefix_Length <= 1 then
+               exit;
+            end if;
+
+            N := Next (N);
+         end loop;
+
+         while Greatest_Prefix (Greatest_Prefix'First
+                                + Greatest_Prefix_Length - 1)
+           /= Directory_Separator
+         loop
+            Greatest_Prefix_Length := Greatest_Prefix_Length - 1;
+         end loop;
+
+         return Greatest_Prefix
+           (Greatest_Prefix_First
+            .. Greatest_Prefix_First + Greatest_Prefix_Length - 1);
+      end;
+   end Greatest_Common_Path;
 
 end Project_Explorers;
