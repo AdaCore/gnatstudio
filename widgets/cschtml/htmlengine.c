@@ -3085,11 +3085,6 @@ html_engine_realize (HTMLEngine *e,
 	g_return_if_fail (e != NULL);
 	g_return_if_fail (window != NULL);
 
-	/* ??? Unclear what to do with the old window here. Is it safe to
-	   unref it ? Apparently we are still leaking memory. */
-	if (e->window != NULL)
-	  g_object_unref (e->window);
-
 	e->window = window;
 
 	html_gdk_painter_realize (HTML_GDK_PAINTER (e->painter), window);
