@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,7 +31,6 @@ with Glib.Unicode;                use Glib, Glib.Unicode;
 with Traces;                      use Traces;
 
 package body Language is
-
    Default_Word_Character_Set : constant Character_Set :=
            Constants.Letter_Set or Constants.Decimal_Digit_Set or To_Set ("_");
    --  Default character set for keywords and indentifiers
@@ -47,6 +46,14 @@ package body Language is
    --  Internal version of Looking_At, which also returns the Line and Column,
    --  considering that Buffer (First) is at line 1 column 1.
    --  Column is a byte index, not a character index.
+
+   type Comment_Type is
+     (No_Comment, Comment_Single_Line, Comment_Multi_Line);
+   function Looking_At_Start_Of_Comment
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : Natural) return Comment_Type;
+   --  Whether we have the start of a comment at Index in Buffer
 
    ---------------------------
    -- Can_Tooltip_On_Entity --
@@ -733,5 +740,154 @@ package body Language is
    begin
       return Default_Word_Character_Set;
    end Word_Character_Set;
+
+   ---------------------------------
+   -- Looking_At_Start_Of_Comment --
+   ---------------------------------
+
+   function Looking_At_Start_Of_Comment
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : Natural) return Comment_Type
+   is
+   begin
+      if Context.New_Line_Comment_Start /= null
+        and then Index + Context.New_Line_Comment_Start'Length <= Buffer'Last
+        and then Buffer
+          (Index .. Index + Context.New_Line_Comment_Start'Length - 1) =
+          Context.New_Line_Comment_Start.all
+      then
+         return Comment_Single_Line;
+      end if;
+
+      if Context.New_Line_Comment_Start_Regexp /= null
+        and then Match (Context.New_Line_Comment_Start_Regexp.all,
+                        Buffer, Data_First => Index)
+      then
+         return Comment_Single_Line;
+      end if;
+
+      if Context.Comment_Start_Length /= 0
+        and then Index + Context.Comment_Start_Length <= Buffer'Last
+        and then Buffer (Index .. Index + Context.Comment_Start_Length - 1)
+        = Context.Comment_Start
+      then
+         return Comment_Multi_Line;
+      end if;
+
+      return No_Comment;
+   end Looking_At_Start_Of_Comment;
+
+   -----------------------------------------
+   -- Skip_To_Current_Comment_Block_Start --
+   -----------------------------------------
+
+   procedure Skip_To_Current_Comment_Block_Start
+     (Context : Language_Context;
+      Buffer : String;
+      Index  : in out Natural)
+   is
+      Tmp : Integer;
+   begin
+      --  Are we in a multi-line comment ?
+      if Context.Comment_End_Length /= 0 then
+         Tmp := Line_End (Buffer, Index);
+         if Tmp - Context.Comment_End_Length + 1 >= Index
+           and then Buffer
+             (Tmp - Context.Comment_End_Length + 1 .. Tmp) =
+             Context.Comment_End
+         then
+            while Index >= Buffer'First
+              and then Buffer
+                (Index .. Index + Context.Comment_Start_Length - 1) /=
+                Context.Comment_Start
+            loop
+               Index := Index - 1;
+            end loop;
+
+            return;
+         end if;
+      end if;
+
+      --  Check for single line comments
+      Tmp := Index;
+      loop
+         while Tmp <= Buffer'Last
+           and then (Buffer (Tmp) = ' ' or Buffer (Tmp) = ASCII.HT)
+         loop
+            Tmp := Tmp + 1;
+         end loop;
+
+         exit when Looking_At_Start_Of_Comment (Context, Buffer, Tmp) =
+           No_Comment;
+
+         Index := Tmp;
+         Skip_Lines (Buffer, -1, Tmp);
+      end loop;
+   end Skip_To_Current_Comment_Block_Start;
+
+   ---------------------------------------
+   -- Skip_To_Current_Comment_Block_End --
+   ---------------------------------------
+
+   procedure Skip_To_Current_Comment_Block_End
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : in out Natural)
+   is
+      Tmp : Integer := Index;
+      Typ : constant Comment_Type :=
+        Looking_At_Start_Of_Comment (Context, Buffer, Index);
+   begin
+      case Typ is
+         when No_Comment =>
+            null;
+
+         when Comment_Single_Line =>
+            loop
+               Skip_Lines (Buffer, 1, Tmp);
+               while Tmp <= Buffer'Last
+                 and then (Buffer (Tmp) = ' ' or Buffer (Tmp) = ASCII.HT)
+               loop
+                  Tmp := Tmp + 1;
+               end loop;
+
+               exit when Looking_At_Start_Of_Comment (Context, Buffer, Tmp) =
+                 No_Comment;
+               Index := Tmp;
+            end loop;
+
+         when Comment_Multi_Line =>
+            Skip_To_String (Buffer, Index, Context.Comment_End);
+      end case;
+   end Skip_To_Current_Comment_Block_End;
+
+   --------------------------------
+   -- Skip_To_Next_Comment_Start --
+   --------------------------------
+
+   procedure Skip_To_Next_Comment_Start
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : in out Natural;
+      Stop_At_First_Blank_Line : Boolean := True) is
+   begin
+      while Index < Buffer'Last loop
+         Skip_Lines (Buffer, 1, Index);
+         if Stop_At_First_Blank_Line
+           and then Buffer (Index) = ASCII.LF
+         then
+            Index := 0;
+            return;
+         end if;
+         Skip_Blanks (Buffer, Index);
+         if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
+           No_Comment
+         then
+            return;
+         end if;
+      end loop;
+      Index := 0;
+   end Skip_To_Next_Comment_Start;
 
 end Language;

@@ -219,6 +219,36 @@ package Language is
      (Lang : access Language_Root) return Language_Context_Access is abstract;
    --  Return the context to use for a specific language
 
+   -------------------
+   -- Parsing files --
+   -------------------
+
+   procedure Skip_To_Current_Comment_Block_Start
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : in out Natural);
+   --  Assuming that Index is at the beginning or inside a comment line, moves
+   --  upward in the file till the end of the current block of comments.
+   --  This block is defined as a group of commented out lines, until a
+   --  non-comment line is seen.
+
+   procedure Skip_To_Current_Comment_Block_End
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : in out Natural);
+   --  Same as Skip_To_Current_Comment_Block_Start, except we move forward
+   --  to the beginning of the last line of comments in the block.
+
+   procedure Skip_To_Next_Comment_Start
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : in out Natural;
+      Stop_At_First_Blank_Line : Boolean := True);
+   --  Skip lines of code until we find the beginning of a comment.
+   --  If Stop_At_First_Blank_Line is True and we see an empty line first,
+   --  set Index to 0. Likewise if no comment is found before the end of the
+   --  buffer.
+
    ----------------------
    -- Source Analyzing --
    ----------------------
