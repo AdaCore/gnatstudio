@@ -823,8 +823,7 @@ package body Debugger.Gdb.Ada is
             else
                Set_Value (R.all,
                           Parse_Type (Get_Debugger (Lang),
-                                      Entity & "."
-                                      & Get_Field_Name (R.all, Fields).all),
+                                      Type_Str (Tmp_Index .. Index - 1)),
                           Field => Fields);
             end if;
 
