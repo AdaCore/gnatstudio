@@ -55,6 +55,7 @@ package body Make_Test_Window_Pkg is
       Label4 : Gtk_Label;
 
       Hbuttonbox1 : Gtk_Hbutton_Box;
+
    begin
       Gtk.Window.Initialize (Make_Test_Window, Window_Toplevel);
       Set_Title (Make_Test_Window, -"New test unit");
@@ -163,7 +164,6 @@ package body Make_Test_Window_Pkg is
         (Make_Test_Window.Help, "clicked",
          Button_Callback.To_Marshaller (On_Help_Clicked'Access));
       Add (Hbuttonbox1, Make_Test_Window.Help);
-
    end Initialize;
 
 end Make_Test_Window_Pkg;

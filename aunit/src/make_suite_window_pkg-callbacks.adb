@@ -71,8 +71,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
    function On_Make_Suite_Window_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
+      Params : Gtk.Arguments.Gtk_Args) return Boolean is
    begin
       Hide (Get_Toplevel (Object));
       Main_Quit;
@@ -83,9 +82,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
    -- On_Ok_Button_Clicked --
    --------------------------
 
-   procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Ok_Button_Clicked (Object : access Gtk_Widget_Record'Class) is
       Suite_Window : constant Make_Suite_Window_Access :=
         Make_Suite_Window_Access (Get_Toplevel (Object));
 
@@ -93,25 +90,24 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Row_Num      : Gint;
       Suite_Name   : String_Access;
       Package_Name : String_Access;
+
    begin
       Hide (Suite_Window.Explorer);
+
       if S = "" then
          return;
       end if;
 
       Get_Suite_Name (S, Package_Name, Suite_Name);
 
-      if Suite_Name /= null
-        and then Package_Name /= null
-      then
+      if Suite_Name /= null and then Package_Name /= null then
          if S (S'Last - 3 .. S'Last) = ".ads" then
             Row_Num := Append
               (Suite_Window.Test_List,
                Null_Array
                + S + ("(test) " & Suite_Name.all));
-            Set (Suite_Window.Test_List,
-                 Row_Num,
-                 Package_Name.all);
+            Set (Suite_Window.Test_List, Row_Num, Package_Name.all);
+
          elsif S (S'Last - 3 .. S'Last) = ".adb" then
             Row_Num := Append
               (Suite_Window.Test_List,
@@ -121,9 +117,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
                  Row_Num,
                  Package_Name.all);
          end if;
-
       end if;
-
    end On_Ok_Button_Clicked;
 
    ------------------------------
@@ -154,8 +148,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
       Filter_B : Filter_Show_Ada_Access := new Filter_Show_Ada;
       Filter_C : Filter_Show_Tests_Access := new Filter_Show_Tests;
-   begin
 
+   begin
       if Suite_Window.Explorer = null then
          Gtk_New (Suite_Window.Explorer, "");
          Create_From_Xpm_D
@@ -216,6 +210,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
       List : Gtk_Clist := Suite_Window.Test_List;
       I    : Gint;
+
    begin
       Freeze (List);
 
@@ -232,9 +227,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
    -- On_Ok_Clicked --
    -------------------
 
-   procedure On_Ok_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Ok_Clicked (Object : access Gtk_Button_Record'Class) is
       --  Generate suite source file.  Exit program if successful
 
       Win  : constant Make_Suite_Window_Access :=
@@ -242,11 +235,10 @@ package body Make_Suite_Window_Pkg.Callbacks is
       File : File_Type;
       Name : String := Get_Text (Win.Name_Entry);
 
-
       use Row_List;
       List : Row_List.Glist := Get_Row_List (Win.Test_List);
-   begin
 
+   begin
       if Name /= "" then
          if To_Lower (Name) = "test_suite" then
             if Message_Dialog
@@ -278,11 +270,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
          end if;
 
          Ada.Text_IO.Create (File, Out_File, To_File_Name (Name) & ".adb");
-         Put_Line
-           (File, "with AUnit.Test_Suites; use AUnit.Test_Suites;");
+         Put_Line (File, "with AUnit.Test_Suites; use AUnit.Test_Suites;");
 
          while List /= Null_List loop
-
             declare
                Package_Name : String := Get (Win.Test_List, Get_Data (List));
             begin
@@ -291,14 +281,12 @@ package body Make_Suite_Window_Pkg.Callbacks is
                   Mixed_Case (Package_Name);
                   Put_Line (File, "with " & Package_Name & ";");
                end if;
-
             end;
 
             List := Next (List);
          end loop;
 
          New_Line (File);
-
          Put_Line
            (File,
             "function "
@@ -311,13 +299,11 @@ package body Make_Suite_Window_Pkg.Callbacks is
          List := Get_Row_List (Win.Test_List);
 
          while List /= Null_List loop
-
             declare
                S : String := Get_Text (Win.Test_List, Get_Data (List), 1);
                Package_Name : String := Get (Win.Test_List, Get_Data (List));
 
             begin
-
                if Package_Name /= "" then
                   Mixed_Case (S);
                   Mixed_Case (Package_Name);
@@ -334,10 +320,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
                      Put_Line
                        (File, "   Add_Test (Result, " & Package_Name &");");
                   end if;
-
                end if;
-
             end;
+
             List := Next (List);
          end loop;
 
@@ -355,9 +340,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
    -- On_Cancel_Clicked --
    -----------------------
 
-   procedure On_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Cancel_Clicked (Object : access Gtk_Button_Record'Class) is
    begin
       Hide (Get_Toplevel (Object));
       Main_Quit;
@@ -367,9 +350,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
    -- On_Help_Clicked --
    ---------------------
 
-   procedure On_Help_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Help_Clicked (Object : access Gtk_Button_Record'Class) is
    begin
       null;
    end On_Help_Clicked;

@@ -64,6 +64,7 @@ package body Make_Suite_Window_Pkg is
       Vbuttonbox1 : Gtk_Vbutton_Box;
       Hbuttonbox1 : Gtk_Hbutton_Box;
       Scrolledwindow2 : Gtk_Scrolled_Window;
+
    begin
       Gtk.Window.Initialize (Make_Suite_Window, Window_Toplevel);
       Set_Title (Make_Suite_Window, -"Make new suite");
@@ -207,7 +208,6 @@ package body Make_Suite_Window_Pkg is
         (Make_Suite_Window.Help, "clicked",
          Button_Callback.To_Marshaller (On_Help_Clicked'Access));
       Add (Hbuttonbox1, Make_Suite_Window.Help);
-
    end Initialize;
 
 end Make_Suite_Window_Pkg;

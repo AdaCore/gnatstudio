@@ -46,8 +46,7 @@ package body Make_Test_Window_Pkg.Callbacks is
 
    function On_Make_Test_Window_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
+      Params : Gtk.Arguments.Gtk_Args) return Boolean is
    begin
       Hide (Get_Toplevel (Object));
       Main_Quit;
@@ -58,11 +57,10 @@ package body Make_Test_Window_Pkg.Callbacks is
    -- On_Name_Entry_Activate --
    ----------------------------
 
-   procedure On_Name_Entry_Activate
-     (Object : access Gtk_Entry_Record'Class)
-   is
-      Window : Make_Test_Window_Access
-        := Make_Test_Window_Access (Get_Toplevel (Object));
+   procedure On_Name_Entry_Activate (Object : access Gtk_Entry_Record'Class) is
+      Window : constant Make_Test_Window_Access :=
+        Make_Test_Window_Access (Get_Toplevel (Object));
+
    begin
       Grab_Focus (Window.Description_Entry);
    end On_Name_Entry_Activate;
@@ -74,8 +72,9 @@ package body Make_Test_Window_Pkg.Callbacks is
    procedure On_Description_Entry_Activate
      (Object : access Gtk_Entry_Record'Class)
    is
-      Window : Make_Test_Window_Access
-        := Make_Test_Window_Access (Get_Toplevel (Object));
+      Window : constant Make_Test_Window_Access :=
+        Make_Test_Window_Access (Get_Toplevel (Object));
+
    begin
       Grab_Focus (Window.Ok);
    end On_Description_Entry_Activate;
@@ -84,16 +83,15 @@ package body Make_Test_Window_Pkg.Callbacks is
    -- On_Ok_Clicked --
    -------------------
 
-   procedure On_Ok_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Ok_Clicked (Object : access Gtk_Button_Record'Class) is
       --  Generate "Test_Case" source files.  Exit program if successful
 
-      Window : Make_Test_Window_Access :=
+      Window      : constant Make_Test_Window_Access :=
         Make_Test_Window_Access (Get_Toplevel (Object));
-      File   : File_Type;
-      Name   : String := Get_Text (Window.Name_Entry);
-      Description : String := Get_Text (Window.Description_Entry);
+      File        : File_Type;
+      Name        : String := Get_Text (Window.Name_Entry);
+      Description : constant String := Get_Text (Window.Description_Entry);
+
    begin
       if Name /= "" then
          if To_Lower (Name) = "test_case" then
@@ -260,9 +258,7 @@ package body Make_Test_Window_Pkg.Callbacks is
    -- On_Cancel_Clicked --
    -----------------------
 
-   procedure On_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Cancel_Clicked (Object : access Gtk_Button_Record'Class) is
    begin
       Hide (Get_Toplevel (Object));
       Main_Quit;
@@ -272,9 +268,7 @@ package body Make_Test_Window_Pkg.Callbacks is
    -- On_Help_Clicked --
    ---------------------
 
-   procedure On_Help_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Help_Clicked (Object : access Gtk_Button_Record'Class) is
    begin
       null;
    end On_Help_Clicked;

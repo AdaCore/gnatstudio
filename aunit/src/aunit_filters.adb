@@ -50,8 +50,8 @@ package body Aunit_Filters is
       Line_Last    : Integer;
       Current_Name : String_Access;
       Found        : Boolean := False;
-   begin
 
+   begin
       if File_Name'Length <= 4 then
          return;
       end if;
@@ -71,6 +71,7 @@ package body Aunit_Filters is
 
             if Index_End < Line_Last - 1 then
                Index := Index_End - 1;
+
                while Index >= Line'First
                  and then Line (Index) /= ' ' loop
                   Index := Index - 1;
@@ -79,9 +80,7 @@ package body Aunit_Filters is
                Package_Name := new String'(Line (Index + 1 .. Index_End - 1));
                Found := True;
             end if;
-
          end if;
-
       end loop;
 
       Reset (File);
@@ -90,7 +89,6 @@ package body Aunit_Filters is
       --  Find the name of the suite or test case.
 
       if File_Name (File_Name'Last - 3 .. File_Name'Last) = ".ads" then
-
          while not Found loop
             Get_Line (File, Line, Line_Last);
             Index := 1;
@@ -110,13 +108,10 @@ package body Aunit_Filters is
                   Suite_Name := new String'(Line (Index + 5 .. Index_End - 1));
                   Found := True;
                end if;
-
             end if;
-
          end loop;
 
       elsif File_Name (File_Name'Last - 3 .. File_Name'Last) = ".adb" then
-
          while not Found loop
             Get_Line (File, Line, Line_Last);
             Index := 1;
@@ -137,11 +132,8 @@ package body Aunit_Filters is
                   Suite_Name := new String'(Line (Index + 9 .. Index_End - 1));
                   Found := True;
                end if;
-
             end if;
-
          end loop;
-
       end if;
 
       Free (Current_Name);
@@ -170,14 +162,15 @@ package body Aunit_Filters is
    is
       Suite_Name   : String_Access := null;
       Package_Name : String_Access;
-   begin
 
+   begin
       --  To find suites, look for tests and suites in body files.
 
       if File'Length > 4
         and then File (File'Last - 3 .. File'Last) = ".adb"
       then
          Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
+
          if Suite_Name /= null then
             State := Normal;
             Text := Suite_Name;
@@ -189,7 +182,6 @@ package body Aunit_Filters is
             Pixmap := Gdk.Pixmap.Null_Pixmap;
             Mask   := Gdk.Bitmap.Null_Bitmap;
          end if;
-
       end if;
    end Use_File_Filter;
 
@@ -209,6 +201,7 @@ package body Aunit_Filters is
    is
       Suite_Name   : String_Access;
       Package_Name : String_Access;
+
    begin
       Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
 
@@ -223,7 +216,6 @@ package body Aunit_Filters is
          Pixmap := Gdk.Pixmap.Null_Pixmap;
          Mask   := Gdk.Bitmap.Null_Bitmap;
       end if;
-
    end Use_File_Filter;
 
    ---------------------
@@ -238,10 +230,8 @@ package body Aunit_Filters is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access)
-   is
+      Text      : out String_Access) is
    begin
-
       if File'Length >= 4
         and then (File (File'Last - 3 .. File'Last) = ".ads"
                   or else File (File'Last - 3 .. File'Last) = ".adb")
@@ -255,9 +245,7 @@ package body Aunit_Filters is
             Line      : String (1 .. 256);
             Line_Last : Integer;
          begin
-            Ada.Text_IO.Open (File_T,
-                              In_File,
-                              Dir & File);
+            Ada.Text_IO.Open (File_T, In_File, Dir & File);
 
             while not Found loop
                Get_Line (File_T, Line, Line_Last);
@@ -273,9 +261,7 @@ package body Aunit_Filters is
                        new String' (Line (1 .. Index_End - 1));
                      Found := True;
                   end if;
-
                end if;
-
             end loop;
 
             Close (File_T);
@@ -302,7 +288,6 @@ package body Aunit_Filters is
       Mask   := Gdk.Bitmap.Null_Bitmap;
 
       if File'Length >= 4 then
-
          if File (File'Last - 3 .. File'Last) = ".adb" then
             Pixmap := Filter.Body_Pixmap;
             Mask := Filter.Body_Bitmap;
@@ -311,9 +296,7 @@ package body Aunit_Filters is
             Pixmap := Filter.Spec_Pixmap;
             Mask := Filter.Spec_Bitmap;
          end if;
-
       end if;
-
    end Use_File_Filter;
 
 end Aunit_Filters;
