@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -784,8 +784,11 @@ package body Find_Utils is
       return Search_Context_Access
    is
       pragma Unreferenced (Kernel, Extra_Information);
+
+      Context : Current_File_Context_Access;
    begin
-      return null;
+      Context := new Current_File_Context;
+      return Search_Context_Access (Context);
    end Current_File_Factory;
 
    --------------------------------
@@ -850,6 +853,16 @@ package body Find_Utils is
    ------------
 
    function Search
+     (Context         : access Current_File_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean
+   is
+      pragma Unreferenced (Context, Kernel, Search_Backward);
+   begin
+      return False;
+   end Search;
+
+   function Search
      (Context         : access Files_Project_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
@@ -897,10 +910,6 @@ package body Find_Utils is
          Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
       return True;
    end Search;
-
-   ------------
-   -- Search --
-   ------------
 
    function Search
      (Context         : access Files_Context;

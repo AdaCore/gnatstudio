@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -172,6 +172,20 @@ package Find_Utils is
    Invalid_Context : exception;
    --  Raised when trying to access the components in Search_Context
 
+   ------------------
+   -- File context --
+   ------------------
+
+   type Current_File_Context is new Search_Context with private;
+   type Current_File_Context_Access is access all Current_File_Context'Class;
+   --  A special context for searching in the current file
+
+   function Search
+     (Context         : access Current_File_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search function for "Current File";
+
    -------------------
    -- Files context --
    -------------------
@@ -196,9 +210,9 @@ package Find_Utils is
       Search_Backward : Boolean) return Boolean;
    --  Search function for "Files..."
 
-   ---------------------------------
-   --  Files From Project context --
-   ---------------------------------
+   --------------------------------
+   -- Files From Project context --
+   --------------------------------
 
    type Files_Project_Context is new Search_Context with private;
    type Files_Project_Context_Access is access all Files_Project_Context'Class;
@@ -290,6 +304,9 @@ private
    type Dir_Data_Access is access Dir_Data;
    procedure Free (D : in out Dir_Data_Access);
    package Directory_List is new Generic_List (Dir_Data_Access);
+
+   type Current_File_Context is new Search_Context with null record;
+   --  No additional data is needed for searching in the current file.
 
    type Files_Context is new Search_Context with record
       Files_Pattern : GNAT.Regexp.Regexp;
