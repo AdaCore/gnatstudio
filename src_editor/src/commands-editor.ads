@@ -34,10 +34,11 @@ package Commands.Editor is
    type Check_Modified_State_Type is new Root_Command with private;
    type Check_Modified_State is access all Check_Modified_State_Type;
 
-   type Direction_Type is (Backward, Forward);
+   type Direction_Type is (Backward, Forward, Extended);
    --  Forward direction indicates a normal command (ie the text is
    --  inserted/deleted before the cursor), and Backward direction indicates
    --  that the text is inserted/deleted after the cursor.
+   --  Extended means that the action does not have the cursor as a boundary.
 
    procedure Create
      (Item   : out Check_Modified_State;
@@ -88,10 +89,14 @@ package Commands.Editor is
       User_Executed : Boolean;
       Line          : Integer;
       Column        : Integer;
-      Direction     : Direction_Type := Forward);
+      Direction     : Direction_Type := Forward;
+      Cursor_Line   : Integer := 0;
+      Cursor_Column : Integer := 0);
    --  Create a new Editor_Command.
    --  Set User_Executed to True if the command is being interactively entered
    --  by the user.
+   --  Cursor_Line and Cursor_Column need to be specified only if the
+   --  Direction_Type is Extended.
 
    procedure Add_Text
      (Item         : Editor_Command;
@@ -134,6 +139,8 @@ private
       Line                      : Integer;
       Column                    : Integer;
       Direction                 : Direction_Type;
+
+      Cursor_Line, Cursor_Column : Integer;
    end record;
 
    type Editor_Replace_Slice_Type is new Root_Command with record
