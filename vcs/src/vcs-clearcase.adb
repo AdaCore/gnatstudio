@@ -122,7 +122,6 @@ package body VCS.ClearCase is
    is
       use String_List;
 
-      L       : String_List.List := List;
       L_Temp  : List_Node := First (List);
       Success : Boolean;
 
@@ -141,7 +140,6 @@ package body VCS.ClearCase is
          L_Temp := Next (L_Temp);
       end loop;
 
-      String_List.Free (L);
       Close (File);
       Insert (Kernel,
               -"ClearCase: Got comparison for file " & Current_File,
