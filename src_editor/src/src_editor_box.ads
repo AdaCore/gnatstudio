@@ -227,23 +227,6 @@ package Src_Editor_Box is
    procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
    --  Set the focus on the source view.
 
-   procedure Add_Line_Highlighting
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type;
-      Id     : String;
-      Highlight_In : Src_Editor_Buffer.Highlight_Location_Array);
-   --  Enable the highlighting of Line using colors defined in category
-   --  corresponding to Id.
-   --  If Line is 0, highlight all lines in file.
-
-   procedure Remove_Line_Highlighting
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type;
-      Id     : String);
-   --  Disable the highlighting of Line using colors defined in category
-   --  corresponding to Id.
-   --  If Line is 0, unhighlight all lines in file.
-
    procedure Clear_Subprogram_Name
      (Editor : access Source_Editor_Box_Record);
    --  Clear the subprogram name label (set to empty string)
@@ -372,14 +355,6 @@ package Src_Editor_Box is
    procedure Undo (Editor : access Source_Editor_Box_Record);
    procedure Redo (Editor : access Source_Editor_Box_Record);
    --  Undo/Redo last edit command.
-
-   function Add_Blank_Lines
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type;
-      Highlight_Category : Integer;
-      Text   : String;
-      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
-   --  See Src_Editor_Buffer.Add_Blank_Lines.
 
 private
 
