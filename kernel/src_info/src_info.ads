@@ -344,6 +344,12 @@ package Src_Info is
    --  Note that Boolean is treated in a special way: it is treated as
    --  Boolean_Type/Object, rather than as an Enumeration_Type/Object.
 
+   type E_Scope is (Global_Scope, Local_Scope, Class_Static, Static_Local);
+   --  The scope of an entity. The values have the following meaning:
+   --     - Global_Entity: publicly visible entity in a top level library.
+   --     - Local_Entity: an entity that does not satisfy the conditions
+   --       to be a Global_Entity.
+
 private
 
    --  In the following declarations, some abbreviations have been used
@@ -586,13 +592,6 @@ private
    --  True if the name of the entity really appears at that location in the
    --  file (for instance, a primitive operation doesn't point directly to the
    --  entity, but only provides more information about the entity).
-
-
-   type E_Scope is (Global_Scope, Local_Scope, Class_Static, Static_Local);
-   --  The scope of an entity. The values have the following meaning:
-   --     - Global_Entity: publicly visible entity in a top level library.
-   --     - Local_Entity: an entity that does not satisfy the conditions
-   --       to be a Global_Entity.
 
    type LI_File_Constrained;
    type LI_File_Ptr is access LI_File_Constrained;
