@@ -30,6 +30,7 @@ with Gtk.Label;               use Gtk.Label;
 with Gtk.Check_Button;        use Gtk.Check_Button;
 with Gtk.Spin_Button;         use Gtk.Spin_Button;
 with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
+with Gtk.Radio_Button;        use Gtk.Radio_Button;
 with GVD.Color_Combo;         use GVD.Color_Combo;
 with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
 
@@ -327,6 +328,7 @@ package body GVD.Preferences is
       Set (Display_Explorer, True);
       Set (String (File_Name_Bg_Color), "#BEBEBE");
       Set (String (Editor_Font), "Courier");
+      Set (String (Editor_Mode), "Source_Only");
       Set (Editor_Font_Size, Gint' (12));
       Set (Editor_Show_Line_Nums, True);
       Set (Editor_Show_Line_With_Code, True);
@@ -423,6 +425,14 @@ package body GVD.Preferences is
          Height => Get_Pref (Editor_Font_Size));
       Hide (Get_Bold_Button (Dialog.Editor_Font_Combo));
       Hide (Get_Italic_Button (Dialog.Editor_Font_Combo));
+
+      if Get_Pref (Editor_Mode) = "Source_Only" then
+         Set_Active (Dialog.Show_Source, True);
+      elsif Get_Pref (Editor_Mode) = "Asm_Only" then
+         Set_Active (Dialog.Show_Asm, True);
+      else
+         Set_Active (Dialog.Show_Asm_Source, True);
+      end if;
 
       --  Show line numbers
       Set_Active
@@ -572,6 +582,15 @@ package body GVD.Preferences is
       Set (Display_Explorer, Get_Active (Dialog.Display_Explorer_Check), True);
       Set (File_Name_Bg_Color, Get_Color (Dialog.File_Name_Bg_Combo), True);
       Set (Editor_Font, Editor_Font_Size, Dialog.Editor_Font_Combo, True);
+
+      if Get_Active (Dialog.Show_Source) then
+         Set ("Editor_Mode", "Source_Only", True);
+      elsif Get_Active (Dialog.Show_Asm) then
+         Set ("Editor_Mode", "Asm_Only", True);
+      else
+         Set ("Editor_Mode", "Source_Asm", True);
+      end if;
+
       Set (Editor_Show_Line_Nums, Get_Active (Dialog.Show_Line_Numbers_Check),
            True);
       Set (Editor_Show_Line_With_Code,

@@ -126,6 +126,10 @@ package GVD.Preferences is
    -- Source Window --
    -------------------
 
+   Editor_Mode : constant String_String := "Editor_Mode";
+   --  The display mode in the editor. Should be "Source_Only", "Asm_Only" or
+   --  "Source_Asm".
+
    Editor_Font : constant String_Font := "Editor_Font";
    --  Font used in the editor.
 
