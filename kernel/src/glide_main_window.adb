@@ -18,13 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Error;   use Glib.Error;
-with Glide_Kernel; use Glide_Kernel;
-with Gtk.Box;      use Gtk.Box;
-with Gtk.Enums;    use Gtk.Enums;
-with Gtk.Image;    use Gtk.Image;
-with Gtk.Window;   use Gtk.Window;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with Glib.Error;                use Glib.Error;
+with Glide_Kernel;              use Glide_Kernel;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Window;                use Gtk.Window;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Glide_Main_Window is
 
@@ -90,11 +91,8 @@ package body Glide_Main_Window is
       Pack_Start (Box1, Main_Window.Toolbar, True, True);
 
       declare
-         File : constant String :=
-           Prefix_Directory & Directory_Separator & "share" &
-           Directory_Separator & "glide" & Directory_Separator &
-           Animated_Image;
-
+         File : constant String := Format_Pathname
+           (Prefix_Directory & "/share/glide/" & Animated_Image);
       begin
          if Is_Regular_File (File) then
             Gtk_New (Main_Window.Animation_Frame);
