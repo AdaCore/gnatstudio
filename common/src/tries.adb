@@ -120,7 +120,12 @@ package body Tries is
    begin
       loop
          Ind := Get_Index (C.Data);
-         if Ind /= null or else C.Children = null then
+
+         if Ind /= null then
+            return Ind;
+         end if;
+
+         if C.Children = null then
             return Ind;
          end if;
 
@@ -222,22 +227,35 @@ package body Tries is
          end loop;
 
          Pointer.Cell_Parent := Current;
-         Current     := Current.Children (Child)'Unrestricted_Access;
-         Ind         := Get_Index (Current.all);
-         Ind_First   := Ind'First + Pointer.Cell_Parent.Index_Length;
-         Ind_Last    := Ind'First + Current.Index_Length - 1;
+         Current := Current.Children (Child)'Unrestricted_Access;
+         Ind     := Get_Index (Current.all);
+
+         pragma Assert (Ind /= null);
+
+         if Ind = null then
+            --  This should never happen, but if it does, return a null
+            --  entity rather than failing later on in case assertions
+            --  are disabled.
+
+            Pointer.Cell := null;
+            Pointer.Scenario := 0;
+            return;
+         end if;
+
+         Ind_First := Ind'First + Pointer.Cell_Parent.Index_Length;
+         Ind_Last  := Ind'First + Current.Index_Length - 1;
 
          if Start = Index'Last then
             Pointer.Cell := Current;
             Pointer.Last := Index'Last;
 
             if Ind_First = Ind_Last then
-               Pointer.Scenario     := 3;
+               Pointer.Scenario := 3;
             else
                Pointer.First_Not_Matched :=
                  Ind (Ind'First + Pointer.Cell_Parent.Index_Length + 1);
-               Pointer.Scenario          := 2;
-               Pointer.Index_Length      := Index'Length;
+               Pointer.Scenario     := 2;
+               Pointer.Index_Length := Index'Length;
             end if;
             return;
          end if;
@@ -293,11 +311,18 @@ package body Tries is
      (Tree  : in out Trie_Tree;
       Data  : Data_Type)
    is
-      Index        : constant String_Access := Get_Index (Data);
-      Pointer      : Cell_Pointer;
+      Index   : constant String_Access := Get_Index (Data);
+      Pointer : Cell_Pointer;
    begin
+      if Index = null then
+         return;
+      end if;
+
       Find_Cell_Child (Tree, Index.all, Pointer);
-      Insert (Index.all, Pointer, Data);
+
+      if Pointer.Cell /= null then
+         Insert (Index.all, Pointer, Data);
+      end if;
    end Insert;
 
    ------------
@@ -379,10 +404,13 @@ package body Tries is
    ------------
 
    procedure Remove (Tree : in out Trie_Tree; Index : String) is
-      Pointer           : Cell_Pointer;
+      Pointer : Cell_Pointer;
    begin
       Find_Cell_Child (Tree, Index, Pointer);
-      Remove (Tree, Pointer);
+
+      if Pointer.Cell /= null then
+         Remove (Tree, Pointer);
+      end if;
    end Remove;
 
    ------------
@@ -476,12 +504,14 @@ package body Tries is
    ---------
 
    function Get (Tree : Trie_Tree; Index : String) return Data_Type is
-      Pointer      : Cell_Pointer;
+      Pointer : Cell_Pointer;
    begin
       Find_Cell_Child (Tree, Index, Pointer);
+
       if Pointer.Scenario = 3 then
          return Pointer.Cell.Data;
       end if;
+
       return No_Data;
    end Get;
 
@@ -547,7 +577,10 @@ package body Tries is
 
          --  From there, we need to return the cell and all of its children
          --  recursively
-         if Pointer.Cell.Index_Length >= Prefix'Length then
+
+         if Pointer.Cell /= null
+           and then Pointer.Cell.Index_Length >= Prefix'Length
+         then
             Process_Recursively (Pointer.Cell.all);
          end if;
       end if;
