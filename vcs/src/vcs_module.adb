@@ -49,7 +49,7 @@ with VCS_View_Pkg;              use VCS_View_Pkg;
 with Basic_Types;               use Basic_Types;
 
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
-with VCS.Generic_VCS;           use VCS.Generic_VCS;
+--  with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -576,7 +576,7 @@ package body VCS_Module is
          Add_After => False);
 
       Standard.VCS.Unknown_VCS.Register_Module (Kernel);
-      Standard.VCS.Generic_VCS.Register_Module (Kernel);
+      --  Standard.VCS.Generic_VCS.Register_Module (Kernel);
 
       Kernel_Callback.Connect
         (Kernel,
