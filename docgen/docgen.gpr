@@ -1,3 +1,4 @@
+with "../shared";
 with "../gvd/gvd.gpr";
 with "../kernel/kernel.gpr";
 with "../gvd/gvd_common.gpr";
@@ -7,33 +8,18 @@ project Docgen is
 
    for Source_Dirs use ("src/");
    for Object_Dir use "obj/";
-   for Exec_Dir use ".";
    for Main use ("docgen.adb");
    for Languages use ("Ada");
-
-   package Ide is
-      for Vcs_Kind use "CVS";
-      for Vcs_Log_Check use "/berlin.a/christof/work/gps/scripts/ci_check";
-      for Vcs_File_Check use "/berlin.a/christof/work/gps/scripts/log_check";
-   end Ide;
-
-   package Naming is
-      for Specification_Suffix ("c") use ".h";
-      for Implementation_Suffix ("c") use ".c";
-   end Naming;
 
    package Builder is
       for Default_Switches ("ada") use ("-g");
    end Builder;
 
    package Compiler is
-      for Default_Switches ("c") use ("-g");
       for Default_Switches ("ada") use ("-O2", "-gnatwe", "-gnatwu", "-gnaty", "-g", "-gnatwr", "-gnatwk");
    end Compiler;
 
-   package Linker is
-      for Default_Switches ("ada") use ("-g");
-   end Linker;
+   package Ide renames Shared.Ide;
 
 end Docgen;
 
