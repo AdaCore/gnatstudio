@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
+with Gdk.Types; use Gdk.Types;
 with Gtk; use Gtk;
 with Gtk.Main;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
@@ -33,6 +35,8 @@ procedure Odd_Main is
    Process_Tab       : Debugger_Process_Tab;
    List              : Argument_List (1 .. Argument_Count);
    Main_Debug_Window : Main_Debug_Window_Access;
+   Id                : Glib.Gint;
+   Index             : Natural := 0;
 
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
@@ -42,13 +46,24 @@ begin
    Gtk_New (Main_Debug_Window);
 
    for J in 1 .. Argument_Count loop
-      List (J) := new String'(Argument (J));
+      if Argument (J) = "--tty" then
+         --  Install input handler to receive commands from an external
+         --  IDE while handling GtkAda events.
+
+         Id := Standard_Input_Package.Add
+           (0, Input_Read, Input_Available'Access,
+            Main_Debug_Window.all'Access);
+
+      else
+         Index := Index + 1;
+         List (Index) := new String' (Argument (J));
+      end if;
    end loop;
 
    --  ??? Need to add command line parsing to handle other debuggers by
    --  default.
    Process_Tab := Create_Debugger
-     (Main_Debug_Window, Debugger.Gdb_Type, "", List);
+     (Main_Debug_Window, Debugger.Gdb_Type, "", List (1 .. Index));
    Show_All (Main_Debug_Window);
    Gtk.Main.Main;
 exception
