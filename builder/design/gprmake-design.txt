@@ -72,7 +72,9 @@ Process:
 - sources files are recompiled when
   - no dependency info is available for this file (case of a new source file)
   - one of the dependencies has a timestamp more recent than the corresponding
-    object file (as done by the 'make' utility).
+    object file (as done by the 'make' utility), when using makefile fragments
+    (see below).
+  - as done by gnatmake when using .ali files
 
 - We do not want to get too deep in the handling of extra build processes (e.g.
   build of documentation, automatic code generation tools, extra preprocessing,
