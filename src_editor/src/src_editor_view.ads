@@ -165,13 +165,15 @@ private
       Total_Column_Width  : Natural := 0;
       --  Width of the Left Window.
 
-      Original_Lines_Number : Natural := 0;
+      Original_Lines_Number : Natural := 1;
       --  The number of lines in the file when it was first opened.
 
       Real_Lines            : Natural_Array_Access;
       --  This array associates original line numbers (ie lines that were
       --  in the view the first time it was opened) with lines in the current
       --  view.
+
+      Original_Text_Inserted : Boolean := False;
    end record;
 
 end Src_Editor_View;
