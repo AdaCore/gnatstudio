@@ -38,7 +38,7 @@ package body Glide_Kernel.Preferences is
 
       Default_Font := Param_Spec_Font (Gnew_Font
         (Name    => "General-Default-Font",
-         Default => "Sans 10",
+         Default => "Sans 9",
          Blurb   => -"The default font used in GPS",
          Nick    => -"Default font"));
       Register_Property
@@ -52,6 +52,14 @@ package body Glide_Kernel.Preferences is
          Default => "Default"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Key_Theme_Name), -"General");
+
+      Default_Charset := Param_Spec_String (Gnew_String
+        (Name    => "General-Charset",
+         Nick    => -"Character set",
+         Blurb   => -"Name of character set to use for displaying text",
+         Default => "ISO-8859-1"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_Charset), -"General");
 
       Default_Widget_Width := Param_Spec_Int (Gnew_Int
         (Name    => "General-Default-Widget-Width",
@@ -127,6 +135,16 @@ package body Glide_Kernel.Preferences is
          Default => "#FF0000"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Message_Highlight), -"Messages");
+
+      Show_Build_Progress := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "Messages-Show-Build-Progress",
+            Nick    => -"Show build progress",
+            Blurb   =>
+              -"True if the progress bar should show progress during builds",
+            Default => True));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Show_Build_Progress), -"Messages");
 
       File_Pattern := Param_Spec_String
         (Gnew_String

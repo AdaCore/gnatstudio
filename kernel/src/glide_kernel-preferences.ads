@@ -82,6 +82,7 @@ package Glide_Kernel.Preferences is
    -- General --
    Default_Font          : Param_Spec_Font;
    Key_Theme_Name        : Param_Spec_String;
+   Default_Charset       : Param_Spec_String;
    Default_Widget_Width  : Param_Spec_Int;
    Default_Widget_Height : Param_Spec_Int;
    Animated_Image        : Param_Spec_String;
@@ -92,6 +93,7 @@ package Glide_Kernel.Preferences is
 
    -- Messages --
    Message_Highlight    : Param_Spec_Color;
+   Show_Build_Progress  : Param_Spec_Boolean;
    File_Pattern         : Param_Spec_String;
    File_Pattern_Index   : Param_Spec_Int;
    Line_Pattern_Index   : Param_Spec_Int;
