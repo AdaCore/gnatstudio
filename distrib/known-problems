@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.0.0
 
+- C915-006 Incorrect refresh of line numbers
+  Problem:    Sometimes scrolling source editors up and down using the
+              scrollbar cause line numbers to be incorrectly displayed.
+  Workaround: Scrolling using the keyboard refreshes the line display.
+
 - Debugger specified on the command line not used by 'Debug->Initialize'
   Problem:    When launching gps with the --debugger switch, creating
               new debugger using Debug->Initialize will not take this
