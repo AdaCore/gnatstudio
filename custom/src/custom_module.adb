@@ -43,7 +43,6 @@ with Language;                  use Language;
 with Language.Custom;           use Language.Custom;
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
-with Src_Info.Dummy;            use Src_Info.Dummy;
 
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
@@ -592,14 +591,7 @@ package body Custom_Module is
          if To_Lower (Current_Node.Tag.all) = "language" then
             --  ??? Lang is never freed
             Lang := new Language.Custom.Custom_Language;
-            Initialize (Lang, Current_Node);
-            Register_Language
-              (Handler, Get_Name (Lang), Language_Access (Lang));
-            Add_Language_Info
-              (Handler, Get_Name (Lang),
-               LI                  => Dummy_Handler.all'Access,
-               Default_Spec_Suffix => Get_Spec_Suffix (Lang),
-               Default_Body_Suffix => Get_Body_Suffix (Lang));
+            Initialize (Lang, Handler, Kernel, Current_Node);
 
          elsif To_Lower (Current_Node.Tag.all) = "submenu" then
             Child := Current_Node.Child;
