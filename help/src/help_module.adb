@@ -47,14 +47,39 @@ with Traces;                       use Traces;
 with OS_Utils;                     use OS_Utils;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Find_Utils;                   use Find_Utils;
+with String_Utils;                 use String_Utils;
 with Gtk.Clipboard;                use Gtk.Clipboard;
+with Generic_List;
+with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Help_Module is
 
    Me : constant Debug_Handle := Create ("Glide_Kernel.Help");
 
+   Template_Index : constant String := "help_index.html";
+
    Font_Adjust : Integer;
    pragma Import (C, Font_Adjust, "_gdk_font_adjust");
+
+   type Help_File_Record is record
+      File  : GNAT.OS_Lib.String_Access;
+      Descr : GNAT.OS_Lib.String_Access;
+   end record;
+
+   procedure Free (Data : in out Help_File_Record);
+   package Help_File_List is new Generic_List (Help_File_Record, Free);
+   use Help_File_List;
+
+   type Help_Category_Record is record
+      Name  : GNAT.OS_Lib.String_Access;
+      Files : Help_File_List.List;
+   end record;
+   type Help_Category_Access is access Help_Category_Record;
+
+   procedure Free (Data : in out Help_Category_Access);
+   package Help_Category_List is new Generic_List (Help_Category_Access, Free);
+   use Help_Category_List;
 
    type Help_Browser_Record is new Gtk_Scrolled_Window_Record with record
       Kernel : Kernel_Handle;
@@ -64,6 +89,15 @@ package body Help_Module is
       Csc : Csc_HTML;
    end record;
    type Help_Browser is access all Help_Browser_Record'Class;
+
+   type Help_Module_ID_Record is new Glide_Kernel.Module_ID_Record with record
+      Categories : Help_Category_List.List;
+      --  The registered help files
+   end record;
+   type Help_Module_ID_Access is access all Help_Module_ID_Record'Class;
+
+   Help_Module_ID   : Help_Module_ID_Access;
+   Help_Module_Name : constant String := "Help_Viewer";
 
    function Load_File
      (Kernel : access Kernel_Handle_Record'Class;
@@ -108,14 +142,14 @@ package body Help_Module is
    --  Process, if possible, the data sent by the kernel
 
    function Create_Html_Editor
-     (Kernel : access Kernel_Handle_Record'Class; File : String)
-      return Help_Browser;
+     (Kernel : access Kernel_Handle_Record'Class;
+      File : String) return Help_Browser;
    --  Create a new html editor that edits File.
 
    function Display_Help
      (Kernel    : access Kernel_Handle_Record'Class;
       Help_File : String) return Help_Browser;
-   --  Display HTML Help file
+   --  Display HTML Help file.
 
    function Key_Press
      (Html : access Gtk_Widget_Record'Class;
@@ -143,10 +177,12 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Load HMTL_File in the HTML/Help widget
 
-   procedure Register_Menu
+   procedure Register_Help
      (Kernel    : access Kernel_Handle_Record'Class;
       HTML_File : String;
-      Name      : String);
+      Descr     : String;
+      Category  : String;
+      Menu_Path : String);
    --  Register the menu in the GPS menubar
 
    procedure On_Open_HTML
@@ -177,6 +213,32 @@ package body Help_Module is
         File : String (1 .. Length);
      end record;
    type String_Menu_Item is access all String_Menu_Item_Record'Class;
+
+   procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class);
+   --  Parse all the index files in the path
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Help_File_Record) is
+   begin
+      Free (Data.File);
+      Free (Data.Descr);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Help_Category_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Help_Category_Record, Help_Category_Access);
+   begin
+      Free (Data.Name);
+      Free (Data.Files);
+      Unchecked_Free (Data);
+   end Free;
 
    ---------------------
    -- Help_Contextual --
@@ -220,7 +282,7 @@ package body Help_Module is
       Set_Context_Information
         (Context => Context,
          Kernel  => Kernel,
-         Creator => Help_Module_ID);
+         Creator => Module_ID (Help_Module_ID));
 
       return Selection_Context_Access (Context);
    end Default_Factory;
@@ -242,33 +304,55 @@ package body Help_Module is
    end On_Load_HTML;
 
    -------------------
-   -- Register_Menu --
+   -- Register_Help --
    -------------------
 
-   procedure Register_Menu
+   procedure Register_Help
      (Kernel    : access Kernel_Handle_Record'Class;
       HTML_File : String;
-      Name      : String)
+      Descr     : String;
+      Category  : String;
+      Menu_Path : String)
    is
-      Help : constant String := "/_" & (-"Help") & '/';
       File : constant String := Locate_Html_File (Kernel, HTML_File);
       Item : String_Menu_Item;
+      Node : Help_Category_List.List_Node;
+      Cat  : Help_Category_Access;
    begin
-      Item := new String_Menu_Item_Record (HTML_File'Length);
-      Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Name);
-      Item.File := HTML_File;
+      if Menu_Path /= "" then
+         Item := new String_Menu_Item_Record (HTML_File'Length);
+         Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Base_Name (Menu_Path));
+         Item.File := HTML_File;
 
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Help,
-         Item        => Gtk_Menu_Item (Item));
-      Set_Sensitive (Item, File /= "");
+         Register_Menu
+           (Kernel      => Kernel,
+            Parent_Path => Dir_Name (Menu_Path),
+            Item        => Gtk_Menu_Item (Item));
+         Set_Sensitive (Item, File /= "");
 
-      Kernel_Callback.Connect
-        (Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Load_HTML'Access),
-         Kernel_Handle (Kernel));
-   end Register_Menu;
+         Kernel_Callback.Connect
+           (Item, "activate",
+            Kernel_Callback.To_Marshaller (On_Load_HTML'Access),
+            Kernel_Handle (Kernel));
+      end if;
+
+      Node := First (Help_Module_ID.Categories);
+      while Node /= Help_Category_List.Null_Node loop
+         Cat := Data (Node);
+         exit when Cat.Name.all = Category;
+         Node := Next (Node);
+      end loop;
+
+      if Node = Help_Category_List.Null_Node then
+         Cat := new Help_Category_Record'
+           (Name  => new String'(Category), Files => Help_File_List.Null_List);
+         Append (Help_Module_ID.Categories, Cat);
+      end if;
+
+      Append (Cat.Files,
+              (File  => new String'(HTML_File),
+               Descr => new String'(Descr)));
+   end Register_Help;
 
    ---------------
    -- Load_File --
@@ -279,9 +363,14 @@ package body Help_Module is
       Html   : access Help_Browser_Record'Class;
       File   : String) return Boolean
    is
-      Buffer   : String_Access;
+      Buffer   : GNAT.OS_Lib.String_Access;
       Stream   : Csc_HTML_Stream;
       Success  : Boolean;
+      Index    : Natural;
+      Str      : Unbounded_String;
+      Cat      : Help_Category_List.List_Node;
+      F        : Help_File_List.List_Node;
+      Contents_Marker : constant String := ASCII.LF & "@@CONTENTS@@";
 
    begin
       if not Is_Regular_File (File) then
@@ -290,7 +379,6 @@ package body Help_Module is
       end if;
 
       Push_State (Kernel_Handle (Kernel), Busy);
-
       Buffer := Read_File (File);
 
       if Buffer /= null then
@@ -298,10 +386,55 @@ package body Help_Module is
          Free (Html.Current_Help_File);
          Html.Current_Help_File := new String'(File);
          Stream := HTML_Begin (Html.Csc);
-         HTML_Write (Html.Csc, Stream, Buffer.all);
+
+         if Base_Name (File) /= Template_Index then
+            HTML_Write (Html.Csc, Stream, Buffer.all);
+
+         else
+            Index := Buffer'First;
+            while Index + Contents_Marker'Length - 1 <= Buffer'Last
+              and then Buffer (Index .. Index + Contents_Marker'Length - 1) /=
+              Contents_Marker
+            loop
+               Index := Index + 1;
+            end loop;
+
+            Str := To_Unbounded_String (Buffer (Buffer'First .. Index - 1));
+
+            Cat := First (Help_Module_ID.Categories);
+            Append (Str, "<table cellspacing=""0"" width=""100%"" border=""2"""
+                    & "cellpadding=""6"">");
+
+            while Cat /= Help_Category_List.Null_Node loop
+               Append (Str,
+                       "<tr><td bgcolor=""#006db6"">"
+                       & "<font face=""tahoma"" size=""+2"" color=""#FFFFFF"">"
+                       & Data (Cat).Name.all
+                       & "</font></td> </tr>" & ASCII.LF);
+
+               F := First (Data (Cat).Files);
+               while F /= Help_File_List.Null_Node loop
+                  Append (Str,
+                          "<tr><td><a href=""" & Data (F).File.all
+                          & """>" & Data (F).Descr.all
+                          & "</a></td></tr>");
+                  F := Next (F);
+               end loop;
+
+               Cat := Next (Cat);
+            end loop;
+
+            Append (Str, "</table>");
+            Append
+              (Str, Buffer (Index + Contents_Marker'Length .. Buffer'Last));
+
+            HTML_Write (Html.Csc, Stream, To_String (Str));
+         end if;
+
          HTML_End (Html.Csc, Stream, Stream_OK);
          Free (Buffer);
          Success := True;
+
       else
          Trace (Me, "link not found: " & File);
          Success := False;
@@ -324,7 +457,7 @@ package body Help_Module is
       Url    : constant String := Get_String (Nth (Params, 1));
       Stream : constant Csc_HTML_Stream :=
         Csc_HTML_Stream (Get_Proxy (Nth (Params, 2)));
-      Buffer : String_Access;
+      Buffer : GNAT.OS_Lib.String_Access;
 
    begin
       Trace (Me, "url requested: " & Url);
@@ -557,8 +690,8 @@ package body Help_Module is
    ------------------------
 
    function Create_Html_Editor
-     (Kernel : access Kernel_Handle_Record'Class; File : String)
-      return Help_Browser
+     (Kernel : access Kernel_Handle_Record'Class;
+      File : String) return Help_Browser
    is
       Html   : Help_Browser;
       Result : Boolean;
@@ -600,7 +733,7 @@ package body Help_Module is
         (Kernel          => Kernel,
          Event_On_Widget => Html.Csc,
          Object          => Html,
-         ID              => Help_Module_ID,
+         ID              => Module_ID (Help_Module_ID),
          Context_Func    => Help_Contextual'Access);
 
       return Html;
@@ -643,8 +776,8 @@ package body Help_Module is
       else
          Scrolled := Help_Browser (Get_Widget (Child));
 
-         if Scrolled.Current_Help_File /= null
-           and then Help_File /= Scrolled.Current_Help_File.all
+         if Scrolled.Current_Help_File = null
+           or else Help_File /= Scrolled.Current_Help_File.all
          then
             Result := Load_File (Kernel, Scrolled, Help_File);
          end if;
@@ -730,10 +863,12 @@ package body Help_Module is
          declare
             File   : constant String := Get_String (Data (Data'First));
             Anchor : constant String := Get_String (Data (Data'First + 2));
-            Html  : constant Help_Browser := Display_Help (Kernel, File);
+            Html  : Help_Browser;
             Result : Boolean;
             pragma Unreferenced (Result);
          begin
+            Html := Display_Help (Kernel, File);
+
             if Html /= null and then Anchor /= "" then
                Result := Jump_To_Anchor (Html.Csc, Anchor);
             end if;
@@ -868,6 +1003,86 @@ package body Help_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Show_Tutorial;
 
+   -----------------------
+   -- Parse_Index_Files --
+   -----------------------
+
+   procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class) is
+      Index_File : constant String := "gps_index.xml";
+      Path : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
+      Iter : Path_Iterator;
+      Node, Tmp, Field : Node_Ptr;
+   begin
+      if Path /= null then
+         Iter := Start (Path.all);
+         loop
+            declare
+               Dir : constant String := Current (Path.all, Iter);
+               Full : constant String := Name_As_Directory (Dir) & Index_File;
+               Name, Descr, Menu, Cat : String_Ptr;
+               Empty : aliased String := "";
+            begin
+               exit when Dir = "";
+
+               if Is_Regular_File (Full) then
+                  Trace (Me, "Parsing index " & Full);
+                  Node := Parse (Full);
+
+                  Tmp := Node.Child;
+                  while Tmp /= null loop
+                     if Tmp.Tag.all = "file" then
+                        Name  := Empty'Unrestricted_Access;
+                        Descr := Empty'Unrestricted_Access;
+                        Menu  := Empty'Unrestricted_Access;
+                        Cat   := Empty'Unrestricted_Access;
+
+                        Field := Tmp.Child;
+                        while Field /= null loop
+                           if Field.Tag.all = "name" then
+                              Name := Field.Value;
+
+                           elsif Field.Tag.all = "descr" then
+                              Descr := Field.Value;
+
+                           elsif Field.Tag.all = "menu" then
+                              Menu := Field.Value;
+
+                           elsif Field.Tag.all = "category" then
+                              Cat := Field.Value;
+
+                           else
+                              Insert
+                                (Kernel,
+                                 -"Invalid field in documentation index file "
+                                 & Full);
+                           end if;
+
+                           Field := Field.Next;
+                        end loop;
+
+                        Trace (Me, "Adding " & Name.all & ' ' & Menu.all);
+                        Register_Help
+                          (Kernel,
+                           HTML_File => Name.all,
+                           Descr     => Descr.all,
+                           Category  => Cat.all,
+                           Menu_Path => Menu.all);
+                     end if;
+
+                     Tmp := Tmp.Next;
+                  end loop;
+
+                  Free (Node);
+               end if;
+            end;
+
+            Iter := Next (Path.all, Iter);
+         end loop;
+
+         Free (Path);
+      end if;
+   end Parse_Index_Files;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -880,8 +1095,9 @@ package body Help_Module is
       Mitem : Gtk_Menu_Item;
 
    begin
+      Help_Module_ID := new Help_Module_ID_Record;
       Register_Module
-        (Module                  => Help_Module_ID,
+        (Module                  => Module_ID (Help_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
          Priority                => Default_Priority - 20,
@@ -898,7 +1114,7 @@ package body Help_Module is
                     Label             => Name,
                     Factory           => Help_Factory'Access,
                     Extra_Information => null,
-                    Id                => Help_Module_ID,
+                    Id                => Module_ID (Help_Module_ID),
                     Mask              => All_Options and not Supports_Replace
                       and not Search_Backward
                       and not Whole_Word and not All_Occurrences));
@@ -914,19 +1130,26 @@ package body Help_Module is
       Register_Menu
         (Kernel, Help, -"_Open HTML File...", "", On_Open_HTML'Access);
 
-      Register_Menu (Kernel, "gps-welcome.html", -"_Welcome");
+      declare
+         Item : String_Menu_Item;
+      begin
+         Item := new String_Menu_Item_Record (Template_Index'Length);
+         Gtk.Menu_Item.Initialize_With_Mnemonic (Item, -"_Contents");
+         Item.File := Template_Index;
+         Register_Menu
+           (Kernel      => Kernel,
+            Parent_Path => Help,
+            Item        => Gtk_Menu_Item (Item));
+         Kernel_Callback.Connect
+           (Item, "activate",
+            Kernel_Callback.To_Marshaller (On_Load_HTML'Access),
+            Kernel_Handle (Kernel));
+      end;
+
+      Parse_Index_Files (Kernel);
+
       Register_Menu
-        (Kernel, "gps-tutorial.html", -"GNAT Programming System _Tutorial");
-      Register_Menu
-        (Kernel, "gps.html", -"Using the GNAT _Programming System");
-      Register_Menu
-        (Kernel, "gvd.html", -"Using the GNU _Visual Debugger");
-      Register_Menu (Kernel, "gnat_ugn.html", -"GNAT _User's Guide");
-      Register_Menu (Kernel, "gnat_rm.html", -"GNAT _Reference Manual");
-      Register_Menu (Kernel, "arm95.html", -"_Ada 95 Reference Manual");
-      Register_Menu (Kernel, "gdb.html", -"Using the GNU _Debugger");
-      Register_Menu (Kernel, "gcc.html", -"Using _GCC");
-      Register_Menu (Kernel, Help, -"A_bout", "", On_About'Access);
+        (Kernel, Help, -"A_bout", "", On_About'Access);
    end Register_Module;
 
 end Help_Module;
