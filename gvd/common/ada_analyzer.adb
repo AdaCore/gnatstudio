@@ -384,6 +384,7 @@ package body Ada_Analyzer is
       --  Use to handle indentation in procedure Do_Indent below.
 
       Default_Extended : Extended_Token;
+      pragma Warnings (Off, Default_Extended);
       --  Use default values to initialize this pseudo constant.
 
       Indent_Level    : Natural renames Indent_Params.Indent_Level;
