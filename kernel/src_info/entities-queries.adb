@@ -164,7 +164,7 @@ package body Entities.Queries is
             E := EL.Table (Ent);
 
             if E.Declaration.File = File then
-               Prox := abs (E.Declaration.Column - Column) +
+               Prox := abs (Natural (E.Declaration.Column) - Column) +
                abs (E.Declaration.Line - Line) * Num_Columns_Per_Line;
 
                if Prox < Distance then
@@ -183,7 +183,7 @@ package body Entities.Queries is
                   if Is_Real_Reference (Ref.Kind)
                     and then Ref.Location.File = File
                   then
-                     Prox := abs (Ref.Location.Column - Column) +
+                     Prox := abs (Natural (Ref.Location.Column) - Column) +
                         abs (Ref.Location.Line - Line) * Num_Columns_Per_Line;
 
                      if Prox < Distance then
