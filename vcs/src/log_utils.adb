@@ -18,9 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Traces;                    use Traces;
 
+with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -104,6 +107,18 @@ package body Log_Utils is
       Set_Logs_Mapper (Kernel, Mapper);
    end Initialize;
 
+   -----------------------------
+   -- Get_ChangeLog_From_File --
+   -----------------------------
+
+   function Get_ChangeLog_From_File
+     (File_Name : VFS.Virtual_File) return VFS.Virtual_File
+   is
+      ChangeLog : constant String := Dir_Name (File_Name).all & "ChangeLog";
+   begin
+      return VFS.Create (ChangeLog);
+   end Get_ChangeLog_From_File;
+
    -----------------------
    -- Get_Log_From_File --
    -----------------------
@@ -131,7 +146,7 @@ package body Log_Utils is
             S        : Virtual_File := VFS.Create
               (Full_Filename =>
                  Logs_Dir & Directory_Separator & Base_Name (Real_Name)
-                 & "$log");
+                   & "$log");
             --  In case there are multiple files with the same base name, see
             --  the loop below to use an alternate name and store it in the
             --  mapping file.
@@ -218,6 +233,153 @@ package body Log_Utils is
          end;
       end if;
    end Get_Log;
+
+   ----------------------------
+   -- Get_Log_From_ChangeLog --
+   ----------------------------
+
+   procedure Get_Log_From_ChangeLog
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : VFS.Virtual_File)
+   is
+      ChangeLog : constant String := Dir_Name (File_Name).all & "ChangeLog";
+      Log_File  : constant Virtual_File :=
+        Get_Log_From_File (Kernel, File_Name, False);
+   begin
+      if Log_File = No_File then
+         declare
+            Log_File     : constant Virtual_File :=
+              Get_Log_From_File (Kernel, File_Name, True);
+            CL_File      : constant Virtual_File := Create (ChangeLog);
+            Date_Tag     : constant String := Image (Clock, ISO_Date);
+            Base_Name    : constant String := VFS.Base_Name (File_Name);
+            CL           : String_Access := Read_File (CL_File);
+            W_File       : Writable_File := Write_File (Log_File);
+            First, Last  : Natural;
+            F, L, P1, P2 : Natural;
+         begin
+            --  Create the log file and fill it with the log entry from the
+            --  global ChangeLog.
+
+            if CL = null then
+               return;
+            end if;
+
+            --  Now we parse the ChangeLog file to get the RH, a global
+            --  ChangeLog has the following format:
+            --
+            --  <ISO-DATE>  <name>  <<e-mail>>
+            --  <HT>* filename[, filename]:
+            --  <HT>revision history
+            --
+            --  where:
+            --
+            --  <ISO-DATE>   A date with format YYYY-MM-DD
+            --  <name>       A name, generally the developper name
+            --  <<e-mail>>   The e-mail address of the developper surrounder
+            --               with '<' and '>' characters.
+            --  <HT>         Horizontal tabulation (or 8 spaces)
+
+            First := Index (CL.all, Date_Tag);
+
+            if First /= 0 then
+               --  There is some ChangeLog entry for this date
+               --  First check for Last character for log entries at this date
+
+               Last := First;
+
+               while Last < CL.all'Last
+                 and then not (CL (Last) = ASCII.LF
+                               and then CL (Last + 1) in '0' .. '9')
+               loop
+                  Last := Last + 1;
+               end loop;
+
+               --  Look for filename between '*' and ':'
+
+               L := First;
+
+               Fill_Log : while L < Last loop
+                  F := L;
+
+                  P1 := Index (CL (F .. Last), ASCII.HT & "*");
+
+                  if P1 = 0 then
+                     P1 := Index (CL (F .. Last), "        *");
+                  end if;
+
+                  if P1 = 0 then
+                     exit Fill_Log;
+
+                  else
+                     P2 := P1;
+
+                     for K in P1 .. Last loop
+                        if CL (K) = ':' then
+                           P2 := K;
+                           exit;
+                        end if;
+                     end loop;
+
+                     --  CL (P1 .. P2) defines a ChangeLog entry, look
+                     --  for filename inside this slice
+
+                     if Index (CL (P1 .. P2), Base_Name) /= 0 then
+                        --  This is really the ChangeLog entry for this file
+
+                        Write_RH : while P2 < Last loop
+                           P1 := P2;
+
+                           --  Look for first line
+
+                           while CL (P1) /= ASCII.HT
+                             and then CL (P1) /= ' '
+                             and then P1 < Last
+                           loop
+                              P1 := P1 + 1;
+
+                              exit Write_RH when
+                                CL (P1) = ASCII.LF
+                                and then
+                                  (CL (P1 - 1) = ASCII.LF
+                                   or else (P1 > 2
+                                            and then CL (P1 - 1) = ASCII.CR
+                                            and then CL (P1 - 2) = ASCII.LF));
+                           end loop;
+
+                           P1 := P1 + 1;
+
+                           --  Skip spaces at the start of the line
+
+                           while CL (P1) = ' ' and then P1 < Last loop
+                              P1 := P1 + 1;
+                           end loop;
+
+                           P2 := P1;
+
+                           --  Look for end of line
+
+                           while CL (P2) /= ASCII.LF and then P2 < Last loop
+                              P2 := P2 + 1;
+                           end loop;
+
+                           Write (W_File, CL (P1 .. P2));
+                        end loop Write_RH;
+
+                        Close (W_File);
+                        exit Fill_Log;
+                     end if;
+                  end if;
+
+                  L := P2 + 1;
+               end loop Fill_Log;
+
+            end if;
+
+            Free (CL);
+         end;
+      end if;
+   end Get_Log_From_ChangeLog;
 
    ------------------------------
    -- Remove_File_From_Mapping --
