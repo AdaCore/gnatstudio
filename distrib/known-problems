@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- C611-012 Cross-references do not work with C under Solaris
+  Problem:    Under some circumstances, on Solaris, the navigation in C/C++
+              files does not work and displays the message "No cross-reference
+              information found for (...)".
+  Workaround: None.
+
 - C703-014 Locations window is raised for every compiling message
   Problem:    When the compilation outputs many error/warning messages,
               the locations window is raised above the messages window with
