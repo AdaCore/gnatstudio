@@ -1,9 +1,9 @@
 AC_REVISION($Revision$)
 AC_INIT(gvd/gvd.ads.in)
 
-GVD_MAJOR_VERSION=0
-GVD_MINOR_VERSION=7
-GVD_MICRO_VERSION=1
+GVD_MAJOR_VERSION=1
+GVD_MINOR_VERSION=0
+GVD_MICRO_VERSION=0
 GVD_VERSION=$GVD_MAJOR_VERSION.$GVD_MINOR_VERSION.$GVD_MICRO_VERSION
 
 STRIP_CR=False
@@ -173,7 +173,7 @@ esac
 # checking for gtk
 AM_PATH_GTK(1.2.9,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
-# Set the version number of Odd
+# Set the version number of GVD
 AC_SUBST(STRIP_CR)
 AC_SUBST(USE_PTYS)
 AC_SUBST(ASYNC_COMMANDS)
