@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -23,6 +23,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Basic_Mapper;              use Basic_Mapper;
 with OS_Utils;                  use OS_Utils;
+with String_Utils;              use String_Utils;
 
 package body Log_Utils is
 
@@ -42,8 +43,8 @@ package body Log_Utils is
    ----------------
 
    procedure Initialize (Kernel : access Kernel_Handle_Record'Class) is
-      Logs_Dir : String
-        := Format_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+      Logs_Dir : constant String :=
+        Format_Pathname (Get_Home_Dir (Kernel) & "/log_files");
       Mapper   : File_Mapper_Access;
    begin
       if not Is_Directory (Logs_Dir) then
@@ -73,7 +74,7 @@ package body Log_Utils is
       File_Name : String) return String
    is
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
-      Return_Name : String := Get_Other_File (Mapper, File_Name);
+      Return_Name : constant String := Get_Other_File (Mapper, File_Name);
    begin
       --  ??? Right now, we save the mapping every time that we add
       --  an entry. This is a bit inefficient, we should save the mapping
@@ -81,10 +82,10 @@ package body Log_Utils is
 
       if Return_Name = "" then
          declare
-            Logs_Dir : String
-              := Format_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+            Logs_Dir : constant String :=
+              Format_Pathname (Get_Home_Dir (Kernel) & "/log_files");
             File     : File_Descriptor;
-            S : String := Logs_Dir
+            S : constant String := Logs_Dir
               & Directory_Separator
               & Base_Name (File_Name)
               & "_log";
@@ -100,15 +101,12 @@ package body Log_Utils is
                return S;
 
             else
-               for J in Natural'Range loop
+               for J in Natural loop
                   declare
-                     Im : String := Integer'Image (J);
-                     S  : String := Logs_Dir
+                     S : constant String := Logs_Dir
                        & Directory_Separator
                        & Base_Name (File_Name)
-                       & "_"
-                       & Im (Im'First + 1 .. Im'Last)
-                       & "_log";
+                       & "_" & Image (J) & "_log";
                   begin
                      if not Is_Regular_File (S) then
                         File := Create_New_File (S, Text);
@@ -137,7 +135,7 @@ package body Log_Utils is
      (Kernel   : access Kernel_Handle_Record'Class;
       Log_Name : String) return String
    is
-      Mapper : File_Mapper_Access := Get_Logs_Mapper (Kernel);
+      Mapper : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
       return Get_Other_File (Mapper, Log_Name);
    end Get_File_From_Log;
@@ -159,7 +157,7 @@ package body Log_Utils is
 
       else
          declare
-            S : String := R.all;
+            S : constant String := R.all;
          begin
             Free (R);
             return S;

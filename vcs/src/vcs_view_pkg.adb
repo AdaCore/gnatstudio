@@ -67,7 +67,7 @@ with Traces; use Traces;
 
 package body VCS_View_Pkg is
 
-   Me : Debug_Handle := Create ("VCS_INTERFACE");
+   Me : constant Debug_Handle := Create ("VCS_INTERFACE");
 
    --------------------
    -- Local packages --
@@ -256,8 +256,8 @@ package body VCS_View_Pkg is
    is
       use File_Status_List;
 
-      Child         : MDI_Child
-        := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
+      Child         : constant MDI_Child :=
+        Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
       Explorer      : VCS_View_Access;
       Cache_Temp    : List_Node;
       Status_Temp   : List_Node := First (Status);
@@ -313,9 +313,9 @@ package body VCS_View_Pkg is
          --  the element, otherwise we add it to the list.
 
          declare
-            New_Status         : File_Status_Record :=
+            New_Status         : constant File_Status_Record :=
               Copy_File_Status (Data (Cache_Temp));
-            New_File_Name      : String :=
+            New_File_Name      : constant String :=
               String_List.Head (New_Status.File_Name);
             Temp_Stored_Status : File_Status_List.List_Node :=
               File_Status_List.First (Explorer.Stored_Status);
@@ -642,12 +642,12 @@ package body VCS_View_Pkg is
       Menu     : Gtk_Menu;
       Check    : Gtk_Check_Menu_Item;
       Mitem    : Gtk_Menu_Item;
-      Context  : File_Selection_Context_Access :=
+      Context  : constant File_Selection_Context_Access :=
         new File_Selection_Context;
 
       Files    : String_List.List;
-      Explorer : VCS_View_Access := VCS_View_Access (View);
-      Kernel   : Kernel_Handle := Explorer.Kernel;
+      Explorer : constant VCS_View_Access := VCS_View_Access (View);
+      Kernel   : constant Kernel_Handle := Explorer.Kernel;
 
    begin
       if Get_Button (Event) = 1 then
@@ -658,8 +658,8 @@ package body VCS_View_Pkg is
 
       --  If there is no selection, select the item under the cursor.
       declare
-         X         : Gdouble := Get_X (Event);
-         Y         : Gdouble := Get_Y (Event);
+         X         : constant Gdouble := Get_X (Event);
+         Y         : constant Gdouble := Get_Y (Event);
          Buffer_X  : Gint;
          Buffer_Y  : Gint;
          Row_Found : Boolean;
@@ -697,7 +697,7 @@ package body VCS_View_Pkg is
 
       if not String_List.Is_Empty (Files) then
          declare
-            First_File : String := String_List.Head (Files);
+            First_File : constant String := String_List.Head (Files);
          begin
             Set_Context_Information
               (Context,
@@ -836,9 +836,11 @@ package body VCS_View_Pkg is
      return String_List.List
    is
       Result         : String_List.List;
-      Focused_Child  : MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-      Explorer_Child : MDI_Child
-        := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
+      Focused_Child  : constant MDI_Child :=
+        Get_Focus_Child (Get_MDI (Kernel));
+      Explorer_Child : constant MDI_Child :=
+        Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
+
    begin
       if Explorer_Child = Focused_Child
         and then Explorer_Child /= null
@@ -860,7 +862,8 @@ package body VCS_View_Pkg is
      (Kernel : access Kernel_Handle_Record'Class)
      return String
    is
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
       File    : File_Selection_Context_Access := null;
    begin
       if Context /= null
@@ -888,7 +891,8 @@ package body VCS_View_Pkg is
    ----------------------
 
    function Get_Current_File (Kernel : Kernel_Handle) return String is
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
       File    : File_Selection_Context_Access;
    begin
       if Context /= null
