@@ -1398,13 +1398,16 @@ package body Project_Viewers is
    begin
       --  ??? Should call Project_Editor_Contextual
       Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
-      Unselect_All (Get_Selection (V.Tree));
 
       if Iter = Null_Iter then
          Set_File_Information
            (Context, Project => V.Current_Project);
       else
-         Select_Iter (Get_Selection (V.Tree), Iter);
+         if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
+            Unselect_All (Get_Selection (V.Tree));
+            Select_Iter (Get_Selection (V.Tree), Iter);
+         end if;
+
          declare
             File_Name   : constant String := Get_String
               (V.Model, Iter, File_Name_Column);
