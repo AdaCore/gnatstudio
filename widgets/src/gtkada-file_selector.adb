@@ -597,6 +597,7 @@ package body Gtkada.File_Selector is
 
          if Win.File_List = null then
             Set_Text (Win.Selection_Entry, New_Dir);
+            Set_Position (Win.Selection_Entry, New_Dir'Length);
          else
             Refresh_Files (Win);
          end if;
@@ -1031,9 +1032,11 @@ package body Gtkada.File_Selector is
                end if;
             end;
 
-            for J in 0 .. Get_Rows (Win.File_List) - 1 loop
-               Matcher (Get_Text (Win.File_List, J, 1), J);
-            end loop;
+            if Win.File_List /= null then
+               for J in 0 .. Get_Rows (Win.File_List) - 1 loop
+                  Matcher (Get_Text (Win.File_List, J, 1), J);
+               end loop;
+            end if;
 
             Best_File_Match := Best_Match;
 
@@ -1088,21 +1091,23 @@ package body Gtkada.File_Selector is
          return True;
       end if;
 
-      for J in 0 .. Get_Rows (Win.File_List) - 1 loop
-         exit when Found;
-         declare
-            T : String := Get_Text (Win.File_List, J, 1);
-            S : String := Get_Text (Win.Selection_Entry) & G;
-         begin
-            if T'Length >= S'Length
-              and then T (T'First .. T'First + S'Length - 1)
-                = S (S'First .. S'First + S'Length - 1)
-            then
-               Found := True;
-               Moveto (Win.File_List, J, 1, 0.0, 0.0);
-            end if;
-         end;
-      end loop;
+      if Win.File_List /= null then
+         for J in 0 .. Get_Rows (Win.File_List) - 1 loop
+            exit when Found;
+            declare
+               T : String := Get_Text (Win.File_List, J, 1);
+               S : String := Get_Text (Win.Selection_Entry) & G;
+            begin
+               if T'Length >= S'Length
+                 and then T (T'First .. T'First + S'Length - 1)
+                 = S (S'First .. S'First + S'Length - 1)
+               then
+                  Found := True;
+                  Moveto (Win.File_List, J, 1, 0.0, 0.0);
+               end if;
+            end;
+         end loop;
+      end if;
 
       return False;
    end On_Selection_Entry_Key_Press_Event;
