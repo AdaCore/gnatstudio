@@ -161,6 +161,7 @@ package body Glide_Kernel is
          3      | 5           => (1 => GType_Pointer),
          6 .. 8               => (1 => GType_String));
       Handler : Glide_Language_Handler;
+
    begin
       Handle := new Kernel_Handle_Record;
       Glib.Object.Initialize (Handle);
@@ -174,6 +175,7 @@ package body Glide_Kernel is
       --  Create the language handler. It is also set for the gvd main window,
       --  so that the embedded gvd uses the same mechanism as the rest of glide
       --  to guess the language for a file name.
+
       Gtk_New (Handler);
       Handle.Lang_Handler := Language_Handler (Handler);
       Glide_Window (Handle.Main_Window).Lang_Handler :=
@@ -262,10 +264,13 @@ package body Glide_Kernel is
       end if;
 
       --  Make a copy of the result, so that we can keep a cache in the kernel
+
       Result := new String_Array (Handle.Predefined_Source_Files'Range);
+
       for S in Handle.Predefined_Source_Files'Range loop
          Result (S) := new String'(Handle.Predefined_Source_Files (S).all);
       end loop;
+
       return Result;
    end Get_Predefined_Source_Files;
 
@@ -313,14 +318,15 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record;
       File   : String) return Gtkada.MDI.MDI_Child
    is
-      MDI   : constant MDI_Window := Get_MDI (Handle);
+      MDI : constant MDI_Window := Get_MDI (Handle);
    begin
       --  ??? the following implementation assumes that the file editors
-      --  are MDI childs that have corresponding file names for title, and
+      --  are MDI children that have corresponding file names for title, and
       --  that they are the only MDI childs that do so.
       --  ??? We might improve a little by checking the Tag of the child
       --  against that of the source editor module. The ID for that module
       --  needs to be moved to glide_kernel.ads.
+
       return Find_MDI_Child_By_Name (MDI, File);
    end Get_File_Editor;
 
@@ -365,11 +371,13 @@ package body Glide_Kernel is
       Module : Module_ID;
       Save_Type : Save_Return_Value;
       F      : Boolean := Force;
+
    begin
       Iter := First_Child (MDI);
       Child := Get (Iter);
 
       Save_Type := Save_Project_Conditional (Handle, F);
+
       if Save_Type = Cancel then
          return False;
       elsif Save_Type = Save_All then
@@ -383,6 +391,7 @@ package body Glide_Kernel is
          Module := Get_Module_From_Child (Handle, Child);
 
          Save_Type := Save_Child (Handle, Child, F);
+
          if Save_Type = Cancel then
             return False;
          elsif Save_Type = Save_All then
@@ -608,6 +617,7 @@ package body Glide_Kernel is
          Signal  : String;
          Context : Selection_Context_Access);
       pragma Import (C, Internal, "g_signal_emit_by_name");
+
    begin
       --  ??? code duplication from Context_Changed, see below.
       Internal
@@ -621,14 +631,15 @@ package body Glide_Kernel is
    -----------------
 
    procedure File_Edited
-     (Handle  : access Kernel_Handle_Record;
-      File    : String)
+     (Handle : access Kernel_Handle_Record;
+      File   : String)
    is
       procedure Internal
         (Handle : System.Address;
          Signal : String;
          File   : String);
       pragma Import (C, Internal, "g_signal_emit_by_name");
+
    begin
       Internal
         (Get_Object (Handle),
@@ -653,6 +664,7 @@ package body Glide_Kernel is
          Signal : String;
          File   : String);
       pragma Import (C, Internal, "g_signal_emit_by_name");
+
    begin
       Internal
         (Get_Object (Handle),
@@ -723,6 +735,7 @@ package body Glide_Kernel is
          Signal  : String;
          Context : Selection_Context_Access);
       pragma Import (C, Internal, "g_signal_emit_by_name");
+
    begin
       Internal
         (Get_Object (Handle),
@@ -738,9 +751,11 @@ package body Glide_Kernel is
      (Kernel : access Kernel_Handle_Record) return Module_ID
    is
       use type Module_List.List_Node;
+
       Module : Module_List.List_Node :=
         Module_List.First (Kernel.Modules_List);
       C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+
    begin
       if C = null then
          return null;
@@ -756,6 +771,7 @@ package body Glide_Kernel is
 
       Trace (Me, "Get_Current_Context: No module associated with tag "
              & External_Tag (Get_Widget (C)'Tag));
+
       return null;
    end Get_Current_Module;
 
@@ -763,8 +779,8 @@ package body Glide_Kernel is
    -- Get_Current_Context --
    -------------------------
 
-   function Get_Current_Context (Kernel : access Kernel_Handle_Record)
-      return Selection_Context_Access
+   function Get_Current_Context
+     (Kernel : access Kernel_Handle_Record) return Selection_Context_Access
    is
       Module : Module_ID;
    begin
@@ -848,11 +864,13 @@ package body Glide_Kernel is
          Node := Parse (File);
          Kernel_Desktop.Restore_Desktop (MDI, Node, Kernel_Handle (Handle));
          Free (Handle.Default_Desktop);
+
          return True;
       else
          Trace (Me, "loading default desktop");
          Kernel_Desktop.Restore_Desktop
            (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
+
          return False;
       end if;
 
@@ -877,6 +895,7 @@ package body Glide_Kernel is
         (Module_ID_Record'Class, Module_ID);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Module_ID_Information, Module_ID_Information_Access);
+
    begin
       Destroy (Module.all);
       Unchecked_Free (Module.Info);
@@ -890,6 +909,7 @@ package body Glide_Kernel is
    procedure Free (Context : in out Selection_Context_Access) is
       procedure Internal is new Ada.Unchecked_Deallocation
         (Selection_Context'Class, Selection_Context_Access);
+
    begin
       Destroy (Context.all);
       Internal (Context);
@@ -899,8 +919,8 @@ package body Glide_Kernel is
    -- Get_Kernel --
    ----------------
 
-   function Get_Kernel (Context : access Selection_Context)
-      return Kernel_Handle is
+   function Get_Kernel
+     (Context : access Selection_Context) return Kernel_Handle is
    begin
       return Context.Kernel;
    end Get_Kernel;
@@ -932,11 +952,11 @@ package body Glide_Kernel is
    -- Get_MDI --
    -------------
 
-   function Get_MDI (Handle : access Kernel_Handle_Record)
-      return Gtkada.MDI.MDI_Window
+   function Get_MDI
+     (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window
    is
-      Top        : constant Glide_Window := Glide_Window (Handle.Main_Window);
-      Page       : constant Glide_Page.Glide_Page :=
+      Top  : constant Glide_Window := Glide_Window (Handle.Main_Window);
+      Page : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
    begin
       return Page.Process_Mdi;
@@ -966,8 +986,8 @@ package body Glide_Kernel is
    -- Get_Main_Window --
    ---------------------
 
-   function Get_Main_Window (Handle : access Kernel_Handle_Record)
-      return Gtk.Window.Gtk_Window is
+   function Get_Main_Window
+     (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window is
    begin
       return Handle.Main_Window;
    end Get_Main_Window;
@@ -976,8 +996,8 @@ package body Glide_Kernel is
    -- Get_Tooltips --
    ------------------
 
-   function Get_Tooltips (Handle : access Kernel_Handle_Record)
-      return Gtk.Tooltips.Gtk_Tooltips is
+   function Get_Tooltips
+     (Handle : access Kernel_Handle_Record) return Gtk.Tooltips.Gtk_Tooltips is
    begin
       return Handle.Tooltips;
    end Get_Tooltips;
@@ -1144,7 +1164,7 @@ package body Glide_Kernel is
                      else
                         Console.Insert
                           (Kernel,
-                           (-"Path for ") & Other_File & (-" not found"),
+                           (-"Path not found for ") & Other_File,
                            Mode => Error);
                      end if;
                   end;
@@ -1176,6 +1196,7 @@ package body Glide_Kernel is
    begin
       for L in 1 .. Num loop
          LI := Get_Nth_Handler (Handler, L);
+
          if LI /= null then
             Parse_All_LI_Information
               (LI,
@@ -1205,6 +1226,7 @@ package body Glide_Kernel is
       Project : Prj.Project_Id := Get_Project_From_File
         (Get_Project_View (Kernel), File_Name);
       Entity : Entity_Information;
+
    begin
       if Project = Prj.No_Project then
          Project := Get_Project_View (Kernel);
@@ -1386,6 +1408,7 @@ package body Glide_Kernel is
 
       if Count > 0 then
          Show_All (Dialog);
+
          if Run (Dialog) = Gtk_Response_OK then
             Status := Success;
             Get_Selected (Get_Selection (View), Gtk_Tree_Model (Model), It);
@@ -1397,16 +1420,18 @@ package body Glide_Kernel is
                Kind   => E_Kind'Val (Get_Int (Model, It, 5)),
                File   => Get_String (Model, It, 0));
          end if;
+
          Destroy (Dialog);
       end if;
 
    exception
       when E : others =>
-         Trace (Me, "Select_Entity_Declaration: Unexpected exception "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+
          if Dialog /= null then
             Destroy (Dialog);
          end if;
+
          Destroy (Iter);
          raise;
    end Select_Entity_Declaration;
@@ -1487,7 +1512,7 @@ package body Glide_Kernel is
          when Global_Scope => return -"global";
          when Local_Scope  => return -"local";
          when Class_Static => return -"static";
-         when Static_Local => return -"global in file (static)";
+         when Static_Local => return -"static";
       end case;
    end Scope_To_String;
 
@@ -1504,9 +1529,8 @@ package body Glide_Kernel is
       case Kind is
          when Overloaded_Entity            => return "???";
          when Unresolved_Entity            => return -"unknown";
-         when Access_Object                =>
-            return -"access variable / pointer";
-         when Access_Type                  => return -"access type / pointer";
+         when Access_Object                => return -"pointer";
+         when Access_Type                  => return -"access type";
          when Array_Object                 => return -"array";
          when Array_Type                   => return -"array type";
          when Boolean_Object               => return -"boolean";
@@ -1516,7 +1540,7 @@ package body Glide_Kernel is
          when Decimal_Fixed_Point_Object   => return -"decimal fixed point";
          when Decimal_Fixed_Point_Type     =>
             return -"decimal fixed point type";
-         when Entry_Or_Entry_Family        => return -"entry or entry family";
+         when Entry_Or_Entry_Family        => return -"entry";
          when Enumeration_Literal          => return -"enumeration literal";
          when Enumeration_Object           => return -"enumeration";
          when Enumeration_Type             => return -"enumeration type";
@@ -1527,11 +1551,11 @@ package body Glide_Kernel is
          when Generic_Function_Or_Operator => return -"generic function";
          when Generic_Package              => return -"generic package";
          when Generic_Procedure            => return -"generic procedure";
-         when Label_On_Block               => return -"label on block";
-         when Label_On_Loop                => return -"label on loop";
-         when Label_On_Statement           => return -"label on statement";
-         when Modular_Integer_Object       => return -"modular integer";
-         when Modular_Integer_Type         => return -"modular integer type";
+         when Label_On_Block               => return -"block label";
+         when Label_On_Loop                => return -"loop label";
+         when Label_On_Statement           => return -"statement label";
+         when Modular_Integer_Object       => return -"unsigned integer";
+         when Modular_Integer_Type         => return -"unsigned integer type";
          when Named_Number                 => return -"named number";
          when Non_Generic_Function_Or_Operator => return -"function";
          when Non_Generic_Package          => return -"package";
@@ -1541,8 +1565,8 @@ package body Glide_Kernel is
          when Private_Type                 => return -"private type";
          when Protected_Object             => return -"protected object";
          when Protected_Type               => return -"protected type";
-         when Record_Object                => return -"record / struct";
-         when Record_Type                  => return -"record type / struct";
+         when Record_Object                => return -"record";
+         when Record_Type                  => return -"record type";
          when Signed_Integer_Object        => return -"signed integer";
          when Signed_Integer_Type          => return -"signed integer type";
          when String_Object                => return -"string";
