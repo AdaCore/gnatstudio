@@ -36,9 +36,7 @@ with Gtk.Widget;
 with GNAT.OS_Lib;
 with Glib.Object;
 with Glide_Kernel;
-with Prj;
-with Prj.Tree;
-with Prj_API;
+with Projects;
 
 package Switches_Editors is
 
@@ -184,15 +182,13 @@ package Switches_Editors is
 
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
-      Project            : Prj.Tree.Project_Node_Id;
-      Project_View       : Prj.Project_Id;
-      Scenario_Variables : Prj_API.Project_Node_Array;
+      Project            : Projects.Project_Type;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
       Files              : GNAT.OS_Lib.Argument_List)
-      return Prj_API.Project_Node_Array;
+      return Boolean;
    --  Generate the information in Project to represent the status of Switches.
-   --  The list of modified projects is returned (there can be several in case
-   --  one of the modified packages was a renaming of another package).
-   --  Project_View can be No_Project, in which case the return value will
+   --  True is returned if at least one project was modified.
+   --  Project can be No_Project, in which case the return value will
    --  always be non empty, after modification of the project.
 
    -----------------------------------------------------
@@ -217,15 +213,14 @@ package Switches_Editors is
 
    procedure Edit_Switches_For_Files
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project      : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
+      Project      : Projects.Project_Type;
       Files        : GNAT.OS_Lib.Argument_List);
    --  Edit the switches for a list of files. All the files will be assigned
    --  the same switches.
    --  If there are no files in Files, the default switches are edited.
 
    procedure Set_Switches
-     (Editor : access Switches_Edit_Record; Project_View : Prj.Project_Id);
+     (Editor : access Switches_Edit_Record; Project : Projects.Project_Type);
    --  Set the initial value for the switches, based on the contents
    --  of Project_View. If a page doesn't exist in Editor, it will not be
    --  automatically created.
@@ -289,7 +284,7 @@ private
    type Switches_Edit_Record is new Gtk_Notebook_Record with record
       Kernel       : Glide_Kernel.Kernel_Handle;
       Files        : GNAT.OS_Lib.Argument_List_Access;
-      Project_View : Prj.Project_Id;
+      Project      : Projects.Project_Type;
       Pages        : Page_Array_Access;
    end record;
 

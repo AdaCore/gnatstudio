@@ -47,8 +47,8 @@ with GNAT.Case_Util;       use GNAT.Case_Util;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
-with Prj_API;              use Prj_API;
-with Prj_Normalize;        use Prj_Normalize;
+with Prj;
+with Projects.Editor;      use Projects, Projects.Editor;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
@@ -57,10 +57,9 @@ with Language_Handlers;    use Language_Handlers;
 with String_Utils;         use String_Utils;
 with Basic_Types;          use Basic_Types;
 with Scenario_Selectors;   use Scenario_Selectors;
+with Projects;             use Projects;
 
 with Types;                use Types;
-with Prj;                  use Prj;
-with Prj.Tree;             use Prj.Tree;
 with Snames;               use Snames;
 with Switch.M;             use Switch.M;
 
@@ -262,15 +261,14 @@ package body Switches_Editors is
 
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
-      Project   : Prj.Project_Id;
+      Project   : Project_Type;
       Files     : Argument_List);
    --  Fill the editor with the switches information for Files (or the
    --  default switches if Files is empty).
 
    procedure Close_Switch_Editor
      (Switches  : access Switches_Edit_Record'Class;
-      Project   : Project_Node_Id;
-      Project_View : Project_Id;
+      Project   : Project_Type;
       Files     : Argument_List;
       Scenario  : access Scenario_Selector_Record'Class);
    --  Called when the user has closed a switch editor for a specific file.
@@ -1812,9 +1810,9 @@ package body Switches_Editors is
       S : constant Switches_Edit := Switches_Edit (Switches);
    begin
       if S.Files /= null then
-         Fill_Editor (S, S.Project_View, S.Files.all);
+         Fill_Editor (S, S.Project, S.Files.all);
       else
-         Fill_Editor (S, S.Project_View, (1 .. 0 => null));
+         Fill_Editor (S, S.Project, (1 .. 0 => null));
       end if;
    end Revert_To_Default;
 
@@ -1824,16 +1822,11 @@ package body Switches_Editors is
 
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
-      Project            : Prj.Tree.Project_Node_Id;
-      Project_View       : Prj.Project_Id;
-      Scenario_Variables : Prj_API.Project_Node_Array;
-      Files              : Argument_List) return Project_Node_Array
+      Project            : Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Files              : Argument_List) return Boolean
    is
-      Max_Modified_Packages : constant Integer := Switches.Pages'Length;
-      --  Maximum number of packages that can be renamed
-
-      Result                : Project_Node_Array (1 .. Max_Modified_Packages);
-      Current               : Natural := Result'First;
+      Changed : Boolean := False;
 
       procedure Change_Switches
         (Page      : access Switches_Editor_Page_Record'Class;
@@ -1854,23 +1847,19 @@ package body Switches_Editors is
          File_Name : String)
       is
          Language : constant Name_Id := Get_String (Page.Lang.all);
-         Args     : Argument_List := Get_Switches (Page, Normalize => False);
-         Value    : Variable_Value;
+         Args     : Argument_List := Get_Switches (Page, Normalize => True);
+         Value    : Prj.Variable_Value;
          Is_Default_Value : Boolean;
-         Rename_Prj : Project_Node_Id;
+         Rename_Prj : Project_Type;
       begin
          Rename_Prj := Find_Project_Of_Package (Project, Page.Pkg.all);
 
-         if not Has_Been_Normalized (Rename_Prj) then
-            Normalize (Rename_Prj, Recurse => False);
-         end if;
-
-         if Project_View = No_Project then
+         if Project = No_Project then
             Is_Default_Value := False;
 
          else
             Get_Switches
-              (Project          => Project_View,
+              (Project          => Rename_Prj,
                In_Pkg           => Page.Pkg.all,
                File             => File_Name,
                Language         => Language,
@@ -1891,7 +1880,7 @@ package body Switches_Editors is
             if File_Name /= "" then
                if Args'Length /= 0 then
                   Update_Attribute_Value_In_Scenario
-                    (Project            => Project,
+                    (Project            => Rename_Prj,
                      Pkg_Name           => Page.Pkg.all,
                      Scenario_Variables => Scenario_Variables,
                      Attribute_Name     => Get_String (Name_Switches),
@@ -1900,7 +1889,7 @@ package body Switches_Editors is
                      Prepend            => False);
                else
                   Delete_Attribute
-                    (Project            => Project,
+                    (Project            => Rename_Prj,
                      Pkg_Name           => Page.Pkg.all,
                      Scenario_Variables => Scenario_Variables,
                      Attribute_Name     => Get_String (Name_Switches),
@@ -1909,7 +1898,7 @@ package body Switches_Editors is
 
             elsif Args'Length /= 0 then
                Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
+                 (Project            => Rename_Prj,
                   Pkg_Name           => Page.Pkg.all,
                   Scenario_Variables => Scenario_Variables,
                   Attribute_Name     => Get_String (Name_Default_Switches),
@@ -1919,28 +1908,17 @@ package body Switches_Editors is
 
             else
                Delete_Attribute
-                 (Project            => Project,
+                 (Project            => Rename_Prj,
                   Pkg_Name           => Page.Pkg.all,
                   Scenario_Variables => Scenario_Variables,
                   Attribute_Name     => Get_String (Name_Default_Switches),
                   Attribute_Index    => Get_String (Language));
             end if;
+
+            Changed := True;
          end if;
+
          Free (Args);
-
-         if not Is_Default_Value then
-            Is_Default_Value := False;
-            for C in Result'First .. Current - 1 loop
-               if Result (C) = Rename_Prj then
-                  Is_Default_Value := True;
-               end if;
-            end loop;
-
-            if not Is_Default_Value then
-               Result (Current) := Rename_Prj;
-               Current := Current + 1;
-            end if;
-         end if;
       end Change_Switches;
 
       ------------------
@@ -1955,7 +1933,7 @@ package body Switches_Editors is
       end Process_File;
 
    begin
-      pragma Assert (Project /= Empty_Node);
+      pragma Assert (Project /= No_Project);
 
       if Files'Length = 0 then
          Process_File ("");
@@ -1964,7 +1942,8 @@ package body Switches_Editors is
             Process_File (Files (F).all);
          end loop;
       end if;
-      return Result (Result'First .. Current - 1);
+
+      return Changed;
    end Generate_Project;
 
    -------------------------
@@ -1973,8 +1952,7 @@ package body Switches_Editors is
 
    procedure Close_Switch_Editor
      (Switches     : access Switches_Edit_Record'Class;
-      Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project      : Project_Type;
       Files        : Argument_List;
       Scenario     : access Scenario_Selector_Record'Class)
    is
@@ -1988,22 +1966,11 @@ package body Switches_Editors is
             Cur : Argument_List := Current (Scenar);
          begin
             Set_Environment (Scenario_Variables (Switches.Kernel), Cur);
-
-            declare
-               Result : constant Project_Node_Array := Generate_Project
-                 (Switches           => Switches,
-                  Scenario_Variables => Scenario_Variables (Switches.Kernel),
-                  Project            => Project,
-                  Project_View       => Project_View,
-                  Files              => Files);
-            begin
-               for R in Result'Range loop
-                  Set_Project_Modified (Switches.Kernel, Result (R), True);
-               end loop;
-
-               Modified := Modified or else Result'Length /= 0;
-            end;
-
+            Modified := Modified or Generate_Project
+              (Switches           => Switches,
+               Scenario_Variables => Scenario_Variables (Switches.Kernel),
+               Project            => Project,
+               Files              => Files);
             Free (Cur);
          end;
 
@@ -2023,9 +1990,9 @@ package body Switches_Editors is
    ------------------
 
    procedure Set_Switches
-     (Editor : access Switches_Edit_Record; Project_View : Prj.Project_Id) is
+     (Editor : access Switches_Edit_Record; Project : Project_Type) is
    begin
-      Fill_Editor (Editor, Project_View, Files => (1 .. 0 => null));
+      Fill_Editor (Editor, Project, Files => (1 .. 0 => null));
    end Set_Switches;
 
    -----------------
@@ -2034,7 +2001,7 @@ package body Switches_Editors is
 
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
-      Project   : Prj.Project_Id;
+      Project   : Project_Type;
       Files     : Argument_List)
    is
       function Get_Switches (Pkg_Name : String; Language : Name_Id)
@@ -2050,7 +2017,7 @@ package body Switches_Editors is
       function Get_Switches (Pkg_Name : String; Language : Name_Id)
          return Argument_List
       is
-         Value      : Variable_Value;
+         Value      : Prj.Variable_Value;
          Is_Default : Boolean;
       begin
          if Files'Length = 0 then
@@ -2065,7 +2032,7 @@ package body Switches_Editors is
       end Get_Switches;
 
    begin
-      Switches.Project_View := Project;
+      Switches.Project := Project;
 
       if Files'Length = 0 then
          declare
@@ -2129,14 +2096,12 @@ package body Switches_Editors is
          File_Name := new String'(File_Information (File));
          Edit_Switches_For_Files
            (Get_Kernel (Context),
-            Get_Project_From_View (Project_Information (File)),
             Project_Information (File),
             (1 => File_Name));
          Free (File_Name);
       else
          Edit_Switches_For_Files
            (Get_Kernel (Context),
-            Get_Project_From_View (Project_Information (File)),
             Project_Information (File),
             (1 .. 0 => null));
       end if;
@@ -2164,8 +2129,7 @@ package body Switches_Editors is
 
    procedure Edit_Switches_For_Files
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
+      Project : Project_Type;
       Files : GNAT.OS_Lib.Argument_List)
    is
       Switches  : Switches_Edit;
@@ -2191,7 +2155,7 @@ package body Switches_Editors is
       else
          Gtk_New (Dialog,
                   Title  => (-"Editing default switches for project ")
-                    & Project_Name (Project_View),
+                    & Project_Name (Project),
                   Parent => Get_Main_Window (Kernel),
                   Flags  => Modal or Destroy_With_Parent);
       end if;
@@ -2213,7 +2177,7 @@ package body Switches_Editors is
 
       Switches.Files := Files'Unrestricted_Access;
 
-      Fill_Editor (Switches, Project_View, Files);
+      Fill_Editor (Switches, Project, Files);
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
 
@@ -2237,7 +2201,7 @@ package body Switches_Editors is
 
       if Run (Dialog) = Gtk_Response_OK then
          Close_Switch_Editor
-           (Switches, Project, Project_View, Files, Selector);
+           (Switches, Project, Files, Selector);
       end if;
 
       Destroy (Dialog);
