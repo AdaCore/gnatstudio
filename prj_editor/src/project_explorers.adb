@@ -1739,7 +1739,7 @@ package body Project_Explorers is
       if N = Null_Iter then
          declare
             Str : constant String :=
-              Get_String (Explorer.Tree.Model, Node, Base_Name_Column);
+              Get_String (Explorer.Tree.Model, Node, Absolute_Name_Column);
          begin
             if (Node_Type = Directory_Node
                 and then Directory_Contains_Files (Prj, Str))
