@@ -78,8 +78,10 @@ package Dynamic_Arrays is
    --  shrunk, but keeps its current size for efficiency
 
    procedure Remove (T : in out Instance; Index : Index_Type);
+   procedure Remove (T : in out Instance; From, To : Index_Type);
    pragma Inline (Remove);
-   --  Remove the element at a given position
+   --  Remove the element at a given position, or between two positions
+   --  (included).
 
    function Find (T : Instance; Item : Data) return Index_Type;
    --  Return the position of the first occurrence of Item in the table,

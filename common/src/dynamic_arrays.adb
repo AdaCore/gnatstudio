@@ -104,7 +104,28 @@ package body Dynamic_Arrays is
       then
          T.Table (Index .. T.P.Next_To_Last - 2) :=
            T.Table (Index + 1 .. T.P.Next_To_Last - 1);
-         T.P.Next_To_Last := Index_Type'Pred (T.P.Next_To_Last);
+         T.P.Next_To_Last := T.P.Next_To_Last - 1;
+
+         if T.P.Next_To_Last = First then
+            --  Might as well save some memory
+            Free (T);
+         end if;
+      end if;
+   end Remove;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove (T : in out Instance; From, To : Index_Type) is
+   begin
+      if T.Table /= null
+        and then From >= First
+        and then To < T.P.Next_To_Last
+      then
+         T.Table (From .. T.P.Next_To_Last - 2 - To + From) :=
+           T.Table (To + 1 .. T.P.Next_To_Last - 1);
+         T.P.Next_To_Last := T.P.Next_To_Last - 1 - To + From;
 
          if T.P.Next_To_Last = First then
             --  Might as well save some memory
