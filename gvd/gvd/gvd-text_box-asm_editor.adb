@@ -20,6 +20,10 @@
 
 with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Color;        use Gdk.Color;
+with Gdk.Font;         use Gdk.Font;
+with Gdk.Event;        use Gdk.Event;
+with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
+with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Window;       use Gdk.Window;
 with Glib;             use Glib;
@@ -29,6 +33,8 @@ with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtk.Pixmap;       use Gtk.Pixmap;
 with Gtk.Widget;       use Gtk.Widget;
+with Gtk.Text;         use Gtk.Text;
+with Gtk.Adjustment;   use Gtk.Adjustment;
 with Gtkada.Types;     use Gtkada.Types;
 
 with Debugger;         use Debugger;
@@ -50,6 +56,7 @@ package body GVD.Asm_Editors is
    --  Message displayed when GVD is getting the assembly code.
 
    package Editor_Cb is new Callback (Asm_Editor_Record);
+   package Editor_Event_Cb is new Return_Callback (Asm_Editor_Record, Boolean);
 
    function Line_From_Address
      (Editor  : access Asm_Editor_Record'Class;
@@ -83,7 +90,9 @@ package body GVD.Asm_Editors is
    --  Called when the assembly code for the address PC needs to be loaded.
    --  This gets the assembly source code for a range starting at PC, and
    --  going up to End_Pc.
-   --  A minimal range of Assembly_Range_Size is displayed.
+   --  A minimal range of Assembly_Range_Size is displayed, unless End_Pc is
+   --  "-1", in which case the assembly code for the whole current function is
+   --  displayed.
 
    function In_Range
      (Pc     : String;
@@ -99,6 +108,23 @@ package body GVD.Asm_Editors is
    procedure Show_Current_Line_Menu
      (Editor : access Asm_Editor_Record'Class);
    --  Display the current line in the editor.
+
+   function Add_Address (Addr : String; Offset : Integer) return String;
+   --  Add the value of Offset to the hexadecimal number Addr.
+   --  Addr is coded in C (0x....), and so is the returned string
+
+   procedure Meta_Scroll
+     (Box : access Asm_Editor_Record'Class; Down : Boolean);
+   --  The user has asked to see the assembly range outside what is currently
+   --  displayed in the assembly editor.
+
+   procedure Meta_Scroll_Down (Box : access Asm_Editor_Record'Class);
+   procedure Meta_Scroll_Up (Box : access Asm_Editor_Record'Class);
+   --  The user has asked for the previous or next undisplayed assembly page
+
+   function Key_Press
+     (Box : access Asm_Editor_Record'Class; Event : Gdk_Event) return Boolean;
+   --  Called when a key is pressed in the child (handling of meta-scrolling)
 
    -------------
    -- Gtk_New --
@@ -123,6 +149,10 @@ package body GVD.Asm_Editors is
       GVD.Text_Boxes.Initialize (Editor);
       Editor.Process := Gtk_Widget (Process);
       Show_All (Editor);
+
+      Editor_Event_Cb.Object_Connect
+        (Get_Child (Editor), "key_press_event",
+         Editor_Event_Cb.To_Marshaller (Key_Press'Access), Editor);
    end Initialize;
 
    ---------------
@@ -171,6 +201,7 @@ package body GVD.Asm_Editors is
       Pc_In_Range : constant Boolean := In_Range (Pc, Editor.Current_Range);
       Pc_End_In_Range : constant Boolean :=
         In_Range (End_Pc, Editor.Current_Range);
+      S_First : Natural;
 
    begin
       --  Is the range already visible ?
@@ -215,16 +246,24 @@ package body GVD.Asm_Editors is
          Free (Editor.Current_Range.High);
          Editor.Current_Range.High := new String' (End_Pc);
 
+         --  Avoid duplicating the first assembly line since it was already
+         --  displayed.
+         S_First := S'First;
+         Skip_To_Char (S.all, S_First, ASCII.LF);
+         S_First := S_First + 1;
+
          S2 := Editor.Current_Range.Data;
-         Editor.Current_Range.Data :=
-           new String' (S2.all & ASCII.LF & Do_Tab_Expansion (S.all));
+         Editor.Current_Range.Data := new String'
+           (S2.all & ASCII.LF & Do_Tab_Expansion (S (S_First .. S'Last)));
          Free (S2);
 
       --  Else get a whole new range (minimum size Assembly_Range_Size)
       else
          Editor.Current_Range := Find_In_Cache (Editor, Pc);
          if Editor.Current_Range = null then
-            if Get_Pref (Assembly_Range_Size) = "0" then
+            if Get_Pref (Assembly_Range_Size) = "0"
+              or else End_Pc = "-1"
+            then
                Get_Machine_Code
                  (Process.Debugger,
                   Range_Start     => Start,
@@ -352,6 +391,20 @@ package body GVD.Asm_Editors is
          Editor_Cb.To_Marshaller (Show_Current_Line_Menu'Access),
          Editor);
 
+      Gtk_New (Mitem, Label => -"Show Previous Page");
+      Append (Menu, Mitem);
+      Editor_Cb.Object_Connect
+        (Mitem, "activate",
+         Editor_Cb.To_Marshaller (Meta_Scroll_Up'Access),
+         Editor);
+
+      Gtk_New (Mitem, Label => -"Show Next Page");
+      Append (Menu, Mitem);
+      Editor_Cb.Object_Connect
+        (Mitem, "activate",
+         Editor_Cb.To_Marshaller (Meta_Scroll_Down'Access),
+         Editor);
+
       Append_To_Contextual_Menu
         (Debugger_Process_Tab (Editor.Process).Editor_Text, Menu);
 
@@ -364,8 +417,8 @@ package body GVD.Asm_Editors is
    -----------------
 
    procedure Set_Address
-     (Editor : access Asm_Editor_Record;
-      Pc     : String)
+     (Editor      : access Asm_Editor_Record;
+      Pc          : String)
    is
       Line : Natural;
    begin
@@ -419,7 +472,8 @@ package body GVD.Asm_Editors is
          --  buffer.
          if Pos_Start = 0 or else Pos_End = 0 then
             On_Frame_Changed
-              (Editor, Range_Start (1 .. Range_Start_Len),
+              (Editor,
+               Range_Start (1 .. Range_Start_Len),
                Range_End (1 .. Range_End_Len));
          end if;
       end loop;
@@ -691,4 +745,129 @@ package body GVD.Asm_Editors is
          Gint (0), Fore => Editor.Highlight_Color);
    end Preferences_Changed;
 
+   -----------------
+   -- Meta_Scroll --
+   -----------------
+
+   procedure Meta_Scroll
+     (Box : access Asm_Editor_Record'Class; Down : Boolean)
+   is
+      Pos : Gfloat;
+      Src_Line : constant Natural :=
+        Get_Line (Debugger_Process_Tab (Box.Process).Editor_Text);
+   begin
+      if Box.Current_Range /= null
+        and then Get_Pref (Assembly_Range_Size) /= "0"
+      then
+         Set_Busy_Cursor
+           (Debugger_Process_Tab (Box.Process), True, Force_Refresh => True);
+
+         if Down then
+            Pos := Get_Upper (Get_Vadj (Get_Child (Box)))
+              - Get_Page_Size (Get_Vadj (Get_Child (Box)));
+            On_Frame_Changed
+              (Box,
+               Box.Current_Range.High.all,
+               Add_Address
+               (Box.Current_Range.High.all,
+                Integer'Value (Get_Pref (Assembly_Range_Size))));
+
+         else
+            declare
+               Addr : constant String := Address_From_Line
+                 (Box, Get_Line (Box));
+               F : constant Gdk_Font := Get_Gdkfont
+                 (Get_Pref (Editor_Font), Get_Pref (Editor_Font_Size));
+               Line : Natural;
+            begin
+               On_Frame_Changed (Box, "", "-1");
+               Line := Line_From_Address (Box, Addr);
+               Set_Line (Box, Line);
+               Pos :=
+                 Gfloat (Gint (Line) * (Get_Ascent (F) + Get_Descent (F)));
+            end;
+         end if;
+
+         --  Scroll to the right position
+         Set_Value (Get_Vadj (Get_Child (Box)), Pos);
+
+         --  Re-highlight the current range
+         Highlight_Range
+           (Box, Gint (0), Gint (0), Gint (0), Fore => Box.Highlight_Color);
+         Highlight_Address_Range (Box, Src_Line);
+
+         Set_Busy_Cursor (Debugger_Process_Tab (Box.Process), False);
+      end if;
+   end Meta_Scroll;
+
+   -----------------
+   -- Add_Address --
+   -----------------
+
+   function Add_Address (Addr : String; Offset : Integer) return String is
+      Convert : constant String := "0123456789abcdef";
+      Str : constant String :=
+        "16#" & Addr (Addr'First + 2 .. Addr'Last) & '#';
+      Value : Long_Long_Integer := Long_Long_Integer'Value (Str)
+        + Long_Long_Integer (Offset);
+      Buffer : String (1 .. 32);
+      Pos : Natural := Buffer'Last;
+   begin
+      while Value > 0 loop
+         Buffer (Pos) := Convert (Integer (Value mod 16) + Convert'First);
+         Pos := Pos - 1;
+         Value := Value / 16;
+      end loop;
+      return "0x" & Buffer (Pos + 1 .. Buffer'Last);
+   end Add_Address;
+
+   ----------------------
+   -- Meta_Scroll_Down --
+   ----------------------
+
+   procedure Meta_Scroll_Down (Box : access Asm_Editor_Record'Class) is
+   begin
+      Meta_Scroll (Box, Down => True);
+   end Meta_Scroll_Down;
+
+   --------------------
+   -- Meta_Scroll_Up --
+   --------------------
+
+   procedure Meta_Scroll_Up (Box : access Asm_Editor_Record'Class) is
+   begin
+      Meta_Scroll (Box, Down => False);
+   end Meta_Scroll_Up;
+
+   ---------------
+   -- Key_Press --
+   ---------------
+
+   function Key_Press
+     (Box : access Asm_Editor_Record'Class; Event : Gdk_Event)
+      return Boolean
+   is
+      Scroll : constant Gtk_Adjustment := Get_Vadj (Get_Child (Box));
+   begin
+      case Get_Key_Val (Event) is
+         when GDK_Page_Down =>
+            --  Only scroll if we are on the last page
+            if Get_Value (Scroll)
+              >= Get_Upper (Scroll) - Get_Page_Size (Scroll)
+            then
+               Meta_Scroll (Box, Down => True);
+               return True;
+            end if;
+
+         when GDK_Page_Up =>
+            --  Only scroll if we are on the first page
+            if Get_Value (Scroll) = 0.0 then
+               Meta_Scroll (Box, Down => False);
+               return True;
+            end if;
+
+         when others => null;
+      end case;
+      return False;
+   end Key_Press;
 end GVD.Asm_Editors;
