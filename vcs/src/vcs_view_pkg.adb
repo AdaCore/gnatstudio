@@ -53,6 +53,7 @@ with VCS;
 
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 with VCS_View_API;              use VCS_View_API;
+with VCS_Module;                use VCS_Module;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -1107,7 +1108,7 @@ package body VCS_View_Pkg is
             Set_Context_Information
               (Context,
                Kernel,
-               Get_Creator (Get_Current_Explorer_Context (Kernel)));
+               VCS_Module_ID);
             Set_File_Name_Information
               (Context,
                Dir_Name (First_File),
