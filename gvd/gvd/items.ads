@@ -311,7 +311,7 @@ package Items is
      return Boolean is abstract;
    --  Return True if Item1 and Item2 are structurally equivalent.
    --  Any access type is structurally equivalent to any other access type,
-   --  whereas two records are structurally equivalent only if there fields are
+   --  whereas two records are structurally equivalent only if their fields are
    --  structurally equivalent.
 
    ---------------
