@@ -578,16 +578,16 @@ package Src_Info.Queries is
    type Dependency_Iterator_Access is access Dependency_Iterator;
 
    procedure Find_Ancestor_Dependencies
-     (Root_Project       : Projects.Project_Type;
-      Lang_Handler       : Language_Handlers.Language_Handler;
-      Source_Filename    : VFS.Virtual_File;
-      Iterator           : out Dependency_Iterator;
-      Project            : Projects.Project_Type := Projects.No_Project;
+     (Root_Project          : Projects.Project_Type;
+      Lang_Handler          : Language_Handlers.Language_Handler;
+      Source_Filename       : VFS.Virtual_File;
+      Iterator              : out Dependency_Iterator;
+      Project               : Projects.Project_Type := Projects.No_Project;
       File_Has_No_LI_Report : File_Error_Reporter := null;
-      Include_Self       : Boolean := False;
-      LI_Once            : Boolean := False;
-      Indirect_Imports   : Boolean := False;
-      Single_Source_File : Boolean := False);
+      Include_Self          : Boolean := False;
+      LI_Once               : Boolean := False;
+      Indirect_Imports      : Boolean := False;
+      Single_Source_File    : Boolean := False);
    --  Prepare Iterator to return the list of all files that directly import
    --  Source_Filename. The rule is the following:
    --     - bodies and separate units always depend on specs

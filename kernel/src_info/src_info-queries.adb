@@ -2835,21 +2835,21 @@ package body Src_Info.Queries is
    --------------------------------
 
    procedure Find_Ancestor_Dependencies
-     (Root_Project       : Project_Type;
-      Lang_Handler       : Language_Handlers.Language_Handler;
-      Source_Filename    : VFS.Virtual_File;
-      Iterator           : out Dependency_Iterator;
-      Project            : Project_Type := No_Project;
+     (Root_Project           : Project_Type;
+      Lang_Handler           : Language_Handlers.Language_Handler;
+      Source_Filename        : VFS.Virtual_File;
+      Iterator               : out Dependency_Iterator;
+      Project                : Project_Type := No_Project;
       File_Has_No_LI_Report  : File_Error_Reporter := null;
-      Include_Self       : Boolean := False;
-      LI_Once            : Boolean := False;
-      Indirect_Imports   : Boolean := False;
-      Single_Source_File : Boolean := False)
+      Include_Self           : Boolean := False;
+      LI_Once                : Boolean := False;
+      Indirect_Imports       : Boolean := False;
+      Single_Source_File     : Boolean := False)
    is
-      Decl_Project : Project_Type := Project;
+      Decl_Project          : Project_Type := Project;
       Iterator_Decl_Project : Project_Type := Project;
-      Handler      : LI_Handler;
-      Tmp          : Projects.Imported_Project_Iterator;
+      Handler               : LI_Handler;
+      Tmp                   : Projects.Imported_Project_Iterator;
 
    begin
       Trace (Me, "Find_Ancestor_Dependencies: "
