@@ -2,9 +2,8 @@ with "../common/common";
 with "../gtkada/gtkada";
 with "../kernel/kernel";
 with "../gvd/gvd_common";
-
 with "../widgets/widgets";
-with "../src_editor/src_editor";
+with "../vsearch/vsearch";
 
 project Prj_Editor is
 
