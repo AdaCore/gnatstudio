@@ -9,9 +9,6 @@ package SN.Browse is
    DB_File_Name     : constant String := "data";
    --  Name of the SN database files
 
-   Xref_Suffix      : constant String := ".xref";
-   --  Extension used for cross reference files
-
    procedure Browse (File_Name, DB_Directory, Browser_Name,
                      DBUtils_Path : in String);
    --  Executes given browser on the file so that all database files

@@ -1,14 +1,15 @@
 with GNAT.Directory_Operations,
      GNAT.IO_Aux,
---     Ada.Text_IO,
      OS_Utils,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation,
+     SN.Xref_Pool,
      GNAT.OS_Lib;
+
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
      Ada.Strings.Fixed,
---     Ada.Text_IO,
+     SN.Xref_Pool,
      GNAT.OS_Lib;
 
 package body SN.Browse is
