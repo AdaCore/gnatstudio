@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Types;                     use Types;
-
 with Glib.Object;               use Glib.Object;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -39,9 +37,11 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with VCS_View_Pkg;              use VCS_View_Pkg;
 
+with Prj;                       use Prj;
 with Prj_API;                   use Prj_API;
+with Prj.Tree;                  use Prj.Tree;
 
-with Ada.Text_IO;               use Ada.Text_IO;
+with Basic_Types;               use Basic_Types;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -76,6 +76,10 @@ package body VCS_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
 
+   procedure List_Open_Files
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+
    procedure On_Context_Changed
      (Object  : access Gtk_Widget_Record'Class;
       Args    : Gtk_Args);
@@ -91,7 +95,15 @@ package body VCS_Module is
       Kernel  : Kernel_Handle);
    --  Show status for files in the current directory.
 
+   function String_Array_To_String_List
+     (S : String_Id_Array) return String_List.List;
+   --  Convenience function to make a string_list out of a String_Id_Array.
+
    procedure On_Open
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure On_Update
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
 
@@ -137,6 +149,12 @@ package body VCS_Module is
    function Get_Explorer (Kernel : Kernel_Handle) return VCS_View_Access;
    --  Return the vcs explorer, if created, null otherwise.
 
+   function Get_Files_In_Project
+     (Kernel : Kernel_Handle) return String_List.List;
+
+   function Get_Dirs_In_Project
+     (Kernel : Kernel_Handle) return String_List.List;
+
    procedure VCS_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -161,30 +179,6 @@ package body VCS_Module is
    procedure On_Menu_Commit
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
-
-   --------------------
-   -- On_Menu_Update --
-   --------------------
-
-   procedure On_Menu_Update
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      File_Context : File_Selection_Context_Access;
-      Kernel       : Kernel_Handle := Get_Kernel (Context);
-      Ref          : VCS_Access := Get_Current_Ref (Kernel);
-      Files        : String_List.List := Get_Selected_Files (Kernel);
-   begin
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File_Context)
-           and then Has_Directory_Information (File_Context)
-         then
-            Update (Ref, Files);
-         end if;
-      end if;
-   end On_Menu_Update;
 
    ----------------------
    -- On_Menu_Edit_Log --
@@ -218,6 +212,17 @@ package body VCS_Module is
    begin
       On_Open (Widget, Get_Kernel (Context));
    end On_Menu_Open;
+
+   --------------------
+   -- On_Menu_Update --
+   --------------------
+
+   procedure On_Menu_Update
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      On_Update (Widget, Get_Kernel (Context));
+   end On_Menu_Update;
 
    ------------------
    -- On_Menu_Diff --
@@ -258,6 +263,14 @@ package body VCS_Module is
    begin
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
+
+         Gtk_New (Item, Label => -"VCS Update");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate",
+            Context_Callback.To_Marshaller
+            (On_Menu_Update'Access),
+            Selection_Context_Access (Context));
 
          Gtk_New (Item, Label => -"VCS Open");
          Append (Menu, Item);
@@ -424,6 +437,20 @@ package body VCS_Module is
    end On_Open;
 
    ---------------
+   -- On_Update --
+   ---------------
+
+   procedure On_Update
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      Update (Ref, Files);
+   end On_Update;
+
+   ---------------
    -- On_Commit --
    ---------------
 
@@ -516,10 +543,13 @@ package body VCS_Module is
       File         : File_Selection_Context_Access;
       Status       : File_Status_List.List;
       Dirs         : String_List.List;
+      Explorer     : VCS_View_Access := Get_Explorer (Get_Kernel (Context));
 
       Ref          : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
    begin
-      if Context = null then
+      if Context = null
+        or else Explorer = null
+      then
          return;
       end if;
 
@@ -530,12 +560,10 @@ package body VCS_Module is
             Status :=  Local_Get_Status (Ref, Dirs);
             String_List.Free (Dirs);
 
-            Display_File_Status (Get_Kernel (Context), Status);
-
-            File_Status_List.Free (Status);
+            Clear (Explorer);
+            Display_File_Status (Get_Kernel (Context), Status, False);
          end if;
       end if;
-
    end On_Context_Changed;
 
    ---------------------------------
@@ -568,6 +596,7 @@ package body VCS_Module is
       Update (Ref, Files);
 
       if Explorer /= null then
+         Clear (Explorer);
          Get_Status (Ref, Files);
       end if;
 
@@ -606,6 +635,7 @@ package body VCS_Module is
          File_Status_List.Tail (Status);
       end loop;
 
+      Clear (Explorer);
       Get_Status (Ref, Files);
 
       String_List.Free (Dirs);
@@ -639,8 +669,8 @@ package body VCS_Module is
          Status :=  Local_Get_Status (Ref, Dirs);
          String_List.Free (Dirs);
 
-         Display_File_Status (Kernel, Status);
-         File_Status_List.Free (Status);
+         Clear (Explorer);
+         Display_File_Status (Kernel, Status, False);
 
          Widget_Callback.Object_Connect
            (Kernel,
@@ -652,6 +682,71 @@ package body VCS_Module is
       end if;
    end On_Open_Interface;
 
+   ---------------------------------
+   -- String_Array_To_String_List --
+   ---------------------------------
+
+   function String_Array_To_String_List
+     (S : String_Id_Array) return String_List.List
+   is
+      Result : String_List.List;
+   begin
+      for J in reverse S'Range loop
+         String_List.Prepend (Result, Get_String (S (J)));
+      end loop;
+
+      return Result;
+   end String_Array_To_String_List;
+
+   -------------------------
+   -- Get_Dirs_In_Project --
+   -------------------------
+
+   function Get_Dirs_In_Project
+     (Kernel : Kernel_Handle) return String_List.List
+   is
+      Result   : String_List.List;
+      Project  : Project_Node_Id;
+   begin
+      Project := Get_Project (Kernel);
+
+      declare
+         Iterator : Imported_Project_Iterator := Start (Project, True);
+      begin
+         while Current (Iterator) /= Empty_Node loop
+            String_List.Concat (Result,
+                                String_Array_To_String_List
+                                (Source_Dirs (Current (Iterator))));
+            Next (Iterator);
+         end loop;
+      end;
+
+      return Result;
+   end Get_Dirs_In_Project;
+
+   --------------------------
+   -- Get_Files_In_Project --
+   --------------------------
+
+   function Get_Files_In_Project
+     (Kernel : Kernel_Handle) return String_List.List
+   is
+      Result  : String_List.List;
+      Project : Project_Node_Id;
+      Files   : String_Array_Access;
+   begin
+      Project := Get_Project (Kernel);
+      Files   := Get_Source_Files (Project, True);
+
+      for J in reverse Files.all'Range loop
+         String_List.Prepend (Result, Files.all (J).all);
+      end loop;
+
+      Free (Files);
+
+      return Result;
+   end Get_Files_In_Project;
+
    -------------------
    -- On_Update_All --
    -------------------
@@ -660,15 +755,31 @@ package body VCS_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Dirs : String_Id_Array := Source_Dirs (Get_Project_View (Kernel));
-      --  ??? we need a project-recursive version of this function.
+      Dirs : String_List.List := Get_Dirs_In_Project (Kernel);
+      Ref  : VCS_Access := Get_Current_Ref (Kernel);
    begin
-      for J in Dirs'Range loop
-         if Dirs (J) /= No_String then
-            Put_Line (Get_String (Dirs (J)));
-         end if;
-      end loop;
+      Update (Ref, Dirs);
    end On_Update_All;
+
+   -------------------
+   -- List_Open_Files --
+   -------------------
+
+   procedure List_Open_Files
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Ref      : VCS_Access := Get_Current_Ref (Kernel);
+      Explorer : VCS_View_Access := Get_Explorer (Kernel);
+   begin
+      if Explorer = null then
+         On_Open_Interface (Widget, Kernel);
+         Explorer := Get_Explorer (Kernel);
+      end if;
+
+      Clear (Explorer);
+      Get_Status (Ref, Get_Files_In_Project (Kernel));
+   end List_Open_Files;
 
    ----------
    -- Idle --
@@ -728,10 +839,10 @@ package body VCS_Module is
 
       Gtk_New (Menu_Item, -"List open files in project");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (List_Open_Files'Access),
---          Kernel_Handle (Kernel));
+      Kernel_Callback.Connect
+        (Menu_Item, "activate",
+         Kernel_Callback.To_Marshaller (List_Open_Files'Access),
+         Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
@@ -752,6 +863,13 @@ package body VCS_Module is
 
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
+
+      Gtk_New (Menu_Item, -"Update");
+      Register_Menu (Kernel, "/" & VCS, Menu_Item);
+      Kernel_Callback.Connect
+        (Menu_Item, "activate",
+         Kernel_Callback.To_Marshaller (On_Update'Access),
+         Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Open");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
@@ -815,11 +933,6 @@ package body VCS_Module is
 --         (Menu_Item, "activate",
 --          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
 --          Kernel_Handle (Kernel));
-
---       Register_Contextual_Menu
---         (Kernel          => Kernel,
---          Event_On_Widget =>
-
    end Initialize_Module;
 
    ---------------------
