@@ -463,7 +463,10 @@ begin
    Gtk_New
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
    Set_Title (GPS, "GPS - the GNAT Programming System");
-   Maximize (GPS);
+
+   if Get_Pref (GPS.Kernel, Start_Maximized) then
+      Maximize (GPS);
+   end if;
 
    loop
       case Getopt ("-version -help P:") is
