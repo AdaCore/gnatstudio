@@ -86,6 +86,7 @@ with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Widget;
 with Prj;
+with Src_Info;
 with Language;
 
 package Glide_Kernel.Modules is
@@ -386,6 +387,15 @@ package Glide_Kernel.Modules is
       return Language.Language_Category;
    --  Return the category for the entity
 
+   function Get_Declaration (Context : access Entity_Selection_Context)
+      return Src_Info.E_Declaration_Info;
+   --  Return the location of the declaration for the entity in Context.
+   --  This information is automatically cached in the context, in case several
+   --  modules need to compute it;
+   --  No_Declaration_Info is returned if the information could not be found.
+   --  No also that in most cases you should set the busy cursor before calling
+   --  this function, since it might take some time.
+
 private
 
    type File_Name_Selection_Context is new Selection_Context with record
@@ -399,9 +409,11 @@ private
    end record;
 
    type Entity_Selection_Context is new File_Name_Selection_Context with record
-      Category    : Language.Language_Category := Language.Cat_Unknown;
-      Entity_Name : GNAT.OS_Lib.String_Access := null;
+      Category     : Language.Language_Category := Language.Cat_Unknown;
+      Entity_Name  : GNAT.OS_Lib.String_Access := null;
       Line, Column : Integer := 0;
+      Decl         : Src_Info.E_Declaration_Info :=
+        Src_Info.No_Declaration_Info;
    end record;
 
    pragma Inline (Has_Project_Information,

@@ -43,6 +43,8 @@ with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
 with Gtk.Widget;        use Gtk.Widget;
 with Language;          use Language;
 with Prj;               use Prj;
+with Src_Info;          use Src_Info;
+with Src_Info.Queries;  use Src_Info.Queries;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
@@ -841,5 +843,42 @@ package body Glide_Kernel.Modules is
       end loop;
    end Display_Differences;
 
+   ---------------------
+   -- Get_Declaration --
+   ---------------------
+
+   function Get_Declaration (Context : access Entity_Selection_Context)
+      return Src_Info.E_Declaration_Info
+   is
+      Lib_Info : LI_File_Ptr;
+      Location : File_Location;
+      Status : Find_Decl_Or_Body_Query_Status;
+   begin
+      if Context.Decl = No_Declaration_Info then
+         Lib_Info := Locate_From_Source_And_Complete
+           (Get_Kernel (Context), File_Information (Context));
+
+         if Lib_Info = No_LI_File then
+            Trace (Me, "Couldn't find LI file for "
+                   & File_Information (Context));
+         else
+            Find_Declaration_Or_Body
+              (Lib_Info           => Lib_Info,
+               File_Name          => File_Information (Context),
+               Entity_Name        => Entity_Name_Information (Context),
+               Line               => Line_Information (Context),
+               Column             => Column_Information (Context),
+               Entity_Declaration => Context.Decl,
+               Location           => Location,
+               Status             => Status);
+
+            if Status /= Success then
+               Context.Decl := No_Declaration_Info;
+            end if;
+         end if;
+      end if;
+
+      return Context.Decl;
+   end Get_Declaration;
 
 end Glide_Kernel.Modules;
