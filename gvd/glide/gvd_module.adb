@@ -1890,7 +1890,9 @@ package body GVD_Module is
                declare
                   Full : constant String := Base_Name (Mains (M).all);
                   Exec : constant String := Full
-                    (Full'First .. Delete_File_Suffix (Full, Current (Iter)));
+                    (Full'First .. Delete_File_Suffix (Full, Current (Iter))) &
+                    Debuggable_Suffix.all;
+
                begin
                   Gtk_New (Mitem, Exec);
                   Append (Menu, Mitem);
