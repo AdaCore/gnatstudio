@@ -66,7 +66,9 @@ package body Task_Manager is
      (Manager : in Task_Manager_Access) return Boolean
    is
       Result : Boolean;
-      pragma Unreferenced (Result);
+      Return_Type : Command_Return_Type;
+      pragma Unreferenced (Result, Return_Type);
+
    begin
       Result := Execute_Incremental (Manager, True);
 
@@ -79,6 +81,7 @@ package body Task_Manager is
 
       else
          Manager.Running_Active := False;
+         Return_Type := Execute (Manager.Pop_Command);
          return False;
       end if;
 
@@ -96,7 +99,8 @@ package body Task_Manager is
      (Manager : in Task_Manager_Access) return Boolean
    is
       Result : Boolean;
-      pragma Unreferenced (Result);
+      Return_Type : Command_Return_Type;
+      pragma Unreferenced (Result, Return_Type);
    begin
       Result := Execute_Incremental (Manager, False);
 
@@ -107,6 +111,7 @@ package body Task_Manager is
       if Manager.Queues /= null then
          return True;
       else
+         Return_Type := Execute (Manager.Pop_Command);
          Manager.Running_Passive := False;
          return False;
       end if;
@@ -181,7 +186,11 @@ package body Task_Manager is
 
          Command := Command_Queues.Head (Manager.Queues (Current).Queue);
 
-         Result := Execute (Command);
+         if Manager.Queues (Current).Status = Interrupted then
+            Result := Success;
+         else
+            Result := Execute (Command);
+         end if;
 
          Manager.Queues (Current).Need_Refresh := True;
 
@@ -189,43 +198,46 @@ package body Task_Manager is
             when Success | Failure =>
                --  ??? add the command to the list of done or failed commands.
 
-               if Result = Success then
-                  declare
-                     New_Queue : constant Command_Queues.List :=
-                       Get_Consequence_Actions (Command);
-                  begin
-                     Manager.Queues (Current).Total :=
-                       Manager.Queues (Current).Total
-                       + Command_Queues.Length (New_Queue);
-                     Command_Queues.Concat
-                       (Manager.Queues (Current).Queue,
-                        New_Queue);
-                  end;
-
-                  Free_Alternate_Actions (Command, True);
-                  Free_Consequence_Actions (Command, False);
+               if Manager.Queues (Current).Status = Interrupted then
+                  Command_Queues.Free (Manager.Queues (Current).Queue);
                else
-                  declare
-                     New_Queue : constant Command_Queues.List :=
-                       Get_Alternate_Actions (Command);
-                  begin
-                     Manager.Queues (Current).Total :=
-                       Manager.Queues (Current).Total
-                       + Command_Queues.Length (New_Queue);
-                     Command_Queues.Concat
-                       (Manager.Queues (Current).Queue,
-                        New_Queue);
-                  end;
+                  if Result = Success then
+                     declare
+                        New_Queue : constant Command_Queues.List :=
+                          Get_Consequence_Actions (Command);
+                     begin
+                        Manager.Queues (Current).Total :=
+                          Manager.Queues (Current).Total
+                          + Command_Queues.Length (New_Queue);
+                        Command_Queues.Concat
+                          (Manager.Queues (Current).Queue,
+                           New_Queue);
+                     end;
 
-                  Free_Consequence_Actions (Command, True);
-                  Free_Alternate_Actions (Command, False);
+                     Free_Alternate_Actions (Command, True);
+                     Free_Consequence_Actions (Command, False);
+                  else
+                     declare
+                        New_Queue : constant Command_Queues.List :=
+                          Get_Alternate_Actions (Command);
+                     begin
+                        Manager.Queues (Current).Total :=
+                          Manager.Queues (Current).Total
+                          + Command_Queues.Length (New_Queue);
+                        Command_Queues.Concat
+                          (Manager.Queues (Current).Queue,
+                           New_Queue);
+                     end;
+
+                     Free_Consequence_Actions (Command, True);
+                     Free_Alternate_Actions (Command, False);
+                  end if;
+
+                  Command_Queues.Next (Manager.Queues (Current).Queue);
+
+                  Manager.Queues (Current).Done :=
+                    Manager.Queues (Current).Done + 1;
                end if;
-
-               Command_Queues.Next (Manager.Queues (Current).Queue);
-
-               Manager.Queues (Current).Done :=
-                 Manager.Queues (Current).Done + 1;
-
                --  If it was the last command in the queue, free the queue.
 
                if Command_Queues.Is_Empty
@@ -310,14 +322,16 @@ package body Task_Manager is
    is
       Idle_Handler    : Idle_Handler_Id;
       Timeout_Handler : Timeout_Handler_Id;
-
-      pragma Unreferenced (Idle_Handler, Timeout_Handler);
+      Result          : Command_Return_Type;
+      pragma Unreferenced (Idle_Handler, Timeout_Handler, Result);
    begin
       if not Manager.Running_Passive then
          Manager.Running_Passive := True;
 
          Timeout_Handler := Task_Manager_Timeout.Add
            (Timeout, Passive_Incremental'Access, Manager);
+
+         Result := Execute (Manager.Push_Command);
       end if;
 
       if Active
@@ -327,6 +341,8 @@ package body Task_Manager is
 
          Idle_Handler := Task_Manager_Idle.Add
            (Active_Incremental'Access, Manager);
+
+         Result := Execute (Manager.Push_Command);
       end if;
    end Run;
 
@@ -428,5 +444,22 @@ package body Task_Manager is
    begin
       Manager.Progress_Area := Area;
    end Set_Progress_Area;
+
+   procedure Set_Busy_Commands
+     (Manager      : Task_Manager_Access;
+      Push_Command : Command_Access;
+      Pop_Command  : Command_Access) is
+   begin
+      if Manager.Push_Command /= null then
+         Destroy (Manager.Push_Command);
+      end if;
+
+      if Manager.Pop_Command /= null then
+         Destroy (Manager.Pop_Command);
+      end if;
+
+      Manager.Push_Command := Push_Command;
+      Manager.Pop_Command := Pop_Command;
+   end Set_Busy_Commands;
 
 end Task_Manager;
