@@ -5773,7 +5773,7 @@ cursor should be highlighted. The list of delimiters includes: @code{@{@}[]()}
 The period (in seconds) after which an editor is automatically saved,
 0 if none.
 
-Each modified file is saved under a file called @code{.#filename}, which is
+Each modified file is saved under a file called @code{.#filename#}, which is
 removed on the next explicit save operation.
 
 @item Column highlight
