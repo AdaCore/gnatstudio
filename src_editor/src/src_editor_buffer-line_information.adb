@@ -1633,13 +1633,21 @@ package body Src_Editor_Buffer.Line_Information is
 
                begin
                   Line_Data.Text := new String (1 .. Length);
+
                   Glib.Convert.Convert
                     (UTF8, Length,
                      Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
                      Ignore, Bytes, Result => Line_Data.Text.all);
 
-                  --  ??? Should not ignore Bytes, otherwise Line_Data.Text
-                  --  will contain garbage
+                  if Bytes < Length then
+                     declare
+                        Stripped : constant String :=
+                          Line_Data.Text (1 .. Bytes);
+                     begin
+                        Free (Line_Data.Text);
+                        Line_Data.Text := new String'(Stripped);
+                     end;
+                  end if;
 
                   g_free (UTF8);
                end;
@@ -1732,7 +1740,20 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer.Modifying_Editable_Lines := False;
             Buffer.Inserting := True;
             Buffer.Blocks_Timeout_Registered := True;
-            Insert (Buffer, Iter, Editable_Lines (Line).Text.all & ASCII.LF);
+
+            declare
+               Length        : constant Integer :=
+                 Editable_Lines (Line).Text'Length;
+               Result_String : String (1 .. Length * 2 + 1);
+               Ignore, Bytes : Natural;
+            begin
+               Glib.Convert.Convert
+                 (Editable_Lines (Line).Text.all & ASCII.LF,
+                  "UTF-8", Get_Pref (Buffer.Kernel, Default_Charset),
+                  Ignore, Bytes, Result => Result_String);
+               Insert (Buffer, Iter, Result_String (1 .. Bytes));
+            end;
+
             Buffer.Blocks_Timeout_Registered := False;
             Buffer.Inserting := False;
             Buffer.Modifying_Editable_Lines := True;
