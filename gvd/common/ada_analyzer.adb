@@ -557,6 +557,7 @@ package body Ada_Analyzer is
            and then Constructs /= null
            and then
              (Value.Token /= Tok_Case or else Top (Stack).Token /= Tok_Record)
+           and then (Value.Token /= Tok_Type or else not In_Generic)
          then
             Column             := Prec - Line_Start (Prec) + 1;
             Info               := Constructs.Current;
@@ -826,11 +827,13 @@ package body Ada_Analyzer is
             end if;
 
          elsif Reserved = Tok_With then
-            if Top_Token.Token = No_Token then
-               Push (Tokens, Temp);
+            if not In_Generic then
+               if Top_Token.Token = No_Token then
+                  Push (Tokens, Temp);
 
-            elsif Top_Token.Token = Tok_Type then
-               Top_Token.Tagged_Type := True;
+               elsif Top_Token.Token = Tok_Type then
+                  Top_Token.Tagged_Type := True;
+               end if;
             end if;
 
          elsif Reserved = Tok_Use and then
@@ -899,14 +902,16 @@ package body Ada_Analyzer is
                Push (Tokens, Temp);
 
             elsif Reserved = Tok_Is then
-               case Top_Token.Token is
-                  when Tok_Case | Tok_Type | Tok_Subtype =>
-                     null;
+               if not In_Generic then
+                  case Top_Token.Token is
+                     when Tok_Case | Tok_Type | Tok_Subtype =>
+                        null;
 
-                  when others =>
-                     Subprogram_Decl := False;
-                     Top_Token.Declaration := True;
-               end case;
+                     when others =>
+                        Subprogram_Decl := False;
+                        Top_Token.Declaration := True;
+                  end case;
+               end if;
 
             elsif Reserved = Tok_Else
               or else (Top_Token.Token = Tok_Select
@@ -995,12 +1000,12 @@ package body Ada_Analyzer is
             then
                Top_Token.Type_Declaration := True;
 
-            elsif not In_Generic then
+            else
                Push (Tokens, Temp);
             end if;
 
          elsif Reserved = Tok_Exception then
-            if not Top_Token.Declaration then
+            if Top_Token.Token /= Tok_Identifier then
                Num_Spaces := Num_Spaces - Indent_Level;
                Do_Indent (Prec, Num_Spaces);
                Num_Spaces := Num_Spaces + 2 * Indent_Level;
@@ -1096,16 +1101,17 @@ package body Ada_Analyzer is
                while Buffer (P) = '-'
                  and then Buffer (Next_Char (P)) = '-'
                loop
-               --  Following line commented because it is too disruptive, e.g:
-               --  procedure F  --  multiline
-               --               --  comment should be aligned properly
-               --  ??? Do_Indent (P, Num_Spaces);
+                  --  Following line commented because it is too disruptive,
+                  --  e.g:
+                  --  procedure F  --  multiline
+                  --               --  comment should be aligned properly
+                  --  ??? Do_Indent (P, Num_Spaces);
 
                   P := Next_Line (Next_Char (P));
                   New_Line (Line_Count);
                end loop;
 
-               if Buffer (P) = ASCII.LF then
+               if P < Buffer_Length and then Buffer (P) = ASCII.LF then
                   P := Prev_Char (P);
                end if;
 
@@ -1364,7 +1370,6 @@ package body Ada_Analyzer is
 
                      if Num_Parens = 0 then
                         if Subprogram_Decl
-                          or else Top_Token.Token = Tok_Type
                           or else Top_Token.Token = Tok_Subtype
                           or else Top_Token.Token = Tok_For
                         then
@@ -1378,13 +1383,12 @@ package body Ada_Analyzer is
                               Pop (Tokens);
                            end if;
 
-                           if Subprogram_Decl then
-                              Subprogram_Decl := False;
-                           end if;
+                           Subprogram_Decl := False;
 
                         elsif Top_Token.Token = Tok_With
                           or else Top_Token.Token = Tok_Use
                           or else Top_Token.Token = Tok_Identifier
+                          or else Top_Token.Token = Tok_Type
                         then
                            Pop (Tokens);
                         end if;
