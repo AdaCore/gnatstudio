@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -152,14 +152,6 @@ package body Src_Editor_Module is
    procedure On_Save_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Save As menu
-
-   procedure On_Undo
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Undo menu
-
-   procedure On_Redo
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Redo menu
 
    procedure On_Cut
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -440,7 +432,8 @@ package body Src_Editor_Module is
    is
       Success     : Boolean;
       Editor      : Source_Editor_Box;
-      File_Exists : Boolean := True;
+      File_Exists : Boolean := False;
+
    begin
       if File /= "" then
          File_Exists := Is_Regular_File (File);
@@ -448,17 +441,22 @@ package body Src_Editor_Module is
 
       --  Create a new editor only if the file exists or we are asked to
       --  create a new empty one anyway.
+
       if File_Exists or else Create_New then
          Gtk_New (Editor, Kernel_Handle (Kernel));
       end if;
 
-      if File /= "" and then File_Exists then
+      if File_Exists then
          Load_File (Editor, File, Get_Language_Handler (Kernel),
                     Success => Success);
+
          if not Success then
             Destroy (Editor);
             Editor := null;
          end if;
+
+      else
+         Load_Empty_File (Editor, File, Get_Language_Handler (Kernel));
       end if;
 
       return Editor;
@@ -473,16 +471,15 @@ package body Src_Editor_Module is
       File       : String := "";
       Create_New : Boolean := True) return Source_Editor_Box
    is
-      MDI         : constant MDI_Window := Get_MDI (Kernel);
-      Short_File  : constant String := Base_Name (File);
-      Editor      : Source_Editor_Box;
-      Box         : Source_Box;
-      Child       : MDI_Child;
-      Iter        : Child_Iterator := First_Child (MDI);
+      MDI        : constant MDI_Window := Get_MDI (Kernel);
+      Short_File : constant String := Base_Name (File);
+      Editor     : Source_Editor_Box;
+      Box        : Source_Box;
+      Child      : MDI_Child;
+      Iter       : Child_Iterator := First_Child (MDI);
 
    begin
       if File /= "" then
-         --  ??? Should do a search on the full filename instead
          loop
             Child := Get (Iter);
             exit when Child = null
@@ -648,38 +645,6 @@ package body Src_Editor_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_New_File;
-
-   -------------
-   -- On_Undo --
-   -------------
-
-   procedure On_Undo
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget, Kernel);
-   begin
-      null;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Undo;
-
-   -------------
-   -- On_Redo --
-   -------------
-
-   procedure On_Redo
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget, Kernel);
-   begin
-      null;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Redo;
 
    -------------
    -- On_Save --
@@ -991,8 +956,10 @@ package body Src_Editor_Module is
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
       pragma Unreferenced (Mode);
+
       Edit : Source_Editor_Box;
-      Id : Idle_Handler_Id;
+      Id   : Idle_Handler_Id;
+
    begin
       if Mime_Type = Mime_Source_File then
          declare
@@ -1001,8 +968,9 @@ package body Src_Editor_Module is
             Column    : constant Gint    := Get_Int (Data (Data'First + 2));
             Highlight : constant Boolean :=
               Get_Boolean (Data (Data'First + 3));
+
          begin
-            Edit := Open_File (Kernel, File, Create_New => False);
+            Edit := Open_File (Kernel, File, Create_New => True);
 
             if Edit /= null
               and then (Line /= 0 or else Column /= 0)
@@ -1100,14 +1068,14 @@ package body Src_Editor_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      File    : constant String := '/' & (-"File") & '/';
-      Edit    : constant String := '/' & (-"Edit") & '/';
-      Gotom   : constant String := '/' & (-"Navigate") & '/';
-      Mitem   : Gtk_Menu_Item;
-      Button  : Gtk_Button;
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-
+      File      : constant String := '/' & (-"File") & '/';
+      Edit      : constant String := '/' & (-"Edit") & '/';
+      Gotom     : constant String := '/' & (-"Navigate") & '/';
+      Mitem     : Gtk_Menu_Item;
+      Button    : Gtk_Button;
+      Toolbar   : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       Undo_Redo : Undo_Redo_Information;
+
    begin
       Src_Editor_Module_Id := Register_Module
         (Kernel                  => Kernel,
@@ -1131,23 +1099,25 @@ package body Src_Editor_Module is
       Register_Menu
         (Kernel, File, Mitem, Ref_Item => -"Reopen", Add_Before => False);
 
-      Register_Menu (Kernel, File, -"New",  Stock_New, On_New_File'Access,
+      Register_Menu (Kernel, File, -"New", Stock_New, On_New_File'Access,
                      Ref_Item => -"Open...");
-      Register_Menu (Kernel, File, -"New View",  "", On_New_View'Access,
+      Register_Menu (Kernel, File, -"New View", "", On_New_View'Access,
                      Ref_Item => -"Open...");
 
-      Register_Menu (Kernel, File, -"Save",  Stock_Save, On_Save'Access,
+      Register_Menu (Kernel, File, -"Save", Stock_Save, On_Save'Access,
                      GDK_S, Control_Mask, Ref_Item => -"Close");
-      Register_Menu (Kernel, File, -"Save As...",  Stock_Save_As,
+      Register_Menu (Kernel, File, -"Save As...", Stock_Save_As,
                      On_Save_As'Access, Ref_Item => -"Close");
 
-      Undo_Redo.Undo_Menu_Item :=
-        Register_Menu (Kernel, Edit, -"Undo",  Stock_Undo,
-                       On_Undo'Access, Ref_Item => -"Preferences");
+      --  Note: callbacks for the Undo/Redo menu items will be added later
+      --  by each source editor.
 
+      Undo_Redo.Undo_Menu_Item :=
+        Register_Menu (Kernel, Edit, -"Undo", Stock_Undo,
+                       null, GDK_Z, Control_Mask, Ref_Item => -"Preferences");
       Undo_Redo.Redo_Menu_Item :=
-        Register_Menu (Kernel, Edit, -"Redo",  Stock_Redo,
-                       On_Redo'Access, Ref_Item => -"Preferences");
+        Register_Menu (Kernel, Edit, -"Redo", Stock_Redo,
+                       null, GDK_R, Control_Mask, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu
@@ -1180,10 +1150,6 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Gotom, -"Goto Body", Stock_Home,
                      On_Goto_Body'Access,
                      Ref_Item => -"Goto Declaration");
-
-      --  ??? Not implemented yet
-      Register_Menu (Kernel, Gotom, -"Goto Body", "", null,
-                     Ref_Item => -"Goto Declaration<->Body");
 
       --  Toolbar buttons
 
