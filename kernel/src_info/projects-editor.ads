@@ -101,7 +101,8 @@ package Projects.Editor is
                                  );
 
    function Add_Imported_Project
-     (Project                   : Project_Type;
+     (Root_Project              : Project_Type;
+      Project                   : Project_Type;
       Imported_Project_Location : String;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
@@ -114,7 +115,8 @@ package Projects.Editor is
    --  statement, otherwise an absolute path is used.
 
    function Add_Imported_Project
-     (Project                   : Project_Type;
+     (Root_Project              : Project_Type;
+      Project                   : Project_Type;
       Imported_Project          : Project_Type;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;

@@ -72,7 +72,8 @@ package body Projects.Editor is
    --  Reset all the caches for the whole project hierarchy
 
    function Add_Imported_Project
-     (Project                   : Project_Type;
+     (Root_Project              : Project_Type;
+      Project                   : Project_Type;
       Imported_Project          : Project_Node_Id;
       Imported_Project_Location : String;
       Report_Errors             : Output.Output_Proc := null;
@@ -2731,7 +2732,8 @@ package body Projects.Editor is
    --------------------------
 
    function Add_Imported_Project
-     (Project                   : Project_Type;
+     (Root_Project              : Project_Type;
+      Project                   : Project_Type;
       Imported_Project          : Project_Node_Id;
       Imported_Project_Location : String;
       Report_Errors             : Output.Output_Proc := null;
@@ -2757,6 +2759,8 @@ package body Projects.Editor is
       end Fail;
 
       With_Clause : Project_Node_Id;
+      Iter        : Imported_Project_Iterator;
+      Tmp_Prj     : Project_Type;
    begin
       Output.Set_Special_Output (Report_Errors);
       Prj.Com.Fail := Fail'Unrestricted_Access;
@@ -2784,7 +2788,9 @@ package body Projects.Editor is
            Prj.Tree.Name_Of (Imported_Project)
          then
             if Report_Errors /= null then
-               Report_Errors (-"This dependency already exists");
+               Report_Errors
+                 (-"There is already a dependency on "
+                  & Get_String (Prj.Tree.Name_Of (Imported_Project)));
             end if;
             Output.Set_Special_Output (null);
             Prj.Com.Fail := null;
@@ -2823,8 +2829,16 @@ package body Projects.Editor is
 
       Set_Project_Modified (Project, True);
 
+      --  Reset all importing caches, since they store the list recursively
+      Iter := Start (Root_Project);
+      loop
+         Tmp_Prj := Current (Iter);
+         Reset_Cache (Tmp_Prj, Imported_By => False);
+         exit when Tmp_Prj = Root_Project;
+         Next (Iter);
+      end loop;
 
-      Reset_Cache (Project, Imported_By => False);
+      --  Reset_Cache (Project, Imported_By => False);
       Reset_Cache
         (Get_Project_From_Name
            (Project_Registry'Class (Get_Registry (Project)),
@@ -2845,7 +2859,8 @@ package body Projects.Editor is
    --------------------------
 
    function Add_Imported_Project
-     (Project                   : Project_Type;
+     (Root_Project              : Project_Type;
+      Project                   : Project_Type;
       Imported_Project          : Project_Type;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
@@ -2853,7 +2868,8 @@ package body Projects.Editor is
       return Import_Project_Error is
    begin
       return Add_Imported_Project
-        (Project                   => Project,
+        (Root_Project              => Root_Project,
+         Project                   => Project,
          Imported_Project          => Imported_Project.Node,
          Imported_Project_Location => Project_Path (Imported_Project),
          Report_Errors             => Report_Errors,
@@ -2866,7 +2882,8 @@ package body Projects.Editor is
    --------------------------
 
    function Add_Imported_Project
-     (Project                   : Project_Type;
+     (Root_Project              : Project_Type;
+      Project                   : Project_Type;
       Imported_Project_Location : String;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
@@ -2938,7 +2955,8 @@ package body Projects.Editor is
       end if;
 
       return Add_Imported_Project
-        (Project           => Project,
+        (Root_Project      => Root_Project,
+         Project           => Project,
          Imported_Project  => Imported_Project,
          Imported_Project_Location => Imported_Project_Location,
          Report_Errors     => Report_Errors,
