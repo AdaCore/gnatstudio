@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2004                       --
+--                           ACT-Europe                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,8 @@
 
 --  This is the general Ada (non debugger specific) support package.
 --  See language.ads for a complete spec.
+
+with Case_Handling; use Case_Handling;
 
 package Language.Ada is
 
@@ -91,11 +93,13 @@ package Language.Ada is
       Result : out Construct_List);
 
    procedure Format_Buffer
-     (Lang          : access Ada_Language;
-      Buffer        : String;
-      Replace       : Replace_Text_Callback;
-      From, To      : Natural := 0;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
+     (Lang            : access Ada_Language;
+      Buffer          : String;
+      Replace         : Replace_Text_Callback;
+      From, To        : Natural := 0;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
+      Case_Exceptions : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception);
 
    procedure Parse_Entities
      (Lang     : access Ada_Language;
