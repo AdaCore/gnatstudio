@@ -390,27 +390,6 @@ package body Language.Custom is
          Parse_Shared_Lib (Tmp_Str.all);
       end if;
 
-      --  Concatenate all Keyword tags
-
-      Node := Top.Child;
-
-      loop
-         Node := Find_Tag (Node, "Keywords");
-
-         exit when Node = null;
-
-         Append (Str, Node.Value.all);
-         Node := Node.Next;
-      end loop;
-
-      declare
-         Keywords : constant String := To_String (Str);
-      begin
-         if Keywords /= "" then
-            Lang.Keywords := new Pattern_Matcher'(Compile (Keywords));
-         end if;
-      end;
-
       --  Concatenate all project fields
 
       Node := Find_Tag (Top.Child, "Project_Field");
@@ -495,6 +474,28 @@ package body Language.Custom is
             Flags := Multiple_Lines or Case_Insensitive;
          end if;
       end if;
+
+      --  Concatenate all Keyword tags
+
+      Node := Top.Child;
+
+      loop
+         Node := Find_Tag (Node, "Keywords");
+
+         exit when Node = null;
+
+         Append (Str, Node.Value.all);
+         Node := Node.Next;
+      end loop;
+
+      declare
+         Keywords : constant String := To_String (Str);
+      begin
+         if Keywords /= "" then
+            Lang.Keywords := new Pattern_Matcher'
+              (Compile (Keywords, Flags and not Multiple_Lines));
+         end if;
+      end;
 
       Parent := Find_Tag (Top.Child, "Categories");
 
