@@ -138,58 +138,63 @@ at the moment it crashed.
 @c --------------------------------------------------------------------
 
 The menu bar provides operations that act either at a global level, or on
-a specific debugger. Since GVD can handle multiple debugger at the same
+a specific debugger. Since GVD can handle multiple debuggers at the same
 time, the commands that deal with debugging or a specific module are always
 using the current debugger to perform the various operations provided by the
-menus. Key short cuts are also available for the most common operations, and
+menus. Key shortcuts are also available for the most common operations, and
 are displayed in the menus themselves.
 Here is a detailed list of the menu items that can be found in the menu bar:
 
 @subsection File
 @itemize @bullet
-   @item Open Program...
+   @item Open Program.
+@anchor{open program menu}..
 Open a file selection dialog that allows you to choose a program to
 debug. The program to debug is either an executable for native debugging, or
 a partially linked module for cross environments (e.g vxWorks).
-Do not use this menu to edit a source file, use the ???xref
-source explorer or the ???xref Open Source menu instead.
+Do not use this menu to edit a source file, see the @ref{The Explorer Window},
+or the @ref{open source menu}.
 
    @item New Debugger...
+@anchor{new debugger menu}
 Open a dialog to create a new debugger window. The new debugger window will be
 added as a new page in the main window.
 This dialog allows you to specify the name of the executable to debug by
-entering its naming in the @i{Program File entry}, or by clicking on the
-@dots{} button to will open a file selection dialog. You can also select
+entering its name in the @i{Program File entry}, or by clicking on the
+@dots{} button to open a file selection dialog. You can also select
 the machine on which your underlying debugger (e.g GDB) will run. By default,
 the debugger will run on the current machine (the machine on which GVD is
 running), so you only need to specify a value for remote debugging.
-???xref section remote debugging for more information.
+For more informatino, see @ref{Debugging a program remotely}.
 
 @b{Limitation}: under Windows systems, you can only have one debugger window
 at a time, so use this menu only after having closed the current debugger, and
 launch several GVDs to debug multiple processes.
-See also ???xref the @i{Close} menu to close a debugger window.
+See also the @ref{close menu}, to close a debugger window.
 
    @item Open Core Dump...
+@anchor{core files}
 This will open a file selection dialog that allows you to debug a core file
 instead of debugging a running process. Note that you must specify an
-executable to debug before, by either using the ???xref @i{Open File} menu of
-specifying the name of the executable on the command line (???xref).
+executable to debug before, by either using the @ref{open program menu}, or
+by specifying the name of the executable on the command line (@pxref{Command
+Line Options}).
 
    @item Edit Source.
-Launch an external editor that will open the file currently displayed in the
-???xref source window. You can specify the name of the external editor by
-using the ???xref @i{Edit->Preferences...} menu.
+Launch an external editor that will open the file currently displayed in
+@ref{The Source Window}. You can specify the name of the external editor by
+using the @ref{preferences menu}.
 
    @item Open Source...
-Open a file selection dialog that allows you to load a source file in the
-???xref source window. See also ???xref the source explorer for another
-convenient way of open source files.
+@anchor{open source menu}
+Open a file selection dialog that allows you to load any source file in the
+source window. You can also open directly the source files used in your
+application by using @ref{The Explorer Window}.
 
    @item Open Session...
 Open a dialog giving you the list of sessions that are saved under the
-@code{$HOME/.gvd/sessions} directory under Unix systems, and
-@code{%HOME%\.gvd\sessions} under Windows systems. The @i{Session List} area
+@file{$HOME/.gvd/sessions} directory under Unix systems, and
+@file{%HOME%\.gvd\sessions} under Windows systems. The @i{Session List} area
 lists all
 such sessions. The @i{Session} field shows the current selection (that can
 be filled either by entering the name on the keyboard, or by clicking in the
@@ -212,7 +217,7 @@ By default, this will save all the sub sessions ran in GVD since start up.
    @item Attach To Process...
 Instead of starting a program to debug, you can instead attach GVD to an
 already running process. To do so, you need to specify the process id
-of the process you want to debug. Note that as for ???xref core files, you need
+of the process you want to debug. Note that as for @ref{core files}, you need
 to specify an executable before attaching to a process.
 
    @item Detach Process.
@@ -226,10 +231,12 @@ debugger. Useful in particular before executing a process, or loading a
 file using a relative path.
 
    @item Close.
+@anchor{close menu}
 Close the current debugger. If this is the last debugger, the main window
 will remain visible, but with a gray area instead of the notebook containing
 the Data, Explorer, Source and Debugger windows.
-???xref See also the @i{New Debugger} menu to create a new debugger.
+To create a new debugger, see also the @ref{new debugger menu}.
+
    @item Exit
 @end itemize
 
@@ -237,12 +244,15 @@ the Data, Explorer, Source and Debugger windows.
 The only item currently available in this menu is the preferences menu.
 
 @subsubsection Preferences...
+@anchor{preferences menu}
 Open a dialog window allowing you to modify the global preferences of GVD.
-To enable the new preferences, you simply need to confirm by using the
+To enable the new preferences, you simply need to confirm by pressing the
 @i{OK} button. The preferences will be saved in a file located under
-@code{$HOME/.gvd/preferences} under Unix systems, and
-@code{%HOME%\.gvd\preferences} under Windows systems.
+@file{$HOME/.gvd/preferences} under Unix systems, and
+@file{%HOME%\.gvd\preferences} under Windows systems.
+
 ???image
+
 The preferences dialog is composed of five pages, accessible through the
 tabs at the top of the dialog, labelled @i{General}, @i{Source}, @i{Data},
 @i{Command}, @i{Helpers}. Each page corresponds to a section of preferences.
@@ -894,7 +904,7 @@ Windows) if GVD_HOME is not set, or to $GVD_HOME/.gvd (resp. %GVD_HOME%\.gvd)
 if set.
 
    @item GVD_EDITOR.
-Override the default editor as found in ???xref the @i{Preferences} menu,
+Override the default editor as found in the @ref{preferences menu},
 Helpers section.
 
 @end itemize
