@@ -121,7 +121,12 @@ package body Odd.Dialogs is
          Add (Task_Dialog.Scrolledwindow1, Task_Dialog.List);
 
          for J in Information'First + 1 .. Information'Last loop
-            Row := Append (Task_Dialog.List, Information (J).Information);
+            declare
+               Info : Chars_Ptr_Array := Information (J).Information;
+               --  ??? workaround a bug in GNAT 3.12p that is fixed in 3.13
+            begin
+               Row := Append (Task_Dialog.List, Info);
+            end;
          end loop;
 
          Row := Columns_Autosize (Task_Dialog.List);
