@@ -180,7 +180,6 @@ package body Project_Viewers is
 
    type User_Data is record
       File_Name : String_Id;
-      Directory : String_Id;
    end record;
    package Project_User_Data is new Row_Data (User_Data);
 
@@ -193,7 +192,6 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      Project          : Project_Type;
       File_Name        : String_Id;
       Directory_Filter : String := "");
    --  Append a new line in the current page of Viewer, for File_Name.
@@ -208,11 +206,6 @@ package body Project_Viewers is
    --  Same as above, except we have already found the proper location for
    --  the file.
    --  Return the number of the newly inserted row
-
-   function Find_In_Source_Dirs
-     (Project : Project_Type; File : String) return String_Id;
-   --  Return the location of File in the source dirs of Project_View.
-   --  null is returned if the file wasn't found.
 
    procedure Select_Row
      (Viewer : access Gtk_Widget_Record'Class; Args : Gtk_Args);
@@ -534,33 +527,6 @@ package body Project_Viewers is
       Refresh_Reopen_Menu (Kernel);
    end Add_To_Reopen;
 
-   -------------------------
-   -- Find_In_Source_Dirs --
-   -------------------------
-
-   function Find_In_Source_Dirs
-     (Project : Project_Type; File : String) return String_Id
-   is
-      Dirs : constant String_Id_Array := Source_Dirs (Project);
-   begin
-      --  We do not use Ada_Include_Path to locate the source file,
-      --  since this would include directories from imported project
-      --  files, and thus slow down the search. Instead, we search
-      --  in all the directories directly belong to the project.
-
-      for D in Dirs'Range loop
-         String_To_Name_Buffer (Dirs (D));
-
-         if Is_Regular_File
-           (Name_As_Directory (Name_Buffer (1 .. Name_Len)) & File)
-         then
-            return Dirs (D);
-         end if;
-      end loop;
-
-      return No_String;
-   end Find_In_Source_Dirs;
-
    -------------------------------
    -- Compiler_Switches_Display --
    -------------------------------
@@ -685,12 +651,10 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      Project          : Project_Type;
       File_Name        : String_Id;
       Directory_Filter : String := "")
    is
       File_N   : String (1 .. Integer (String_Length (File_Name)));
-      Dir_Name : String_Id;
 
    begin
       String_To_Name_Buffer (File_Name);
@@ -703,15 +667,16 @@ package body Project_Viewers is
          return;
       end if;
 
-      Dir_Name := Find_In_Source_Dirs (Project, File_N);
-      pragma Assert (Dir_Name /= No_String);
-
-      String_To_Name_Buffer (Dir_Name);
       Project_User_Data.Set
         (Viewer.List,
          Append_Line_With_Full_Name
-           (Viewer, File_N, Name_Buffer (1 .. Name_Len)),
-         (File_Name => File_Name, Directory => Dir_Name));
+           (Viewer, File_N,
+            Get_Full_Path_From_File
+              (Registry        => Get_Registry (Viewer.Kernel),
+               Filename        => File_N,
+               Use_Source_Path => True,
+               Use_Object_Path => False)),
+         (File_Name => File_Name));
    end Append_Line;
 
    ----------------
@@ -748,7 +713,11 @@ package body Project_Viewers is
                Creator => Module_ID (Prj_Editor_Module_ID));
             Set_File_Information
               (File,
-               Directory    => Get_String (User.Directory),
+               Directory    => Get_Full_Path_From_File
+                 (Registry        => Get_Registry (V.Kernel),
+                  Filename        => Get_String (User.File_Name),
+                  Use_Source_Path => True,
+                  Use_Object_Path => False),
                File_Name    => Get_String (User.File_Name),
                Project      => V.Project_Filter);
 
@@ -956,7 +925,7 @@ package body Project_Viewers is
       Freeze (Viewer.List);
 
       for F in Files'Range loop
-         Append_Line (Viewer, Project_Filter, Files (F), Directory_Filter);
+         Append_Line (Viewer, Files (F), Directory_Filter);
       end loop;
 
       Thaw (Viewer.List);
@@ -1562,7 +1531,7 @@ package body Project_Viewers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel, Event_Widget);
+      pragma Unreferenced (Event_Widget);
 
       Context     : constant File_Selection_Context_Access :=
         new File_Selection_Context;
@@ -1588,7 +1557,11 @@ package body Project_Viewers is
       if User.File_Name /= No_String then
          Set_File_Information
            (Context,
-            Directory    => Get_String (User.Directory),
+            Directory    => Get_Full_Path_From_File
+               (Registry        => Get_Registry (Kernel),
+                Filename        => Get_String (User.File_Name),
+                Use_Source_Path => True,
+                Use_Object_Path => False),
             File_Name    => Get_String (User.File_Name),
             Project      => V.Project_Filter);
       else
@@ -2161,6 +2134,8 @@ package body Project_Viewers is
       Changed : Boolean := False;
       Project_Uses_Relative_Paths : constant Boolean :=
         Get_Paths_Type (Project) = Relative;
+      Exec : constant String := Name_As_Directory
+        (Normalize_Pathname (Executables_Directory (Project)));
 
    begin
       Assert (Me, Project = Ref_Project,
@@ -2218,13 +2193,16 @@ package body Project_Viewers is
       end if;
 
       if (Get_Active (Obj_Dir.Same)
-          and then Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
-            (Normalize_Pathname (Executables_Directory (Project))))
+          and then Get_Text (Obj_Dir.Obj_Dir) /= Exec)
         or else (not Get_Active (Obj_Dir.Same)
-                 and then Get_Text (Obj_Dir.Exec_Dir) /= Name_As_Directory
-                   (Normalize_Pathname (Executables_Directory (Project))))
+                 and then Get_Text (Obj_Dir.Exec_Dir) /= Exec)
       then
-         if Exec_Dir.all = "" then
+         Trace (Me, "Exec directory was modified");
+         Changed := True;
+
+         if Exec_Dir.all = ""
+           or else Get_Active (Obj_Dir.Same)
+         then
             Delete_Attribute
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
@@ -2249,9 +2227,6 @@ package body Project_Viewers is
                Attribute_Name     => Exec_Dir_Attribute,
                Value              => Exec_Dir.all);
          end if;
-
-         Trace (Me, "Exec directory was modified");
-         Changed := True;
       end if;
 
       Free (New_Dir);
@@ -2271,10 +2246,10 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
-      pragma Unreferenced (Page, Kernel, Full_Project);
+      pragma Unreferenced (Page, Full_Project);
       Switches : Switches_Editors.Switches_Edit;
    begin
-      Gtk_New (Switches);
+      Gtk_New (Switches, Kernel);
       Show_All (Switches);
       Set_Switches (Switches, Project);
 
