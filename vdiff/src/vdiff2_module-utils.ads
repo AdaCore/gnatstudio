@@ -83,7 +83,8 @@ package Vdiff2_Module.Utils is
      (Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
-      Revert : Boolean := False) return Boolean;
+      Revert    : Boolean := False;
+      Tmp_File  : VFS.Virtual_File := VFS.No_File) return Boolean;
    --  Compute the differences from Diff_File.
    --  If Revert is False, create New_File from Orig_File and Diff_File.
    --  If Revert is True, create Orig_File from New_File and Diff_File.

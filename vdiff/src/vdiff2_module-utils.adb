@@ -1131,7 +1131,8 @@ package body Vdiff2_Module.Utils is
          File2        => File2,
          File3        => File3,
          Current_Node => First (Result),
-         Ref_File     => 2);
+         Ref_File     => 2,
+         Tmp_File     => VFS.No_File);
       Process_Differences (Id.Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
@@ -1143,7 +1144,8 @@ package body Vdiff2_Module.Utils is
      (Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
-      Revert : Boolean := False) return Boolean is
+      Revert    : Boolean := False;
+      Tmp_File  : VFS.Virtual_File := VFS.No_File) return Boolean is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Result : Diff_List;
       Button : Message_Dialog_Buttons;
@@ -1162,14 +1164,14 @@ package body Vdiff2_Module.Utils is
       end if;
 
       Item :=
-        (List => Result,
-         File1 => Orig_File,
-         File2 => New_File,
-         File3 => VFS.No_File,
+        (List         => Result,
+         File1        => Orig_File,
+         File2        => New_File,
+         File3        => VFS.No_File,
          Current_Node => First (Result),
-         Ref_File => 2);
+         Ref_File     => 2,
+         Tmp_File     => Tmp_File);
       Process_Differences (Id.Kernel, Item, Id.List_Diff);
-      --  Delete_File (Ref_File, Success);
       return true;
    end Visual_Patch;
 
