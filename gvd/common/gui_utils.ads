@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -186,17 +186,6 @@ package GUI_Utils is
    --  if any.
    --  If Event is null, then the current selection is returned.
    --  ??? The column is also available, but not returned.
-
-   function Freeze_Sort
-     (Tree : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class)
-      return Gint;
-   --  Freeze the sorting in the tree view, and returns the current
-   --  sort_column_id, which should be used when thawing.
-
-   procedure Thaw_Sort
-     (Tree : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
-      Column_Id : Gint);
-   --  Thaw a freezed tree_view.
 
    -------------------------
    -- Full_Path_Menu_Item --
