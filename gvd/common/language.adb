@@ -187,6 +187,29 @@ package body Language is
       Internal (Lang);
    end Free;
 
+   procedure Free (List : in out Construct_List) is
+      Info, Tmp : Construct_Access;
+
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Construct_Information, Construct_Access);
+
+   begin
+      Info := List.First;
+
+      loop
+         exit when Info = null;
+
+         Free (Info.Name);
+         Tmp := Info;
+         Info := Info.Next;
+         Free (Tmp);
+      end loop;
+
+      List.First   := null;
+      List.Current := null;
+      List.Last    := null;
+   end Free;
+
    ----------------------------
    -- Get_Language_From_File --
    ----------------------------
