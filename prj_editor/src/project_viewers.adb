@@ -26,6 +26,7 @@ with Gtk.Alignment;   use Gtk.Alignment;
 with Gtk.Arguments;   use Gtk.Arguments;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Clist;       use Gtk.Clist;
+with Gtk.Dialog;      use Gtk.Dialog;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Frame;       use Gtk.Frame;
 with Gtk.Label;       use Gtk.Label;
@@ -35,6 +36,7 @@ with Gtk.Notebook;    use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Style;       use Gtk.Style;
 with Gtk.Widget;      use Gtk.Widget;
+with Gtk.Window;      use Gtk.Window;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtkada.MDI;      use Gtkada.MDI;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
@@ -61,7 +63,6 @@ with Glide_Intl;           use Glide_Intl;
 with Switches_Editors;     use Switches_Editors;
 with Naming_Editors;       use Naming_Editors;
 with Directory_Tree;       use Directory_Tree;
-with String_Utils;         use String_Utils;
 with Switches_Editors; use Switches_Editors;
 with Traces;               use Traces;
 
@@ -885,28 +886,43 @@ package body Project_Viewers is
       Initial_Dirs_Id : String_Id_Array := Source_Dirs
         (Project_Information (File_Context));
       Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
+      Selector : Directory_Selector;
    begin
       for J in Initial_Dirs_Id'Range loop
          Initial_Dirs (J) := new String'
            (Get_String (Initial_Dirs_Id (J)));
       end loop;
 
-      declare
-         Dirs : Argument_List := Multiple_Directories_Selector_Dialog
-           (Get_Current_Dir, Initial_Dirs);
-      begin
-         Update_Attribute_Value_In_Scenario
-           (Project            => Get_Project_From_View
-              (Project_Information (File_Context)),
-            Pkg_Name           => "",
-            Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
-            Attribute_Name     => Get_Name_String (Name_Source_Dirs),
-            Values             => Dirs,
+      Gtk_New
+        (Selector,
+         Initial_Directory => Get_Current_Dir,
+         Multiple_Directories => True,
+         Busy_Cursor_On => Get_Window (Get_Main_Window (Get_Kernel (Context))),
+         Initial_Selection => Initial_Dirs);
+
+      if Run (Selector,
+              -"Select source directories",
+              Get_Main_Window (Get_Kernel (Context))) =
+        Gtk_Response_OK
+      then
+         declare
+            Dirs : Argument_List := Get_Multiple_Selection (Selector);
+         begin
+            Update_Attribute_Value_In_Scenario
+              (Project            => Get_Project_From_View
+                 (Project_Information (File_Context)),
+               Pkg_Name           => "",
+               Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
+               Attribute_Name     => Get_Name_String (Name_Source_Dirs),
+               Values             => Dirs,
                Attribute_Index    => "",
-            Prepend            => False);
-         Free (Dirs);
-         Recompute_View (Get_Kernel (Context));
-      end;
+               Prepend            => False);
+            Free (Dirs);
+            Recompute_View (Get_Kernel (Context));
+         end;
+      end if;
+
+      Destroy (Selector);
 
       Free (Initial_Dirs);
    end Edit_Source_Dirs_From_Contextual;
@@ -919,22 +935,43 @@ package body Project_Viewers is
      (Widget  : access Gtk_Widget_Record'Class;
       Context : Selection_Context_Access)
    is
-      Dir : constant String := Single_Directory_Selector_Dialog
-        (Get_Current_Dir);
-      File_Context : File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+      Selector : Directory_Selector;
+      Project : Project_Id :=
+        Project_Information (File_Selection_Context_Access (Context));
    begin
-      if Dir /= "" then
-         Update_Attribute_Value_In_Scenario
-           (Project            => Get_Project_From_View
-              (Project_Information (File_Context)),
-            Pkg_Name           => "",
-            Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
-            Attribute_Name     => "object_dir",
-            Value              => Dir,
-            Attribute_Index    => "");
-         Recompute_View (Get_Kernel (Context));
+      Trace
+        (Me, "Changing object directory: "
+         & GNAT.OS_Lib.Normalize_Pathname
+         (Get_Name_String (Prj.Projects.Table (Project).Object_Directory)));
+      Gtk_New
+        (Selector,
+         Initial_Directory => GNAT.OS_Lib.Normalize_Pathname
+           (Get_Name_String (Prj.Projects.Table (Project).Object_Directory))
+           & Directory_Separator,
+         Busy_Cursor_On    =>
+           Get_Window (Get_Main_Window (Get_Kernel (Context))));
+
+      if Run (Selector, -"Select object directory",
+              Get_Main_Window (Get_Kernel (Context))) =
+        Gtk_Response_OK
+      then
+         declare
+            Dir : constant String := Get_Single_Selection (Selector);
+         begin
+            if Dir /= "" then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Get_Project_From_View (Project),
+                  Pkg_Name           => "",
+                  Scenario_Variables =>
+                    Scenario_Variables (Get_Kernel (Context)),
+                  Attribute_Name     => Get_Name_String (Name_Object_Dir),
+                  Value              => Dir,
+                  Attribute_Index    => "");
+               Recompute_View (Get_Kernel (Context));
+            end if;
+         end;
       end if;
+      Destroy (Selector);
    end Change_Obj_Directory_From_Contextual;
 
    --------------------
@@ -1109,8 +1146,7 @@ package body Project_Viewers is
       if Has_Project_Information (File) then
          Gtk_New (Selector,
                   Root => "/",
-                  Initial_Directory => Dir
-                  (Dir'First .. Dir'Last - Base_File_Name (Dir)'Length),
+                  Initial_Directory => Dir_Name (Dir),
                   Dialog_Title => -"Select project");
          Register_Filter (Selector, Prj_File_Filter);
 
@@ -1249,7 +1285,7 @@ package body Project_Viewers is
             Append (Menu, Item);
 
             Gtk_New (Item, Label => -"Edit Switches for "
-                     & Base_File_Name (File_Information (File_Context)));
+                     & Base_Name (File_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
