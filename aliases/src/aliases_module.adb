@@ -173,7 +173,9 @@ package body Aliases_Module is
    --  Set First .. Last to the beginning and end of the current alias name.
    --  ??? Should accept unicode
 
-   function Expand_Alias (Name : String; Cursor : access Integer)
+   function Expand_Alias
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name : String; Cursor : access Integer)
       return String;
    --  Return the expanded version of Name.
    --  Cursor is the index in the returnef string for the cursor position.
@@ -607,7 +609,9 @@ package body Aliases_Module is
    -- Expand_Alias --
    ------------------
 
-   function Expand_Alias (Name : String; Cursor : access Integer)
+   function Expand_Alias
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name : String; Cursor : access Integer)
       return String
    is
       function Find_And_Replace_Cursor (Str : String) return String;
@@ -666,7 +670,7 @@ package body Aliases_Module is
             if Dialog = null then
                Gtk_New (Dialog,
                            Title  => -"Alias Parameter Selection",
-                        Parent => null,
+                        Parent => Get_Main_Window (Kernel),
                         Flags  => Destroy_With_Parent);
                Gtk_New (S);
 
@@ -746,7 +750,8 @@ package body Aliases_Module is
                   declare
                      Cursor : aliased Integer;
                      Replace : constant String := Expand_Alias
-                       (Text (First + 1 .. Last - 1),
+                       (Get_Kernel (Data),
+                        Text (First + 1 .. Last - 1),
                         Cursor'Unchecked_Access);
                   begin
                      if Replace /= "" then
@@ -774,7 +779,8 @@ package body Aliases_Module is
                   declare
                      Cursor : aliased Integer;
                      Replace : constant String := Expand_Alias
-                       (Get_Slice (Buffer, First_Iter, Last_Iter),
+                       (Get_Kernel (Data),
+                        Get_Slice (Buffer, First_Iter, Last_Iter),
                         Cursor'Unchecked_Access);
                      Result : Boolean;
                   begin
@@ -1461,7 +1467,7 @@ package body Aliases_Module is
       Gtk_New_Vseparator (Sep);
       Pack_Start (Get_Action_Area (Editor), Sep, Expand => False);
 
-      W := Add_Button (Editor, Stock_Save, Gtk_Response_OK);
+      W := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       W := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
       Color := Parse (Highlight_Color);
