@@ -38,7 +38,6 @@ project Kernel is
       "glide_kernel.adb",
       "glide_kernel.ads",
       "kernel.ads",
-      "read_ali.adb",
       "src_info-ali.adb",
       "src_info-ali.ads",
       "src_info-ali_maps.ads",
