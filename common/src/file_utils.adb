@@ -87,21 +87,25 @@ package body File_Utils is
                   Read (Dir, File, File_Last);
                   exit when File_Last = 0;
 
-                  --  We just need one more item in the array, so doubling
-                  --  is more than enough, we do not need to loop until the
-                  --  length is correct
+                  if Is_Regular_File
+                    (Normalized_Dir & File (File'First .. File_Last))
+                  then
+                     --  We just need one more item in the array, so doubling
+                     --  is more than enough, we do not need to loop until the
+                     --  length is correct
 
-                  if Result_Index > Result'Last then
-                     Tmp := Result;
-                     Result := new File_Array (1 .. Result'Last * 2);
-                     Result (1 .. Tmp'Last) := Tmp.all;
-                     Unchecked_Free (Tmp);
+                     if Result_Index > Result'Last then
+                        Tmp := Result;
+                        Result := new File_Array (1 .. Result'Last * 2);
+                        Result (1 .. Tmp'Last) := Tmp.all;
+                        Unchecked_Free (Tmp);
+                     end if;
+
+                     Result (Result_Index) := Create
+                       (Full_Filename =>
+                          Normalized_Dir & File (File'First .. File_Last));
+                     Result_Index := Result_Index + 1;
                   end if;
-
-                  Result (Result_Index) := Create
-                    (Full_Filename =>
-                       Normalized_Dir & File (File'First .. File_Last));
-                  Result_Index := Result_Index + 1;
                end loop;
 
                Close (Dir);
