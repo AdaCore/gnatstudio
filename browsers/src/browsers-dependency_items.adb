@@ -1106,7 +1106,7 @@ package body Browsers.Dependency_Items is
       C : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Item : File_Item;
-      Other_File : constant String := Get_Other_File_Of
+      Other_File : constant String := Other_File_Name
         (Get_Kernel (Context), File_Information (C), False);
    begin
       if Other_File /= "" then
