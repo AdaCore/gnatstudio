@@ -88,9 +88,11 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Generic_List;
 with GVD.Preferences; use GVD.Preferences;
+with Pixmaps_IDE;     use Pixmaps_IDE;
 
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer. Buffer_Commands;
+with Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Module is
 
@@ -1002,6 +1004,31 @@ package body Src_Editor_Module is
                end if;
             else
                Set_Error_Msg (Data, -"file not open");
+            end if;
+         end;
+
+      elsif Command = "remove_blank_lines" then
+         declare
+            Identifier  : constant String := Nth_Arg (Data, 1);
+            Mark_Record : constant Mark_Identifier_Record :=
+              Find_Mark (Identifier);
+            Child       : MDI_Child;
+            Number      : Integer := 0;
+            Box         : Source_Box;
+         begin
+            Child := Find_Editor (Kernel, Mark_Record.File.all);
+
+            if Number_Of_Arguments (Data) >= 3 then
+               Number := Nth_Arg (Data, 2);
+            end if;
+
+            if Child /= null then
+               Box := Source_Box (Get_Widget (Child));
+
+               Src_Editor_Buffer.Line_Information.Remove_Blank_Lines
+                 (Get_Buffer (Box.Editor), Mark_Record.Mark, Number);
+            else
+               Set_Error_Msg (Data, -"file not found or not open");
             end if;
          end;
       end if;
@@ -2433,7 +2460,7 @@ package body Src_Editor_Module is
               and then Has_Line_Information
                 (Entity_Selection_Context_Access (Context))
             then
-               Start_Line := Line_Information
+               Start_Line := Modules.Line_Information
                  (Entity_Selection_Context_Access (Context));
 
                End_Line := Start_Line;
@@ -2793,7 +2820,7 @@ package body Src_Editor_Module is
          Location := Message_Context_Access (File);
 
          if Has_Line_Information (Location) then
-            Line := Line_Information (Location);
+            Line := Modules.Line_Information (Location);
          else
             Line := 1;
          end if;
@@ -3327,6 +3354,18 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
+         Command      => "remove_blank_lines",
+         Params       => "(mark, [number])",
+         Return_Value => "string",
+         Description  =>
+           -("Remove blank lines located at mark."
+             & " If number is specified, remove only the n first lines"),
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
          Command      => "unhighlight",
          Params       => "(file, category, [line=0])",
          Description  =>
@@ -3579,6 +3618,10 @@ package body Src_Editor_Module is
       else
          Map_Cb (Get_Main_Window (Kernel));
       end if;
+
+      --  Initialize graphics
+      --  ??? We should use a smaller and more adequate pixbuf than trash_xpm.
+      Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (trash_xpm);
    end Register_Module;
 
    -------------------------
@@ -3653,6 +3696,9 @@ package body Src_Editor_Module is
 
       Unref (Id.Post_It_Note_GC);
       Unref (Id.Blank_Lines_GC);
+
+      --  Destroy graphics
+      Unref (Remove_Blank_Lines_Pixbuf);
    end Destroy;
 
    -----------------
