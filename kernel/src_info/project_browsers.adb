@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -30,13 +30,21 @@ package body Project_Browsers is
    function Hash (N : Name_Id) return Header_Num;
    --  hash function to use for the htables.
 
+   procedure False_Free (X : in out Vertex_Access);
+   --  Do nothing.
+
+   procedure Free_Name_Id (X : in out Name_Id);
+   --  Free memory associated to X.
+
    package Vertex_Htable is new HTables.Simple_HTable
-     (Header_Num => Header_Num,
-      Element    => Vertex_Access,
-      No_Element => null,
-      Key        => Name_Id,
-      Hash       => Hash,
-      Equal      => Types."=");
+     (Header_Num   => Header_Num,
+      Element      => Vertex_Access,
+      Free_Element => False_Free,
+      No_Element   => null,
+      Key          => Name_Id,
+      Free_Key     => Free_Name_Id,
+      Hash         => Hash,
+      Equal        => Types."=");
    use Vertex_Htable;
 
    type Name_Vertex is new Vertex with record
@@ -50,6 +58,26 @@ package body Project_Browsers is
    procedure Destroy (V : in out Name_Vertex);
    procedure Destroy (E : in out Name_Edge);
    --  Dummy function, so that Name_Vertex is no longer abstract
+
+   ----------------
+   -- False_Free --
+   ----------------
+
+   procedure False_Free (X : in out Vertex_Access) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end False_Free;
+
+   ------------------
+   -- Free_Name_Id --
+   ------------------
+
+   procedure Free_Name_Id (X : in out Name_Id) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Free_Name_Id;
 
    -------------
    -- Destroy --
