@@ -367,8 +367,7 @@ package body Src_Editor_Box is
 
             Console.Insert
               (Kernel,
-               -"Internal error, invalid location: " &
-                 Get_Filename (Source) & ':' &
+               -"Invalid location: " & Get_Filename (Source) & ':' &
                  Image (L) & ':' & Image (C + Length),
                Highlight_Sloc => False,
                Mode => Error);
@@ -581,7 +580,7 @@ package body Src_Editor_Box is
                Set_Foreground (Data.Box.Bg_GC, Color);
                Set_Background (Data.Box.Default_GC, Color);
                Data.Box.Tooltip_Font := From_Description
-                 (Get_Pref (Data.Box.Kernel, Default_Tooltip_Font));
+                 (Get_Pref (Data.Box.Kernel, Tooltip_Font));
             end if;
 
             Height := Get_Ascent (Data.Box.Tooltip_Font) +
