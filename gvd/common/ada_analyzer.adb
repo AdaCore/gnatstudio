@@ -847,9 +847,15 @@ package body Source_Analyzer is
                if Reserved = Tok_Select then
                   --  Start of a select statement
                   Push (Tokens, Temp);
-               end if;
 
-               if Reserved = Tok_Else
+               elsif Top (Tokens).Token = Tok_If
+                 and then Reserved = Tok_Then
+               then
+                  --  Notify that we're past the 'if' condition
+
+                  Top (Tokens).Token := Tok_Then;
+
+               elsif Reserved = Tok_Else
                  or else (Top (Tokens).Token = Tok_Select
                           and then Reserved = Tok_Then)
                  or else Reserved = Tok_Begin
@@ -905,6 +911,19 @@ package body Source_Analyzer is
                      Val.Declaration := True;
                   end if;
                end if;
+            end if;
+
+         elsif Reserved = Tok_Or
+           or else Reserved = Tok_And
+         then
+            --  "and then", "or else", "and" and "or" should be slightly
+            --  indented between 'if' and 'then', e.g:
+            --  if Cond1
+            --    and then Cond2
+            --  then
+
+            if Top (Tokens).Token = Tok_If then
+               Do_Indent (Prec, Num_Spaces + Indent_Continue);
             end if;
 
          elsif Reserved = Tok_Generic then
