@@ -116,6 +116,8 @@ package body Src_Info.LI_Utils is
             end if;
             D_Ptr := D_Ptr.Next;
          end loop;
+         --  ??? Shouldn't we try to locate existent declaration for
+         --  that Symbol_Name?
       end if;
       Insert_Declaration_Internal (D_Ptr, File, List, Symbol_Name,
             Source_Filename,
@@ -367,14 +369,20 @@ package body Src_Info.LI_Utils is
          --  Inserting to the end of the declaration's list
          D_Ptr := Dep_Ptr.Value.Declarations;
          loop
-            exit when D_Ptr.Next = null;
+            if D_Ptr.Value.Declaration.Location.Line = Location.Line
+              and then D_Ptr.Value.Declaration.Location.Line = Location.Line
+            then
+               D_Ptr.Value.Declaration := No_Declaration;
+               exit;
+            end if;
+            if D_Ptr.Next = null then
+               D_Ptr.Next := new E_Declaration_Info_Node;
+               D_Ptr.Next.Next := null;
+               D_Ptr := D_Ptr.Next;
+               exit;
+            end if;
             D_Ptr := D_Ptr.Next;
          end loop;
-         D_Ptr.Next := new E_Declaration_Info_Node;
-         D_Ptr.Next.Next := null;
-         D_Ptr := D_Ptr.Next;
-         --  ??? shouldn't we try to locate existent declaration
-         --  with specified Symbol_Name
       end if;
       Insert_Declaration_Internal (D_Ptr, File, List, Symbol_Name,
             Referred_Filename,
