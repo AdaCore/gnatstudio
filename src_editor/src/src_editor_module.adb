@@ -77,6 +77,7 @@ with Find_Utils;                use Find_Utils;
 with Histories;                 use Histories;
 with OS_Utils;                  use OS_Utils;
 with Aliases_Module;            use Aliases_Module;
+with Commands;                  use Commands;
 
 with Gtkada.Types;              use Gtkada.Types;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -2920,11 +2921,51 @@ package body Src_Editor_Module is
       Selector         : Scope_Selector;
       Extra            : Files_Extra_Scope;
       Recent_Menu_Item : Gtk_Menu_Item;
+      Command          : Command_Access;
+
+      Src_Key_Context  : constant Key_Context := new Src_Editor_Key_Context;
+      --  Memory is never freed, but this is needed for the whole life of
+      --  the application
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
       Source_Editor_Module (Src_Editor_Module_Id).Kernel :=
         Kernel_Handle (Kernel);
+
+      Command := new Indentation_Command;
+      Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Key
+        (Handler     => Get_Key_Handler (Kernel),
+         Name        => "Indent current line",
+         Default_Key => GDK_Tab,
+         Default_Mod => Control_Mask,
+         Command     => Command,
+         Tooltip     => -"Auto-indent the current line or block of lines",
+         Context     => Src_Key_Context);
+
+      Command := new Completion_Command;
+      Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Key
+        (Handler     => Get_Key_Handler (Kernel),
+         Name        => "Complete identifier",
+         Default_Key => GDK_slash,
+         Default_Mod => Control_Mask,
+         Command     => Command,
+         Tooltip     => -("Completion the current identifier based on the"
+                           & " contents of the editor"),
+         Context     => Src_Key_Context);
+
+      Command := new Jump_To_Delimiter_Command;
+      Jump_To_Delimiter_Command (Command.all).Kernel :=
+        Kernel_Handle (Kernel);
+      Register_Key
+        (Handler     => Get_Key_Handler (Kernel),
+         Name        => "Jump to matching delimiter",
+         Default_Key => GDK_apostrophe,
+         Default_Mod => Control_Mask,
+         Command     => Command,
+         Tooltip   => -"Jump to the matching delimiter ()[]{}",
+         Context     => Src_Key_Context);
 
       Register_Module
         (Module                  => Src_Editor_Module_Id,
