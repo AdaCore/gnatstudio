@@ -32,6 +32,7 @@ with Glib.Values;            use Glib.Values;
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
 with Glide_Kernel.Console;   use Glide_Kernel.Console;
+with Glide_Intl;             use Glide_Intl;
 
 with Traces;                 use Traces;
 with Basic_Types;            use Basic_Types;
@@ -39,7 +40,6 @@ with Basic_Types;            use Basic_Types;
 with Codefix;                use Codefix;
 with Codefix.Graphics;       use Codefix.Graphics;
 with Codefix.GPS_Io;         use Codefix.GPS_Io;
-with Glide_Intl;             use Glide_Intl;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
@@ -73,6 +73,9 @@ package body Codefix_Module is
    --  Check is the current location is a fixable error, and propose the fix
    --  if possible.
 
+   procedure Graphic_Fix (Error : Error_Id);
+   --  Remove from the location box the pixmap of the error.
+
    procedure Compilation_Finished_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
       Args    : GValues;
@@ -88,12 +91,13 @@ package body Codefix_Module is
 
    function Get_Body_Or_Spec
      (This : GPS_Navigator; File_Name : String) return String;
-   --  ???
+   --  Return the spec name if File_Name is a body, or the body name if
+   --  File_Name is a spec
 
    procedure Initialize
      (This : GPS_Navigator;
       File : in out Text_Interface'Class);
-   --  ???
+   --  Set the value of the Text_Interface's kernel
 
    ------------
    -- On_Fix --
@@ -245,7 +249,8 @@ package body Codefix_Module is
         (Graphic_Codefix,
          Kernel,
          Codefix_Module_ID.Current_Text,
-         Codefix_Module_ID.Corrector);
+         Codefix_Module_ID.Corrector,
+         Graphic_Fix'Access);
 
       Window := Get_MDI (Kernel);
       Child := Put (Window, Graphic_Codefix);
@@ -309,6 +314,24 @@ package body Codefix_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Codefix_Contextual_Menu;
+
+   -----------------
+   -- Graphic_Fix --
+   -----------------
+
+   procedure Graphic_Fix (Error : Error_Id) is
+   begin
+      Remove_Location_Action
+        (Kernel        => Codefix_Module_ID.Kernel,
+         Identifier    => "--  ???",
+         Category      => Compilation_Category,
+         File          => Get_Error_Message (Error).File_Name.all,
+         Line          => Get_Error_Message (Error).Line,
+         Column        => Get_Error_Message (Error).Col,
+         Message       =>
+           Cut_Message (Get_Message (Get_Error_Message (Error))));
+   end Graphic_Fix;
+
 
    ---------------------
    -- Register_Module --
