@@ -148,9 +148,9 @@ package body SN.Browse is
 
       Close (Temp_File);
 
-      Args := new Argument_List (1 .. 3 + DB_Directories'Length);
+      Args     := new Argument_List (1 .. 3 + DB_Directories'Length);
       Args (1) := new String'("-f");
-      Args (2) := new String'(Temp_Name);
+      Args (2) := new String'(Temp_Name (1 .. Temp_Name'Last - 1));
       Args (3) := new String'("-l");
 
       for D in DB_Directories'Range loop
