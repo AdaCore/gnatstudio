@@ -75,15 +75,13 @@ package body Src_Editor_View is
    --  things such as line number, breakpoint icons, etc).
 
    function Focus_Out_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Focus) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Save the current insert cursor position before the Source_View looses
    --  the focus. This will allow us to restore it as soon as the focus is
    --  gained back.
 
    function Focus_In_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Focus) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Restore the previously saved insert cursor position when the Source_View
    --  gains the focus back.
 
@@ -168,8 +166,7 @@ package body Src_Editor_View is
    ------------------------
 
    function Focus_Out_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Focus) return Boolean
+     (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
@@ -188,8 +185,7 @@ package body Src_Editor_View is
    -----------------------
 
    function Focus_In_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Focus) return Boolean
+     (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
@@ -222,6 +218,7 @@ package body Src_Editor_View is
      (Buffer : access Source_Buffer_Record'Class;
       View   : Source_View)
    is
+      pragma Unreferenced (Buffer);
       New_Number_Of_Digits : constant Natural := LNA_Width_In_Digits (View);
    begin
       if View.Show_Line_Numbers
