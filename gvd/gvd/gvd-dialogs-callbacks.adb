@@ -1,5 +1,6 @@
 with System; use System;
 with Glib; use Glib;
+with Gtk.Label; use Gtk.Label;
 with Gtk.Enums; use Gtk.Enums;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -12,10 +13,24 @@ with Debugger; use Debugger;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
-package body Task_Dialog_Pkg.Callbacks is
+package body Odd.Dialogs.Callbacks is
 
    use Odd;
    use Gtk.Arguments;
+
+   ----------------------------------
+   -- On_Backtrace_List_Select_Row --
+   ----------------------------------
+
+   procedure On_Backtrace_List_Select_Row
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Frame : Gint := To_Gint (Params, 1) + 1;
+
+   begin
+      null;
+   end On_Backtrace_List_Select_Row;
 
    -----------------------------
    -- On_Task_List_Select_Row --
@@ -85,10 +100,9 @@ package body Task_Dialog_Pkg.Callbacks is
    -----------------------------
 
    procedure On_Close_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+     (Object : access Gtk_Button_Record'Class) is
    begin
       Hide (Get_Toplevel (Object));
    end On_Close_Button_Clicked;
 
-end Task_Dialog_Pkg.Callbacks;
+end Odd.Dialogs.Callbacks;
