@@ -1054,6 +1054,7 @@ package body VCS.Generic_VCS is
       S       : String renames Text;
       Matches : Match_Array (0 .. Parser.Matches_Num);
       Start   : Integer := S'First;
+      Prev_Start : Integer := S'First - 1;
 
    begin
       if Parser.Regexp = null then
@@ -1063,6 +1064,8 @@ package body VCS.Generic_VCS is
       end if;
 
       loop
+         Prev_Start := Start;
+
          Match (Parser.Regexp.all, S, Matches, Start, S'Last);
 
          exit when Matches (0) = No_Match;
@@ -1077,6 +1080,9 @@ package body VCS.Generic_VCS is
                   Rep.Kernel,
                   True, False);
 
+               Start := Integer'Max
+                 (Matches (Parser.File_Index).Last + 1, Start);
+
             elsif not Is_Empty (Rep.Current_Query_Files) then
                St.File := Glide_Kernel.Create
                  (String_List.Head (Rep.Current_Query_Files),
@@ -1088,9 +1094,6 @@ package body VCS.Generic_VCS is
                --  ??? There should be an error message here
                return Status;
             end if;
-
-
-            Start := Integer'Max (Matches (Parser.File_Index).Last + 1, Start);
 
             if Parser.Local_Rev_Index /= 0 then
                String_List_Utils.String_List.Append
@@ -1124,7 +1127,6 @@ package body VCS.Generic_VCS is
                   Node : Status_Parser.List_Node :=
                            First (Parser.Status_Identifiers);
                begin
-                  Trace (Me, "Status found: #" & Status_String & "#");
                   while Node /= Status_Parser.Null_Node loop
                      Match (Data (Node).Regexp.all, Status_String, Matches);
 
@@ -1140,6 +1142,10 @@ package body VCS.Generic_VCS is
 
             File_Status_List.Append (Status, St);
          end;
+
+         --  Prevent infinite loop that could occur if users allow matches
+         --  on empty strings.
+         exit when Prev_Start = Start;
       end loop;
 
       return Status;
