@@ -21,6 +21,7 @@
 
 #include "htmlgdkfontmanager.h"
 #include <string.h>
+//  #include <pango-font.h>
 
 /* FIXME this should be dynamically done, and based on the base font name.  */
 
@@ -39,6 +40,7 @@ static gchar *load_font(HTMLGdkFontManager *manager, CscHTMLFontStyle style, con
 	gchar *key;
 	gint i;
 	gchar **font_names;
+	//  PangoFontDescription* descr;
 
 	if (manager->font_hash == NULL)
 		return;
@@ -71,7 +73,19 @@ static gchar *load_font(HTMLGdkFontManager *manager, CscHTMLFontStyle style, con
 			family_string = g_strdup(font_names[i]);
 
 		font_name = g_strdup_printf("-*-%s-%s-%s-normal-*-%d-*-*-*-*-*-*-*", family_string, weight_string, slant_string, real_size);
-		font = gdk_font_load(font_name);
+	        font = gdk_font_load(font_name);
+
+		//if (style & CSC_HTML_FONT_STYLE_ITALIC)
+                //   font_name = g_strdup_printf 
+	        //      ("%s %s Italic %d", family_string,
+		//       weight_string, real_size);
+		//else
+                //   font_name = g_strdup_printf ("%s %s %d", family_string,
+		//		                weight_string, real_size);
+                //descr = pango_font_description_from_string (font_name);
+	        //font = gdk_font_from_description (descr);	
+                //pango_font_description_free (descr);
+		
 		if (font != NULL) {
 			break;
 		}
