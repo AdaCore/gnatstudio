@@ -112,7 +112,7 @@ package Python is
       Name   : Interfaces.C.Strings.chars_ptr) return PyObject;
    pragma Import (C, PyObject_GetAttrString, "PyObject_GetAttrString");
    --  Lookup an attribute in the object's dictionnary.
-   --  No need to Py_DECREF the return type, this is a borrowed decision.
+   --  No need to Py_DECREF the return type, this is a borrowed reference.
 
    function PyObject_GetAttrString
      (Object : PyObject; Name : String) return PyObject;
@@ -184,6 +184,7 @@ package Python is
 
    function PyTuple_GetItem (Tuple : PyTuple; Index : Integer) return PyObject;
    --  Get the item at a specific location in the tuple, starting at index 0.
+   --  Do not decref returned value.
 
    procedure PyTuple_SetItem
      (Tuple : PyTuple; Index : Integer; Value : PyObject);
@@ -319,7 +320,7 @@ package Python is
      (Dict : PyDictObject;
       Key  : Interfaces.C.Strings.chars_ptr) return PyObject;
    pragma Import (C, PyDict_GetItemString, "PyDict_GetItemString");
-   --  Get an object from a dictionary
+   --  Get an object from a dictionary. Do not decref the returned value
 
    function PyDict_GetItemString
      (Dict : PyDictObject; Key  : String) return PyObject;
