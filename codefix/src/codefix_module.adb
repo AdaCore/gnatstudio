@@ -132,6 +132,16 @@ package body Codefix_Module is
                (Get_Error_Message (Mitem.Error)));
       end if;
 
+      Remove_Location_Action
+        (Kernel        => Codefix_Module_ID.Kernel,
+         Identifier    => "--  ???",
+         Category      => "Builder Results",
+         File          => Get_Error_Message (Mitem.Error).File_Name.all,
+         Line          => Get_Error_Message (Mitem.Error).Line,
+         Column        => Get_Error_Message (Mitem.Error).Col,
+         Message       =>
+           Cut_Message (Get_Message (Get_Error_Message (Mitem.Error))));
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
