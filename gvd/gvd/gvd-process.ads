@@ -246,8 +246,9 @@ package Odd.Process is
    --  debugger process. However, commands internal to odd are filtered and
    --  are not transmitted to the debugger.
    --  If Output_Command is True, then the command is first output to the
-   --  command window. An ASCII.LF is appended at the end before printing
-   --  If Echo is True, then the command is displayed in the debugger window.
+   --  command window. An ASCII.LF is appended at the end before printing.
+   --  Mode is the type of the command which will be transmitted to the
+   --  debugger.
 
    procedure Text_Output_Handler
      (Process    : Debugger_Process_Tab;
