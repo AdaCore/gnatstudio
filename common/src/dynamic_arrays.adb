@@ -133,8 +133,10 @@ package body Dynamic_Arrays is
 
    procedure Free (T : in out Instance) is
    begin
-      Free (Convert (T.Table));
-      T.Table := null;
-      T.P.Next_To_Last := First;
+      if T.Table /= null then
+         Free (Convert (T.Table));
+         T.Table := null;
+         T.P.Next_To_Last := First;
+      end if;
    end Free;
 end Dynamic_Arrays;
