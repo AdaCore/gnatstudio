@@ -100,9 +100,10 @@ package body Scenario_Views is
    ----------------------
 
    procedure On_Edit_Scenario (View : access Gtk_Widget_Record'Class) is
-      V : Scenario_View := Scenario_View (View);
-      Edit : Variable_Edit;
+      V          : constant Scenario_View := Scenario_View (View);
+      Edit       : Variable_Edit;
       Scenar_Var : Project_Node_Array := Find_Scenario_Variables (V.Manager);
+
    begin
       Gtk_New (Edit, V.Manager);
 
@@ -158,7 +159,8 @@ package body Scenario_Views is
 
    procedure Editor_Changed (View : access Gtk_Widget_Record'Class) is
       --  Var : Project_Node_Id := Project_Node_Id (To_Gint (Args, 1));
-      V : Scenario_View := Scenario_View (View);
+      V : constant Scenario_View := Scenario_View (View);
+
    begin
       Recompute_View (V.Manager);
    end Editor_Changed;
