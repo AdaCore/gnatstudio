@@ -40,6 +40,7 @@ package GVD.Window_Settings is
       Data_Height    : Gint;
       Data_Width     : Gint;
       Stack_Width    : Gint;
+      Explorer_Width : Gint;
       Command_Height : Gint;
       Editor_Height  : Gint;
    end record;

@@ -32,6 +32,8 @@ with Main_Debug_Window_Pkg;   use Main_Debug_Window_Pkg;
 with GVD.Memory_View;         use GVD.Memory_View;
 with GVD.Dialogs;             use GVD.Dialogs;
 with GVD.Process;             use GVD.Process;
+with GVD.Preferences;         use GVD.Preferences;
+with GVD.Code_Editors;        use GVD.Code_Editors;
 
 package body GVD.Window_Settings is
 
@@ -213,6 +215,14 @@ package body GVD.Window_Settings is
                        True);
                end if;
 
+               if Get_Pref (Display_Explorer) then
+                  Set (String_Gint
+                       ("Explorer_Width"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Width
+                             (Get_Explorer_Scroll (Process.Editor_Text))),
+                       True);
+               end if;
             end;
          end if;
       end loop;
@@ -297,6 +307,10 @@ package body GVD.Window_Settings is
          Result.Stack_Width := Get_Setting
            (String_Gint
             ("Stack_Width" & Image (Image'First + 1 .. Image'Last)));
+
+         Result.Explorer_Width := Get_Setting
+           (String_Gint
+            ("Explorer_Width" & Image (Image'First + 1 .. Image'Last)));
       end;
 
       --  Use default values if needed.
@@ -315,6 +329,10 @@ package body GVD.Window_Settings is
 
       if Result.Stack_Width = -1 then
          Result.Stack_Width := 200;
+      end if;
+
+      if Result.Explorer_Width = -1 then
+         Result.Explorer_Width := 200;
       end if;
 
       return Result;
