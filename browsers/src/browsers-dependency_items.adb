@@ -53,10 +53,10 @@ with Projects.Registry;         use Projects.Registry;
 with Fname;                     use Fname;
 with Namet;                     use Namet;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
-with String_List_Utils;         use String_List_Utils;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 package body Browsers.Dependency_Items is
 
@@ -282,7 +282,7 @@ package body Browsers.Dependency_Items is
    function Depends_On_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : Argument_List) return String;
    --  Handler for the command "depends_on"
 
    procedure Examine_Dependencies (Item : access Arrow_Item_Record'Class);
@@ -906,18 +906,17 @@ package body Browsers.Dependency_Items is
    function Depends_On_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
+      Args    : Argument_List) return String
    is
-      use String_List_Utils.String_List;
-      Node    : List_Node := First (Args);
+      Index : Natural := Args'First;
    begin
-      while Node /= Null_Node loop
+      while Index <= Args'Last loop
          if Command = "file.uses" then
-            Examine_Dependencies (Kernel, File => Data (Node));
+            Examine_Dependencies (Kernel, File => Args (Index).all);
          elsif Command = "file.used_by" then
-            Examine_From_Dependencies (Kernel, File => Data (Node));
+            Examine_From_Dependencies (Kernel, File => Args (Index).all);
          end if;
-         Node := Next (Node);
+         Index := Index + 1;
       end loop;
 
       return "";
@@ -947,21 +946,27 @@ package body Browsers.Dependency_Items is
                      On_Dependency_Browser'Access);
 
       Register_Command
-        (Kernel, "file.uses",
-         (-"Usage:") & ASCII.LF & "  uses file_name [file_name...]"
-         & ASCII.LF
-         & (-("Display in the dependency browser the list of files that"
-              & " file_name depends on. This is done for each of the"
-              & " file on the command line.")),
-         Handler => Depends_On_Command_Handler'Access);
+        (Kernel,
+         Command      => "file.uses",
+         Usage        => "uses file_name [file_name...]",
+         Description  =>
+           -("Display in the dependency browser the list of files that"
+             & " file_name depends on. This is done for each of the"
+             & " file on the command line."),
+         Minimum_Args => 1,
+         Maximum_Args => Natural'Last,
+         Handler      => Depends_On_Command_Handler'Access);
       Register_Command
-        (Kernel, "file.used_by",
-         (-"Usage:") & ASCII.LF & "  used_by file_name [file_name...]"
-         & ASCII.LF
-         & (-("Display in the dependency browser the list of files that"
-              & " depends on file_name. This is done for each of the"
-              & " file on the command line.")),
-         Handler => Depends_On_Command_Handler'Access);
+        (Kernel,
+         Command      => "file.used_by",
+         Usage        => "used_by file_name [file_name...]",
+         Description  =>
+           -("Display in the dependency browser the list of files that"
+             & " depends on file_name. This is done for each of the"
+             & " file on the command line."),
+         Minimum_Args => 1,
+         Maximum_Args => Natural'Last,
+         Handler      => Depends_On_Command_Handler'Access);
    end Register_Module;
 
    -------------

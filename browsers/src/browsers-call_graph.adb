@@ -54,7 +54,6 @@ with Ada.Exceptions;   use Ada.Exceptions;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Traces;           use Traces;
-with String_List_Utils; use String_List_Utils;
 
 package body Browsers.Call_Graph is
 
@@ -315,7 +314,7 @@ package body Browsers.Call_Graph is
    function Call_Graph_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : Argument_List) return String;
    --  Handle shell commands
 
    procedure Examine_Ancestors_Call_Graph
@@ -1479,38 +1478,32 @@ package body Browsers.Call_Graph is
    function Call_Graph_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
+      Args    : Argument_List) return String
    is
-      use String_List_Utils.String_List;
-      Name, File, Line : List_Node;
-      L, C             : Positive := 1;
-      Entity           : Entity_Information;
-      Status           : Find_Decl_Or_Body_Query_Status;
+      Name, File : String_Access;
+      L, C       : Positive := 1;
+      Entity     : Entity_Information;
+      Status     : Find_Decl_Or_Body_Query_Status;
 
    begin
       --  ??? This part is copied from
       --  Browsers.Entities.Show_Entity_Command_Handler, would be nice to share
-      if Length (Args) < 2 then
-         return "Not enough arguments";
-      end if;
+      Name   := Args (Args'First);
+      File   := Args (Args'First + 1);
 
-      Name   := First (Args);
-      File   := Next (Name);
+      if Args'First + 2 <= Args'Last then
+         L := Positive'Value (Args (Args'First + 2).all);
 
-      if Next (File) /= Null_Node then
-         Line := Next (File);
-         L := Positive'Value (Data (Line));
-
-         if Next (Line) /= Null_Node then
-            C := Positive'Value (Data (Next (Line)));
+         if Args'First + 3 <= Args'Last then
+            C := Positive'Value (Args (Args'First + 3).all);
          end if;
       end if;
 
       Find_Declaration_Or_Overloaded
         (Kernel      => Kernel,
-         Lib_Info    => Locate_From_Source_And_Complete (Kernel, Data (File)),
-         File_Name   => Data (File),
-         Entity_Name => Data (Name),
+         Lib_Info    => Locate_From_Source_And_Complete (Kernel, File.all),
+         File_Name   => File.all,
+         Entity_Name => Name.all,
          Line        => L,
          Column      => C,
          Entity      => Entity,
@@ -1566,27 +1559,35 @@ package body Browsers.Call_Graph is
       --  ??? Ultimately, we should display the results in the location window,
       --  but return them as a list (Python scripts for instance)
       Register_Command
-        (Kernel, "entity.find_all_refs",
-         (-"Usage:") & ASCII.LF
-         & "  entity.find_all_refs entity_name file_name [line] [column]"
-         & ASCII.LF
-         & (-"Display in the location window all the references to the"
-            & " entity"),
-         Handler => Call_Graph_Command_Handler'Access);
+        (Kernel,
+         Command      => "entity.find_all_refs",
+         Usage        =>
+           "entity.find_all_refs entity_name file_name [line] [column]",
+         Description  =>
+           -"Display in the location window all the references to the entity.",
+         Minimum_Args => 2,
+         Maximum_Args => 4,
+         Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
-        (Kernel, "entity.calls",
-         (-"Usage:") & ASCII.LF
-         & "  entity.calls entity_name file_name [line] [column]"
-         & ASCII.LF
-         & (-"Display the list of entities called by the entity."),
-         Handler => Call_Graph_Command_Handler'Access);
+        (Kernel,
+         Command      => "entity.calls",
+         Usage        =>
+           "entity.calls entity_name file_name [line] [column]",
+         Description  =>
+           -"Display the list of entities called by the entity.",
+         Minimum_Args => 2,
+         Maximum_Args => 4,
+         Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
-        (Kernel, "entity.called_by",
-         (-"Usage:") & ASCII.LF
-         & "  entity.called_by entity_name file_name [line] [column]"
-         & ASCII.LF
-         & (-"Display the list of entities that call the entity."),
-         Handler => Call_Graph_Command_Handler'Access);
+        (Kernel,
+         Command      => "entity.called_by",
+         Usage        =>
+           "entity.called_by entity_name file_name [line] [column]",
+         Description  =>
+           -"Display the list of entities that call the entity.",
+         Minimum_Args => 2,
+         Maximum_Args => 4,
+         Handler      => Call_Graph_Command_Handler'Access);
    end Register_Module;
 
    ------------------

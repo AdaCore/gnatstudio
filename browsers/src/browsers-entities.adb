@@ -21,6 +21,7 @@
 with Ada.Exceptions;       use Ada.Exceptions;
 with GNAT.Heap_Sort_G;
 with GNAT.Strings;         use GNAT.Strings;
+with GNAT.OS_Lib;
 
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with Glide_Kernel;         use Glide_Kernel;
@@ -29,7 +30,6 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Browsers.Canvas;      use Browsers.Canvas;
 with Traces;               use Traces;
 with Glide_Intl;           use Glide_Intl;
-with String_List_Utils;    use String_List_Utils;
 
 with Glib;          use Glib;
 with Glib.Object;   use Glib.Object;
@@ -246,7 +246,7 @@ package body Browsers.Entities is
    function Show_Entity_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Command handler for this module (in the shell window)
 
    function "<" (E1, E2 : Entity_Information) return Boolean;
@@ -404,13 +404,16 @@ package body Browsers.Entities is
          Text        => -"Entity Browser",
          Callback    => On_Type_Browser'Access);
       Register_Command
-        (Kernel, "entity.show",
-         (-"Usage:") & ASCII.LF & "  entity.show entity_name file_name [line]"
-         & " [column}" & ASCII.LF
-         & (-"Display in the type browser the informations known about the"
-            & " entity: list of fields for records, list of primitive"
-            & " subprograms or methods, list of parameters, ..."),
-         Handler => Show_Entity_Command_Handler'Access);
+        (Kernel,
+         Command      => "entity.show",
+         Usage        => "entity.show entity_name file_name [line] [column}",
+         Description  =>
+           -("Display in the type browser the informations known about the"
+             & " entity: list of fields for records, list of primitive"
+             & " subprograms or methods, list of parameters, ..."),
+         Minimum_Args => 2,
+         Maximum_Args => 4,
+         Handler      => Show_Entity_Command_Handler'Access);
    end Register_Module;
 
    ---------------------------------
@@ -420,43 +423,36 @@ package body Browsers.Entities is
    function Show_Entity_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
+      Args    : GNAT.OS_Lib.Argument_List) return String
    is
-      use String_List_Utils.String_List;
       Entity : Entity_Information;
       Child  : MDI_Child;
       Status : Find_Decl_Or_Body_Query_Status;
-      Name, File, Line : List_Node;
+      Name, File : String_Access;
       L, C : Positive := 1;
       Item  : Type_Item;
       pragma Unreferenced (Item);
 
    begin
       if Command = "entity.show" then
-         if Length (Args) < 2 then
-            return "Not enough arguments";
-         end if;
-
          Child := Open_Type_Browser_Child (Kernel);
 
-         Name   := First (Args);
-         File   := Next (Name);
+         Name   := Args (Args'First);
+         File   := Args (Args'First + 1);
 
-         if Next (File) /= Null_Node then
-            Line := Next (File);
-            L := Positive'Value (Data (Line));
+         if Args'First + 2 <= Args'Last then
+            L := Positive'Value (Args (Args'First + 2).all);
 
-            if Next (Line) /= Null_Node then
-               C := Positive'Value (Data (Next (Line)));
+            if Args'First + 3 <= Args'Last then
+               C := Positive'Value (Args (Args'First + 3).all);
             end if;
          end if;
 
          Find_Declaration_Or_Overloaded
            (Kernel      => Kernel,
-            Lib_Info    => Locate_From_Source_And_Complete
-              (Kernel, Data (File)),
-            File_Name   => Data (File),
-            Entity_Name => Data (Name),
+            Lib_Info    => Locate_From_Source_And_Complete (Kernel, File.all),
+            File_Name   => File.all,
+            Entity_Name => Name.all,
             Line        => L,
             Column      => C,
             Entity      => Entity,
