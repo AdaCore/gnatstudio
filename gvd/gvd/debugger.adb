@@ -489,7 +489,9 @@ package body Debugger is
          --  end if;
 
             --  ??? Need to queue the command instead
-            if Command_In_Process (Get_Process (Debugger)) then
+            if Wait_For_Prompt
+              and then Command_In_Process (Get_Process (Debugger))
+            then
                return;
             end if;
 
@@ -511,7 +513,10 @@ package body Debugger is
             end loop;
 
          when Visible_Command =>
-            if Command_In_Process (Get_Process (Debugger)) then
+            --  ??? Need to queue the command instead
+            if Wait_For_Prompt
+              and then Command_In_Process (Get_Process (Debugger))
+            then
                return;
             end if;
 
