@@ -790,7 +790,6 @@ package body VCS_View_API is
                Append (Menu, Item);
 
                Add_Action (Diff_Head, On_Menu_Diff'Access);
-               Add_Action (Diff_Working, On_Menu_Diff_Local'Access);
 
                --  ??? This should be rewritten using actions.
 --                 Gtk_New (Item, Label =>
@@ -1110,7 +1109,15 @@ package body VCS_View_API is
          end if;
          return Child;
       else
-         return Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
+         Child :=
+           Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
+
+         if Child /= null then
+            Set_Child_Visible (Child, True);
+            Show (Child);
+         end if;
+
+         return Child;
       end if;
    end Open_Explorer;
 
@@ -2696,7 +2703,9 @@ package body VCS_View_API is
               -"Compare against revision...",
               -"Enter revision: ");
       begin
-         if Str /= "" then
+         if Str'Length /= 0
+           and then Str (Str'First) /= ASCII.NUL
+         then
             Diff
               (Ref,
                Create (Full_Filename => Head (Files)),
