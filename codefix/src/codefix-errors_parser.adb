@@ -495,7 +495,19 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
+
+      Str_Red : Dynamic_String;
+
    begin
+
+      Assign
+        (Str_Red,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+
+      if Str_Red.all = "return" then
+         raise Uncorrectible_Message;
+      end if;
+
       Append
         (Solutions,
          Expected
@@ -517,7 +529,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Missing_Sep) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("missing ""([^""]+)""")));
+        (Compile ("missing ""([^""\w]+)""")));
    end Initialize;
 
    procedure Fix
