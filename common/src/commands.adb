@@ -50,11 +50,13 @@ package body Commands is
       procedure Free_Queue_Access is
          new Unchecked_Deallocation (Command_Queue_Record, Command_Queue);
    begin
-      Free (Q.The_Queue);
-      Free (Q.Undo_Queue);
-      Free (Q.Redo_Queue);
-      Free (Q.Queue_Change_Hook);
-      Free_Queue_Access (Q);
+      if Q /= null then
+         Free (Q.The_Queue);
+         Free (Q.Undo_Queue);
+         Free (Q.Redo_Queue);
+         Free (Q.Queue_Change_Hook);
+         Free_Queue_Access (Q);
+      end if;
    end Free_Queue;
 
    ----------
@@ -63,8 +65,10 @@ package body Commands is
 
    procedure Free (X : in out Command_Access) is
    begin
-      Free (X.Next_Commands);
-      Destroy (X);
+      if X /= null then
+         Free (X.Next_Commands);
+         Destroy (X);
+      end if;
    end Free;
 
    ----------
