@@ -27,6 +27,7 @@ with Items.Arrays;  use Items.Arrays;
 with Items.Records; use Items.Records;
 
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Tags;    use Ada.Tags;
 
 package body Debugger.Gdb.C is
 
@@ -483,17 +484,25 @@ package body Debugger.Gdb.C is
       --  Avoid some calls to ptype if possible. Note that we have to get
       --  rid of the field's name before calling Is_Simple_Type, since
       --  otherwise "int a" is not recognized as a simple type.
+      --  We also need to handle properly cases of "int a[2]".
 
-      if Is_Simple_Type (Lang, Type_Str (Index .. Name_Start - 2)) then
-         Result := New_Simple_Type;
-         Set_Type_Name (Result, Type_Str (Index .. Field_End - 1));
-      else
-         Tmp := Index;
-         Parse_Type
-           (Lang, Type_Str (Index .. Field_End - 1),
-            Record_Field_Name
-            (Lang, Entity, Type_Str (Name_Start .. Name_End)),
-            Tmp, Result);
+      Tmp := Index;
+      C_Detect_Composite_Type
+        (Lang, Type_Str (Index .. Field_End - 1), Entity, Tmp, Result);
+
+      --  if not an access or array:
+      if Result = null then
+         if Is_Simple_Type (Lang, Type_Str (Index .. Name_Start - 2)) then
+            Result := New_Simple_Type;
+            Set_Type_Name (Result, Type_Str (Index .. Field_End - 1));
+         else
+            Tmp := Index;
+            Parse_Type
+              (Lang, Type_Str (Index .. Field_End - 1),
+               Record_Field_Name
+               (Lang, Entity, Type_Str (Name_Start .. Name_End)),
+               Tmp, Result);
+         end if;
       end if;
    end C_Field_Name;
 
