@@ -37,6 +37,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
@@ -63,7 +64,6 @@ with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Gtkada.Types;
-with Factory_Data;
 
 package body GPS.Main_Window is
 
@@ -250,14 +250,12 @@ package body GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window      : out GPS_Window;
-      Key              : String;
-      Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
       Prefix_Directory : String) is
    begin
       Main_Window := new GPS_Window_Record;
       GPS.Main_Window.Initialize
-        (Main_Window, Key, Menu_Items, Home_Dir, Prefix_Directory);
+        (Main_Window, Home_Dir, Prefix_Directory);
    end Gtk_New;
 
    ----------------------
@@ -419,15 +417,14 @@ package body GPS.Main_Window is
 
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;
-      Key              : String;
-      Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
       Prefix_Directory : String)
    is
-      Vbox     : Gtk_Vbox;
-      Menu     : Gtk_Widget;
-      Box1     : Gtk_Hbox;
-      Progress : Gtk.Progress_Bar.Gtk_Progress_Bar;
+      Vbox      : Gtk_Vbox;
+      Box1      : Gtk_Hbox;
+      Progress  : Gtk.Progress_Bar.Gtk_Progress_Bar;
+      Menu      : Gtk_Menu;
+      Menu_Item : Gtk_Menu_Item;
 
    begin
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
@@ -480,11 +477,12 @@ package body GPS.Main_Window is
       Set_Modal (Main_Window, False);
       Set_Default_Size (Main_Window, 800, 700);
 
+      Gtk_New (Main_Window.Main_Accel_Group);
+      Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
+      Gtk_New (Main_Window.MDI, Main_Window.Main_Accel_Group);
+
       Gtk_New_Vbox (Vbox, False, 0);
       Add (Main_Window, Vbox);
-
-      Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
-      Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
 
       Gtk_New_Hbox
         (Main_Window.Statusbar, Homogeneous => False, Spacing => 4);
@@ -510,28 +508,28 @@ package body GPS.Main_Window is
       Set_Size_Request (Progress, 0, -1);
       Pack_End (Vbox, Main_Window.Statusbar, False, False, 0);
 
-      Gtk_New (Main_Window.Main_Accel_Group);
-      Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
-      Gtk_New (Main_Window.MDI, Main_Window.Main_Accel_Group);
-      Add (Vbox, Main_Window.MDI);
-      Gtk_New
-        (Main_Window.Factory, Gtk.Menu_Bar.Get_Type,
-         Key, Main_Window.Main_Accel_Group);
-      Factory_Data.Create_Items
-        (Main_Window.Factory, Menu_Items, Main_Window.all'Access);
-      Menu := Get_Widget (Main_Window.Factory, Key);
-      Main_Window.Menu_Bar := Gtk_Menu_Bar (Menu);
       Gtk_New_Hbox (Main_Window.Menu_Box, False, 0);
       Pack_Start (Vbox, Main_Window.Menu_Box, False, False);
-      Pack_Start (Main_Window.Menu_Box, Menu);
-      Reorder_Child (Vbox, Main_Window.Menu_Box, 0);
-      Set_Submenu
-        (Gtk_Menu_Item (Get_Widget (Main_Window.Factory, '/' & (-"Window"))),
-         Create_Menu (Main_Window.MDI));
+
+      Gtk_New (Main_Window.Menu_Bar);
+      Pack_Start (Main_Window.Menu_Box, Main_Window.Menu_Bar);
+
+      Gtk_New_With_Mnemonic (Menu_Item, -"_File");
+      Append (Main_Window.Menu_Bar, Menu_Item);
+      Gtk_New (Menu);
+      Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
+      Set_Submenu (Menu_Item, Menu);
+
+      Gtk_New_With_Mnemonic (Menu_Item, -"_Window");
+      Append (Main_Window.Menu_Bar, Menu_Item);
+      Set_Submenu (Menu_Item, Create_Menu (Main_Window.MDI));
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
       Main_Window.Home_Dir := new String'(Home_Dir);
       Main_Window.Prefix_Directory := new String'(Prefix_Directory);
+
+      Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
+      Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
 
       Gtk_New_Hbox (Box1);
       Pack_Start (Main_Window.Toolbar_Box, Box1);
@@ -544,6 +542,8 @@ package body GPS.Main_Window is
       Pack_End
         (Main_Window.Menu_Box, Main_Window.Animation_Frame, False, False);
       Put_Animation (Main_Window);
+
+      Add (Vbox, Main_Window.MDI);
 
       Widget_Callback.Connect (Main_Window, "destroy", On_Destroy'Access);
 
@@ -1054,7 +1054,6 @@ package body GPS.Main_Window is
    begin
       Free (Win.Home_Dir);
       Free (Win.Prefix_Directory);
-      Unref (Win.Factory);
 
       if Win.Task_Dialog /= null then
          Destroy (Win.Task_Dialog);

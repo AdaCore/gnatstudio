@@ -496,7 +496,7 @@ package body GPS.Kernel.Console is
 
       Initialize_Console (Kernel);
 
-      Register_Menu (Kernel, Console, Ref_Item => -"Close");
+      Register_Menu (Kernel, Console);
       Register_Menu
         (Kernel, Console, -"_Clear", "", On_Clear_Console'Access);
       Register_Menu
@@ -504,7 +504,7 @@ package body GPS.Kernel.Console is
       Register_Menu
         (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
       Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
+      Register_Menu (Kernel, File, Mitem);
    end Register_Module;
 
 end GPS.Kernel.Console;

@@ -23,13 +23,11 @@ with Glib.Object;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Dialog;       use Gtk.Dialog;
-with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Menu_Bar;     use Gtk.Menu_Bar;
 with Gtk.Window;       use Gtk.Window;
 with Gdk.Pixbuf;       use Gdk.Pixbuf;
 with Gtk.Frame;        use Gtk.Frame;
 with Gtk.Image;        use Gtk.Image;
-with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Toolbar;      use Gtk.Toolbar;
 with Gtk.Main;
 
@@ -79,7 +77,6 @@ package GPS.Main_Window is
 
       --  Fields previousely in GVD_Main_Window_Record
 
-      Factory             : Gtk_Item_Factory;
       Toolbar_Box         : Gtk_Vbox;
       Statusbar           : Gtk.Box.Gtk_Hbox;
       Menu_Box            : Gtk.Box.Gtk_Hbox;
@@ -102,21 +99,15 @@ package GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window      : out GPS_Window;
-      Key              : String;
-      Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
       Prefix_Directory : String);
    --  Create a new main window.
-   --  Key is a unique string identifying main_window.
-   --  Menu_Items is used to create the default menu bar.
    --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
    --  files will be saved.
    --  Prefix_Directory is the prefix where GPS is installed (e.g /opt/gps).
 
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;
-      Key              : String;
-      Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
       Prefix_Directory : String);
    --  Internal initialization function
