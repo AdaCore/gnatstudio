@@ -30,6 +30,7 @@ begin
 
    if not Success or Type_To_Object (Desc.Kind) = Overloaded_Entity then
       Free (Var);
+      Free (Desc);
       return; -- type not found, ignore errors
    end if;
 
@@ -39,19 +40,36 @@ begin
       Scope := Static_Local;
    end if;
 
-   Insert_Declaration
-     (Handler           => LI_Handler (Global_CPP_Handler),
-      File              => Global_LI_File,
-      Symbol_Name       =>
-        Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-      Source_Filename   =>
-        Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-      Location          => Sym.Start_Position,
-      Kind              => Type_To_Object (Desc.Kind),
-      Scope             => Scope,
-      Declaration_Info  => tmp_ptr);
+   if Desc.Parent_Point = Invalid_Point then
+      Insert_Declaration
+        (Handler           => LI_Handler (Global_CPP_Handler),
+         File              => Global_LI_File,
+         Symbol_Name       =>
+           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Source_Filename   =>
+           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Location          => Sym.Start_Position,
+         Kind              => Type_To_Object (Desc.Kind),
+         Scope             => Scope,
+         Declaration_Info  => tmp_ptr);
+   else
+      Insert_Declaration
+        (Handler           => LI_Handler (Global_CPP_Handler),
+         File              => Global_LI_File,
+         Symbol_Name       =>
+           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Source_Filename   =>
+           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Location          => Sym.Start_Position,
+         Kind              => Type_To_Object (Desc.Kind),
+         Scope             => Scope,
+         Parent_Location   => Desc.Parent_Point,
+         Parent_Filename   => Desc.Parent_Filename.all,
+         Declaration_Info  => tmp_ptr);
+   end if;
 
    Free (Var);
+   Free (Desc);
 exception
    when  DB_Error |   -- non-existent table
          Not_Found => -- no such variable

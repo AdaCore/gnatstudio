@@ -31,6 +31,7 @@ with SN;                use SN;
 with SN.DB_Structures;  use SN.DB_Structures;
 with SN.Find_Fns;       use SN.Find_Fns;
 with SN.Browse;
+with Ada.Unchecked_Deallocation;
 
 with File_Buffer;
 
@@ -167,11 +168,16 @@ package body Src_Info.CPP is
 
    type CType_Description is
       record
-         Kind         : E_Kind;
-         IsVolatile   : Boolean;
-         IsConst      : Boolean;
-         IsTemplate   : Boolean;
+         Kind            : E_Kind;
+         IsVolatile      : Boolean;
+         IsConst         : Boolean;
+         IsTemplate      : Boolean;
+         Parent_Point    : Point;
+         Parent_Filename : SN.String_Access;
       end record;
+
+   procedure Free (Desc : in out CType_Description);
+   --  Frees Parent_Filename if any
 
    --  Debugging utils
    procedure Info (Msg : String); -- print info message
@@ -400,9 +406,10 @@ package body Src_Info.CPP is
       Volatile_Str : constant String := "volatile ";
       Const_Str    : constant String := "const ";
    begin
-      Desc.IsVolatile := False;
-      Desc.IsConst    := False;
-      Desc.IsTemplate := False;
+      Desc.IsVolatile   := False;
+      Desc.IsConst      := False;
+      Desc.IsTemplate   := False;
+      Desc.Parent_Point := Invalid_Point;
       Success         := False;
 
       --  check for leading volatile/const modifier
@@ -542,6 +549,9 @@ package body Src_Info.CPP is
               Typedef.Original.First .. Typedef.Original.Last),
               Desc, Success);
       if Success then
+         Desc.Parent_Point     := Typedef.Start_Position;
+         Desc.Parent_Filename := new String'(Typedef.Buffer (
+                    Typedef.File_Name.First .. Typedef.File_Name.Last));
          Free (Typedef);
          Success := True;
          return;
@@ -572,6 +582,18 @@ package body Src_Info.CPP is
    begin
       Put_Line ("[E] " & Msg);
    end Fail;
+
+   ----------
+   -- Free --
+   ----------
+   procedure Free (Desc : in out CType_Description) is
+      procedure Free is new Ada.Unchecked_Deallocation
+         (String, SN.String_Access);
+   begin
+      if Desc.Parent_Point /= Invalid_Point then
+         Free (Desc.Parent_Filename);
+      end if;
+   end Free;
 
    --------------
    -- Handlers --
