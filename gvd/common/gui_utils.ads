@@ -50,8 +50,9 @@ package GUI_Utils is
    ----------------------
 
    procedure Add_Unique_List_Entry
-     (List : access Gtk.List.Gtk_List_Record'Class;
-      Text : String);
+     (List    : access Gtk.List.Gtk_List_Record'Class;
+      Text    : String;
+      Prepend : Boolean := False);
    --  Add Text to List if it is not already there. Nothing is done if Text
    --  is already visible in the list
 
@@ -59,7 +60,8 @@ package GUI_Utils is
      (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
       Text        : String;
       Item_String : String := "";
-      Use_Item_String : Boolean := False);
+      Use_Item_String : Boolean := False;
+      Prepend     : Boolean := False);
    --  Add Text to the popdown list of Combo, if it is not already there.
    --  If the Text is already in the combo box, nothing is done.
    --  If Use_Item_String is True, then Item_String will be inserted in the
@@ -69,7 +71,8 @@ package GUI_Utils is
      (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
       Text        : String;
       Item_String : String := "";
-      Use_Item_String : Boolean := False) return Gtk.List_Item.Gtk_List_Item;
+      Use_Item_String : Boolean := False;
+      Prepend     : Boolean := False) return Gtk.List_Item.Gtk_List_Item;
    --  Same as above, but return the inserted item (or the previously existing
    --  one).
 

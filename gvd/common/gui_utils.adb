@@ -87,8 +87,9 @@ package body GUI_Utils is
    --  Callback for the editable renderer
 
    function Add_Unique_List_Entry
-     (List : access Gtk.List.Gtk_List_Record'Class;
-      Text : String) return Gtk_List_Item;
+     (List    : access Gtk.List.Gtk_List_Record'Class;
+      Text    : String;
+      Prepend : Boolean := False) return Gtk_List_Item;
    --  Internal version of Add_Unique_List_Entry, that also returns the added
    --  item.
 
@@ -97,8 +98,9 @@ package body GUI_Utils is
    ---------------------------
 
    function Add_Unique_List_Entry
-     (List : access Gtk.List.Gtk_List_Record'Class;
-      Text : String) return Gtk_List_Item
+     (List    : access Gtk.List.Gtk_List_Record'Class;
+      Text    : String;
+      Prepend : Boolean := False) return Gtk_List_Item
    is
       use Widget_List;
 
@@ -122,7 +124,15 @@ package body GUI_Utils is
 
       Gtk_New (Item, Locale_To_UTF8 (Text));
       Show (Item);
-      Add (List, Item);
+
+      if Prepend then
+         Append (Children, Gtk_Widget (Item));
+         Prepend_Items (List, Children);
+--         Free (Children);
+      else
+         Add (List, Item);
+      end if;
+
       return Item;
    end Add_Unique_List_Entry;
 
@@ -132,12 +142,13 @@ package body GUI_Utils is
 
    procedure Add_Unique_List_Entry
      (List : access Gtk.List.Gtk_List_Record'Class;
-      Text : String)
+      Text : String;
+      Prepend : Boolean := False)
    is
       Item : Gtk_List_Item;
       pragma Unreferenced (Item);
    begin
-      Item := Add_Unique_List_Entry (List, Text);
+      Item := Add_Unique_List_Entry (List, Text, Prepend);
    end Add_Unique_List_Entry;
 
    ----------------------------
@@ -145,17 +156,18 @@ package body GUI_Utils is
    ----------------------------
 
    procedure Add_Unique_Combo_Entry
-     (Combo : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text  : String;
-      Item_String : String := "";
-      Use_Item_String : Boolean := False)
+     (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Text            : String;
+      Item_String     : String  := "";
+      Use_Item_String : Boolean := False;
+      Prepend         : Boolean := False)
    is
       Item : Gtk_List_Item;
       pragma Unreferenced (Item);
 
    begin
       Item := Add_Unique_Combo_Entry
-        (Combo, Text, Item_String, Use_Item_String);
+        (Combo, Text, Item_String, Use_Item_String, Prepend);
    end Add_Unique_Combo_Entry;
 
    ----------------------------
@@ -166,11 +178,12 @@ package body GUI_Utils is
      (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
       Text        : String;
       Item_String : String := "";
-      Use_Item_String : Boolean := False) return Gtk.List_Item.Gtk_List_Item
+      Use_Item_String : Boolean := False;
+      Prepend     : Boolean := False) return Gtk.List_Item.Gtk_List_Item
    is
       Item : Gtk_List_Item;
    begin
-      Item := Add_Unique_List_Entry (Get_List (Combo), Text);
+      Item := Add_Unique_List_Entry (Get_List (Combo), Text, Prepend);
 
       if Use_Item_String then
          Set_Item_String (Combo, Gtk_Item (Item), Item_String);
