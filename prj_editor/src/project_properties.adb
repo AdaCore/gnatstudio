@@ -51,10 +51,10 @@ with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
+with Language;                  use Language;
 with Ada.Unchecked_Deallocation;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Project_Viewers;           use Project_Viewers;
 with Languages_Lists;           use Languages_Lists;
@@ -67,8 +67,18 @@ package body Project_Properties is
    type Widget_Array is array (Natural range <>) of Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
 
+   type Lang_Widget_Info is record
+      Language  : GNAT.OS_Lib.String_Access;
+      Widget    : Gtk_Entry;
+      Attribute : Project_Field;
+   end record;
+   type Lang_Widget_Array is array (Natural range <>) of Lang_Widget_Info;
+   type Lang_Widget_Array_Access is access Lang_Widget_Array;
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Widget_Array, Widget_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Lang_Widget_Array, Lang_Widget_Array_Access);
 
    type Properties_Editor_Record is new Gtk.Dialog.Gtk_Dialog_Record with
    record
@@ -77,8 +87,7 @@ package body Project_Properties is
       Debugger           : Gtk.GEntry.Gtk_Entry;
       Global_Pragmas     : Gtk.GEntry.Gtk_Entry;
       Local_Pragmas      : Gtk.GEntry.Gtk_Entry;
-      Gnatls             : Gtk.GEntry.Gtk_Entry;
-      Compilers          : Widget_Array_Access;
+      Compilers          : Lang_Widget_Array_Access;
       Languages          : Languages_Lists.Languages_List;
       Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
       Tools_Host         : Gtk.GEntry.Gtk_Entry;
@@ -108,11 +117,10 @@ package body Project_Properties is
       Kernel  : access Kernel_Handle_Record'Class);
    --  Internal initialization function
 
-   procedure Command_Set_Sensitive
-     (Check : access Glib.Object.GObject_Record'Class;
-      Ent   : GObject);
-   --  Set Ent to sensitive or insensitive state, depending on whether Check is
-   --  active or not.
+   procedure Selected_Languages_Changed
+     (Editor : access Gtk_Widget_Record'Class);
+   --  Refresh the list of sensitive fields for compiler,... when the list of
+   --  languages has changed.
 
    procedure Destroyed (Editor : access Gtk_Widget_Record'Class);
    --  Called when the editor is destroyed
@@ -143,6 +151,43 @@ package body Project_Properties is
       return Project_Edition_Type;
    --  Display a warning dialog to indicate that the current view is
    --  incomplete, and it might be dangereous to edit the properties.
+
+   procedure Add_Widget
+     (List      : in out Lang_Widget_Array_Access;
+      Lang      : String;
+      Widget    : access Gtk_Entry_Record'Class;
+      Attribute : Project_Field);
+   --  Add a new entry in List. Resize as needed
+
+   function Get_Value (Project : Project_Type; Attribute : Project_Field)
+      return String;
+   --  Return the value of Attribute in Project.
+
+   ----------------
+   -- Add_Widget --
+   ----------------
+
+   procedure Add_Widget
+     (List      : in out Lang_Widget_Array_Access;
+      Lang      : String;
+      Widget    : access Gtk_Entry_Record'Class;
+      Attribute : Project_Field)
+   is
+      Tmp : Lang_Widget_Array_Access := List;
+   begin
+      if List = null then
+         List := new Lang_Widget_Array (1 .. 1);
+      else
+         List := new Lang_Widget_Array (Tmp'First .. Tmp'Last + 1);
+         List (Tmp'Range) := Tmp.all;
+         Unchecked_Free (Tmp);
+      end if;
+
+      List (List'Last) :=
+        (Language  => new String'(Lang),
+         Widget    => Gtk_Entry (Widget),
+         Attribute => Attribute);
+   end Add_Widget;
 
    ------------------------
    -- Paths_Are_Relative --
@@ -180,20 +225,70 @@ package body Project_Properties is
    procedure Destroyed (Editor : access Gtk_Widget_Record'Class) is
       E : Properties_Editor := Properties_Editor (Editor);
    begin
-      Unchecked_Free (E.Compilers);
+      if E.Compilers /= null then
+         for C in E.Compilers'Range loop
+            Free (E.Compilers (C).Language);
+         end loop;
+         Unchecked_Free (E.Compilers);
+      end if;
+
       Unchecked_Free (E.Pages);
    end Destroyed;
 
-   ---------------------------
-   -- Command_Set_Sensitive --
-   ---------------------------
+   ---------------
+   -- Get_Value --
+   ---------------
 
-   procedure Command_Set_Sensitive
-     (Check : access Glib.Object.GObject_Record'Class;
-      Ent   : GObject) is
+   function Get_Value (Project : Project_Type; Attribute : Project_Field)
+      return String is
    begin
-      Set_Sensitive (Gtk_Widget (Ent), Get_Active (Gtk_Check_Button (Check)));
-   end Command_Set_Sensitive;
+      if Attribute.Attribute_Index = null then
+         if Attribute.Values /= null then
+            return Get_Attribute_Value
+              (Project,
+               Build (Ide_Package, Attribute.Attribute_Name.all),
+               Default => Attribute.Values (Attribute.Values'First).all);
+         else
+            return Get_Attribute_Value
+              (Project, Build (Ide_Package, Attribute.Attribute_Name.all));
+         end if;
+
+      else
+         if Attribute.Values /= null then
+            return Get_Attribute_Value
+              (Project,
+               Build (Ide_Package, Attribute.Attribute_Name.all),
+               Default => Attribute.Values (Attribute.Values'First).all,
+               Index   => Attribute.Attribute_Index.all);
+         else
+            return Get_Attribute_Value
+              (Project,
+               Build (Ide_Package, Attribute.Attribute_Name.all),
+               Index   => Attribute.Attribute_Index.all);
+         end if;
+      end if;
+   end Get_Value;
+
+   --------------------------------
+   -- Selected_Languages_Changed --
+   --------------------------------
+
+   procedure Selected_Languages_Changed
+     (Editor : access Gtk_Widget_Record'Class)
+   is
+      Ed   : constant Properties_Editor := Properties_Editor (Editor);
+      Lang : Argument_List := Get_Languages (Ed.Languages);
+   begin
+      if Ed.Compilers /= null then
+         for F in Ed.Compilers'Range loop
+            Set_Sensitive
+              (Ed.Compilers (F).Widget,
+               Contains (Lang, Ed.Compilers (F).Language.all,
+                         Case_Sensitive => False));
+         end loop;
+      end if;
+      Free (Lang);
+   end Selected_Languages_Changed;
 
    -------------------------
    -- Create_General_Page --
@@ -214,7 +309,6 @@ package body Project_Properties is
       Group        : Gtk_Size_Group;
       Vbox, Box, Hbox : Gtk_Box;
       Event        : Gtk_Event_Box;
-      Ada_Check    : Gtk_Check_Button;
       Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel));
       Project_Languages : Argument_List :=  Get_Languages (Project);
@@ -297,7 +391,11 @@ package body Project_Properties is
       --  Languages frame
 
       Gtk_New (Editor.Languages, Kernel, Project);
-      Pack_Start (Vbox, Editor.Languages, Expand => False);
+      Pack_Start (Vbox, Editor.Languages, Expand => True);
+      Widget_Callback.Object_Connect
+        (Editor.Languages, "changed",
+         Widget_Callback.To_Marshaller (Selected_Languages_Changed'Access),
+         Editor);
 
       --  Tools frame
 
@@ -308,126 +406,52 @@ package body Project_Properties is
       Gtk_New_Vbox (Box, Homogeneous => True);
       Add (Frame, Box);
 
-      Editor.Compilers := new Widget_Array (Languages'Range);
-
       for L in Languages'Range loop
-         Gtk_New_Hbox (Hbox, Homogeneous => False);
-         Pack_Start (Box, Hbox);
-
          declare
-            S : String := Languages (L).all;
+            Fields : constant Project_Field_Array := Get_Project_Fields
+              (Get_Language_By_Name
+               (Get_Language_Handler (Kernel), Languages (L).all));
          begin
-            Mixed_Case (S);
-            Gtk_New (Event);
-            Pack_Start (Hbox, Event, Expand => False);
+            for F in Fields'Range loop
+               Gtk_New_Hbox (Hbox, Homogeneous => False);
+               Pack_Start (Box, Hbox);
 
-            Gtk_New (Label, S & ' ' & (-"compiler:"));
-            Set_Alignment (Label, 0.0, 0.5);
-            Add (Event, Label);
-            Add_Widget (Group, Label);
-            Set_Tip (Get_Tooltips (Kernel), Event,
-                     -"Name of the compiler to use for the language " & S);
+               Gtk_New (Event);
+               Pack_Start (Hbox, Event, Expand => False);
+
+               Gtk_New (Label, Fields (F).Description.all);
+               Set_Alignment (Label, 0.0, 0.5);
+               Add (Event, Label);
+               Add_Widget (Group, Label);
+               --  Set_Tip (Get_Tooltips (Kernel), Event,
+               --           Fields (F).Description.all);
+               --  ??? Should use real tooltip
+
+               if Fields (F).Values /= null then
+                  Gtk_New (Combo);
+                  Set_Width_Chars (Get_Entry (Combo), 0);
+                  Pack_Start (Hbox, Combo);
+
+                  for V in Fields (F).Values'Range loop
+                     Append (Items, Fields (F).Values (V).all);
+                  end loop;
+
+                  Set_Popdown_Strings (Combo, Items);
+                  Free_String_List (Items);
+
+                  Ent := Get_Entry (Combo);
+               else
+                  Gtk_New (Ent);
+                  Pack_Start (Hbox, Ent);
+               end if;
+
+               Set_Editable (Ent, Fields (F).Editable);
+               Set_Text (Ent, Get_Value (Project, Fields (F)));
+               Add_Widget
+                 (Editor.Compilers, Languages (L).all, Ent, Fields (F));
+            end loop;
          end;
-
-         if To_Lower (Languages (L).all) = "ada" then
-            Gtk_New (Combo);
-            Set_Width_Chars (Get_Entry (Combo), 0);
-            Pack_Start (Hbox, Combo);
-            Append (Items, "gnatmake");
-            Append (Items, "powerpc-wrs-vxworks-gnatmake");
-            Append (Items, "powerpc-wrs-vxworksae-gnatmake");
-            Append (Items, "powerpc-elf-gnatmake");
-            Append (Items, "i386-wrs-vxworks-gnatmake");
-            Append (Items, "m68k-wrs-vxworks-gnatmake");
-            Append (Items, "mips-wrs-vxworks-gnatmake");
-            Append (Items, "sparc-wrs-vxworks-gnatmake");
-            Append (Items, "sparc64-wrs-vxworks-gnatmake");
-            Append (Items, "xscale-wrs-vxworks-gnatmake");
-            Append (Items, "powerpc-xcoff-lynxos-gnatmake");
-            Append (Items, "gnaampmake");
-            Set_Popdown_Strings (Combo, Items);
-            Free_String_List (Items);
-
-            Ent := Get_Entry (Combo);
-            Set_Text
-              (Ent,
-               Get_Attribute_Value
-                 (Project, Compiler_Command_Attribute,
-                  Default => "gnatmake",
-                  Index => Languages (L).all));
-
-         else
-            Gtk_New (Ent);
-            Pack_Start (Hbox, Ent);
-            Set_Text
-              (Ent,
-               Get_Attribute_Value
-                 (Project, Compiler_Command_Attribute,
-                  Default => "gcc",
-                  Index => Languages (L).all));
-         end if;
-
-         Editor.Compilers (L) := Gtk_Widget (Ent);
-
-         Set_Sensitive
-           (Ent, Contains (Project_Languages, Languages (L).all));
-
-         Object_User_Callback.Connect
-           (Get_Check_Button (Editor.Languages, Languages (L).all),
-            "toggled",
-            Object_User_Callback.To_Marshaller (Command_Set_Sensitive'Access),
-            User_Data => GObject (Ent));
       end loop;
-
-      --  gnatls
-
-      --  ??? Would be nice to specify the list of available cross compilers
-      --  using a configuration file
-
-      Ada_Check := Get_Check_Button (Editor.Languages, "ada");
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Gnatls:");
-      Add_Widget (Group, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Add (Event, Label);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -("Name of the external tool to use to find the location of"
-                 & " the standard Ada library"));
-
-      Gtk_New (Combo);
-      Set_Width_Chars (Get_Entry (Combo), 0);
-      Pack_Start (Hbox, Combo, Expand => True);
-
-      Append (Items, "gnatls");
-      Append (Items, "powerpc-wrs-vxworks-gnatls");
-      Append (Items, "powerpc-wrs-vxworksae-gnatls");
-      Append (Items, "powerpc-elf-gnatls");
-      Append (Items, "i386-wrs-vxworks-gnatls");
-      Append (Items, "m68k-wrs-vxworks-gnatls");
-      Append (Items, "mips-wrs-vxworks-gnatls");
-      Append (Items, "sparc-wrs-vxworks-gnatls");
-      Append (Items, "sparc64-wrs-vxworks-gnatls");
-      Append (Items, "xscale-wrs-vxworks-gnatls");
-      Append (Items, "powerpc-xcoff-lynxos-gnatls");
-      Append (Items, "gnaampls");
-      Set_Popdown_Strings (Combo, Items);
-      Free_String_List (Items);
-      Editor.Gnatls := Get_Entry (Combo);
-      Set_Text
-        (Editor.Gnatls,
-         Get_Attribute_Value
-         (Project, Gnatlist_Attribute, Default => "gnatls"));
-
-      Set_Sensitive (Editor.Gnatls, Get_Active (Ada_Check));
-      Object_User_Callback.Connect
-        (Ada_Check, "toggled",
-         Object_User_Callback.To_Marshaller (Command_Set_Sensitive'Access),
-         User_Data => GObject (Editor.Gnatls));
 
       --  Debugger
 
@@ -629,6 +653,9 @@ package body Project_Properties is
 
       Free (Languages);
       Free (Project_Languages);
+
+      --  Force a refresh of the sensitive fields
+      Changed (Editor.Languages);
 
       return Gtk_Widget (Vbox);
    end Create_General_Page;
@@ -863,8 +890,9 @@ package body Project_Properties is
          return Boolean
       is
          Changed  : Boolean := False;
-         Ent      : Gtk_GEntry;
          Relative : Boolean := Get_Active (Editor.Use_Relative_Paths);
+         New_Languages : Argument_List := Get_Languages (Editor.Languages);
+         Project_Languages : Argument_List := Get_Languages (Project);
       begin
          --  If we are moving the project through the GUI, then we need to
          --  convert the paths to absolute or the semantics changes.
@@ -891,18 +919,61 @@ package body Project_Properties is
             end if;
          end if;
 
+         --  List of languages has changed
+
          if Project = No_Project
-           or else Get_Text (Editor.Gnatls) /= Get_Attribute_Value
-           (Project, Gnatlist_Attribute, Default => "gnatls")
+           or else not Is_Equal
+           (New_Languages, Project_Languages, Case_Sensitive => False)
          then
+            Changed := True;
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute          => Gnatlist_Attribute,
-               Value              => Get_Text (Editor.Gnatls));
-            Changed := True;
-            Trace (Me, "gnatls changed");
+               Attribute          => Languages_Attribute,
+               Values             => New_Languages);
+            Trace (Me, "List of languages changed");
          end if;
+
+         --  Process the tools
+
+         for C in Editor.Compilers'Range loop
+            if Contains (New_Languages,
+                         Editor.Compilers (C).Language.all,
+                         Case_Sensitive => False)
+            then
+               declare
+                  F   : Lang_Widget_Info renames Editor.Compilers (C);
+                  Att : Project_Field renames Editor.Compilers (C).Attribute;
+               begin
+                  if Project = No_Project
+                    or else Get_Text (F.Widget) /= Get_Value (Project, Att)
+                  then
+                     Changed := True;
+
+                     if Att.Attribute_Index /= null then
+                        Trace (Me, Att.Attribute_Name.all
+                               & ' ' & Att.Attribute_Index.all
+                               & " changed");
+                        Update_Attribute_Value_In_Scenario
+                          (Project            => Project,
+                           Scenario_Variables => Scenario_Variables,
+                           Attribute          => Build
+                             (Ide_Package, Att.Attribute_Name.all),
+                           Value              => Get_Text (F.Widget),
+                           Attribute_Index    => Att.Attribute_Index.all);
+                     else
+                        Trace (Me, Att.Attribute_Name.all & " changed");
+                        Update_Attribute_Value_In_Scenario
+                          (Project            => Project,
+                           Scenario_Variables => Scenario_Variables,
+                           Attribute          => Build
+                           (Ide_Package, Att.Attribute_Name.all),
+                           Value              => Get_Text (F.Widget));
+                     end if;
+                  end if;
+               end;
+            end if;
+         end loop;
 
          if Project = No_Project
            or else Get_Text (Editor.Debugger) /= Get_Attribute_Value
@@ -916,86 +987,6 @@ package body Project_Properties is
             Changed := True;
             Trace (Me, "debugger command changed");
          end if;
-
-         declare
-            New_Languages : Argument_List := Get_Languages (Editor.Languages);
-         begin
-            if Project /= No_Project then
-
-               declare
-                  Project_Languages : Argument_List :=
-                    Get_Languages (Project);
-                  Different : Boolean;
-               begin
-                  for J in Languages'Range loop
-                     Ent   := Gtk_GEntry (Editor.Compilers (J));
-
-                     if Is_Selected (Editor.Languages, Languages (J).all) then
-                        Different := False;
-                        if To_Lower (Languages (J).all) = "ada" then
-                           Different := Get_Attribute_Value
-                             (Project, Compiler_Command_Attribute,
-                              Default => "gnatmake",
-                              Index => Languages (J).all) /= Get_Text (Ent);
-                        else
-                           Different := Get_Attribute_Value
-                             (Project, Compiler_Command_Attribute,
-                              Default => "gcc",
-                              Index => Languages (J).all) /= Get_Text (Ent);
-                        end if;
-
-                        if Different then
-                           Update_Attribute_Value_In_Scenario
-                             (Project  => Project,
-                              Scenario_Variables => Scenario_Variables,
-                              Attribute => Compiler_Command_Attribute,
-                              Value => Get_Text (Ent),
-                              Attribute_Index => Languages (J).all);
-                           Changed := True;
-                           Trace (Me, "Compiler changed for "
-                                  & Languages (J).all);
-                        end if;
-                     end if;
-                  end loop;
-
-                  if not Is_Equal
-                    (New_Languages, Project_Languages, Case_Sensitive => False)
-                  then
-                     Changed := True;
-                     Update_Attribute_Value_In_Scenario
-                       (Project            => Project,
-                        Scenario_Variables => Scenario_Variables,
-                        Attribute          => Languages_Attribute,
-                        Values             => New_Languages);
-                     Trace (Me, "List of languages changed");
-                  end if;
-
-                  Free (Project_Languages);
-               end;
-
-            else
-               Changed := True;
-               Trace (Me, "No project view initially");
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Languages_Attribute,
-                  Values             => New_Languages);
-
-               for J in Languages'Range loop
-                  Ent := Gtk_GEntry (Editor.Compilers (J));
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Project,
-                     Scenario_Variables => Scenario_Variables,
-                     Attribute          => Compiler_Command_Attribute,
-                     Value              => Get_Text (Ent),
-                     Attribute_Index    => Languages (J).all);
-               end loop;
-
-            end if;
-
-            Free (New_Languages);
-         end;
 
          if Project = No_Project
            or else Get_Text (Editor.Tools_Host) /= Get_Attribute_Value
@@ -1101,6 +1092,9 @@ package body Project_Properties is
                   Attribute          => Local_Pragmas_Attribute);
             end if;
          end if;
+
+         Free (New_Languages);
+         Free (Project_Languages);
 
          return Changed;
       end Process_General_Page;
