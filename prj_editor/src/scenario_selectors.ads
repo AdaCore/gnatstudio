@@ -22,8 +22,7 @@ with Gtk.Scrolled_Window;
 with Gtk.Tree_Model;
 with Gtk.Tree_Store;
 with Glide_Kernel;
-with Prj.Tree;
-with Prj_API;
+with Projects;
 with GNAT.OS_Lib;
 
 package Scenario_Selectors is
@@ -39,7 +38,7 @@ package Scenario_Selectors is
    procedure Gtk_New
      (Selector : out Project_Selector;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ref_Project : Prj.Tree.Project_Node_Id);
+      Ref_Project : Projects.Project_Type);
    --  Create a new project selector.
    --  Ref_Project is the project whose settings are shown in the project
    --  properties editor. As a result, it can never be unselected.
@@ -47,7 +46,7 @@ package Scenario_Selectors is
    procedure Initialize
      (Selector : access Project_Selector_Record'Class;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ref_Project : Prj.Tree.Project_Node_Id);
+      Ref_Project : Projects.Project_Type);
    --  Internal version of Gtk_New
 
    type Project_Iterator (<>) is private;
@@ -65,13 +64,8 @@ package Scenario_Selectors is
    procedure Next (Iter : in out Project_Iterator);
    --  Move to the next project
 
-   function Current (Iter : Project_Iterator) return Prj.Tree.Project_Node_Id;
-   --  Return the current project, or Empty_Node if there are no more projects.
-
-   function Current (Iter : Project_Iterator) return Prj.Project_Id;
-   --  Return the current project view, or No_Project if there are no more
-   --  projects or if the view doesn't exist yet (when called from the project
-   --  creation wizard).
+   function Current (Iter : Project_Iterator) return Projects.Project_Type;
+   --  Return the current project, or No_Project if there are no more projects.
 
    -----------------------
    -- Scenario selector --
@@ -115,13 +109,13 @@ package Scenario_Selectors is
    --  in Glide_Kernel.Scenario_Variables.
    --  The returned value must be freed by the caller.
 
-   function Get_Current_Scenario (Variables : Prj_API.Project_Node_Array)
+   function Get_Current_Scenario (Variables : Projects.Scenario_Variable_Array)
       return GNAT.OS_Lib.Argument_List;
    --  Return the current values of the environment variables in Variables.
    --  The returned array must be freed by the caller.
 
    procedure Set_Environment
-     (Variables : Prj_API.Project_Node_Array;
+     (Variables : Projects.Scenario_Variable_Array;
       Values    : GNAT.OS_Lib.Argument_List);
    --  Set the value of each variable described in Variables to the value at
    --  the matching index in Values. This directly modifies the environment
@@ -134,7 +128,7 @@ private
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
    record
       Model       : Gtk.Tree_Store.Gtk_Tree_Store;
-      Ref_Project : Prj.Tree.Project_Node_Id;
+      Ref_Project : Projects.Project_Type;
       Kernel      : Glide_Kernel.Kernel_Handle;
       Select_All  : Boolean := True;
    end record;
@@ -148,9 +142,8 @@ private
    end record;
 
    type Project_Iterator (Num_Projects : Natural) is record
-      Projects      : Prj_API.Project_Node_Array (1 .. Num_Projects);
-      Projects_View : Prj_API.Project_Id_Array (1 .. Num_Projects);
-      Current       : Natural;
+      Project   : Projects.Project_Type_Array (1 .. Num_Projects);
+      Current   : Natural;
    end record;
 
    type Iter_Array is array (Natural range <>) of Gtk.Tree_Model.Gtk_Tree_Iter;

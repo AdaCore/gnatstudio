@@ -25,51 +25,51 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
---  with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with Prj.Ext;                  use Prj.Ext;
-with Prj.Tree;                 use Prj.Tree;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with System;
 with Glide_Intl;               use Glide_Intl;
 with Namet;                    use Namet;
-with Stringt;                  use Stringt;
-with Prj_API;                  use Prj_API;
+with Projects.Editor;          use Projects, Projects.Editor;
+with Projects.Registry;        use Projects.Registry;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with Ada.Unchecked_Deallocation;
 
 package body Scenario_Selectors is
 
    Selected_Column      : constant := 0;
    Project_Name_Column  : constant := 1;
-   Project_Id_Column    : constant := 2;
    Project_Column_Types : constant GType_Array :=
      (Selected_Column     => GType_Boolean,
-      Project_Name_Column => GType_String,
-      Project_Id_Column   => GType_Int);
+      Project_Name_Column => GType_String);
 
    Var_Name_Column      : constant := 1;
    Var_Column_Types      : constant GType_Array :=
      (Selected_Column     => GType_Boolean,
       Var_Name_Column     => GType_String);
 
+   type Project_Type_Array_Access is access Project_Type_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Project_Type_Array, Project_Type_Array_Access);
+
    procedure Project_Set
      (Selector : access Project_Selector_Record'Class;
       Iter     : Gtk_Tree_Iter;
       Selected : Boolean;
-      Project  : Project_Node_Id);
+      Project  : Project_Type);
    --  Add a new project in the tree model
 
    procedure Add_Project_Recursive
      (Selector : access Project_Selector_Record'Class;
       Iter     : Gtk_Tree_Iter;
-      Project  : Project_Node_Id);
+      Project  : Project_Type);
    --  Add project and all its importing projects to the selector.
 
    procedure Project_Selected
@@ -86,7 +86,7 @@ package body Scenario_Selectors is
    procedure Reset_Selected_Status
      (Selector : access Project_Selector_Record'Class;
       Iter     : Gtk_Tree_Iter;
-      Project  : Project_Node_Id;
+      Project  : Project_Type;
       Selected : Boolean);
    --  Changes the selected status for all the lines that reference Project,
    --  Starting at line Iter.
@@ -120,7 +120,7 @@ package body Scenario_Selectors is
    procedure Gtk_New
      (Selector : out Project_Selector;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ref_Project : Prj.Tree.Project_Node_Id) is
+      Ref_Project : Project_Type) is
    begin
       Selector := new Project_Selector_Record;
       Initialize (Selector, Kernel, Ref_Project);
@@ -133,7 +133,7 @@ package body Scenario_Selectors is
    procedure Initialize
      (Selector : access Project_Selector_Record'Class;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ref_Project : Prj.Tree.Project_Node_Id)
+      Ref_Project : Project_Type)
    is
       View          : Gtk_Tree_View;
       Col           : Gtk_Tree_View_Column;
@@ -204,9 +204,8 @@ package body Scenario_Selectors is
          It    : Gtk_Tree_Iter := Iter;
       begin
          while It /= Null_Iter loop
-            if Project_Node_Id
-              (Get_Int (S.Model, It, Project_Id_Column)) /=
-              S.Ref_Project
+            if Get_String (S.Model, It, Project_Name_Column) /=
+              Project_Name (S.Ref_Project)
             then
                Set (S.Model, It, Selected_Column, Selected);
             end if;
@@ -231,15 +230,14 @@ package body Scenario_Selectors is
    procedure Reset_Selected_Status
      (Selector : access Project_Selector_Record'Class;
       Iter     : Gtk_Tree_Iter;
-      Project  : Project_Node_Id;
+      Project  : Project_Type;
       Selected : Boolean)
    is
       It : Gtk_Tree_Iter := Iter;
    begin
       while It /= Null_Iter loop
-         if Project_Node_Id
-           (Get_Int (Selector.Model, It, Project_Id_Column))
-           = Project
+         if Get_String (Selector.Model, It, Project_Name_Column)
+           = Project_Name (Project)
          then
             Set (Selector.Model, It, Selected_Column, Selected);
          end if;
@@ -261,7 +259,7 @@ package body Scenario_Selectors is
       S           : constant Project_Selector := Project_Selector (Selector);
       Iter        : Gtk_Tree_Iter;
       Path_String : constant String := Get_String (Nth (Params, 1));
-      Project     : Project_Node_Id;
+      Project     : Project_Type;
       Selected    : Boolean;
 
    begin
@@ -269,8 +267,16 @@ package body Scenario_Selectors is
 
       --  Can't unselect the reference project
       if Iter /= Null_Iter then
-         Project := Project_Node_Id
-           (Get_Int (S.Model, Iter, Project_Id_Column));
+         declare
+            N : constant String := Get_String
+              (S.Model, Iter, Project_Name_Column);
+         begin
+            Name_Len := N'Length;
+            Name_Buffer (1 .. Name_Len) := N;
+
+            Project := Get_Project_From_Name
+              (Get_Registry (S.Kernel), Name_Find);
+         end;
 
          if Project /= S.Ref_Project then
             Selected := Get_Boolean (S.Model, Iter, Selected_Column);
@@ -291,21 +297,21 @@ package body Scenario_Selectors is
    procedure Add_Project_Recursive
      (Selector : access Project_Selector_Record'Class;
       Iter     : Gtk_Tree_Iter;
-      Project  : Project_Node_Id)
+      Project  : Project_Type)
    is
       It : Gtk_Tree_Iter;
-      With_Clause : Project_Node_Id;
+      Iterator : Imported_Project_Iterator;
    begin
       if Get_Pref (Selector.Kernel, Selector_Show_Project_Hierarchy) then
-         With_Clause := First_With_Clause_Of (Project);
+         Iterator := Start (Project, Recursive => True, Direct_Only => True);
+
          Append (Selector.Model, It, Iter);
          Project_Set
            (Selector, It, Project = Selector.Ref_Project, Project);
 
-         while With_Clause /= Empty_Node loop
-            Add_Project_Recursive
-              (Selector, It, Project_Node_Of (With_Clause));
-            With_Clause := Next_With_Clause_Of (With_Clause);
+         while Current (Iterator) /= No_Project loop
+            Add_Project_Recursive (Selector, It, Current (Iterator));
+            Next (Iterator);
          end loop;
 
       else
@@ -313,7 +319,7 @@ package body Scenario_Selectors is
             Iterator : Imported_Project_Iterator := Start
               (Project, Recursive => True);
          begin
-            while Current (Iterator) /= Empty_Node loop
+            while Current (Iterator) /= No_Project loop
                Append (Selector.Model, It, Iter);
                Project_Set (Selector, It,
                             Current (Iterator) = Selector.Ref_Project,
@@ -332,21 +338,19 @@ package body Scenario_Selectors is
      (Selector : access Project_Selector_Record'Class;
       Iter     : Gtk_Tree_Iter;
       Selected : Boolean;
-      Project  : Project_Node_Id)
+      Project  : Project_Type)
    is
       procedure Internal
         (Tree, Iter : System.Address;
          Col1 : Gint; Value1 : String;
          Col2 : Gint; Value2 : Gint;
-         Col3 : Gint; Id     : Gint;
          Final : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
    begin
       Internal
         (Get_Object (Selector.Model), Iter'Address,
-         Project_Name_Column, Get_String (Name_Of (Project)) & ASCII.NUL,
-         Selected_Column,     Boolean'Pos (Selected),
-         Project_Id_Column,   Gint (Project));
+         Project_Name_Column, Project_Name (Project) & ASCII.NUL,
+         Selected_Column,     Boolean'Pos (Selected));
    end Project_Set;
 
    --------------------------------------------------------------------------
@@ -427,14 +431,12 @@ package body Scenario_Selectors is
    procedure Show_Variables
      (Selector : access Scenario_Selector_Record'Class)
    is
-      Vars : constant Project_Node_Array := Scenario_Variables
+      Vars : constant Scenario_Variable_Array := Scenario_Variables
         (Selector.Kernel);
       Iter, Child : Gtk_Tree_Iter;
       Value : String_List_Iterator;
    begin
       for V in Vars'Range loop
-         String_To_Name_Buffer (External_Reference_Of (Vars (V)));
-
          Append (Selector.Model, Iter, Null_Iter);
          Set (Selector.Model,
               Iter,
@@ -443,13 +445,12 @@ package body Scenario_Selectors is
          Set (Selector.Model,
               Iter,
               Column => Var_Name_Column,
-              Value  => Name_Buffer (1 .. Name_Len));
+              Value  => External_Reference_Of (Vars (V)));
 
          declare
-            Current : constant String := Get_String
-              (Prj.Ext.Value_Of (Name_Find));
+            Current : constant String := Value_Of (Vars (V));
          begin
-            Value := Type_Values (String_Type_Of (Vars (V)));
+            Value := Value_Of (Vars (V));
             while not Done (Value) loop
                Append (Selector.Model, Child, Iter);
                Set (Selector.Model,
@@ -568,7 +569,7 @@ package body Scenario_Selectors is
    function Start (Selector : access Project_Selector_Record'Class)
       return Project_Iterator
    is
-      Tmp : Project_Node_Array_Access := new Project_Node_Array (1 .. 1);
+      Tmp : Project_Type_Array_Access := new Project_Type_Array (1 .. 1);
 
       procedure Add_Recursive (Iter : Gtk_Tree_Iter);
       --  Add the project pointed to by Iter, if not already in Tmp
@@ -579,14 +580,22 @@ package body Scenario_Selectors is
 
       procedure Add_Recursive (Iter : Gtk_Tree_Iter) is
          It    : Gtk_Tree_Iter := Iter;
-         Prj   : Project_Node_Id;
+         Prj   : Project_Type;
          Found : Boolean := False;
-         T     : Project_Node_Array_Access;
+         T     : Project_Type_Array_Access;
       begin
          while It /= Null_Iter loop
             if Get_Boolean (Selector.Model, It, Selected_Column) then
-               Prj := Project_Node_Id
-                 (Get_Int (Selector.Model, It, Project_Id_Column));
+               declare
+                  N : constant String := Get_String
+                    (Selector.Model, It, Project_Name_Column);
+               begin
+                  Name_Len := N'Length;
+                  Name_Buffer (1 .. Name_Len) := N;
+                  Prj := Get_Project_From_Name
+                    (Get_Registry (Selector.Kernel), Name_Find);
+               end;
+
                for P in Tmp'Range loop
                   if Tmp (P) = Prj then
                      Found := True;
@@ -596,9 +605,9 @@ package body Scenario_Selectors is
 
                if not Found then
                   T := Tmp;
-                  Tmp := new Project_Node_Array (Tmp'First .. Tmp'Last + 1);
+                  Tmp := new Project_Type_Array (Tmp'First .. Tmp'Last + 1);
                   Tmp (T'Range) := T.all;
-                  Free (T);
+                  Unchecked_Free (T);
                   Tmp (Tmp'Last) := Prj;
                end if;
             end if;
@@ -616,15 +625,9 @@ package body Scenario_Selectors is
          Result : Project_Iterator (Tmp'Length);
       begin
          Result := (Num_Projects  => Tmp'Length,
-                    Projects      => Tmp.all,
-                    Projects_View => (others => Prj.No_Project),
+                    Project       => Tmp.all,
                     Current       => Tmp'First);
-         for R in Result.Projects_View'Range loop
-            Result.Projects_View (R) := Get_Project_View_From_Project
-              (Result.Projects (R));
-         end loop;
-
-         Free (Tmp);
+         Unchecked_Free (Tmp);
          return Result;
       end;
    end Start;
@@ -651,26 +654,12 @@ package body Scenario_Selectors is
    -- Current --
    -------------
 
-   function Current (Iter : Project_Iterator)
-      return Prj.Tree.Project_Node_Id is
+   function Current (Iter : Project_Iterator) return Project_Type is
    begin
-      if Iter.Current <= Iter.Projects'Last then
-         return Iter.Projects (Iter.Current);
+      if Iter.Current <= Iter.Project'Last then
+         return Iter.Project (Iter.Current);
       else
-         return Empty_Node;
-      end if;
-   end Current;
-
-   -------------
-   -- Current --
-   -------------
-
-   function Current (Iter : Project_Iterator) return Prj.Project_Id is
-   begin
-      if Iter.Current <= Iter.Projects_View'Last then
-         return Iter.Projects_View (Iter.Current);
-      else
-         return Prj.No_Project;
+         return No_Project;
       end if;
    end Current;
 
@@ -830,14 +819,13 @@ package body Scenario_Selectors is
    -- Get_Current_Scenario --
    --------------------------
 
-   function Get_Current_Scenario (Variables : Prj_API.Project_Node_Array)
+   function Get_Current_Scenario (Variables : Scenario_Variable_Array)
       return GNAT.OS_Lib.Argument_List
    is
       Values : Argument_List (Variables'Range);
    begin
       for V in Values'Range loop
-         String_To_Name_Buffer (External_Reference_Of (Variables (V)));
-         Values (V) := new String'(Get_String (Value_Of (Name_Find)));
+         Values (V) := new String'(Value_Of (Variables (V)));
       end loop;
       return Values;
    end Get_Current_Scenario;
@@ -847,12 +835,11 @@ package body Scenario_Selectors is
    ---------------------
 
    procedure Set_Environment
-     (Variables : Prj_API.Project_Node_Array;
+     (Variables : Scenario_Variable_Array;
       Values    : GNAT.OS_Lib.Argument_List) is
    begin
       for V in Variables'Range loop
-         Add (Get_String (External_Reference_Of (Variables (V))),
-              Values (V).all);
+         Set_Value (Variables (V), Values (V).all);
       end loop;
    end Set_Environment;
 
