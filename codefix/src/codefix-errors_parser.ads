@@ -135,52 +135,11 @@ use Codefix.Formal_Errors.Cursor_Lists;
 
 package Codefix.Errors_Parser is
 
-   type Errors_Subcategories is
-     (Misspelling,
-      Wrong_Keyword,
-      Unallowed_Tabulation,
-      Illegal_Character,
-      Qualified_Expression,
-      Wrong_Declaration_Order,
-      Wrong_Loop_Position,
-      Keyword_Missing,
-      Separator_Missing,
-      Semantic_Incoherence,
-      Statement_Expected,
-      Space_Required,
-      Implicit_Deference,
-      Block_Name_Expected,
-      Extra_Keyword,
-      Unexpected_Keyword,
-      Unallowed_Keyword,
-      Unallowed_Style_Character,
-      Unefficient_Pragma,
-      Wrong_Indentation,
-      Missing_With,
-      Wrong_Case,
-      Unit_Not_Referenced,
-      Pragma_Should_Begin,
-      Var_Not_Modified,
-      Ambiguous_Expression,
-      Useless_Conversion,
-      Movable_With_Clause);
-   --  Those subcategories are the real categories of errors that a user can
-   --  choose to correct or not.
-
-   type Error_State is (Enabled, Disabled);
-   --  The two states possible for an error.
-
-   procedure Set_Error_State
-     (Error : Errors_Subcategories; State : Error_State);
-   --  Modify the current error state.
-
-   function Get_Error_State (Error : Errors_Subcategories) return Error_State;
-   --  Return the current error state.
-
    procedure Get_Solutions
      (Current_Text : Text_Navigator_Abstr'Class;
       Errors_List  : in out Errors_Interface'Class;
       Message      : Error_Message;
+      Category     : out Dynamic_String;
       Solutions    : out Solution_List);
    --  Here is the big function that analyses a message and return the
    --  possible solutions.
@@ -200,7 +159,7 @@ package Codefix.Errors_Parser is
       Ada.Unchecked_Deallocation (Natural, Ptr_Natural);
 
    type Error_Parser
-     (Subcategorie : Errors_Subcategories; Nb_Parsers : Natural)
+     (Category : Dynamic_String; Nb_Parsers : Natural)
    is abstract tagged record
        Matcher    : Arr_Matcher (1 .. Nb_Parsers);
        Current_It : Ptr_Natural := new Natural;
@@ -249,14 +208,14 @@ package Codefix.Errors_Parser is
    --  Add a parser in the general parse list.
 
    General_Parse_List : Parser_List.List := Parser_List.Null_List;
-   General_Errors_Array : array (Errors_Subcategories'Range) of Error_State :=
-     (others => Enabled);
+   General_Preferences_List : State_List;
 
    procedure Initialize_Parsers;
    --  Initialize all Parsers, must be called before the first call of Fix.
 
-   type Agregate_Misspelling is new Error_Parser (Misspelling, 1)
-     with null record;
+   type Agregate_Misspelling is new Error_Parser
+     (new String'("Misspelling"), 1)
+   with null record;
 
    procedure Initialize (This : in out Agregate_Misspelling);
 
@@ -269,8 +228,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'possible mispelling of "=>"'
 
-   type Ligth_Misspelling is new Error_Parser (Misspelling, 1)
-     with null record;
+   type Ligth_Misspelling is new Error_Parser
+     (new String'("Misspelling"), 1)
+   with null record;
 
    procedure Initialize (This : in out Ligth_Misspelling);
 
@@ -283,8 +243,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix the most 'possible mispelling of sth'
 
-   type Double_Misspelling is new Error_Parser (Misspelling, 1)
-      with null record;
+   type Double_Misspelling is new Error_Parser
+     (new String'("Misspelling"), 1)
+   with null record;
 
    procedure Initialize (This : in out Double_Misspelling);
 
@@ -297,8 +258,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix the case where there is an alternative for the correction
 
-   type Goto_Misspelling is new Error_Parser (Misspelling, 1)
-     with null record;
+   type Goto_Misspelling is new Error_Parser
+     (new String'("Misspelling"), 1)
+   with null record;
 
    procedure Initialize (This : in out Goto_Misspelling);
 
@@ -311,7 +273,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix expressions like 'go  to Label;'
 
-   type Library_Misspelling is new Error_Parser (Misspelling, 1) with record
+   type Library_Misspelling is new Error_Parser
+     (new String'("Misspelling"), 1)
+   with record
       Misspelling_Matcher : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("possible misspelling of ""([^""]+)"""));
    end record;
@@ -329,8 +293,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Problems of misspelling of packages
 
-   type Sth_Should_Be_Sth is new Error_Parser (Wrong_Keyword, 1)
-     with null record;
+   type Sth_Should_Be_Sth is new Error_Parser
+     (new String'("Wrong_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out Sth_Should_Be_Sth);
 
@@ -343,8 +308,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix messages like 'sth should be sth'
 
-   type Should_Be_Semicolon is new Error_Parser (Wrong_Keyword, 1)
-     with null record;
+   type Should_Be_Semicolon is new Error_Parser
+     (new String'("Wrong_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out Should_Be_Semicolon);
 
@@ -357,8 +323,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'perdiod should probably be semicolon'
 
-   type And_Meant is new Error_Parser (Wrong_Keyword, 1)
-     with null record;
+   type And_Meant is new Error_Parser
+     (new String'("Wrong_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out And_Meant);
 
@@ -371,7 +338,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix instruction where '&' stands for 'and'
 
-   type Or_Meant is new Error_Parser (Wrong_Keyword, 1) with null record;
+   type Or_Meant is new Error_Parser
+     (new String'("Wrong_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out Or_Meant);
 
@@ -384,8 +353,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix instruction where '|' stands for 'or'
 
-   type Unqualified_Expression is new Error_Parser (Qualified_Expression, 1)
-     with null record;
+   type Unqualified_Expression is new Error_Parser
+     (new String'("Qualified_Expression"), 1)
+   with null record;
 
    procedure Initialize (This : in out Unqualified_Expression);
 
@@ -398,8 +368,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix instruction where ' is missing
 
-   type Goes_Before is new Error_Parser (Wrong_Declaration_Order, 4)
-     with null record;
+   type Goes_Before is new Error_Parser
+     (new String'("Wrong_Declaration_Order"), 4)
+   with null record;
 
    procedure Initialize (This : in out Goes_Before);
 
@@ -412,8 +383,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'so must be before sth'
 
-   type Sth_Expected_3 is new Error_Parser (Keyword_Missing, 1)
-     with null record;
+   type Sth_Expected_3 is new Error_Parser
+     (new String'("Keyword_Missing"), 1)
+   with null record;
 
    procedure Initialize (This : in out Sth_Expected_3);
 
@@ -426,8 +398,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'function, procedure or package expected'
 
-   type Sth_Expected_2 is new Error_Parser (Keyword_Missing, 1)
-     with null record;
+   type Sth_Expected_2 is new Error_Parser
+     (new String'("Keyword_Missing"), 1)
+   with null record;
 
    procedure Initialize (This : in out Sth_Expected_2);
 
@@ -440,7 +413,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix error messages where function or procedure is expected.
 
-   type Sth_Expected is new Error_Parser (Keyword_Missing, 1) with null record;
+   type Sth_Expected is new Error_Parser
+     (new String'("Keyword_Missing"), 1)
+   with null record;
 
    procedure Initialize (This : in out Sth_Expected);
 
@@ -453,7 +428,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix error messages where a keyword is expected at a position.
 
-   type Missing_Kw is new Error_Parser (Keyword_Missing, 1) with null record;
+   type Missing_Kw is new Error_Parser
+     (new String'("Keyword_Missing"), 1)
+   with null record;
 
    procedure Initialize (This : in out Missing_Kw);
 
@@ -466,7 +443,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'kw missing'.
 
-   type Missing_Sep is new Error_Parser (Separator_Missing, 1) with record
+   type Missing_Sep is new Error_Parser
+     (new String'("Separator_Missing"), 1)
+   with record
       Wrong_Form : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("([\w|\s]+;)"));
    end record;
@@ -484,7 +463,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'sth missing'.
 
-   type Missing_All is new Error_Parser (Semantic_Incoherence, 2) with record
+   type Missing_All is new Error_Parser
+     (new String'("Semantic_Incoherence"), 2)
+   with record
       Col_Matcher : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("type[\s]+[\w]+[\s]+is[\s]+(access)"));
    end record;
@@ -502,8 +483,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'add All to'.
 
-   type Statement_Missing is new Error_Parser (Statement_Expected, 1)
-     with null record;
+   type Statement_Missing is new Error_Parser
+     (new String'("Statement_Expected"), 1)
+   with null record;
 
    procedure Initialize (This : in out Statement_Missing);
 
@@ -516,8 +498,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'statement missing'.
 
-   type Space_Missing is new Error_Parser (Space_Required, 1)
-      with null record;
+   type Space_Missing is new Error_Parser
+     (new String'("Space_Required"), 1)
+   with null record;
 
    procedure Initialize (This : in out Space_Missing);
 
@@ -530,7 +513,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'space required'.
 
-   type Name_Missing is new Error_Parser (Block_Name_Expected, 3) with record
+   type Name_Missing is new Error_Parser
+     (new String'("Block_Name_Expected"), 3)
+   with record
       Matcher_Aux : Arr_Matcher (1 .. 3) :=
         (new Pattern_Matcher'
          (Compile ("(end)[\s]*;", Case_Insensitive)),
@@ -553,7 +538,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'end sth expected'.
 
-   type Double_Keyword is new Error_Parser (Extra_Keyword, 1) with null record;
+   type Double_Keyword is new Error_Parser
+     (new String'("Extra_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out Double_Keyword);
 
@@ -566,7 +553,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
 
-   type Extra_Paren is new Error_Parser (Extra_Keyword, 1) with null record;
+   type Extra_Paren is new Error_Parser
+     (new String'("Extra_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out Extra_Paren);
 
@@ -579,8 +568,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
 
-   type Redundant_Keyword is new Error_Parser (Extra_Keyword, 1)
-     with null record;
+   type Redundant_Keyword is new Error_Parser
+     (new String'("Extra_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out Redundant_Keyword);
 
@@ -593,8 +583,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'retudant sth'.
 
-   type Unexpected_Sep is new Error_Parser (Unexpected_Keyword, 1)
-     with null record;
+   type Unexpected_Sep is new Error_Parser
+     (new String'("Unexpected_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out Unexpected_Sep);
 
@@ -607,8 +598,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
 
-   type Unexpected_Word is new Error_Parser (Unexpected_Keyword, 1)
-     with null record;
+   type Unexpected_Word is new Error_Parser
+     (new String'("Unexpected_Keyword"), 1)
+   with null record;
 
    procedure Initialize (This : in out Unexpected_Word);
 
@@ -621,8 +613,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'unexpected sth ignored'.
 
-   type Kw_Not_Allowed is new Error_Parser (Unallowed_Keyword, 3)
-     with null record;
+   type Kw_Not_Allowed is new Error_Parser
+     (new String'("Unallowed_Keyword"), 3)
+   with null record;
 
    procedure Initialize (This : in out Kw_Not_Allowed);
 
@@ -635,8 +628,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'kw not allowed' etc.
 
-   type Sep_Not_Allowed is new Error_Parser (Unallowed_Style_Character, 4)
-      with null record;
+   type Sep_Not_Allowed is new Error_Parser
+     (new String'("Unallowed_Style_Character"), 4)
+   with null record;
 
    procedure Initialize (This : in out Sep_Not_Allowed);
 
@@ -649,8 +643,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'kw not allowed' etc.
 
-   type Should_Be_In is new Error_Parser (Wrong_Indentation, 1)
-     with null record;
+   type Should_Be_In is new Error_Parser
+     (new String'("Wrong_Indentation"), 1)
+   with null record;
 
    procedure Initialize (This : in out Should_Be_In);
 
@@ -663,8 +658,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'sth should be in column'.
 
-   type Bad_Column is new Error_Parser (Wrong_Indentation, 3)
-     with null record;
+   type Bad_Column is new Error_Parser
+     (new String'("Wrong_Indentation"), 3)
+   with null record;
 
    procedure Initialize (This : in out Bad_Column);
 
@@ -677,8 +673,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix messages about bad indentation.
 
-   type Main_With_Missing is new Error_Parser (Missing_With, 3)
-     with null record;
+   type Main_With_Missing is new Error_Parser
+     (new String'("Missing_With"), 3)
+   with null record;
 
    procedure Initialize (This : in out Main_With_Missing);
 
@@ -691,8 +688,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix messages that guess a missing with.
 
-   type Bad_Casing_Standard is new Error_Parser (Wrong_Case, 2)
-      with null record;
+   type Bad_Casing_Standard is new Error_Parser
+     (new String'("Wrong_Case"), 2)
+   with null record;
 
    procedure Initialize (This : in out Bad_Casing_Standard);
 
@@ -705,8 +703,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix standard case errors.
 
-   type Bad_Casing_Declared is new Error_Parser (Wrong_Case, 1)
-      with null record;
+   type Bad_Casing_Declared is new Error_Parser
+     (new String'("Wrong_Case"), 1)
+   with null record;
 
    procedure Initialize (This : in out Bad_Casing_Declared);
 
@@ -719,8 +718,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix case problems with declared words etc.
 
-   type Bad_Casing_Keyword is new Error_Parser (Wrong_Case, 1)
-     with null record;
+   type Bad_Casing_Keyword is new Error_Parser
+     (new String'("Wrong_Case"), 1)
+   with null record;
 
    procedure Initialize (This : in out Bad_Casing_Keyword);
 
@@ -733,8 +733,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix case problems with keywords.
 
-   type Object_Not_Referenced is new Error_Parser (Unit_Not_Referenced, 6)
-     with null record;
+   type Object_Not_Referenced is new Error_Parser
+     (new String'("Unit_Not_Referenced"), 6)
+   with null record;
 
    procedure Initialize (This : in out Object_Not_Referenced);
 
@@ -747,8 +748,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'sth is not referenced'.
 
-   type Pkg_Not_Referenced is new Error_Parser (Unit_Not_Referenced, 2)
-     with null record;
+   type Pkg_Not_Referenced is new Error_Parser
+     (new String'("Unit_Not_Referenced"), 2)
+   with null record;
 
    procedure Initialize (This : in out Pkg_Not_Referenced);
 
@@ -761,8 +763,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'no entities of sth are referenced'.
 
-   type Pragma_Missplaced is new Error_Parser (Pragma_Should_Begin, 1)
-      with null record;
+   type Pragma_Missplaced is new Error_Parser
+     (new String'("Pragma_Should_Begin"), 1)
+   with null record;
 
    procedure Initialize (This : in out Pragma_Missplaced);
 
@@ -775,8 +778,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'pragma must be first line of'.
 
-   type Constant_Expected is new Error_Parser (Var_Not_Modified, 1)
-      with null record;
+   type Constant_Expected is new Error_Parser
+     (new String'("Var_Not_Modified"), 1)
+   with null record;
 
    procedure Initialize (This : in out Constant_Expected);
 
@@ -789,7 +793,8 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'could be declared constant'.
 
-   type Possible_Interpretation is new Error_Parser (Ambiguous_Expression, 1)
+   type Possible_Interpretation is new Error_Parser
+     (new String'("Ambiguous_Expression"), 1)
    with record
       Local_Matcher : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("possible interpretation at line ([\d]+)"));
@@ -810,7 +815,8 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'ambiguous expression (cannot resolve "Sth")'
 
-   type Hidden_Declaration is new Error_Parser (Ambiguous_Expression, 1)
+   type Hidden_Declaration is new Error_Parser
+     (new String'("Ambiguous_Expression"), 1)
    with record
       Check_Possible : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("multiple use clauses cause hiding"));
@@ -833,8 +839,9 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'multiple use clause hiding'
 
-   type Redundant_Conversion is new Error_Parser (Useless_Conversion, 1)
-     with null record;
+   type Redundant_Conversion is new Error_Parser
+     (new String'("Useless_Conversion"), 1)
+   with null record;
 
    procedure Initialize (This : in out Redundant_Conversion);
 
@@ -847,7 +854,8 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'useless conversion'
 
-   type Missplaced_With is new Error_Parser (Movable_With_Clause, 2)
+   type Missplaced_With is new Error_Parser
+     (new String'("Movable_With_Clause"), 2)
      with null record;
 
    procedure Initialize (This : in out Missplaced_With);
