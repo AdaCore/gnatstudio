@@ -27,16 +27,14 @@
 -----------------------------------------------------------------------
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with Language; use Language;
+with OS_Utils; use OS_Utils;
 
 with Ada.Strings.Fixed;
-
 with Ada.Unchecked_Deallocation;
 
 package body Find_Utils is
-
-   K_Max_File_Name_Length : constant := 256;
-   --  ? Get from OS ?
 
    procedure Common_Init
      (Search          : out Code_Search;
@@ -47,14 +45,12 @@ package body Find_Utils is
       Scan_Comments   : Boolean;
       Scan_Strings    : Boolean;
       Scan_Statements : Boolean);
-   --  Initialize files-independant fields.
+   --  Initialize file-independent fields.
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
    --         ? XXX (iff it is a regexp) ?
    --  * Nor Comments nor Strings nor Statements are scanned
-
-
 
    -----------------
    -- Common_Init --
@@ -72,15 +68,16 @@ package body Find_Utils is
    is
       Flags : Regexp_Flags := No_Flags;
       WD    : constant String := "\b";  -- Word_Delimiter
+
    begin
       if Look_For = ""
-        or else not         (Scan_Comments
-                     or else Scan_Strings
-                     or else Scan_Statements)  -- ? really need 'or else' ?
+        or else not
+          (Scan_Comments
+           or else Scan_Strings
+           or else Scan_Statements)  -- really need 'or else' ???
       then
          raise Search_Error;
       end if;
-
 
       if not Match_Case then
          Flags := Case_Insensitive;
@@ -88,34 +85,38 @@ package body Find_Utils is
 
       if Regexp then
          if Whole_Word then
-            Search.Pattern := new Pattern_Matcher'
-              (Compile (WD & Look_For & WD, Flags));
+            Search.Pattern :=
+              new Pattern_Matcher' (Compile (WD & Look_For & WD, Flags));
+
          else
-            Search.Pattern := new Pattern_Matcher'
-              (Compile (Look_For, Flags));
+            Search.Pattern :=
+              new Pattern_Matcher' (Compile (Look_For, Flags));
          end if;
       else
          if Whole_Word then
             Search.Pattern := new Pattern_Matcher'
               (Compile (WD & Quote (Look_For) & WD, Flags));
-         elsif not Match_Case then  -- or optimized by Ada.Strings.Fixed.Index
+
+         elsif not Match_Case then
+            --  What does the following comment mean ???
+            --  or optimized by Ada.Strings.Fixed.Index
+
             Search.Pattern := new Pattern_Matcher'
               (Compile (Quote (Look_For), Flags));
          end if;
       end if;
 
-
-
-      Search.Look_For        := new String'(Look_For);
+      Search.Look_For        := new String' (Look_For);
       Search.Match_Case      := Match_Case;
       Search.Whole_Word      := Whole_Word;
       Search.Regexp          := Regexp;
       Search.Scan_Comments   := Scan_Comments;
       Search.Scan_Strings    := Scan_Strings;
       Search.Scan_Statements := Scan_Statements;
+
    exception
       when Expression_Error =>
-         --  ? Free (Pattern_Matcher); ?
+         --  Free (Pattern_Matcher); ???
          raise Search_Error;
    end Common_Init;
 
@@ -127,15 +128,13 @@ package body Find_Utils is
      (Search   : in out Code_Search;
       Callback : Poll_Search_Handler)
    is
-
       function Explore_Directory (Directory : String) return Boolean;
       --  Explore the directory to scan files.
-      --  Direct and indirect sub-directories are recursively explored iff
-      --  Search.Recurse.
+      --  Sub-directories are recursively explored iff Search.Recurse.
       --  Scanned files are selected with Search.Files_Pattern.
       --  Return False when the search was aborted.
       --
-      --  Directory: Where explore to select files
+      --  Directory: Location of beginning of the search.
 
       function Scan_File (Name : String) return Boolean;
       --  Determine the language context of the file, and then scan it.
@@ -183,8 +182,6 @@ package body Find_Utils is
       --
       --  Text: Text to check for matches
 
-
-
       -------------------
       -- Contain_Match --
       -------------------
@@ -192,10 +189,11 @@ package body Find_Utils is
       function Contain_Match (Text : String) return Boolean is
          use Ada.Strings.Fixed;
       begin
-         --  ? testing order is optimized ?
-         if (Search.Match_Case
+         --  ??? Should compute the following test once.
+
+         if Search.Match_Case
            and then not Search.Whole_Word
-           and then not Search.Regexp)
+           and then not Search.Regexp
          then
             return Index (Text, Search.Look_For.all) /= 0;
          else
@@ -209,11 +207,10 @@ package body Find_Utils is
 
       function Explore_Directory (Directory : String) return Boolean is
          Continue  : Boolean := True;
-
-         Dir_Name  : Dir_Name_Str (1 .. Directory'Length + 1) :=
+         Dir_Name  : constant Dir_Name_Str (1 .. Directory'Length + 1) :=
                        Directory & Directory_Separator;
          Dir       : Dir_Type;
-         File_Name : String (1 .. K_Max_File_Name_Length);
+         File_Name : String (1 .. Max_Path_Len);
          Last      : Natural;
 
       begin
@@ -225,10 +222,10 @@ package body Find_Utils is
             exit when Last = 0;
 
             declare
-               Full_Name : String (1 .. Dir_Name'Length + Last) :=
+               Full_Name : constant String (1 .. Dir_Name'Length + Last) :=
                              Dir_Name & File_Name (1 .. Last);
             begin
-               --  Is_Directory adds ASCII.NUL
+               --  unlike Open_Read, Is_Directory adds ASCII.NUL automatically
 
                if Is_Directory (Full_Name) then
                   if Search.Recurse
@@ -263,8 +260,8 @@ package body Find_Utils is
          if Language = null then
             return Scan_File_Without_Context (Name);
          else
-            return Scan_File_With_Context (Name,
-                                           Get_Language_Context (Language));
+            return Scan_File_With_Context
+              (Name, Get_Language_Context (Language));
          end if;
       end Scan_File;
 
@@ -276,7 +273,8 @@ package body Find_Utils is
         (Name    : String;
          Context : Language_Context) return Boolean
       is
-         FD       : File_Descriptor := Open_Read (Name & ASCII.NUL, Text);
+         FD       : constant File_Descriptor :=
+           Open_Read (Name & ASCII.NUL, Text);
          Continue : Boolean := True;
 
       begin
@@ -285,11 +283,11 @@ package body Find_Utils is
          end if;
 
          declare
-            Len     : Positive := Positive (File_Length (FD));
-            Buffer  : aliased String (1 .. Len);
-            Pos     : Positive := 1;
-            BOL     : Positive;  -- Beginning Of Line
-            Line_Nr : Positive := 1;
+            Len        : Positive := Positive (File_Length (FD));
+            Buffer     : aliased String (1 .. Len);
+            Pos        : Positive := 1;
+            Line_Start : Positive;
+            Line_Nr    : Positive := 1;
 
          begin
             Len := Read (FD, Buffer'Address, Len);  -- Let's hope all is read
@@ -297,17 +295,20 @@ package body Find_Utils is
             Search.Lexical_State := Statements;
 
             while Pos <= Len loop  -- Skip empty files
-               BOL := Pos;
+               Line_Start := Pos;
 
                while Pos <= Len and then Buffer (Pos) /= ASCII.LF loop
                   Pos := Pos + 1;
                end loop;
 
-               Continue := Scan_Line_With_Context
-                             (Name, Buffer (BOL .. Pos - 1), Line_Nr, Context);
+               Continue :=
+                 Scan_Line_With_Context
+                   (Name, Buffer (Line_Start .. Pos - 1), Line_Nr, Context);
+
                exit when not Continue;
 
-               Pos := Pos + 1;  -- Skip ASCII.LF
+               --  Skip ASCII.LF
+               Pos := Pos + 1;
                Line_Nr := Line_Nr + 1;
             end loop;
          end;
@@ -321,41 +322,48 @@ package body Find_Utils is
       -------------------------------
 
       function Scan_File_Without_Context (Name : String) return Boolean is
-         FD       : File_Descriptor := Open_Read (Name & ASCII.NUL, Text);
+         FD       : constant File_Descriptor :=
+           Open_Read (Name & ASCII.NUL, Text);
          Continue : Boolean := True;
+
       begin
          if FD = Invalid_FD then
             return Callback (False, Name);
          end if;
 
          declare
-            Len     : Natural := Natural (File_Length (FD));
-            Buffer  : aliased String (1 .. Len);
-            Pos     : Positive := 1;
-            BOL     : Positive;  -- Beginning Of Line
-            Line_Nr : Positive := 1;
+            Len        : Natural := Natural (File_Length (FD));
+            Buffer     : aliased String (1 .. Len);
+            Pos        : Positive := 1;
+            Line_Start : Positive;
+            Line_Nr    : Positive := 1;
+
          begin
             Len := Read (FD, Buffer'Address, Len);
 
             while Pos <= Len loop
-               BOL := Pos;
+               Line_Start := Pos;
 
                while Pos <= Len and then Buffer (Pos) /= ASCII.LF loop
                   Pos := Pos + 1;
                end loop;
 
-               if Contain_Match (Buffer (BOL .. Pos - 1)) then
-                  Continue := Callback (True, Name, Line_Nr,
-                                        Buffer (BOL .. Pos - 1));
+               if Contain_Match (Buffer (Line_Start .. Pos - 1)) then
+                  Continue :=
+                    Callback
+                      (True, Name, Line_Nr, Buffer (Line_Start .. Pos - 1));
+
                   exit when not Continue;
                end if;
 
-               Pos := Pos + 1;  -- Skip ASCII.LF
+               --  Skip ASCII.LF
+               Pos := Pos + 1;
                Line_Nr := Line_Nr + 1;
             end loop;
          end;
 
          Close (FD);
+
          return Continue and then Callback (False, Name);
       end Scan_File_Without_Context;
 
@@ -397,11 +405,11 @@ package body Find_Utils is
          M_Comm_Start_Length  : Natural renames Context.Comment_Start_Length;
          M_Comm_End_Length    : Natural renames Context.Comment_End_Length;
 
-         Called : Boolean := False; -- Callback was called on this line ?
+         Called   : Boolean := False; --  Was callback called on this line ?
+         Continue : Boolean := True;  --  really necessary ???
 
-         Continue : Boolean := True;  --  ? really necessary ?
       begin
-         --  !! handle multiline comment on 1 line !!
+         --  handle multiline comment on 1 line ???
 
          Reached := Line'First;
 
@@ -422,6 +430,7 @@ package body Find_Utils is
                         Next_Lexical_State := Multi_Comments;
                         Next := Pos + M_Comm_Start_Length;
                         exit;
+
                      elsif NL_Comm_Start_Length /= 0
                        and then Pos + NL_Comm_Start_Length - 1 <= EOL
                        and then Line (Pos .. Pos + NL_Comm_Start_Length - 1)
@@ -430,6 +439,7 @@ package body Find_Utils is
                         Next_Lexical_State := Mono_Comments;
                         Next := Pos + NL_Comm_Start_Length;
                         exit;
+
                      elsif Line (Pos) = Str_Delim then
                         Next_Lexical_State := Strings;
                         Next := Pos + 1;
@@ -484,8 +494,8 @@ package body Find_Utils is
                exit Whole_Line_Loop when not Continue;
 
                --  ??? improve by 'exit when not Callback'
-               --  ??? OK since Search.Lexical_State needn't being updated and
-               --  ???   called no more
+               --  ??? OK since Search.Lexical_State doesn't need to be updated
+               --  ??? and is no longer called.
             end if;
 
             Reached := Next;  -- Skip the processed text
@@ -500,6 +510,7 @@ package body Find_Utils is
    --  Start of processing for Do_Search
 
       Continue : Boolean;
+
    begin
       pragma Assert (Callback /= null);
 
@@ -523,13 +534,16 @@ package body Find_Utils is
    ----------
 
    procedure Free (S : in out Code_Search) is
-      procedure Free_String is new Standard.Ada.Unchecked_Deallocation
-        (String, String_Access);
-      procedure Free_Pattern_Matcher is new Standard.Ada.Unchecked_Deallocation
-        (Pattern_Matcher, Pattern_Matcher_Access);
+      procedure Free_String is new
+        Standard.Ada.Unchecked_Deallocation (String, String_Access);
+
+      procedure Free_Pattern_Matcher is new
+        Standard.Ada.Unchecked_Deallocation
+          (Pattern_Matcher, Pattern_Matcher_Access);
+
    begin
-      Free_String          (S.Look_For);
-      Free_String          (S.Directory);
+      Free_String (S.Look_For);
+      Free_String (S.Directory);
       Free_Pattern_Matcher (S.Pattern);
    end Free;
 
@@ -546,16 +560,15 @@ package body Find_Utils is
       Regexp          : Boolean := False;
       Scan_Comments   : Boolean := True;
       Scan_Strings    : Boolean := True;
-      Scan_Statements : Boolean := True)
-   is
+      Scan_Statements : Boolean := True) is
    begin
       if Files = null then
          raise Search_Error;
       end if;
 
-      Common_Init (Search, Look_For, Match_Case, Whole_Word, Regexp,
-                   Scan_Comments, Scan_Strings, Scan_Statements);
-
+      Common_Init
+        (Search, Look_For, Match_Case, Whole_Word, Regexp,
+         Scan_Comments, Scan_Strings, Scan_Statements);
       Search.Files := Files;
    end Init_Search;
 
@@ -576,27 +589,27 @@ package body Find_Utils is
       Scan_Strings    : Boolean := True;
       Scan_Statements : Boolean := True)
    is
+      Result : Boolean;
    begin
       --  Ensure Files_Pattern is initialized
 
-      declare
-         Dummy : Boolean;
       begin
-         Dummy := Match ("", Files_Pattern);
+         Result := Match ("", Files_Pattern);
       exception
          when Constraint_Error =>
             raise Search_Error;
       end;
 
-      Common_Init (Search, Look_For, Match_Case, Whole_Word, Regexp,
-                   Scan_Comments, Scan_Strings, Scan_Statements);
+      Common_Init
+        (Search, Look_For, Match_Case, Whole_Word, Regexp,
+         Scan_Comments, Scan_Strings, Scan_Statements);
       Search.Files_Pattern := Files_Pattern;
       Search.Recurse := Recurse;
 
       if Directory = "" then
-         Search.Directory := new String'(Get_Current_Dir);
+         Search.Directory := new String' (Get_Current_Dir);
       else
-         Search.Directory := new String'(Directory);
+         Search.Directory := new String' (Directory);
       end if;
    end Init_Search;
 

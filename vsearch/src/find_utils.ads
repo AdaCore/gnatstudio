@@ -26,14 +26,11 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
---!!!!! which chars are in a word (Whole_Word) ?
---!!!!! / conv to \, case (Files_Pattern) ?
-
-
-
+--  which chars are in a word (Whole_Word) ???
+--  / conv to \, case (Files_Pattern) ???
 
 --  Line-oriented pattern search in source code files
-
+--
 --  This package implements a line-oriented searching for a word or a pattern
 --  in given source code files.
 --  Scope may be limited to comments and/or strings and/or statements. Syntax
@@ -43,13 +40,9 @@
 --  Files may be given as a list or with a pattern and a directory !!!
 --  Classic options included: match case, whole word.
 
-
 --  ??? assume strings can continue over ASCII.LF (wait for end delimiter)
 --  ??? in C strings, \ skips ASCII.LF; don't skip LF without \ ?
 --  ??? 1 depth level of syntax, eg strings aren't found in comments
-
-
-
 
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Regexp; use GNAT.Regexp;
@@ -58,14 +51,16 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 package Find_Utils is
 
    type Code_Search is private;
-   --  Private type representing a search in source code files
+   --  Type representing a search in source code files
 
    type Project_Files is array (Positive range <>) of String_Access;
    --  Type used to store the project file list
 
    type Project_Files_Access is access Project_Files;
+   --  ???
 
    Search_Error : exception;
+   --  ???
 
    procedure Init_Search
      (Search          : out Code_Search;
@@ -79,10 +74,10 @@ package Find_Utils is
       Scan_Statements : Boolean := True);
    --  Prepare searching for a word or a pattern in given file list.
    --
-   --  Look_For         Searched word or mono-line pattern (see g-regpat.ads)
+   --  Look_For         Searched word or single line pattern (see g-regpat.ads)
    --  Files            Files to be searched
-   --                NOTE: It's your responsability to free Files
-   --  Match_Case       CAPITAL & small letters are respected
+   --                   NOTE: It's your responsability to free Files
+   --  Match_Case       UPPER & lowercase letters are respected
    --  Whole_Word       Match only full words (eg 'end' not found in 'friend')
    --  Regexp           Look for a pattern instead of a word
    --  Scan_Comments    Allows the word to be matched in comments
@@ -94,7 +89,7 @@ package Find_Utils is
    --  * Look_For is empty, or can't compile
    --         ? XXX (iff it is a regexp) ?
    --  * Files is null
-   --  * Nor Comments nor Strings nor Statements are scanned
+   --  * Neither Comments nor Strings nor Statements are scanned
    --
    --  ??? Searching " in Ada strings badly implemented: treated as 2 strings
    --  ??? Searching empty lines match none !
@@ -117,16 +112,15 @@ package Find_Utils is
    --  Files_Pattern  Pattern selecting files to be scanned (eg globbing *.ad?)
    --  Directory      Where files are selected, "" means current dir; absolute
    --                 or relative to current dir
-   --              NOTE: used current dir is the one when Init_Search is called
-   --  Recurse        Whether files may also be selected in direct and indirect
-   --                 sub-directories
+   --                 NOTE: current dir is computed when Init_Search is called
+   --  Recurse        Whether files may also be selected in sub-directories
    --  ...            See first Init_Search procedure
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
    --         ? XXX (iff it is a regexp) ?
    --  * Files_Pattern is uninitialized
-   --  * Nor Comments nor Strings nor Statements are scanned
+   --  * Neither Comments nor Strings nor Statements are scanned
    --
    --  ??? Searching " in Ada strings badly implemented: treated as 2 strings
    --  ??? Searching empty lines match none !
@@ -137,20 +131,20 @@ package Find_Utils is
       Line_Nr     : Positive := 1;
       Line_Text   : String   := "") return Boolean;
    --  Function called after a match is found or after a whole file is scanned.
-   --  An unopenable file is immediately considered as whole scanned.
+   --  An unopenable file is immediately considered as scanned.
    --  The search may be aborted at any call by returning False.
    --
-   --  Match_Found  TRUE: a match is found...  FALSE: the whole scanned file...
+   --  Match_Found  True: a match is found...  False: the whole scanned file...
    --  File               ... in this file...         ... is this one
    --  Line_Nr            ... at this line...          !! IRRELEVANT !!
    --  Line_Text          ... within this text         !! IRRELEVANT !!
    --
-   --  Match calls are intended for, eg, updating a list of matches.
-   --  Other calls are intended for, eg, updating a list of scanned files.
-   --  But you can handle your own business during the call (user events,
-   --  animate a search drawing, ...).
+   --  Match calls are intended for, e.g. updating a list of matches.
+   --  Other calls are intended for, e.g. updating a list of scanned files.
+   --  But you can perform your own processing during the call (user events,
+   --  update a scroll bar, ...).
    --
-   --  NOTE: The handler mustn't raise any exception !
+   --  NOTE: The handler mustn't raise any exception
 
 --  !! DELETE >>>
 
@@ -181,8 +175,8 @@ private
 
    type Pattern_Matcher_Access is access Pattern_Matcher;
 
-   type Recognized_Lexical_States is (Statements, Strings,
-                                      Mono_Comments, Multi_Comments);
+   type Recognized_Lexical_States is
+     (Statements, Strings, Mono_Comments, Multi_Comments);
    --  Current lexical state of the currently parsed file
 
    type Code_Search is record
