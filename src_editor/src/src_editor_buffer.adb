@@ -2677,7 +2677,7 @@ package body Src_Editor_Buffer is
             Natural (Get_Line (Iter)),
             Natural (Get_Line_Offset (Iter)),
             Text.all,
-            Forward);
+            True);
          Enqueue (Buffer.Queue, Command);
       end if;
 
