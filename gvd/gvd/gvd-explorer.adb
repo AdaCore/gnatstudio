@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -38,6 +38,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.Case_Util;        use GNAT.Case_Util;
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 
 with Language;              use Language;
@@ -1287,7 +1288,7 @@ package body GVD.Explorer is
          declare
             S : String := Language_Category'Image (Category);
          begin
-            Lower_Case (S);
+            To_Lower (S);
 
             --  Skip the "Cat_" part
             return S (S'First + 4 .. S'Last);
