@@ -29,6 +29,7 @@ with Gdk.Event;                use Gdk.Event;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
@@ -193,6 +194,11 @@ package body Glide_Result_View is
    --  Highlight the line with the corresponding category.
    --  If Highlight is set to False, remove the highlighting.
    --  If Line = 0, highlight / unhighlight all lines in file.
+
+   procedure On_Row_Expanded
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the "row_expanded" signal.
 
    -----------------
    -- Create_Mark --
@@ -923,6 +929,9 @@ package body Glide_Result_View is
          View,
          After => False);
 
+      Widget_Callback.Connect
+        (View.Tree, "row_expanded", On_Row_Expanded'Access);
+
       Register_Contextual_Menu
         (View.Kernel,
          View.Tree,
@@ -930,6 +939,22 @@ package body Glide_Result_View is
          Module,
          Context_Func'Access);
    end Initialize;
+
+   ---------------------
+   -- On_Row_Expanded --
+   ---------------------
+
+   procedure On_Row_Expanded
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Tree : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
+      Iter : Gtk_Tree_Iter;
+   begin
+      Get_Tree_Iter (Nth (Params, 1), Iter);
+      Scroll_To_Cell
+        (Tree, Get_Path (Get_Model (Tree), Iter), null, True, 0.1, 0.1);
+   end On_Row_Expanded;
 
    ------------
    -- Insert --
