@@ -19,17 +19,22 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
 
 with Gdk.Color;                use Gdk.Color;
+with Pango.Font;               use Pango.Font;
 with Gdk.Types;                use Gdk.Types;
 with Glib;                     use Glib;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Generic_Properties;  use Glib.Generic_Properties;
 with Gdk.Color;                use Gdk.Color;
 with Pango.Font;               use Pango.Font;
 with Glide_Intl;               use Glide_Intl;
 with Language;                 use Language;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Default_Preferences;      use Default_Preferences;
 with Case_Handling;            use Case_Handling;
@@ -45,21 +50,81 @@ package body Glide_Kernel.Preferences is
    Preferences_Pages : Preferences_Page_Array_Access;
    --  ??? To be included in the kernel
 
-   Pref_Cst  : aliased constant String := "preference";
    Value_Cst : aliased constant String := "value";
-
-   Get_Cmd_Parameters : constant Cst_Argument_List := (1 => Pref_Cst'Access);
-
-   Set_Cmd_Parameters : constant Cst_Argument_List :=
-                          (1 => Pref_Cst'Access, 2 => Value_Cst'Access);
+   Set_Cmd_Parameters : constant Cst_Argument_List := (1 => Value_Cst'Access);
 
    procedure Get_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Get preference command handler
 
-   procedure Set_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Set preference command handler
+   function Get_Index
+     (Enum  : Param_Spec_Enum;
+      Value : String) return String;
+   --  Return string representation of value's index in Enum
+
+   function Get_Value
+     (Enum  : Param_Spec_Enum;
+      Index : Guint) return String;
+   --  Return enum value for Index
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level);
+   --  Handle GPS customization files for this module
+
+   ---------------
+   -- Get_Value --
+   ---------------
+
+   function Get_Value
+     (Enum  : Param_Spec_Enum;
+      Index : Guint) return String
+   is
+      E_Klass : constant Enum_Class := Enumeration (Enum);
+      Val     : Enum_Value;
+   begin
+      Val := Nth_Value (E_Klass, Index);
+
+      if Val = null then
+         raise Constraint_Error;
+      end if;
+
+      declare
+         S : String := Nick (Val);
+      begin
+         Mixed_Case (S);
+         return S;
+      end;
+   end Get_Value;
+
+   ---------------
+   -- Get_Index --
+   ---------------
+
+   function Get_Index
+     (Enum  : Param_Spec_Enum;
+      Value : String) return String
+   is
+      L_Value : constant String     := To_Upper (Value);
+      --  Enumeration value are returned all upper case
+      E_Klass : constant Enum_Class := Enumeration (Enum);
+      Val     : Enum_Value;
+      K       : Guint := 0;
+   begin
+      loop
+         Val := Nth_Value (E_Klass, K);
+         exit when Val = null;
+
+         if Nick (Val) = L_Value then
+            return Guint'Image (K);
+         end if;
+
+         K := K + 1;
+      end loop;
+      raise Constraint_Error;
+   end Get_Index;
 
    -------------------------
    -- Get_Command_Handler --
@@ -68,178 +133,128 @@ package body Glide_Kernel.Preferences is
    procedure Get_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-
-      function Get_Value
-        (Enum  : Param_Spec_Enum;
-         Index : Guint) return String;
-      --  Return enum value for Index
-
-      function Get_Value
-        (Enum  : Param_Spec_Enum;
-         Index : Guint) return String
-      is
-         E_Klass : constant Enum_Class := Enumeration (Enum);
-         Val     : Enum_Value;
-      begin
-         Val := Nth_Value (E_Klass, Index);
-
-         if Val = null then
-            raise Constraint_Error;
-         end if;
-
-         declare
-            S : String := Nick (Val);
-         begin
-            Mixed_Case (S);
-            return S;
-         end;
-      end Get_Value;
-
+      Class  : constant Class_Type := New_Class (Kernel, "Preference");
+      Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
    begin
-      Name_Parameters (Data, Get_Cmd_Parameters);
+      if Command = Constructor_Method then
+         Set_Data (Inst, String'(Nth_Arg (Data, 2)));
 
-      declare
-         Pref  : constant String     := Nth_Arg (Data, 1);
-         Param : constant Param_Spec := Get (Kernel.Preferences, Pref);
-         Typ   : GType;
-      begin
-         if Param = null then
-            Set_Error_Msg (Data, -"Unknown preference " & Pref);
-            return;
-         else
-            Typ := Value_Type (Param);
-         end if;
-
-         if Typ = GType_Int then
-            Set_Return_Value
-              (Data,
-               Integer
-                 (Get_Pref (Kernel.Preferences, Param_Spec_Int (Param))));
-
-         elsif Typ = GType_Boolean then
-            Set_Return_Value
-              (Data,
-               (Get_Pref (Kernel.Preferences, Param_Spec_Boolean (Param))));
-
-         elsif Typ = GType_String then
-            Set_Return_Value
-              (Data, Get_Pref (Kernel.Preferences, Param_Spec_String (Param)));
-
-         elsif Typ = Gdk.Color.Gdk_Color_Type then
-            Set_Return_Value
-              (Data,
-               To_String
-                 (Get_Pref (Kernel.Preferences, Param_Spec_Color (Param))));
-
-         elsif Fundamental (Typ) = GType_Enum then
-            Set_Return_Value
-              (Data,
-               Get_Value
-                 (Param_Spec_Enum (Param),
-                  Guint
-                    (Get_Pref (Kernel.Preferences, Param_Spec_Enum (Param)))));
-
-         else
-            Set_Error_Msg (Data, -"Preference not supported");
-         end if;
-      exception
-         when others =>
-            Set_Error_Msg (Data, -"Wrong parameters");
-      end;
-   end Get_Command_Handler;
-
-   -------------------------
-   -- Set_Command_Handler --
-   -------------------------
-
-   procedure Set_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-
-      function Get_Index
-        (Enum  : Param_Spec_Enum;
-         Value : String) return String;
-      --  Return string representation of value's index in Enum
-
-      function Get_Index
-        (Enum  : Param_Spec_Enum;
-         Value : String) return String
-      is
-         L_Value : constant String     := To_Upper (Value);
-         --  Enumeration value are returned all upper case
-         E_Klass : constant Enum_Class := Enumeration (Enum);
-         Val     : Enum_Value;
-         K       : Guint := 0;
-      begin
-         loop
-            Val := Nth_Value (E_Klass, K);
-            exit when Val = null;
-
-            if Nick (Val) = L_Value then
-               return Guint'Image (K);
+      elsif Command = "get" then
+         declare
+            Pref  : constant String     := Get_Data (Inst);
+            Param : constant Param_Spec := Get (Kernel.Preferences, Pref);
+            Typ   : GType;
+         begin
+            if Param = null then
+               Set_Error_Msg (Data, -"Unknown preference " & Pref);
+               return;
+            else
+               Typ := Value_Type (Param);
             end if;
 
-            K := K + 1;
-         end loop;
-         raise Constraint_Error;
-      end Get_Index;
+            if Typ = GType_Int then
+               Set_Return_Value
+                 (Data,
+                  Integer
+                    (Get_Pref (Kernel.Preferences, Param_Spec_Int (Param))));
 
-   begin
-      Name_Parameters (Data, Set_Cmd_Parameters);
+            elsif Typ = GType_Boolean then
+               Set_Return_Value
+                 (Data,
+                  (Get_Pref (Kernel.Preferences, Param_Spec_Boolean (Param))));
 
-      declare
-         Pref  : constant String     := Nth_Arg (Data, 1);
-         Param : constant Param_Spec := Get (Kernel.Preferences, Pref);
-         Typ   : GType;
-         Done  : Boolean := True;
-      begin
-         if Param = null then
-            Set_Error_Msg (Data, -"Unknown preference " & Pref);
-            return;
-         else
-            Typ := Value_Type (Param);
-         end if;
+            elsif Typ = GType_String then
+               Set_Return_Value
+                 (Data,
+                  Get_Pref (Kernel.Preferences, Param_Spec_String (Param)));
 
-         if Typ = GType_Int then
-            Set_Pref
-              (Kernel.Preferences,
-               Pref,
-               Gint'Image (Gint (Integer'(Nth_Arg (Data, 2)))));
+            elsif Typ = Gdk.Color.Gdk_Color_Type then
+               Set_Return_Value
+                 (Data,
+                  To_String
+                    (Get_Pref (Kernel.Preferences,
+                               Param_Spec_Color (Param))));
 
-         elsif Typ = GType_String
-           or else Typ = Pango.Font.Get_Type
-           or else Typ = Gdk_Color_Type
-         then
-            Set_Pref (Kernel.Preferences, Pref, String'(Nth_Arg (Data, 2)));
+            elsif Typ = Pango.Font.Get_Type then
+               Set_Return_Value
+                 (Data,
+                  To_String
+                    (Get_Pref (Kernel.Preferences,
+                               Param_Spec_Font (Param))));
 
-         elsif Typ = GType_Boolean then
-            Set_Pref
-              (Kernel.Preferences, Pref, Boolean'Image (Nth_Arg (Data, 2)));
+            elsif Fundamental (Typ) = GType_Enum then
+               Set_Return_Value
+                 (Data,
+                  Get_Value
+                    (Param_Spec_Enum (Param),
+                     Guint
+                       (Get_Pref (Kernel.Preferences,
+                                  Param_Spec_Enum (Param)))));
 
-         elsif Fundamental (Typ) = GType_Enum then
-            Set_Pref
-              (Kernel.Preferences,
-               Pref,
-               Get_Index
-                 (Param_Spec_Enum (Param), String'(Nth_Arg (Data, 2))));
-         else
-            Done := False;
-            Set_Error_Msg (Data, -"Preference not supported");
-         end if;
+            else
+               Set_Error_Msg (Data, -"Preference not supported");
+            end if;
+         exception
+            when others =>
+               Set_Error_Msg (Data, -"Wrong parameters");
+         end;
 
-         if Done then
-            Run_Hook (Kernel, Preferences_Changed_Hook);
-         end if;
+      elsif Command = "set" then
+         Name_Parameters (Data, Set_Cmd_Parameters);
+         declare
+            Pref  : constant String     := Get_Data (Inst);
+            Param : constant Param_Spec := Get (Kernel.Preferences, Pref);
+            Typ   : GType;
+            Done  : Boolean := True;
+         begin
+            if Param = null then
+               Set_Error_Msg (Data, -"Unknown preference " & Pref);
+               return;
+            else
+               Typ := Value_Type (Param);
+            end if;
 
-      exception
-         when others =>
-            Set_Error_Msg (Data, -"Wrong parameters");
-      end;
-   end Set_Command_Handler;
+            if Typ = GType_Int then
+               Set_Pref
+                 (Kernel.Preferences,
+                  Pref,
+                  Gint'Image (Gint (Integer'(Nth_Arg (Data, 1)))));
+
+            elsif Typ = GType_String
+              or else Typ = Pango.Font.Get_Type
+              or else Typ = Gdk_Color_Type
+            then
+               Set_Pref
+                 (Kernel.Preferences, Pref, String'(Nth_Arg (Data, 1)));
+
+            elsif Typ = GType_Boolean then
+               Set_Pref
+                 (Kernel.Preferences, Pref, Boolean'Image (Nth_Arg (Data, 1)));
+
+            elsif Fundamental (Typ) = GType_Enum then
+               Set_Pref
+                 (Kernel.Preferences,
+                  Pref,
+                  Get_Index
+                    (Param_Spec_Enum (Param), String'(Nth_Arg (Data, 1))));
+            else
+               Done := False;
+               Set_Error_Msg (Data, -"Preference not supported");
+            end if;
+
+            if Done then
+               Run_Hook (Kernel, Preferences_Changed_Hook);
+            end if;
+
+         exception
+            when others =>
+               Set_Error_Msg (Data, -"Wrong parameters");
+         end;
+      end if;
+
+      Free (Inst);
+   end Get_Command_Handler;
 
    ---------------------------------
    -- Register_Global_Preferences --
@@ -1023,6 +1038,191 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (ClearCase_Command), -"VCS:ClearCase");
    end Register_Global_Preferences;
 
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (File, Level);
+      Tmp : Glib.Xml_Int.Node_Ptr := Node;
+      Child : Glib.Xml_Int.Node_Ptr;
+      Child_Count : Natural;
+   begin
+      while Tmp /= null loop
+         if Tmp.Tag.all = "preference" then
+            declare
+               Name    : constant String := Get_Attribute (Tmp, "name", "");
+               Page    : constant String :=
+                 Get_Attribute (Tmp, "page", "General");
+               Default : constant String := Get_Attribute (Tmp, "default", "");
+               Tooltip : constant String := Get_Attribute (Tmp, "tip", "");
+               Label   : constant String := Get_Attribute (Tmp, "label", "");
+               Typ     : constant String := Get_Attribute (Tmp, "type", "");
+               Min   : constant String := Get_Attribute (Tmp, "minimum", "0");
+               Max   : constant String := Get_Attribute (Tmp, "maximum", "10");
+               Pspec   : Param_Spec;
+               Minimum, Maximum, Def : Gint;
+               Bool_Def : Boolean;
+            begin
+               if Name = "" or else Typ = "" or else Label = "" then
+                  Insert
+                    (Kernel,
+                     -("<preference> must have ""name"", ""type"" and"
+                       & " ""label"" attributes"),
+                     Mode => Error);
+                  return;
+               end if;
+
+               for N in Name'Range loop
+                  if Name (N) = '_' or else Name (N) = ' ' then
+                     Insert
+                       (Kernel,
+                        -("<preference>: ""name"" attribute mustn't contain"
+                          & " '_' or ' ' characters"),
+                        Mode => Error);
+                     return;
+                  end if;
+               end loop;
+
+               if Typ = "boolean" then
+                  if Default = "" then
+                     Bool_Def := True;
+                  else
+                     Bool_Def := Boolean'Value (Default);
+                  end if;
+                  Pspec := Gnew_Boolean
+                    (Name    => Name,
+                     Nick    => Label,
+                     Blurb   => Tooltip,
+                     Default => Bool_Def);
+
+               elsif Typ = "integer" then
+                  Minimum := Gint'Value (Min);
+                  Maximum := Gint'Value (Max);
+                  Def     := Gint'Value (Default);
+                  if Minimum > Maximum then
+                     Insert
+                       (Kernel,
+                        -"Minimum value greater than maximum for preference "
+                        & Name,
+                        Mode => Error);
+                     Maximum := Minimum;
+                  end if;
+
+                  if Minimum > Def  then
+                     Insert
+                       (Kernel,
+                        -"Minimum value greater than default for preference "
+                        & Name,
+                       Mode => Error);
+                     Minimum := Def;
+                  end if;
+
+                  if Def > Maximum then
+                     Insert
+                       (Kernel,
+                        -"Default value greater than maximum for preference "
+                        & Name,
+                        Mode => Error);
+                     Maximum := Def;
+                  end if;
+
+                  Pspec := Gnew_Int
+                    (Name    => Name,
+                     Nick    => Label,
+                     Blurb   => Tooltip,
+                     Minimum => Minimum,
+                     Maximum => Maximum,
+                     Default => Def);
+               elsif Typ = "string" then
+                  Pspec := Gnew_String
+                    (Name    => Name,
+                     Nick    => Label,
+                     Blurb   => Tooltip,
+                     Default => Default);
+               elsif Typ = "color" then
+                  Pspec := Param_Spec (Gnew_Color
+                    (Name    => Name,
+                     Nick    => Label,
+                     Blurb   => Tooltip,
+                     Default => Default));
+               elsif Typ = "font" then
+                  Pspec := Param_Spec (Gnew_Font
+                    (Name    => Name,
+                     Nick    => Label,
+                     Blurb   => Tooltip,
+                     Default => Default));
+
+               elsif Typ = "choices" then
+                  Child := Tmp.Child;
+                  Child_Count := 0;
+                  while Child /= null loop
+                     Child_Count := Child_Count + 1;
+                     Child := Child.Next;
+                  end loop;
+
+                  declare
+                     Typ : GType;
+                     Val : chars_ptr_array (1 .. size_t (Child_Count));
+                  begin
+                     Child := Tmp.Child;
+                     Child_Count := 1;
+                     while Child /= null loop
+                        Val (size_t (Child_Count)) := New_String
+                          (Child.Value.all);
+                        Child_Count := Child_Count + 1;
+                        Child := Child.Next;
+                     end loop;
+
+                     Typ := Register_Static_Enum (Name, Val);
+
+                     for V in Val'Range loop
+                        Free (Val (V));
+                     end loop;
+
+                     if Default = "" then
+                        Def := 1;
+                     else
+                        Def := Gint'Value (Default);
+                     end if;
+
+                     Pspec := Gnew_Enum
+                       (Name      => Name,
+                        Nick      => Label,
+                        Blurb     => Tooltip,
+                        Enum_Type => Typ,
+                        Default   => Def);
+                  end;
+
+               else
+                  Insert
+                    (Kernel,
+                     -"Invalid ""type"" attribute for <preference>",
+                     Mode => Error);
+                  return;
+               end if;
+
+               Register_Property (Kernel.Preferences, Pspec, Page);
+
+            exception
+               when Constraint_Error =>
+                  Insert
+                    (Kernel,
+                     -("Invalid attribute value for <preference>, ignoring"
+                       & " preference " & Name),
+                     Mode => Error);
+            end;
+         end if;
+
+         Tmp := Tmp.Next;
+      end loop;
+   end Customize;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1031,21 +1231,29 @@ package body Glide_Kernel.Preferences is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Pref_Class : constant Class_Type := New_Class (Kernel, "Preference");
+      Module     : Module_ID;
    begin
+      Glide_Kernel.Modules.Register_Module
+        (Module                => Module,
+         Kernel                => Kernel,
+         Module_Name           => "Preferences",
+         Customization_Handler => Customize'Access);
       Register_Command
-        (Kernel, "get",
+        (Kernel, Constructor_Method,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Pref_Class,
-         Static_Method => True,
+         Handler       => Get_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get",
+         Class         => Pref_Class,
          Handler       => Get_Command_Handler'Access);
       Register_Command
         (Kernel, "set",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => Pref_Class,
-         Static_Method => True,
-         Handler       => Set_Command_Handler'Access);
+         Handler       => Get_Command_Handler'Access);
    end Register_Module;
 
    ----------------------
