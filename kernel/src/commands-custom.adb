@@ -1314,8 +1314,14 @@ package body Commands.Custom is
          function Execute_Shell
            (Component : Shell_Component_Record'Class) return Boolean
          is
-            Errors : aliased Boolean;
+            Errors  : aliased Boolean;
+            Old_Dir : GNAT.OS_Lib.String_Access;
          begin
+            if Context.Dir /= null then
+               Old_Dir := new String'(Get_Current_Dir);
+               Change_Dir (Context.Dir.all);
+            end if;
+
             if Command.Execution.Save_Output (Command.Execution.Cmd_Index) then
                if Console /= null and then Component.Show_Command then
                   Insert (Console, Subst_Cmd_Line, Add_LF => True);
@@ -1336,6 +1342,11 @@ package body Commands.Custom is
                   Show_Command => Component.Show_Command,
                   Console      => Console,
                   Errors => Errors);
+            end if;
+
+            if Context.Dir /= null then
+               Change_Dir (Old_Dir.all);
+               Free (Old_Dir);
             end if;
 
             return not Errors;
