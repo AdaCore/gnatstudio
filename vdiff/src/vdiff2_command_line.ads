@@ -22,6 +22,7 @@
 
 with Glide_Kernel;         use Glide_Kernel;
 with Commands;             use Commands;
+with Vdiff2_Command2;      use Vdiff2_Command2;
 with Diff_Utils2;          use Diff_Utils2;
 with Gdk.Event;
 with VFS;                  use VFS;
@@ -35,13 +36,11 @@ package Vdiff2_Command_Line is
       File   : Virtual_File := VFS.No_File);
       --  Is an access for the action executed by an Diff_Command
 
-   type Diff_Command_Line is new Root_Command with record
-      Kernel    : Kernel_Handle;
-      List_Diff : Diff_Head_List_Access;
+   type Diff_Command_Line is new Diff_Command with record
       Action    : Handler_Action_Line;
-      File : Virtual_File;
-      Line : Natural;
-      Head : Diff_Head_List.List_Node;
+      File      : Virtual_File;
+      Line      : Natural;
+      Head      : Diff_Head_List.List_Node;
    end record;
 
    type Diff_Command_Line_Access is access all Diff_Command_Line;
