@@ -129,7 +129,6 @@ package body Vdiff2_Command_Block is
       end if;
 
       if Diff /= Null_Head then
-         Trace (Me, "Execute Action");
          Command.Action (Command.Kernel, Diff);
 
          if Diff.List = Diff_Chunk_List.Null_List then
@@ -184,7 +183,7 @@ package body Vdiff2_Command_Block is
       if  Link /= Diff_Chunk_List.Null_Node then
          Diff.Current_Node := Link;
          Curr_Data := Data (Link);
-         Trace (Me, "Execute Action Prev");
+         Trace (Me, "Execute Prev_Difference");
          Goto_Difference (Kernel, Curr_Data);
       end if;
    end Prev_Difference;
@@ -204,7 +203,7 @@ package body Vdiff2_Command_Block is
          Diff.Current_Node := First (Diff.List);
          Link := Diff.Current_Node;
          Curr_Data := Data (Link);
-         Trace (Me, "Execute Action First");
+         Trace (Me, "Execute Action First_Difference");
          Goto_Difference (Kernel, Curr_Data);
       end if;
    end First_Difference;
@@ -224,7 +223,7 @@ package body Vdiff2_Command_Block is
          Diff.Current_Node := Last (Diff.List);
          Link := Diff.Current_Node;
          Curr_Data := Data (Link);
-         Trace (Me, "Execute Action Last");
+         Trace (Me, "Execute Action Last_Difference");
          Goto_Difference (Kernel, Curr_Data);
       end if;
    end Last_Difference;
