@@ -23,6 +23,7 @@ with Gdk.Event;                    use Gdk.Event;
 with Glib;                         use Glib;
 with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
+with Glib.Xml_Int;                 use Glib.Xml_Int;
 with Gtk.Alignment;                use Gtk.Alignment;
 with Gtk.Arguments;                use Gtk.Arguments;
 with Gtk.Box;                      use Gtk.Box;
@@ -39,7 +40,9 @@ with Gtk.Label;                    use Gtk.Label;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
+with Gtk.Size_Group;               use Gtk.Size_Group;
 with Gtk.Stock;                    use Gtk.Stock;
+with Gtk.Table;                    use Gtk.Table;
 with Gtk.Tooltips;                 use Gtk.Tooltips;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
@@ -85,6 +88,7 @@ with Variable_Editors;         use Variable_Editors;
 with Project_Properties;       use Project_Properties;
 with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
+with String_Utils;             use String_Utils;
 with VFS;                      use VFS;
 
 with Types;         use Types;
@@ -97,7 +101,29 @@ package body Project_Viewers is
      of Project_Editor_Page;
    type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
 
-   type Pages_Array is array (Natural range <>) of Switches_Page_Creator;
+   type Switches_Page_Creator_Data is record
+      Creator  : Switches_Page_Creator;
+      Page     : Switches_Editors.Switches_Editor_Page;
+   end record;
+   --  Page is the cached version of the page. It is created lazily, and never
+   --  destroyed afterwards.
+
+   type XML_Switches_Record is new Switches_Page_Creator_Record with record
+      XML_Node : Node_Ptr;   --  The <switches> node
+      Tool_Name, Package_Name, Language_Filter : GNAT.OS_Lib.String_Access;
+      Index    : GNAT.OS_Lib.String_Access;
+   end record;
+   type XML_Switches is access all XML_Switches_Record'Class;
+
+   function Create
+     (Creator : access XML_Switches_Record;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Switches_Editors.Switches_Editor_Page;
+   procedure Destroy (Creator : in out XML_Switches_Record);
+   --  See inherited subprograms
+
+
+   type Pages_Array is array (Natural range <>) of Switches_Page_Creator_Data;
    type Page_Array_Access is access Pages_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Pages_Array, Page_Array_Access);
@@ -342,6 +368,22 @@ package body Project_Viewers is
       Kernel : Kernel_Handle;
    end record;
    procedure Activate (Callback : access On_Reopen; Item : String);
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  Called when a new customization in parsed
+
+   procedure Parsing_Switches_XML
+     (Kernel : access Kernel_Handle_Record'Class;
+      Page   : Switches_Editor_Page;
+      Table  : access Gtk_Table_Record'Class;
+      Lines  : Natural;
+      Cols   : Natural;
+      Node   : Node_Ptr);
+   --  Subprogram for Parse_Switches_Page, this is used to handle both the
+   --  <switches> and the <popup> tags
 
    --------------------------
    -- Project editor pages --
@@ -2706,7 +2748,7 @@ package body Project_Viewers is
 
    procedure Register_Switches_Page
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Creator : Switches_Page_Creator)
+      Creator : access Switches_Page_Creator_Record'Class)
    is
       pragma Unreferenced (Kernel);
       Tmp : Page_Array_Access;
@@ -2714,11 +2756,12 @@ package body Project_Viewers is
       if Prj_Editor_Module_ID /= null then
          if Prj_Editor_Module_ID.Switches_Pages = null then
             Prj_Editor_Module_ID.Switches_Pages :=
-              new Pages_Array'(1 => Creator);
+              new Pages_Array'(1 => (Switches_Page_Creator (Creator), null));
          else
             Tmp := Prj_Editor_Module_ID.Switches_Pages;
             Prj_Editor_Module_ID.Switches_Pages := new Pages_Array'
-              (Tmp.all & Creator);
+              (Tmp.all & Switches_Page_Creator_Data'
+                 (Switches_Page_Creator (Creator), null));
             Unchecked_Free (Tmp);
          end if;
       else
@@ -2732,17 +2775,25 @@ package body Project_Viewers is
 
    function Get_Nth_Switches_Page
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Editor : access Switches_Editors.Switches_Edit_Record'Class;
       Num    : Positive)
-      return Switches_Editors.Switches_Editor_Page is
+      return Switches_Editors.Switches_Editor_Page
+   is
+      Pages  : Page_Array_Access := Prj_Editor_Module_ID.Switches_Pages;
    begin
-      if Prj_Editor_Module_ID.Switches_Pages = null
-        or else Num not in Prj_Editor_Module_ID.Switches_Pages'Range
-      then
+      if Pages = null or else Num not in Pages'Range then
          return null;
-      else
-         return Prj_Editor_Module_ID.Switches_Pages (Num) (Kernel, Editor);
       end if;
+
+      if Pages (Num).Page = null and then Pages (Num).Creator /= null then
+         Pages (Num).Page := Create (Pages (Num).Creator, Kernel);
+         Destroy (Pages (Num).Creator);
+      end if;
+
+      if Pages (Num).Page /= null then
+         Ref (Pages (Num).Page);
+      end if;
+
+      return Pages (Num).Page;
    end Get_Nth_Switches_Page;
 
    -------------------------
@@ -2760,6 +2811,30 @@ package body Project_Viewers is
          return Prj_Editor_Module_ID.Switches_Pages'Length;
       end if;
    end Switches_Page_Count;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Creator : in out Switches_Page_Creator_Record) is
+      pragma Unreferenced (Creator);
+   begin
+      null;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Creator : in out Switches_Page_Creator) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Switches_Page_Creator_Record'Class, Switches_Page_Creator);
+   begin
+      if Creator /= null then
+         Destroy (Creator.all);
+         Unchecked_Free (Creator);
+      end if;
+   end Destroy;
 
    -----------------------------------
    -- Register_Naming_Scheme_Editor --
@@ -2859,6 +2934,553 @@ package body Project_Viewers is
       end if;
    end On_File_Edited;
 
+   --------------------------
+   -- Parsing_Switches_XML --
+   --------------------------
+
+   procedure Parsing_Switches_XML
+     (Kernel : access Kernel_Handle_Record'Class;
+      Page   : Switches_Editor_Page;
+      Table  : access Gtk_Table_Record'Class;
+      Lines  : Natural;
+      Cols   : Natural;
+      Node   : Node_Ptr)
+   is
+      type Frame_Array is array (1 .. Lines, 1 .. Cols) of Gtk_Frame;
+      type Box_Array   is array (1 .. Lines, 1 .. Cols) of Gtk_Box;
+      type Size_Group_Array is array (1 .. Lines, 1 .. Cols) of Gtk_Size_Group;
+
+      Frames : Frame_Array;
+      Boxes  : Box_Array;
+      Sizes  : Size_Group_Array;
+
+      procedure Coordinates_From_Node
+        (N : Node_Ptr; Line, Col : out Natural);
+      --  Get the line and column from N
+
+      procedure Process_Title_Node      (N : Node_Ptr);
+      procedure Process_Check_Node      (N : Node_Ptr);
+      procedure Process_Spin_Node       (N : Node_Ptr);
+      procedure Process_Radio_Node      (N : Node_Ptr);
+      procedure Process_Combo_Node      (N : Node_Ptr);
+      procedure Process_Popup_Node      (N : Node_Ptr);
+      procedure Process_Dependency_Node (N : Node_Ptr);
+      procedure Process_Expansion_Node  (N : Node_Ptr);
+      --  Process a child node (resp. <title>, <check>, <spin>, <radio>,
+      --  <combo>, <popup>, <dependency>, <expansion>)
+
+      function Process_Radio_Entry_Nodes
+        (Parent : Node_Ptr) return Radio_Switch_Array;
+      function Process_Combo_Entry_Nodes
+        (Parent : Node_Ptr) return Combo_Switch_Array;
+      --  Return the contents of all the <radio-entry> and
+      --  <combo-entry> nodes of Parent
+
+      ---------------------------
+      -- Coordinates_From_Node --
+      ---------------------------
+
+      procedure Coordinates_From_Node
+        (N : Node_Ptr; Line, Col : out Natural)
+      is
+      begin
+         Line :=
+           Natural'Min (Safe_Value (Get_Attribute (N, "line", "1")), Lines);
+         Col :=
+           Natural'Min (Safe_Value (Get_Attribute (N, "column", "1")), Cols);
+      end Coordinates_From_Node;
+
+      ------------------------
+      -- Process_Title_Node --
+      ------------------------
+
+      procedure Process_Title_Node (N : Node_Ptr) is
+         Line, Col : Natural;
+         Line_Span : constant Integer := Safe_Value
+           (Get_Attribute (N, "line-span", "1"));
+         Col_Span : constant Integer := Safe_Value
+           (Get_Attribute (N, "column-span", "1"));
+      begin
+         Coordinates_From_Node (N, Line, Col);
+         Set_Label (Frames (Line, Col), N.Value.all);
+
+         if Line_Span = 0 or else Col_Span = 0 then
+            Set_Child_Visible (Frames (Line, Col), False);
+
+         elsif Line_Span /= 1 or else Col_Span /= 1 then
+            Ref (Frames (Line, Col));
+            Remove (Table, Frames (Line, Col));
+            Attach (Table,
+                    Frames (Line, Col),
+                    Left_Attach   => Guint (Col - 1),
+                    Right_Attach  => Guint (Col + Col_Span - 1),
+                    Top_Attach    => Guint (Line - 1),
+                    Bottom_Attach => Guint (Line + Line_Span - 1));
+            Unref (Frames (Line, Col));
+         end if;
+      end Process_Title_Node;
+
+      -----------------------------
+      -- Process_Dependency_Node --
+      -----------------------------
+
+      procedure Process_Dependency_Node (N : Node_Ptr) is
+         Master_Page   : constant String := Get_Attribute (N, "master-page");
+         Master_Switch : constant String := Get_Attribute (N, "master-switch");
+         Slave_Page    : constant String := Get_Attribute (N, "slave-page");
+         Slave_Switch  : constant String := Get_Attribute (N, "slave-switch");
+         Master_Status : constant String :=
+           Get_Attribute (N, "master-status", "true");
+         Slave_Status  : constant String :=
+           Get_Attribute (N, "slave-status", "true");
+      begin
+         if Master_Page = ""
+           or else Master_Switch = ""
+           or else Slave_Page = ""
+           or else Slave_Switch = ""
+         then
+            Insert
+              (Kernel,
+                 -("Invalid <dependency> node in custom file,"
+                   & " all attributes must be specified"),
+               Mode => Glide_Kernel.Console.Error);
+            return;
+         end if;
+
+         Add_Dependency
+           (Page,
+            Master_Page,
+            Master_Switch,
+            Master_Status = "true" or else Master_Status = "on",
+            Slave_Page,
+            Slave_Switch,
+            Slave_Status = "true" or else Slave_Status = "on");
+      end Process_Dependency_Node;
+
+      -------------------------------
+      -- Process_Radio_Entry_Nodes --
+      -------------------------------
+
+      function Process_Radio_Entry_Nodes
+        (Parent : Node_Ptr) return Radio_Switch_Array
+      is
+         N : Node_Ptr := Parent.Child;
+         Num_Children : Natural := 0;
+      begin
+         while N /= null loop
+            if N.Tag.all = "radio-entry" then
+               Num_Children := Num_Children + 1;
+            end if;
+            N := N.Next;
+         end loop;
+
+         declare
+            Buttons : Radio_Switch_Array (1 .. Num_Children);
+         begin
+            N := Parent.Child;
+            for B in Buttons'Range loop
+               while  N.Tag.all /= "radio-entry" loop
+                  N := N.Next;
+               end loop;
+
+               declare
+                  Label   : constant String := Get_Attribute (N, "label");
+                  Switch  : constant String := Get_Attribute (N, "switch");
+                  Tip     : constant String := Get_Attribute (N, "tip");
+               begin
+                  if Label = "" or else Switch = "" then
+                     Insert
+                       (Kernel,
+                          -("Invalid <radio-entry> node in custom file,"
+                            & " requires a label and a switch attributes"),
+                        Mode => Glide_Kernel.Console.Error);
+                     return Buttons (1 .. 0);
+                  end if;
+
+                  Buttons (B) :=
+                    (Label  => new String'(Label),
+                     Switch => new String'(Switch),
+                     Tip    => new String'(Tip));
+               end;
+
+               N := N.Next;
+            end loop;
+
+            return Buttons;
+         end;
+      end Process_Radio_Entry_Nodes;
+
+      -------------------------------
+      -- Process_Combo_Entry_Nodes --
+      -------------------------------
+
+      function Process_Combo_Entry_Nodes
+        (Parent : Node_Ptr) return Combo_Switch_Array
+      is
+         N : Node_Ptr := Parent.Child;
+         Num_Children : Natural := 0;
+      begin
+         while N /= null loop
+            if N.Tag.all = "combo-entry" then
+               Num_Children := Num_Children + 1;
+            end if;
+            N := N.Next;
+         end loop;
+
+         declare
+            Buttons : Combo_Switch_Array (1 .. Num_Children);
+         begin
+            N := Parent.Child;
+            for B in Buttons'Range loop
+               while N.Tag.all /= "combo-entry" loop
+                  N := N.Next;
+               end loop;
+
+               declare
+                  Label : constant String := Get_Attribute (N, "label");
+                  Value : constant String := Get_Attribute (N, "value");
+               begin
+                  if Label = "" or else Value = "" then
+                     Insert
+                       (Kernel,
+                          -("Invalid <combo-entry> node in custom file,"
+                            & " requires a label and a switch attributes"),
+                        Mode => Glide_Kernel.Console.Error);
+                     return Buttons (1 .. 0);
+                  end if;
+
+                  Buttons (B) :=
+                    (Label => new String'(Label),
+                     Value => new String'(Value));
+               end;
+
+               N := N.Next;
+            end loop;
+
+            return Buttons;
+         end;
+      end Process_Combo_Entry_Nodes;
+
+      ------------------------
+      -- Process_Radio_Node --
+      ------------------------
+
+      procedure Process_Radio_Node (N : Node_Ptr) is
+         Line, Col : Natural;
+      begin
+         Coordinates_From_Node (N, Line, Col);
+         Create_Radio (Page, Boxes (Line, Col), Process_Radio_Entry_Nodes (N));
+      end Process_Radio_Node;
+
+      ------------------------
+      -- Process_Popup_Node --
+      ------------------------
+
+      procedure Process_Popup_Node (N : Node_Ptr) is
+         Line, Col : Natural;
+         Label     : constant String := Get_Attribute (N, "label");
+         Table     : Gtk_Table;
+         Lines : constant Integer :=
+           Safe_Value (Get_Attribute (N, "lines", "1"));
+         Cols  : constant Integer :=
+           Safe_Value (Get_Attribute (N, "columns", "1"));
+      begin
+         Coordinates_From_Node (N, Line, Col);
+         if Label = "" then
+            Insert
+              (Kernel,
+                 -("Invalid <popup> node in custom file,"
+                   & " requires a label attributes"),
+               Mode => Glide_Kernel.Console.Error);
+            return;
+         end if;
+
+         Gtk_New (Table, Guint (Lines), Guint (Cols), Homogeneous => False);
+         Parsing_Switches_XML (Kernel, Page, Table, Lines, Cols, N);
+
+         Pack_Start
+           (Boxes (Line, Col), Create_Popup (Label, Table), False, False);
+      end Process_Popup_Node;
+
+      ------------------------
+      -- Process_Combo_Node --
+      ------------------------
+
+      procedure Process_Combo_Node (N : Node_Ptr) is
+         Line, Col : Natural;
+         Label     : constant String := Get_Attribute (N, "label");
+         Switch    : constant String := Get_Attribute (N, "switch");
+         Tip       : constant String := Get_Attribute (N, "tip");
+         No_Switch : constant String := Get_Attribute (N, "noswitch");
+         No_Digit  : constant String := Get_Attribute (N, "nodigit");
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         if Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <combo> node in custom file, requires"
+                        & " a switch attributes"),
+                    Mode => Glide_Kernel.Console.Error);
+            return;
+         end if;
+
+         Pack_Start
+           (Boxes (Line, Col), Create_Combo
+              (Page, Label,
+               Switch            => Switch,
+               Default_No_Switch => No_Switch,
+               Default_No_Digit  => No_Digit,
+               Buttons           => Process_Combo_Entry_Nodes (N),
+               Tip               => Tip,
+               Label_Size_Group  => Sizes (Line, Col)),
+            False, False);
+      end Process_Combo_Node;
+
+      -----------------------
+      -- Process_Spin_Node --
+      -----------------------
+
+      procedure Process_Spin_Node  (N : Node_Ptr) is
+         Line, Col : Natural;
+         Label   : constant String := Get_Attribute (N, "label");
+         Switch  : constant String := Get_Attribute (N, "switch");
+         Tip     : constant String := Get_Attribute (N, "tip");
+         Min     : constant Integer := Safe_Value
+           (Get_Attribute (N, "min", "1"));
+         Max     : constant Integer := Safe_Value
+           (Get_Attribute (N, "max", "1"));
+         Default     : constant Integer := Safe_Value
+           (Get_Attribute (N, "default", "1"));
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         if Label = "" or else Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <spin> node in custom file, requires"
+                        & " a label and a switch attributes"),
+                    Mode => Glide_Kernel.Console.Error);
+            return;
+         end if;
+
+         Create_Spin
+           (Page, Boxes (Line, Col), Label, Switch, Min, Max, Default, Tip,
+            Sizes (Line, Col));
+      end Process_Spin_Node;
+
+      ------------------------
+      -- Process_Check_Node --
+      ------------------------
+
+      procedure Process_Check_Node (N : Node_Ptr) is
+         Line, Col : Natural;
+         Label   : constant String := Get_Attribute (N, "label");
+         Switch  : constant String := Get_Attribute (N, "switch");
+         Tip     : constant String := Get_Attribute (N, "tip");
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         if Label = "" or else Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <check> node in custom file, requires"
+                        & " a label and a switch attributes"),
+                    Mode => Glide_Kernel.Console.Error);
+            return;
+         end if;
+
+         Create_Check (Page, Boxes (Line, Col), Label, Switch, Tip);
+      end Process_Check_Node;
+
+      ----------------------------
+      -- Process_Expansion_Node --
+      ----------------------------
+
+      procedure Process_Expansion_Node (N : Node_Ptr) is
+         Switch : constant String := Get_Attribute (N, "switch");
+         Alias  : constant String := Get_Attribute (N, "alias");
+         N2 : Node_Ptr := N.Child;
+         Num_Children : Natural := 0;
+      begin
+         if Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <expansion> node in custom file, requires"
+                        & " a switch attributes"),
+                    Mode => Glide_Kernel.Console.Error);
+            return;
+         end if;
+
+         if Alias /= "" then
+            Add_Coalesce_Switch (Page, Switch, Alias);
+         end if;
+
+         while N2 /= null loop
+            if N2.Tag.all = "entry" then
+               Num_Children := Num_Children + 1;
+            end if;
+            N2 := N2.Next;
+         end loop;
+
+         if Num_Children /= 0 then
+            declare
+               Switches : Switches_Editors.Cst_Argument_List
+                 (1 .. Num_Children);
+            begin
+               N2 := N.Child;
+               for S in Switches'Range loop
+                  while N2.Tag.all /= "entry" loop
+                     N2 := N2.Next;
+                  end loop;
+
+                  Switches (S) := new String'
+                    (Get_Attribute (N2, "switch"));
+                  N2 := N2.Next;
+               end loop;
+
+               Add_Custom_Expansion (Page, Switch, Switches);
+            end;
+         end if;
+      end Process_Expansion_Node;
+
+
+      N      : Node_Ptr;
+
+   begin
+      --  Create all the frames
+
+      for L in Frame_Array'Range (1) loop
+         for C in Frame_Array'Range (2) loop
+            Gtk_New (Frames (L, C));
+            Set_Border_Width (Frames (L, C), 5);
+            Attach (Table, Frames (L, C), Guint (C - 1), Guint (C),
+                    Guint (L - 1), Guint (L));
+            Gtk_New_Vbox (Boxes (L, C), False, 0);
+            Add (Frames (L, C), Boxes (L, C));
+
+            Gtk_New (Sizes (L, C));
+         end loop;
+      end loop;
+
+      --  Parse the contents of the XML tree
+
+      N := Node.Child;
+      while N /= null loop
+         begin
+            if N.Tag.all = "title" then
+               Process_Title_Node (N);
+            elsif N.Tag.all = "check" then
+               Process_Check_Node (N);
+            elsif N.Tag.all = "spin" then
+               Process_Spin_Node (N);
+            elsif N.Tag.all = "radio" then
+               Process_Radio_Node (N);
+            elsif N.Tag.all = "combo" then
+               Process_Combo_Node (N);
+            elsif N.Tag.all = "popup" then
+               Process_Popup_Node (N);
+            elsif N.Tag.all = "dependency" then
+               Process_Dependency_Node (N);
+            elsif N.Tag.all = "expansion" then
+               Process_Expansion_Node (N);
+            else
+               Insert (Kernel,
+                       -"Invalid xml tag child for <switches>: "
+                       & N.Tag.all);
+            end if;
+
+         exception
+            when E : others =>
+               Trace (Me, "Unexpected exception " & Exception_Information (E));
+         end;
+
+         N := N.Next;
+      end loop;
+   end Parsing_Switches_XML;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Creator : access XML_Switches_Record;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Switches_Editors.Switches_Editor_Page
+   is
+      Lines : constant Integer :=
+        Safe_Value (Get_Attribute (Creator.XML_Node, "lines", "1"));
+      Cols : constant Integer :=
+        Safe_Value (Get_Attribute (Creator.XML_Node, "columns", "1"));
+      Page : Switches_Editor_Page;
+   begin
+      Gtk_New (Page, Creator.Tool_Name.all,
+               Creator.Package_Name.all,
+               Creator.Language_Filter.all,
+               Creator.Index.all,
+               Guint (Lines), Guint (Cols), Get_Tooltips (Kernel));
+      Parsing_Switches_XML (Kernel, Page, Page, Lines, Cols, Creator.XML_Node);
+      return Page;
+   end Create;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Creator : in out XML_Switches_Record) is
+   begin
+      Free (Creator.XML_Node);
+      Free (Creator.Package_Name);
+      Free (Creator.Tool_Name);
+      Free (Creator.Index);
+      Free (Creator.Language_Filter);
+   end Destroy;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (Level);
+      N : Node_Ptr := Node;
+      N2 : Node_Ptr;
+      Creator : XML_Switches;
+   begin
+      while N /= null loop
+         if N.Tag.all = "tool" then
+            declare
+               Tool_Name : constant String := Get_Attribute (N, "name");
+            begin
+               if Tool_Name = "" then
+                  Glide_Kernel.Console.Insert
+                    (Kernel, -"Invalid <tool> node, no name specified");
+               else
+                  N2 := N.Child;
+                  while N2 /= null loop
+                     if N2.Tag.all = "switches" then
+                        Creator := new XML_Switches_Record'
+                          (Switches_Page_Creator_Record with
+                           XML_Node        => Deep_Copy (N2),
+                           Tool_Name       => new String'(Tool_Name),
+                           Index           => new String'
+                             (Get_Attribute (N, "index", Tool_Name)),
+                           Language_Filter =>
+                              new String'(Get_Attribute (N, "language")),
+                           Package_Name    => new String'
+                             (Get_Attribute (N, "package", Ide_Package)));
+                        Register_Switches_Page (Kernel, Creator);
+                     end if;
+
+                     N2 := N2.Next;
+                  end loop;
+               end if;
+            end;
+         end if;
+
+         N := N.Next;
+      end loop;
+   end Customize;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2875,7 +3497,8 @@ package body Project_Viewers is
          Kernel                  => Kernel,
          Module_Name             => Project_Editor_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => Project_Editor_Contextual'Access);
+         Contextual_Menu_Handler => Project_Editor_Contextual'Access,
+         Customization_Handler   => Customize'Access);
 
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);

@@ -172,30 +172,40 @@ package Project_Viewers is
    ------------------------------------
    --  See switches_editors.ads
 
-   type Switches_Page_Creator is access function
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Editor : access Switches_Editors.Switches_Edit_Record'Class)
-     return Switches_Editors.Switches_Editor_Page;
+   type Switches_Page_Creator_Record is abstract tagged null record;
+   type Switches_Page_Creator is access all Switches_Page_Creator_Record'Class;
+
+   function Create
+     (Creator : access Switches_Page_Creator_Record;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Switches_Editors.Switches_Editor_Page is abstract;
+   --  Create a new switches editor page.
+
+   procedure Destroy (Creator : in out Switches_Page_Creator_Record);
+   procedure Destroy (Creator : in out Switches_Page_Creator);
+   --  Free the memory occupied by the creator object. The default is to do
+   --  nothing. This is called when the page has been created the first time,
+   --  since the page is then cached.
 
    procedure Register_Switches_Page
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Creator : Switches_Page_Creator);
-   --  Register a new switches page creator. This will be called every time the
-   --  project properties or project wizard are displayed, and the resulting
-   --  switches page is destroyed when the project properties dialog is closed.
+      Creator : access Switches_Page_Creator_Record'Class);
+   --  Register a new switches page creator. This will be called to create
+   --  the page initially when the project properties or project wizard are
+   --  displayed, and the resulting switches page is destroyed when the project
+   --  properties dialog is closed.
    --
    --  The reason to register a creator instead of the page itself is to save
    --  startup time, and create widgets lazily.
 
    function Get_Nth_Switches_Page
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Editor : access Switches_Editors.Switches_Edit_Record'Class;
       Num    : Positive)
       return Switches_Editors.Switches_Editor_Page;
    --  Return the Num-th switches editor page, or null if there are no more
    --  such pages.
    --  The first page is number 1.
-   --  The returned widget must be destroyed by the caller.
+   --  The returned widget must be Unref-ed by the caller.
 
    function Switches_Page_Count
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Natural;
