@@ -2902,7 +2902,8 @@ package body Src_Editor_Module is
    begin
       if Mime_Type = Mime_Source_File then
          declare
-            File       : constant Virtual_File := Get_File (Data (Data'First));
+            File        : constant Virtual_File :=
+              Get_File (Data (Data'First));
             Line        : constant Gint    := Get_Int (Data (Data'First + 1));
             Column      : Gint             := Get_Int (Data (Data'First + 2));
             Column_End  : constant Gint    := Get_Int (Data (Data'First + 3));
@@ -3181,7 +3182,7 @@ package body Src_Editor_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       File             : constant String := '/' & (-"File") & '/';
-      Save             : constant String := File & (-"Save...") & '/';
+      Save             : constant String := File & (-"Save More") & '/';
       Edit             : constant String := '/' & (-"Edit") & '/';
       Navigate         : constant String := '/' & (-"Navigate") & '/';
       Mitem            : Gtk_Menu_Item;
@@ -3317,10 +3318,10 @@ package body Src_Editor_Module is
 
       Register_Menu (Kernel, File, -"_Open...",  Stock_Open,
                      On_Open_File'Access, null,
-                     GDK_F3, Ref_Item => -"Save...");
+                     GDK_F3, Ref_Item => -"Save More");
       Register_Menu (Kernel, File, -"Open _From Project...",  Stock_Open,
                      On_Open_From_Path'Access, null,
-                     GDK_F3, Shift_Mask, Ref_Item => -"Save...");
+                     GDK_F3, Shift_Mask, Ref_Item => -"Save More");
 
       Recent_Menu_Item :=
         Register_Menu (Kernel, File, -"_Recent", "", null,
@@ -3339,9 +3340,9 @@ package body Src_Editor_Module is
 
       Register_Menu (Kernel, File, -"_Save", Stock_Save,
                      On_Save'Access, null,
-                     GDK_S, Control_Mask, Ref_Item => -"Save...");
+                     GDK_S, Control_Mask, Ref_Item => -"Save More");
       Register_Menu (Kernel, File, -"Save _As...", Stock_Save_As,
-                     On_Save_As'Access, Ref_Item => -"Save...");
+                     On_Save_As'Access, Ref_Item => -"Save More");
       Register_Menu (Kernel, Save, -"_All", "",
                      On_Save_All'Access, Ref_Item => -"Desktop");
 
