@@ -38,6 +38,7 @@
 
 with Gdk.Pixmap;
 with Gdk.Bitmap;
+with Gdk.Window;
 with Gtk.Box;
 with Gtk.Clist;
 with Gtk.Ctree;
@@ -68,14 +69,16 @@ package Directory_Tree is
    procedure Show_Parent (Tree : access Dir_Tree_Record);
    --  Shows the parent of the selected node.
 
-   procedure Show_Directory (Tree : access Dir_Tree_Record; Dir : String);
+   procedure Show_Directory
+     (Tree           : access Dir_Tree_Record;
+      Dir            : String;
+      Busy_Cursor_On : Gdk.Window.Gdk_Window := null);
    --  Expand the tree so that the directory Dir is visible.
    --  Dir must end with a directory separator.
-
-   procedure Add_Directory (Tree : access Dir_Tree_Record; Dir : String);
-   --  Add the absolute directory Dir to the tree.
-   --  A new node is created if the directory is not already in the tree.
-   --  Dir must end with a directory separator.
+   --  If Busy_Cursor_On is not null, then the cursor is that window is set to
+   --  the busy cursor. It is recommended to use this parameter instead of
+   --  setting this parameter yourself, since all this handling is done in an
+   --  idle loop, and thus you would restore the cursor too early.
 
    function Get_Selection (Tree : access Dir_Tree_Record) return String;
    --  Return the absolute directory for the selected node.
@@ -92,7 +95,8 @@ package Directory_Tree is
      (Selector             : out Directory_Selector;
       Initial_Directory    : String;
       Root_Directory       : String := "/";
-      Multiple_Directories : Boolean := False);
+      Multiple_Directories : Boolean := False;
+      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null);
    --  Create a directory selector.
    --  Multiple_Directories should be True if multiple directories can be
    --  selected by the user.
@@ -103,7 +107,8 @@ package Directory_Tree is
      (Selector             : access Directory_Selector_Record'Class;
       Initial_Directory    : String;
       Root_Directory       : String := "/";
-      Multiple_Directories : Boolean := False);
+      Multiple_Directories : Boolean := False;
+      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null);
    --  Internal function for the creation of new widgets.
 
    function Get_Single_Selection
