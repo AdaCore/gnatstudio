@@ -219,6 +219,7 @@ package body Welcome is
          --  (which is shown on some window managers)
          loop
             Response := Run (Screen);
+
             exit when Response = Gtk_Response_OK
               or else Response = Gtk_Response_Close;
          end loop;

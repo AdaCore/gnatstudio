@@ -899,6 +899,7 @@ package body Src_Contexts is
       else
          --  The search could not be made, invalidate the context
          --  in case it was the last search in the file.
+
          Context.End_Line   := Context.Begin_Line;
          Context.End_Column := Context.Begin_Column;
          return False;

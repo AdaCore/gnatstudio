@@ -31,7 +31,7 @@ with Gtk.Pixmap;    use Gtk.Pixmap;
 with Gtk.Style;     use Gtk.Style;
 with Gtk.Widget;    use Gtk.Widget;
 
-with Pixmaps_Prj;      use Pixmaps_Prj;
+with Pixmaps_Prj;   use Pixmaps_Prj;
 
 package body Logo_Boxes is
 

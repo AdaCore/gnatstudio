@@ -75,8 +75,7 @@ package body VCS.Unknown_VCS is
    -- Free --
    ----------
 
-   procedure Free (Ref : access Unknown_VCS_Record)
-   is
+   procedure Free (Ref : access Unknown_VCS_Record) is
       pragma Unreferenced (Ref);
    begin
       null;
@@ -105,7 +104,7 @@ package body VCS.Unknown_VCS is
    function Local_Get_Status
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
-     return File_Status_List.List
+      return File_Status_List.List
    is
       pragma Unreferenced (Rep);
 
