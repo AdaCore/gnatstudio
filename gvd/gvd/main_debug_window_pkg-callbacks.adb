@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gdk.Window;          use Gdk.Window;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -805,6 +806,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Show_All (Top.Backtrace_Dialog);
+      Gdk_Raise (Get_Window (Top.Backtrace_Dialog));
       Update (Top.Backtrace_Dialog, Tab);
    end On_Backtrace1_Activate;
 
@@ -824,6 +826,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Show_All (Top.Task_Dialog);
+      Gdk_Raise (Get_Window (Top.Task_Dialog));
       Update (Top.Task_Dialog, Tab);
    end On_Threads1_Activate;
 

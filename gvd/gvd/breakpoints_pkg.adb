@@ -18,8 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gdk.Window;      use Gdk.Window;
 with Gtk; use Gtk;
-with Gtk.Adjustment; use Gtk.Adjustment;
+with Gtk.Adjustment;  use Gtk.Adjustment;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Odd_Intl; use Odd_Intl;
@@ -582,6 +583,7 @@ begin
    Set_Page (Editor.Notebook1, 0);
    Set_Process (Editor, Process);
 
+   Gdk_Raise (Get_Window (Editor));
    Show_All (Editor);
 end Breakpoint_Editor;
 
