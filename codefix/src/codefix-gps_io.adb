@@ -54,7 +54,7 @@ package body Codefix.GPS_Io is
          3 => new String'("-c"),
          4 => new String'(Image (Cursor.Col)),
          5 => new String'("-L"),
-         6 => new String'("1"),
+         6 => new String'("0"),
          7 => new String'
            (Get_Full_Path_From_File
             (Registry        => Get_Registry (Current_Text.Kernel),
