@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+
 package Glide_Kernel.Console is
 
    type Message_Type is (Info, Error, Verbose);
@@ -48,5 +50,10 @@ package Glide_Kernel.Console is
 
    procedure Clear (Kernel : access Kernel_Handle_Record'Class);
    --  Clear all the text in the Console.
+
+   function Get_Interactive_Console
+     (Kernel : access Kernel_Handle_Record'Class)
+     return Glide_Interactive_Console;
+   --  Return the interactive console associated with the kernel.
 
 end Glide_Kernel.Console;
