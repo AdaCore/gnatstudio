@@ -121,10 +121,9 @@ package body Glide_Kernel.Project is
    -- Recompute_View --
    --------------------
 
-   procedure Recompute_View
-     (Handle  : access Kernel_Handle_Record'Class)
-   is
+   procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
       procedure Report_Error (S : String);
+      --  ???
 
       ------------------
       -- Report_Error --
@@ -139,10 +138,10 @@ package body Glide_Kernel.Project is
 
    begin
       Prj.Reset;
-      Prj.Proc.Process (Handle.Project_View, Handle.Project,
-                        Report_Error'Unrestricted_Access);
+      Prj.Proc.Process
+        (Handle.Project_View, Handle.Project,
+         Report_Error'Unrestricted_Access);
       pragma Assert (Handle.Project_View /= No_Project);
-
       Project_View_Changed (Handle);
    end Recompute_View;
 
