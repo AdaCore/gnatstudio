@@ -1828,7 +1828,6 @@ package body Src_Editor_Buffer is
          if Sloc_End.Column = 0 then
             Get_Iter_At_Line_Index (Buffer, Entity_End, Line, 0);
             Backward_Char (Entity_End, Success);
-
          else
             if Gint (Sloc_End.Line) = 1 then
                Offset := Slice_Offset_Column;
@@ -1836,15 +1835,28 @@ package body Src_Editor_Buffer is
                Offset := 0;
             end if;
 
-            Col := Gint (Sloc_End.Column) + Offset - 1;
+            if Slice (Sloc_End.Index) /= ASCII.LF then
+               Col := Gint (Sloc_End.Column) + Offset;
 
-            if not Is_Valid_Index (Source_Buffer (Buffer), Line, Col) then
-               Trace (Me, "invalid position");
-               return False;
+               if not Is_Valid_Index (Source_Buffer (Buffer), Line, Col) then
+                  Trace (Me, "invalid position");
+                  return False;
+               end if;
+
+               Get_Iter_At_Line_Index (Buffer, Entity_End, Line, Col);
+
+            else
+               if not Is_Valid_Index (Source_Buffer (Buffer), Line, 0) then
+                  Trace (Me, "invalid position");
+                  return False;
+               end if;
+
+               Get_Iter_At_Line_Index (Buffer, Entity_End, Line, 0);
+
+               if not Ends_Line (Entity_End) then
+                  Forward_To_Line_End (Entity_End, Success);
+               end if;
             end if;
-
-            Get_Iter_At_Line_Index (Buffer, Entity_End, Line, Col);
-            Forward_Char (Entity_End, Success);
          end if;
 
          if Partial_Entity then
