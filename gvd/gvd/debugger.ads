@@ -266,7 +266,7 @@ package Debugger is
    --  Print the value of the entity
    --  GDB_COMMAND: "print"
    --  JDB_COMMAND: "dump"
-   
+
    procedure Set_Variable
      (Debugger : access Debugger_Root;
       Var_Name : String;
