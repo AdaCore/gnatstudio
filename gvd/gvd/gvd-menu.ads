@@ -20,12 +20,9 @@
 
 with Glib; use Glib;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
-pragma Elaborate_All (Gtk.Item_Factory);
-with Gtk.Window;
+with Factory_Data;
 
 package GVD.Menu is
-   package Factory_Data is new
-     Gtk.Item_Factory.Data_Item (Gtk.Window.Gtk_Window_Record'Class);
    use Factory_Data;
 
    ---------------
