@@ -187,7 +187,7 @@ package body GVD.Status_Bar is
          Set_Editable (Text, False);
 
          Freeze (Text);
-         Insert (Text, Chars => -"Recent message (most recent first):"
+         Insert (Text, Chars => -"Recent messages (most recent first):"
                  & ASCII.LF & ASCII.LF);
 
          --  Skip one message if it is a blank string
