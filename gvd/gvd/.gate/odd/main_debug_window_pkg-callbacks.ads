@@ -220,7 +220,7 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Edit_Breakpoints1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Edit_Displays1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
