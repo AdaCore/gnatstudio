@@ -110,6 +110,11 @@ package Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record) return Boolean;
    --  Return whether the Editor is writable.
 
+   procedure Set_Writable
+     (Editor   : access Source_Editor_Box_Record;
+      Writable : Boolean);
+   --  Change the writable status of the editor.
+
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------
