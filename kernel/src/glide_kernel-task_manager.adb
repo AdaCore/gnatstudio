@@ -18,12 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Stock;                use Gtk.Stock;
+
 with GVD.Status_Bar;           use GVD.Status_Bar;
 
 with Glide_Main_Window;        use Glide_Main_Window;
 
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Task_Manager;             use Task_Manager;
 with Task_Manager.GUI;         use Task_Manager.GUI;
 
@@ -33,7 +41,6 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Glide_Intl;               use Glide_Intl;
-
 with Commands.Custom;          use Commands.Custom;
 
 package body Glide_Kernel.Task_Manager is
@@ -91,6 +98,79 @@ package body Glide_Kernel.Task_Manager is
    function Create_Wrapper
      (Command : access Root_Command'Class) return Command_Access;
    --  Create a new wrapper
+
+   function On_Exit_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class) return Boolean;
+   --  Called before GPS exits.
+
+   ------------------
+   -- On_Exit_Hook --
+   ------------------
+
+   function On_Exit_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class) return Boolean
+   is
+      pragma Unreferenced (Data);
+
+      Manager   : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+      Dialog    : Gtk_Dialog;
+      Label     : Gtk_Label;
+      Interface : Task_Manager_Interface;
+      Button    : Gtk_Widget;
+      Response  : Gtk_Response_Type;
+      pragma Unreferenced (Button);
+
+      Previous_Interface : constant Gtk_Widget := Get_GUI (Manager);
+   begin
+      if not Has_Running_Commands (Manager) then
+         return True;
+      end if;
+
+      Gtk_New
+        (Dialog,
+         Title  => -"Tasks are running",
+         Parent => Get_Main_Window (Kernel),
+         Flags  => Modal or Destroy_With_Parent);
+
+      Gtk_New
+        (Label, -"The following tasks are running, do you want to quit GPS ?");
+
+      Set_Alignment (Label, 0.0, 0.0);
+      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+      Gtk_New (Interface, Manager, Dialog => Gtk_Widget (Dialog));
+      Pack_Start (Get_Vbox (Dialog), Interface, Padding => 10);
+
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_Yes);
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Set_Default_Size (Dialog, 150, 100);
+      Show_All (Dialog);
+      Response := Run (Dialog);
+
+      case Response is
+         when Gtk_Response_Cancel =>
+            Destroy (Dialog);
+            Set_GUI (Manager, Previous_Interface);
+            return False;
+
+         when Gtk_Response_Yes =>
+            Destroy (Dialog);
+            Set_GUI (Manager, Previous_Interface);
+            return True;
+
+         when Gtk_Response_None =>
+            Set_GUI (Manager, Previous_Interface);
+            return True;
+
+         when others =>
+            Destroy (Dialog);
+            Set_GUI (Manager, Previous_Interface);
+            return True;
+      end case;
+   end On_Exit_Hook;
 
    ---------------------
    -- On_Task_Manager --
@@ -310,6 +390,11 @@ package body Glide_Kernel.Task_Manager is
          -"Task Manager",
          Callback => On_Task_Manager'Access,
          Ref_Item => Shell);
+
+      Add_Hook
+        (Kernel,
+         Before_Exit_Action_Hook,
+         On_Exit_Hook'Access);
    end Register_Module;
 
    -------------
