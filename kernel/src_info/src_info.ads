@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -171,9 +171,9 @@ package Src_Info is
    procedure Destroy (Iterator : in out LI_Handler_Iterator);
    --  Free the memory used by the list of source files.
 
-   ------------------
-   --  LI handlers --
-   ------------------
+   -----------------
+   -- LI handlers --
+   -----------------
 
    type LI_Handler_Record is abstract tagged limited null record;
    type LI_Handler is access all LI_Handler_Record'Class;
