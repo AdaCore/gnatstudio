@@ -693,11 +693,15 @@ package body Python_Module is
       if Command = "__str__"
         or else Command = "__repr__"
       then
-         Set_Return_Value (Data,
-                           Get_Name (Entity) & ':'
-                           & Get_Declaration_File_Of (Entity) & ':'
-                           & Image (Get_Declaration_Line_Of (Entity)) & ':'
-                           & Image (Get_Declaration_Column_Of (Entity)));
+         if Is_Predefined_Entity (Entity) then
+            Set_Return_Value (Data, Get_Name (Entity));
+         else
+            Set_Return_Value (Data,
+                              Get_Name (Entity) & ':'
+                              & Get_Declaration_File_Of (Entity) & ':'
+                              & Image (Get_Declaration_Line_Of (Entity)) & ':'
+                              & Image (Get_Declaration_Column_Of (Entity)));
+         end if;
 
       elsif Command = "__hash__" then
          Set_Return_Value
