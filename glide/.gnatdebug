@@ -43,6 +43,7 @@ MODULE.SSH                = yes
 MODULE.PROJECT_PROPERTIES = yes
 MODULE.PROJECT_VIEWER     = yes
 MODULE.CPP                = yes
+EXPLORERS.TOOLTIPS        = no
 
 --  Debug handles related to the cross-references database
 
@@ -61,4 +62,6 @@ GLIDE_KERNEL.SCRIPTS=no
 PYTHON.OUT=no
 COMMANDS.CUSTOM=no
 HOOKS=no
+
+EXPECT=no
 
