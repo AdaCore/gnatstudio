@@ -42,6 +42,7 @@ with VCS_View_API;              use VCS_View_API;
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with Basic_Types;               use Basic_Types;
 
+with VCS.Unknown_VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -73,7 +74,6 @@ package body VCS_Module is
       File_Checker : Gtk.GEntry.Gtk_Entry;
    end record;
    type VCS_Selector is access all VCS_Selector_Record'Class;
-
 
    procedure VCS_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -141,7 +141,7 @@ package body VCS_Module is
       Menu_Item    : Gtk_Menu_Item;
    begin
       if Context.all in File_Selection_Context'Class then
-         Gtk_New (Menu_Item, Label => -"VCS");
+         Gtk_New (Menu_Item, Label => -"Version Control");
          Gtk_New (Submenu);
          VCS_View_API.VCS_Contextual_Menu (Object, Context, Submenu);
          Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
@@ -470,6 +470,8 @@ package body VCS_Module is
          Title     => -"Version Control System Configuration",
          Ref_Page  => -"Sources",
          Add_After => False);
+
+      Standard.VCS.Unknown_VCS.Register_Module (Kernel);
    end Register_Module;
 
 end VCS_Module;
