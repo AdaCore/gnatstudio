@@ -860,6 +860,8 @@ package body Src_Info.ALI is
       Chars_Read  : Integer;
       Filename_Id : File_Name_Type;
    begin
+      Initialize_ALI;
+
       FD := Open_Read (ALI_Filename & ASCII.NUL, Fmode => Text);
       if FD = Invalid_FD then
          return No_ALI_Id;
