@@ -235,7 +235,14 @@ package GUI_Utils is
    --  The caller is responsible for freeing Column_Names.
    --
    --  Columns associated with a boolean value will be rendered as a toggle
-   --  button.
+   --  button. By default, they can be toggled interactively by the user. If
+   --  you want to prevent that, you need to set the activatable property on
+   --  the appropriate renderer, with code like:
+   --     List := Get_Cell_Renderers (Get_Column (Tree, 0));
+   --     Add_Attribute (Get_Column (Tree, 0),
+   --                    Cell_Renderer_List.Get_Data (List),
+   --                    "activatable", 1);
+   --     Cell_Renderer_List.Free (List);
    --
    --  The resulting view should be added to a scrolled_window
    --

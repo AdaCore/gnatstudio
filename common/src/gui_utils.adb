@@ -32,12 +32,14 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Window;               use Gdk.Window;
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
+with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 with Glib;                     use Glib;
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Accel_Map;            use Gtk.Accel_Map;
 with Gtk.Bin;                  use Gtk.Bin;
 with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Clist;                use Gtk.Clist;
@@ -92,13 +94,20 @@ package body GUI_Utils is
       Widget  : Gtk_Widget;
    end record;
 
+   type Model_Column is record
+      Model   : Gtk_Tree_Model;
+      Column  : Glib.Gint;
+   end record;
+
    package Contextual_Callback is new Gtk.Handlers.User_Return_Callback
      (Gtk_Widget_Record, Boolean, Contextual_Menu_Data);
+   package Tree_Column_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Model_Column);
 
    procedure Toggle_Callback
-     (Model  : access GObject_Record'Class;
+     (Render : access GObject_Record'Class;
       Params : Glib.Values.GValues;
-      Data   : Glib.Gint);
+      Data   : Model_Column);
    --  Called when a toggle renderer is clicked on.
 
    function Button_Press_For_Contextual_Menu
@@ -1616,7 +1625,6 @@ package body GUI_Utils is
 
             if not Is_Icon and then Sortable_Columns then
                Set_Sort_Column_Id (Col, Gint (N));
-               Set_Sort_Indicator (Col, True);
                Set_Clickable (Col, True);
                if Initial_Sort_On = N + Column_Names'First then
                   Clicked (Col);
@@ -1629,10 +1637,10 @@ package body GUI_Utils is
          if Column_Types (Column_Types'First + Guint (N)) = GType_Boolean then
             Gtk_New (Toggle_Render);
             Set_Radio (Toggle_Render, False);
-            Tree_Model_Callback.Object_Connect
+            Tree_Column_Callback.Connect
               (Toggle_Render, "toggled",
-               Toggle_Callback'Access, Slot_Object => Model,
-               User_Data => Gint (N));
+               Toggle_Callback'Access,
+               User_Data => (Gtk_Tree_Model (Model), Gint (N)));
             Pack_Start (Col, Toggle_Render, False);
             Add_Attribute (Col, Toggle_Render, "active", Gint (N));
 
@@ -1664,18 +1672,28 @@ package body GUI_Utils is
    ---------------------
 
    procedure Toggle_Callback
-     (Model  : access GObject_Record'Class;
+     (Render : access GObject_Record'Class;
       Params : Glib.Values.GValues;
-      Data   : Glib.Gint)
+      Data   : Model_Column)
    is
-      M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
+      R           : constant Gtk_Cell_Renderer := Gtk_Cell_Renderer (Render);
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : Gtk_Tree_Iter;
+      Activatable : Boolean;
    begin
-      Iter := Get_Iter_From_String (M, Path_String);
+      Iter := Get_Iter_From_String (Data.Model, Path_String);
 
       if Iter /= Null_Iter then
-         Set (M, Iter, Data, not Get_Boolean (M, Iter, Data));
+         --  The activatable property only prevents us from activating the
+         --  toggle, not from deactivating it
+         Activatable :=
+           Get_Property (R, Property_Boolean (Glib.Build ("activatable")));
+
+         if Activatable then
+            Set (Gtk_Tree_Store (Data.Model), Iter, Data.Column,
+                 not Get_Boolean (Gtk_Tree_Store (Data.Model),
+                                  Iter, Data.Column));
+         end if;
       end if;
    end Toggle_Callback;
 
