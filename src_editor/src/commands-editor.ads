@@ -20,6 +20,7 @@
 
 --  This package implements commands related to the editor.
 
+with Gtk.Text_Mark;     use Gtk.Text_Mark;
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 
@@ -33,6 +34,19 @@ package Commands.Editor is
 
    type Check_Modified_State_Type is new Root_Command with private;
    type Check_Modified_State is access all Check_Modified_State_Type;
+
+   type Remove_Blank_Lines_Command_Type is new Root_Command with record
+      Buffer : Source_Buffer;
+      Mark   : Gtk_Text_Mark;
+      Number : Natural;
+   end record;
+   type Remove_Blank_Lines_Command is access
+     all Remove_Blank_Lines_Command_Type;
+
+   function Execute
+     (Command : access Remove_Blank_Lines_Command_Type)
+      return Command_Return_Type;
+   --  This commands removes the Number blank lines associated with Mark.
 
    type Direction_Type is (Backward, Forward, Extended);
    --  Forward direction indicates a normal command (ie the text is
