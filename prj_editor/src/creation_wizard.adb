@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -58,18 +58,16 @@ with String_Utils;     use String_Utils;
 
 package body Creation_Wizard is
 
-   function First_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget;
-   function Second_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget;
-   function Third_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget;
-   function Fourth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget;
-   function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget;
-   --  function Sixth_Page (Wiz : access Prj_Wizard_Record'Class)
-   --     return Gtk_Widget;
+   function First_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
+   function Second_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
+   function Third_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
+   function Fourth_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
+   function Fifth_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
    --  Return the widget to use for any of the pages in the wizard
 
    procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class);
@@ -290,12 +288,15 @@ package body Creation_Wizard is
    -----------------
 
    function Second_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget is
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget
+   is
+      Prj_Location : aliased String := Get_Text (Wiz.Project_Location);
    begin
       Gtk_New (Wiz.Src_Dir_Selection,
-               Initial_Directory => Get_Text (Wiz.Project_Location),
+               Initial_Directory => Prj_Location,
                Multiple_Directories => True,
-               Busy_Cursor_On => Get_Window (Wiz));
+               Busy_Cursor_On => Get_Window (Wiz),
+               Initial_Selection => (1 => Prj_Location'Unchecked_Access));
       return Gtk_Widget (Wiz.Src_Dir_Selection);
    end Second_Page;
 
@@ -392,11 +393,11 @@ package body Creation_Wizard is
    ------------------
 
    function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
-      Wiz  : Prj_Wizard := Prj_Wizard (W);
+      Wiz          : Prj_Wizard := Prj_Wizard (W);
       Project, Var : Project_Node_Id;
-      Dir : constant String := Name_As_Directory
+      Dir          : constant String := Name_As_Directory
         (Get_Text (Wiz.Project_Location));
-      Name : constant String := Get_Text (Wiz.Project_Name);
+      Name         : constant String := Get_Text (Wiz.Project_Name);
 
    begin
       Project := Create_Project (Name => Name, Path => Dir);
@@ -404,6 +405,7 @@ package body Creation_Wizard is
       --  Append the source directories
       Var := Create_Attribute
         (Project, Get_Name_String (Name_Source_Dirs), Kind => List);
+
       declare
          Dirs : Argument_List := Get_Multiple_Selection
            (Wiz.Src_Dir_Selection);
@@ -412,7 +414,9 @@ package body Creation_Wizard is
             for J in Dirs'Range loop
                Append_To_List (Var, Dirs (J).all);
             end loop;
+
             Free (Dirs);
+
          else
             Append_To_List (Var, ".");
          end if;
@@ -421,6 +425,7 @@ package body Creation_Wizard is
       --  Append the build directory
       Var := Create_Attribute
         (Project, Get_Name_String (Name_Object_Dir), Kind => Single);
+
       declare
          Dir : constant String :=
            Get_Single_Selection (Wiz.Obj_Dir_Selection);
@@ -438,6 +443,16 @@ package body Creation_Wizard is
       if Get_Active (Wiz.Ada_Support) then
          Emit_Switches
            (Wiz, Project, Get_Name_String (Name_Compiler), Ada_Compiler);
+      end if;
+
+      if Get_Active (Wiz.C_Support) then
+         Emit_Switches
+           (Wiz, Project, Get_Name_String (Name_Compiler), C_Compiler);
+      end if;
+
+      if Get_Active (Wiz.Cpp_Support) then
+         Emit_Switches
+           (Wiz, Project, Get_Name_String (Name_Compiler), Cpp_Compiler);
       end if;
 
       Emit_Switches (Wiz, Project, Get_Name_String (Name_Binder), Binder);
