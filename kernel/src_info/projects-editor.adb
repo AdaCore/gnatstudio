@@ -2594,7 +2594,7 @@ package body Projects.Editor is
       Imported_Project : Project_Node_Id := Empty_Node;
 
       Basename : constant String := Base_Name
-        (Imported_Project_Location, Prj.Project_File_Extension);
+        (Imported_Project_Location, Project_File_Extension);
       Dep_ID   : Name_Id;
       Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
       Imported : constant String := Normalize_Pathname
@@ -2631,6 +2631,8 @@ package body Projects.Editor is
       end if;
 
       if Imported_Project = Empty_Node then
+         Trace (Me, "Add_Imported_Project: imported project not found ("
+                & Imported_Project_Location & ")");
          Output.Set_Special_Output (null);
          Prj.Com.Fail := null;
          return Imported_Project_Not_Found;
@@ -2686,6 +2688,7 @@ package body Projects.Editor is
             Report_Errors
               (-"Circular dependency detected in the project hierarchy");
          end if;
+         Trace (Me, "Circular dependency detected in the project hierarchy");
          Output.Set_Special_Output (null);
          Prj.Com.Fail := null;
          return Circular_Dependency;
@@ -2754,11 +2757,11 @@ package body Projects.Editor is
 
       Name_Len := New_Path'Length;
       Name_Buffer (1 .. Name_Len) := New_Path;
-      Set_Directory_Of (Project.Node, Name_Enter);
+      Set_Directory_Of (Project.Node, Name_Find);
 
       Name_Len := D'Length;
       Name_Buffer (1 .. Name_Len) := D;
-      Set_Path_Name_Of (Project.Node, Name_Enter);
+      Set_Path_Name_Of (Project.Node, Name_Find);
 
       --  Unregister the old name
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
@@ -2890,17 +2893,17 @@ package body Projects.Editor is
       --  Adding the name of the project
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
-      Project_Name := Name_Enter;
+      Project_Name := Name_Find;
       Set_Name_Of (Project, Project_Name);
 
       --  Adding the project path
       Name_Len := Path'Length;
       Name_Buffer (1 .. Name_Len) := Path;
-      Set_Directory_Of (Project, Name_Enter);
+      Set_Directory_Of (Project, Name_Find);
 
       Name_Len := D'Length;
       Name_Buffer (1 .. Name_Len) := D;
-      Set_Path_Name_Of (Project, Name_Enter);
+      Set_Path_Name_Of (Project, Name_Find);
 
       --  Create the project declaration
       Set_Project_Declaration_Of
