@@ -929,7 +929,7 @@ package body Src_Info.CPP is
              (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
       end if;
 
-      Desc.Kind := Record_Type;
+      Desc.Kind := Enumeration_Type;
       Success := True;
    exception
       when  DB_Error |   -- non-existent table
