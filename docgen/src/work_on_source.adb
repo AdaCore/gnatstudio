@@ -30,8 +30,7 @@ with OS_Utils;                  use OS_Utils;
 
 package body Work_On_Source is
 
-   --  package GOL renames GNAT.OS_Lib;
-   --  package ASU renames Ada.Strings.Unbounded;
+   package ASU renames Ada.Strings.Unbounded;
    package TSFL renames Type_Source_File_List;
    package TEL renames Type_Entity_List;
 
@@ -87,10 +86,10 @@ package body Work_On_Source is
          Sort_List_Name (Entity_List);
 
          --  the order of the following procedure calls can't be changed
-         --  without changing the order in texi_output: Doc_TEXI_Subtitle
+         --  without changing the order in texi_output!
+         --  See: Doc_TEXI_Subtitle
 
          Process_Package_Description (Doc_File,
-                                      Source_Filename,
                                       Package_Name,
                                       File_Text.all,
                                       Options);
@@ -169,11 +168,13 @@ package body Work_On_Source is
       Data_Open   : Doc_Info (Info_Type => Open_Info);
 
    begin
+      --  initialise the Doc_Info data
       Data_Open := Doc_Info'(Open_Info,
                              Open_Title => new String'("Docgen documentation"),
                              Open_File  => new String'(Package_File),
                              Open_Package_List => Source_File_List);
 
+      --  call the documentation procedure
       Options.Doc_Subprogram (Doc_File, Data_Open);
 
       Free (Data_Open.Open_Title);
@@ -189,9 +190,11 @@ package body Work_On_Source is
 
       Data_Close    : Doc_Info (Info_Type => Close_Info);
    begin
+      --  initialise the Doc_Info data
       Data_Close := Doc_Info'(Close_Info,
                               Close_Title => new String'("End documentation"));
 
+      --  call the documentation procedure
       Options.Doc_Subprogram (Doc_File, Data_Close);
 
       Free (Data_Close.Close_Title);
@@ -241,7 +244,6 @@ package body Work_On_Source is
       Data_Package     : Doc_Info (Info_Type => Unit_Index_Info);
       Data_Item        : Doc_Info (Info_Type => Index_Item_Info);
       Data_End         : Doc_Info (Info_Type => End_Of_Index_Info);
-
 
       package TSFL renames Type_Source_File_List;
 
@@ -514,7 +516,6 @@ package body Work_On_Source is
 
    procedure Process_Package_Description
      (Doc_File        : File_Type;
-      Source_Filename : String;
       Package_Name    : String;
       Text            : String;
       Options         : All_Options) is
@@ -559,15 +560,16 @@ package body Work_On_Source is
 
          Options.Doc_Subprogram (Doc_File, Data_Subtitle);
 
-         Description := new String'(Extract_Comment (Source_Filename,
-                                                      Line,
-                                                      0,
-                                                      True,
-                                                      Options));
+         Description := Extract_Comment (Text,
+                                         Line,
+                                         0,
+                                         True,
+                                         Options);
          Data_Package := Doc_Info'(Package_Desc_Info,
                                    Package_Desc_Description
                                      => Description);
          Options.Doc_Subprogram (Doc_File, Data_Package);
+         Free (Description);
       end if;
    end Process_Package_Description;
 
@@ -608,7 +610,9 @@ package body Work_On_Source is
             Free (Old_Line);
          end if;
 
-         if Parse_Node = Parsed_List.Last then
+         if Parse_Node = Parsed_List.Last or
+           Parse_Node.Category = Cat_Procedure or
+           Parse_Node.Category = Cat_Function then
             Parsed_List_End := True;
          else
             Parse_Node := Parse_Node.Next;
@@ -691,18 +695,20 @@ package body Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := new String'
-                 (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
-                                   TEL.Data (Entity_Node).Line,
-                                   Count_Lines (Header.all),
-                                   False,
-                                   Options));
+               Description := Extract_Comment
+                 (File_Text.all,
+                  TEL.Data (Entity_Node).Line,
+                  Count_Lines (Header.all),
+                  False,
+                  Options);
                Data_Package := Doc_Info'(Package_Info,
                                          Package_Entity      =>
                                            TEL.Data (Entity_Node),
                                          Package_Description => Description,
                                          Package_List        => Entity_List,
-                                         Package_Header => Header);
+                                         Package_Header => Header,
+                                         Package_Header_Line =>
+                                           TEL.Data (Entity_Node).Line);
                Options.Doc_Subprogram (Doc_File, Data_Package);
             end if;
             Entity_Node := TEL.Next (Entity_Node);
@@ -769,18 +775,20 @@ package body Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := new String'
-                 (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
-                                   TEL.Data (Entity_Node).Line,
-                                   Count_Lines (Header.all),
-                                   False,
-                                   Options));
+               Description := Extract_Comment
+                 (File_Text.all,
+                  TEL.Data (Entity_Node).Line,
+                  Count_Lines (Header.all),
+                  False,
+                  Options);
 
                Data_Var := Doc_Info'(Var_Info,
                                      Var_Entity      => TEL.Data (Entity_Node),
                                      Var_Description => Description,
                                      Var_List        => Entity_List,
-                                     Var_Header     => Header);
+                                     Var_Header     => Header,
+                                     Var_Header_Line =>
+                                       TEL.Data (Entity_Node).Line);
                Options.Doc_Subprogram (Doc_File, Data_Var);
             end if;
             Entity_Node := TEL.Next (Entity_Node);
@@ -847,12 +855,12 @@ package body Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := new String'
-                 (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
-                                   TEL.Data (Entity_Node).Line,
-                                   Count_Lines (Header.all),
-                                   False,
-                                   Options));
+               Description := Extract_Comment
+                 (File_Text.all,
+                  TEL.Data (Entity_Node).Line,
+                  Count_Lines (Header.all),
+                  False,
+                  Options);
 
                Data_Exception := Doc_Info'(Exception_Info,
                                            Exception_Entity      =>
@@ -862,7 +870,9 @@ package body Work_On_Source is
                                            Exception_List        =>
                                              Entity_List,
                                            Exception_Header   =>
-                                             Header);
+                                             Header,
+                                           Exception_Header_Line =>
+                                           TEL.Data (Entity_Node).Line);
                Options.Doc_Subprogram (Doc_File, Data_Exception);
             end if;
             Entity_Node := TEL.Next (Entity_Node);
@@ -930,19 +940,21 @@ package body Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := new String'
-                 (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
-                                   TEL.Data (Entity_Node).Line,
-                                   Count_Lines (Header.all),
-                                   False,
-                                   Options));
+               Description := Extract_Comment
+                 (File_Text.all,
+                  TEL.Data (Entity_Node).Line,
+                  Count_Lines (Header.all),
+                  False,
+                  Options);
 
                Data_Type := Doc_Info'(Type_Info,
                                       Type_Entity      =>
                                         TEL.Data (Entity_Node),
                                       Type_Description => Description,
                                       Type_List        => Entity_List,
-                                      Type_Header => Header);
+                                      Type_Header => Header,
+                                      Type_Header_Line =>
+                                        TEL.Data (Entity_Node).Line);
                Options.Doc_Subprogram (Doc_File, Data_Type);
 
             end if;
@@ -1011,12 +1023,12 @@ package body Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := new String'
-                 (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
-                                   TEL.Data (Entity_Node).Line,
-                                   Count_Lines (Header.all),
-                                   False,
-                                   Options));
+               Description := Extract_Comment
+                 (File_Text.all,
+                  TEL.Data (Entity_Node).Line,
+                  Count_Lines (Header.all),
+                  False,
+                  Options);
 
                Data_Subprogram := Doc_Info'(Subprogram_Info,
                                             Subprogram_Entity      =>
@@ -1028,7 +1040,9 @@ package body Work_On_Source is
                                             Subprogram_List        =>
                                               Entity_List,
                                             Subprogram_Header =>
-                                            Header);
+                                              Header,
+                                            Subprogram_Header_Line =>
+                                              TEL.Data (Entity_Node).Line);
                Options.Doc_Subprogram (Doc_File, Data_Subprogram);
             end if;
             Entity_Node := TEL.Next (Entity_Node);
@@ -1041,42 +1055,6 @@ package body Work_On_Source is
       Free (Data_Subtitle.Subtitle_Package);
    end Process_Subprograms;
 
-   ------------------
-   --  Go_To_Line  --   !!! needed?
-   ------------------
-
-   procedure Go_To_Line
-     (File : File_Type;
-      Line : Natural) is
-      Dummy : String (1 .. Max_Line_Length);
-      Last  : Natural;
-   begin
-      for J in 1 .. Line loop
-         Get_Line (File, Dummy, Last);
-      end loop;
-      --  how convert Natural->Count in order to use Skip?
-   end Go_To_Line;
-
-   --------------------------
-   --  Get_Line_From_File  --   !!!needed?
-   --------------------------
-
-   function Get_Line_From_File
-     (File_Name : String;
-      Line      : Natural) return String
-   is
-      File        : File_Type;
-      Text        : String (1 .. Max_Line_Length);
-      Last        : Natural;
-   begin
-      Text := (1 .. Max_Line_Length => ' ');
-      Open (File, In_File, File_Name);
-      Go_To_Line (File, Line - 1);
-      Ada.Text_IO.Get_Line (File, Text, Last);
-      Close (File);
-      return Text (1 .. Last);
-   end Get_Line_From_File;
-
    ---------------------
    -- Line_Is_Comment --
    ---------------------
@@ -1085,7 +1063,7 @@ package body Work_On_Source is
      (Line : String) return Boolean is
    begin
       if Line'Length > 5 then
-         for J in 1 .. Line'Last - 3 loop
+         for J in Line'First .. Line'Last - 3 loop
             if Line (J) = '-' and Line (J + 1) = '-' then
                return True;
             elsif Line (J) /= ' '
@@ -1106,7 +1084,7 @@ package body Work_On_Source is
    function Line_Is_Empty
      (Line : String) return Boolean is
    begin
-      for J in 1 .. Line'Last loop
+      for J in Line'First .. Line'Last loop
          if    Line (J) /= ' '
            and Line (J) /= ASCII.HT
            and Line (J) /= ASCII.LF
@@ -1126,7 +1104,7 @@ package body Work_On_Source is
      (Comment_Line : String) return Boolean is
    begin
       if Comment_Line'Length > 5 then
-         for J in 1 .. Comment_Line'Last - 3 loop
+         for J in Comment_Line'First .. Comment_Line'Last - 3 loop
             if Comment_Line (J) = '-' and Comment_Line (J + 1) = '-' then
                if Comment_Line (J + 2) = '!' then
                   return True;
@@ -1147,7 +1125,7 @@ package body Work_On_Source is
      (Comment_Line : String) return String is
       J : Natural;
    begin
-      J := 1;
+      J := Comment_Line'First;
       while (Comment_Line (J) /= '-' and Comment_Line (J + 1) /= '-') loop
          J := J + 1;
       end loop;
@@ -1159,98 +1137,61 @@ package body Work_On_Source is
    -----------------------
 
    function Extract_Comment
-     (File_Name           : String;
+     (File_Text           : String;
       Line                : Natural;
       Header_Lines        : Natural;
       Package_Description : Boolean;
-      Options             : All_Options) return String is
+      Options             : All_Options) return GNAT.OS_Lib.String_Access is
 
-      New_Line, Old_Line : ASU.Unbounded_String;
-      J                  : Natural;
-      Char_Between       : Character;
+      New_Line, Old_Line  : GNAT.OS_Lib.String_Access;
+      Result_Line         : GNAT.OS_Lib.String_Access;
+      J                   : Natural;
 
    begin
-      Old_Line := ASU.To_Unbounded_String ("");
-      --  create one line or keep the formatting (for package description)
-      if Package_Description then
-         Char_Between := ASCII.LF;
-      else
-         Char_Between := ' ';
-      end if;
+      Result_Line := new String'("");
 
-      --  the comments under the header of the entity
+      --  the comments are under the header of the entity
       if Options.Comments_Under or Package_Description then
          J := Line + Header_Lines;
-         --  the comments above the header of the entity
+         --  the comments are above the header of the entity
       else
          J := Line - 1;
       end if;
 
-      New_Line := ASU.To_Unbounded_String (Get_Line_From_File (File_Name, J));
-      while Line_Is_Comment (ASU.To_String (New_Line)) loop
+      New_Line := new String'
+        (Get_Line_From_String (File_Text, J));
+      while Line_Is_Comment (New_Line.all) loop
          if Options.Comments_Under or Package_Description then
             J := J + 1;
             if not (Options.Ignorable_Comments and
-                      Is_Ignorable_Comment (ASU.To_String (New_Line))) then
+                      Is_Ignorable_Comment (New_Line.all)) then
                if Package_Description then
-                  Old_Line := Old_Line & Char_Between &
-                    ASU.To_String (New_Line);
+                  Result_Line := new String'(Result_Line.all & New_Line.all);
                else
-                  Old_Line := Old_Line & Char_Between &
-                    Kill_Prefix (ASU.To_String (New_Line));
+                  Result_Line := new String'(Result_Line.all & ' ' &
+                    Kill_Prefix (New_Line.all));
                end if;
             end if;
          else
             J := J - 1;
             if not (Options.Ignorable_Comments and
-                      Is_Ignorable_Comment (ASU.To_String (New_Line))) then
+                      Is_Ignorable_Comment (New_Line.all)) then
                if Package_Description then
-                  Old_Line := ASU.To_String (New_Line) &
-                    Char_Between & Old_Line;
+                  Result_Line := new String'(New_Line.all &
+                    Result_Line.all);
                else
-                  Old_Line := (Kill_Prefix (ASU.To_String (New_Line))) &
-                    Char_Between & Old_Line;
+                  Result_Line := new String'((Kill_Prefix (New_Line.all)) &
+                    ' ' & Result_Line.all);
                end if;
             end if;
          end if;
-         New_Line := ASU.To_Unbounded_String
-           (Get_Line_From_File (File_Name, J));
+         Old_Line := New_Line;
+         New_Line := new String'(Get_Line_From_String (File_Text, J));
+         Free (Old_Line);
       end loop;
-      return ASU.To_String (Old_Line);
+      Free (New_Line);
+      return Result_Line;
    end Extract_Comment;
-
-   -------------------------
-   --  Exception_Renames  --   !!! needed?
-   -------------------------
-
-   function Exception_Renames
-     (File_Name : String;
-      Line      : Natural)
-     return Unbounded_String is
-
-      File        : File_Type;
-      Last        : Natural;
-      Text        : Unbounded_String;
-      Result_Text : Unbounded_String;
-      New_Line    : String (1 .. Max_Line_Length);
-
-   begin
-      Open (File, In_File, File_Name);
-
-      Go_To_Line (File, Line - 1);
-      Ada.Text_IO.Get_Line (File, New_Line, Last);
-      Text := To_Unbounded_String (New_Line);
-
-      if Index (Text, "renames") > 0 then
-         Result_Text := To_Unbounded_String
-           (" " &New_Line (Index (Text, "renames") .. Last - 1));
-      else
-         Result_Text := To_Unbounded_String ("");
-      end if;
-
-      Close (File);
-      return Result_Text;
-   end Exception_Renames;
 
    -----------------------
    -- Get_Doc_File_Name --
@@ -1261,16 +1202,14 @@ package body Work_On_Source is
       Source_Path     : String;
       Doc_Suffix      : String) return String is
       --  returns the complete name of the doc file
-
-      Doc_File : ASU.Unbounded_String;
+      Doc_File : constant String := Base_Name (Source_Filename);
+      Extens   : constant String := File_Extension (Source_Filename);
    begin
-      Doc_File := ASU.To_Unbounded_String (Base_Name (Source_Filename));
       return Source_Path &
-             (ASU.To_String (ASU.Replace_Slice
-                                 (Doc_File,
-                                  ASU.Index (Doc_File, "."),
-                                ASU.Index (Doc_File, "."), "_")))
-              & Doc_Suffix;
+      Doc_File (Doc_File'First .. Doc_File'Last - 4)
+      & "_"
+      & Extens (Extens'First + 1 .. Extens'Last)
+      & Doc_Suffix;
    end Get_Doc_File_Name;
 
    --------------------------
@@ -1292,7 +1231,7 @@ package body Work_On_Source is
             Index_Start := Index_Start + 1;
          end loop;
       end if;
-      Index_End := Index_Start + 1;
+      Index_End := Index_Start;
       while Index_End < Text'Length and Text (Index_End) /=  ASCII.LF loop
          Index_End := Index_End + 1;
       end loop;
@@ -1334,7 +1273,7 @@ package body Work_On_Source is
             Parse_Node := Parse_Node.Next;
          end if;
       end loop;
-      return new String'("No Entity found by parser!");
+      return new String'("No Entity found by parser for: " & Entity_Name);
    end Get_Whole_Header;
 
 end Work_On_Source;
