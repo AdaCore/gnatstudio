@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -40,6 +40,8 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Case_Util;        use GNAT.Case_Util;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 
 with Language;              use Language;
@@ -52,7 +54,6 @@ with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
 with Process_Proxies;       use Process_Proxies;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
-with String_Utils;          use String_Utils;
 with Basic_Types;           use Basic_Types;
 with Odd_Intl;              use Odd_Intl;
 with GVD.Files;             use GVD.Files;
@@ -742,7 +743,7 @@ package body GVD.Explorer is
         (Tree,
          Parent        => Extension_Node,
          Sibling       => null,
-         Text          => Null_Array + Base_File_Name (File_Name),
+         Text          => Null_Array + Base_Name (File_Name),
          Spacing       => 5,
          Pixmap_Closed => Tree.Folder_Pixmap,
          Mask_Closed   => Tree.Folder_Mask,
@@ -792,7 +793,8 @@ package body GVD.Explorer is
       File_Name : String) return Gtk_Ctree_Node
    is
       use type Row_List.Glist;
-      Base_Name       : constant String := Base_File_Name (File_Name);
+      Base_Name       : constant String :=
+        GNAT.Directory_Operations.Base_Name (File_Name);
       Extension       : constant String := File_Extension (File_Name);
       Extension_Nodes : constant Row_List.Glist := Get_Row_List (Explorer);
       Extension_Node  : Gtk_Ctree_Node;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -25,6 +25,7 @@ with GNAT.Regpat;       use GNAT.Regpat;
 with GNAT.Expect;       use GNAT.Expect;
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gtk.Window;        use Gtk.Window;
 
@@ -1577,7 +1578,7 @@ package body Debugger.Gdb is
 
       declare
          Full_Cmd : constant String :=
-           Cmd.all & Base_File_Name (File) & ":" & Image (Line);
+           Cmd.all & Base_Name (File) & ":" & Image (Line);
          S        : constant String :=
            Send (Debugger, Full_Cmd, Mode => Actual_Mode);
 
@@ -2070,7 +2071,7 @@ package body Debugger.Gdb is
       declare
          S : constant String :=
            Send (Debugger, "info line "
-                   & Base_File_Name (File)
+                   & Base_Name (File)
                    & ':' & Image (Line),
                  Mode => Internal);
 
