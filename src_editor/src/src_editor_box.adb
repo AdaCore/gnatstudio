@@ -452,7 +452,7 @@ package body Src_Editor_Box is
          end if;
       end if;
 
-      Length := Get_Name (Entity)'Length;
+      Length := Get_Name (Entity).all'Length;
 
       if Dir_Name (Filename).all /= "" then
          Add_Navigation_Location (Editor);

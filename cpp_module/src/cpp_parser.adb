@@ -977,7 +977,7 @@ package body CPP_Parser is
    begin
       Find_All_Entities_In_File (Iter, In_File, Prefix => Name);
       while not At_End (Iter) loop
-         if Get_Name (Get (Iter)) = Name then
+         if Get_Name (Get (Iter)).all = Name then
             Count := Count + 1;
             Entity := Get (Iter);
             exit when Count >= 2;
@@ -2041,7 +2041,7 @@ package body CPP_Parser is
          Set_Cursor
            (Handler.SN_Table (LV),
             By_Key,
-            Get_Name (Entity) & Field_Sep,
+            Get_Name (Entity).all & Field_Sep,
             Exact_Match => False);
 
          loop
