@@ -47,9 +47,14 @@ package body Find_Utils is
    --  Return the index for the end of the line containing Pos
 
    procedure Register_Search_Function
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data              : Search_Module_Data)
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Data   : Search_Module_Data)
      renames Vsearch_Ext.Register_Search_Function;
+
+   function Search_Context_From_Module
+     (Id : access Glide_Kernel.Module_ID_Record'Class)
+      return Find_Utils.Search_Module_Data
+     renames Vsearch_Ext.Search_Context_From_Module;
 
    -----------------------
    -- Is_Word_Delimiter --
@@ -396,5 +401,15 @@ package body Find_Utils is
    begin
       Search_Reset (Kernel);
    end Reset_Search;
+
+   -----------------
+   -- Get_Options --
+   -----------------
+
+   function Get_Options (Context : access Root_Search_Context)
+      return Search_Options is
+   begin
+      return Context.Options;
+   end Get_Options;
 
 end Find_Utils;

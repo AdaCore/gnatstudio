@@ -120,6 +120,10 @@ package Find_Utils is
    --  Invalid_Context is raised if the user is in fact looking for a regular
    --  expression.
 
+   function Get_Options (Context : access Root_Search_Context)
+      return Search_Options;
+   --  Return the options currently set for the context
+
    procedure Free (Context : in out Root_Search_Context);
    --  Free the memory allocated for Context.all. It doesn't free Context
    --  itself.
@@ -230,6 +234,7 @@ package Find_Utils is
       Mask              : Search_Options_Mask;
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget;
+      Id                : Glide_Kernel.Module_Id;
    end record;
    --  If Extra_Information is not null, then it will be displayed every time
    --  this label is selected. It can be used for instance to ask for more
@@ -245,6 +250,10 @@ package Find_Utils is
    --  Mask indicates what options are relevant for that module. Options that
    --  are not set will be greyed out.
    --  If Supports_Replace if false, then the button will be greyed out.
+   --
+   --  Id can be left null. If not null, it will be used to set the default
+   --  search context when the search dialog is popped up (the first
+   --  search_module_data that matches the current module is used).
 
    No_Search : constant Search_Module_Data;
 
@@ -261,6 +270,12 @@ package Find_Utils is
    --  Raises the kernel signal Search_Reset_Signal. This is just a convenience
    --  callback function. Object is ignored, and can be anything.
 
+   function Search_Context_From_Module
+     (Id : access Glide_Kernel.Module_ID_Record'Class)
+      return Find_Utils.Search_Module_Data;
+   --  Return the first search context that matches Id, or No_Search if there
+   --  is none.
+
 private
 
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
@@ -274,6 +289,7 @@ private
       Label             => "",
       Mask              => 0,
       Factory           => null,
+      Id                => null,
       Extra_Information => null);
 
    type Root_Search_Context is tagged limited record
