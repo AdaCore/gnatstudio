@@ -157,6 +157,13 @@ package body VCS_View_API is
      return String_List.List;
    --  Return the list of files that are selected, according to Context.
 
+   procedure Process_Dirs
+     (Context    : Selection_Context_Access;
+      Recursive  : Boolean;
+      Update     : Boolean;
+      Get_Status : Boolean);
+   --  Perform VCS operations on directories contained in Context.
+
    -------------------------------
    -- Contextual menu callbacks --
    -------------------------------
@@ -222,6 +229,14 @@ package body VCS_View_API is
       Context : Selection_Context_Access);
 
    procedure On_Menu_Update_Dir
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Get_Status_Dir_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Dir_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
@@ -730,12 +745,29 @@ package body VCS_View_API is
             (On_Menu_Get_Status_Dir'Access),
             Selection_Context_Access (File_Name));
 
+         Gtk_New (Item, Label => -"Query status for directory recursively");
+         Append (Submenu, Item);
+         Context_Callback.Connect
+           (Item, "activate",
+            Context_Callback.To_Marshaller
+            (On_Menu_Get_Status_Dir_Recursive'Access),
+            Selection_Context_Access (File_Name));
+
          Gtk_New (Item, Label => -"Update directory");
          Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
             (On_Menu_Update_Dir'Access),
+            Selection_Context_Access (File_Name));
+
+
+         Gtk_New (Item, Label => -"Update directory recursively");
+         Append (Submenu, Item);
+         Context_Callback.Connect
+           (Item, "activate",
+            Context_Callback.To_Marshaller
+            (On_Menu_Update_Dir_Recursive'Access),
             Selection_Context_Access (File_Name));
       end if;
 
@@ -1529,6 +1561,99 @@ package body VCS_View_API is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status;
 
+   ------------------
+   -- Process_Dirs --
+   ------------------
+
+   procedure Process_Dirs
+     (Context    : Selection_Context_Access;
+      Recursive  : Boolean;
+      Update     : Boolean;
+      Get_Status : Boolean)
+   is
+      Files        : String_List.List;
+      File_Context : File_Selection_Context_Access;
+      Ref          : constant VCS_Access := Get_Current_Ref (Context);
+
+      procedure Add_Directory_Recursively;
+      --  Add Dir and all subdirectories in Dir to Files, and make Node point
+      --  to the next node.
+
+      procedure Add_Directory_Recursively is
+         use String_List_Utils.String_List;
+
+         Node : String_List.List_Node;
+         File : String (1 .. 1024);
+         Last : Natural;
+         D    : Dir_Type;
+      begin
+         Node := First (Files);
+
+         while Node /= Null_Node loop
+            begin
+               Open (D, Data (Node));
+
+               loop
+                  begin
+                     Read (D, File, Last);
+
+                     if Last = 0 then
+                        Close (D);
+                        exit;
+                     else
+                        if File (1 .. Last) /= "."
+                          and then File (1 .. Last) /= ".."
+                          and then GNAT.OS_Lib.Is_Directory
+                            (Data (Node) & File (1 .. Last))
+                        then
+                           Append (Files,
+                                   Data (Node) & File (1 .. Last)
+                                   & GNAT.OS_Lib.Directory_Separator);
+                        end if;
+                     end if;
+
+                  exception
+                     when Directory_Error =>
+                        Close (D);
+                        exit;
+                  end;
+               end loop;
+
+            exception
+               when Directory_Error =>
+                  null;
+            end;
+
+            Node := Next (Node);
+         end loop;
+      end Add_Directory_Recursively;
+
+   begin
+      Open_Explorer (Get_Kernel (Context), Context);
+
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Directory_Information (File_Context) then
+            String_List.Append (Files, Directory_Information (File_Context));
+
+            if Recursive then
+               Add_Directory_Recursively;
+            end if;
+
+            if Update then
+               VCS.Update (Ref, Files);
+            end if;
+
+            if Get_Status then
+               VCS.Get_Status (Ref, Files);
+            end if;
+
+            String_List.Free (Files);
+         end if;
+      end if;
+   end Process_Dirs;
+
    ------------------------
    -- On_Menu_Update_Dir --
    ------------------------
@@ -1539,27 +1664,33 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Files        : String_List.List;
-      File_Context : File_Selection_Context_Access;
-      Ref          : constant VCS_Access := Get_Current_Ref (Context);
-
    begin
-      Open_Explorer (Get_Kernel (Context), Context);
-
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Directory_Information (File_Context) then
-            String_List.Append (Files, Directory_Information (File_Context));
-            Update (Ref, Files);
-            Get_Status (Ref, Files);
-         end if;
-      end if;
+      Process_Dirs
+        (Context, Recursive => False, Update => True, Get_Status => True);
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Dir;
+
+   ----------------------------------
+   -- On_Menu_Update_Dir_Recursive --
+   ----------------------------------
+
+   procedure On_Menu_Update_Dir_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Process_Dirs
+        (Context, Recursive => True, Update => True, Get_Status => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Update_Dir_Recursive;
 
    ----------------------------
    -- On_Menu_Get_Status_Dir --
@@ -1571,26 +1702,33 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Files        : String_List.List;
-      File_Context : File_Selection_Context_Access;
    begin
-      Open_Explorer (Get_Kernel (Context), Context);
-
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Directory_Information (File_Context) then
-            String_List.Append (Files, Directory_Information (File_Context));
-            Get_Status (Get_Current_Ref (Context), Files);
-         end if;
-      end if;
-
-      String_List.Free (Files);
+      Process_Dirs
+        (Context, Recursive => False, Update => False, Get_Status => True);
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Dir;
+
+   --------------------------------------
+   -- On_Menu_Get_Status_Dir_Recursive --
+   --------------------------------------
+
+   procedure On_Menu_Get_Status_Dir_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Process_Dirs
+        (Context, Recursive => True, Update => False, Get_Status => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Get_Status_Dir_Recursive;
 
    --------------------
    -- Update_Project --
