@@ -1,5 +1,9 @@
 Known Problems fixed in GPS 1.2.0
 
+- Problem:    When switching from an editor to another, the editors scroll
+              back to the place where their cursor is set, not to the point
+              that was viewed the most recently.
+
 - Problem:    When the debugger preference "show lines with code" is set,
               unsetting a breakpoint will leave a blue dot.
 
