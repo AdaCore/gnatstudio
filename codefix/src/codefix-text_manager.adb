@@ -22,6 +22,8 @@ with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.Case_Util;        use GNAT.Case_Util;
+
 with Basic_Types;           use Basic_Types;
 with String_Utils;          use String_Utils;
 
@@ -35,8 +37,8 @@ package body Codefix.Text_Manager is
       Str_1_Lower : String := Str_1;
       Str_2_Lower : String := Str_2;
    begin
-      Lower_Case (Str_1_Lower);
-      Lower_Case (Str_2_Lower);
+      To_Lower (Str_1_Lower);
+      To_Lower (Str_2_Lower);
 
       if Str_1'Length < Str_2'Length then
          return Str_1_Lower = Str_2_Lower
@@ -56,6 +58,18 @@ package body Codefix.Text_Manager is
    begin
       return Str = Blank_Str;
    end Is_Blank;
+
+   -------------------
+   -- Is_In_Comment --
+   -------------------
+
+   --  ??? Check if -- are in a string
+   function Is_In_Comment (Str : String; J : Natural) return Boolean is
+      Index_Found : Natural := Str'First;
+   begin
+      Skip_To_String (Str, Index_Found, "--");
+      return J > Index_Found;
+   end Is_In_Comment;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -379,11 +393,12 @@ package body Codefix.Text_Manager is
    -------------------
 
    function Search_String
-     (This         : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class;
-      Searched     : String;
-      Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True)
+     (This          : Text_Navigator_Abstr'Class;
+      Cursor        : File_Cursor'Class;
+      Searched      : String;
+      Step          : Step_Way := Normal_Step;
+      Skip_Strings  : Boolean := True;
+      Skip_Comments : Boolean := True)
      return File_Cursor'Class is
    begin
       return Search_String
@@ -391,7 +406,8 @@ package body Codefix.Text_Manager is
          File_Cursor (Cursor),
          Searched,
          Step,
-         Jump_String);
+         Skip_Strings,
+         Skip_Comments);
    end Search_String;
 
    function Search_Unit
@@ -543,13 +559,61 @@ package body Codefix.Text_Manager is
       --  Change the string in order to make comparaisons between lists of
       --  parameters.
 
-      procedure Seeker (Stop : Source_Location);
+      procedure Seeker (Stop : Source_Location; Is_First : Boolean := False);
       --  Recursivly scan a token list in order to found the declaration what
       --  correpond with a body. Stop is the beginning of the current block.
 
-      Current_Info : Construct_Access;
-      Found        : Boolean := False;
-      Result       : Construct_Access;
+      type Scope_Node;
+
+      type Ptr_Scope_Node is access all Scope_Node;
+
+      procedure Free (This : in out Ptr_Scope_Node);
+
+      package Scope_Lists is new Generic_List (Ptr_Scope_Node);
+      use Scope_Lists;
+
+      type Scope_Node is record
+         Scope_List : Scope_Lists.List;
+         Result     : Construct_Access;
+         Name       : Dynamic_String;
+      end record;
+
+      function Get_Node (Container : Ptr_Scope_Node; Name : String)
+        return Ptr_Scope_Node;
+
+      procedure Add_Node (Container : Ptr_Scope_Node; Object : Ptr_Scope_Node);
+
+      function Get_Node (Container : Ptr_Scope_Node; Name : String)
+        return Ptr_Scope_Node is
+         Current_Node : Scope_Lists.List_Node := First (Container.Scope_List);
+      begin
+         while Current_Node /= Scope_Lists.Null_Node loop
+            if Data (Current_Node).Name.all = Name then
+               return Data (Current_Node);
+            end if;
+
+            Current_Node := Next (Current_Node);
+         end loop;
+
+         raise Codefix_Panic;
+      end Get_Node;
+
+      procedure Add_Node
+        (Container : Ptr_Scope_Node; Object : Ptr_Scope_Node) is
+      begin
+         Append (Container.Scope_List, Object);
+      end Add_Node;
+
+      procedure Free (This : in out Ptr_Scope_Node) is
+         pragma Unreferenced (This);
+      begin
+         null;
+      end Free;
+
+      Current_Info  : Construct_Access;
+      Found         : Boolean := False;
+      Result        : Construct_Access;
+      Current_Scope : Ptr_Scope_Node;
 
       ---------------
       -- Normalize --
@@ -568,10 +632,40 @@ package body Codefix.Text_Manager is
       -- Seeker --
       ------------
 
-      procedure Seeker (Stop : Source_Location) is
+      --  Regler les pbs de memory leaks lies a des paquetages
+      --  intra-procedures.
+
+      procedure Seeker (Stop : Source_Location; Is_First : Boolean := False) is
          Current_Result : Construct_Access;
          New_Sloc       : Source_Location;
+         This_Scope     : Ptr_Scope_Node := null;
       begin
+
+         if Current_Info.Is_Declaration
+           and then (Current_Info.Category = Cat_Package
+                     or else Current_Info.Category = Cat_Protected)
+         then
+            Current_Scope := Get_Node
+              (Current_Scope, Current_Info.Name.all);
+            This_Scope := Current_Scope; --  Vraiment utile ?
+            Current_Result := Current_Scope.Result;
+            Result := Current_Result;
+         end if;
+
+         if not Current_Info.Is_Declaration
+           and then (Current_Info.Category = Cat_Package
+                     or else Current_Info.Category = Cat_Protected)
+         then
+            This_Scope := new Scope_Node;
+            Assign (This_Scope.Name, Current_Info.Name.all);
+            Add_Node (Current_Scope, This_Scope);
+            Current_Scope := This_Scope;
+         end if;
+
+         if not Is_First then
+            Current_Info := Current_Info.Prev;
+         end if;
+
          while Current_Info /= null loop
 
             if Current_Info.Category not in Construct_Category then
@@ -586,22 +680,33 @@ package body Codefix.Text_Manager is
 
                --  Does this body have the rigth profile ?
                if not Current_Info.Is_Declaration and then
-                 Current_Info.Name.all = Spec.Name.all and then
-                 Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
+                 Current_Info.Name.all = Spec.Name.all
+                 and then Normalize (Current_Info.Profile) =
+                   Normalize (Spec.Profile)
                then
                   Result := Current_Info;
+                  if This_Scope /= null then
+                     This_Scope.Result := Result; -- ou current result ???
+                  end if;
                end if;
 
-
-               --  Is it the beginnig of a scope ?
-               if not Current_Info.Is_Declaration and then
-                 Current_Info.Category in Enclosing_Entity_Category
+               --  Is it the beginning of a scope ?
+               if (not Current_Info.Is_Declaration and then
+                     Current_Info.Category in Enclosing_Entity_Category)
+                 or else Current_Info.Category = Cat_Protected
+                 or else Current_Info.Category = Cat_Package
                then
+
                   Current_Result := Result;
                   New_Sloc := Current_Info.Sloc_Start;
-                  Current_Info := Current_Info.Prev;
+
                   Current_Result := Result;
+
                   Seeker (New_Sloc);
+
+                  if This_Scope /= null then
+                     Current_Scope := This_Scope;
+                  end if;
 
                   if Found then
                      return;
@@ -609,11 +714,11 @@ package body Codefix.Text_Manager is
                      Result := Current_Result;
                   end if;
 
-                  --  Is this spec the rigth one ?
+                  --  Is this spec the right one ?
                elsif Current_Info.Is_Declaration and then
-               Current_Info.Name.all = Spec.Name.all and then
-               Current_Info.Sloc_Start = Spec.Sloc_Start and then
-               Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
+                 Current_Info.Name.all = Spec.Name.all and then
+                 Current_Info.Sloc_Start = Spec.Sloc_Start and then
+                 Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
                then
                   Found := True;
                   return;
@@ -632,7 +737,8 @@ package body Codefix.Text_Manager is
 
    begin
       Current_Info := Current_Text.Tokens_List.Last;
-      Seeker (Current_Info.Sloc_Start);
+      Current_Scope := new Scope_Node;
+      Seeker (Current_Info.Sloc_Start, True);
       return Result.all;
    end Search_Body;
 
@@ -661,11 +767,12 @@ package body Codefix.Text_Manager is
    -------------------
 
    function Search_String
-     (This         : Text_Interface'Class;
-      Cursor       : Text_Cursor'Class;
-      Searched     : String;
-      Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True)
+     (This          : Text_Interface'Class;
+      Cursor        : Text_Cursor'Class;
+      Searched      : String;
+      Step          : Step_Way := Normal_Step;
+      Skip_Strings  : Boolean := True;
+      Skip_Comments : Boolean := True)
      return File_Cursor'Class is
 
       Last, Increment    : Integer;
@@ -697,7 +804,8 @@ package body Codefix.Text_Manager is
                                    New_Cursor,
                                    Searched,
                                    Step,
-                                   Jump_String));
+                                   Skip_Strings,
+                                   Skip_Comments));
 
          if Result /= Null_File_Cursor then
             Result := Clone (Result);
@@ -955,13 +1063,14 @@ package body Codefix.Text_Manager is
    -------------------
 
    function Search_String
-     (This     : Extract_Line;
-      Cursor   : File_Cursor'Class;
-      Searched : String;
-      Step     : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True) return File_Cursor'Class
+     (This          : Extract_Line;
+      Cursor        : File_Cursor'Class;
+      Searched      : String;
+      Step          : Step_Way := Normal_Step;
+      Skip_Strings  : Boolean := True;
+      Skip_Comments : Boolean := True) return File_Cursor'Class
    is
-      pragma Unreferenced (Jump_String);
+      pragma Unreferenced (Skip_Strings);
 
       Result : File_Cursor := File_Cursor (Cursor);
 
@@ -973,7 +1082,10 @@ package body Codefix.Text_Manager is
       case Step is
          when Normal_Step =>
             for J in Result.Col .. This.Content'Last - Searched'Last + 1 loop
-               if This.Content (J .. J + Searched'Last - 1) = Searched then
+               if This.Content (J .. J + Searched'Last - 1) = Searched
+                 and then (not Skip_Comments
+                           or else not Is_In_Comment (This.Content.all, J))
+               then
                   Result.Col := J;
                   return Result;
                end if;
@@ -983,7 +1095,10 @@ package body Codefix.Text_Manager is
             for J in reverse This.Content'First ..
               Result.Col - Searched'Last + 1
             loop
-               if This.Content (J .. J + Searched'Last - 1) = Searched then
+               if This.Content (J .. J + Searched'Last - 1) = Searched
+                 and then (not Skip_Comments
+                           or else not Is_In_Comment (This.Content.all, J))
+               then
                   Result.Col := J;
                   return Result;
                end if;
@@ -2673,6 +2788,7 @@ package body Codefix.Text_Manager is
          end case;
       end Line_1_Created;
 
+      --  begin of Merge
 
    begin
       Line_1 := Get_First_Line (Extract_1);
