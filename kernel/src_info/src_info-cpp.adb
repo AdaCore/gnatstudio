@@ -4684,15 +4684,17 @@ package body Src_Info.CPP is
          end;
       else
          declare
-            DB_Dir : constant String := Get_DB_Dir
-              (Get_Project_From_File (Handler.Root_Project, Full_Included));
+            Prj_For_IU : constant Prj.Project_Id :=
+               Get_Project_From_File (Handler.Root_Project, Full_Included);
          begin
-            Insert_Dependency
-              (Handler           => Handler,
-               DB_Dir            => DB_Dir,
-               File              => File,
-               List              => List,
-               Referred_Filename => Full_Included);
+            if Prj_For_IU /= Prj.No_Project then
+               Insert_Dependency
+                 (Handler           => Handler,
+                  DB_Dir            => Get_DB_Dir (Prj_For_IU),
+                  File              => File,
+                  List              => List,
+                  Referred_Filename => Full_Included);
+            end if;
          end;
       end if;
    end Sym_IU_Handler;
@@ -4797,7 +4799,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.DB_Dirs, Sym.DBI),
+              (Handler.DB_Dirs, Inst_Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4809,7 +4811,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.DB_Dirs, Sym.DBI),
+              (Handler.DB_Dirs, Inst_Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
