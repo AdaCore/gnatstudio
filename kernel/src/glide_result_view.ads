@@ -25,7 +25,6 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Box;                  use Gtk.Box;
 
 with Glide_Kernel;             use Glide_Kernel;
-with String_List_Utils;
 
 package Glide_Result_View is
 
@@ -83,8 +82,6 @@ private
 
       Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
-
-      Unopened_Files : String_List_Utils.String_List.List;
    end record;
 
 end Glide_Result_View;
