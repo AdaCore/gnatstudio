@@ -671,6 +671,7 @@ package body Ada_Analyzer is
          --  Build next entry of Constructs
 
          if Value.Token /= Tok_Record
+           and then Value.Token /= Tok_Colon
            and then Constructs /= null
            and then
              (Value.Token /= Tok_Case or else Top (Stack).Token /= Tok_Record)
@@ -1145,7 +1146,7 @@ package body Ada_Analyzer is
             end if;
 
          elsif Reserved = Tok_Exception then
-            if Top_Token.Token /= Tok_Identifier then
+            if Top_Token.Token /= Tok_Colon then
                Num_Spaces := Num_Spaces - Indent_Level;
                Do_Indent (Prec, Num_Spaces);
                Num_Spaces := Num_Spaces + 2 * Indent_Level;
@@ -1181,7 +1182,6 @@ package body Ada_Analyzer is
          Char          : Character;
          Padding       : Integer := 0;
          Top_Token     : Token_Stack.Generic_Type_Access;
-         Previous_Line : constant Natural := Line_Count;
 
          procedure Close_Parenthesis;
          --  Current buffer contents is a closed parenthesis,
@@ -1317,6 +1317,8 @@ package body Ada_Analyzer is
 
             exit when P = Buffer_Length or else Is_Word_Char (Buffer (P));
 
+            Top_Token := Top (Tokens);
+
             case Buffer (P) is
                when '(' =>
                   Prev_Token := Tok_Left_Paren;
@@ -1342,8 +1344,6 @@ package body Ada_Analyzer is
                           - New_Buffer.Current.Len;
                      end if;
                   end if;
-
-                  Top_Token := Top (Tokens);
 
                   if Num_Parens = 0
                     and then Top_Token.Token in Token_Class_Declk
@@ -1378,8 +1378,6 @@ package body Ada_Analyzer is
 
                         Close_Parenthesis;
                      end if;
-
-                     Top_Token := Top (Tokens);
 
                      if Top_Token.Token in Token_Class_Declk
                        and then Top_Token.Ident_Len = 0
@@ -1464,23 +1462,19 @@ package body Ada_Analyzer is
                            Prev_Token := Tok_Slash;
                         else
                            Prev_Token := Tok_Colon;
-                           Top_Token  := Top (Tokens);
 
-                           if Top_Token.Declaration then
-                              --  This is a variable declaration
+                           if Top_Token.Declaration
+                             and then Top_Token.Token = Tok_Identifier
+                           then
+                              Pop (Tokens);
 
                               declare
                                  Val : Extended_Token;
                               begin
-                                 Val.Token       := Tok_Identifier;
-                                 Val.Sloc.Line   := Previous_Line;
-                                 Val.Sloc.Column :=
-                                   Token_Prec - Line_Start (Token_Prec) + 1;
-                                 Val.Sloc.Index  := Token_Prec;
-                                 Val.Identifier (1 .. Str_Len) :=
-                                   Str (1 .. Str_Len);
-                                 Val.Ident_Len   := Str_Len;
-                                 Val.Sloc_Name   := Val.Sloc;
+                                 --  Create a dummy token to separate variables
+                                 --  declaration from their type.
+
+                                 Val.Token := Tok_Colon;
                                  Push (Tokens, Val);
                               end;
                            end if;
@@ -1601,12 +1595,13 @@ package body Ada_Analyzer is
                   end if;
 
                when ',' | ';' =>
-                  Top_Token := Top (Tokens);
-
                   if Buffer (P) = ';' then
                      Prev_Token := Tok_Semicolon;
 
-                     if Num_Parens = 0 then
+                     if Top_Token.Token = Tok_Colon then
+                        Pop (Tokens);
+
+                     elsif Num_Parens = 0 then
                         if Subprogram_Decl
                           or else Top_Token.Token = Tok_Subtype
                           or else Top_Token.Token = Tok_For
@@ -1635,7 +1630,12 @@ package body Ada_Analyzer is
                   else
                      Prev_Token := Tok_Comma;
 
-                     if Top_Token.Token = Tok_With
+                     if Top_Token.Declaration
+                       and then Top_Token.Token = Tok_Identifier
+                     then
+                        Pop (Tokens);
+
+                     elsif Top_Token.Token = Tok_With
                        or else Top_Token.Token = Tok_Use
                      then
                         declare
@@ -1771,6 +1771,24 @@ package body Ada_Analyzer is
                Top_Token.Sloc_Name.Line   := Line_Count;
                Top_Token.Sloc_Name.Column := Prec - Start_Of_Line + 1;
                Top_Token.Sloc_Name.Index  := Prec;
+            end if;
+
+            if Top_Token.Declaration then
+               --  This is a variable declaration
+
+               declare
+                  Val : Extended_Token;
+               begin
+                  Val.Token       := Tok_Identifier;
+                  Val.Sloc.Line   := Line_Count;
+                  Val.Sloc.Column := Prec - Start_Of_Line + 1;
+                  Val.Sloc.Index  := Prec;
+                  Val.Identifier (1 .. Str_Len) := Str (1 .. Str_Len);
+                  Val.Ident_Len   := Str_Len;
+                  Val.Sloc_Name   := Val.Sloc;
+                  Val.Declaration := True;
+                  Push (Tokens, Val);
+               end;
             end if;
 
             Casing := Ident_Casing;
