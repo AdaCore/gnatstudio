@@ -123,6 +123,9 @@ package Codefix.Text_Manager is
    type Text_Interface is abstract tagged private;
    type Ptr_Text is access all Text_Interface'Class;
 
+   procedure Undo (This : in out Text_Interface) is abstract;
+   --  Undo the last action for the Text_Interface
+
    function Get_New_Mark
      (Current_Text : Text_Interface;
       Cursor       : Text_Cursor'Class) return Mark_Abstr'Class is abstract;
@@ -425,6 +428,9 @@ package Codefix.Text_Manager is
    --  Return a cursor positioned on the first non-blank character before the
    --  position specified by the cursor
 
+   procedure Undo
+     (This : Text_Navigator_Abstr'Class; File_Name : String);
+   --  Undo the last action from the File_Name.
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -574,6 +580,9 @@ package Codefix.Text_Manager is
    --  Merge the two lines in result. See declartion of Generic_Merge in
    --  Codefix.Merge_Utils for more details.
 
+   function Get_Number_Actions (This : Extract_Line) return Natural;
+   --  Return the number of actions that will be needed to commit the lines.
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
@@ -582,6 +591,11 @@ package Codefix.Text_Manager is
    --  An extract is a temporary object that contains a part of the source
    --  code, modified or not. The modifications made in an extract do not have
    --  any influence in the source code before the call of Update function.
+
+   type Ptr_Extract is access all Extract'Class;
+
+   procedure Free (This : in out Ptr_Extract);
+   --  Free the pointer and the memory associated to it.
 
    procedure Remove
      (This, Prev : Ptr_Extract_Line; Container : in out Extract);
@@ -853,6 +867,9 @@ package Codefix.Text_Manager is
    --  Returns the number of actions that have been made in the extract
    --  during his commit.
 
+   procedure Undo (This : Extract; Current_Text : Text_Navigator_Abstr'Class);
+   --  Undo each changes that have been made into the extract.
+
    ----------------------------------------------------------------------------
    --  type Text_Command
    ----------------------------------------------------------------------------
@@ -919,7 +936,7 @@ package Codefix.Text_Manager is
       Error_Cb     : Execute_Corrupted := null);
    --  Same as the previous one, but when problems happend no exception is
    --  raised but Error_Cb is called. This function also
-   --  updates the current text, in order to be conformant with user's changes.
+   --  updates the current text, in order to be conformant with user's changes,
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command.
@@ -1142,10 +1159,6 @@ private
    type Extract_Line is record
       Context         : Merge_Info := Original_Unit;
 
-      Number_Actions  : Natural := 0;
-      --  This is the number of actions that have been made during the commit
-      --  of the line.
-
       Cursor          : File_Cursor;
       --  This cursor specify the position where the line begins.
 
@@ -1154,9 +1167,6 @@ private
       Next            : Ptr_Extract_Line;
       Coloration      : Boolean := False;
    end record;
-
-   procedure Free is
-      new Ada.Unchecked_Deallocation (Extract_Line, Ptr_Extract_Line);
 
    procedure Get
      (This        : Text_Interface'Class;
@@ -1168,6 +1178,9 @@ private
      (This        : Text_Interface'Class;
       Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Extract_Line, Ptr_Extract_Line);
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -1193,7 +1206,7 @@ private
    ----------------------------------------------------------------------------
 
    type Text_Command is abstract tagged record
-      Caption : Dynamic_String;
+      Caption      : Dynamic_String;
    end record;
 
    type Remove_Word_Cmd is new Text_Command with record
