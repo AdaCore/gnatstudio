@@ -334,6 +334,12 @@ package body Project_Properties is
                   Project      => Project,
                   New_Name     => New_Name,
                   New_Path     => New_Path);
+
+               --  Since we actually changed the project hierarchy (all modules
+               --  that stored the name of the projects are now obsolete), we
+               --  act as if a new project had been loaded.
+               Project_Changed (Kernel);
+
                Changed := True;
             end if;
 
