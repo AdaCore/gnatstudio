@@ -1219,6 +1219,7 @@ package body Gtkada.MDI is
 
       C.Initial := null;
       Free (C.Title);
+      Free (C.Short_Title);
    end Destroy_Child;
 
    ---------------------------
@@ -2014,6 +2015,7 @@ package body Gtkada.MDI is
       else
          C.Title := new String' (" ");
       end if;
+      C.Short_Title := new String' (C.Title.all);
 
       --  We need to show the widget before inserting it in a notebook,
       --  otherwise the notebook page will not be made visible.
@@ -2065,27 +2067,48 @@ package body Gtkada.MDI is
       return Child.Title.all;
    end Get_Title;
 
+   ---------------------
+   -- Get_Short_Title --
+   ---------------------
+
+   function Get_Short_Title (Child : access MDI_Child_Record) return String is
+   begin
+      return Child.Short_Title.all;
+   end Get_Short_Title;
+
    ---------------
    -- Set_Title --
    ---------------
 
-   procedure Set_Title (Child : access MDI_Child_Record; Title : String) is
+   procedure Set_Title
+     (Child       : access MDI_Child_Record;
+      Title       : String;
+      Short_Title : String := "")
+   is
       Label : Gtk_Accel_Label;
    begin
       Free (Child.Title);
+      Free (Child.Short_Title);
       Child.Title := new String' (Title);
+      if Short_Title /= "" then
+         Child.Short_Title := new String' (Short_Title);
+      else
+         Child.Short_Title := new String' (Title);
+      end if;
 
       if Child.Initial.all in Gtk_Window_Record'Class then
          Set_Title (Gtk_Window (Child.Initial), Title);
       end if;
 
       if Child.State = Docked then
-         Set_Tab_Label_Text (Child.MDI.Docks (Child.Dock), Child, Title);
+         Set_Tab_Label_Text
+           (Child.MDI.Docks (Child.Dock), Child, Child.Short_Title.all);
 
       elsif Child.State = Normal
         and then Child.MDI.Docks (None) /= null
       then
-         Set_Tab_Label_Text (Child.MDI.Docks (None), Child, Title);
+         Set_Tab_Label_Text
+           (Child.MDI.Docks (None), Child, Child.Short_Title.all);
       end if;
 
       --  Update the menu, if it exists
@@ -2094,7 +2117,7 @@ package body Gtkada.MDI is
          --  Since we don't want to use Gtk.Type_Conversion in this package,
          --  the simplest is to destroy and recreate the label associated
          --  with the menu_item.
-         Gtk_New (Label, Title);
+         Gtk_New (Label, Child.Short_Title.all);
          Set_Alignment (Label, 0.0, 0.5);
          Set_Accel_Widget (Label, Child.Menu_Item);
          Remove (Child.Menu_Item, Get_Child (Child.Menu_Item));
@@ -2688,7 +2711,7 @@ package body Gtkada.MDI is
       end if;
 
       Create_Notebook (MDI, Side);
-      Gtk_New (Label, Child.Title.all);
+      Gtk_New (Label, Child.Short_Title.all);
       Append_Page (MDI.Docks (Side), Child, Label);
       Unref (Child);
 
@@ -3095,7 +3118,7 @@ package body Gtkada.MDI is
       Tmp : Widget_List.Glist;
    begin
       if Child.Menu_Item = null
-        and then Child.Title.all /= ""
+        and then Child.Short_Title.all /= ""
       then
 
          --  Find the group to which the radio menu items should belong. We
@@ -3114,7 +3137,7 @@ package body Gtkada.MDI is
             Tmp := Next (Tmp);
          end loop;
 
-         Gtk_New (Child.Menu_Item, G, Child.Title.all);
+         Gtk_New (Child.Menu_Item, G, Child.Short_Title.all);
          Append (Child.MDI.Menu, Child.Menu_Item);
          Set_Active
            (Child.Menu_Item, MDI_Child (Child) = Child.MDI.Focus_Child);
@@ -3425,7 +3448,10 @@ package body Gtkada.MDI is
                         Height := Guint'Value (N.Value.all);
 
                      elsif N.Tag.all = "Title" then
-                        Set_Title (Child, N.Value.all);
+                        Set_Title (Child, N.Value.all, Child.Short_Title.all);
+
+                     elsif N.Tag.all = "Short_Title" then
+                        Set_Title (Child, Child.Title.all, N.Value.all);
 
                      elsif N.Tag.all = "State" then
                         State := State_Type'Value (N.Value.all);
@@ -3542,6 +3568,7 @@ package body Gtkada.MDI is
                Add ("Dock", Dock_Side'Image (Child.Dock));
                Add ("State", State_Type'Image (Child.State));
                Add ("Title", Child.Title.all);
+               Add ("Short_Title", Child.Short_Title.all);
                Add ("Height", Guint'Image (Get_Allocation_Height (Child)));
                Add ("Width", Guint'Image (Get_Allocation_Width (Child)));
                Add ("Y", Gint'Image (Child.Y));

@@ -135,8 +135,14 @@ package Gtkada.MDI is
    --  This first checks through a delete_event callback whether the child
    --  accepts to be closed.
 
-   procedure Set_Title (Child : access MDI_Child_Record; Title : String);
-   --  Set the title for a child.
+   procedure Set_Title
+     (Child : access MDI_Child_Record;
+      Title : String;
+      Short_Title : String := "");
+   --  Set the title for a child. Title is the title put in titlebar of
+   --  the children, whereas Short_Title is the name of the notebook tab when
+   --  children are maximized. By default, it is the same as Title.
+   --
    --  If you have put a Gtk_Window in the MDI, then the default title is the
    --  same as for the Gtk_Window. Likewise, if you modify the title with this
    --  subprogram, it changes the title of the Gtk_Window.
@@ -146,6 +152,9 @@ package Gtkada.MDI is
 
    function Get_Title (Child : access MDI_Child_Record) return String;
    --  Return the title for a specific child
+
+   function Get_Short_Title (Child : access MDI_Child_Record) return String;
+   --  Return the name of the notebook tab used when children are maximized.
 
    procedure Raise_Child (Child : access MDI_Child_Record'Class);
    --  Put Child in the foreground.
@@ -428,6 +437,7 @@ private
       State : State_Type := Normal;
 
       Title : GNAT.OS_Lib.String_Access;
+      Short_Title : GNAT.OS_Lib.String_Access;
       --  Title of the item, as it appears in the title bar
 
       Dock : Dock_Side := None;
