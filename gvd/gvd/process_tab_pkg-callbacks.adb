@@ -169,7 +169,7 @@ package body Process_Tab_Pkg.Callbacks is
       end if;
    end On_Debugger_Text_Insert_Text;
 
-  ----------------------------------
+   ----------------------------------
    -- On_Debugger_Text_Delete_Text --
    ----------------------------------
 
@@ -202,15 +202,15 @@ package body Process_Tab_Pkg.Callbacks is
       use type Gdk.Types.Gdk_Key_Type;
 
    begin
-      if Get_Key_Val (Arg1) = Gdk_Up
-        or else Get_Key_Val (Arg1) = Gdk_Down
+      if Get_Key_Val (Arg1) = GDK_Up
+        or else Get_Key_Val (Arg1) = GDK_Down
       then
          Delete_Text
            (Top.Debugger_Text,
             Gint (Top.Edit_Pos),
             Gint (Get_Length (Top.Debugger_Text)));
          begin
-            if Get_Key_Val (Arg1) = Gdk_Up then
+            if Get_Key_Val (Arg1) = GDK_Up then
                Move_To_Previous (Top.Command_History);
             else
                Move_To_Next (Top.Command_History);
