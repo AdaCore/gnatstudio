@@ -35,7 +35,6 @@ with GVD.Source_Editors;  use GVD.Source_Editors;
 with GVD.Types;           use GVD.Types;
 with Odd_Intl;            use Odd_Intl;
 
-with Ada.Text_IO;         use Ada.Text_IO;
 with Process_Proxies;     use Process_Proxies;
 with GVD.Process;         use GVD.Process;
 with Debugger;            use Debugger;

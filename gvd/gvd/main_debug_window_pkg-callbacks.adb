@@ -35,7 +35,6 @@ with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
 with Breakpoints_Pkg;     use Breakpoints_Pkg;
 with GVD.Process;         use GVD.Process;
-with Ada.Text_IO;         use Ada.Text_IO;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Display_Items;       use Display_Items;
 with Gtkada.Canvas;       use Gtkada.Canvas;

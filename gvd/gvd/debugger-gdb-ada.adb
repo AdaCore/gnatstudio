@@ -30,8 +30,6 @@ with Items.Arrays;  use Items.Arrays;
 with Items.Records; use Items.Records;
 with Items.Classes; use Items.Classes;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Debugger.Gdb.Ada is
 
    use Language;

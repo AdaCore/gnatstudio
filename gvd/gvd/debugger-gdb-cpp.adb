@@ -28,7 +28,6 @@ with Items.Arrays;   use Items.Arrays;
 with Items.Records;  use Items.Records;
 with Items.Classes;  use Items.Classes;
 
-with Ada.Text_IO;    use Ada.Text_IO;
 with Ada.Tags;       use Ada.Tags;
 with Debugger.Gdb.C; use Debugger.Gdb.C;
 

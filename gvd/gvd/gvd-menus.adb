@@ -37,7 +37,6 @@ with Debugger;            use Debugger;
 with GVD.Dialogs;         use GVD.Dialogs;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
-with Ada.Text_IO;         use Ada.Text_IO;
 with Process_Proxies;     use Process_Proxies;
 with Debugger;            use Debugger;
 

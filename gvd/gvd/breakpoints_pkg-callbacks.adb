@@ -23,7 +23,6 @@ with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 with GVD.Types;               use GVD.Types;
 with Gtkada.Types;            use Gtkada.Types;
 with Gtk.Arguments;           use Gtk.Arguments;
-with Ada.Text_IO;             use Ada.Text_IO;
 with GVD.Process;             use GVD.Process;
 with Debugger;                use Debugger;
 with Odd_Intl;                use Odd_Intl;

@@ -26,8 +26,6 @@ with Items.Simples; use Items.Simples;
 with Items.Arrays;  use Items.Arrays;
 with Items.Records; use Items.Records;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Debugger.Gdb.C is
 
    use Language;

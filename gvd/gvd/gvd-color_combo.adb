@@ -39,7 +39,6 @@ pragma Warnings (Off, Gtk.Frame);
 pragma Warnings (Off, Gtk.Button);
 
 with Gdk.Window;          use Gdk.Window;
-with Ada.Text_IO;         use Ada.Text_IO;
 
 package body GVD.Color_Combo is
 

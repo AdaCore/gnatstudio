@@ -42,7 +42,6 @@ with GVD.Types;        use GVD.Types;
 with Odd_Intl;         use Odd_Intl;
 
 with GNAT.Regpat;      use GNAT.Regpat;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body GVD.Asm_Editors is
 

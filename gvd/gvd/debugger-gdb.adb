@@ -54,8 +54,6 @@ with Items.Classes;     use Items.Classes;
 
 with Unchecked_Conversion;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Debugger.Gdb is
 
    use String_History;
