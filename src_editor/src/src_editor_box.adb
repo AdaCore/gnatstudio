@@ -980,6 +980,10 @@ package body Src_Editor_Box is
       Delete (Box.Source_View);
       Unref (Box.Source_Buffer);
 
+      --  Remove the idle handler if it was registered
+      if Box.Check_Timestamp_Registered then
+         Idle_Remove (Box.Check_Timestamp_Id);
+      end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1283,6 +1287,7 @@ package body Src_Editor_Box is
    function Check_Timestamp_Idle (Box : GObject) return Boolean is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
+      B.Check_Timestamp_Registered := False;
       if B.Timestamp_Mode = Check_At_Focus then
          B.Timestamp_Mode := Checking;
 
@@ -1296,8 +1301,15 @@ package body Src_Editor_Box is
 
          B.Timestamp_Mode := Check_At_Focus;
       end if;
-
+      
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+
+         return False;
    end Check_Timestamp_Idle;
 
    --------------
@@ -1305,17 +1317,18 @@ package body Src_Editor_Box is
    --------------
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean is
-      Id        : Idle_Handler_Id;
-      pragma Unreferenced (Id);
-
-      B         : constant Source_Editor_Box := Source_Editor_Box (Box);
+      B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       --  We must do the check in an idle callback: otherwise, when the dialog
-      --  is pop up on the screen, and since it is modal, then button release
-      --  event is never sent to the editor, and there is a drag selection
-      --  taking place.
-
-      Id := Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
+      --  is popped up on the screen, and since it is modal, the button
+      --  release event is never sent to the editor, and there is a drag
+      --  selection taking place.
+      
+      if not B.Check_Timestamp_Registered then
+         B.Check_Timestamp_Registered := True;
+         B.Check_Timestamp_Id := 
+           Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
+      end if;
 
       --  Connect the Undo/Redo buttons to the buffer.
       if B.Writable then
