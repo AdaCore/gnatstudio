@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat;  use GNAT.Regpat;
+with GNAT.Regpat; use GNAT.Regpat;
 
 package body Language.Java is
 
