@@ -489,6 +489,7 @@ package body Project_Viewers is
       User : User_Data;
       Rows : Gint;
       File : File_Name_Selection_Context_Access;
+      Child : MDI_Child;
 
    begin
       if Context /= null
@@ -496,10 +497,27 @@ package body Project_Viewers is
       then
          File := File_Name_Selection_Context_Access (Context);
 
-         if File.all in File_Selection_Context'Class then
+         Child := Find_MDI_Child (Get_MDI (Viewer.Kernel), Viewer);
+         if Child = null then
+            Trace (Me, "No MDI window visiting the project viewer");
+            return;
+         end if;
+
+         if File.all in File_Selection_Context'Class
+           and then not Has_Directory_Information (File)
+         then
+            Set_Title (Child,
+                       Title => -"Editing switches for project "
+                         & Project_Name (Project_Information
+                         (File_Selection_Context_Access (File))),
+                       Short_Title => Project_Switches_Name);
             Viewer.Current_Project :=
               Project_Information (File_Selection_Context_Access (File));
          else
+            Set_Title (Child,
+                       Title => -"Editing switches for directory "
+                         & Directory_Information (File),
+                       Short_Title => Project_Switches_Name);
             Viewer.Current_Project := Get_Project_From_Directory
               (Get_Project_View (Viewer.Kernel), Directory_Information (File));
          end if;
@@ -798,17 +816,16 @@ package body Project_Viewers is
       else
          Gtk_New (Viewer, Kernel);
 
-         --  The initial contents of the viewer should be read immediately from
-         --  the explorer, without forcing the user to do a new selection.
-
-         Explorer_Selection_Changed (Viewer, Context);
-
          Set_Size_Request
            (Viewer,
             Get_Pref (Kernel, Default_Widget_Width),
             Get_Pref (Kernel, Default_Widget_Height));
          Child := Put (Get_MDI (Kernel), Viewer);
-         Set_Title (Child, Project_Switches_Name);
+
+         --  The initial contents of the viewer should be read immediately from
+         --  the explorer, without forcing the user to do a new selection.
+
+         Explorer_Selection_Changed (Viewer, Context);
       end if;
    end On_Edit_Switches;
 
