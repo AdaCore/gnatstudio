@@ -722,6 +722,7 @@ package body Src_Editor_Box is
 
    begin
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
+      Delete (Box.Source_View);
 
    exception
       when E : others =>
