@@ -596,8 +596,7 @@ All but Comments
 	  <object>files_extra_info</object>
 	  <last_modification_time>Fri, 13 Apr 2001 15:24:05 GMT</last_modification_time>
 	</signal>
-	<label>Browse...</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
+	<label>Browse</label>
 	<child>
 	  <left_attach>1</left_attach>
 	  <right_attach>2</right_attach>
