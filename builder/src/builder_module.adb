@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -85,6 +85,10 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Make menu
 
+   procedure On_Custom
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Build->Custom... menu
+
    procedure On_Run
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Run menu
@@ -130,6 +134,8 @@ package body Builder_Module is
       Set_Sensitive (Find_Menu_Item
         (Kernel, Build & (-"Compile File")), Sensitive);
       Set_Sensitive (Find_Menu_Item (Kernel, Build & (-"Make")), Sensitive);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Build & (-"Custom...")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Build & (-"Stop Build")), not Sensitive);
    end Set_Sensitive_Menus;
@@ -343,6 +349,55 @@ package body Builder_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Compile;
 
+   ---------------
+   -- On_Custom --
+   ---------------
+
+   procedure On_Custom
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Cmd : constant String := Simple_Entry_Dialog
+        (Parent  => Get_Main_Window (Kernel),
+         Title   => -"Custom Build",
+         Message => -"Enter the build command to execute:",
+         Key     => "gps_build_command");
+
+   begin
+      if Cmd = "" or else Cmd (Cmd'First) = ASCII.NUL then
+         return;
+      end if;
+
+      declare
+         Top     : constant Glide_Window :=
+           Glide_Window (Get_Main_Window (Kernel));
+         Fd      : Process_Descriptor_Access;
+         Args    : Argument_List_Access;
+         Id      : Timeout_Handler_Id;
+
+      begin
+         --  ??? Ask for saving sources/projects before building
+         Push_State (Kernel, Processing);
+         Console.Clear (Kernel);
+         Set_Sensitive_Menus (Kernel, False);
+         Args := Argument_String_To_List (Cmd);
+         Console.Insert (Kernel, Cmd, False);
+         Top.Interrupted := False;
+         Fd := new Process_Descriptor;
+         Non_Blocking_Spawn
+           (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
+            Err_To_Out  => True);
+         Free (Args);
+         Id := Process_Timeout.Add
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Custom;
+
    ----------------
    -- Idle_Build --
    ----------------
@@ -479,7 +534,7 @@ package body Builder_Module is
         (Parent  => Get_Main_Window (Kernel),
          Title   => -"Arguments Selection",
          Message => -"Enter the arguments to your application:",
-         Key     => "glide_run_arguments");
+         Key     => "gps_run_arguments");
 
    begin
       if Arguments = "" or else Arguments (Arguments'First) /= ASCII.NUL then
@@ -526,6 +581,7 @@ package body Builder_Module is
                      On_Check_Syntax'Access);
       Register_Menu (Kernel, Build, -"Compile File", "", On_Compile'Access);
       Register_Menu (Kernel, Build, -"Make", "", On_Build'Access);
+      Register_Menu (Kernel, Build, -"Custom...", "", On_Custom'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
       Set_Sensitive
