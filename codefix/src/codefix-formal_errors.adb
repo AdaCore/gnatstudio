@@ -310,10 +310,10 @@ package body Codefix.Formal_Errors is
       Message         : Error_Message;
       Column_Expected : Natural := 0) return Extract
    is
-      function Most_Close (Size_Red : Positive) return Positive;
-      --  Return the most close identation modulo Indentation_Width.
+      function Closest (Size_Red : Positive) return Positive;
+      --  Return the closest indentation modulo Indentation_Width.
 
-      function Most_Close (Size_Red : Positive) return Positive is
+      function Closest (Size_Red : Positive) return Positive is
       begin
          Put_Line (Integer'Image (Size_Red));
 
@@ -331,7 +331,7 @@ package body Codefix.Formal_Errors is
                  (Codefix_Panic'Identity,
                   "Indentation_With changed, please update Wrong_Column");
          end case;
-      end Most_Close;
+      end Closest;
 
       New_Extract  : Extract;
       Str_Red      : Dynamic_String;
@@ -346,7 +346,7 @@ package body Codefix.Formal_Errors is
       if Column_Expected = 0 then
          Set_String
            (New_Extract,
-            White_String (1 .. Most_Close (Message.Col)) &
+            White_String (1 .. Closest (Message.Col)) &
               Str_Red (Message.Col .. Str_Red'Length));
 
       else

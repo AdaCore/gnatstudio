@@ -1,3 +1,25 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  ??? Description of this package
+
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
@@ -5,7 +27,7 @@ package Codefix is
 
    Codefix_Panic : exception;
    --  This exception is raised when a unpredicted error is made,
-   --  most of times it is due to a bad utilisation of the functions by the
+   --  most of times it is due to a bad usage of the functions by the
    --  programmer.
 
    Tab_Width : constant Natural := 8;
@@ -48,6 +70,8 @@ package Codefix is
 
    procedure Free is new Ada.Unchecked_Deallocation (String, Dynamic_String);
 
+   --  ??? Why can't we use GNAT.Dynamic_Tables instead
+
    generic
 
       type Data_Type is private;
@@ -79,8 +103,7 @@ package Codefix is
 
       function Get_Element
         (This     : Dynamic_Array;
-         Position : Positive)
-        return Data_Type;
+         Position : Positive) return Data_Type;
       --  Use to get an element from the array. If there is nothing inside,
       --  Null_Element is returned.
 
@@ -95,7 +118,6 @@ package Codefix is
 
       procedure Free (This : in out Dynamic_Array);
       --  Free the memory used by a dynamic array.
-
 
       function Clone (This : Dynamic_Array) return Dynamic_Array;
       --  Copy all the values of an arry into an other.

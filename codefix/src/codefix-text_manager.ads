@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Unchecked_Deallocation;
 
 with Ada_Analyzer; use Ada_Analyzer;
@@ -57,14 +77,12 @@ package Codefix.Text_Manager is
    function Get
      (This   : Text_Interface;
       Cursor : Text_Cursor'Class;
-      Len    : Natural)
-     return String is abstract;
+      Len    : Natural) return String is abstract;
    --  Get Len characters from the the position specified by the cursor.
 
    function Get_Line
      (This   : Text_Interface;
-      Cursor : Text_Cursor'Class)
-     return String is abstract;
+      Cursor : Text_Cursor'Class) return String is abstract;
    --  Get all character from the column specified by the cursor to the end of
    --  the line.
 
@@ -90,13 +108,11 @@ package Codefix.Text_Manager is
 
    function Line_Length
      (This   : Text_Interface'Class;
-      Cursor : Text_Cursor'Class)
-     return Natural;
+      Cursor : Text_Cursor'Class) return Natural;
    --  Returns le length of a line from the position of the cursor.
 
    function Read_File
-     (This : Text_Interface)
-   return Dynamic_String is abstract;
+     (This : Text_Interface) return Dynamic_String is abstract;
    --  Get the entire file in a Dynamic_String.
 
    function Get_File_Name (This : Text_Interface) return String;
@@ -110,8 +126,7 @@ package Codefix.Text_Manager is
       Cursor       : Text_Cursor'Class;
       Searched     : String;
       Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True)
-   return File_Cursor'Class;
+      Jump_String  : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -131,7 +146,7 @@ package Codefix.Text_Manager is
       Cursor                 : File_Cursor'Class;
       Position               : Relative_Position := Specified;
       Category_1, Category_2 : Language_Category := Cat_Unknown)
-     return Construct_Information;
+      return Construct_Information;
    --  Get the Construct_Information found at the specified position, or the
    --  nearest before or after the position (depends on the value of
    --  Position_Expected.
@@ -139,23 +154,20 @@ package Codefix.Text_Manager is
    function Search_Body
      (Current_Text : Text_Navigator_Abstr;
       File_Name    : String;
-      Spec         : Construct_Information)
-     return Construct_Information;
+      Spec         : Construct_Information) return Construct_Information;
    --  Returns the body of a subprogramm, only if this body is in the same
    --  file.
 
    function Get
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class;
-      Len    : Natural)
-     return String;
+      Len    : Natural) return String;
    --  Get Len characters from the file and the position specified by the
    --  cursor.
 
    function Get_Line
      (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class)
-     return String;
+      Cursor : File_Cursor'Class) return String;
    --  Get all character from the file and the column specified by the cursor
    --  to the end of the line.
 
@@ -186,8 +198,7 @@ package Codefix.Text_Manager is
 
    function Line_Length
      (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class)
-     return Natural;
+      Cursor : File_Cursor'Class) return Natural;
    --  Return le length of a line from the position of the cursor.
 
    procedure Update (This : Text_Navigator_Abstr);
@@ -201,8 +212,7 @@ package Codefix.Text_Manager is
       Cursor       : File_Cursor'Class;
       Searched     : String;
       Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True)
-   return File_Cursor'Class;
+      Jump_String  : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -230,8 +240,7 @@ package Codefix.Text_Manager is
 
    function Clone
      (This      : Extract_Line;
-      Recursive : Boolean := True)
-     return Extract_Line;
+      Recursive : Boolean := True) return Extract_Line;
    --  Clone an Extract_Line. Recursive True means that all the lines of the
    --  extract that record this line are cloned.
 
@@ -240,8 +249,7 @@ package Codefix.Text_Manager is
       Cursor       : File_Cursor'Class;
       Searched     : String;
       Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True)
-   return File_Cursor'Class;
+      Jump_String  : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor. If Cursor.Col = 0, then
    --  the scan in initialized from the end of the content.
@@ -322,20 +330,19 @@ package Codefix.Text_Manager is
    function Get_Word_Length
      (This   : Extract;
       Cursor : File_Cursor'Class;
-      Format : String)
-     return Natural;
+      Format : String) return Natural;
    --  Get the length of a word what begins at the position specified by the
    --  cursor.
 
    procedure Free (This : in out Extract);
    --  Free the memory associated to an Extract.
 
-   function Get_Line (This : Extract; Position : File_Cursor)
-     return Ptr_Extract_Line;
+   function Get_Line
+     (This : Extract; Position : File_Cursor) return Ptr_Extract_Line;
    --  Returns the line with the number specified in the original text.
 
-   function Get_Record (This : Extract; Number : Natural)
-     return Ptr_Extract_Line;
+   function Get_Record
+     (This : Extract; Number : Natural) return Ptr_Extract_Line;
    --  Returns the line recorded at the position Number in the extract.
 
    function Get_Number_Lines (This : Extract) return Natural;
@@ -369,8 +376,7 @@ package Codefix.Text_Manager is
       Cursor       : File_Cursor'Class;
       Searched     : String;
       Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True)
-   return File_Cursor'Class;
+      Jump_String  : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -393,11 +399,9 @@ private
 
    function Get_File
      (This : Text_Navigator_Abstr'Class;
-      Name : String)
-   return Ptr_Text;
+      Name : String) return Ptr_Text;
    --  Returns the existent file interface, or create a new one if it
    --  doesn't exists.
-
 
    ----------------------------------------------------------------------------
    --  type Text_Interface

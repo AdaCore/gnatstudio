@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Generic_List;
@@ -36,8 +56,7 @@ package Codefix.Formal_Errors is
 
    function Get_Extract
      (This     : Solution_List;
-      Position : Positive)
-     return Extract;
+      Position : Positive) return Extract;
    --  Get the extract recorded in a solution list at the given position.
 
    procedure Free (This : in out Solution_List);
@@ -51,8 +70,7 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Str_Expected : String;
-      Str_Red      : String := "")
-      return Extract;
+      Str_Red      : String := "") return Extract;
    --  This fonction replace Str_Red by Str_Expected in the current text by
    --  the position specified in the Message. If there is no Str_Red, it
    --  looks for the first word in the position.
@@ -60,8 +78,7 @@ package Codefix.Formal_Errors is
    function Wrong_Order
      (Current_Text                : Text_Navigator_Abstr'Class;
       Message                     : Error_Message;
-      First_String, Second_String : String)
-      return Extract;
+      First_String, Second_String : String) return Extract;
    --  Seach the position of the second string from the position specified
    --  in the message to the beginning, and invert the two strings.
 
@@ -69,30 +86,26 @@ package Codefix.Formal_Errors is
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : Error_Message;
       String_Expected : String;
-      Add_Spaces      : Boolean := True)
-      return Extract;
+      Add_Spaces      : Boolean := True) return Extract;
    --  Add the missing keyword into the text.
 
    function Unexpected
      (Current_Text      : Text_Navigator_Abstr'Class;
       Message           : Error_Message;
       String_Unexpected : String;
-      Mode              : String_Mode := Text_Ascii)
-      return Extract;
+      Mode              : String_Mode := Text_Ascii) return Extract;
    --  Delete the unexpected string
 
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : Error_Message;
-      Column_Expected : Natural := 0)
-      return Extract;
+      Column_Expected : Natural := 0) return Extract;
    --  Try re-indent the line
 
    function With_Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Missing_Clause : String)
-      return Extract;
+      Missing_Clause : String) return Extract;
    --  Add the missing clause in the text
 
    type Case_Type is (Lower, Upper, Mixed);
@@ -101,23 +114,20 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Correct_Word : String := "";
-      Word_Case    : Case_Type := Mixed)
-   return Extract;
+      Word_Case    : Case_Type := Mixed) return Extract;
    --  Re-case the word
 
    function Not_Referenced
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Category     : Language_Category;
-      Name         : String)
-   return Solution_List;
+      Name         : String) return Solution_List;
    --  Propose to delete the unit unreferrenced or, in some cases, to add
    --  a pragma 'not referreced'
 
    function First_Line_Pragma
      (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class)
-   return Extract;
+      Cursor       : File_Cursor'Class) return Extract;
    --  Move the pragma to the beginning of the file
 
 private
@@ -127,7 +137,10 @@ private
    end record;
 
    procedure Parse_Head (Message : String; This : out Error_Message);
+   --  ???
+
    function Clone (This : Error_Message) return Error_Message;
+   --  ???
 
    Invalid_Error_Message : constant Error_Message := (0, 0, null, null);
 

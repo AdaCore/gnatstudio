@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Generic_List;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
@@ -16,8 +36,7 @@ package Codefix.Errors_Manager is
 
    procedure Get_Direct_Message
      (This    : in out Errors_Interface;
-      Current : out Error_Message)
-   is abstract;
+      Current : out Error_Message) is abstract;
    --  Get a message without any modification of cols or lines numbers.
 
    procedure Get_Message
@@ -27,8 +46,8 @@ package Codefix.Errors_Manager is
    --  Returns the next message to be analyzed, with the correct modifications.
    --  (change the cols to be conformant with tabs).
 
-   function No_More_Messages (This : Errors_Interface) return Boolean
-      is abstract;
+   function No_More_Messages
+     (This : Errors_Interface) return Boolean is abstract;
    --  Is true where all the messages are got fron Get_Message.
 
    ----------------------------------------------------------------------------
@@ -101,8 +120,8 @@ private
    use Memorized_Corrections;
 
    type Error_Id is record
-      Ptr_Solutions : Memorized_Corrections.List_Node
-         := Memorized_Corrections.Null_Node;
+      Ptr_Solutions : Memorized_Corrections.List_Node :=
+         Memorized_Corrections.Null_Node;
    end record;
 
    type Correction_Manager is record
@@ -119,5 +138,6 @@ private
    use Line_List;
 
    function Sort (List : Solution_List) return Line_List.List;
+   --  ??? Can't we use List_Utils.Sort instead
 
 end Codefix.Errors_Manager;
