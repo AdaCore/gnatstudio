@@ -98,6 +98,10 @@ package Python is
      (Obj : PyObject; Attr_Name : String; Value : PyObject);
    --  Same as above
 
+   function PyObject_HasAttrString
+     (Obj : PyObject; Attr_Name : String) return Boolean;
+   --  Whether a specific attribute exists for the object.
+
    function PyObject_GetAttrString
      (Object : PyObject;
       Name   : Interfaces.C.Strings.chars_ptr) return PyObject;
