@@ -185,6 +185,7 @@ package body Shell_Script is
       Script          : Shell_Scripting;
       Args            : GNAT.OS_Lib.Argument_List_Access;
       Return_Value    : GNAT.OS_Lib.String_Access;
+      Return_Dict     : GNAT.OS_Lib.String_Access;
       Return_As_List  : Boolean := False;
       Return_As_Error : Boolean := False;
    end record;
@@ -214,6 +215,18 @@ package body Shell_Script is
      (Data   : in out Shell_Callback_Data; Value : System.Address);
    procedure Set_Return_Value
      (Data   : in out Shell_Callback_Data; Value : Class_Instance);
+   procedure Set_Return_Value_Key
+     (Data   : in out Shell_Callback_Data;
+      Key    : String;
+      Append : Boolean := False);
+   procedure Set_Return_Value_Key
+     (Data   : in out Shell_Callback_Data;
+      Key    : Integer;
+      Append : Boolean := False);
+   procedure Set_Return_Value_Key
+     (Data   : in out Shell_Callback_Data;
+      Key    : Class_Instance;
+      Append : Boolean := False);
    --  See doc from inherited subprogram
 
    -------------------------
@@ -1026,11 +1039,18 @@ package body Shell_Script is
                Free (Callback.Args);
 
                if Callback.Return_As_Error then
+                  Free (Callback.Return_Dict);
                   return Callback.Return_Value.all;
                end if;
 
                if Data.Short_Command.all = Constructor_Method then
                   Set_Return_Value (Callback, Instance);
+               end if;
+
+               if Callback.Return_Dict /= null then
+                  Free (Callback.Return_Value);
+                  Callback.Return_Value := Callback.Return_Dict;
+                  Callback.Return_Dict  := null;
                end if;
 
                --  Save the return value for the future
@@ -1279,6 +1299,67 @@ package body Shell_Script is
    begin
       Data.Return_As_List := True;
    end Set_Return_Value_As_List;
+
+   --------------------------
+   -- Set_Return_Value_Key --
+   --------------------------
+
+   procedure Set_Return_Value_Key
+     (Data   : in out Shell_Callback_Data;
+      Key    : String;
+      Append : Boolean := False)
+   is
+      pragma Unreferenced (Append);
+      Tmp : GNAT.OS_Lib.String_Access;
+   begin
+      if Data.Return_Value = null then
+         if Data.Return_Dict = null then
+            Data.Return_Dict := new String'(Key & " => ()");
+         else
+            Tmp := Data.Return_Dict;
+            Data.Return_Dict := new String'(Tmp.all & ", " & Key & " => ()");
+            Free (Tmp);
+         end if;
+
+      else
+         if Data.Return_Dict = null then
+            Data.Return_Dict := new String'
+              (Key & " => (" & Data.Return_Value.all & ')');
+         else
+            Tmp := Data.Return_Dict;
+            Data.Return_Dict := new String'
+              (Tmp.all & ", " & Key & " => (" & Data.Return_Value.all & ')');
+            Free (Tmp);
+         end if;
+      end if;
+
+      Data.Return_As_List := False;
+      Free (Data.Return_Value);
+   end Set_Return_Value_Key;
+
+   --------------------------
+   -- Set_Return_Value_Key --
+   --------------------------
+
+   procedure Set_Return_Value_Key
+     (Data   : in out Shell_Callback_Data;
+      Key    : Integer;
+      Append : Boolean := False) is
+   begin
+      Set_Return_Value_Key (Data, Integer'Image (Key), Append);
+   end Set_Return_Value_Key;
+
+   --------------------------
+   -- Set_Return_Value_Key --
+   --------------------------
+
+   procedure Set_Return_Value_Key
+     (Data   : in out Shell_Callback_Data;
+      Key    : Class_Instance;
+      Append : Boolean := False) is
+   begin
+      Set_Return_Value_Key (Data, Name_From_Instance (Key), Append);
+   end Set_Return_Value_Key;
 
    ----------------------
    -- Set_Return_Value --
