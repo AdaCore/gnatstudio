@@ -22,21 +22,21 @@
 --  editor and the browsers.
 
 with Glib.Graphs;
-with Gtkada.Canvas;
 with Prj.Tree;
 with Types;
 
 package Project_Browsers is
 
+   type Name_Id_Array is array (Positive range <>) of Types.Name_Id;
+
    type Vertex_Factory is access function
-     (Project_Name : Types.Name_Id) return Gtkada.Canvas.Canvas_Item;
+     (Project_Name : Types.Name_Id) return Glib.Graphs.Vertex_Access;
    --  This function should return a new vertex to put in the graph. You should
    --  pass your own factory if you want to put the item into the canvas
    --  afterwards.
 
    type Edge_Factory is access function
-     (V1, V2 : access Gtkada.Canvas.Canvas_Item_Record'Class)
-      return Gtkada.Canvas.Canvas_Link;
+     (V1, V2 : access Glib.Graphs.Vertex'Class) return Glib.Graphs.Edge_Access;
    --  This function should return a new edge between the two vertices V1 and
    --  V2.
 
@@ -60,5 +60,11 @@ package Project_Browsers is
    --  If Factory is null, then a default vertex is created.
    --  The graph can be used directly in GtkAda.Canvas provided you set up the
    --  vertices correctly in your factory.
+
+   function Topological_Sort (Root_Project : Prj.Tree.Project_Node_Id)
+      return Name_Id_Array;
+   --  Return the projects sorted topologically (first the ones that don't
+   --  depend on any other project, then their parent, and so on until the
+   --  root_project).
 
 end Project_Browsers;

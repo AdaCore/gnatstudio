@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.Canvas; use Gtkada.Canvas;
 with Glib.Graphs;   use Glib.Graphs;
 with Prj.Tree;      use Prj.Tree;
 with Types;         use Types;
@@ -33,12 +32,43 @@ package body Project_Browsers is
 
    package Vertex_Htable is new HTables.Simple_HTable
      (Header_Num => Header_Num,
-      Element    => Gtkada.Canvas.Canvas_Item,
+      Element    => Vertex_Access,
       No_Element => null,
       Key        => Name_Id,
       Hash       => Hash,
       Equal      => Types."=");
    use Vertex_Htable;
+
+   type Name_Vertex is new Vertex with record
+      Name : Name_Id;
+   end record;
+   type Name_Vertex_Access is access all Name_Vertex'Class;
+   --  For internal use only, for storing the names.
+
+   type Name_Edge is new Edge with null record;
+   type Name_Edge_Access is access all Name_Edge'Class;
+
+   procedure Destroy (V : in out Name_Vertex);
+   procedure Destroy (E : in out Name_Edge);
+   --  Dummy function, so that Name_Vertex is no longer abstract
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (V : in out Name_Vertex) is
+   begin
+      null;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (E : in out Name_Edge) is
+   begin
+      null;
+   end Destroy;
 
    ----------
    -- Hash --
@@ -63,12 +93,12 @@ package body Project_Browsers is
       G : Graph;
 
       function Create_Project_Vertex (Name    : Name_Id)
-        return Canvas_Item;
+        return Vertex_Access;
       --  Return the vertex in G for the project Name.
       --  If such a node doesn't exist, a new vertex is created.
 
       procedure Process_Project
-        (Project : Project_Node_Id; Origin  : Canvas_Item);
+        (Project : Project_Node_Id; Origin  : Vertex_Access);
       --  Add project and its dependencies, recursively, into the graph.
 
       ---------------------------
@@ -76,12 +106,13 @@ package body Project_Browsers is
       ---------------------------
 
       function Create_Project_Vertex (Name : Name_Id)
-         return Canvas_Item
+         return Vertex_Access
       is
-         V : Canvas_Item;
+         V : Vertex_Access;
       begin
          if Factory = null then
-            V := new Buffered_Item_Record;
+            V := new Name_Vertex;
+            Name_Vertex_Access (V).Name := Name;
          else
             V := Factory (Name);
          end if;
@@ -96,11 +127,11 @@ package body Project_Browsers is
       ---------------------
 
       procedure Process_Project
-        (Project : Project_Node_Id; Origin  : Canvas_Item)
+        (Project : Project_Node_Id; Origin  : Vertex_Access)
       is
          With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
-         Dest        : Canvas_Item;
-         E           : Canvas_Link;
+         Dest        : Vertex_Access;
+         E           : Edge_Access;
          New_Item    : Boolean;
       begin
          while With_Clause /= Empty_Node loop
@@ -112,7 +143,7 @@ package body Project_Browsers is
             end if;
 
             if E_Factory = null then
-               E := new Canvas_Link_Record;
+               E := new Name_Edge;
             else
                E := E_Factory (Origin, Dest);
             end if;
@@ -126,7 +157,7 @@ package body Project_Browsers is
          end loop;
       end Process_Project;
 
-      Origin : Canvas_Item;
+      Origin : Vertex_Access;
    begin
       Set_Directed (G, True);
       Origin := Create_Project_Vertex (Prj.Tree.Name_Of (Root_Project));
@@ -151,6 +182,25 @@ package body Project_Browsers is
       Destroy (G);
       return Result;
    end Has_Circular_Dependencies;
+
+   ----------------------
+   -- Topological_Sort --
+   ----------------------
+
+   function Topological_Sort (Root_Project : Prj.Tree.Project_Node_Id)
+      return Name_Id_Array
+   is
+      G : Graph := Dependency_Graph (Root_Project, null);
+      Vertices : Depth_Vertices_Array := Depth_First_Search (G);
+      List : Name_Id_Array (1 .. Vertices'Length);
+   begin
+      for J in Vertices'Range loop
+         List (J - Vertices'First + List'First) :=
+           Name_Vertex_Access (Vertices (J).Vertex).Name;
+      end loop;
+      Destroy (G);
+      return List;
+   end Topological_Sort;
 
 end Project_Browsers;
 
