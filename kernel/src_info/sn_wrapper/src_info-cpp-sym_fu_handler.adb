@@ -156,7 +156,7 @@ begin
          exit when P = null;
 
          declare
-            --  FIXME:
+            --  ???:
             --  SN has only line number in .to table. So, to get exact
             --  position we are getting that line from source file and
             --  calling corresponding handler for EVERY
@@ -200,6 +200,13 @@ begin
                end loop;
             end if;
             Free (Ref);
+         exception
+            when others =>
+               --  unexpected exception in Fu_To_XX handler
+               Free (Ref);
+               --  ??? Probably we want to report this exception and continue
+               --  to work further, but now we reraise that exception
+               raise;
          end;
 
          Free (P);
@@ -212,6 +219,6 @@ begin
    end if;
 
 exception
-   when DB_Error => null; -- non-existent table .to
+   when DB_Error => null; -- non-existent table .to, ignore it
 
 end Sym_FU_Handler;

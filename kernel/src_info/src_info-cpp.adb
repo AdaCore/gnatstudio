@@ -414,12 +414,28 @@ package body Src_Info.CPP is
             --  apply corresponding symbol handler
             Symbol_Handlers (Sym.Symbol)(Sym);
             Free (Sym);
+         exception
+            when others =>
+               Free (Sym);
+               raise;
          end;
 
          Free (P);
       end loop;
       File_Buffer.Done;
       Free (Module_Typedefs);
+   exception
+      when DB_Error => -- critical DB error
+         --  we can not continue if DB layer gives us this error ...
+         raise;
+      when others   => -- unexpected exception
+         Free (P);
+         File_Buffer.Done;
+         Free (Module_Typedefs);
+         --  ??? Here we probably want to report the unexpected exception
+         --  and continue to work further, but currently we reraise that
+         --  exception
+         raise;
    end Process_File;
 
    ---------------------------
