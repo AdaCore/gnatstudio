@@ -700,24 +700,28 @@ package body GUI_Utils is
    -------------------------
 
    procedure Remove_All_Children
-     (Container : access Gtk.Container.Gtk_Container_Record'Class)
+     (Container : access Gtk.Container.Gtk_Container_Record'Class;
+      Filter    : Filter_Function := null)
    is
       use Widget_List;
       Children : Widget_List.Glist := Get_Children (Container);
       N : Widget_List.Glist;
+      W : Gtk_Widget;
    begin
       while Children /= Null_List loop
          N := Children;
          Children := Next (Children);
+         W := Widget_List.Get_Data (N);
 
-         --  Small workaround for a gtk+ bug: a Menu_Item containing an
-         --  accel_label would never be destroyed because the label holds a
-         --  reference to the menu item, and the latter holds a reference to
-         --  the label (see gtk_accel_label_set_accel_widget).
+         if Filter = null or else Filter (W) then
+            --  Small workaround for a gtk+ bug: a Menu_Item containing an
+            --  accel_label would never be destroyed because the label holds a
+            --  reference to the menu item, and the latter holds a reference to
+            --  the label (see gtk_accel_label_set_accel_widget).
 
-         Destroy (Get_Child (Gtk_Bin (Widget_List.Get_Data (N))));
-
-         Remove (Container, Widget_List.Get_Data (N));
+            Destroy (Get_Child (Gtk_Bin (W)));
+            Remove (Container, W);
+         end if;
       end loop;
 
       Widget_List.Free (Children);

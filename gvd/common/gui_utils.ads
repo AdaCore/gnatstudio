@@ -119,9 +119,14 @@ package GUI_Utils is
    --  Column.
    --  -1 is returned if no such row was found.
 
+   type Filter_Function is access
+     function (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+
    procedure Remove_All_Children
-     (Container : access Gtk.Container.Gtk_Container_Record'Class);
-   --  Remove and destroy all the children from Container.
+     (Container : access Gtk.Container.Gtk_Container_Record'Class;
+      Filter    : Filter_Function := null);
+   --  Remove and destroy all the children from Container for which Filter
+   --  returns True. All children are removed if Filter is null.
    --  If Container is a menu, this empties the menu, thus allowing dynamic
    --  menus.
 
