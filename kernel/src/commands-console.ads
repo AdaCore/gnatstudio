@@ -34,12 +34,21 @@ package Commands.Console is
       Highlight_Sloc : Boolean := True;
       Add_LF         : Boolean := True;
       Mode           : Message_Type := Info);
+   --  Create a new console command.
+
+   function Copy
+     (Item : Console_Command_Access)
+     return Console_Command_Access;
+   --  Create a new Console_Command_Access as a copy of Item.
 
    function Execute (Command : access Console_Command) return Boolean;
+   --  Execute Command.
+
    function Undo (Command : access Console_Command) return Boolean
      renames Execute;
 
    procedure Destroy (Command : access Console_Command);
+   --  Free memory associated to Command.
 
 private
 
