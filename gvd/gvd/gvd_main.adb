@@ -35,7 +35,6 @@ with Process_Proxies;
 with GVD.Process;           use GVD.Process;
 with GVD.Trace;             use GVD.Trace;
 with GVD.Types;
-with GVD.Strings;           use GVD.Strings;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Window_Settings;   use GVD.Window_Settings;
 
@@ -78,10 +77,6 @@ procedure GVD_Main is
    procedure Bug_Dialog
      (Win : Main_Debug_Window_Access; E : Exception_Occurrence);
    --  Display a bug box on the screen with as much information as possible.
-
-   function Format (Str : String; Columns : Positive) return String;
-   --  Cut Str in lines of no more than Columns columns by replacing spaces
-   --  by ASCII.LF characters at the most appropriate place.
 
    procedure Help;
    --  Display help on the standard output.
@@ -169,35 +164,6 @@ procedure GVD_Main is
       end if;
    end Init;
 
-   function Format (Str : String; Columns : Positive) return String is
-      S     : String (Str'Range);
-      Blank : Natural := 0;
-      Count : Natural := 0;
-
-   begin
-      for J in Str'Range loop
-         S (J) := Str (J);
-
-         if Str (J) = ASCII.LF then
-            Count := 0;
-         else
-            Count := Count + 1;
-
-            if Str (J) = ' ' then
-               Blank := J;
-            end if;
-
-            if Count = Columns and Blank /= 0 then
-               S (Blank) := ASCII.LF;
-               Count := 0;
-               Blank := 0;
-            end if;
-         end if;
-      end loop;
-
-      return Strip_CR (S);
-   end Format;
-
    procedure Bug_Dialog
      (Win : Main_Debug_Window_Access; E : Exception_Occurrence) is
    begin
@@ -210,11 +176,6 @@ procedure GVD_Main is
       Button := Message_Dialog
         (-"Please report with the contents of the file " &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
-         (-"the following information:") & ASCII.LF &
-         (-"Version: ") & GVD.Version & ASCII.LF &
-         (-"Date: ") & GVD.Source_Date & ASCII.LF &
-         (-"Target: ") & GVD.Target & ASCII.LF &
-         Format (Exception_Information (E), Columns => 80) & ASCII.LF &
          (-("and a description as complete as possible " &
            "(including sources) to reproduce the bug")),
          Error, Button_OK,
