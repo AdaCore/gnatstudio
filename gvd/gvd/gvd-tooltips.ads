@@ -49,12 +49,12 @@ with Gdk.Window;
 generic
    type User_Type (<>) is private;
    type Widget_Type is new Gtk.Widget.Gtk_Widget_Record with private;
-   with procedure Draw_Tooltip (Widget : access Widget_Type'Class;
-                                Data   : in out User_Type;
-                                Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-                                Width, Height : out Glib.Gint;
-                                Area   : out Gdk.Rectangle.Gdk_Rectangle)
-   is <>;
+   with procedure Draw_Tooltip
+     (Widget : access Widget_Type'Class;
+      Data   : in out User_Type;
+      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
+      Width, Height : out Glib.Gint;
+      Area   : out Gdk.Rectangle.Gdk_Rectangle) is <>;
    --  Subprogram called every time a tooltip needs to be drawn.
    --  Width and Height should either contain the size of the pixmap on exit,
    --  or (0, 0) if no tooltip could be displayed.
@@ -62,8 +62,8 @@ generic
    --  the pointer, using Gdk.Window.Get_Pointer.
    --  Area indicates the area of effectiveness of the tooltip : if the user
    --  moves the mouse within this area after the tooltip is displayed, then
-   --  the tooltip is hidden, and not will not be displayed again as long as
-   --  the user stays within this area. The X, Y coordinates of the rectangle
+   --  the tooltip is hidden, and will not be displayed again as long as the
+   --  user stays within this area. The X, Y coordinates of the rectangle
    --  should be relative to Widget.
 
 package Odd.Tooltips is
