@@ -132,7 +132,7 @@ package body VCS.Generic_VCS is
 
    function Lookup_Action
      (Kernel : Kernel_Handle;
-      Action : String_Access) return Action_Record;
+      Action : String_Access) return Action_Record_Access;
    --  Wrapper for Lookup_Action.
 
    procedure Generic_Parse_Status
@@ -209,10 +209,10 @@ package body VCS.Generic_VCS is
 
    function Lookup_Action
      (Kernel : Kernel_Handle;
-      Action : String_Access) return Action_Record is
+      Action : String_Access) return Action_Record_Access is
    begin
       if Action = null then
-         return No_Action;
+         return null;
       else
          return Lookup_Action (Kernel, Action.all);
       end if;
@@ -336,7 +336,7 @@ package body VCS.Generic_VCS is
       Show_Bar   : Boolean := True)
    is
       Kernel     : Kernel_Handle renames Ref.Kernel;
-      The_Action : constant Action_Record :=
+      The_Action : constant Action_Record_Access :=
         Lookup_Action (Kernel, Ref.Commands (Dir_Action));
 
       Node   : List_Node;
@@ -346,7 +346,7 @@ package body VCS.Generic_VCS is
       use type GNAT.OS_Lib.String_List_Access;
 
    begin
-      if The_Action = No_Action then
+      if The_Action = null then
          return;
       end if;
 
@@ -413,7 +413,7 @@ package body VCS.Generic_VCS is
    is
       Kernel : Kernel_Handle renames Ref.Kernel;
 
-      The_Action : constant Action_Record :=
+      The_Action : constant Action_Record_Access :=
         Lookup_Action (Kernel, Ref.Commands (Action));
 
       Node   : List_Node;
@@ -424,7 +424,7 @@ package body VCS.Generic_VCS is
 
       use type GNAT.OS_Lib.String_List_Access;
    begin
-      if The_Action = No_Action
+      if The_Action = null
         or else Is_Empty (Files)
       then
          return;
@@ -509,7 +509,7 @@ package body VCS.Generic_VCS is
       Action     : VCS_Action)
    is
       Kernel     : Kernel_Handle renames Ref.Kernel;
-      The_Action : constant Action_Record :=
+      The_Action : constant Action_Record_Access :=
         Lookup_Action (Kernel, Ref.Commands (Action));
       Custom     : Command_Access;
       Args       : GNAT.OS_Lib.String_List_Access;
@@ -523,7 +523,7 @@ package body VCS.Generic_VCS is
          Dir := new String'(Locale_From_UTF8 (Dir_Name (File).all));
       end if;
 
-      if The_Action = No_Action then
+      if The_Action = null then
          return;
       end if;
 

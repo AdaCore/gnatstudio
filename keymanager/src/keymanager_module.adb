@@ -769,8 +769,8 @@ package body KeyManager_Module is
       Key     : constant Gdk_Key_Type := Get_Key_Val (Event);
       Modif   : Gdk_Modifier_Type := Get_State (Event);
       Binding : Key_Description_List;
-      Command : Action_Record;
-      Any_Context_Command : Action_Record := No_Action;
+      Command : Action_Record_Access;
+      Any_Context_Command : Action_Record_Access := null;
       Has_Secondary : constant Boolean := Handler.Secondary_Keymap /= null;
       Context : Selection_Context_Access;
       Custom  : Command_Access;
@@ -834,7 +834,7 @@ package body KeyManager_Module is
             Binding := Next (Binding);
          end loop;
 
-         if Any_Context_Command /= No_Action then
+         if Any_Context_Command /= null then
             Trace (Me, "Executing any context action");
 
             if Any_Context_Command.Description = null then
@@ -1144,7 +1144,7 @@ package body KeyManager_Module is
          Iter    : Key_Htable.Iterator;
          Binding : Key_Description_List;
          Parent  : Gtk_Tree_Iter;
-         Action  : Action_Record;
+         Action  : Action_Record_Access;
       begin
          Get_First (Table, Iter);
          loop
@@ -1161,7 +1161,7 @@ package body KeyManager_Module is
 
                else
                   Action := Lookup_Action (Handler.Kernel, Binding.Action.all);
-                  if Action /= No_Action then
+                  if Action /= null then
                      Parent := Find_Parent (Editor.Model, Action.Filter);
                      if Parent /= Null_Iter then
                         Parent := Children (Editor.Model, Parent);
@@ -1197,7 +1197,7 @@ package body KeyManager_Module is
 
       Sort_Id     : constant Gint := Freeze_Sort (Editor.Model);
       Parent      : Gtk_Tree_Iter;
-      Action      : Action_Record;
+      Action      : Action_Record_Access;
       Action_Iter : Action_Iterator := Start (Editor.Kernel);
    begin
       Clear (Editor.Model);
@@ -1210,7 +1210,7 @@ package body KeyManager_Module is
       --  Add all actions in the table
       loop
          Action := Get (Action_Iter);
-         exit when Action = No_Action;
+         exit when Action = null;
 
          Parent := Find_Parent (Editor.Model, Action.Filter);
          if Parent = Null_Iter then
@@ -1456,7 +1456,7 @@ package body KeyManager_Module is
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
-      Action    : Action_Record;
+      Action    : Action_Record_Access;
 
    begin
       Get_Selected (Selection, Model, Iter);
