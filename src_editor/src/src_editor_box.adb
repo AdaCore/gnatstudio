@@ -2568,19 +2568,21 @@ package body Src_Editor_Box is
       return Natural (Block.Indentation_Level);
    end Get_Block_Level;
 
-   -------------------------
-   -- Get_Subprogram_Name --
-   -------------------------
+   --------------------
+   -- Get_Subprogram --
+   --------------------
 
-   function Get_Subprogram_Name
+   function Get_Subprogram
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type :=
-        Src_Editor_Buffer.Editable_Line_Type'Last) return String
+        Src_Editor_Buffer.Editable_Line_Type'Last) return Entity_Information
    is
       Normalized_Line : Editable_Line_Type := Line;
       L     : Buffer_Line_Type;
       New_L : Buffer_Line_Type;
       Block : Block_Record;
+      Entity : Entity_Information;
+      Status : Find_Decl_Or_Body_Query_Status;
    begin
       if Normalized_Line = Editable_Line_Type'Last then
          Normalized_Line := Editor.Current_Line;
@@ -2593,15 +2595,32 @@ package body Src_Editor_Box is
       if Block.Block_Type = Cat_Unknown
         and then Block.Indentation_Level = 0
       then
-         return "";
+         return null;
       end if;
 
       while L > 1 loop
          if Block.Block_Type in Enclosing_Entity_Category then
             if Block.Name /= null then
-               return Block.Name.all;
+               Find_Declaration_Or_Overloaded
+                 (Kernel      => Editor.Kernel,
+                  File        => Get_Or_Create
+                    (Db   => Get_Database (Editor.Kernel),
+                     File => Get_Filename (Editor.Source_Buffer)),
+                  Entity_Name => Block.Name.all,
+                  Line        => Integer
+                    (Get_Editable_Line (Editor.Source_Buffer, L) - 1),
+                  Column      => 1,
+                  Entity      => Entity,
+                  Status      => Status);
+               Trace (Me, "Get_Subprogram: Enclosing subprogram for line"
+                      & Line'Img & " is " & Block.Name.all
+                      & " found at line"
+                      & Get_Editable_Line (Editor.Source_Buffer, L)'Img
+                      & " entity_is_null=" & Boolean'Image (Entity = null)
+                      & " status=" & Status'Img);
+               return Entity;
             else
-               return "";
+               return null;
             end if;
          end if;
 
@@ -2625,7 +2644,25 @@ package body Src_Editor_Box is
          Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => False);
       end loop;
 
-      return "";
+      return null;
+   end Get_Subprogram;
+
+   -------------------------
+   -- Get_Subprogram_Name --
+   -------------------------
+
+   function Get_Subprogram_Name
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type :=
+        Src_Editor_Buffer.Editable_Line_Type'Last) return String
+   is
+      Entity : constant Entity_Information := Get_Subprogram (Editor, Line);
+   begin
+      if Entity /= null then
+         return Get_Name (Entity).all;
+      else
+         return "";
+      end if;
    end Get_Subprogram_Name;
 
    ----------------

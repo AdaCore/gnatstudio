@@ -52,6 +52,7 @@ with GPS.Kernel.Standard_Hooks;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_View;
 with VFS;
+with Entities;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 
 with Ada.Unchecked_Deallocation;
@@ -294,6 +295,14 @@ package Src_Editor_Box is
    --  Return the name for the subprogram enclosing Line.
    --  If Line is left to its default value, then the subprogram at the current
    --  line is computed.
+
+   function Get_Subprogram
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type :=
+        Src_Editor_Buffer.Editable_Line_Type'Last)
+      return Entities.Entity_Information;
+   --  Same as above, but returns a pointer to the declaration of the
+   --  subprogram
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record);
    --  Check whether the file in Editor is writable, and update the read-only
