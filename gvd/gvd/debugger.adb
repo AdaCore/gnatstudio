@@ -372,8 +372,7 @@ package body Debugger is
 
    function Output_Available (Process : Debugger_Process_Tab) return Boolean is
       Debugger : constant Debugger_Access := Process.Debugger;
-      Mode     : constant Command_Type :=
-        Get_Command_Mode (Get_Process (Debugger));
+      Mode     : Command_Type;
 
    begin
       --  Get everything that is available (and transparently call the
@@ -387,6 +386,7 @@ package body Debugger is
       if Wait_Prompt (Debugger, Timeout => 1) then
          Timeout_Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
+         Mode := Get_Command_Mode (Get_Process (Debugger));
 
          --  Put back the standard cursor
 
