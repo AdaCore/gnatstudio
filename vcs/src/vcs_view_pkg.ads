@@ -48,12 +48,14 @@ package VCS_View_Pkg is
       Cached_Status   : File_Status_List.List;
    end record;
 
-   procedure Gtk_New (VCS_View : out VCS_View_Access;
-                      Kernel   : Kernel_Handle;
-                      Ref      : VCS_Access);
+   procedure Gtk_New
+     (VCS_View : out VCS_View_Access;
+      Kernel   : Kernel_Handle := null);
    --  Create a new VCS explorer.
 
-   procedure Initialize (VCS_View : access VCS_View_Record'Class);
+   procedure Initialize
+     (VCS_View : access VCS_View_Record'Class;
+      Kernel   : Kernel_Handle);
    --  Internal initialization function.
 
    procedure Clear (Explorer : VCS_View_Access);
@@ -108,8 +110,7 @@ package VCS_View_Pkg is
    --  Convenience function to get the current file.
 
    function Get_Selected_Files
-     (Kernel : Kernel_Handle)
-     return String_List.List;
+     (Kernel : Kernel_Handle) return String_List.List;
    --  Return the currently selected files, as a list.
    --  Caller must free this list afterwards.
 
