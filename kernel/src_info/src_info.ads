@@ -193,6 +193,28 @@ package Src_Info is
    --  associated with the same LI file.
    --  This name is used as an index into the LI_File_List.
 
+   --------------
+   -- Entities --
+   --------------
+
+   type E_Declaration_Info is private;
+   No_Declaration_Info : constant E_Declaration_Info;
+
+   type E_Reference is private;
+   No_Reference : constant E_Reference;
+
+   type File_Location is private;
+   Null_File_Location : constant File_Location;
+
+   function Get_Location (Decl : E_Declaration_Info) return File_Location;
+   function Get_Location (Ref  : E_Reference) return File_Location;
+   --  Return the location for a declaration or a reference.
+
+   function Get_File   (Location : File_Location) return String;
+   function Get_Line   (Location : File_Location) return Positive;
+   function Get_Column (Location : File_Location) return Positive;
+   --  Return the fields of a location
+
 private
 
    --  In the following declarations, some abbreviations have been used
@@ -422,6 +444,15 @@ private
    --  This has not been done yet because it adds a little bit of
    --  complexity to the implementation (in terms of memory management).
 
+   No_Declaration : constant E_Declaration :=
+     (Name            => null,
+      Location        => Null_File_Location,
+      Kind            => E_Kind'First,
+      Parent_Location => Null_File_Location,
+      Parent_Kind     => E_Kind'First,
+      Scope           => Local_Scope,
+      End_Of_Scope    => No_Reference);
+
    type E_Declaration_Access is access all E_Declaration;
 
    type E_Declaration_Info is record
@@ -431,6 +462,8 @@ private
    --  All the information associated to a given entity declaration, which
    --  is the information about the declaration itself, and the references
    --  to this declaration.
+
+   No_Declaration_Info : constant E_Declaration_Info := (No_Declaration, null);
 
    type E_Declaration_Info_Node;
    type E_Declaration_Info_List is access E_Declaration_Info_Node;

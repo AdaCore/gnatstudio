@@ -1011,4 +1011,49 @@ package body Src_Info is
         * Timestamp (Second);
    end To_Timestamp;
 
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location (Decl : E_Declaration_Info) return File_Location is
+   begin
+      return Decl.Declaration.Location;
+   end Get_Location;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location (Ref  : E_Reference) return File_Location is
+   begin
+      return Ref.Location;
+   end Get_Location;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File (Location : File_Location) return String is
+   begin
+      return Get_Source_Filename (Location.File);
+   end Get_File;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (Location : File_Location) return Positive is
+   begin
+      return Location.Line;
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column (Location : File_Location) return Positive is
+   begin
+      return Location.Column;
+   end Get_Column;
+
 end Src_Info;
