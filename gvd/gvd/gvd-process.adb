@@ -164,6 +164,22 @@ package body GVD.Process is
       Cmd     : String);
    --  Parse and process a "graph print" or "graph display" command
 
+   -----------------------
+   -- Add_Regexp_Filter --
+   -----------------------
+
+   procedure Add_Regexp_Filter
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Filter  : Regexp_Filter_Function;
+      Regexp  : Pattern_Matcher) is
+   begin
+      Process.Filters :=
+        new Regexp_Filter_List_Elem'
+          (Filter => Filter,
+           Regexp => new Pattern_Matcher' (Regexp),
+           Next   => Process.Filters);
+   end Add_Regexp_Filter;
+
    -------------
    -- Convert --
    -------------
@@ -405,15 +421,18 @@ package body GVD.Process is
       Str        : String;
       Window     : System.Address)
    is
-      Process     : constant Debugger_Process_Tab :=
+      Process        : constant Debugger_Process_Tab :=
         Convert (To_Main_Debug_Window (Window), Descriptor);
-      Tmp_Str     : GNAT.OS_Lib.String_Access;
+      Tmp_Str        : GNAT.OS_Lib.String_Access;
+      Current_Filter : Regexp_Filter_List;
+      Matched        : Match_Array (0 .. Max_Parenthesis);
 
    begin
       --  Concatenate current output
 
       if Process.Current_Output = null then
          Process.Current_Output := new String' (Str);
+         Process.Last_Match := 0;
       else
          --  ??? Consider optimizing this by using the GNAT.Table approach
          Tmp_Str := Process.Current_Output;
@@ -421,6 +440,27 @@ package body GVD.Process is
            new String' (Process.Current_Output.all & Str);
          Free (Tmp_Str);
       end if;
+
+      -- Process the filters
+
+      Current_Filter := Process.Filters;
+
+      while Current_Filter /= null loop
+         Match
+           (Current_Filter.Regexp.all,
+            Process.Current_Output
+              (Process.Last_Match + 1 .. Process.Current_Output'Last),
+            Matched);
+
+         if Matched (0) /= No_Match then
+            Process.Last_Match := Matched (0).Last;
+
+            Current_Filter.Filter
+              (Process, Process.Current_Output.all, Matched);
+         end if;
+
+         Current_Filter := Current_Filter.Next;
+      end loop;
 
       --  Do not show the output if we have an internal or hidden command
 
@@ -546,7 +586,30 @@ package body GVD.Process is
 
       Align_On_Grid (Process.Data_Canvas, Align_Items_On_Grid);
 
-      --  Spawn the debugger
+      --  Add a new page to the notebook
+
+      Gtk_New (Label);
+      Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
+      Show_All (Window.Process_Notebook);
+      Set_Page (Window.Process_Notebook, -1);
+
+      Length := Page_List.Length (Get_Children (Window.Process_Notebook));
+
+      if Length > 1 then
+         Set_Show_Tabs (Window.Process_Notebook, True);
+      elsif Length /= 0 then
+         Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
+      end if;
+
+      --  Set the user data, so that we can easily convert afterwards.
+
+      Process_User_Data.Set
+        (Process.Editor_Text, Process, Process_User_Data_Name);
+      Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
+
+      --  Spawn the debugger. Note that this needs to be done after the
+      --  creation of a new notebook page, since Spawn might need to access
+      --  the current page (via Convert).
 
       case Kind is
          when Gdb_Type =>
@@ -580,21 +643,6 @@ package body GVD.Process is
             (-" Could not find file: ") & Executable);
       end if;
 
-      --  Add a new page to the notebook
-
-      Gtk_New (Label);
-      Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
-      Show_All (Window.Process_Notebook);
-      Set_Page (Window.Process_Notebook, -1);
-
-      Length := Page_List.Length (Get_Children (Window.Process_Notebook));
-
-      if Length > 1 then
-         Set_Show_Tabs (Window.Process_Notebook, True);
-      elsif Length /= 0 then
-         Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
-      end if;
-
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
       --  debugger outputs a file name that should be displayed in the editor.
@@ -623,12 +671,6 @@ package body GVD.Process is
            (Process.Data_Canvas, Grid_Size => 0,
             Annotation_Height => Annotation_Font_Size);
       end if;
-
-      --  Set the user data, so that we can easily convert afterwards.
-
-      Process_User_Data.Set
-        (Process.Editor_Text, Process, Process_User_Data_Name);
-      Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       --  Set the output filter, so that we output everything in the Gtk_Text
       --  window.

@@ -21,6 +21,7 @@
 with Glib;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Expect; use GNAT.Expect;
 
 with Gdk.Color;
@@ -113,6 +114,8 @@ package GVD.Process is
    --    This is also called initially when the executable is given on the
    --    command line.
 
+   type Regexp_Filter_List is private;
+
    type Debugger_Process_Tab_Record is new
      Process_Tab_Pkg.Process_Tab_Record with
    record
@@ -170,6 +173,14 @@ package GVD.Process is
 
       Post_Processing         : Boolean := False;
       --  True if the debugger is handling post processing of a command.
+
+      Filters                 : Regexp_Filter_List;
+      --  List of regexp filters registered to this process.
+
+      Last_Match              : Natural := 0;
+      --  Last match in Current_Output.
+      --  This is needed to avoid matching twice the same string and to
+      --  optimize the handling of regexp filters.
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
@@ -208,6 +219,20 @@ package GVD.Process is
 
    Debugger_Not_Found : exception;
    --  ??? This needs documentation.
+
+   type Regexp_Filter_Function is access procedure
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Match   : Match_Array);
+   --  To be used with Add_Regexp_Filter below.
+
+   procedure Add_Regexp_Filter
+     (Process   : access Debugger_Process_Tab_Record'Class;
+      Filter    : Regexp_Filter_Function;
+      Regexp    : Pattern_Matcher);
+   --  Add a new regexp filter.
+   --  This filter will be run when output from a debugger is received
+   --  that matches regexp.
 
    function Get_Num (Tab : Debugger_Process_Tab) return Glib.Gint;
    --  Return the number identifying the debugger associated with a process tab
@@ -342,5 +367,17 @@ package GVD.Process is
    --  emitted to the debugger.
    --  False is returned when there is no such breakpoint in the list (or the
    --  list of breakpoints has never been parsed before).
+
+private
+
+   type Pattern_Matcher_Access is access Pattern_Matcher;
+
+   type Regexp_Filter_List_Elem;
+   type Regexp_Filter_List is access Regexp_Filter_List_Elem;
+   type Regexp_Filter_List_Elem is record
+      Filter : Regexp_Filter_Function;
+      Regexp : Pattern_Matcher_Access;
+      Next   : Regexp_Filter_List;
+   end record;
 
 end GVD.Process;
