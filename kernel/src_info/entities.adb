@@ -501,6 +501,8 @@ package body Entities is
       UEI    : Unshared_Entity_Informations;
       EL     : Entity_Information_List_Access;
       Entity : Entity_Information;
+      From, To : Entity_Reference_Arrays.Index_Type :=
+        Entity_Reference_Arrays.Index_Type'Last;
    begin
       Get_First (File.Entities, Iter);
       loop
@@ -516,18 +518,30 @@ package body Entities is
             --  If the entity has references in other files, do not mark it
             --  as valid, so that it isn't removed later on, or we would lose
             --  trace of these references.
-            --  ??? Could be more efficient and remove ranges at once
+            To := Entity_Reference_Arrays.Index_Type'Last;
             for R in reverse
               Entity_Reference_Arrays.First .. Last (Entity.References)
             loop
                if Entity.References.Table (R).Location.File /= File then
                   Entity.Is_Valid := False;
+                  if To /= Entity_Reference_Arrays.Index_Type'Last then
+                     Remove (Entity.References, From, To);
+                     To := Entity_Reference_Arrays.Index_Type'Last;
+                  end if;
                else
                   Unref (Entity.References.Table (R).Caller,
                          "reference.caller");
-                  Remove (Entity.References, R);
+                  if To = Entity_Reference_Arrays.Index_Type'Last then
+                     To := R;
+                  end if;
+
+                  From := R;
                end if;
             end loop;
+
+            if To /= Entity_Reference_Arrays.Index_Type'Last then
+               Remove (Entity.References, From, To);
+            end if;
 
             Isolate (Entity, Clear_References => False);
          end loop;
@@ -552,6 +566,7 @@ package body Entities is
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
 
+            To := Entity_Reference_Arrays.Index_Type'Last;
             for R in reverse
               Entity_Reference_Arrays.First .. Last (Entity.References)
             loop
@@ -559,9 +574,21 @@ package body Entities is
                if Entity.References.Table (R).Location.File = File then
                   Unref (Entity.References.Table (R).Caller,
                          "reference.caller");
-                  Remove (Entity.References, R);
+                  if To = Entity_Reference_Arrays.Index_Type'Last then
+                     To := R;
+                  end if;
+                  From := R;
+               else
+                  if To /= Entity_Reference_Arrays.Index_Type'Last then
+                     Remove (Entity.References, From, To);
+                  end if;
+                  To := Entity_Reference_Arrays.Index_Type'Last;
                end if;
             end loop;
+
+            if To /= Entity_Reference_Arrays.Index_Type'Last then
+               Remove (Entity.References, From, To);
+            end if;
          end loop;
          Get_Next (File.All_Entities, Iter2);
       end loop;
