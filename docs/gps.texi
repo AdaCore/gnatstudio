@@ -9417,6 +9417,81 @@ contextual menu entry will not be visible in other contexts
 </root>
 @end smallexample
 
+
+@c  ------ FAQ 3
+@item How do I redirect the output of my python script to another window  ?
+
+By default, the output of all python commands is displayed in the Python
+console. However, you might want in some cases to create other windows in
+GPS for this output. This can be done in one of two ways:
+
+@itemize -
+@item Define a new action
+
+If the whole output of your script should be redirected to the same window,
+or if the script will only be used interactively through a menu or a key
+binding, the easiest way is to create a new XML action, and redirect the
+output, as in
+
+@smallexample
+<?xml version="1.0" ?>
+<root>
+  <action name="redirect output" output="New Window">
+     <shell lang="python">print "a"</shell>
+  </action>
+</root>
+@end smallexample
+
+All the various shell commands in your action can be output in a different
+window, and this also applies for the output of external commands.
+
+
+@item Explicit redirection
+
+If, however, you want to control in your script where the output should be
+sent, for instance if you can't know that statically when you write your
+commands, you can use the following code:
+
+@smallexample
+sys.stdout.set_console ("New Window")
+sys.stdin.set_console ("New Window")
+print "foo"
+print (sys.stdin.read ())
+sys.stdout.set_console ()
+sys.stdin.set_console ()
+@end smallexample
+
+The first two lines redirect all input and output to a new window, which is
+created if it doesn't exist yet. Note however that the output of stderr
+is not redirected, and you need to explicitely do it for @code{sys.stderr}.
+
+The last two lines restore the default Python console. You must do this
+at the end of your script, or all scripts will continue to use the new
+consoles.
+
+You can alternatively create separate objects for the output, and use them
+in turn:
+
+@smallexample
+my_out=GPS.Console (1)
+my_out.set_console ("New Window")
+my_out2=GPS.Console (1)
+my_out2.set_console ("New Window2")
+
+sys.stdout=my_out
+print "a"
+sys.stdout=my_out2
+print "b"
+sys.stdout=GPS.Console (1)
+@end smallexample
+
+The parameter to the constructor @code{GPS.Console} indicates whether any
+output sent to that console should be saved by GPS, and reused for the
+@code{%1}, @code{%2},... parameters if the command is executed in a
+GPS action. That should generally be 1, except for stderr where it should
+be 0.
+@end itemize
+
 @end itemize
 
 @end ifset
