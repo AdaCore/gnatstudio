@@ -396,8 +396,7 @@ package body Debugger is
    is
       use type Gtk.Window.Gtk_Window;
       Data    : History_Data;
-      Process : constant Debugger_Process_Tab :=
-        Convert (Debugger.Window, Debugger);
+      Process : Debugger_Process_Tab;
 
    begin
       Set_Command_In_Process (Get_Process (Debugger));
@@ -409,6 +408,7 @@ package body Debugger is
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
       if Debugger.Window /= null then
+         Process := Convert (Debugger.Window, Debugger);
          Send_Init (Process);
 
          --  Display the command in the output window if necessary
