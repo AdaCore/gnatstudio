@@ -4,7 +4,6 @@ pragma Warnings (Off);
 with Prj.Ext;
 with Prj.Part;
 with Prj.Proc;
-with Src_Editor_Box;
 with Src_Info.ALI;
 with Src_Info.Debug;
 with Src_Info.Prj_Utils;
