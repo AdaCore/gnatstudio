@@ -57,6 +57,7 @@ def project_recomputed (hook_name):
     GPS.Project.root().languages (recursive=True).index ("python")
 
     # The rest is done only if we support python
+    GPS.Menu.get ("/Python").show()
     list=[]
     for p in sys.path:
       for root, dirs, files in os.walk ("/usr/local/lib/python2.3"):
@@ -65,7 +66,7 @@ def project_recomputed (hook_name):
     GPS.Project.add_predefined_paths (sources=os.pathsep.join (list))
 
   except:
-    pass
+    GPS.Menu.get ("/Python").hide()
 
 def show_python_library ():
   """Open a navigator to show  the help on the python library"""
