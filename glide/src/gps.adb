@@ -113,7 +113,6 @@ with Action_Editor;
 procedure GPS is
    use Glide_Main_Window;
 
-   --
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
