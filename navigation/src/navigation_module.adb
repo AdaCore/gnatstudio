@@ -744,28 +744,28 @@ package body Navigation_Module is
       Register_Menu (Kernel, Navigate, -"_End Of Statement",
                      Stock_Go_Down, On_End_Statement'Access,
                      null, GDK_Down, Mod1_Mask);
-      Register_Menu (Kernel, Navigate, -"Previous Subprogram", "",
+      Register_Menu (Kernel, Navigate, -"Pre_vious Subprogram", "",
                      On_Previous_Subprogram'Access, null,
                      GDK_Up, Control_Mask);
-      Register_Menu (Kernel, Navigate, -"Next Subprogram", "",
+      Register_Menu (Kernel, Navigate, -"Ne_xt Subprogram", "",
                      On_Next_Subprogram'Access, null, GDK_Down, Control_Mask);
 
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
       Register_Menu
-        (Kernel, Navigate, -"Previous Tag", "", On_Previous_Result'Access,
+        (Kernel, Navigate, -"Previous _Tag", "", On_Previous_Result'Access,
          Accel_Key  => GDK_less,
          Accel_Mods => Control_Mask);
       Register_Menu
-        (Kernel, Navigate, -"Next Tag", "", On_Next_Result'Access,
+        (Kernel, Navigate, -"N_ext Tag", "", On_Next_Result'Access,
          Accel_Key  => GDK_greater,
          Accel_Mods => Control_Mask);
 
       Register_Menu
-        (Kernel, Navigate, -"Back", Stock_Go_Back,
+        (Kernel, Navigate, -"Bac_k", Stock_Go_Back,
          On_Back'Access);
       Register_Menu
-        (Kernel, Navigate, -"Forward", Stock_Go_Forward,
+        (Kernel, Navigate, -"For_ward", Stock_Go_Forward,
          On_Forward'Access);
 
       Append_Space (Toolbar);
