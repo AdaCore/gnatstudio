@@ -599,7 +599,7 @@ package body Debugger.Gdb is
       --  processing a command.
       --  ??? Problem here if we were waiting on a user question (for instance
       --  in Start)
-      Interrupt (Debugger, Wait_For_Prompt => False);
+      Interrupt (Debugger);
 
       --  Make sure gdb will not complain if the file is being run
       Send (Debugger, "set confirm off");
