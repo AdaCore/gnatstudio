@@ -185,7 +185,8 @@ package body Src_Info.CPP is
 
    type To_Handler is access procedure (Ref : TO_Table);
 
-   procedure Fu_To_Gv_Handler  (Ref : TO_Table);
+   procedure Fu_To_Gv_Handler (Ref : TO_Table);
+   procedure Fu_To_Fu_Handler (Ref : TO_Table);
    procedure Fu_To_Con_Handler (Ref : TO_Table);
    procedure Fu_To_E_Handler   (Ref : TO_Table);
    procedure Fu_To_Ec_Handler  (Ref : TO_Table);
@@ -196,6 +197,7 @@ package body Src_Info.CPP is
 
    Fu_To_Handlers : array (Symbol_Type) of To_Handler :=
      (GV     => Fu_To_Gv_Handler'Access,
+      FU     => Fu_To_Fu_Handler'Access,
       CON    => Fu_To_Con_Handler'Access,
       E      => Fu_To_E_Handler'Access,
       EC     => Fu_To_Ec_Handler'Access,
@@ -965,6 +967,7 @@ package body Src_Info.CPP is
    procedure Sym_IU_Handler      (Sym : FIL_Table) is separate;
 
    procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
+   procedure Fu_To_Fu_Handler    (Ref : TO_Table) is separate;
    procedure Fu_To_Con_Handler   (Ref : TO_Table) is separate;
    procedure Fu_To_E_Handler     (Ref : TO_Table) is separate;
    procedure Fu_To_Ec_Handler    (Ref : TO_Table) is separate;
