@@ -38,7 +38,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --  by looking at all the pages of the main notebook.
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access) is
-      Tab  : Process_Tab_Access;
+      Tab  : Debugger_Process_Tab;
       Page_Num : Gint := 0;
       Page : Gtk_Widget;
 
@@ -50,7 +50,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
          Page_Num := Page_Num + 1;
          Tab := Process_User_Data.Get (Page);
-         Close (Tab.Debugger.Debugger.all);
+         Close (Tab.Debugger.all);
       end loop;
    end Cleanup_Debuggers;
 
@@ -132,7 +132,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       List     : Argument_List (1 .. 0);
-      Process  : Gtk_Window;
+      Process  : Debugger_Process_Tab;
    begin
       Process := Create_Debugger (List, Process_Name => "");
    end On_Attach_To_Process1_Activate;
@@ -415,11 +415,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab : Process_Tab_Access;
+      Tab : Debugger_Process_Tab;
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Run (Tab.Debugger.Debugger.all);
+      Run (Tab.Debugger.all);
    end On_Run1_Activate;
 
    ----------------------------
@@ -441,11 +441,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab : Process_Tab_Access;
+      Tab : Debugger_Process_Tab;
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Start (Tab.Debugger.Debugger.all);
+      Start (Tab.Debugger.all);
    end On_Start1_Activate;
 
    ------------------------------------------

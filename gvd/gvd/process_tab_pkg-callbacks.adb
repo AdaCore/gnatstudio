@@ -25,6 +25,7 @@ with Gtk.Handlers; use Gtk.Handlers;
 with Debugger; use Debugger;
 with Unchecked_Conversion;
 with GNAT.IO; use GNAT.IO;
+with Odd.Process; use Odd.Process;
 
 package body Process_Tab_Pkg.Callbacks is
 
@@ -42,7 +43,7 @@ package body Process_Tab_Pkg.Callbacks is
       --  Arg2 : Gint := To_Gint (Params, 2);
       Arg3 : Address := To_Address (Params, 3);
 
-      Top  : Process_Tab_Access := Process_Tab_Access (Object);
+      Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
 
       type Guint_Ptr is access all Guint;
       function To_Guint_Ptr is new Unchecked_Conversion (Address, Guint_Ptr);
@@ -54,8 +55,7 @@ package body Process_Tab_Pkg.Callbacks is
       else
          if Arg1 (Arg1'First) = ASCII.LF then
             Send_Command
-              (Top.Debugger,
-               Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos)));
+              (Top, Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos)));
          end if;
       end if;
    end On_Debugger_Text_Insert_Text;
@@ -71,7 +71,7 @@ package body Process_Tab_Pkg.Callbacks is
       --  Arg1 : Gint := To_Gint (Params, 1);
       Arg2 : Gint := To_Gint (Params, 2);
 
-      Top  : Process_Tab_Access := Process_Tab_Access (Object);
+      Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
 
    begin
       if Arg2 <= Gint (Top.Edit_Pos) then

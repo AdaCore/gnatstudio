@@ -19,27 +19,49 @@
 -----------------------------------------------------------------------
 
 with System;
+with Glib;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Expect; use GNAT.Expect;
 
 with Gtk.Window; use Gtk.Window;
+with Gtk.Object; use Gtk.Object;
 
 with Debugger; use Debugger;
 with Language; use Language;
+with Process_Tab_Pkg;
 
 package Odd.Process is
 
-   type Debugger_Descriptor is record
-      Debugger : Debugger_Access;
-      Window   : Gtk_Window;
-   end record;
-   --  This type holds all the informations related to a given debugger.
+   ---------------------------
+   -- Debugger_Processs_Tab --
+   ---------------------------
+   --  This type represents one of the tabs in the process notebook, and
+   --  its associated debugger session.
+   --  This is the graphical part of the Debugger.* packages, and all graphic
+   --  subprogram calls should be done on that type instead of on a
+   --  Debugger'Class.
+   --  Note also that the real contents of the notebook page is not the
+   --  Debugger_Process_Tab_Record itself, but rather its Process_Paned
+   --  field.
+
+   type Debugger_Process_Tab_Record is new Process_Tab_Pkg.Process_Tab_Record
+     with record
+        Debugger : Debugger_Access;
+        Edit_Pos : Glib.Guint;
+     end record;
+   type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
+
+
+
+   package Process_User_Data is new User_Data (Debugger_Process_Tab);
+
+
 
    function Create_Debugger
      (Params       : Argument_List;
       Process_Name : String := "")
-     return Gtk_Window;
+     return Debugger_Process_Tab;
    --  Create a debugger with a given list of arguments.
    --  A new page is added to the main notebook. Process_Name is used as the
    --  name of the tab, or if it is the empty string an automatic name is
@@ -48,11 +70,12 @@ package Odd.Process is
 
    Debugger_Not_Found : exception;
 
-   function Convert (Pid : GNAT.Expect.Pipes_Id) return Debugger_Descriptor;
+   function Convert (Pid : GNAT.Expect.Pipes_Id)
+                    return Debugger_Process_Tab;
    --  Return the debugger_descriptor associated with a pipes_id.
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 
-   procedure Send_Command (Debugger : Debugger_Descriptor; Command : String);
+   procedure Send_Command (Debugger : Debugger_Process_Tab; Command : String);
    --  Send a given command to the debugger.
    --  If Command is internal, execute it without actually sending it.
 

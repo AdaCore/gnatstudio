@@ -52,7 +52,7 @@ package body Odd.Process is
 
    function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
 
-   package My_Input is new Gdk.Input.Input_Add (Debugger_Descriptor);
+   package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
 
    procedure Text_Output_Handler (Pid : GNAT.Expect.Pipes_Id;
                                   Str : String);
@@ -72,22 +72,22 @@ package body Odd.Process is
    -------------
 
    function Convert (Pid : GNAT.Expect.Pipes_Id)
-                    return Debugger_Descriptor
+                    return Debugger_Process_Tab
    is
       Page : Gtk_Widget;
       Num_Pages : Gint := Gint (Page_List.Length (Get_Children
                                 (Main_Debug_Window.Process_Notebook)));
-      Process     : Process_Tab_Access;
+      Process     : Debugger_Process_Tab;
       Process_Pid : Pipes_Id_Access;
    begin
-      --  For all the process tab in the application, check whether
+      --  For all the process tabs in the application, check whether
       --  this is the one associated with Pid.
 
       for Page_Num in 0 .. Num_Pages - 1 loop
          Page := Get_Nth_Page (Main_Debug_Window.Process_Notebook, Page_Num);
          if Page /= null then
             Process := Process_User_Data.Get (Page);
-            Process_Pid := Get_Process (Process.Debugger.Debugger.all);
+            Process_Pid := Get_Process (Process.Debugger.all);
 
             --  Note: The process might have been already killed when this
             --  function is called.
@@ -95,7 +95,7 @@ package body Odd.Process is
             if Process_Pid /= null
               and then Process_Pid.all = Pid
             then
-               return Process.Debugger;
+               return Process;
             end if;
          end if;
       end loop;
@@ -111,21 +111,19 @@ package body Odd.Process is
      (Pid : GNAT.Expect.Pipes_Id;
       Str : String)
    is
-      Descriptor : Debugger_Descriptor := Convert (Pid);
-      Win        : Process_Tab_Access :=
-        Process_Tab_Access (Descriptor.Window);
+      Process    : Debugger_Process_Tab := Convert (Pid);
       Font       : Gdk_Font;
    begin
-      Freeze (Win.Debugger_Text);
+      Freeze (Process.Debugger_Text);
       Load (Font, "-adobe-helvetica-bold-*-*-*-*-140-*-*-*-*-*-*");
-      Insert (Win.Debugger_Text,
+      Insert (Process.Debugger_Text,
               Font,
               Black (Get_System),
               White (Get_System),
               Str);
-      Win.Edit_Pos := Get_Length (Win.Debugger_Text);
-      Thaw (Win.Debugger_Text);
-      Set_Position (Win.Debugger_Text, Gint (Win.Edit_Pos));
+      Process.Edit_Pos := Get_Length (Process.Debugger_Text);
+      Thaw (Process.Debugger_Text);
+      Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
    end Text_Output_Handler;
 
    ----------------------
@@ -157,9 +155,9 @@ package body Odd.Process is
    function Create_Debugger
      (Params       : Argument_List;
       Process_Name : String := "")
-     return Gtk_Window
+     return Debugger_Process_Tab
    is
-      Window   : Process_Tab_Access;
+      Process  : Debugger_Process_Tab;
       Id       : Gint;
       Infile   : File_Type;
       Top      : Main_Debug_Window_Access renames Main_Debug_Window;
@@ -167,7 +165,8 @@ package body Odd.Process is
       Next_Tab : Guint;
 
    begin
-      Gtk_New (Window);
+      Process := new Debugger_Process_Tab_Record;
+      Initialize (Process);
 
       --  Add a new page to the notebook
 
@@ -179,25 +178,24 @@ package body Odd.Process is
          Gtk_New (Label, Process_Name);
       end if;
 
-      Append_Page (Top.Process_Notebook, Window.Process_Paned, Label);
+      Append_Page (Top.Process_Notebook, Process.Process_Paned, Label);
       Set_Page (Top.Process_Notebook, Gint (Next_Tab));
       Show_All (Top.Process_Notebook);
 
+      Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
+
       --  Spawn the debugger
-
-      Window.Debugger.Window := Window.all'Access;
-
       --  ??? This should be a parameter
       --  ??? Params should be passed on to the debugger
 
-      Window.Debugger.Debugger := new Gdb_Debugger;
+      Process.Debugger := new Gdb_Debugger;
 
-      Spawn (Window.Debugger.Debugger, Remote_Machine => "");
-      Add_Output_Filter (Get_Process (Window.Debugger.Debugger.all).all,
+      Spawn (Process.Debugger, Remote_Machine => "");
+      Add_Output_Filter (Get_Process (Process.Debugger.all).all,
                          Text_Output_Handler'Access);
---        Add_Input_Filter (Get_Process (Window.Debugger.Debugger.all).all,
+--        Add_Input_Filter (Get_Process (Process.Debugger.all).all,
 --                          Text_Output_Handler'Access);
-      Initialize (Window.Debugger.Debugger);
+      Initialize (Process.Debugger);
 
       Open (Infile, In_File, "odd_main.adb");
       declare
@@ -206,99 +204,85 @@ package body Odd.Process is
          Row    : Gint;
          Pixmap : Gdk.Gdk_Pixmap;
          Mask   : Gdk.Gdk_Bitmap;
-         Style  : Gtk_Style := Get_Style (Window.Editor_Text);
+         Style  : Gtk_Style := Get_Style (Process.Editor_Text);
          Texts  : constant Chars_Ptr_Array := (0 => Null_Ptr);
 
       begin
-         Realize (Window.Editor_Text);
+         Realize (Process.Editor_Text);
          Create_From_Xpm_D
-           (Pixmap, Get_Clist_Window (Window.Editor_Text),
+           (Pixmap, Get_Clist_Window (Process.Editor_Text),
             Mask, Get_White (Style), stop_xpm);
 
          while not End_Of_File (Infile) loop
             Get_Line (File => Infile, Item => S, Last => Last);
-            Row := Append (Window.Editor_Text, Texts);
+            Row := Append (Process.Editor_Text, Texts);
             Set_Pixtext
-              (Window.Editor_Text, Row, 0, S (1 .. Last), 5, Pixmap, Mask);
+              (Process.Editor_Text, Row, 0, S (1 .. Last), 5, Pixmap, Mask);
          end loop;
       end;
       Close (Infile);
 
       Id := My_Input.Add
         (To_Gint (Get_Output_Fd
-                  (Get_Process (Window.Debugger.Debugger.all).all)),
+                  (Get_Process (Process.Debugger.all).all)),
          Gdk.Types.Input_Read,
          Output_Available'Access,
-         Window.Debugger'Access);
+         My_Input.Data_Access (Process));
 
-      return Gtk_Window (Window);
+      return Process;
    end Create_Debugger;
 
    ------------------
    -- Send_Command --
    ------------------
 
-   procedure Send_Command (Debugger : Debugger_Descriptor; Command : String) is
+   procedure Send_Command (Debugger : Debugger_Process_Tab;
+                           Command  : String) is
 
-      Win    : Process_Tab_Access :=
-        Process_Tab_Access (Debugger.Window);
       The_Type : Generic_Type_Access;
       Item   : Display_Item;
+      First  : constant Integer := Command'First;
 
    begin
-      if Command'Length > 6
-        and then Command (Command'First .. Command'First + 5) = "graph "
+      if Command'Length > 13
+        and then Command (First .. First + 12) = "graph display"
       then
+         declare
+            Var : String := Command (First + 14 .. Command'Last);
+         begin
+            The_Type := Parse_Type (Debugger.Debugger.all, Var);
 
-         --  Handle "graph" commands (print, display)
+            if The_Type /= null then
+               Parse_Value (Debugger.Debugger.all, Var, The_Type);
 
-         if Command'Length > 11
-           and then Command (Command'First + 6 .. Command'First + 10) = "print"
-         then
-            declare
-               Var : String := Command (Command'First + 12 .. Command'Last);
-            begin
-               The_Type := Parse_Type (Debugger.Debugger.all, Var);
+               Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
+                        Var, The_Type, Auto_Refresh => True);
+               Put (Debugger.Data_Canvas, Item);
+            end if;
+         end;
 
-               if The_Type /= null then
-                  Parse_Value (Debugger.Debugger.all, Var, The_Type);
+      elsif Command'Length > 11
+        and then Command (First .. First + 10) = "graph print"
+      then
+         declare
+            Var : String := Command (First + 12 .. Command'Last);
+         begin
+            The_Type := Parse_Type (Debugger.Debugger.all, Var);
 
-                  Gtk_New (Item, Get_Window (Win.Data_Canvas),
-                           Var, The_Type, Auto_Refresh => False);
-                  Put (Win.Data_Canvas, Item);
-               end if;
-            end;
+            if The_Type /= null then
+               Parse_Value (Debugger.Debugger.all, Var, The_Type);
 
-         elsif Command'Length > 13
-           and then Command (Command'First + 6 .. Command'First + 12)
-           = "display"
-         then
-            declare
-               Var : String := Command (Command'First + 14 .. Command'Last);
-            begin
-               The_Type := Parse_Type (Debugger.Debugger.all, Var);
+               Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
+                        Var, The_Type, Auto_Refresh => False);
+               Put (Debugger.Data_Canvas, Item);
+            end if;
+         end;
 
-               if The_Type /= null then
-                  Parse_Value (Debugger.Debugger.all, Var, The_Type);
-
-                  Gtk_New (Item, Get_Window (Win.Data_Canvas),
-                           Var, The_Type, Auto_Refresh => True);
-                  Put (Win.Data_Canvas, Item);
-               end if;
-            end;
-
-         else
-            Send (Get_Process (Debugger.Debugger.all).all,
-              Command (Command'First + 6 .. Command'Last));
-         end if;
+      elsif Command = "quit" then
+         Main_Quit;
 
       else
-         if Command = "quit" then
-            Main_Quit;
-         end if;
-
          --  Regular debugger command, send it.
-
          Send (Get_Process (Debugger.Debugger.all).all, Command);
       end if;
    end Send_Command;

@@ -53,8 +53,6 @@ begin
    Set_Handle_Size (Process_Tab.Process_Paned, 10);
    Set_Gutter_Size (Process_Tab.Process_Paned, 6);
 
-   Process_User_Data.Set (Process_Tab.Process_Paned, Process_Tab.all'Access);
-
    Gtk_New_Vpaned (Process_Tab.Vpaned6);
    Add (Process_Tab.Process_Paned, Process_Tab.Vpaned6);
    Set_Handle_Size (Process_Tab.Vpaned6, 10);

@@ -27,7 +27,6 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
-with Process_Tab_Pkg; use Process_Tab_Pkg;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Process; use Odd.Process;
 with Odd.Pixmaps; use Odd.Pixmaps;
@@ -47,7 +46,6 @@ end Gtk_New;
 procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class) is
    The_Accel_Group : Gtk_Accel_Group;
    Combo6_Items : String_List.Glist;
-   Process : Process_Tab_Access;
    List : Argument_List (1 .. 0);
 
 begin

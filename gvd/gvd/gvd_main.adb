@@ -27,7 +27,7 @@ with GNAT.Os_Lib; use GNAT.Os_Lib;
 with Odd.Process; use Odd.Process;
 
 procedure Odd_Main is
-   Process_Tab : Gtk_Window;
+   Process_Tab : Debugger_Process_Tab;
    List : Argument_List (1 .. 0);
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
