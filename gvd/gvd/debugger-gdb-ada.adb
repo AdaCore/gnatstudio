@@ -26,6 +26,35 @@ package body Debugger.Gdb.Ada is
 
    use Language;
 
+   procedure Parse_Array_Type
+     (Lang      : access Gdb_Ada_Language;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Result    : out Generic_Type_Access);
+   --  Parse the description of an array type.
+   --  Index should point at the opening character of the array in Type_Str
+   --  (ie "array " in gdb).
+
+   procedure Parse_Record_Type
+     (Lang      : access Gdb_Ada_Language;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Result    : out Generic_Type_Access;
+      End_On    : String);
+   --  Parse the type describing a record.
+   --  Index should pointer after the initial "record ", and the record is
+   --  assumed to end on a string like End_On.
+   --  This function is also used to parse the variant part of a record.
+
+   procedure Parse_Array_Value
+     (Lang     : access Gdb_Ada_Language;
+      Type_Str : String;
+      Index    : in out Natural;
+      Result   : in out Array_Type_Access);
+   --  Parse the value of an array.
+
    ----------------
    -- Parse_Type --
    ----------------
