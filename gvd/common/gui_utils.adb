@@ -543,6 +543,9 @@ package body GUI_Utils is
    is
       GC : Gdk_GC;
       F  : Gdk_Font;
+      Lines_Count : Gint := 1;
+      Start : Natural;
+      H : Gint;
    begin
       --  ??? Should use a pango_layout instead for proper support of
       --  internationalization
@@ -551,9 +554,23 @@ package body GUI_Utils is
       Set_Foreground (GC, Bg_Color);
 
       F := From_Description (Font);
+      Width := 0;
+      Start := Text'First;
 
-      Height := Get_Ascent (F) + Get_Descent (F);
-      Width  := String_Width (F, Text) + 4;
+      for Index in Text'Range loop
+         if Text (Index) = ASCII.LF then
+            Lines_Count := Lines_Count + 1;
+            Width  := Gint'Max
+              (Width, String_Width (F, Text (Start .. Index - 1)));
+            Start := Index + 1;
+         end if;
+      end loop;
+
+      Width  := Gint'Max
+        (Width, String_Width (F, Text (Start .. Text'Last))) + 4;
+
+
+      Height := (Get_Ascent (F) + Get_Descent (F)) * Lines_Count;
       Gdk.Pixmap.Gdk_New (Pixmap, Window, Width, Height);
       Draw_Rectangle
         (Pixmap,
@@ -565,8 +582,6 @@ package body GUI_Utils is
          Height => Height - 1);
 
       Set_Foreground (GC, Black (Get_Default_Colormap));
-      Draw_Text (Pixmap, F, GC, 2, Get_Ascent (F), Text);
-
       Draw_Rectangle
         (Pixmap,
          GC,
@@ -575,6 +590,19 @@ package body GUI_Utils is
          Y      => 0,
          Width  => Width - 1,
          Height => Height - 1);
+
+      Start := Text'First;
+      H := Get_Ascent (F);
+
+      for Index in Text'Range loop
+         if Text (Index) = ASCII.LF then
+            Draw_Text (Pixmap, F, GC, 2, H, Text (Start .. Index - 1));
+            H := H + Get_Ascent (F) + Get_Descent (F);
+            Start := Index + 1;
+         end if;
+      end loop;
+
+      Draw_Text (Pixmap, F, GC, 2, H, Text (Start .. Text'Last));
 
       Unref (F);
       Unref (GC);
