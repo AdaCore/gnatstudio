@@ -426,14 +426,12 @@ package body Src_Editor_Buffer is
          Len := A (J).Length;
 
          if Len /= 0 then
-            Output (Index .. Index + Len) :=
-              A (J).Contents (1 .. Len) & ASCII.LF;
-            Index := Index + Len + 1;
-         else
-            Output (Index) := ASCII.LF;
-            Index := Index + 1;
+            Output (Index .. Index + Len - 1) :=
+              A (J).Contents (1 .. Len);
          end if;
 
+         Output (Index + Len) := ASCII.LF;
+         Index := Index + Len + 1;
          Free (A (J));
       end loop;
 
