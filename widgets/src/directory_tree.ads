@@ -175,7 +175,7 @@ private
    type Directory_Selector_Record is new Gtk.Paned.Gtk_Paned_Record with record
       Directory : Dir_Tree;
 
-      List_Tree  :  Gtk.Tree_View.Gtk_Tree_View;
+      List_Tree  : Gtk.Tree_View.Gtk_Tree_View;
       List_Model : Gtk.Tree_Store.Gtk_Tree_Store;
       Tree_Contextual_Menu : Gtk.Menu.Gtk_Menu;
    end record;
