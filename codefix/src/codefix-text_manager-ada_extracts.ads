@@ -101,8 +101,6 @@ private
 
    function Is_Comment (Line : String) return Boolean;
 
-   function Is_Blank (Str : String) return Boolean;
-
    type Ada_Instruction is new Extract with record
       Start, Stop : File_Cursor;
    end record;
