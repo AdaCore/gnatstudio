@@ -58,6 +58,7 @@ with Odd.Code_Editors; use Odd.Code_Editors;
 with GNAT.Regpat;     use GNAT.Regpat;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Odd.Menus;       use Odd.Menus;
+with Odd.Explorer;    use Odd.Explorer;
 with Items.Simples;   use Items.Simples;
 
 with Main_Debug_Window_Pkg;      use Main_Debug_Window_Pkg;
@@ -427,6 +428,14 @@ package body Odd.Process is
       Initialize (Process);
       Initialize_Class_Record (Process, Signals, Class_Record);
       Process.Window := Window.all'Access;
+
+
+      Widget_Callback.Object_Connect
+        (Process,
+         "executable_changed",
+         Widget_Callback.To_Marshaller
+         (Odd.Explorer.On_Executable_Changed'Access),
+         Get_Explorer (Process.Editor_Text));
 
       Widget_Callback.Connect
         (Gtk_Widget (Process), "process_stopped",
