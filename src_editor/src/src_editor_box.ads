@@ -167,7 +167,7 @@ package Src_Editor_Box is
 
    function Get_Show_Line_Numbers
      (Editor : access Source_Editor_Box_Record) return Boolean;
-   -- Returns True if the line numbers are displayed.
+   --  Returns True if the line numbers are displayed.
 
 private
 
