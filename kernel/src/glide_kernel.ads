@@ -65,12 +65,6 @@ package Glide_Kernel is
       return Gtk.Accel_Group.Gtk_Accel_Group;
    --  Returns the defauls accelerators group for the main window.
 
-   procedure Initialize_All_Modules (Handle : access Kernel_Handle_Record);
-   --  Initialize all the modules that are registered. This should be called
-   --  only after the main window and the MDI have been initialized, so that
-   --  the modules can add entries in the menus and the MDI.
-   --  Only the modules that haven't been initialized yet are processed.
-
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record);
    --  Save the current desktop.
@@ -294,10 +288,6 @@ package Glide_Kernel is
    --  use Glide_Kernel.Modules.Context_Callback below to connect signals to
    --  the items.
 
-   type Module_Initializer is access procedure
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  General type for the module initialization subprograms.
-
    type Mime_Mode is (Read_Only, Read_Write);
    --  How the data should be opened. In some cases, it might happen that some
    --  module is the best to display data read-only, but cannot handle the
@@ -332,6 +322,10 @@ package Glide_Kernel is
 
    package Object_User_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Glib.Object.GObject);
+   --  Generic callback that can be used to connect a signal to a kernel.
+
+   package Object_Return_Callback is new Gtk.Handlers.Return_Callback
+     (Glib.Object.GObject_Record, Boolean);
    --  Generic callback that can be used to connect a signal to a kernel.
 
    package Kernel_Callback is new Gtk.Handlers.User_Callback
@@ -405,7 +399,6 @@ private
    type Module_ID_Information (Name_Length : Natural) is record
       Name            : String (1 .. Name_Length);
       Priority        : Module_Priority;
-      Initializer     : Module_Initializer;
       Contextual_Menu : Module_Menu_Handler;
       Mime_Handler    : Module_Mime_Handler;
       Was_Initialized : Boolean := False;

@@ -148,32 +148,6 @@ package body Glide_Kernel is
       return GVD_Main_Window (Handle.Main_Window).Main_Accel_Group;
    end Get_Default_Accelerators;
 
-   ----------------------------
-   -- Initialize_All_Modules --
-   ----------------------------
-
-   procedure Initialize_All_Modules (Handle : access Kernel_Handle_Record) is
-      Module : Module_List.List_Node :=
-        Module_List.First (Handle.Modules_List);
-
-      use type Module_List.List_Node;
-   begin
-      while Module /= Module_List.Null_Node loop
-         if not Module_List.Data (Module).Was_Initialized then
-            Trace (Me, "Initializing module "
-                   & Module_List.Data (Module).Name);
-
-            if Module_List.Data (Module).Initializer /= null then
-               Module_List.Data (Module).Initializer (Handle);
-            end if;
-
-            Module_List.Data (Module).Was_Initialized := True;
-         end if;
-
-         Module := Module_List.Next (Module);
-      end loop;
-   end Initialize_All_Modules;
-
    --------------------------------
    -- Get_Predefined_Source_Path --
    --------------------------------
