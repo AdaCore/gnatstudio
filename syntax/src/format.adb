@@ -138,7 +138,8 @@ package body Format is
       In_Comments     : in out Boolean;
       Num_Parens      : in out Integer;
       String_Mismatch : in out Boolean;
-      Semicolon       : in out Boolean);
+      Semicolon       : in out Boolean;
+      Line_Count      : in out Word);
    --  Starting at Buffer (P), find the location of the next word
    --  and set P accordingly.
    --  Formatting of operators is performed by this procedure.
@@ -491,7 +492,8 @@ package body Format is
       In_Comments     : in out Boolean;
       Num_Parens      : in out Integer;
       String_Mismatch : in out Boolean;
-      Semicolon       : in out Boolean)
+      Semicolon       : in out Boolean;
+      Line_Count      : in out Word)
    is
       Comma         : String := ", ";
       Spaces        : String := "    ";
@@ -531,26 +533,30 @@ package body Format is
    begin
       if In_Comments then
          P := Next_Line (Buffer, P);
+         Line_Count := Line_Count + 1;
       end if;
 
       End_Of_Line     := Line_End (Buffer, P);
       In_Comments     := False;
       String_Mismatch := False;
 
-      while P < Buffer'Last and then not (Is_Word_Char (Buffer (P))) loop
+      loop
          if P > End_Of_Line then
             End_Of_Line := Line_End (Buffer, P);
+            Line_Count  := Line_Count + 1;
          end if;
 
-         if Buffer (P) = '-'
+         --  Skip comments
+
+         while Buffer (P) = '-'
            and then Buffer (Next_Char (P)) = '-'
-         then
-            In_Comments := True;
-            Next_Word
-              (Buffer, New_Buffer, P, In_Comments,
-               Num_Parens, String_Mismatch, Semicolon);
-            return;
-         end if;
+         loop
+            P           := Next_Line (Buffer, P);
+            End_Of_Line := Line_End (Buffer, P);
+            Line_Count  := Line_Count + 1;
+         end loop;
+
+         exit when P = Buffer'Last or else Is_Word_Char (Buffer (P));
 
          case Buffer (P) is
             when '(' =>
@@ -660,7 +666,9 @@ package body Format is
                   end if;
 
                   if Spaces (3) = ' ' then
-                     if Buffer (Next_Char (P)) = ' ' then
+                     if Buffer (Next_Char (P)) = ' '
+                       or else Last - 1 = End_Of_Line
+                     then
                         Long := 2;
                      else
                         Long := 3;
@@ -685,7 +693,7 @@ package body Format is
                Char := Buffer (Next_Char (P));
 
                if Char /= ' ' and then Char /= '''
-                 and then P + 1 /= End_Of_Line
+                 and then P /= End_Of_Line
                then
                   Comma (1) := Buffer (P);
                   Replace_Text (New_Buffer, P, P + 1, Comma (1 .. 2));
@@ -1143,7 +1151,8 @@ package body Format is
             In_Comments := True;
             Next_Word
               (Buffer, New_Buffer, Prec,
-               In_Comments, Num_Parens, String_Mismatch, Semicolon);
+               In_Comments, Num_Parens, String_Mismatch,
+               Semicolon, Line_Count);
 
          else
             Prec := Next_Char (Prec);
@@ -1166,6 +1175,23 @@ package body Format is
               (Token = Tok_Unknown or else Semicolon)
             then
                End_Token := False;
+            elsif Subprogram_Decl then
+               if Num_Parens = 1 and then Prev_Num_Parens = 0 then
+                  Param_Indent := Prec - Line_Start (Buffer, Prec);
+               elsif Num_Parens = 0 then
+                  if Prev_Num_Parens = 1 then
+                     Subprogram_Decl := False;
+                     Param_Indent    := None;
+
+                     if Semicolon then
+                        --  subprogram decl with no following reserved word,
+                        --  e.g:
+                        --  procedure ... ();
+
+                        Pop;
+                     end if;
+                  end if;
+               end if;
             end if;
 
             if Token = Tok_Unknown
@@ -1200,49 +1226,33 @@ package body Format is
          Prec            := Current + 1;
          Next_Word
            (Buffer, New_Buffer, Prec, In_Comments,
-            Num_Parens, String_Mismatch, Semicolon);
+            Num_Parens, String_Mismatch, Semicolon, Line_Count);
 
          Syntax_Error :=
            Syntax_Error or else (Prec = Buffer'Last and then Num_Spaces > 0);
 
          if String_Mismatch then
-            Put_Line (">>> String Mismatch");
+            Put_Line
+              (">>> String Mismatch at line" & Line_Count'Img &
+               ", around character" & Current'Img);
          end if;
 
          if Syntax_Error then
-            Put_Line (">>> Syntax Error");
+            Put_Line
+              (">>> Syntax Error at line" & Line_Count'Img &
+               ", around character" & Current'Img);
          end if;
 
          Current := End_Of_Word (Buffer, Prec);
          Word_Count := Word_Count + 1;
 
-         if Subprogram_Decl then
-            if Num_Parens = 1 and then Prev_Num_Parens = 0 then
-               Param_Indent := Prec - Line_Start (Buffer, Prec);
-            elsif Num_Parens = 0 then
-               if Prev_Num_Parens = 1 then
-                  Subprogram_Decl := False;
-                  Param_Indent    := None;
-
-                  if Semicolon then
-                     --  subprogram decl with no following reserved word, e.g:
-                     --  procedure ... ();
-
-                     Pop;
-                  end if;
-               end if;
-            end if;
-         end if;
-
-         --  A new line, reset flags and update counters.
+         --  A new line, reset flags.
 
          if Line_Start (Buffer, Prec) /= Line_Start (Buffer, Prec_Last) then
             Indent_Done := False;
             In_String   := False;
 
             --  ??? Handle events, update progress bar, ...
-
-            Line_Count := Line_Count + 1;
          end if;
       end loop;
 
