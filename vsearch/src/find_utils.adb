@@ -988,6 +988,9 @@ package body Find_Utils is
          return False;
       end if;
 
+      Raise_Child (Context.Child);
+      Minimize_Child (Context.Child, False);
+
       if Search_Backward then
          Inc := -1;
       else
