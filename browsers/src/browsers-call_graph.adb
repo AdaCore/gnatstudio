@@ -1537,9 +1537,6 @@ package body Browsers.Call_Graph is
 
       Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
 
-      --  ??? File_Name should be optional
-      --  ??? Ultimately, we should display the results in the location window,
-      --  but return them as a list (Python scripts for instance)
       Register_Command
         (Kernel,
          Command      => "find_all_refs",
