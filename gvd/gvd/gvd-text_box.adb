@@ -185,6 +185,8 @@ package body Odd.Text_Boxes is
    begin
       Set_Value
         (Get_Vadjustment (Box.Buttons), Get_Value (Get_Vadj (Box.Child)));
+      --  ??? Need to queue a draw event explicitely under Win32
+      Queue_Draw (Box.Buttons);
    end Scroll_Layout;
 
    ---------------------------
@@ -219,6 +221,8 @@ package body Odd.Text_Boxes is
          Set_Value
            (Get_Vadjustment (Box.Buttons),
             Get_Value (Get_Vadj (Box.Child)));
+         --  ??? Need to queue a draw event explicitely under Win32
+         Queue_Draw (Box.Buttons);
          Show (Box.Buttons);
       end if;
    end Scroll_Layout_Changed;
