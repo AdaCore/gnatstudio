@@ -1842,10 +1842,10 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
           *ptr = 0;
       }
 
-      paf_type = Get_class_or_typedef( name, acType );
+      paf_type = get_template_argument (scope_g, sym_name_g, name, 0);
 
       if ( !paf_type )
-          paf_type = get_template_argument (scope_g, sym_name_g, name, 0);
+          paf_type = Get_class_or_typedef( name, acType );
 
       if ( !paf_type )
       {
