@@ -23,6 +23,11 @@
 --
 --  See package VCS for a complete spec of this package.
 
+with GNAT.Expect;               use GNAT.Expect;
+with Gtk.Main;                  use Gtk.Main;
+with Generic_List;
+with Unchecked_Deallocation;
+
 package VCS.CVS is
 
    type CVS_Record is new VCS_Record with private;
@@ -32,13 +37,13 @@ package VCS.CVS is
 
    procedure Free (Ref : access CVS_Record);
 
-   function Get_Status
+   procedure Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List;
       Get_Status  : Boolean := True;
       Get_Version : Boolean := True;
       Get_Tags    : Boolean := False;
-      Get_Users   : Boolean := False) return File_Status_List.List;
+      Get_Users   : Boolean := False);
 
    function Local_Get_Status
      (Rep       : access CVS_Record;
@@ -71,23 +76,61 @@ package VCS.CVS is
      (Rep       : access CVS_Record;
       Filenames : String_List.List);
 
-   function Diff
+   procedure Diff
      (Rep       : access CVS_Record;
       File      : String;
       Version_1 : String := "";
-      Version_2 : String := "") return String_List.List;
+      Version_2 : String := "");
 
-   function Log
+   procedure Log
      (Rep  : access CVS_Record;
-      File : String) return String_List.List;
+      File : String);
 
-   function Annotate
+   procedure Annotate
      (Rep  : access CVS_Record;
-      File : String) return String_List.List;
+      File : String);
 
    procedure Register_Module;
 
 private
-   type CVS_Record is new VCS_Record with null record;
+   type String_List_Handler is access
+     procedure (Kernel : Kernel_Handle;
+                Head   : String_List.List;
+                List   : String_List.List);
+
+   type String_List_And_Handler is record
+      Rep     : CVS_Access;
+      Head    : String_List.List;
+      List    : String_List.List;
+      Handler : String_List_Handler;
+   end record;
+
+   type String_List_And_Handler_Access is access String_List_And_Handler;
+
+   procedure Destroy (D : in String_List_And_Handler_Access);
+
+   procedure Free is new Unchecked_Deallocation
+     (String_List_And_Handler, String_List_And_Handler_Access);
+
+   package String_List_Idle is
+      new Gtk.Main.Idle (String_List_And_Handler_Access);
+
+   type Command_Record is record
+      Command : String_List.List;
+      Dir     : String_List.List;
+      Args    : String_List.List;
+      Head    : String_List.List;
+      Handler : String_List_Handler;
+   end record;
+
+   procedure Free (D : in out Command_Record);
+
+   package Command_List is new Generic_List (Command_Record);
+
+   type CVS_Record is new VCS_Record with record
+      Command_In_Progress : Boolean := False;
+      Command_Queue       : Command_List.List;
+      Fd                  : Process_Descriptor;
+   end record;
 
 end VCS.CVS;
