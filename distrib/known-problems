@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.0.2
 
+- BA17-003 Adding the same project multiple times to the project tree
+  Problem:    On windows, it wasn't possible to have two projects import the
+              same subproject.
+  Workaround: Edit the project file manually, and add a "with" clause.
+
 - Bad handling of 8 bit characters
   Problem:    When using >127 character values (e.g. accentuated letters)
               in the editor, some operations (indentation, undo) do not work
