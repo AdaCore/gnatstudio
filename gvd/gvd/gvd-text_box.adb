@@ -489,8 +489,6 @@ package body GVD.Text_Box is
       Select_Max : Gint := Gint
         (Guint'Max (Get_Selection_Start_Pos (Box.Child),
                     Get_Selection_End_Pos (Box.Child)));
-      Index   : Natural;
-      X       : Gint;
 
    begin
       case Get_Button (Event) is
@@ -501,21 +499,9 @@ package body GVD.Text_Box is
                     + Gint (Get_Value (Get_Vadj (Box.Child)));
                   Line := Line_From_Pixels (Box, Y);
 
-                  X := Gint (Get_X (Event))
-                    / Char_Width (Box.Font, Character' ('m')) -
-                    Invisible_Column_Width (Box) + 1;
-                  Index := Index_From_Line (Box, Line) - Box.Buffer'First;
-                  Move_N_Columns (Box, Index, Integer (X));
-                  Index :=
-                    Index + Line * Natural (Invisible_Column_Width (Box));
+                  --  Take the selection into account if it is exists
 
-                  --  Take the selection into account if it is under the
-                  --  cursor.
-
-                  if Get_Has_Selection (Box.Child)
-                    and then Select_Min <= Gint (Index)
-                    and then Gint (Index) <= Select_Max
-                  then
+                  if Get_Has_Selection (Box.Child) then
                      --  Keep only the first line of the selection. This avoids
                      --  having too long menus, and since the debugger can not
                      --  handle multiple line commands anyway is not a big
