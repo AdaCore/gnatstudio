@@ -33,21 +33,24 @@
 
 with SN; use SN;
 with DB_API; use DB_API;
-with GNAT.OS_Lib;
 
 package SN.DB_Structures is
 
-   --  ??? TODO: Create a new record for (Name, Filename, Start_Position)
+   type Buffer_String_Array is array (Natural) of Character;
+   type Buffer_String is access all Buffer_String_Array;
 
    type CL_Table is record
       Name                : Segment;
       File_Name           : Segment;
       Start_Position      : Point;
+      Key                 : Buffer_String;
+
       End_Position        : Point;
       Attributes          : SN_Attributes;
       Template_Parameters : Segment;
       --  Comments        : Segment;
-      Buffer              : GNAT.OS_Lib.String_Access;
+      Data                : Buffer_String;
+
       DBI                 : Integer;
    end record;
    --  Interface to the ".cl" tables.
@@ -60,12 +63,15 @@ package SN.DB_Structures is
       Name                : Segment;
       File_Name           : Segment;
       Start_Position      : Point;
+      Key                 : Buffer_String;
+
       End_Position        : Point;
       Attributes          : SN_Attributes;
       Declared_Type       : Segment;
       Type_Start_Position : Point;
       Comments            : Segment;
-      Buffer              : GNAT.OS_Lib.String_Access;
+      Data                : Buffer_String;
+
       DBI                 : Integer;
    end record;
    --  Interface to the ".con" tables.
@@ -78,10 +84,13 @@ package SN.DB_Structures is
       Name                : Segment;
       File_Name           : Segment;
       Start_Position      : Point;
+      Key                 : Buffer_String;
+
       End_Position        : Point;
       Attributes          : SN_Attributes;
       --  Comments        : Segment;
-      Buffer              : GNAT.OS_Lib.String_Access;
+      Data                : Buffer_String;
+
       DBI                 : Integer;
    end record;
    --  Interface to the ".e" tables.
@@ -94,10 +103,13 @@ package SN.DB_Structures is
       Name                : Segment;
       File_Name           : Segment;
       Start_Position      : Point;
+      Key                 : Buffer_String;
+
       End_Position        : Point;
       Attributes          : SN_Attributes;
       Enumeration_Name    : Segment;
-      Buffer              : GNAT.OS_Lib.String_Access;
+      Data                : Buffer_String;
+
       DBI                 : Integer;
    end record;
    --  Interface to the ".ec" tables.
@@ -110,6 +122,8 @@ package SN.DB_Structures is
       Name                : Segment;
       File_Name           : Segment;
       Start_Position      : Point;
+      Key                 : Buffer_String;
+
       End_Position        : Point;
       Attributes          : SN_Attributes;
       Return_Type         : Segment;
@@ -117,7 +131,8 @@ package SN.DB_Structures is
       --  Arg_Names : Segment_Vector.Node_Access;
       Comments            : Segment;
       Template_Parameters : Segment;
-      Buffer              : GNAT.OS_Lib.String_Access;
+      Data                : Buffer_String;
+
       DBI                 : Integer;
    end record;
    --  Interface to the ".fd" tables.
@@ -133,11 +148,14 @@ package SN.DB_Structures is
       Class                    : Segment;
       Identifier               : Segment;
       Symbol                   : Symbol_Type;
+      Key                      : Buffer_String;
+
       End_Position             : Point;
       Highlight_Start_Position : Point;
       Highlight_End_Position   : Point;
       Types_Of_Arguments       : Segment;
-      Buffer                   : GNAT.OS_Lib.String_Access;
+      Data                     : Buffer_String;
+
       DBI                      : Integer;
    end record;
    --  Interface to the ".fil" tables.
@@ -150,13 +168,16 @@ package SN.DB_Structures is
       Name                     : Segment;
       File_Name                : Segment;
       Start_Position           : Point;
+      Key                      : Buffer_String;
+
       End_Position             : Point;
       Attributes               : SN_Attributes;
       Return_Type              : Segment;
       Arg_Types                : Segment;
       --  Arg_Names            : Segment_Vector.Node_Access;
       --  Comments             : Segment;
-      Buffer                   : GNAT.OS_Lib.String_Access;
+      Data                     : Buffer_String;
+
       DBI                      : Integer;
    end record;
    --  Interface to the ".fr" tables.
@@ -171,6 +192,8 @@ package SN.DB_Structures is
       Name                     : Segment;
       File_Name                : Segment;
       Start_Position           : Point;
+      Key                      : Buffer_String;
+
       End_Position             : Point;
       Attributes               : SN_Attributes;
       Return_Type              : Segment;
@@ -178,7 +201,8 @@ package SN.DB_Structures is
       --  Arg_Names            : Segment_Vector.Node_Access;
       Comments                 : Segment;
       Template_Parameters      : Segment;
-      Buffer                   : GNAT.OS_Lib.String_Access;
+      Data                     : Buffer_String;
+
       DBI                      : Integer;
    end record;
    --  Interface to ".fu" tables and ".mi" tables
@@ -193,13 +217,16 @@ package SN.DB_Structures is
       Name                     : Segment;
       File_Name                : Segment;
       Start_Position           : Point;
+      Key                      : Buffer_String;
+
       End_Position             : Point;
       Attributes               : SN_Attributes;
       Value_Type               : Segment;
       --  Template_Parameters  : Segment;
       Comments                 : Segment;
       Type_Start_Position      : Point;
-      Buffer                   : GNAT.OS_Lib.String_Access;
+      Data                     : Buffer_String;
+
       DBI                      : Integer;
    end record;
    --  Interface to the ".gv" tables.
@@ -213,11 +240,14 @@ package SN.DB_Structures is
       Base_Class               : Segment;
       File_Name                : Segment;
       Start_Position           : Point;
+      Key                      : Buffer_String;
+
       End_Position             : Point;
       Attributes               : SN_Attributes;
       --  Class_Template       : Segment
       --  Comments             : Segment;
-      Buffer                   : GNAT.OS_Lib.String_Access;
+      Data                     : Buffer_String;
+
       DBI                      : Integer;
    end record;
    --  Interface to the ".in" tables.
@@ -231,7 +261,8 @@ package SN.DB_Structures is
       Included_File            : Segment;
       Included_From_File       : Segment;
       Included_At_Position     : Point;
-      Buffer                   : GNAT.OS_Lib.String_Access;
+      Key                      : Buffer_String;
+
       DBI                      : Integer;
    end record;
    --  Interface to the ".iu" tables.
@@ -245,11 +276,14 @@ package SN.DB_Structures is
       Name                    : Segment;
       File_Name               : Segment;
       Start_Position          : Point;
+      Key                     : Buffer_String;
+
       End_Position            : Point;
       Attributes              : SN_Attributes;
       Value_Type              : Segment;
-      --  Comments                : Segment;
-      Buffer                  : GNAT.OS_Lib.String_Access;
+      --  Comments            : Segment;
+      Data                    : Buffer_String;
+
       DBI                     : Integer;
    end record;
    --  Interface to the ".iv" tables.
@@ -263,6 +297,8 @@ package SN.DB_Structures is
       Name                    : Segment;
       File_Name               : Segment;
       Start_Position          : Point;
+      Key                     : Buffer_String;
+
       End_Position            : Point;
       Attributes              : SN_Attributes;
       Class                   : Segment;
@@ -270,7 +306,8 @@ package SN.DB_Structures is
       Arg_Types               : Segment;
       Comments                : Segment;
       Type_Start_Position     : Point;
-      Buffer                  : GNAT.OS_Lib.String_Access;
+      Data                    : Buffer_String;
+
       DBI                     : Integer;
    end record;
    --  Interface to the ".lv" tables.
@@ -283,10 +320,13 @@ package SN.DB_Structures is
       Name                    : Segment;
       File_Name               : Segment;
       Start_Position          : Point;
+      Key                     : Buffer_String;
+
       End_Position            : Point;
       Attributes              : SN_Attributes;
       --  Comments            : Segment;
-      Buffer                  : GNAT.OS_Lib.String_Access;
+      Data                    : Buffer_String;
+
       DBI                     : Integer;
    end record;
    --  Interface to the ".ma" tables
@@ -308,6 +348,8 @@ package SN.DB_Structures is
       Name                     : Segment;
       File_Name                : Segment;
       Start_Position           : Point;
+      Key                      : Buffer_String;
+
       End_Position             : Point;
       Attributes               : SN_Attributes;
       Return_Type              : Segment;
@@ -315,7 +357,8 @@ package SN.DB_Structures is
       --  Arg_Names            : Segment_Vector.Node_Access;
       Template_Parameters      : Segment;
       Comments                 : Segment;
-      Buffer                   : GNAT.OS_Lib.String_Access;
+      Data                     : Buffer_String;
+
       DBI                      : Integer;
    end record;
    --  Interface to the ".md" tables
@@ -329,12 +372,15 @@ package SN.DB_Structures is
       Name                     : Segment;
       File_Name                : Segment;
       Start_Position           : Point;
+      Key                      : Buffer_String;
+
       End_Position             : Point;
       Attributes               : SN_Attributes;
       Original                 : Segment;
       Comments                 : Segment;
       Class_Name               : Segment; -- name of enclosed class
-      Buffer                   : GNAT.OS_Lib.String_Access;
+      Data                     : Buffer_String;
+
       DBI                      : Integer;
    end record;
    --  Interface to the ".t" tables
@@ -345,16 +391,19 @@ package SN.DB_Structures is
 
    type TA_Table is record
       Scope                  : Segment; -- name of the class or function/method
-      Class_Name             : Segment; -- name of method's class
       Name                   : Segment;
       Start_Position         : Point;
+      Key                    : Buffer_String;
+
+      Class_Name             : Segment; -- name of method's class
       File_Name              : Segment;
       Type_Position          : Point;
       Attributes             : SN_Attributes;
       Value_Type             : Segment;
       Template_Parameters    : Segment;
       Comments               : Segment;
-      Buffer                 : GNAT.OS_Lib.String_Access;
+      Data                   : Buffer_String;
+
       DBI                    : Integer;
    end record;
    --  Interface to the ".ta" tables.
@@ -372,11 +421,14 @@ package SN.DB_Structures is
       Referred_Symbol_Name    : Segment;
       Referred_Symbol         : Symbol_Type;
       Access_Type             : Segment;
+      Key                     : Buffer_String;
+
       File_Name               : Segment;
       Position                : Point;
       Caller_Argument_Types   : Segment;
       Referred_Argument_Types : Segment;
-      Buffer                  : GNAT.OS_Lib.String_Access;
+      Data                    : Buffer_String;
+
       DBI                     : Integer;
    end record;
    --  Interface to ".to" tables.
@@ -411,25 +463,7 @@ package SN.DB_Structures is
    --  These functions provide the necessary functions to parse the contents
    --  of the Source Navigator tables
 
-   procedure Free (target : in out CL_Table);
-   procedure Free (target : in out CON_Table);
-   procedure Free (target : in out E_Table);
-   procedure Free (target : in out EC_Table);
-   procedure Free (target : in out FD_Table);
-   procedure Free (target : in out FIL_Table);
-   procedure Free (target : in out FR_Table);
-   procedure Free (target : in out FU_Table);
-   procedure Free (target : in out GV_Table);
-   procedure Free (target : in out IN_Table);
-   procedure Free (target : in out IU_Table);
-   procedure Free (target : in out IV_Table);
-   procedure Free (target : in out LV_Table);
-   procedure Free (target : in out MA_Table);
-   procedure Free (target : in out MD_Table);
-   procedure Free (target : in out T_Table);
-   procedure Free (target : in out TA_Table);
-   procedure Free (target : in out TO_Table);
-   --  These procedures are used to free the memory allocated for each of
-   --  Source Navigator tables.
+   function Get_Class_Name (Key : Buffer_String; Seg : Segment) return String;
+   --  Return the class name (or '#' if Seg is Empty_Segment
 
 end SN.DB_Structures;
