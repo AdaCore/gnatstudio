@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -140,29 +140,31 @@ package body GVD.Memory_View is
       declare
          Buffer : String (1 .. Unit_Size);
       begin
-         while Index <= View.Number_Of_Bytes * 2 loop
+         while Index <= View.Number_Of_Bytes * 2 - Unit_Size loop
             Buffer (1 .. Unit_Size) :=
               View.Values
                 (View.Values'First + Index ..
-                 View.Values'First + Index + Unit_Size - 1);
+                     View.Values'First + Index + Unit_Size - 1);
 
-            for J in 0 .. Unit_Size / 2 - 1 loop
+            for J in 1 .. Unit_Size / 2 loop
                View.Values
-                 (View.Values'First + Index + J * 2
-                  .. View.Values'First + Index + J * 2 + 1) :=
-                 Buffer (Buffer'Last -  J * 2 - 1 .. Buffer'Last - J * 2);
+                 (View.Values'First + Index + (J - 1) * 2
+                    .. View.Values'First + Index + (J - 1) * 2 + 1) :=
+                 Buffer (Buffer'Last - (J - 1) * 2 - 1
+                           .. Buffer'Last - (J - 1) * 2);
             end loop;
 
             Buffer (1 .. Unit_Size) :=
               View.Flags
                 (View.Flags'First + Index ..
-                 View.Flags'First + Index + Unit_Size - 1);
+                     View.Flags'First + Index + Unit_Size - 1);
 
-            for J in 0 .. Unit_Size / 2 - 1 loop
+            for J in 1 .. Unit_Size / 2 loop
                View.Flags
-                 (View.Flags'First + Index + J * 2
-                  .. View.Flags'First + Index + J * 2 + 1) :=
-                 Buffer (Buffer'Last -  J * 2 - 1 .. Buffer'Last -  J * 2);
+                 (View.Flags'First + Index + (J - 1) * 2
+                    .. View.Flags'First + Index + (J - 1) * 2 + 1) :=
+                 Buffer (Buffer'Last - (J - 1) * 2 - 1
+                           .. Buffer'Last - (J - 1) * 2);
             end loop;
 
             Index := Index + Unit_Size;
