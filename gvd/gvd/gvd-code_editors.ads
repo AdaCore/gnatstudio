@@ -117,10 +117,8 @@ package GVD.Code_Editors is
       Source            : GVD.Text_Box.Source_Editor.Source_Editor;
       Ps_Font_Name      : String;
       Font_Size         : Glib.Gint;
-      Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Comments_Color    : Gdk.Color.Gdk_Color;
       Strings_Color     : Gdk.Color.Gdk_Color;
       Keywords_Color    : Gdk.Color.Gdk_Color);
    --  Set the various settings of an editor.

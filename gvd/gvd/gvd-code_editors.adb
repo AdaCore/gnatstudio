@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -318,10 +318,8 @@ package body GVD.Code_Editors is
       Source            : GVD.Text_Box.Source_Editor.Source_Editor;
       Ps_Font_Name      : String;
       Font_Size         : Glib.Gint;
-      Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Comments_Color    : Gdk.Color.Gdk_Color;
       Strings_Color     : Gdk.Color.Gdk_Color;
       Keywords_Color    : Gdk.Color.Gdk_Color) is
    begin
