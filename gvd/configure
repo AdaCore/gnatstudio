@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.41 
+# From configure.in Revision: 1.42 
 #############################################################
 #
 #  Checking for Gnat
@@ -563,7 +563,7 @@ fi
 
 
 GVD_MAJOR_VERSION=1
-GVD_MINOR_VERSION=2
+GVD_MINOR_VERSION=3
 GVD_MICRO_VERSION=0
 GVD_VERSION=$GVD_MAJOR_VERSION.$GVD_MINOR_VERSION.$GVD_MICRO_VERSION
 
