@@ -1045,6 +1045,11 @@ package body Src_Editor_Module is
       File  : constant String := Get_String (Nth (Args, 1));
    begin
       if Id.Display_Line_Numbers then
+         --  ??? We are deliberately not displaying line numbers for files
+         --  that are unnamed, since this would cause the line information
+         --  to overwrite previously existing line information for all files,
+         --  and doing this multiple times causes double deallocation.
+
          if File /= "" then
             Create_Line_Information_Column
               (Kernel,
