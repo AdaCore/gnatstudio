@@ -389,7 +389,7 @@ package body Src_Editor_Module is
    function Edit_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Interactive command handler for the source editor module.
 
    procedure Add_To_Recent_Menu
@@ -498,13 +498,13 @@ package body Src_Editor_Module is
    function Edit_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
+      Args    : GNAT.OS_Lib.Argument_List) return String
    is
       use String_List_Utils.String_List;
       Id       : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Node          : List_Node;
-      Filename      : Basic_Types.String_Access;
+      Node          : Natural;
+      Filename      : GNAT.OS_Lib.String_Access;
       Error_Message : Basic_Types.String_Access;
       Line     : Natural := 1;
       Length   : Natural := 0;
@@ -518,42 +518,35 @@ package body Src_Editor_Module is
 
       function Parse_Argument (Arg : String) return Natural is
       begin
-         Node := Next (Node);
-
-         if Node = Null_Node then
-            Free (Filename);
+         Node := Node + 1;
+         if Node > Args'Last then
             Error_Message := new String'
               (Command & ": " & (-"option " & Arg & " requires a value"));
             return 0;
          end if;
 
-         declare
-         begin
-            return Natural'Value (Data (Node));
-         exception
-            when others =>
-               Free (Filename);
-
-               Error_Message := new String'
-                 (Command
-                  & ": " & (-"option " & Arg & " requires a numerical value"));
-               return 0;
-         end;
+         return Natural'Value (Args (Node).all);
+      exception
+         when others =>
+            Error_Message := new String'
+              (Command
+               & ": " & (-"option " & Arg & " requires a numerical value"));
+            return 0;
       end Parse_Argument;
 
    begin
       if Command = "edit" or else Command = "create_mark" then
-         Node := First (Args);
+         Node := Args'First;
 
-         while Node /= Null_Node loop
-            if Data (Node) = "-c" then
+         while Node <= Args'Last loop
+            if Args (Node).all = "-c" then
                Column := Parse_Argument ("-c");
-            elsif Data (Node) = "-l" then
+            elsif Args (Node).all = "-l" then
                Line := Parse_Argument ("-l");
-            elsif Data (Node) = "-L" then
+            elsif Args (Node).all = "-L" then
                Length := Parse_Argument ("-L");
             elsif Filename = null then
-               Filename := new String'(Data (Node));
+               Filename := new String'(Args (Node).all);
             else
                Free (Filename);
                return Command & ": " & (-"too many parameters");
@@ -569,7 +562,7 @@ package body Src_Editor_Module is
                end;
             end if;
 
-            Node := Next (Node);
+            Node := Node + 1;
          end loop;
 
          if Filename /= null then
@@ -638,114 +631,76 @@ package body Src_Editor_Module is
         or else Command = "edit_undo"
         or else Command = "edit_redo"
       then
-         Node := First (Args);
+         Filename := Args (Args'First);
 
-         while Node /= Null_Node loop
-            if Filename = null then
-               Filename := new String'(Data (Node));
-            else
-               Free (Filename);
-               return Command & ": " & (-"too many parameters");
-            end if;
-
-            Node := Next (Node);
-         end loop;
-
-         if Filename /= null then
-            if Command = "close" then
-               Close_File_Editors (Kernel, Filename.all);
-            else
-               declare
-                  Child : MDI_Child;
-                  Box   : Source_Box;
-               begin
-                  Child := Find_Editor (Kernel, Filename.all);
-
-                  if Child = null then
-                     Free (Filename);
-                     return "file not open";
-                  end if;
-
-                  Box := Source_Box (Get_Widget (Child));
-
-                  if Command = "edit_redo" then
-                     Redo (Box.Editor);
-                  elsif Command = "edit_undo" then
-                     Undo (Box.Editor);
-                  end if;
-               end;
-            end if;
-
-            Free (Filename);
-
-            return "";
+         if Command = "close" then
+            Close_File_Editors (Kernel, Filename.all);
          else
-            return Command & ": " & (-"missing parameter file_name");
-         end if;
-
-      elsif Command = "goto_mark" then
-         Node := First (Args);
-
-         while Node /= Null_Node loop
-            if Filename = null then
-               Filename := new String'(Data (Node));
-            else
-               Free (Filename);
-               return Command & ": " & (-"too many parameters");
-            end if;
-
-            Node := Next (Node);
-         end loop;
-
-         if Filename /= null then
             declare
-               Mark_Record : constant Mark_Identifier_Record
-                 := Find_Mark (Filename.all);
+               Child : MDI_Child;
+               Box   : Source_Box;
             begin
-               if Mark_Record.Child /= null then
-                  Raise_Child (Mark_Record.Child);
-                  Set_Focus_Child (Mark_Record.Child);
-                  Grab_Focus
-                    (Source_Box
-                       (Get_Widget (Mark_Record.Child)).Editor);
+               Child := Find_Editor (Kernel, Filename.all);
 
-                  --  If the Length is null, we set the length to 1, otherwise
-                  --  the cursor is not visible.
-
-                  if Mark_Record.Length = 0 then
-                     Scroll_To_Mark
-                       (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                        Mark_Record.Mark, 1);
-                  else
-                     Scroll_To_Mark
-                       (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                        Mark_Record.Mark,
-                        Mark_Record.Length);
-                  end if;
-
-               else
-                  if Mark_Record.File /= null
-                    and then Is_In_List
-                      (Id.Unopened_Files, Mark_Record.File.all)
-                  then
-                     Open_File_Editor (Kernel,
-                                       Mark_Record.File.all,
-                                       Mark_Record.Line,
-                                       Mark_Record.Column,
-                                       Mark_Record.Column
-                                         + Mark_Record.Length,
-                                       From_Path => True);
-                     Fill_Marks (Kernel_Handle (Kernel), Mark_Record.File.all);
-                  end if;
+               if Child = null then
+                  return "file not open";
                end if;
 
-               Free (Filename);
+               Box := Source_Box (Get_Widget (Child));
 
-               return "";
+               if Command = "edit_redo" then
+                  Redo (Box.Editor);
+               elsif Command = "edit_undo" then
+                  Undo (Box.Editor);
+               end if;
             end;
-         else
-            return -"goto_mark: missing parameter file_name";
          end if;
+
+         return "";
+
+      elsif Command = "goto_mark" then
+         Filename := Args (Args'First);
+
+         declare
+            Mark_Record : constant Mark_Identifier_Record :=
+              Find_Mark (Filename.all);
+         begin
+            if Mark_Record.Child /= null then
+               Raise_Child (Mark_Record.Child);
+               Set_Focus_Child (Mark_Record.Child);
+               Grab_Focus (Source_Box (Get_Widget (Mark_Record.Child)).Editor);
+
+               --  If the Length is null, we set the length to 1, otherwise
+               --  the cursor is not visible.
+
+               if Mark_Record.Length = 0 then
+                  Scroll_To_Mark
+                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                     Mark_Record.Mark, 1);
+               else
+                  Scroll_To_Mark
+                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                     Mark_Record.Mark,
+                     Mark_Record.Length);
+               end if;
+
+            else
+               if Mark_Record.File /= null
+                 and then Is_In_List
+                 (Id.Unopened_Files, Mark_Record.File.all)
+               then
+                  Open_File_Editor (Kernel,
+                                    Mark_Record.File.all,
+                                    Mark_Record.Line,
+                                    Mark_Record.Column,
+                                    Mark_Record.Column + Mark_Record.Length,
+                                    From_Path => True);
+                  Fill_Marks (Kernel_Handle (Kernel), Mark_Record.File.all);
+               end if;
+            end if;
+
+            return "";
+         end;
 
       elsif Command = "get_chars" or else Command = "replace_text" then
          declare
@@ -753,27 +708,27 @@ package body Src_Editor_Module is
             After  : Integer := -1;
             Text   : Basic_Types.String_Access;
          begin
-            Node := First (Args);
+            Node := Args'First;
 
-            while Node /= Null_Node loop
-               if Data (Node) = "-c" then
+            while Node <= Args'Last loop
+               if Args (Node).all = "-c" then
                   Column := Parse_Argument ("-c");
 
-               elsif Data (Node) = "-l" then
+               elsif Args (Node).all = "-l" then
                   Line := Parse_Argument ("-l");
 
-               elsif Data (Node) = "-b" then
+               elsif Args (Node).all = "-b" then
                   Before := Parse_Argument ("-b");
 
-               elsif Data (Node) = "-a" then
+               elsif Args (Node).all = "-a" then
                   After := Parse_Argument ("-a");
 
                elsif Filename = null then
-                  Filename := new String'(Data (Node));
+                  Filename := new String'(Args (Node).all);
 
                elsif Text = null then
                   declare
-                     T : constant String := Data (Node);
+                     T : constant String := Args (Node).all;
                   begin
                      Text := new String'(T (T'First + 1 .. T'Last - 1));
                   end;
@@ -795,7 +750,7 @@ package body Src_Editor_Module is
                   end;
                end if;
 
-               Node := Next (Node);
+               Node := Node + 1;
             end loop;
 
             if Filename /= null then
@@ -872,186 +827,121 @@ package body Src_Editor_Module is
         or else Command = "get_column"
         or else Command = "get_file"
       then
-         Node := First (Args);
+         Filename := Args (Args'First);
 
-         while Node /= Null_Node loop
-            if Filename = null then
-               Filename := new String'(Data (Node));
+         declare
+            Mark_Record : constant Mark_Identifier_Record :=
+              Find_Mark (Filename.all);
+         begin
+            if Mark_Record.File = null then
+               return -"mark not found";
             else
-               Free (Filename);
-               return -"close: too many parameters";
-            end if;
-
-            Node := Next (Node);
-         end loop;
-
-         if Filename /= null then
-            declare
-               Mark_Record : constant Mark_Identifier_Record
-                 := Find_Mark (Filename.all);
-            begin
-               Free (Filename);
-
-               if Mark_Record.File = null then
-                  return -"mark not found";
-               else
-                  if Command = "get_line" then
-                     if Mark_Record.Child /= null then
-                        return Image
-                          (Get_Line
-                             (Source_Box
-                                (Get_Widget (Mark_Record.Child)).Editor,
-                              Mark_Record.Mark));
-                     else
-                        return Image (Mark_Record.Line);
-                     end if;
-                  elsif Command = "get_column" then
-                     if Mark_Record.Child /= null then
-                        return Image
-                          (Get_Column
-                             (Source_Box
-                                (Get_Widget (Mark_Record.Child)).Editor,
-                              Mark_Record.Mark));
-                     else
-                        return Image (Mark_Record.Column);
-                     end if;
+               if Command = "get_line" then
+                  if Mark_Record.Child /= null then
+                     return Image
+                       (Get_Line
+                        (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                         Mark_Record.Mark));
                   else
-                     if Mark_Record.File = null then
-                        return "";
-                     else
-                        return Mark_Record.File.all;
-                     end if;
+                     return Image (Mark_Record.Line);
+                  end if;
+               elsif Command = "get_column" then
+                  if Mark_Record.Child /= null then
+                     return Image
+                       (Get_Column
+                        (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                         Mark_Record.Mark));
+                  else
+                     return Image (Mark_Record.Column);
+                  end if;
+               else
+                  if Mark_Record.File = null then
+                     return "";
+                  else
+                     return Mark_Record.File.all;
                   end if;
                end if;
-            end;
-         else
-            return -"missing parameter mark";
-         end if;
+            end if;
+         end;
 
       elsif Command = "get_last_line" then
-         Node := First (Args);
+         Filename := Args (Args'First);
 
-         while Node /= Null_Node loop
-            if Filename = null then
-               Filename := new String'(Data (Node));
-            else
-               Free (Filename);
-               return -"close: too many parameters";
-            end if;
-
-            Node := Next (Node);
-         end loop;
-
-         if Filename /= null then
-            declare
-               Child : constant MDI_Child := Find_Editor
-                 (Kernel, Filename.all);
-            begin
-               if Child = null then
-                  declare
-                     A : GNAT.OS_Lib.String_Access
-                       := Read_File (Filename.all);
-                     N : Natural := 0;
-                  begin
-                     Free (Filename);
-
-                     if A /= null then
-                        for J in A'Range loop
-                           if A (J) = ASCII.LF then
-                              N := N + 1;
-                           end if;
-                        end loop;
-
-                        Free (A);
-
-                        if N = 0 then
-                           N := 1;
+         declare
+            Child : constant MDI_Child := Find_Editor (Kernel, Filename.all);
+         begin
+            if Child = null then
+               declare
+                  A : GNAT.OS_Lib.String_Access := Read_File (Filename.all);
+                  N : Natural := 0;
+               begin
+                  if A /= null then
+                     for J in A'Range loop
+                        if A (J) = ASCII.LF then
+                           N := N + 1;
                         end if;
+                     end loop;
 
-                        return Image (N);
-                     else
-                        return -"file not found or not opened";
+                     Free (A);
+
+                     if N = 0 then
+                        N := 1;
                      end if;
-                  end;
-               else
-                  Free (Filename);
 
-                  return Image
-                    (Get_Last_Line
-                       (Source_Box (Get_Widget (Child)).Editor));
-               end if;
-            end;
-         else
-            return -"missing parameter file";
-         end if;
+                     return Image (N);
+                  else
+                     return -"file not found or not opened";
+                  end if;
+               end;
+            else
+               return Image
+                 (Get_Last_Line (Source_Box (Get_Widget (Child)).Editor));
+            end if;
+         end;
 
       elsif Command = "get_buffer" then
-         Node := First (Args);
+         Filename := Args (Args'First);
 
-         while Node /= Null_Node loop
-            if Filename = null then
-               Filename := new String'(Data (Node));
+         declare
+            Child : constant MDI_Child := Find_Editor (Kernel, Filename.all);
+            A : GNAT.OS_Lib.String_Access;
+         begin
+            if Child /= null then
+               return Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
             else
-               Free (Filename);
-               return -"close: too many parameters";
-            end if;
+               --  The buffer is not currently open, read directly from disk.
 
-            Node := Next (Node);
-         end loop;
-
-         if Filename /= null then
-            declare
-               Child : constant MDI_Child :=
-                 Find_Editor (Kernel, Filename.all);
-            begin
-               if Child /= null then
-                  Free (Filename);
-                  return Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
+               A := Read_File (Filename.all);
+               if A /= null then
+                  declare
+                     S : constant String := A.all;
+                  begin
+                     Free (A);
+                     return S;
+                  end;
 
                else
-                  --  The buffer is not currently open,
-                  --  read directly from disk.
-
-                  declare
-                     A : GNAT.OS_Lib.String_Access
-                       := Read_File (Filename.all);
-                  begin
-                     Free (Filename);
-
-                     if A /= null then
-                        declare
-                           S : constant String := A.all;
-                        begin
-                           Free (A);
-                           return S;
-                        end;
-
-                     else
-                        return -"file not found";
-                     end if;
-                  end;
+                  return -"file not found";
                end if;
-            end;
-         else
-            return -"missing parameter file";
-         end if;
+            end if;
+         end;
 
       elsif Command = "save" then
          Force := True;
          All_Save := False;
 
-         Node := First (Args);
+         Node := Args'First;
 
-         while Node /= Null_Node loop
-            if Data (Node) = "-i" then
+         while Node <= Args'Last loop
+            if Args (Node).all = "-i" then
                Force := False;
-            elsif Data (Node) = "all" then
+            elsif Args (Node).all = "all" then
                All_Save := True;
             else
                return -"save: invalid parameter";
             end if;
 
-            Node := Next (Node);
+            Node := Node + 1;
          end loop;
 
          if All_Save then
@@ -2562,7 +2452,7 @@ package body Src_Editor_Module is
 
                declare
                   S    : String (1 .. L);
-                  Args : List;
+                  Args : Argument_List (1 .. 6);
                begin
                   N := First (Lines);
                   L := 1;
@@ -2573,12 +2463,12 @@ package body Src_Editor_Module is
                      N := Next (N);
                   end loop;
 
-                  Append (Args, File);
-                  Append (Args, "-l");
-                  Append (Args, Image (Start_Line));
-                  Append (Args, "-a");
-                  Append (Args, Image (Length));
-                  Append (Args, """" & S & """");
+                  Args := (1 => new String'(File),
+                           2 => new String'("-l"),
+                           3 => new String'(Image (Start_Line)),
+                           4 => new String'("-a"),
+                           5 => new String'(Image (Length)),
+                           6 => new String'("""" & S & """"));
 
                   Interpret_Command (Kernel, "replace_text", Args);
 
@@ -3221,139 +3111,158 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
-         Command => "edit",
-         Help    => -"Usage:" & ASCII.LF
-         & "  edit [-l line] [-c column] file_name" & ASCII.LF
-         & (-"Open a file editor for file_name."),
-         Handler => Edit_Command_Handler'Access);
+         Command      => "edit",
+         Usage        => "edit [-l line] [-c column] file_name",
+         Description  => -"Open a file editor for file_name.",
+         Minimum_Args => 1,
+         Maximum_Args => 5,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
          Command => "create_mark",
-         Help    => -"Usage:" & ASCII.LF
-         & "  create_mark [-l line] [-c column] [-L length] file_name"
-           & ASCII.LF
-           & (-("Create a mark for file_name," &
-                " at position given by line and column.")) & ASCII.LF
-           & (-("Length corresponds to the text length to highlight"
-                & " after the mark.")) & ASCII.LF
-           & (-("The identifier of the mark is returned.")) & ASCII.LF
-           & (-("Use the command goto_mark to jump to this mark.")),
+         Usage   =>
+           "create_mark [-l line] [-c column] [-L length] file_name",
+         Description =>
+           -("Create a mark for file_name, at position given by line and"
+             & " column."
+             & ASCII.LF
+             & "Length corresponds to the text length to highlight"
+             & " after the mark." & ASCII.LF
+             & "The identifier of the mark is returned." & ASCII.LF
+             & "Use the command goto_mark to jump to this mark."),
+         Minimum_Args => 1,
+         Maximum_Args => 7,
          Handler => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "goto_mark",
-         Help    => -"Usage:" & ASCII.LF
-         & "  goto_mark identifier" & ASCII.LF
-         & (-"Jump to the location of the mark corresponding to identifier."),
-         Handler => Edit_Command_Handler'Access);
+         Command      => "goto_mark",
+         Usage        => "goto_mark identifier",
+         Description  =>
+           -"Jump to the location of the mark corresponding to identifier.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "get_chars",
-         Help    => -"Usage:" & ASCII.LF
-         & "  get_chars {mark_identifier | -l line -c col} "
-         & (-"[-b before] [-a after]") & ASCII.LF
-         & (-"Get the characters around a certain mark or position.")
-         & ASCII.LF
-         & (-"Returns string between <before> characters before the mark")
-         & ASCII.LF
-         & (-"and <after> characters after the position.") & ASCII.LF
-         & (-"If <before> or <after> is omitted, the bounds will be")
-         & ASCII.LF
-         & (-"at the beginning and/or the end of the line."),
-         Handler => Edit_Command_Handler'Access);
+         Command      => "get_chars",
+         Usage        => "get_chars {mark_identifier | -l line -c col} "
+                         & "[-b before] [-a after]",
+         Description  =>
+           -("Get the characters around a certain mark or position."
+             & ASCII.LF
+             & "Returns string between <before> characters before the mark"
+             & ASCII.LF
+             & "and <after> characters after the position." & ASCII.LF
+             & "If <before> or <after> is omitted, the bounds will be"
+             & ASCII.LF
+             & "at the beginning and/or the end of the line."),
+         Minimum_Args => 0,
+         Maximum_Args => 8,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "get_line",
-         Help => -"Usage:" & ASCII.LF
-         & "   mark" & ASCII.LF
-         & "Returns the current line of mark.",
-         Handler => Edit_Command_Handler'Access);
+         Command      => "get_line",
+         Usage        => "get_line mark",
+         Description  => -"Returns the current line of mark.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "get_column",
-         Help => -"Usage:" & ASCII.LF
-         & "  get_column mark" & ASCII.LF
-         & "Returns the current column of mark.",
-         Handler => Edit_Command_Handler'Access);
+         Command      => "get_column",
+         Usage        => "get_column mark",
+         Description  => -"Returns the current column of mark.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "get_file",
-         Help => -"Usage:" & ASCII.LF
-         & "  get_file mark" & ASCII.LF
-         & "Returns the current file of mark.",
-         Handler => Edit_Command_Handler'Access);
+         Command      => "get_file",
+         Usage        => "get_file mark",
+         Description  => -"Returns the current file of mark.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "get_last_line",
-         Help => -"Usage:" & ASCII.LF
-         & "  get_last_line file" & ASCII.LF
-         & "Returns the number of the last line in file.",
-         Handler => Edit_Command_Handler'Access);
-
-
-      Register_Command
-        (Kernel,
-         Command => "get_buffer",
-         Help => -"Usage:" & ASCII.LF
-         & "  get_buffer file" & ASCII.LF
-         & "Returns the text contained in the current buffer for file.",
-         Handler => Edit_Command_Handler'Access);
+         Command      => "get_last_line",
+         Usage        => "get_last_line file",
+         Description  => -"Returns the number of the last line in file.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "replace_text",
-         Help    => -"Usage:" & ASCII.LF
-         & "  replace_text {mark_identifier | -l line -c col} "
-         & (-"[-b before] [-a after] ""text""") & ASCII.LF
-         & (-"Replace the characters around a certain mark or position.")
-         & ASCII.LF
-         & (-"Replace string between <before> characters before the mark")
-         & ASCII.LF
-         & (-"and <after> characters after the position.") & ASCII.LF
-         & (-"If <before> or <after> is omitted, the bounds will be")
-         & ASCII.LF
-         & (-"at the beginning and/or the end of the line."),
-         Handler => Edit_Command_Handler'Access);
+         Command      => "get_buffer",
+         Usage        => "get_buffer file",
+         Description  =>
+           -"Returns the text contained in the current buffer for file.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "edit_undo",
-         Help    => -"Usage:" & ASCII.LF
-         & " edit_undo file"
-         & (-"Undo the last edition command for file."),
-         Handler => Edit_Command_Handler'Access);
+         Command      => "replace_text",
+         Usage        => "replace_text {mark_identifier | -l line -c col} "
+                         & "[-b before] [-a after] ""text""",
+         Description  =>
+           -("Replace the characters around a certain mark or position."
+             & ASCII.LF
+             & "Replace string between <before> characters before the mark"
+             & ASCII.LF
+             & "and <after> characters after the position." & ASCII.LF
+             & "If <before> or <after> is omitted, the bounds will be"
+             & ASCII.LF
+             & "at the beginning and/or the end of the line."),
+         Minimum_Args => 2,
+         Maximum_Args => 9,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "edit_redo",
-         Help    => -"Usage:" & ASCII.LF
-         & " edit_redo file"
-         & (-"Redo the last edition command for file."),
-         Handler => Edit_Command_Handler'Access);
+         Command      => "edit_undo",
+         Usage        => "edit_undo file",
+         Description  => -"Undo the last edition command for file.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "close",
-         Help    => -"Usage:" & ASCII.LF
-         & "  close file_name" & ASCII.LF
-         & (-"Close all file editors for file_name."),
-         Handler => Edit_Command_Handler'Access);
+         Command      => "edit_redo",
+         Usage        => "edit_redo file",
+         Description  => -"Redo the last edition command for file.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "save",
-         Help    => -"Usage:" & ASCII.LF
-         & "  save [-i] [all]" & ASCII.LF
-         & (-"Save current or all files.") & ASCII.LF
-         & (-"  -i: prompt before each save"),
-         Handler => Edit_Command_Handler'Access);
+         Command      => "close",
+         Usage        => "close file_name",
+         Description  => -"Close all file editors for file_name.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "save",
+         Usage        => "save [-i] [all]",
+         Description  => -("Save current or all files." & ASCII.LF
+                           & "  -i: prompt before each save."),
+         Minimum_Args => 0,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
 
       --  Register the search functions
 
