@@ -49,7 +49,6 @@ with Traces;                    use Traces;
 with Commands;                  use Commands;
 with Commands.Custom;           use Commands.Custom;
 
-with Ada.Unchecked_Deallocation;
 
 package body Custom_Module is
 
@@ -160,20 +159,9 @@ package body Custom_Module is
                  or else To_Lower (Current_Child.Tag.all) = "gps_action"
                then
                   declare
-                     Args : Argument_List_Access :=
-                       Argument_String_To_List (Current_Child.Value.all);
-                     A : Argument_List_Access;
                      C : Custom_Command_Access;
                      Script : Scripting_Language;
-
-                     procedure Free_Array is new Ada.Unchecked_Deallocation
-                       (Object => String_List, Name => String_List_Access);
                   begin
-                     if Args'Length > 1 then
-                        A := new Argument_List'
-                          (Args (Args'First + 1 .. Args'Last));
-                     end if;
-
                      if To_Lower (Current_Child.Tag.all) = "gps_action" then
                         declare
                            Lang : constant String := Get_Attribute
@@ -206,12 +194,10 @@ package body Custom_Module is
                      end if;
 
                      --  ??? This command is never freed anywhere
-                     --  ??? Neither is A
                      Create
                        (C,
                         Kernel_Handle (Kernel),
-                        Args (Args'First).all,
-                        A,
+                        Current_Child.Value.all,
                         Script);
 
                      if Command = null then
@@ -219,9 +205,6 @@ package body Custom_Module is
                      else
                         Add_Consequence_Action (Command, Command_Access (C));
                      end if;
-
-                     Free (Args (Args'First));
-                     Free_Array (Args);
                   end;
                end if;
 
