@@ -594,6 +594,8 @@ package body Python_Module is
       Set_Default_Console
         (Script.Interpreter, Console, Display_Prompt => True);
 
+      Initialize_IO;
+
       Set_Command_Handler
         (Console, Python_Console_Command_Handler'Access, System.Null_Address);
       Set_Completion_Handler
@@ -655,7 +657,10 @@ package body Python_Module is
          & "sys.__stdin__=sys.stdin" & ASCII.LF
          & "sys.__stderr__=sys.stderr" & ASCII.LF)
       then
+         Trace (Me, "Initialize_IO failed");
          raise Interpreter_Error;
+      else
+         Trace (Me, "Python IO initialized");
       end if;
    end Initialize_IO;
 
