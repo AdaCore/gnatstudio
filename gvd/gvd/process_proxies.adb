@@ -48,6 +48,7 @@ package body Process_Proxies is
          GNAT.Expect.Process_Descriptor_Access);
       procedure Free_Internal is new Unchecked_Deallocation
         (Boolean, Boolean_Access);
+
    begin
       Free_Internal (Proxy.Descriptor);
       Free_Internal (Proxy.Command_In_Process);
@@ -201,16 +202,16 @@ package body Process_Proxies is
          end if;
 
          Expect
-           (Proxy.Descriptor.all, Result, Pattern, Matched,  Timeout => 10);
+           (Proxy.Descriptor.all, Result, Pattern, Matched, Timeout => 10);
 
-         exit when Num = Timeout;
+         exit when Timeout = 0 or else Num = Timeout;
 
          Num := Num + 1;
 
          case Result is
             when Expect_Full_Buffer =>
                --  If the buffer was already full, we simply exit as if there
-               --  had been a timeout. This should not be a problem in odd,
+               --  had been a timeout. This should not be a problem in GVD,
                --  since the buffers have an unlimited size.
                exit;
 
