@@ -22,6 +22,7 @@ with Glib; use Glib;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.List; use Gtk.List;
+with Gtk.List_Item; use Gtk.List_Item;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Container; use Gtk.Container;
 with Odd.Process; use Odd.Process;
@@ -198,99 +199,48 @@ package body Odd.Dialogs.Callbacks is
    procedure On_Replay_Selection_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      type List_Node;
-      type List_Link is access List_Node;
-      type List_Node is record
-         Command : Odd.Types.String_Access;
-         Number  : Gint;
-         Next    : List_Link;
-      end record;
-
-      procedure Free is new Unchecked_Deallocation (List_Node, List_Link);
-
+      History_Dialog : History_Dialog_Access :=
+        History_Dialog_Access (Get_Toplevel (Object));
       Top  : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access
-          (History_Dialog_Access (Get_Toplevel (Object)).Window);
+        Main_Debug_Window_Access (History_Dialog.Window);
       Page : constant Gtk_Widget :=
         Get_Nth_Page
           (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
       Tab  : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
       List : constant Gtk_List :=
         History_Dialog_Access (Get_Toplevel (Object)).List;
+      Item : Gtk_List_Item;
 
       use Widget_List;
-
-      Selected   : Widget_List.Glist := Last (Get_Selection (List));
-      New_List   : List_Link;
-      First_Item : List_Link;
+      Selected   : Widget_List.Glist := First (Get_Children (List));
+      Current    : Widget_List.Glist := Get_Selection (List);
 
    begin
-
-      --  Processing the first command might provoke an Update on that widget,
-      --  which will discard the selection. Therefore, we must build a list of
-      --  commands to be sent prior to sending them.
-
-      --  Elements are inserted in this list with respect to their position in
-      --  the main list.
+      Freeze (History_Dialog);
 
       while Selected /= Null_List loop
-
-         declare
-            Previous : List_Link := null;
-            Buffer   : List_Link := null;
-            Current  : List_Link := First_Item;
-            N        : Gint := Child_Position (List, Get_Data (Selected));
-         begin
-            Buffer := new List_Node;
-            Buffer.Command := new String'
-              (Get (Gtk_Label
-                     (Get_Data
-                       (Children (Gtk_Container (Get_Data (Selected)))))));
-            Buffer.Number := N;
-            Buffer.Next := null;
-
-            if First_Item = null then
-               First_Item := Buffer;
-            else
-               while Current /= null
-                 and then Current.Number < N
-               loop
-                  Previous := Current;
-                  Current := Current.Next;
-               end loop;
-
-               if Previous = null then
-                  Buffer.Next := Current;
-                  First_Item := Buffer;
-               elsif Current = null then
-                  Previous.Next := Buffer;
-               else
-                  Buffer.Next := Current;
-                  Previous.Next := Buffer;
-               end if;
-            end if;
-         end;
-
-         Selected := Prev (Selected);
+         if Index (Current, Get_Data (Selected)) /= -1 then
+            declare
+               Command : String :=
+                 Get (Gtk_Label
+                       (Get_Data
+                         (Children
+                           (Gtk_Container (Get_Data (Selected))))));
+            begin
+               Process_User_Command
+                 (Tab,
+                  Command,
+                  Output_Command => True,
+                  Mode           => Odd.Types.User);
+               Gtk_New (Item, Label => Command);
+               Show (Item);
+               Add (History_Dialog.List, Item);
+            end;
+         end if;
+         Selected := Next (Selected);
       end loop;
 
-      New_List := First_Item;
-
-      --  Execute the commands and free the list while traversing it
-
-      while New_List /= null loop
-         Process_User_Command
-           (Tab,
-            New_List.Command.all,
-            Output_Command => True,
-            Mode => User);
-         Free (New_List.Command);
-         First_Item := New_List;
-         New_List := New_List.Next;
-         Free (First_Item);
-      end loop;
-
-      Update (Top.History_Dialog, Gtk_Widget (Tab));
+      Thaw (History_Dialog);
    end On_Replay_Selection_Clicked;
 
    -------------------------------
