@@ -93,7 +93,7 @@ package Directory_Tree is
    procedure Gtk_New
      (Selector             : out Directory_Selector;
       Initial_Directory    : String;
-      Root_Directory       : String := "/";
+      Root_Directory       : String := (1 => GNAT.OS_Lib.Directory_Separator);
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
@@ -106,7 +106,7 @@ package Directory_Tree is
    procedure Initialize
      (Selector             : access Directory_Selector_Record'Class;
       Initial_Directory    : String;
-      Root_Directory       : String := "/";
+      Root_Directory       : String := (1 => GNAT.OS_Lib.Directory_Separator);
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
