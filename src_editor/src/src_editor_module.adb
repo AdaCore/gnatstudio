@@ -134,6 +134,11 @@ package body Src_Editor_Module is
    Before_Cst            : aliased constant String := "before";
    After_Cst             : aliased constant String := "after";
    Name_Cst              : aliased constant String := "name";
+   First_Line_Cst        : aliased constant String := "first_line";
+   Start_Column_Cst      : aliased constant String := "start_column";
+   Last_Line_Cst         : aliased constant String := "last_line";
+   End_Column_Cst        : aliased constant String := "end_column";
+   Text_Cst              : aliased constant String := "text";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -166,6 +171,13 @@ package body Src_Editor_Module is
       5 => After_Cst'Access);
    Case_Exception_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
+   Select_Text_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => First_Line_Cst'Access,
+      2 => Last_Line_Cst'Access,
+      3 => Start_Column_Cst'Access,
+      4 => End_Column_Cst'Access);
+   Insert_Text_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Text_Cst'Access);
 
    type Editor_Child_Record is new GPS_MDI_Child_Record
       with null record;
@@ -947,6 +959,38 @@ package body Src_Editor_Module is
             end if;
          end;
 
+      elsif Command = "select_text" then
+         Name_Parameters (Data, Select_Text_Cmd_Parameters);
+
+         declare
+            Child        : constant MDI_Child := Find_Current_Editor (Kernel);
+            Buffer       : Source_Buffer;
+            First_Line   : constant Natural := Nth_Arg (Data, 1);
+            Start_Column : constant Natural := Nth_Arg (Data, 3, Default => 1);
+            Last_Line    : Natural := Nth_Arg (Data, 2);
+            End_Column   : Natural := Nth_Arg (Data, 4, Default => 0);
+         begin
+            if Child /= null then
+               if End_Column = 0 then
+                  --  End column not specified, in this case select the
+                  --  whole line
+                  End_Column := 1;
+                  Last_Line  := Last_Line + 1;
+               end if;
+
+               Buffer := Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
+
+               if Is_Valid_Position
+                 (Buffer, Gint (First_Line - 1), Gint (Start_Column - 1))
+               then
+                  Select_Region
+                    (Buffer,
+                     Gint (First_Line - 1), Gint (Start_Column - 1),
+                     Gint (Last_Line - 1), Gint (End_Column - 1));
+               end if;
+            end if;
+         end;
+
       elsif Command = "close"
         or else Command = "undo"
         or else Command = "redo"
@@ -1115,6 +1159,22 @@ package body Src_Editor_Module is
                Set_Error_Msg (Data, -"file not open");
             end if;
 
+         end;
+
+      elsif Command = "insert_text" then
+         declare
+            Child  : constant MDI_Child := Find_Current_Editor (Kernel);
+            Buffer : Source_Buffer;
+            Text   : constant String  := Nth_Arg (Data, 1);
+            Line   : Editable_Line_Type;
+            Column : Positive;
+         begin
+            if Child /= null then
+               Buffer := Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
+
+               Get_Cursor_Position (Buffer, Line, Column);
+               Insert (Buffer, Line, Column, Text);
+            end if;
          end;
 
       elsif Command = "get_line"
@@ -2818,8 +2878,7 @@ package body Src_Editor_Module is
 
       Success          : Boolean;
       Child            : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source           : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Child);
+      Source           : Source_Editor_Box;
       Print_Helper     : constant String := Get_Pref (Kernel, Print_Command);
       Source_Font      : constant Pango_Font_Description :=
         Get_Pref_Font (Kernel, Default_Style);
@@ -2827,6 +2886,13 @@ package body Src_Editor_Module is
       Source_Font_Size : constant Gint := To_Pixels (Get_Size (Source_Font));
 
    begin
+      if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
+         Console.Insert (Kernel, "No source file selected", Mode => Error);
+         return;
+      end if;
+
+      Source := Get_Source_Box_From_MDI (Child);
+
       if Source = null then
          return;
       end if;
@@ -4376,6 +4442,31 @@ package body Src_Editor_Module is
          Description   => -"Select the whole editor contents.",
          Minimum_Args  => 0,
          Maximum_Args  => 0,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "select_text",
+         Params        =>
+           Parameter_Names_To_Usage (Select_Text_Cmd_Parameters),
+         Description   => -"Select a block in the current editor.",
+         Minimum_Args  => 2,
+         Maximum_Args  => 4,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "insert_text",
+         Params        =>
+           Parameter_Names_To_Usage (Insert_Text_Cmd_Parameters),
+         Description   => -("Insert a text in the current editor at the "
+                            & "cursor position."),
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
