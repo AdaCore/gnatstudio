@@ -54,6 +54,10 @@ with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
 package body GVD.Canvas is
 
+   Experimental_Zoom_Support : constant Boolean := False;
+   --  Activate this to enable zoom support. This is still buggy with regards
+   --  to items positionning on the canvas. ???
+
    -----------------
    -- Local Types --
    -----------------
@@ -252,8 +256,10 @@ package body GVD.Canvas is
       Canvas.Detect_Aliases := Get_Pref (Default_Detect_Aliases);
       Initialize (Canvas);
 
-      Widget_Callback.Connect
-        (Canvas, "zoomed", Widget_Callback.To_Marshaller (Zoomed'Access));
+      if Experimental_Zoom_Support then
+         Widget_Callback.Connect
+           (Canvas, "zoomed", Widget_Callback.To_Marshaller (Zoomed'Access));
+      end if;
 
       --  Create the  background contextual menu now, so that the key shortcuts
       --  are activated
@@ -582,47 +588,49 @@ package body GVD.Canvas is
          Check_Canvas_Handler.To_Marshaller (Change_Detect_Aliases'Access),
          GVD_Canvas (Canvas));
 
-      Gtk_New (Mitem);
-      Append (Canvas.Contextual_Background_Menu, Mitem);
+      if Experimental_Zoom_Support then
+         Gtk_New (Mitem);
+         Append (Canvas.Contextual_Background_Menu, Mitem);
 
-      Gtk_New (Mitem, Label => -"Zoom in");
-      Append (Canvas.Contextual_Background_Menu, Mitem);
-      Widget_Callback.Object_Connect
-        (Mitem, "activate",
-         Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
-      Add_Accelerator
-        (Mitem, "activate",
-         Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
-
-      Gtk_New (Mitem, Label => -"Zoom out");
-      Append (Canvas.Contextual_Background_Menu, Mitem);
-      Widget_Callback.Object_Connect
-        (Mitem, "activate",
-         Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
-      Add_Accelerator
-        (Mitem, "activate",
-         Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
-
-      Gtk_New (Zooms_Menu);
-
-      for J in Zoom_Levels'Range loop
-         Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
-         Append (Zooms_Menu, Mitem);
-         Item_Handler.Connect
+         Gtk_New (Mitem, Label => -"Zoom in");
+         Append (Canvas.Contextual_Background_Menu, Mitem);
+         Widget_Callback.Object_Connect
            (Mitem, "activate",
-            Item_Handler.To_Marshaller (Zoom_Level'Access),
-            (Name_Length    => 0,
-             Canvas         => GVD_Canvas (Canvas),
-             Item           => null,
-             Component      => null,
-             Component_Name => "",
-             Mode           => Value,
-             Zoom           => Zoom_Levels (J)));
-      end loop;
+            Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
+         Add_Accelerator
+           (Mitem, "activate",
+            Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
 
-      Gtk_New (Mitem, Label => -"Zoom");
-      Append (Canvas.Contextual_Background_Menu, Mitem);
-      Set_Submenu (Mitem, Zooms_Menu);
+         Gtk_New (Mitem, Label => -"Zoom out");
+         Append (Canvas.Contextual_Background_Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
+         Add_Accelerator
+           (Mitem, "activate",
+            Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
+
+         Gtk_New (Zooms_Menu);
+
+         for J in Zoom_Levels'Range loop
+            Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
+            Append (Zooms_Menu, Mitem);
+            Item_Handler.Connect
+              (Mitem, "activate",
+               Item_Handler.To_Marshaller (Zoom_Level'Access),
+               (Name_Length    => 0,
+                Canvas         => GVD_Canvas (Canvas),
+                Item           => null,
+                Component      => null,
+                Component_Name => "",
+                Mode           => Value,
+                Zoom           => Zoom_Levels (J)));
+         end loop;
+
+         Gtk_New (Mitem, Label => -"Zoom");
+         Append (Canvas.Contextual_Background_Menu, Mitem);
+         Set_Submenu (Mitem, Zooms_Menu);
+      end if;
 
       Show_All (Canvas.Contextual_Background_Menu);
 
