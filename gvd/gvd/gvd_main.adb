@@ -276,12 +276,12 @@ begin
       Main_Debug_Window.Sessions_Dir := new String'
         (Dir.all & Directory_Separator & "sessions");
    else
-        Button := Message_Dialog
-          ((-"Cannot find sessions directory ") & Dir.all &
-           Directory_Separator & "sessions" & ASCII.LF & (-"Exiting..."),
-           Error, Button_OK,
-           Justification => Justify_Left);
-        OS_Exit (1);
+      Button := Message_Dialog
+        ((-"Cannot find sessions directory ") & Dir.all &
+         Directory_Separator & "sessions" & ASCII.LF & (-"Exiting..."),
+         Error, Button_OK,
+         Justification => Justify_Left);
+      OS_Exit (1);
    end if;
 
    Show_All (Main_Debug_Window);
