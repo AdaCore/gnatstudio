@@ -115,9 +115,7 @@ package body Builder_Module is
 
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Data_Type   => Compute_Xref_Data_Access,
-      Description => -"Computing cross-references information",
-      Free        => Deep_Free,
-      Iterate     => Xref_Iterate);
+      Free        => Deep_Free);
 
    procedure Free (Ar : in out String_List);
    procedure Free (Ar : in out String_List_Access);
@@ -905,7 +903,9 @@ package body Builder_Module is
       elsif Command = "compute_xref" then
          Xref_Commands.Create
            (C,
-            new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0));
+            -"Computing cross-references information",
+            new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
+            Xref_Iterate'Access);
 
          Launch_Synchronous (Command_Access (C), 0.01);
          Destroy (Command_Access (C));
@@ -1085,7 +1085,9 @@ package body Builder_Module is
       C : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
       Xref_Commands.Create
-        (C, new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0));
+        (C, -"Computing cross-references information",
+         new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
+         Xref_Iterate'Access);
 
       Launch_Background_Command
         (Kernel, Command_Access (C), True, "");

@@ -186,9 +186,7 @@ package body GVD_Module is
 
    package Reveal_Lines_Commands is new Commands.Generic_Asynchronous
      (Data_Type   => GVD_Module,
-      Description => -"Querying line information",
-      Free        => Free_Line_Information,
-      Iterate     => Line_Information_Compute);
+      Free        => Free_Line_Information);
    --  Package that handles commands related to line breakpoints query.
 
    procedure Destroy (Id : in out GVD_Module_Record);
@@ -1893,7 +1891,11 @@ package body GVD_Module is
 
          if Id.Show_Lines_With_Code then
             if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-               Reveal_Lines_Commands.Create (C, Id);
+               Reveal_Lines_Commands.Create
+                 (C,
+                  Data        => Id,
+                  Iterate     => Line_Information_Compute'Access,
+                  Description => -"Querying line information");
 
                Launch_Background_Command
                  (Id.Kernel, Command_Access (C), True, "Debugger");
