@@ -450,7 +450,7 @@ package body Builder_Module is
            (Fd.all,
             Remote_Args (Remote_Args'First).all,
             Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last) &
-              Arguments,
+              Command'Unrestricted_Access & Arguments,
             Buffer_Size => 0, Err_To_Out => True);
          Free (Remote_Args);
 
