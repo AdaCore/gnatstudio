@@ -2668,6 +2668,20 @@ of the window. It shows in a tree structure the project hierarchy,
 along with all the source files belonging to the project, and the
 entities declared in the source files.
 
+It is worth noting that the explorer provides a tree representation of
+the project hierarchy. If a project is imported by multiple other
+projects in the hiearchy, then this project will appear multiple times
+in the explorer.
+
+@cindex limited with
+Likewise, if you have edited the project manually and have used the
+@code{limited with} construct to have cycles in the project
+dependencies, the cycle will expand infinitely. For instance, if
+project @file{a} imports project @file{b}, which in turns imports
+project @file{a} through a @code{limited with} clause, then expanding
+the node for @file{a} will show @file{b}. In turn, expanding the node
+for @file{b} will show a node for @file{a}, and so on.
+
 The contextual menu in this explorer provides a number of items to
 modify the project hierarchy (what each project imports), as well as
 to visualize and modify the attributes for each projects (compilation
@@ -2978,6 +2992,14 @@ scheme. For instance, this let you specify that in addition to using
 @file{.adb} for Ada body files, the file @file{foo.ada} should also be
 considered as an Ada file.
 
+The list of exceptions is displayed in the bottom list of the naming
+scheme editor. To remove entries from that list, select the line you
+want to remove, and then press the @key{Del} key.
+The contents of the lines can be edited interactively, by
+double-clicking on the line and column you want to edit.
+
+To add new entries to this list, use the three fields at the bottom of
+the window, and press the update button.
 
 @c ------------------------------------------------------------------
 @subsection Main Units
