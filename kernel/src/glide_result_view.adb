@@ -907,11 +907,6 @@ package body Glide_Result_View is
             Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
             File   : constant Virtual_File := Create
               (Full_Filename => Get_String (Model, Par, Absolute_Name_Column));
-            Category : constant String :=
-              Get_String (Model, Granpa, Base_Name_Column);
-            Message : constant String :=
-              Get_String (Model, Iter, Base_Name_Column) &
-              Get_String (Model, Iter, Message_Column);
          begin
             Result := new Message_Context;
             Set_File_Information
@@ -921,8 +916,8 @@ package body Glide_Result_View is
                Column => Column);
             Set_Message_Information
               (Result,
-               Category,
-               Message);
+               Category => Get_String (Model, Granpa, Base_Name_Column),
+               Message  => Get_String (Model, Iter, Message_Column));
          end;
       end if;
 
