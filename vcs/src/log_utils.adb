@@ -410,6 +410,7 @@ package body Log_Utils is
             --  global ChangeLog.
 
             if CL = null then
+               Close (W_File);
                return;
             end if;
 
