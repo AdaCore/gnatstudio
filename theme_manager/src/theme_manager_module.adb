@@ -180,6 +180,10 @@ package body Theme_Manager_Module is
    is
       Iter : Gtk_Tree_Iter := Get_Iter_First (Model);
    begin
+      if Category = "" then
+         return Null_Iter;
+      end if;
+
       while Iter /= Null_Iter loop
          if Get_String (Model, Iter, Name_Column) = Category then
             return Iter;
@@ -254,7 +258,7 @@ package body Theme_Manager_Module is
             Name  : constant String := Get_Attribute (Node, "name");
             Descr : constant String := Get_Attribute (Node, "description");
             Cat   : constant String := Get_Attribute
-              (Node, "category", "General");
+              (Node, "category", "");
          begin
             if Name = "" then
                Insert (Kernel, -"<theme> nodes must have a name attribute");
