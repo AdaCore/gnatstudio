@@ -433,6 +433,7 @@ package body VCS_View_API is
 
             Add_Action (Open, On_Menu_Open'Access);
             Add_Action (History, On_Menu_View_Log'Access);
+            Add_Action (History_Revision, On_Menu_View_Log_Rev'Access);
 
             Gtk_New (Item);
             Append (Menu, Item);
@@ -2270,6 +2271,65 @@ package body VCS_View_API is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_View_Log;
+
+   --------------------------
+   -- On_Menu_View_Log_Rev --
+   --------------------------
+
+   procedure On_Menu_View_Log_Rev
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      Ref      : constant VCS_Access := Get_Current_Ref (Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Explorer : constant VCS_View_Access := Get_Explorer (Kernel, False);
+      Files    : String_List.List;
+      Revision : String_Access;
+      Status   : File_Status_Record;
+   begin
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot view log",
+            Mode => Error);
+         return;
+      end if;
+
+      Status := Get_Cached_Status
+        (Explorer, Create (String_List.Head (Files)), Ref);
+
+      if String_List.Is_Empty (Status.Working_Revision) then
+         Revision := new String'("");
+      else
+         Revision := new String'
+           (Protect (String_List.Head (Status.Working_Revision)));
+      end if;
+
+      declare
+         Str : constant String :=
+           Execute_GPS_Shell_Command
+            (Kernel,
+             "MDI.input_dialog"
+             & " ""Query history for revision:"""
+             & " ""Revision=" & Revision.all & """");
+      begin
+         if Str /= "" then
+            Log
+              (Get_Current_Ref (Context),
+               Create (Full_Filename => String_List.Head (Files)),
+               Str);
+         end if;
+      end;
+
+      Free (Revision);
+      String_List.Free (Files);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_View_Log_Rev;
 
    -------------------------------
    -- On_Menu_Diff_Working_Head --
