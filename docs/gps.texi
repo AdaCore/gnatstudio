@@ -88,7 +88,6 @@ Multiple Document Interface
 Editing File
 * General Information::
 * Navigation in the Source Editor::
-* Indentation::
 * Using an External Editor::
 * Using the Clipboard::
 
@@ -136,8 +135,7 @@ Working in a cross environment
 
 Customization
 * The Preferences Dialog::
-* Customizing the Menu Bar::
-* Customizing the Tool Bar::
+* Customizing the Menu Bar and the Tool Bar::
 * Changing Colors Fonts and Key Bindings::
 
 
@@ -879,7 +877,7 @@ instance, on the background of your screen), the window will be floated.
 @item Sides of the GPS window
 On each side of the GPS window, a small zone (a few pixels high or
 wide) is set up as a drop-area. If you drop a window on these zone
-(they are briefly highlighted while the mouse rests on them), then the
+(they are briefly highlighted while the mouse stays on them), then the
 window will be added to the dock on that side. If there is no dock
 area on that side, one will be created.
 
@@ -897,7 +895,6 @@ by side. Drag one of them on the drop area on the right side.
 @menu
 * General Information::
 * Navigation in the Source Editor::
-* Indentation::
 * Using an External Editor::
 * Using the Clipboard::
 @end menu
@@ -940,8 +937,13 @@ Redo previous insertion/deletion
 Toggle overwrite mode
 @end table
 
-@node Indentation
-@section Indentation
+@subsubsection Indentation
+@noindent
+
+@subsubsection Word completion
+@noindent
+
+@subsubsection Jump to delimiter
 @noindent
 
 @c --------------------------------------------------------------------------
@@ -1471,8 +1473,7 @@ When you want to quit the debugger without quitting GPS, go to the menu
 
 @menu
 * The Preferences Dialog::
-* Customizing the Menu Bar::
-* Customizing the Tool Bar::
+* Customizing the Menu Bar and the Tool Bar::
 * Changing Colors Fonts and Key Bindings::
 @end menu
 
@@ -1480,13 +1481,31 @@ When you want to quit the debugger without quitting GPS, go to the menu
 @section The Preferences Dialog
 @noindent
 
-@node Customizing the Menu Bar
-@section Customizing the Menu Bar
+@node Customizing the Menu Bar and the Tool Bar
+@section Customizing the Menu Bar and the Tool Bar
 @noindent
 
+You can customize the GPS menu bar in two different ways: you can
+redefine or add new key bindings to the existing menu items, and
+you can define new menu items.
+
+@subsection Redefining key bindings
+@noindent
+In order to define or redefine key bindings, you first need to enable
+the @i{dynamic key binding} feature in the @code{preferences} dialog,
+in the general section.
+
+Then, you can simply navigate through the menus, and type the key binding
+you want to associate to a particular item. To remove a key binding, use
+the @key{Backspace} key.
+Your changes will be saved when GPS exits, in a file called
+@file{$HOME/.gps/custom_keys}.
+
+@subsection Adding menu and button items
+@noindent
 The GPS menu bar can be customized through an XML file called
-@file{custom} in the gps home directory (@file{~/.gps} on Unix
-systems).
+@file{custom} in the gps home directory (@file{$HOME/.gps} on Unix
+systems, @file{%HOME%\.gps} on Windows systems).
 
 Here is an example for such a file:
 
@@ -1656,10 +1675,6 @@ directories in the current project, and all imported subprojects,
 recursively.
 @end table
 
-@node Customizing the Tool Bar
-@section Customizing the Tool Bar
-@noindent
-
 @node Changing Colors Fonts and Key Bindings
 @section Changing Colors Fonts and Key Bindings
 @noindent
@@ -1776,20 +1791,21 @@ under Windows) if GPS_HOME is not set, or to $GPS_HOME/.gps (respectively
 
 @table @file
    @item $HOME/.gps
-GPS state directory
+GPS state directory. Defaults to C:\.gps under Windows systems if HOME is not
+defined.
 
    @item $HOME/.gps/log
 @anchor{log file}
 Log file created automatically by GPS
 
    @item $HOME/.gps/custom
-You can edit this file to add your own menu entries in GPS.
-@xref{Customizing the Menu Bar}.
+You can edit this file to add your own menu and toolbar entries in GPS.
+@xref{Customizing the Menu Bar and the Tool Bar}.
 
    @item $HOME/.gps/custom_key
 Contains all the key bindings defined in GPS. This file is
 automatically created if you have activated the dynamic key bindings feature
-(@xref{Changing Colors Fonts and Key Bindings}.)
+(@xref{Customizing the Menu Bar and the Tool Bar}.
 
    @item $HOME/.gps/desktop
 Desktop file in XML format (using the menu @code{File->Save...->Desktop}),
@@ -1913,9 +1929,10 @@ A: You should check the permissions of the directory $HOME/.gps and its
 subdirectories, they should be owned by the user.
 
 @item GPS crashes whenever I open a source editor
-This is usually due to font problems. Typically, editing the file
+This is usually due to font problems. Editing the file
 @file{$HOME/.gps/preferences} and changing the name of the fonts, e.g
-changing @i{Courier} by @i{Courier Medium}, and @i{Helvetica} by @i{Sans}.
+changing @i{Courier} by @i{Courier Medium}, and @i{Helvetica} by @i{Sans}
+should solve the problem.
 
 @item GPS refuses to start the debugger
 If GPS cannot properly initialize the debugger (using the menu
