@@ -425,7 +425,7 @@ package body Entities is
             Entity := EL.Table (E);
 
             if Entity.Is_Valid then
-               if E = Entity_Information_Arrays.First then
+               if Entity_Information_Arrays.Length (EL.all) = 1 then
                   Remove (File.Entities, Entity.Name.all);
                else
                   Remove (EL.all, E);
@@ -461,8 +461,9 @@ package body Entities is
             if Entity.Declaration.File = File
               and then Entity.Is_Valid
             then
-               if E = Entity_Information_Arrays.First then
+               if Entity_Information_Arrays.Length (EL.all) = 1 then
                   Remove (Tree, Entity.Name.all);
+                  exit;
                else
                   Remove (EL.all, E);
                end if;
@@ -620,6 +621,17 @@ package body Entities is
       begin
          for J in reverse Entity_Information_Arrays.First .. Last (E) loop
             Assert (Assert_Me, E.Table (J) /= null, "Invalid entity in list");
+
+            if Active (Debug_Me) then
+               if E.Table (J).Ref_Count = 0 then
+                  Trace (Debug_Me, "Entity should no longer be referenced "
+                         & E.Table (J).Name.all
+                         & "But is still referenced from "
+                         & Entity.Name.all & ":"
+                         & Base_Name (Get_Filename (Entity.Declaration.File)));
+               end if;
+            end if;
+
             Assert
               (Assert_Me, E.Table (J).Declaration.File /= null,
                "Invalid declaration");
@@ -1336,6 +1348,7 @@ package body Entities is
 
       if Entity.Kind.Is_Type then
          Append (Is_Of_Type.Child_Types, Entity);
+         Add_All_Entities (Is_Of_Type.Declaration.File, Entity);
       end if;
 
       Add_All_Entities (Entity.Declaration.File, Is_Of_Type);
