@@ -19,12 +19,12 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel.Project;  use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;  use Glide_Kernel.Scripts;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with String_List_Utils;
 with String_Utils;          use String_Utils;
 with Projects.Registry;     use Projects.Registry;
 with Basic_Types;           use Basic_Types;
-with Shell;                 use Shell;
 
 package body Codefix.GPS_Io is
 
@@ -49,21 +49,18 @@ package body Codefix.GPS_Io is
    is
       Result : GPS_Mark;
       Args   : Argument_List :=
-        (1 => new String'("-l"),
-         2 => new String'(Image (Cursor.Line)),
-         3 => new String'("-c"),
-         4 => new String'(Image (Cursor.Col)),
-         5 => new String'("-L"),
-         6 => new String'("0"),
-         7 => new String'
+        (1 => new String'
            (Get_Full_Path_From_File
             (Registry        => Get_Registry (Current_Text.Kernel),
              Filename        => Get_File_Name (Current_Text),
              Use_Source_Path => True,
-             Use_Object_Path => False)));
+             Use_Object_Path => False)),
+         2 => new String'(Image (Cursor.Line)),
+         3 => new String'(Image (Cursor.Col)),
+         4 => new String'("0"));
    begin
       Result.Id := new String'
-        (Interpret_Command (Current_Text.Kernel, "create_mark", Args));
+        (Execute_GPS_Shell_Command (Current_Text.Kernel, "create_mark", Args));
       Free (Args);
       return Result;
    end Get_New_Mark;
@@ -77,18 +74,16 @@ package body Codefix.GPS_Io is
       Mark         : Mark_Abstr'Class) return File_Cursor'Class
    is
       New_Cursor : File_Cursor;
+      Args : Argument_List (1 .. 1);
    begin
       Assign (New_Cursor.File_Name, Get_File_Name (Current_Text));
+
+      Args (1) := new String'(GPS_Mark (Mark).Id.all);
       New_Cursor.Col := Natural'Value
-        (Interpret_Command
-           (Current_Text.Kernel,
-            "get_column " & GPS_Mark (Mark).Id.all));
-
+        (Execute_GPS_Shell_Command (Current_Text.Kernel, "get_column", Args));
       New_Cursor.Line := Natural'Value
-        (Interpret_Command
-           (Current_Text.Kernel,
-            "get_line " & GPS_Mark (Mark).Id.all));
-
+        (Execute_GPS_Shell_Command (Current_Text.Kernel, "get_line", Args));
+      Free (Args);
       return New_Cursor;
    end Get_Current_Cursor;
 
@@ -125,8 +120,8 @@ package body Codefix.GPS_Io is
 
    procedure Undo (This : in out Console_Interface) is
       Args : Argument_List := (1 => new String'(Get_File_Name (This)));
-      Ignore : constant String := Interpret_Command
-        (This.Kernel, "edit.undo", Args);
+      Ignore : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "undo", Args);
       pragma Unreferenced (Ignore);
    begin
       Free (Args);
@@ -195,51 +190,38 @@ package body Codefix.GPS_Io is
       if Cursor.Line /= 0 then
          declare
             Args : Argument_List :=
-              (1  => new String'("-l"),
-               2  => new String'(Image (Cursor.Line)),
-               3  => new String'("-c"),
-               4  => new String'(Image (Cursor.Col)),
-               5  => new String'
-                  (Get_Full_Path_From_File
-                   (Registry        => Get_Registry (This.Kernel),
-                    Filename        => Get_File_Name (This),
-                    Use_Source_Path => True,
-                    Use_Object_Path => False)),
-               6  => new String'("-a"),
-               7  => new String'(Image (Len)),
-               8  => new String'("-b"),
-               9  => new String'("0"),
-               10 => new String'('"' & New_Value & '"'));
-
-            Ignore : constant String := Interpret_Command
-              (This.Kernel, "replace_text", Args);
-            pragma Unreferenced (Ignore);
+              (1 => new String'
+                 (Get_Full_Path_From_File
+                  (Registry        => Get_Registry (This.Kernel),
+                   Filename        => Get_File_Name (This),
+                   Use_Source_Path => True,
+                   Use_Object_Path => False)),
+               2 => new String'(Image (Cursor.Line)),
+               3 => new String'(Image (Cursor.Col)),
+               4 => new String'(New_Value),
+               5 => new String'("0"),           --  before
+               6 => new String'(Image (Len)));  --  after
          begin
+            Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
             Free (Args);
          end;
 
       else
          declare
             Args : Argument_List :=
-              (1  => new String'("-l"),
-               2  => new String'("1"),
-               3  => new String'("-c"),
-               4  => new String'("1"),
-               5  => new String'
-                  (Get_Full_Path_From_File
-                   (Registry        => Get_Registry (This.Kernel),
-                    Filename        => Get_File_Name (This),
-                    Use_Source_Path => True,
-                    Use_Object_Path => False)),
-               6  => new String'("-a"),
-               7  => new String'("0"),
-               8  => new String'("-b"),
-               9  => new String'("0"),
-               10 => new String'('"' & New_Value & '"'));
-            Ignore : constant String := Interpret_Command
-              (This.Kernel, "replace_text", Args);
-            pragma Unreferenced (Ignore);
+              (1 => new String'
+                 (Get_Full_Path_From_File
+                  (Registry        => Get_Registry (This.Kernel),
+                   Filename        => Get_File_Name (This),
+                   Use_Source_Path => True,
+                   Use_Object_Path => False)),
+               2 => new String'("1"),  --  line
+               3 => new String'("1"),  --  column
+               4 => new String'(New_Value),
+               5 => new String'("0"),  --  before
+               6 => new String'("0")); --  after
          begin
+            Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
             Free (Args);
          end;
       end if;
@@ -281,29 +263,20 @@ package body Codefix.GPS_Io is
       Cursor : Text_Cursor'Class)
    is
       Args : Argument_List :=
-        (1 => new String'("-l"),
+        (1 => new String'
+           (Get_Full_Path_From_File
+            (Registry        => Get_Registry (This.Kernel),
+             Filename        => Get_File_Name (This),
+             Use_Source_Path => True,
+             Use_Object_Path => False)),
          2 => new String'(Image (Cursor.Line)),
-         3 => new String'("-c"),
-         4 => new String'(Image (Cursor.Col)),
-         5 => new String'
-            (Get_Full_Path_From_File
-             (Registry        => Get_Registry (This.Kernel),
-              Filename        => Get_File_Name (This),
-              Use_Source_Path => True,
-              Use_Object_Path => False)),
-         6 => new String'(""""""));  --  string composed of double quotes
-
+         3 => new String'(Image (Cursor.Col)),
+         4 => new String'(""));  --  replacement text
    begin
       This.File_Modified.all := True;
       Text_Has_Changed (This);
-
-      declare
-         Ignore : constant String := Interpret_Command
-           (This.Kernel, "replace_text", Args);
-         pragma Unreferenced (Ignore);
-      begin
-         Free (Args);
-      end;
+      Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
+      Free (Args);
    end Delete_Line;
 
    ----------------
@@ -332,8 +305,8 @@ package body Codefix.GPS_Io is
             Filename        => Get_File_Name (This),
             Use_Source_Path => True,
             Use_Object_Path => False)));
-      S    : constant GNAT.OS_Lib.String_Access :=
-        new String'(Interpret_Command (This.Kernel, "get_buffer", Args));
+      S    : constant GNAT.OS_Lib.String_Access := new String'
+        (Execute_GPS_Shell_Command (This.Kernel, "get_buffer", Args));
    begin
       Free (Args);
       return S;
@@ -412,7 +385,7 @@ package body Codefix.GPS_Io is
                 Use_Object_Path => False)));
       begin
          This.Lines_Number.all := Natural'Value
-           (Interpret_Command (This.Kernel, "get_last_line", Args));
+           (Execute_GPS_Shell_Command (This.Kernel, "get_last_line", Args));
          Free (Args);
       end;
 
@@ -499,7 +472,8 @@ package body Codefix.GPS_Io is
      (This : in out Compilation_Output; Kernel : Kernel_Handle) is
    begin
       Assign
-        (This.Errors_Buffer, Interpret_Command (Kernel, "get_build_output"));
+        (This.Errors_Buffer,
+         Execute_GPS_Shell_Command (Kernel, "get_build_output"));
       This.Kernel := Kernel;
    end Get_Last_Output;
 
