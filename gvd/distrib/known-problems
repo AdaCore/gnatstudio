@@ -1,5 +1,13 @@
 Known Problems fixed in GVD 2.0.0
 
+- Incorrect detection of file extension in the explorer
+  Problem:    The explorer tree on the left of the GVD window incorrectly
+              handles files with no extension, and they are put at the same
+              level as the "adb files", "c files", .. nodes.
+  Workaround: The problem is that the file names include directory names with a
+              dot, and thus the extension is incorrectly detected. Try putting
+              only absolute paths in the parameters to the compiler.
+
 - [9124-001]  Update button in breakpoints editor doesn't work
   Problem:    When using the "Update" button in the breakpoints editor
               ("Advanced" section), gvd enters in a recursive loop.
@@ -13,7 +21,6 @@ Known Problems fixed in GVD 2.0.0
 - [9118-007] Display update problems under Windows NT/2000
   Problem:    After a question dialog is displayed, drawing in the debugger
               console gets messed up.
-  
   Workaround: When this happens, put another window in front to force the
               display, or use the scrollbar.
 
