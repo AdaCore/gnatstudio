@@ -31,6 +31,7 @@ package Switches_Editor_Pkg is
       Num_Processes : Gtk_Spin_Button;
       Make_Keep_Going : Gtk_Check_Button;
       Make_Debug : Gtk_Check_Button;
+      Make_Mapping_File : Gtk_Check_Button;
       Make_Switches_Entry : Gtk_Entry;
       Label17 : Gtk_Label;
       Ada_Switches : Gtk_Table;
@@ -41,6 +42,7 @@ package Switches_Editor_Pkg is
       Ada_No_Inline : Gtk_Check_Button;
       Ada_Interunit_Inlining : Gtk_Check_Button;
       Ada_Unroll_Loops : Gtk_Check_Button;
+      Ada_Pic : Gtk_Check_Button;
       Ada_Code_Coverage : Gtk_Check_Button;
       Ada_Instrument_Arcs : Gtk_Check_Button;
       Frame22 : Gtk_Frame;
@@ -81,6 +83,7 @@ package Switches_Editor_Pkg is
       C_Optimization_Level_Entry : Gtk_Entry;
       C_No_Inline : Gtk_Check_Button;
       C_Unroll_Loops : Gtk_Check_Button;
+      C_Pic : Gtk_Check_Button;
       C_Profile : Gtk_Check_Button;
       C_Code_Coverage : Gtk_Check_Button;
       C_Instrument_Arcs : Gtk_Check_Button;
@@ -94,6 +97,7 @@ package Switches_Editor_Pkg is
       Vbox50 : Gtk_Vbox;
       Cpp_All_Warnings : Gtk_Check_Button;
       Cpp_No_Warnings : Gtk_Check_Button;
+      Cpp_Overloaded_Virtual : Gtk_Check_Button;
       Cpp_Switches_Entry : Gtk_Entry;
       Cpp_Codegen_Frame : Gtk_Frame;
       Vbox49 : Gtk_Vbox;
@@ -101,10 +105,13 @@ package Switches_Editor_Pkg is
       Cpp_Optimization_Level_Entry : Gtk_Entry;
       Cpp_No_Inline : Gtk_Check_Button;
       Cpp_Unroll_Loops : Gtk_Check_Button;
+      Cpp_Pic : Gtk_Check_Button;
       Cpp_Profile : Gtk_Check_Button;
       Cpp_Code_Coverage : Gtk_Check_Button;
       Cpp_Instrument_Arcs : Gtk_Check_Button;
       Cpp_Exceptions : Gtk_Check_Button;
+      Cpp_Elide_Constructor : Gtk_Check_Button;
+      Cpp_Conserve_Space : Gtk_Check_Button;
       Frame45 : Gtk_Frame;
       Vbox52 : Gtk_Vbox;
       Cpp_Debug : Gtk_Check_Button;
@@ -113,6 +120,7 @@ package Switches_Editor_Pkg is
       Binder_Switches_Entry : Gtk_Entry;
       Vbox27 : Gtk_Vbox;
       Binder_Tracebacks : Gtk_Check_Button;
+      Binder_Restrictions : Gtk_Check_Button;
       Binder_Static_Gnat : Gtk_Radio_Button;
       Binder_Shared_Gnat : Gtk_Radio_Button;
       Label19 : Gtk_Label;

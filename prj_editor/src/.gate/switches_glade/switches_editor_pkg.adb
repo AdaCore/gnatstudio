@@ -119,11 +119,18 @@ begin
      (Switches_Editor.Make_Keep_Going, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Make_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Make_Debug, -"Debug Information");
+   Gtk_New (Switches_Editor.Make_Debug, -"Debug information");
    Set_Active (Switches_Editor.Make_Debug, False);
    Pack_Start (Switches_Editor.Vbox26, Switches_Editor.Make_Debug, False, False, 0);
    Widget_Callback.Object_Connect
      (Switches_Editor.Make_Debug, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Make_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Make_Mapping_File, -"Use mapping file");
+   Set_Active (Switches_Editor.Make_Mapping_File, False);
+   Pack_Start (Switches_Editor.Vbox26, Switches_Editor.Make_Mapping_File, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Make_Mapping_File, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Make_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Make_Switches_Entry);
@@ -181,7 +188,7 @@ begin
      (Switches_Editor.Ada_Optimization_Level_Entry, "changed",
       Widget_Callback.To_Marshaller (Refresh_Ada_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Ada_No_Inline, -"No Inlining");
+   Gtk_New (Switches_Editor.Ada_No_Inline, -"No inlining");
    Set_Active (Switches_Editor.Ada_No_Inline, False);
    Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Ada_No_Inline, False, False, 0);
    Widget_Callback.Object_Connect
@@ -202,14 +209,21 @@ begin
      (Switches_Editor.Ada_Unroll_Loops, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Ada_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Ada_Code_Coverage, -"Code Coverage");
+   Gtk_New (Switches_Editor.Ada_Pic, -"Position independent code");
+   Set_Active (Switches_Editor.Ada_Pic, False);
+   Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Ada_Pic, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Ada_Pic, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Ada_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Ada_Code_Coverage, -"Code coverage");
    Set_Active (Switches_Editor.Ada_Code_Coverage, False);
    Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Ada_Code_Coverage, False, False, 0);
    Widget_Callback.Object_Connect
      (Switches_Editor.Ada_Code_Coverage, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Ada_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Ada_Instrument_Arcs, -"Instrument Arcs");
+   Gtk_New (Switches_Editor.Ada_Instrument_Arcs, -"Instrument arcs");
    Set_Active (Switches_Editor.Ada_Instrument_Arcs, False);
    Set_Sensitive (Switches_Editor.Ada_Instrument_Arcs, False);
    Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Ada_Instrument_Arcs, False, False, 0);
@@ -241,7 +255,7 @@ begin
      (Switches_Editor.Ada_Suppress_All_Checks, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Ada_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Ada_Stack_Checking, -"Stack Checking");
+   Gtk_New (Switches_Editor.Ada_Stack_Checking, -"Stack checking");
    Set_Active (Switches_Editor.Ada_Stack_Checking, False);
    Pack_Start (Switches_Editor.Vbox20, Switches_Editor.Ada_Stack_Checking, False, False, 0);
    Widget_Callback.Object_Connect
@@ -327,7 +341,7 @@ begin
      (Switches_Editor.Ada_Debug, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Ada_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Ada_Assertions, -"Enable Assertions");
+   Gtk_New (Switches_Editor.Ada_Assertions, -"Enable assertions");
    Set_Active (Switches_Editor.Ada_Assertions, False);
    Pack_Start (Switches_Editor.Vbox23, Switches_Editor.Ada_Assertions, False, False, 0);
    Widget_Callback.Object_Connect
@@ -449,7 +463,7 @@ begin
      (Switches_Editor.C_Optimization_Level_Entry, "changed",
       Widget_Callback.To_Marshaller (Refresh_C_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.C_No_Inline, -"No Inlining");
+   Gtk_New (Switches_Editor.C_No_Inline, -"No inlining");
    Set_Active (Switches_Editor.C_No_Inline, False);
    Pack_Start (Switches_Editor.Vbox46, Switches_Editor.C_No_Inline, False, False, 0);
    Widget_Callback.Object_Connect
@@ -463,6 +477,13 @@ begin
      (Switches_Editor.C_Unroll_Loops, "toggled",
       Widget_Callback.To_Marshaller (Refresh_C_Switches'Access), Switches_Editor);
 
+   Gtk_New (Switches_Editor.C_Pic, -"Position independent code");
+   Set_Active (Switches_Editor.C_Pic, False);
+   Pack_Start (Switches_Editor.Vbox46, Switches_Editor.C_Pic, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.C_Pic, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_C_Switches'Access), Switches_Editor);
+
    Gtk_New (Switches_Editor.C_Profile, -"Profiling");
    Set_Active (Switches_Editor.C_Profile, False);
    Pack_Start (Switches_Editor.Vbox46, Switches_Editor.C_Profile, False, False, 0);
@@ -470,14 +491,14 @@ begin
      (Switches_Editor.C_Profile, "toggled",
       Widget_Callback.To_Marshaller (Refresh_C_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.C_Code_Coverage, -"Code Coverage");
+   Gtk_New (Switches_Editor.C_Code_Coverage, -"Code coverage");
    Set_Active (Switches_Editor.C_Code_Coverage, False);
    Pack_Start (Switches_Editor.Vbox46, Switches_Editor.C_Code_Coverage, False, False, 0);
    Widget_Callback.Object_Connect
      (Switches_Editor.C_Code_Coverage, "toggled",
       Widget_Callback.To_Marshaller (Refresh_C_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.C_Instrument_Arcs, -"Instrument Arcs");
+   Gtk_New (Switches_Editor.C_Instrument_Arcs, -"Instrument arcs");
    Set_Active (Switches_Editor.C_Instrument_Arcs, False);
    Set_Sensitive (Switches_Editor.C_Instrument_Arcs, False);
    Pack_Start (Switches_Editor.Vbox46, Switches_Editor.C_Instrument_Arcs, False, False, 0);
@@ -495,7 +516,7 @@ begin
    Gtk_New_Vbox (Switches_Editor.Vbox51, False, 0);
    Add (Switches_Editor.Frame44, Switches_Editor.Vbox51);
 
-   Gtk_New (Switches_Editor.C_Debug, -"Debug Information");
+   Gtk_New (Switches_Editor.C_Debug, -"Debug information");
    Set_Active (Switches_Editor.C_Debug, False);
    Pack_Start (Switches_Editor.Vbox51, Switches_Editor.C_Debug, False, False, 0);
    Widget_Callback.Object_Connect
@@ -550,6 +571,13 @@ begin
      (Switches_Editor.Cpp_No_Warnings, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
 
+   Gtk_New (Switches_Editor.Cpp_Overloaded_Virtual, -"Overloaded virtual");
+   Set_Active (Switches_Editor.Cpp_Overloaded_Virtual, False);
+   Pack_Start (Switches_Editor.Vbox50, Switches_Editor.Cpp_Overloaded_Virtual, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Cpp_Overloaded_Virtual, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
+
    Gtk_New (Switches_Editor.Cpp_Switches_Entry);
    Set_Editable (Switches_Editor.Cpp_Switches_Entry, True);
    Set_Max_Length (Switches_Editor.Cpp_Switches_Entry, 0);
@@ -593,7 +621,7 @@ begin
      (Switches_Editor.Cpp_Optimization_Level_Entry, "changed",
       Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Cpp_No_Inline, -"No Inlining");
+   Gtk_New (Switches_Editor.Cpp_No_Inline, -"No inlining");
    Set_Active (Switches_Editor.Cpp_No_Inline, False);
    Pack_Start (Switches_Editor.Vbox49, Switches_Editor.Cpp_No_Inline, False, False, 0);
    Widget_Callback.Object_Connect
@@ -607,6 +635,13 @@ begin
      (Switches_Editor.Cpp_Unroll_Loops, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
 
+   Gtk_New (Switches_Editor.Cpp_Pic, -"Position independent code");
+   Set_Active (Switches_Editor.Cpp_Pic, False);
+   Pack_Start (Switches_Editor.Vbox49, Switches_Editor.Cpp_Pic, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Cpp_Pic, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
+
    Gtk_New (Switches_Editor.Cpp_Profile, -"Profiling");
    Set_Active (Switches_Editor.Cpp_Profile, False);
    Pack_Start (Switches_Editor.Vbox49, Switches_Editor.Cpp_Profile, False, False, 0);
@@ -614,14 +649,14 @@ begin
      (Switches_Editor.Cpp_Profile, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Cpp_Code_Coverage, -"Code Coverage");
+   Gtk_New (Switches_Editor.Cpp_Code_Coverage, -"Code coverage");
    Set_Active (Switches_Editor.Cpp_Code_Coverage, False);
    Pack_Start (Switches_Editor.Vbox49, Switches_Editor.Cpp_Code_Coverage, False, False, 0);
    Widget_Callback.Object_Connect
      (Switches_Editor.Cpp_Code_Coverage, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Cpp_Instrument_Arcs, -"Instrument Arcs");
+   Gtk_New (Switches_Editor.Cpp_Instrument_Arcs, -"Instrument arcs");
    Set_Active (Switches_Editor.Cpp_Instrument_Arcs, False);
    Set_Sensitive (Switches_Editor.Cpp_Instrument_Arcs, False);
    Pack_Start (Switches_Editor.Vbox49, Switches_Editor.Cpp_Instrument_Arcs, False, False, 0);
@@ -629,11 +664,25 @@ begin
      (Switches_Editor.Cpp_Instrument_Arcs, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Cpp_Exceptions, -"Exceptions Support");
+   Gtk_New (Switches_Editor.Cpp_Exceptions, -"Exceptions support");
    Set_Active (Switches_Editor.Cpp_Exceptions, False);
    Pack_Start (Switches_Editor.Vbox49, Switches_Editor.Cpp_Exceptions, False, False, 0);
    Widget_Callback.Object_Connect
      (Switches_Editor.Cpp_Exceptions, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Cpp_Elide_Constructor, -"Elide constructor");
+   Set_Active (Switches_Editor.Cpp_Elide_Constructor, False);
+   Pack_Start (Switches_Editor.Vbox49, Switches_Editor.Cpp_Elide_Constructor, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Cpp_Elide_Constructor, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Cpp_Conserve_Space, -"Conserve space");
+   Set_Active (Switches_Editor.Cpp_Conserve_Space, False);
+   Pack_Start (Switches_Editor.Vbox49, Switches_Editor.Cpp_Conserve_Space, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Cpp_Conserve_Space, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Frame45, -"Debugging");
@@ -646,7 +695,7 @@ begin
    Gtk_New_Vbox (Switches_Editor.Vbox52, False, 0);
    Add (Switches_Editor.Frame45, Switches_Editor.Vbox52);
 
-   Gtk_New (Switches_Editor.Cpp_Debug, -"Debug Information");
+   Gtk_New (Switches_Editor.Cpp_Debug, -"Debug information");
    Set_Active (Switches_Editor.Cpp_Debug, False);
    Pack_Start (Switches_Editor.Vbox52, Switches_Editor.Cpp_Debug, False, False, 0);
    Widget_Callback.Object_Connect
@@ -687,6 +736,13 @@ begin
    Pack_Start (Switches_Editor.Vbox27, Switches_Editor.Binder_Tracebacks, False, False, 0);
    Widget_Callback.Object_Connect
      (Switches_Editor.Binder_Tracebacks, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Bind_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Binder_Restrictions, -"List possible restrictions");
+   Set_Active (Switches_Editor.Binder_Restrictions, False);
+   Pack_Start (Switches_Editor.Vbox27, Switches_Editor.Binder_Restrictions, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Binder_Restrictions, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Bind_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Binder_Static_Gnat, Vbox27_Group, -"Static GNAT runtime");

@@ -31,11 +31,6 @@ begin
    Set_Homogeneous (New_Variable_Editor.Dialog_Vbox1, False);
    Set_Spacing (New_Variable_Editor.Dialog_Vbox1, 0);
 
-   New_Variable_Editor.Dialog_Action_Area1 := Get_Action_Area (New_Variable_Editor);
-   Set_Border_Width (New_Variable_Editor.Dialog_Action_Area1, 10);
-   Set_Homogeneous (New_Variable_Editor.Dialog_Action_Area1, True);
-   Set_Spacing (New_Variable_Editor.Dialog_Action_Area1, 5);
-
    Gtk_New (New_Variable_Editor.Table1, 2, 2, False);
    Set_Border_Width (New_Variable_Editor.Table1, 10);
    Set_Row_Spacings (New_Variable_Editor.Table1, 5);
@@ -112,19 +107,21 @@ begin
    Pack_Start (New_Variable_Editor.Vbox54, New_Variable_Editor.Hbuttonbox4, False, False, 0);
 
    Gtk_New (New_Variable_Editor.Delete_Variable, -"Delete");
-   Set_Relief (New_Variable_Editor.Delete_Variable, Relief_Normal);
    Set_Flags (New_Variable_Editor.Delete_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.Delete_Variable);
 
    Gtk_New (New_Variable_Editor.New_Variable, -"New");
-   Set_Relief (New_Variable_Editor.New_Variable, Relief_Normal);
    Set_Flags (New_Variable_Editor.New_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.New_Variable);
 
    Gtk_New (New_Variable_Editor.Rename_Variable, -"Rename");
-   Set_Relief (New_Variable_Editor.Rename_Variable, Relief_Normal);
    Set_Flags (New_Variable_Editor.Rename_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.Rename_Variable);
+
+   New_Variable_Editor.Dialog_Action_Area1 := Get_Action_Area (New_Variable_Editor);
+   Set_Border_Width (New_Variable_Editor.Dialog_Action_Area1, 10);
+   Set_Homogeneous (New_Variable_Editor.Dialog_Action_Area1, True);
+   Set_Spacing (New_Variable_Editor.Dialog_Action_Area1, 5);
 
 end Initialize;
 
