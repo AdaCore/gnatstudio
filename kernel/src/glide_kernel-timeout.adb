@@ -56,6 +56,7 @@ package body Glide_Kernel.Timeout is
       Died    : Boolean := False;
       --  Indicates that the process has died.
 
+      Id          : Timeout_Handler_Id;
       Interactive : Boolean := False;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
@@ -120,7 +121,7 @@ package body Glide_Kernel.Timeout is
       Result : Expect_Match;
 
    begin
-      if Data.Died then
+      if Data = null or else Data.Died then
          return False;
       end if;
 
@@ -175,6 +176,7 @@ package body Glide_Kernel.Timeout is
 
    exception
       when E : others =>
+         Timeout_Remove (Console.Id);
          Cleanup (Console.D);
          Unref (Console);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -198,7 +200,6 @@ package body Glide_Kernel.Timeout is
    is
       Timeout : constant Guint32 := 50;
       Fd      : Process_Descriptor_Access;
-      Id      : Timeout_Handler_Id;
       Data    : Console_Process;
       Console : Glide_Interactive_Console;
       Child   : MDI_Child;
@@ -282,7 +283,7 @@ package body Glide_Kernel.Timeout is
          Data.Console := Console;
          Data.Interactive := Interactive;
 
-         Id := Console_Process_Timeout.Add
+         Data.Id := Console_Process_Timeout.Add
            (Timeout,
             Process_Cb'Access,
             Data);
@@ -314,6 +315,7 @@ package body Glide_Kernel.Timeout is
       Button  : Message_Dialog_Buttons;
    begin
       if Console.Died then
+         Timeout_Remove (Console.Id);
          Unref (Console);
          return False;
       end if;
@@ -326,6 +328,7 @@ package body Glide_Kernel.Timeout is
          Button_Yes);
 
       if Button = Button_Yes then
+         Timeout_Remove (Console.Id);
          Cleanup (Console.D);
          Unref (Console);
          return False;
@@ -336,6 +339,7 @@ package body Glide_Kernel.Timeout is
 
    exception
       when E : others =>
+         Timeout_Remove (Console.Id);
          Cleanup (Console.D);
          Unref (Console);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
