@@ -79,8 +79,9 @@ with Commands.Generic_Asynchronous;
 
 package body Vsearch_Ext is
 
-   Pattern_Hist_Key : constant History_Key := "search_patterns";
-   Replace_Hist_Key : constant History_Key := "search_replace";
+   Pattern_Hist_Key   : constant History_Key := "search_patterns";
+   Replace_Hist_Key   : constant History_Key := "search_replace";
+   Auto_Hide_Hist_Key : constant History_Key := "search_autohide";
    --  The key for the histories.
 
    procedure Free (Data : in out Search_Module_Data);
@@ -348,13 +349,39 @@ package body Vsearch_Ext is
       Close_Button : Gtk_Button;
    begin
       Set_Resizable (Gtk_Dialog (Get_Toplevel (Vsearch)), True);
+
+
+      --  Add the "auto hide" checkbutton.
+      Gtk_New (Vsearch.Auto_Hide, -"Auto-hide");
+
+      Pack_Start
+        (Get_Action_Area (Gtk_Dialog (Get_Toplevel (Vsearch))),
+         Vsearch.Auto_Hide, True, True, 3);
+
+      Show_All (Vsearch.Auto_Hide);
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Vsearch.Kernel).all, Auto_Hide_Hist_Key, False);
+
+      Associate
+        (Get_History (Vsearch.Kernel).all,
+         Auto_Hide_Hist_Key,
+         Vsearch.Auto_Hide);
+
+      --  Add the "Close" button.
       Close_Button := Gtk_Button
         (Add_Button (Gtk_Dialog (Get_Toplevel (Vsearch)),
                      Stock_Close,
                      Gtk_Response_Cancel));
+
       Widget_Callback.Object_Connect
         (Close_Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Vsearch'Access), Vsearch);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Float_Vsearch;
 
    -------------------
@@ -365,6 +392,11 @@ package body Vsearch_Ext is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Search);
    begin
       Close (Get_MDI (Vsearch.Kernel), Search, Force => True);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Close_Vsearch;
 
    ----------
@@ -607,6 +639,13 @@ package body Vsearch_Ext is
             --  we can restart from the beginning simply by pressing Ctrl-N
             Set_First_Next_Mode (Vsearch, Find_Next => True);
          end if;
+      end if;
+
+      if Realized_Is_Set (Vsearch)
+        and then Get_History
+          (Get_History (Vsearch.Kernel).all, Auto_Hide_Hist_Key)
+      then
+         Close_Vsearch (Vsearch);
       end if;
 
    exception
@@ -901,6 +940,11 @@ package body Vsearch_Ext is
      (Search : access Gtk_Widget_Record'Class) is
    begin
       Set_Active (Vsearch_Extended (Search).Search_All_Check, False);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Reset_All_Occurrences;
 
    ----------------------------
@@ -941,6 +985,12 @@ package body Vsearch_Ext is
          return True;
       end if;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Key_Press;
 
    -----------------------
@@ -959,6 +1009,12 @@ package body Vsearch_Ext is
          return True;
       end if;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Key_Press_Replace;
 
    -----------------------
@@ -988,6 +1044,9 @@ package body Vsearch_Ext is
    exception
       when Gtkada.Types.Data_Error =>
          null;
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Selection_Changed;
 
    ---------------------------
@@ -1242,6 +1301,12 @@ package body Vsearch_Ext is
       --  This is called when the user presses "Escape" in the dialog.
       Close_Vsearch (Vsearch);
       return True;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Delete;
 
    ---------------------------
