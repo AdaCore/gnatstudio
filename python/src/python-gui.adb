@@ -95,6 +95,8 @@ package body Python.GUI is
    pragma Convention (C, Flush);
    function Read_Line (Self : PyObject; Args : PyObject) return PyObject;
    pragma Convention (C, Read_Line);
+   function Is_A_TTY (Self : PyObject; Args : PyObject) return PyObject;
+   pragma Convention (C, Is_A_TTY);
    --  Override the python's methods of the File class.
 
    procedure Insert_Text
@@ -185,6 +187,17 @@ package body Python.GUI is
       Py_INCREF (Py_None);
       return Py_None;
    end Write;
+
+   --------------
+   -- Is_A_TTY --
+   --------------
+
+   function Is_A_TTY (Self : PyObject; Args : PyObject) return PyObject is
+      pragma Unreferenced (Self, Args);
+   begin
+      Py_INCREF (Py_False);
+      return Py_False;
+   end Is_A_TTY;
 
    -----------
    -- Flush --
@@ -328,6 +341,7 @@ package body Python.GUI is
       Add_Method (Stdout, Create_Method_Def ("flush",    Flush'Access));
       Add_Method (Stdout, Create_Method_Def ("read",     Read_Line'Access));
       Add_Method (Stdout, Create_Method_Def ("readline", Read_Line'Access));
+      Add_Method (Stdout, Create_Method_Def ("isatty",   Is_A_TTY'Access));
 
       --  Note: we also set __stdout__,..., so that the user can restore them
       --  after temporarily modifying sys.stdout in their own programs
