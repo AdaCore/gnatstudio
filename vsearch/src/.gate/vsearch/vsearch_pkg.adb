@@ -6,7 +6,6 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Vsearch; use Callbacks_Vsearch;
 with Vsearch_Intl; use Vsearch_Intl;
-with Vsearch_Pkg.Callbacks; use Vsearch_Pkg.Callbacks;
 
 package body Vsearch_Pkg is
 
@@ -18,10 +17,8 @@ end Gtk_New;
 
 procedure Initialize (Vsearch : access Vsearch_Record'Class) is
    pragma Suppress (All_Checks);
-   Files_Combo_Items : String_List.Glist;
-   Tooltips : Gtk_Tooltips;
-   Directory_Combo_Items : String_List.Glist;
    Replace_Combo_Items : String_List.Glist;
+   Tooltips : Gtk_Tooltips;
    Context_Combo_Items : String_List.Glist;
    Scope_Combo_Items : String_List.Glist;
    Pattern_Combo_Items : String_List.Glist;
@@ -68,88 +65,6 @@ begin
      Fill, 0,
      2, 0);
 
-   Gtk_New (Vsearch.Files_Frame, -"Files");
-   Set_Shadow_Type (Vsearch.Files_Frame, Shadow_Etched_In);
-   Attach (Vsearch.Table, Vsearch.Files_Frame, 0, 2, 3, 4,
-     Fill, 0,
-     2, 0);
-
-   Gtk_New (Vsearch.Files_Table, 3, 3, False);
-   Set_Border_Width (Vsearch.Files_Table, 5);
-   Set_Row_Spacings (Vsearch.Files_Table, 5);
-   Set_Col_Spacings (Vsearch.Files_Table, 5);
-   Add (Vsearch.Files_Frame, Vsearch.Files_Table);
-
-   Gtk_New (Vsearch.Files_Label, -("Files:"));
-   Set_Alignment (Vsearch.Files_Label, 0.0, 0.5);
-   Set_Padding (Vsearch.Files_Label, 0, 0);
-   Set_Justify (Vsearch.Files_Label, Justify_Center);
-   Set_Line_Wrap (Vsearch.Files_Label, False);
-   Attach (Vsearch.Files_Table, Vsearch.Files_Label, 0, 1, 0, 1,
-     Fill, 0,
-     0, 0);
-
-   Gtk_New (Vsearch.Directory_Label, -("Directory:"));
-   Set_Alignment (Vsearch.Directory_Label, 0.0, 0.5);
-   Set_Padding (Vsearch.Directory_Label, 0, 0);
-   Set_Justify (Vsearch.Directory_Label, Justify_Center);
-   Set_Line_Wrap (Vsearch.Directory_Label, False);
-   Attach (Vsearch.Files_Table, Vsearch.Directory_Label, 0, 1, 1, 2,
-     Fill, 0,
-     0, 0);
-
-   Gtk_New (Vsearch.Files_Combo);
-   Set_Case_Sensitive (Vsearch.Files_Combo, False);
-   Set_Use_Arrows (Vsearch.Files_Combo, True);
-   Set_Use_Arrows_Always (Vsearch.Files_Combo, False);
-   String_List.Append (Files_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Vsearch.Files_Combo, Files_Combo_Items);
-   Free_String_List (Files_Combo_Items);
-   Attach (Vsearch.Files_Table, Vsearch.Files_Combo, 1, 3, 0, 1,
-     Fill, 0,
-     0, 0);
-
-   Vsearch.Files_Entry := Get_Entry (Vsearch.Files_Combo);
-   Set_Editable (Vsearch.Files_Entry, True);
-   Set_Max_Length (Vsearch.Files_Entry, 0);
-   Set_Text (Vsearch.Files_Entry, -"");
-   Set_Visibility (Vsearch.Files_Entry, True);
-   Gtk_New (Tooltips);
-   Set_Tip (Tooltips, Vsearch.Files_Entry, -"File(s) to scan");
-
-   Gtk_New (Vsearch.Directory_Combo);
-   Set_Case_Sensitive (Vsearch.Directory_Combo, False);
-   Set_Use_Arrows (Vsearch.Directory_Combo, True);
-   Set_Use_Arrows_Always (Vsearch.Directory_Combo, False);
-   String_List.Append (Directory_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Vsearch.Directory_Combo, Directory_Combo_Items);
-   Free_String_List (Directory_Combo_Items);
-   Attach (Vsearch.Files_Table, Vsearch.Directory_Combo, 1, 3, 1, 2,
-     Fill, 0,
-     0, 0);
-
-   Vsearch.Directory_Entry := Get_Entry (Vsearch.Directory_Combo);
-   Set_Editable (Vsearch.Directory_Entry, True);
-   Set_Max_Length (Vsearch.Directory_Entry, 0);
-   Set_Text (Vsearch.Directory_Entry, -"");
-   Set_Visibility (Vsearch.Directory_Entry, True);
-   Set_Tip (Tooltips, Vsearch.Directory_Entry, -"Directory to scan");
-
-   Gtk_New (Vsearch.Subdirs_Check, -"Recursive Search");
-   Set_Active (Vsearch.Subdirs_Check, False);
-   Attach (Vsearch.Files_Table, Vsearch.Subdirs_Check, 2, 3, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
-
-   Gtk_New (Vsearch.Browse_Button, -"Browse...");
-   Attach (Vsearch.Files_Table, Vsearch.Browse_Button, 1, 2, 2, 3,
-     Fill, 0,
-     0, 0);
-   Set_Tip (Tooltips, Vsearch.Browse_Button, -"Select a directory");
-   Widget_Callback.Object_Connect
-     (Vsearch.Browse_Button, "clicked",
-      Widget_Callback.To_Marshaller (On_Browse_Button_Clicked'Access), Vsearch);
-
    Gtk_New (Vsearch.Replace_Combo);
    Set_Case_Sensitive (Vsearch.Replace_Combo, False);
    Set_Use_Arrows (Vsearch.Replace_Combo, True);
@@ -166,17 +81,14 @@ begin
    Set_Max_Length (Vsearch.Replace_Entry, 0);
    Set_Text (Vsearch.Replace_Entry, -"");
    Set_Visibility (Vsearch.Replace_Entry, True);
+   Gtk_New (Tooltips);
    Set_Tip (Tooltips, Vsearch.Replace_Entry, -"The text that will replace each match");
 
    Gtk_New (Vsearch.Context_Combo);
    Set_Case_Sensitive (Vsearch.Context_Combo, False);
    Set_Use_Arrows (Vsearch.Context_Combo, True);
    Set_Use_Arrows_Always (Vsearch.Context_Combo, False);
-   String_List.Append (Context_Combo_Items, -"Current File");
-   String_List.Append (Context_Combo_Items, -"Project Explorer");
-   String_List.Append (Context_Combo_Items, -"Files From Project");
-   String_List.Append (Context_Combo_Items, -"Files...");
-   String_List.Append (Context_Combo_Items, -"Help");
+   String_List.Append (Context_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Vsearch.Context_Combo, Context_Combo_Items);
    Free_String_List (Context_Combo_Items);
    Attach (Vsearch.Table, Vsearch.Context_Combo, 1, 2, 2, 3,
@@ -186,7 +98,7 @@ begin
    Vsearch.Context_Entry := Get_Entry (Vsearch.Context_Combo);
    Set_Editable (Vsearch.Context_Entry, False);
    Set_Max_Length (Vsearch.Context_Entry, 0);
-   Set_Text (Vsearch.Context_Entry, -"Current File");
+   Set_Text (Vsearch.Context_Entry, -"");
    Set_Visibility (Vsearch.Context_Entry, True);
    Set_Tip (Tooltips, Vsearch.Context_Entry, -"The context of the search");
 
