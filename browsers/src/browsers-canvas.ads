@@ -93,6 +93,13 @@ package Browsers.Canvas is
    --  If Refresh_Items is True, this will redraw all the items in the canvas,
    --  by calling their Refresh subprogram
 
+   procedure Layout
+     (Browser : access General_Browser_Record;
+      Force : Boolean := False);
+   --  Recompute the layout of items in the browser.
+   --  If Force is true, then even the items that have been moved manually by
+   --  the user are recomputed.
+
    -----------
    -- Items --
    -----------
@@ -203,15 +210,16 @@ package Browsers.Canvas is
    procedure Destroy (Callback : in out Active_Area_Callback);
    --  Destroy the callback
 
-   type Widget_Active_Callback is access
-     procedure (Event : Gdk.Event.Gdk_Event; User : Gtk.Widget.Gtk_Widget);
-   type Widget_Active_Area_Callback is new Active_Area_Callback with private;
+   type Item_Active_Callback is access
+     procedure (Event : Gdk.Event.Gdk_Event;
+                User : access Browser_Item_Record'Class);
+   type Item_Active_Area_Callback is new Active_Area_Callback with private;
    --  A special instanciation of the callback for cases where the user data is
    --  a widget.
 
-   function Build (Cb : Widget_Active_Callback;
-                   User : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Widget_Active_Area_Callback'Class;
+   function Build (Cb : Item_Active_Callback;
+                   User : access Browser_Item_Record'Class)
+      return Item_Active_Area_Callback'Class;
    --  Build a new callback
 
    procedure Add_Active_Area
@@ -346,6 +354,7 @@ private
 
       Selected_Item : Gtkada.Canvas.Canvas_Item;
 
+      Close_Pixmap : Gdk.Pixbuf.Gdk_Pixbuf;
       Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
@@ -406,11 +415,11 @@ private
                     Item : access Text_Item_With_Arrows_Record);
    --  See doc for inherited Reset
 
-   type Widget_Active_Area_Callback is new Active_Area_Callback with record
-      User_Data : Gtk.Widget.Gtk_Widget;
-      Cb        : Widget_Active_Callback;
+   type Item_Active_Area_Callback is new Active_Area_Callback with record
+      User_Data : Browser_Item;
+      Cb        : Item_Active_Callback;
    end record;
-   procedure Call (Callback : Widget_Active_Area_Callback;
+   procedure Call (Callback : Item_Active_Area_Callback;
                    Event    : Gdk.Event.Gdk_Event);
    --  See doc for inherited Call
 

@@ -132,6 +132,10 @@ package body Browsers.Canvas is
    --  Internal version of Select_Item, that can also be used to unselect an
    --  item.
 
+   procedure Close_Item
+     (Event : Gdk.Event.Gdk_Event; User  : access Browser_Item_Record'Class);
+   --  Close an item when the user presses on the title bar button.
+
    ----------------
    -- Initialize --
    ----------------
@@ -156,7 +160,7 @@ package body Browsers.Canvas is
       Browser.Kernel := Kernel_Handle (Kernel);
 
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
-      Set_Auto_Layout (Browser.Canvas, True);
+      Set_Auto_Layout (Browser.Canvas, False);
 
       if Create_Toolbar then
          Gtk_New (Browser.Toolbar);
@@ -168,6 +172,8 @@ package body Browsers.Canvas is
         (Browser, Stock_Go_Back, Icon_Size_Menu);
       Browser.Right_Arrow := Render_Icon
         (Browser, Stock_Go_Forward, Icon_Size_Menu);
+      Browser.Close_Pixmap := Render_Icon
+        (Browser, Stock_Close, Icon_Size_Menu);
 
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
@@ -185,6 +191,8 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Browser.Canvas, "background_click",
          Widget_Callback.To_Marshaller (On_Background_Click'Access), Browser);
+
+      --  ??? Should free pixmaps on destroy.
 
       Set_Size_Request
         (Browser,
@@ -466,8 +474,6 @@ package body Browsers.Canvas is
    begin
       Push_State (Get_Kernel (Data.Browser), Busy);
 
-      Set_Auto_Layout (Get_Canvas (Data.Browser), False);
-
       Iter := Start (Get_Canvas (Data.Browser));
       loop
          Item := Get (Iter);
@@ -483,12 +489,7 @@ package body Browsers.Canvas is
       Reset (Data.Browser, Browser_Item (Data.Item));
       Refresh (Browser_Item (Data.Item));
 
-      Set_Auto_Layout (Get_Canvas (Data.Browser), True);
-      Layout
-        (Get_Canvas (Data.Browser),
-         Force => False,
-         Vertical_Layout =>
-           Get_Pref (Get_Kernel (Data.Browser), Browsers_Vertical_Layout));
+      Layout (Data.Browser);
       Refresh_Canvas (Get_Canvas (Data.Browser));
 
       Show_Item (Get_Canvas (Data.Browser), Data.Item);
@@ -523,7 +524,7 @@ package body Browsers.Canvas is
       B : constant General_Browser := General_Browser (Browser);
    begin
       Push_State (Get_Kernel (B), Busy);
-      Layout (Get_Canvas (B), Force => True, Vertical_Layout => True);
+      Layout (B, Force => True);
       Refresh_Canvas (Get_Canvas (B));
       Pop_State (Get_Kernel (B));
 
@@ -841,6 +842,21 @@ package body Browsers.Canvas is
       end if;
    end Set_Title;
 
+   ----------------
+   -- Close_Item --
+   ----------------
+
+   procedure Close_Item
+     (Event : Gdk.Event.Gdk_Event;
+      User  : access Browser_Item_Record'Class) is
+   begin
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Release
+      then
+         Remove (Get_Canvas (Get_Browser (User)), User);
+      end if;
+   end Close_Item;
+
    ---------------------
    -- Resize_And_Draw --
    ---------------------
@@ -851,13 +867,14 @@ package body Browsers.Canvas is
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint)
    is
-      W, H  : Gint;
+      W, H, Y, X  : Gint;
       Layout_H : Gint := 0;
       Bg_GC : Gdk_GC;
    begin
       if Item.Title /= null then
          Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
-         W := Gint'Max (W + 2 * Margin, Width);
+         W := Gint'Max (W + 3 * Margin + Get_Width (Item.Browser.Close_Pixmap),
+                        Width);
          H := Layout_H + Height;
       else
          W := Width;
@@ -917,6 +934,37 @@ package body Browsers.Canvas is
             Y1     => Layout_H,
             X2     => W,
             Y2     => Layout_H);
+         X := W - Margin - Get_Width (Item.Browser.Close_Pixmap);
+         Y := Yoffset +
+           (Layout_H - Get_Height (Item.Browser.Close_Pixmap)) / 2;
+         Draw_Shadow
+           (Style       => Get_Style (Item.Browser),
+            Window      => Pixmap (Item),
+            State_Type  => State_Normal,
+            Shadow_Type => Shadow_Out,
+            X           => X,
+            Y           => Y,
+            Width       => Get_Width (Item.Browser.Close_Pixmap),
+            Height      => Get_Height (Item.Browser.Close_Pixmap));
+
+         Render_To_Drawable_Alpha
+           (Pixbuf       => Item.Browser.Close_Pixmap,
+            Drawable     => Pixmap (Item),
+            Src_X        => 0,
+            Src_Y        => 0,
+            Dest_X       => X,
+            Dest_Y       => Y,
+            Width        => -1,
+            Height       => -1,
+            Alpha        => Alpha_Full,
+            Alpha_Threshold => 128);
+
+         Add_Active_Area
+           (Item,
+            Gdk_Rectangle'(X, Y, Get_Width (Item.Browser.Close_Pixmap),
+                           Get_Height (Item.Browser.Close_Pixmap)),
+            Build (Close_Item'Access, Item));
+
          Yoffset := Yoffset + Layout_H;
       end if;
 
@@ -1090,6 +1138,10 @@ package body Browsers.Canvas is
      (Item  : access Browser_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button) is
    begin
+      if Get_Event_Type (Event) = Button_Press then
+         Select_Item (Item.Browser, Item, True);
+      end if;
+
       Raise_Item (Get_Canvas (Get_Browser (Item)), Item);
       Activate (Browser_Item (Item), Event);
    end On_Button_Click;
@@ -1120,7 +1172,7 @@ package body Browsers.Canvas is
    ----------
 
    procedure Call
-     (Callback : Widget_Active_Area_Callback;
+     (Callback : Item_Active_Area_Callback;
       Event    : Gdk.Event.Gdk_Event) is
    begin
       Callback.Cb (Event, Callback.User_Data);
@@ -1335,13 +1387,13 @@ package body Browsers.Canvas is
    -----------
 
    function Build
-     (Cb : Widget_Active_Callback;
-      User : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Widget_Active_Area_Callback'Class is
+     (Cb : Item_Active_Callback;
+      User : access Browser_Item_Record'Class)
+      return Item_Active_Area_Callback'Class is
    begin
-      return Widget_Active_Area_Callback'
+      return Item_Active_Area_Callback'
         (Active_Area_Callback with
-         User_Data => Gtk_Widget (User),
+         User_Data => Browser_Item (User),
          Cb        => Cb);
    end Build;
 
@@ -1354,5 +1406,20 @@ package body Browsers.Canvas is
    begin
       Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset);
    end Refresh;
+
+   ------------
+   -- Layout --
+   ------------
+
+   procedure Layout
+     (Browser : access General_Browser_Record;
+      Force : Boolean := False) is
+   begin
+      Layout
+        (Get_Canvas (Browser),
+         Force => Force,
+         Vertical_Layout =>
+           Get_Pref (Get_Kernel (Browser), Browsers_Vertical_Layout));
+   end Layout;
 
 end Browsers.Canvas;
