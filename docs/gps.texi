@@ -6882,12 +6882,12 @@ Sets the color used for the background of most visual objects.
 Sets the color used for the foreground of most visual objects.
 
 @item base[@i{state}] = @i{color}
-Sets the color used for the background of visual objects displaying editable
-text, for instance the text editor in GPS.
-
-@item text[@i{state}] = @i{color}
 Sets the color used for foreground of visual objects using base for the
 background color.
+
+@item text[@i{state}] = @i{color}
+Sets the color used for the background of visual objects displaying editable
+text, for instance the text editor in GPS.
 
 @item bg_pixmap[@i{state}] = @i{pixmap}
 Sets a background pixmap to be used in place of the bg color. The special
