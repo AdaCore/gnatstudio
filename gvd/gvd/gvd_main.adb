@@ -116,6 +116,11 @@ procedure GVD_Main is
    procedure Init is
       Dir_Created : Boolean := False;
    begin
+      --  Set the TERM variable to a dummy value, since we only know how to
+      --  handle simple terminals
+
+      Setenv ("TERM", "dumb");
+
       Home := Getenv ("GVD_HOME");
 
       if Home.all = "" then
