@@ -799,10 +799,14 @@ package body Debugger is
       Max_Events : constant := 30;
       --  Limit the number of events to process in one iteration
 
+      Current_Process : Process_Proxy_Access;
    begin
       --  Wait until the command has been processed
 
-      while Command_In_Process (Get_Process (Debugger)) loop
+      Current_Process := Get_Process (Debugger);
+      while Current_Process /= null
+        and then Command_In_Process (Current_Process)
+      loop
          Num_Events := 1;
 
          while Gtk.Main.Events_Pending
@@ -811,6 +815,7 @@ package body Debugger is
             Tmp := Gtk.Main.Main_Iteration;
             Num_Events := Num_Events + 1;
          end loop;
+         Current_Process := Get_Process (Debugger);
       end loop;
    end Wait_User_Command;
 
