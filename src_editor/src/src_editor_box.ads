@@ -83,6 +83,10 @@ package Src_Editor_Box is
      (Box    : access Source_Editor_Box_Record);
    --  Detach Box of its Parent, if possible.
 
+   ------------------------------------
+   -- Source_Buffer related services --
+   ------------------------------------
+
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
@@ -151,6 +155,19 @@ package Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record);
    --  If a line in the given buffer is highlighted (from using
    --  Highlight_Line), then restores this line un-highlighted.
+
+   ----------------------------------
+   -- Source_View related services --
+   ----------------------------------
+
+   procedure Set_Show_Line_Numbers
+     (Editor       : access Source_Editor_Box_Record;
+      Show_Numbers : Boolean := True);
+   --  Set whether the line numbers should be displayed or not.
+
+   function Get_Show_Line_Numbers
+     (Editor : access Source_Editor_Box_Record) return Boolean;
+   -- Returns True if the line numbers are displayed.
 
 private
 

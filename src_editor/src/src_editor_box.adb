@@ -495,4 +495,25 @@ package body Src_Editor_Box is
       Default_Style_Changed (Get_Layout (Editor.Source_View));
    end Cancel_Highlight_Line;
 
+   ---------------------------
+   -- Set_Show_Line_Numbers --
+   ---------------------------
+
+   procedure Set_Show_Line_Numbers
+     (Editor       : access Source_Editor_Box_Record;
+      Show_Numbers : Boolean := True) is
+   begin
+      Set_Show_Line_Numbers (Editor.Source_View, Show_Numbers);
+   end Set_Show_Line_Numbers;
+
+   ---------------------------
+   -- Get_Show_Line_Numbers --
+   ---------------------------
+
+   function Get_Show_Line_Numbers
+     (Editor : access Source_Editor_Box_Record) return Boolean is
+   begin
+      return Get_Show_Line_Numbers (Editor.Source_View);
+   end Get_Show_Line_Numbers;
+
 end Src_Editor_Box;
