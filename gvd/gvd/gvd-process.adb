@@ -200,8 +200,6 @@ package body Odd.Process is
          Str, File_First, File_Last, First, Last, Line);
 
       --  Do not show the output if we have an internal command
-      --  ??? Should output it anyway if in -fullname mode (external
-      --  IDE - e.g Emacs - support).
 
       if Is_Internal_Command (Get_Process (Process.Debugger)) then
          Initial_Internal_Command := True;
