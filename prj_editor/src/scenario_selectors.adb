@@ -42,6 +42,7 @@ with Glide_Intl;               use Glide_Intl;
 with Namet;                    use Namet;
 with Stringt;                  use Stringt;
 with Prj_API;                  use Prj_API;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 package body Scenario_Selectors is
 
@@ -105,6 +106,12 @@ package body Scenario_Selectors is
       Selected : Boolean);
    --  Called when directly selecting a child node, to select or unselect
    --  all the values.
+
+   function Find_First_Selected
+     (Selector : access Scenario_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+   --  Return the first selected sibling of Iter, including Iter if it is
+   --  selected.
 
    -------------
    -- Gtk_New --
@@ -544,5 +551,267 @@ package body Scenario_Selectors is
          end if;
       end if;
    end Var_Selected;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Selector : access Project_Selector_Record'Class)
+      return Project_Iterator
+   is
+      Tmp : Project_Node_Array_Access := new Project_Node_Array (1 .. 1);
+
+      procedure Add_Recursive (Iter : Gtk_Tree_Iter);
+      --  Add the project pointed to by Iter, if not already in Tmp
+
+      -------------------
+      -- Add_Recursive --
+      -------------------
+
+      procedure Add_Recursive (Iter : Gtk_Tree_Iter) is
+         It    : Gtk_Tree_Iter := Iter;
+         Prj   : Project_Node_Id;
+         Found : Boolean := False;
+         T     : Project_Node_Array_Access;
+      begin
+         while It /= Null_Iter loop
+            if Get_Boolean (Selector.Model, It, Selected_Column) then
+               Prj := Project_Node_Id
+                 (Get_Int (Selector.Model, It, Project_Id_Column));
+               for P in Tmp'Range loop
+                  if Tmp (P) = Prj then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  T := Tmp;
+                  Tmp := new Project_Node_Array (Tmp'First .. Tmp'Last + 1);
+                  Tmp (T'Range) := T.all;
+                  Free (T);
+                  Tmp (Tmp'Last) := Prj;
+               end if;
+            end if;
+
+            Add_Recursive (Children (Selector.Model, It));
+            Next (Selector.Model, It);
+         end loop;
+      end Add_Recursive;
+
+   begin
+      Tmp (1) := Selector.Ref_Project;
+      Add_Recursive (Get_Iter_First (Selector.Model));
+
+      declare
+         Result : Project_Iterator (Tmp'Length);
+      begin
+         Result := (Num_Projects  => Tmp'Length,
+                    Projects      => Tmp.all,
+                    Projects_View => (others => Prj.No_Project),
+                    Current       => Tmp'First);
+         for R in Result.Projects_View'Range loop
+            Result.Projects_View (R) := Get_Project_View_From_Project
+              (Result.Projects (R));
+         end loop;
+
+         Free (Tmp);
+         return Result;
+      end;
+   end Start;
+
+   -----------
+   -- Count --
+   -----------
+
+   function Count (Iter : Project_Iterator) return Natural is
+   begin
+      return Iter.Num_Projects;
+   end Count;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Project_Iterator) is
+   begin
+      Iter.Current := Iter.Current + 1;
+   end Next;
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current (Iter : Project_Iterator)
+      return Prj.Tree.Project_Node_Id is
+   begin
+      if Iter.Current <= Iter.Projects'Last then
+         return Iter.Projects (Iter.Current);
+      else
+         return Empty_Node;
+      end if;
+   end Current;
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current (Iter : Project_Iterator) return Prj.Project_Id is
+   begin
+      if Iter.Current <= Iter.Projects_View'Last then
+         return Iter.Projects_View (Iter.Current);
+      else
+         return Prj.No_Project;
+      end if;
+   end Current;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Selector : access Scenario_Selector_Record'Class)
+      return Scenario_Iterator
+   is
+      It : Gtk_Tree_Iter := Get_Iter_First (Selector.Model);
+      Child : Gtk_Tree_Iter;
+      Count : Natural := 0;
+   begin
+      --  Count the number of variables
+      while It /= Null_Iter loop
+         Count := Count + 1;
+         Next (Selector.Model, It);
+      end loop;
+
+      declare
+         Iter  : Scenario_Iterator (Count);
+      begin
+         Iter.Selector := Scenario_Selector (Selector);
+         Count := Iter.Current'First;
+         It := Get_Iter_First (Selector.Model);
+
+         while It /= Null_Iter loop
+            Iter.Variables (Count) := It;
+            Iter.At_End := False;
+
+            --  Find the first value of the variable
+            Child := Children (Selector.Model, It);
+            while Child /= Null_Iter loop
+               if Get_Boolean (Selector.Model, Child, Selected_Column) then
+                  exit;
+               end if;
+
+               Next (Selector.Model, Child);
+            end loop;
+
+            Iter.Current (Count) := Child;
+
+            Count := Count + 1;
+            Next (Selector.Model, It);
+         end loop;
+
+         return Iter;
+      end;
+   end Start;
+
+   ---------------------------
+   -- Has_Multiple_Scenario --
+   ---------------------------
+
+   function Has_Multiple_Scenario (Iter : Scenario_Iterator) return Boolean is
+      It    : Gtk_Tree_Iter := Get_Iter_First (Iter.Selector.Model);
+      Child : Gtk_Tree_Iter;
+      Count : Natural;
+   begin
+      while It /= Null_Iter loop
+         Child := Children (Iter.Selector.Model, It);
+         Count := 0;
+
+         while Child /= Null_Iter loop
+            if Get_Boolean
+              (Iter.Selector.Model, Child, Selected_Column)
+            then
+               Count := Count + 1;
+            end if;
+            Next (Iter.Selector.Model, Child);
+         end loop;
+
+         if Count > 1 then
+            return True;
+         end if;
+
+         Next (Iter.Selector.Model, It);
+      end loop;
+      return False;
+   end Has_Multiple_Scenario;
+
+   -------------------------
+   -- Find_First_Selected --
+   -------------------------
+
+   function Find_First_Selected
+     (Selector : access Scenario_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter) return Gtk_Tree_Iter
+   is
+      It : Gtk_Tree_Iter := Iter;
+   begin
+      while It /= Null_Iter loop
+         exit when Get_Boolean (Selector.Model, It, Selected_Column);
+         Next (Selector.Model, It);
+      end loop;
+      return It;
+   end Find_First_Selected;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Scenario_Iterator) is
+      Var : Natural := Iter.Current'Last;
+   begin
+      while Var >= Iter.Current'First loop
+         Next (Iter.Selector.Model, Iter.Current (Var));
+         Iter.Current (Var) := Find_First_Selected
+           (Iter.Selector, Iter.Current (Var));
+
+         if Iter.Current (Var) /= Null_Iter then
+            return;
+         end if;
+
+         --  Find the first selected child of the variable
+         Iter.Current (Var) := Find_First_Selected
+           (Iter.Selector,
+            Children (Iter.Selector.Model, Iter.Variables (Var)));
+
+         --  And move the parent to the next variable
+         Var := Var - 1;
+      end loop;
+
+      --  No more scenario
+      Iter.At_End := True;
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Scenario_Iterator) return Boolean is
+   begin
+      return Iter.At_End;
+   end At_End;
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current (Iter : Scenario_Iterator) return Argument_List is
+      Result : Argument_List (Iter.Current'Range);
+   begin
+      for R in Result'Range loop
+         Result (R) := new String'
+           (Get_String
+            (Iter.Selector.Model, Iter.Current (R), Var_Name_Column));
+      end loop;
+      return Result;
+   end Current;
 
 end Scenario_Selectors;
