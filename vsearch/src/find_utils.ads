@@ -129,8 +129,10 @@ package Find_Utils is
    type Poll_Search_Handler is access function
      (Match_Found : Boolean;
       File        : String;
-      Line_Nr     : Positive := 1;
-      Line_Text   : String   := "") return Boolean;
+      Line_Nr     : Positive    := 1;
+      Line_Text   : String      := "";
+      Sub_Matches : Match_Array := (0 => No_Match))
+      return Boolean;
    --  Function called after a match is found or after a whole file is scanned.
    --  An unopenable file is immediately considered as scanned.
    --  The search may be aborted at any call by returning False.
@@ -138,14 +140,20 @@ package Find_Utils is
    --  Match_Found  True: a match is found...  False: the whole scanned file...
    --  File               ... in this file...         ... is this one
    --  Line_Nr            ... at this line...          !! IRRELEVANT !!
-   --  Line_Text          ... within this text         !! IRRELEVANT !!
+   --  Line_Text          ... within this text:        !! IRRELEVANT !!
+   --  Sub_Matches        it matched there.            !! IRRELEVANT !!
+   --
+   --  Sub-matches indicate where sub-expressions matched in the regexp (see
+   --  g-regpat.ads).
    --
    --  Match calls are intended for, e.g. updating a list of matches.
    --  Other calls are intended for, e.g. updating a list of scanned files.
    --  But you can perform your own processing during the call (user events,
    --  update a scroll bar, ...).
    --
-   --  NOTE: The handler mustn't raise any exception
+   --  NOTES:
+   --  * The handler mustn't raise any exception
+   --  * Sub_Matches parameter is only filled when searching for a regexp.
 
    procedure Do_Search
      (Search   : in out Code_Search;
@@ -160,7 +168,7 @@ package Find_Utils is
    procedure Free (S : in out Code_Search);
    --  Free the memory occupied by S.
    --
-   --  NOTE: S.Files is not freed because it was given (see Init_Search).
+   --  NOTE: see Init_Search.
 
 private
 
@@ -169,11 +177,13 @@ private
 
    type RE_Pattern_Access is access RE_Pattern;
 
+   type Match_Array_Access is access Match_Array;
+
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
    --  Current lexical state of the currently parsed file.
    --
-   --  Statements      all but comments and strings and characters
+   --  Statements      all but comments and strings
    --  Strings         string literals
    --  Mono_Comments   end of line terminated comments
    --  Multi_Comments  (possibly) multi-line comments
@@ -195,6 +205,7 @@ private
 
       Scope         : Search_Scope;
       Lexical_State : Recognized_Lexical_States;
+      Sub_Matches   : Match_Array_Access := null;
    end record;
 
 end Find_Utils;

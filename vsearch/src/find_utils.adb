@@ -56,7 +56,7 @@ package body Find_Utils is
       Look_For   : String;
       Match_Case : Boolean;
       Whole_Word : Boolean);
-   --  Initialize RE_Pat.
+   --  Initialize RE_Pat and Sub_Matches.
    --
    --  Raise Search_Error if:
    --  * Look_For can't compile
@@ -100,6 +100,7 @@ package body Find_Utils is
       elsif Look_For'Length <= Boyer_Moore.Max_Pattern_Length then
          Search.Use_BM := True;
          Compile (Search.BM_Pat, Look_For, Match_Case);
+         Search.Sub_Matches := new Match_Array'(0 => No_Match);
 
       else
          Init_RE_Pattern (Search, Quote (Look_For), Match_Case, Whole_Word);
@@ -197,7 +198,8 @@ package body Find_Utils is
          Pos : Integer;
       begin
          if not Search.Use_BM then
-            return Match (Search.RE_Pat.all, Text) /= Text'First - 1;
+            Match (Search.RE_Pat.all, Text, Search.Sub_Matches.all);
+            return Search.Sub_Matches (0) /= No_Match;
          end if;
 
          Pos := Boyer_Moore.Search (Search.BM_Pat, Text);
@@ -378,9 +380,10 @@ package body Find_Utils is
                end loop;
 
                if Contain_Match (Buffer (Line_Start .. Pos - 1)) then
-                  Continue :=
-                    Callback
-                      (True, Name, Line_Nr, Buffer (Line_Start .. Pos - 1));
+                  Continue := Callback
+                                (True, Name, Line_Nr,
+                                 Buffer (Line_Start .. Pos - 1),
+                                 Search.Sub_Matches.all);
 
                   exit when not Continue;
                end if;
@@ -518,7 +521,9 @@ package body Find_Utils is
               and then Scanning_Allowed (Search.Lexical_State)
               and then Contain_Match (Line (Reached .. Pos - 1))
             then
-               Continue := Callback (True, Name, Line_Nr, Line);
+               Continue := Callback
+                             (True, Name, Line_Nr, Line,
+                              Search.Sub_Matches.all);
                Called := True;
 
                exit Whole_Line_Loop when not Continue;
@@ -578,11 +583,15 @@ package body Find_Utils is
       procedure Free_RE_Pattern is new
         Standard.Ada.Unchecked_Deallocation (RE_Pattern, RE_Pattern_Access);
 
+      procedure Free_Match_Array is new
+        Standard.Ada.Unchecked_Deallocation (Match_Array, Match_Array_Access);
+
    begin
       Free_String (S.Look_For);
       Free_String (S.Directory);
       Free_RE_Pattern (S.RE_Pat);
       Free (S.BM_Pat);
+      Free_Match_Array (S.Sub_Matches);
    end Free;
 
    ---------------------
@@ -608,6 +617,9 @@ package body Find_Utils is
       else
          Search.RE_Pat := new RE_Pattern'(Compile (Look_For, Flags));
       end if;
+
+      Search.Sub_Matches :=
+        new Match_Array (0 .. Paren_Count (Search.RE_Pat.all));
 
    exception
       when Expression_Error =>
