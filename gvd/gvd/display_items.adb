@@ -1705,8 +1705,7 @@ package body Display_Items is
    ----------------------------
 
    function Create_Drawing_Context
-     (Item : access Display_Item_Record'Class)
-     return Drawing_Context is
+     (Item : access Display_Item_Record'Class) return Drawing_Context is
    begin
       return Create_Drawing_Context
         (Canvas => Item.Debugger.Data_Canvas,
