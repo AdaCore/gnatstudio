@@ -2112,11 +2112,11 @@ package body Project_Viewers is
    begin
       if Project_View /= No_Project then
          Gtk_New (Editor, Project_View);
-         Show_All (Editor);
+         Show (Editor);
          Show_Project_Settings (Editor, Project_View);
       else
          Gtk_New (Editor, Known_Languages (Get_Language_Handler (Kernel)));
-         Show_All (Editor);
+         Show (Editor);
       end if;
 
       return Gtk_Widget (Editor);
