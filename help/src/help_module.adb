@@ -54,7 +54,7 @@ with Generic_List;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Histories;                    use Histories;
-with Shell;                        use Shell;
+with Glide_Kernel.Scripts;         use Glide_Kernel.Scripts;
 
 package body Help_Module is
 
@@ -203,10 +203,8 @@ package body Help_Module is
       Anchor : String := "");
    --  Open an HTML file.
 
-   function Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+   procedure Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
    --  Handler for HTML commands.
 
    function Default_Factory
@@ -244,21 +242,17 @@ package body Help_Module is
    -- Command_Handler --
    ---------------------
 
-   function Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String is
+   procedure Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "html.browse" then
-         if Args'Length = 2 then
+         if Number_Of_Arguments (Data) = 2 then
             Open_HTML_File
-              (Kernel, Args (Args'First).all, Args (Args'Last).all);
+              (Get_Kernel (Data), Nth_Arg (Data, 1), Nth_Arg (Data, 2));
          else
-            Open_HTML_File (Kernel, Args (Args'First).all);
+            Open_HTML_File (Get_Kernel (Data), Nth_Arg (Data, 1));
          end if;
       end if;
-
-      return "";
    end Command_Handler;
 
    --------------
@@ -970,10 +964,8 @@ package body Help_Module is
                Args (2) := new String'(File);
                Args (3) := new String'(Anchor);
 
-               Interpret_Command
-                 (Kernel,
-                  "add_location_command",
-                  Args);
+               Execute_GPS_Shell_Command
+                 (Kernel, "add_location_command", Args);
 
                for J in Args'Range loop
                   Free (Args (J));
@@ -1277,8 +1269,8 @@ package body Help_Module is
 
       Register_Command
         (Kernel,
-         Command      => "html.browse",
-         Usage        => "html.browse URL [anchor]",
+         Command      => "html_browse",
+         Usage        => "html_browse (URL, [anchor]) -> None",
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => 1,
          Maximum_Args => 2,
