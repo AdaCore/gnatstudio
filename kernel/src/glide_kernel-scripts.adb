@@ -336,9 +336,12 @@ package body Glide_Kernel.Scripts is
 
    procedure Free (Instance : access Class_Instance_Record'Class) is
       Ins : Class_Instance := Class_Instance (Instance);
+      Free_Pointer : Boolean;
    begin
-      Primitive_Free (Instance.all);
-      Unchecked_Free (Ins);
+      Primitive_Free (Instance.all, Free_Pointer);
+      if Free_Pointer then
+         Unchecked_Free (Ins);
+      end if;
    end Free;
 
    -----------------------
