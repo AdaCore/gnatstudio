@@ -21,6 +21,9 @@
 with Glib.Values;
 with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
 with Glide_Kernel;              use Glide_Kernel;
@@ -59,6 +62,12 @@ package body Glide_Main_Window is
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
    --  Called when the the main window is destroyed
+
+   function Check_MDI_Selection
+     (Main_Window : access Gtk_Widget_Record'Class;
+      Event       : Gdk_Event) return Boolean;
+   --  Check whether Event should activate the selection dialog for MDI
+   --  children.
 
    -------------
    -- Anim_Cb --
@@ -118,7 +127,6 @@ package body Glide_Main_Window is
          Main_Quit;
       end if;
    end Quit;
-
 
    ---------------------
    -- Delete_Callback --
@@ -183,6 +191,10 @@ package body Glide_Main_Window is
          Background_Color  => Get_Pref (Kernel, MDI_Background_Color),
          Title_Bar_Color   => Get_Pref (Kernel, MDI_Title_Bar_Color),
          Focus_Title_Color => Get_Pref (Kernel, MDI_Focus_Title_Color));
+
+      Set_All_Floating_Mode
+        (Get_MDI (Kernel), Get_Pref (Kernel, MDI_All_Floating));
+
       Free (Title_Font);
    end Preferences_Changed;
 
@@ -253,7 +265,46 @@ package body Glide_Main_Window is
          Delete_Callback'Access,
          Gtk_Widget (Main_Window),
          After => False);
+
+      Return_Callback.Connect
+        (Main_Window, "key_press_event",
+         Return_Callback.To_Marshaller (Check_MDI_Selection'Access));
+      Return_Callback.Connect
+        (Main_Window, "key_release_event",
+         Return_Callback.To_Marshaller (Check_MDI_Selection'Access));
    end Initialize;
+
+   -------------------------
+   -- Check_MDI_Selection --
+   -------------------------
+
+   function Check_MDI_Selection
+     (Main_Window : access Gtk_Widget_Record'Class;
+      Event       : Gdk_Event) return Boolean
+   is
+      Win      : constant Glide_Window := Glide_Window (Main_Window);
+      Modifier : Gdk_Modifier_Type;
+      Key      : Gdk_Key_Type;
+      Key2     : Gdk_Key_Type;
+   begin
+      Get_Pref (Win.Kernel, MDI_Switch_Child, Modifier, Key);
+
+      --  ??? Approximate algorithm, maybe we should simply use a preference,
+      --  but previous and next need to have the same modifier
+
+      if Key = GDK_Tab then
+         Key2 := GDK_ISO_Left_Tab;
+      elsif Key in GDK_A .. GDK_Z then
+         Key2 := Key + (GDK_LC_a - GDK_A);
+      elsif Key in GDK_LC_a .. GDK_LC_z then
+         Key2 := Key - (GDK_LC_a - GDK_A);
+      else
+         Key2 := Key; -- no going backward
+      end if;
+
+      return Check_Interactive_Selection_Dialog
+        (Win.Process_Mdi, Event, Modifier, Key, Key2);
+   end Check_MDI_Selection;
 
    ----------------
    -- On_Destroy --
