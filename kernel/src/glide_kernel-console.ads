@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+with Interactive_Consoles; use Interactive_Consoles;
 with Glide_Result_View;
 
 package Glide_Kernel.Console is
@@ -71,12 +71,12 @@ package Glide_Kernel.Console is
 
    function Get_Interactive_Console
      (Kernel : access Kernel_Handle_Record'Class)
-      return Glide_Interactive_Console;
+      return Interactive_Console;
    --  Return the interactive console associated with the kernel.
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class)
-      return Glide_Interactive_Console;
+      return Interactive_Console;
    --  Return the interactive console associated with the kernel.
 
    function Get_Or_Create_Result_View

@@ -40,7 +40,7 @@ with Traces;               use Traces;
 with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
 with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
-with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+with Interactive_Consoles;       use Interactive_Consoles;
 
 with Glide_Intl;           use Glide_Intl;
 
@@ -52,7 +52,7 @@ package body Glide_Kernel.Timeout is
    Me : constant Debug_Handle := Create ("Glide_Kernel.Timeout");
 
    type Console_Process_Data is new GObject_Record with record
-      Console : Glide_Interactive_Console;
+      Console : Interactive_Console;
       D       : Process_Data;
       Died    : Boolean := False;
       --  Indicates that the process has died.
@@ -202,7 +202,7 @@ package body Glide_Kernel.Timeout is
       Timeout : constant Guint32 := 50;
       Fd      : Process_Descriptor_Access;
       Data    : Console_Process;
-      Console : Glide_Interactive_Console;
+      Console : Interactive_Console;
       Child   : MDI_Child;
 
       procedure Spawn
@@ -279,7 +279,7 @@ package body Glide_Kernel.Timeout is
             Set_Title (Child, Command, Title);
 
          else
-            Console := Get_Interactive_Console (Kernel);
+            Console := Get_Console (Kernel);
             Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
          end if;
 
