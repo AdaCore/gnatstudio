@@ -874,8 +874,9 @@ package body Odd.Process is
                if Enable_Block_Search then
                   Gtk_New
                     (Item, Get_Window (Process.Data_Canvas),
-                     Variable_Name => Variable_Name_With_Frame
-                     (Process.Debugger, Cmd (First .. Last)),
+                     Variable_Name =>
+                       Variable_Name_With_Frame
+                         (Process.Debugger, Cmd (First .. Last)),
                      Debugger      => Process,
                      Auto_Refresh  =>
                        Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
@@ -1043,6 +1044,7 @@ package body Odd.Process is
          Skip_Blanks (Command, First);
          Data.Command := new String'(Command);
          Append (Debugger.Window.Command_History, Data);
+         Set_Busy_Cursor (Debugger);
          Process_Graph_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
 
@@ -1053,8 +1055,6 @@ package body Odd.Process is
 
          Send
            (Debugger.Debugger, Command,
-            Wait_For_Prompt =>
-              not Command_In_Process (Get_Process (Debugger.Debugger)),
             Mode => Mode);
       end if;
    end Process_User_Command;
