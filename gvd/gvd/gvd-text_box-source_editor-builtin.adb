@@ -1491,6 +1491,9 @@ package body GVD.Source_Editors is
       --  Hide or display the lines with code. This needs to be done after we
       --  have redisplayed the editor
       Set_Show_Lines_With_Code (Editor, Get_Pref (Editor_Show_Line_With_Code));
+
+      --  Note: We don't need to do anything for the tooltips preference, since
+      --  this is check dynamically before displaying the tooltips.
    end Preferences_Changed;
 
 end GVD.Source_Editors;
