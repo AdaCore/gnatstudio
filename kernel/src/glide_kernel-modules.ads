@@ -307,6 +307,43 @@ package Glide_Kernel.Modules is
    --  the underlying gtk menu item. Useful in particular to check or change
    --  the state of a menu item.
 
+   ------------
+   -- Search --
+   ------------
+
+   procedure Register_Search_Pattern
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Name           : String;
+      Regexp         : String;
+      Case_Sensitive : Boolean := False;
+      Is_Regexp : Boolean := True);
+   --  Register a new template regular expression in the search engine.
+   --  Name will appear in the popdown menu of the combo box, but this will be
+   --  associated with the regular expression Regexp.
+   --  This emits the "search_regexps_changed" signal on Kernel.
+
+   function Search_Regexps_Count
+     (Kernel : access Kernel_Handle_Record'Class) return Natural;
+   --  Return the number of registered predefined patterns
+
+   procedure Get_Nth_Search_Regexp_Options
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Num            : Natural;
+      Case_Sensitive : out Boolean;
+      Is_Regexp      : out Boolean);
+   --  Return the options for the Num-th predefined search regexp
+
+   function Get_Nth_Search_Regexp_Name
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return String;
+   --  Return the name, as it appears in the combo box, for the Num-th regexp.
+   --  The first regexp is number 1.
+
+   function Get_Nth_Search_Regexp
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return String;
+   --  Return the Num-th regular expression
+
    ----------------------
    -- Projects edition --
    ----------------------
@@ -607,7 +644,7 @@ package Glide_Kernel.Modules is
      (Context : access File_Selection_Context) return String;
    --  Return the information about the selected project. This is only relevant
    --  if Has_Directory_Information is True.
-   --  This directory name always ends with a '/'
+   --  This directory name always ends with a directory separator.
 
    function Has_File_Information
      (Context : access File_Selection_Context) return Boolean;
@@ -615,7 +652,7 @@ package Glide_Kernel.Modules is
 
    function File_Information
      (Context : access File_Selection_Context) return String;
-   --  Return the information about the selected project. This is only relevant
+   --  Return the information about the selected file. This is only relevant
    --  if Has_File_Information is True.
    --  This is the base file name for the file
 
@@ -755,11 +792,24 @@ private
      of Project_Editor_Page;
    type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
 
+   type Search_Regexp is record
+      Name           : String_Access;
+      Regexp         : String_Access;
+      Case_Sensitive : Boolean;
+      Is_Regexp      : Boolean;
+   end record;
+
+   type Search_Regexps_Array is array (Natural range <>) of Search_Regexp;
+   type Search_Regexps_Array_Access is access Search_Regexps_Array;
+
    type Real_Kernel_Module_Data_Record is new Kernel_Module_Data_Record
    with record
       Project_Editor_Pages : Project_Editor_Page_Array_Access;
       --  The pages to be added in the project properties editor and the
       --  project creation wizard.
+
+      Search_Regexps : Search_Regexps_Array_Access;
+      --  The list of predefined regexps for the search module.
    end record;
    type Real_Module_Data is access all Real_Kernel_Module_Data_Record'Class;
 

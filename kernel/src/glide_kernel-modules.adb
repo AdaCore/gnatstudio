@@ -104,6 +104,9 @@ package body Glide_Kernel.Modules is
      (Project_Editor_Page_Array, Project_Editor_Page_Array_Access);
    --  Free the memory used by Pages
 
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Search_Regexps_Array, Search_Regexps_Array_Access);
+
    ---------------------
    -- Compute_Tooltip --
    ---------------------
@@ -1310,6 +1313,13 @@ package body Glide_Kernel.Modules is
 
          Unchecked_Free (Data.Project_Editor_Pages);
       end if;
+
+      for S in Data.Search_Regexps'Range loop
+         Free (Data.Search_Regexps (S).Name);
+         Free (Data.Search_Regexps (S).Regexp);
+      end loop;
+
+      Unchecked_Free (Data.Search_Regexps);
    end Destroy;
 
    -------------
@@ -1404,9 +1414,8 @@ package body Glide_Kernel.Modules is
            new Project_Editor_Page_Array (Tmp'First .. Tmp'Last + 1);
          Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages
            (Tmp'Range) := Tmp.all;
+         Unchecked_Free (Tmp);
       end if;
-
-      Unchecked_Free (Tmp);
 
       Page.Flags := Flags;
       Page.Label := new String' (Label);
@@ -1472,6 +1481,86 @@ package body Glide_Kernel.Modules is
       return null;
    end Get_Nth_Project_Editor_Page;
 
+   -----------------------------
+   -- Register_Search_Pattern --
+   -----------------------------
+
+   procedure Register_Search_Pattern
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String;
+      Regexp : String;
+      Case_Sensitive : Boolean := False;
+      Is_Regexp : Boolean := True)
+   is
+      Tmp : Search_Regexps_Array_Access :=
+        Real_Module_Data (Kernel.Modules_Data).Search_Regexps;
+   begin
+      Real_Module_Data (Kernel.Modules_Data).Search_Regexps :=
+        new Search_Regexps_Array (Tmp'First .. Tmp'Last + 1);
+      Real_Module_Data (Kernel.Modules_Data).Search_Regexps
+        (Tmp'Range) := Tmp.all;
+      Unchecked_Free (Tmp);
+
+      Tmp := Real_Module_Data (Kernel.Modules_Data).Search_Regexps;
+      Tmp (Tmp'Last) :=
+        (Name           => new String' (Name),
+         Regexp         => new String' (Regexp),
+         Case_Sensitive => Case_Sensitive,
+         Is_Regexp      => Is_Regexp);
+
+      Search_Regexps_Changed (Kernel);
+   end Register_Search_Pattern;
+
+   --------------------------
+   -- Search_Regexps_Count --
+   --------------------------
+
+   function Search_Regexps_Count
+     (Kernel : access Kernel_Handle_Record'Class) return Natural is
+   begin
+      return Real_Module_Data (Kernel.Modules_Data).Search_Regexps'Length;
+   end Search_Regexps_Count;
+
+   -----------------------------------
+   -- Get_Nth_Search_Regexp_Options --
+   -----------------------------------
+
+   procedure Get_Nth_Search_Regexp_Options
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Num            : Natural;
+      Case_Sensitive : out Boolean;
+      Is_Regexp      : out Boolean) is
+   begin
+      Case_Sensitive := Real_Module_Data
+        (Kernel.Modules_Data).Search_Regexps (Num).Case_Sensitive;
+      Is_Regexp := Real_Module_Data
+        (Kernel.Modules_Data).Search_Regexps (Num).Is_Regexp;
+   end Get_Nth_Search_Regexp_Options;
+
+   --------------------------------
+   -- Get_Nth_Search_Regexp_Name --
+   --------------------------------
+
+   function Get_Nth_Search_Regexp_Name
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return String is
+   begin
+      return Real_Module_Data
+        (Kernel.Modules_Data).Search_Regexps (Num).Name.all;
+   end Get_Nth_Search_Regexp_Name;
+
+   ----------------------------------
+   -- Get_Nth_Search_Regexp_Regexp --
+   ----------------------------------
+
+   function Get_Nth_Search_Regexp
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return String is
+   begin
+      return Real_Module_Data
+        (Kernel.Modules_Data).Search_Regexps (Num).Regexp.all;
+   end Get_Nth_Search_Regexp;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1479,6 +1568,8 @@ package body Glide_Kernel.Modules is
    procedure Initialize (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Kernel.Modules_Data := new Real_Kernel_Module_Data_Record;
+      Real_Module_Data (Kernel.Modules_Data).Search_Regexps :=
+        new Search_Regexps_Array (1 .. 0);
    end Initialize;
 
 end Glide_Kernel.Modules;
