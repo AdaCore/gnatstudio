@@ -806,22 +806,21 @@ package body Glide_Kernel.Scripts is
          Entity := Get_Data (Data, 1);
          Set_Return_Value (Data, Get_Name (Entity).all);
 
-      elsif Command = "decl_file" then
-         Entity := Get_Data (Data, 1);
+      elsif Command = "declaration" then
+         declare
+            Location : File_Location;
+         begin
+            Entity := Get_Data (Data, 1);
+            Location := Get_Declaration_Of (Entity);
 
-         Set_Return_Value
-           (Data,
-            Create_File
-              (Get_Script (Data), Get_Filename
-                 (Get_File (Get_Declaration_Of (Entity)))));
-
-      elsif Command = "decl_line" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Line (Get_Declaration_Of (Entity)));
-
-      elsif Command = "decl_column" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Column (Get_Declaration_Of (Entity)));
+            Set_Return_Value
+              (Data, Create_File_Location
+                 (Get_Script (Data),
+                  File   => Create_File
+                    (Get_Script (Data), Get_Filename (Get_File (Location))),
+                  Line   => Get_Line (Location),
+                  Column => Get_Column (Location)));
+         end;
 
       elsif Command = "body" then
          declare
@@ -1337,15 +1336,7 @@ package body Glide_Kernel.Scripts is
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel, "decl_file",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "decl_line",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "decl_column",
+        (Kernel, "declaration",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
