@@ -621,34 +621,35 @@ package body Project_Trees is
    is
       N : Gtk_Ctree_Node;
       Is_Leaf : constant Boolean := True;
+      Text : Tree_Chars_Ptr_Array;
    begin
       if Construct.Is_Declaration then
-         N := Insert_Node
-           (Ctree         => Tree,
-            Parent        => Parent_Node,
-            Sibling       => null,
-            Text          => Create_Line_Text (Construct.Name.all & " (spec)"),
-            Spacing       => 5,
-            Pixmap_Closed => Tree.Close_Pixmaps (Entity_Node),
-            Mask_Closed   => Tree.Close_Masks (Entity_Node),
-            Pixmap_Opened => Tree.Open_Pixmaps (Entity_Node),
-            Mask_Opened   => Tree.Open_Masks (Entity_Node),
-            Is_Leaf       => Is_Leaf,
-            Expanded      => False);
+         if Construct.Profile /= null then
+            Text := Create_Line_Text
+              (Construct.Name.all & " (spec) " & Reduce (Construct.Profile.all));
+         else
+            Text := Create_Line_Text (Construct.Name.all & " (spec)");
+         end if;
+
+      elsif Construct.Profile /= null then
+         Text := Create_Line_Text
+           (Construct.Name.all & " " & Reduce (Construct.Profile.all));
       else
-         N := Insert_Node
-           (Ctree         => Tree,
-            Parent        => Parent_Node,
-            Sibling       => null,
-            Text          => Create_Line_Text (Construct.Name.all),
-            Spacing       => 5,
-            Pixmap_Closed => Tree.Close_Pixmaps (Entity_Node),
-            Mask_Closed   => Tree.Close_Masks (Entity_Node),
-            Pixmap_Opened => Tree.Open_Pixmaps (Entity_Node),
-            Mask_Opened   => Tree.Open_Masks (Entity_Node),
-            Is_Leaf       => Is_Leaf,
-            Expanded      => False);
+         Text := Create_Line_Text (Construct.Name.all);
       end if;
+
+      N := Insert_Node
+        (Ctree         => Tree,
+         Parent        => Parent_Node,
+         Sibling       => null,
+         Text          => Text,
+         Spacing       => 5,
+         Pixmap_Closed => Tree.Close_Pixmaps (Entity_Node),
+         Mask_Closed   => Tree.Close_Masks (Entity_Node),
+         Pixmap_Opened => Tree.Open_Pixmaps (Entity_Node),
+         Mask_Opened   => Tree.Open_Masks (Entity_Node),
+         Is_Leaf       => Is_Leaf,
+         Expanded      => False);
 
       Node_Set_Row_Data
         (Tree, N, (Entity_Node,
