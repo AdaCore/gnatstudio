@@ -18,27 +18,33 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk; use Gtk;
 with Gdk.Types;       use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gtk; use Gtk;
+with Gtk.Object;    use Gtk.Object;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Accel_Group; use Gtk.Accel_Group;
 with Gtk.Pixmap;      use Gtk.Pixmap;
 with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.Types;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with GVD.Pixmaps; use GVD.Pixmaps;
 with GVD.Types;   use GVD.Types;
 with GVD.Dialogs; use GVD.Dialogs;
+with GVD.Preferences; use GVD.Preferences;
 with GVD.Process; use GVD.Process;
 with GVD.Memory_View; use GVD.Memory_View;
-with Gtkada.Types;
+
+with Language.Debugger.Ada; use Language.Debugger.Ada;
+with Language.Debugger.C;   use Language.Debugger.C;
+with Language.Debugger.Cpp; use Language.Debugger.Cpp;
+with Language;              use Language;
+
 with System;        use System;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
-with Gtk.Object;    use Gtk.Object;
-with GVD.Preferences; use GVD.Preferences;
 
 package body Main_Debug_Window_Pkg is
 
@@ -487,12 +493,12 @@ begin
       Widget_Callback.To_Marshaller (On_Threads1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Threads1);
 
-   Gtk_New (Main_Debug_Window.Processes1, -"Processes...");
-   Set_Right_Justify (Main_Debug_Window.Processes1, False);
+   Gtk_New (Main_Debug_Window.Tasks1, -"Tasks...");
+   Set_Right_Justify (Main_Debug_Window.Tasks1, False);
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Processes1, "activate",
-      Widget_Callback.To_Marshaller (On_Processes1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Processes1);
+     (Main_Debug_Window.Tasks1, "activate",
+      Widget_Callback.To_Marshaller (On_Tasks1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Tasks1);
 
    Gtk_New (Main_Debug_Window.Signals1, -"Signals...");
    Set_Right_Justify (Main_Debug_Window.Signals1, False);
@@ -730,10 +736,15 @@ begin
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Statusbar1, False, False, 0);
 
    Gtk_New (Main_Debug_Window.Task_Dialog, Gtk_Window (Main_Debug_Window));
+   Gtk_New (Main_Debug_Window.Thread_Dialog, Gtk_Window (Main_Debug_Window));
    Gtk_New (Main_Debug_Window.History_Dialog, Gtk_Window (Main_Debug_Window));
    Gtk_New (Main_Debug_Window.Memory_View, Gtk_Widget (Main_Debug_Window));
    Lock (The_Accel_Group);
    Lock (Gtk.Accel_Group.Get_Default);
+   Reset_File_Extensions;
+   Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
+   Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
+   Add_File_Extensions (Cpp_Lang, Get_Pref (Cpp_Extensions));
 end Initialize;
 
    -----------------------------
@@ -803,6 +814,11 @@ end Initialize;
       if Get_Active (Window.Call_Stack) /= Get_Pref (Show_Stack) then
          Set_Active (Window.Call_Stack, Get_Pref (Show_Stack));
       end if;
+
+      Reset_File_Extensions;
+      Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
+      Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
+      Add_File_Extensions (Cpp_Lang, Get_Pref (Cpp_Extensions));
    end Preferences_Changed;
 
 end Main_Debug_Window_Pkg;

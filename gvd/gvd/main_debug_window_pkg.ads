@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
@@ -67,6 +68,7 @@ package Main_Debug_Window_Pkg is
       Open_Program        : Open_Program_Access;
       Open_Session        : Open_Session_Access;
       History_Dialog      : History_Dialog_Access;
+      Thread_Dialog       : Thread_Dialog_Access;
       Task_Dialog         : Task_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
       Log_File            : File_Descriptor := Standerr;
@@ -75,6 +77,7 @@ package Main_Debug_Window_Pkg is
       Log_Level           : GVD.Types.Command_Type := GVD.Types.Internal;
       External_Editor     : String_Access;
       Prefix_Directory    : String_Access;
+      External_XID        : Glib.Guint32 := 0;
 
       File_Caches         : GVD.Types.File_Cache_List;
       --  List of data cached for each of the file of the application
@@ -158,7 +161,7 @@ package Main_Debug_Window_Pkg is
       Data1_Menu : Gtk_Menu;
       Call_Stack : Gtk_Check_Menu_Item;
       Threads1 : Gtk_Menu_Item;
-      Processes1 : Gtk_Menu_Item;
+      Tasks1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;
       Separator17 : Gtk_Menu_Item;
       Edit_Breakpoints1 : Gtk_Menu_Item;
