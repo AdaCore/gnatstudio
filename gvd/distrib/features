@@ -2,6 +2,7 @@ New features in GVD 1.0.2
 
 - Added support for C++ in gdb.
 - Assembly window is now much more efficient.
+- New menu File->Open Source... to open a source file without the explorer
 
 New features in GVD 1.0.1
 
