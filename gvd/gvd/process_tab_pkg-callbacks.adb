@@ -29,6 +29,7 @@ with Gdk.Event;   use Gdk.Event;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Ada.Tags; use Ada.Tags;
 with Ada.Text_IO; use Ada.Text_IO;
@@ -99,7 +100,7 @@ package body Process_Tab_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Arg1 : String := To_String (Params, 1);
-      --  Arg2 : Gint := To_Gint (Params, 2);
+      Arg2 : Gint := To_Gint (Params, 2);
       Position : Address := To_Address (Params, 3);
 
       Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
@@ -110,6 +111,18 @@ package body Process_Tab_Pkg.Callbacks is
 
    begin
       if To_Guint_Ptr (Position).all < Top.Edit_Pos then
+
+         --  Move the cursor back to the end of the window, so that the text
+         --  is correctly inserted. This is more user friendly that simply
+         --  forbidding any key.
+
+         if Is_Graphic (Arg1 (Arg1'First)) then
+            Text_Output_Handler
+              (Top, Arg1 (Arg1'First .. Arg1'First + Integer (Arg2) - 1));
+            Set_Position
+              (Top.Debugger_Text, Gint (Get_Length (Top.Debugger_Text)));
+         end if;
+
          Emit_Stop_By_Name (Top.Debugger_Text, "insert_text");
       else
          if Arg1 (Arg1'First) = ASCII.LF then
