@@ -2491,6 +2491,9 @@ package body Projects.Editor is
       end if;
 
       Set_Project_Modified (Project, True);
+
+      --  Need to reset all the caches, since the caches contain the indirect
+      --  dependencies as well.
       Reset_Cache (Project, Imported_By => False);
       Reset_Cache (Imported_Project, Imported_By => True);
    end Remove_Imported_Project;
@@ -2814,8 +2817,7 @@ package body Projects.Editor is
       Old         : constant Project_Node_Id :=
         Find_Project_In_Hierarchy (Root_Project, Name);
       Imported    : Project_Type;
-      Iterator    : Imported_Project_Iterator := Find_All_Projects_Importing
-        (Root_Project, Project, Direct_Only => False);
+      Iterator    : Imported_Project_Iterator;
       With_Clause : Project_Node_Id;
       Modified    : Boolean;
 
@@ -2865,8 +2867,25 @@ package body Projects.Editor is
           Node => Project.Node,
           Extended => False));
 
+      Reset_Name_Table
+        (Project_Registry (Get_Registry (Project)),
+         Project, Get_String (Old_Name), New_Name);
+
+      Set_Project_Modified (Project, True);
+      Reset_Cache (Project, Imported_By => True);
+      Reset_Cache (Project, Imported_By => False);
+
+      --  This is no longer the default project, since it was
+      --  renamed. Otherwise, Project_Path would still return "" when saving
+      --  the default project.
+
+      Set_Is_Default (Project, False);
+
       --  Replace all the with_clauses in the project hierarchy that points to
       --  Project.
+
+      Iterator := Find_All_Projects_Importing
+        (Root_Project, Project, Direct_Only => False);
 
       loop
          Imported := Current (Iterator);
@@ -2897,6 +2916,7 @@ package body Projects.Editor is
          if Modified then
             Set_Project_Modified (Imported, True);
             Reset_Cache (Imported, Imported_By => True);
+            Reset_Cache (Imported, Imported_By => False);
          end if;
 
          Next (Iterator);
