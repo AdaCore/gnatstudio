@@ -594,6 +594,12 @@ package body Debugger.Gdb.Ada is
          if Looking_At (Type_Str, Tmp_Index, "null;") then
             Tmp_Index := Tmp_Index + 5;
 
+         --  An incomplete type ? Do not increment the count, e.g:
+         --  "record <incomplete type> end record"
+
+         elsif Looking_At (Type_Str, Tmp_Index, "<incomplete ") then
+            Tmp_Index := Tmp_Index + 17;
+
          --  A record with a variant part ? This counts as
          --  only one field
 
@@ -631,6 +637,9 @@ package body Debugger.Gdb.Ada is
       while Fields <= Num_Fields (R.all) loop
          if Looking_At (Type_Str, Index, "null;") then
             Index := Index + 5;
+
+         elsif Looking_At (Type_Str, Index, "<incomplete ") then
+            Index := Index + 17;
 
          elsif Looking_At (Type_Str, Index, "case ") then
             Index := Index + 5;
