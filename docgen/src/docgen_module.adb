@@ -42,6 +42,8 @@ with String_Utils;             use String_Utils;
 with Docgen_Backend_HTML;      use Docgen_Backend_HTML;
 with Docgen;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Projects.Registry;         use Projects.Registry;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 --  with Docgen_Backend_TEXI;     use Docgen_Backend_TEXI; not ready
 
 package body Docgen_Module is
@@ -512,10 +514,13 @@ package body Docgen_Module is
       then
          Project := Project_Information
            (File_Selection_Context_Access (Context));
-         Sources := Get_Source_Files (Project, Recursive);
-         Array2List (Kernel, Sources, Source_File_List);
-         Generate (Kernel, Source_File_List);
+      else
+         Project := Get_Root_Project (Get_Registry (Kernel));
+
       end if;
+      Sources := Get_Source_Files (Project, Recursive);
+      Array2List (Kernel, Sources, Source_File_List);
+      Generate (Kernel, Source_File_List);
    end Generate_Project;
 
    ----------------------
@@ -609,16 +614,14 @@ package body Docgen_Module is
             Docgen_Module (Docgen_Module_ID).B :=  new Backend_HTML;
       end case;
 
-      --  It's better to remove old documentation
-      --  In fact, files may have changed since last
-      --    documentation process (eg. so links aren't valid)
-      --  Only old documentation which has the same format is
-      --     removed
-      Remove_Dir (Get_Doc_Directory
-                    (Docgen_Module (Docgen_Module_ID).B, Kernel),
-                  True);
-      Make_Dir (Get_Doc_Directory
-                  (Docgen_Module (Docgen_Module_ID).B, Kernel));
+      --  We override old documentations which has the same format and
+      --  which has been already processed.
+      --  Documentation for new files is added.
+      if not Is_Directory
+        (Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel)) then
+         Make_Dir (Get_Doc_Directory
+                     (Docgen_Module (Docgen_Module_ID).B, Kernel));
+      end if;
 
       Process_Files
         (Docgen_Module (Docgen_Module_ID).B,
