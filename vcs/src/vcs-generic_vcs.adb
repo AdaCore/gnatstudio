@@ -146,6 +146,39 @@ package body VCS.Generic_VCS is
       Action : VCS_Action) return String;
    --  Return a description of Action.
 
+   -- Parser command --
+
+   type Parser_Command_Type is new Root_Command with record
+      Override_Cache : Boolean;
+      Clear_Logs     : Boolean;
+      Text           : String_Access;
+      Start          : Integer;
+      Prev_Start     : Integer;
+      Parser         : Status_Parser_Record;
+      Status         : File_Status_List.List;
+      Rep            : Generic_VCS_Access;
+   end record;
+
+   --  ??? Need to implement destroy
+
+   function Execute
+     (Command : access Parser_Command_Type) return Command_Return_Type;
+
+   type Parser_Command_Access is access all Parser_Command_Type;
+
+   procedure Free (Command : in out Parser_Command_Type);
+   --  Free memory associated to Command.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Command : in out Parser_Command_Type) is
+   begin
+      Free (Command.Text);
+      File_Status_List.Free (Command.Status);
+   end Free;
+
    ---------------------
    -- Describe_Action --
    ---------------------
@@ -1088,26 +1121,6 @@ package body VCS.Generic_VCS is
          N := N.Next;
       end loop;
    end Customize;
-
-   -- Parser command --
-
-   type Parser_Command_Type is new Root_Command with record
-      Override_Cache : Boolean;
-      Clear_Logs     : Boolean;
-      Text           : String_Access;
-      Start          : Integer;
-      Prev_Start     : Integer;
-      Parser         : Status_Parser_Record;
-      Status         : File_Status_List.List;
-      Rep            : Generic_VCS_Access;
-   end record;
-
-   --  ??? Need to implement destroy
-
-   function Execute
-     (Command : access Parser_Command_Type) return Command_Return_Type;
-
-   type Parser_Command_Access is access all Parser_Command_Type;
 
    -------------
    -- Execute --
