@@ -170,6 +170,17 @@ package body Debugger.Gdb.Cpp is
          Internal_Parse_Value
            (Lang, Type_Str, Index, V, Repeat_Num,
             Parent => Result);
+
+         --  If the class uses virtual methods, there is an extra field
+         --  called '_vptr.' that should simply be skipped for now ???
+         --     ", _vptr. = 0x8049b60 <X::B virtual table>"
+
+         if Looking_At (Type_Str, Index, ", _vptr. = ") then
+            Index := Index + 11;
+            Skip_To_Char (Type_Str, Index, '>');
+            Index := Index + 1;
+         end if;
+
          Repeat_Num := 1;
 
          if Index <= Type_Str'Last and then Type_Str (Index) = '}' then
@@ -239,7 +250,10 @@ package body Debugger.Gdb.Cpp is
       pragma Assert (Result = null);
       pragma Assert (Type_Str (Index - 1) = '{');
 
-      --  Count the number of fields
+      --  Count the number of fields.
+      --  Gdb first displays the fields (along with public:, protected: or
+      --  private:), then a blank line, and the methods with their visibility.
+      --  If there is no blank line, there there is no field.
 
       while Tmp <= Type_Str'Last
         and then (Type_Str (Tmp) /= ASCII.LF
@@ -249,6 +263,11 @@ package body Debugger.Gdb.Cpp is
          Num_Fields := Num_Fields + 1;
          Tmp := Tmp + 1;
       end loop;
+
+      --  No field ?
+      if Tmp > Type_Str'Last then
+         Num_Fields := 0;
+      end if;
 
       if Is_Union then
          Result := New_Union_Type (Num_Fields);
