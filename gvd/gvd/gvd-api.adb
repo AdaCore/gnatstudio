@@ -23,6 +23,7 @@ with Gtk; use Gtk;
 with Gtk.Arguments; use Gtk.Arguments;
 with GVD.Types;
 with GVD.Process;
+with GVD.Source_Editors;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with Ada.Unchecked_Conversion;
@@ -42,6 +43,10 @@ package body GVD.API is
    function "-" is new
      Ada.Unchecked_Conversion
        (GVD.Process.Debugger_Process_Tab, Debugger_Process_Tab);
+
+   function "+" is new
+     Ada.Unchecked_Conversion
+       (Source_Editor, GVD.Source_Editors.Source_Editor);
 
    ---------------
    -- About_GVD --
@@ -86,7 +91,7 @@ package body GVD.API is
 
    procedure Change_Line_Nums (Editor : Source_Editor; Toggle : Integer) is
    begin
-      Set_Show_Line_Nums (+Editor, Boolean'Val (Toggle));
+      GVD.Source_Editors.Set_Show_Line_Nums (+Editor, Boolean'Val (Toggle));
    end Change_Line_Nums;
 
    ----------------------------
@@ -97,7 +102,8 @@ package body GVD.API is
      (Editor : Source_Editor;
       Toggle : Integer) is
    begin
-      Set_Show_Lines_With_Code (+Editor, Boolean'Val (Toggle));
+      GVD.Source_Editors.Set_Show_Lines_With_Code
+        (+Editor, Boolean'Val (Toggle));
    end Change_Lines_With_Code;
 
    -----------------
@@ -588,15 +594,6 @@ package body GVD.API is
    begin
       On_Refresh1_Activate (+Window);
    end Refresh;
-
-   -------------------
-   -- Reload_Source --
-   -------------------
-
-   procedure Reload_Source (Window : Main_Debug_Window) is
-   begin
-      On_Reload_Source1_Activate (+Window);
-   end Reload_Source;
 
    ---------
    -- Run --

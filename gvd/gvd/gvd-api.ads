@@ -133,9 +133,6 @@ package GVD.API is
    procedure Edit_Source (Window : Main_Debug_Window);
    --  void gvd_edit_source (main_debug_window window);
 
-   procedure Reload_Source (Window : Main_Debug_Window);
-   --  void gvd_reload_source (main_debug_window window);
-
    procedure Open_Session (Window : Main_Debug_Window);
    --  void gvd_open_session (main_debug_window window);
 
@@ -346,7 +343,6 @@ private
    pragma Export (C, Open_Debugger, "gvd_open_debugger");
    pragma Export (C, Open_Core_Dump, "gvd_open_core_dump");
    pragma Export (C, Edit_Source, "gvd_edit_source");
-   pragma Export (C, Reload_Source, "gvd_reload_source");
    pragma Export (C, Open_Session, "gvd_open_session");
    pragma Export (C, Save_Session_As, "gvd_save_session_as");
    pragma Export (C, Attach_To_Process, "gvd_attach_to_process");
