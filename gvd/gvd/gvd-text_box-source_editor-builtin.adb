@@ -588,32 +588,31 @@ package body Odd.Source_Editors is
    is
       Last   : Positive;
       Text   : constant Gtk_Text := Get_Child (Editor);
-      Widget_Index : Gint := Invisible_Column_Width (Editor);
-      Col : Natural := 1;
+      Index  : Gint := Invisible_Column_Width (Editor);
+      Col    : Natural := 1;
       Buffer : constant Odd.Types.String_Access := Get_Buffer (Editor);
       Line   : Natural := 1;
 
    begin
-
-      --  Convert from Buffer position to Widget position (ie include handling
-      --  of ASCII.HT characters).
+      --  Convert from raw file position to visual buffer position (i.e include
+      --  handling of extra columns and ASCII.HT characters).
 
       for Text_Pos in Buffer'First .. Natural (Position) loop
          if Buffer (Text_Pos) = ASCII.LF then
             Col := 1;
-            Widget_Index := Widget_Index + Invisible_Column_Width (Editor) + 1;
+            Index := Index + Invisible_Column_Width (Editor) + 1;
             Line := Line + 1;
 
          elsif Buffer (Text_Pos) = ASCII.HT
            and then Col mod Tab_Size /= 0
          then
-            Widget_Index := Widget_Index +
+            Index := Index +
               Gint ((1 + Col / Tab_Size) * Tab_Size - Col + 1);
             Col := (1 + Col / Tab_Size) * Tab_Size + 1;
 
          else
             Col := Col + 1;
-            Widget_Index := Widget_Index + 1;
+            Index := Index + 1;
          end if;
       end loop;
 
@@ -624,6 +623,7 @@ package body Odd.Source_Editors is
 
       --  Set the adjustment directly, so that the text is not scrolled
       --  on the screen (which is too slow for big files)
+
       Set_Value (Get_Vadj (Text), Gfloat (Pixels_From_Line (Editor, Line)));
       Changed (Get_Vadj (Text));
 
@@ -633,11 +633,11 @@ package body Odd.Source_Editors is
       --  than the following ones).
 
       Claim_Selection (Text, True, 0);
-      Set_Position (Text, Widget_Index - 1);
+      Set_Position (Text, Index - 1);
       Select_Region
         (Text,
-         Widget_Index - 1,
-         Widget_Index + Gint (Last - 1 - Natural (Position)));
+         Index - 1,
+         Index + Gint (Last - 1 - Natural (Position)));
       Thaw (Text);
    end Highlight_Word;
 
