@@ -266,7 +266,9 @@ package body Creation_Wizard is
 
       Set_Row_Spacing (Table, 1, 20);
 
-      Gtk_New (Label, -"Enter the directory where to copy the file to:");
+      Gtk_New
+        (Label,
+         -"Enter the directory where the project file will be created:");
       Attach (Table, Label, 0, 2, 2, 3);
 
       Gtk_New (Wiz.Project_Location, 255);
