@@ -1130,7 +1130,8 @@ package body VCS_View_API is
            (Kernel, Create (Full_Filename => Head (Files)));
 
          if Child /= null then
-            Success := Save_Child (Kernel, Child, False) /= Cancel;
+            Success := Save_Child
+              (Kernel, Child, Force => Get_Pref (Kernel, Auto_Save)) /= Cancel;
          end if;
 
          Files_Temp := Next (Files_Temp);
@@ -1179,7 +1180,8 @@ package body VCS_View_API is
            (Kernel, Get_Log_From_File (Kernel, File, False));
 
          if Child /= null then
-            Success := Save_Child (Kernel, Child, True) /= Cancel;
+            Success := Save_Child
+              (Kernel, Child, Force => Get_Pref (Kernel, Auto_Save)) /= Cancel;
          end if;
 
          Append (Logs, Get_Log (Kernel, File));
