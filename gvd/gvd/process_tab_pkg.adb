@@ -48,7 +48,7 @@ begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
    Initialize_Class_Record (Process_Tab, Signals, Class_Record);
 
-   --  Set_Title (Process_Tab, -"window1");
+   --  Set_Title (Process_Tab, -"");
    --  Set_Policy (Process_Tab, False, True, False);
    --  Set_Position (Process_Tab, Win_Pos_None);
    --  Set_Modal (Process_Tab, False);

@@ -179,7 +179,7 @@ begin
 
    Gtk_New (General_Preferences.File_Name_Bg_Combo);
    Attach (General_Preferences.Table9, General_Preferences.File_Name_Bg_Combo, 1, 2, 1, 2,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.File_Name_Bg_Combo, False);
    Set_Use_Arrows (General_Preferences.File_Name_Bg_Combo, True);
@@ -268,7 +268,7 @@ begin
 
    Gtk_New (General_Preferences.Comment_Color_Combo);
    Attach (General_Preferences.Table10, General_Preferences.Comment_Color_Combo, 1, 2, 3, 4,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.Comment_Color_Combo, False);
    Set_Use_Arrows (General_Preferences.Comment_Color_Combo, True);
@@ -285,7 +285,7 @@ begin
 
    Gtk_New (General_Preferences.String_Color_Combo);
    Attach (General_Preferences.Table10, General_Preferences.String_Color_Combo, 1, 2, 4, 5,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.String_Color_Combo, False);
    Set_Use_Arrows (General_Preferences.String_Color_Combo, True);
@@ -302,7 +302,7 @@ begin
 
    Gtk_New (General_Preferences.Keyword_Color_Combo);
    Attach (General_Preferences.Table10, General_Preferences.Keyword_Color_Combo, 1, 2, 5, 6,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.Keyword_Color_Combo, False);
    Set_Use_Arrows (General_Preferences.Keyword_Color_Combo, True);
@@ -514,7 +514,7 @@ begin
 
    Gtk_New (General_Preferences.Xref_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Xref_Color_Combo, 1, 2, 0, 1,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.Xref_Color_Combo, False);
    Set_Use_Arrows (General_Preferences.Xref_Color_Combo, True);
@@ -531,7 +531,7 @@ begin
 
    Gtk_New (General_Preferences.Change_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Change_Color_Combo, 1, 2, 1, 2,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.Change_Color_Combo, False);
    Set_Use_Arrows (General_Preferences.Change_Color_Combo, True);
@@ -548,7 +548,7 @@ begin
 
    Gtk_New (General_Preferences.Thaw_Bg_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Thaw_Bg_Color_Combo, 1, 2, 2, 3,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.Thaw_Bg_Color_Combo, False);
    Set_Use_Arrows (General_Preferences.Thaw_Bg_Color_Combo, True);
@@ -565,7 +565,7 @@ begin
 
    Gtk_New (General_Preferences.Title_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Title_Color_Combo, 3, 4, 0, 1,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.Title_Color_Combo, False);
    Set_Use_Arrows (General_Preferences.Title_Color_Combo, True);
@@ -582,7 +582,7 @@ begin
 
    Gtk_New (General_Preferences.Freeze_Bg_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Freeze_Bg_Color_Combo, 3, 4, 2, 3,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.Freeze_Bg_Color_Combo, False);
    Set_Use_Arrows (General_Preferences.Freeze_Bg_Color_Combo, True);
@@ -643,7 +643,7 @@ begin
 
    Gtk_New (General_Preferences.Debug_Higlight_Combo);
    Attach (General_Preferences.Table8, General_Preferences.Debug_Higlight_Combo, 1, 2, 0, 1,
-     Fill, 0,
+     0, 0,
      0, 0);
    Set_Case_Sensitive (General_Preferences.Debug_Higlight_Combo, False);
    Set_Use_Arrows (General_Preferences.Debug_Higlight_Combo, True);

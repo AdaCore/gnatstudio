@@ -119,7 +119,7 @@ begin
    Set_Value (Breakpoints.Line_Spin, 1.0);
    Set_Wrap (Breakpoints.Line_Spin, False);
 
-   Gtk_New (Breakpoints.Subprogram_Selected, Vbox15_Group, -"Subprogram name");
+   Gtk_New (Breakpoints.Subprogram_Selected, Vbox15_Group, -"Subprogram Name");
    Vbox15_Group := Group (Breakpoints.Subprogram_Selected);
    Pack_Start (Breakpoints.Vbox15, Breakpoints.Subprogram_Selected, False, False, 0);
    Widget_Callback.Object_Connect
@@ -415,7 +415,7 @@ begin
    Gtk_New_Vbox (Breakpoints.Vbox16, False, 0);
    Add (Breakpoints.Frame11, Breakpoints.Vbox16);
 
-   Gtk_New (Breakpoints.Label72, -("Click in the "Enb" column to change the status"));
+   Gtk_New (Breakpoints.Label72, -("Click in the 'Enb' column to change the status"));
    Pack_Start (Breakpoints.Vbox16, Breakpoints.Label72, False, False, 0);
    Set_Alignment (Breakpoints.Label72, 0.05, 0.5);
    Set_Padding (Breakpoints.Label72, 0, 0);

@@ -78,7 +78,6 @@ begin
 
    Gtk_New (Open_Program.Jdb_Button, Table7_Group, -"JDB");
    Table7_Group := Group (Open_Program.Jdb_Button);
-   Set_Sensitive (Open_Program.Jdb_Button, False);
    Attach (Open_Program.Table7, Open_Program.Jdb_Button, 4, 5, 3, 4,
      0, 0,
      0, 0);

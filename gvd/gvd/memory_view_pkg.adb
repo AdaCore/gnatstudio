@@ -55,7 +55,7 @@ begin
    Gtk_New_Vbox (Memory_View.Vbox20, False, 0);
    Add (Memory_View, Memory_View.Vbox20);
 
-   Gtk_New (Memory_View.Frame, -"(no executable)");
+   Gtk_New (Memory_View.Frame);
    Pack_Start (Memory_View.Vbox20, Memory_View.Frame, False, False, 0);
    Set_Shadow_Type (Memory_View.Frame, Shadow_Etched_In);
 

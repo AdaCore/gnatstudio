@@ -96,7 +96,7 @@ begin
    Set_Child_Size (Open_Session.Hbuttonbox10, 85, 27);
    Set_Child_Ipadding (Open_Session.Hbuttonbox10, 7, 0);
 
-   Gtk_New (Open_Session.Select_All, -"Select all");
+   Gtk_New (Open_Session.Select_All, -"Select All");
    Set_Flags (Open_Session.Select_All, Can_Default);
    Button_Callback.Connect
      (Open_Session.Select_All, "clicked",

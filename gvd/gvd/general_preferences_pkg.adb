@@ -26,6 +26,10 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with General_Preferences_Pkg.Callbacks; use General_Preferences_Pkg.Callbacks;
+with GVD.Pixmaps; use GVD.Pixmaps;
+with Gdk.Pixmap; use Gdk.Pixmap;
+with Gdk.Bitmap; use Gdk.Bitmap;
+with Gtk.Pixmap; use Gtk.Pixmap;
 
 package body General_Preferences_Pkg is
 
@@ -38,6 +42,9 @@ end Gtk_New;
 procedure Initialize (General_Preferences : access General_Preferences_Record'Class) is
    pragma Suppress (All_Checks);
    Big_Item_Spin_Adj : Gtk_Adjustment;
+   Color_Pixmap : Gtk_Pixmap;
+   Val  : Gdk_Pixmap;
+   Mask : Gdk_Bitmap;
 
 begin
    Gtk.Window.Initialize (General_Preferences, Window_Dialog);
@@ -187,7 +194,7 @@ begin
 
    Gtk_New (General_Preferences.File_Name_Bg_Combo);
    Attach (General_Preferences.Table9, General_Preferences.File_Name_Bg_Combo, 1, 2, 1, 2,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Frame17, -"Source");
@@ -260,17 +267,17 @@ begin
 
    Gtk_New (General_Preferences.Comment_Color_Combo);
    Attach (General_Preferences.Table10, General_Preferences.Comment_Color_Combo, 1, 2, 3, 4,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.String_Color_Combo);
    Attach (General_Preferences.Table10, General_Preferences.String_Color_Combo, 1, 2, 4, 5,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Keyword_Color_Combo);
    Attach (General_Preferences.Table10, General_Preferences.Keyword_Color_Combo, 1, 2, 5, 6,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Frame18, -"Assembly");
@@ -446,27 +453,27 @@ begin
 
    Gtk_New (General_Preferences.Xref_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Xref_Color_Combo, 1, 2, 0, 1,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Change_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Change_Color_Combo, 1, 2, 1, 2,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Thaw_Bg_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Thaw_Bg_Color_Combo, 1, 2, 2, 3,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Title_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Title_Color_Combo, 3, 4, 0, 1,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Freeze_Bg_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Freeze_Bg_Color_Combo, 3, 4, 2, 3,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Label9, -("Data"));
@@ -511,7 +518,7 @@ begin
 
    Gtk_New (General_Preferences.Debug_Higlight_Combo);
    Attach (General_Preferences.Table8, General_Preferences.Debug_Higlight_Combo, 1, 2, 0, 1,
-     Fill, 0,
+     0, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Label10, -("Command"));
@@ -638,6 +645,29 @@ begin
       Button_Callback.To_Marshaller (On_Help_Button_Clicked'Access));
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Help_Button);
 
+   Color_Pixmap := Create_Pixmap (paint_xpm, General_Preferences);
+   Get (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.File_Name_Bg_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Comment_Color_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.String_Color_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Keyword_Color_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Asm_Highlight_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Xref_Color_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Change_Color_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Thaw_Bg_Color_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Title_Color_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Freeze_Bg_Color_Combo), Color_Pixmap);
+   Gtk_New (Color_Pixmap, Val, Mask);
+   Add (Get_Button (General_Preferences.Debug_Higlight_Combo), Color_Pixmap);
 end Initialize;
 
 end General_Preferences_Pkg;
