@@ -21,6 +21,7 @@
 --  This package contains the implementation for a specific scripting language,
 --  the simple GPS shell.
 
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Debug_Utilities;     use GNAT.Debug_Utilities;
@@ -105,6 +106,8 @@ package body Shell_Script is
    function Get_Kernel (Data : Shell_Callback_Data)
       return Glide_Kernel.Kernel_Handle;
    function Number_Of_Arguments (Data : Shell_Callback_Data) return Natural;
+   procedure Name_Parameters
+     (Data  : in out Shell_Callback_Data; Names : Cst_Argument_List);
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return String;
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Integer;
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Boolean;
@@ -438,6 +441,18 @@ package body Shell_Script is
    end Interpret_Command_Handler;
 
    ---------------------
+   -- Name_Parameters --
+   ---------------------
+
+   procedure Name_Parameters
+     (Data  : in out Shell_Callback_Data; Names : Cst_Argument_List)
+   is
+      pragma Unreferenced (Data, Names);
+   begin
+      null;
+   end Name_Parameters;
+
+   ---------------------
    -- Register_Module --
    ---------------------
 
@@ -489,7 +504,7 @@ package body Shell_Script is
       Register_Command
         (Script,
          Command      => "help",
-         Usage        => "help () -> None",
+         Usage        => "() -> None",
          Description  => -"List recognized commands.",
          Minimum_Args => 0,
          Maximum_Args => 1,
@@ -498,7 +513,7 @@ package body Shell_Script is
       Register_Command
         (Script,
          Command      => "echo",
-         Usage        => "echo () -> None",
+         Usage        => "() -> None",
          Description  => -"Display a line of text.",
          Minimum_Args => 0,
          Maximum_Args => Natural'Last,
@@ -507,7 +522,7 @@ package body Shell_Script is
       Register_Command
         (Script,
          Command      => "clear_cache",
-         Usage        => "clear_cache () -> None",
+         Usage        => "() -> None",
          Description  => -"Free the internal cache used for return values.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -572,7 +587,8 @@ package body Shell_Script is
                while Command_Node /= Command_List.Null_Node loop
                   Info := Command_List.Data (Command_Node);
                   if Info.Command.all = Cmd then
-                     Insert (-("Usage: ") & Command & ' ' & Info.Usage.all);
+                     Insert (-("Usage: ") & Info.Command.all
+                             & ' ' & Info.Usage.all);
                      Insert (Info.Description.all);
                   end if;
                   Command_Node := Command_List.Next (Command_Node);
@@ -610,13 +626,18 @@ package body Shell_Script is
       pragma Unreferenced (Script);
       use Command_List;
       Node : Command_List.List_Node;
-      Cmd  : String_Access;
+      Cmd, U  : String_Access;
       Min  : Natural := Minimum_Args;
       Max  : Natural := Maximum_Args;
       Info : Command_Information;
    begin
       if Command = "" or else Shell_Module_Id = null then
          return;
+      end if;
+
+      if Usage /= "" and then Usage (Usage'First) /= '(' then
+         Trace (Me, "Invalid usage string for "
+                & Command & ": must start with '('");
       end if;
 
       if Class /= No_Class then
@@ -650,9 +671,16 @@ package body Shell_Script is
          Node := Next (Node);
       end loop;
 
+      if Usage = "" or else Class = No_Class then
+         U := new String'(Usage);
+      else
+         U := new String'('(' & To_Lower (Get_Name (Class))
+                          & ", " & Usage (Usage'First + 1 .. Usage'Last));
+      end if;
+
       Info := (Command         => Cmd,
                Short_Command   => new String'(Command),
-               Usage           => new String'(Usage),
+               Usage           => U,
                Description     => new String'(Description),
                Minimum_Args    => Min,
                Maximum_Args    => Max,
