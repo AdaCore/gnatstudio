@@ -789,7 +789,10 @@ package body Src_Info.Queries is
          New_Item : Scope_List;
       begin
          while R /= null loop
-            if R.Value.Location /= Decl_Start
+            --  Do not add labels to the scope tree, since these only bring
+            --  syntactic information, and do not impact the code.
+            if R.Value.Kind /= Label
+              and then R.Value.Location /= Decl_Start
               and then R.Value.Location /=
               Decl.Declaration.End_Of_Scope.Location
             then
