@@ -3,7 +3,7 @@ with "../gtkada/gtkada";
 with "../gvd/gvd";
 with "../kernel/kernel";
 with "../aunit/aunit";
-with "../hypergrep/hypergrep";
+with "../vsearch/vsearch";
 with "../prj_editor/prj_editor";
 with "../src_editor/src_editor";
 with "../vdiff/vdiff";
@@ -22,9 +22,9 @@ project Glide is
   package Compiler is
      case Build is
         when "Debug" => 
-          for Switches use ("-g");
+          for Switches ("Ada") use ("-g");
         when others =>
-          for Switches use ("-O2");
+          for Switches ("Ada") use ("-O2");
      end case;
   end Compiler;
 
