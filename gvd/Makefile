@@ -6,8 +6,13 @@ all:
 	$(MAKE) CFLAGS="$(CFLAGS)" -C gvd
 	$(MAKE) CFLAGS="$(CFLAGS)" -C tests
 
+install:
+	$(MAKE) -C gvd install
+	$(MAKE) -C po install
+
 clean:
 	$(MAKE) -C pixmaps clean
 	$(MAKE) -C gnat clean
 	$(MAKE) -C gvd clean
 	$(MAKE) -C tests clean
+	$(MAKE) -C po clean
