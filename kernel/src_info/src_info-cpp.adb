@@ -36,13 +36,24 @@ package body Src_Info.CPP is
 
    type SN_Table_Array is array (Table_Type) of DB_File;
 
-   procedure Open_DB_Files
-     (DB_Prefix : in String);
+   ----------------
+   --  SN_Table  --
+   ----------------
 
-   procedure Close_DB_Files;
+   SN_Table : SN_Table_Array;
 
-   procedure Process_File
-     (Source_Filename : in String);
+   ----------------------
+   --  Global_LI_File  --
+   ----------------------
+
+   Global_LI_File : LI_File_Ptr;
+
+   ------------------------
+   -- Global_CPP_Handler --
+   ------------------------
+
+   Global_CPP_Handler : constant CPP_LI_Handler :=
+     new CPP_LI_Handler_Record;
 
    --------------------
    -- Symbol_Handler --
@@ -50,12 +61,22 @@ package body Src_Info.CPP is
 
    type Symbol_Handler is access procedure (Sym : FIL_Table);
 
-   procedure Sym_Default_Handler (Sym      : FIL_Table);
-   --  This is default handler for symbols, which are not registered
-   --  in Symbols_Handlers.
+   procedure Sym_Default_Handler (Sym : FIL_Table);
+   procedure Sym_GV_Handler      (Sym : FIL_Table);
+   procedure Sym_FU_Handler      (Sym : FIL_Table);
+   procedure Sym_E_Handler       (Sym : FIL_Table);
+   procedure Sym_EC_Handler      (Sym : FIL_Table);
 
-   procedure Sym_GV_Handler (Sym : FIL_Table);
-   procedure Sym_FU_Handler (Sym : FIL_Table);
+   ---------------------
+   -- Symbol_Handlers --
+   ---------------------
+
+   Symbol_Handlers : array (Symbol_Type) of Symbol_Handler :=
+     (GV     => Sym_GV_Handler'Access,
+      FU     => Sym_FU_Handler'Access,
+      E      => Sym_E_Handler'Access,
+      EC     => Sym_EC_Handler'Access,
+      others => Sym_Default_Handler'Access);
 
    function Ext (S : String) return String;
    --  Used to fill Table_Type_To_Ext array
@@ -72,6 +93,33 @@ package body Src_Info.CPP is
    end Ext;
    pragma Inline (Ext);
 
+   -----------------------
+   -- Table_Type_To_Ext --
+   -----------------------
+
+   Table_Type_To_Ext : array (Table_Type) of String (1 .. 3) :=
+     (FIL    => Ext ("fil"),
+      F      => Ext ("f"),
+      FU     => Ext ("fu"),
+      T      => Ext ("t"),
+      CL     => Ext ("cl"),
+      GV     => Ext ("gv"),
+      E      => Ext ("e"),
+      EC     => Ext ("ec"),
+      others => Ext (""));
+
+   procedure Open_DB_Files
+     (DB_Prefix : in String);
+
+   procedure Close_DB_Files;
+
+   procedure Process_File
+     (Source_Filename : in String);
+
+   -----------------------
+   -- CType_Description --
+   -----------------------
+
    type CType_Description is
       record
          Kind         : E_Kind;
@@ -79,46 +127,11 @@ package body Src_Info.CPP is
          IsConst      : Boolean;
       end record;
 
-   ----------------
-   --  SN_Table  --
-   ----------------
-
-   SN_Table : SN_Table_Array;
-
-   ----------------------
-   --  Global_LI_File  --
-   ----------------------
-
-   Global_LI_File : LI_File_Ptr;
-
-   -----------------------
-   -- Table_Type_To_Ext --
-   -----------------------
-
-   Table_Type_To_Ext : array (Table_Type) of String (1 .. 3) :=
-      (FIL    => Ext ("fil"),
-       F      => Ext ("f"),
-       FU     => Ext ("fu"),
-       T      => Ext ("t"),
-       CL     => Ext ("cl"),
-       GV     => Ext ("gv"),
-       others => Ext (""));
-
-   ---------------------
-   -- Symbol_Handlers --
-   ---------------------
-
-   Symbol_Handlers : array (Symbol_Type) of Symbol_Handler :=
-      (GV       => Sym_GV_Handler'Access,
-       FU       => Sym_FU_Handler'Access,
-       others   => Sym_Default_Handler'Access);
-
-   ------------------------
-   -- Global_CPP_Handler --
-   ------------------------
-
-   Global_CPP_Handler : constant CPP_LI_Handler :=
-     new CPP_LI_Handler_Record;
+   --  Debugging utils
+   procedure Info (Msg : String); -- print info message
+   procedure Warn (Msg : String); -- print warning message
+   procedure Fail (Msg : String); -- print error message
+   pragma Inline (Info, Warn, Fail);
 
    -------------------
    -- Open_DB_Files --
@@ -131,14 +144,15 @@ package body Src_Info.CPP is
       for Table in Table_Type loop
          if Table_Type_To_Ext (Table)(1) /= ASCII.NUL then
             declare
-               File_Name : String := DB_Prefix & "." &
-                  Table_Type_To_Ext (Table);
+               File_Name : String :=
+                 DB_Prefix & "." & Table_Type_To_Ext (Table);
             begin
                Open (SN_Table (Table), File_Name);
             exception
                when others =>
-                  Put_Line ("Warning: could not open " & "'" &
-                            File_Name & "'");
+               --  could not open table, ignore this error
+                  Warn (Table_Type'Image (Table)
+                        & " table does not exist");
             end;
          end if;
       end loop;
@@ -302,8 +316,9 @@ package body Src_Info.CPP is
    procedure Type_Name_To_Kind
      (Type_Name : in String; Desc : out CType_Description;
       Success : out Boolean);
-   --  Attempts to convert type name into E_Kind. Searches up for
-   --  the name in the class, typedef, etc. tables.
+   --  Attempts to convert type name into E_Kind.
+   --  At the moment searches up for
+   --  the name in the class, typedef, enum tables.
 
    Function_Type_Pat : constant Pattern_Matcher
                      := Compile ("\(([^\)]+)\)\s*\(\)\s*$");
@@ -333,7 +348,7 @@ package body Src_Info.CPP is
                      Type_Name'First + Volatile_Str'Length - 1)
                      = Volatile_Str
       then -- volatile modifier
-         --  Put_Line ("volatile ");
+         --  Info ("volatile ");
          Type_Name_To_Kind (Type_Name
             (Type_Name'First + Volatile_Str'Length .. Type_Name'Last),
             Desc, Success);
@@ -346,7 +361,7 @@ package body Src_Info.CPP is
                      Type_Name'First + Const_Str'Length - 1)
                      = Const_Str
       then -- const modifier
-         --  Put_Line ("const ");
+         --  Info ("const ");
          Type_Name_To_Kind (Type_Name
             (Type_Name'First + Const_Str'Length .. Type_Name'Last),
             Desc, Success);
@@ -357,7 +372,7 @@ package body Src_Info.CPP is
       --  first try builtin type
       Builtin_Type_To_Kind (Type_Name, Desc, Success);
       if Success then
-         --  Put_Line ("builtin type");
+         --  Info ("builtin type");
          return;
       end if;
 
@@ -374,7 +389,7 @@ package body Src_Info.CPP is
             Success := False;
             return;
          end if;
-         --  Put_Line ("functional ");
+         --  Info ("functional ");
          Type_Name_To_Kind (
             Type_Name (Matches (1).First ..  Matches (1).Last),
             Desc, Success);
@@ -385,258 +400,97 @@ package body Src_Info.CPP is
          --  array
          Success      := True;
          Desc.Kind    := Array_Type;
-         --  Put_Line ("pointer");
+         --  Info ("pointer");
          return;
       end if;
 
       --  look in typedefs
-      declare
-         Typedef   : T_Table;
-      begin
-         Typedef   := Find (SN_Table (T), Type_Name);
-         Type_Name_To_Kind (Typedef.Buffer (
-                 Typedef.Original.First .. Typedef.Original.Last),
-                 Desc, Success);
-         if Success then
+      if Is_Open (SN_Table (T)) then
+         declare
+            Typedef   : T_Table;
+         begin
+            Typedef   := Find (SN_Table (T), Type_Name);
+            Type_Name_To_Kind (Typedef.Buffer (
+                    Typedef.Original.First .. Typedef.Original.Last),
+                    Desc, Success);
+            if Success then
+               Free (Typedef);
+               Success := True;
+               return;
+            end if;
             Free (Typedef);
+            --  This is a typedef but base type is not found :(
+            Success := False;
+            return;
+         exception
+            when  DB_Error |   -- non-existent table
+                  Not_Found => -- missed, fall thru'
+               null;
+         end;
+      end if;
+
+      --  look in classes
+      if Is_Open (SN_Table (CL)) then
+         declare
+            Class_Def : CL_Table;
+         begin
+            Class_Def := Find (SN_Table (CL), Type_Name);
+            Free (Class_Def);
+            Desc.Kind := Record_Type;
             Success := True;
             return;
-         end if;
-         Free (Typedef);
-         --  This is a typedef but base type is not found :(
-         Success := False;
-         return;
-      exception
-         when  DB_Error |   -- non-existent table
-               Not_Found => -- missed, fall thru'
-            null;
-      end;
+         exception
+            when  DB_Error |   -- non-existent table
+                  Not_Found => -- missed, fall thru'
+               null;
+         end;
+      end if;
 
-      --  loop in classes
-      declare
-         Class_Def : CL_Table;
-      begin
-         Class_Def := Find (SN_Table (CL), Type_Name);
-         Free (Class_Def);
-         Desc.Kind := Record_Type;
-         Success := True;
-         return;
-      exception
-         when  DB_Error |   -- non-existent table
-               Not_Found => -- missed, fall thru'
-            null;
-      end;
+      --  look in enums
+      if Is_Open (SN_Table (E)) then
+         declare
+            Enum_Def : E_Table;
+         begin
+            Enum_Def := Find (SN_Table (E), Type_Name);
+            Free (Enum_Def);
+            Desc.Kind := Enumeration_Object;
+            Success := True;
+            return;
+         exception
+            when  DB_Error |   -- non-existent table
+                  Not_Found => -- missed, fall thru'
+               null;
+         end;
+      end if;
+
       --  when everything else failed
       Success := False;
    end Type_Name_To_Kind;
 
-   -------------------------
-   -- Sym_Default_Handler --
-   -------------------------
-
-   procedure Sym_Default_Handler
-     (Sym : FIL_Table)
-   is
-      --  pragma Unreferenced (Sym);
+   procedure Info (Msg : String) is
    begin
-      Put_Line ("Sym_Default_Hanlder ("
-        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & ")");
-      null;
-   end Sym_Default_Handler;
+      Put_Line ("[I] " & Msg);
+   end Info;
 
-   --------------------
-   -- Sym_GV_Handler --
-   --------------------
-
-   procedure Sym_GV_Handler
-     (Sym : FIL_Table)
-   is
-      Desc       : CType_Description;
-      Var        : GV_Table;
-      Success    : Boolean;
-      tmp_ptr    : E_Declaration_Info_List;
-      Attributes : SN_Attributes;
-      Scope      : E_Scope := Global_Scope;
+   procedure Warn (Msg : String) is
    begin
-      Put_Line ("Sym_GV_Handler ("
-                & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-                & ")");
+      Put_Line ("[W] " & Msg);
+   end Warn;
 
-      if not Is_Open (SN_Table (GV)) then
-         --  GV table does not exist, nothing to do ...
-         return;
-      end if;
-
-      --  Lookup variable type
-      Var := Find (SN_Table (GV), Sym.Buffer
-         (Sym.Identifier.First .. Sym.Identifier.Last));
-      Type_Name_To_Kind (Var.Buffer
-         (Var.Value_Type.First .. Var.Value_Type.Last), Desc, Success);
-
-      if not Success then
-         Free (Var);
-         return; -- type not found, ignore errors
-      end if;
-
-      Attributes := SN_Attributes (Var.Attributes);
-
-      if (Attributes and SN_STATIC) = SN_STATIC then
-         Scope := Static_Local;
-      end if;
-
-      Insert_Declaration
-        (Handler           => LI_Handler (Global_CPP_Handler),
-         File              => Global_LI_File,
-         Symbol_Name       =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Source_Filename   =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-         Location          => Sym.Start_Position,
-         Kind              => Desc.Kind,
-         Scope             => Scope,
-         Declaration_Info  => tmp_ptr);
-
-      Free (Var);
-   exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- no such variable
-         null;           -- ignore error
-   end Sym_GV_Handler;
-
-   --------------------
-   -- Sym_FU_Handler --
-   --------------------
-
-   procedure Sym_FU_Handler
-     (Sym : FIL_Table)
-   is
-      tmp_ptr : E_Declaration_Info_List;
+   procedure Fail (Msg : String) is
    begin
+      Put_Line ("[E] " & Msg);
+   end Fail;
 
-      Put_Line ("Sym_FU_Hanlder ("
-        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-        & ")");
+   --------------
+   -- Handlers --
+   --------------
 
-      Insert_Declaration
-        (Handler           => LI_Handler (Global_CPP_Handler),
-         File              => Global_LI_File,
-         Symbol_Name       =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Source_Filename   =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-         Location          => Sym.Start_Position,
-         Kind              => Non_Generic_Procedure,
-         Scope             => Global_Scope,
-         Declaration_Info  => tmp_ptr);
-
-   end Sym_FU_Handler;
-
-   --------------------
-   -- Sym_FU_Handler --
-   --------------------
---    procedure Sym_FU_Handler (Sym : DB.FIL_Table) is
---       P : Pair_Ptr;
---   S : String := Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last);
---       Class : Unbounded_String := To_Unbounded_String ("#");
---       Comment : Unbounded_String;
---       --  FU_Tab : FU_Table;
---       MDecl  : MD_Table;
---       Sym_Type : String_Access :=
---             new String'(ASCII.NUL & ASCII.NUL & ASCII.NUL);
---       tmp_int : Integer;
---       tmp_ptr : E_Declaration_Info_List;
---    begin
---       --  Handler for FU (function) symbol.
---  --      HTML.Highlight (Sym, HTML.Font_Color_Blue);
---       --  Method implementation specific handling goes here
---       if Sym.Symbol = MI then
---          Comment := To_Unbounded_String (
---                "method " & Sym.Buffer (Sym.Class.First .. Sym.Class.Last)
---                & "::" &
---                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
---          begin
---             MDecl := Find (SN_Table (MD),
---                 Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
---                 Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
---             Comment := Make_Method_Comment (MDecl);
---             Insert_Declaration
---             HTML.Insert_Xref (Sym.Highlight_Start_Position,
---                Sym.Highlight_End_Position,
---           MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last),
---                MDecl.Start_Position,
---                To_String (Comment));
---             Insert_Declaration
---               (Handler           => LI_Handler (Global_CPP_Handler),
---                File              => File,
---                Symbol_Name       =>
---                  Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
---               Source_Filename   =>
---                   Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
---                Location          => Sym.Start_Position,
---                Kind              => Non_Generic_Procedure,
---                Scope             => Global_Scope,
---                Declaration_Info  => tmp_ptr);
---             Free (MDecl);
---          exception
---             when DB_Error | Not_Found =>
---                null;
---          end;
---       else
---          Comment := To_Unbounded_String ("global function definition: " &
---                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
---          HTML.Highlight (Sym, HTML.Title, To_String (Comment));
---       end if;
---
---       tmp_int := 1;
---       To_String (Sym.Symbol, Sym_Type, tmp_int);
---       Set_Cursor
---         (SN_Table (TO),
---          Position => By_Key,
---          Key => To_String (Class) & Field_Sep & S &
---                            Field_Sep &
---                            Sym_Type.all,
---                            Exact_Match => False);
---
---       loop
---          P := Get_Pair (SN_Table (TO), Next_By_Key);
---          exit when P = null;
---
---          declare
---             --  FIXME:
---             --  SN has only line number in .to table. So, to get exact
---             --  position we are getting that line from source file and
---             --  calling corresponding handler for EVERY
---             --  occurrence of that symbol in that line.
---             Ref      : DB.TO_Table := DB.Parse_Pair (P.all);
---
---           Src_Line : String := File_Buffer.Get_Line (Ref.Position.Line);
---             PRef     : DB.TO_Table;  -- Ref with exact position
---             P        : Natural := Src_Line'First; -- index to start from
---             S        : String  :=
---                   Ref.Buffer (Ref.Referred_Symbol_Name.First
---                                     .. Ref.Referred_Symbol_Name.Last);
---             Matches  : Match_Array (0 .. 0);
---             Pat      : Pattern_Matcher := Compile ("\b" & S & "\b");
---          begin
---             loop
---                Match (Pat, Src_Line (P .. Src_Line'Last), Matches);
---                exit when Matches (0) = No_Match or Ref.Symbol = Undef;
---                P := Matches (0).Last + 1;
---                PRef := Ref;
---                --  conversion to column
---              PRef.Position.Column := Matches (0).First - Src_Line'First;
---                Fu_To_Handlers (Ref.Referred_Symbol)(PRef);
---             end loop;
---             Free (Ref);
---          end;
---
---          Free (P);
---       end loop;
---
---    exception
---       when DB_Error => null; -- non-existent table .to
---
---    end Sym_FU_Handler;
+   procedure Sym_Default_Handler (Sym : FIL_Table) is separate;
+   procedure Sym_GV_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_FU_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
+   procedure Sym_EC_Handler      (Sym : FIL_Table) is separate;
 
 end Src_Info.CPP;
 
