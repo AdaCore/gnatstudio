@@ -28,9 +28,10 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
+with Breakpoints_Pkg;     use Breakpoints_Pkg;
 with Open_Program_Pkg;    use Open_Program_Pkg;
 with Print_Dialog_Pkg;    use Print_Dialog_Pkg;
-with Breakpoints_Pkg;    use Breakpoints_Pkg;
+with Task_Dialog_Pkg;     use Task_Dialog_Pkg;
 with Generic_Values;
 
 with Ada.Text_IO;  use Ada.Text_IO;
@@ -164,7 +165,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------------
 
    procedure On_Attach_To_Process1_Activate
-     (Object : access Gtk_Widget_Record'Class)
+     (Object : access Gtk_Menu_Item_Record'Class)
    is
    begin
       null;
@@ -465,7 +466,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------
 
    procedure On_Run_Again1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -595,7 +596,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------------------
 
    procedure On_Continue_Without_Signal1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -606,7 +607,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------
 
    procedure On_Kill1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -628,7 +629,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------
 
    procedure On_Abort1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -771,7 +772,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------
 
    procedure On_Backtrace1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -782,7 +783,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------
 
    procedure On_Registers1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -793,29 +794,24 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --------------------------
 
    procedure On_Threads1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top    : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab    : Debugger_Process_Tab;
+      Dialog : Task_Dialog_Access;
    begin
-      null;
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Gtk_New (Dialog, Top, Info_Threads (Tab.Debugger));
+      Show_All (Dialog);
    end On_Threads1_Activate;
-
-   ------------------------
-   -- On_Tasks1_Activate --
-   ------------------------
-
-   procedure On_Tasks1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Tasks1_Activate;
 
    ----------------------------
    -- On_Processus1_Activate --
    ----------------------------
 
    procedure On_Processus1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -826,7 +822,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --------------------------
 
    procedure On_Signals1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
