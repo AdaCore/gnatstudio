@@ -27,16 +27,14 @@ with Glide_Kernel;
 package Docgen.Work_On_File is
 
    procedure Process_Files
-     (B                : Backend_Handle;
+     (B                : Docgen_Backend.Backend_Handle;
       Source_File_List : in out Docgen.Type_Source_File_List.List;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options;
-      Doc_Suffix       : String;
-      Converter        : Docgen.Doc_Subprogram_Type);
+      Doc_Suffix       : String);
    --  Process all files from Source_File_List, and generate their
-   --  documentation. Converter indicates what format the documentation should
-   --  be generated in.
+   --  documentation.
    --
-   --  ??? Doc_Suffix suffix should be a primitive operation of the converter
+   --  ??? Doc_Suffix suffix should be an attribute/primitve of the converter
 
 end Docgen.Work_On_File;
