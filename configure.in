@@ -13,6 +13,7 @@ EXEC_COMMAND="sh -c"
 DEFAULT_FONT="sans 9"
 DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
+PRINT_CMD="a2ps"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
 PYTHON_LIBS=""
@@ -185,6 +186,7 @@ case "${host}" in
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
+	PRINT_CMD=""
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
 	;;
@@ -222,6 +224,7 @@ AC_SUBST(EXEC_COMMAND)
 AC_SUBST(DEFAULT_PS)
 AC_SUBST(DEFAULT_FONT)
 AC_SUBST(HTML_BROWSER)
+AC_SUBST(PRINT_CMD)
 AC_SUBST(OPAQUE_MDI)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(PYTHON_BASE)
