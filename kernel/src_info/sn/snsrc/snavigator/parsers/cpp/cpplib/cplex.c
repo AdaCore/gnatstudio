@@ -224,7 +224,7 @@ f_ReadFile (int fd)
   
   yyeof = 0;
   yylineno = 1;
-  yycharno = 0;
+  yycharno = 1;
   token_in_line_count = 0;
   lex_mode = LEX_MODE_NORMAL;
   
@@ -503,7 +503,7 @@ extern Token_t f_TokenInput( void )
       case '\n':
 newline:
          yylineno++;
-         yycharno = 0;
+         yycharno = 1;
          if( lex_mode == LEX_MODE_PP )
          {
             token_in_line_count = -1;
@@ -525,12 +525,12 @@ newline:
                unput();
             }
             yylineno++;
-            yycharno = 0;
+            yycharno = 1;
          }
          else if( yychar == '\n' )
          {
             yylineno++;
-            yycharno = 0;
+            yycharno = 1;
          }
          break;
 
@@ -550,12 +550,12 @@ newline:
                      unput();
                   }
                   yylineno++;
-                  yycharno = 0;
+                  yycharno = 1;
                }
                else if( yychar == '\n' )
                {
                   yylineno++;
-                  yycharno = 0;
+                  yycharno = 1;
                }
             }
             else if( yychar == '"' )
@@ -577,12 +577,12 @@ newline:
                   unput();
                }
                yylineno++;
-               yycharno = 0;
+               yycharno = 1;
             }
             else if( yychar == '\n' )
             {
                yylineno++;
-               yycharno = 0;
+               yycharno = 1;
             }
          }
          d_TokenReturn( SN_STRINGliteral )
@@ -603,12 +603,12 @@ newline:
                      unput();
                   }
                   yylineno++;
-                  yycharno = 0;
+                  yycharno = 1;
                }
                else if( yychar == '\n' )
                {
                   yylineno++;
-                  yycharno = 0;
+                  yycharno = 1;
                }
             }
             else if( yychar == '\'' )
@@ -654,12 +654,12 @@ newline:
                         unput();
                      }
                      yylineno++;
-                     yycharno = 0;
+                     yycharno = 1;
                   }
                   else if( yychar == '\n' )
                   {
                      yylineno++;
-                     yycharno = 0;
+                     yycharno = 1;
                   }
                }
                else if( yychar == '>' )
@@ -810,12 +810,12 @@ newline:
                      unput();
                   }
                   yylineno++;
-                  yycharno = 0;
+                  yycharno = 1;
                }
                else if( yychar == '\n' )
                {
                   yylineno++;
-                  yycharno = 0;
+                  yycharno = 1;
                }
                yycharprev = yychar;
             }
@@ -848,7 +848,7 @@ newline:
                if( yychar == '\n' )
                {
                   yylineno++;
-                  yycharno = 0;
+                  yycharno = 1;
                   if( lex_mode == LEX_MODE_PP )
                   {
                      token_in_line_count = -1;
