@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -340,7 +340,6 @@ package body Language_Handlers.Glide is
                    & " Index=" & Index'Img);
          end if;
 
-         raise Unsupported_Language;
          return null;
       end if;
    end Get_LI_Handler_From_File;
