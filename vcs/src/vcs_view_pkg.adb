@@ -22,19 +22,19 @@ with Glib;        use Glib;
 with Glib.Values; use Glib.Values;
 with Glib.Object; use Glib.Object;
 
-
-with Gdk.Types;  use Gdk.Types;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
 
 with Gtk;                      use Gtk;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Arguments;            use Gtk.Arguments;
+with Gtk.Button;               use Gtk.Button;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Toolbar;              use Gtk.Toolbar;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Window;               use Gtk.Window;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
@@ -53,7 +53,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with System; use System;
 
-with String_Utils; use String_Utils;
 with GUI_Utils;    use GUI_Utils;
 
 with VCS;
@@ -679,7 +678,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
 
       No_Files_Selected : Boolean := True;
 
@@ -772,7 +771,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
 
       Stub              : Log_Editor_Window_Record;
       Log_Editor        : Log_Editor_Window_Access;
@@ -879,7 +878,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
 
       L                : List := Get_Selected_Files (Explorer);
       L_Temp           : List := L;
@@ -915,7 +914,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
 
       L                : List := Get_Selected_Files (Explorer);
       L_Temp           : List := L;
@@ -951,7 +950,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer  : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer  : VCS_View_Access := VCS_View_Access (Object);
 
       L                : List := Get_Selected_Files (Explorer);
       L_Temp           : List := L;
@@ -985,7 +984,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
       L        : List := Get_Selected_Files (Explorer);
    begin
       if Is_Empty (L) then
@@ -1046,7 +1045,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
       L        : List := Get_Selected_Files (Explorer);
    begin
       if Is_Empty (L) then
@@ -1070,7 +1069,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
       L        : List := Get_Selected_Files (Explorer);
    begin
       if Is_Empty (L) then
@@ -1104,7 +1103,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer   : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer   : VCS_View_Access := VCS_View_Access (Object);
       L          : List := Get_Selected_Files (Explorer);
       Files_List : List;
       Logs_List  : List;
@@ -1184,7 +1183,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
       L        : List := Get_Selected_Files (Explorer);
    begin
       if Is_Empty (L) then
@@ -1208,7 +1207,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      Explorer : VCS_View_Access := VCS_View_Access (Object);
       L        : List := Get_Selected_Files (Explorer);
    begin
       if Is_Empty (L) then
@@ -1623,41 +1622,46 @@ package body VCS_View_Pkg is
         (Toolbar  => Toolbar2,
          The_Type => Toolbar_Child_Button,
          Text     => "Edit Log");
-      Widget_Callback.Connect
+      Widget_Callback.Object_Connect
         (VCS_View.Edit_Log_Button, "clicked",
-         On_Edit_Log_Button_Clicked'Access);
+         On_Edit_Log_Button_Clicked'Access,
+         VCS_View);
 
       VCS_View.Edit_Multiple_Log_Button := Append_Element
         (Toolbar  => Toolbar2,
          The_Type => Toolbar_Child_Button,
          Text     => "Edit multiple Log");
-      Widget_Callback.Connect
+      Widget_Callback.Object_Connect
         (VCS_View.Edit_Multiple_Log_Button, "clicked",
-         On_Edit_Multiple_Log_Button_Clicked'Access);
+         On_Edit_Multiple_Log_Button_Clicked'Access,
+         VCS_View);
 
       VCS_View.View_Diff_Button := Append_Element
         (Toolbar  => Toolbar2,
          The_Type => Toolbar_Child_Button,
          Text     => "View Diff");
-      Widget_Callback.Connect
+      Widget_Callback.Object_Connect
         (VCS_View.View_Diff_Button, "clicked",
-         On_View_Diff_Button_Clicked'Access);
+         On_View_Diff_Button_Clicked'Access,
+         VCS_View);
 
       VCS_View.Annotate_Button := Append_Element
         (Toolbar => Toolbar2,
          The_Type => Toolbar_Child_Button,
          Text => "Annotate");
-      Widget_Callback.Connect
+      Widget_Callback.Object_Connect
         (VCS_View.Annotate_Button, "clicked",
-         On_Annotate_Button_Clicked'Access);
+         On_Annotate_Button_Clicked'Access,
+         VCS_View);
 
       VCS_View.View_Log_Button := Append_Element
         (Toolbar  => Toolbar2,
          The_Type => Toolbar_Child_Button,
          Text     => "View Log");
-      Widget_Callback.Connect
+      Widget_Callback.Object_Connect
         (VCS_View.View_Log_Button, "clicked",
-         On_View_Log_Button_Clicked'Access);
+         On_View_Log_Button_Clicked'Access,
+         VCS_View);
       Pack_Start (Hbox1, Toolbar2, False, False, 3);
 
       Gtk_New (Toolbar1, Orientation_Vertical, Toolbar_Both);
@@ -1669,46 +1673,53 @@ package body VCS_View_Pkg is
         (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Text     => "Get status");
-      Widget_Callback.Connect
+      Widget_Callback.Object_Connect
         (VCS_View.Get_Status_Button, "clicked",
-         On_Get_Status_Button_Clicked'Access);
+         On_Get_Status_Button_Clicked'Access,
+         VCS_View);
       VCS_View.Update_Button := Append_Element
         (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Text     => "Update");
-      Widget_Callback.Connect
+      Widget_Callback.Object_Connect
         (VCS_View.Update_Button, "clicked",
-         On_Update_Button_Clicked'Access);
+         On_Update_Button_Clicked'Access,
+         VCS_View);
       VCS_View.Open_Button := Append_Element
         (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Text     => "Open");
-      Widget_Callback.Connect
-        (VCS_View.Open_Button, "clicked", On_Open_Button_Clicked'Access);
+      Widget_Callback.Object_Connect
+        (VCS_View.Open_Button, "clicked", On_Open_Button_Clicked'Access,
+         VCS_View);
       VCS_View.Commit_Button := Append_Element
         (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Text     => "Commit");
-      Widget_Callback.Connect
-        (VCS_View.Commit_Button, "clicked", On_Commit_Button_Clicked'Access);
+      Widget_Callback.Object_Connect
+        (VCS_View.Commit_Button, "clicked", On_Commit_Button_Clicked'Access,
+         VCS_View);
       VCS_View.Revert_Button := Append_Element
         (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Text     => "Revert");
-      Widget_Callback.Connect
-        (VCS_View.Revert_Button, "add", On_Revert_Button_Clicked'Access);
+      Widget_Callback.Object_Connect
+        (VCS_View.Revert_Button, "add", On_Revert_Button_Clicked'Access,
+         VCS_View);
       VCS_View.Add_Button := Append_Element
         (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Text     => "Add");
-      Widget_Callback.Connect
-        (VCS_View.Add_Button, "clicked", On_Add_Button_Clicked'Access);
+      Widget_Callback.Object_Connect
+        (VCS_View.Add_Button, "clicked", On_Add_Button_Clicked'Access,
+         VCS_View);
       VCS_View.Remove_Button := Append_Element
         (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Text     => "Remove");
-      Widget_Callback.Connect
-        (VCS_View.Remove_Button, "clicked", On_Remove_Button_Clicked'Access);
+      Widget_Callback.Object_Connect
+        (VCS_View.Remove_Button, "clicked", On_Remove_Button_Clicked'Access,
+         VCS_View);
       Pack_Start (Hbox1, Toolbar1, False, False, 3);
 
       Gtk_New_Hbox (Hbox2, False, 0);
