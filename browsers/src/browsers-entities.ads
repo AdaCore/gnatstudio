@@ -69,7 +69,14 @@ package Browsers.Entities is
    type Parent_Link is access all Parent_Link_Record'Class;
 
 private
+   procedure Highlight_Item_And_Siblings
+     (Browser : access Type_Browser_Record;
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
+      Old     : Gtkada.Canvas.Canvas_Item := null);
+   --  See doc for inherited subprogram
 
+   function Get_Background_GC
+     (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC;
    procedure Resize_And_Draw
      (Item                        : access Type_Item_Record;
       Width, Height               : Glib.Gint;
@@ -85,7 +92,7 @@ private
    procedure Reset
      (Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Item : access Type_Item_Record);
-   --  See doc for inherited subprogram
+   --  See doc for inherited subprograms
 
    procedure Draw_Straight_Line
      (Link : access Parent_Link_Record;

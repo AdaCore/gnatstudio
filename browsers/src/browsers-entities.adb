@@ -1119,10 +1119,15 @@ package body Browsers.Entities is
 
                --  Could be null if the access type is really a subtyping
                if Parent /= No_Entity_Information then
-                  Add_Line
-                    (Attr_Lines, "access to @" & Get_Name (Parent) & '@',
-                     Callback => Build (Item, Parent));
-                  --  Do not destroy Parent, needed for callbacks
+                  if Is_Predefined_Entity (Parent) then
+                     Add_Line (Attr_Lines, "access to " & Get_Name (Parent));
+                     Destroy (Parent);
+                  else
+                     Add_Line
+                       (Attr_Lines, "access to @" & Get_Name (Parent) & '@',
+                        Callback => Build (Item, Parent));
+                     --  Do not destroy Parent, needed for callbacks
+                  end if;
                end if;
 
             when Array_Kind =>
@@ -1130,10 +1135,15 @@ package body Browsers.Entities is
 
                --  Could be null if the array type is really a subtyping
                if Parent /= No_Entity_Information then
-                  Add_Line
-                    (Attr_Lines, "array of @" & Get_Name (Parent) & '@',
-                     Callback => Build (Item, Parent));
-                  --  Do not destroy Parent, needed for callbacks
+                  if Is_Predefined_Entity (Parent) then
+                     Add_Line (Attr_Lines, "array of " & Get_Name (Parent));
+                     Destroy (Parent);
+                  else
+                     Add_Line
+                       (Attr_Lines, "array of @" & Get_Name (Parent) & '@',
+                        Callback => Build (Item, Parent));
+                     --  Do not destroy Parent, needed for callbacks
+                  end if;
                end if;
 
             when Class_Wide
@@ -1460,5 +1470,31 @@ package body Browsers.Entities is
       Item.Parents_Computed := False;
       Item.Children_Computed := False;
    end Reset;
+
+   ---------------------------------
+   -- Highlight_Item_And_Siblings --
+   ---------------------------------
+
+   procedure Highlight_Item_And_Siblings
+     (Browser : access Type_Browser_Record;
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
+      Old     : Gtkada.Canvas.Canvas_Item := null)
+   is
+      pragma Unreferenced (Browser, Item, Old);
+   begin
+      --  Do nothing, we simply do not want to redraw the items with a
+      --  different background.
+      null;
+   end Highlight_Item_And_Siblings;
+
+   -----------------------
+   -- Get_Background_GC --
+   -----------------------
+
+   function Get_Background_GC
+     (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC is
+   begin
+      return Get_Default_Item_Background_GC (Get_Browser (Item));
+   end Get_Background_GC;
 
 end Browsers.Entities;
