@@ -45,6 +45,7 @@ with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Hbutton_Box;       use Gtk.Hbutton_Box;
 with Gtk.Label;             use Gtk.Label;
+with Gtk.Main;              use Gtk.Main;
 with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;   use Gtk.Scrolled_Window;
@@ -814,6 +815,8 @@ package body Creation_Wizard is
       Create_Project_Entry (Wiz.Naming, Project);
 
       Pretty_Print (Project);
+      Destroy (W);
+      Main_Quit;
    end Generate_Prj;
 
 end Creation_Wizard;
