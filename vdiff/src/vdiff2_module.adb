@@ -26,11 +26,14 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
+with VFS;                       use VFS;
 
 with Pixmaps_Vdiff2;            use Pixmaps_Vdiff2;
 with Diff_Utils2;               use Diff_Utils2;
 with Vdiff2_Command;            use Vdiff2_Command;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
+with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
 
 with Gdk.Bitmap;                use Gdk.Bitmap;
 with Gdk.Color;                 use Gdk.Color;
@@ -43,13 +46,10 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
-with Commands.Interactive;      use Commands.Interactive;
-with VFS;                       use VFS;
-
 
 package body Vdiff2_Module is
-   use Diff_Head_List;
 
+   use Diff_Head_List;
 
    procedure VDiff_Contextual
      (Object  : access GObject_Record'Class;
