@@ -914,4 +914,20 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'a generic package is not allowed in a use clause'.
 
+   type Non_Visible_Declaration is new Error_Parser
+     (new String'("Non_Visible_Declaration"), 2)
+   with null record;
+
+   procedure Initialize (This : in out Non_Visible_Declaration);
+
+   procedure Fix
+     (This         : Non_Visible_Declaration;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'non visible declaration at'.
+
+
 end Codefix.Errors_Parser;
