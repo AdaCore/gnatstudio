@@ -1261,7 +1261,13 @@ If the line and column are not specified, then the current selection is returned
 
   <shell_doc name="GPS.close" real_name="GPS.Editor.close">
       <param name="file">A string</param>
-      <description>Close all file editors for file_name</description>
+      <description>Close all file editors for file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.set_writable" real_name="GPS.Editor.set_writable">
+      <param name="file">A string</param>
+      <param name="writable">A boolean</param>
+      <description>Change the Writable status for the editors for file</description>
   </shell_doc>
 
   <shell_doc name="GPS.save" real_name="GPS.Editor.save">
