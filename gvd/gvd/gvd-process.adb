@@ -495,7 +495,7 @@ package body GVD.Process is
          if Addr_First /= 0 then
             Pc_Length := Addr_Last - Addr_First + Pc'First;
             Pc (Pc'First .. Pc_Length) :=
-              Process.Current_Output (Addr_First ..Addr_Last);
+              Process.Current_Output (Addr_First .. Addr_Last);
          end if;
       end if;
 
