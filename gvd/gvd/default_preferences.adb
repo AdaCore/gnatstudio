@@ -157,6 +157,9 @@ package body Default_Preferences is
      (Ent : access GObject_Record'Class; Data : Nodes);
    --  Open a dialog to select a new font
 
+   procedure Reset_Specific_Data (Node : Node_Ptr);
+   --  Remove (but do not free), the cached data associated with each node.
+
    -------------------
    -- Destroy_Cache --
    -------------------
@@ -930,6 +933,20 @@ package body Default_Preferences is
       end if;
    end Editor_Widget;
 
+   -------------------------
+   -- Reset_Specific_Data --
+   -------------------------
+
+   procedure Reset_Specific_Data (Node : Node_Ptr) is
+      Sibling : Node_Ptr := Node;
+   begin
+      while Sibling /= null loop
+         Sibling.Specific_Data := (Descr => null);
+         Reset_Specific_Data (Sibling.Child);
+         Sibling := Sibling.Next;
+      end loop;
+   end Reset_Specific_Data;
+
    ----------------------
    -- Edit_Preferences --
    ----------------------
@@ -1072,6 +1089,8 @@ package body Default_Preferences is
 
       Show_All (Dialog);
 
+      Reset_Specific_Data (Manager.Preferences);
+
       loop
          begin
             case Run (Dialog) is
@@ -1089,17 +1108,13 @@ package body Default_Preferences is
                   end if;
                   Had_Apply := True;
 
-               when Gtk_Response_Cancel =>
+               when others =>  --  including Cancel
                   Free (Manager.Preferences);
                   Manager.Preferences := Saved_Pref;
                   Destroy (Dialog);
                   if Had_Apply and then On_Changed /= null then
                      On_Changed (Manager);
                   end if;
-                  exit;
-
-               when others =>
-                  Destroy (Dialog);
                   exit;
             end case;
          exception
