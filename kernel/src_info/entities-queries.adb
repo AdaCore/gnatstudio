@@ -1421,9 +1421,9 @@ package body Entities.Queries is
          while T /= null loop
             if T.Start_Line <= Info'Last then
                Info (Line .. T.Start_Line - 1) := (others => Enclosing_Entity);
+               Info_For_Decl (T.Start_Line) := Enclosing_Entity;
             end if;
 
-            Info_For_Decl (T.Start_Line) := Enclosing_Entity;
 
             if T.First_Child = null then
                Line := T.Start_Line;
