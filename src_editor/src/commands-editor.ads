@@ -43,6 +43,31 @@ package Commands.Editor is
    type Remove_Blank_Lines_Command is access
      all Remove_Blank_Lines_Command_Type;
 
+   type Hide_Editable_Lines_Type is new Root_Command with record
+      Buffer : Source_Buffer;
+      Mark   : Gtk_Text_Mark;
+      Number : Editable_Line_Type;
+   end record;
+   type Hide_Editable_Lines_Command is access all Hide_Editable_Lines_Type;
+
+   type Unhide_Editable_Lines_Type is new Root_Command with record
+      Buffer     : Source_Buffer;
+      Mark       : Gtk_Text_Mark;
+      First_Line : Editable_Line_Type;
+      Last_Line  : Editable_Line_Type;
+   end record;
+   type Unhide_Editable_Lines_Command is access all Unhide_Editable_Lines_Type;
+
+   function Execute
+     (Command : access Unhide_Editable_Lines_Type)
+      return Command_Return_Type;
+   --  Unhides lines from the buffer.
+
+   function Execute
+     (Command : access Hide_Editable_Lines_Type)
+      return Command_Return_Type;
+   --  Hides lines from the buffer.
+
    function Execute
      (Command : access Remove_Blank_Lines_Command_Type)
       return Command_Return_Type;
