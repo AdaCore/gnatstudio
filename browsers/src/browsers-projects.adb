@@ -175,8 +175,9 @@ package body Browsers.Projects is
    --  Callbacks for the button in the title bar
 
    procedure Add_Link_If_Not_Present
-     (Browser : access Project_Browser_Record'Class;
-      Src, Dest : Browser_Project_Vertex_Access);
+     (Browser      : access Project_Browser_Record'Class;
+      Src, Dest    : Browser_Project_Vertex_Access;
+      Limited_With : Boolean);
    --  Add a link between the two items
 
    ----------------
@@ -235,8 +236,9 @@ package body Browsers.Projects is
    -----------------------------
 
    procedure Add_Link_If_Not_Present
-     (Browser : access Project_Browser_Record'Class;
-      Src, Dest : Browser_Project_Vertex_Access)
+     (Browser      : access Project_Browser_Record'Class;
+      Src, Dest    : Browser_Project_Vertex_Access;
+      Limited_With : Boolean)
    is
       L : Browser_Link;
       P1, P2 : Project_Type;
@@ -251,7 +253,12 @@ package body Browsers.Projects is
             Add_Link
               (Get_Canvas (Browser), L, Src, Dest, Descr => -"extending");
          else
-            Add_Link (Get_Canvas (Browser), L, Src, Dest);
+            if Limited_With then
+               Add_Link (Get_Canvas (Browser), L, Src, Dest,
+                         Descr => "limited");
+            else
+               Add_Link (Get_Canvas (Browser), L, Src, Dest);
+            end if;
          end if;
       end if;
    end Add_Link_If_Not_Present;
@@ -314,7 +321,8 @@ package body Browsers.Projects is
 
          while Current (Iter) /= No_Project loop
             Dest := Add_Project_If_Not_Present (Browser, Current (Iter));
-            Add_Link_If_Not_Present (Browser, Src, Dest);
+            Add_Link_If_Not_Present
+              (Browser, Src, Dest, Limited_With => Is_Limited_With (Iter));
 
             --  ??? Could be more efficient if we could use Direct_Only =>
             --  False in the call to Start.
@@ -396,7 +404,9 @@ package body Browsers.Projects is
 
       while Current (Iter) /= No_Project loop
          Src := Add_Project_If_Not_Present (Browser, Current (Iter));
-         Add_Link_If_Not_Present (Browser, Src, Dest);
+         Add_Link_If_Not_Present
+           (Browser, Src, Dest,
+            Limited_With => Is_Limited_With (Iter));
 
          Next (Iter);
       end loop;
