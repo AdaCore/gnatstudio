@@ -236,7 +236,7 @@ procedure GPS is
          Put_Line ("GPS " & GVD.Version &
                    (-", A complete application development system."));
          Put_Line (-"Usage:");
-         Put_Line (-"   gps [project-file] [source1] [source2] ...");
+         Put_Line (-"   gps [-p project-file] [source1] [source2] ...");
          Put_Line (-"Options:");
          Put_Line (-"   --help              Show this help message and exit.");
          Put_Line (-"   --version           Show the GPS version and exit.");
@@ -246,7 +246,7 @@ procedure GPS is
            ("GPS " & GVD.Version &
             (-", A complete application development system.") & LF &
             (-"Usage:") & LF &
-            (-"   gps [project-file] [source1] [source2] ...") & LF &
+            (-"   gps [-p project-file] [source1] [source2] ...") & LF &
             (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
             (-"   --version           Show the GPS version and exit."),
@@ -371,21 +371,8 @@ procedure GPS is
 
       Glide_Page.Load_Desktop (GPS);
 
-      loop
-         declare
-            S : constant String := Get_Argument (Do_Expansion => True);
-         begin
-            exit when S = "";
-
-            if File_Extension (S) = Project_File_Extension then
-               Load_Project (GPS.Kernel, Normalize_Pathname (S));
-               Project_Loaded := True;
-            else
-               Open_File_Editor (GPS.Kernel, S);
-               File_Opened := True;
-            end if;
-         end;
-      end loop;
+      --  We now make sure we have a project loaded, so that opening editors
+      --  will work correctly.
 
       --  If no project has been specified on the command line, try to open
       --  the first one in the current directory (if any).
@@ -414,6 +401,19 @@ procedure GPS is
       if not Project_Loaded then
          Recompute_View (GPS.Kernel);
       end if;
+
+      --  Then load all the source files given on the command line.
+
+      loop
+         declare
+            S : constant String := Get_Argument (Do_Expansion => True);
+         begin
+            exit when S = "";
+
+            Open_File_Editor (GPS.Kernel, S);
+            File_Opened := True;
+         end;
+      end loop;
 
       --  Call Show_All before displaying the help so that the help window will
       --  have the focus.
@@ -456,7 +456,7 @@ begin
    Maximize (GPS);
 
    loop
-      case Getopt ("-version -help") is
+      case Getopt ("-version -help p") is
          -- long option names --
          when '-' =>
             case Full_Switch (Full_Switch'First + 1) is
@@ -482,6 +482,10 @@ begin
                      Help;
                      OS_Exit (0);
                   end if;
+
+               when 'p' =>
+                  Load_Project (GPS.Kernel, Normalize_Pathname (Parameter));
+                  Project_Loaded := True;
 
                when others =>
                   null;
