@@ -4717,41 +4717,65 @@ extern template_param* template_argument_skip( LongString *plstr )
              return 0;
          }
       } else if ( !bSeekNext ) {
+         Save_d ();
          LongString type, name, arg_pos, arg_type_pos;
          LongStringInit (&type, -1);
          LongStringInit (&name, -1);
          LongStringInit (&arg_pos, -1);
          LongStringInit (&arg_type_pos, -1);
 
-         function_argument_declaration (&type, &name, &arg_pos, &arg_type_pos);
-
          tp = (template_param*) malloc (sizeof (template_param));           
          if  ( !tp ) {                                                      
-            fprintf (stderr, "memory allocation error\n");                  
-            abort ();                                                       
+             fprintf (stderr, "memory allocation error\n");                  
+             abort ();                                                       
          }                                                                  
                                                                             
          tp->kind = TPK_VALUE;                                              
-         tp->name = name;                                                   
-         get_pos (arg_pos.buf, &tp->name_lineno, &tp->name_charno);         
-         tp->type = type;                                                   
-         get_pos (arg_type_pos.buf, &tp->type_lineno, &tp->type_charno);    
+
+         function_argument_declaration (&type, &name, &arg_pos, &arg_type_pos);
+
+         /* FIXME: function_argument_declaration does not return any error code
+          * :(
+          */
+         if ( !arg_pos.buf || !arg_type_pos.buf ) { /* we failed to process it */
+             Restore_d ();
+             LongStringInit (&tp->type, -1);
+             LongStringInit (&tp->name, -1);
+             tp->name_lineno = f_lineno (0);
+             tp->name_charno = f_charno (0);
+             tp->type_lineno = 0;
+             tp->type_charno = 0;
+             skip_expression ();
+             plstr->append (plstr, "?", 1);
+             LongStringMyFree (&name);                                       
+             LongStringMyFree (&type);                                  
+             LongStringMyFree (&arg_pos);                                       
+             LongStringMyFree (&arg_type_pos);                                  
+         } else {
+             tp->name = name;                                                   
+             get_pos (arg_pos.buf, &tp->name_lineno, &tp->name_charno);         
+             tp->type = type;                                                   
+             get_pos (arg_type_pos.buf, &tp->type_lineno, &tp->type_charno);    
+             LongStringsMyAppend (plstr, &type);                                
+             /* skip name: it is really of no use                               
+             LongStringMyAppend (plstr, " ");                                   
+             LongStringsMyAppend (plstr, &name);                                
+             */                                                                 
+             LongStringMyFree (&arg_pos);                                       
+             LongStringMyFree (&arg_type_pos);                                  
+         }
+
          tp->params = 0;                                                    
          tp->next = root;                                                   
                                                                             
          root = tp;                                                         
                                                                             
          bSeekNext = True;                                                  
-         LongStringsMyAppend (plstr, &type);                                
-         /* skip name: it is really of no use                               
-         LongStringMyAppend (plstr, " ");                                   
-         LongStringsMyAppend (plstr, &name);                                
-         */                                                                 
-         LongStringMyFree (&arg_pos);                                       
-         LongStringMyFree (&arg_type_pos);                                  
-      } else if ( bSeekNext && token (0) == ',' ) {
-         bSeekNext = False;
-         LongStringMyAppend (plstr, ", ");
+      } else if ( bSeekNext ) {
+         if ( token (0) == ',' ) {
+             bSeekNext = False;
+             LongStringMyAppend (plstr, ", ");
+         }
          step (1);
       }
    }
