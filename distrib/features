@@ -16,6 +16,11 @@ New features in GPS 1.1.0
 
 - New mode in the MDI: all windows can be automatically set as floating
 
+- Moving a project to a new location will preserve the source directories
+
+- Clicking on revert in the switches editor for specific files will force
+  the file to use the default project switches.
+
 New features in GPS 1.0.2
 
 - Menu File->New View implemented
