@@ -35,6 +35,7 @@ with Vdiff_Utils;            use Vdiff_Utils;
 with Codefix;                use Codefix;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
+with Codefix.Merge_Utils;    use Codefix.Merge_Utils;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 
@@ -201,10 +202,10 @@ package body Codefix.Graphics is
             Current_Iterator.New_Line := new String'
               (Get_New_Text (Current_Line.all));
 
-            if Get_Context (Current_Line.all) = Original_Line then
+            if Get_Context (Current_Line.all) = Original_Unit then
                Current_Iterator.Old_Line := new String'
                  (Current_Iterator.New_Line.all);
-            elsif Get_Context (Current_Line.all) /= Line_Created then
+            elsif Get_Context (Current_Line.all) /= Unit_Created then
                Current_Iterator.Old_Line := new String'(Get_Old_Text
                   (Current_Line.all, Graphic_Codefix.Current_Text.all));
             end if;
@@ -213,13 +214,13 @@ package body Codefix.Graphics is
               Get_Cursor (Current_Line.all).Line;
 
             case Get_Context (Current_Line.all) is
-               when Original_Line =>
+               when Original_Unit =>
                   Current_Iterator.Action := Nothing;
-               when Line_Modified =>
+               when Unit_Modified =>
                   Current_Iterator.Action := Change;
-               when Line_Created =>
+               when Unit_Created =>
                   Current_Iterator.Action := Append;
-               when Line_Deleted =>
+               when Unit_Deleted =>
                   Current_Iterator.Action := Delete;
             end case;
 
