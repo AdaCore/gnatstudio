@@ -642,12 +642,12 @@ package body Glide_Kernel.Scripts is
          Name_Parameters (Data, Exec_Action_Parameters);
 
          declare
-            Action : constant Action_Record := Lookup_Action
+            Action : constant Action_Record_Access := Lookup_Action
               (Kernel, Nth_Arg (Data, 1));
             Context : constant Selection_Context_Access :=
               Get_Current_Context (Kernel);
          begin
-            if Action = No_Action then
+            if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
 
             elsif not Filter_Matches (Action.Filter, Context, Kernel) then
