@@ -98,6 +98,13 @@ package body GVD.Explorer is
    --  Compute the contents of a file if needed. This is not done
    --  systematically, so as to speed things up.
 
+   function Drag_Motion
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
+   --  This function is used to trap a motion_notify_event on
+   --  the explorer which causes the window to scroll at the bottom
+   --  right corner under windows.
+
    procedure Display_Shared (Explorer : access Explorer_Record'Class);
    --  Load and display the files found in shared libraries.
 
@@ -203,6 +210,14 @@ package body GVD.Explorer is
    begin
       Explorer := new Explorer_Record;
       Initialize (Explorer, Columns => 1);
+
+      --  ??? This is a tweak to avoid a bug that scrolls to the end
+      --  of the list under windows when moving the mouse with the
+      --  right button pressed in the explorer.
+      Gtkada.Handlers.Return_Callback.Connect
+        (Explorer, "motion_notify_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Drag_Motion'Access));
 
       Explorer.Code_Editor := Gtk_Widget (Code_Editor);
 
@@ -475,6 +490,19 @@ package body GVD.Explorer is
 
       Thaw (Tree);
    end Explore;
+
+   -----------------
+   -- Drag_Motion --
+   -----------------
+
+   function Drag_Motion
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
+   is
+   begin
+      Emit_Stop_By_Name (Widget, "motion_notify_event");
+      return False;
+   end Drag_Motion;
 
    --------------------------
    -- Expand_Explorer_Tree --
