@@ -95,6 +95,10 @@ package body Codefix.GPS_Io is
    procedure Free (This : in out Console_Interface) is
    begin
       Free (Text_Interface (This));
+      Free (This.Lines.all);
+      Free (This.Lines);
+      Free (This.Lines_Number);
+      Free (This.File_Modified);
    end Free;
 
    ---------
