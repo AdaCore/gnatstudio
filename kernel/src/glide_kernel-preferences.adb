@@ -362,6 +362,16 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Save_Desktop_On_Exit), -"General");
 
+      Multi_Language_Build := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Multi-Language-Build",
+         Nick    => -"Multi language build",
+         Blurb   =>
+         -("Whether GPS should build (using gprmake) more than just Ada " &
+           "sources for projects containing Ada and other (e.g. C) languages"),
+         Default => False));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Multi_Language_Build), -"General");
+
       -- MDI --
 
       MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
