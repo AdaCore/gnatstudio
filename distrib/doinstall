@@ -113,9 +113,6 @@ end_message() {
 
    $basedir/bin/gps
 
-   Try $basedir/bin/gps --help
-   for help on the possible switches for GPS
-
    Make sure that gps is in your path by typing one of the following
    commands:
 
