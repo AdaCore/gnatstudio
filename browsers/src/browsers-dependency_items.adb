@@ -85,7 +85,7 @@ package body Browsers.Dependency_Items is
       Recompute_Layout : Boolean := True);
    --  Examine the dependencies for File in In_Browser.
    --  The browser is not cleared first.
-   --  Layout is recompute on exit if Recompute_Layout is true
+   --  Layout is recomputed on exit if Recompute_Layout is true
 
    procedure Examine_From_Dependencies
      (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -95,7 +95,7 @@ package body Browsers.Dependency_Items is
    --  Display the list of files that depend directly on File.
    --  if Interactive is True, then the computation is done in an idle loop, so
    --  that the application remains responsive for the user.
-   --  Layout is recompute on exit if Recompute_Layout is true
+   --  Layout is recomputed on exit if Recompute_Layout is true
 
    procedure Open_File
      (Browser : access Glib.Object.GObject_Record'Class;
@@ -849,14 +849,15 @@ package body Browsers.Dependency_Items is
       Args    : String_List_Utils.String_List.List) return String
    is
       use String_List_Utils.String_List;
-      Node : List_Node;
+      Node    : List_Node;
       Browser : Dependency_Browser;
 
-      Found : Canvas_Item;
+      Found   : Canvas_Item;
 
       function Unexpanded
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  ???
 
       ----------------
       -- Unexpanded --
