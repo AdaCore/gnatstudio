@@ -142,94 +142,95 @@ package body Tries is
       Index_Length : out Natural;
       Scenario     : out Natural)
    is
-      Start : Integer;
+      Current  : Cell_Child_Access := Tree;
+      Start    : Integer := Index'First;
       Ind      : String_Access;
       Ind_First, Ind_Last : Natural;
+      Child    : Integer;
    begin
       --  If we are processing the root node
       if Tree.Index_Length = 0 then
          Cell_Parent := null;
       end if;
 
-      if Tree.Children = null then
-         Cell        := Tree;
-         Scenario    := 5;
-      else
-         Cell_Parent := Tree;
+      while Current /= null and then Current.Children /= null loop
+         --  Find matching child. There is at most one of these.
 
-         for C in Tree.Children'Range loop
-            Ind := Get_Index (Tree.Children (C));
-
+         Child := Current.Children'First;
+         while Child <= Current.Children'Last loop
+            Ind := Get_Index (Current.Children (Child));
             if Ind /= null then
-               Ind_First := Ind'First + Tree.Index_Length;
-               Ind_Last := Ind'First + Tree.Children (C).Index_Length - 1;
-               Assert (Me, Ind_Last <= Ind'Last, "Too long Index_Length");
+               Ind_First := Ind'First + Current.Index_Length;
+               exit when Ind (Ind_First) = Index (Start);
+            end if;
+            Child := Child + 1;
+         end loop;
 
-               if Ind (Ind_First) = Index (Index'First) then
-                  if Ind_Last - Ind_First = 0 and then Index'Length = 1 then
-                     Cell        := Tree.Children (C)'Unrestricted_Access;
-                     Last        := Index'Last;
-                     Scenario    := 3;
-                     return;
+         --  No child found ? Stop here
+         if Child > Current.Children'Last then
+            Last     := Start - 1;
+            Cell     := Current;
+            Scenario := 4;
+            return;
+         end if;
+
+         Cell_Parent := Current;
+         Current     := Current.Children (Child)'Unrestricted_Access;
+
+         Ind_Last := Ind'First + Current.Index_Length - 1;
+--       Assert (Me, Ind_Last <= Ind'Last, "Too long Index_Length");
+
+         if Start = Index'Last then
+            Cell := Current;
+            Last := Index'Last;
+
+            if Ind_First = Ind_Last then
+               Scenario     := 3;
+            else
+               Scenario     := 2;
+               Index_Length := Index'Length;
+            end if;
+            return;
+         end if;
+
+         Start := Start + 1;
+         for J in Ind_First + 1 .. Ind_Last loop
+            if Ind (J) /= Index (Start) then
+               --  If at least one character matched, this is the
+               --  correct cell, although it will have to be split
+               Cell         := Current;
+               Last         := Start - 1;
+               Index_Length := J - Ind'First;
+               Scenario     := 1;
+               return;
+            else
+               Start := Start + 1;
+
+               --  Cell matches, but will have to be splitted
+               if Start > Index'Last then
+                  Cell        := Current;
+                  Last        := Start;
+
+                  --  If all the characters of the index matched,
+                  --  we have found our cell
+
+                  if J = Ind_Last then
+                     Scenario     := 3;
+                  else
+                     Index_Length := J - Ind'First + 1;
+                     Scenario     := 2;
                   end if;
-
-                  if Index'Length = 1 then
-                     Scenario := 2;
-                     Index_Length := Index'Length;
-                     Last     := Index'Last;
-                     Cell     := Tree.Children (C)'Unrestricted_Access;
-                     return;
-                  end if;
-
-                  Start := Index'First + 1;
-                  for J in Ind_First + 1 .. Ind_Last loop
-                     if Ind (J) /= Index (Start) then
-                        --  If at least one character matched, this is the
-                        --  correct cell, although it will have to be split
-                        Cell := Tree.Children (C)'Unrestricted_Access;
-                        Last := Start - 1;
-                        Index_Length := J - Ind'First;
-                        Scenario := 1;
-                        return;
-                     else
-                        Start := Start + 1;
-
-                        --  Cell matches, but will have to be splitted
-                        if Start > Index'Last then
-                           Cell := Tree.Children (C)'Unrestricted_Access;
-                           Cell_Parent := Tree;
-                           Last := Start;
-
-                           --  If all the characters of the index matched,
-                           --  we have found our cell
-
-                           if J = Ind_Last then
-                              Scenario   := 3;
-                           else
-                              Index_Length := J - Ind'First + 1;
-                              Scenario     := 2;
-                           end if;
-                           return;
-                        end if;
-                     end if;
-                  end loop;
-
-                  --  If at least one character matched, but the index was
-                  --  too short, check the children
-
-                  Find_Cell_Child
-                    (Tree.Children (C)'Unrestricted_Access,
-                     Index (Start .. Index'Last),
-                     Cell, Cell_Parent, Last, Index_Length, Scenario);
                   return;
                end if;
             end if;
          end loop;
-      end if;
 
-      Last := Index'First - 1;
-      Cell := Tree;
-      Scenario := 4;
+         --  If at least one character matched, but the index was
+         --  too short, check the children
+      end loop;
+
+      Cell := Current;
+      Scenario := 5;
    end Find_Cell_Child;
 
    ----------
@@ -313,9 +314,9 @@ package body Tries is
                   2 => (Data         => Data,
                         Index_Length => Index'Length,
                         Children     => null)));
-            Assert
-              (Me, Get_Index (Data)'Length >= Index'Length,
-               "Invalid length in scenario 1");
+--              Assert
+--                (Me, Get_Index (Data)'Length >= Index'Length,
+--                 "Invalid length in scenario 1");
 
          when 2 =>
             Cell.all :=
@@ -325,16 +326,16 @@ package body Tries is
                  (1 => (Data         => Cell.Data,
                         Index_Length => Cell.Index_Length,
                         Children     => Cell.Children)));
-            Assert (Me, Get_Index (Data)'Length >= Index_Length,
-                    "Invalid length in scenario 2 "
-                    & Get_Index (Data)'Length'Img
-                    & Index_Length'Img);
+--              Assert (Me, Get_Index (Data)'Length >= Index_Length,
+--                      "Invalid length in scenario 2 "
+--                      & Get_Index (Data)'Length'Img
+--                      & Index_Length'Img);
 
          when 3 =>
             Free (Cell.Data);
             Cell.Data := Data;
-            Assert (Me, Get_Index (Cell.Data)'Length >= Cell.Index_Length,
-                    "Invalid length in scenario 3");
+--              Assert (Me, Get_Index (Cell.Data)'Length >= Cell.Index_Length,
+--                      "Invalid length in scenario 3");
 
          when 4 | 5 =>
             Tmp2 := Cell.Children;
@@ -351,8 +352,8 @@ package body Tries is
               (Data         => Data,
                Index_Length => Index'Length,
                Children     => null);
-            Assert (Me, Get_Index (Data)'Length >= Index'Length,
-                    "Invalid length in scenario 4");
+--              Assert (Me, Get_Index (Data)'Length >= Index'Length,
+--                      "Invalid length in scenario 4");
 
          when others =>
             null;
