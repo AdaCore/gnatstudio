@@ -136,6 +136,9 @@ package body Help_Module is
    procedure On_Destroy (Html : access Gtk_Widget_Record'Class);
    --  Called when an html browser is destroyed.
 
+   procedure On_Load_Done (Html : access Gtk_Widget_Record'Class);
+   --  Called when a file has been loaded.
+
    procedure On_Zoom_In
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Help->Zoom in
@@ -507,7 +510,25 @@ package body Help_Module is
    procedure On_Destroy (Html : access Gtk_Widget_Record'Class) is
    begin
       Free (Help_Browser (Html).Current_Help_File);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
+
+   ------------------
+   -- On_Load_Done --
+   ------------------
+
+   procedure On_Load_Done (Html : access Gtk_Widget_Record'Class) is
+      Browser : constant Help_Browser := Help_Browser (Html);
+   begin
+      --  This is a dirty tweak to force the adjustment of the scrolled
+      --  window after the load is done.
+      Queue_Resize (Browser);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Load_Done;
 
    ----------------
    -- On_Zoom_In --
@@ -611,6 +632,9 @@ package body Help_Module is
       Widget_Callback.Connect
         (Html, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
+      Widget_Callback.Object_Connect
+        (Html.Csc, "load_done",
+         Widget_Callback.To_Marshaller (On_Load_Done'Access), Html);
 
       Font_Adjust := Integer (Get_Pref (Kernel, Help_Font_Adjust));
 
