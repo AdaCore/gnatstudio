@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -112,13 +112,13 @@ package body Basic_Mapper is
          Ada.Text_IO.Open (File, Ada.Text_IO.Out_File, File_Name);
       end if;
 
-      Get_First (Mapper.Table_1, Element);
+      Get_First (Mapper.Table_2, Element);
 
       while Get_Element (Element) /= No_Element loop
          Ada.Text_IO.Put_Line (File, Get_Element (Element).all);
          Ada.Text_IO.Put_Line
            (File, Get_Other_Text (Mapper, Get_Element (Element).all));
-         Get_Next (Mapper.Table_1, Element);
+         Get_Next (Mapper.Table_2, Element);
       end loop;
 
       Ada.Text_IO.Close (File);
