@@ -27,6 +27,9 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtkada.MDI;                use Gtkada.MDI;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
@@ -103,6 +106,11 @@ package body Glide_Kernel.Help is
      (Kernel    : access Kernel_Handle_Record'Class;
       Help_File : String);
    --  Display HTML Help file
+
+   function Key_Press
+     (Html : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean;
+   --  Handles the scrolling through the keyboard keys
 
    ---------------
    -- Load_File --
@@ -249,6 +257,57 @@ package body Glide_Kernel.Help is
       end if;
    end Title_Changed;
 
+   ---------------
+   -- Key_Press --
+   ---------------
+
+   function Key_Press
+     (Html : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean
+   is
+      H : Help_Browser := Help_Browser (Html);
+      Adj : Gtk_Adjustment;
+   begin
+      case Get_Key_Val (Event) is
+         when GDK_Up =>
+            Adj := Get_Vadjustment (H);
+            Set_Value
+              (Adj,
+               Gdouble'Max
+                 (Get_Lower (Adj),
+                  Get_Value (Adj) - Get_Step_Increment (Adj)));
+
+         when GDK_Down =>
+            Adj := Get_Vadjustment (H);
+            Set_Value
+              (Adj,
+               Gdouble'Min
+                 (Get_Value (Adj) + Get_Step_Increment (Adj),
+                  Get_Upper (Adj) - Get_Page_Size (Adj)));
+
+         when GDK_Page_Up =>
+            Adj := Get_Vadjustment (H);
+            Set_Value
+              (Adj,
+               Gdouble'Max
+                 (Get_Lower (Adj),
+                  Get_Value (Adj) - Get_Page_Size (Adj)));
+
+         when GDK_Page_Down =>
+            Adj := Get_Vadjustment (H);
+            Set_Value
+              (Adj,
+               Gdouble'Min
+                 (Get_Value (Adj) + Get_Page_Size (Adj),
+                  Get_Upper (Adj) - Get_Page_Size (Adj)));
+
+         when others =>
+            return False;
+      end case;
+
+      return True;
+   end Key_Press;
+
    ------------------------
    -- Create_Html_Editor --
    ------------------------
@@ -282,6 +341,9 @@ package body Glide_Kernel.Help is
         (Html.Csc, "title_changed",
          Title_Changed'Access, User_Data => Kernel_Handle (Kernel),
          Slot_Object => Html);
+      Return_Callback.Object_Connect
+        (Html.Csc, "key_press_event",
+         Return_Callback.To_Marshaller (Key_Press'Access), Html);
 
       Result := Load_File (Kernel, Html, File);
 
