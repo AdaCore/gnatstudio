@@ -26,7 +26,7 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Stock;       use Gtk.Stock;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Codefix_Interface; use Callbacks_Codefix_Interface;
-with Glide_Intl;      use Glide_Intl;
+with GPS.Intl;      use GPS.Intl;
 with Codefix_Window_Pkg.Callbacks; use Codefix_Window_Pkg.Callbacks;
 
 package body Codefix_Window_Pkg is

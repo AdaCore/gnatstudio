@@ -55,7 +55,7 @@ with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Namet;                       use Namet;
 
 with File_Utils;                  use File_Utils;
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Main_Window;           use GPS.Main_Window;
 with Default_Preferences;         use Default_Preferences;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;

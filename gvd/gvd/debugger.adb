@@ -35,7 +35,7 @@ with Gtk.Main;          use Gtk.Main;
 with Gtk.Window;        use Gtk.Window;
 with Gtkada.Types;      use Gtkada.Types;
 
-with Glide_Intl;        use Glide_Intl;
+with GPS.Intl;        use GPS.Intl;
 with Items;             use Items;
 with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;

@@ -41,7 +41,7 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Debugger;         use Debugger;
 with Memory_View_Pkg;  use Memory_View_Pkg;
 
-with Glide_Intl;       use Glide_Intl;
+with GPS.Intl;       use GPS.Intl;
 with String_Utils;     use String_Utils;
 with GUI_Utils;        use GUI_Utils;
 with GVD.Process;      use GVD.Process;

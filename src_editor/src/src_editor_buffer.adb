@@ -57,7 +57,7 @@ with Src_Highlighting;          use Src_Highlighting;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Commands.Editor;           use Commands.Editor;
 with Commands.Controls;         use Commands.Controls;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;

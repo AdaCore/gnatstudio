@@ -46,7 +46,7 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.Types;     use Gtkada.Types;
 with Basic_Types;      use Basic_Types;
-with Glide_Intl;       use Glide_Intl;
+with GPS.Intl;       use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 with GVD.Code_Editors; use GVD.Code_Editors;

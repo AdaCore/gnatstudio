@@ -30,7 +30,7 @@ with GVD.Types;             use GVD.Types;
 with GVD.Process;           use GVD.Process;
 with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
-with Glide_Intl;            use Glide_Intl;
+with GPS.Intl;            use GPS.Intl;
 
 package body GVD.Main_Window.Utils is
 

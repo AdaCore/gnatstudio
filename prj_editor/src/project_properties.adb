@@ -23,7 +23,7 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;

@@ -54,7 +54,7 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with OS_Utils;                  use OS_Utils;
 with Find_Utils;                use Find_Utils;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with VFS;                       use VFS;
 

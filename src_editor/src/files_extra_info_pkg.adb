@@ -22,7 +22,7 @@ with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Tooltips; use Gtk.Tooltips;
-with Glide_Intl; use Glide_Intl;
+with GPS.Intl; use GPS.Intl;
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
 with GPS.Kernel; use GPS.Kernel;
 

@@ -46,7 +46,7 @@ with GVD.Preferences;   use GVD.Preferences;
 with String_Utils;      use String_Utils;
 with GVD.Types;         use GVD.Types;
 with Basic_Types;       use Basic_Types;
-with Glide_Intl;        use Glide_Intl;
+with GPS.Intl;        use GPS.Intl;
 
 with GNAT.Regpat;       use GNAT.Regpat;
 with Ada.Exceptions;    use Ada.Exceptions;

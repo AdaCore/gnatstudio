@@ -51,7 +51,7 @@ with Projects;          use Projects;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with Entities;          use Entities;
-with Glide_Intl;        use Glide_Intl;
+with GPS.Intl;        use GPS.Intl;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Console; use GPS.Kernel.Console;

@@ -24,7 +24,7 @@ with Glib; use Glib;
 with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Glide_Intl; use Glide_Intl;
+with GPS.Intl; use GPS.Intl;
 with Vdiff_Utils;     use Vdiff_Utils;
 
 package body Vdiff_Pkg is

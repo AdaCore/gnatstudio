@@ -24,7 +24,7 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
 with Gtkada.Types;         use Gtkada.Types;
 with Gtk.Widget;           use Gtk.Widget;
-with Glide_Intl;           use Glide_Intl;
+with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Custom;  use GPS.Kernel.Custom;

@@ -27,7 +27,7 @@ with Gtkada.MDI;          use Gtkada.MDI;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Widget;          use Gtk.Widget;
 
-with Glide_Intl;          use Glide_Intl;
+with GPS.Intl;          use GPS.Intl;
 with GVD;                 use GVD;
 with GVD.Process;         use GVD.Process;
 with GVD.Proc_Utils;      use GVD.Proc_Utils;

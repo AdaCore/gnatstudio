@@ -22,7 +22,7 @@ with Basic_Types;              use Basic_Types;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib.Values;              use Glib.Values;
 with Glib;                     use Glib;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel;             use GPS.Kernel;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;

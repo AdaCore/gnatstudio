@@ -35,7 +35,7 @@ with Generic_List;
 with VFS;                      use VFS;
 with Basic_Types;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 
 package body Diff_Utils is
    use Diff_Occurrence_List;

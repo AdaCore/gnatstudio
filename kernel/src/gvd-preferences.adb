@@ -21,7 +21,7 @@
 with Glib;                     use Glib;
 with Default_Preferences;      use Default_Preferences;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Config;                   use Config;
 
 package body GVD.Preferences is

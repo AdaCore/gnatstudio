@@ -45,7 +45,7 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with Interactive_Consoles;       use Interactive_Consoles;
 with System;                     use System;
 
-with Glide_Intl;           use Glide_Intl;
+with GPS.Intl;           use GPS.Intl;
 
 with Gtkada.MDI;           use Gtkada.MDI;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;

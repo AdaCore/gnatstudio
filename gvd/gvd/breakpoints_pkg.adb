@@ -23,7 +23,7 @@ with Gtk.Adjustment;   use Gtk.Adjustment;
 with Gtk.Stock;        use Gtk.Stock;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Enums;        use Gtk.Enums;
-with Glide_Intl;       use Glide_Intl;
+with GPS.Intl;       use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 

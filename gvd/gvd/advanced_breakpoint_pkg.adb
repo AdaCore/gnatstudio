@@ -25,7 +25,7 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Adjustment; use Gtk.Adjustment;
 with Callbacks_Odd; use Callbacks_Odd;
-with Glide_Intl; use Glide_Intl;
+with GPS.Intl; use GPS.Intl;
 with Advanced_Breakpoint_Pkg.Callbacks; use Advanced_Breakpoint_Pkg.Callbacks;
 
 package body Advanced_Breakpoint_Pkg is

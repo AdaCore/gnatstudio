@@ -32,7 +32,7 @@ with Gtkada.Types;
 
 with Factory_Data;
 with GVD.Types;             use GVD.Types;
-with Glide_Intl;            use Glide_Intl;
+with GPS.Intl;            use GPS.Intl;
 
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 

@@ -68,7 +68,7 @@ with Gtkada.Dialogs;              use Gtkada.Dialogs;
 with Gtkada.File_Selector;        use Gtkada.File_Selector;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with GUI_Utils;                   use GUI_Utils;
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 
 with Basic_Types;
 with Language;                    use Language;

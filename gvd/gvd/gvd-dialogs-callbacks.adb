@@ -29,7 +29,7 @@ with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 
-with Glide_Intl;            use Glide_Intl;
+with GPS.Intl;            use GPS.Intl;
 with GVD.Process;           use GVD.Process;
 with Debugger;              use Debugger;
 with GVD.Main_Window;       use GVD.Main_Window;

@@ -26,7 +26,7 @@ with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib;                     use Glib;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;

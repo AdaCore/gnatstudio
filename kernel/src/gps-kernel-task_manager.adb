@@ -41,7 +41,7 @@ with Glib.Object;              use Glib.Object;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Commands.Custom;          use Commands.Custom;
 
 package body GPS.Kernel.Task_Manager is

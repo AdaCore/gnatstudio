@@ -22,7 +22,7 @@ with Gtk; use Gtk;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Stock;       use Gtk.Stock;
-with Glide_Intl; use Glide_Intl;
+with GPS.Intl; use GPS.Intl;
 
 package body New_Variable_Editor_Pkg is
 

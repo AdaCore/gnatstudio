@@ -29,7 +29,7 @@
 --  with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
-with Glide_Intl; use Glide_Intl;
+with GPS.Intl; use GPS.Intl;
 
 package body Files_Extra_Info_Pkg.Callbacks is
 

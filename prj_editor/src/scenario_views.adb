@@ -44,7 +44,7 @@ with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Variable_Editors;     use Variable_Editors;
-with Glide_Intl;           use Glide_Intl;
+with GPS.Intl;           use GPS.Intl;
 
 with Namet;    use Namet;
 with Traces;   use Traces;

@@ -26,7 +26,7 @@ with Glib.Object;              use Glib.Object;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 
 with Interactive_Consoles;     use Interactive_Consoles;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;

@@ -20,7 +20,7 @@
 
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Pixmap;      use Gtk.Pixmap;
-with Glide_Intl;      use Glide_Intl;
+with GPS.Intl;      use GPS.Intl;
 with Pixmaps_IDE;     use Pixmaps_IDE;
 
 with Gtkada.Handlers; use Gtkada.Handlers;

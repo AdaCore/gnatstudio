@@ -36,7 +36,7 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with System;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Namet;                    use Namet;
 with Projects.Editor;          use Projects, Projects.Editor;
 with Projects.Registry;        use Projects.Registry;

@@ -31,7 +31,7 @@ with Glib.Properties;          use Glib.Properties;
 with Glib.Generic_Properties;  use Glib.Generic_Properties;
 with Gdk.Color;                use Gdk.Color;
 with Pango.Font;               use Pango.Font;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Language;                 use Language;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;

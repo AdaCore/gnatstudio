@@ -32,7 +32,7 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.File_Selector;     use Gtkada.File_Selector;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Creation_Wizard.Full;     use Creation_Wizard, Creation_Wizard.Full;
 with Wizards;                  use Wizards;
 with VFS;                      use VFS;

@@ -23,7 +23,7 @@ with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
 with GPS.Location_View;         use GPS.Location_View;
 
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GNAT.Expect;               use GNAT.Expect;
 
 with GNAT.Regpat;               use GNAT.Regpat;

@@ -36,7 +36,7 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with GVD.Types;                use GVD.Types;
 with Process_Proxies;          use Process_Proxies;
 with Basic_Types;              use Basic_Types;

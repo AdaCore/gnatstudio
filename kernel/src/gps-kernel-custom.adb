@@ -28,7 +28,7 @@ with System.Assertions;         use System.Assertions;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with File_Utils;                use File_Utils;
 with VFS;                       use VFS;
 

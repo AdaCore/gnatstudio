@@ -46,7 +46,7 @@ with Wizards;          use Wizards;
 with GPS.Kernel;     use GPS.Kernel;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with Glide_Intl;       use Glide_Intl;
+with GPS.Intl;       use GPS.Intl;
 with File_Utils;       use File_Utils;
 
 package body Creation_Wizard is

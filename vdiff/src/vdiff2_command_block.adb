@@ -22,7 +22,7 @@ with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;              use GPS.Kernel.Scripts;
-with Glide_Intl;                        use Glide_Intl;
+with GPS.Intl;                        use GPS.Intl;
 with Basic_Types;                       use Basic_Types;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with Diff_Utils2;                       use Diff_Utils2;

@@ -32,7 +32,7 @@ with Commands;                   use Commands;
 with Traces;                     use Traces;
 with Basic_Types;
 with String_Utils;               use String_Utils;
-with Glide_Intl;                 use Glide_Intl;
+with GPS.Intl;                 use GPS.Intl;
 
 package body GPS.Kernel.Standard_Hooks is
 

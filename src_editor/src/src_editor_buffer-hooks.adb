@@ -22,7 +22,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 with Entities;                    use Entities;
 with Src_Editor_Box;              use Src_Editor_Box;
 with Src_Editor_Module;           use Src_Editor_Module;

@@ -27,7 +27,7 @@ with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 

@@ -45,7 +45,7 @@ with Display_Items;    use Display_Items;
 with Items;            use Items;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 
-with Glide_Intl;       use Glide_Intl;
+with GPS.Intl;       use GPS.Intl;
 with GVD.Main_Window;  use GVD.Main_Window;
 with GVD.Memory_View;  use GVD.Memory_View;
 with GVD.Menu;         use GVD.Menu;

@@ -45,7 +45,7 @@ with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with Traces;                 use Traces;

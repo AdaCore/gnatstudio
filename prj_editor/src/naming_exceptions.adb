@@ -21,7 +21,7 @@
 with Projects;               use Projects;
 with Projects.Editor;        use Projects.Editor;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with Glide_Intl;             use Glide_Intl;
+with GPS.Intl;             use GPS.Intl;
 with Glib;                   use Glib;
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Types.Keysyms;      use Gdk.Types, Gdk.Types.Keysyms;

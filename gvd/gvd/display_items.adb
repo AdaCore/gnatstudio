@@ -36,7 +36,7 @@ with Language;          use Language;
 with Items;             use Items;
 with Items.Simples;     use Items.Simples;
 
-with Glide_Intl;        use Glide_Intl;
+with GPS.Intl;        use GPS.Intl;
 with GVD.Canvas;        use GVD.Canvas;
 with GVD.Preferences;   use GVD.Preferences;
 with GVD.Process;       use GVD.Process;

@@ -30,7 +30,7 @@ with Gtk.Clist;              use Gtk.Clist;
 with Gtkada.Dialogs;         use Gtkada.Dialogs;
 
 with GPS.Kernel.Console;   use GPS.Kernel.Console;
-with Glide_Intl;             use Glide_Intl;
+with GPS.Intl;             use GPS.Intl;
 
 with Diff_Utils;             use Diff_Utils;
 with Vdiff_Pkg;              use Vdiff_Pkg;

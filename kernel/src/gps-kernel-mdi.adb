@@ -39,7 +39,7 @@ with Gtkada.Dialogs;              use Gtkada.Dialogs;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
 
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;

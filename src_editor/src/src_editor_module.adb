@@ -33,7 +33,7 @@ with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;

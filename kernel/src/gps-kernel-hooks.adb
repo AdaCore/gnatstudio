@@ -25,7 +25,7 @@ with System;       use System;
 with Ada.Tags;     use Ada.Tags;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Glide_Intl; use Glide_Intl;
+with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;

@@ -36,7 +36,7 @@ with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with GUI_Utils;                use GUI_Utils;
 with Ada.Exceptions;           use Ada.Exceptions;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Creation_Wizard.Full;     use Creation_Wizard.Full;
 with Creation_Wizard.Adp;      use Creation_Wizard.Adp;
 with Creation_Wizard.Simple;   use Creation_Wizard.Simple;

@@ -28,7 +28,7 @@ with GNAT.Strings;
 with Ada.Exceptions;             use Ada.Exceptions;
 
 with Traces;                     use Traces;
-with Glide_Intl;                 use Glide_Intl;
+with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with String_Utils;               use String_Utils;
 

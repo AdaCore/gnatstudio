@@ -24,7 +24,7 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd;   use Callbacks_Odd;
-with Glide_Intl;      use Glide_Intl;
+with GPS.Intl;      use GPS.Intl;
 with Memory_View_Pkg.Callbacks; use Memory_View_Pkg.Callbacks;
 
 package body Memory_View_Pkg is

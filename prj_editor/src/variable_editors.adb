@@ -50,7 +50,7 @@ with Projects.Editor;          use Projects, Projects.Editor;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 

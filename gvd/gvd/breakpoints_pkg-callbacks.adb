@@ -23,7 +23,7 @@ with Glib.Object;        use Glib.Object;
 with GVD.Types;          use GVD.Types;
 with Gtk.Arguments;      use Gtk.Arguments;
 with Debugger;           use Debugger;
-with Glide_Intl;         use Glide_Intl;
+with GPS.Intl;         use GPS.Intl;
 with Gtk.Combo;          use Gtk.Combo;
 with GUI_Utils;          use GUI_Utils;
 with GVD.Code_Editors;   use GVD.Code_Editors;

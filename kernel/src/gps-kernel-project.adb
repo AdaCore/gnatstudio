@@ -29,7 +29,7 @@ with Prj;
 with Types;                    use Types;
 with Entities;
 
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Location_View;        use GPS.Location_View;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;

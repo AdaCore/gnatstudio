@@ -58,7 +58,7 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel;             use GPS.Kernel;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
 with String_List_Utils;        use String_List_Utils;

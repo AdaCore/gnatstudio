@@ -25,7 +25,7 @@ with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with Glide_Intl;           use Glide_Intl;
+with GPS.Intl;           use GPS.Intl;
 
 with Glib;                 use Glib;
 with Glib.Xml_Int;         use Glib.Xml_Int;

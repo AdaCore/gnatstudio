@@ -31,7 +31,7 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Widget;                use Gtk.Widget;
 
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 
 with GVD.Preferences;           use GVD.Preferences;
 

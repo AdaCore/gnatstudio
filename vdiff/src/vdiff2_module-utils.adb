@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel;                      use GPS.Kernel;
-with Glide_Intl;                        use Glide_Intl;
+with GPS.Intl;                        use GPS.Intl;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;       use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                 use GPS.Location_View;

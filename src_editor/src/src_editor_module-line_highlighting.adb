@@ -23,7 +23,7 @@ with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
 with GPS.Kernel;      use GPS.Kernel;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Glide_Intl;        use Glide_Intl;
+with GPS.Intl;        use GPS.Intl;
 with VFS;               use VFS;
 
 with Src_Editor_Box;    use Src_Editor_Box;

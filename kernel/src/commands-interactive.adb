@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;   use Gdk.Event;
-with Glide_Intl;  use Glide_Intl;
+with GPS.Intl;  use GPS.Intl;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Gtk.Label;   use Gtk.Label;
 with Ada.Unchecked_Deallocation;

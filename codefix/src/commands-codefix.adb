@@ -25,7 +25,7 @@ use Codefix.Formal_Errors.Command_List;
 
 with Codefix_Module;        use Codefix_Module;
 with Traces;                use Traces;
-with Glide_Intl;            use Glide_Intl;
+with GPS.Intl;            use GPS.Intl;
 with VFS;                   use VFS;
 
 package body Commands.Codefix is

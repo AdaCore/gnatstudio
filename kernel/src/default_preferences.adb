@@ -70,7 +70,7 @@ with GVD.Color_Combo;          use GVD.Color_Combo;
 with Pango.Font;               use Pango.Font;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Pango.Layout;             use Pango.Layout;
 with String_Hash;
 with Traces;                   use Traces;

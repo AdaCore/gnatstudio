@@ -60,7 +60,7 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with Pixmaps_IDE;              use Pixmaps_IDE;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with VFS;                      use VFS;
 
 with Traces;                   use Traces;

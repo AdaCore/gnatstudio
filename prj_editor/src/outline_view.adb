@@ -46,7 +46,7 @@ with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 with Entities;                    use Entities;
 with String_Utils;                use String_Utils;
 with Projects;                    use Projects;

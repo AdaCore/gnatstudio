@@ -74,7 +74,7 @@ with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Traces;                    use Traces;
 with Find_Utils;                use Find_Utils;
