@@ -410,14 +410,30 @@ package body Projects.Registry is
       Errors             : Projects.Error_Report;
       New_Project_Loaded : out Boolean)
    is
-      Path : constant String := Normalize_Project_Path (Root_Project_Path);
       Project : Project_Node_Id;
-   begin
-      if not Is_Regular_File (Path) then
-         Trace (Me, "Load: " & Path & " is not a regular file");
+
+      procedure Fail (S1, S2, S3 : String);
+      --  Replaces Osint.Fail
+
+      ----------
+      -- Fail --
+      ----------
+
+      procedure Fail (S1, S2, S3 : String) is
+      begin
          if Errors /= null then
-            Errors (Root_Project_Path & (-" is not a a regular file"));
+            Errors (S1 & S2 & S3);
          end if;
+      end Fail;
+
+   begin
+      if not Is_Regular_File (Root_Project_Path) then
+         Trace (Me, "Load: " & Root_Project_Path & " is not a regular file");
+
+         if Errors /= null then
+            Errors (Root_Project_Path & (-" is not a regular file"));
+         end if;
+
          New_Project_Loaded := False;
          return;
       end if;
@@ -430,7 +446,9 @@ package body Projects.Registry is
       Output.Set_Special_Output (Output_Proc (Errors));
       Reset (Registry, View_Only => False);
 
-      Prj.Part.Parse (Project, Path, True);
+      Prj.Com.Fail := Fail'Unrestricted_Access;
+      Prj.Part.Parse (Project, Root_Project_Path, True);
+      Prj.Com.Fail := null;
 
       Opt.Full_Path_Name_For_Brief_Errors := False;
 
