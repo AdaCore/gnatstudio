@@ -274,7 +274,7 @@ package body Src_Info.Debug is
       Fl := ED.Parent_Location;
       while Fl /= null loop
          if Is_File_Location (Fl.Value) then
-            Put ('<');
+            Put ('<' & Fl.Kind'Img & ' ');
             if Fl.Value.File /= ED.Location.File then
                Dump_Source_File (Fl.Value.File);
                Put ('|');
