@@ -2,7 +2,6 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.MDI;      use Gtkada.MDI;
 with GVD.Process;
 with Glide_Kernel;    use Glide_Kernel;
-with Project_Explorers; use Project_Explorers;
 with Glide_Consoles;  use Glide_Consoles;
 
 package body Glide_Page is
@@ -43,9 +42,7 @@ package body Glide_Page is
 
             exit when Child = null;
 
-            if Get_Widget (Child).all in Project_Explorer_Record'Class then
-               Page.Explorer := Project_Explorer (Get_Widget (Child));
-            elsif Get_Widget (Child).all in Glide_Console_Record'Class then
+            if Get_Widget (Child).all in Glide_Console_Record'Class then
                Page.Console := Glide_Console (Get_Widget (Child));
             end if;
 
@@ -59,12 +56,6 @@ package body Glide_Page is
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
          Raise_Child (Child);
-
-         Gtk_New (Page.Explorer, Window.Kernel);
-         Child := Put (Page.Process_Mdi, Page.Explorer);
-         Set_Title (Child, "Project Explorer");
-         Set_Dock_Side (Child, Left);
-         Dock_Child (Child);
       end if;
    end Initialize;
 
