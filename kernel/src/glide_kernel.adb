@@ -1686,8 +1686,8 @@ package body Glide_Kernel is
          when Protected_Type               => return -"protected type";
          when Record_Object                => return -"record";
          when Record_Type                  => return -"record type";
-         when Signed_Integer_Object        => return -"signed integer";
-         when Signed_Integer_Type          => return -"signed integer type";
+         when Signed_Integer_Object        => return -"integer";
+         when Signed_Integer_Type          => return -"integer type";
          when String_Object                => return -"string";
          when String_Type                  => return -"string type";
          when Task_Object                  => return -"task";
