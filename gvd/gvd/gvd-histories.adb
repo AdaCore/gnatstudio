@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Unchecked_Deallocation;
 with System; use System;
 with Unchecked_Conversion;
-with System.Address_To_Access_Conversions;
 
 package body Odd.Histories is
+
+   use Hlist;
 
    -------------
    -- Convert --
@@ -53,23 +53,23 @@ package body Odd.Histories is
    ------------
 
    procedure Append (History : in out History_List;
-                     Data    : Data_Type)
-   is
-      use Hlist;
+                     Data    : Data_Type) is
    begin
       if History.List = Null_List then
           Hlist.Append (History.List,
                        new Data_Record' (Data => new Data_Type' (Data),
                                          Num_Repeats => 1));
-      elsif Hlist.Get_Data (Hlist.Last (History.List)).Data.all = Data
-      then
+
+      elsif Hlist.Get_Data (Hlist.Last (History.List)).Data.all = Data then
          Hlist.Get_Data (Hlist.Last (History.List)).Num_Repeats :=
            Hlist.Get_Data (Hlist.Last (History.List)).Num_Repeats + 1;
+
       else
          Hlist.Append (History.List,
                        new Data_Record' (Data => new Data_Type' (Data),
                                          Num_Repeats => 1));
       end if;
+
       History.Current := Hlist.Last (History.List);
       History.Position := After_End;
    end Append;
@@ -79,7 +79,6 @@ package body Odd.Histories is
    -----------------
 
    function Get_Current (History : History_List) return Data_Type is
-      use Hlist;
    begin
       if History.Current /= Null_List then
          return Hlist.Get_Data (History.Current).Data.all;
@@ -93,7 +92,6 @@ package body Odd.Histories is
    ----------------------------
 
    function Get_Current_Repeat_Num (History : History_List) return Natural is
-      use Hlist;
    begin
       if History.Current /= Null_List then
          return Hlist.Get_Data (History.Current).Num_Repeats;
@@ -107,7 +105,6 @@ package body Odd.Histories is
    ----------------------
 
    procedure Move_To_Previous (History : in out History_List) is
-      use Hlist;
    begin
       if History.Position = After_End then
          History.Position := Inside_History;
@@ -130,7 +127,6 @@ package body Odd.Histories is
    ------------------
 
    procedure Move_To_Next (History : in out History_List) is
-      use Hlist;
    begin
       if History.Position = Before_Beginnning then
          History.Position := Inside_History;
@@ -153,7 +149,6 @@ package body Odd.Histories is
    ----------
 
    procedure Wind (History : in out History_List; D : Direction) is
-      use Hlist;
    begin
       if History.List /= Hlist.Null_List then
          if D = Backward then
@@ -168,8 +163,7 @@ package body Odd.Histories is
    -- Length --
    ------------
 
-   function Length (History : in History_List) return Integer
-   is
+   function Length (History : in History_List) return Integer is
    begin
       return Integer (Hlist.Length (History.List));
    end Length;

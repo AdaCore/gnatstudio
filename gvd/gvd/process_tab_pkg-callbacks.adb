@@ -215,10 +215,12 @@ package body Process_Tab_Pkg.Callbacks is
          else
             Move_To_Previous (History);
          end if;
-         declare Data : String := Get_Current (History);
+
+         declare
+            Data : constant String := Get_Current (History);
          begin
             if S'Length <= Data'Length
-              and then S = Data (S'First .. S'Last)
+              and then S = Data (Data'First .. Data'First + S'Length - 1)
             then
                Found := True;
                Index := Data'Length - S'Length;
@@ -227,6 +229,7 @@ package body Process_Tab_Pkg.Callbacks is
             Counter := Counter + 1;
          end;
       end loop;
+
    exception
       when No_Such_Item =>
          for J in 1 .. Counter loop
@@ -236,10 +239,8 @@ package body Process_Tab_Pkg.Callbacks is
                Move_To_Next (History);
             end if;
          end loop;
-         declare Data : String := Get_Current (History);
-         begin
-            Index := Data'Length - S'Length;
-         end;
+
+         Index := Get_Current (History)'Length - S'Length;
    end Move_Until_Match;
 
    --------------------------------------
@@ -267,24 +268,20 @@ package body Process_Tab_Pkg.Callbacks is
             D := Forward;
          end if;
          if Get_Has_Selection (Top.Debugger_Text) then
-            declare
-               S : String :=
-                 Get_Chars (Top.Debugger_Text,
-                            Gint (Top.Edit_Pos),
-                            Gint (Get_Selection_Start_Pos
-                                  (Top.Debugger_Text)));
-            begin
-               Move_Until_Match (Top.Command_History, S, D, Index, Found);
-            end;
+            Move_Until_Match
+              (Top.Command_History,
+               Get_Chars
+               (Top.Debugger_Text,
+                Gint (Top.Edit_Pos),
+                Gint (Get_Selection_Start_Pos (Top.Debugger_Text))),
+               D, Index, Found);
          else
-            declare
-               S : String :=
-                 Get_Chars (Top.Debugger_Text,
-                            Gint (Top.Edit_Pos),
-                            Get_Position (Top.Debugger_Text));
-            begin
-               Move_Until_Match (Top.Command_History, S, D, Index, Found);
-            end;
+            Move_Until_Match
+              (Top.Command_History,
+               Get_Chars (Top.Debugger_Text,
+                          Gint (Top.Edit_Pos),
+                          Get_Position (Top.Debugger_Text)),
+               D, Index, Found);
          end if;
          if Found then
             Delete_Text
@@ -296,8 +293,8 @@ package body Process_Tab_Pkg.Callbacks is
             Text_Output_Handler
               (Top, Get_Current (Top.Command_History), Is_Command => True);
             Select_Region
-              (Top.Debugger_Text, Gint (Get_Length (Top.Debugger_Text)
-                                        - Guint (Index) ));
+              (Top.Debugger_Text,
+               Gint (Get_Length (Top.Debugger_Text) - Guint (Index) ));
          else
             Delete_Text
               (Top.Debugger_Text,
