@@ -174,11 +174,25 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
-   procedure Reset_Recursive (Item : access Record_Type);
    procedure Set_Visibility
      (Item      : in out Record_Type;
       Visible   : Boolean;
       Recursive : Boolean := False);
+   procedure Component_Is_Visible
+     (Item       : access Record_Type;
+      Component  : access Generic_Type'Class;
+      Is_Visible : out Boolean;
+      Found      : out Boolean);
+
+   type Record_Iterator is new Generic_Iterator with record
+      Item  : Record_Type_Access;
+      Field : Natural;
+      Variant : Natural;
+   end record;
+   function Start (Item : access Record_Type) return Generic_Iterator'Class;
+   procedure Next (Iter : in out Record_Iterator);
+   function At_End (Iter : Record_Iterator) return Boolean;
+   function Data (Iter : Record_Iterator) return Generic_Type_Access;
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;

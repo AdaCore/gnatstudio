@@ -126,6 +126,20 @@ package body Items is
       return Item.Visible;
    end Get_Visibility;
 
+   --------------------------
+   -- Component_Is_Visible --
+   --------------------------
+
+   procedure Component_Is_Visible
+     (Item       : access Generic_Type;
+      Component  : access Generic_Type'Class;
+      Is_Visible : out Boolean;
+      Found      : out Boolean) is
+   begin
+      Found := Generic_Type_Access (Component) = Generic_Type_Access (Item);
+      Is_Visible := Component.Visible;
+   end Component_Is_Visible;
+
    --------------------
    -- Display_Pixmap --
    --------------------
@@ -258,5 +272,59 @@ package body Items is
          Free_Internal (I);
       end if;
    end Free;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Item : access Generic_Type) return Generic_Iterator'Class is
+      Iter : Generic_Iterator;
+   begin
+      return Iter;
+   end Start;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Generic_Iterator) return Boolean is
+   begin
+      return True;
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Generic_Iterator) is
+   begin
+      null;
+   end Next;
+
+   ----------
+   -- Data --
+   ----------
+
+   function Data (Iter : Generic_Iterator) return Generic_Type_Access is
+   begin
+      return null;
+   end Data;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Generic_Type) is
+      Iter : Generic_Iterator'Class := Start (Generic_Type_Access (Item));
+      It   : Generic_Type_Access;
+   begin
+      while not At_End (Iter) loop
+         It := Data (Iter);
+         if It /= null then
+            Reset_Recursive (It);
+         end if;
+         Next (Iter);
+      end loop;
+   end Reset_Recursive;
 
 end Items;

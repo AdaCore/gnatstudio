@@ -848,19 +848,6 @@ package body Items.Arrays is
       return Generic_Type_Access (Item);
    end Get_Component;
 
-   ---------------------
-   -- Reset_Recursive --
-   ---------------------
-
-   procedure Reset_Recursive (Item : access Array_Type) is
-   begin
-      if Item.Values /= null then
-         for V in Item.Values'Range loop
-            Reset_Recursive (Item.Values (V).Value);
-         end loop;
-      end if;
-   end Reset_Recursive;
-
    -------------
    -- Replace --
    -------------
@@ -906,5 +893,79 @@ package body Items.Arrays is
          end loop;
       end if;
    end Set_Visibility;
+
+   --------------------------
+   -- Component_Is_Visible --
+   --------------------------
+
+   procedure Component_Is_Visible
+     (Item       : access Array_Type;
+      Component  : access Generic_Type'Class;
+      Is_Visible : out Boolean;
+      Found      : out Boolean)
+   is
+      F       : Boolean;
+   begin
+      if Generic_Type_Access (Component) = Generic_Type_Access (Item) then
+         Is_Visible := Item.Visible;
+         Found := True;
+         return;
+      end if;
+
+      if Item.Values /= null then
+         for V in Item.Values'Range loop
+            Component_Is_Visible
+              (Item.Values (V).Value, Component, Is_Visible, F);
+            if F then
+               Is_Visible := Is_Visible and then Item.Visible;
+               Found := True;
+               return;
+            end if;
+         end loop;
+      end if;
+      Found := False;
+   end Component_Is_Visible;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Item : access Array_Type) return Generic_Iterator'Class is
+      Iter : Array_Iterator;
+   begin
+      Iter.Item := Array_Type_Access (Item);
+      if Item.Values /= null then
+         Iter.Child := Item.Values'First;
+      end if;
+      return Iter;
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Array_Iterator) is
+   begin
+      Iter.Child := Iter.Child + 1;
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Array_Iterator) return Boolean is
+   begin
+      return Iter.Item.Values = null
+        or else Iter.Child > Iter.Item.Values'Last;
+   end At_End;
+
+   ----------
+   -- Data --
+   ----------
+
+   function Data (Iter : Array_Iterator) return Generic_Type_Access is
+   begin
+      return Iter.Item.Values (Iter.Child).Value;
+   end Data;
 
 end Items.Arrays;

@@ -308,26 +308,6 @@ package body Items.Records is
       Put ("}");
    end Print;
 
-   ---------------------
-   -- Reset_Recursive --
-   ---------------------
-
-   procedure Reset_Recursive (Item : access Record_Type) is
-   begin
-      for F in Item.Fields'Range loop
-         if Item.Fields (F).Value /= null then
-            Reset_Recursive (Item.Fields (F).Value);
-         end if;
-
-         if Item.Fields (F).Variant_Part /= null then
-            for V in Item.Fields (F).Variant_Part'Range loop
-               Reset_Recursive (Item.Fields (F).Variant_Part (V));
-            end loop;
-         end if;
-      end loop;
-   end Reset_Recursive;
-
-
    ----------
    -- Free --
    ----------
@@ -832,5 +812,110 @@ package body Items.Records is
          end loop;
       end if;
    end Set_Visibility;
+
+   --------------------------
+   -- Component_Is_Visible --
+   --------------------------
+
+   procedure Component_Is_Visible
+     (Item       : access Record_Type;
+      Component  : access Generic_Type'Class;
+      Is_Visible : out Boolean;
+      Found      : out Boolean)
+   is
+      Fo : Boolean;
+   begin
+      if Generic_Type_Access (Component) = Generic_Type_Access (Item) then
+         Is_Visible := Item.Visible;
+         Found := True;
+         return;
+      end if;
+
+      for F in Item.Fields'Range loop
+         if Item.Fields (F).Value /= null then
+            Component_Is_Visible
+              (Item.Fields (F).Value, Component, Is_Visible, Fo);
+            if Fo then
+               Is_Visible := Is_Visible and then Item.Visible;
+               Found := True;
+               return;
+            end if;
+         end if;
+
+         if Item.Fields (F).Variant_Part /= null then
+            for V in Item.Fields (F).Variant_Part'Range loop
+               Component_Is_Visible
+                 (Item.Fields (F).Variant_Part (V),
+                  Component, Is_Visible, Fo);
+               if Fo then
+                  Is_Visible := Is_Visible and then Item.Visible;
+                  Found := True;
+                  return;
+               end if;
+            end loop;
+         end if;
+      end loop;
+      Found := False;
+   end Component_Is_Visible;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Item : access Record_Type) return Generic_Iterator'Class is
+      Iter : Record_Iterator;
+   begin
+      Iter.Item := Record_Type_Access (Item);
+      Iter.Field := Item.Fields'First;
+      Iter.Variant := Natural'Last;
+      return Iter;
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Record_Iterator) is
+   begin
+      if Iter.Item.Fields (Iter.Field).Variant_Part /= null then
+         if Iter.Variant = Natural'Last then
+            Iter.Variant := Iter.Item.Fields (Iter.Field).Variant_Part'First;
+         else
+            Iter.Variant := Iter.Variant + 1;
+         end if;
+
+         if Iter.Variant
+           > Iter.Item.Fields (Iter.Field).Variant_Part'Last
+         then
+            Iter.Variant := Natural'Last;
+            Iter.Field := Iter.Field + 1;
+         end if;
+      else
+         Iter.Field := Iter.Field + 1;
+      end if;
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Record_Iterator) return Boolean is
+   begin
+      return Iter.Field > Iter.Item.Fields'Last;
+   end At_End;
+
+   ----------
+   -- Data --
+   ----------
+
+   function Data (Iter : Record_Iterator) return Generic_Type_Access is
+   begin
+      if Iter.Variant = Natural'Last then
+         return Generic_Type_Access (Iter.Item.Fields (Iter.Field).Value);
+      else
+         return Generic_Type_Access
+           (Iter.Item.Fields (Iter.Field).Variant_Part (Iter.Variant));
+      end if;
+   end Data;
 
 end Items.Records;

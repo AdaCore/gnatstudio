@@ -87,6 +87,14 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
-   procedure Reset_Recursive (Item : access Repeat_Type);
+
+   type Repeat_Iterator is new Generic_Iterator with record
+      Item   : Repeat_Type_Access;
+      At_End : Boolean;
+   end record;
+   function Start (Item : access Repeat_Type) return Generic_Iterator'Class;
+   procedure Next (Iter : in out Repeat_Iterator);
+   function At_End (Iter : Repeat_Iterator) return Boolean;
+   function Data (Iter : Repeat_Iterator) return Generic_Type_Access;
 
 end Items.Repeats;

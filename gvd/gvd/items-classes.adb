@@ -373,20 +373,6 @@ package body Items.Classes is
    end Replace;
 
    ---------------------
-   -- Reset_Recursive --
-   ---------------------
-
-   procedure Reset_Recursive (Item : access Class_Type) is
-   begin
-      for A in Item.Ancestors'Range loop
-         Reset_Recursive (Item.Ancestors (A));
-      end loop;
-      if Item.Child /= null then
-         Reset_Recursive (Item.Child);
-      end if;
-   end Reset_Recursive;
-
-   ---------------------
    -- Propagate_Width --
    ---------------------
 
@@ -421,5 +407,88 @@ package body Items.Classes is
          Set_Visibility (Item.Child.all, Visible, Recursive);
       end if;
    end Set_Visibility;
+
+   --------------------------
+   -- Component_Is_Visible --
+   --------------------------
+
+   procedure Component_Is_Visible
+     (Item       : access Class_Type;
+      Component  : access Generic_Type'Class;
+      Is_Visible : out Boolean;
+      Found      : out Boolean)
+   is
+      F : Boolean;
+   begin
+      if Generic_Type_Access (Component) = Generic_Type_Access (Item) then
+         Is_Visible := Item.Visible;
+         Found := True;
+         return;
+      end if;
+
+      for A in Item.Ancestors'Range loop
+         Component_Is_Visible
+           (Item.Ancestors (A), Component, Is_Visible, F);
+         if F then
+            Is_Visible := Is_Visible and then Item.Visible;
+            Found := True;
+            return;
+         end if;
+      end loop;
+
+      Component_Is_Visible (Item.Child, Component, Is_Visible, F);
+      if F then
+         Is_Visible := Is_Visible and then Item.Visible;
+         Found := True;
+         return;
+      end if;
+   end Component_Is_Visible;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Item : access Class_Type) return Generic_Iterator'Class is
+      Iter : Class_Iterator;
+   begin
+      Iter.Item := Class_Type_Access (Item);
+      if Item.Ancestors'Length /= 0 then
+         Iter.Ancestor := Item.Ancestors'Last + 1;
+      else
+         Iter.Ancestor := Item.Ancestors'First;
+      end if;
+      return Iter;
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Class_Iterator) is
+   begin
+      Iter.Ancestor := Iter.Ancestor + 1;
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Class_Iterator) return Boolean is
+   begin
+      return Iter.Ancestor > Iter.Item.Ancestors'Last + 1;
+   end At_End;
+
+   ----------
+   -- Data --
+   ----------
+
+   function Data (Iter : Class_Iterator) return Generic_Type_Access is
+   begin
+      if Iter.Ancestor <= Iter.Item.Ancestors'Last then
+         return Generic_Type_Access (Iter.Item.Ancestors (Iter.Ancestor));
+      else
+         return Generic_Type_Access (Iter.Item.Child);
+      end if;
+   end Data;
 
 end Items.Classes;

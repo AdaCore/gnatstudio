@@ -103,10 +103,23 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
-   procedure Reset_Recursive (Item : access Class_Type);
    procedure Set_Visibility
      (Item      : in out Class_Type;
       Visible   : Boolean;
       Recursive : Boolean := False);
+   procedure Component_Is_Visible
+     (Item       : access Class_Type;
+      Component  : access Generic_Type'Class;
+      Is_Visible : out Boolean;
+      Found      : out Boolean);
+
+   type Class_Iterator is new Generic_Iterator with record
+      Item     : Class_Type_Access;
+      Ancestor : Natural;
+   end record;
+   function Start (Item : access Class_Type) return Generic_Iterator'Class;
+   procedure Next (Iter : in out Class_Iterator);
+   function At_End (Iter : Class_Iterator) return Boolean;
+   function Data (Iter : Class_Iterator) return Generic_Type_Access;
 
 end Items.Classes;

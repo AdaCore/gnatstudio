@@ -269,13 +269,43 @@ package body Items.Repeats is
       return null;
    end Replace;
 
-   ---------------------
-   -- Reset_Recursive --
-   ---------------------
+   -----------
+   -- Start --
+   -----------
 
-   procedure Reset_Recursive (Item : access Repeat_Type) is
+   function Start (Item : access Repeat_Type) return Generic_Iterator'Class is
+      Iter : Repeat_Iterator;
    begin
-      Reset_Recursive (Item.Value);
-   end Reset_Recursive;
+      Iter.Item := Repeat_Type_Access (Item);
+      Iter.At_End := False;
+      return Iter;
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Repeat_Iterator) is
+   begin
+      Iter.At_End := True;
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Repeat_Iterator) return Boolean is
+   begin
+      return Iter.At_End;
+   end At_End;
+
+   ----------
+   -- Data --
+   ----------
+
+   function Data (Iter : Repeat_Iterator) return Generic_Type_Access is
+   begin
+      return Iter.Item.Value;
+   end Data;
 
 end Items.Repeats;

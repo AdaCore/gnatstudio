@@ -64,6 +64,27 @@ package Items is
    type Generic_Type_Access is access all Generic_Type'Class;
    --  general type for the items.
 
+   type Generic_Iterator is tagged private;
+   --  Iterator used to traverse all the children of an item. For a record
+   --  type, this would point to each of the fields.
+
+   ---------------
+   -- Iterators --
+   ---------------
+
+   function Start (Item : access Generic_Type) return Generic_Iterator'Class;
+   --  Return an iterator that points to the first child of the item.
+
+   function At_End (Iter : Generic_Iterator) return Boolean;
+   --  Return True if the iterator points after the last child of the item, ie
+   --  if there is no more child
+
+   procedure Next (Iter : in out Generic_Iterator);
+   --  Points to the next child.
+
+   function Data (Iter : Generic_Iterator) return Generic_Type_Access;
+   --  Return the value pointed to by the iterator
+
    ---------------------
    -- Drawing Context --
    ---------------------
@@ -169,6 +190,16 @@ package Items is
    function Get_Visibility (Item : Generic_Type) return Boolean;
    --  Return the visibility state of an item.
 
+   procedure Component_Is_Visible
+     (Item       : access Generic_Type;
+      Component  : access Generic_Type'Class;
+      Is_Visible : out Boolean;
+      Found      : out Boolean);
+   --  Return True if Component (A child or grand-child of Item) is currently
+   --  displayed on the screen.
+   --  Found is set to False if Component is not part of the item hierarchy. In
+   --  that case, Is_Visible's value is irrelevant.
+
    procedure Propagate_Width (Item  : in out Generic_Type;
                               Width : Glib.Gint);
    --  Set a specific width for the item.
@@ -227,7 +258,7 @@ package Items is
    --  Replace_With is returned; null is returned if Current did not belong to
    --  Parent, or if nothing could be done.
 
-   procedure Reset_Recursive (Item : access Generic_Type) is abstract;
+   procedure Reset_Recursive (Item : access Generic_Type);
    --  Reset the boolean that indicates whether the item has changed since the
    --  last update. All the children of Item are reset as well.
 
@@ -318,5 +349,7 @@ private
 
    procedure Free_Internal is new Unchecked_Deallocation
      (Generic_Type'Class, Generic_Type_Access);
+
+   type Generic_Iterator is tagged null record;
 
 end Items;
