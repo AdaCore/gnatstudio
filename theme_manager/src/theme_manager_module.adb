@@ -581,7 +581,7 @@ package body Theme_Manager_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Theme     : Theme_Editor := new Theme_Editor_Record;
+      Theme     : constant Theme_Editor := new Theme_Editor_Record;
    begin
       Theme_Manager_Module := new Theme_Manager_Module_Record;
       Register_Module

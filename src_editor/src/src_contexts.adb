@@ -1042,7 +1042,8 @@ package body Src_Contexts is
       Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
-      Context : Files_Project_Context_Access := new Files_Project_Context;
+      Context : constant Files_Project_Context_Access :=
+                  new Files_Project_Context;
    begin
       Context.Scope      := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
@@ -1059,7 +1060,8 @@ package body Src_Contexts is
      (Scope           : Search_Scope;
       All_Occurrences : Boolean) return Files_Project_Context_Access
    is
-      Context : Files_Project_Context_Access := new Files_Project_Context;
+      Context : constant Files_Project_Context_Access :=
+                  new Files_Project_Context;
    begin
       Context.Scope           := Scope;
       Context.All_Occurrences := All_Occurrences;
@@ -1077,7 +1079,7 @@ package body Src_Contexts is
       Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
-      Context : Open_Files_Context_Access := new Open_Files_Context;
+      Context : constant Open_Files_Context_Access := new Open_Files_Context;
       Open_File_List : VFS.File_Array_Access;
 
    begin
@@ -1102,7 +1104,7 @@ package body Src_Contexts is
      (All_Occurrences : Boolean;
       Scope           : Search_Scope) return Files_Context_Access
    is
-      Context : Files_Context_Access := new Files_Context;
+      Context : constant Files_Context_Access := new Files_Context;
    begin
       Context.Scope := Scope;
       Context.All_Occurrences := All_Occurrences;

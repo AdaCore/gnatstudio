@@ -283,7 +283,7 @@ package body VCS_Module is
    ------------------
 
    procedure Register_VCS (Module : Module_ID; VCS_Identifier : String) is
-      M   : VCS_Module_ID_Access := VCS_Module_ID_Access (Module);
+      M   : constant VCS_Module_ID_Access := VCS_Module_ID_Access (Module);
       Old : Argument_List_Access;
    begin
       if M.VCS_List = null then
@@ -1042,7 +1042,8 @@ package body VCS_Module is
       Raise_Child : Boolean := True;
       Show        : Boolean := False) return VCS_View_Access
    is
-      M : VCS_Module_ID_Access := VCS_Module_ID_Access (VCS_Module_ID);
+      M : constant VCS_Module_ID_Access :=
+            VCS_Module_ID_Access (VCS_Module_ID);
    begin
       if M.Explorer = null then
          Gtk_New (M.Explorer, Kernel);
@@ -1075,7 +1076,8 @@ package body VCS_Module is
    -----------------------
 
    procedure Hide_VCS_Explorer is
-      M : VCS_Module_ID_Access := VCS_Module_ID_Access (VCS_Module_ID);
+      M : constant VCS_Module_ID_Access :=
+            VCS_Module_ID_Access (VCS_Module_ID);
    begin
       if M.Explorer = null
         or else M.Explorer_Child = null

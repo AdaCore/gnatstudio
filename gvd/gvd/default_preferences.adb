@@ -250,7 +250,7 @@ package body Default_Preferences is
    function Clone
      (Info : Pref_Description_Access) return Pref_Description_Access
    is
-      Clone : Pref_Description_Access := new Pref_Description'
+      Clone : constant Pref_Description_Access := new Pref_Description'
         (Page  => new String'(Info.Page.all),
          Value => null,
          Param => Info.Param,

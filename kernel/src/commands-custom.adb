@@ -253,7 +253,7 @@ package body Commands.Custom is
    -------------
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
-      Command : Custom_Command_Access := Convert (Data.Callback_Data);
+      Command : constant Custom_Command_Access := Convert (Data.Callback_Data);
    begin
       Command.Execution.External_Process_In_Progress := False;
       Command.Execution.Process_Exit_Status := Status;
@@ -264,7 +264,7 @@ package body Commands.Custom is
    --------------------------
 
    procedure Store_Command_Output (Data : Process_Data; Output : String) is
-      Command : Custom_Command_Access := Convert (Data.Callback_Data);
+      Command : constant Custom_Command_Access := Convert (Data.Callback_Data);
 
       procedure Insert (Message : String);
       --  Insert Message in the current console

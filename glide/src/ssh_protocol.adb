@@ -282,7 +282,7 @@ package body SSH_Protocol is
    -----------------------
 
    procedure Register_Protocol is
-      SSH, Telnet, Rsh, Scp, Rsync, Ftp : Generic_Connection :=
+      SSH, Telnet, Rsh, Scp, Rsync, Ftp : constant Generic_Connection :=
         new Generic_Connection_Record;
    begin
       SSH.Commands :=

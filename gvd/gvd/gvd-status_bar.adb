@@ -172,7 +172,7 @@ package body GVD.Status_Bar is
    --------------
 
    procedure Arrow_Cb (Widget : access Gtk_Widget_Record'Class) is
-      Status  : GVD_Status_Bar := GVD_Status_Bar (Widget);
+      Status  : constant GVD_Status_Bar := GVD_Status_Bar (Widget);
       X, Y, W : Gint;
       Success : Boolean;
       Grab    : Gdk_Grab_Status;

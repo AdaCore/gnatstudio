@@ -697,7 +697,7 @@ package body Src_Editor_Module is
       pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle := Get_Kernel (Data);
 
-      Id      : Source_Editor_Module :=
+      Id      : constant Source_Editor_Module :=
          Source_Editor_Module (Src_Editor_Module_Id);
 
       Inst    : constant Class_Instance :=
@@ -2639,7 +2639,7 @@ package body Src_Editor_Module is
             Recursive => True);
          List2 : File_Array_Access :=
            Get_Predefined_Source_Files (Get_Registry (Kernel));
-         Completions : String_Array_Access :=
+         Completions : constant String_Array_Access :=
            new String_Array (List1'First .. List1'Last + List2'Length);
       begin
          for L in List1'Range loop
@@ -4617,7 +4617,7 @@ package body Src_Editor_Module is
       Pref_Display_Subprogram_Names : constant Boolean :=
         Get_Pref (Kernel, Display_Subprogram_Names);
 
-      Id : Source_Editor_Module :=
+      Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
 
       Color   : Gdk_Color;

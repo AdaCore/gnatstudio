@@ -49,7 +49,7 @@ package body Vdiff2_Command_Line is
    function Execute
      (Command : access Diff_Command_Line) return Command_Return_Type
    is
-      Diff : Diff_Head_Access := new Diff_Head;
+      Diff : constant Diff_Head_Access := new Diff_Head;
    begin
 
       if Command.Head /= Diff_Head_List.Null_Node
@@ -177,7 +177,7 @@ package body Vdiff2_Command_Line is
                   VRange (Num_File), VRange (Diff.Ref_File));
 
       declare
-         Info           : Line_Information_Data :=
+         Info           : constant Line_Information_Data :=
            new Line_Information_Array
              (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
          Null_Line_Info : Line_Information_Record;
@@ -247,7 +247,7 @@ package body Vdiff2_Command_Line is
                   VRange (Num_File), VRange (Diff.Ref_File));
 
       declare
-         Info           : Line_Information_Data :=
+         Info           : constant Line_Information_Data :=
            new Line_Information_Array
              (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
          Null_Line_Info : Line_Information_Record;

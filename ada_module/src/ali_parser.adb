@@ -1556,7 +1556,7 @@ package body ALI_Parser is
      (Db       : Entities.Entities_Database;
       Registry : Projects.Registry.Project_Registry) return Entities.LI_Handler
    is
-      ALI : ALI_Handler := new ALI_Handler_Record;
+      ALI : constant ALI_Handler := new ALI_Handler_Record;
    begin
       ALI.Db       := Db;
       ALI.Registry := Registry;

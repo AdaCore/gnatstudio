@@ -789,7 +789,7 @@ package body Project_Explorers_Files is
       Values   : GValues) return Boolean
    is
       pragma Unreferenced (Values);
-      T       : Project_Explorer_Files := Project_Explorer_Files (Explorer);
+      T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
 
    begin
       if T.Scroll_To_Directory then
@@ -817,7 +817,8 @@ package body Project_Explorers_Files is
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Values   : GValues)
    is
-      T       : Project_Explorer_Files := Project_Explorer_Files (Explorer);
+      T       : constant Project_Explorer_Files :=
+        Project_Explorer_Files (Explorer);
       Path    : constant Gtk_Tree_Path :=
         Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
       Iter    : Gtk_Tree_Iter;

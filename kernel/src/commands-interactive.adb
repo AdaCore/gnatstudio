@@ -69,7 +69,8 @@ package body Commands.Interactive is
      (Command : access Interactive_Command'Class;
       Context : Interactive_Command_Context) return Command_Access
    is
-      C : Interactive_Command_Proxy_Access := new Interactive_Command_Proxy;
+      C : constant Interactive_Command_Proxy_Access :=
+            new Interactive_Command_Proxy;
    begin
       C.Command := Interactive_Command_Access (Command);
       C.Context := Context;

@@ -315,7 +315,7 @@ package body Glide_Kernel.Task_Manager is
    function Create_Wrapper
      (Command : access Root_Command'Class) return Command_Access
    is
-      C : Wrapper_Command_Access := new Wrapper_Command;
+      C : constant Wrapper_Command_Access := new Wrapper_Command;
    begin
       C.Command := Command_Access (Command);
       return Command_Access (C);

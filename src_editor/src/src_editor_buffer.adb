@@ -2168,7 +2168,7 @@ package body Src_Editor_Buffer is
      (Hook   : Preferences_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      B       : Source_Buffer := Hook.Buffer;
+      B       : constant Source_Buffer := Hook.Buffer;
       Timeout : Gint;
       Prev    : Boolean;
    begin

@@ -262,7 +262,7 @@ package body Gtkada.File_Selector is
      (Pattern : String;
       Name    : String) return Regexp_Filter
    is
-      Filter : Regexp_Filter := new Regexp_Filter_Record;
+      Filter : constant Regexp_Filter := new Regexp_Filter_Record;
    begin
       if Name = "" then
          Filter.Label := new String'(Pattern);
@@ -475,7 +475,7 @@ package body Gtkada.File_Selector is
      (File_Selector : File_Selector_Window_Access;
       Parent        : Gtk_Window := null) return VFS.Virtual_File
    is
-      Filter_A : Filter_Show_All_Access := new Filter_Show_All;
+      Filter_A : constant Filter_Show_All_Access := new Filter_Show_All;
    begin
       pragma Assert (File_Selector /= null);
 
@@ -555,7 +555,7 @@ package body Gtkada.File_Selector is
      (File_Selector : File_Selector_Window_Access;
       Parent        : Gtk_Window := null) return String
    is
-      Filter_A : Filter_Show_All_Access := new Filter_Show_All;
+      Filter_A : constant Filter_Show_All_Access := new Filter_Show_All;
    begin
       pragma Assert (File_Selector /= null);
 

@@ -39,7 +39,7 @@ package body Items.Records is
    function New_Record_Type
      (Num_Fields : Natural) return Generic_Type_Access
    is
-      R : Generic_Type_Access := new Record_Type (Num_Fields);
+      R : constant Generic_Type_Access := new Record_Type (Num_Fields);
    begin
       --  A null record is always valid.
       if Num_Fields = 0 then

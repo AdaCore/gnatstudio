@@ -158,7 +158,7 @@ package body SN.Xref_Pools is
                  Ref_Buf_Last < Ref_Buf'First;
 
                declare
-                  Xref_Elmt : Xref_Elmt_Ptr := new Xref_Elmt_Record;
+                  Xref_Elmt : constant Xref_Elmt_Ptr := new Xref_Elmt_Record;
                begin
                   Xref_Elmt.Source_Filename :=
                     new String'(Src_Buf (Src_Buf'First .. Src_Buf_Last));
@@ -376,7 +376,7 @@ package body SN.Xref_Pools is
       Pool            : Xref_Pool)
    is
       Full : aliased constant String := Full_Name (Source_Filename).all;
-      Xref_Elmt : Xref_Elmt_Ptr :=
+      Xref_Elmt : constant Xref_Elmt_Ptr :=
         STable.Get (Pool.HTable, Full'Unrestricted_Access);
    begin
       if Xref_Elmt /= null then

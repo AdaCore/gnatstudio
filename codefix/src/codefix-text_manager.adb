@@ -2769,7 +2769,7 @@ package body Codefix.Text_Manager is
       Cursor : File_Cursor'Class;
       Word   : String)
    is
-      Current_Line : Ptr_Extract_Line := Get_Line (This, Cursor);
+      Current_Line : constant Ptr_Extract_Line := Get_Line (This, Cursor);
    begin
       Insert (Current_Line.Content, Cursor.Col, Word);
 

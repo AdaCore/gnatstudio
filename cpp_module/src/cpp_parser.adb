@@ -2490,7 +2490,7 @@ package body CPP_Parser is
       Registry : Projects.Registry.Project_Registry)
       return Entities.LI_Handler
    is
-      CPP : CPP_Handler := new CPP_Handler_Record;
+      CPP : constant CPP_Handler := new CPP_Handler_Record;
    begin
       CPP.Db       := Db;
       CPP.Registry := Registry;
@@ -2725,7 +2725,7 @@ package body CPP_Parser is
    function Set_Executables
      (Handler : access Entities.LI_Handler_Record'Class) return String
    is
-      H : CPP_Handler := CPP_Handler (Handler);
+      H : constant CPP_Handler := CPP_Handler (Handler);
    begin
       Free (H.DBIMP_Path);
       Free (H.CBrowser_Path);

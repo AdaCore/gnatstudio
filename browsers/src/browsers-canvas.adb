@@ -195,7 +195,7 @@ package body Browsers.Canvas is
    -------------
 
    procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class) is
-      C : Image_Canvas := Image_Canvas (Canvas);
+      C : constant Image_Canvas := Image_Canvas (Canvas);
    begin
       if C.Scaled_Background /= null
         and then C.Scaled_Background /= C.Background
@@ -508,7 +508,7 @@ package body Browsers.Canvas is
    procedure Realized (Browser : access Gtk_Widget_Record'Class) is
       use type Gdk_GC;
 
-      B      : General_Browser := General_Browser (Browser);
+      B      : constant General_Browser := General_Browser (Browser);
       Color  : Gdk_Color;
       Kernel : constant Kernel_Handle := Get_Kernel (B);
 
@@ -753,7 +753,7 @@ package body Browsers.Canvas is
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data)
    is
       pragma Unreferenced (Mitem);
-      It : Browser_Item := Browser_Item (Data.Item);
+      It : constant Browser_Item := Browser_Item (Data.Item);
    begin
       It.Hide_Links := not It.Hide_Links;
       Refresh_Canvas (Get_Canvas (Data.Browser));

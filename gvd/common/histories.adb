@@ -175,7 +175,7 @@ package body Histories is
       Allow       : Boolean;
       Merge_First : Boolean := False)
    is
-      Current : History_Key_Access := Create_New_Key_If_Necessary
+      Current : constant History_Key_Access := Create_New_Key_If_Necessary
         (Hist, Key, Strings);
    begin
       Current.Allow_Duplicates := Allow;
@@ -440,7 +440,7 @@ package body Histories is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
-      Value : History_Key_Access := Create_New_Key_If_Necessary
+      Value : constant History_Key_Access := Create_New_Key_If_Necessary
         (Hist, Key, Strings);
       Tmp   : String_Access;
       Tmp2  : String_List_Access;
@@ -515,7 +515,7 @@ package body Histories is
       Key       : History_Key;
       Value     : Boolean)
    is
-      Val : History_Key_Access := Create_New_Key_If_Necessary
+      Val : constant History_Key_Access := Create_New_Key_If_Necessary
         (Hist, Key, Booleans);
    begin
       Val.Value := Value;
@@ -609,9 +609,10 @@ package body Histories is
       Menu      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
       Callback  : Menu_Callback)
    is
-      Val : History_Key_Access := Create_New_Key_If_Necessary
+      Val : constant History_Key_Access := Create_New_Key_If_Necessary
         (Hist, Key, Strings);
-      Notifier : Menu_Changed_Notifier := new Menu_Changed_Notifier_Record;
+      Notifier : constant Menu_Changed_Notifier :=
+                   new Menu_Changed_Notifier_Record;
    begin
       Notifier.Menu     := Gtk_Menu_Item (Menu);
       Notifier.Callback := Callback;

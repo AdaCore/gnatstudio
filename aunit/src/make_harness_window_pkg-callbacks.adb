@@ -161,7 +161,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       --  Open explorer window to select suite
-      Harness_Window : Make_Harness_Window_Access :=
+      Harness_Window : constant Make_Harness_Window_Access :=
         Make_Harness_Window_Access (Get_Toplevel (Object));
 
       Filter_A : Filter_Show_All_Access;

@@ -1292,7 +1292,7 @@ package body Glide_Result_View is
    procedure Toggle_Sort
      (Widget : access Gtk_Widget_Record'Class)
    is
-      Explorer : Result_View := Result_View (Widget);
+      Explorer : constant Result_View := Result_View (Widget);
    begin
       Explorer.Sort_By_Category := not Explorer.Sort_By_Category;
 

@@ -1323,7 +1323,7 @@ package body Browsers.Entities is
 
    procedure Find_Children_Types  (Item  : access Arrow_Item_Record'Class) is
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Data   : Find_Children_Types_Data :=
+      Data   : constant Find_Children_Types_Data :=
                  (Item    => Type_Item (Item),
                   Browser => Type_Browser (Get_Browser (Item)),
                   Iter    => new Child_Type_Iterator);
@@ -1355,7 +1355,7 @@ package body Browsers.Entities is
      (Event : Gdk_Event;
       Item  : access Browser_Item_Record'Class)
    is
-      It : Type_Item := Type_Item (Item);
+      It : constant Type_Item := Type_Item (Item);
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release

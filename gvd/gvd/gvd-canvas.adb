@@ -386,7 +386,7 @@ package body GVD.Canvas is
    procedure Preferences_Changed
      (Canvas : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      C   : GVD_Canvas := GVD_Canvas (Canvas);
+      C   : constant GVD_Canvas := GVD_Canvas (Canvas);
       Win : Gdk.Window.Gdk_Window;
       Item : Canvas_Item;
       Iter : Item_Iterator;

@@ -68,7 +68,7 @@ package body Naming_Exceptions is
    --------------------
 
    procedure Destroy_Editor (Editor : access Gtk_Widget_Record'Class) is
-      Ed : Exceptions_Editor := Exceptions_Editor (Editor);
+      Ed : constant Exceptions_Editor := Exceptions_Editor (Editor);
    begin
       Free (Ed.Language);
    end Destroy_Editor;

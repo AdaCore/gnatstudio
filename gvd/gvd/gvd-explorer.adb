@@ -920,7 +920,7 @@ package body GVD.Explorer is
    is
       pragma Unreferenced (Event);
 
-      Exp     : Explorer_Access := Explorer_Access (Explorer);
+      Exp     : constant Explorer_Access := Explorer_Access (Explorer);
       --  Check : Gtk_Check_Menu_Item;
       Mitem   : Gtk_Menu_Item;
       Tips    : Gtk_Tooltips;

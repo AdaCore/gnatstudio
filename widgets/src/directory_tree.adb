@@ -1551,7 +1551,7 @@ package body Directory_Tree is
       Values   : GValues) return Boolean
    is
       pragma Unreferenced (Values);
-      T : Dir_Tree := Dir_Tree (Explorer);
+      T : constant Dir_Tree := Dir_Tree (Explorer);
 
    begin
       Disconnect (T.File_Tree, T.Realize_Cb_Id);
@@ -1594,7 +1594,7 @@ package body Directory_Tree is
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Values   : GValues)
    is
-      T       : Dir_Tree := Dir_Tree (Explorer);
+      T       : constant Dir_Tree := Dir_Tree (Explorer);
       Path    : constant Gtk_Tree_Path :=
         Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
       Iter    : Gtk_Tree_Iter;

@@ -2980,7 +2980,8 @@ package body Project_Viewers is
       Num    : Positive)
       return Switches_Editors.Switches_Editor_Page
    is
-      Pages  : Page_Array_Access := Prj_Editor_Module_ID.Switches_Pages;
+      Pages  : constant Page_Array_Access :=
+        Prj_Editor_Module_ID.Switches_Pages;
    begin
       if Pages = null or else Num not in Pages'Range then
          return null;

@@ -1997,7 +1997,7 @@ package body Glide_Kernel is
       Shell_Lang : String := "Shell";
       Module     : String := "") return Base_Action_Filter
    is
-      F : Base_Action_Filter :=
+      F : constant Base_Action_Filter :=
         new Base_Action_Filter_Record (Standard_Filter);
    begin
       if Language /= "" then

@@ -344,7 +344,7 @@ package body Navigation_Module is
    procedure On_Back
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Data    : Navigation_Module :=
+      Data    : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
       Result  : Command_Return_Type;
       pragma Unreferenced (Widget, Result);
@@ -376,7 +376,7 @@ package body Navigation_Module is
    procedure On_Forward
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Data    : Navigation_Module :=
+      Data    : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
       Result : Command_Return_Type;
       pragma Unreferenced (Widget, Result);

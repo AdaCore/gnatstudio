@@ -227,7 +227,7 @@ package body Project_Properties is
    ---------------
 
    procedure Destroyed (Editor : access Gtk_Widget_Record'Class) is
-      E : Properties_Editor := Properties_Editor (Editor);
+      E : constant Properties_Editor := Properties_Editor (Editor);
    begin
       if E.Compilers /= null then
          for C in E.Compilers'Range loop

@@ -169,7 +169,7 @@ package body Wizards is
    ----------------
 
    procedure On_Destroy (Wiz : access Gtk_Widget_Record'Class) is
-      W : Wizard := Wizard (Wiz);
+      W : constant Wizard := Wizard (Wiz);
    begin
       if W.Titles /= null then
          for P in W.Titles'Range loop

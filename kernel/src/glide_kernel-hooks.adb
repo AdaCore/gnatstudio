@@ -498,7 +498,7 @@ package body Glide_Kernel.Hooks is
       Profile  : Hook_Type;
       Watch    : Glib.Object.GObject := null)
    is
-      Info : Hook_Description_Access :=
+      Info : constant Hook_Description_Access :=
         Get_Or_Create_Hook (Kernel, Name, Profile => Profile);
    begin
       Prepend (Info.Funcs, Hook);
@@ -674,7 +674,8 @@ package body Glide_Kernel.Hooks is
       Watch     : Glib.Object.GObject := null;
       Func_Name : String := "")
    is
-      Wrap : Simple_No_Args_Wrapper := new Simple_No_Args_Wrapper_Record;
+      Wrap : constant Simple_No_Args_Wrapper :=
+               new Simple_No_Args_Wrapper_Record;
    begin
       if Func_Name /= "" then
          Wrap.Name := new String'(Func_Name);
@@ -768,7 +769,7 @@ package body Glide_Kernel.Hooks is
       Watch     : Glib.Object.GObject := null;
       Func_Name : String := "")
    is
-      Wrap : Simple_Args_Wrapper := new Simple_Args_Wrapper_Record;
+      Wrap : constant Simple_Args_Wrapper := new Simple_Args_Wrapper_Record;
    begin
       if Func_Name /= "" then
          Wrap.Name := new String'(Func_Name);
@@ -852,7 +853,8 @@ package body Glide_Kernel.Hooks is
       Watch     : Glib.Object.GObject := null;
       Func_Name : String := "")
    is
-      Wrap : Simple_Shell_Args_Wrapper := new Simple_Shell_Args_Wrapper_Record;
+      Wrap : constant Simple_Shell_Args_Wrapper :=
+               new Simple_Shell_Args_Wrapper_Record;
    begin
       if Func_Name /= "" then
          Wrap.Name := new String'(Func_Name);
@@ -962,7 +964,8 @@ package body Glide_Kernel.Hooks is
       Watch     : Glib.Object.GObject := null;
       Func_Name : String := "")
    is
-      Wrap : Simple_Return_Wrapper := new Simple_Return_Wrapper_Record;
+      Wrap : constant Simple_Return_Wrapper :=
+               new Simple_Return_Wrapper_Record;
    begin
       if Func_Name /= "" then
          Wrap.Name := new String'(Func_Name);

@@ -540,7 +540,7 @@ package body Shell_Script is
       Kernel  : Kernel_Handle)
    is
       pragma Unreferenced (Console);
-      Script : Shell_Scripting := Shell_Scripting
+      Script : constant Shell_Scripting := Shell_Scripting
         (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
    begin
       Script.Console := null;
@@ -618,7 +618,7 @@ package body Shell_Script is
       return MDI_Child
    is
       Child  : MDI_Child;
-      Script : Shell_Scripting := Shell_Scripting
+      Script : constant Shell_Scripting := Shell_Scripting
         (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
    begin
       if Script.Console = null then

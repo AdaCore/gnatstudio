@@ -1525,7 +1525,7 @@ package body Entities.Queries is
          Entity        : Entity_Information;
          Info_For_Decl : Entity_Info_Array)
       is
-         Refs   : Entity_Reference_List := Entity.References;
+         Refs   : constant Entity_Reference_List := Entity.References;
          Caller : Entity_Information;
       begin
          for R in Entity_Reference_Arrays.First .. Last (Refs) loop

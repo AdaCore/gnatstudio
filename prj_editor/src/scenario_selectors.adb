@@ -218,7 +218,7 @@ package body Scenario_Selectors is
    ------------------------
 
    procedure Select_All_Project (Selector : access Gtk_Widget_Record'Class) is
-      S : Project_Selector := Project_Selector (Selector);
+      S : constant Project_Selector := Project_Selector (Selector);
       Selected : constant Boolean := S.Select_All;
 
       procedure Select_Recursive (Iter : Gtk_Tree_Iter);

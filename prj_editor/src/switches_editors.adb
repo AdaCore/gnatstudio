@@ -992,7 +992,7 @@ package body Switches_Editors is
    is
       Hbox  : Gtk_Box;
       Adj   : Gtk_Adjustment;
-      S     : Switch_Spin_Widget_Access := new Switch_Spin_Widget
+      S     : constant Switch_Spin_Widget_Access := new Switch_Spin_Widget
         (Separator'Length, Switch'Length);
       L     : Gtk_Label;
 
@@ -1081,7 +1081,7 @@ package body Switches_Editors is
       Separator         : String := " ")
    is
       Hbox   : Gtk_Box;
-      S      : Switch_Field_Widget_Access := new Switch_Field_Widget
+      S      : constant Switch_Field_Widget_Access := new Switch_Field_Widget
         (Separator'Length, Switch'Length);
       L      : Gtk_Label;
       Button : Gtk_Button;
@@ -1180,7 +1180,7 @@ package body Switches_Editors is
       Switch : String;
       Tip    : String := "")
    is
-      S : Switch_Check_Widget_Access := new Switch_Check_Widget
+      S : constant Switch_Check_Widget_Access := new Switch_Check_Widget
         (Switch'Length);
    begin
       Gtk_New (S.Check, Label);
@@ -1217,7 +1217,7 @@ package body Switches_Editors is
      return Gtk.Widget.Gtk_Widget
    is
       L     : Gtk_Label;
-      S     : Switch_Combo_Widget_Access := new Switch_Combo_Widget
+      S     : constant Switch_Combo_Widget_Access := new Switch_Combo_Widget
         (Separator'Length, Switch'Length, Default_No_Switch'Length,
          Default_No_Digit'Length);
       Hbox  : Gtk_Box;
@@ -1604,7 +1604,7 @@ package body Switches_Editors is
    --------------------
 
    procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class) is
-      P : Switches_Editor_Page := Switches_Editor_Page (Page);
+      P : constant Switches_Editor_Page := Switches_Editor_Page (Page);
    begin
       Free (P.Lang_Filter);
       Free (P.Attribute_Index);

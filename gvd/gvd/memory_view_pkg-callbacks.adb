@@ -331,7 +331,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Reset_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+               GVD_Memory_View (Get_Toplevel (Object));
    begin
       Free (View.Flags);
       View.Flags := new String'(View.Values.all);

@@ -1379,7 +1379,7 @@ package body Display_Items is
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean
       is
-         It2 : Display_Item := Display_Item (Item);
+         It2 : constant Display_Item := Display_Item (Item);
       begin
          --  Stop iterating when we saw It, since we only want to check the
          --  items before it.
@@ -1548,7 +1548,7 @@ package body Display_Items is
    is
       pragma Unreferenced (Canvas);
 
-      It : Display_Item := Display_Item (Item);
+      It : constant Display_Item := Display_Item (Item);
    begin
       It.Was_Alias := It.Is_Alias_Of /= null;
       It.Is_Alias_Of := null;

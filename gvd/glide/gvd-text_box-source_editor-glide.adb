@@ -450,7 +450,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
             --  We need to resize A.
 
             declare
-               B : Breakpoint_Array_Ptr := new Breakpoint_Array
+               B : constant Breakpoint_Array_Ptr := new Breakpoint_Array
                  (A'First .. A'Last + 16);
             begin
                B (A'First .. A'Last) := A.all;

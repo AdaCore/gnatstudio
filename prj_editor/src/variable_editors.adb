@@ -278,7 +278,7 @@ package body Variable_Editors is
    ---------------------
 
    procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class) is
-      E         : New_Var_Edit := New_Var_Edit (Editor);
+      E         : constant New_Var_Edit := New_Var_Edit (Editor);
       Iter      : Gtk_Tree_Iter;
       Selection : constant Gtk_Tree_Selection :=
         Get_Selection (E.Values_List);
@@ -300,7 +300,7 @@ package body Variable_Editors is
    ---------------------
 
    procedure Delete_Variable (Editor : access Gtk_Widget_Record'Class) is
-      E         : New_Var_Edit := New_Var_Edit (Editor);
+      E         : constant New_Var_Edit := New_Var_Edit (Editor);
       Iter      : Gtk_Tree_Iter;
       Selection : constant Gtk_Tree_Selection :=
         Get_Selection (E.Values_List);
