@@ -49,13 +49,18 @@ package body Docgen.Work_On_Source is
       LI_Unit           : LI_File_Ptr;
       Options           : All_Options)
    is
-      File_Text         : GNAT.OS_Lib.String_Access;
-      Parsed_List       : Construct_List;
+      File_Text   : GNAT.OS_Lib.String_Access;
+      Parsed_List : Construct_List;
 
    begin
       --  Parse the source file and create the Parsed_List
 
       File_Text := Read_File (Source_Filename);
+
+      if File_Text = null then
+         --  This is a non existing file
+         return;
+      end if;
 
       Process_Open_File
         (Doc_File,
@@ -190,13 +195,13 @@ package body Docgen.Work_On_Source is
       --  initialise the Doc_Info data
       Data_Open := Doc_Info'
         (Open_Info,
-         Doc_Info_Options => Options,
-         Doc_File_List => Source_File_List,
-         Open_Title => new String'(Package_Name),
-         Open_File  => new String'(Package_File),
+         Doc_Info_Options  => Options,
+         Doc_File_List     => Source_File_List,
+         Open_Title        => new String'(Package_Name),
+         Open_File         => new String'(Package_File),
          Open_Package_Next => Next_Package,
          Open_Package_Prev => Prev_Package,
-         Doc_LI_Unit => No_LI_File);
+         Doc_LI_Unit       => No_LI_File);
 
       --  call the documentation procedure
       Options.Doc_Subprogram (Doc_File, Data_Open);
@@ -216,18 +221,18 @@ package body Docgen.Work_On_Source is
    is
       Data_Close : Doc_Info (Info_Type => Close_Info);
    begin
-      --  initialise the Doc_Info data
+      --  Initialise the Doc_Info data
+
       Data_Close := Doc_Info'
         (Close_Info,
          Doc_Info_Options => Options,
-         Doc_LI_Unit => No_LI_File,
-         Doc_File_List => TSFL.Null_List,
-         Close_File_Name =>
-         new String'(File_Name));
+         Doc_LI_Unit      => No_LI_File,
+         Doc_File_List    => TSFL.Null_List,
+         Close_File_Name  => new String'(File_Name));
 
-      --  call the documentation procedure
+      --  Call the documentation procedure
+
       Options.Doc_Subprogram (Doc_File, Data_Close);
-
       Free (Data_Close.Close_File_Name);
    end Process_Close_File;
 
@@ -250,17 +255,14 @@ package body Docgen.Work_On_Source is
       Data_Line := Doc_Info'
         (Body_Line_Info,
          Doc_Info_Options => Options,
-         Doc_LI_Unit => LI_Unit,
-         Body_Text      => File_Text,
-         Body_File      =>
-         new String'(Source_File),
-         Doc_File_List => Source_File_List);
+         Doc_LI_Unit      => LI_Unit,
+         Body_Text        => File_Text,
+         Body_File        => new String'(Source_File),
+         Doc_File_List    => Source_File_List);
 
       --  Call the documentation procedure
 
       Options.Doc_Subprogram (Doc_File, Data_Line);
-
-      Free (Data_Line.Body_Text);
       Free (Data_Line.Body_File);
    end Process_One_Body_File;
 
@@ -318,31 +320,34 @@ package body Docgen.Work_On_Source is
          --  Create the upper part of the unit index
 
          Options.Doc_Subprogram (Index_File, Data_Package);
+         Free (Data_Package.Unit_Index_File_Name);
 
          for J in 1 .. Type_Source_File_List.Length (Source_File_List) -
-           One_Ready loop
+           One_Ready
+         loop
             Source_Filename := TSFL.Data (Source_File_Node).File_Name;
 
             --  Add unit, but only if from a spec file
 
             if Is_Spec_File (Source_Filename.all) then
                Package_Name := TSFL.Data (Source_File_Node).Package_Name;
-               Data_Item :=
-                 Doc_Info'(Index_Item_Info,
-                           Doc_Info_Options => Options,
-                           Doc_LI_Unit => No_LI_File,
-                           Doc_File_List => TSFL.Null_List,
-                           Item_Name => Package_Name,
-                           Item_File =>
-                           new String'(File_Name (Source_Filename.all)),
-                           Item_Line => First_File_Line,
-                           Item_Doc_File =>
-                           new String'(Base_Name
-                                         (Get_Doc_File_Name
-                                            (Source_Filename.all,
-                                             Options.Doc_Directory.all,
-                                             Options.Doc_Suffix.all))));
+               Data_Item := Doc_Info'
+                 (Index_Item_Info,
+                  Doc_Info_Options => Options,
+                  Doc_LI_Unit => No_LI_File,
+                  Doc_File_List => TSFL.Null_List,
+                  Item_Name => Package_Name,
+                  Item_File => new String'(File_Name (Source_Filename.all)),
+                  Item_Line => First_File_Line,
+                  Item_Doc_File => new String'
+                    (Base_Name
+                       (Get_Doc_File_Name
+                          (Source_Filename.all,
+                           Options.Doc_Directory.all,
+                           Options.Doc_Suffix.all))));
                Options.Doc_Subprogram (Index_File, Data_Item);
+               Free (Data_Item.Item_File);
+               Free (Data_Item.Item_Doc_File);
             end if;
 
             Source_File_Node := TSFL.Next (Source_File_Node);
@@ -357,9 +362,6 @@ package body Docgen.Work_On_Source is
          End_index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
-      Free (Data_Package.Unit_Index_File_Name);
-      Free (Data_Item.Item_File);
-      Free (Data_Item.Item_Doc_File);
       Free (Data_End.End_Index_Title);
 
       Close (Index_File);
@@ -382,11 +384,12 @@ package body Docgen.Work_On_Source is
 
       Doc_File_Name    : constant String := "index_sub";
    begin
-      Create (Index_File,
-              Out_File,
-              Options.Doc_Directory.all &
-              Doc_File_Name &
-              Options.Doc_Suffix.all);
+      Create
+        (Index_File,
+         Out_File,
+         Options.Doc_Directory.all &
+         Doc_File_Name &
+         Options.Doc_Suffix.all);
 
       Data_Subprogram := Doc_Info'
         (Subprogram_Index_Info,
@@ -395,6 +398,7 @@ package body Docgen.Work_On_Source is
          Doc_File_List => TSFL.Null_List,
          Subprogram_Index_File_Name => new String'(Doc_File_Name));
       Options.Doc_Subprogram (Index_File, Data_Subprogram);
+      Free (Data_Subprogram.Subprogram_Index_File_Name);
 
       if not TEL.Is_Empty (Subprogram_Index_List) then
          Subprogram_Index_Node := TEL.First (Subprogram_Index_List);
@@ -417,6 +421,8 @@ package body Docgen.Work_On_Source is
                         Options.Doc_Directory.all,
                         Options.Doc_Suffix.all))));
             Options.Doc_Subprogram (Index_File, Data_Item);
+            Free (Data_Item.Item_File);
+            Free (Data_Item.Item_Doc_File);
 
             Subprogram_Index_Node := TEL.Next (Subprogram_Index_Node);
          end loop;
@@ -431,9 +437,6 @@ package body Docgen.Work_On_Source is
          End_Index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
-      Free (Data_Item.Item_File);
-      Free (Data_Item.Item_Doc_File);
-      Free (Data_Subprogram.Subprogram_Index_File_Name);
       Free (Data_End.End_Index_Title);
 
       Close (Index_File);
@@ -471,6 +474,7 @@ package body Docgen.Work_On_Source is
          Doc_File_List => TSFL.Null_List,
          Type_Index_File_Name => new String'(Doc_File_Name));
       Options.Doc_Subprogram (Index_File, Data_Type);
+      Free (Data_Type.Type_Index_File_Name);
 
       if not TEL.Is_Empty (Type_Index_List) then
          Type_Index_Node := TEL.First (Type_Index_List);
@@ -491,9 +495,11 @@ package body Docgen.Work_On_Source is
                        (Source_Filename.all,
                         Options.Doc_Directory.all,
                         Options.Doc_Suffix.all))));
-               Options.Doc_Subprogram (Index_File, Data_Item);
+            Options.Doc_Subprogram (Index_File, Data_Item);
+            Free (Data_Item.Item_File);
+            Free (Data_Item.Item_Doc_File);
 
-               Type_Index_Node := TEL.Next (Type_Index_Node);
+            Type_Index_Node := TEL.Next (Type_Index_Node);
          end loop;
 
       end if;
@@ -506,10 +512,7 @@ package body Docgen.Work_On_Source is
          End_Index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
-      Free (Data_Item.Item_File);
-      Free (Data_Item.Item_Doc_File);
       Free (Data_End.End_Index_Title);
-      Free (Data_Type.Type_Index_File_Name);
 
       Close (Index_File);
    end Process_Type_Index;
@@ -756,7 +759,6 @@ package body Docgen.Work_On_Source is
             --  check if defined in this file, the others used only for bodys!
               and then TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
-
                Header := Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
@@ -764,7 +766,6 @@ package body Docgen.Work_On_Source is
                   TEL.Data (Entity_Node).Line);
 
                if Header /= null then
-
                   --  Check if the subtitle has been set already.
                   --  Can't be set before the "if"
 
