@@ -1676,6 +1676,11 @@ package body Src_Info.CPP is
    is
       DB_Dir : constant String := Get_DB_Dir (Project);
    begin
+      if Active (Info_Stream) then
+         Trace (Info_Stream, "start of create_or_complete_li for " &
+                Base_Name (Source_Filename));
+      end if;
+
       --  Do nothing if we couldn't create the database directory
       if DB_Dir = "" then
          return;
@@ -1696,7 +1701,7 @@ package body Src_Info.CPP is
          Handler       => Handler,
          Full_Filename => Source_Filename);
 
-      --  check timestamps for the parsed file
+      --  Check timestamps for the parsed file
       if File /= No_LI_File and then File.LI.Parsed then
          if not Check_Timestamp
            or else Is_Up_To_Date (File,
@@ -1717,12 +1722,15 @@ package body Src_Info.CPP is
 
       Convert_To_Parsed
         (File, File.LI.LI_Filename, Update_Timestamp => True);
-
       Process_File (Source_Filename, Handler, File);
+      Save (Get_Xref_Pool (Handler.Prj_HTable, DB_Dir),
+            Create (Full_Filename => DB_Dir & Browse.Xref_Pool_Filename));
 
-      Save
-        (Get_Xref_Pool (Handler.Prj_HTable, DB_Dir),
-         Create (Full_Filename => DB_Dir & Browse.Xref_Pool_Filename));
+      if Active (Info_Stream) then
+         Trace (Info_Stream, "end of create_or_complete_li for " &
+                Base_Name (Source_Filename));
+      end if;
+
    exception
       when E : others =>
          Trace (Warn_Stream, "Unexpected exception: "
