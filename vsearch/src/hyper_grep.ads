@@ -27,21 +27,21 @@
 -----------------------------------------------------------------------
 
 with Hyper_Grep_Base_Pkg; use Hyper_Grep_Base_Pkg;
-with Gtk.Window; use Gtk.Window;
+with Glide_Kernel;
 
 package Hyper_Grep is
 
    type Hyper_Grep_Record is new Hyper_Grep_Base_Record with record
-      Glide : Gtk_Window;
+      Kernel : Glide_Kernel.Kernel_Handle;
    end record;
    type Hyper_Grep_Access is access all Hyper_Grep_Record'Class;
 
    procedure Gtk_New
      (Hyper_Grep : out Hyper_Grep_Access;
-      Glide      : Gtk_Window);
+      Handle     : Glide_Kernel.Kernel_Handle);
 
    procedure Initialize
      (Hyper_Grep : access Hyper_Grep_Record'Class;
-      Glide      : Gtk_Window);
+      Handle     : Glide_Kernel.Kernel_Handle);
 
 end Hyper_Grep;

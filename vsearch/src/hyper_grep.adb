@@ -30,18 +30,18 @@ package body Hyper_Grep is
 
    procedure Gtk_New
      (Hyper_Grep : out Hyper_Grep_Access;
-      Glide      : Gtk_Window) is
+      Handle     : Glide_Kernel.Kernel_Handle) is
    begin
       Hyper_Grep := new Hyper_Grep_Record;
-      Initialize (Hyper_Grep, Glide);
+      Initialize (Hyper_Grep, Handle);
    end Gtk_New;
 
    procedure Initialize
      (Hyper_Grep : access Hyper_Grep_Record'Class;
-      Glide      : Gtk_Window) is
+      Handle     : Glide_Kernel.Kernel_Handle) is
    begin
       Hyper_Grep_Base_Pkg.Initialize (Hyper_Grep);
-      Hyper_Grep.Glide := Glide;
+      Hyper_Grep.Kernel := Handle;
    end Initialize;
 
 end Hyper_Grep;
