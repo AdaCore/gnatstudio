@@ -804,7 +804,6 @@ package body GVD.Text_Boxes is
      (Box         : access GVD_Text_Box_Record;
       From, To    : Glib.Gint;
       Widget_From : Glib.Gint;
-      Line        : Natural;
       Fore        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color) is
    begin
@@ -822,11 +821,11 @@ package body GVD.Text_Boxes is
          Freeze (Box.Child);
          Delete_Text (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
          Set_Point (Box.Child, Guint (Box.Highlight_Index));
-         Insert
-           (Box,
-            Chars => Do_Tab_Expansion
-            (Box.Buffer (Integer (Box.Highlight_Start)
-                         .. Integer (Box.Highlight_End) - 1)));
+
+         --  Redisplay the line with its proper color highlighting
+         Insert_Buffer (GVD_Text_Box (Box),
+                        Box.Buffer (Integer (Box.Highlight_Start)
+                                    .. Integer (Box.Highlight_End) - 1));
          Box.Highlight_Start := 0;
          Thaw (Box.Child);
       end if;

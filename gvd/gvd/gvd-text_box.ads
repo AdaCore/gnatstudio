@@ -188,7 +188,6 @@ package GVD.Text_Boxes is
      (Box         : access GVD_Text_Box_Record;
       From, To    : Glib.Gint;
       Widget_From : Glib.Gint;
-      Line        : Natural;
       Fore        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color);
    --  Highlight a specific range in the text area (the background becomes
