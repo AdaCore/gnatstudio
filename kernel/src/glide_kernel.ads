@@ -92,6 +92,12 @@ package Glide_Kernel is
    --  Parse the given ALI file and return the new LI_File_Ptr created if
    --  the parsing was successful.
 
+   function Locate_From_Source
+     (Handle            : access Kernel_Handle_Record;
+      Source_Filename   : String)
+      return Src_Info.LI_File_Ptr;
+   --  Find the ALI file for Source_Filename, and return a handle to it.
+
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record);
    --  Save the current desktop.
