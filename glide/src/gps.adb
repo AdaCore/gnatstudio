@@ -518,7 +518,7 @@ procedure GPS is
    procedure Parse_Switches is
    begin
       loop
-         case Getopt ("-version -help P! -log-level= " &
+         case Getopt ("-version -help P: -log-level= " &
                       "-debug? -debugger= -target= -load= -eval=")
          is
             -- long option names --
