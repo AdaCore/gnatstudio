@@ -539,6 +539,7 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget);
 
    begin
+      Trace (Me, "begin Close Difference");
       while CurrNode /= Diff_Head_List.Null_Node loop
          Diff.all := Data (CurrNode);
          exit when (Diff.File1 /= null and then Diff.File1.all = File)
@@ -550,12 +551,13 @@ package body Vdiff2_Module.Callback is
       if CurrNode /= Diff_Head_List.Null_Node then
          Hide_Differences (Kernel, Diff.all);
          Remove_Nodes (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                          Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+                       Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
                              CurrNode),
-                          CurrNode);
+                       CurrNode);
+         Free_All (Diff.all);
       end if;
-      Free_All (Diff.all);
       Free (Diff);
+      Trace (Me, "end Close Difference");
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
