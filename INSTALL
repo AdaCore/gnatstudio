@@ -4,9 +4,13 @@ Building/Installing from sources
 To build GPS from sources, you need to have GNU make available as
 a prerequisite.
 
-Then you need to install the GNAT compiler (version >= 3.15) on your machine.
+Then you need to install the GNAT 3.15 compiler on your machine.
 
-You then need to install the Gtk+ 2.2.x suite (e.g 2.2.1).
+GNAT must be installed before compiling any of the other
+packages, and the C compiler that comes with GNAT must be used to build
+Gtk+, since the Gtk+ packages are dependent on the particular compiler used.
+
+You then need to install the latest Gtk+ suite (currently 2.0.6).
 To download and build Gtk+, follow the instructions given at www.gtk.org
 
 Once Gtk+ has been installed, extract the GPS sources:
@@ -18,8 +22,7 @@ Choose a prefix to install GPS:
 
   $ prefix=<prefix>
 
-Then build GtkAda (see GtkAda/INSTALL for further instructions, in particular
-under Windows systems):
+Then build GtkAda:
 
   $ cd gtkada
   $ ./configure --prefix=$prefix
@@ -30,19 +33,8 @@ Then make sure that your PATH and LD_LIBRARY_PATH environment variables point
 to the GtkAda installation
 
 After having configured and installed Gtk+/Gtkada, execute the following
-commands at the top level GPS source directory (under Windows, similar
-changes as explained in GtkAda/INSTALL are needed, as well as applying the
-patch docs/gps-win32.diff):
+commands at the top level GPS source directory:
 
   $ ./configure --prefix=$prefix
   $ make
   $ make install
-
-Note: if you want to use a C compiler other than the one provided with
-gnat, you can replace the configure lines above by:
-CC=/path/to/c/compiler ./configure --prefix=$prefix
-
-If you need to modify configure.in and then regenerate the configure script,
-you will need autoconf version 2.54 installed on your machine. Later version
-may not be compatible.
-
