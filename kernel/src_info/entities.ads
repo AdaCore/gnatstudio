@@ -141,6 +141,7 @@ package Entities is
       Is_Type     : Boolean;
       Is_Abstract : Boolean;
    end record;
+   pragma Pack (E_Kind);
    --  Description for the type of an entity.
    --  Kind describes its general family.
    --  Is_Generic is set to true if this is a generic entity (or a template in
@@ -749,6 +750,11 @@ private
       Name                  : GNAT.OS_Lib.String_Access;
       Kind                  : E_Kind;
       Attributes            : Entity_Attributes;
+      Is_Valid              : Boolean := True;
+      --  Whether the entity still exists in its source file. This is set to
+      --  False when some other entity references this one, but we have
+      --  reparsed the source file since then and the entity is no longer
+      --  valid.
 
       Declaration           : File_Location;
       Caller_At_Declaration : Entity_Information;
@@ -756,12 +762,12 @@ private
 
       End_Of_Scope          : E_Reference;
       --  The location at which the declaration of this entity ends. This is
-      --  used for all entites that contain other entities (records, C++
-      --  classes, packages,...)
+      --  used for all entities that contain other entities (records, C++
+      --  classes, packages, ...)
       --  The handling of end_of_scope is the following: if the entity
       --  has only one of these, it is stored in its declaration. If
       --  the entity has two of these (spec+body of a package for
-      --  instance, only the one for the body is stored). However, in
+      --  instance), only the one for the body is stored. However, in
       --  the latter case we need to save the end-of-scope for the
       --  spec in the standard list of references so that scope_trees
       --  can be generated.
@@ -792,12 +798,6 @@ private
       Called_Entities       : Entities_Tries.Trie_Tree;
       --  List of entities that have a reference between the body and the
       --  end-of-scope of the entity.
-
-      Is_Valid              : Boolean := True;
-      --  Whether the entity still exists in its source file. This is set to
-      --  False when some other entity references this one, but we have
-      --  reparsed the source file since then and the entity is no longer
-      --  valid.
 
       Ref_Count             : Natural := 1;
       --  The reference count for this entity. When it reaches 0, the entity
