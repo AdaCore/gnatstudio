@@ -1084,6 +1084,8 @@ package body Src_Editor_Box is
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Event_Box, Box.Cursor_Loc_Label);
 
+      --  Setup a minimal size for the line:column area, to avoid too much
+      --  resizing.
       declare
          Layout : constant Pango_Layout :=
            Create_Pango_Layout (Box.Cursor_Loc_Label, "9999:99");
