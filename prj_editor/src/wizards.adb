@@ -22,7 +22,6 @@ with Glib;               use Glib;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
 with Gtk.Dialog;         use Gtk.Dialog;
-with Gtk.Enums;          use Gtk.Enums;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.Stock;          use Gtk.Stock;
 with Gtk.Style;          use Gtk.Style;
@@ -175,10 +174,10 @@ package body Wizards is
    --------------
 
    procedure Add_Page
-     (Wiz         : access Wizard_Record;
-      Page        : access Wizard_Page_Record'Class;
-      Description : String;
-      Toc         : String := "";
+     (Wiz           : access Wizard_Record;
+      Page          : access Wizard_Page_Record'Class;
+      Description   : String;
+      Toc           : String := "";
       Lazy_Creation : Boolean := False)
    is
       Tmp : Wizard_Pages_Array_Access := Wiz.Pages;
@@ -205,7 +204,6 @@ package body Wizards is
       end if;
 
       Show_All (Page.Toc);
-      Set_Justify (Page.Toc, Justify_Left);
       Set_Alignment (Page.Toc, 0.0, 0.0);
       Pack_Start (Get_Side_Box (Wiz), Page.Toc, Expand => False);
       Set_Style (Page.Toc, Wiz.Normal_Style);
@@ -222,34 +220,35 @@ package body Wizards is
       Page.Was_Complete := Is_Complete (Page, Wiz);
       Display_Message (Wiz, "", As_Error => False);
 
-      if not Lazy_Creation then
-         begin
-            Page.Content := Create_Content (Page, Wiz);
-
-            Size_Request (Page.Content, Req);
-            Size_Request (Get_Contents (Wiz), Full_Req);
-
-            if Req.Width > Full_Req.Width then
-               Full_Req.Width := Req.Width;
-            end if;
-            if Req.Height > Full_Req.Height then
-               Full_Req.Height := Req.Height;
-            end if;
-
-            Pack_Start (Get_Contents (Wiz),
-                        Page.Content,
-                        Expand => True, Fill => True);
-            Hide (Page.Content);
-            Set_Child_Visible (Page.Content, False);
-
-            Set_Size_Request
-              (Get_Contents (Wiz), Full_Req.Width, Full_Req.Height);
-         exception
-            when E : others =>
-               Trace (Exception_Handle, "Unexpected exception "
-                      & Exception_Information (E));
-         end;
+      if Lazy_Creation then
+         return;
       end if;
+
+      Page.Content := Create_Content (Page, Wiz);
+
+      Size_Request (Page.Content, Req);
+      Size_Request (Get_Contents (Wiz), Full_Req);
+
+      if Req.Width > Full_Req.Width then
+         Full_Req.Width := Req.Width;
+      end if;
+      if Req.Height > Full_Req.Height then
+         Full_Req.Height := Req.Height;
+      end if;
+
+      Pack_Start (Get_Contents (Wiz),
+                  Page.Content,
+                  Expand => True, Fill => True);
+      Hide (Page.Content);
+      Set_Child_Visible (Page.Content, False);
+
+      Set_Size_Request
+        (Get_Contents (Wiz), Full_Req.Width, Full_Req.Height);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end Add_Page;
 
    ------------------
