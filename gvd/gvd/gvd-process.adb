@@ -903,7 +903,8 @@ package body GVD.Process is
       if Get_Parse_File_Name (Get_Process (Process.Debugger)) then
          Found_File_Name
            (Process.Debugger,
-            Process.Current_Output.all,
+            Process.Current_Output
+              (Process.Current_Output'First .. Process.Current_Output_Pos - 1),
             File_First, File_Last, First, Last, Line,
             Addr_First, Addr_Last);
 
