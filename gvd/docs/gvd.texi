@@ -1412,6 +1412,16 @@ Run inferior debugger on HOST. See
 
 @item --target TARG:PRO
 Load program on machine TARG using protocol PRO.
+Note that TARG can contain the @code{:} character for e.g specifying the
+port number. The last colon will be used by GVD as the separator between
+the target and the protocol. For instance, assuming you want to connect
+to a board named @i{bare} on port 1234 using the @i{remote} protocol, you
+would specify:
+
+@smallexample
+gvd --target bare:1234:remote
+@end smallexample
+
 See @ref{Using GVD with a Remote Program} for more information.
 
 @item --log-level [0-4]
