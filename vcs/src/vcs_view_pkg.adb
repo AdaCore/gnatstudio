@@ -252,18 +252,14 @@ package body VCS_View_Pkg is
 
       Text      : String_Access;
    begin
-      Width := 0;
+      Width  := 0;
       Height := 0;
 
       Window := Get_Bin_Window (Data.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
 
       Get_Path_At_Pos
-        (Data.Tree,
-         X, Y,
-         Path, Column,
-         Cell_X, Cell_Y,
-         Row_Found);
+        (Data.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
 
       if not Row_Found then
          return;
@@ -287,6 +283,8 @@ package body VCS_View_Pkg is
       elsif Column = Data.File_Column then
          Text := new String'(Get_String (Data.Model, Iter, Name_Column));
       end if;
+
+      Path_Free (Path);
 
       if Text /= null then
          Create_Pixmap_From_Text
