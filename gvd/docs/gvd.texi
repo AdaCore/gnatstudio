@@ -52,6 +52,7 @@ unmodified in any copy.
 * Environment::
 * Files::
 * Limitations::
+* Reporting bugs::
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -87,6 +88,8 @@ Limitations
 
 * General Limitations::
 * Limitations using GDB::
+
+Reporting bugs
 
 @end detailmenu
 @end menu
@@ -1289,6 +1292,7 @@ Override the default editor as found in the @ref{helpers menu}.
    @item $HOME/.gvd
 GVD state directory
    @item $HOME/.gvd/log
+@anchor{log file}
 Log file created automatically by GVD. This log file contains all the input
 and output exchanged between GVD and the underlying debugger. You can
 specify the level of logs (from no log to very verbose) by using the
@@ -1367,6 +1371,22 @@ saved by the user.
      GVD sets these values automatically when invoking GDB; if these values
      are changed, there may be some malfunctions, especially in the data
      display.
+
+@c --------------------------------------------------------------------
+@node Reporting bugs
+@chapter Reporting bugs
+@c --------------------------------------------------------------------
+
+@noindent
+If you encounter a bug in GVD, you can report it to
+@uref{mailto:report@@gnat.com} if you are a supported user (to become a
+supported user, contact @uref{mailto:sales@@gnat.com}), or to the
+public gvd development list (@uref{mailto:gvd-devel@@lists.act-europe.fr}).
+
+Please try to include a detailled description of the problem, including
+sources to reproduce it if possible, and/or a scenario describing the
+actions performed to reproduce the problem. Saving your session and
+the log file (see @ref{log file}) can help automate this process.
 
 @c @printindex cp
 @contents
