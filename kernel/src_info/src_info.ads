@@ -159,7 +159,7 @@ package Src_Info is
    --  If the files are analyzed by external processes, the call to
    --  Generate_LI_For_Project would for instance start the external process
    --  for the first file, and when Next is called, it should check that the
-   --  first process as finished executing before processing the next file.
+   --  first process has finished executing before processing the next file.
    --
    --  If an extra phase needs to be done after parsing all the source files,
    --  it should also be done as a result of a call to Next.
