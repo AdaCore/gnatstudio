@@ -70,7 +70,7 @@ package body Project_Properties is
 
    type Lang_Widget_Info is record
       Language  : GNAT.OS_Lib.String_Access;
-      Widget    : Gtk_Entry;
+      Widget    : Gtk_Widget;
       Attribute : Project_Field;
    end record;
    type Lang_Widget_Array is array (Natural range <>) of Lang_Widget_Info;
@@ -156,7 +156,7 @@ package body Project_Properties is
    procedure Add_Widget
      (List      : in out Lang_Widget_Array_Access;
       Lang      : String;
-      Widget    : access Gtk_Entry_Record'Class;
+      Widget    : access Gtk_Widget_Record'Class;
       Attribute : Project_Field);
    --  Add a new entry in List. Resize as needed
 
@@ -171,7 +171,7 @@ package body Project_Properties is
    procedure Add_Widget
      (List      : in out Lang_Widget_Array_Access;
       Lang      : String;
-      Widget    : access Gtk_Entry_Record'Class;
+      Widget    : access Gtk_Widget_Record'Class;
       Attribute : Project_Field)
    is
       Tmp : Lang_Widget_Array_Access := List;
@@ -186,7 +186,7 @@ package body Project_Properties is
 
       List (List'Last) :=
         (Language  => new String'(Lang),
-         Widget    => Gtk_Entry (Widget),
+         Widget    => Gtk_Widget (Widget),
          Attribute => Attribute);
    end Add_Widget;
 
@@ -441,15 +441,17 @@ package body Project_Properties is
                   Free_String_List (Items);
 
                   Ent := Get_Entry (Combo);
+                  Add_Widget
+                    (Editor.Compilers, Languages (L).all, Combo, Fields (F));
                else
                   Gtk_New (Ent);
                   Pack_Start (Hbox, Ent);
+                  Add_Widget
+                    (Editor.Compilers, Languages (L).all, Ent, Fields (F));
                end if;
 
                Set_Editable (Ent, Fields (F).Editable);
                Set_Text (Ent, Get_Value (Project, Fields (F)));
-               Add_Widget
-                 (Editor.Compilers, Languages (L).all, Ent, Fields (F));
             end loop;
          end;
       end loop;
@@ -957,8 +959,11 @@ package body Project_Properties is
                   F   : Lang_Widget_Info renames Editor.Compilers (C);
                   Att : Project_Field renames Editor.Compilers (C).Attribute;
                begin
-                  if Project = No_Project
-                    or else Get_Text (F.Widget) /= Get_Value (Project, Att)
+                  if F.Widget.all in Gtk_Entry_Record'Class
+                    and then
+                      (Project = No_Project
+                       or else Get_Text (Gtk_Entry (F.Widget)) /=
+                         Get_Value (Project, Att))
                   then
                      Changed := True;
 
@@ -967,20 +972,20 @@ package body Project_Properties is
                                & ' ' & Att.Attribute_Index.all
                                & " changed");
                         Update_Attribute_Value_In_Scenario
-                          (Project            => Project,
+                          (Project          => Project,
                            Scenario_Variables => Scenario_Variables,
-                           Attribute          => Build
+                           Attribute        => Build
                              (Ide_Package, Att.Attribute_Name.all),
-                           Value              => Get_Text (F.Widget),
-                           Attribute_Index    => Att.Attribute_Index.all);
+                           Value            => Get_Text (Gtk_Entry (F.Widget)),
+                           Attribute_Index  => Att.Attribute_Index.all);
                      else
                         Trace (Me, Att.Attribute_Name.all & " changed");
                         Update_Attribute_Value_In_Scenario
-                          (Project            => Project,
+                          (Project         => Project,
                            Scenario_Variables => Scenario_Variables,
-                           Attribute          => Build
+                           Attribute       => Build
                            (Ide_Package, Att.Attribute_Name.all),
-                           Value              => Get_Text (F.Widget));
+                           Value           => Get_Text (Gtk_Entry (F.Widget)));
                      end if;
                   end if;
                end;
