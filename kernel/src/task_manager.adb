@@ -444,12 +444,12 @@ package body Task_Manager is
                --  -  when A ends, queue 1 is freed and therefore B is never
                --      executed.
 
-
                if Manager.Running_Queue >= 1 then
                   Manager.Running_Queue := Manager.Running_Queue + 1;
                end if;
 
                return Manager.Queues'First;
+
             else
                New_Queues
                  (Manager.Queues'First .. Manager.Queues'Last) :=
