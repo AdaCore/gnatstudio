@@ -18,28 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
-with Gdk.Types; use Gdk.Types;
-with Gtk; use Gtk;
+with Glib;                  use Glib;
+with Gdk.Input;
+with Gdk.Types;             use Gdk.Types;
 with Gtk.Main;
-with Gtk.Enums; use Gtk.Enums;
+with Gtk;                   use Gtk;
+with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Notebook;          use Gtk.Notebook;
+with Gtkada.Intl;           use Gtkada.Intl;
+with Gtkada.Dialogs;        use Gtkada.Dialogs;
+
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Gtkada.Intl; use Gtkada.Intl;
-with Gtkada.Dialogs; use Gtkada.Dialogs;
-with GVD.Process; use GVD.Process;
+with Debugger;
+with Process_Proxies;
+with GVD.Process;           use GVD.Process;
 with GVD.Types;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GVD.Preferences;
+with GVD.Preferences;       use GVD.Preferences;
 
 pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
 pragma Warnings (On);
 
-with Ada.Command_Line; use Ada.Command_Line;
+with Ada.Command_Line;  use Ada.Command_Line;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.Text_IO;       use Ada.Text_IO;
 with GNAT.Command_Line; use GNAT.Command_Line;
-with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Text_IO; use Ada.Text_IO;
+
 with Language.Debugger.Ada; use Language.Debugger.Ada;
 with Language.Debugger.C;   use Language.Debugger.C;
 with Language;              use Language;
@@ -47,7 +55,7 @@ with Display_Items;         use Display_Items;
 with GVD.Strings;           use GVD.Strings;
 
 procedure GVD_Main is
-   Process_Tab       : Debugger_Process_Tab;
+   Process           : Debugger_Process_Tab;
    List              : Argument_List (1 .. Argument_Count);
    Main_Debug_Window : Main_Debug_Window_Access;
    Id                : Glib.Gint;
@@ -55,11 +63,14 @@ procedure GVD_Main is
    Level             : Integer;
    Debug_Type        : GVD.Types.Debugger_Type := GVD.Types.Gdb_Type;
    Button            : Message_Dialog_Buttons;
+   Editor            : String_Access;
    Root              : String_Access;
    Home              : String_Access;
    Dir               : String_Access;
    Remote_Host       : String_Access := new String' ("");
    Debugger_Name     : String_Access := new String' ("");
+   Target            : String_Access := new String' ("");
+   Protocol          : String_Access := new String' ("");
    Debuggee_Name     : String_Access;
 
    procedure Init;
@@ -175,16 +186,16 @@ procedure GVD_Main is
    begin
       Put_Line (Standard_Error, -"Bug detected in GVD");
       Put_Line (Standard_Error,
-                "Please report with the contents of the file " &
+                (-"Please report with the contents of the file ") &
                 Dir.all & Directory_Separator & "log");
-      Put_Line (Standard_Error, "and the following information:");
-      Put_Line (Standard_Error, "Version: " & GVD.Version);
+      Put_Line (Standard_Error, -"and the following information:");
+      Put_Line (Standard_Error, (-"Version: ") & GVD.Version);
       Put_Line (Standard_Error, Exception_Information (E));
       Button := Message_Dialog
-        ("Please report with the contents of the file " &
+        ((-"Please report with the contents of the file ") &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
-         "and the following information:" & ASCII.LF &
-         "Version: " & GVD.Version & ASCII.LF &
+         (-"and the following information:") & ASCII.LF &
+         (-"Version: ") & GVD.Version & ASCII.LF &
          Format (Exception_Information (E), Columns => 80),
          Error, Button_OK,
          Title => -"Bug detected in GVD",
@@ -193,19 +204,22 @@ procedure GVD_Main is
 
    procedure Help is
    begin
-      Put_Line ("GVD " & GVD.Version);
-      Put_Line ("This is a beta release of GVD, the GNU Visual Debugger.");
-      Put_Line ("Usage:");
-      Put_Line ("   gvd [options...] executable-file");
-      Put_Line ("Options:");
-      Put_Line ("   --debugger DEBUG  use DEBUG as the underlying debugger.");
-      Put_Line ("   --host HOST       Run inferior debugger on HOST.");
-      Put_Line ("   --log-level [0-4] Set level of logging (Default is 3).");
-      Put_Line ("   --tty             Use controlling tty as additional " &
-                "debugger console.");
-      Put_Line ("   --version         Show the GVD version and exit.");
+      Put_Line ("GVD " & GVD.Version & ", the GNU Visual Debugger.");
+      Put_Line (-"Usage:");
+      Put_Line (-"   gvd [options...] executable-file");
+      Put_Line (-"Options:");
+      Put_Line (-"   --debugger DEBUG  use DEBUG as the underlying debugger.");
+      Put_Line (-"   --jdb             assume a java debugger.");
+      Put_Line (-"   --host HOST       Run inferior debugger on HOST.");
+      Put_Line (-"   --no-explorer     Do not display explorer window.");
+      Put_Line (-("   --target TARG:PRO " &
+                  "Load program on machine TARG using protocol PRO."));
+      Put_Line (-"   --log-level [0-4] Set level of logging (Default is 3).");
+      Put_Line (-("   --tty             Use controlling tty as additional " &
+                  "debugger console."));
+      Put_Line (-"   --version         Show the GVD version and exit.");
       New_Line;
-      Put_Line ("Other arguments are passed to the underlying debugger.");
+      Put_Line (-"Other arguments are passed to the underlying debugger.");
    end Help;
 
    ---------------------
@@ -239,16 +253,19 @@ begin
       Main_Debug_Window.Log_File   := Create_File (Log'Address, Fmode => Text);
    end;
 
-   if Getenv ("GVD_EDITOR") /= null then
-      Main_Debug_Window.External_Editor := Getenv ("GVD_EDITOR");
+   Editor := Getenv ("GVD_EDITOR");
+
+   if Editor.all /= "" then
+      Main_Debug_Window.External_Editor := Editor;
    else
-      Main_Debug_Window.External_Editor := new
-        String'(GVD.Preferences.Default_External_Editor);
+      Free (Editor);
+      Main_Debug_Window.External_Editor :=
+        Current_Preferences.Default_External_Editor;
    end if;
 
    loop
-      case Getopt ("-debugger: -tty fullname -version -help " &
-        "-host: -log-level:")
+      case Getopt ("-debugger: -jdb -tty fullname -version -help " &
+        "-host: -log-level: -no-explorer -target:")
       is
          -- long option names --
          when '-' =>
@@ -258,13 +275,6 @@ begin
                when 'd' =>
                   Free (Debugger_Name);
                   Debugger_Name := new String' (Clean_Parameter);
-
-               -- --tty --
-               when 't' =>
-                  Main_Debug_Window.TTY_Mode := True;
-                  Id := Standard_Input_Package.Add
-                    (0, Input_Read, Input_Available'Access,
-                     Main_Debug_Window.all'Access);
 
                -- -fullname --
                when 'f' => null;
@@ -296,6 +306,41 @@ begin
                        GVD.Types.Command_Type'Val
                          (GVD.Types.Command_Type'Pos
                            (GVD.Types.Command_Type'Last) + 1 - Level);
+                  end if;
+
+               -- --no-explorer --
+               when 'n' =>
+                  Current_Preferences.Display_Explorer := False;
+
+               when 't' =>
+                  -- --tty --
+                  if Full_Switch = "-tty" then
+                     Main_Debug_Window.TTY_Mode := True;
+                     Id := Standard_Input_Package.Add
+                       (0, Input_Read, Input_Available'Access,
+                        Main_Debug_Window.all'Access);
+
+                  -- --target --
+                  elsif Full_Switch = "-target" then
+                     declare
+                        Param  : constant String := Clean_Parameter;
+                        Column : constant Natural :=
+                          Ada.Strings.Fixed.Index (Param, ":");
+
+                     begin
+                        --  Param should be of the form target:protocol
+
+                        if Column = 0 then
+                           raise Invalid_Switch;
+                        end if;
+
+                        Free (Target);
+                        Free (Protocol);
+                        Target   :=
+                          new String '(Param (Param'First .. Column - 1));
+                        Protocol :=
+                          new String '(Param (Column + 1 .. Param'Last));
+                     end;
                   end if;
 
                -- --version --
@@ -331,16 +376,15 @@ begin
    --  non-switch argument found on the command line)
    Debuggee_Name := new String' (GNAT.Command_Line.Get_Argument);
 
-   --  ??? Should set the executable here, so that we can use Set_Executable
-   --  and get initialization for free.
-
-   Process_Tab := Create_Debugger
-     (Main_Debug_Window,
-      Debug_Type,
-      Debuggee_Name.all,
-      List (1 .. Index),
-      Remote_Host   => Remote_Host.all,
-      Debugger_Name => Debugger_Name.all);
+   Process := Create_Debugger
+     (Window          => Main_Debug_Window,
+      Kind            => Debug_Type,
+      Executable      => Debuggee_Name.all,
+      Params          => List (1 .. Index),
+      Remote_Host     => Remote_Host.all,
+      Remote_Target   => Target.all,
+      Remote_Protocol => Protocol.all,
+      Debugger_Name   => Debugger_Name.all);
 
    if Dir /= null
      and then Is_Directory (Dir.all & Directory_Separator & "sessions")
@@ -365,6 +409,34 @@ begin
          exit;
       exception
          when E : others =>
+            declare
+               Page      : Gtk_Widget;
+               Num_Pages : constant Gint :=
+                 Gint (Page_List.Length
+                   (Get_Children (Main_Debug_Window.Process_Notebook)));
+
+            begin
+               for Page_Num in 0 .. Num_Pages - 1 loop
+                  Page := Get_Nth_Page
+                    (Main_Debug_Window.Process_Notebook, Page_Num);
+
+                  if Page /= null then
+                     Process := Process_User_Data.Get (Page);
+
+                     if Process.Input_Id /= 0 then
+                        Gdk.Input.Remove (Process.Input_Id);
+                        Process.Input_Id := 0;
+                     end if;
+
+                     Process_Proxies.Set_Command_In_Process
+                       (Debugger.Get_Process (Process.Debugger), False);
+                     Set_Busy_Cursor (Process, False);
+                     Unregister_Dialog (Process);
+                     Free (Process.Current_Command);
+                  end if;
+               end loop;
+            end;
+
             Bug_Dialog (E);
       end;
    end loop;
