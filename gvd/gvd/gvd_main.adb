@@ -205,6 +205,7 @@ procedure GVD_Main is
                    Dir.all & Directory_Separator & "log");
          Put_Line (Standard_Error, -"the following information:");
          Put_Line (Standard_Error, (-"Version: ") & GVD.Version);
+         Put_Line (Standard_Error, (-"Date: ") & GVD.Source_Date);
          Put_Line (Standard_Error, (-"Target: ") & GVD.Target);
          Put_Line (Standard_Error, Exception_Information (E));
          Put_Line (Standard_Error,
@@ -217,6 +218,7 @@ procedure GVD_Main is
          Dir.all & Directory_Separator & "log" & ASCII.LF &
          (-"the following information:") & ASCII.LF &
          (-"Version: ") & GVD.Version & ASCII.LF &
+         (-"Date: ") & GVD.Source_Date & ASCII.LF &
          (-"Target: ") & GVD.Target & ASCII.LF &
          Format (Exception_Information (E), Columns => 80) & ASCII.LF &
          (-("and a description as complete as possible " &
@@ -414,11 +416,12 @@ begin
                -- --version --
                when 'v' =>
                   if GVD.Can_Output then
-                     Put_Line ("GVD Version " & GVD.Version &
-                       " for " & GVD.Target);
+                     Put_Line ("GVD version " & GVD.Version &
+                       " (" & GVD.Source_Date & ") for " & GVD.Target);
                   else
                      Button := Message_Dialog
-                       ("GVD Version " & GVD.Version & " for " & GVD.Target,
+                       ("GVD version " & GVD.Version &
+                        " (" & GVD.Source_Date & ") for " & GVD.Target,
                         Information, Button_OK,
                         Title => -"Version",
                         Justification => Justify_Left);
