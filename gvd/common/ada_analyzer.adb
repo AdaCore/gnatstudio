@@ -1650,7 +1650,7 @@ package body Ada_Analyzer is
                      --  Undo additional level of indentation, as in:
                      --     ...
                      --  exception
-                     --     when =>
+                     --     when others =>
                      --        null;
                      --  end;
 
@@ -1872,6 +1872,7 @@ package body Ada_Analyzer is
                if Reserved = Tok_When then
                   if Top_Token.Token = Tok_Case then
                      if Indent_Case_Extra = Automatic
+                       and then not Top_Token.Extra_Indent
                        and then Prec - Start_Of_Line > Num_Spaces
                      then
                         Top_Token.Extra_Indent := True;
