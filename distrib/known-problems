@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D601-008 Custom files: Incorrect handling of spaces in "switch" attribute
+  Problem:    If you are defining a new tool in an XML file, GPS doesn't
+              report an error if the switch contains a space, and fails in
+              showing the project editor correctly
+  Workaround: Remove the space, and use the "separator" attribute instead
+
 - D527-012 Cannot load newly created project
   Problem:    When creating a project from GPS, using Project->New..., GPS
               will generate an error message when loading this project as
