@@ -916,7 +916,8 @@ package body Glide_Kernel.Modules is
      (Kernel    : access Kernel_Handle_Record'Class;
       Mime_Type : String;
       Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean
+      Mode      : Mime_Mode := Read_Write;
+      Set_Busy  : Boolean := True) return Boolean
    is
       Current : Module_List.List_Node :=
         Module_List.First (Kernel.Modules_List);
@@ -924,7 +925,9 @@ package body Glide_Kernel.Modules is
 
       use type Module_List.List_Node;
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
+      if Set_Busy then
+         Push_State (Kernel_Handle (Kernel), Busy);
+      end if;
 
       while Current /= Module_List.Null_Node loop
          begin
@@ -946,7 +949,9 @@ package body Glide_Kernel.Modules is
          Current := Module_List.Next (Current);
       end loop;
 
-      Pop_State (Kernel_Handle (Kernel));
+      if Set_Busy then
+         Pop_State (Kernel_Handle (Kernel));
+      end if;
 
       return Result;
    end Mime_Action;
@@ -990,7 +995,9 @@ package body Glide_Kernel.Modules is
       Set_Boolean (Value (4), Stick_To_Data);
       Set_Boolean (Value (5), Every_Line);
 
-      if not Mime_Action (Kernel, Mime_File_Line_Info, Value) then
+      if not Mime_Action
+        (Kernel, Mime_File_Line_Info, Value, Set_Busy => False)
+      then
          Trace (Me, "No file editor with line info display "
                 & "capability was registered");
       end if;
