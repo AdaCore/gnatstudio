@@ -18,25 +18,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Error;                  use Glib.Error;
-with Glib.Messages;               use Glib.Messages;
-with Glib.Object;                 use Glib.Object;
-with Glib.Values;                 use Glib.Values;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
-with Gtk;                         use Gtk;
-with Gtk.Accel_Map;               use Gtk.Accel_Map;
-with Gtk.Arguments;               use Gtk.Arguments;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Handlers;                use Gtk.Handlers;
-with Gtk.Image;                   use Gtk.Image;
-with Gtk.Main;                    use Gtk.Main;
-with Gtk.Window;                  use Gtk.Window;
+with Glib.Error;                use Glib.Error;
+with Glib.Messages;             use Glib.Messages;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;               use Glib.Values;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtk;                       use Gtk;
+with Gtk.Accel_Map;             use Gtk.Accel_Map;
+with Gtk.Arguments;             use Gtk.Arguments;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Main;                  use Gtk.Main;
+with Gtk.Window;                use Gtk.Window;
 with Gtk.Rc;
 
 with GPS.Menu;
 with GPS.Main_Window;
-with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with File_Utils;
 with String_Utils;
 with GPS.Kernel;                use GPS.Kernel;
@@ -51,29 +51,29 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with Gtkada.Intl;                 use Gtkada.Intl;
-with Gtkada.Dialogs;              use Gtkada.Dialogs;
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Config;                      use Config;
-with OS_Utils;                    use OS_Utils;
-with Projects.Editor;             use Projects.Editor;
-with Projects.Registry;           use Projects;
-with GNAT.Command_Line;           use GNAT.Command_Line;
-with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
-with Ada.Text_IO;                 use Ada.Text_IO;
-with Traces;                      use Traces;
-with Ada.Exceptions;              use Ada.Exceptions;
-with Welcome;                     use Welcome;
-with Welcome_Page;                use Welcome_Page;
+with Gtkada.Intl;               use Gtkada.Intl;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Config;                    use Config;
+with OS_Utils;                  use OS_Utils;
+with Projects.Editor;           use Projects.Editor;
+with Projects.Registry;         use Projects;
+with GNAT.Command_Line;         use GNAT.Command_Line;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Text_IO;               use Ada.Text_IO;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Welcome;                   use Welcome;
+with Welcome_Page;              use Welcome_Page;
 with DDE;
-with GUI_Utils;                   use GUI_Utils;
+with GUI_Utils;                 use GUI_Utils;
 with Remote_Connections;
 with System;
 
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
---  Modules registered by GPS.
+--  Modules registered by GPS
 with Ada_Module;
 with Aliases_Module;
 with Aunit_Module;
@@ -196,7 +196,7 @@ procedure GPS.Main is
    Program_Args           : String_Access;
 
    Started                : Boolean := False;
-   --  Whether the main loop is started.
+   --  Whether the main loop is started
 
    Button                 : Message_Dialog_Buttons;
    Result                 : Boolean;
@@ -204,7 +204,7 @@ procedure GPS.Main is
    pragma Unreferenced (Button, Result, Timeout_Id);
 
    procedure Init_Settings;
-   --  Set up environment for GPS.
+   --  Set up environment for GPS
 
    procedure Main_Processing;
    --  Main GPS processing (launches a gtk+ main loop and handle unexpected
@@ -214,7 +214,7 @@ procedure GPS.Main is
    --  Perform clean ups and automatic saving before exiting.
 
    procedure Parse_Switches;
-   --  Parse command line switches.
+   --  Parse command line switches
 
    procedure Display_Splash_Screen;
    --  Display the GPS splash screen
@@ -223,10 +223,10 @@ procedure GPS.Main is
    --  Finish the set up of GPS, while the main loop is running.
 
    procedure Help;
-   --  Display help on the standard output.
+   --  Display help on the standard output
 
    procedure Ctrl_C_Handler;
-   --  Handler for Ctrl-C events.
+   --  Handler for Ctrl-C events
 
    function Clean_Parameter return String;
    --  Return a clean version of the parameter for command line switches, ie
@@ -320,7 +320,7 @@ procedure GPS.Main is
       Message    : String) is
    begin
       if Log_Domain = "" then
-         --  Ignore this message, to avoid generating too much noise.
+         --  Ignore this message, to avoid generating too much noise
          return;
       end if;
 
