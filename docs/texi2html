@@ -339,6 +339,13 @@ $T2H_OPTIONS -> {out_file} =
  verbose => 'if set, all HTML output goes into file $s',
 };
 
+$T2H_OPTIONS -> {css_link} =
+{
+ type => '=s',
+ linkage => sub {$main::T2H_CSS_URL = @_[1];},
+ verbose => 'if set, add a css link to $s',
+};
+
 # -short_ref
 #if set cross-references are given without section numbers
 $T2H_SHORT_REF = '';
@@ -922,7 +929,12 @@ $T2H_AUTHORS
 -->
 <HEAD>
 <TITLE>$longtitle</TITLE>
+EOT
+  if ($T2H_CSS_URL ne "") {
+      print $fh "<LINK REL=\"stylesheet\" HREF=\"$T2H_CSS_URL\" TYPE=\"text/css\">\n";
+  }
 
+  print $fh <<EOT;
 <META NAME="description" CONTENT="$longtitle">
 <META NAME="keywords" CONTENT="$longtitle">
 <META NAME="resource-type" CONTENT="document">
