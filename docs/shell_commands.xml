@@ -1565,51 +1565,75 @@ Access the various suggested fixes through the methods of the Codefix class</des
     ###################################################################-->
 
   <shell_doc name="GPS.Process">
-      <description>Interface to expect-related commands</description>
+      <description>Interface to expect-related commands. This class can be used to spawn new processes and communicate with them later on. It is similar to what GPS uses to communicate with gdb</description>
+      <example lang="python">
+The following example launches a gdb process, let is print its welcome message, and kills it as soon as a prompt is seen in the output.
+In addition, it displays debugging messages in a new GPS window.
+As you might note, some instance-specific data is stored in the instance of the process, and can be retrieve in each callback.
+
+import GPS, sys
+
+def my_print(msg):
+   sys.stdout.set_console ("My gdb")
+   print (msg)
+   sys.stdout.set_console()
+
+def on_match (self, unmatched, matched):
+   my_print "on_match (" + self.id + ")=" + matched
+   self.kill()
+
+def on_exit (self, status, remaining_output):
+   my_print "on_exit (" + self.id + ")"
+
+def run():
+   proc = GPS.Process("gdb", "^\\(gdb\\)", on_match=on_match, on_exit=on_exit)
+   proc.id = "first session"
+      </example>
   </shell_doc>
 
-  <shell_doc name="GPS.spawn" real_name="GPS.Process.spawn">
+  <shell_doc name="GPS.Process.__init__">
+      <param name="self">The instance of GPS.Process</param>
       <param name="command">A string</param>
-      <param name="regexp">A string</param>
-      <param name="on_match_action">A string, containing the name of a GPS action to call</param>
-      <param name="on_exit_action">A string, containing the name of a GPS action to call</param>
-      <return>A string</return>
+      <param name="regexp" default="">A string</param>
+      <param name="on_match" default="None">A subprogram, see the section "Subprogram parameters" in the GPS documentation</param>
+      <param name="on_exit" default="None">A subprogram</param>
       <description>Spawn specified command. If regexp is not-empty and on_match_action is specified, launch on_match_action when regexp is found in the process output. If on_exit_action is specified, execute it when the process terminates. Return the ID of the spawned process.
-on_match_action is an action with the parameters:
-  $1 = the ID of the process
+on_match is a subprogram called with the parameters:
+  $1 = the instance of GPS.Process
   $2 = the string which matched the regexp
   $3 = the string since the last match
 
-on_exit_action is an action with the parameters:
-  $1 = the ID of the process
+on_exit is a subprogram called with the parameters:
+  $1 = the instance of GPS.Process
   $2 = the exit status
   $3 = the entire output of the process</description>
+      <see_also name="GPS.Process"/>
   </shell_doc>
 
-  <shell_doc name="GPS.send" real_name="GPS.Process.send">
-      <param name="id">A string, as returned by GPS.spawn()</param>
+  <shell_doc name="GPS.Process.send">
+      <param name="self">The instance of GPS.Process</param>
       <param name="command">A string</param>
       <param name="add_lf" default="true">A boolean</param>
-      <description>Send a line of text to process controlled by GPS</description>
+      <description>Send a line of text to the process</description>
   </shell_doc>
 
-  <shell_doc name="GPS.interrupt" real_name="GPS.Process.interrupt">
-      <param name="id">A string, as returned by GPS.spawn()</param>
+  <shell_doc name="GPS.Process.interrupt">
+      <param name="self">The instance of GPS.Process</param>
       <description>Interrupt a process controlled by GPS</description>
   </shell_doc>
 
-  <shell_doc name="GPS.kill" real_name="GPS.Process.kill">
-      <param name="id">A string, as returned by GPS.spawn()</param>
+  <shell_doc name="GPS.Process.kill">
+      <param name="self">The instance of GPS.Process</param>
       <description>Terminate a process controlled by GPS</description>
   </shell_doc>
 
-  <shell_doc name="GPS.expect" real_name="GPS.Process.except">
-      <param name="id">A string, as returned by GPS.spawn()</param>
+  <shell_doc name="GPS.Process.expect">
+      <param name="self">The instance of GPS.Process</param>
       <param name="regexp">A string</param>
-      <param name="expect_action">A string, name of an action</param>
-      <description>Listen to the output of specified process for regexp. When the regexp matches the output, execute the associated action, and stop listening for that specific regexp.
-expect_action is an action with the parameters:
-  $1 = the ID of the process
+      <param name="on_match">A subprogram, see the section "Subprogram Parameters" in tehe GPS documentation</param>
+      <description>Listen to the output of specified process for regexp. When the regexp matches the output, execute the associated subprogram, and stop listening for that specific regexp.
+on_match is subprogram called with the parameters:
+  $1 = the instance of GPS.Process
   $2 = the string which matched the regexp
   $3 = the string since the last match
       </description>
