@@ -38,6 +38,8 @@ with Odd.Dialogs;         use Odd.Dialogs;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
 with Ada.Text_IO;         use Ada.Text_IO;
+with Process_Proxies;     use Process_Proxies;
+with Debugger;            use Debugger;
 
 package body Odd.Menus is
 
@@ -67,6 +69,9 @@ package body Odd.Menus is
       Component_Name : String (1 .. Name_Length);
       Mode           : Display_Mode;
    end record;
+
+   package Item_Register is new Register_Generic
+     (Item_Record, Gtk_Widget_Record);
 
    --------------------
    -- local packages --
@@ -176,11 +181,15 @@ package body Odd.Menus is
 
    procedure Update_Variable
      (Widget : access Gtk_Widget_Record'Class;
-      Item   : Item_Record)
-   is
-      pragma Warnings (Off, Widget);
+      Item   : Item_Record) is
    begin
-      Display_Items.Update (Item.Canvas, Item.Item, Redisplay_Canvas => True);
+      if not Item_Register.Register_Post_Cmd_If_Needed
+        (Get_Process (Get_Debugger (Item.Item).Debugger),
+         Widget, Update_Variable'Access, Item)
+      then
+         Display_Items.Update
+           (Item.Canvas, Item.Item, Redisplay_Canvas => True);
+      end if;
    end Update_Variable;
 
    --------------
@@ -215,10 +224,15 @@ package body Odd.Menus is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record) is
    begin
-      if Get_Active (Gtk_Radio_Menu_Item (Widget))
-        and then Get_Display_Mode (Item.Item) /= Item.Mode
+      if not Item_Register.Register_Post_Cmd_If_Needed
+        (Get_Process (Get_Debugger (Item.Item).Debugger),
+         Widget, Change_Display_Mode'Access, Item)
       then
-         Set_Display_Mode (Item.Item, Item.Mode);
+         if Get_Active (Gtk_Radio_Menu_Item (Widget))
+           and then Get_Display_Mode (Item.Item) /= Item.Mode
+         then
+            Set_Display_Mode (Item.Item, Item.Mode);
+         end if;
       end if;
    end Change_Display_Mode;
 
@@ -228,21 +242,23 @@ package body Odd.Menus is
 
    procedure Clone_Component
      (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record)
-   is
-      pragma Warnings (Off, Widget);
+      Item    : Item_Record) is
    begin
-      if Is_A_Variable (Item.Item) then
-         Process_User_Command
-           (Get_Debugger (Item.Item),
-            "graph display " & Item.Component_Name,
-            Output_Command => True);
-
-      else
-         Process_User_Command
-           (Get_Debugger (Item.Item),
-            "graph display `" & Get_Name (Item.Item) & "`",
-            Output_Command => True);
+      if not Item_Register.Register_Post_Cmd_If_Needed
+        (Get_Process (Get_Debugger (Item.Item).Debugger),
+         Widget, Clone_Component'Access, Item)
+      then
+         if Is_A_Variable (Item.Item) then
+            Process_User_Command
+              (Get_Debugger (Item.Item),
+               "graph display " & Item.Component_Name,
+               Output_Command => True);
+         else
+            Process_User_Command
+              (Get_Debugger (Item.Item),
+               "graph display `" & Get_Name (Item.Item) & "`",
+               Output_Command => True);
+         end if;
       end if;
    end Clone_Component;
 
@@ -263,10 +279,15 @@ package body Odd.Menus is
          Position => Win_Pos_Mouse,
          Key      => "odd_set_value_dialog");
    begin
-      if S /= "" and then S (S'First) /= ASCII.Nul then
-         Set_Variable
-           (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
-         Update_Variable (Widget, Item);
+      if not Item_Register.Register_Post_Cmd_If_Needed
+        (Get_Process (Get_Debugger (Item.Item).Debugger),
+         Widget, Set_Value'Access, Item)
+      then
+         if S /= "" and then S (S'First) /= ASCII.Nul then
+            Set_Variable
+              (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
+            Update_Variable (Widget, Item);
+         end if;
       end if;
    end Set_Value;
 

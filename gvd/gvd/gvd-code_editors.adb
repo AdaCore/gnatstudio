@@ -36,6 +36,9 @@ with Odd.Types;           use Odd.Types;
 with Odd_Intl;            use Odd_Intl;
 
 with Ada.Text_IO;         use Ada.Text_IO;
+with Process_Proxies;     use Process_Proxies;
+with Odd.Process;         use Odd.Process;
+with Debugger;            use Debugger;
 
 package body Odd.Code_Editors is
 
@@ -56,6 +59,9 @@ package body Odd.Code_Editors is
       Editor : Code_Editor;
       Mode   : View_Mode;
    end record;
+
+   package Editor_Register is new Register_Generic
+     (Editor_Mode_Data, Gtk_Radio_Menu_Item_Record);
 
    package Editor_Mode_Cb is new Gtk.Handlers.User_Callback
      (Gtk_Radio_Menu_Item_Record, Editor_Mode_Data);
@@ -168,6 +174,17 @@ package body Odd.Code_Editors is
    begin
       return Editor.Source;
    end Get_Source;
+
+   -------------
+   -- Get_Asm --
+   -------------
+
+   function Get_Asm
+     (Editor : access Code_Editor_Record'Class)
+     return Odd.Asm_Editors.Asm_Editor is
+   begin
+      return Editor.Asm;
+   end Get_Asm;
 
    ---------------
    -- Load_File --
@@ -298,9 +315,21 @@ package body Odd.Code_Editors is
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
       Data : Editor_Mode_Data) is
    begin
+
       if Get_Active (Item)
         and then Data.Editor.Mode /= Data.Mode
       then
+
+         --  If we are currently processing a command, wait till the current
+         --  one is finished, and then change the mode
+
+         if Editor_Register.Register_Post_Cmd_If_Needed
+           (Get_Process (Debugger_Process_Tab (Data.Editor.Process).Debugger),
+            Item, Change_Mode'Access, Data)
+         then
+            return;
+         end if;
+
          case Data.Editor.Mode is
             when Source_Only =>
                Remove (Data.Editor, Data.Editor.Source);

@@ -56,6 +56,7 @@ with Odd.Types;             use Odd.Types;
 with Odd_Intl;              use Odd_Intl;
 with Display_Items;         use Display_Items;
 with Items;                 use Items;
+with Process_Proxies;       use Process_Proxies;
 
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.Types; use Gdk.Types;
@@ -87,26 +88,27 @@ package body Odd.Source_Editors is
    -- Local packages --
    --------------------
 
-   type Breakpoint_Record (File_Length : Natural) is record
+   type Contextual_Data_Record
+     (File_Length : Natural;
+      Name_Length : Natural) is
+   record
       Process : Debugger_Process_Tab;
       File    : String (1 .. File_Length);
       Line    : Integer;
-   end record;
-
-   type Variable_Record (Name_Length : Natural) is record
-      Process      : Debugger_Process_Tab;
       Name         : String (1 .. Name_Length);
       Auto_Refresh : Boolean;
    end record;
 
+   package Contextual_Register is new Register_Generic
+     (Contextual_Data_Record, Gtk_Widget_Record);
+   use Contextual_Register;
+
    package Check_Editor_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Check_Menu_Item_Record, Source_Editor);
    package Widget_Breakpoint_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Breakpoint_Record);
-   package Widget_Variable_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Variable_Record);
+     (Gtk_Widget_Record, Contextual_Data_Record);
    package Editor_Idle is new Gtk.Main.Idle (Source_Editor);
-   package Editor_Cb is new Callback (Source_Editor_Record);
+   package Editor_Cb is new Gtk.Handlers.Callback (Source_Editor_Record);
 
    procedure Update_Buttons
      (Editor : access Source_Editor_Record'Class;
@@ -118,12 +120,12 @@ package body Odd.Source_Editors is
 
    procedure Set_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Breakpoint_Record);
+      Br     : Contextual_Data_Record);
    --  Set a breakpoint on a specific line.
 
    procedure Till_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Breakpoint_Record);
+      Br     : Contextual_Data_Record);
    --  Set a temporary breakpoint on a line, and continue execution.
 
    procedure Change_Line_Nums
@@ -133,7 +135,7 @@ package body Odd.Source_Editors is
 
    procedure Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
-      Var    : Variable_Record);
+      Br     : Contextual_Data_Record);
    --  Callback for the "print variable" or "display variable" contextual menu
    --  items.
 
@@ -327,6 +329,15 @@ package body Odd.Source_Editors is
       Mitem : Gtk_Menu_Item;
       Check : Gtk_Check_Menu_Item;
 
+      File_Length : Natural := Get_Current_File (Source)'Length;
+      Data  : Contextual_Data_Record :=
+        (Name_Length  => Entity'Length,
+          File_Length  => File_Length,
+          Name         => Entity,
+          Auto_Refresh => False,
+          File         => Get_Current_File (Source),
+          Line         => Line,
+          Process      => Debugger_Process_Tab (Source.Process));
    begin
       --  Destroy the previous menu (which we couldn't do earlier because
       --  of the call to popup. It will change every item anyway.
@@ -344,28 +355,21 @@ package body Odd.Source_Editors is
 
       Gtk_New (Mitem, Label => -"Print " & Entity);
       Append (Menu, Mitem);
-      Widget_Variable_Handler.Connect
+      Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
-         Widget_Variable_Handler.To_Marshaller (Print_Variable'Access),
-         Variable_Record'
-         (Name_Length  => Entity'Length,
-          Name         => Entity,
-          Auto_Refresh => False,
-          Process      => Debugger_Process_Tab (Source.Process)));
+         Widget_Breakpoint_Handler.To_Marshaller (Print_Variable'Access),
+         Data);
       if Entity'Length = 0 then
          Set_State (Mitem, State_Insensitive);
       end if;
 
       Gtk_New (Mitem, Label => -"Display " & Entity);
       Append (Menu, Mitem);
-      Widget_Variable_Handler.Connect
+      Data.Auto_Refresh := True;
+      Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
-         Widget_Variable_Handler.To_Marshaller (Print_Variable'Access),
-         Variable_Record'
-         (Name_Length  => Entity'Length,
-          Name         => Entity,
-          Auto_Refresh => True,
-          Process      => Debugger_Process_Tab (Source.Process)));
+         Widget_Breakpoint_Handler.To_Marshaller (Print_Variable'Access),
+         Data);
       if Entity'Length = 0 then
          Set_State (Mitem, State_Insensitive);
       end if;
@@ -383,11 +387,7 @@ package body Odd.Source_Editors is
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Set_Breakpoint'Access),
-         Breakpoint_Record'
-         (File_Length  => Get_Current_File (Source)'Length,
-          Process      => Debugger_Process_Tab (Source.Process),
-          File         => Get_Current_File (Source),
-          Line         => Line));
+         Data);
 
       Gtk_New
         (Mitem, Label => -"Continue Until Line" & Integer'Image (Line));
@@ -395,11 +395,7 @@ package body Odd.Source_Editors is
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Till_Breakpoint'Access),
-         Breakpoint_Record'
-         (File_Length  => Get_Current_File (Source)'Length,
-          Process      => Debugger_Process_Tab (Source.Process),
-          File         => Get_Current_File (Source),
-          Line         => Line));
+         Data);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
@@ -924,10 +920,14 @@ package body Odd.Source_Editors is
 
    procedure Set_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Breakpoint_Record) is
+      Br     : Contextual_Data_Record) is
    begin
-      Break_Source
-        (Br.Process.Debugger, Br.File, Br.Line, Mode => Odd.Types.Visible);
+      if not Register_Post_Cmd_If_Needed
+        (Get_Process (Br.Process.Debugger), Widget, Set_Breakpoint'Access, Br)
+      then
+         Break_Source
+           (Br.Process.Debugger, Br.File, Br.Line, Mode => Odd.Types.Visible);
+      end if;
    end Set_Breakpoint;
 
    ---------------------
@@ -936,10 +936,15 @@ package body Odd.Source_Editors is
 
    procedure Till_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Breakpoint_Record) is
+      Br     : Contextual_Data_Record) is
    begin
-      Break_Source (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
-      Continue (Br.Process.Debugger, Mode => Odd.Types.Visible);
+      if not Register_Post_Cmd_If_Needed
+        (Get_Process (Br.Process.Debugger), Widget, Till_Breakpoint'Access, Br)
+      then
+         Break_Source
+           (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
+         Continue (Br.Process.Debugger, Mode => Odd.Types.Visible);
+      end if;
    end Till_Breakpoint;
 
    --------------------
@@ -948,18 +953,20 @@ package body Odd.Source_Editors is
 
    procedure Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
-      Var    : Variable_Record)
-   is
-      pragma Warnings (Off, Widget);
+      Br     : Contextual_Data_Record) is
    begin
-      if Var.Auto_Refresh then
-         Process_User_Command
-           (Var.Process, "graph display " & Var.Name,
-            Output_Command => True);
-      else
-         Process_User_Command
-           (Var.Process, "graph print " & Var.Name,
-            Output_Command => True);
+      if not Register_Post_Cmd_If_Needed
+        (Get_Process (Br.Process.Debugger), Widget, Print_Variable'Access, Br)
+      then
+         if Br.Auto_Refresh then
+            Process_User_Command
+              (Br.Process, "graph display " & Br.Name,
+               Output_Command => True);
+         else
+            Process_User_Command
+              (Br.Process, "graph print " & Br.Name,
+               Output_Command => True);
+         end if;
       end if;
    end Print_Variable;
 
@@ -1305,5 +1312,4 @@ package body Odd.Source_Editors is
    exception
       when Language.Unexpected_Type | Constraint_Error => null;
    end Draw_Tooltip;
-
 end Odd.Source_Editors;

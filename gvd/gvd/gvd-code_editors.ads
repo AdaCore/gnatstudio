@@ -126,6 +126,11 @@ package Odd.Code_Editors is
       return Odd.Source_Editors.Source_Editor;
    --  Return the widget used to display the source code
 
+   function Get_Asm
+     (Editor : access Code_Editor_Record'Class)
+      return Odd.Asm_Editors.Asm_Editor;
+   --  Return the widget used to display the asm code
+
    function Get_Current_File
      (Editor : access Code_Editor_Record) return String;
    --  Return the name of the currently edited file.
