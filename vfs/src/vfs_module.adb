@@ -33,7 +33,6 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Traces;                    use Traces;
-with String_Utils;              use String_Utils;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with VFS;                       use VFS;
 
