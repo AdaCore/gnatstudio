@@ -1,5 +1,9 @@
 New features in GPS 1.0.2
 
+- Separate execution window for debugged programs
+
+- Ability to display debugger values in hex/decimal/octal/binary format
+
 - More window parameters saved in the desktop
   Such as the coordinates and the maximized state of the main window
 
