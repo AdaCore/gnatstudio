@@ -72,7 +72,6 @@ package body Theme_Manager_Module is
       Name        : GNAT.OS_Lib.String_Access;
       Description : GNAT.OS_Lib.String_Access;
       Category    : GNAT.OS_Lib.String_Access;
-      Active      : Boolean;
       Xml         : Node_Ptr;
       --  The concatenation of all XML nodes that define the theme. They are
       --  stored in an order so that system-wide definitions are parsed first,
@@ -252,6 +251,7 @@ package body Theme_Manager_Module is
       Themes : Theme_Description_Access;
       Str : GNAT.OS_Lib.String_Access;
       Active : constant String := Get_Pref (Kernel, Active_Themes);
+      Theme_Active : Boolean;
    begin
       if Node.Tag.all = "theme" then
          declare
@@ -272,17 +272,17 @@ package body Theme_Manager_Module is
                Themes := Themes.Next;
             end loop;
 
+            Theme_Active := Index (Active, '@' & Name & '@') /= 0;
+
             if Themes = null then
                Themes := new Theme_Description'
                  (Name        => new String'(Name),
                   Description => new String'(Descr),
                   Category    => new String'(Cat),
                   Xml         => new Glib.Xml_Int.Node,
-                  Active      => Index (Active, '@' & Name & '@') /= 0,
                   Next        => Theme_Manager_Module.Themes);
                Theme_Manager_Module.Themes := Themes;
-               Trace (Me, "Registering new theme: " & Name
-                      & " Active=" & Themes.Active'Img);
+               Trace (Me, "Registering new theme: " & Name);
 
             elsif Descr /= "" then
                Str := new String'
@@ -293,7 +293,7 @@ package body Theme_Manager_Module is
 
             Add_Child (Themes.Xml, Deep_Copy (Node.Child), Append => True);
 
-            if Themes.Active then
+            if Theme_Active then
                Load_XML_Theme (Kernel, File, Node.Child);
             end if;
          end;
@@ -488,6 +488,7 @@ package body Theme_Manager_Module is
       Text     : Gtk_Text_View;
       Themes   : Theme_Description_Access := Theme_Manager_Module.Themes;
       pragma Unreferenced (Action, Num, Iter);
+      Active : constant String := Get_Pref (Pref.Kernel, Active_Themes);
 
    begin
       if Themes = null then
@@ -542,7 +543,8 @@ package body Theme_Manager_Module is
          Iter := Add (Pane.Model,
                       Find_Category (Pane.Model, Themes.Category.all),
                       name     => Themes.Name.all,
-                      Active   => Themes.Active,
+                      Active   =>
+                        Index (Active, '@' & Themes.Name.all & '@') /= 0,
                       Visible  => True);
          Themes := Themes.Next;
       end loop;
