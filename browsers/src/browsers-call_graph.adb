@@ -1618,7 +1618,6 @@ package body Browsers.Call_Graph is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      pragma Unreferenced (Command);
       Output : Ada.Text_IO.File_Type;
 
       procedure My_Output (Str : String);
@@ -1644,14 +1643,19 @@ package body Browsers.Call_Graph is
       end My_Output_Line;
 
    begin
-      Create (Output, Name => Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
-      Trace (Me, "Database dumped in "
-             & Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
-      Entities.Debug.Output      := My_Output'Unrestricted_Access;
-      Entities.Debug.Output_Line := My_Output_Line'Unrestricted_Access;
-      Dump (Get_Database (Get_Kernel (Data)), Full => True);
-      Set_Default_Output;
-      Close (Output);
+      if Command = "dump_xref_db" then
+         Create (Output, Name => Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
+         Trace (Me, "Database dumped in "
+                & Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
+         Entities.Debug.Output      := My_Output'Unrestricted_Access;
+         Entities.Debug.Output_Line := My_Output_Line'Unrestricted_Access;
+         Dump (Get_Database (Get_Kernel (Data)), Full => True);
+         Set_Default_Output;
+         Close (Output);
+
+      elsif Command = "reset_xref_db" then
+         Entities.Reset (Get_Database (Get_Kernel (Data)));
+      end if;
    end Xref_Command_Handler;
 
    ------------------------------
@@ -2112,6 +2116,9 @@ package body Browsers.Call_Graph is
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "dump_xref_db",
+         Handler      => Xref_Command_Handler'Access);
+      Register_Command
+        (Kernel, "reset_xref_db",
          Handler      => Xref_Command_Handler'Access);
    end Register_Module;
 
