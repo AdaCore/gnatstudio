@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -173,8 +173,10 @@ package body Odd.Asm_Editors is
       Editor.Current_Range := Find_In_Cache (Editor, Pc);
 
       if Editor.Current_Range = null then
-         Set_Buffer (Editor, new String'(-"Getting assembly code..."),
-                     Clear_Previous => False);
+         --  When is this memory freed ???
+         Set_Buffer
+           (Editor, new String' (-"Getting assembly code..."),
+            Clear_Previous => False);
          Update_Child (Editor);
 
          Get_Machine_Code
