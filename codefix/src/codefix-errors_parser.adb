@@ -23,7 +23,10 @@ with GNAT.Regpat; use GNAT.Regpat;
 with Language;    use Language;
 with Glide_Kernel; use Glide_Kernel;
 
+with Traces; use Traces;
+
 package body Codefix.Errors_Parser is
+   Me : constant Debug_Handle := Create ("Codefix");
 
    -------------------
    -- Get_Solutions --
@@ -145,6 +148,7 @@ package body Codefix.Errors_Parser is
             end if;
          exception
             when Uncorrectable_Message =>
+               Trace (Me, "Error cannot be corrected automatically");
                null;
          end;
       end loop;
@@ -720,6 +724,12 @@ package body Codefix.Errors_Parser is
          Set_File (Declaration_Cursor, Get_File (Message));
       end if;
 
+      Set_Location
+        (Declaration_Cursor,
+         Integer'Value
+           (Get_Message (Message) (Matches (2).First .. Matches (2).Last)),
+         1);
+
       Assign (Line_Red, Get_Line (Current_Text, Declaration_Cursor));
 
       Match (This.Col_Matcher.all, Line_Red.all, Col_Matches);
@@ -730,10 +740,8 @@ package body Codefix.Errors_Parser is
 
       Set_Location
         (Declaration_Cursor,
-         Line   => Integer'Value
-           (Get_Message (Message) (Matches (2).First .. Matches (2).Last)),
-         Column => Integer'Value
-           (Line_Red (Col_Matches (1).First .. Col_Matches (1).Last)));
+         Line   => Get_Line (Declaration_Cursor),
+         Column => Col_Matches (1).Last + 1);
 
       Solutions := Expected (Current_Text, Declaration_Cursor, "all");
 
