@@ -72,42 +72,45 @@ package Src_Info is
    --  Note that the path to the file is ignored during the search, only
    --  the basename is taken into account.
 
-   ------------------
-   -- Source files --
-   ------------------
+   function Get_LI_Filename (LI : LI_File_Ptr) return String;
+   --  Return the name of the LI file associated with LI
 
-   type Source_File is private;
-   --  Information on a source file and its library unit file.
+   -----------------------
+   --  File information --
+   -----------------------
 
-   No_Source_File : constant Source_File;
+   type Internal_File is private;
+   --  Information on a file and its unit. This information can be stored for
+   --  later used, and remains valid even when the LI file is parsed again.
+
+   procedure Destroy (File : in out Internal_File);
+   --  Destroy the memory associated with File_Info.
+
+   function Copy (File : Internal_File) return Internal_File;
+   --  Return a deep copy of Internal_File, that will need to be destroyed
+   --  later on.  File might be destroyed, the copy will remain valid.
+
+   function Make_Source_File
+     (Source_Filename : String; LI_Filename : String) return Internal_File;
+   --  Converts from a source filename to a File_Info structure.
+   --  The returned result will need to be destroyed.
+
+   function Get_Source_Filename (File : Internal_File) return String;
+   --  Return the Filename for the given File.
 
    procedure Get_Unit_Name
-     (Source            : in out Source_File;
-      Source_Info_List  : in out LI_File_List;
+     (File              : in out Internal_File;
+      Source_Info_List  : in out Src_Info.LI_File_List;
       Project           : Prj.Project_Id;
       Extra_Source_Path : String;
       Extra_Object_Path : String;
       Unit_Name         : out String_Access);
-   --  Return the Unit Name from the given Source. The returned string must not
-   --  be freed by the caller.
+   --  Return the Unit Name from the given File. The returned string must not
+   --  be freed by the caller, as it is cached in File for later retrieval.
    --
-   --  This Unit_Name is computed lazily, that is only when read for the first
-   --  time. In cases where computing the unit_name fails, null is returned.
-
-   function Get_Source_Filename (File : Source_File) return String;
-   --  Returns the source filename of the given file.
-   --  Note that this function is merely a shortcut to
-   --       File.Unit.Spec/Body/Separate_Info.Source_Filename.all
-   --  and does not perform any check before accessing these fields. The
-   --  caller should make sure that the information is accessible before
-   --  invoking this function.
-
-   function Make_Source_File
-     (LI : LI_File_Ptr; Source_Filename : String) return Source_File;
-   --  Return a Source_File based on a *parsed* LI and a filename. This
-   --  automatically checks whether Source_Filename is a spec, a body,...
-   --
-   --  No_Source_File is returned if Source_Filename is not associated with LI.
+   --  Note that, for implicit dependencies, the unit name is sometimes
+   --  computed in a lazy manor, that is only when read for the first time. In
+   --  cases where computing the unit_name fails, null is returned.
 
    ----------------------------
    -- Dependency Information --
@@ -123,30 +126,6 @@ package Src_Info is
    function Get_Depends_From_Body (Dep : Dependency_Info) return Boolean;
    --  Return True if the given Dep is an explicit dependency from the
    --  implementation part.
-
-   ------------------------------
-   -- Dependency between files --
-   ------------------------------
-
-   type Dependency_File_Info_Node is private;
-   type Dependency_File_Info_List is private;
-   --  A dependency between two units, and list of dependencies.
-
-   No_Dependencies : constant Dependency_File_Info_List;
-
-   function File_Information (Dep : Dependency_File_Info_List)
-      return Source_File;
-   --  Return the information on the file that Dep depends on.
-
-   function Dependency_Information (Dep : Dependency_File_Info_List)
-      return Dependency_Info;
-   --  Return the information on the dependency itself. This doesn't contain
-   --  information about the files.
-
-   function Next (Dep : Dependency_File_Info_List)
-      return Dependency_File_Info_List;
-   --  Return the next item in the list.
-   --  ??? We should use proper iterators for the list.
 
 private
 
@@ -250,8 +229,8 @@ private
    --     - Local_Entity: an entity that does not satisfy the conditions
    --       to be a Global_Entity.
 
-   type LI_File;
-   type LI_File_Ptr is access LI_File;
+   type LI_File_Constrained;
+   type LI_File_Ptr is access LI_File_Constrained;
 
    No_LI_File : constant LI_File_Ptr := null;
 
@@ -277,6 +256,19 @@ private
    function "=" (Left, Right : Source_File) return Boolean;
    --  A redefined equality function that compares the Unit_Name values, not
    --  the access value.
+
+   procedure Get_Unit_Name
+     (Source            : in out Source_File;
+      Source_Info_List  : in out LI_File_List;
+      Project           : Prj.Project_Id;
+      Extra_Source_Path : String;
+      Extra_Object_Path : String;
+      Unit_Name         : out String_Access);
+   --  Return the Unit Name from the given Source. The returned string must not
+   --  be freed by the caller.
+   --
+   --  This Unit_Name is computed lazily, that is only when read for the first
+   --  time. In cases where computing the unit_name fails, null is returned.
 
    type File_Location is record
       File   : Source_File;
@@ -346,6 +338,14 @@ private
    --  E_Declaration_Info_List is a chained list of E_Declaration_Info.
    --  E_Declaration_Info_Node is a node of this list.
 
+   type Internal_File is record
+      Unit_Name : String_Access;
+      File_Name : String_Access;
+      LI_Name   : String_Access;
+   end record;
+   --  The information associated to a source file, and that remains valid even
+   --  when the LI file is parsed again
+
    type File_Info is record
       Unit_Name         : String_Access;
       Source_Filename   : String_Access;
@@ -394,6 +394,7 @@ private
    --  File_Timestamp is the timestamp that File had when the current unit
    --  was last compiled.
 
+   type Dependency_File_Info_Node;
    type Dependency_File_Info_List is access Dependency_File_Info_Node;
    type Dependency_File_Info_Node is record
       Value : Dependency_File_Info;
@@ -422,6 +423,13 @@ private
    --  hence should never be deallocated, except when the entire LI File
    --  Tree (All LI_File object, with all the data pointed by these objects)
    --  is destroyed.
+
+   type LI_File_Constrained is record
+      LI : LI_File;
+   end record;
+   --  Use this record, instead of an LI_File when pointing to it, since
+   --  otherwise we cannot change the discriminant of LI_File dynamically when
+   --  needed (see ARM 3.10.9).
 
    type LI_File_Node;
    type LI_File_Node_Ptr is access LI_File_Node;
@@ -519,7 +527,7 @@ private
 
    function Get
      (HT : LI_File_HTable.HTable; LI_Filename : String) return LI_File_Ptr;
-   --  Return a pointer to the LI_File which filename is LI_Filename.
+   --  Return a pointer to the LI_File whose filename is LI_Filename.
    --  Return No_LI_File if no such LI_File is found.
 
    procedure Get_First
@@ -550,6 +558,14 @@ private
    pragma Inline (Is_File_Location);
    --  Returns True if the given file location value has been set. It is
    --  faster than comparing the Location against Null_File_Location.
+
+   function Get_Source_Filename (File : Source_File) return String;
+   --  Returns the source filename of the given file.
+   --  Note that this function is merely a shortcut to
+   --       File.Unit.Spec/Body/Separate_Info.Source_Filename.all
+   --  and does not perform any check before accessing these fields. The
+   --  caller should make sure that the information is accessible before
+   --  invoking this function.
 
    function Get_File_Info (SF : Source_File) return File_Info_Ptr;
    --  Return an access to the File_Info associated to the given Source_File.
