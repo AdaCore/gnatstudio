@@ -20,6 +20,8 @@
 
 with GVD_Module;           use GVD_Module;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Debugger_Pixmaps;     use Debugger_Pixmaps;
+with GVD.Types;            use GVD.Types;
 
 package body Commands.Debugger is
 
@@ -56,7 +58,8 @@ package body Commands.Debugger is
          when Set =>
             Command.BP := Break_Source (Command.Debugger,
                                         Command.File.all,
-                                        Command.Line);
+                                        Command.Line,
+                                        Mode => Visible);
 
             Create (Other_Command,
                     Command.Kernel,
@@ -68,17 +71,17 @@ package body Commands.Debugger is
             Other_Command.BP := Command.BP;
 
             A (1).Line := Command.Line;
-            A (1).Text := new String' ("<B>");
+            A (1).Image := Line_Has_Breakpoint_Pixbuf;
             A (1).Associated_Command := Command_Access (Other_Command);
             Add_Line_Information (Command.Kernel,
                                   Command.File.all,
                                   GVD_Module_Name & "/Line Information",
-                                  20,
                                   new Line_Information_Array' (A));
 
          when Unset =>
             Remove_Breakpoint (Command.Debugger,
-                               Command.BP);
+                               Command.BP,
+                               Mode => Visible);
 
             Create (Other_Command,
                     Command.Kernel,
@@ -88,12 +91,11 @@ package body Commands.Debugger is
                     Command.Line);
 
             A (1).Line := Command.Line;
-            A (1).Text := new String' ("< >");
+            A (1).Image := Line_Has_Code_Pixbuf;
             A (1).Associated_Command := Command_Access (Other_Command);
             Add_Line_Information (Command.Kernel,
                                   Command.File.all,
                                   GVD_Module_Name & "/Line Information",
-                                  20,
                                   new Line_Information_Array' (A));
 
       end case;
