@@ -49,8 +49,7 @@ package body Find_Utils is
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
-   --         ? XXX (iff it is a regexp) ?
-   --  * Nor Comments nor Strings nor Statements are scanned
+   --  * Neither Comments nor Strings nor Statements are scanned
 
    -----------------
    -- Common_Init --
@@ -74,7 +73,10 @@ package body Find_Utils is
         or else not
           (Scan_Comments
            or else Scan_Strings
-           or else Scan_Statements)  -- really need 'or else' ???
+           or else Scan_Statements)
+
+      --  Really need 'or else' in the sub-expression ???
+
       then
          raise Search_Error;
       end if;
@@ -97,10 +99,12 @@ package body Find_Utils is
             Search.Pattern := new Pattern_Matcher'
               (Compile (WD & Quote (Look_For) & WD, Flags));
 
-         elsif not Match_Case then
-            --  What does the following comment mean ???
-            --  or optimized by Ada.Strings.Fixed.Index
+         elsif Match_Case then
+            null;
 
+            --  Search will be optimized by Ada.Strings.Fixed.Index
+
+         else
             Search.Pattern := new Pattern_Matcher'
               (Compile (Quote (Look_For), Flags));
          end if;
@@ -116,7 +120,6 @@ package body Find_Utils is
 
    exception
       when Expression_Error =>
-         --  Free (Pattern_Matcher); ???
          raise Search_Error;
    end Common_Init;
 
@@ -225,7 +228,7 @@ package body Find_Utils is
                Full_Name : constant String (1 .. Dir_Name'Length + Last) :=
                              Dir_Name & File_Name (1 .. Last);
             begin
-               --  unlike Open_Read, Is_Directory adds ASCII.NUL automatically
+               --  Unlike Open_Read, Is_Directory adds ASCII.NUL automatically
 
                if Is_Directory (Full_Name) then
                   if Search.Recurse
@@ -247,7 +250,9 @@ package body Find_Utils is
 
       exception
          when Directory_Error =>
-            return True;  -- ignore opening error
+            --  Ignore opening error
+
+            return True;
       end Explore_Directory;
 
       ---------------
@@ -283,18 +288,20 @@ package body Find_Utils is
          end if;
 
          declare
-            Len        : Positive := Positive (File_Length (FD));
+            Len        : Natural := Natural (File_Length (FD));
             Buffer     : aliased String (1 .. Len);
             Pos        : Positive := 1;
             Line_Start : Positive;
             Line_Nr    : Positive := 1;
 
          begin
-            Len := Read (FD, Buffer'Address, Len);  -- Let's hope all is read
+            Len := Read (FD, Buffer'Address, Len);
 
             Search.Lexical_State := Statements;
 
-            while Pos <= Len loop  -- Skip empty files
+            --  NOTE: Empty files are skipped
+
+            while Pos <= Len loop
                Line_Start := Pos;
 
                while Pos <= Len and then Buffer (Pos) /= ASCII.LF loop
@@ -308,6 +315,7 @@ package body Find_Utils is
                exit when not Continue;
 
                --  Skip ASCII.LF
+
                Pos := Pos + 1;
                Line_Nr := Line_Nr + 1;
             end loop;
@@ -341,6 +349,8 @@ package body Find_Utils is
          begin
             Len := Read (FD, Buffer'Address, Len);
 
+            --  NOTE: Empty files are skipped
+
             while Pos <= Len loop
                Line_Start := Pos;
 
@@ -357,6 +367,7 @@ package body Find_Utils is
                end if;
 
                --  Skip ASCII.LF
+
                Pos := Pos + 1;
                Line_Nr := Line_Nr + 1;
             end loop;
@@ -378,21 +389,21 @@ package body Find_Utils is
          Context : Language_Context) return Boolean
       is
          Scanning_Allowed :
-            constant array (Recognized_Lexical_States) of Boolean :=
-              (Statements     => Search.Scan_Statements,
-               Strings        => Search.Scan_Strings,
-               Mono_Comments  => Search.Scan_Comments,
-               Multi_Comments => Search.Scan_Comments);
+           constant array (Recognized_Lexical_States) of Boolean :=
+             (Statements     => Search.Scan_Statements,
+              Strings        => Search.Scan_Strings,
+              Mono_Comments  => Search.Scan_Comments,
+              Multi_Comments => Search.Scan_Comments);
 
          EOL : constant Natural := Line'Last;  -- End Of Line
 
          Reached : Positive;
          Pos     : Positive;
-         --  ~ Line (Reached .. Pos - 1) is whole the same lexical state
+         --  Search.Lexical_State applies on Line (Reached .. Pos - 1)
 
          Next               : Positive;
          Next_Lexical_State : Recognized_Lexical_States;
-         --  ~ Line (Next) is from where Next_Lexical_State applies
+         --  Next_Lexical_State applies from Line (Next)
 
          Str_Delim     : Character renames Context.String_Delimiter;
          Quote_Char    : Character renames Context.Quote_Character;
@@ -409,14 +420,14 @@ package body Find_Utils is
          Continue : Boolean := True;  --  really necessary ???
 
       begin
-         --  handle multiline comment on 1 line ???
-
          Reached := Line'First;
 
          Whole_Line_Loop : loop
             Pos := Reached;
 
-            Next := EOL + 1;  -- ~ Default when whole line is same lexical
+            --  Default values when the line contains no other lexical state
+
+            Next := EOL + 1;
             Next_Lexical_State := Search.Lexical_State;
 
             case Search.Lexical_State is
@@ -498,7 +509,9 @@ package body Find_Utils is
                --  ??? and is no longer called.
             end if;
 
-            Reached := Next;  -- Skip the processed text
+            --  Skip the processed text
+
+            Reached := Next;
             Search.Lexical_State := Next_Lexical_State;
 
             exit Whole_Line_Loop when Reached > EOL;

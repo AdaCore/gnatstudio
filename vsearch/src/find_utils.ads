@@ -26,10 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
---  which chars are in a word (Whole_Word) ???
---  / conv to \, case (Files_Pattern) ???
-
---  Line-oriented pattern search in source code files
+--  Line-oriented pattern search in source code files.
 --
 --  This package implements a line-oriented searching for a word or a pattern
 --  in given source code files.
@@ -37,12 +34,14 @@
 --  detection is done on filename patterns (eg *.c, *.ads, ...). If file type
 --  is unknown (probably with *.txt), whole file is scanned, whatever asked
 --  scope is.
---  Files may be given as a list or with a pattern and a directory !!!
+--  Files may be given as a list or with a pattern and a directory.
 --  Classic options included: match case, whole word.
 
---  ??? assume strings can continue over ASCII.LF (wait for end delimiter)
---  ??? in C strings, \ skips ASCII.LF; don't skip LF without \ ?
---  ??? 1 depth level of syntax, eg strings aren't found in comments
+--  NOTES:
+--  * Strings are assumed to end only with the string delimiter (i.e. continue
+--    across ASCII.LF).
+--  * There is only 1 syntax level (e.g. strings aren't found in comments).
+--  * Searching in empty files matches nothing.
 
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Regexp; use GNAT.Regexp;
@@ -57,10 +56,11 @@ package Find_Utils is
    --  Type used to store the project file list
 
    type Project_Files_Access is access Project_Files;
-   --  ???
+   --  Type to get the list of project files.
 
    Search_Error : exception;
-   --  ???
+   --  This exception is raised when trying to initialize a search with bad
+   --  arguments.
 
    procedure Init_Search
      (Search          : out Code_Search;
@@ -87,12 +87,8 @@ package Find_Utils is
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
-   --         ? XXX (iff it is a regexp) ?
    --  * Files is null
    --  * Neither Comments nor Strings nor Statements are scanned
-   --
-   --  ??? Searching " in Ada strings badly implemented: treated as 2 strings
-   --  ??? Searching empty lines match none !
 
    procedure Init_Search
      (Search          : out Code_Search;
@@ -118,12 +114,8 @@ package Find_Utils is
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
-   --         ? XXX (iff it is a regexp) ?
    --  * Files_Pattern is uninitialized
    --  * Neither Comments nor Strings nor Statements are scanned
-   --
-   --  ??? Searching " in Ada strings badly implemented: treated as 2 strings
-   --  ??? Searching empty lines match none !
 
    type Poll_Search_Handler is access function
      (Match_Found : Boolean;
@@ -146,16 +138,6 @@ package Find_Utils is
    --
    --  NOTE: The handler mustn't raise any exception
 
---  !! DELETE >>>
-
-   --  Match_Found  Whether a match is found (Line parameters are relevant) or
-   --               it is only a check for aborting (irrelevant parameters).
-   --  File         File containing the match or whole scanned
-   --  Line_Nr      Matching line number (relevant iff Match_Found)
-   --  Line_Text    Matching line text   (relevant iff Match_Found)
-
---  !! DELETE <<<
-
    procedure Do_Search
      (Search   : in out Code_Search;
       Callback : Poll_Search_Handler);
@@ -177,7 +159,7 @@ private
 
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
-   --  Current lexical state of the currently parsed file
+   --  Current lexical state of the currently parsed file.
 
    type Code_Search is record
       Look_For        : String_Access := null;
