@@ -149,7 +149,7 @@ package body Glide_Menu is
 
    begin
       if Dir /= "" then
-         Change_Project_Dir (Kernel, Dir);
+         Change_Dir (Dir);
       end if;
    end On_Change_Dir;
 

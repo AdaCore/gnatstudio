@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -118,15 +118,6 @@ package Glide_Kernel.Project is
    --  Recompute the view of the project, based on the current value of all
    --  scenario variables.
    --  This emits the "project_view_changed" signal.
-
-   ------------------
-   -- Source files --
-   ------------------
-
-   procedure Change_Project_Dir
-     (Handle : access Kernel_Handle_Record'Class;
-      Dir    : String);
-   --  Change the current directory.
 
    --------------
    -- Scenarii --
