@@ -667,7 +667,7 @@ package Codefix.Errors_Parser is
    type Possible_Interpretation is new Error_Parser (Ambiguous_Expression, 1)
    with record
       Source_Matcher : Ptr_Matcher := new Pattern_Matcher'
-        (Compile ("possible interpretation at ([^\.]+\.ad[b|s]):([\d]+)"));
+        (Compile ("possible interpretation at ([^:]+):([\d]+)"));
    end record;
 
    procedure Initialize (This : in out Possible_Interpretation);
