@@ -517,7 +517,7 @@ package body Odd.Strings is
 
                   when ASCII.HT =>
                      if Col mod Tab_Size /= 0 then
-                        Bound := (1 + Col / Tab_Size) * Tab_Size - Col;
+                        Bound := (1 + Col / Tab_Size) * Tab_Size - Col + 1;
                         S (S_Index .. S_Index + Bound - 1) := (others => ' ');
                         S_Index := S_Index + Bound;
                         Col := Col + Bound;
