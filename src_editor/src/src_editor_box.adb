@@ -1866,12 +1866,25 @@ package body Src_Editor_Box is
       Buffer_Line : constant Gint := To_Buffer_Line (Line);
       Buffer_Col  : constant Gint := To_Buffer_Column (Column);
    begin
-      if Force_Focus then
-         Grab_Focus (Editor.Source_View);
-      end if;
+      if Is_Valid_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col) then
+         if Force_Focus then
+            Grab_Focus (Editor.Source_View);
+         end if;
 
-      Set_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
-      Scroll_To_Cursor_Location (Editor.Source_View, True);
+         Set_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
+         Scroll_To_Cursor_Location (Editor.Source_View, True);
+
+      else
+         if Column = 1 then
+            Console.Insert
+              (Editor.Kernel, -"Invalid line number: " & Image (Line),
+               Mode => Error);
+         else
+            Console.Insert
+              (Editor.Kernel, -"Invalid source location: " & Image (Line) &
+               ':' & Image (Column), Mode => Error);
+         end if;
+      end if;
    end Set_Cursor_Location;
 
    -------------------------
