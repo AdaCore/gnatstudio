@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 2.0.0
 
+- [9124-001]  Update button in breakpoints editor doesn't work
+  Problem:    When using the "Update" button in the breakpoints editor
+              ("Advanced" section), gvd enters in a recursive loop.
+  Workaround: Modify the breakpoints using the debugger console instead.
+
 - Bad clean up when load another executable after source+asm view
   Problem:    When using the source+asm view on multiple files, and then
               loading another executable, a bug box is displayed.
