@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- D914-023 Sort order in Project View now kept when scenario changes
+  Problem:    If you change the value of the environment variables that
+              describe the current scenario, the list of directories in the
+              project view will change appropriately, but the new directories
+              are appended at the end, instead of keeping the sort order.
+  Workaround: Close and reopen the project view to force a refresh
+
 - Directories in Project View contain no file after a change of scenario
   Problem:    If you select a new value for the scenario variables at the
               top of the project view, the directories that didn't exist
