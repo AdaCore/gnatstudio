@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D528-004 Directory names always absolute in project files on Windows
+  Problem:    If you add directories to a project file through the "Edit
+              project properties" dialog, the generated project file will in
+              fact use absolute directory names on Windows
+  Workaround: Edit the project file manually afterwards
+
 - Color reset when changing the size of a font
   Problem:    When changing the size of a font in the preferences dialog,
               the foreground and background colors are reset to the default
