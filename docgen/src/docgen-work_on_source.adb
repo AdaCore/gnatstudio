@@ -42,9 +42,9 @@ package body Docgen.Work_On_Source is
       Source_File_List  : in out Type_Source_File_List.List;
       Source_Filename   : String;
       Package_Name      : String;
-      Def_In_Line       : Integer;
       Entity_List       : in out Type_Entity_List.List;
       Process_Body_File : Boolean;
+      LI_Unit           : LI_File_Ptr;
       Options           : All_Options) is
 
       File_Text         : GNAT.OS_Lib.String_Access;
@@ -64,7 +64,6 @@ package body Docgen.Work_On_Source is
                          Options);
       Process_Header (Doc_File,
                       Package_Name,
-                      Def_In_Line,
                       Source_Filename,
                       Process_Body_File,
                       Options);
@@ -87,11 +86,12 @@ package body Docgen.Work_On_Source is
                                       File_Text.all,
                                       Options);
          Process_With_Clause (Doc_File,
-                              Entity_List,
                               Source_Filename,
                               Package_Name,
                               Parsed_List,
                               File_Text,
+                              LI_Unit,
+                              Source_File_List,
                               Options);
          Process_Packages     (Doc_File,
                                Entity_List,
@@ -99,6 +99,8 @@ package body Docgen.Work_On_Source is
                                Package_Name,
                                Parsed_List,
                                File_Text,
+                               LI_Unit,
+                               Source_File_List,
                                Options);
          Process_Vars        (Doc_File,
                               Entity_List,
@@ -106,6 +108,8 @@ package body Docgen.Work_On_Source is
                               Package_Name,
                               Parsed_List,
                               File_Text,
+                              LI_Unit,
+                              Source_File_List,
                               Options);
          Process_Exceptions  (Doc_File,
                               Entity_List,
@@ -113,6 +117,8 @@ package body Docgen.Work_On_Source is
                               Package_Name,
                               Parsed_List,
                               File_Text,
+                              LI_Unit,
+                              Source_File_List,
                               Options);
          Process_Types       (Doc_File,
                               Entity_List,
@@ -120,6 +126,8 @@ package body Docgen.Work_On_Source is
                               Package_Name,
                               Parsed_List,
                               File_Text,
+                              LI_Unit,
+                              Source_File_List,
                               Options);
          Process_Entries     (Doc_File,
                               Entity_List,
@@ -128,6 +136,8 @@ package body Docgen.Work_On_Source is
                               Package_Name,
                               Parsed_List,
                               File_Text,
+                              LI_Unit,
+                              Source_File_List,
                               Options);
          Process_Subprograms (Doc_File,
                               Entity_List,
@@ -136,14 +146,17 @@ package body Docgen.Work_On_Source is
                               Package_Name,
                               Parsed_List,
                               File_Text,
+                              LI_Unit,
+                              Source_File_List,
                               Options);
          Free (Parsed_List);
 
       else
          Process_One_Body_File (Doc_File,
                                 Source_Filename,
-                                Entity_List,
                                 File_Text,
+                                LI_Unit,
+                                Source_File_List,
                                 Options);
       end if;
       Process_Footer (Doc_File,
@@ -173,11 +186,12 @@ package body Docgen.Work_On_Source is
       --  initialise the Doc_Info data
       Data_Open := Doc_Info'(Open_Info,
                              Doc_Info_Options => Options,
+                             Doc_File_List => Source_File_List,
                              Open_Title => new String'(Package_Name),
                              Open_File  => new String'(Package_File),
                              Open_Package_Next => Next_Package,
                              Open_Package_Prev => Prev_Package,
-                             Open_Package_List => Source_File_List);
+                             Doc_LI_Unit => No_LI_File);
 
       --  call the documentation procedure
       Options.Doc_Subprogram (Doc_File, Data_Open);
@@ -200,6 +214,8 @@ package body Docgen.Work_On_Source is
       --  initialise the Doc_Info data
       Data_Close := Doc_Info'(Close_Info,
                               Doc_Info_Options => Options,
+                              Doc_LI_Unit => No_LI_File,
+                              Doc_File_List => TSFL.Null_List,
                               Close_File_Name =>
                               new String'(File_Name));
 
@@ -216,8 +232,9 @@ package body Docgen.Work_On_Source is
    procedure Process_One_Body_File
      (Doc_File           : File_Type;
       Source_File        : String;
-      Entity_List        : Type_Entity_List.List;
       File_Text          : GNAT.OS_Lib.String_Access;
+      LI_Unit            : LI_File_Ptr;
+      Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options)
    is
       Data_Line          : Doc_Info (Info_Type => Body_Line_Info);
@@ -225,10 +242,11 @@ package body Docgen.Work_On_Source is
       --  initialise the Doc_Info data
       Data_Line := Doc_Info'(Body_Line_Info,
                              Doc_Info_Options => Options,
+                             Doc_LI_Unit => LI_Unit,
                              Body_Text      => File_Text,
                              Body_File      =>
                              new String'(Source_File),
-                             Body_Entity_List => Entity_List);
+                             Doc_File_List => Source_File_List);
 
       --  call the documentation procedure
       Options.Doc_Subprogram (Doc_File, Data_Line);
@@ -280,6 +298,8 @@ package body Docgen.Work_On_Source is
 
          Data_Package := Doc_Info'(Unit_Index_Info,
                                    Doc_Info_Options => Options,
+                                   Doc_LI_Unit => No_LI_File,
+                                   Doc_File_List => TSFL.Null_List,
                                    Unit_Project_Name => Options.Project_Name,
                                    Unit_Index_File_Name =>
                                      new String'(Doc_File_Name),
@@ -297,11 +317,12 @@ package body Docgen.Work_On_Source is
                Data_Item :=
                  Doc_Info'(Index_Item_Info,
                            Doc_Info_Options => Options,
+                           Doc_LI_Unit => No_LI_File,
+                           Doc_File_List => TSFL.Null_List,
                            Item_Name => Package_Name,
                            Item_File =>
                            new String'(File_Name (Source_Filename.all)),
-                           Item_Line =>
-                             TSFL.Data (Source_File_Node).Def_In_Line,
+                           Item_Line => First_File_Line,
                            Item_Doc_File =>
                            new String'(Base_Name
                                          (Get_Doc_File_Name
@@ -317,6 +338,8 @@ package body Docgen.Work_On_Source is
 
          Data_End := Doc_Info'(End_Of_Index_Info,
                                Doc_Info_Options => Options,
+                               Doc_LI_Unit => No_LI_File,
+                               Doc_File_List => TSFL.Null_List,
                                End_index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
@@ -353,6 +376,8 @@ package body Docgen.Work_On_Source is
 
       Data_Subprogram := Doc_Info'(Subprogram_Index_Info,
                                    Doc_Info_Options => Options,
+                                   Doc_LI_Unit => No_LI_File,
+                                   Doc_File_List => TSFL.Null_List,
                                    Subprogram_Index_File_Name =>
                                      new String'(Doc_File_Name));
       Options.Doc_Subprogram (Index_File, Data_Subprogram);
@@ -365,6 +390,8 @@ package body Docgen.Work_On_Source is
 
             Data_Item := Doc_Info'(Index_Item_Info,
                                    Doc_Info_Options => Options,
+                                   Doc_LI_Unit => No_LI_File,
+                                   Doc_File_List => TSFL.Null_List,
                                    Item_Name =>
                                      TEL.Data
                                        (Subprogram_Index_Node).Short_Name,
@@ -388,6 +415,8 @@ package body Docgen.Work_On_Source is
 
       Data_End := Doc_Info'(End_Of_Index_Info,
                             Doc_Info_Options => Options,
+                            Doc_LI_Unit => No_LI_File,
+                            Doc_File_List => TSFL.Null_List,
                             End_Index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
@@ -426,6 +455,8 @@ package body Docgen.Work_On_Source is
               Options.Doc_Suffix.all);
       Data_Type := Doc_Info'(Type_Index_Info,
                              Doc_Info_Options => Options,
+                             Doc_LI_Unit => No_LI_File,
+                             Doc_File_List => TSFL.Null_List,
                              Type_Index_File_Name =>
                              new String'(Doc_File_Name));
       Options.Doc_Subprogram (Index_File, Data_Type);
@@ -439,6 +470,8 @@ package body Docgen.Work_On_Source is
 
             Data_Item := Doc_Info'(Index_Item_Info,
                                    Doc_Info_Options => Options,
+                                   Doc_LI_Unit => No_LI_File,
+                                   Doc_File_List => TSFL.Null_List,
                                    Item_Name =>
                                      TEL.Data (Type_Index_Node).Short_Name,
                                    Item_File =>
@@ -461,6 +494,8 @@ package body Docgen.Work_On_Source is
 
       Data_End := Doc_Info'(End_Of_Index_Info,
                             Doc_Info_Options => Options,
+                            Doc_LI_Unit => No_LI_File,
+                            Doc_File_List => TSFL.Null_List,
                             End_Index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
@@ -479,7 +514,6 @@ package body Docgen.Work_On_Source is
    procedure Process_Header
      (Doc_File           : File_Type;
       Package_Name       : String;
-      Def_In_Line        : Integer;
       Package_File       : String;
       Process_Body_File  : Boolean;
       Options            : All_Options) is
@@ -490,9 +524,11 @@ package body Docgen.Work_On_Source is
 
       Data_Header := Doc_Info'(Header_Info,
                                Doc_Info_Options => Options,
+                               Doc_LI_Unit => No_LI_File,
+                               Doc_File_List => TSFL.Null_List,
                                Header_Package => new String'(Package_Name),
                                Header_File  => new String'(Package_File),
-                               Header_Line  => Def_In_Line,
+                               Header_Line  => First_File_Line,
                                Header_Link  => Process_Body_File);
       Options.Doc_Subprogram (Doc_File, Data_Header);
 
@@ -515,6 +551,8 @@ package body Docgen.Work_On_Source is
    begin
       Data_Footer := Doc_Info'(Footer_Info,
                                Doc_Info_Options => Options,
+                               Doc_LI_Unit => No_LI_File,
+                               Doc_File_List => TSFL.Null_List,
                                Footer_Title => new String'("Docgen"),
                                Footer_File  => new String'(Package_File));
       Options.Doc_Subprogram (Doc_File, Data_Footer);
@@ -565,6 +603,8 @@ package body Docgen.Work_On_Source is
 
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Doc_Info_Options => Options,
+                                    Doc_LI_Unit => No_LI_File,
+                                    Doc_File_List => TSFL.Null_List,
                                     Subtitle_Name =>
                                     new String'("Description"),
                                     Subtitle_Kind => Package_Desc_Info,
@@ -581,6 +621,8 @@ package body Docgen.Work_On_Source is
                                          Options);
          Data_Package := Doc_Info'(Package_Desc_Info,
                                    Doc_Info_Options => Options,
+                                   Doc_LI_Unit => No_LI_File,
+                                   Doc_File_List => TSFL.Null_List,
                                    Package_Desc_Description
                                      => Description);
          Options.Doc_Subprogram (Doc_File, Data_Package);
@@ -593,13 +635,14 @@ package body Docgen.Work_On_Source is
    --------------------------
 
    procedure Process_With_Clause
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options) is
+     (Doc_File         : File_Type;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options) is
 
       Data_Subtitle   : Doc_Info (Info_Type => Subtitle_Info);
       Data_With       : Doc_Info (Info_Type => With_Info);
@@ -607,10 +650,12 @@ package body Docgen.Work_On_Source is
       Old_Line, New_Line : GNAT.OS_Lib.String_Access;
       Parse_Node         : Construct_Access;
       Parsed_List_End    : Boolean;
+      First_With_Line    : Natural;
    begin
       New_Line        := new String'("  ");
       Parse_Node      := Parsed_List.First;
       Parsed_List_End := False;
+      First_With_Line := 0;
 
       --  exception if no paresed entities found: later
 
@@ -623,6 +668,9 @@ package body Docgen.Work_On_Source is
                                        (Parse_Node.Sloc_Start.Index ..
                                           Parse_Node.Sloc_End.Index));
             Free (Old_Line);
+            if First_With_Line = 0 then
+               First_With_Line := Parse_Node.Sloc_Start.Line;
+            end if;
          end if;
 
          if Parse_Node = Parsed_List.Last or
@@ -638,6 +686,8 @@ package body Docgen.Work_On_Source is
 
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Doc_Info_Options => Options,
+                                    Doc_LI_Unit => No_LI_File,
+                                    Doc_File_List => TSFL.Null_List,
                                     Subtitle_Name =>
                                     new String'("Dependencies"),
                                     Subtitle_Kind => With_Info,
@@ -647,7 +697,9 @@ package body Docgen.Work_On_Source is
       end if;
       Data_With := Doc_Info'(With_Info,
                              Doc_Info_Options => Options,
-                             With_List  => Entity_List,
+                             Doc_LI_Unit => LI_Unit,
+                             Doc_File_List => Source_File_List,
+                             With_Header_Line => First_With_Line,
                              With_File  => new String '(Source_Filename),
                              With_Header => New_Line);
       Options.Doc_Subprogram (Doc_File, Data_With);
@@ -662,13 +714,15 @@ package body Docgen.Work_On_Source is
    ----------------------
 
    procedure Process_Packages
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options) is
+     (Doc_File         : File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options) is
 
       Entity_Node     : Type_Entity_List.List_Node;
       Description     : GNAT.OS_Lib.String_Access;
@@ -683,6 +737,8 @@ package body Docgen.Work_On_Source is
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Doc_Info_Options => Options,
+                                    Doc_LI_Unit => No_LI_File,
+                                    Doc_File_List => TSFL.Null_List,
                                     Subtitle_Name =>
                                     new String'("Packages"),
                                     Subtitle_Kind => Package_Info,
@@ -707,8 +763,6 @@ package body Docgen.Work_On_Source is
                   First_Already_Set := True;
                end if;
 
-
-
                Header :=
                  Get_Whole_Header (File_Text.all,
                                    Parsed_List,
@@ -723,10 +777,11 @@ package body Docgen.Work_On_Source is
                   Options);
                Data_Package := Doc_Info'(Package_Info,
                                          Doc_Info_Options => Options,
+                                         Doc_LI_Unit => LI_Unit,
+                                         Doc_File_List => Source_File_List,
                                          Package_Entity      =>
                                            TEL.Data (Entity_Node),
                                          Package_Description => Description,
-                                         Package_List        => Entity_List,
                                          Package_Header => Header,
                                          Package_Header_Line =>
                                            TEL.Data (Entity_Node).Line);
@@ -747,13 +802,15 @@ package body Docgen.Work_On_Source is
    ------------------
 
    procedure Process_Vars
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options) is
+     (Doc_File         : File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options) is
 
       Entity_Node     : Type_Entity_List.List_Node;
       Description     : GNAT.OS_Lib.String_Access;
@@ -768,6 +825,8 @@ package body Docgen.Work_On_Source is
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Doc_Info_Options => Options,
+                                    Doc_LI_Unit => No_LI_File,
+                                    Doc_File_List => TSFL.Null_List,
                                     Subtitle_Name =>
                                     new String'
                                       ("Constants and Named Numbers"),
@@ -808,10 +867,11 @@ package body Docgen.Work_On_Source is
 
                   Data_Var := Doc_Info'(Var_Info,
                                         Doc_Info_Options => Options,
+                                        Doc_LI_Unit => LI_Unit,
+                                        Doc_File_List => Source_File_List,
                                         Var_Entity      =>
                                           TEL.Data (Entity_Node),
                                         Var_Description => Description,
-                                        Var_List        => Entity_List,
                                         Var_Header     => Header,
                                         Var_Header_Line =>
                                        TEL.Data (Entity_Node).Line);
@@ -833,13 +893,15 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Exceptions
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options) is
+     (Doc_File         : File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options) is
 
       Entity_Node     : Type_Entity_List.List_Node;
       Description     : GNAT.OS_Lib.String_Access;
@@ -854,6 +916,8 @@ package body Docgen.Work_On_Source is
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Doc_Info_Options => Options,
+                                    Doc_LI_Unit => No_LI_File,
+                                    Doc_File_List => TSFL.Null_List,
                                     Subtitle_Name =>
                                     new String'("Exceptions"),
                                     Subtitle_Kind => Exception_Info,
@@ -895,12 +959,13 @@ package body Docgen.Work_On_Source is
 
                   Data_Exception := Doc_Info'(Exception_Info,
                                               Doc_Info_Options => Options,
+                                              Doc_LI_Unit => LI_Unit,
+                                              Doc_File_List =>
+                                                Source_File_List,
                                               Exception_Entity      =>
                                                 TEL.Data (Entity_Node),
                                               Exception_Description =>
                                                 Description,
-                                              Exception_List        =>
-                                                Entity_List,
                                               Exception_Header   =>
                                                 Header,
                                               Exception_Header_Line =>
@@ -924,13 +989,15 @@ package body Docgen.Work_On_Source is
    -------------------
 
    procedure Process_Types
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options) is
+     (Doc_File         : File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options) is
 
       Entity_Node     : Type_Entity_List.List_Node;
       Description     : GNAT.OS_Lib.String_Access;
@@ -946,6 +1013,8 @@ package body Docgen.Work_On_Source is
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Doc_Info_Options => Options,
+                                    Doc_LI_Unit => No_LI_File,
+                                    Doc_File_List => TSFL.Null_List,
                                     Subtitle_Name =>
                                     new String'("Types"),
                                     Subtitle_Kind => Type_Info,
@@ -988,13 +1057,14 @@ package body Docgen.Work_On_Source is
 
                   Data_Type := Doc_Info'(Type_Info,
                                          Doc_Info_Options => Options,
-                                      Type_Entity      =>
-                                        TEL.Data (Entity_Node),
-                                      Type_Description => Description,
-                                      Type_List        => Entity_List,
-                                      Type_Header => Header,
-                                      Type_Header_Line =>
-                                        TEL.Data (Entity_Node).Line);
+                                         Doc_LI_Unit => LI_Unit,
+                                         Doc_File_List => Source_File_List,
+                                         Type_Entity      =>
+                                           TEL.Data (Entity_Node),
+                                         Type_Description => Description,
+                                         Type_Header => Header,
+                                         Type_Header_Line =>
+                                           TEL.Data (Entity_Node).Line);
                   Options.Doc_Subprogram (Doc_File, Data_Type);
                end if;
 
@@ -1021,6 +1091,8 @@ package body Docgen.Work_On_Source is
       Package_Name       : String;
       Parsed_List        : Construct_List;
       File_Text          : GNAT.OS_Lib.String_Access;
+      LI_Unit            : LI_File_Ptr;
+      Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options) is
 
       Entity_Node             : Type_Entity_List.List_Node;
@@ -1036,6 +1108,8 @@ package body Docgen.Work_On_Source is
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Doc_Info_Options => Options,
+                                    Doc_LI_Unit => No_LI_File,
+                                    Doc_File_List => TSFL.Null_List,
                                     Subtitle_Name =>
                                     new String'
                                       ("Tasks, Entries and Entry Families"),
@@ -1077,14 +1151,14 @@ package body Docgen.Work_On_Source is
 
                   Data_Entry := Doc_Info'(Entry_Info,
                                           Doc_Info_Options => Options,
+                                          Doc_LI_Unit => LI_Unit,
+                                          Doc_File_List => Source_File_List,
                                           Entry_Entity      =>
                                             TEL.Data (Entity_Node),
                                           Entry_Description =>
                                             Description,
                                           Entry_Link        =>
                                             Process_Body_File,
-                                          Entry_List        =>
-                                            Entity_List,
                                           Entry_Header =>
                                             Header,
                                           Entry_Header_Line =>
@@ -1114,6 +1188,8 @@ package body Docgen.Work_On_Source is
       Package_Name       : String;
       Parsed_List        : Construct_List;
       File_Text          : GNAT.OS_Lib.String_Access;
+      LI_Unit            : LI_File_Ptr;
+      Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options) is
 
       Entity_Node             : Type_Entity_List.List_Node;
@@ -1129,6 +1205,8 @@ package body Docgen.Work_On_Source is
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Doc_Info_Options => Options,
+                                    Doc_LI_Unit => No_LI_File,
+                                    Doc_File_List => TSFL.Null_List,
                                     Subtitle_Name =>
                                     new String'("Subprograms"),
                                     Subtitle_Kind => Subprogram_Info,
@@ -1138,8 +1216,7 @@ package body Docgen.Work_On_Source is
          for J in 1 .. TEL.Length (Entity_List) loop
 
             --  check if the entity is a procedure or a function
-            if (TEL.Data (Entity_Node).Kind = Procedure_Entity or
-                TEL.Data (Entity_Node).Kind = Function_Entity)
+            if (TEL.Data (Entity_Node).Kind = Subprogram_Entity)
             --  check if defined in this file (the rest of
             --  entities only for the body documentation)
             and TEL.Data (Entity_Node).File_Name.all = Source_Filename
@@ -1171,6 +1248,9 @@ package body Docgen.Work_On_Source is
 
                   Data_Subprogram := Doc_Info'(Subprogram_Info,
                                                Doc_Info_Options => Options,
+                                               Doc_LI_Unit => LI_Unit,
+                                               Doc_File_List =>
+                                                 Source_File_List,
                                                Subprogram_Entity      =>
                                                  TEL.Data (Entity_Node),
                                                Subprogram_Description =>
