@@ -35,6 +35,7 @@ with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Text_Iter;          use Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtk.Text_Tag_Table;     use Gtk.Text_Tag_Table;
+with Pango.Enums;
 
 with Language;               use Language;
 with Src_Highlighting;       use Src_Highlighting;
@@ -46,11 +47,19 @@ package body Src_Editor_Buffer is
 
    use type System.Address;
 
-   Default_Keyword_Color : constant String := "red";
-   Default_Comment_Color : constant String := "blue";
+   Default_Keyword_Color : constant String := "blue";
+   Default_Comment_Color : constant String := "red";
    Default_String_Color  : constant String := "brown";
    --  ??? As soon as we have defined a uniform GLIDE handling of
    --  ??? defaults/preferences, these constants should move there.
+
+   Default_Keyword_Font_Attr  : constant Font_Attributes :=
+     To_Font_Attributes (Weight => Pango.Enums.Pango_Weight_Bold);
+   Default_Comment_Font_Attr  : constant Font_Attributes :=
+     To_Font_Attributes (Style => Pango.Enums.Pango_Style_Italic);
+   Default_String_Font_Attr   : constant Font_Attributes :=
+     To_Font_Attributes;
+   --  ??? Just as for the colors, these will eventually move away.
 
    Class_Record : GObject_Class := Uninitialized_Class;
    --  A pointer to the 'class record'.
@@ -572,10 +581,13 @@ package body Src_Editor_Buffer is
 
       Buffer.Highlight_Tags :=
         Create_Tags
-          (Keyword_Color => Default_Keyword_Color,
-           Comment_Color => Default_Comment_Color,
-           String_Color => Default_String_Color);
-      --  ??? Use preferences for the colors...
+          (Keyword_Color     => Default_Keyword_Color,
+           Keyword_Font_Attr => Default_Keyword_Font_Attr,
+           Comment_Color     => Default_Comment_Color,
+           Comment_Font_Attr => Default_Comment_Font_Attr,
+           String_Color      => Default_String_Color,
+           String_Font_Attr  => Default_String_Font_Attr);
+      --  ??? Use preferences for the colors and font attributes...
 
       --  Save the newly created highlighting tags into the source buffer
       --  tag table.
