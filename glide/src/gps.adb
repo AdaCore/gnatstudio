@@ -104,6 +104,7 @@ procedure GPS is
 
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
+   Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
@@ -124,6 +125,7 @@ procedure GPS is
    Splash                 : Gtk_Window;
    User_Directory_Existed : Boolean;
    Cleanup_Needed         : Boolean := False;
+   Unexpected_Exception   : Boolean := False;
 
    Started                : Boolean := False;
    --  Whether the main loop is started.
@@ -251,6 +253,7 @@ procedure GPS is
       Dir_Created : Boolean := False;
       File        : File_Type;
       Charset     : String_Access;
+      Make_Root   : String_Access;
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
@@ -303,6 +306,16 @@ procedure GPS is
          end if;
       end if;
 
+      --  Define MAKE_ROOT if needed, so that the generated makefiles can find
+      --  Makefile.prolog and Makefile.generic
+
+      Make_Root := Getenv ("MAKE_ROOT");
+
+      if Make_Root.all = "" then
+         Setenv ("MAKE_ROOT", Prefix.all);
+         Free (Make_Root);
+      end if;
+
       Bind_Text_Domain
         ("gps", Format_Pathname (Prefix.all & "/share/locale"));
 
@@ -345,7 +358,7 @@ procedure GPS is
               (File,
                Name => String_Utils.Name_As_Directory (Dir.all)
                  & "traces.cfg");
-            Put_Line (File, ">log");
+            Put_Line (File, ">log.$$");
             Put_Line (File, "+");
             Put_Line (File, "DEBUG.COLORS=no");
             Put_Line (File, "DEBUG.ABSOLUTE_TIME=yes");
@@ -1117,16 +1130,28 @@ procedure GPS is
    ---------------------
 
    procedure Main_Processing is
+      Log_File : aliased String := Get_Home_Dir (GPS.Kernel) & "log";
+      Pid_File : aliased String := Log_File & "." & Pid_Image;
+      Str      : String_Access;
+
    begin
       Gtk.Main.Main;
    exception
       when E : others =>
+         Unexpected_Exception := True;
          Trace (Me, "Unhandled exception: " & Exception_Information (E));
+
+         if Is_Regular_File (Log_File & "." & Pid_Image) then
+            Str := Pid_File'Unchecked_Access;
+         else
+            Str := Log_File'Unchecked_Access;
+         end if;
+
          Button := Message_Dialog
-           ((-"Unexpected fatal error, GPS is in an inconsistent state") &
-            ASCII.LF & (-"Please report with contents of ") &
-            Get_Home_Dir (GPS.Kernel) & "log" & ASCII.LF & ASCII.LF &
-            (-"You will be asked to save modified files before GPS exits"),
+           ("Unexpected fatal error, GPS is in an inconsistent state" &
+            ASCII.LF & "Please report with contents of " & Str.all &
+            ASCII.LF & ASCII.LF &
+            "You will be asked to save modified files before GPS exits",
             Error, Button_OK,
             Title => -"Fatal Error",
             Justification => Justify_Left);
@@ -1138,7 +1163,10 @@ procedure GPS is
    -----------------
 
    procedure Do_Cleanups is
-      Kernel : constant Kernel_Handle := GPS.Kernel;
+      Kernel   : constant Kernel_Handle := GPS.Kernel;
+      Log_File : constant String := Get_Home_Dir (Kernel) & "log";
+      Success  : Boolean;
+
    begin
       if not Cleanup_Needed then
          return;
@@ -1171,6 +1199,19 @@ procedure GPS is
 
       Projects.Registry.Finalize;
       Traces.Finalize;
+
+      --  In case of a normal exit, rename log.<pid> as log to avoid
+      --  generating a new log file for each session; this way we still
+      --  keep the log file in case of post mortem analysis.
+      --  In case of unexpected exit, keep the log file under its original
+      --  name, so that it does not get erased by the next session and can
+      --  be reported.
+
+      if not Unexpected_Exception
+        and then Is_Regular_File (Log_File & "." & Pid_Image)
+      then
+         Rename_File (Log_File & "." & Pid_Image, Log_File, Success);
+      end if;
 
       Free (Home);
       Free (Dir);
