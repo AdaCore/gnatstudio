@@ -59,6 +59,7 @@ with Namet;                     use Namet;
 
 with Types;                     use Types;
 
+with Basic_Types;
 with Projects;                  use Projects;
 with Language;                  use Language;
 with String_Utils;              use String_Utils;
@@ -2289,15 +2290,17 @@ package body Project_Explorers is
 
       function Check_Entities
         (File      : VFS.Virtual_File;
-         Project   : Project_Type)
-         return Boolean
+         Project   : Project_Type) return Boolean
       is
-         Languages : constant Glide_Language_Handler :=
+         Languages  : constant Glide_Language_Handler :=
            Glide_Language_Handler (Get_Language_Handler (Kernel));
-         Handler : constant Src_Info.LI_Handler := Get_LI_Handler_From_File
+         Handler    : constant Src_Info.LI_Handler := Get_LI_Handler_From_File
            (Languages, File);
          Constructs : Construct_List;
-         Status : Boolean := False;
+         Status     : Boolean := False;
+
+         use type Basic_Types.String_Access;
+
       begin
          Src_Info.Parse_File_Constructs
            (Handler, Project, Languages, File, Constructs);
@@ -2305,8 +2308,8 @@ package body Project_Explorers is
          Constructs.Current := Constructs.First;
 
          while Constructs.Current /= null loop
-            if Filter_Category (Constructs.Current.Category) /=
-              Cat_Unknown
+            if Filter_Category (Constructs.Current.Category) /= Cat_Unknown
+              and then Constructs.Current.Name /= null
               and then Match (C, Constructs.Current.Name.all) /= -1
             then
                Status := True;
