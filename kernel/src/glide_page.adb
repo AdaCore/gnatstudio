@@ -84,9 +84,9 @@ package body Glide_Page is
    begin
       Configure
         (Get_MDI (Kernel),
-         Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque_Resize),
-         Opaque_Move       => Get_Pref (Kernel, MDI_Opaque_Move),
-         Opaque_Docks      => Get_Pref (Kernel, MDI_Opaque_Docks),
+         Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque),
+         Opaque_Move       => Get_Pref (Kernel, MDI_Opaque),
+         Opaque_Docks      => Get_Pref (Kernel, MDI_Opaque),
          Close_Floating_Is_Unfloat =>
            not Get_Pref (Kernel, MDI_Destroy_Floats),
          Title_Font        => Get_Pref (Kernel, MDI_Title_Font),
