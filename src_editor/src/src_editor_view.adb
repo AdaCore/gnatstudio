@@ -466,14 +466,8 @@ package body Src_Editor_View is
             --  If one of the values hadn't been initialized, display the
             --  whole range of lines.
 
-            if View.Bottom_Line = 0 then
-               View.Top_Line    := Top_Line;
-               View.Bottom_Line := Bottom_Line;
-               Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
-            else
-               View.Top_Line    := Top_Line;
-               View.Bottom_Line := Bottom_Line;
-            end if;
+            View.Top_Line    := Top_Line;
+            View.Bottom_Line := Bottom_Line;
 
             --  Compute the smallest connected area that needs refresh.
 
