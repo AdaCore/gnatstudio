@@ -165,7 +165,7 @@ package body Src_Info.Queries is
       return Boolean is
    begin
       return Location.Line = Line
-        and then Location.Column = Column
+        and then (Location.Column = 0 or else Location.Column = Column)
         and then Get_Source_Filename (Location.File) = File_Name;
    end Location_Matches;
 
@@ -225,11 +225,9 @@ package body Src_Info.Queries is
       --  Search the entity in the list of declarations
       Decl_Loop :
       while Current_Decl /= null loop
-
          --  Check the entity name to limit a bit the search in the
          --  Xref lists
          if Current_Decl.Value.Declaration.Name.all = Entity_Name then
-
             --  Check if the location corresponds to the declaration,
             --  in which case we need to jump to the first body.
             if Location_Matches
@@ -246,7 +244,6 @@ package body Src_Info.Queries is
             Current_Ref := Current_Decl.Value.References;
             Ref_Loop :
             while Current_Ref /= null loop
-
                if Location_Matches
                  (Current_Ref.Value.Location, File_Name, Line, Column)
                then
@@ -385,7 +382,8 @@ package body Src_Info.Queries is
       end if;
 
    exception
-      when others =>
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          --  Trap all exceptions for better robustness, and report an
          --  internal error
          Entity := No_Entity_Information;
@@ -484,9 +482,10 @@ package body Src_Info.Queries is
       end if;
 
    exception
-      when others =>
+      when E : others =>
          --  Trap all exceptions for better robustness, and report an
          --  internal error
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Status := Internal_Error;
          Location := Null_File_Location;
    end Find_Next_Body;
