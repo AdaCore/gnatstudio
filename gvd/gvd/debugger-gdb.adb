@@ -1886,7 +1886,9 @@ package body Debugger.Gdb is
    begin
       Len := 0;
 
-      if Output = "The program is not being run." then
+      if Output = "The program is not being run."
+        or else Output = "No stack"
+      then
          return;
       end if;
 
