@@ -30,7 +30,7 @@
 --  action will be enqueued. When an action finishes, the next action
 --  pending in the queue will be executed.
 --
---  One very important point : the implementation of the function
+--  One very important point: the implementation of the function
 --  Execute must call Command_Finished when the action is completed,
 --  since this is what triggers the execution of the next action in
 --  queue.
@@ -93,7 +93,7 @@ package Commands is
 
 private
    procedure Execute (Command : access Root_Command);
-   --  Convenience subprogram : same as function Execute, but does not
+   --  Convenience subprogram: same as function Execute, but does not
    --  return any value.
 
    procedure Command_Finished
