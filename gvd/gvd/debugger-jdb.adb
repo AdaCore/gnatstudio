@@ -34,8 +34,6 @@ with GVD.Main_Window;   use GVD.Main_Window;
 
 package body Debugger.Jdb is
 
-   use String_History;
-
    ---------------
    -- Constants --
    ---------------

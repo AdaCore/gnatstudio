@@ -59,8 +59,6 @@ with Ada.Unchecked_Deallocation;
 
 package body Debugger.Gdb is
 
-   use String_History;
-
    ---------------
    -- Constants --
    ---------------
