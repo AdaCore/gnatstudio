@@ -28,7 +28,7 @@ begin
    Set_Title (Switches_Editor, -"Switches");
    Set_Policy (Switches_Editor, False, True, False);
    Set_Position (Switches_Editor, Win_Pos_None);
-   Set_Modal (Switches_Editor, True);
+   Set_Modal (Switches_Editor, False);
    Set_Default_Size (Switches_Editor, 400, 300);
 
    Gtk_New_Vbox (Switches_Editor.Vbox2, False, 0);
