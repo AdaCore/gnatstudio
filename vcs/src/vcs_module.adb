@@ -94,6 +94,7 @@ package body VCS_Module is
      (Object  : access Gtk_Widget_Record'Class;
       Args    : Gtk_Args)
    is
+      pragma Unreferenced (Object);
       Context      : Selection_Context_Access :=
         To_Selection_Context_Access (To_Address (Args, 1));
       File         : File_Selection_Context_Access;
@@ -131,6 +132,7 @@ package body VCS_Module is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Files    : String_List.List;
       Dirs     : String_List.List;
       Status   : File_Status_List.List;
@@ -207,6 +209,7 @@ package body VCS_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       MDI      : MDI_Window := Get_MDI (Kernel);
       Explorer : VCS_View_Access := Get_Explorer (Kernel);
       Child    : MDI_Child;
@@ -248,6 +251,7 @@ package body VCS_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Dirs : String_List.List := Get_Dirs_In_Project (Kernel);
       Ref  : VCS_Access := Get_Current_Ref (Kernel);
    begin

@@ -126,6 +126,7 @@ package body VCS.CVS is
    ----------
 
    procedure Free (Ref : access CVS_Record) is
+      pragma Unreferenced (Ref);
    begin
       null;
    end Free;
@@ -371,6 +372,7 @@ package body VCS.CVS is
       Arguments         : String_List.List;
       Output_To_Message : Boolean := False)
    is
+      pragma Unreferenced (Output_To_Message);
       C : Command_Record;
    begin
       String_List.Append (C.Dir, Get_Path (String_List.Head (Filenames)));
@@ -616,6 +618,7 @@ package body VCS.CVS is
       Get_Tags    : Boolean := False;
       Get_Users   : Boolean := False)
    is
+      pragma Unreferenced (Get_Users, Get_Tags, Get_Version, Get_Status);
       Files   : String_List.List := Filenames;
 
       C : Command_Record;
@@ -827,6 +830,7 @@ package body VCS.CVS is
       Filenames : String_List.List;
       User_Name : String           := "")
    is
+      pragma Unreferenced (User_Name);
       Arguments : String_List.List;
    begin
       String_List.Append (Arguments, "-Q");
