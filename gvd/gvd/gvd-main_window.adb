@@ -194,7 +194,6 @@ package body GVD.Main_Window is
       if Tab /= null
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
-         Update_Call_Stack (Tab);
          Update (Window.Task_Dialog, Tab);
          Update (Window.History_Dialog, Tab);
       end if;
