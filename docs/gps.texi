@@ -7768,18 +7768,19 @@ to avoid splitting switches each time a space is encountered.
 @c --------------------------------------------------------------------------
 
 @noindent
-The user has to be able to specify which tools should be used when working
-with the tool. If the tool is simply called through custom menus, you might
+The user has to be able to specify which switches to use with the tool.
+If the tool is simply called through custom menus, you might
 want to hard code some or all of the switches. However, in the general case
 it is better to use the project properties editor, so that project-specific
 switches can be specified.
 
 This is what GPS does by default for Ada, C and C++. You can find in the GPS
-installation how the switches for these languages are defined in an XML file.
-These provide extended examples of the use of customization files.
+installation directory how the switches for these languages are defined in an
+XML file. These provide extended examples of the use of customization files.
 
-This switches editor provides a powerful interface to the command line, where
-the user can edit the command line both as text and through GUI widgets.
+The switches editor in the project properties editor provides a powerful
+interface to the command line, where the user can edit the command line both as
+text and through GUI widgets.
 
 The switches are declared through the @code{<switches>} tag in the
 customization file, which must be a child of a @code{<tool>} tag as described
@@ -8007,16 +8008,16 @@ The command line for each of these commands can either be hard-coded in the
 customization file, or be the result of previous commands executed as part of
 the same action. As GPS executes each command from the action in turn, it
 saves its output on a stack as needed. If a command line contains a special
-construct @code{%1}, @code{%2},@dots{} then these constructs will be replaced
-by the result of resp. the last command executed, the previous from last
+construct @code{%1}, @code{%2}@dots{} then these constructs will be replaced
+by the result of respectively the last command executed, the previous from last
 command, and so on.
 
-Every time you execute a new command, it pushes the previous %1, %2,@dots{}
-parameters one step, so that they become resp. %2, %3,@dots{} and the output
-of that command becomes %1.
+Every time you execute a new command, it pushes the previous %1, %2@dots{}
+parameters one step further on the stack, so that they become respectively %2,
+%3@dots{} and the output of that command becomes %1.
 
 The output of the previous commands is substituted exactly as is. However, if
-the output is surrounded by quotes, they are ignored when substitution takes
+the output is surrounded by quotes, they are ignored when a substitution takes
 place, so you need to put them back if they are needed. The reason for this
 behavior is so that for scripting languages that systematically protect their
 output with quotes (simple or double), these quotes are sometimes in the
@@ -8043,10 +8044,10 @@ action is stopped immediately, and no further command is performed.
 
 @cindex save_all
 Before launching the external tool, you might want to force GPS to save all
-open files, the project,@dots{}. This is done using the same command GPS itself
+open files, the project@dots{}. This is done using the same command GPS itself
 uses before starting a compilation. This command is called @code{save_all},
-and takes one optional argument which specifies whether an interactive dialog
-should be displayed for the user.
+and takes one optional boolean argument which specifies whether an interactive
+dialog should be displayed for the user.
 
 Since this command aborts when the user presses cancel, you can
 simply put it in its own @code{<shell>} command, as in:
@@ -8063,7 +8064,7 @@ simply put it in its own @code{<shell>} command, as in:
 @ifclear python
 @smallexample
 <action name="test save children">
-  <shell>save_all</shell>
+  <shell>save_all 0</shell>
   <external>echo Run unless Cancel was pressed</external>
 </action>
 @end smallexample
@@ -8139,7 +8140,7 @@ They generally have their own native way to read input, possibly by creating
 a dialog.
 
 In addition, the simplest solution is to use the predefined GPS commands for
-this. These include two main functions:
+this. These are the two functions:
 
 @table @code
 @item yes_no_dialog
@@ -8335,32 +8336,35 @@ the default switches from the currently selected project, and then ask the
 user interactively for the name of the file to search.
 
 @smallexample
-<tool name="Find" >
-  <switches columns="2" >
-    <title column="1" >Filters</title>
-    <title column="2" >Actions</title>
+<?xml version="1.0" ?>
+<toolexample>
+  <tool name="Find" >
+    <switches columns="2" >
+      <title column="1" >Filters</title>
+      <title column="2" >Actions</title>
 
-    <spin label="Modified less than n days ago" switch="-mtime-"
-          min="0" max="365" default="0" />
-    <check label="Follow symbolic links" switch="-follow" />
+      <spin label="Modified less than n days ago" switch="-mtime-"
+            min="0" max="365" default="0" />
+      <check label="Follow symbolic links" switch="-follow" />
 
-    <check label="Print matching files" switch="-print" column="2" />
-  </switches>
-</tool>
+      <check label="Print matching files" switch="-print" column="2" />
+    </switches>
+  </tool>
 
-<action name="action find">
-  <shell>Project %p</shell>
-  <shell>Project.get_tool_switches_as_string %1 Find </shell>
-  <shell>input_dialog "Name of file to search" Filename</shell>
-  <external>find . -name %1 %2</external>
-</action>
+  <action name="action find">
+    <shell>Project %p</shell>
+    <shell>Project.get_tool_switches_as_string %1 Find </shell>
+    <shell>input_dialog "Name of file to search" Filename</shell>
+    <external>find . -name %1 %2</external>
+  </action>
 
-<Submenu>
-  <Title>External</Title>
-  <menu action="action find">
-     <Title>Launch find</Title>
-  </menu>
-</Submenu>
+  <Submenu>
+    <Title>External</Title>
+     <menu action="action find">
+       <Title>Launch find</Title>
+    </menu>
+  </Submenu>
+</toolexample>
 @end smallexample
 
 
