@@ -5,6 +5,7 @@ with Glide_Main_Window; use Glide_Main_Window;
 with Gtk.Box; use Gtk.Box;
 with Src_Editor_Box; use Src_Editor_Box;
 with Project_Trees;
+with Scenario_Views;
 
 package Glide_Page is
 
@@ -13,6 +14,7 @@ package Glide_Page is
       Console_Sw : Gtk_Scrolled_Window;
       Console    : Gtk_Text;
       Explorer   : Project_Trees.Project_Tree;
+      Scenario   : Scenario_Views.Scenario_View;
    end record;
    type Glide_Page is access all Glide_Page_Record'Class;
 
