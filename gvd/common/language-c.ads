@@ -25,6 +25,9 @@ package Language.Debugger.C is
 
    type C_Language is new Language_Debugger with private;
 
+   C_Lang : constant Language_Access;
+   --  Class constant for the C language.
+
    -------------
    -- Parsing --
    -------------
@@ -76,4 +79,6 @@ package Language.Debugger.C is
 
 private
    type C_Language is new Language_Debugger with null record;
+
+   C_Lang : constant Language_Access := new C_Language;
 end Language.Debugger.C;

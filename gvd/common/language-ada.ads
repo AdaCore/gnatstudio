@@ -25,6 +25,9 @@ package Language.Debugger.Ada is
 
    type Ada_Language is new Language_Debugger with private;
 
+   Ada_Lang : constant Language_Access;
+   --  Class constant for the Ada language.
+
    -------------
    -- Parsing --
    -------------
@@ -70,4 +73,6 @@ package Language.Debugger.Ada is
 
 private
    type Ada_Language is new Language_Debugger with null record;
+
+   Ada_Lang : constant Language_Access := new Ada_Language;
 end Language.Debugger.Ada;

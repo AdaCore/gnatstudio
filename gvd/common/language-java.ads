@@ -23,7 +23,10 @@
 
 package Language.Debugger.Java is
 
-   type Java_Language is abstract new Language_Debugger with private;
+   type Java_Language is new Language_Debugger with private;
+
+   Java_Lang : constant Language_Access;
+   --  Class constant for the Java language.
 
    function Is_Simple_Type
      (Lang : access Java_Language;
@@ -50,7 +53,7 @@ package Language.Debugger.Java is
       Field : String) return String;
 
 private
+   type Java_Language is new Language_Debugger with null record;
 
-   type Java_Language is abstract new Language_Debugger with null record;
-
+   Java_Lang : constant Language_Access := new Java_Language;
 end Language.Debugger.Java;

@@ -27,6 +27,9 @@ package Language.Debugger.Cpp is
 
    type Cpp_Language is new Language.Debugger.C.C_Language with private;
 
+   Cpp_Lang : constant Language_Access;
+   --  Class constant for the C++ language.
+
    ------------------
    -- Highlighting --
    ------------------
@@ -46,4 +49,6 @@ package Language.Debugger.Cpp is
 
 private
    type Cpp_Language is new Language.Debugger.C.C_Language with null record;
+
+   Cpp_Lang : constant Language_Access := new Cpp_Language;
 end Language.Debugger.Cpp;
