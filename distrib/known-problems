@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 1.0.2
 
+- B816-004 Crash in layout in the browsers
+  Problem:    When a browser (call graph, dependencies,...) has lots of items
+              displayed, it sometimes happens that the layout algorithm crashes
+              and all the items are located in the top-left corner (or they
+              appear to be a limitation in the number of items supported by the
+              browser).
+  Workaround: <none found>
+
 Known Problems fixed in GPS 1.0.1
 
 - B726-016 Crash when switching page in the preferences under Solaris
