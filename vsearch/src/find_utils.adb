@@ -227,7 +227,7 @@ package body Find_Utils is
 
       begin
          if Dir_Name = "" then
-            Open (Dir, ".");
+            Open (Dir, Get_Current_Dir);
          else
             Open (Dir, Dir_Name);
          end if;
