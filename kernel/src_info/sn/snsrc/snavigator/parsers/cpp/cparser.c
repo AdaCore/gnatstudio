@@ -4244,6 +4244,8 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
 
    if( Declaration->storage_class == SN_TYPEDEF )
    {
+      char buffer[1024];
+      sprintf (buffer, "class=%s", Class->name.buf);
       Put_symbol( PAF_TYPE_DEF
 /*              , get_scope( Declarator->name ) */
                 , NULL                          /* 17.02.97 rigo */
@@ -4258,7 +4260,8 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
 /*              , (char *) 0 */
                 , get_scope( Declarator->name.buf )   /* 17.02.97 rigo */
                 , (char *) 0
-                , get_comment( Declarator->lineno_end )
+                , buffer
+                /* get_comment( Declarator->lineno_end ) */
                 , Declarator->lineno_beg
                 , Declarator->charno_beg
                 , Declarator->lineno_end
