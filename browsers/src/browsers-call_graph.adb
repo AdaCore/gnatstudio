@@ -52,6 +52,7 @@ with Ada.Exceptions;   use Ada.Exceptions;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Traces;           use Traces;
+with String_List_Utils; use String_List_Utils;
 
 package body Browsers.Call_Graph is
 
@@ -59,6 +60,11 @@ package body Browsers.Call_Graph is
 
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
+
+   All_Refs_Category : constant String := "References for: ";
+   --  String used as a category title. This needs to be translated when used,
+   --  therefore the following comment is for translation purposes:
+   --     -"References for: "
 
    Automatically_Check_To_Dependencies : constant Boolean := True;
    --  If True, then every time an item is added to the call graph we check,
@@ -163,8 +169,8 @@ package body Browsers.Call_Graph is
    --  List all the references to the entity in the local file (or ALI file).
 
    procedure Find_All_References_Internal
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access;
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Info           : Entity_Information;
       Category_Title : String;
       Include_Writes : Boolean;
       Include_Reads  : Boolean);
@@ -222,6 +228,12 @@ package body Browsers.Call_Graph is
    --  containing File.
    --  Category corresponds to the purpose of the print. All references
    --  corresponding to the same category will be printed as a group.
+
+   function Call_Graph_Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String;
+   --  Handle shell commands
 
    -------------
    -- Gtk_New --
@@ -928,32 +940,25 @@ package body Browsers.Call_Graph is
    ----------------------------------
 
    procedure Find_All_References_Internal
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access;
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Info           : Entity_Information;
       Category_Title : String;
       Include_Writes : Boolean;
       Include_Reads  : Boolean)
    is
-      pragma Unreferenced (Widget);
-
-      Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
       Data     : Entity_Idle_Data;
-      Info     : Entity_Information;
       Idle_Id  : Idle_Handler_Id;
       pragma Unreferenced (Idle_Id);
 
    begin
-      Push_State (Get_Kernel (Entity), Busy);
-      Info := Get_Entity (Entity);
-
+      Push_State (Kernel_Handle (Kernel), Busy);
       if Info /= No_Entity_Information then
          begin
             Remove_Result_Category
-              (Get_Kernel (Entity), Category_Title & Get_Name (Info));
+              (Kernel, Category_Title & Get_Name (Info));
 
             if Include_Reads then
-               Print_Ref (Get_Kernel (Entity),
+               Print_Ref (Kernel,
                           Get_Declaration_File_Of (Info),
                           Get_Declaration_Line_Of (Info),
                           Get_Declaration_Column_Of (Info),
@@ -961,14 +966,14 @@ package body Browsers.Call_Graph is
                           Category_Title & Get_Name (Info));
             end if;
 
-            Data := (Kernel => Get_Kernel (Entity),
-                     Iter   => new Entity_Reference_Iterator,
+            Data := (Kernel         => Kernel_Handle (Kernel),
+                     Iter           => new Entity_Reference_Iterator,
                      Include_Writes => Include_Writes,
                      Include_Reads  => Include_Reads,
                      Category       => new String'(Category_Title),
-                     Entity => Copy (Info));
+                     Entity         => Copy (Info));
 
-            Find_All_References (Get_Kernel (Entity), Info, Data.Iter.all);
+            Find_All_References (Kernel, Info, Data.Iter.all);
 
             Idle_Id := Entity_Iterator_Idle.Add
               (Cb       => Find_Next_Reference'Access,
@@ -981,13 +986,13 @@ package body Browsers.Call_Graph is
                raise;
          end;
       else
-         Pop_State (Get_Kernel (Entity));
+         Pop_State (Kernel_Handle (Kernel));
       end if;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
-         Pop_State (Get_Kernel (Entity));
+         Pop_State (Kernel_Handle (Kernel));
    end Find_All_References_Internal;
 
    -----------------------------------------
@@ -996,11 +1001,14 @@ package body Browsers.Call_Graph is
 
    procedure Find_All_References_From_Contextual
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
    begin
       Find_All_References_Internal
-        (Widget, Context,
-         Category_Title => -"References for: ",
+        (Get_Kernel (Context),
+         Get_Entity (Entity_Selection_Context_Access (Context)),
+         Category_Title => -All_Refs_Category,
          Include_Writes => True,
          Include_Reads  => True);
    end Find_All_References_From_Contextual;
@@ -1011,10 +1019,13 @@ package body Browsers.Call_Graph is
 
    procedure Find_All_Writes_From_Contextual
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
    begin
       Find_All_References_Internal
-        (Widget, Context,
+        (Get_Kernel (Context),
+         Get_Entity (Entity_Selection_Context_Access (Context)),
          Category_Title => -"Modifications of: ",
          Include_Writes => True,
          Include_Reads  => False);
@@ -1026,10 +1037,13 @@ package body Browsers.Call_Graph is
 
    procedure Find_All_Reads_From_Contextual
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
    begin
       Find_All_References_Internal
-        (Widget, Context,
+        (Get_Kernel (Context),
+         Get_Entity (Entity_Selection_Context_Access (Context)),
          Category_Title => -"Read-Only references for: ",
          Include_Writes => False,
          Include_Reads  => True);
@@ -1342,6 +1356,66 @@ package body Browsers.Call_Graph is
          Menu    => null);
    end Default_Factory;
 
+   --------------------------------
+   -- Call_Graph_Command_Handler --
+   --------------------------------
+
+   function Call_Graph_Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String
+   is
+      use String_List_Utils.String_List;
+      Name, File, Line : List_Node;
+      L, C             : Positive := 1;
+      Entity           : Entity_Information;
+      Status           : Find_Decl_Or_Body_Query_Status;
+
+   begin
+      --  ??? This part is copied from
+      --  Browsers.Entities.Show_Entity_Command_Handler, would be nice to share
+      if Length (Args) < 2 then
+         return "Not enough arguments";
+      end if;
+
+      Name   := First (Args);
+      File   := Next (Name);
+
+      if Next (File) /= Null_Node then
+         Line := Next (File);
+         L := Positive'Value (Data (Line));
+
+         if Next (Line) /= Null_Node then
+            C := Positive'Value (Data (Next (Line)));
+         end if;
+      end if;
+
+      Find_Declaration_Or_Overloaded
+        (Kernel      => Kernel,
+         Lib_Info    => Locate_From_Source_And_Complete (Kernel, Data (File)),
+         File_Name   => Data (File),
+         Entity_Name => Data (Name),
+         Line        => L,
+         Column      => C,
+         Entity      => Entity,
+         Status      => Status);
+
+      if Status /= Success and then Status /= Fuzzy_Match then
+         return "Entity not found";
+      end if;
+
+      if Command = "entity.find_all_refs" then
+         Find_All_References_Internal
+           (Kernel, Entity,
+            Category_Title => -All_Refs_Category,
+            Include_Writes => True,
+            Include_Reads  => True);
+
+         Destroy (Entity);
+      end if;
+      return "";
+   end Call_Graph_Command_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1363,6 +1437,18 @@ package body Browsers.Call_Graph is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
+
+      --  ??? File_Name should be optional
+      --  ??? Ultimately, we should display the results in the location window,
+      --  but return them as a list (Python scripts for instance)
+      Register_Command
+        (Kernel, "entity.find_all_refs",
+         (-"Usage:") & ASCII.LF
+         & "  entity.find_all_refs entity_name file_name [line] [column]"
+         & ASCII.LF
+         & (-"Display in the location window all the references to the"
+            & " entity"),
+         Handler => Call_Graph_Command_Handler'Access);
    end Register_Module;
 
    ------------------
