@@ -97,7 +97,11 @@ __gnat_expect_poll (fd, num_fd, timeout, is_set)
   for (i = 0; i < num_fd; i++)
     handles[i] = (HANDLE) _get_osfhandle (fd [i]);
 
-  num = timeout / 10;
+  if (timeout < 0) {
+     num = -1;
+  } else {
+     num = timeout / 10;
+  }
 
   while (1)
     {
