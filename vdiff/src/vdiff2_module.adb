@@ -22,6 +22,7 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
@@ -267,6 +268,16 @@ package body Vdiff2_Module is
         (Handler     => Get_Key_Handler (Kernel),
          Action      => "Last difference",
          Default_Key => "control-3");
+
+      Register_Command
+        (Kernel,
+         Command      => "visual_diff",
+         Params       => "(file1, file2, [file3])",
+         Description  =>
+           -("..."),  --  ???
+         Minimum_Args => 2,
+         Maximum_Args => 3,
+         Handler      => Diff_Command_Handler'Access);
    end Register_Module;
 
    ------------------------
