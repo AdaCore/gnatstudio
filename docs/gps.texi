@@ -4358,6 +4358,12 @@ selected item (i.e. its callers).
 This browser is accessible through the contextual menu in the project
 explorer and source editor, by selecting one of the items:
 
+All boxes in this browser list several information: the location of their
+declaration, and the list of all their references in the other entities
+currently displayed in the browser. If you close the box for an entity that
+call them, the matching references are also hidden, to keep the contents
+of the browser simpler.
+
 @table @command
 @item References->@i{Entity} calls
 Display all the entities called by the selected entity. This has the
