@@ -4,6 +4,8 @@ with Ada.Command_Line;          use Ada.Command_Line;
 with GPR_Creation;              use GPR_Creation;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Projects.Editor;           use Projects, Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
 
 package body Convert.Adp is
 
@@ -274,8 +276,13 @@ package body Convert.Adp is
           (Get_Attribute_Value (Buffer, "build_dir"),
            Get_Current_Dir);
       Source_Dirs, Object_Dirs, Main_Units : String_List_Access;
+      Project  : Project_Type;
+      Registry : Project_Registry;
 
    begin
+      Projects.Registry.Initialize;
+      Load_Default_Project (Registry, ".");
+
       if Build_Dir = "" then
          Put_Line ("Cannot convert project: build_dir must be defined in");
          Put_Line ("the .adp file");
@@ -287,24 +294,26 @@ package body Convert.Adp is
       Object_Dirs := Parse_Object_Dirs (Buffer, Build_Dir);
       Main_Units  := Parse_Main_Units  (Buffer);
 
-      declare
-         Tmp : constant String := Create_Gpr_Files
-           (Root_Project_Name => Base_Name (Adp_Filename, ".adp"),
-            Output_Dir        => Dir_Name (Adp_Filename),
-            Source_Dirs       => Source_Dirs.all,
-            Object_Dirs       => Object_Dirs.all,
-            Spec_Extension    => Spec_Extension.all,
-            Body_Extension    => Body_Extension.all,
-            Main_Units        => Main_Units,
-            Builder_Switches  => Get_Attribute_Value (Buffer, "gnatmake_opt"),
-            Compiler_Switches => Get_Attribute_Value (Buffer, "comp_opt"),
-            Binder_Switches   => Get_Attribute_Value (Buffer, "bind_opt"),
-            Linker_Switches   => Get_Attribute_Value (Buffer, "link_opt"),
-            Cross_Prefix      => Get_Attribute_Value (Buffer, "cross_prefix"));
-         pragma Unreferenced (Tmp);
-      begin
-         null;
-      end;
+      Project := Create_Project
+        (Registry,
+         Name => Base_Name (Adp_Filename, ".adp"),
+         Path => Dir_Name (Adp_Filename));
+
+      Create_Gpr_Files
+        (Registry          => Registry,
+         Root_Project      => Project,
+         Source_Dirs       => Source_Dirs.all,
+         Object_Dirs       => Object_Dirs.all,
+         Spec_Extension    => Spec_Extension.all,
+         Body_Extension    => Body_Extension.all,
+         Main_Units        => Main_Units,
+         Builder_Switches  => Get_Attribute_Value (Buffer, "gnatmake_opt"),
+         Compiler_Switches => Get_Attribute_Value (Buffer, "comp_opt"),
+         Binder_Switches   => Get_Attribute_Value (Buffer, "bind_opt"),
+         Linker_Switches   => Get_Attribute_Value (Buffer, "link_opt"),
+         Cross_Prefix      => Get_Attribute_Value (Buffer, "cross_prefix"));
+
+      Save_Project (Project);
 
       Free (Main_Units);
       Free (Source_Dirs);
