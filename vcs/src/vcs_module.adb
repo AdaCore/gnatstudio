@@ -685,12 +685,12 @@ package body VCS_Module is
       Register_Command
         (Kernel       => Kernel,
          Command      => "status_parse",
-         Params       => "(vcs_identifier, string)",
+         Params       => "(vcs_identifier, string, [clear_logs])",
          Description  =>
          -("Parses string for vcs status."
             & " See the GPS documentation for detailed usage description."),
          Minimum_Args => 2,
-         Maximum_Args => 2,
+         Maximum_Args => 3,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => Status_Parse_Handler'Access);
@@ -713,6 +713,7 @@ package body VCS_Module is
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
       S              : constant String := Nth_Arg (Data, 2);
 
+      Clear_Logs     : constant Boolean := Nth_Arg (Data, 3, Default => False);
       Status : File_Status_List.List;
    begin
       Ref := Get_VCS_From_Id (VCS_Identifier);
@@ -727,7 +728,7 @@ package body VCS_Module is
       Open_Explorer (Kernel, null);
 
       Status := Parse_Status (Ref, S);
-      Display_File_Status (Kernel, Status, Ref, True, True, True);
+      Display_File_Status (Kernel, Status, Ref, True, True, Clear_Logs);
 
       --  ??? Should we free Status ?
    end Status_Parse_Handler;
@@ -761,6 +762,10 @@ package body VCS_Module is
       end if;
 
       File_Status_List.Free (Status);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
 
 end VCS_Module;
