@@ -94,9 +94,10 @@ AC_DEFUN(AM_PATH_GNATPREP,
 
 AC_DEFUN(AM_PATH_PYTHON,
 [
-   if test -z ${PYTHON_PATH_WITH}; then 
+   if test "$PYTHON_PATH_WITH" = "yes" ; then
       AC_PATH_PROG(PYTHON_BASE, python, no)
 
+      PBASE=${PYTHON_BASE}
       PYTHON_BASE=`dirname ${PYTHON_BASE}`
       PYTHON_BASE=`dirname ${PYTHON_BASE}`
    else
@@ -122,6 +123,7 @@ AC_DEFUN(AM_PATH_PYTHON,
    else
       echo "checking for python ... not found"
       PYTHON_ADA_SOURCE="src2"
+      PYTHON_BASE=no
    fi
 ])
 
