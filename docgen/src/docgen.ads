@@ -148,8 +148,8 @@ package Docgen is
       --  show more information
       Ignorable_Comments   : Boolean := False;
       --  ignore all comments with "--!"
-      Comments_Under       : Boolean := False;
-      --  doc comments for entities under the header
+      Comments_Above       : Boolean := False;
+      --  doc comments for entities above the header
       Show_Private         : Boolean := False;
       --  show also private entities
       Doc_Directory        : GNAT.OS_Lib.String_Access;
@@ -325,14 +325,6 @@ package Docgen is
    --  first the doc path is added in front of the created name
    --  then the "." in front of the suffix is replaced by "_",
    --  so that a new output format suffix can be added
-
-   function Is_Defined_In_Subprogram
-     (Entity          : String;
-      Short_Entity    : String;
-      Package_Name    : String) return Boolean;
-   --  returns true if the entity is defined within another entity and
-   --  not dierctly within the package. The function only parses the
-   --  full entity name to find a "."!
 
    function Source_File_In_List
      (Source_File_List : Type_Source_File_List.List;
