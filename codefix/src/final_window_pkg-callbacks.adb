@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with System; use System;
 with Glib; use Glib;
 with Gdk.Event; use Gdk.Event;
@@ -7,7 +27,6 @@ with Gtk.Object; use Gtk.Object;
 with Gtk.Enums; use Gtk.Enums;
 with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
-with Gtk.Main; use Gtk.Main;
 
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 
@@ -31,7 +50,7 @@ package body Final_Window_Pkg.Callbacks is
          Final_Window.Graphic_Codefix.Current_Text,
          null);
 
-      Gtk.Main.Main_Quit;
+      Quit (Final_Window.Graphic_Codefix);
    end On_Final_Validation_Clicked;
 
    -----------------------------
@@ -39,10 +58,11 @@ package body Final_Window_Pkg.Callbacks is
    -----------------------------
 
    procedure On_Final_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Final_Window : Final_Window_Access := Final_Window_Access (Object);
    begin
-      Gtk.Main.Main_Quit;
+      Quit (Final_Window.Graphic_Codefix);
    end On_Final_Cancel_Clicked;
 
 end Final_Window_Pkg.Callbacks;
