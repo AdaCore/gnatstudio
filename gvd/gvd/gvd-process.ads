@@ -252,9 +252,10 @@ package Odd.Process is
    --  debugger.
 
    procedure Text_Output_Handler
-     (Process    : Debugger_Process_Tab;
-      Str        : String;
-      Is_Command : Boolean := False);
+     (Process      : Debugger_Process_Tab;
+      Str          : String;
+      Is_Command   : Boolean := False;
+      Set_Position : Boolean := False);
    --  Insert Str in the debugger window.
    --  Note that this function does not change the Edit_Pos for the record,
    --  so this should be used only for temporary output.
@@ -262,6 +263,11 @@ package Odd.Process is
    --  support highlighting.
    --  If Is_Command is True, then the string is displayed in the highlighting
    --  color, used for user commands.
+   --  If Set_Position is True, then the cursor position after the text has
+   --  been inserted is consideredas the beginning of a new command. The user
+   --  will be able to delete text back to that position, but not before, and
+   --  when <enter> is pressed, the text from the position onwards is sent to
+   --  the debugger.
 
    procedure Register_Dialog
      (Process : access Debugger_Process_Tab_Record;

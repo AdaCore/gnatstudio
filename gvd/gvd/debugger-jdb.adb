@@ -685,7 +685,8 @@ package body Debugger.Jdb is
       Text_Output_Handler
         (Convert (Debugger.Window, Debugger),
          Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt),
-         Is_Command => True);
+         Is_Command => True,
+         Set_Position => True);
    end Display_Prompt;
 
    ----------------------

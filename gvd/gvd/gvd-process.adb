@@ -266,7 +266,8 @@ package body Odd.Process is
    procedure Text_Output_Handler
      (Process : Debugger_Process_Tab;
       Str     : String;
-      Is_Command : Boolean := False)
+      Is_Command : Boolean := False;
+      Set_Position : Boolean := False)
    is
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
       Str2    : String := Strip_Control_M (Str);
@@ -323,9 +324,16 @@ package body Odd.Process is
 
       Thaw (Process.Debugger_Text);
 
-      --  Note: we can not modify Process.Edit_Pos in this function, since
-      --  otherwise the history (up and down keys in the command window) will
-      --  not work properly.
+      --  Note: we can not systematically modify Process.Edit_Pos in this
+      --  function, since otherwise the history (up and down keys in the
+      --  command window) will not work properly.
+
+      if Set_Position then
+         Process.Edit_Pos := Get_Length (Process.Debugger_Text);
+         Set_Point (Process.Debugger_Text, Process.Edit_Pos);
+         Gtk.Text.Set_Position
+           (Process.Debugger_Text, Gint (Process.Edit_Pos));
+      end if;
    end Text_Output_Handler;
 
    ----------------------------
@@ -416,15 +424,12 @@ package body Odd.Process is
       case Get_Command_Mode (Get_Process (Process.Debugger)) is
          when User | Odd.Types.Visible =>
             if First = 0 then
-               Text_Output_Handler (Process, Str);
+               Text_Output_Handler (Process, Str, Set_Position => True);
             else
                Text_Output_Handler (Process, Str (Str'First .. First - 1));
-               Text_Output_Handler (Process, Str (Last + 1 .. Str'Last));
+               Text_Output_Handler
+                 (Process, Str (Last + 1 .. Str'Last), Set_Position => True);
             end if;
-
-            Process.Edit_Pos := Get_Length (Process.Debugger_Text);
-            Set_Point (Process.Debugger_Text, Process.Edit_Pos);
-            Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
 
          when Hidden | Internal =>
             null;

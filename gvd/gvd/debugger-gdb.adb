@@ -553,6 +553,12 @@ package body Debugger.Gdb is
          Send (Debugger, "list", Mode => Internal);
          Send (Debugger, "info line", Mode => Internal);
       end if;
+
+   exception
+      --  If the executable was not found, nothing to be done, we simply
+      --  start with an empty debugger
+      when Executable_Not_Found =>
+         null;
    end Initialize;
 
    -----------
@@ -1126,7 +1132,8 @@ package body Debugger.Gdb is
       Text_Output_Handler
         (Convert (Debugger.Window, Debugger),
          Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt),
-         Is_Command => True);
+         Is_Command => True,
+         Set_Position => True);
    end Display_Prompt;
 
    ----------------------
