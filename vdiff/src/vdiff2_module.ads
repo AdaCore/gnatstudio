@@ -43,6 +43,9 @@ package Vdiff2_Module is
    Diff_Change_Color      : Param_Spec_Color;
    Diff_Fine_Change_Color : Param_Spec_Color;
 
+   procedure Init_Prev_Diff_Cmd (Diff : Diff_Head);
+   --  Initialize for each command the last selected diff
+
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
