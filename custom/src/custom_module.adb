@@ -729,7 +729,7 @@ package body Custom_Module is
             Register_Menu (Kernel, Parent_Path, Item);
          else
             Command := Lookup_Action (Kernel, Action);
-            if Command.Command /= null then
+            if Command /= null and then Command.Command /= null then
 
                if Before /= "" then
                   Register_Menu
