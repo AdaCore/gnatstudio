@@ -1,3 +1,17 @@
+Known Problems fixed in GPS 2.0.1
+
+- D516-001 Bad handling of executable name with spaces when debugging
+  Problem:    When loading an executable containing spaces in its pathname,
+              the executable is not loaded properly.
+  Workaround: Load the file manually by typing a load "file-name" command in
+              debugger console.
+
+- D512-014 Attach not recognized as an execution command
+  Problem:    When typing an 'attach' command in the debugger console,
+              the 'start/continue' button will perform a 'begin' instead of
+              a 'continue' command.
+  Workaround: Either using the Continue menu or type 'cont' in the console.
+
 Known Problems fixed in GPS 2.0.0
 
 - D511-008 Bad handling of caps lock key under Windows
