@@ -42,7 +42,7 @@ begin
    New_Buffer := To_Line_Buffer (Buffer.all);
    Analyze_Ada_Source
      (Buffer.all, New_Buffer,
-      Indent_Params  => (3, 2, 2),
+      Indent_Params  => (3, 2, 2, 8),
       Current_Indent => Ignore,
       Prev_Indent    => Ignore);
    Print (New_Buffer);
