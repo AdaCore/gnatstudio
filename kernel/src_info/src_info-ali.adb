@@ -29,7 +29,6 @@ with Prj;                       use Prj;
 with Prj_API;                   use Prj_API;
 with Prj.Com;
 with Prj.Env;                   use Prj.Env;
-with Src_Info.ALI_Maps;         use Src_Info.ALI_Maps;
 with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with Src_Info.LI_Utils;         use Src_Info.LI_Utils;
 with Types;                     use Types;
@@ -45,6 +44,88 @@ package body Src_Info.ALI is
    --  but this is not terribly important since most of the time, only the
    --  Run-time file are krunched, and we know that their max_len is 8.
 
+   type E_Kind_To_Char_Map is array (Character range '+' .. 'z') of E_Kind;
+   E_Kind_To_Char : constant E_Kind_To_Char_Map :=
+     ('a'    => (Array_Kind,             False, False),
+      'A'    => (Array_Kind,             False, True),
+      'b'    => (Boolean_Kind,           False, False),
+      'B'    => (Boolean_Kind,           False, True),
+      'c'    => (Class_Wide,             False, False),
+      'C'    => (Class_Wide,             False, True),
+      'd'    => (Decimal_Fixed_Point,    False, False),
+      'D'    => (Decimal_Fixed_Point,    False, True),
+      'e'    => (Enumeration_Kind,       False, False),
+      'E'    => (Enumeration_Kind,       False, True),
+      'f'    => (Floating_Point,         False, False),
+      'F'    => (Floating_Point,         False, True),
+      'g'    => Unresolved_Entity_Kind,
+      'G'    => Unresolved_Entity_Kind,
+      'h'    => Unresolved_Entity_Kind,
+      'H'    => Unresolved_Entity_Kind,
+      'i'    => (Signed_Integer,         False, False),
+      'I'    => (Signed_Integer,         False, True),
+      'j'    => Unresolved_Entity_Kind,
+      'J'    => Unresolved_Entity_Kind,
+      'k'    => (Package_Kind,           True,  False),
+      'K'    => (Package_Kind,           False, False),
+      'l'    => (Label_On_Loop,          False, False),
+      'L'    => (Label_On_Statement,     False, False),
+      'm'    => (Modular_Integer,        False, False),
+      'M'    => (Modular_Integer,        False, True),
+      'n'    => (Enumeration_Literal,    False, False),
+      'N'    => (Named_Number,           False, False),
+      'o'    => (Ordinary_Fixed_Point,   False, False),
+      'O'    => (Ordinary_Fixed_Point,   False, True),
+      'p'    => (Access_Kind,            False, False),
+      'P'    => (Access_Kind,            False, True),
+      'q'    => (Label_On_Block,         False, False),
+      'Q'    => Unresolved_Entity_Kind,
+      'r'    => (Record_Kind,            False, False),
+      'R'    => (Record_Kind,            False, True),
+      's'    => (String_Kind,            False, False),
+      'S'    => (String_Kind,            False, True),
+      't'    => (Task_Kind,              False, False),
+      'T'    => (Task_Kind,              False, True),
+      'u'    => (Procedure_Kind,         True,  False),
+      'U'    => (Procedure_Kind,         False, False),
+      'v'    => (Function_Or_Operator,   True,  False),
+      'V'    => (Function_Or_Operator,   False, False),
+      'w'    => (Protected_Kind,         False, False),
+      'W'    => (Protected_Kind,         False, True),
+      'x'    => Unresolved_Entity_Kind,
+      'X'    => (Exception_Entity,       False, False),
+      'y'    => Unresolved_Entity_Kind,
+      'Y'    => (Entry_Or_Entry_Family,  False, False),
+      'z'    => Unresolved_Entity_Kind,
+      'Z'    => Unresolved_Entity_Kind,
+      '+'    => (Private_Type,           False, True),
+      others => Unresolved_Entity_Kind);
+
+   type Char_To_Reference_Kind_Map is array
+     (Character range ' ' .. 'z') of Reference_Kind;
+   Char_To_Reference_Kind : constant Char_To_Reference_Kind_Map :=
+     (' '    => Instantiation_Reference,
+      '<'    => Subprogram_Out_Parameter,
+      '='    => Subprogram_In_Out_Parameter,
+      '>'    => Subprogram_In_Parameter,
+      '^'    => Subprogram_Access_Parameter,
+      'b'    => Body_Entity,
+      'c'    => Completion_Of_Private_Or_Incomplete_Type,
+      'e'    => End_Of_Spec,
+      'i'    => Implicit,
+      'k'    => Parent_Package,
+      'l'    => Label,
+      'm'    => Modification,
+      'p'    => Primitive_Operation,
+      'r'    => Reference,
+      't'    => End_Of_Body,
+      'w'    => With_Line,
+      'x'    => Type_Extension,
+      'z'    => Formal_Generic_Parameter,
+      others => Reference);
+   --  Conversion from characters read in ALI files to the reference kind. See
+   --  the function Char_To_R_Kind
+
    type Sdep_To_Sfile_Table is array (Sdep_Id range <>) of Source_File;
    --  An array used to store the Source_File data for each Sdep ID in
    --  the Sdep table.
@@ -59,10 +140,12 @@ package body Src_Info.ALI is
    --  ??? Not used for now
 
    function Char_To_E_Kind (C : Character) return E_Kind;
+   pragma Inline (Char_To_E_Kind);
    --  Translate the given character into the associated E_Kind value.
    --  Raise ALI_Internal_Error if C does not represent any E_Kind value.
 
    function Char_To_R_Kind (C : Character) return Reference_Kind;
+   pragma Inline (Char_To_R_Kind);
    --  Translate the given character into the associated Reference_Kind value.
    --  Raise ALI_Internal_Error if C does not represent any Reference_Kind.
 
@@ -302,16 +385,15 @@ package body Src_Info.ALI is
    --------------------
 
    function Char_To_E_Kind (C : Character) return E_Kind is
+      pragma Suppress (All_Checks);
    begin
-      for E in E_Kind loop
-         if E_Kind_To_Char (E) = C then
-            return E;
-         end if;
-      end loop;
-
-      --  If we reach this point, the character is illegal.
-      Trace (Me, "Char_To_E_Kind: Invalid character '" & C & ''');
-      return Unresolved_Entity;
+      if C in E_Kind_To_Char'Range then
+         return E_Kind_To_Char (C);
+      else
+         --  If we reach this point, the character is illegal.
+         Trace (Me, "Char_To_E_Kind: Invalid character '" & C & ''');
+         return Unresolved_Entity_Kind;
+      end if;
    end Char_To_E_Kind;
 
    --------------------
@@ -319,16 +401,15 @@ package body Src_Info.ALI is
    --------------------
 
    function Char_To_R_Kind (C : Character) return Reference_Kind is
+      pragma Suppress (All_Checks);
    begin
-      for R in Reference_Kind loop
-         if Reference_Kind_To_Char (R) = C then
-            return R;
-         end if;
-      end loop;
-
-      --  If we reach this point, the character is illegal.
-      Trace (Me, "Char_To_R_Kind: Invalid character '" & C & ''');
-      return Reference;
+      if C in Char_To_Reference_Kind'Range then
+         return Char_To_Reference_Kind (C);
+      else
+         --  If we reach this point, the character is illegal.
+         Trace (Me, "Char_To_R_Kind: Invalid character '" & C & ''');
+         return Reference;
+      end if;
    end Char_To_R_Kind;
 
    ----------------------
