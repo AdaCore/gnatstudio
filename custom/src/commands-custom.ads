@@ -27,20 +27,34 @@
 --      %f  -> base name of the currently opened file.
 --      %F  -> absolute name of the currently opened file.
 --
---     ??? The following still have to be implemented :
---
 --      %p  -> the current project (associated with the opened file)
 --      %P  -> the current root project
 --
+--      %{p|P}[r]{d|s}[f] ->
+--         Substituted by the contents of a project :
+--               P : the project is the root project
+--               p : the project is the current project
+--               r : indicates that the listing should be project-recursive,
+--                   ie that sub-projects should be listed as well, and their
+--                   subprojects, and so on.
+--               d : list the source directories
+--               s : list the source files
+--               f : output the list into a file and substitute the
+--                   parameter with the name of that file.
+--
+--          Examples :
+--            %Ps   ->  replaced by a list of source files in the root project,
+--                      not recursively
+--            %prs  ->  replaced by a list of files in the current project,
+--                      recursively
+--            %prdf ->  replaced by the name of a file that contains a list
+--                      of source directories in the current project,
+--                      recursively
+--
+--
+--     ??? The following still have to be implemented :
+--
 --      %l, %c -> the current line and column in the current file.
---
---      %lpF -> a file containing a list of source files in the current project
---      %lPf -> a file containing a list of source files in the root project
---      %lpD -> a file containing a list of source dirs in the current project
---      %lPD -> a file containing a list of source dirs in the root project
---
---      %s  -> a list of source files in the current project
---      %S  -> a list of source files in the root project
 
 with Glide_Kernel;         use Glide_Kernel;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
