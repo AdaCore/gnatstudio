@@ -321,12 +321,15 @@ package body Display_Items is
 
       if Default_Entity = null then
          begin
-            Parse_Value (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+            Parse_Value
+              (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+
             if not Value_Found then
                Output_Error
                  (Debugger.Window,
                   (-"Could not get the value of ") & Variable_Name);
             end if;
+
          exception
             when Language.Unexpected_Type | Constraint_Error =>
                Output_Error
@@ -334,6 +337,7 @@ package body Display_Items is
                   (-"Could not parse the value for ") & Variable_Name);
                return;
          end;
+
       else
          Value_Found := True;
       end if;
