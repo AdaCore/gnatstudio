@@ -335,6 +335,11 @@ package body Src_Editor_Buffer is
    --  associated with the line.
    --  The caller is responsible for freeing the returned value.
 
+   function Get_First_Lines
+     (Buffer : Source_Buffer;
+      Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access;
+   --  Return the text up to line Line.
+
    ----------
    -- Free --
    ----------
@@ -407,9 +412,20 @@ package body Src_Editor_Buffer is
    end Get_String;
 
    function Get_String
-     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access
+     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access is
+   begin
+      return Get_First_Lines (Buffer, Buffer.Last_Editable_Line);
+   end Get_String;
+
+   ---------------------
+   -- Get_First_Lines --
+   ---------------------
+
+   function Get_First_Lines
+     (Buffer : Source_Buffer;
+      Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access
    is
-      A      : array (Buffer.Editable_Lines'Range) of Src_String;
+      A      : array (Buffer.Editable_Lines'First .. Line) of Src_String;
       Len    : Integer := 0;
       Index  : Integer := 1;
       Output : GNAT.OS_Lib.String_Access;
@@ -436,7 +452,7 @@ package body Src_Editor_Buffer is
       end loop;
 
       return Output;
-   end Get_String;
+   end Get_First_Lines;
 
    ------------------
    -- Check_Blocks --
@@ -634,6 +650,7 @@ package body Src_Editor_Buffer is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Line_Info_Display_Array, Line_Info_Display_Array_Access);
    begin
+
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
 
@@ -691,7 +708,6 @@ package body Src_Editor_Buffer is
 
          Unchecked_Free (Buffer.Editable_Lines);
       end if;
-
 
       for J in Buffer.Line_Data'Range loop
          if Buffer.Line_Data (J).Enabled_Highlights /= null then
@@ -2304,15 +2320,14 @@ package body Src_Editor_Buffer is
       Line    : Editable_Line_Type;
       Column  : Natural)
    is
-      Buffer_Line : constant Buffer_Line_Type :=
+      Buffer_Line : Buffer_Line_Type :=
         Get_Buffer_Line (Buffer, Line);
    begin
-      --  ??? We should be able to set cursor in non-visible lines, by making
-      --  them visible.
+      --  If the line is in a non-visible line, make the line visible.
 
       if Buffer_Line = 0 then
-         Trace (Me, "invalid buffer line");
-         return;
+         Unfold_Line (Buffer, Line);
+         Buffer_Line := Get_Buffer_Line (Buffer, Line);
       end if;
 
       Set_Cursor_Position (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
@@ -3754,12 +3769,10 @@ package body Src_Editor_Buffer is
       Editable_Line : Editable_Line_Type;
       Global_Offset : Integer := 0;
 
-      C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
-      Line_Start    : Natural;
-      Line_End      : Natural;
+      Line_Start    : Natural := 0;
+      Line_End      : Natural := 0;
       Result        : Boolean;
-      Slice         : Unchecked_String_Access;
-      pragma Suppress (Access_Check, Slice);
+      Buffer_Text   : GNAT.OS_Lib.String_Access;
       Index         : Integer;
       Replace_Cmd   : Editor_Replace_Slice;
       Tabs_Used     : Boolean := False;
@@ -3823,10 +3836,10 @@ package body Src_Editor_Buffer is
       procedure Find_Non_Blank (Last : Natural) is
       begin
          while Index <= Last
-           and then (Slice (Index) = ' '
-                     or else Slice (Index) = ASCII.HT)
+           and then (Buffer_Text (Index) = ' '
+                     or else Buffer_Text (Index) = ASCII.HT)
          loop
-            if Slice (Index) = ASCII.HT then
+            if Buffer_Text (Index) = ASCII.HT then
                Tabs_Used := True;
             end if;
 
@@ -3898,15 +3911,22 @@ package body Src_Editor_Buffer is
       --  the stacks used by Next_Indentation to avoid parsing
       --  the buffer from scratch each time.
 
-      C_Str := Get_Slice (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
-      Slice := To_Unchecked_String (C_Str);
+      Buffer_Text := Get_First_Lines
+        (Buffer, Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)));
+
+      --  Initialize Line_End at the line before Iter, so that Line_Start
+      --  is well computed in the first iteration of the loop below.
+
+      Line_End := Buffer_Text'Length
+        - Natural (Get_Offset (End_Pos) - Get_Offset (Iter)) - 1;
 
       --  In the loop below, Global_Offset contains the offset between
       --  the modified buffer, and the original buffer, caused by the
       --  buffer replacements.
 
       loop
-         Line_Start   := Natural (Get_Offset (Iter)) + 1 - Global_Offset;
+         Line_Start := Line_End + 1;
+
          Index        := Line_Start;
 
          if Current_Line = Cursor_Line then
@@ -3918,9 +3938,14 @@ package body Src_Editor_Buffer is
             Forward_To_Line_End (Iter, Result);
          end if;
 
-         Line_End := Natural (Get_Offset (Iter)) + 1 - Global_Offset;
+         Line_End := Line_Start
+           + Natural (Get_Line_Offset (Iter));
+
          Local_Next_Indentation
-           (Lang, Slice (1 .. Line_End), Indent, Indent_Params);
+           (Lang,
+            Buffer_Text
+              (Buffer_Text'First .. Buffer_Text'First + Line_End - 1),
+            Indent, Indent_Params);
 
          Find_Non_Blank (Line_End);
          Offset := Index - Line_Start;
@@ -3963,18 +3988,19 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Line_Offset (Buffer, Iter, Current_Line);
       end loop;
 
-      g_free (C_Str);
+      Free (Buffer_Text);
       return True;
 
    exception
-      when others =>
+      when E : others =>
          --  Stop propagation of exception, since doing nothing
          --  in this callback is harmless.
 
-         if C_Str /= Gtkada.Types.Null_Ptr then
-            g_free (C_Str);
+         if Buffer_Text /= null then
+            Free (Buffer_Text);
          end if;
 
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Do_Indentation;
 
