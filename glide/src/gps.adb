@@ -28,7 +28,6 @@ with Glide_Main_Window;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Help;    use Glide_Kernel.Help;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Gtkada.Intl;          use Gtkada.Intl;
@@ -38,6 +37,7 @@ with GVD.Types;
 with OS_Utils;             use OS_Utils;
 with Ada.Command_Line;     use Ada.Command_Line;
 with Prj;                  use Prj;
+with Src_Info;             use Src_Info;
 
 --  Modules registered by Glide.
 with Aunit_Module;
@@ -49,7 +49,11 @@ with Project_Explorers;
 with Project_Viewers;
 with Src_Editor_Module;
 with VCS_Module;
+with Glide_Kernel.Help;
 with Vdiff_Module;
+
+--  The LI parsers
+with Src_Info.ALI;
 
 procedure Glide2 is
    use Glide_Main_Window;
@@ -148,6 +152,8 @@ procedure Glide2 is
    end Init_Settings;
 
 begin
+   --  Register all modules
+
    Aunit_Module.Register_Module;
    VCS_Module.Register_Module;
    Metrics_Module.Register_Module;
@@ -156,8 +162,15 @@ begin
    Project_Viewers.Register_Module;
    Project_Explorers.Register_Module;
    Src_Editor_Module.Register_Module;
+   Glide_Kernel.Help.Register_Module;
    GVD_Module.Register_Module;
    Vdiff_Module.Register_Module;
+
+   --  Register all LI parsers
+
+   Src_Info.Register_LI_Handler (new Src_Info.ALI.ALI_Handler_Record, "ada");
+
+   --  Initialize GtkAda
 
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
@@ -224,7 +237,7 @@ begin
    end if;
 
    if not File_Opened then
-      Display_Help
+      Open_Html
         (Glide.Kernel,
          Glide.Prefix_Directory.all & "/doc/glide2/html/glide-welcome.html");
       Maximize_Children (Get_MDI (Glide.Kernel));
