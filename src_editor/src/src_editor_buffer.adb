@@ -3545,6 +3545,28 @@ package body Src_Editor_Buffer is
    is
       Real_Lines : Natural_Array_Access renames Buffer.Real_Lines;
       Highlightings : Highlighting_Array_Access renames Buffer.Highlightings;
+
+      Bottom_Line : Integer;
+
+      procedure Expand_Lines (N : Integer);
+      --  Expand the line-indexed array to contail N lines in size.
+
+      procedure Expand_Lines (N : Integer) is
+         A : constant Natural_Array := Real_Lines.all;
+
+         H : constant Highlighting_Array := Highlightings.all;
+      begin
+         Real_Lines := new Natural_Array (1 .. N * 2);
+         Real_Lines (A'Range) := A;
+         Real_Lines (A'Last + 1 .. Real_Lines'Last) := (others => 0);
+
+         Highlightings := new Highlighting_Array (1 .. N * 2);
+         Highlightings (H'Range) := H;
+         Highlightings (H'Last + 1 .. Highlightings'Last) :=
+           (others => (null, null));
+
+      end Expand_Lines;
+
    begin
       if Number <= 0 then
          return;
@@ -3554,20 +3576,7 @@ package body Src_Editor_Buffer is
          Buffer.Original_Lines_Number := Number;
 
          if Buffer.Original_Lines_Number > Real_Lines'Last then
-            declare
-               A : constant Natural_Array := Real_Lines.all;
-
-               H : constant Highlighting_Array := Highlightings.all;
-            begin
-               Real_Lines := new Natural_Array (1 .. Number * 2);
-               Real_Lines (A'Range) := A;
-               Real_Lines (A'Last + 1 .. Real_Lines'Last) := (others => 0);
-
-               Highlightings := new Highlighting_Array (1 .. Number * 2);
-               Highlightings (H'Range) := H;
-               Highlightings (H'Last + 1 .. Highlightings'Last) :=
-                 (others => (null, null));
-            end;
+            Expand_Lines (Number);
          end if;
 
          for J in 1 .. Number loop
@@ -3585,6 +3594,12 @@ package body Src_Editor_Buffer is
             Real_Lines (J) := Real_Lines (J - Number);
             Highlightings (J) := Highlightings (J - Number);
          end loop;
+
+         Bottom_Line := Integer (Get_Line_Count (Buffer));
+
+         if Real_Lines'Last < Bottom_Line then
+            Expand_Lines (Bottom_Line);
+         end if;
 
          --  Reset the newly inserted lines.
 
