@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                     use Glib;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 with Gdk.Pixmap;               use Gdk.Pixmap;
 with Gdk.Rectangle;            use Gdk.Rectangle;
 
@@ -39,6 +40,7 @@ with VCS;                      use VCS;
 with VFS;
 
 with Generic_List;
+with Ada.Unchecked_Deallocation;
 
 package VCS_View_Pkg is
 
@@ -140,6 +142,16 @@ package VCS_View_Pkg is
    --  Return the cached status corresponding to File.
    --  User must not free the result.
 
+   procedure Save_State
+     (Explorer : VCS_View_Access;
+      Node     : Node_Ptr);
+   --  Save the state of the explorer in Node.
+
+   procedure Load_State
+     (Explorer : VCS_View_Access;
+      Node     : Node_Ptr);
+   --  Load the state of the explorer from Node.
+
 private
    type Line_Record is record
       Status : File_Status_Record;
@@ -177,6 +189,17 @@ private
       Widget_Type  => Gtk_Tree_View_Record,
       Draw_Tooltip => Draw_Tooltip);
 
+   type Page_Status_Record is record
+      Status  : File_Status;
+      Display : Boolean := True;
+   end record;
+
+   type Page_Status_Array is array (Natural range <>) of Page_Status_Record;
+   type Page_Status_Array_Access is access Page_Status_Array;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Page_Status_Array, Page_Status_Array_Access);
+
    type VCS_Page_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
 
@@ -200,8 +223,9 @@ private
       --  The column corresponding to the log file indicator.
 
       Tooltip    : VCS_Explorer_Tooltips.Tooltips;
-   end record;
 
+      Status     : Page_Status_Array_Access;
+   end record;
 
    type VCS_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
@@ -212,12 +236,6 @@ private
 
       Notebook   : Gtk_Notebook;
       --  The notebook containing the actual explorer pages.
-
-      Hide_Up_To_Date : Boolean := False;
-      --  Whether up-to-date and unknown files should be hidden in the view.
-
-      Hide_Not_Registered : Boolean := False;
-      --  Whether files that are not registered should be hidden in the view.
 
       Number_Of_Pages : Integer := 0;
       --  The number of pages in the notebook.
