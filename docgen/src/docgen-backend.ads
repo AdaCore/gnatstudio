@@ -112,7 +112,7 @@ package Docgen.Backend is
       Level            : Natural;
       Entity           : Entity_Information;
       Header           : String) is abstract;
-   --  Used to add a header or a gooter for an inner package
+   --  Used to add a header or a footer for an inner package
 
    procedure Doc_Package_Desc
      (B           : access Backend;
