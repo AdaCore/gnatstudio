@@ -605,7 +605,7 @@ package body Src_Info.CPP is
             if not Is_Xref_Valid (File, Handler.Xrefs)
               or else To_Timestamp (File_Time_Stamp (File)) >
                 To_Timestamp (File_Time_Stamp
-                   (Handler.DB_Dir.all & Xref_File_Name.all))
+                   (Xref_File_Name.all))
             then
                Num_Source_Files := Num_Source_Files + 1;
 
@@ -615,14 +615,14 @@ package body Src_Info.CPP is
                --  cbrowser opens it in append mode.
 
                if Is_Regular_File
-                 (Handler.DB_Dir.all & Xref_File_Name.all)
+                 (Xref_File_Name.all)
                then
                   Delete_File
-                    (Handler.DB_Dir.all & Xref_File_Name.all, Success);
+                    (Xref_File_Name.all, Success);
                end if;
 
                Put_Line
-                 (Tmp_File, "@" & Handler.DB_Dir.all & Xref_File_Name.all);
+                 (Tmp_File, "@" & Xref_File_Name.all);
                Put_Line (Tmp_File, File);
             end if;
          end;
