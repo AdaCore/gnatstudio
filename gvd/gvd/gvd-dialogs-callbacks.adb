@@ -65,12 +65,16 @@ package body GVD.Dialogs.Callbacks is
       --  Since lists start at 0, increment the value.
       Thread        : constant Gint := To_Gint (Params, 1) + 1;
 
+      Top           : constant GVD_Dialog :=
+        GVD_Dialog (Get_Toplevel (Object));
+
+      Main_Window   : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Top.Main_Window);
+
       --  Get the process notebook from the main window which is associated
       --  with the task dialog (toplevel (object)).
 
-      Notebook      : constant Gtk_Notebook :=
-        Main_Debug_Window_Access (Task_Dialog_Access
-        (Get_Toplevel (Object)).Main_Window).Process_Notebook;
+      Notebook      : constant Gtk_Notebook := Main_Window.Process_Notebook;
 
       --  Get the current page in the process notebook.
 
@@ -79,25 +83,16 @@ package body GVD.Dialogs.Callbacks is
           (Notebook, Get_Current_Page (Notebook)));
 
    begin
-      Thread_Switch
-        (Process.Debugger, Natural (Thread), Mode => GVD.Types.Visible);
-   end On_Task_List_Select_Row;
-
-   -----------------------------
-   -- On_Task_Process_Stopped --
-   -----------------------------
-
-   procedure On_Task_Process_Stopped
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Dialog   : constant Task_Dialog_Access :=
-        Debugger_Process_Tab (Object).Window.Task_Dialog;
-   begin
-      if Visible_Is_Set (Dialog) then
-         Update (Dialog, Object);
+      if Top = GVD_Dialog (Main_Window.Thread_Dialog) then
+         Thread_Switch
+           (Process.Debugger, Natural (Thread), Mode => GVD.Types.Visible);
+      elsif Top = GVD_Dialog (Main_Window.Task_Dialog) then
+         Task_Switch
+           (Process.Debugger, Natural (Thread), Mode => GVD.Types.Visible);
+      else
+         raise Program_Error;
       end if;
-   end On_Task_Process_Stopped;
+   end On_Task_List_Select_Row;
 
    -----------------------------
    -- On_Close_Button_Clicked --
