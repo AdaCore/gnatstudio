@@ -77,6 +77,12 @@ package body Prj_API is
    --  The returned value is the expression_of of the last such declaration, or
    --  Empty_Node if there was none.
 
+   function Find_Node_By_Name
+     (Project : Project_Node_Id;
+      Kind    : Project_Node_Kind;
+      Name    : Name_Id) return Project_Node_Id;
+   --  Find a node given its name
+
    ----------------
    -- Get_String --
    ----------------
@@ -1555,11 +1561,13 @@ package body Prj_API is
          return Empty_Node;
       end if;
 
-      Assert
-        (Me,
-         not Deep_Clone or else  Kind_Of (Node) = N_Attribute_Declaration,
-         "Don't know how to properly Clone_Node a " & Kind_Of (Node)'Img,
-         Raise_Exception => False);
+      --  Assert (Me, not Deep_Clone or else
+      --          (Kind_Of (Node) /= N_Variable_Reference
+      --           and then Kind_Of (Node) /= N_Attribute_Reference)
+      --          or else Package_Node_Of (Node) = Empty_Node,
+      --          "Deep-cloning of " & Kind_Of (Node)'Img & " referencing"
+      --          & " other packages is incorrect",
+      --          Raise_Exception => False);
 
       Tree_Private_Part.Project_Nodes.Increment_Last;
       New_Node := Tree_Private_Part.Project_Nodes.Last;
@@ -1574,14 +1582,13 @@ package body Prj_API is
       if Deep_Clone then
          case Kind_Of (Node) is
             when N_Project =>
+               --  Packages, Variables, First_String_Type_Of must be outside of
+               --  this subprogram
                Set_First_With_Clause_Of
                  (New_Node, Clone_Node (First_With_Clause_Of (Node), True));
                Set_Project_Declaration_Of
                  (New_Node, Clone_Node (Project_Declaration_Of (Node), True));
                Set_First_String_Type_Of (New_Node, Empty_Node);
-               --  ??? Need to set First_String_Type_Of
-               --  ??? Need to set Variables
-               --  ??? Need to set Packages
 
             when N_With_Clause =>
                Set_Next_With_Clause_Of
@@ -1599,19 +1606,19 @@ package body Prj_API is
                  (New_Node, Clone_Node (Next_Declarative_Item (Node), True));
 
             when N_Package_Declaration =>
+               --  Next_Package_In_Project and Variables must be set outside of
+               --  this subprogram
+               --  Pkg_Id doesn't need to be cloned, as per 9509-010.
                Set_First_Declarative_Item_Of
                  (New_Node,
                   Clone_Node (First_Declarative_Item_Of (Node), True));
                Set_Next_Package_In_Project (New_Node, Empty_Node);
-               --  ??? Need to set Next_Package_In_Project
-               --  ??? Need to set Variables
-               --  ??? Do we need to set Pkg_Id
 
             when N_String_Type_Declaration =>
+               --  Next_String_Type must be set outside of this
                Set_First_Literal_String
                  (New_Node, Clone_Node (First_Literal_String (Node), True));
                Set_Next_String_Type (New_Node, Empty_Node);
-               --  ??? Need to set Next_String_Type
 
             when N_Literal_String =>
                Set_Next_Literal_String
@@ -1622,18 +1629,19 @@ package body Prj_API is
                  (New_Node, Clone_Node (Expression_Of (Node), True));
 
             when N_Typed_Variable_Declaration =>
+               --  Next_Variable must be set outside of this
+               --  String_Type_Of is set to the same value as for Node, and
+               --  this needs to be fixed in a post-processing phase.
                Set_Expression_Of
                  (New_Node, Clone_Node (Expression_Of (Node), True));
-               Set_String_Type_Of (New_Node, Empty_Node);
+               Set_String_Type_Of (New_Node, String_Type_Of (Node));
                Set_Next_Variable (New_Node, Empty_Node);
-               --  ??? Need to set String_Type_Of
-               --  ??? Need to set Next_Variable
 
             when N_Variable_Declaration =>
+               --  Next_Variable must be set outside of this
                Set_Expression_Of
                  (New_Node, Clone_Node (Expression_Of (Node), True));
                Set_Next_Variable (New_Node, Empty_Node);
-               --  ??? Need to set Next_Variable
 
             when N_Expression =>
                Set_First_Term (New_Node, Clone_Node (First_Term (Node), True));
@@ -1652,10 +1660,10 @@ package body Prj_API is
                                         True));
 
             when N_Variable_Reference =>
-               Set_Package_Node_Of (New_Node, Empty_Node);
-               Set_String_Type_Of (New_Node, Empty_Node);
-               --  ??? Need to set Package_Node_Of
-               --  ??? Need to set String_Type_Of
+               --  String_Type_Of is set to the same value as for Node, and
+               --  this needs to be fixed in a post-processing phase.
+               --  Same for Package_Node_Of
+               null;
 
             when N_External_Value =>
                Set_External_Reference_Of
@@ -1664,8 +1672,9 @@ package body Prj_API is
                  (New_Node, Clone_Node (External_Default_Of (Node), True));
 
             when N_Attribute_Reference =>
-               Set_Package_Node_Of (New_Node, Empty_Node);
-               --  ??? Need to set Package_Node_Of
+               --  Package_Node_Of is set to the same value of for Node, and
+               --  this needs to be fixed in a post-processing phase.
+               null;
 
             when N_Case_Construction =>
                Set_Case_Variable_Reference_Of
@@ -1686,6 +1695,156 @@ package body Prj_API is
       return New_Node;
    end Clone_Node;
 
+   -----------------------
+   -- Find_Node_By_Name --
+   -----------------------
+
+   function Find_Node_By_Name
+     (Project : Project_Node_Id;
+      Kind    : Project_Node_Kind;
+      Name    : Name_Id) return Project_Node_Id
+   is
+      Decl : Project_Node_Id := First_Declarative_Item_Of
+        (Project_Declaration_Of (Project));
+      Current : Project_Node_Id;
+   begin
+      while Decl /= Empty_Node loop
+         Current := Current_Item_Node (Decl);
+         if Kind_Of (Current) = Kind
+           and then Prj.Tree.Name_Of (Current) = Name
+         then
+            return Current;
+         end if;
+
+         Decl := Next_Declarative_Item (Decl);
+      end loop;
+      return Empty_Node;
+   end Find_Node_By_Name;
+
+   ---------------------------
+   -- Find_Type_Declaration --
+   ---------------------------
+
+   function Find_Type_Declaration
+     (Project : Project_Node_Id; Name : Types.Name_Id)
+      return Project_Node_Id is
+   begin
+      return Find_Node_By_Name (Project, N_String_Type_Declaration, Name);
+   end Find_Type_Declaration;
+
+   ------------------------------
+   -- Find_Package_Declaration --
+   ------------------------------
+
+   function Find_Package_Declaration
+     (Project : Project_Node_Id; Name : Types.Name_Id)
+      return Project_Node_Id is
+   begin
+      return Find_Node_By_Name (Project, N_Package_Declaration, Name);
+   end Find_Package_Declaration;
+
+   ------------------------------
+   -- Post_Process_After_Clone --
+   ------------------------------
+
+   procedure Post_Process_After_Clone
+     (Project : Project_Node_Id; Pkg : Project_Node_Id := Empty_Node)
+   is
+      Last_Var     : Project_Node_Id := Empty_Node;
+      Last_Type    : Project_Node_Id := Empty_Node;
+      Last_Package : Project_Node_Id := Empty_Node;
+      Decl_Item    : Project_Node_Id;
+      Current_Node : Project_Node_Id;
+
+   begin
+      if Pkg = Empty_Node then
+         Decl_Item := First_Declarative_Item_Of
+           (Project_Declaration_Of (Project));
+      else
+         pragma Assert (Kind_Of (Pkg) = N_Package_Declaration);
+         Decl_Item := First_Declarative_Item_Of (Pkg);
+      end if;
+
+      while Decl_Item /= Empty_Node loop
+         Current_Node := Current_Item_Node (Decl_Item);
+         case Kind_Of (Current_Node) is
+            when N_Package_Declaration =>
+               if Last_Package /= Empty_Node then
+                  Set_Next_Package_In_Project (Last_Package, Current_Node);
+                  Last_Package := Current_Node;
+               else
+                  Last_Package := Current_Node;
+                  Tree_Private_Part.Project_Nodes.Table (Project).Packages
+                    := Last_Package;
+               end if;
+
+               Post_Process_After_Clone (Project, Last_Package);
+
+            when N_Variable_Declaration | N_Typed_Variable_Declaration =>
+               if Last_Var /= Empty_Node then
+                  Set_Next_Variable (Last_Var, Current_Node);
+                  Last_Var := Current_Node;
+               else
+                  Last_Var := Current_Node;
+
+                  if Pkg /= Empty_Node then
+                     Tree_Private_Part.Project_Nodes.Table (Pkg).Variables
+                       := Last_Var;
+                  else
+                     Tree_Private_Part.Project_Nodes.Table (Project).Variables
+                       := Last_Var;
+                  end if;
+               end if;
+
+               --  Make sure that we do reference the type defined in the new
+               --  project, not in some older project
+               if Kind_Of (Current_Node) = N_Typed_Variable_Declaration then
+                  Set_String_Type_Of
+                    (Current_Node, Find_Type_Declaration
+                     (Project,
+                      Prj.Tree.Name_Of (String_Type_Of (Current_Node))));
+               end if;
+
+            when N_Variable_Reference =>
+               if String_Type_Of (Current_Node) /= Empty_Node then
+                  Set_String_Type_Of
+                    (Current_Node, Find_Type_Declaration
+                     (Project,
+                      Prj.Tree.Name_Of (String_Type_Of (Current_Node))));
+               end if;
+
+               if Package_Node_Of (Current_Node) /= Empty_Node then
+                  Set_Package_Node_Of
+                    (Current_Node, Find_Package_Declaration
+                     (Project,
+                      Prj.Tree.Name_Of (Package_Node_Of (Current_Node))));
+               end if;
+
+            when N_Attribute_Reference =>
+               if Package_Node_Of (Current_Node) /= Empty_Node then
+                  Set_Package_Node_Of
+                    (Current_Node, Find_Package_Declaration
+                     (Project,
+                      Prj.Tree.Name_Of (Package_Node_Of (Current_Node))));
+               end if;
+
+            when N_String_Type_Declaration =>
+               if Last_Type /= Empty_Node then
+                  Set_Next_String_Type (Last_Type, Current_Node);
+                  Last_Type := Current_Node;
+               else
+                  Last_Type := Current_Node;
+                  Set_First_String_Type_Of (Project, Last_Type);
+               end if;
+
+            when others =>
+               null;
+
+         end case;
+
+         Decl_Item := Next_Declarative_Item (Decl_Item);
+      end loop;
+   end Post_Process_After_Clone;
 
 begin
    Namet.Initialize;

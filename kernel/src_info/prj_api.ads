@@ -130,6 +130,9 @@ package Prj_API is
    function Get_Or_Create_Package
      (Project : Project_Node_Id; Pkg : String) return Project_Node_Id;
    --  Create (or get an existing) package in project.
+   --
+   --  ??? Should always create, since we can use a find_* function to get an
+   --  existing one.
 
    function Create_Variable_Reference (Var : Project_Node_Id)
       return Project_Node_Id;
@@ -167,6 +170,16 @@ package Prj_API is
    --  packages are not searched. Also, this function will not go recursively
    --  inside the case statements.
 
+   function Find_Type_Declaration
+     (Project : Project_Node_Id; Name : Types.Name_Id)
+      return Project_Node_Id;
+   --  Return the declaration of the type whose name is Name.
+
+   function Find_Package_Declaration
+     (Project : Project_Node_Id; Name : Types.Name_Id)
+     return Project_Node_Id;
+   --  Return the package whose name is Name, or Empty_Node if there is none
+
    -------------------------------
    -- Node creation and copying --
    -------------------------------
@@ -178,10 +191,26 @@ package Prj_API is
    --  If Deep_Clone is false, then the two nodes will share part of their
    --  structure.
    --
-   --  Note: The current implementation will only deeo0clone correctly
-   --  Attribute declarations. All others nodes can only be cloned at the first
-   --  level. There is currently no need for other nodes, and it requires
-   --  significantly more work due to having xref link every where in the tree.
+   --  Note: nodes like variable or type declarations, packages,... are not
+   --  chained up when they are cloned, you need to recreate the proper lists
+   --  afterwards. See Post_Process_After_Clone below
+   --
+   --  A special case also occurs for a N_Typed_Variable_Declaration, since the
+   --  type that is referenced is a pointer to the same node as the type for
+   --  Node. No deep copy is done for this type. This needs to be fixed in a
+   --  post-processing phase, as above.
+   --
+   --  The same limitation exists for N_Variable_Reference and
+   --  N_Attribute_Reference and the package they are referencing
+
+   procedure Post_Process_After_Clone
+     (Project : Project_Node_Id; Pkg : Project_Node_Id := Empty_Node);
+   --  Post-process a project, and make sure that all the internal lists for
+   --  variables, packages, types,... are properly chained up, and that all the
+   --  variables reference a type declaration in Project (and not in some other
+   --  project), ...
+   --  On exit, Project is fully independent of whatever old project is was
+   --  created from.
 
    ---------------------
    -- Variable values --
