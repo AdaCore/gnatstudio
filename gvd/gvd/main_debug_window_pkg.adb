@@ -807,6 +807,10 @@ end Initialize;
       if Tab /= null and then Window.Task_Dialog /= null then
          Update (Window.Task_Dialog, Tab);
       end if;
+
+      if Tab /= null and then Window.History_Dialog /= null then
+         Update (Window.History_Dialog, Tab);
+      end if;
    end Update_External_Dialogs;
 
 end Main_Debug_Window_Pkg;
