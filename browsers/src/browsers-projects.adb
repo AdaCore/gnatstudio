@@ -541,8 +541,9 @@ package body Browsers.Projects is
    function Open_Project_Browser
      (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child
    is
-      Child : MDI_Child;
+      Child   : MDI_Child;
       Browser : Project_Browser;
+      Title   : constant String := -"Project Browser";
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Browser_Record'Tag);
@@ -558,8 +559,10 @@ package body Browsers.Projects is
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module => Project_Browser_Module_ID);
          Set_Focus_Child (Child);
-         Set_Title (Child, -"Project Browser");
+         Set_Title (Child, Title);
       end if;
+
+      Add_Navigation_Location (Kernel, Title);
 
       return Child;
    end Open_Project_Browser;
