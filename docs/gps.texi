@@ -4811,6 +4811,7 @@ displaying a contextual menu, which is not possible in GVD.
 * The VCS Explorer::
 * The VCS Menu::
 * The Version Control Contextual Menu::
+* Working with global ChangeLog file::
 @end menu
 
 GPS offers the possibility for multiple developers to work on the same project,
@@ -5023,6 +5024,10 @@ Remove the annotations from the selected file.
 @item Edit revision log
 Edit the current revision log for the selected file.
 
+@item Edit global ChangeLog
+Edit the global ChangeLog entry for the selected file.
+@pxref{Working with global ChangeLog file}.
+
 @c @item Revert
 @item Add to repository
 Add a file to the repository.
@@ -5081,6 +5086,10 @@ Remove annotations for the selected files.
 
 @item Edit revision log
 Edit the revision log file corresponding to the selected files.
+
+@item Edit global ChangeLog
+Edit the global ChangeLog entry for the selected file.
+@pxref{Working with global ChangeLog file}.
 
 @item Revert
 Revert the file to the latest version in the repository, erasing
@@ -5158,6 +5167,50 @@ system, or whose information could not be retrieved (e.g. the version control
 server is temporarily unavailable).
 
 @end table
+
+@node Working with global ChangeLog file
+@section Working with global ChangeLog file
+@cindex global ChangeLog
+@cindex ChangeLog file
+@noindent
+
+A global ChangeLog file contains revision logs for all files in a
+directory and is named @file{ChangeLog}. The format for such a file
+is:
+
+@smallexample
+   @b{ISO-DATE  @i{name  <e-mail>}}
+
+   <HT>* @b{filename}[, @b{filename}]:
+   <HT>revision history
+@end smallexample
+
+where:
+
+@table @b
+@item ISO-DATE
+A date with the ISO format YYYY-MM-DD
+
+@item name
+A name, generally the developer name
+
+@item <e-mail>
+The e-mail address of the developer surrounded with '<' and '>' characters.
+
+@item HT         
+Horizontal tabulation (or 8 spaces)
+@end table
+
+Using the menu entry @b{Edit global ChangeLog} will open the file
+@file{ChangeLog} in the directory where the current selected file is
+and create the corresponding @file{ChangeLog} entry. This means that
+the ISO date and filename headers will be created if not yet
+present. You will have to enter your name and e-mail address.
+
+This @file{ChangeLog} file serve as a repository for revision logs,
+when ready to check-in a file use the standard @b{Edit revision log}
+menu command. This will open the standard revision log buffer with the
+content filled from the global @file{ChangeLog} file.
 
 @c --------------------------------------------------------------------
 @node Tools
