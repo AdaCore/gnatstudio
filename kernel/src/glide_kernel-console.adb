@@ -266,7 +266,7 @@ package body Glide_Kernel.Console is
          begin
             Insert (Console, S);
             Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
-            Execute_GPS_Shell_Command (Kernel, "locations_parse", Args);
+            Execute_GPS_Shell_Command (Kernel, "Locations.parse", Args);
             Basic_Types.Free (Args);
          end;
 
