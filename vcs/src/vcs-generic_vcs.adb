@@ -602,12 +602,28 @@ package body VCS.Generic_VCS is
       Version_1 : String := "";
       Version_2 : String := "")
    is
-      pragma Unreferenced (Version_2, Version_1);
-      Filenames : String_List.List;
+      Args : GNAT.OS_Lib.String_List_Access;
+
    begin
-      --  ??? This will only diff against the head revision.
-      Generic_Command (Rep, File, null, Diff_Head);
-      Free (Filenames);
+      if Version_1 = ""
+        and then Version_2 = ""
+      then
+         Generic_Command (Rep, File, null, Diff_Head);
+
+      elsif Version_1 /= ""
+        and then Version_2 = ""
+      then
+         Args := new GNAT.OS_Lib.String_List (1 .. 1);
+         Args (1) := new String'(Version_1);
+         Generic_Command (Rep, File, Args, Diff);
+         GNAT.Strings.Free (Args);
+
+      elsif Version_1 /= ""
+        and then Version_2 /= ""
+      then
+         null;
+         --  ??? to be implemented.
+      end if;
    end Diff;
 
    ---------
