@@ -28,7 +28,6 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Gdk;                       use Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Arrow;                 use Gtk.Arrow;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -996,7 +995,7 @@ package body Directory_Tree is
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean
    is
-      File       : String (1 .. 1024);
+      File       : String (1 .. 4096);
       Last       : Natural;
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
