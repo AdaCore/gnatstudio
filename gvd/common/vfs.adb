@@ -42,10 +42,8 @@ with System;
 
 package body VFS is
 
-   Temporary_Dir : constant String := "/tmp";
-   --  Name of the temporary directory
-   --  ??? Must be configurable, but we need access either to the kernel
-   --  (and use GPS_HOME), or the project (and use the object directory)
+   Temporary_Dir : constant String := Get_Tmp_Dir;
+   --  Cache the name of the temporary directory
 
    Empty_String : constant Cst_UTF8_String_Access := new String'("");
 
@@ -103,6 +101,7 @@ package body VFS is
       Connection : Remote_Connection;
    begin
       Parse_URL (Full_Filename, Protocol, User, Host, Path);
+
       if Protocol /= null then
          Connection := Get_Connection (Protocol.all, User.all, Host.all);
          Free (Protocol);
@@ -126,6 +125,7 @@ package body VFS is
 
             --  Behave as if we have a local file, although nobody will be
             --  able to open it
+
             return (Ada.Finalization.Controlled with
                     Value => new Contents_Record'
                       (Connection      => null,
