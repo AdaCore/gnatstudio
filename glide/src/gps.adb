@@ -427,6 +427,7 @@ procedure GPS is
       Browsers.Projects.Register_Module (GPS.Kernel);
       Browsers.Entities.Register_Module (GPS.Kernel);
       Project_Viewers.Register_Module (GPS.Kernel);
+      Aliases_Module.Register_Module (GPS.Kernel);
       Src_Editor_Module.Register_Module (GPS.Kernel);
       Project_Explorers_Files.Register_Module (GPS.Kernel);
       Project_Explorers.Register_Module (GPS.Kernel);
@@ -440,7 +441,6 @@ procedure GPS is
       Aunit_Module.Register_Module (GPS.Kernel);
       VFS_Module.Register_Module (GPS.Kernel);
       Codefix_Module.Register_Module (GPS.Kernel);
-      Aliases_Module.Register_Module (GPS.Kernel);
 
       Custom_Module.Register_Module (GPS.Kernel);
 
