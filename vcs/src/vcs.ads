@@ -48,19 +48,23 @@ package VCS is
    type VCS_Access is access all VCS_Record'Class;
 
    type VCS_Action is
-     (Status,          --  Queries the status of one or more files
-      Open,            --  Open one or more file for writing
-      Update,          --  Update one or more files
-      Commit,          --  Commits one or more files
-      History,         --  Get the entire revision history for one file
-      Annotate,        --  Get the annotations for one file
-      Diff_Head,       --  Diff current against head revision
-      Diff_Working,    --  Diff current against working revision
-      Diff,            --  Diff current against specified revision
-      Diff2,           --  Diff between two specified revisions
-      Add,             --  Add one file or dir to the repository
-      Remove,          --  Remove one file or dir from repository
-      Revert);         --  Revert files or dirs to repository revision
+     (None,             --  Do nothing
+      Status,           --  Queries the status of one or more files
+      Status_Dir,       --  Queries the status for one directory
+      Local_Status,     --  Queries the local status for one or more files
+      Local_Status_Dir, --  Queries the local status for one directory
+      Open,             --  Open one or more file for writing
+      Update,           --  Update one or more files
+      Commit,           --  Commits one or more files
+      History,          --  Get the entire revision history for one file
+      Annotate,         --  Get the annotations for one file
+      Diff_Head,        --  Diff current against head revision
+      Diff_Working,     --  Diff current against working revision
+      Diff,             --  Diff current against specified revision
+      Diff2,            --  Diff between two specified revisions
+      Add,              --  Add one file or dir to the repository
+      Remove,           --  Remove one file or dir from repository
+      Revert);          --  Revert files or dirs to repository revision
 
    type Action_Array is array (VCS_Action) of String_Access;
 
@@ -157,7 +161,8 @@ package VCS is
    procedure Get_Status
      (Rep         : access VCS_Record;
       Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False) is abstract;
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False) is abstract;
    --  Return the status of a list of files.
    --  The returned File_Status_Record is to be filled only with information
    --  that have the corresponding parameter set to True, all the other fields
@@ -296,9 +301,17 @@ package VCS is
    function Get_Queue (VCS : access VCS_Record) return Commands.Command_Queue;
 
    function Parse_Status
-     (Rep  : access VCS_Record;
-      Text : String) return File_Status_List.List;
+     (Rep   : access VCS_Record;
+      Text  : String;
+      Local : Boolean) return File_Status_List.List;
    --  Parse Text and return the list of status obtained.
+   --  Local indicates whether we are parsing local status.
+
+   procedure Parse_Annotations
+     (Rep   : access VCS_Record;
+      File  : VFS.Virtual_File;
+      Text  : String);
+   --  Parse the annotations and fill the editor if needed.
 
    function Get_Identified_Actions
      (Rep : access VCS_Record) return Action_Array;
