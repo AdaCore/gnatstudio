@@ -65,6 +65,7 @@ with Directory_Tree;           use Directory_Tree;
 with Switches_Editors;         use Switches_Editors;
 with Traces;                   use Traces;
 with Variable_Editors;         use Variable_Editors;
+with Project_Properties;       use Project_Properties;
 
 with Prj;           use Prj;
 with Prj.Tree;      use Prj.Tree;
@@ -194,7 +195,6 @@ package body Project_Viewers is
 
    function Append_Line_With_Full_Name
      (Viewer         : access Project_Viewer_Record'Class;
-      Project_View   : Project_Id;
       File_Name      : String;
       Directory_Name : String) return Gint;
    --  Same as above, except we have already found the proper location for
@@ -332,6 +332,7 @@ package body Project_Viewers is
       Line      : out Interfaces.C.Strings.chars_ptr;
       Style     : out Gtk_Style)
    is
+      pragma Unreferenced (Directory, Fd);
       Value      : Variable_Value;
       Is_Default : Boolean;
 
@@ -359,9 +360,7 @@ package body Project_Viewers is
       Line      : out Interfaces.C.Strings.chars_ptr;
       Style     : out Gtk_Style)
    is
-      pragma Warnings (Off, Viewer);
-      pragma Warnings (Off, Directory);
-      pragma Warnings (Off, Fd);
+      pragma Unreferenced (Viewer, Directory, Fd);
    begin
       Style := null;
       Line  := New_String (File_Name);
@@ -379,9 +378,7 @@ package body Project_Viewers is
       Line      : out Interfaces.C.Strings.chars_ptr;
       Style     : out Gtk_Style)
    is
-      pragma Warnings (Off, Viewer);
-      pragma Warnings (Off, Directory);
-      pragma Warnings (Off, File_Name);
+      pragma Unreferenced (Viewer, Directory, File_Name);
    begin
       Style := null;
       Line := New_String (Long_Integer'Image (File_Length (Fd)));
@@ -399,9 +396,7 @@ package body Project_Viewers is
       Line      : out Interfaces.C.Strings.chars_ptr;
       Style     : out Gtk_Style)
    is
-      pragma Warnings (Off, Viewer);
-      pragma Warnings (Off, Directory);
-      pragma Warnings (Off, File_Name);
+      pragma Unreferenced (Directory, File_Name);
 
       type Char_Pointer is access Character;
 
@@ -452,7 +447,7 @@ package body Project_Viewers is
       Column    : Gint;
       Context   : File_Selection_Context_Access)
    is
-      pragma Warnings (Off, Column);
+      pragma Unreferenced (Column, Viewer);
    begin
       Edit_Switches_For_Context
         (Selection_Context_Access (Context), Force_Default => False);
@@ -464,7 +459,6 @@ package body Project_Viewers is
 
    function Append_Line_With_Full_Name
      (Viewer         : access Project_Viewer_Record'Class;
-      Project_View   : Project_Id;
       File_Name      : String;
       Directory_Name : String) return Gint
    is
@@ -539,7 +533,7 @@ package body Project_Viewers is
       Project_User_Data.Set
         (Viewer.List,
          Append_Line_With_Full_Name
-           (Viewer, Project_View, File_N, Name_Buffer (1 .. Name_Len)),
+           (Viewer, File_N, Name_Buffer (1 .. Name_Len)),
          (File_Name => File_Name, Directory => Dir_Name));
    end Append_Line;
 
@@ -740,6 +734,7 @@ package body Project_Viewers is
      (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       File_Context : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Initial_Dirs_Id : String_Id_Array := Source_Dirs
@@ -794,6 +789,7 @@ package body Project_Viewers is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       Selector : Directory_Selector;
       Project : Project_Id :=
         Project_Information (File_Selection_Context_Access (Context));
@@ -837,6 +833,7 @@ package body Project_Viewers is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Wiz : Creation_Wizard.Prj_Wizard;
       Load_Project_Page : Gtk_Alignment;
       Frame : Gtk_Frame;
@@ -878,6 +875,7 @@ package body Project_Viewers is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Child  : MDI_Child;
       Viewer : Project_Viewer;
    begin
@@ -908,7 +906,9 @@ package body Project_Viewers is
 
    procedure Save_All_Projects
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
    begin
       Save_Project (Get_Project (Kernel), Recursive => True);
    end Save_All_Projects;
@@ -919,7 +919,9 @@ package body Project_Viewers is
 
    procedure Save_Specific_Project
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
    begin
       Save_Project
         (Get_Project_From_View
@@ -946,6 +948,7 @@ package body Project_Viewers is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin
@@ -967,6 +970,7 @@ package body Project_Viewers is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Wiz  : Creation_Wizard.Prj_Wizard;
@@ -997,6 +1001,7 @@ package body Project_Viewers is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin
@@ -1017,6 +1022,7 @@ package body Project_Viewers is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Selector : File_Selector_Window_Access;
@@ -1056,6 +1062,7 @@ package body Project_Viewers is
       Context   : access Selection_Context'Class;
       Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Object);
       Item : Gtk_Menu_Item;
       Submenu : Gtk_Menu;
       File_Context : File_Selection_Context_Access;
@@ -1079,7 +1086,15 @@ package body Project_Viewers is
                (Save_Specific_Project'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => -"Edit Default Switches for "
+            Gtk_New (Item, Label => -"Project properties");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Edit_Project_Properties'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => -"Edit default switches for "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
@@ -1137,7 +1152,7 @@ package body Project_Viewers is
          if Has_Project_Information (File_Context)
            and then not Has_File_Information (File_Context)
          then
-            Gtk_New (Item, Label => -"Edit Source Directories for "
+            Gtk_New (Item, Label => -"Edit source directories for "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
@@ -1146,7 +1161,7 @@ package body Project_Viewers is
                (Edit_Source_Dirs_From_Contextual'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => -"Edit Object Directory for "
+            Gtk_New (Item, Label => -"Edit object directory for "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
@@ -1160,7 +1175,7 @@ package body Project_Viewers is
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
 
-            Gtk_New (Item, Label => -"Add Variable");
+            Gtk_New (Item, Label => -"Add variable");
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -1172,7 +1187,7 @@ package body Project_Viewers is
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
 
-            Gtk_New (Item, Label => -"Edit Switches for "
+            Gtk_New (Item, Label => -"Edit switches for "
                      & Base_Name (File_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
@@ -1195,6 +1210,7 @@ package body Project_Viewers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
+      pragma Unreferenced (Kernel, Event_Widget);
       Context : File_Selection_Context_Access :=
         new File_Selection_Context;
       V : Project_Viewer := Project_Viewer (Object);
