@@ -52,6 +52,18 @@ package VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
 
+   procedure Add
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure Remove
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
+   procedure Revert
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+
    procedure VCS_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
