@@ -1416,7 +1416,7 @@ package body Src_Editor_Buffer is
          Buffer.Has_Delimiters_Highlight := False;
       end if;
 
-      if not Get_Pref (Buffer.Kernel, Highlight_Delimiters) then
+      if not Buffer.Highlight_Delimiters then
          return;
       end if;
 
@@ -2107,8 +2107,9 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   procedure Execute (Hook : Preferences_Changed_Hook_Record;
-                      Kernel : access Kernel_Handle_Record'Class)
+   procedure Execute
+     (Hook : Preferences_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
    is
       B       : Source_Buffer := Hook.Buffer;
       Timeout : Gint;
@@ -2177,6 +2178,8 @@ package body Src_Editor_Buffer is
       end if;
 
       B.Auto_Syntax_Check := Get_Pref (Kernel, Automatic_Syntax_Check);
+      B.Highlight_Delimiters := Get_Pref (Kernel, Highlight_Delimiters);
+      B.Tab_Width := Get_Pref (Kernel, Tab_Width);
    end Execute;
 
    ---------------
@@ -2706,7 +2709,7 @@ package body Src_Editor_Buffer is
    is
       Result  : Boolean := True;
       Current : Gint := 0;
-      Tab_Len : constant Gint := Get_Pref (Buffer.Kernel, Tab_Width);
+      Tab_Len : constant Gint := Buffer.Tab_Width;
    begin
       Assert (Me, Is_Valid_Position (Buffer, Line, 0),
               "Invalid position for Set_Screen_Position "
@@ -2764,7 +2767,7 @@ package body Src_Editor_Buffer is
    is
       Start   : Gtk_Text_Iter;
       Result  : Boolean := True;
-      Tab_Len : constant Gint := Get_Pref (Buffer.Kernel, Tab_Width);
+      Tab_Len : constant Gint := Buffer.Tab_Width;
 
    begin
       Line   := Get_Line (Iter);
