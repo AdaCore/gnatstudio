@@ -713,8 +713,10 @@ package body Find_Utils is
       procedure Unchecked_Free is new Unchecked_Deallocation
         (Search_Context'Class, Search_Context_Access);
    begin
-      Free (Context.all);
-      Unchecked_Free (Context);
+      if Context /= null then
+         Free (Context.all);
+         Unchecked_Free (Context);
+      end if;
    end Free;
 
    ----------
@@ -863,7 +865,7 @@ package body Find_Utils is
            and then C.Next_Matches_In_File (C.Last_Match_Returned) /= null
          then
             Highlight_Result
-              (Kernel, C.Files (C.Current_File).all,
+              (Kernel, C.Files (C.Current_File - 1).all,
                C.Next_Matches_In_File (C.Last_Match_Returned).all);
             return True;
          else
@@ -883,13 +885,12 @@ package body Find_Utils is
 
          C.Next_Matches_In_File := Scan_File_And_Store
            (C, Kernel, C.Files (C.Current_File).all);
-         exit when C.Next_Matches_In_File /= null;
-
          C.Current_File := C.Current_File + 1;
+         exit when C.Next_Matches_In_File /= null;
       end loop;
 
       C.Last_Match_Returned := C.Next_Matches_In_File'First;
-      Highlight_Result (Kernel, C.Files (C.Current_File).all,
+      Highlight_Result (Kernel, C.Files (C.Current_File - 1).all,
                         C.Next_Matches_In_File (C.Last_Match_Returned).all);
       return True;
    end Search_Files_From_Project;
