@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- Infinite loop in search dialog
+  Problem:    In some cases, it might happen that looking for a constant string
+              results in an infinite loop in GPS.
+  Workaround: Click the Regexp button in the search dialog before starting the
+              search
+
 - C326-004 Duplicate entries in dialog File->Open From Project
   Problem:    When using extending projects, duplicate source files might be
               displayed in this dialog (once for the original project and once
