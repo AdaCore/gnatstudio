@@ -52,6 +52,7 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
+with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -244,13 +245,14 @@ package body Project_Properties is
      (Kernel      : access Kernel_Handle_Record'Class;
       Project     : Project_Type;
       Attr        : Attribute_Description_Access;
-      Size_Group  : Gtk_Size_Group;
+      Size_Group  : in out Gtk_Size_Group;
       Path_Widget : Gtk_Entry;
       Widget      : out Gtk_Widget;
       Expandable  : out Boolean;
       Context     : String);
    --  Create the widget used to edit Attr.
-   --  Size_Group, if specified, is used to properly align all the labels.
+   --  Size_Group, if specified, is used to properly align all the labels. It
+   --  is created as needed.
    --  Expandable indicates whether the resulting widget should be expandable
    --  in its container box when the latter is resized, or whether it should
    --  keep its current size.
@@ -3205,7 +3207,7 @@ package body Project_Properties is
      (Kernel      : access Kernel_Handle_Record'Class;
       Project     : Project_Type;
       Attr        : Attribute_Description_Access;
-      Size_Group  : Gtk_Size_Group;
+      Size_Group  : in out Gtk_Size_Group;
       Path_Widget : Gtk_Entry;
       Widget      : out Gtk_Widget;
       Expandable  : out Boolean;
@@ -3238,10 +3240,11 @@ package body Project_Properties is
          Gtk_New (Label, Attr.Label.all & ':');
          Set_Alignment (Label, 0.0, 0.5);
 
-         if Size_Group /= null then
-            Add_Widget (Size_Group, Label);
+         if Size_Group = null then
+            Gtk_New (Size_Group);
          end if;
 
+         Add_Widget (Size_Group, Label);
          Add (Event, Label);
 
          if Attr.Description /= null
@@ -3292,7 +3295,7 @@ package body Project_Properties is
       Box          : Gtk_Box;
       XML_Page     : XML_Project_Wizard_Page_Access;
       General_Page_Box : Gtk_Box;
-      Main_Box     : Gtk_Box;
+      Main_Box     : Gtk_Paned;
       Event        : Gtk_Event_Box;
       General_Size : Gtk_Size_Group;
       Tmp          : Wizard_Pages_Array_Access;
@@ -3309,15 +3312,15 @@ package body Project_Properties is
          Auto_Shrink  => True);
       Realize (Editor);
 
-      Gtk_New_Hbox (Main_Box);
+      Gtk_New_Hpaned (Main_Box);
       Pack_Start (Get_Vbox (Editor), Main_Box, Expand => True, Fill => True);
 
       Gtk_New (Main_Note);
       Set_Tab_Pos (Main_Note, Pos_Left);
-      Pack_Start (Main_Box, Main_Note, Expand => True, Fill => True);
+      Pack1 (Main_Box, Main_Note, Resize => True, Shrink => True);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Pack_Start (Main_Box, Box, Expand => True, Fill => True);
+      Pack2 (Main_Box, Box, Resize => False, Shrink => True);
 
       Gtk_New (Label, -"Apply changes to:");
       Set_Alignment (Label, 0.0, 0.0);
@@ -3545,8 +3548,6 @@ package body Project_Properties is
                   else
                      Gtk_New_Vbox (Page_Box.Box, Homogeneous => False);
                   end if;
-
-                  Gtk_New (Size);
                end if;
 
                if Box = null then
