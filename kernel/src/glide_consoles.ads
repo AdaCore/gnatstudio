@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -35,7 +35,7 @@ package Glide_Consoles is
    procedure Gtk_New
      (Console : out Glide_Console;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Create a new console for glide
+   --  Create a new console window.
 
    procedure Initialize
      (Console : access Glide_Console_Record'Class;
@@ -48,8 +48,6 @@ package Glide_Consoles is
       Add_LF              : Boolean := True;
       Mode                : Message_Type := Info);
    --  Insert Text in the Glide's console.
-   --  Highlight parts of Text that match a source location (the color is set
-   --  using the preferences) if Highlight_Sloc is True.
    --  If Add_LF is True, automatically add a line separator.
 
    procedure Clear (Console : access Glide_Console_Record);
