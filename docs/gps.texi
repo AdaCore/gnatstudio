@@ -6554,7 +6554,7 @@ specific encoding through the standard @code{<?xml encoding="..." ?>}
 declaration, as in the following example:
 
 @smallexample
-<?xml version="1.0" encoding="iso-8859-1">
+<?xml version="1.0" encoding="iso-8859-1"?>
 <submenu>
   <title>encoded text/title>
 </submenu>
@@ -7143,8 +7143,8 @@ can make an action depend on a named filter:
 </test_filter>
 @end smallexample
 
-  A number of predefined filters are predefined by GPS itself. The full list
-  appears in the key shortcut editor, and is listed here:
+  A number of filters are predefined by GPS itself. The full list appears in
+  the key shortcut editor, and is listed here:
 
   @table @code
   @item Source editor
@@ -8148,12 +8148,14 @@ predefined stock icons will not get overridden by your icons.
 @end menu
 
 @noindent
-Support for external tools can be provided through GPS. Typically, this
-would be done to specify different compilers, but it can also apply to a wide
-variety of tools.
+GPS has built-in support for external tools. This feature can be used to
+support a wide variety of tools (in particular, to specify different
+compilers). Regular enhancements are done in this area, so if you are
+planning to use the external tool support in GPS, check for the latest GPS
+version available.
 
-GPS's support for external tools is enhancing with each release. Typically,
-the following things need to be achieved to successfully use a tool:
+Typically, the following things need to be achieved to successfully use a
+tool:
 
 @itemize @bullet
 @item Specify its command line switches
@@ -9367,10 +9369,9 @@ you need to provide several things:
  key shortcuts
 @end itemize
 
-Alternatively, your python script can call the command
-@code{GPS.parse_xml} to specify some inline XML tags to
-interpret. These tag can directly the new menus or key bindings associated
-with your command.
+Alternatively, your python script can call the command @code{GPS.parse_xml}
+to specify some inline XML tags to interpret. These tags can directly create
+the new menus or key bindings associated with your command.
 
 The following example defines a python command that inserts a line full of
 dashes ('-') at the current cursor location. This command is associated with
@@ -9413,9 +9414,9 @@ Modify the file @file{$HOME/.gps/traces.cfg}, and add the following line:
 PYTHON.OUT=yes
 @end smallexample
 
-This will put in the file @file{$HOME/.gps/log} all the output from
-python, among other traces. However, it will also slow down GPS when
-there are a lot of output to process.
+This will include the python traces as part of the general traces available
+in the file @file{$HOME/.gps/log}. Note that it may slow down GPS if there is
+a lot of output to process.
 
 @end ifset
 
