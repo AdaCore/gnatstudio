@@ -8,7 +8,17 @@ ODD_VERSION=$ODD_MAJOR_VERSION.$ODD_MINOR_VERSION.$ODD_MICRO_VERSION
 
 AC_CANONICAL_SYSTEM
 
-# checking for local tools
+######## Command line options ###
+
+AC_ARG_WITH(ptys,
+[  --without-ptys          don't use ptys to communicate with the debuggers],
+[if test "$withval" = yes; then
+   AC_DEFINE(GVD_USE_PTYS)
+fi],
+AC_DEFINE(GVD_USE_PTYS))
+
+
+######## checking for local tools ###
 AC_PROG_CC
 AM_PATH_GNAT
 AC_PROG_MAKE_SET
