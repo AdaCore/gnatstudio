@@ -137,6 +137,17 @@ package body Project_Properties is
       return Boolean;
    --  Return True if the paths in the project should be relative paths
 
+   type Project_Edition_Type is (Do_Not_Edit,
+                                 Edit_File,
+                                 Edit_Properties);
+
+   function Warning_On_View_Incomplete
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Project_Type)
+      return Project_Edition_Type;
+   --  Display a warning dialog to indicate that the current view is
+   --  incomplete, and it might be dangereous to edit the properties.
+
    ------------------------
    -- Paths_Are_Relative --
    ------------------------
@@ -817,6 +828,63 @@ package body Project_Properties is
       return New_Languages (New_Languages'First .. Num_Languages - 1);
    end Get_Languages;
 
+   --------------------------------
+   -- Warning_On_View_Incomplete --
+   --------------------------------
+
+   function Warning_On_View_Incomplete
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Project_Type)
+      return Project_Edition_Type
+   is
+      D : Gtk_Dialog;
+      B : Gtk_Widget;
+      L : Gtk_Label;
+      C : Gtk_Check_Button;
+      pragma Unreferenced (B);
+   begin
+      Gtk_New (D,
+               Title  => -"Project had errors",
+               Parent => Get_Main_Window (Kernel),
+               Flags  => Modal);
+
+      Gtk_New
+        (L,
+         -"The project """
+         & Project_Name (Project)
+         & (-(""" contained errors, and was incorrectly"
+              & ASCII.LF
+              & "loaded by GPS. Editing it through the project properties"
+              & ASCII.LF
+              & "dialog might result in a lose of data.")));
+      Set_Alignment (L, 0.0, 0.5);
+      Pack_Start (Get_Vbox (D), L, Expand => True, Fill => True);
+
+      Gtk_New (C, -"Edit the project file");
+      Set_Active (C, True);
+      Pack_End (Get_Vbox (D), C, Expand => False);
+
+      B := Add_Button (D, Stock_Open,   Gtk_Response_OK);
+      B := Add_Button (D, Stock_Cancel, Gtk_Response_Cancel);
+
+      Show_All (D);
+
+      case Run (D) is
+         when Gtk_Response_OK =>
+            if Get_Active (C) then
+               Destroy (D);
+               return Edit_File;
+            else
+               Destroy (D);
+               return Edit_Properties;
+            end if;
+
+         when others =>
+            Destroy (D);
+            return Do_Not_Edit;
+      end case;
+   end Warning_On_View_Incomplete;
+
    ---------------------
    -- Edit_Properties --
    ---------------------
@@ -1135,6 +1203,23 @@ package body Project_Properties is
       Project_Renamed_Or_Moved : Boolean := False;
 
    begin
+      if not View_Is_Complete (Project) then
+         case Warning_On_View_Incomplete (Kernel, Project) is
+            when Do_Not_Edit =>
+               return;
+
+            when Edit_File =>
+               Open_File_Editor
+                 (Kernel,
+                  Project_Path (Project),
+                  From_Path => False);
+               return;
+
+            when Edit_Properties =>
+               null;
+         end case;
+      end if;
+
       Gtk_New (Editor, Project, Kernel);
 
       loop
