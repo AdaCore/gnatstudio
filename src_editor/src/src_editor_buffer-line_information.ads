@@ -158,5 +158,6 @@ package Src_Editor_Buffer.Line_Information is
    --  If Start_Col <= 0, start at the beginning of line.
    --  If End_Col <= 0, end at end of line.
    --  If Remove is True, remove the highlighting instead of adding it.
+   --  If Line = 0, (un)highlight the whole buffer.
 
 end Src_Editor_Buffer.Line_Information;
