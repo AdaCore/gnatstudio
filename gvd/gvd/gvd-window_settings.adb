@@ -23,8 +23,8 @@ with Gint_Xml;            use Gint_Xml;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Box;             use Gtk.Box;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Item_Factory;    use Gtk.Item_Factory;
 
 with Gtkada.Canvas;       use Gtkada.Canvas;
 
@@ -34,6 +34,7 @@ with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Process;         use GVD.Process;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Code_Editors;    use GVD.Code_Editors;
+with Odd_Intl;            use Odd_Intl;
 
 with Ada.Strings;         use Ada.Strings;
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
@@ -199,11 +200,13 @@ package body GVD.Window_Settings is
                              (Process.Command_Scrolledwindow)),
                        True);
                   Set (String_Gint ("Editor_Height" & Image),
-                       Gint (Get_Allocation_Height (Process.Editor_Vbox)),
+                       Gint (Get_Allocation_Height (Process.Editor_Text)),
                        True);
                end if;
 
-               if Get_Active (Top.Call_Stack) then
+               if Get_Active (Gtk_Check_Menu_Item (Get_Item
+                 (Top.Factory, -"/Data/Call Stack")))
+               then
                   Set (String_Gint ("Stack_Width" & Image),
                        Gint (Get_Allocation_Width
                              (Process.Stack_Scrolledwindow)),
