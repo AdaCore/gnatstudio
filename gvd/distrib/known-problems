@@ -41,6 +41,12 @@ Known Problems fixed in GVD 2.0.0
   Workaround: Always compile your applications with debugging information.
               You need this anyway to do anything useful.
 
+- [9126-005] Loading a program does not give a visual feedback
+  Problem:    When loading a program (e.g using File->Open Program...), GVD
+              does not show any visual feedback of the operation.
+  Workaround: None. If the load command is unsuccessful, GVD will output
+              an error message in the status bar.
+
 - [9125-003] Incorrect parsing of incomplete record types
   Problem:    When trying to display an incomplete record (in some rare cases,
               when the compiler generates partial debug information), GVD will
