@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.0.1
 
+- The highlighting from the debugger stayed after the debugger ends.
+  Problem:    When the debugger highlights lines of code, the highlighting
+              remains after the debugger terminates.
+  Workaround: Close the concerned files and re-open them.
+
 - Incorrect project file set when spawning external Emacs editor
   Problem:    It might happen that the project file used in the external Emacs
               editors spawned by GPS is not the same one as in GPS.
@@ -14,7 +19,7 @@ Known Problems fixed in GPS 1.0.1
               on the icon beside the variable's name in the explorer
 
 - No cross-reference for overloaded entities in C/C++
-  Problem:    When selecting "goto declaration" for a C/C++ entity that has 
+  Problem:    When selecting "goto declaration" for a C/C++ entity that has
               multiple possible definitions (either overloaded or in a
               pre-processor section), GPS failed, when a dialog should have
               been displayed.
