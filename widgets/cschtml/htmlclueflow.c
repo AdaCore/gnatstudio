@@ -1191,7 +1191,7 @@ search_set_info (HTMLObject *cur, HTMLSearch *info, guint pos, guint len)
 	guint text_len = 0;
 	guint cur_len;
 
-	printf ("se_info pos: %d len: %d\n", pos, len);
+	/* printf ("se_info pos: %d len: %d\n", pos, len); */
 
 	info->found_len = len;
 
@@ -1278,7 +1278,7 @@ search_text (HTMLObject **beg, HTMLSearch *info)
 			cur = (info->forward) ? cur->next : cur->prev;
 		}
 
-		printf ("text (%d): %s\n", text_len, par);
+		/* printf ("text (%d): %s\n", text_len, par); */
 
 		/* set eq_len and pos counters */
 		eq_len = 0;
@@ -1311,13 +1311,13 @@ search_text (HTMLObject **beg, HTMLSearch *info)
 
 				while ((info->forward && pos < text_len)
 				       || (!info->forward && pos >= 0)) {
-					printf ("try match pos: %d %s\n", pos, par + pos);
+					/* printf ("try match pos: %d %s\n", pos, par + pos); */
 					rv = regexec (info->reb,
 						      par + pos,
 						      1, &match, 0);
 					if (rv == 0) {
-						printf ("found! pos: %d start: %d len: %d\n",
-							pos, pos + match.rm_so, match.rm_eo - match.rm_so);
+						/* printf ("found! pos: %d start: %d len: %d\n",
+							pos, pos + match.rm_so, match.rm_eo - match.rm_so); */
 						search_set_info (head, info, pos + match.rm_so, match.rm_eo - match.rm_so);
 						retval = TRUE;
 						break;
@@ -1327,14 +1327,14 @@ search_text (HTMLObject **beg, HTMLSearch *info)
 #else
 				rv = re_search (info->reb, par, text_len, pos,
 						(info->forward) ? text_len-pos : -pos, NULL);
-				printf ("search result: %d pos: %d\n", rv, pos);
+				/* printf ("search result: %d pos: %d\n", rv, pos); */
 				if (rv>=0) {
 					guint found_pos = rv;
 					rv = re_match (info->reb, par, text_len, found_pos, NULL);
 					if (rv < 0) {
 						g_warning ("re_match (...) error");
 					}
-					printf ("found! start: %d len: %d\n", found_pos, rv);
+					/* printf ("found! start: %d len: %d\n", found_pos, rv); */
 					search_set_info (head, info, found_pos, rv);
 					retval = TRUE;
 				} else {
@@ -1352,7 +1352,7 @@ search_text (HTMLObject **beg, HTMLSearch *info)
 					    == info->trans [par [pos]]) {
 						eq_len++;
 						if (eq_len == info->text_len) {
-							printf ("found! pos %d\n", pos);
+							/* printf ("found! pos %d\n", pos); */
 							search_set_info (head, info, pos - ((info->forward)
 									 ? eq_len-1 : 0), info->text_len);
 							retval=TRUE;
@@ -1381,13 +1381,13 @@ search (HTMLObject *obj, HTMLSearch *info)
 	HTMLObject *cur;
 	gboolean next = FALSE;
 
-	printf ("search clueflow\n");
+	/* printf ("search clueflow\n"); */
 
 	/* does last search end here? */
 	if (info->found) {
 		cur  = HTML_OBJECT (info->found->data);
 		next = TRUE;
-		printf ("search next clueflow continue\n");
+		/* printf ("search next clueflow continue\n"); */
 	} else {
 		/* search_next? */
 		if (html_search_child_on_stack (info, obj)) {
