@@ -817,12 +817,16 @@ package body Directory_Tree is
 
             exit when Last = 0;
 
-            if Is_Directory (Dir & File (1 .. Last))
-              and then Filter (Selector.Directory, File (1 .. Last))
-            then
-               Add_Directory
-                 (Selector, Name_As_Directory (Dir & File (1 .. Last)), True);
-            end if;
+            declare
+               Dir_Name : constant String := Dir & File (1 .. Last);
+            begin
+               if Is_Directory (Dir_Name)
+                 and then not Is_Symbolic_Link (Dir_Name)
+                 and then Filter (Selector.Directory, File (1 .. Last))
+               then
+                  Add_Directory (Selector, Name_As_Directory (Dir_Name), True);
+               end if;
+            end;
          end loop;
 
          Close (Handle);
