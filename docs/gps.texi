@@ -10,7 +10,7 @@
 @set GPS
 @set GPSVersion 2.0.0
 
-@c @set python
+@set python
 
 @titlepage
 
@@ -74,6 +74,7 @@ unmodified in any copy.
 * Tools::
 * Working in a Cross Environment::
 * Customizing and Extending GPS::
+* Scripting GPS::
 * Environment::
 @ifset python
 * Python Commands::
@@ -180,14 +181,13 @@ Customizing and Extending GPS
 * The Preferences Dialog::
 * GPS Themes::
 * The Key Manager Dialog::
-* Customizing the Menu and Tool Bar::
+* Customizing through XML files::
 * Adding Support for New Languages::
 * Defining Text Aliases::
 * Adding support for new tools::
 * Defining New Styles and Key Bindings::
-* Scripting GPS::
 
-Customizing the Menu and Tool Bar
+Customizing through XML files
 * Customization files::
 * Defining Actions::
 * Macro arguments::
@@ -214,6 +214,15 @@ Executing external tools
 * Querying switches interactively::
 * Redirecting the command output::
 * Processing the tool output::
+
+Scripting GPS
+* Scripts::
+* Scripts and GPS actions::
+* The GPS Shell::
+@ifset python
+* The Python Interpreter::
+@end ifset
+* Hooks::
 
 Environment
 * Command Line Options::
@@ -5445,12 +5454,11 @@ machine, you can specify the name of this machine by setting the
 * The Preferences Dialog::
 * GPS Themes::
 * The Key Manager Dialog::
-* Customizing the Menu and Tool Bar::
+* Customizing through XML files::
 * Adding Support for New Languages::
 * Defining Text Aliases::
 * Adding support for new tools::
 * Defining New Styles and Key Bindings::
-* Scripting GPS::
 @end menu
 
 @node The Preferences Dialog
@@ -6181,7 +6189,7 @@ loaded.
 The key manager is accessible through the menu @code{Edit->Key Shortcuts}.
 This dialog provides an easy way to associate key shortcuts with actions.
 These actions are either predefined in GPS, or defined in your own
-customization files, as documented in @ref{Customizing the Menu and Tool Bar}.
+customization files, as documented in @ref{Customizing through XML files}.
 It also provides an easy way to redefine the menu shortcuts.
 
 @iftex
@@ -6200,7 +6208,7 @@ command only applies in source editors, whereas the command to change the
 current window applies anywhere in GPS. The categories correspond in fact to
 filters that indicate when the action can be executed. You can create your own
 new categories by using the @code{<filter>} tag in the customization files
-(@pxref{Customizing the Menu and Tool Bar}).
+(@pxref{Customizing through XML files}).
 
 Through the key manager, you can define key bindings similar to what Emacs
 uses (@key{control-x} followed by @key{control-k} for instance). To register
@@ -6213,8 +6221,8 @@ items yet.
 
 
 @c -----------------------------------------------------------------
-@node Customizing the Menu and Tool Bar
-@section Customizing the Menu and Tool Bar
+@node Customizing through XML files
+@section Customizing through XML files
 @cindex customization
 @c -----------------------------------------------------------------
 
@@ -9039,7 +9047,7 @@ The possible values of the parameters listed above are:
 
 @c --------------------------------------------------------------------
 @node Scripting GPS
-@section Scripting GPS
+@chapter Scripting GPS
 @cindex scripts
 @c --------------------------------------------------------------------
 
@@ -9050,10 +9058,13 @@ The possible values of the parameters listed above are:
 @ifset python
 * The Python Interpreter::
 @end ifset
+* Hooks::
 @end menu
 
+@c ---------------------------------------------------------------------
 @node Scripts
-@subsection Scripts
+@section Scripts
+@c ---------------------------------------------------------------------
 
 @noindent
 Scripts are small programs that interact with GPS and allow you to
@@ -9122,17 +9133,18 @@ from the command line, you would pass the following command switches:
 gps --eval=shell:'Entity entity_name file_name; Entity.show %1'
 @end smallexample
 
-See the section @ref{Customizing the Menu and Tool Bar} on how to bind key
+See the section @ref{Customizing through XML files} on how to bind key
 shortcuts to shell commands.
 
-
+@c --------------------------------------------------------------------
 @node Scripts and GPS actions
-@subsection Scripts and GPS actions
+@section Scripts and GPS actions
 @cindex execute_action
+@c --------------------------------------------------------------------
 
 @noindent
 There is a strong relationship between GPS actions, as defined in the
-customization files, and scripting languages.
+customization files (@pxref{Defining Actions}), and scripting languages
 
 Actions can be bound to menus and keys through the customization files or
 the @code{Edit->Key shortcuts} dialog.
@@ -9162,10 +9174,11 @@ GPS.execute_action (action="Split horizontally")
 The list of actions known to GPS can be found through the
 @code{Edit->Key shortcuts} dialog. Action names are case sensitive.
 
-
+@c ------------------------------------------------------------------------
 @node The GPS Shell
-@subsection The GPS Shell
+@section The GPS Shell
 @cindex gps shell
+@c ------------------------------------------------------------------------
 
 @noindent
 The GPS shell is a very simple-minded, line-oriented language. It is
@@ -9218,8 +9231,7 @@ These return values will be modified also for internal commands sent
 by GPS, so you should really only use this when you emit multiple
 commands at the same time, and don't do any other action in GPS. This
 is mostly useful when used for command-line scripts (see @code{--eval}
-and @code{--load}), or for custom files, @xref{Customizing the Menu
-and Tool Bar}.
+and @code{--load}), or for custom files, @xref{Customizing through XML files}.
 
 Arguments to commands can, but need not, be quoted. If they don't contain
 any space, double-quote ('"') or newline characters, you do not need to quote
@@ -9236,6 +9248,7 @@ locations_parse """%1 """ category_name
 @end smallexample
 
 
+@c ------------------------------------------------------------------------
 @ifclear python
 In future versions of GPS, it will be possible to use more advanced scripting
 languages such as @code{Python}.
@@ -9243,8 +9256,10 @@ languages such as @code{Python}.
 
 @ifset python
 @node The Python Interpreter
-@subsection The Python Interpreter
+@section The Python Interpreter
 @cindex python
+@c ------------------------------------------------------------------------
+
 @noindent
 
 Python is an interpreted object-oriented language, created by Guido
@@ -9330,7 +9345,7 @@ you wish, e.g:
 >>> e=GPS.Entity (name="foo", file="file.adb")
 @end smallexample
 
-@subsubsection Python modules
+@subsection Python modules
 
 On startup, GPS will automatically import (with python's @code{import}
 command) all the files with the extension @file{.py} found in the directory
@@ -9392,9 +9407,316 @@ parse_xml ("""
 
 @end smallexample
 
+@end ifset
 
+@c --------------------------------------------------------------------
+@node Hooks
+@section Hooks
+@cindex hooks
+@c --------------------------------------------------------------------
+
+@noindent
+A @b{hook} is a named set of commands to be executed on particular occasions
+as a result of user actions in GPS.
+
+GPS and its various modules define a number of standard hooks, which are
+called for instance when a new project is loaded, when a file is edited, and
+so on. You can define your own commands to be executed in such cases.
+
+@cindex hooks, list_hooks
+@cindex hooks, describe_hook
+You can find out the list of hooks that GPS currently knows about by calling
+the @b{list_hooks} function, which takes no argument, and returns a list of
+hook names that you can use. More advanced description for each hook is
+available through the @b{describe_hook} command.
+
+@smallexample
+GPS> list_hooks
+project_changed
+open_file_action_hook
+preferences_changed
+[...]
+
+GPS> describe_hook preferences_changed
+Hook called when a file needs to be opened or closed
+This hook is of type "open_file" -- see describe_hook_type
+@end smallexample
+
+@cindex hooks, describe_hook_type
+The description of each hooks includes a pointer to the type of the hook, that
+is what parameters the subprograms in this hook will receive. For instance:
+
+@smallexample
+GPS> describe_hook_type "open_file"
+Common type for all hooks related to opening files.
+Arguments are the following: (file, line, column,
+column_end, enable_navigation, new_file, force_reload)
+@end smallexample
+
+@cindex hooks, list_hook_types
+The list of all known hook types can be found through the @b{list_hook_types}
+command. This takes no argument and returns a list of all known types of hooks.
+As before, you can more information for each of these type through a call to
+@b{describe_hook_type}.
+
+
+@c ----------------------------------
+@subsection Adding commands to hooks
+@c ----------------------------------
+
+@noindent
+You can add your own command to existing hooks through a call to the
+@b{add_hook} command. Whenever the hook is executed by GPS or another script,
+your command will also be executed, and will be given the parameters that
+were specified when the hook is run. The first parameter is always the name
+of the hook being executed.
+
+This @b{add_hook} function takes two arguments: the name of the hook to which
+you want to connect, and the command to be executed.
+
+@ifclear python
+The command can be any shell command. The arguments for the hook will be
+appended to this command. In the following example, the message "Just executed
+the hook: project_changed" will be printed in the Shell console.
+
+@smallexample
+GPS> add_hook "project_changed" "echo Just executed the hook: "
+@end smallexample
+@end ifclear
+
+@ifset python
+The command must be the name of a subprogram to execute. The arguments for the
+hook will be passed to this subprogram. In the following example, the
+message "The hook project_changed was executed by GPS" will be displayed in the
+Python console whenever the project changes.
+
+@smallexample
+def my_callback (name):
+    print "The hook " + name + " was executed by GPS"
+GPS.add_hook ("project_changed", "my_callback")
+@end smallexample
+@end ifset
+
+The example above shows the simplest type of hook, which doesn't take any
+argument. However, most hooks receive several parameters. For instance, the
+hook "file_edited" receives the file name as a parameter.
+
+@ifclear python
+The following code will print the name of the hook ("file_edited") and the
+name of the file in the shell console every time a file is open by GPS.
+@smallexample
+GPS> add_hook "file_edited" "echo name+file="
+@end smallexample
+@end ifclear
+
+@ifset python
+The following code prints the name of the file being edited by GPS in the
+python console whenever a new editor is opened. The second argument is of type
+GPS.File.
+
+@smallexample
+def my_file_callback (name, file):
+    print "Editing " + file.name()
+GPS.add_hook ("file_edited", "my_file_callback")
+@end smallexample
+
+Very often, the name of the function in the second argument to add_hook will
+need to be qualified with name of the python module in which the function is
+declared.
 
 @end ifset
+
+@ifset python
+@c ----------------------------------
+@subsection Action hooks
+@cindex hooks, action_hooks
+@cindex hooks, open_file_action_hook
+@c ----------------------------------
+
+@noindent
+Some hooks have a special use in GPS. Their name always ends with
+"_action_hook".
+
+As opposed to the standard hooks described in the previous section, the
+execution of the action hooks stops as soon as one of the subprograms returns
+a True value ("1" or "true"). The subprograms associated with that hook are
+executed one after the other. If any such subprogram knows how to act for that
+hook, it should do the appropriate action and return "1".
+
+This mechanism is used extensively by GPS internally. For instance, whenever
+a file needs to be opened in an editor, GPS executes the
+"open_file_action_hook" hook to request its editing. Several modules are
+connected to that hook.
+
+One of the first modules to be executed is the external editor module. If the
+user has chosen to use an external editor, this module will simply spawn
+Emacs or the external editor that the user has selected, and return 1. This
+immediately stops the execution of the "open_file_action_hook".
+
+However, if the user doesn't want to use external editors, this module will
+return 0. This will keep executing the hook, and in particular will execute the
+source editor module, which will always act and open an editor internally in
+GPS.
+
+This is a very flexible mechanism. In your own script, you could choose to
+have some special handling for files with a ".foo" extension for instance. If
+the user wants to open such a file, you would spawn for instance an external
+command (say "my_editor") on this file, instead of opening it in GPS.
+
+This is done with a code similar to the following
+
+@smallexample
+from os.path import *
+import os
+def my_foo_handler (name, file, line, column, \
+                    column_end, enable_nav, new_file, reload):
+    if splitext (file.name())[1] == ".foo":
+        os.spawnv \
+           (os.P_NOWAIT, "/usr/bin/emacs", ("emacs", file.name()))
+        return 1   ## Prevent further execution of the hook
+    return 0  ## Let other subprograms in the hook do their job
+
+GPS.add_hook ("open_file_action_hook", "my_foo_handler")
+@end smallexample
+
+@end ifset
+
+@c --------------------------------------------------------------------
+@subsection Running hooks
+@cindex hooks, run_hook
+@c --------------------------------------------------------------------
+
+@noindent
+Any module in GPS is responsible for running the hooks when appropriate.
+Most of the time, the subprograms exported by GPS to the scripting languages
+will properly run the hook. But you might also need to run them in your own
+scripts.
+
+As usual, this will result in the execution of all the functions bound to
+that hook, whether they are defined in Ada or in any of the scripting
+languages.
+
+This is done through the @b{run_hook} command. This takes a variable
+number of arguments, the first of which is always the name of the hook.
+The remaining parameters must be in the right order and of the right type
+for that specific type of hook.
+
+@ifset python
+If you are running an action hook, the execution will stop as usual as soon
+as one of the subprograms return a True value.
+@end ifset
+
+The following example shows how to run a simple hook with no parameter, and
+a more complex hook with several parameters. The latter will in fact request
+the opening of an editor for the file in GPS, and thus has an immediately
+visible effect on the interface. The file is opened at line 100. See the
+description of the hook for more information on the other parameters.
+
+@ifset python
+@smallexample
+GPS.run_hook ("project_changed")
+GPS.run_hook ("open_file_action_hook", \
+              GPS.File ("test.adb"), 100, 1, 0, 1, 1, 1)
+@end smallexample
+@end ifset
+
+@ifclear python
+GPS> run_hook "project_changed"
+GPS> run_hook "open_file_action_hook" %1 100 1 0 true true true
+@end ifclear
+
+@c --------------------------------------------------------------------
+@subsection Creating new hooks
+@cindex hooks, creating
+@cindex hooks, register_hook
+@c --------------------------------------------------------------------
+
+@noindent
+The list of hooks known to GPS is fully dynamic. GPS itself declares a
+number of hooks, mostly for its internal use although of course you can
+also connect to them.
+
+But you can also create your own hooks to report events happening in your
+own modules and programs. This way, any other script or GPS module can
+react to these events.
+
+Such hooks can either be of a type exported by GPS, which constraints the
+list of parameters for the callbacks, but make such hooks more portable and
+secure; or they can be of a general type, which allows basically any kind
+of parameters. In the latter case, checks are done at runtime to ensure that
+the subprogram that is called as a result of running the hook has the right
+number of parameters. If this isn't the case, GPS will complain and display
+error messages.
+
+Creating new hooks is done through a call to @b{register_hook}. This function
+takes three arguments: the name of the hook you are creating, a description
+of when the hook is executed for the interactive help, and the type of the
+hook.
+
+The name of the hook is left to you. Any character is allowed in that name,
+although using only alphanumerical characters.
+
+The description is displayed when the user calls @b{describe_hook}.
+
+The type of the hook must be one of the following:
+
+@itemize
+@item "" (the empty string)
+
+This indicates that the hook doesn't take any argument. None should be given
+to @b{run_hook}, apart of course from the hook name, and none should be
+expected by the various commands connected to that hook, once again apart from
+the hook name itself.
+
+@item one of the values returned by @b{list_hook_types}
+
+This indicates that the hook is of one of the types exported by GPS itself. The
+advantage of using such explicit types as opposed to "general" is that GPS
+is able to make more tests for the validity of the parameters.
+
+@item "general"
+
+This indicates that the hook is of the general type that allows any number of
+parameter, of any type. Other script will be able to connect to it, but will
+not be executed when the hook is run if they do not expect the same number of
+parameters that was given to @b{run_hook}
+
+@end itemize
+
+@ifset python
+A small trick worth noting: if the command bound to a hook doesn't have the
+right number of parameters that this hook provide, the command will not be
+executed and GPS will report an error. You can make sure that your command
+will always be executed by either giving default values for its parameter, or
+by using python's syntax to indicate a variable number of arguments.
+
+This is especially useful if you are connecting to a "general" hook, since you
+do not really know in advance how many parameters the call of @b{run_hook} will
+provide.
+
+@smallexample
+## This callback can be connected to any type of hook
+def trace (name, *args):
+   print "hook=" + name
+
+## This callback can be connected to hooks with one or two parameters
+def trace2 (name, arg1, arg2=100):
+   print "hook=" + str (arg1) + str (arg2)
+
+register_hook ("my_custom_hook", "some description", "general")
+add_hook ("my_custom_hook", "trace2")
+run_hook ("my_custom_hook", 1, 2) ## Prints 1 2
+run_hook ("my_custom_hook", 1)    ## Prints 1 100
+@end smallexample
+
+@end ifset
+
+@ifclear python
+GPS> register_hook "my_custom_hook" "some description" "general"
+GPS> run_hook "my_custom_hook" 1 2
+GPS> run_hook "my_custom_hook" "arg1" "arg2" "arg3"
+@end ifclear
+
 
 @c --------------------------------------------------------------------
 @node Environment
@@ -9471,7 +9793,7 @@ more details.
    @item GPS_CUSTOM_PATH
 @cindex GPS_CUSTOM_PATH
 Contains a list of directories to search for custom files. See
-@ref{Customizing the Menu and Tool Bar} for more details.
+@ref{Customizing through XML files} for more details.
 
 
 @c Currently disabled, since this is not well supported yet
@@ -9522,13 +9844,13 @@ Directory containing files with user-defined customizations.
 All files found under this directory are loaded by GPS during start up.
 You can create/edit these files to add your own menu/tool-bar entries in GPS,
 or define support for new languages.
-@pxref{Customizing the Menu and Tool Bar} and
+@pxref{Customizing through XML files} and
 @pxref{Adding Support for New Languages}.
 
    @item $HOME/.gps/custom_key
 Contains all the menu shortcuts defined in GPS. This file is
 automatically created if you have activated the dynamic key bindings feature
-(@pxref{Customizing the Menu and Tool Bar}).
+(@pxref{Customizing through XML files}).
 
    @item $HOME/.gps/keys.xml
 Contains all the key bindings for the actions defined in GPS or in the
