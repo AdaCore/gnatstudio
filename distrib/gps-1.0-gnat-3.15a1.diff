@@ -1,0 +1,57 @@
+Index: common/src/stubs.c
+*** gps-1.0.0/common/src/stubs.c	Sat Mar 24 05:37:44 2001
+--- common/src/stubs.c	Fri May 31 20:02:56 2002
+***************
+*** 0 ****
+--- 1,5 ----
++ int __gnat_copy_attribs (from, to, mode) {}
++ 
++ const int __gnat_vmsp = 0;
++ 
++ int get_gcc_version () {}
+*** gps-1.0.0/gvd/gvd_common.gpr	Tue Apr 16 12:10:06 2002
+--- gvd/gvd_common.gpr	Fri May 31 18:02:42 2002
+***************
+*** 1,5 ****
+--- 1,6 ----
+  with "../gtkada/gtkada";
+  with "../shared";
++ with "../gnat";
+  
+  project GVD_Common is
+  
+*** gps-1.0.0/Makefile.gnat	Thu May 16 18:50:48 2002
+--- Makefile.gnat	Fri May 31 19:50:04 2002
+***************
+*** 22,27 ****
+--- 22,39 ----
+    fmap.adb \
+    fname.ads \
+    fname.adb \
++   g-comlin.ads \
++   g-comlin.adb \
++   g-dirope.ads \
++   g-dirope.adb \
++   g-enblsp.ads \
++   g-enblsp.adb \
++   g-expect.ads \
++   g-expect.adb \
++   g-os_lib.ads \
++   g-os_lib.adb \
++   g-string.ads \
++   g-string.adb \
+    gnatvsn.ads \
+    hostparm.ads \
+    krunch.ads \
+*** gps-1.0.0/glide/gps.gpr	Wed Apr 24 11:15:52 2002
+--- glide/gps.gpr	Thu May 30 18:29:52 2002
+***************
+*** 31,37 ****
+     package Builder is
+        for Default_Switches ("Ada") use ("-m", "-a", "-g", "-gnatQ");
+  
+-       for Global_Configuration_Pragmas use "gnat.adc";
+     end Builder;
+  
+     package Compiler is
+--- 31,36 ----
