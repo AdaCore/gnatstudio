@@ -5,7 +5,8 @@ MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
-all: gvd.texi
+all: doc clean-temp-files
+doc: gvd.texi
 	echo x | tex gvd.texi
 	texindex gvd.cp
 	tex gvd.texi
@@ -13,7 +14,6 @@ all: gvd.texi
 	perl texi2html -menu -monolithic gvd.texi
 	makeinfo --force -o gvd.info gvd.texi
 	makeinfo --force --no-headers --no-split -o gvd.txt gvd.texi
-	$(MAKE) clean-temp-files
 
 install:
 	$(MKDIR) $(docdir)
