@@ -1521,6 +1521,7 @@ package body GVD.Process is
       F       : constant Gdk_Font :=
         Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
       C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
+      Widget  : Gtk_Widget;
 
    begin
       if F /= Process.Debugger_Text_Font
@@ -1553,30 +1554,31 @@ package body GVD.Process is
             Ref (Process.Data_Editor_Paned);
             Remove (Process.Process_Paned, Process.Data_Editor_Paned);
 
-            Ref (Process.Data_Paned);
-            Remove (Process.Data_Editor_Paned, Process.Data_Paned);
-            Add (Process, Process.Data_Paned);
-            Unref (Process.Data_Paned);
+            if Get_Active
+              (Main_Debug_Window_Access (Process.Window).Call_Stack)
+            then
+               Widget := Gtk_Widget (Process.Data_Paned);
+            else
+               Widget := Gtk_Widget (Process.Data_Scrolledwindow);
+            end if;
 
-            Ref (Process.Editor_Frame);
-            Remove (Process.Data_Editor_Paned, Process.Editor_Frame);
-            Add (Process.Process_Paned, Process.Editor_Frame);
-            Unref (Process.Editor_Frame);
+            Reparent (Widget, Process);
+            Reparent (Process.Editor_Frame, Process.Process_Paned);
             Show_All (Process);
          else
             Hide (Process);
 
+            if Get_Active
+              (Main_Debug_Window_Access (Process.Window).Call_Stack)
+            then
+               Widget := Gtk_Widget (Process.Data_Paned);
+            else
+               Widget := Gtk_Widget (Process.Data_Scrolledwindow);
+            end if;
+
             --  Put back the Data into the paned
-            Ref (Process.Data_Paned);
-            Remove (Process, Process.Data_Paned);
-            Add (Process.Data_Editor_Paned, Process.Data_Paned);
-            Unref (Process.Data_Paned);
-
-            Ref (Process.Editor_Frame);
-            Remove (Process.Process_Paned, Process.Editor_Frame);
-            Add (Process.Data_Editor_Paned, Process.Editor_Frame);
-            Unref (Process.Editor_Frame);
-
+            Reparent (Widget, Process.Data_Editor_Paned);
+            Reparent (Process.Editor_Frame, Process.Data_Editor_Paned);
             Add (Process.Process_Paned, Process.Data_Editor_Paned);
             Unref (Process.Data_Editor_Paned);
             Show_All (Process.Process_Paned);
