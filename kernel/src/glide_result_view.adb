@@ -50,13 +50,14 @@ with String_Utils;             use String_Utils;
 with String_List_Utils;        use String_List_Utils;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
 with Projects.Registry;        use Projects.Registry;
-with Shell;                    use Shell;
 
 with Traces;                   use Traces;
 with Commands;                 use Commands;
+with Basic_Types;              use Basic_Types;
 with System;
 
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -176,6 +177,82 @@ package body Glide_Result_View is
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Default context factory.
 
+   function Create_Mark
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Filename : String;
+      Line     : Natural := 1;
+      Column   : Natural := 1;
+      Length   : Natural := 0) return String;
+   --  Create a mark for Filename, at position given by Line, Column, with
+   --  length Length.
+   --  Return the identifier corresponding to the mark that has been created.
+
+   procedure Highlight_Line
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Filename           : String;
+      Line               : Natural := 1;
+      Highlight_Category : String;
+      Highlight          : Boolean := True);
+   --  Highlight the line with the corresponding category.
+   --  If Highlight is set to False, remove the highlighting.
+   --  If Line = 0, highlight / unhighlight all lines in file.
+
+   -----------------
+   -- Create_Mark --
+   -----------------
+
+   function Create_Mark
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Filename : String;
+      Line     : Natural := 1;
+      Column   : Natural := 1;
+      Length   : Natural := 0) return String
+   is
+      Args : GNAT.OS_Lib.Argument_List :=
+        (1 => new String'(Filename),
+         2 => new String'(Image (Line)),
+         3 => new String'(Image (Column)),
+         4 => new String'(Image (Length)));
+      Result : constant String :=
+        Execute_GPS_Shell_Command (Kernel, "create_mark", Args);
+   begin
+      Basic_Types.Free (Args);
+      return Result;
+   end Create_Mark;
+
+   --------------------
+   -- Highlight_Line --
+   --------------------
+
+   procedure Highlight_Line
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Filename           : String;
+      Line               : Natural := 1;
+      Highlight_Category : String;
+      Highlight          : Boolean := True)
+   is
+      Args    : GNAT.OS_Lib.Argument_List (1 .. 3) :=
+        (1 => new String'(Filename),
+         2 => new String'(Highlight_Category),
+         3 => new String'(Line'Img));
+      Command : GNAT.OS_Lib.String_Access;
+   begin
+      if Highlight then
+         Command := new String'("highlight");
+      else
+         Command := new String'("unhighlight");
+      end if;
+
+      if Line = 0 then
+         Execute_GPS_Shell_Command (Kernel, Command.all, Args (1 .. 2));
+      else
+         Execute_GPS_Shell_Command (Kernel, Command.all, Args);
+      end if;
+
+      Basic_Types.Free (Args);
+      GNAT.OS_Lib.Free (Command);
+   end Highlight_Line;
+
    -------------------
    -- Goto_Location --
    -------------------
@@ -209,10 +286,12 @@ package body Glide_Result_View is
 
       declare
          Mark : constant String := Get_String (Model, Iter, Mark_Column);
+         Args : GNAT.OS_Lib.Argument_List := (1 => new String'(Mark));
       begin
          if Mark /= "" then
-            Interpret_Command (View.Kernel, "goto_mark " & Mark);
+            Execute_GPS_Shell_Command (View.Kernel, "goto_mark", Args);
          end if;
+         Free (Args);
       end;
    end Goto_Location;
 
