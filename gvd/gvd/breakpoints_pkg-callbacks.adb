@@ -352,8 +352,7 @@ package body Breakpoints_Pkg.Callbacks is
       if Selection /= -1 then
          Load_File
            (Editor.Process.Editor_Text,
-            Find_File (Editor.Process.Debugger,
-                       Editor.Process.Breakpoints (Selection).File.all));
+            Editor.Process.Breakpoints (Selection).File.all);
          Set_Line
            (Editor.Process.Editor_Text,
             Editor.Process.Breakpoints (Selection).Line,
