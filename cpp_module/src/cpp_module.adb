@@ -101,7 +101,7 @@ package body Cpp_Module is
          Indent_Continue   => 0,
          Indent_Decl       => 0,
          Tab_Width         => Integer (Get_Pref (Kernel, Tab_Width)),
-         Indent_Case_Extra => False,
+         Indent_Case_Extra => Automatic,
          Reserved_Casing   => Case_Handling.Unchanged,
          Ident_Casing      => Case_Handling.Unchanged,
          Format_Operators  => False,
