@@ -346,7 +346,7 @@ package body Glide_Menu is
          Gtk_New (Help & (-"Welcome"),
                   Callback => On_Manual'Access,
                   Callback_Action => Help_Context'Pos (Welcome_Help)),
-         Gtk_New (Help & (-"Using the Glide2 Development Environment"), "",
+         Gtk_New (Help & (-"Using the GPS Development Environment"), "",
                   Callback => On_Manual'Access,
                   Callback_Action => Help_Context'Pos (Glide_Help)),
          Gtk_New (Help & (-"Using the GNU Visual Debugger"), "",
