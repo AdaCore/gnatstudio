@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -817,8 +817,9 @@ package body Glide_Kernel.Modules is
       Highlight_Line    : Boolean := True;
       Enable_Navigation : Boolean := True)
    is
-      Value : GValue_Array (1 .. 5);
-      Norm_Filename : String := Normalize_Pathname (Filename);
+      Value         : GValue_Array (1 .. 5);
+      Norm_Filename : constant String := Normalize_Pathname (Filename);
+
    begin
       Init (Value (1), Glib.GType_String);
 
@@ -904,11 +905,13 @@ package body Glide_Kernel.Modules is
    -- Get_Entity --
    ----------------
 
-   function Get_Entity (Context : access Entity_Selection_Context)
+   function Get_Entity
+     (Context : access Entity_Selection_Context)
       return Src_Info.Queries.Entity_Information
    is
       Lib_Info : LI_File_Ptr;
       Status   : Find_Decl_Or_Body_Query_Status;
+
    begin
       if Context.Entity = No_Entity_Information then
          Lib_Info := Locate_From_Source_And_Complete
