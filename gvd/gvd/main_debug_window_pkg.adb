@@ -38,6 +38,7 @@ with Gtkada.Types;
 with System;        use System;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gtk.Object;    use Gtk.Object;
+with GVD.Preferences; use GVD.Preferences;
 
 package body Main_Debug_Window_Pkg is
 
@@ -472,7 +473,7 @@ begin
    Set_Submenu (Main_Debug_Window.Data1, Main_Debug_Window.Data1_Menu);
 
    Gtk_New (Main_Debug_Window.Call_Stack, -"Call Stack");
-   Set_Active (Main_Debug_Window.Call_Stack, False);
+   Set_Active (Main_Debug_Window.Call_Stack, Get_Pref (Show_Stack));
    Set_Always_Show_Toggle (Main_Debug_Window.Call_Stack, True);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Call_Stack, "activate",
@@ -799,6 +800,10 @@ end Initialize;
    begin
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Window), "preferences_changed");
+
+      if Get_Active (Window.Call_Stack) /= Get_Pref (Show_Stack) then
+         Set_Active (Window.Call_Stack, Get_Pref (Show_Stack));
+      end if;
    end Preferences_Changed;
 
 end Main_Debug_Window_Pkg;
