@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -102,6 +102,12 @@ package Default_Preferences is
    --  Page:subpage1:subpage2:...
    --  Due to some limitations in glib, the name in Param must only use
    --  alphanumeric characters or '-'.
+
+   function Get
+     (Manager : access Preferences_Manager_Record;
+      Name    : String)
+      return Param_Spec;
+   --  Return the Param_Spec with the given Name
 
    function Get_Pref
      (Manager : access Preferences_Manager_Record;
