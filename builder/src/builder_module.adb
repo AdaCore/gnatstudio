@@ -1079,10 +1079,17 @@ package body Builder_Module is
                end if;
 
                Exec := Locate_Exec_On_Path (Args (1).all);
-               Launch_Process
-                 (K, Exec.all, Args (2 .. Args'Last), -"Run: " & Command,
-                  null, null, "", Success);
-               Free (Exec);
+
+               if Exec = null then
+                  Insert (K, -"Could not locate executable on path: "
+                            & Args (1).all);
+               else
+                  Launch_Process
+                    (K, Exec.all, Args (2 .. Args'Last), -"Run: " & Command,
+                     null, null, "", Success, True);
+                  Free (Exec);
+               end if;
+
                Free (Args);
             end if;
          end;
@@ -1109,14 +1116,14 @@ package body Builder_Module is
                   Launch_Process
                     (K, Args (1).all, Args (2 .. Args'Last),
                      -"Run: " & Data.File & ' ' & Arguments,
-                     null, null, "", Success);
+                     null, null, "", Success, True);
 
                else
                   Args := Argument_String_To_List (Arguments);
                   Launch_Process
                     (K, Executables_Directory (Data.Project) & Data.File,
                      Args.all, -"Run: " & Data.File & ' ' & Arguments,
-                     null, null, "", Success);
+                     null, null, "", Success, True);
                end if;
 
                Free (Args);
