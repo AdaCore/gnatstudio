@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -31,11 +31,11 @@
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 with Gdk.Window;
-with Gtk.Box;
 with Gtk.Clist;
 with Gtk.Ctree;
 with Gtk.Menu;
 with Gtk.Main;
+with Gtk.Paned;
 with GNAT.OS_Lib;
 
 package Directory_Tree is
@@ -82,7 +82,8 @@ package Directory_Tree is
    -- High-level directory selector --
    -----------------------------------
 
-   type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type Directory_Selector_Record is new Gtk.Paned.Gtk_Paned_Record
+     with private;
    type Directory_Selector is access all Directory_Selector_Record'Class;
 
    No_Selection : constant GNAT.OS_Lib.Argument_List (1 .. 0) :=
@@ -136,7 +137,7 @@ private
       Idle      : Gtk.Main.Idle_Handler_Id;
    end record;
 
-   type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
+   type Directory_Selector_Record is new Gtk.Paned.Gtk_Paned_Record with record
       Directory : Dir_Tree;
       List      : Gtk.Clist.Gtk_Clist;
       Tree_Contextual_Menu : Gtk.Menu.Gtk_Menu;

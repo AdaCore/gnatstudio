@@ -41,6 +41,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
@@ -1206,13 +1207,14 @@ package body Directory_Tree is
       Bbox      : Gtk_Hbutton_Box;
       Button    : Gtk_Button;
       Arrow     : Gtk_Arrow;
+      Vbox      : Gtk_Box;
 
    begin
-      Initialize_Vbox (Selector, Homogeneous => False, Spacing => 0);
+      Initialize_Vpaned (Selector);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack_Start (Selector, Scrolled, Expand => True, Fill => True);
+      Pack1 (Selector, Scrolled, Resize => True);
 
       Gtk_New (Selector.Directory, Root_Directory);
       Add (Scrolled, Selector.Directory);
@@ -1224,9 +1226,12 @@ package body Directory_Tree is
            (Selector.Directory, Directory_Selector (Selector),
             Tree_Contextual_Menu'Access);
 
+         Gtk_New_Vbox (Vbox, Homogeneous => False);
+         Pack2 (Selector, Vbox, Resize => False);
+
          Gtk_New (Bbox);
          Set_Layout (Bbox, Buttonbox_Spread);
-         Pack_Start (Selector, Bbox, Expand => False, Fill => False);
+         Pack_Start (Vbox, Bbox, Expand => False, Fill => False);
 
          Gtk_New (Button);
          Gtk_New (Arrow, Arrow_Down, Shadow_In);
@@ -1248,7 +1253,7 @@ package body Directory_Tree is
 
          Gtk_New (Scrolled);
          Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-         Pack_Start (Selector, Scrolled, Expand => True, Fill => True);
+         Pack_Start (Vbox, Scrolled, Expand => True, Fill => True);
 
          Gtk_New (Selector.List, Columns => 1);
          Add (Scrolled, Selector.List);
