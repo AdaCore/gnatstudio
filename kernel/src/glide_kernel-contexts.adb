@@ -31,32 +31,28 @@ package body Glide_Kernel.Contexts is
    type Filter_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Ctxt    : access Glide_Kernel.Selection_Context'Class)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Entity is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Ctxt    : access Glide_Kernel.Selection_Context'Class)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_Only is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_Only;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Ctxt    : access Glide_Kernel.Selection_Context'Class)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_File;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Ctxt    : access Glide_Kernel.Selection_Context'Class)
       return Boolean;
    --  See inherited documentation
 
@@ -66,11 +62,10 @@ package body Glide_Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_Only;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Ctxt    : access Glide_Kernel.Selection_Context'Class)
       return Boolean
    is
-      pragma Unreferenced (Filter, Kernel);
+      pragma Unreferenced (Filter);
    begin
       return Ctxt.all in File_Selection_Context'Class
         and then Has_Project_Information (File_Selection_Context_Access (Ctxt))
@@ -86,11 +81,10 @@ package body Glide_Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_File;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Ctxt    : access Glide_Kernel.Selection_Context'Class)
       return Boolean
    is
-      pragma Unreferenced (Filter, Kernel);
+      pragma Unreferenced (Filter);
    begin
       return Ctxt.all in File_Selection_Context'Class
         and then Has_Project_Information
@@ -105,11 +99,10 @@ package body Glide_Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Ctxt    : access Glide_Kernel.Selection_Context'Class)
       return Boolean
    is
-      pragma Unreferenced (Filter, Kernel);
+      pragma Unreferenced (Filter);
    begin
       return Ctxt.all in Entity_Selection_Context'Class
         and then Has_Entity_Name_Information
@@ -122,11 +115,10 @@ package body Glide_Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Ctxt    : access Glide_Kernel.Selection_Context'Class)
       return Boolean
    is
-      pragma Unreferenced (Filter, Kernel);
+      pragma Unreferenced (Filter);
    begin
       return Ctxt.all in File_Selection_Context'Class
         and then Has_File_Information (File_Selection_Context_Access (Ctxt));

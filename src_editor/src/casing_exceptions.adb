@@ -75,8 +75,7 @@ package body Casing_Exceptions is
    type Substring_Filter_Record is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Substring_Filter_Record;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
 
    -----------------
    -- Subprograms --
@@ -293,10 +292,10 @@ package body Casing_Exceptions is
 
    function Filter_Matches_Primitive
      (Filter  : access Substring_Filter_Record;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+      Context : access Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Filter);
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context);
       Selection    : Entity_Selection_Context_Access;
    begin
       if Context.all in Entity_Selection_Context'Class

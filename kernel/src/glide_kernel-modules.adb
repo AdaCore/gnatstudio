@@ -525,10 +525,9 @@ package body Glide_Kernel.Modules is
          C := Convert (User.Kernel.Contextual);
          while C /= null loop
             if C.Uses_Action then
-               Matches := Filter_Matches
-                 (C.Action.Filter, Context, User.Kernel);
+               Matches := Filter_Matches (C.Action.Filter, Context);
             else
-               Matches := Filter_Matches (C.Filter, Context, User.Kernel);
+               Matches := Filter_Matches (C.Filter, Context);
             end if;
 
             Trace (Me, "Testing contextual menu " & C.Name.all
@@ -792,7 +791,7 @@ package body Glide_Kernel.Modules is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel_Handle (Widget));
    begin
-      if Filter_Matches (Command.Filter, Context, Kernel_Handle (Widget)) then
+      if Context /= null and then Filter_Matches (Command.Filter, Context) then
          Launch_Background_Command
            (Kernel_Handle (Widget), Command.Command, Destroy_On_Exit => False,
             Active => False, Show_Bar => False, Queue_Id => "");

@@ -326,27 +326,23 @@ package body GVD_Module is
    type Debugger_Active_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
 
    type Printable_Variable_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Printable_Variable_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
 
    type Access_Variable_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Access_Variable_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
 
    type Subprogram_Variable_Filter
      is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
 
    type Print_Variable_Command is new Interactive_Command with record
       Display     : Boolean := False;
@@ -1448,12 +1444,11 @@ package body GVD_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+      Context : access Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Filter);
       Process  : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Kernel));
+        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
    begin
       return Process /= null
         and then Process.Debugger /= null
@@ -1467,10 +1462,9 @@ package body GVD_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+      Context : access Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Filter, Kernel);
+      pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
       if Context.all in Entity_Selection_Context'Class then
@@ -1486,10 +1480,9 @@ package body GVD_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Printable_Variable_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+      Context : access Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Filter, Kernel);
+      pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
       if Context.all in Entity_Selection_Context'Class then
@@ -1507,10 +1500,9 @@ package body GVD_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Access_Variable_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+      Context : access Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Filter, Kernel);
+      pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
       if Context.all in Entity_Selection_Context'Class then

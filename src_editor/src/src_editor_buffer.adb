@@ -5172,11 +5172,11 @@ package body Src_Editor_Buffer is
 
    function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
-      Ctxt    : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+      Ctxt    : access Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Context, Ctxt);
-      Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+      pragma Unreferenced (Context);
+      Widget : constant Gtk_Widget :=
+        Get_Current_Focus_Widget (Get_Kernel (Ctxt));
    begin
       return Widget /= null
         and then Widget.all in Source_View_Record'Class;

@@ -98,8 +98,7 @@ package body Browsers.Call_Graph is
    type Container_Entity_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Container_Entity_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
 
    type Entity_Calls_Command is new Interactive_Command with null record;
    function Execute
@@ -1594,10 +1593,9 @@ package body Browsers.Call_Graph is
 
    function Filter_Matches_Primitive
      (Filter  : access Container_Entity_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+      Context : access Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Filter, Kernel);
+      pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
       if Context.all in Entity_Selection_Context'Class

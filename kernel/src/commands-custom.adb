@@ -179,8 +179,7 @@ package body Commands.Custom is
 
    function Filter_Matches_Primitive
      (Filter  : access Parameters_Filter_Record;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
    --  See doc for inherited subprogram.
 
    procedure Free (Execution : in out Custom_Command_Execution);
@@ -216,15 +215,16 @@ package body Commands.Custom is
 
    function Filter_Matches_Primitive
      (Filter  : access Parameters_Filter_Record;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+      Context : access Selection_Context'Class) return Boolean
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Project : Project_Type;
    begin
       if Filter.Need_Project = 'p'
         or else Filter.Need_Project = 'P'
       then
-         Project := Project_From_Param (Filter.Need_Project & ' ', Context);
+         Project := Project_From_Param
+           (Filter.Need_Project & ' ', Selection_Context_Access (Context));
          if Project = No_Project then
             Insert (Kernel, -"No project specified", Mode => Error);
             return False;
@@ -232,8 +232,7 @@ package body Commands.Custom is
       end if;
 
       if Filter.Need_File then
-         if Context = null
-           or else Context.all not in File_Selection_Context'Class
+         if Context.all not in File_Selection_Context'Class
            or else not Has_File_Information
              (File_Selection_Context_Access (Context))
          then
@@ -243,8 +242,7 @@ package body Commands.Custom is
       end if;
 
       if Filter.Need_Directory then
-         if Context = null
-           or else Context.all not in File_Selection_Context'Class
+         if Context.all not in File_Selection_Context'Class
            or else not Has_Directory_Information
              (File_Selection_Context_Access (Context))
          then

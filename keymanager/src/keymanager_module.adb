@@ -821,7 +821,9 @@ package body KeyManager_Module is
                      Trace (Me, "Candidate action in any context: "
                             & Binding.Action.all);
 
-                  elsif Filter_Matches (Command.Filter, Context, Kernel) then
+                  elsif Context /= null
+                    and then Filter_Matches (Command.Filter, Context)
+                  then
                      Trace (Me, "Executing action " & Binding.Action.all);
 
                      Launch_Background_Command

@@ -435,24 +435,16 @@ package body Project_Explorers is
       with null record;
    function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Boolean;
+      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean;
    function Filter_Matches_Primitive
      (Context : access Directory_Node_Filter_Record;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Boolean;
+      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean;
    function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Boolean;
+      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean;
    function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Boolean;
+      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -460,11 +452,9 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Boolean
+      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Context, Kernel);
+      pragma Unreferenced (Context);
       C : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Ctxt);
    begin
@@ -479,11 +469,9 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Directory_Node_Filter_Record;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Boolean
+      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Kernel, Context);
+      pragma Unreferenced (Context);
       C : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Ctxt);
    begin
@@ -498,11 +486,9 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Boolean
+      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Kernel, Context);
+      pragma Unreferenced (Context);
       C : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Ctxt);
    begin
@@ -517,11 +503,9 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
-      Ctxt    : Glide_Kernel.Selection_Context_Access;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Boolean
+      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Kernel, Context);
+      pragma Unreferenced (Context);
    begin
       return Get_Creator (Ctxt) = Explorer_Module_ID
         and then Ctxt.all in Entity_Selection_Context'Class;
