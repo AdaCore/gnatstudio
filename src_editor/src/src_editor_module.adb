@@ -39,7 +39,6 @@ with Language_Handlers;         use Language_Handlers;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Basic_Types;               use Basic_Types;
 with GVD.Status_Bar;            use GVD.Status_Bar;
-with GVD.Dialogs;               use GVD.Dialogs;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Combo;                 use Gtk.Combo;
@@ -1245,7 +1244,8 @@ package body Src_Editor_Module is
          Filename : constant String :=
            Select_File
              (Title             => -"Open File",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              History           => Get_History (Kernel));
 
       begin
          if Filename = "" then
@@ -1402,7 +1402,8 @@ package body Src_Editor_Module is
             New_Name : constant String :=
               Select_File
                 (Title             => -"Save File As",
-                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 History           => Get_History (Kernel));
 
          begin
             if New_Name = "" then
@@ -1560,35 +1561,10 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Editor : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-
    begin
-      if Editor = null then
-         return;
-      end if;
-
-      declare
-         Str : constant String := Simple_Entry_Dialog
-           (Get_Main_Window (Kernel), -"Goto Line...", -"Enter line number:",
-            Win_Pos_Mouse, "Goto_Line");
-
-      begin
-         if Str = "" or else Str (Str'First) = ASCII.NUL then
-            return;
-         end if;
-
-         Set_Cursor_Location (Editor, Positive'Value (Str));
-
-      exception
-         when Constraint_Error =>
-            Console.Insert
-              (Kernel, -"Invalid line number: " & Str, Mode => Error);
-      end;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      On_Goto_Line
+        (Editor => Get_Source_Box_From_MDI (Find_Current_Editor (Kernel)),
+         Kernel => Kernel);
    end On_Goto_Line;
 
    -------------------------
@@ -2454,7 +2430,7 @@ package body Src_Editor_Module is
       The_Data    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Value       : constant String_List_Access := Get_History
-        (Get_History (Kernel), Hist_Key);
+        (Get_History (Kernel).all, Hist_Key);
       Reopen_Menu : Gtk_Menu;
       Mitem       : Gtk_Menu_Item;
    begin
