@@ -54,9 +54,6 @@
 
 8 * [Yeti] Caching Language_Context
 
-8 * [Yeti] When Whole_Word without Regexp, search for literal text and then
-    verify it's a whole one
-
 ----------
 -- Bugs --
 ----------
