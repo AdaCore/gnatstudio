@@ -189,13 +189,16 @@ package body Browsers.Call_Graph is
    --  Create a current kernel context, based on the currently selected item
 
    procedure Print_Ref
-     (Kernel  : access Kernel_Handle_Record'Class;
-      File    : String;
-      Line    : Natural;
-      Column  : Natural;
-      Name    : String);
+     (Kernel   : access Kernel_Handle_Record'Class;
+      File     : String;
+      Line     : Natural;
+      Column   : Natural;
+      Name     : String;
+      Category : String);
    --  Print a reference in the console, after looking for the directory
    --  containing File.
+   --  Category corresponds to the puspose of the print. All references
+   --  corresponding to the same category will be printed as a group.
 
    -------------
    -- Gtk_New --
@@ -999,15 +1002,17 @@ package body Browsers.Call_Graph is
    ---------------
 
    procedure Print_Ref
-     (Kernel  : access Kernel_Handle_Record'Class;
-      File    : String;
-      Line    : Natural;
-      Column  : Natural;
-      Name    : String) is
+     (Kernel   : access Kernel_Handle_Record'Class;
+      File     : String;
+      Line     : Natural;
+      Column   : Natural;
+      Name     : String;
+      Category : String) is
    begin
       Console.Insert
         (Kernel,
-         File & ':' & Image (Line) & ':' & Image (Column) & ' ' & Name);
+         File & ':' & Image (Line) & ':' & Image (Column) & ' ' & Name,
+         Location_Id => Category);
    end Print_Ref;
 
    -------------------------
@@ -1024,7 +1029,8 @@ package body Browsers.Call_Graph is
          Print_Ref
            (D.Kernel, Get_File (Location),
             Get_Line (Location), Get_Column (Location),
-            Get_Name (D.Entity));
+            Get_Name (D.Entity),
+            -"References for: " & Get_Name (D.Entity));
          Next (D.Kernel, D.Iter.all);
 
          return True;
@@ -1057,7 +1063,8 @@ package body Browsers.Call_Graph is
                        Get_Declaration_File_Of (Info),
                        Get_Declaration_Line_Of (Info),
                        Get_Declaration_Column_Of (Info),
-                       Get_Name (Info));
+                       Get_Name (Info),
+                       -"References for: " & Get_Name (Info));
 
             Data := (Kernel => Get_Kernel (Entity),
                      Iter   => new Entity_Reference_Iterator,
@@ -1114,7 +1121,8 @@ package body Browsers.Call_Graph is
                        Get_Declaration_File_Of (Info),
                        Get_Declaration_Line_Of (Info),
                        Get_Declaration_Column_Of (Info),
-                       Get_Name (Info));
+                       Get_Name (Info),
+                       -"References for: " & Get_Name (Info));
          end if;
 
          Find_All_References
@@ -1126,7 +1134,8 @@ package body Browsers.Call_Graph is
             Print_Ref
               (Get_Kernel (Entity), Get_File (Location),
                Get_Line (Location), Get_Column (Location),
-               Get_Name (Info));
+               Get_Name (Info),
+               -"References for: " & Get_Name (Info));
 
             Next (Get_Kernel (Entity), Iter);
          end loop;
