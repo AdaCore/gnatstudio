@@ -181,7 +181,9 @@ package body Custom_Module is
             end if;
          end if;
 
-         Create (Command, Kernel_Handle (Kernel), Node.Child);
+         Create (Command, Kernel_Handle (Kernel), Node.Child,
+                 Default_Output => Get_Attribute
+                   (Node, "output", Console_Output));
 
          Register_Action
            (Kernel,
@@ -262,6 +264,8 @@ package body Custom_Module is
 
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String) is
          Action : constant String := Get_Attribute (Node, "action");
+         Before : constant String := Get_Attribute (Node, "before");
+         After  : constant String := Get_Attribute (Node, "after");
          Child  : Node_Ptr;
          Title  : String_Access := new String'("");
          Item   : Gtk_Menu_Item;
@@ -293,13 +297,37 @@ package body Custom_Module is
          else
             Command := Lookup_Action (Kernel, Action);
             if Command.Command /= null then
-               Register_Menu
-                 (Kernel,
-                  Parent_Path,
-                  Title.all,
-                  "",
-                  null,
-                  Command_Access (Command.Command));
+
+               if Before /= "" then
+                  Register_Menu
+                    (Kernel,
+                     Parent_Path,
+                     Text        => Title.all,
+                     Stock_Image => "",
+                     Callback    => null,
+                     Command     => Command_Access (Command.Command),
+                     Ref_Item    => Before);
+
+               elsif After /= "" then
+                  Register_Menu
+                    (Kernel,
+                     Parent_Path,
+                     Text        => Title.all,
+                     Stock_Image => "",
+                     Callback    => null,
+                     Command     => Command_Access (Command.Command),
+                     Ref_Item    => Before,
+                     Add_Before  => False);
+
+               else
+                  Register_Menu
+                    (Kernel,
+                     Parent_Path,
+                     Text        => Title.all,
+                     Stock_Image => "",
+                     Callback    => null,
+                     Command     => Command_Access (Command.Command));
+               end if;
             end if;
          end if;
          Free (Title);
