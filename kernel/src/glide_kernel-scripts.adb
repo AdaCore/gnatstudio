@@ -23,7 +23,14 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
 with Glide_Intl;           use Glide_Intl;
+with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.Label;            use Gtk.Label;
+with Gtk.Size_Group;       use Gtk.Size_Group;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Enums;            use Gtk.Enums;
+with Gtk.GEntry;           use Gtk.GEntry;
+with Gtk.Stock;            use Gtk.Stock;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
@@ -150,6 +157,7 @@ package body Glide_Kernel.Scripts is
    Shared_Lib_Cst : aliased constant String := "shared_lib";
    Module_Cst     : aliased constant String := "module";
    Msg_Cst        : aliased constant String := "msg";
+   Param1_Cst     : aliased constant String := "param1";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -166,6 +174,9 @@ package body Glide_Kernel.Scripts is
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
       3 => Col_Cst'Access);
+   Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Msg_Cst'Access,
+      2 => Param1_Cst'Access);
 
    ----------
    -- Free --
@@ -589,6 +600,61 @@ package body Glide_Kernel.Scripts is
              Justification => Justify_Left,
              Dialog_Type   => Confirmation,
              Parent        => Get_Main_Window (Kernel)) = Button_Yes);
+
+      elsif Command = "input_dialog" then
+         declare
+            Dialog : Gtk_Dialog;
+            Label  : Gtk_Label;
+            Group  : Gtk_Size_Group;
+            Hbox   : Gtk_Hbox;
+            Button : Gtk_Widget;
+            pragma Unreferenced (Button);
+
+            type Ent_Array
+               is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
+            Ent : Ent_Array;
+         begin
+            Name_Parameters (Data, Input_Dialog_Cmd_Parameters);
+            Gtk_New (Dialog,
+                     Title  => Nth_Arg (Data, 1),
+                     Parent => Get_Main_Window (Kernel),
+                     Flags  => Modal);
+
+            Gtk_New (Label, Nth_Arg (Data, 1));
+            Set_Alignment (Label, 0.0, 0.5);
+            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+            Gtk_New (Group);
+
+            for Num in Ent'Range loop
+               Gtk_New_Hbox (Hbox, Homogeneous => False);
+               Pack_Start (Get_Vbox (Dialog), Hbox);
+
+               Gtk_New (Label, Nth_Arg (Data, Num) & ':');
+               Set_Alignment (Label, 0.0, 0.5);
+               Add_Widget (Group, Label);
+               Pack_Start (Hbox, Label, Expand => False);
+
+               Gtk_New (Ent (Num));
+               Pack_Start (Hbox, Ent (Num));
+            end loop;
+
+            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+            Show_All (Dialog);
+
+            Set_Return_Value_As_List (Data);
+
+            if Run (Dialog) = Gtk_Response_OK then
+               for Num in Ent'Range loop
+                  Set_Return_Value (Data, Get_Text (Ent (Num)));
+               end loop;
+            end if;
+
+            Destroy (Dialog);
+         end;
+
       end if;
    end Default_Command_Handler;
 
@@ -1082,6 +1148,21 @@ package body Glide_Kernel.Scripts is
              & " is returned to the caller"),
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "input_dialog",
+         Params      => Parameter_Names_To_Usage (Input_Dialog_Cmd_Parameters),
+         Return_Value => "list",
+         Description  =>
+           -("Display a modal dialog and ask some input to the user."
+             & " The message is displayed at the top, and one input field"
+             & " is displayed for each remaining argument. The return value"
+             & " is the value that the user has input for each of these"
+             & " parameters." & ASCII.LF
+             & "An empty list is returned if the user presses Cancel"),
+         Minimum_Args => 2,
+         Maximum_Args => 100,
          Handler      => Default_Command_Handler'Access);
 
 
