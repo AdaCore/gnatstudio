@@ -31,6 +31,8 @@ with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+
 with String_Utils;              use String_Utils;
 
 package body VCS.CVS is
@@ -45,10 +47,25 @@ package body VCS.CVS is
    procedure Set_Message
      (Rep : access CVS_Record;
       M   : String);
-   --  Sets the internal error message to M.
+   --  Sets the internal message to M.
+
+   procedure Clear_Message
+     (Rep : access CVS_Record);
+   --  Clears the internal message.
+
+   procedure Append_To_Message
+     (Rep : access CVS_Record;
+      S   : String);
+   --  Appends S at the end of current message.
+
+   procedure Append_To_Message
+     (Rep : access CVS_Record;
+      L   : String_List.List);
+   --  Concats L at the end of current message.
 
    function Command
-     (Command        : String;
+     (Rep            : access CVS_Record;
+      Command        : String;
       Arguments      : Argument_List)
      return String_List.List;
    --  Executes command Command with arguments Arguments and returns the result
@@ -82,6 +99,18 @@ package body VCS.CVS is
       Filenames   : String_List.List)
      return File_Status_List.List;
    --  Just like Local_Get_Status, but assuming that Filenames is not
+   --  empty and that all files in Filenames are from the same directory.
+
+   procedure Simple_Action
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List;
+      Arguments :        String_List.List);
+
+   procedure Real_Simple_Action
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List;
+      Arguments :        String_List.List);
+   --  Just like Simple_Action, but assuming that Filenames is not
    --  empty and that all files in Filenames are from the same directory.
 
    --------------
@@ -133,7 +162,8 @@ package body VCS.CVS is
    -------------
 
    function Command
-     (Command        : String;
+     (Rep            : access CVS_Record;
+      Command        : String;
       Arguments      : Argument_List)
      return String_List.List
    is
@@ -144,14 +174,34 @@ package body VCS.CVS is
       Non_Blocking_Spawn (Fd, Command, Arguments,
                           Err_To_Out => True);
       begin
-         while Match = 1 loop
-            Expect (Fd, Match, "\n");
-            declare
-               S : String := Expect_Out (Fd);
-            begin
-               String_List.Prepend (Result, S (S'First .. S'Last - 1));
-            end;
-         end loop;
+
+         if Rep.Local_Idle_Function = null then
+            while Match = 1 loop
+               Expect (Fd, Match, "\n");
+               declare
+                  S : String := Expect_Out (Fd);
+               begin
+                  String_List.Prepend (Result, S (S'First .. S'Last - 1));
+               end;
+            end loop;
+         else
+            while Match = 1 loop
+               Expect (Fd, Match, "\n",  Rep.Timeout);
+
+               case Match is
+                  when Expect_Timeout =>
+                     Rep.Local_Idle_Function.all;
+                     Match := 1;
+                  when others =>
+                     declare
+                        S : String := Expect_Out (Fd);
+                     begin
+                        String_List.Prepend (Result, S (S'First .. S'Last - 1));
+                     end;
+               end case;
+            end loop;
+         end if;
+
       exception
          when Process_Died =>
             null;
@@ -161,20 +211,111 @@ package body VCS.CVS is
       return Result;
    end Command;
 
-   -----------------
-   -- Set_Message --
-   -----------------
+   ------------------------
+   -- Real_Simple_Action --
+   ------------------------
 
-   procedure Set_Message
-     (Rep : access CVS_Record;
-      M   : String)
+   procedure Real_Simple_Action
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List;
+      Arguments :        String_List.List)
    is
+      use String_List;
+
+      Filenames_Temp   : List := Filenames;
+      Arguments_Temp   : List := Arguments;
+
+      Output  : List;
+
+      Filenames_Length : Natural := Length (Filenames);
+      Args_Length      : Natural := Length (Arguments);
+
+      Args             : Argument_List
+        (1 .. Filenames_Length + Args_Length + 1);
+
+      Old_Dir : Dir_Name_Str := Get_Current_Dir;
+      New_Dir : Dir_Name_Str := Get_Path (Head (Filenames));
    begin
-      if Rep.Message /= null then
-         Free (Rep.Message);
+      Change_Dir (New_Dir);
+
+      --  Build arguments list.
+
+      for J in 1 .. Args_Length + 1 loop
+         Args (J) := new String'(Head (Arguments_Temp));
+         Arguments_Temp := Next (Arguments_Temp);
+      end loop;
+
+      for J in Args_Length + 1 .. Args_Length + Filenames_Length + 1 loop
+         Args (J) := new String'(Base_File_Name (Head (Filenames_Temp)));
+         Filenames_Temp := Next (Filenames_Temp);
+      end loop;
+
+      --  Spawn the command.
+
+      Output := Command (Rep, "cvs", Args);
+
+      --  If there is any output, set the error flag to true and
+      --  fill the error message accordingly.
+
+      if not Is_Empty (Output) then
+         Rep.Success := False;
+         Append_To_Message (Rep, Output);
       end if;
-      Rep.Message := new String'(M);
-   end Set_Message;
+
+      --  Free arguments list.
+
+      for J in Args'Range loop
+         Free (Args (J));
+      end loop;
+
+      Change_Dir (Old_Dir);
+
+   exception
+      when Directory_Error =>
+         Append_To_Message (Rep, "Could not open directory");
+         Rep.Success := False;
+
+   end Real_Simple_Action;
+
+   -------------------
+   -- Simple_Action --
+   -------------------
+
+   procedure Simple_Action
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List;
+      Arguments :        String_List.List)
+   is
+      use String_List;
+
+      Current_Filename : String_List.List := Filenames;
+   begin
+      if Is_Empty (Current_Filename) then
+         --  ??? Set an error here.
+         return;
+      end if;
+
+      while not Is_Empty (Current_Filename) loop
+
+         --  Extract a list of files that belong to the same directory.
+         declare
+            Current_Directory : String := Get_Path (Head (Current_Filename));
+            Current_List      : String_List.List;
+         begin
+            while not Is_Empty (Current_Filename)
+              and then Get_Path (Head (Current_Filename)) = Current_Directory
+            loop
+               Append (Current_List, Head (Current_Filename));
+               Current_Filename := Next (Current_Filename);
+            end loop;
+
+            --  At this point, Current_List should not be empty and
+            --  all its element are files from Current_Directory.
+            Real_Simple_Action (Rep, Current_List, Arguments);
+            Free (Current_List);
+         end;
+      end loop;
+   end Simple_Action;
 
    ---------------------
    -- Real_Get_Status --
@@ -193,8 +334,7 @@ package body VCS.CVS is
 
       Files   : List := Filenames;
 
-      Filenames_Lengh : Natural := Length (Filenames);
-      Args    : Argument_List (1 .. Filenames_Lengh + 1);
+      Filenames_Length : Natural := Length (Filenames);
       Result  : File_Status_List.List;
       Old_Dir : Dir_Name_Str := Get_Current_Dir;
       New_Dir : Dir_Name_Str := Get_Path (Head (Filenames));
@@ -204,18 +344,47 @@ package body VCS.CVS is
       Blank_Status   : File_Status_Record;
       Current_Status : File_Status_Record := Blank_Status;
    begin
+
+      --  ??? Need to take parameters into account and fill the
+      --  corresponding information accordingly.
+
       Change_Dir (New_Dir);
 
       --  Generate arguments list.
+      --  If the first argument is a directory, do a simple query for
+      --  all files in that directory.
 
-      Args (1) := new String'("status");
-      for J in 2 .. Filenames_Lengh + 1 loop
-         Args (J) := new String'(Base_File_Name (Head (Files)));
-         Files := Tail (Files);
-      end loop;
+      if Head (Filenames) = New_Dir then
+         declare
+            Args    : Argument_List (1 .. 1);
+         begin
+            Args (1) := new String'("status");
 
-      --  Spawn command.
-      Output := Command ("cvs", Args);
+            --  Spawn command.
+            Output := Command (Rep, "cvs", Args);
+
+            Free (Args (1));
+         end;
+      else
+         declare
+            Args    : Argument_List (1 .. Filenames_Length + 1);
+         begin
+            Args (1) := new String'("status");
+
+            for J in 2 .. Filenames_Length + 1 loop
+               Args (J) := new String'(Base_File_Name (Head (Files)));
+               Files := Next (Files);
+            end loop;
+
+            --  Spawn command.
+            Output := Command (Rep, "cvs", Args);
+
+            --  Free arguments list.
+            for J in Args'Range loop
+               Free (Args (J));
+            end loop;
+         end;
+      end if;
 
       --  Parse output of the command.
 
@@ -303,21 +472,21 @@ package body VCS.CVS is
                end if;
             end if;
 
-            Output := Tail (Output);
+            Tail (Output);
          end;
       end loop;
 
       --  Append the last status.
       File_Status_List.Append (Result, Current_Status);
 
-      --  Free arguments list.
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
       Change_Dir (Old_Dir);
       return Result;
+
+   exception
+      when Directory_Error =>
+         Append_To_Message (Rep, "Could not open directory");
+         Rep.Success := False;
+         return Result;
    end Real_Get_Status;
 
    ---------------------------
@@ -356,15 +525,20 @@ package body VCS.CVS is
 
       while Last >= 0 loop
          Index := 2;
-         Skip_To_Char (Buffer, Index, '/');
+         Skip_To_Char (Buffer (1 .. Last), Index, '/');
          Next_Index := Index + 1;
-         Skip_To_Char (Buffer, Next_Index, '/');
+         Skip_To_Char (Buffer (1 .. Last), Next_Index, '/');
 
          Append (Current_Status.File_Name, New_Dir & Buffer (2 .. Index - 1));
          Append (Current_Status.Working_Revision,
                  Buffer (Index + 1 .. Next_Index - 1));
 
-         File_Status_List.Append (Result, Current_Status);
+         if Index + 1 < Next_Index - 1 then
+            File_Status_List.Append (Result, Current_Status);
+         else
+            Free (Current_Status.File_Name);
+            Free (Current_Status.Working_Revision);
+         end if;
          Current_Status := Blank_Status;
 
          Get_Line (File, Buffer, Last);
@@ -417,10 +591,11 @@ package body VCS.CVS is
               and then Get_Path (Head (Current_Filename)) = Current_Directory
             loop
                Append (Current_List, Head (Current_Filename));
-               Current_Filename := Tail (Current_Filename);
+               Current_Filename := Next (Current_Filename);
             end loop;
 
-            --  At this point, Current_List should not be empty.
+            --  At this point, Current_List should not be empty and
+            --  all its element are files from Current_Directory.
             File_Status_List.Concat (Result,
                                      Real_Get_Status (Rep,
                                                       Current_List,
@@ -464,10 +639,11 @@ package body VCS.CVS is
               and then Get_Path (Head (Current_Filename)) = Current_Directory
             loop
                Append (Current_List, Head (Current_Filename));
-               Current_Filename := Tail (Current_Filename);
+               Current_Filename := Next (Current_Filename);
             end loop;
 
-            --  At this point, Current_List should not be empty.
+            --  At this point, Current_List should not be empty and
+            --  all its element are files from Current_Directory.
             File_Status_List.Concat (Result,
                                      Real_Local_Get_Status (Rep,
                                                             Current_List));
@@ -484,12 +660,20 @@ package body VCS.CVS is
 
    procedure Open
      (Rep       : access CVS_Record;
-      Name      : String;
-      User_Name : String := "")
+      Filenames :        String_List.List;
+      User_Name :        String           := "")
    is
-      --  L    : String_List.List;
+      Arguments : String_List.List;
    begin
-      null;
+      Clear_Message (Rep);
+      Rep.Success := True;
+
+      String_List.Append (Arguments, "-Q");
+      String_List.Append (Arguments, "edit");
+
+      Simple_Action (Rep, Filenames, Arguments);
+
+      String_List.Free (Arguments);
    end Open;
 
    ------------
@@ -497,50 +681,137 @@ package body VCS.CVS is
    ------------
 
    procedure Commit
-     (Rep  : access CVS_Record;
-      Name : String;
-      Log  : String) is
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List;
+      Logs      :        String_List.List)
+   is
+      Arguments      : String_List.List;
+      Filenames_Temp : String_List.List := Filenames;
+      Logs_Temp      : String_List.List := Logs;
+      Single_File    : String_List.List;
+
+      use String_List;
    begin
-      null;
+      Clear_Message (Rep);
+      Rep.Success := True;
+
+      while not Is_Empty (Filenames_Temp) loop
+         Append (Arguments, "-Q");
+         Append (Arguments, "commit");
+         Append (Arguments, "-m");
+         Append (Arguments, Head (Logs_Temp));
+
+         Append (Single_File, Head (Filenames_Temp));
+
+         Simple_Action (Rep, Single_File, Arguments);
+
+         Free (Arguments);
+         Free (Single_File);
+
+         Logs_Temp      := Next (Logs_Temp);
+         Filenames_Temp := Next (Filenames_Temp);
+      end loop;
+
+   exception
+      when List_Empty =>
+         Rep.Success := False;
+         Append_To_Message (Rep, "Log list incomplete !");
    end Commit;
 
    ------------
    -- Update --
    ------------
 
-   procedure Update (Rep : access CVS_Record; Name : String) is
+   procedure Update
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List)
+   is
+      Arguments : String_List.List;
    begin
-      null;
+      Clear_Message (Rep);
+      Rep.Success := True;
+
+      String_List.Append (Arguments, "-Q");
+      String_List.Append (Arguments, "update");
+
+      Simple_Action (Rep, Filenames, Arguments);
+
+      String_List.Free (Arguments);
    end Update;
 
    -----------
    -- Merge --
    -----------
 
-   procedure Merge (Rep : access CVS_Record; Name : String)
+   procedure Merge
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List)
    is
+      Arguments : String_List.List;
    begin
-      null;
+      Clear_Message (Rep);
+      Rep.Success := True;
+
+      String_List.Append (Arguments, "-Q");
+      String_List.Append (Arguments, "update");
+
+      Simple_Action (Rep, Filenames, Arguments);
+
+      String_List.Free (Arguments);
    end Merge;
 
    ---------
    -- Add --
    ---------
 
-   procedure Add (Rep : access CVS_Record; Name : String)
+   procedure Add
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List)
    is
+      Arguments : String_List.List;
    begin
-      null;
+      String_List.Append (Arguments, "-Q");
+      String_List.Append (Arguments, "add");
+
+      Simple_Action (Rep, Filenames, Arguments);
+
+      String_List.Free (Arguments);
+
+      Clear_Message (Rep);
+      Rep.Success := True;
+
+      String_List.Append (Arguments, "-Q");
+      String_List.Append (Arguments, "commit");
+      String_List.Append (Arguments, "-m");
+
+      String_List.Append (Arguments, "Initial revision for this file.");
+      --  ??? This should be customizable.
+
+      Simple_Action (Rep, Filenames, Arguments);
+
+      String_List.Free (Arguments);
    end Add;
 
    ------------
    -- Remove --
    ------------
 
-   procedure Remove (Rep : access CVS_Record; Name : String)
+   procedure Remove
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List)
    is
+      Arguments : String_List.List;
    begin
-      null;
+      Clear_Message (Rep);
+      Rep.Success := True;
+
+      String_List.Append (Arguments, "-Q");
+      String_List.Append (Arguments, "remove");
+      String_List.Append (Arguments, "-f");
+
+      Simple_Action (Rep, Filenames, Arguments);
+
+      String_List.Free (Arguments);
    end Remove;
 
    ----------
@@ -549,7 +820,7 @@ package body VCS.CVS is
 
    function Diff
      (Rep       : access CVS_Record;
-      File_Name : String;
+      File      : String;
       Version_1 : String := "";
       Version_2 : String)
      return String_List.List
@@ -565,7 +836,7 @@ package body VCS.CVS is
 
    function Log
       (Rep       : access CVS_Record;
-       File_Name : String)
+       File      : String)
       return String_List.List
    is
       Result : String_List.List;
@@ -580,8 +851,56 @@ package body VCS.CVS is
    function Success (Rep : access CVS_Record) return Boolean
    is
    begin
-      return False;
+      return Rep.Success;
    end Success;
+
+   -------------------
+   -- Clear_Message --
+   -------------------
+
+   procedure Clear_Message
+     (Rep : access CVS_Record)
+   is
+   begin
+      String_List.Free (Rep.Message);
+   end Clear_Message;
+
+   -----------------------
+   -- Append_To_Message --
+   -----------------------
+
+   procedure Append_To_Message
+     (Rep : access CVS_Record;
+      S   : String)
+   is
+   begin
+      String_List.Append (Rep.Message, S);
+   end Append_To_Message;
+
+   procedure Append_To_Message
+     (Rep : access CVS_Record;
+      L   : String_List.List)
+   is
+   begin
+      String_List.Concat (Rep.Message, L);
+   end Append_To_Message;
+
+   -----------------
+   -- Set_Message --
+   -----------------
+
+   procedure Set_Message
+     (Rep : access CVS_Record;
+      M   : String)
+   is
+      use String_List;
+   begin
+      if not Is_Empty (Rep.Message) then
+         Free (Rep.Message);
+      end if;
+
+      Append (Rep.Message, M);
+   end Set_Message;
 
    -----------------
    -- Get_Message --
@@ -589,8 +908,39 @@ package body VCS.CVS is
 
    function Get_Message (Rep : access CVS_Record) return String
    is
+      S : Unbounded_String := Null_Unbounded_String;
+
+      use String_List;
+      Message_Temp : List := Rep.Message;
    begin
-      return "";
+      while not Is_Empty (Message_Temp) loop
+         Append (S, Head (Message_Temp) & ASCII.CR & ASCII.LF);
+         Message_Temp := Next (Message_Temp);
+      end loop;
+
+      return To_String (S);
    end Get_Message;
+
+   ----------
+   -- Idle --
+   ----------
+
+   --    package body Idle is
+
+   procedure Register_Idle_Function
+     (Rep  : access CVS_Record;
+      Func : Idle_Function;
+      Timeout : Integer := 200)
+   is
+      procedure Call_Idle_Function is
+      begin
+         Put_Line ("bla");
+      end Call_Idle_Function;
+   begin
+      Rep.Local_Idle_Function := Func;
+      Rep.Timeout := Timeout;
+   end Register_Idle_Function;
+
+   --    end Idle;
 
 end VCS.CVS;
