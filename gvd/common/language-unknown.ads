@@ -54,13 +54,6 @@ package Language.Unknown is
 
    function Can_Indent (Lang : access Unknown_Language) return Boolean;
 
-   procedure Next_Indentation
-     (Lang          : access Unknown_Language;
-      Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
-
 private
    type Unknown_Language is new Language_Root with null record;
 

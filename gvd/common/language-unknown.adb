@@ -121,23 +121,6 @@ package body Language.Unknown is
       return False;
    end Can_Indent;
 
-   ----------------------
-   -- Next_Indentation --
-   ----------------------
-
-   procedure Next_Indentation
-     (Lang          : access Unknown_Language;
-      Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
-   is
-      pragma Unreferenced (Lang, Buffer, Indent_Params);
-   begin
-      Indent := 0;
-      Next_Indent := 0;
-   end Next_Indentation;
-
    -----------------------
    -- Is_Case_Sensitive --
    -----------------------
