@@ -434,6 +434,9 @@ package body Src_Editor_Box is
 
          Gtk_New (Editor.Contextual_Menu);
 
+         Gtk_New (Item, "Go to previous reference");
+         Add (Editor.Contextual_Menu, Item);
+
          Gtk_New (Item, "Go to declaration/body");
          Add (Editor.Contextual_Menu, Item);
          Widget_Callback.Connect
@@ -443,8 +446,6 @@ package body Src_Editor_Box is
             User_Data => Editor,
             After     => True);
 
-         Gtk_New (Item, "Go to previous reference");
-         Add (Editor.Contextual_Menu, Item);
          Gtk_New (Item, "List references");
          Add (Editor.Contextual_Menu, Item);
          Gtk_New (Item);
