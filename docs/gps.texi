@@ -2813,27 +2813,17 @@ further global queries will be faster.
 @xref{Find All References}.
 Find all references to @i{entity} in all the files in the project
 
-@item Find all references (and implicit use) to @i{entity}
-@cindex find all references and implicit
-Find all references to @i{entity} in all the source files in the project.
-This menu will also include implicit references to the entity, for instance
-when it is used as an implicit parameter in a generic instantiation.
+@item Find all references ...
+This menu is similar to the one above, except it is possible to select more
+precisely what kind of reference should be selected. It is also possible
+to indicate the scope of the search, and whether the context (or caller)
+at each reference should be displayed. Computing the caller information will
+take slightly longer though.
 
 @item Find all local references to @i{entity}
 @cindex find all local references
 Find all references to @i{entity} in the current file (or in the current
 top level unit for Ada sources).
-See @ref{Find All References} for more details.
-
-@item Find all writes to @i{entity}
-@cindex find all writes
-Find all writes to an entity. This is a search global to the project.
-See @ref{Find All References} for more details.
-
-@item Find all reads of @i{entity}
-@cindex find all reads
-Find all non write accesses to an entity. This is a search global to the
-project.
 See @ref{Find All References} for more details.
 
 @end table
