@@ -19,16 +19,21 @@ package body Placeholders is
    Placeholder_Bg_Color : constant String := "#888888";
    --  <preference> The background color for placeholders.
 
-   Placeholder_Xpm     : aliased chars_ptr_array (0 .. 0);
+   Placeholder_Xpm   : aliased chars_ptr_array (0 .. 0);
    pragma Import (C, Placeholder_Xpm, "placeholder_xpm");
 
    Placeholder_Quark : GQuark := Unknown_Quark;
 
+   Placeholder_Width  : constant := 16;
+   --  Minimal width of a placeholder
+
+   Placeholder_Height : constant := 16;
+   --  Minimal height of a placeholder
+
    procedure Realized (Holder : access Gtk_Widget_Record'Class);
    --  Callback for the "realize" signal
 
-   function Expose (Holder : access Gtk_Widget_Record'Class)
-      return Boolean;
+   function Expose (Holder : access Gtk_Widget_Record'Class) return Boolean;
    --  Callback for the "expose_event" signal
 
    -------------
@@ -48,7 +53,7 @@ package body Placeholders is
    procedure Initialize (Holder : access Placeholder_Record'Class) is
    begin
       Gtk.Drawing_Area.Initialize (Holder);
-
+      Set_USize (Holder, Placeholder_Width, Placeholder_Height);
       Set_Placeholder (Holder);
 
       Add_Events (Holder, Button_Press_Mask or Button_Release_Mask);
@@ -67,9 +72,7 @@ package body Placeholders is
    --------------------
 
    function Is_Placeholder
-     (Object : access Gtk.Object.Gtk_Object_Record'Class)
-      return Boolean
-   is
+     (Object : access Gtk.Object.Gtk_Object_Record'Class) return Boolean is
    begin
       if Placeholder_Quark = Unknown_Quark then
          Placeholder_Quark := Quark_From_String ("Gbuilder_Placeholder");
@@ -86,8 +89,7 @@ package body Placeholders is
    ---------------------
 
    procedure Set_Placeholder
-     (Object : access Gtk.Object.Gtk_Object_Record'Class)
-   is
+     (Object : access Gtk.Object.Gtk_Object_Record'Class) is
    begin
       if Placeholder_Quark = Unknown_Quark then
          Placeholder_Quark := Quark_From_String ("GBuilder_Placeholder");
