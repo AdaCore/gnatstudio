@@ -4919,8 +4919,7 @@ sub Sec2PrevNode
     }
     elsif ($i ne '1')
     {
-      # unfortunately, -- operator is not magical
-      $i = chr(ord($i) + 1);
+      $i--;
     }
     else
     {
