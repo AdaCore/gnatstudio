@@ -1,5 +1,20 @@
 Known Problems in GVD 1.0.1
 
+- Parsing of char* fields in C structs
+  Problem: the value of string fields in C structures was incorrectly parsed,
+           and extended till the end of the line. As a result, the following
+           fields were empty.
+  Workaround: The value of the following fields is still visible, but not at
+           the correct location
+  Status: Fixed in GVD 1.0.2
+
+- Parsing of array fields in C structs
+  Problem: fields that are arrays of simple types (int, double,...) were
+           incorrectly detected.
+  Workaround: Look at the value of the variable directly in the source window
+           through the tooltips
+  Status: Fixed in GVD 1.0.2
+
 - Current line highlighted with an offset
   Problem: If the previous current line contained some tabs, then the next
            one is highlighted with an offset.
