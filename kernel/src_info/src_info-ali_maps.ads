@@ -86,10 +86,9 @@ private package Src_Info.ALI_Maps is
       Completion_Of_Private_Or_Incomplete_Type => 'c',
       Type_Extension                           => 'x',
       Implicit                                 => 'i',
+      Label                                    => 'l',
       End_Of_Spec                              => 'e',
-      End_Of_Spec_With_Label                   => 'E',
-      End_Of_Body                              => 't',
-      End_Of_Body_With_Label                   => 'T');
+      End_Of_Body                              => 't');
 
    type E_Scope_To_Char_Map is array (E_Scope) of Character;
 

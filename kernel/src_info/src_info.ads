@@ -258,10 +258,9 @@ private
       Completion_Of_Private_Or_Incomplete_Type,
       Type_Extension,
       Implicit,
+      Label,
       End_Of_Spec,
-      End_Of_Spec_With_Label,
-      End_Of_Body,
-      End_Of_Body_With_Label);
+      End_Of_Body);
    --  The kind of reference to an entity. They have the following meaning:
    --    - Reference: The entity is used
    --    - Modification: The value of the entity is changed
@@ -276,16 +275,15 @@ private
    --      which a tagged type is extended.
    --    - Implicit: Used to identify a reference to the entity in a generic
    --      actual or in a default in a call.
+   --    - Label: Used for cases where the name of the entity appears in
+   --      syntactic constructs only, but doesn't impact the code, for instance
+   --      in "end Foo;" constructs in Ada.
    --    - End_Of_Spec: Used to identify the end of the following constructs.
    --      Block statement, loop statement, package specification, task
    --      definition, protected definition, record definition.
-   --    - End_Of_Spec_With_Label: Identical to End_Of_Spec except that a
-   --      label is attached to the contruct.
    --    - End_Of_Body: Used to identify the end of the following constructs.
    --      Subprogram body, package body, task body, entry body, protected
    --      body, accept statement.
-   --    - End_Of_Body_With_Label: Identical to End_Of_Body, except that a
-   --      label is attached to the construct.
 
    type Reference_Kind_To_Boolean_Map is array (Reference_Kind) of Boolean;
 
@@ -297,10 +295,9 @@ private
       Completion_Of_Private_Or_Incomplete_Type => False,
       Type_Extension                           => False,
       Implicit                                 => False,
+      Label                                    => False,
       End_Of_Spec                              => True,
-      End_Of_Spec_With_Label                   => True,
-      End_Of_Body                              => True,
-      End_Of_Body_With_Label                   => True);
+      End_Of_Body                              => True);
    --  True if the matching entity indicates an end-of-scope (end of subprogram
    --  declaration, end of record definition, ...)
 
@@ -312,10 +309,9 @@ private
       Completion_Of_Private_Or_Incomplete_Type => True,
       Type_Extension                           => False,
       Implicit                                 => False,
+      Label                                    => False,
       End_Of_Spec                              => False,
-      End_Of_Spec_With_Label                   => False,
-      End_Of_Body                              => False,
-      End_Of_Body_With_Label                   => False);
+      End_Of_Body                              => False);
    --  True if the matching entity indicates an start-of-scope (start of
    --  subprogram declaration, start of record definition, ...)
 
