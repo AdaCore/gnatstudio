@@ -214,7 +214,11 @@ package body Welcome is
         (Screen.Open_Browse, "clicked",
          Widget_Callback.To_Marshaller (On_Browse_Load'Access), Screen);
 
-      Clicked (Screen.Open_Project_Button);
+      if Get_Text (Get_Entry (Screen.Open_Project)) = "" then
+         Clicked (Screen.Default_Project);
+      else
+         Clicked (Screen.Open_Project_Button);
+      end if;
 
       --  Always displaying the welcome dialog
 
