@@ -1553,7 +1553,7 @@ package body Shell_Script is
          Free (Data.Return_Value);
       end if;
 
-      Set_Return_Value (Data, Integer'Image (Value));
+      Set_Return_Value (Data, String_Utils.Image (Value));
    end Set_Return_Value;
 
    ----------------------
