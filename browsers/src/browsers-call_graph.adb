@@ -1444,10 +1444,11 @@ package body Browsers.Call_Graph is
 
       if Info /= null then
          declare
+            Decl  : constant File_Location := Get_Declaration_Of (Info);
             Title : constant String :=
                       -"References for " & Get_Name (Info).all
-                      & " declared at line "  &
-                      Image (Get_Declaration_Of (Info).Line);
+                      & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
+                      & ":" & Image (Decl.Line) & ")";
 
          begin
             --  Print the declaration of the entity, but only if it is in the
