@@ -28,26 +28,14 @@ begin
    Return_Callback.Connect
      (Process_Tab, "delete_event", On_Process_Tab_Delete_Event'Access);
 
-   Gtk_New_Hbox (Process_Tab.Process_Hbox, False, 0);
-   Add (Process_Tab, Process_Tab.Process_Hbox);
-
-   Gtk_New_Vpaned (Process_Tab.Process_Paned);
-   Set_Handle_Size (Process_Tab.Process_Paned, 10);
-   Set_Gutter_Size (Process_Tab.Process_Paned, 6);
-   Set_Position (Process_Tab.Process_Paned, 500);
-   Pack_Start (Process_Tab.Process_Hbox, Process_Tab.Process_Paned, True, True, 0);
-
-   Gtk_New_Vpaned (Process_Tab.Data_Editor_Paned);
-   Set_Handle_Size (Process_Tab.Data_Editor_Paned, 10);
-   Set_Gutter_Size (Process_Tab.Data_Editor_Paned, 6);
-   Set_Position (Process_Tab.Data_Editor_Paned, 200);
-   Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
+   Gtk_New_Hbox (Process_Tab.Process_Mdi, False, 0);
+   Add (Process_Tab, Process_Tab.Process_Mdi);
 
    Gtk_New_Hpaned (Process_Tab.Data_Paned);
    Set_Handle_Size (Process_Tab.Data_Paned, 10);
    Set_Gutter_Size (Process_Tab.Data_Paned, 6);
    Set_Position (Process_Tab.Data_Paned, 200);
-   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Paned);
+   Pack_Start (Process_Tab.Process_Mdi, Process_Tab.Data_Paned, True, True, 0);
 
    Gtk_New (Process_Tab.Stack_Scrolledwindow);
    Set_Policy (Process_Tab.Stack_Scrolledwindow, Policy_Automatic, Policy_Automatic);
@@ -114,31 +102,12 @@ begin
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
    Add (Process_Tab.Data_Scrolledwindow, Process_Tab.Data_Canvas);
 
-   Gtk_New_Vbox (Process_Tab.Editor_Vbox, False, 0);
-   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Editor_Vbox);
-
-   Gtk_New_Hbox (Process_Tab.Label_Hbox, False, 0);
-   Pack_Start (Process_Tab.Editor_Vbox, Process_Tab.Label_Hbox, False, True, 0);
-
-   Gtk_New_Hseparator (Process_Tab.Explorer_Separator);
-   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Explorer_Separator, False, True, 0);
-
-   Gtk_New (Process_Tab.Editor_Label);
-   Set_Alignment (Process_Tab.Editor_Label, 0.5, 0.5);
-   Set_Padding (Process_Tab.Editor_Label, 0, 0);
-   Set_Justify (Process_Tab.Editor_Label, Justify_Center);
-   Set_Line_Wrap (Process_Tab.Editor_Label, False);
-   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Editor_Label, False, False, 0);
-
-   Gtk_New_Hseparator (Process_Tab.Editor_Separator);
-   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Editor_Separator, True, True, 0);
-
    Gtk_New_Hbox (Process_Tab.Editor_Text, False, 0);
-   Pack_Start (Process_Tab.Editor_Vbox, Process_Tab.Editor_Text, True, True, 0);
+   Pack_Start (Process_Tab.Process_Mdi, Process_Tab.Editor_Text, True, True, 0);
 
    Gtk_New (Process_Tab.Command_Scrolledwindow);
    Set_Policy (Process_Tab.Command_Scrolledwindow, Policy_Never, Policy_Always);
-   Add (Process_Tab.Process_Paned, Process_Tab.Command_Scrolledwindow);
+   Pack_Start (Process_Tab.Process_Mdi, Process_Tab.Command_Scrolledwindow, True, True, 0);
 
    Gtk_New (Process_Tab.Debugger_Text);
    Set_Editable (Process_Tab.Debugger_Text, True);
