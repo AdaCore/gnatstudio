@@ -187,7 +187,7 @@ package body Creation_Wizard is
       Set_USize (Wiz, 640, -1);
 
       Create_From_Xpm_D
-        (Pix, null, Get_Default_Colormap, Mask, Null_Color, Logo_Xpm);
+        (Pix, null, Get_Default_Colormap, Mask, Null_Color, logo_xpm);
       Add_Logo (Wiz, Pix, Mask);
 
       Set_Toc (Wiz, 1, "Naming the project");
