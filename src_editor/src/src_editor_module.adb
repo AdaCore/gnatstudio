@@ -195,6 +195,11 @@ package body Src_Editor_Module is
    --  Generate the contextual menu entries for contextual menus in other
    --  modules than the source editor.
 
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Create the current context for Glide_Kernel.Get_Current_Context
+
    procedure New_View
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new view for the current editor and add it in the MDI.
@@ -923,6 +928,19 @@ package body Src_Editor_Module is
       end if;
    end Source_Editor_Contextual;
 
+   ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      C : Source_Box := Source_Box (Child);
+   begin
+      return Get_Contextual_Menu (Kernel, Child, C.Editor, null, null);
+   end Default_Factory;
+
    -----------------------
    -- Initialize_Module --
    -----------------------
@@ -1049,7 +1067,9 @@ package body Src_Editor_Module is
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => Source_Editor_Contextual'Access,
-         Mime_Handler            => Mime_Action'Access);
+         Mime_Handler            => Mime_Action'Access,
+         MDI_Child_Tag           => Source_Box_Record'Tag,
+         Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;

@@ -316,7 +316,15 @@ package body Project_Explorers is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access;
-   --  Return the context to use for the contextual menu
+   --  Return the context to use for the contextual menu.
+   --  It is also used to return the context for
+   --  Glide_Kernel.Get_Current_Context, and thus can be called with a null
+   --  event or a null menu.
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Create the Glide_Kernel.Get_Current_Context.
 
    function Load_Desktop
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
@@ -491,6 +499,7 @@ package body Project_Explorers is
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel, Event_Widget, Menu);
+      use type Node_List.Glist;
       Context      : Selection_Context_Access;
       T            : Project_Explorer := Project_Explorer (Object);
       Row, Column  : Gint;
@@ -499,16 +508,25 @@ package body Project_Explorers is
       Importing_Project : Project_Id := No_Project;
 
    begin
-      Get_Selection_Info
-        (T.Tree, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-         Row, Column, Is_Valid);
+      if Event /= null then
+         Get_Selection_Info
+           (T.Tree, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            Row, Column, Is_Valid);
 
-      if not Is_Valid then
-         return null;
+         if not Is_Valid then
+            return null;
+         end if;
+
+         Node := Node_Nth (T.Tree, Guint (Row));
+         Gtk_Select (T.Tree, Node);
+      else
+         if Get_Selection (T.Tree) /= Node_List.Null_List then
+            Node := Node_List.Get_Data (Get_Selection (T.Tree));
+         else
+            return null;
+         end if;
       end if;
 
-      Node := Node_Nth (T.Tree, Guint (Row));
-      Gtk_Select (T.Tree, Node);
       Parent := Row_Get_Parent (Node_Get_Row (Node));
 
       declare
@@ -1852,6 +1870,17 @@ package body Project_Explorers is
       end if;
    end On_Open_Explorer;
 
+   ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access is
+   begin
+      return Explorer_Context_Factory (Kernel, Child, Child, null, null);
+   end Default_Factory;
+
    -----------------------
    -- Initialize_Module --
    -----------------------
@@ -1884,7 +1913,9 @@ package body Project_Explorers is
          Module_Name             => Explorer_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => null);
+         Contextual_Menu_Handler => null,
+         MDI_Child_Tag           => Project_Explorer_Record'Tag,
+         Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
