@@ -1075,23 +1075,11 @@ package body Browsers.Dependency_Items is
                      On_Dependency_Browser'Access);
 
       Register_Command
-        (Kernel,
-         Command      => "uses",
-         Description  =>
-           -("Display in the dependency browser the list of files that"
-             & " file_name depends on."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "uses",
          Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "used_by",
-         Description  =>
-           -("Display in the dependency browser the list of files that"
-             & " depends on file_name."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "used_by",
          Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
    end Register_Module;

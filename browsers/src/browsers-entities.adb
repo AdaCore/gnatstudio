@@ -430,60 +430,23 @@ package body Browsers.Entities is
          Text        => -"Entity Browser",
          Callback    => On_Type_Browser'Access);
       Register_Command
-        (Kernel,
-         Command      => "show",
-         Description  =>
-           -("Display in the type browser the informations known about the"
-             & " entity: list of fields for records, list of primitive"
-             & " subprograms or methods, list of parameters, ..."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "show",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Show_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "discriminants",
-         Return_Value => "list",
-         Description  =>
-           -("Return the list of discriminants for entity. This is a list"
-             & " of entities, empty if the type has no discriminant or if this"
-             & " notion doesn't apply to that language"),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "discriminants",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Show_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "fields",
-         Return_Value => "list",
-         Description  =>
-           -("Return the list of fields for entity. This is a list of entities"
-             & ". This applies to Ada record and tagged"
-             & " types, or C structs for instance."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "fields",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Show_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "parameters",
-         Return_Value => "list",
-         Description  =>
-           -("Return the list of parameters for entity. This is a list of"
-             & " entities. This applies to subprograms."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "parameters",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Show_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "return_type",
-         Return_Value => "Entity",
-         Description  =>
-           -("Return the return type for entity. This applies to"
-             & " subprograms."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "return_type",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Show_Entity_Command_Handler'Access);
    end Register_Module;

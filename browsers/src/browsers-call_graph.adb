@@ -1932,47 +1932,19 @@ package body Browsers.Call_Graph is
         (Kernel, Navigate, Mitem, Ref_Item => Find_All);
 
       Register_Command
-        (Kernel,
-         Command      => "find_all_refs",
-         Description  =>
-           -"Display in the location window all the references to the entity.",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "find_all_refs",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "references",
-         Description  =>
-           -"List all references to the entity in the project tree",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "references",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "calls",
-         Return_Value => "htable",
-         Description  =>
-           -("Display the list of entities called by the entity. The returned"
-             & " value is a dictionary whose keys are instances of Entity "
-             & " called by this entity, and whose value is a list of"
-             & " FileLocation instances where the entity is referenced"),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "calls",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "called_by",
-         Return_Value => "htable",
-         Description  =>
-           -("Display the list of entities that call the entity. The returned"
-             & " value is a dictionary whose keys are instances of Entity "
-             & " called by this entity, and whose value is a list of"
-             & " FileLocation instances where the entity is referenced"),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "called_by",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Call_Graph_Command_Handler'Access);
    end Register_Module;
