@@ -1118,6 +1118,32 @@ package body Codefix.Errors_Parser is
             Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
    end Fix;
 
+   ------------------------
+   -- Pkg_Not_Referenced --
+   ------------------------
+
+   procedure Initialize (This : in out Pkg_Not_Referenced) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+       (Compile ("unit ""([^""]+)"" is not referenced")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Pkg_Not_Referenced;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array) is
+   begin
+      Concat
+        (Solutions,
+         Not_Referenced
+           (Current_Text,
+            Message,
+            Cat_With,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+   end Fix;
+
    -----------------------
    -- Pragma_Missplaced --
    -----------------------
@@ -1173,6 +1199,7 @@ begin
    Add_Parser (new Bad_Casing_Declared);
    Add_Parser (new Bad_Casing_Keyword);
    Add_Parser (new Object_Not_Referenced);
+   Add_Parser (new Pkg_Not_Referenced);
    Add_Parser (new Pragma_Missplaced);
 
    Initialize_Parsers;
