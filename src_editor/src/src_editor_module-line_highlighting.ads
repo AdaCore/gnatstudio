@@ -48,9 +48,11 @@ package Src_Editor_Module.Line_Highlighting is
 
    function Get_GC (Index : Natural) return Gdk_GC;
    --  Return the GC corresponding to a category Index.
+   --  If Index does not correspond to an existing category, return null.
 
    function Get_Color (Index : Natural) return Gdk_Color;
    --  Return the color corresponding to a category Index.
+   --  If Index does not correspond to an existing category, return Null_Color.
 
    function Get_Last_Index return Natural;
    --  Return the number of categories.
