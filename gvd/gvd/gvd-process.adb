@@ -29,6 +29,7 @@ with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
 with Gdk.Event;    use Gdk.Event;
 
+with Gtk;          use Gtk;
 with Gtk.Handlers; use Gtk.Handlers;
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Menu;     use Gtk.Menu;
@@ -430,7 +431,7 @@ package body Odd.Process is
       --  full processed (since Text_Output_Handler is called while a
       --  call to Wait or Wait_Prompt is being processed).
       --  The memory allocated for Load_File_Data is freed in
-      --  process_proxies.adb:Process_Post_Processes.
+      --  process_proxies.adb:Process_Post_Processes. ??? Check this comment
       --  The memory allocated for the string is freed in
       --  Load_File_Post_Process.
 
@@ -625,9 +626,10 @@ package body Odd.Process is
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
 
-      if Page_List.Length (Get_Children (Window.Process_Notebook)) > 0 then
-         Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
-      end if;
+      --  ??? Not suitable for Gnome
+      --  if Page_List.Length (Get_Children (Window.Process_Notebook)) > 0 then
+      --     Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
+      --  end if;
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -985,14 +987,12 @@ package body Odd.Process is
    -- Close_Debugger --
    --------------------
 
-   procedure Close_Debugger
-     (Debugger : Debugger_Process_Tab)
-   is
-      Top      : Main_Debug_Window_Access := Debugger.Window;
+   procedure Close_Debugger (Debugger : Debugger_Process_Tab) is
+      Top      : constant Main_Debug_Window_Access := Debugger.Window;
       Notebook : constant Gtk_Notebook := Debugger.Window.Process_Notebook;
       use String_History;
-   begin
 
+   begin
       --  Remove the notebook page.
 
       Close (Debugger.Debugger);
@@ -1000,11 +1000,11 @@ package body Odd.Process is
 
       --  If the last notebook page was destroyed, disable "Open Program"
       --  in the menu.
+      --  Does not work with Gnome menus ???
 
-      if Page_List.Length (Get_Children (Top.Process_Notebook)) = 0 then
-         Set_Sensitive (Gtk_Widget (Top.Open_Program1), False);
-      end if;
-
+      --  if Page_List.Length (Get_Children (Top.Process_Notebook)) = 0 then
+      --     Set_Sensitive (Gtk_Widget (Top.Open_Program1), False);
+      --  end if;
    end Close_Debugger;
 
    --------------------------
@@ -1218,7 +1218,7 @@ package body Odd.Process is
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
      return Debugger_Process_Tab
    is
-      Page : Gtk_Notebook_Page := Get_Cur_Page
+      Page : Gtk.Gtk_Notebook_Page := Get_Cur_Page
         (Main_Debug_Window_Access (Main_Window).Process_Notebook);
    begin
       if Page = null then
