@@ -2913,7 +2913,7 @@ package body Gtkada.MDI is
 
    procedure Create_Menu_Entry (Child : access MDI_Child_Record'Class) is
       use Widget_List, Widget_SList;
-      G : Widget_SList.Gslist := Widget_SList.Null_List;
+      G : Widget_SList.GSlist := Widget_SList.Null_List;
       First_Child : MDI_Child;
       Tmp : Widget_List.Glist;
    begin
