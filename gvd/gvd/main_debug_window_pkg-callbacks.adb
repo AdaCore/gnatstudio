@@ -43,6 +43,9 @@ with Odd.Dialogs;         use Odd.Dialogs;
 with Gtkada.Types;        use Gtkada.Types;
 with Odd.Types;           use Odd.Types;
 with Odd.Strings;         use Odd.Strings;
+with Odd.Preferences;
+with Odd.Code_Editors;    use Odd.Code_Editors;
+with Unchecked_Deallocation;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -164,10 +167,77 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------
 
    procedure On_Edit_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      function Substitute
+        (Name : String; File : String; Line : Natural)
+        return String;
+      --  Substitute %f and %l in Name by the file name and the line number.
+
+      ----------------
+      -- Substitute --
+      ----------------
+
+      function Substitute
+        (Name : String; File : String; Line : Natural)
+        return String
+      is
+         Index : Natural := Name'First;
+      begin
+         while Index < Name'Last loop
+            if Name (Index) = '%'
+              and then Name (Index + 1) = 'f'
+            then
+               return Name (Name'First .. Index - 1)
+                 & File
+                 & Substitute (Name (Index + 2 .. Name'Last), File, Line);
+
+            elsif Name (Index) = '%'
+              and then Name (Index + 1) = 'l'
+            then
+               declare
+                  Img : constant String := Natural'Image (Line);
+               begin
+                  return Name (Name'First .. Index - 1)
+                    & Img (Img'First + 1 .. Img'Last)
+                    & Substitute (Name (Index + 2 .. Name'Last), File, Line);
+               end;
+            end if;
+
+            Index := Index + 1;
+         end loop;
+         return Name;
+      end Substitute;
+
+      procedure Free is new Unchecked_Deallocation
+        (Argument_List, Argument_List_Access);
+
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Editor : constant String := Substitute
+        (Odd.Preferences.External_Editor,
+         Get_Current_File (Tab.Editor_Text),
+         Get_Line (Tab.Editor_Text));
+      Args : Argument_List_Access;
+      Pid : GNAT.OS_Lib.Process_Id;
+      Prog : GNAT.OS_Lib.String_Access;
    begin
-      null;
+      Text_Output_Handler (Tab, Editor, Is_Command => True);
+
+      Args := Argument_String_To_List (Editor);
+      Prog := Locate_Exec_On_Path (Args (Args'First).all);
+
+      if Prog /= null then
+         Pid := GNAT.OS_Lib.Non_Blocking_Spawn
+           (Prog.all, Args (Args'First + 1 .. Args'Last));
+         Free (Prog);
+      end if;
+
+      if Args /= null then
+         for J in Args'Range loop
+            Free (Args (J));
+         end loop;
+         Free (Args);
+      end if;
    end On_Edit_Source1_Activate;
 
    --------------------------------
