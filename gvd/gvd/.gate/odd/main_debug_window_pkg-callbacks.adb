@@ -162,7 +162,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------
 
    procedure On_Exit1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -360,7 +360,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------
 
    procedure On_Run1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -382,7 +382,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------
 
    procedure On_Start1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;

@@ -25,6 +25,8 @@ begin
    Set_Modal (Process_Tab, False);
 
    Gtk_New_Vpaned (Process_Tab.Process_Paned);
+   Return_Callback.Object_Connect
+     (Process_Tab.Process_Paned, "delete_event", On_Process_Paned_Delete_Event'Access, Process_Tab);
    Add (Process_Tab, Process_Tab.Process_Paned);
    Set_Handle_Size (Process_Tab.Process_Paned, 10);
    Set_Gutter_Size (Process_Tab.Process_Paned, 6);
@@ -36,35 +38,45 @@ begin
 
    Gtk_New (Process_Tab.Scrolledwindow9);
    Add (Process_Tab.Vpaned6, Process_Tab.Scrolledwindow9);
-   Set_Policy (Process_Tab.Scrolledwindow9, Policy_Automatic, Policy_Automatic);
+   Set_Policy (Process_Tab.Scrolledwindow9, Policy_Always, Policy_Always);
 
    Gtk_New (Process_Tab.Data_Canvas);
    Add (Process_Tab.Scrolledwindow9, Process_Tab.Data_Canvas);
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
 
-   Gtk_New (Process_Tab.Notebook3);
-   Add (Process_Tab.Vpaned6, Process_Tab.Notebook3);
-   Set_Scrollable (Process_Tab.Notebook3, True);
-   Set_Show_Border (Process_Tab.Notebook3, True);
-   Set_Show_Tabs (Process_Tab.Notebook3, True);
-   Set_Tab_Hborder (Process_Tab.Notebook3, 2);
-   Set_Tab_Vborder (Process_Tab.Notebook3, 2);
-   Set_Tab_Pos (Process_Tab.Notebook3, Pos_Top);
+   Gtk_New (Process_Tab.Thread_Notebook);
+   Add (Process_Tab.Vpaned6, Process_Tab.Thread_Notebook);
+   Set_Scrollable (Process_Tab.Thread_Notebook, True);
+   Set_Show_Border (Process_Tab.Thread_Notebook, True);
+   Set_Show_Tabs (Process_Tab.Thread_Notebook, True);
+   Set_Tab_Hborder (Process_Tab.Thread_Notebook, 2);
+   Set_Tab_Vborder (Process_Tab.Thread_Notebook, 2);
+   Set_Tab_Pos (Process_Tab.Thread_Notebook, Pos_Top);
 
    Gtk_New (Process_Tab.Scrolledwindow8);
-   Add (Process_Tab.Notebook3, Process_Tab.Scrolledwindow8);
+   Add (Process_Tab.Thread_Notebook, Process_Tab.Scrolledwindow8);
    Set_Policy (Process_Tab.Scrolledwindow8, Policy_Never, Policy_Always);
 
-   Gtk_New (Process_Tab.Editor_Text);
+   Gtk_New (Process_Tab.Editor_Text, 1);
    Add (Process_Tab.Scrolledwindow8, Process_Tab.Editor_Text);
-   Set_Editable (Process_Tab.Editor_Text, False);
+   Set_Selection_Mode (Process_Tab.Editor_Text, Selection_Single);
+   Set_Shadow_Type (Process_Tab.Editor_Text, Shadow_In);
+   Set_Show_Titles (Process_Tab.Editor_Text, False);
+   Set_Column_Width (Process_Tab.Editor_Text, 0, 80);
+
+   Gtk_New (Process_Tab.Label54, -("label54"));
+   Set_Alignment (Process_Tab.Label54, 0.5, 0.5);
+   Set_Padding (Process_Tab.Label54, 0, 0);
+   Set_Justify (Process_Tab.Label54, Justify_Center);
+   Set_Line_Wrap (Process_Tab.Label54, False);
+   Set_Column_Widget (Process_Tab.Editor_Text, 0, Process_Tab.Label54);
 
    Gtk_New (Process_Tab.Label52, -("Main Thread"));
    Set_Alignment (Process_Tab.Label52, 0.5, 0.5);
    Set_Padding (Process_Tab.Label52, 0, 0);
    Set_Justify (Process_Tab.Label52, Justify_Center);
    Set_Line_Wrap (Process_Tab.Label52, False);
-   Set_Tab (Process_Tab.Notebook3, 0, Process_Tab.Label52);
+   Set_Tab (Process_Tab.Thread_Notebook, 0, Process_Tab.Label52);
 
    Gtk_New (Process_Tab.Scrolledwindow7);
    Add (Process_Tab.Process_Paned, Process_Tab.Scrolledwindow7);
