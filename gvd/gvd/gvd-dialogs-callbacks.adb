@@ -108,6 +108,13 @@ package body GVD.Dialogs.Callbacks is
 
       elsif Top = GVD_Dialog (Main_Window.PD_Dialog) then
          Match ("[0-9]+", Str, Matched);
+
+	 --  ??? The Command_Type was changed from Visible to Hidden
+	 --  (revision 1.62) because the debugger is still
+	 --  processing the previous command (Info_PD), and there is
+	 --  an assertion failure in Debugger.Send_Full. This does
+	 --  not happen for Task_Switch or Thread_Switch (above)
+
          PD_Switch
            (Process.Debugger,
             Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
