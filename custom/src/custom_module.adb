@@ -23,6 +23,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
+with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -71,8 +72,11 @@ package body Custom_Module is
    On_Activate_Cst : aliased constant String := "on_activate";
    Add_Before_Cst  : aliased constant String := "add_before";
    Ref_Cst         : aliased constant String := "ref";
+   Name_Cst        : aliased constant String := "name";
    Menu_Get_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
+   Menu_Rename_Params : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
    Menu_Create_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access,
       2 => On_Activate_Cst'Access,
@@ -988,6 +992,27 @@ package body Custom_Module is
             Set_Data (Inst, Widget => Gtk_Widget (Menu));
             Set_Return_Value (Data, Inst);
          end;
+
+      elsif Command = "rename" then
+         Name_Parameters (Data, Menu_Rename_Params);
+         declare
+            Inst : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
+            W    : constant Gtk_Widget     := Get_Data (Inst);
+            Menu : constant Gtk_Menu_Item  := Gtk_Menu_Item (W);
+            Label : Gtk_Accel_Label;
+         begin
+            if W /= null then
+               Gtk_New (Label, "");
+               Set_Text_With_Mnemonic (Label, Nth_Arg (Data, 2));
+               Set_Alignment (Label, 0.0, 0.5);
+               Set_Accel_Widget (Label, Menu);
+
+               Remove (Menu, Get_Child (Menu));
+               Add (Menu, Label);
+               Show_All (Label);
+            end if;
+            Free (Inst);
+         end;
       end if;
    end Menu_Handler;
 
@@ -1031,6 +1056,12 @@ package body Custom_Module is
          Minimum_Args  => 1,
          Maximum_Args  => 4,
          Static_Method => True,
+         Class         => Menu_Class,
+         Handler       => Menu_Handler'Access);
+      Register_Command
+        (Kernel, "rename",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => Menu_Class,
          Handler       => Menu_Handler'Access);
    end Register_Module;
