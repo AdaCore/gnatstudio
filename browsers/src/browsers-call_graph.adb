@@ -1454,12 +1454,14 @@ package body Browsers.Call_Graph is
               (Get_Database (Kernel), File_Information (Entity)));
 
          while not At_End (Iter) loop
-            Location := Get_Location (Get (Iter));
-            Print_Ref
-              (Kernel,
-               Location,
-               Get_Name (Info).all,
-               -"References for: " & Get_Name (Info).all);
+            if Get (Iter) /= No_Entity_Reference then
+               Location := Get_Location (Get (Iter));
+               Print_Ref
+                 (Kernel,
+                  Location,
+                  Get_Name (Info).all,
+                  -"References for: " & Get_Name (Info).all);
+            end if;
 
             Next (Iter);
          end loop;
