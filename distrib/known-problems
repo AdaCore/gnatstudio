@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- D515-001 "Tasks are running" window shows internal processings of GPS
+  Problem:    When launching GPS and exiting quickly, or when exiting right
+              after opening a new editor, GPS opens the "Tasks are running"
+              window and shows internal GPS commands.
+  Workaround: These messages can safely be ignored.
+
 - Using "Locate in explorer" from VCS Explorer doesn't work
   Problem:    When using the contextual menu on an entry in the VCS Explorer
               and using "Locate in Explorer: ...", nothing happens.
