@@ -733,6 +733,38 @@ package body Glide_Kernel.Scripts is
       elsif Command = "decl_column" then
          Entity := Get_Data (Instance);
          Set_Return_Value (Data, Get_Declaration_Column_Of (Entity));
+
+      elsif Command = "body" then
+         declare
+            Status : Find_Decl_Or_Body_Query_Status;
+            Lib_Info : LI_File_Ptr;
+            Location : File_Location;
+         begin
+            Entity := Get_Data (Instance);
+            Lib_Info := Locate_From_Source_And_Complete
+              (Kernel, Get_Declaration_File_Of (Entity));
+            Find_Next_Body
+              (Kernel,
+               Lib_Info    => Lib_Info,
+               File_Name   => Get_Declaration_File_Of (Entity),
+               Entity_Name => Get_Name (Entity),
+               Line        => Get_Declaration_Line_Of (Entity),
+               Column      => Get_Declaration_Column_Of (Entity),
+               Location    => Location,
+               Status      => Status);
+
+            if Status = Success then
+               Set_Return_Value
+                 (Data, Create_File_Location
+                    (Get_Script (Data),
+                     File   => Create_File
+                       (Get_Script (Data), Get_File (Location)),
+                     Line   => Get_Line (Location),
+                     Column => Get_Column (Location)));
+            else
+               Set_Error_Msg (Data, -"Body not found for the entity");
+            end if;
+         end;
       end if;
    end Create_Entity_Command_Handler;
 
@@ -1122,6 +1154,18 @@ package body Glide_Kernel.Scripts is
          Return_Value => "integer",
          Description  => -("Return the column in decl_file() at which the"
                            & " entity is defined"),
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "body",
+         Return_Value => "FileLocation",
+         Description  =>
+           -("Return the location of the body for this entity. This is the"
+             & " place where the subprogram is implemented, or where the full"
+             & " definition of a type is visible. For types which do not have"
+             & " the notion of body, this returns the location of the"
+             & " declaration"),
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
 
