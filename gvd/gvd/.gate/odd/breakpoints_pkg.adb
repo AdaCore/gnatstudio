@@ -309,7 +309,7 @@ begin
       Widget_Callback.To_Marshaller (On_Advanced_Watchpoint_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox3, Breakpoints.Advanced_Watchpoint);
 
-   Gtk_New (Breakpoints.Watchpoint, -("WatchPoint"));
+   Gtk_New (Breakpoints.Watchpoint, -("Variable"));
    Set_Alignment (Breakpoints.Watchpoint, 0.5, 0.5);
    Set_Padding (Breakpoints.Watchpoint, 0, 0);
    Set_Justify (Breakpoints.Watchpoint, Justify_Center);
@@ -416,7 +416,7 @@ begin
    Set_Shadow_Type (Breakpoints.Clist1, Shadow_In);
    Set_Show_Titles (Breakpoints.Clist1, True);
    Set_Column_Width (Breakpoints.Clist1, 0, 80);
-   Set_Column_Width (Breakpoints.Clist1, 1, 80);
+   Set_Column_Width (Breakpoints.Clist1, 1, 186);
 
    Gtk_New (Breakpoints.Label15, -("label15"));
    Set_Alignment (Breakpoints.Label15, 0.5, 0.5);
