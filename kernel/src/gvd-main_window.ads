@@ -34,7 +34,6 @@ with Basic_Types;
 with GVD.Types;
 with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
-with GVD.Memory_View;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Language_Handlers;
 with Ada.Unchecked_Deallocation;
@@ -67,7 +66,7 @@ package GVD.Main_Window is
 
       Menu_Box            : Gtk.Box.Gtk_Hbox;
       Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
-      Memory_View         : GVD.Memory_View.GVD_Memory_View;
+      Memory_View         : Gtk.Window.Gtk_Window;
       History_Dialog      : Gtk.Dialog.Gtk_Dialog;
       Thread_Dialog       : Gtk.Dialog.Gtk_Dialog;
       Task_Dialog         : Gtk.Dialog.Gtk_Dialog;
