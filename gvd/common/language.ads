@@ -179,6 +179,7 @@ package Language is
       Indent_Level    : Natural;
       Indent_Continue : Natural;
       Indent_Decl     : Natural;
+      Tab_Width       : Natural;
    end record;
    --  Define all parameters to indent a source code.
    --  Note that some of these parameters will be ignored, depending on the
@@ -191,7 +192,8 @@ package Language is
    Default_Indent_Parameters : constant Indent_Parameters :=
      (Indent_Level    => 3,
       Indent_Continue => 2,
-      Indent_Decl     => 0);
+      Indent_Decl     => 0,
+      Tab_Width       => 8);
 
    type Language_Category is
      (Cat_Unknown,
