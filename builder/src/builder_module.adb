@@ -217,85 +217,13 @@ package body Builder_Module is
 
    procedure Parse_Compiler_Output
      (Kernel : Kernel_Handle;
-      Output : String)
-   is
-      File_Location : constant Pattern_Matcher :=
-        Compile (Get_Pref (Kernel, File_Pattern));
-      File_Index : constant Integer :=
-        Integer (Get_Pref (Kernel, File_Pattern_Index));
-      Line_Index : constant Integer :=
-        Integer (Get_Pref (Kernel, Line_Pattern_Index));
-      Col_Index  : constant Integer :=
-        Integer (Get_Pref (Kernel, Column_Pattern_Index));
-      Matched    : Match_Array (0 .. 9);
-      Start      : Natural := Output'First;
-      Last       : Natural;
-      Real_Last  : Natural;
-      Line       : Natural := 1;
-      Column     : Natural := 1;
-
+      Output : String) is
    begin
       Insert (Kernel, Output, Add_LF => False);
       String_List_Utils.String_List.Append
         (Builder_Module_ID_Access (Builder_Module_ID).Output,
          Output);
-
-      while Start <= Output'Last loop
-         --  Parse output line by line and look for file locations
-
-         while Start < Output'Last
-           and then (Output (Start) = ASCII.CR
-                     or else Output (Start) = ASCII.LF)
-         loop
-            Start := Start + 1;
-         end loop;
-
-         Real_Last := Start;
-
-         while Real_Last < Output'Last
-           and then Output (Real_Last + 1) /= ASCII.CR
-           and then Output (Real_Last + 1) /= ASCII.LF
-         loop
-            Real_Last := Real_Last + 1;
-         end loop;
-
-         Match (File_Location, Output (Start .. Real_Last), Matched);
-
-         if Matched (0) /= No_Match then
-            if Matched (Line_Index) /= No_Match then
-               Line := Integer'Value
-                 (Output
-                    (Matched (Line_Index).First .. Matched (Line_Index).Last));
-
-               if Line <= 0 then
-                  Line := 1;
-               end if;
-            end if;
-
-            if Matched (Col_Index) = No_Match then
-               Last := Matched (Line_Index).Last;
-            else
-               Last := Matched (Col_Index).Last;
-               Column := Integer'Value
-                 (Output (Matched (Col_Index).First ..
-                          Matched (Col_Index).Last));
-
-               if Column <= 0 then
-                  Column := 1;
-               end if;
-            end if;
-
-            Insert_Result
-              (Kernel,
-               -"Builder Results",
-               Output
-                 (Matched (File_Index).First .. Matched (File_Index).Last),
-               Output (Last + 1 .. Real_Last),
-               Positive (Line), Positive (Column), 0);
-         end if;
-
-         Start := Real_Last + 1;
-      end loop;
+      Parse_File_Locations (Kernel, Output, -"Builder Results");
 
    exception
       when E : others =>
