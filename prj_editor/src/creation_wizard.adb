@@ -114,7 +114,9 @@ package body Creation_Wizard is
       Main_Page_Box := First_Page (Wiz);
       Set_Page (Wiz, 1, Main_Page_Box);
 
-      for E in 1 .. Attr_Count loop
+      --  "+1" here is for the "General" page.
+
+      for E in 1 .. Attr_Count + 1 loop
          Box := Attribute_Editors_Page_Box
            (Kernel           => Kernel,
             Project          => No_Project,
