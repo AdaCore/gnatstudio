@@ -1123,11 +1123,11 @@ begin
       Tooltip_Text => -"Set the value of selection",
       Icon => Gtk_Widget (Create_Pixmap (set_xpm, Main_Debug_Window)));
 
-   Main_Debug_Window.Entry15 := Get_Entry (Main_Debug_Window.Combo6);
-   Set_Editable (Main_Debug_Window.Entry15, True);
-   Set_Max_Length (Main_Debug_Window.Entry15, 0);
-   Set_Text (Main_Debug_Window.Entry15, -"");
-   Set_Visibility (Main_Debug_Window.Entry15, True);
+   Main_Debug_Window.Toolbar_Entry := Get_Entry (Main_Debug_Window.Combo6);
+   Set_Editable (Main_Debug_Window.Toolbar_Entry, True);
+   Set_Max_Length (Main_Debug_Window.Toolbar_Entry, 0);
+   Set_Text (Main_Debug_Window.Toolbar_Entry, -"");
+   Set_Visibility (Main_Debug_Window.Toolbar_Entry, True);
 
    Gtk_New (Main_Debug_Window.Toolbar2, Orientation_Horizontal, Toolbar_Icons);
    Pack_Start (Main_Debug_Window.Vbox1,
@@ -1199,7 +1199,7 @@ begin
       Tooltip_Text => -"Execute until selected stack frame returns",
       Icon => Gtk_Widget (Create_Pixmap (finish_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button58, "clicked", Widget_Callback.To_Marshaller (On_Continue1_Activate'Access), Main_Debug_Window);
+     (Main_Debug_Window.Button58, "clicked", Widget_Callback.To_Marshaller (On_Finish1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button60 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
@@ -1207,7 +1207,7 @@ begin
       Tooltip_Text => -"Continue program being debugged, after signal or breakpoint",
       Icon => Gtk_Widget (Create_Pixmap (cont_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button60, "clicked", On_Up1_Activate'Access, Main_Debug_Window);
+     (Main_Debug_Window.Button60, "clicked", Widget_Callback.To_Marshaller (On_Continue1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button61 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
@@ -1215,7 +1215,7 @@ begin
       Tooltip_Text => -"Interrupt debugged program",
       Icon => Gtk_Widget (Create_Pixmap (interrupt_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button61, "clicked", On_Down1_Activate'Access, Main_Debug_Window);
+     (Main_Debug_Window.Button61, "clicked", Widget_Callback.To_Marshaller (On_Interrupt1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button57 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
@@ -1223,7 +1223,7 @@ begin
       Tooltip_Text => -"Select and print stack frame that called this one",
       Icon => Gtk_Widget (Create_Pixmap (up_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button57, "clicked", Widget_Callback.To_Marshaller (On_Finish1_Activate'Access), Main_Debug_Window);
+     (Main_Debug_Window.Button57, "clicked", On_Up1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button51 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
@@ -1231,7 +1231,7 @@ begin
       Tooltip_Text => -"Select and print stack frame called by this one",
       Icon => Gtk_Widget (Create_Pixmap (down_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button51, "clicked", Widget_Callback.To_Marshaller (On_Interrupt1_Activate'Access), Main_Debug_Window);
+     (Main_Debug_Window.Button51, "clicked", On_Down1_Activate'Access, Main_Debug_Window);
 
    Gtk_New (Main_Debug_Window.Frame7);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Frame7, True, True, 0);

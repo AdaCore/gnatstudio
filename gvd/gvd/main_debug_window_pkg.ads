@@ -196,7 +196,7 @@ package Main_Debug_Window_Pkg is
       About_Odd1 : Gtk_Menu_Item;
       Toolbar1 : Gtk_Toolbar;
       Combo6 : Gtk_Combo;
-      Entry15 : Gtk_Entry;
+      Toolbar_Entry : Gtk_Entry;
       Button62 : Gtk_Widget;
       Button63 : Gtk_Widget;
       Button64 : Gtk_Widget;
