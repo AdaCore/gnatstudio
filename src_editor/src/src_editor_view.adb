@@ -1192,6 +1192,7 @@ package body Src_Editor_View is
       Iter_Location : Gdk_Rectangle;
       Line_Height   : Gint;
       Unused        : Gint;
+      Result        : Boolean;
 
    begin
       Window_To_Buffer_Coords
@@ -1220,7 +1221,10 @@ package body Src_Editor_View is
       --       beyond the end of the last line, in which case we also
       --       return -1,-1.
 
-      Src_Editor_Buffer.Forward_To_Line_End (Iter);
+      if not Ends_Line (Iter) then
+         Forward_To_Line_End (Iter, Result);
+      end if;
+
       Get_Iter_Location (View, Iter, Iter_Location);
       Get_Line_Yrange (View, Iter, Unused, Line_Height);
 
