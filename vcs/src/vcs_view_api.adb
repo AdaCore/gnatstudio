@@ -537,6 +537,8 @@ package body VCS_View_API is
                  (On_Menu_Get_Status_Dir'Access),
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
+
+            Items_Inserted := True;
          end if;
 
          if Actions (Update) /= null then
@@ -549,6 +551,8 @@ package body VCS_View_API is
                  (On_Menu_Update_Dir'Access),
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
+
+            Items_Inserted := True;
          end if;
 
          if Actions (Status_Files) /= null then
@@ -562,6 +566,8 @@ package body VCS_View_API is
                  (On_Menu_Get_Status_Dir_Recursive'Access),
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
+
+            Items_Inserted := True;
          end if;
 
          if Actions (Update) /= null then
@@ -575,6 +581,8 @@ package body VCS_View_API is
                  (On_Menu_Update_Dir_Recursive'Access),
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
+
+            Items_Inserted := True;
          end if;
 
          if Show_Everything
@@ -677,7 +685,7 @@ package body VCS_View_API is
            or else Dir_Section
            or else File_Section
          then
-            Set_Sensitive (Menu_Item, Section_Active and then Items_Inserted);
+            Set_Sensitive (Menu_Item, Section_Active);
          end if;
       end if;
    end VCS_Contextual_Menu;
