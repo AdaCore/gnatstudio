@@ -576,9 +576,9 @@ package body Ada_Analyzer is
                  new String' (Value.Identifier (1 .. Value.Ident_Len));
             end if;
 
-            Constructs.Current.Sloc_Start      := Value.Sloc;
-            Constructs.Current.Sloc_End        := (Line_Count, Column);
-            Constructs.Current.Subprogram_Spec := Subprogram_Decl;
+            Constructs.Current.Sloc_Start     := Value.Sloc;
+            Constructs.Current.Sloc_End       := (Line_Count, Column);
+            Constructs.Current.Is_Declaration := Subprogram_Decl;
          end if;
       end Pop;
 
