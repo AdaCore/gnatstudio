@@ -28,7 +28,7 @@ package body Codefix.Errors_Parser is
    ---------------------
 
    procedure Set_Error_State
-     (Error : Error_Subcategorie;
+     (Error : Errors_Subcategories;
       State : Error_State) is
    begin
       General_Errors_Array (Error) := State;
@@ -38,7 +38,8 @@ package body Codefix.Errors_Parser is
    -- Get_Error_State --
    ---------------------
 
-   function Get_Error_State (Error : Error_Subcategorie) return Error_State is
+   function Get_Error_State
+     (Error : Errors_Subcategories) return Error_State is
    begin
       return General_Errors_Array (Error);
    end Get_Error_State;
@@ -153,7 +154,7 @@ package body Codefix.Errors_Parser is
                return;
             end if;
          exception
-            when Uncorrectible_Message =>
+            when Uncorrectable_Message =>
                null;
          end;
       end loop;
@@ -321,7 +322,7 @@ package body Codefix.Errors_Parser is
       Match (This.Misspelling_Matcher.all, Get_Message (Preview), Fix_Matches);
 
       if Fix_Matches (0) = No_Match then
-         raise Uncorrectible_Message;
+         raise Uncorrectable_Message;
       end if;
 
       Append
@@ -656,7 +657,7 @@ package body Codefix.Errors_Parser is
          Get_Message (Message) (Matches (1).First .. Matches (1).Last));
 
       if Str_Red.all = "return" or else Str_Red.all = "RETURN" then
-         raise Uncorrectible_Message;
+         raise Uncorrectable_Message;
       end if;
 
 
@@ -701,7 +702,7 @@ package body Codefix.Errors_Parser is
          Wrong_Matches);
 
       if Wrong_Matches (0) /= No_Match then
-         raise Uncorrectible_Message;
+         raise Uncorrectable_Message;
       end if;
 
       Append
@@ -769,7 +770,7 @@ package body Codefix.Errors_Parser is
       Match (This.Col_Matcher.all, Line_Red.all, Col_Matches);
 
       if Col_Matches (0) = No_Match then
-         raise Uncorrectible_Message;
+         raise Uncorrectable_Message;
       end if;
 
       Initialize
@@ -971,7 +972,7 @@ package body Codefix.Errors_Parser is
          Append (Solutions, Unexpected (Current_Text, Message, "then"));
       else
          Free (Str_Red);
-         raise Uncorrectible_Message;
+         raise Uncorrectable_Message;
       end if;
 
       Free (Str_Red);
@@ -1041,7 +1042,7 @@ package body Codefix.Errors_Parser is
       else
          Free (Str_Red_1);
          Free (Str_Red_2);
-         raise Uncorrectible_Message;
+         raise Uncorrectable_Message;
       end if;
 
       Free (Str_Red_1);
@@ -1543,13 +1544,13 @@ package body Codefix.Errors_Parser is
       Get_Preview (Errors_List, Current_Text, Preview);
 
       if Preview = Invalid_Error_Message then
-         raise Uncorrectible_Message;
+         raise Uncorrectable_Message;
       end if;
 
       Match (This.Check_Possible.all, Get_Message (Preview), Matches_Check);
 
       if Matches_Check (0) = No_Match then
-         raise Uncorrectible_Message;
+         raise Uncorrectable_Message;
       end if;
 
       Get_Message (Errors_List, Current_Text, Preview);
@@ -1686,10 +1687,7 @@ begin
    Add_Parser (new Pragma_Missplaced);
    Add_Parser (new Constant_Expected);
    Add_Parser (new Possible_Interpretation);
-
-   --  Add_Parser (new Hidden_Declaration);
-   --  Seems to works bad. Needs more investigations
-
+   Add_Parser (new Hidden_Declaration);
    Add_Parser (new Redundant_Conversion);
    Add_Parser (new Missplaced_With);
 
