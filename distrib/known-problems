@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- D802-017 GPS scrolls back to line 1 when opening an already opened file
+  Problem:    If you double-click on a file name in the explorer (or
+              select it in the Open From Project menu), and the file is
+              already opened, GPS will show the file but scroll back to
+              line 1
+  Workaround: Select the file through the Window menu
+
 - D914-023 Sort order in Project View now kept when scenario changes
   Problem:    If you change the value of the environment variables that
               describe the current scenario, the list of directories in the
