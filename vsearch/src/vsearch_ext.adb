@@ -1162,12 +1162,14 @@ package body Vsearch_Ext is
                Return_Callback.To_Marshaller (On_Delete'Access));
          end if;
 
-         Child := Put (Get_MDI (Kernel), Vsearch_Module_Id.Search,
+         Child := Put (Kernel, Vsearch_Module_Id.Search,
                        All_Buttons or Float_As_Transient
                        or Always_Destroy_Float,
                        Focus_Widget =>
                          Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Combo),
-                       Default_Width => 1, Default_Height => 1);
+                       Default_Width => 1, Default_Height => 1,
+                       Module => Vsearch_Module_Id,
+                       Desktop_Independent => True);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
