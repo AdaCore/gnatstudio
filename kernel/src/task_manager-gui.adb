@@ -88,7 +88,8 @@ package body Task_Manager.GUI is
    -------------
 
    procedure Refresh (View : access Task_Manager_Interface_Record'Class) is
-      Global : constant Boolean := View.Manager.Need_Global_Refresh;
+      Global : constant Boolean :=
+        View.Manager.Need_Global_Refresh or else View.Lines = null;
    begin
       if Global then
          Clear (View.Tree.Model);
@@ -128,6 +129,7 @@ package body Task_Manager.GUI is
    begin
       if not (Index in View.Manager.Queues'Range)
         or else not View.Manager.Queues (Index).Need_Refresh
+        or else View.Lines = null
         or else not (Index in View.Lines'Range)
       then
          return;
