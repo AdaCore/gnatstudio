@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -372,6 +372,7 @@ package Entities.Queries is
    function Get_Parent_Package
      (Pkg : Entity_Information) return Entity_Information;
    --  Return the parent package for the package Pkg.
+   --  This is not intended to be use for nested packages.
 
    type Child_Type_Iterator is private;
    type Child_Type_Iterator_Access is access Child_Type_Iterator;
