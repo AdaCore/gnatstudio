@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.4.1
 
+- CC02-007 Duplicate of attribute declarations in generated project files
+  Problem:    GPS will insert duplicate declarations for the attributes if
+              you edit the switches through the Project Properties editor.
+  Workaround: In the ada_support.xml and c_support.xml files installed with
+              GPS, replace 'index="Ada"' with 'index="ada"'
+
 - CC01-003 Error when saving project
   Problem:    Saving a project through Project->Save All might result in an
               internal error which blocks GPS, and does not save the project.
