@@ -366,26 +366,45 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Gtk_New (Process_List, Title => -"Process Selection");
-      Skip_To_Char (Exec_Command, Command_Index, ' ');
-      Args := Argument_String_To_List
-        (Exec_Command (Command_Index + 1 .. Exec_Command'Last));
 
-      declare
-         New_Args : Argument_List (Args'First .. Args'Last + 1);
-      begin
-         New_Args (Args'First .. Args'Last) := Args.all;
-         New_Args (New_Args'Last) := new String' (Get_Pref (List_Processes));
+      if Tab.Descriptor.Remote_Host = null
+        or else Tab.Descriptor.Remote_Host.all = ""
+      then
+         Skip_To_Char (Exec_Command, Command_Index, ' ');
+         Args := Argument_String_To_List
+           (Exec_Command (Command_Index + 1 .. Exec_Command'Last));
+         declare
+            New_Args : Argument_List (Args'First .. Args'Last + 1);
+         begin
+            New_Args (Args'First .. Args'Last) := Args.all;
+            New_Args (New_Args'Last) :=
+              new String' (Get_Pref (List_Processes));
 
-         GNAT.Expect.Non_Blocking_Spawn
-           (P,
-            Exec_Command (Exec_Command'First .. Command_Index - 1),
-            New_Args);
-         Expect (P, Match, "\n");
+            GNAT.Expect.Non_Blocking_Spawn
+              (P,
+               Exec_Command (Exec_Command'First .. Command_Index - 1),
+               New_Args);
+            Expect (P, Match, "\n");
 
-         for J in New_Args'Range loop
-            Free (New_Args (J));
-         end loop;
-      end;
+            for J in New_Args'Range loop
+               Free (New_Args (J));
+            end loop;
+         end;
+   else
+         declare
+            New_Args : Argument_List (1 .. 2);
+         begin
+            New_Args (2) := new String' (Get_Pref (List_Processes));
+            New_Args (1) := new String' (Tab.Descriptor.Remote_Host.all);
+            GNAT.Expect.Non_Blocking_Spawn
+              (P,
+               Get_Pref (Remote_Protocol),
+               New_Args);
+            Expect (P, Match, "\n");
+            Free (New_Args (1));
+            Free (New_Args (2));
+         end;
+      end if;
 
       Free (Args);
 
