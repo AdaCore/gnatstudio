@@ -302,7 +302,7 @@ package body Language_Handlers.Glide is
       then
          return null;
       else
-         return Handler.Languages (Num).Handler;
+         return Handler.Languages (Handler.Languages'First + Num - 1).Handler;
       end if;
    end Get_Nth_Handler;
 

@@ -87,7 +87,8 @@ package Language_Handlers.Glide is
    function Get_Nth_Handler
      (Handler : access Glide_Language_Handler_Record;
       Num     : Positive) return Src_Info.LI_Handler;
-   --  Return the handler for the Num-th language
+   --  Return the handler for the Num-th language.
+   --  The first handler is number 1.
 
    Unsupported_Language : exception;
    --  Raised when a file name can not be associated with one of the handlers.
