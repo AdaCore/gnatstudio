@@ -5709,9 +5709,12 @@ nodes:
    @end table
 
 @item Project_Field
-This tags describes the tools that are used to support this
+This tag describes the tools that are used to support this
 language. The name of these tools is stored in the project files, and
-therefore only a limited number of tools can be specified.
+therefore only a limited number of tools can be specified. Note that this
+tag is currently only used by the project properties and wizard, and is
+not taken into account by other components.
+
 This nodes has two attributes:
 
    @table @code
@@ -5773,10 +5776,6 @@ Here is an example of a language definition for the GPS project files:
       <Index>1</Index>
     </Category>
   </Categories>
-
-  <Project_Field
-      name="compiler_command"
-      index="project file">Project file support</Project_Field>
 </Language>
 @end smallexample
 
