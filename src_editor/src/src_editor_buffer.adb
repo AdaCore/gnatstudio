@@ -789,9 +789,6 @@ package body Src_Editor_Buffer is
       UTF8     : Gtkada.Types.Chars_Ptr;
       Ignore   : aliased Natural;
       Length   : aliased Natural;
-
-      pragma Warnings (Off);
-
    begin
       Success := True;
       Contents := Read_File (Filename);
@@ -811,7 +808,7 @@ package body Src_Editor_Buffer is
         (Contents.all, "UTF-8", "ISO-8859-1",
          Ignore'Unchecked_Access, Length'Unchecked_Access);
 
-      --  ??? This does not seem to work, but should
+      --  --  ??? This does not seem to work, but should
       --  UTF8 := Locale_To_UTF8
       --    (Contents.all, Ignore'Unchecked_Access, Length'Unchecked_Access);
 
@@ -1074,7 +1071,10 @@ package body Src_Editor_Buffer is
       Match_Start_Line   : out Gint;
       Match_Start_Column : out Gint;
       Match_End_Line     : out Gint;
-      Match_End_Column   : out Gint) is
+      Match_End_Column   : out Gint)
+   is
+      pragma Unreferenced
+        (Pattern, Case_Sensitive, Whole_Word, Search_Forward);
    begin
       pragma Assert (Is_Valid_Position (Buffer, From_Line, From_Column));
 
