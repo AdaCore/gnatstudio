@@ -1,5 +1,16 @@
 Known Problems fixed in GPS 1.2.2
 
+- C520-006 Location window raised unexpectedly
+  Problem:    The location window is sometimes raised when manipulating the
+              source editor even though no information is displayed in it.
+  Workaround: Close the location window in such cases
+
+- Infinite loop in search dialog
+  Problem:    In some cases, it might happen that looking for a constant string
+              results in an infinite loop in GPS.
+  Workaround: Click the Regexp button in the search dialog before starting the
+              search
+                                                                                
 - C605-012 Editing read-only project file
   Problem:    When a project has been edited through the project properties
               dialog, and you try to save it but the file is read-only on the
