@@ -604,6 +604,12 @@ package body Debugger.Gdb is
          Name_Last  := 1;
          Line       := 0;
       else
+         --  Skip the line feed character.
+
+         if Last < Str'Last and then Str (Last + 1) = ASCII.LF then
+            Last := Last + 1;
+         end if;
+
          Name_First := Matched (1).First;
          Name_Last  := Matched (1).Last;
          Line       := Natural'Value
