@@ -22,7 +22,7 @@
 --  files.
 
 with Diff_Utils;  use Diff_Utils;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Glide_Kernel;
 
 package Vdiff2_Utils is
@@ -31,20 +31,22 @@ package Vdiff2_Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Merge  : String;
       Item   : Diff_List_Head);
-   --  show a result of a Merge.
+   --  Show a result of a Merge
 
    procedure Show_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_List_Head);
-   --  show a result of diff Diff
+   --  Show a result of diff Diff
+
    procedure Show_Differences3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_List_Head);
+   --  ???
 
    procedure Hide_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_List_Head);
-   --  hide the hightlighting.
+   --  Hide the hightlighting ??? not very clear
 
    type Text_Iterator;
 
