@@ -48,7 +48,7 @@ package body Dynamic_Arrays is
 
    function Length (T : Instance) return Index_Type is
    begin
-      return Index_Type'Succ (Last (T) - First);
+      return T.P.Next_To_Last - First;
    end Length;
 
    ------------
@@ -116,7 +116,7 @@ package body Dynamic_Arrays is
 
    function Find (T : Instance; Item : Data) return Index_Type is
    begin
-      for Index in First .. Last (T) loop
+      for Index in First .. T.P.Next_To_Last - 1 loop
          if T.Table (Index) = Item then
             return Index;
          end if;
