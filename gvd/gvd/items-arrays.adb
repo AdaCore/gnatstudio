@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                  GPS                              --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                                AdaCore                            --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -55,14 +55,17 @@ package body Items.Arrays is
       --  Do we have an array with no element ?
 
       if Length <= 0 then
-
-         --  Special case for one dimensional arrays, since these are often
-         --  strings whose length was not known when parsing the type info.
          if Item.Num_Dimensions = 1 then
+            --  Special case for one dimensional arrays, since these are often
+            --  strings whose length was not known when parsing the type info.
+
             return Long_Integer'Image (Item.Dimensions (Dim_Num).First);
          else
-            return "??";
+            --  As an approximation, return Index itself
+
+            return Long_Integer'Image (Index);
          end if;
+
       else
          declare
             Dim : constant String := Long_Integer'Image
@@ -763,13 +766,14 @@ package body Items.Arrays is
    is
       W : constant Gint := Width - Item.Index_Width - 2 * Border_Spacing -
         Left_Border;
-
    begin
       Item.Width := Width;
 
       if Item.Visible and then Item.Values /= null then
          for V in Item.Values'Range loop
-            Propagate_Width (Item.Values (V).Value.all, W);
+            if Item.Values (V).Value /= null then
+               Propagate_Width (Item.Values (V).Value.all, W);
+            end if;
          end loop;
       end if;
    end Propagate_Width;
