@@ -51,21 +51,25 @@ package Glide_Kernel.Console is
    procedure Parse_File_Locations
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
-      Category       : String);
+      Category       : String;
+      Highlight      : Boolean := False);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
+   --  If Highlighting is True, attempt to highlight the corresponding
+   --  locations using Category as highlighting identifier.
 
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class);
    --  If the message window is present in the MDI, raise it.
 
    procedure Insert_Result
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String;
-      File     : String;
-      Text     : String;
-      Line     : Positive;
-      Column   : Positive;
-      Length   : Natural := 0);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Category  : String;
+      File      : String;
+      Text      : String;
+      Line      : Positive;
+      Column    : Positive;
+      Length    : Natural := 0;
+      Highlight : Boolean := False);
    --  Insert a new location in the result view.
 
    procedure Remove_Result_Category

@@ -174,7 +174,8 @@ package body Glide_Kernel.Console is
    procedure Parse_File_Locations
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
-      Category       : String)
+      Category       : String;
+      Highlight      : Boolean := False)
    is
       File_Location : constant Pattern_Matcher :=
         Compile (Get_Pref (Kernel, File_Pattern));
@@ -239,10 +240,10 @@ package body Glide_Kernel.Console is
             Insert_Result
               (Kernel,
                Category,
-               Text
-                 (Matched (File_Index).First .. Matched (File_Index).Last),
+               Text (Matched (File_Index).First .. Matched (File_Index).Last),
                Text (Last + 1 .. Real_Last),
-               Positive (Line), Positive (Column), 0);
+               Positive (Line), Positive (Column), 0,
+               Highlight);
          end if;
 
          Start := Real_Last + 1;
@@ -268,18 +269,19 @@ package body Glide_Kernel.Console is
    -------------------
 
    procedure Insert_Result
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String;
-      File     : String;
-      Text     : String;
-      Line     : Positive;
-      Column   : Positive;
-      Length   : Natural := 0)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Category  : String;
+      File      : String;
+      Text      : String;
+      Line      : Positive;
+      Column    : Positive;
+      Length    : Natural := 0;
+      Highlight : Boolean := False)
    is
       View : constant Result_View := Get_Or_Create_Result_View (Kernel);
    begin
       if View /= null then
-         Insert (View, Category, File, Line, Column, Text, Length);
+         Insert (View, Category, File, Line, Column, Text, Length, Highlight);
          Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
       end if;
    end Insert_Result;
