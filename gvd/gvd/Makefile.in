@@ -66,8 +66,8 @@ gvd_test.o: gvd_test.c gvd-api.h
 
 install-nocheck: force
 	$(MKDIR) $(bindir)
-	$(STRIP) $(EXEC)
 	$(INSTALL_PROGRAM) $(EXEC) $(bindir)
+	$(STRIP) $(bindir)/$(EXEC)
 
 install: $(EXEC) install-nocheck
 
