@@ -326,24 +326,22 @@ begin
 
                   if Level = 0 then
                      Main_Debug_Window.Debug_Mode := False;
-                  else
-                     Main_Debug_Window.Debug_Mode := True;
-                     begin
-                        Main_Debug_Window.Log_Level :=
-                          GVD.Types.Command_Type'Val
-                            (GVD.Types.Command_Type'Pos
-                              (GVD.Types.Command_Type'Last) + 1 - Level);
-                     exception
-                        when Constraint_Error =>
-                           --  Means that the log level given is
-                           --  either < 0 or > 4
-                           if GVD.Can_Output then
-                              Put_Line ("Invalid value for --log-level");
-                           end if;
 
-                           Help;
-                           OS_Exit (-1);
-                     end;
+                  elsif Level in 1 .. GVD.Types.Command_Type'Pos
+                                        (GVD.Types.Command_Type'Last) + 1 then
+                     Main_Debug_Window.Debug_Mode := True;
+                     Main_Debug_Window.Log_Level :=
+                       GVD.Types.Command_Type'Val
+                         (GVD.Types.Command_Type'Pos
+                           (GVD.Types.Command_Type'Last) + 1 - Level);
+
+                  else
+                     if GVD.Can_Output then
+                        Put_Line ("Invalid value for --log-level");
+                     end if;
+
+                     Help;
+                     OS_Exit (-1);
                   end if;
 
                when 't' =>
