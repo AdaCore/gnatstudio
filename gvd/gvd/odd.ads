@@ -18,6 +18,46 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib; use Glib;
+
 package Odd is
-   pragma Pure;
+
+   ---------------
+   -- Constants --
+   ---------------
+
+   Editor_Font_Size : constant Gint := 12;
+   --  Size of the font used in the editor.
+
+   Editor_Font : constant String := "Courier";
+   --  Font used in the editor.
+
+   Comments_Color : constant String := "red";
+   --  Color used for comments.
+
+   Strings_Color  : constant String := "brown";
+   --  Color used for strings.
+
+   Keywords_Color : constant String := "blue";
+   --  Color used for keywords.
+
+   Debugger_Highlight_Color : constant String := "blue";
+   --  Color used for highlighting in the debugger window.
+
+   Debugger_Font_Size : constant Gint := 12;
+   --  Size of the font used in the debugger text window.
+
+   Debugger_Font : constant String := "Courier";
+   --  Font used in the debugger text window.
+
+   Editor_Show_Line_Nums : constant Boolean := True;
+   --  Whether line numbers should be shown in the code editor
+
+   Editor_Show_Line_With_Code : constant Boolean := False;
+   --  Whether dots should be shown in the code editor for lines that
+   --  contain code.
+
+   Align_Items_On_Grid : constant Boolean := True;
+   --  Should items be aligned on the grid.
+
 end Odd;
