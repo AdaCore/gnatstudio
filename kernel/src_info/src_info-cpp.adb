@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Prj;
+with Prj_API;
+
 with SN,
      SN.DB_Structures,
      SN.Browse,
@@ -33,9 +35,9 @@ use  SN,
 package body Src_Info.CPP is
    type SN_Table_Array is array (Table_Type) of DB_File;
 
-   ----------------------
-   --  Symbol_Handler  --
-   ----------------------
+   --------------------
+   -- Symbol_Handler --
+   --------------------
    type Symbol_Handler is access procedure (Sym : FIL_Table;
                            File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array);
@@ -50,9 +52,9 @@ package body Src_Info.CPP is
                            File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array);
 
-   -----------
-   --  Ext  --
-   -----------
+   ---------
+   -- Ext --
+   ---------
    function Ext (S : String) return String is
       R : String (1 .. 3) := ASCII.NUL & ASCII.NUL & ASCII.NUL;
    begin
@@ -61,9 +63,9 @@ package body Src_Info.CPP is
    end Ext;
    pragma Inline (Ext);
 
-   -------------------------
-   --  Table_Type_To_Ext  --
-   -------------------------
+   -----------------------
+   -- Table_Type_To_Ext --
+   -----------------------
    Table_Type_To_Ext : array (Table_Type) of String (1 .. 3) :=
       (FIL    => Ext ("fil"),
        F      => Ext ("f"),
@@ -74,9 +76,9 @@ package body Src_Info.CPP is
       (others   => Sym_Default_Handler'Access);
 
 
-   ---------------------
-   --  Open_DB_Files  --
-   ---------------------
+   -------------------
+   -- Open_DB_Files --
+   -------------------
    procedure Open_DB_Files (SN_Table : in out SN_Table_Array;
                             DB_Prefix : in String) is
    begin
@@ -97,9 +99,9 @@ package body Src_Info.CPP is
    end Open_DB_Files;
 
 
-   ----------------------
-   --  Close_DB_Files  --
-   ----------------------
+   --------------------
+   -- Close_DB_Files --
+   --------------------
    procedure Close_DB_Files (SN_Table : in out SN_Table_Array) is
    begin
       for Table in Table_Type loop
@@ -112,9 +114,9 @@ package body Src_Info.CPP is
    end Close_DB_Files;
 
 
-   --------------------
-   --  Process_File  --
-   --------------------
+   ------------------
+   -- Process_File --
+   ------------------
    procedure Process_File (Source_Filename : in String;
                            File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array) is
@@ -142,9 +144,9 @@ package body Src_Info.CPP is
    end Process_File;
 
 
-   -----------------------------
-   --  Create_Or_Complete_LI  --
-   -----------------------------
+   ---------------------------
+   -- Create_Or_Complete_LI --
+   ---------------------------
    procedure Create_Or_Complete_LI
      (Handler                : access CPP_LI_Handler_Record;
       File                   : in out LI_File_Ptr;
@@ -152,16 +154,19 @@ package body Src_Info.CPP is
       List                   : in out LI_File_List;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
-      Predefined_Object_Path : String) is
+      Predefined_Object_Path : String) 
+   is
       pragma Unreferenced (Handler);
       pragma Unreferenced (List);
       pragma Unreferenced (Project);
       pragma Unreferenced (Predefined_Object_Path);
       SN_Table : SN_Table_Array;
+      SN_Dir   : String := Prj_API.Object_Path
+        (Project, Recursive => False) & Browse.DB_Dir_Name;
    begin
-      Open_DB_Files (SN_Table,
-          Predefined_Source_Path
-          & Directory_Separator & Browse.DB_File_Name);
+      Open_DB_Files
+        (SN_Table,
+         SN_Dir & Directory_Separator & Browse.DB_File_Name);
 
       Process_File (Source_Filename, File, SN_Table);
 
