@@ -104,15 +104,18 @@ package body Python_Module is
    procedure Execute_Command
      (Script             : access Python_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True);
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean);
    function Execute_Command
      (Script  : access Python_Scripting_Record;
       Command : String;
-      Display_In_Console : Boolean) return String;
+      Display_In_Console : Boolean;
+      Errors  : access Boolean) return String;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True);
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean);
    function Get_Name (Script : access Python_Scripting_Record) return String;
    function Is_Subclass
      (Script : access Python_Scripting_Record;
@@ -439,6 +442,7 @@ package body Python_Module is
       Ignored      : Integer;
       pragma Unreferenced (Ignored);
       N      : Node_Ptr;
+      Errors : Boolean;
    begin
       Python_Module_Id := new Python_Module_Record;
       Register_Module
@@ -471,7 +475,7 @@ package body Python_Module is
       Python_Module_Id.Script.GPS_Module := Py_InitModule
         (GPS_Module_Name, Doc => "Interface with the GPS environment");
       Run_Command (Python_Module_Id.Script.Interpreter,
-                   "import GPS", Hide_Output => True);
+                   "import GPS", Hide_Output => True, Errors => Errors);
 
       Python_Module_Id.Script.GPS_Unexpected_Exception := PyErr_NewException
         (GPS_Module_Name & ".Unexpected_Exception", null, null);
@@ -613,6 +617,7 @@ package body Python_Module is
       D   : Dir_Type;
       File : String (1 .. 1024);
       Last : Natural;
+      Errors : Boolean;
    begin
       if Python_Module_Id = null then
          return;
@@ -624,7 +629,8 @@ package body Python_Module is
          Run_Command
            (Python_Module_Id.Script.Interpreter,
             "sys.path=['" & Dir & "']+sys.path",
-            Hide_Output => True);
+            Hide_Output => True,
+            Errors      => Errors);
 
          Open (D, Dir);
 
@@ -639,7 +645,8 @@ package body Python_Module is
                Execute_Command
                  (Python_Module_Id.Script,
                   "import " & Base_Name (File (1 .. Last), ".py"),
-                  Display_In_Console => True);
+                  Display_In_Console => True,
+                  Errors => Errors);
             end if;
          end loop;
 
@@ -1154,14 +1161,17 @@ package body Python_Module is
    procedure Execute_Command
      (Script             : access Python_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True) is
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean) is
    begin
       if Display_In_Console then
          Insert_Text (Script.Interpreter, Command & ASCII.LF);
       end if;
 
       Run_Command
-        (Script.Interpreter, Command, Hide_Output => not Display_In_Console);
+        (Script.Interpreter, Command,
+         Hide_Output => not Display_In_Console,
+         Errors      => Errors);
    end Execute_Command;
 
    ---------------------
@@ -1171,10 +1181,12 @@ package body Python_Module is
    function Execute_Command
      (Script  : access Python_Scripting_Record;
       Command : String;
-      Display_In_Console : Boolean) return String is
+      Display_In_Console : Boolean;
+      Errors  : access Boolean) return String is
    begin
       return Run_Command
-        (Script.Interpreter, Command, Hide_Output => not Display_In_Console);
+        (Script.Interpreter, Command, Hide_Output => not Display_In_Console,
+         Errors => Errors);
    end Execute_Command;
 
    ------------------
@@ -1184,10 +1196,12 @@ package body Python_Module is
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True) is
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean) is
    begin
       Execute_Command
-        (Script, "execfile (""" & Filename & """)", Display_In_Console);
+        (Script, "execfile (""" & Filename & """)",
+         Display_In_Console, Errors);
    end Execute_File;
 
    --------------

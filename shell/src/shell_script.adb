@@ -157,15 +157,18 @@ package body Shell_Script is
    procedure Execute_Command
      (Script             : access Shell_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True);
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean);
    function Execute_Command
      (Script  : access Shell_Scripting_Record;
       Command : String;
-      Display_In_Console : Boolean := True) return String;
+      Display_In_Console : Boolean := True;
+      Errors  : access Boolean) return String;
    procedure Execute_File
      (Script             : access Shell_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True);
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean);
    function Get_Name (Script : access Shell_Scripting_Record) return String;
    function Is_Subclass
      (Script : access Shell_Scripting_Record;
@@ -302,15 +305,17 @@ package body Shell_Script is
 
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String) return String;
-   --  Execute a command in the GPS shell and returns its result.
+      Command : String;
+      Errors  : access Boolean) return String;
+   --  n a command in the GPS shell and returns its result.
    --  Command might be a series of commands, separated by semicolons or
    --  newlines. The return value is the result of the last command.
 
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+      Args    : GNAT.OS_Lib.Argument_List;
+      Errors  : access Boolean) return String;
    --  Execute a command in the GPS shell and returns its result.
    --  Command must be a single command (no semicolon-separated list).
 
@@ -498,7 +503,9 @@ package body Shell_Script is
       K : constant Kernel_Handle := Kernel_Handle (Kernel);
    begin
       declare
-         S : constant String := Execute_GPS_Shell_Command (K, Input);
+         Errors : aliased Boolean;
+         S : constant String := Execute_GPS_Shell_Command
+           (K, Input, Errors'Unchecked_Access);
       begin
          --  Preserver the focus on the console after an interactive execution
          Set_Focus_Child (Get_Or_Create_Console (K));
@@ -777,10 +784,12 @@ package body Shell_Script is
          declare
             Filename : constant String := Nth_Arg (Data, 1);
             Buffer : GNAT.OS_Lib.String_Access := Read_File (Filename);
+            Errors : Boolean;
          begin
             if Buffer /= null then
                Execute_Command
-                 (Get_Script (Data), Buffer.all, Display_In_Console => True);
+                 (Get_Script (Data), Buffer.all, Display_In_Console => True,
+                  Errors => Errors);
                Free (Buffer);
             else
                Set_Error_Msg (Data, -"File not found: """ & Filename & '"');
@@ -921,11 +930,14 @@ package body Shell_Script is
    procedure Execute_Command
      (Script             : access Shell_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True)
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean)
    is
+      Err : aliased Boolean;
       S : constant String := Execute_GPS_Shell_Command
-        (Script.Kernel, Command);
+        (Script.Kernel, Command, Err'Unchecked_Access);
    begin
+      Errors := Err;
       if Display_In_Console and then Script.Console /= null then
          Insert (Script.Console, S);
       end if;
@@ -938,12 +950,15 @@ package body Shell_Script is
    procedure Execute_File
      (Script             : access Shell_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True)
+      Display_In_Console : Boolean := True;
+      Errors             : out Boolean)
    is
+      Err  : aliased Boolean;
       Args : Argument_List := (1 => new String'(Filename));
       S    : constant String := Execute_GPS_Shell_Command
-        (Script.Kernel, "load", Args);
+        (Script.Kernel, "load", Args, Err'Unchecked_Access);
    begin
+      Errors := Err;
       if Display_In_Console and then Script.Console /= null then
          Insert (Script.Console, S);
       end if;
@@ -977,11 +992,14 @@ package body Shell_Script is
    function Execute_Command
      (Script  : access Shell_Scripting_Record;
       Command : String;
-      Display_In_Console : Boolean := True) return String
+      Display_In_Console : Boolean := True;
+      Errors  : access Boolean) return String
    is
+      Err : aliased Boolean;
       Result : constant String := Execute_GPS_Shell_Command
-        (Script.Kernel, Command);
+        (Script.Kernel, Command, Err'Unchecked_Access);
    begin
+      Errors.all := Err;
       if Display_In_Console and then Script.Console /= null then
          Insert (Script.Console, Result);
       end if;
@@ -996,7 +1014,8 @@ package body Shell_Script is
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
+      Args    : GNAT.OS_Lib.Argument_List;
+      Errors  : access Boolean) return String
    is
       use type Command_List.List_Node;
 
@@ -1008,7 +1027,10 @@ package body Shell_Script is
       Shell        : Shell_Scripting;
 
    begin
+      Errors.all := False;
+
       if Shell_Module_Id = null then
+         Errors.all := True;
          return -"Shell module not initialized";
       end if;
 
@@ -1067,6 +1089,7 @@ package body Shell_Script is
                Free (Callback.Args);
 
                if Callback.Return_As_Error then
+                  Errors.all := True;
                   Free (Callback.Return_Dict);
                   declare
                      R : constant String := Callback.Return_Value.all;
@@ -1138,7 +1161,8 @@ package body Shell_Script is
 
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String) return String
+      Command : String;
+      Errors  : access Boolean) return String
    is
       Args         : Argument_List_Access;
       First, Last  : Integer;
@@ -1187,7 +1211,8 @@ package body Shell_Script is
                R : constant String := Execute_GPS_Shell_Command
                  (Kernel,
                   Command => Args (Args'First).all,
-                  Args    => Args (Args'First + 1 .. Args'Last));
+                  Args    => Args (Args'First + 1 .. Args'Last),
+                  Errors  => Errors);
             begin
                Free (Args);
 
