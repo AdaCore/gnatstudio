@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,7 @@
 with Glide_Kernel;                      use Glide_Kernel;
 with Glide_Intl;                        use Glide_Intl;
 with Glide_Kernel.Standard_Hooks;       use Glide_Kernel.Standard_Hooks;
+with Glide_Result_View;                 use Glide_Result_View;
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with Gtkada.MDI;                        use Gtkada.MDI;
@@ -116,22 +117,19 @@ package body Vdiff2_Module.Utils is
       Info     : T_VLine_Information;
       Conflict : Boolean := False)
    is
-      Other, Other2 : T_Loc := 0;
-      Offset_Max   : Natural := 0;
-      Tmp : String_Access;
+      Other      : T_Loc := 0;
+      Offset_Max : Natural := 0;
 
    begin
       for J in 1 .. 3 loop
          if J /= Ref and J /= Loc and Other = 0 then
             Other := J;
             if Loc /= 0 then
-               Other2 := Loc;
                exit;
             end if;
          end if;
 
          if J /= Other and Other /= 0 and J /= Ref then
-            Other2 := J;
             exit;
          end if;
       end loop;
@@ -159,52 +157,12 @@ package body Vdiff2_Module.Utils is
             VStyle (J).all, VOffset (J));
 
          if VOffset (J) < Offset_Max then
-            Tmp := new String'
-              (Add_Line
-                 (Kernel, VFile (J),
-                  VRange (J).Last, VStyle (J).all,
-                  Offset_Max - VOffset (J)));
-            VRange (J).Blank_Lines := new String'(Tmp.all);
+            VRange (J).Blank_Lines_Mark :=
+              Add_Line
+                (Kernel, VFile (J),
+                 VRange (J).Last, VStyle (J).all,
+                 Offset_Max - VOffset (J));
          end if;
-
-         if VRange (J).Action = Delete then
-            if Tmp /= null then
-               VRange (J).Mark := new String'(Tmp.all);
-            end if;
-
-         elsif J = Ref then
-
-            if VRange (Other).Action = Append or
-              VRange (Other2).Action = Append then
-               if Tmp /= null then
-                  VRange (J).Mark := new String'(Tmp.all);
-               end if;
-            else
-               VRange (J).Mark := new String'
-                 (Mark_Diff_Block (Kernel, VFile (J),
-                                   VRange (J).First));
-               if Tmp /= null then
-                  Delete_Mark (Kernel_Handle (Kernel), Tmp.all);
-               end if;
-            end if;
-         else
-            if (VRange (Other).Action = Append and then J /= Other) or
-              (VRange (Other2).Action = Append and then J /= Other2)
-            then
-               if Tmp /= null then
-                  VRange (J).Mark := new String'(Tmp.all);
-               end if;
-            else
-               VRange (J).Mark := new String'
-                 (Mark_Diff_Block (Kernel, VFile (J),
-                                   VRange (J).First));
-               if Tmp /= null then
-                  Delete_Mark (Kernel_Handle (Kernel), Tmp.all);
-               end if;
-            end if;
-         end if;
-
-         Free (Tmp);
       end loop;
 
    exception
@@ -380,9 +338,9 @@ package body Vdiff2_Module.Utils is
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
-         Remove_Blank_Lines (Kernel, Curr_Chunk.Range1.Blank_Lines);
-         Remove_Blank_Lines (Kernel, Curr_Chunk.Range2.Blank_Lines);
-         Remove_Blank_Lines (Kernel, Curr_Chunk.Range3.Blank_Lines);
+         Remove_Blank_Lines (Kernel, Curr_Chunk.Range1.Blank_Lines_Mark);
+         Remove_Blank_Lines (Kernel, Curr_Chunk.Range2.Blank_Lines_Mark);
+         Remove_Blank_Lines (Kernel, Curr_Chunk.Range3.Blank_Lines_Mark);
          Curr_Node := Next (Curr_Node);
       end loop;
 
@@ -396,6 +354,8 @@ package body Vdiff2_Module.Utils is
             Remove_Line_Information_Column
               (Kernel, VFile (J), Id_Col_Vdiff);
             Unhighlight_Range (Kernel, VFile (J), Fine_Change_Style);
+
+            Remove_Result_Category (Kernel, -"Visual differences", VFile (J));
          end if;
       end loop;
    end Hide_Differences;
@@ -439,35 +399,14 @@ package body Vdiff2_Module.Utils is
          Curr_Chunk_Source := Data (Curr_Node_Source);
          Curr_Chunk_Dest := Data (Curr_Node_Dest);
 
-         if Curr_Chunk_Source.Range1.Mark /= null then
-            Curr_Chunk_Dest.Range1.Mark :=
-              new String'(Curr_Chunk_Source.Range1.Mark.all);
-         end if;
+         Curr_Chunk_Dest.Range1.Blank_Lines_Mark :=
+           Curr_Chunk_Source.Range1.Blank_Lines_Mark;
 
-         if Curr_Chunk_Source.Range2.Mark /= null then
-            Curr_Chunk_Dest.Range2.Mark :=
-              new String'(Curr_Chunk_Source.Range2.Mark.all);
-         end if;
+         Curr_Chunk_Dest.Range2.Blank_Lines_Mark :=
+           Curr_Chunk_Source.Range2.Blank_Lines_Mark;
 
-         if Curr_Chunk_Source.Range3.Mark /= null then
-            Curr_Chunk_Dest.Range3.Mark :=
-              new String'(Curr_Chunk_Source.Range3.Mark.all);
-         end if;
-
-         if Curr_Chunk_Source.Range1.Blank_Lines /= null then
-            Curr_Chunk_Dest.Range1.Blank_Lines :=
-              new String'(Curr_Chunk_Source.Range1.Blank_Lines.all);
-         end if;
-
-         if Curr_Chunk_Source.Range2.Blank_Lines /= null then
-            Curr_Chunk_Dest.Range2.Blank_Lines :=
-              new String'(Curr_Chunk_Source.Range2.Blank_Lines.all);
-         end if;
-
-         if Curr_Chunk_Source.Range3.Blank_Lines /= null then
-            Curr_Chunk_Dest.Range3.Blank_Lines :=
-              new String'(Curr_Chunk_Source.Range3.Blank_Lines.all);
-         end if;
+         Curr_Chunk_Dest.Range3.Blank_Lines_Mark :=
+           Curr_Chunk_Source.Range3.Blank_Lines_Mark;
 
          Curr_Node_Source := Next (Curr_Node_Source);
          Curr_Node_Dest := Next (Curr_Node_Dest);
@@ -491,7 +430,6 @@ package body Vdiff2_Module.Utils is
          Show_Differences3 (Kernel, Item);
          Item.Current_Node := First (Item.List);
          Set_Data (Curr_Node, Item);
-         Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
       end if;
    end Modify_Differences;
 
@@ -509,10 +447,6 @@ package body Vdiff2_Module.Utils is
       pragma Unreferenced (Button);
 
    begin
-      if not VDiff2_Module (Vdiff_Module_ID).Is_Active then
-         VDiff_Toolbar (Kernel);
-      end if;
-
       if Is_In_Diff_List
           (Item_Local.File1, Diff_List.all) = Diff_Head_List.Null_Node
         and then Is_In_Diff_List
@@ -524,22 +458,13 @@ package body Vdiff2_Module.Utils is
          then
             Append (Diff_List.all, Item_Local);
             Show_Differences3 (Kernel, Item_Local);
-            Init_Prev_Diff_Cmd (Item);
-            Goto_Difference (Kernel_Handle (Kernel),
-                             Data (Item_Local.Current_Node));
             return;
 
          elsif Item_Local.File3 = VFS.No_File then
             Append (Diff_List.all, Item_Local);
             Show_Differences3 (Kernel, Item_Local);
-            Init_Prev_Diff_Cmd (Item);
-            Goto_Difference (Kernel_Handle (Kernel),
-                             Data (Item_Local.Current_Node));
             return;
          end if;
-         VDiff2_Module (Vdiff_Module_ID).Is_Active :=
-           (VDiff2_Module (Vdiff_Module_ID).List_Diff.all /=
-              Diff_Head_List.Null_List);
       end if;
       Button := Message_Dialog
         (Msg     => -"One of these files is already used in VDiff",
@@ -607,6 +532,11 @@ package body Vdiff2_Module.Utils is
       Ref        : T_Loc := Item.Ref_File;
       Other      : T_Loc := 2;
 
+      Highlight_File : Virtual_File;
+      Modification   : String (1 .. 8);
+      The_Range      : Natural;
+      Line           : Integer;
+
    begin
       Trace (Me, "Show_Differences");
 
@@ -616,6 +546,12 @@ package body Vdiff2_Module.Utils is
          Other := 1;
       else
          Ref := 1;
+      end if;
+
+      if Other = 1 then
+         Highlight_File := Item.File1;
+      else
+         Highlight_File := Item.File2;
       end if;
 
       --  Keep the current window configuration, except we split the current
@@ -642,24 +578,27 @@ package body Vdiff2_Module.Utils is
 
          case Curr_Chunk.Range2.Action is
             when Append =>
+               Modification := "appended";
+               The_Range := Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First;
+
                VStyle (Other) := new String'(Append_Style);
                VStyle (Ref)   := new String'(Old_Style);
-               Curr_Chunk.Range1.Mark := new String'
-                 (Add_Line
-                    (Kernel, Item.File1,
-                     Curr_Chunk.Range1.First, VStyle (Ref).all,
-                     Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First));
-               Curr_Chunk.Range1.Blank_Lines :=
-                 new String'(Curr_Chunk.Range1.Mark.all);
+
+               Curr_Chunk.Range1.Blank_Lines_Mark :=
+                 Add_Line
+                   (Kernel, Item.File1,
+                    Curr_Chunk.Range1.First, VStyle (Ref).all,
+                    The_Range);
+
                Highlight_Line
                  (Kernel, Item.File2, Curr_Chunk.Range2.First,
                   VStyle (Other).all,
-                  Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First);
-               Curr_Chunk.Range2.Mark := new String'
-                 (Mark_Diff_Block (Kernel, Item.File2,
-                                   Curr_Chunk.Range2.First));
+                  The_Range);
 
             when Change =>
+               Modification := "modified";
+               The_Range := Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First;
+
                VStyle (Other) := new String'(Change_Style);
                VStyle (Ref)   := new String'(Old_Style);
                Offset1 := Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First;
@@ -670,30 +609,19 @@ package body Vdiff2_Module.Utils is
                                VStyle (Other).all, Offset2);
 
                if Offset1 < Offset2 then
-                  Curr_Chunk.Range2.Blank_Lines :=
-                    new String'
-                      (Add_Line
-                        (Kernel, Item.File1,
-                         Curr_Chunk.Range1.Last, VStyle (Ref).all,
-                         Offset2 - Offset1));
+                  Curr_Chunk.Range2.Blank_Lines_Mark :=
+                    Add_Line
+                      (Kernel, Item.File1,
+                       Curr_Chunk.Range1.Last, VStyle (Ref).all,
+                       Offset2 - Offset1);
 
                elsif Offset1 > Offset2 then
-                  Curr_Chunk.Range2.Blank_Lines :=
-                    new String'
-                      (Add_Line
-                        (Kernel, Item.File2,
-                         Curr_Chunk.Range2.Last, VStyle (Other).all,
-                         Offset1 - Offset2));
+                  Curr_Chunk.Range2.Blank_Lines_Mark :=
+                    Add_Line
+                      (Kernel, Item.File2,
+                       Curr_Chunk.Range2.Last, VStyle (Other).all,
+                       Offset1 - Offset2);
                end if;
-
-               Curr_Chunk.Range1.Mark := new String'
-                 (Mark_Diff_Block
-                   (Kernel, Item.File1,
-                    Curr_Chunk.Range1.First));
-               Curr_Chunk.Range2.Mark := new String'
-                 (Mark_Diff_Block
-                   (Kernel, Item.File2,
-                     Curr_Chunk.Range2.First));
 
                Fine_Diff_Block
                  (Kernel_Handle (Kernel),
@@ -703,27 +631,43 @@ package body Vdiff2_Module.Utils is
                   Curr_Chunk.Range2);
 
             when Delete =>
+               Modification := "removed ";
+               The_Range := Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First;
+
                VStyle (Other) := new String'(Remove_Style);
                VStyle (Ref)   := new String'(Old_Style);
                Highlight_Line
                  (Kernel, Item.File1,
                   Curr_Chunk.Range1.First, VStyle (Ref).all,
                   Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
-               Curr_Chunk.Range2.Mark := new String'
-                 (Add_Line
-                   (Kernel, Item.File2,
-                    Curr_Chunk.Range2.First, VStyle (Other).all,
-                    Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First));
-               Curr_Chunk.Range2.Blank_Lines :=
-                 new String'(Curr_Chunk.Range2.Mark.all);
-               Curr_Chunk.Range1.Mark := new String'
-                 (Mark_Diff_Block
-                   (Kernel, Item.File1,
-                    Curr_Chunk.Range1.First));
+                  Curr_Chunk.Range2.Blank_Lines_Mark :=
+                    Add_Line
+                      (Kernel, Item.File2,
+                       Curr_Chunk.Range2.First, VStyle (Other).all,
+                       Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
 
             when others =>
                null;
          end case;
+
+         --  Insert the diff chunk in the Locations View.
+
+         if Other = 1 then
+            Line := Curr_Chunk.Range1.First;
+         else
+            Line := Curr_Chunk.Range2.First;
+         end if;
+
+         if The_Range = 1 then
+            Insert_Result
+              (Kernel, -"Visual differences", Highlight_File,
+               " 1 line " & Modification, Line, 1);
+         else
+            Insert_Result
+              (Kernel, -"Visual differences", Highlight_File,
+               Integer'Image (The_Range) & " lines " & Modification,
+               Line, 1);
+         end if;
 
          Free (VStyle);
          Curr_Node := Next (Curr_Node);
@@ -1011,7 +955,6 @@ package body Vdiff2_Module.Utils is
       Curr_Chunk.Range1 := VRange (1);
       Curr_Chunk.Range2 := VRange (2);
       Curr_Chunk.Range3 := VRange (3);
-
    end Show_Diff_Chunk;
 
    ----------------
@@ -1027,7 +970,6 @@ package body Vdiff2_Module.Utils is
       Button : Message_Dialog_Buttons;
 
    begin
-
       if Is_Regular_File (Merge) then
          Button := Message_Dialog
            (Msg         => -"Would you overwrite this file: "& Merge,
@@ -1056,7 +998,7 @@ package body Vdiff2_Module.Utils is
          Unhighlight_Line (Kernel, File, J, Style);
       end loop;
 
-      Remove_Blank_Lines (Kernel, Range1.Blank_Lines);
+      Remove_Blank_Lines (Kernel, Range1.Blank_Lines_Mark);
    end Unhighlight_Block;
 
    -----------------
