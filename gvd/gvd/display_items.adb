@@ -76,13 +76,13 @@ package body Display_Items is
    Title_Font_Name : constant String := "Helvetica-Bold";
    --  Font used for the name of the item.
 
-   Title_Font_Size : constant Gint := 8;
+   Title_Font_Size : constant Gint := 10;
    --  Size of the font used for the name of the item.
 
    Value_Font_Name : constant String := "Helvetica";
    --  Font used to display the value of the item.
 
-   Value_Font_Size : constant Gint := 8;
+   Value_Font_Size : constant Gint := 10;
    --  Size of the font used to display the value of the item.
 
    Num_Buttons : constant := 2;
