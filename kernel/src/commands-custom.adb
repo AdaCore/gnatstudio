@@ -48,14 +48,6 @@ package body Commands.Custom is
 
    Me : constant Debug_Handle := Create ("Commands.Custom");
 
-   No_Output : constant String := "none";
-   --  Value of the "output" attribute that specifies that no output should be
-   --  visible.
-
-   Console_Output : constant String := "";
-   --  Value of the "output" attribute that specifies that the output should be
-   --  sent to the console.
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);
 
@@ -282,6 +274,7 @@ package body Commands.Custom is
       Free (X.Command);
       Free (X.XML);
       Free (X.Current_Output);
+      Free (X.Default_Output_Destination);
 
       GNAT.OS_Lib.Free (X.Outputs);
       Unchecked_Free   (X.Save_Output);
@@ -311,12 +304,14 @@ package body Commands.Custom is
    procedure Create
      (Item         : out Custom_Command_Access;
       Kernel       : Kernel_Handle;
-      Command      : Glib.Xml_Int.Node_Ptr)
+      Command      : Glib.Xml_Int.Node_Ptr;
+      Default_Output : String := Console_Output)
    is
       Node, Previous : Node_Ptr;
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
+      Item.Default_Output_Destination := new String'(Default_Output);
 
       --  Make a deep copy of the relevant nodes
       Node := Command;
@@ -714,14 +709,16 @@ package body Commands.Custom is
                         Get_Attribute (N, "lang", GPS_Shell_Name)),
                      N.Value.all,
                      Output_Location =>
-                       Get_Attribute (N, "output", Console_Output));
+                       Get_Attribute (N, "output",
+                                      Command.Default_Output_Destination.all));
 
                elsif To_Lower (N.Tag.all) = "external" then
                   Success := Execute_Simple_Command
                     (null,
                      N.Value.all,
                      Output_Location =>
-                       Get_Attribute (N, "output", Console_Output));
+                       Get_Attribute (N, "output",
+                                      Command.Default_Output_Destination.all));
 
                   --  We'll have to run again to check for completion
                   return True;

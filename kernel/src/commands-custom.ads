@@ -70,6 +70,14 @@ package Commands.Custom is
    type Custom_Command is new Interactive_Command with private;
    type Custom_Command_Access is access all Custom_Command'Class;
 
+   No_Output : constant String := "none";
+   --  Value of the "output" attribute that specifies that no output should be
+   --  visible.
+
+   Console_Output : constant String := "";
+   --  Value of the "output" attribute that specifies that the output should be
+   --  sent to the console.
+
    procedure Create
      (Item         : out Custom_Command_Access;
       Kernel       : Kernel_Handle;
@@ -81,13 +89,16 @@ package Commands.Custom is
    --  Internal command in the specific scripting language.
 
    procedure Create
-     (Item         : out Custom_Command_Access;
-      Kernel       : Kernel_Handle;
-      Command      : Glib.Xml_Int.Node_Ptr);
+     (Item           : out Custom_Command_Access;
+      Kernel         : Kernel_Handle;
+      Command        : Glib.Xml_Int.Node_Ptr;
+      Default_Output : String := Console_Output);
    --  Create a new command with a list of <shell> and <external> nodes, as
    --  done in the customization files.
    --  Each of the commands is executed in turn. Output from one command is
    --  made available to the next through %1, %2,...
+   --  Default_Output specifies where the output should be sent by default, if
+   --  not overriden by any "output" attribute in the XML tree.
 
    procedure Free (X : in out Custom_Command);
    --  Free memory associated with X.
@@ -118,6 +129,9 @@ private
       XML         : Glib.Xml_Int.Node_Ptr;
       --  Only (Command, Script) or XML is defined, depending on what version
       --  of Create was used.
+
+      Default_Output_Destination : String_Access;
+      --  The default location for the XML tree
 
       In_Process  : Boolean := False;
       --  True if we are processing the command, but there are some external
