@@ -1178,6 +1178,10 @@ package body VCS_View_API is
                File_Args         : String_List.List;
                Log_Args          : String_List.List;
                Head_List         : String_List.List;
+               S                 : GNAT.OS_Lib.String_Access;
+
+               use type GNAT.OS_Lib.String_Access;
+
             begin
                if File_Check_Script /= "" then
                   Append (File_Args, Data (Files_Temp));
@@ -1202,52 +1206,42 @@ package body VCS_View_API is
                if Log_Check_Script /= "" then
                   --  Check that the log file is not empty.
 
-                  declare
-                     S : GNAT.OS_Lib.String_Access;
+                  S := Read_File (Log_File);
 
-                     use type GNAT.OS_Lib.String_Access;
-                  begin
-                     S := Read_File (Log_File);
+                  if S = null then
+                     Cancel_All := True;
+                     Insert (Kernel,
+                                (-"File could not be read: ") & Log_File);
 
-                     if S = null then
+                     Free (File_Args);
+                     Free (Log_Args);
+                     Free (Head_List);
+                     exit;
+
+                  elsif S.all = "" then
+                     if Message_Dialog
+                       ((-"File: ") & Data (Files_Temp)
+                        & ASCII.LF & ASCII.LF &
+                          (-"The revision log for this file is empty,")
+                        & ASCII.LF &
+                          (-"Commit anyway ?"),
+                        Confirmation,
+                        Button_Yes or Button_No,
+                        Button_Yes,
+                        "", -"Empty log detected",
+                        Gtk.Enums.Justify_Left) = Button_No
+                     then
                         Cancel_All := True;
-                        Insert (Kernel,
-                                  (-"File could not be read: ") & Log_File);
 
+                        GNAT.OS_Lib.Free (S);
                         Free (File_Args);
                         Free (Log_Args);
                         Free (Head_List);
                         exit;
-
-                     elsif S.all = "" then
-                        declare
-                           M : Message_Dialog_Buttons;
-                        begin
-                           M := Message_Dialog
-                             ((-"File: ") & Data (Files_Temp)
-                              & ASCII.LF & ASCII.LF &
-                                (-"The revision log for this file is empty,")
-                              & ASCII.LF &
-                                (-"Commit anyways ?"),
-                              Confirmation,
-                              Button_Yes or Button_No,
-                              Button_Yes,
-                              "", -"Empty log detected",
-                              Gtk.Enums.Justify_Left);
-
-                           if M = Button_No then
-                              Cancel_All := True;
-
-                              Free (File_Args);
-                              Free (Log_Args);
-                              Free (Head_List);
-                              exit;
-                           end if;
-                        end;
                      end if;
+                  end if;
 
-                     GNAT.OS_Lib.Free (S);
-                  end;
+                  GNAT.OS_Lib.Free (S);
 
                   Append (Log_Args, Log_File);
                   Append
@@ -1283,6 +1277,7 @@ package body VCS_View_API is
 
       --  Execute the commit command after the last file check or log check
       --  command.
+
       if Last_Check /= null then
          Add_Consequence_Action (Last_Check, Commit_Command);
       else
@@ -1438,6 +1433,7 @@ package body VCS_View_API is
       Files_Temp := String_List.First (Files);
 
       --  Open log editors for files that don't have a log.
+
       while Files_Temp /= String_List.Null_Node loop
          if Get_Log_From_File
            (Kernel, String_List.Data (Files_Temp), False) = ""
@@ -1453,6 +1449,7 @@ package body VCS_View_API is
       end loop;
 
       --  If All files have a log, commit the whole lot.
+
       if All_Logs_Exist then
          Commit_Files (Kernel, Get_Current_Ref (Context), Files);
       end if;
