@@ -1369,6 +1369,13 @@ package body Src_Info.ALI is
             Predefined_Entity_Name => No_Name,
             Next  => Decl.Parent_Location);
 
+         if Decl.Kind.Kind = Function_Or_Operator
+           or else Decl.Kind.Kind = Procedure_Kind
+           or else Decl.Kind.Kind = Entry_Or_Entry_Family
+         then
+            Decl.Parent_Location.Kind := Returned_Type;
+         end if;
+
          --  This field no longer exists, but we might want it some day.
          --  Decl.Parent_Kind := Char_To_E_Kind (Xref_Ent.Tref_Type);
 
