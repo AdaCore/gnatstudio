@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -213,6 +213,7 @@ private
       Normalized_Full : GNAT.OS_Lib.String_Access;
       Dir_Name        : GNAT.OS_Lib.String_Access;
    end record;
+
    type Contents_Access is access Contents_Record;
 
    type Virtual_File is new Ada.Finalization.Controlled with record

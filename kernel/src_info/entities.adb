@@ -33,7 +33,6 @@ package body Entities is
    --  If True, no memory is freed, this makes the structure more robust and
    --  easier to debug, but will of course use more memory.
 
-
    Manage_Global_Entities_Table : constant Boolean := False;
    --  True if we should try and create a global table for all entities
    --  defined in the project. The same information can be computed by
