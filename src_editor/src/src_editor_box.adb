@@ -2395,7 +2395,10 @@ package body Src_Editor_Box is
       Success        : Boolean;
 
    begin
-      Scroll_To_Mark (Editor.Source_View, Mark, 0.0,  True, 1.0, 0.8);
+      --  ??? It seems that setting the field "Use_Alignment" to True
+      --  causes Gtk critical errors. To be investigated.
+
+      Scroll_To_Mark (Editor.Source_View, Mark, 0.0,  False, 0.5, 0.5);
       Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Mark);
 
       Place_Cursor (Editor.Source_Buffer, Iter);
