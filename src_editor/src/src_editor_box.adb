@@ -322,6 +322,8 @@ package body Src_Editor_Box is
       Scan_Buffer_No_Scope
         (Context     => Context'Access,
          Buffer      => Buffer,
+         Start_Index => Buffer'First,
+         End_Index   => Buffer'Last,
          Callback    => Callback'Unrestricted_Access,
          Ref_Index   => Index,
          Ref_Line    => L,
