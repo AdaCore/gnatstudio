@@ -4,7 +4,7 @@ clear
 cat <<EOF
 
   This script is provided to simplify the installation of GPS,
-  the GNU Development Environment.
+  the GNAT Programming System.
 
   You will be asked for confirmation before the actual installation is
   done. You can break out of this script at any time before this.
@@ -56,7 +56,15 @@ EOF
    # Check that we have permission to write in $basedir
    if test -d $basedir; then
      if test -w $basedir; then
-        true
+        if [ -x $basedir/bin/gps ]; then
+           echo "  $basedir/bin/gps found."
+           printf "  Do you want to overwrite existing installation [Y/n] ? "
+           read x
+           if [ " $x" = " n" -o " $x" = " N" ]; then
+              echo "Aborting the installation process"
+	      exit
+           fi
+        fi
      else
         echo "You do not have permission to write in $basedir"
         echo "Please check whether you should be root to install in that directory."
@@ -92,11 +100,6 @@ install_binaries() {
 
   echo "Installing the binaries ...."
   cd $basedir
-
-  # Remove gpr2make, in case there is a recent GNAT installation, where
-  # gpr2make is a symbolic link to .gnat_wrapper
-
-  rm -f bin/gpr2make
 
   # Do the installation through tar, to preserve symbolic links
   # We also explicitly work on specific directories to avoid
