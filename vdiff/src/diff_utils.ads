@@ -45,6 +45,15 @@ package Diff_Utils is
    function Diff (File1, File2 : String) return Diff_Occurrence_Link;
    --  Execute diff on File1 and File2 and return a list of differences.
 
+   function Diff
+     (Orig_File : String;
+      New_File  : String;
+      Diff_File : String;
+      Revert    : Boolean := False) return Diff_Occurrence_Link;
+   --  Compute the differences from Diff_File.
+   --  If Revert is False, create New_File from Orig_File and Diff_File.
+   --  If Revert is True, create Orig_File from New_File and Diff_File.
+
    procedure Free (Link : in out Diff_Occurrence_Link);
    --  Free the memory associated with each node of the list Link.
 
