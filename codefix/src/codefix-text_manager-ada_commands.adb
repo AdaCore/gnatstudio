@@ -35,11 +35,12 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Recase_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class;
+      Cursor       : File_Cursor'Class;
       Correct_Word : String := "";
       Word_Case    : Case_Type := Mixed) is
    begin
-      Make_Word_Mark (Word, Current_Text, This.Word);
+      This.Cursor := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Cursor));
       Assign (This.Correct_Word, Correct_Word);
       This.Word_Case := Word_Case;
    end Initialize;
@@ -80,7 +81,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Cursor_Line  : File_Cursor;
       Word_Matcher : constant Pattern_Matcher := Compile ("([\w]+)");
-      Word         : Word_Cursor;
+      Cursor       : File_Cursor;
       Matches      : Match_Array (0 .. 1);
       Size         : Integer;
       Line         : Dynamic_String;
@@ -88,13 +89,14 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    begin
 
-      Make_Word_Cursor (This.Word, Current_Text, Word);
-      Cursor_Line := File_Cursor (Word);
+      Cursor := File_Cursor'
+        (Get_Current_Cursor (Current_Text, This.Cursor.all));
+      Cursor_Line := Cursor;
 
       Cursor_Line.Col := 1;
       Get_Line (Current_Text, Cursor_Line, New_Extract);
       Assign (Line, Get_String (New_Extract));
-      Match (Word_Matcher, Line (Word.Col .. Line'Length), Matches);
+      Match (Word_Matcher, Line (Cursor.Col .. Line'Length), Matches);
 
       Size := Matches (1).Last - Matches (1).First + 1;
 
@@ -107,7 +109,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Replace_Word
         (New_Extract,
-         Word,
+         Cursor,
          Word_Chosen (Word_Chosen'Last - Size + 1 .. Word_Chosen'Last),
          Size);
 
@@ -118,7 +120,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Recase_Word_Cmd) is
    begin
-      Free (This.Word);
+      Free (This.Cursor);
       Free (This.Correct_Word);
    end Free;
 

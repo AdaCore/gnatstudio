@@ -31,7 +31,7 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Recase_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class;
+      Cursor       : File_Cursor'Class;
       Correct_Word : String := "";
       Word_Case    : Case_Type := Mixed);
    --  Set all the marks that will be needed to re-case the word later.
@@ -182,7 +182,7 @@ private
    use Ada_Lists;
 
    type Recase_Word_Cmd is new Text_Command with record
-      Word         : Word_Mark;
+      Cursor       : Ptr_Mark;
       Correct_Word : Dynamic_String;
       Word_Case    : Case_Type;
    end record;
