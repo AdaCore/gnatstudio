@@ -37,6 +37,8 @@ with Gtk.Style;       use Gtk.Style;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtkada.MDI;      use Gtkada.MDI;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 with Gtkada.Types;    use Gtkada.Types;
 
 with Ada.Calendar;
@@ -62,7 +64,6 @@ with Directory_Tree;       use Directory_Tree;
 with String_Utils;         use String_Utils;
 
 with Prj;           use Prj;
-with Prj.Part;      use Prj.Part;
 with Prj.Tree;      use Prj.Tree;
 with Stringt;       use Stringt;
 with Types;         use Types;
@@ -297,6 +298,11 @@ package body Project_Viewers is
       Context : Selection_Context_Access);
    --  Add a dependency to the project described in Context. The dependency is
    --  created from the wizard.
+
+   procedure On_Add_Dependency_From_Existing
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Add a dependency to a default empty project.
 
    -------------------------
    -- Find_In_Source_Dirs --
@@ -1027,7 +1033,6 @@ package body Project_Viewers is
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Wiz  : Creation_Wizard.Prj_Wizard;
-      Imported_Project : Project_Node_Id;
    begin
       if Has_Project_Information (File) then
          Gtk_New (Wiz, Get_Kernel (Context));
@@ -1035,19 +1040,56 @@ package body Project_Viewers is
             Name : constant String := Run (Wiz);
          begin
             if Name /= "" then
-               Prj.Part.Parse (Imported_Project, Name, True);
                Add_Imported_Project
-                 (Get_Project_From_View (Project_Information (File)),
-                  Imported_Project);
+                 (Get_Project_From_View (Project_Information (File)), Name);
             end if;
          exception
-            when E : Project_Warning =>
+            when E : Project_Warning | Project_Error =>
                Insert (Get_Kernel (Context), Exception_Message (E));
          end;
          Destroy (Wiz);
          Recompute_View (Get_Kernel (Context));
       end if;
    end On_Add_Dependency_From_Wizard;
+
+   -------------------------------------
+   -- On_Add_Dependency_From_Existing --
+   -------------------------------------
+
+   procedure On_Add_Dependency_From_Existing
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File : File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+      Selector : File_Selector_Window_Access;
+
+      Dir : constant String := Get_Name_String
+        (Path_Name_Of (Get_Project_From_View (Project_Information (File))));
+   begin
+      if Has_Project_Information (File) then
+         Gtk_New (Selector,
+                  Root => "/",
+                  Initial_Directory => Dir
+                  (Dir'First .. Dir'Last - Base_File_Name (Dir)'Length),
+                  Dialog_Title => -"Select project");
+         Register_Filter (Selector, Prj_File_Filter);
+
+         declare
+            Name : constant String := Select_File (Selector);
+         begin
+            if Name /= "" then
+               Add_Imported_Project
+                 (Get_Project_From_View (Project_Information (File)), Name);
+            end if;
+         end;
+         Recompute_View (Get_Kernel (Context));
+      end if;
+
+   exception
+      when E : Project_Warning | Project_Error =>
+         Insert (Get_Kernel (Context), Exception_Message (E));
+   end On_Add_Dependency_From_Existing;
 
    -------------------------------
    -- Project_Editor_Contextual --
@@ -1123,13 +1165,13 @@ package body Project_Viewers is
                (On_Add_Dependency_From_Wizard'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, -"default project");
-            Set_Sensitive (Item, False);
+            Gtk_New (Item, -"From file...");
             Add (Submenu, Item);
-
-            Gtk_New (Item, -"Existing project");
-            Set_Sensitive (Item, False);
-            Add (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Add_Dependency_From_Existing'Access),
+               Selection_Context_Access (Context));
          end if;
 
          if Has_Directory_Information (File_Context) then
