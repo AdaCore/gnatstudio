@@ -33,6 +33,8 @@ with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Glib;                     use Glib;
+with Gtk.Accel_Group;          use Gtk.Accel_Group;
+with Gtk.Accel_Map;            use Gtk.Accel_Map;
 with Gtk.Bin;                  use Gtk.Bin;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;                use Gtk.Clist;
@@ -64,6 +66,7 @@ with Pango.Layout;             use Pango.Layout;
 with String_Utils;             use String_Utils;
 with System;                   use System;
 with String_List_Utils;        use String_List_Utils;
+with Ada.Text_IO;              use Ada.Text_IO;
 
 package body GUI_Utils is
 
@@ -1154,5 +1157,45 @@ package body GUI_Utils is
          Free (Completions);
       end;
    end Do_Completion;
+
+   --------------------
+   -- Save_Accel_Map --
+   --------------------
+
+   procedure Save_Accel_Map (Filename : String) is
+      File : File_Type;
+
+      procedure Save_Dynamic_Key
+        (Data       : System.Address;
+         Accel_Path : String;
+         Accel_Key  : Gdk.Types.Gdk_Key_Type;
+         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
+         Changed    : Boolean);
+      --  Called for each key shortcut the user has defined interactively
+
+      procedure Save_Dynamic_Key
+        (Data       : System.Address;
+         Accel_Path : String;
+         Accel_Key  : Gdk.Types.Gdk_Key_Type;
+         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
+         Changed    : Boolean)
+      is
+         pragma Unreferenced (Data);
+      begin
+         if Accel_Key /= 0 and then Changed then
+            Put_Line (File, "(gtk_accel_path """
+                      & Accel_Path
+                      & """ """
+                      & Accelerator_Name (Accel_Key, Accel_Mods)
+                      & """) ");
+         end if;
+      end Save_Dynamic_Key;
+
+   begin
+      Create (File, Out_File, Filename);
+      Gtk.Accel_Map.Foreach
+        (System.Null_Address, Save_Dynamic_Key'Unrestricted_Access);
+      Close (File);
+   end Save_Accel_Map;
 
 end GUI_Utils;

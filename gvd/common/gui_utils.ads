@@ -337,6 +337,15 @@ package GUI_Utils is
    --  the menu creation takes any type as input.
    --  This package must be instantiated as library level.
 
+   ------------------
+   -- Accelerators --
+   ------------------
+
+   procedure Save_Accel_Map (Filename : String);
+   --  Save the current accel map.
+   --  As opposed to Gtk.Accel_Map.Save, this one doesn't keep the lines which
+   --  have no shortcut, thus keeping the file small.
+
 private
 
    type Full_Path_Menu_Item_Record (Length : Natural) is
