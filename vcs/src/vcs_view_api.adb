@@ -613,7 +613,7 @@ package body VCS_View_API is
                     (On_Menu_Remove_Annotate'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Edit changelog");
+               Gtk_New (Item, Label => -"Edit revision log");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -632,7 +632,7 @@ package body VCS_View_API is
                Gtk_New (Item);
                Append (Menu, Item);
 
-               Gtk_New (Item, Label => -"Remove changelog");
+               Gtk_New (Item, Label => -"Remove revision log");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -1024,7 +1024,7 @@ package body VCS_View_API is
                   Append (Log_Args, Log_File);
                   Append
                     (Head_List, -"File: " & Head (Files) & ASCII.LF
-                     & (-"The changelog provided does not pass the checks."));
+                     & (-"The revision log does not pass the checks."));
 
                   Create
                     (Log_Checks,
