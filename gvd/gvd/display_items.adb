@@ -455,33 +455,14 @@ package body Display_Items is
      (Canvas : access Interactive_Canvas_Record'Class;
       Num    : Integer) return Display_Item
    is
-      Found : Display_Item := null;
-
-      function Search_By_Num
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Search for the item whose number is Num.
-
-      -------------------
-      -- Search_By_Num --
-      -------------------
-
-      function Search_By_Num
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         if Display_Item (Item).Num = Num then
-            Found := Display_Item (Item);
-            return False;
-         end if;
-
-         return True;
-      end Search_By_Num;
-
+      Found : Display_Item;
+      Iter : Item_Iterator := Start (Canvas);
    begin
-      For_Each_Item (Canvas, Search_By_Num'Unrestricted_Access);
+      loop
+         Found := Display_Item (Get (Iter));
+         exit when Found = null or else Found.Num = Num;
+         Next (Iter);
+      end loop;
       return Found;
    end Find_Item;
 
@@ -530,10 +511,7 @@ package body Display_Items is
 
       --  Keep some space for the shadow (3d look).
 
-      Set_Screen_Size_And_Pixmap
-        (Item,
-         Get_Window (Item.Debugger.Data_Canvas),
-         Alloc_Width + 1, Alloc_Height + 1);
+      Set_Screen_Size (Item, Alloc_Width + 1, Alloc_Height + 1);
 
       if Item.Auto_Refresh then
          Draw_Rectangle
@@ -677,42 +655,30 @@ package body Display_Items is
         (Get_Language
          (Visual_Debugger (Get_Process (GVD_Canvas (Canvas))).Debugger),
          Name);
-
-      function Alias_Found
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Set New_Item to a non-null value if an alias was found for
-      --  Return False when we need to stop traversing the list of children.
-
-      -----------------
-      -- Alias_Found --
-      -----------------
-
-      function Alias_Found
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         if (Name = "" or else Display_Item (Item).Name.all = Name)
-           and then Is_Alias_Of (Display_Item (Item), Id, Name, Deref_Name)
-         then
-            if Display_Item (Item).Is_Alias_Of /= null then
-               Alias_Item := Display_Item (Item).Is_Alias_Of;
-            else
-               Alias_Item := Display_Item (Item);
-            end if;
-            return False;
-         end if;
-
-         return True;
-      end Alias_Found;
-
+      Iter : Item_Iterator;
+      Item : Display_Item;
    begin
       --  Always search if we have a special name to look for, so as to avoid
       --  creating the same item multiple times
       if Name /= "" or else Get_Detect_Aliases (GVD_Canvas (Canvas)) then
-         For_Each_Item (Canvas, Alias_Found'Unrestricted_Access);
+         Iter := Start (Canvas);
+         loop
+            Item := Display_Item (Get (Iter));
+            exit when Item = null;
+
+            if (Name = "" or else Item.Name.all = Name)
+              and then Is_Alias_Of (Item, Id, Name, Deref_Name)
+            then
+               if Item.Is_Alias_Of /= null then
+                  Alias_Item := Item.Is_Alias_Of;
+               else
+                  Alias_Item := Item;
+               end if;
+               exit;
+            end if;
+
+            Next (Iter);
+         end loop;
       end if;
 
       return Alias_Item;
@@ -1262,39 +1228,9 @@ package body Display_Items is
      (Item : access Display_Item_Record;
       Remove_Aliases : Boolean := True)
    is
-      function Free_Alias
-        (Canvas : access Interactive_Canvas_Record'Class;
-         It     : access Canvas_Item_Record'Class) return Boolean;
-      --  If It is an alias of Item, and it wasn't displayed explicitly
-      --  by the user, then remove it from the canvas as well.
-      --  Also remove It if it is currently hidden (alias detection), and was
-      --  linked to Item. The user probably expects it to be killed as well
-
-      ----------------
-      -- Free_Alias --
-      ----------------
-
-      function Free_Alias
-        (Canvas : access Interactive_Canvas_Record'Class;
-         It     : access Canvas_Item_Record'Class) return Boolean is
-      begin
-         if Display_Item (It).Is_Alias_Of = Display_Item (Item)
-           and then Display_Item (It).Is_Dereference
-         then
-            Free (Display_Item (It), Remove_Aliases => False);
-
-         --  If It is hidden, and was linked to Item
-         elsif Display_Item (It).Is_Alias_Of /= null
-           and then Has_Link (Canvas, Item, It)
-         then
-            Free (Display_Item (It), Remove_Aliases => False);
-         end if;
-
-         return True;
-      end Free_Alias;
-
       Canvas : constant GVD_Canvas := GVD_Canvas (Item.Debugger.Data_Canvas);
-
+      Iter   : Item_Iterator;
+      It     : Display_Item;
    begin
       if Item.Debugger.Selected_Item = Canvas_Item (Item) then
          Item.Debugger.Selected_Item := null;
@@ -1305,7 +1241,31 @@ package body Display_Items is
       --  visible any more).
 
       if Remove_Aliases then
-         For_Each_Item (Canvas, Free_Alias'Unrestricted_Access);
+         Iter := Start (Canvas);
+         loop
+            It := Display_Item (Get (Iter));
+            exit when It = null;
+
+            --  If It is an alias of Item, and it wasn't displayed explicitly
+            --  by the user, then remove it from the canvas as well.  Also
+            --  remove It if it is currently hidden (alias detection), and was
+            --  linked to Item. The user probably expects it to be killed as
+            --  well
+
+            if It.Is_Alias_Of = Display_Item (Item)
+              and then It.Is_Dereference
+            then
+               Free (It, Remove_Aliases => False);
+
+            --  If It is hidden, and was linked to Item
+            elsif It.Is_Alias_Of /= null
+              and then Has_Link (Canvas, Item, It)
+            then
+               Free (It, Remove_Aliases => False);
+            end if;
+
+            Next (Iter);
+         end loop;
       end if;
 
       Free (Item.Entity);
@@ -1328,28 +1288,14 @@ package body Display_Items is
       Event      : Gdk.Event.Gdk_Event)
    is
       Canvas : constant GVD_Canvas := GVD_Canvas (The_Canvas);
-
-      --  This is slightly complicated since we need to get a valid item
-      --  to undo the selection.
-
-      function Unselect
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Unselect the currently selected canvas item.
-
-      function Unselect
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         Select_Item (Display_Item (Item), null);
-         return False;
-      end Unselect;
-
+      Iter   : Item_Iterator;
    begin
       if Get_Button (Event) = 1 then
-         For_Each_Item (Canvas, Unselect'Unrestricted_Access);
+         Iter := Start (Canvas);
+         if Get (Iter) /= null then
+            Select_Item (Display_Item (Get (Iter)), null);
+         end if;
+
       elsif Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
