@@ -49,7 +49,9 @@ package body Projects.Graphs is
    type Name_Vertex_Access is access all Name_Vertex'Class;
    --  For internal use only, for storing the names.
 
-   type Name_Edge is new Edge with null record;
+   type Name_Edge is new Edge with record
+      Limited_With : Boolean;
+   end record;
 
    procedure Destroy (V : in out Name_Vertex);
    procedure Destroy (E : in out Name_Edge);
@@ -58,7 +60,8 @@ package body Projects.Graphs is
    function Dependency_Graph
      (Root_Project : Prj.Tree.Project_Node_Id;
       Factory      : Vertex_Factory := null;
-      E_Factory    : Edge_Factory := null) return Glib.Graphs.Graph;
+      E_Factory    : Edge_Factory := null;
+      Add_Limited_Withs : Boolean) return Glib.Graphs.Graph;
    --  Return a graph that represent the dependencies between the projects: the
    --  vertices are the projects themselves, and the links represent a with
    --  clause.
@@ -71,6 +74,9 @@ package body Projects.Graphs is
    --  If Factory is null, then a default vertex is created.
    --  The graph can be used directly in GtkAda.Canvas provided you set up the
    --  vertices correctly in your factory.
+   --
+   --  If Add_Limited_Withs is False, then the dependencies between projects
+   --  that are through limited withs will not be listed
 
    ----------------
    -- False_Free --
@@ -118,7 +124,8 @@ package body Projects.Graphs is
    function Dependency_Graph
      (Root_Project : Project_Node_Id;
       Factory      : Vertex_Factory := null;
-      E_Factory    : Edge_Factory := null)
+      E_Factory    : Edge_Factory := null;
+      Add_Limited_Withs : Boolean)
       return Glib.Graphs.Graph
    is
       Table : Vertex_Htable.HTable;
@@ -161,30 +168,43 @@ package body Projects.Graphs is
       procedure Process_Project
         (Project : Project_Node_Id; Origin  : Vertex_Access)
       is
-         procedure Add_Project (Node : Project_Node_Id; Name : Name_Id);
+         procedure Add_Project
+           (Node : Project_Node_Id;
+            Name : Name_Id;
+            Limited_With : Boolean);
          --  Add a new vertex for the project Name
 
-         procedure Add_Project (Node : Project_Node_Id; Name : Name_Id) is
+         procedure Add_Project
+           (Node         : Project_Node_Id;
+            Name         : Name_Id;
+            Limited_With : Boolean)
+         is
             Dest        : Vertex_Access;
             E           : Edge_Access;
             New_Item    : Boolean;
          begin
-            Dest := Get (Table, Name);
-            New_Item := Dest = null;
+            if Add_Limited_Withs
+              or else not Limited_With
+            then
+               Dest := Get (Table, Name);
+               New_Item := Dest = null;
 
-            if New_Item then
-               Dest := Create_Project_Vertex (Name);
-            end if;
+               if New_Item then
+                  Dest := Create_Project_Vertex (Name);
+               end if;
 
-            if E_Factory = null then
-               E := new Name_Edge;
-            else
-               E := E_Factory (Origin, Dest);
-            end if;
-            Add_Edge (G, E, Origin, Dest);
+               if E_Factory = null then
+                  E := new Name_Edge;
+               else
+                  E := E_Factory (Origin, Dest);
+               end if;
+               Name_Edge (E.all).Limited_With := Limited_With;
 
-            if New_Item then
-               Process_Project (Node, Dest);
+               Add_Edge (G, E, Origin, Dest);
+
+               if New_Item then
+                  Process_Project (Node, Dest);
+               end if;
             end if;
          end Add_Project;
 
@@ -199,7 +219,10 @@ package body Projects.Graphs is
             --  its Recursive parameters is set to False.
             if Project_Node_Of (With_Clause) /= Root_Project then
                Add_Project (Project_Node_Of (With_Clause),
-                            Prj.Tree.Name_Of (With_Clause));
+                            Prj.Tree.Name_Of (With_Clause),
+                            Limited_With =>
+                              Non_Limited_Project_Node_Of (With_Clause) =
+                              Empty_Node);
             end if;
             With_Clause := Next_With_Clause_Of (With_Clause);
          end loop;
@@ -208,7 +231,8 @@ package body Projects.Graphs is
 
          Extended := Extended_Project_Of (Project_Declaration_Of (Project));
          if Extended /= Empty_Node then
-            Add_Project (Extended, Prj.Tree.Name_Of (Extended));
+            Add_Project (Extended, Prj.Tree.Name_Of (Extended),
+                         Limited_With => False);
          end if;
       end Process_Project;
 
@@ -231,7 +255,8 @@ package body Projects.Graphs is
       E_Factory    : Edge_Factory := null)
       return Boolean
    is
-      G : Graph := Dependency_Graph (Root_Project, Factory, E_Factory);
+      G : Graph := Dependency_Graph
+        (Root_Project, Factory, E_Factory, Add_Limited_Withs => False);
       Result : constant Boolean := not Is_Acyclic (G);
    begin
       Destroy (G);
@@ -245,7 +270,8 @@ package body Projects.Graphs is
    function Topological_Sort (Root_Project : Prj.Tree.Project_Node_Id)
       return Name_Id_Array
    is
-      G : Graph := Dependency_Graph (Root_Project, null);
+      G : Graph := Dependency_Graph
+        (Root_Project, null, Add_Limited_Withs => False);
       Vertices : constant Depth_Vertices_Array := Depth_First_Search (G);
       List : Name_Id_Array (1 .. Vertices'Length);
    begin
