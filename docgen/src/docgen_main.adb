@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,7 +24,6 @@
 --  The procedure examines the command line options, creates the list of
 --  source files to be processed and calls the procedure Process_File
 --  from the package Docgen.Work_On_File.
-
 
 with Ada.Command_Line;          use Ada.Command_Line;
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -57,33 +56,35 @@ procedure Docgen_Main is
 
    function Get_Package_Name
      (File_Name : String) return Package_Info;
-   --  extracts the package name from the given source file
-   --  To be replace later!
+   --  Extract the package name from the given source file
+   --  To be rewritten using the GPS parser ???
 
    procedure Handle_Command_Line
      (Quit : out Boolean);
+   --  ???
 
    procedure Add_Body_Files
      (Source_File_List : in out Type_Source_File_List.List);
-      --  add to the list the body files of the spec files in the list
+   --  Add to the list the body files of the spec files in the list
 
    function Get_Source_Dir
-     (Source_File_List   : TSFL.List) return String;
-      --  return the path of the first source file in the list
+     (Source_File_List : TSFL.List) return String;
+   --  return the path of the first source file in the list
 
    ----------------------
-   --  Get_Package_Name --      To be replace later!
+   -- Get_Package_Name --
    ----------------------
 
    function Get_Package_Name
-     (File_Name : String) return Package_Info is
-      --  extracts the package name from the given source file
+     (File_Name : String) return Package_Info
+   is
       File                 : File_Type;
       Last, Index1, Index2 : Natural;
       Line_Nr              : Integer;
       Line_From_File       : String (1 .. Max_Line_Length);
       Package_Name_Found   : Boolean;
       Result               : Package_Info;
+
    begin
       Package_Name_Found := False;
       Open (File, In_File, File_Name);
@@ -92,6 +93,8 @@ procedure Docgen_Main is
       --  looks for the first string "package " in the file
       --  which is not in a comment
       --  and returns the identifier behind
+      --  ??? Should use the GPS parser instead
+
       while not Package_Name_Found and not End_Of_File (File) loop
          Ada.Text_IO.Get_Line (File, Line_From_File, Last);
          declare
@@ -141,10 +144,16 @@ procedure Docgen_Main is
       New_Package      : Package_Info;
 
    begin
+      --  ??? Should use GNAT.Command_Line instead
+
       J := 1;
-      if N = 0 then raise Help_Requested;
+
+      if N = 0 then
+         raise Help_Requested;
       end if;
+
       Quit := False;
+
       while J <= N loop
          declare
             S : constant String := Argument (J);
@@ -184,6 +193,7 @@ procedure Docgen_Main is
                   else
                      Prj_File_Name := new String'(S);
                   end if;
+
                elsif S (S'Last - 3 .. S'Last) = ".ads" then
                      if Prj_File_Name /= null then
                         Source_File_Node.File_Name := new String'(S);
@@ -202,6 +212,7 @@ procedure Docgen_Main is
                end if;
             end if;
          end;
+
          J := J + 1;
       end loop;
 
@@ -214,7 +225,9 @@ procedure Docgen_Main is
       when Command_Line_Error =>
          --  check the remaining arguments if there's a help option
          --  somewhere. If so, translate this into a Help_Requested.
+
          J := J + 1;
+
          while J <= N loop
             declare
                S : constant String := Argument (J);
@@ -222,8 +235,10 @@ procedure Docgen_Main is
                exit when S = "-?"    or else S = "-h" or else
                          S = "-help" or else S = "--help";
             end;
+
             J := J + 1;
          end loop;
+
          if J <= N then
             raise Help_Requested;
          else
@@ -236,9 +251,8 @@ procedure Docgen_Main is
    --------------------
 
    procedure Add_Body_Files
-     (Source_File_List : in out Type_Source_File_List.List) is
-      --  add to the list the body files from the spec files in the list
-      --  add an .adb file for each .ads file found in the list
+     (Source_File_List : in out Type_Source_File_List.List)
+   is
       Source_File_Node : Type_Source_File_List.List_Node;
       New_Node         : Source_File_Information;
       New_Filename     : GNAT.OS_Lib.String_Access;
@@ -246,10 +260,13 @@ procedure Docgen_Main is
       New_Package      : Package_Info;
    begin
       Source_File_Node := TSFL.First (Source_File_List);
-      for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
 
+      for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
          --  only if the .adb file really exists
+
          if TSFL.Data (Source_File_Node).Other_File_Found then
+
+            --  ??? The following code should use Glide_Kernel.Other_File_Name
 
             Old_Filename := new String'
               (TSFL.Data (Source_File_Node).File_Name.all);
@@ -279,6 +296,7 @@ procedure Docgen_Main is
       if Options.Info_Output then
          Put_Line ("The files in the file list are now: ");
          Source_File_Node := TSFL.First (Source_File_List);
+
          for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
             Put_Line (File_Name (TSFL.Data (Source_File_Node).File_Name.all));
             Source_File_Node := TSFL.Next (Source_File_Node);
@@ -322,20 +340,22 @@ begin --  DocGen
    end if;
 
    if not TSFL.Is_Empty (Source_File_List) then
-
       --  if Process_Body (-body) option was set, add all .adb
       --  files to the list
+
       if Options.Process_Body_Files then
          Add_Body_Files (Source_File_List);
       end if;
 
       --  if not path for the doc was set, take the path of the sources
+
       if Options.Doc_Directory = null then
          Options.Doc_Directory :=
            new String '(Get_Source_Dir (Source_File_List));
       end if;
 
       --  Process all files listed or all files from the project file
+
       Process_Files (Source_File_List, Options);
    end if;
 
@@ -383,5 +403,4 @@ exception
       Put_Line (Current_Error, "                  The last character is" &
                 """/"" or ""\""");
       New_Line (Current_Error);
-
 end Docgen_Main;
