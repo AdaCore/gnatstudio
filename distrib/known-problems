@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.0.0
 
+- Duplicate new file names
+  Problem:    Creating several new files, and closing one that is not the last
+              one, and creating a new one again result in a name duplication,
+              and gets GPS confused
+  Workaround: Save the files as soon as possible. Added benefit is a proper
+              recognition of the language
+
 - CB18-012 Different behavior between VCS global and contextual menus.
   Problem:    When you use the global menu VCS->Query status for all projects,
               only the status for project source files are queried, whereas
