@@ -169,6 +169,10 @@ package body Glide_Kernel.Project is
          if S = ""
            or else S = "<Current_Directory>"
          then
+            --  Do not include "." in the default source paths: when the user
+            --  is compiling, it would represent the object directory, when the
+            --  user is searching file it would represent whatever the current
+            --  directory is at that point,...
             return;
 
          elsif Source_Path then
