@@ -448,6 +448,12 @@ package body Src_Editor_Buffer.Line_Information is
                if Columns_Config.all (J).Identifier.all = Identifier then
                   Stick_To_Data := True;
                   Column := J;
+
+                  if Column < Buffer.Block_Highlighting_Column then
+                     Buffer.Block_Highlighting_Column :=
+                       Buffer.Block_Highlighting_Column - 1;
+                  end if;
+
                   exit;
                end if;
             end loop;
@@ -1973,5 +1979,45 @@ package body Src_Editor_Buffer.Line_Information is
          Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
       end if;
    end Highlight_Range;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line
+     (Buffer   : access Source_Buffer_Record'Class;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark)
+      return Editable_Line_Type
+   is
+      Iter : Gtk_Text_Iter;
+      Line : Editable_Line_Type;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Position);
+
+      Line := Get_Editable_Line
+        (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
+
+      if Line = 0 then
+         return 1;
+      else
+         return Line;
+      end if;
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column
+     (Buffer   : access Source_Buffer_Record'Class;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark)
+     return Positive
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Position);
+
+      return Positive (Get_Line_Offset (Iter) + 1);
+   end Get_Column;
 
 end Src_Editor_Buffer.Line_Information;
