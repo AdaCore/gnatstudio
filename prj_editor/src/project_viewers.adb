@@ -961,7 +961,7 @@ package body Project_Viewers is
       procedure Report_Error (Msg : String) is
       begin
          Console.Insert (Kernel, Msg, Mode => Console.Error);
-         Parse_File_Locations (Kernel, Msg, "Project read");
+         Parse_File_Locations (Kernel, Msg, -"Project read");
       end Report_Error;
 
       Dialog : Gtk_Dialog;
@@ -1154,7 +1154,7 @@ package body Project_Viewers is
            (Kernel, S & ASCII.LF,
             Mode => Console.Error,
             Add_LF => False);
-         Parse_File_Locations (Kernel, S, "Project add dependency");
+         Parse_File_Locations (Kernel, S, -"Project add dependency");
       end Report_Error;
 
       Base : constant String := Project_Directory (Importing_Project);
