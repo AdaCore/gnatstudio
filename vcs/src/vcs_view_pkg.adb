@@ -773,6 +773,7 @@ package body VCS_View_Pkg is
       Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
       Set_Clickable (Col, True);
       Set_Sort_Column_Id (Col, Base_Name_Column);
+      Set_Resizable (Col, True);
       Dummy := Append_Column (Explorer.Tree, Col);
 
       Gtk_New (Col);
