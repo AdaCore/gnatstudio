@@ -1031,6 +1031,8 @@ package body Src_Info.CPP is
    is
       P               : Pair_Ptr;
       Module_Typedefs : Src_Info.Type_Utils.Module_Typedefs_List;
+      Sym             : FIL_Table;
+
    begin
       if not Is_Open (Handler.SN_Table (FIL)) then
          --  .fil table does not exist, no data available
@@ -1049,14 +1051,15 @@ package body Src_Info.CPP is
          P := Get_Pair (Handler.SN_Table (FIL), Next_By_Key);
          exit when P = null;
 
-         declare
-            Sym : FIL_Table := Parse_Pair (P.all);
          begin
+            Parse_Pair (P.all, Sym);
             --  apply corresponding symbol handler
+
             Symbol_Handlers (Sym.Symbol)
               (Sym, Handler, File, List_Of_Files, Project_View,
                Module_Typedefs);
             Free (Sym);
+
          exception
             when others =>
                Free (Sym);
@@ -1532,7 +1535,7 @@ package body Src_Info.CPP is
       Class_Def   : CL_Table;
       Kind        : E_Kind;
    begin
-      Class_Def := Find (Handler.SN_Table (CL), Class_Name);
+      Find (Handler.SN_Table (CL), Class_Name, Tab => Class_Def);
       Kind := Get_Method_Kind (Class_Def, Return_Type, Attributes);
       Free (Class_Def);
       return Kind;
@@ -1584,13 +1587,17 @@ package body Src_Info.CPP is
 
       loop
          P := Get_Pair (MD_File, Next_By_Key);
+
          if P = null then -- no fwd decls at all
             Close (MD_File, Success);
             return;
          end if;
-         MD_Tab := Parse_Pair (P.all);
+
+         Parse_Pair (P.all, MD_Tab);
          Free (P);
+
          --  Update position of the first forward declaration
+
          exit when Cmp_Prototypes
            (MD_Tab.Buffer,
             Buffer,
@@ -1599,6 +1606,7 @@ package body Src_Info.CPP is
             MD_Tab.Return_Type,
             Return_Type,
             Strict => Strict);
+
          Free (MD_Tab);
       end loop;
 
@@ -1615,7 +1623,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (MD_File, Next_By_Key);
          exit when P = null;
-         MD_Tab_Tmp := Parse_Pair (P.all);
+         Parse_Pair (P.all, MD_Tab_Tmp);
          Free (P);
          --  Update position of the first forward declaration
          if MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
@@ -1630,7 +1638,8 @@ package body Src_Info.CPP is
                MD_Tab_Tmp.Return_Type,
                Strict => Strict)
             and then ((First_MD_Pos = Invalid_Point)
-            or else MD_Tab_Tmp.Start_Position < First_MD_Pos) then
+                      or else MD_Tab_Tmp.Start_Position < First_MD_Pos)
+         then
             First_MD_Pos := MD_Tab_Tmp.Start_Position;
          end if;
          Free (MD_Tab_Tmp);
@@ -1665,9 +1674,10 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             begin -- create class declaration if needed
-               CL_Tab := Find
+               Find
                  (Handler.SN_Table (CL),
-                  Buffer (Class_Name.First .. Class_Name.Last));
+                  Buffer (Class_Name.First .. Class_Name.Last),
+                  Tab => CL_Tab);
                Find_Or_Create_Class
                  (Handler,
                   CL_Tab,
@@ -1757,7 +1767,7 @@ package body Src_Info.CPP is
 
          exit when P = null;
 
-         FD_Tab := Parse_Pair (P.all);
+         Parse_Pair (P.all, FD_Tab);
          Free (P);
          Match := True;
 
@@ -1792,7 +1802,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (FD_File, Next_By_Key);
          exit when P = null;
-         FD_Tab_Tmp := Parse_Pair (P.all);
+         Parse_Pair (P.all, FD_Tab_Tmp);
          Free (P);
          --  Update position of the first forward declaration
          Match :=
@@ -2006,9 +2016,10 @@ package body Src_Info.CPP is
       --              Ref.Referred_Symbol_Name.Last));
 
       --  we need declaration's location
-      Var := Find (Handler.SN_Table (CON),
-         Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                     Ref.Referred_Symbol_Name.Last));
+      Find (Handler.SN_Table (CON),
+            Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                        Ref.Referred_Symbol_Name.Last),
+            Tab => Var);
 
       --  Find declaration
       if Xref_Filename_For
@@ -2250,7 +2261,7 @@ package body Src_Info.CPP is
    begin
       --  Info ("Fu_To_EC_Handler: " & Ref_Id);
 
-      Enum_Const := Find (Handler.SN_Table (EC), Ref_Id);
+      Find (Handler.SN_Table (EC), Ref_Id, Tab => Enum_Const);
 
       --  Find declaration
       if Xref_Filename_For
@@ -2344,7 +2355,7 @@ package body Src_Info.CPP is
          loop
             P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
             exit when P = null;
-            MDecl := Parse_Pair (P.all);
+            Parse_Pair (P.all, MDecl);
             Free (P);
             if MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last)
                /= Filename
@@ -2470,7 +2481,7 @@ package body Src_Info.CPP is
 
             exit when P = null;
 
-            FDecl := Parse_Pair (P.all);
+            Parse_Pair (P.all, FDecl);
             Free (P);
 
             if FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last)
@@ -2614,7 +2625,7 @@ package body Src_Info.CPP is
 
             exit when P = null;
 
-            FDecl_Tmp := Parse_Pair (P.all);
+            Parse_Pair (P.all, FDecl_Tmp);
             Free (P);
 
             if not Forward_Declared then
@@ -2826,7 +2837,7 @@ package body Src_Info.CPP is
       --  Info ("Fu_To_GV_Handler: " & Ref_Id);
 
       --  we need declaration's location
-      Var := Find (Handler.SN_Table (GV), Ref_Id);
+      Find (Handler.SN_Table (GV), Ref_Id, Tab => Var);
 
       --  Find declaration
       if Xref_Filename_For
@@ -2975,7 +2986,7 @@ package body Src_Info.CPP is
       end if;
 
       --  we need declaration's location
-      Var := Find (Handler.SN_Table (IV), Ref_Class, Ref_Id);
+      Find (Handler.SN_Table (IV), Ref_Class, Ref_Id, Tab => Var);
 
       --  Find declaration
       if Xref_Filename_For
@@ -3157,7 +3168,7 @@ package body Src_Info.CPP is
 
       --  Info ("Fu_To_Ma: " & Ref_Id);
 
-      Macro := Find (Handler.SN_Table (MA), Ref_Id);
+      Find (Handler.SN_Table (MA), Ref_Id, Tab => Macro);
 
       if Xref_Filename_For
          (Macro.Buffer (Macro.File_Name.First .. Macro.File_Name.Last),
@@ -3259,7 +3270,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
          exit when P = null;
-         MDecl_Tmp := Parse_Pair (P.all);
+         Parse_Pair (P.all, MDecl_Tmp);
          Free (P);
          if Init then
             Init  := False;
@@ -3293,21 +3304,27 @@ package body Src_Info.CPP is
             False);
 
          Init := True;
+
          loop
             P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
             exit when P = null;
+
             Fn := Parse_Pair (P.all);
+
             Free (P);
             Init := False;
+
             exit when Cmp_Arg_Types
               (MDecl.Buffer,
                Fn.Buffer,
                MDecl.Arg_Types,
                Fn.Arg_Types,
                Strict => True);
+
             Init := True;
             Free (Fn);
          end loop;
+
          Release_Cursor (Handler.SN_Table (MI));
 
          if Init then -- implementation for the referred method not found
@@ -3373,7 +3390,7 @@ package body Src_Info.CPP is
          declare
             Class_Def : CL_Table;
          begin
-            Class_Def := Find (Handler.SN_Table (CL), Ref_Class);
+            Find (Handler.SN_Table (CL), Ref_Class, Tab => Class_Def);
             --  ??? what to do when several classes with one name are available
             --  what about unions?
 
@@ -3454,7 +3471,7 @@ package body Src_Info.CPP is
 
       --  Info ("Fu_To_T: " & Ref_Id);
 
-      Typedef := Find (Handler.SN_Table (T), Ref_Id);
+      Find (Handler.SN_Table (T), Ref_Id, Tab => Typedef);
 
       if Xref_Filename_For
          (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last),
@@ -3793,9 +3810,13 @@ package body Src_Info.CPP is
 
             loop
                P := Get_Pair (Handler.SN_Table (SN_IN), Next_By_Key);
+
                exit when P = null;
-               Super := Parse_Pair (P.all);
+
+               Parse_Pair (P.all, Super);
+
                --  Lookup base class definition to find its precise location
+
                Find_Class
                  (Super.Buffer
                     (Super.Base_Class.First .. Super.Base_Class.Last),
@@ -3863,8 +3884,11 @@ package body Src_Info.CPP is
       end if;
 
       --  Lookup variable type
-      Var := Find (Handler.SN_Table (CON), Sym.Buffer
-         (Sym.Identifier.First .. Sym.Identifier.Last));
+      Find
+        (Handler.SN_Table (CON),
+         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Tab => Var);
+
       Type_Name_To_Kind
         (Var.Buffer
            (Var.Value_Type.First .. Var.Value_Type.Last),
@@ -4022,10 +4046,11 @@ package body Src_Info.CPP is
         and then Is_Open (Handler.SN_Table (E))
       then
          declare
-            EC_Def : EC_Table := Find
-              (Handler.SN_Table (EC), Ec_Id, Sym.Start_Position);
+            EC_Def : EC_Table;
             E_Def  : E_Table;
          begin
+            Find (Handler.SN_Table (EC),
+                  Ec_Id, Sym.Start_Position, Tab => EC_Def);
             Find_Enum
               (EC_Def.Buffer
                  (EC_Def.Enumeration_Name.First ..
@@ -4099,11 +4124,12 @@ package body Src_Info.CPP is
       --        & """");
 
       --  Find this symbol
-      FD_Tab := Find
+      Find
         (Handler.SN_Table (FD),
          Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Sym.Start_Position,
-         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
+         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Tab => FD_Tab);
 
       Is_Static  := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
       First_DBI  := FD_Tab.DBI;
@@ -4117,7 +4143,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
          exit when P = null;
-         FD_Tab_Tmp := Parse_Pair (P.all);
+         Parse_Pair (P.all, FD_Tab_Tmp);
          Free (P);
          --  Update position of the first forward declaration
          --  We have to compare prototypes of all global functions
@@ -4251,10 +4277,10 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_FU_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4283,15 +4309,19 @@ package body Src_Info.CPP is
          declare
             Class_Decl_Info : E_Declaration_Info_List;
          begin
-            FU_Tab := Find (Handler.SN_Table (MI),
-                Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-                Fu_Id,
-                Sym.Start_Position,
-                Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
+            Find
+              (Handler.SN_Table (MI),
+               Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+               Fu_Id,
+               Sym.Start_Position,
+               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+               Tab => FU_Tab);
+
             begin -- check if this class is template
-               Class_Def := Find
+               Find
                  (Handler.SN_Table (CL),
-                  Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
+                  Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+                  Tab => Class_Def);
                Target_Kind := Get_Method_Kind
                  (Class_Def,
                   FU_Tab.Buffer (FU_Tab.Return_Type.First ..
@@ -4330,11 +4360,12 @@ package body Src_Info.CPP is
          end;
       else
          begin
-            FU_Tab := Find
+            Find
               (Handler.SN_Table (FU),
                Fu_Id,
                Sym.Start_Position,
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
+               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+               Tab => FU_Tab);
             Target_Kind := Get_Function_Kind
                (FU_Tab.Buffer (FU_Tab.Return_Type.First ..
                                FU_Tab.Return_Type.Last),
@@ -4348,13 +4379,14 @@ package body Src_Info.CPP is
       end if;
 
       --  Detect forward declaration. If there are many declarations
-      --  we should not try do interpret them, 'cause it may be
+      --  we should not try to interpret them, 'cause it may be
       --  overloading.
       --  If exist only one, Start_Position
       --  should point to it and we have to add Body_Entity reference
       --  Otherwise Start_Position should point directly to the body.
       --  We should also try to find GPS declaration created during
       --  FD processing and not create new declaration.
+
       if Sym.Symbol = MI then
          Find_First_Forward_Declaration
            (FU_Tab.Buffer,
@@ -4450,7 +4482,8 @@ package body Src_Info.CPP is
          exit when P = null;
 
          begin
-            Ref := Parse_Pair (P.all);
+            Parse_Pair (P.all, Ref);
+
             if Fu_To_Handlers (Ref.Referred_Symbol) /= null then
                Our_Ref := Cmp_Arg_Types
                  (Ref.Buffer,
@@ -4466,6 +4499,7 @@ package body Src_Info.CPP is
                     (Ref, Handler, File, List, Project_View, Module_Type_Defs);
                end if;
             end if;
+
             Free (Ref);
 
          exception
@@ -4523,8 +4557,10 @@ package body Src_Info.CPP is
       end if;
 
       --  Lookup variable type
-      Var := Find (Handler.SN_Table (GV), Sym.Buffer
-         (Sym.Identifier.First .. Sym.Identifier.Last));
+      Find
+       (Handler.SN_Table (GV),
+        Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+        Tab => Var);
 
       Type_Name_To_Kind
         (Var.Buffer
@@ -4686,10 +4722,11 @@ package body Src_Info.CPP is
       end if;
 
       --  Lookup instance variable
-      Inst_Var := Find
+      Find
         (Handler.SN_Table (IV),
          Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Tab => Inst_Var);
 
       Find_Class
         (Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
@@ -4857,12 +4894,13 @@ package body Src_Info.CPP is
       --      & """");
 
       --  Find this symbol
-      MD_Tab := Find
+      Find
         (Handler.SN_Table (MD),
          Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
          Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Sym.Start_Position,
-         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
+         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         MD_Tab);
 
       Set_Cursor
         (Handler.SN_Table (MD),
@@ -4875,7 +4913,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
          exit when P = null;
-         MD_Tab_Tmp := Parse_Pair (P.all);
+         Parse_Pair (P.all, MD_Tab_Tmp);
          Free (P);
          --  Update position of the first forward declaration
          if Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
@@ -4903,9 +4941,10 @@ package body Src_Info.CPP is
          Class_Def          : CL_Table;
          Class_Decl_Info    : E_Declaration_Info_List;
       begin -- check if this class is template
-         Class_Def := Find
+         Find
            (Handler.SN_Table (CL),
-            Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
+            Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+            Tab => Class_Def);
          Target_Kind := Get_Method_Kind
            (Class_Def,
             MD_Tab.Buffer (MD_Tab.Return_Type.First ..
@@ -5228,7 +5267,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (Handler.SN_Table (LV), Next_By_Key);
          exit when P = null;
-         Var := Parse_Pair (P.all);
+         Parse_Pair (P.all, Var);
          Free (P);
          --  Check if we found the right local variable:
          --  compare class names (for methods only)
@@ -5443,7 +5482,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
          exit when P = null;
-         Ref := Parse_Pair (P.all);
+         Parse_Pair (P.all, Ref);
          Free (P);
          --  Check if we found the right lv usage: comapre file name
          --  and argument types
@@ -5508,7 +5547,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
          exit when P = null;
-         Ref := Parse_Pair (P.all);
+         Parse_Pair (P.all, Ref);
          Free (P);
          if Ref.Buffer (Ref.Access_Type.First .. Ref.Access_Type.Last)
             = "w" then
@@ -5581,7 +5620,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (TA_File, Next_By_Key);
          exit when P = null;
-         Arg := Parse_Pair (P.all);
+         Parse_Pair (P.all, Arg);
          Free (P);
 
          if Buffer (File_Name.First .. File_Name.Last)
