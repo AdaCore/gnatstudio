@@ -762,6 +762,13 @@ package body Navigation_Module is
          Accel_Key  => GDK_greater,
          Accel_Mods => Control_Mask);
 
+      Register_Menu
+        (Kernel, Navigate, -"Previous Location", Stock_Go_Back,
+         On_Back'Access);
+      Register_Menu
+        (Kernel, Navigate, -"Forward Location", Stock_Go_Forward,
+         On_Forward'Access);
+
       Append_Space (Toolbar);
 
       Button := Insert_Stock
