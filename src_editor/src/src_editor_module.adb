@@ -279,7 +279,7 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Edit->Select All menu
 
-   procedure On_Goto_Line
+   procedure On_Goto_Line_Current_Editor
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Navigate->Goto Line... menu
 
@@ -2159,11 +2159,11 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_New_View;
 
-   ------------------
-   -- On_Goto_Line --
-   ------------------
+   ---------------------------------
+   -- On_Goto_Line_Current_Editor --
+   ---------------------------------
 
-   procedure On_Goto_Line
+   procedure On_Goto_Line_Current_Editor
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
@@ -2172,13 +2172,13 @@ package body Src_Editor_Module is
 
    begin
       if Editor /= null then
-         On_Goto_Line (Editor => Editor, Kernel => Kernel);
+         On_Goto_Line (Editor => GObject (Editor), Kernel => Kernel);
       end if;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Line;
+   end On_Goto_Line_Current_Editor;
 
    -------------------------
    -- On_Goto_Declaration --
@@ -3020,7 +3020,7 @@ package body Src_Editor_Module is
                      On_Pretty_Print'Access, Ref_Item => -"Preferences");
 
       Register_Menu (Kernel, Navigate, -"Goto _Line...", Stock_Jump_To,
-                     On_Goto_Line'Access, null,
+                     On_Goto_Line_Current_Editor'Access, null,
                      GDK_G, Control_Mask,
                      Ref_Item => -"Goto File Spec<->Body");
       Register_Menu (Kernel, Navigate, -"Goto _Declaration", Stock_Home,
