@@ -609,6 +609,10 @@ package body GVD.Process is
          Strings_Color     => Strings_Color,
          Keywords_Color    => Keywords_Color);
 
+      --  Initialize the call stack list
+
+      Show_Call_Stack_Columns (Process);
+
       --  Initialize the canvas
 
       if Display_Grid then

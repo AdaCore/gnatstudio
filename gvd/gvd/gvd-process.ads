@@ -66,6 +66,19 @@ package GVD.Process is
    Command_History_Collapse_Entries : constant Boolean := True;
    --  Whether we should collapse entries in the history list.
 
+   ----------------------
+   -- Backtrace window --
+   ----------------------
+
+   type Stack_List_Filter is mod 2 ** 16;
+   Frame_Num       : constant Stack_List_Filter := 2 ** 0;
+   Subprog_Name    : constant Stack_List_Filter := 2 ** 1;
+   Params          : constant Stack_List_Filter := 2 ** 2;
+   File_Location   : constant Stack_List_Filter := 2 ** 3;
+   Program_Counter : constant Stack_List_Filter := 2 ** 4;
+   All_Info        : constant Stack_List_Filter := 2 ** 5 - 1;
+   --  Lists the information to be displayed in the stack list window.
+
    ---------------------------
    -- Debugger_Process_Tab --
    ---------------------------
@@ -142,7 +155,10 @@ package GVD.Process is
       --  (Added to handle sessions)
 
       Input_Id                : Glib.Gint := 0;
-      --  Input callback Id when one has been set up for this process.
+
+      Backtrace_Filter : Stack_List_Filter :=
+        Subprog_Name or Params;
+      --  What columns to be displayed in the stack list window
 
       Current_Command         : String_Access;
       --  Async command currently running in the underlying debugger, if any.
