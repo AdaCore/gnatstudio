@@ -29,6 +29,7 @@ with GVD.Types;
 with Basic_Types;
 with GVD.Proc_Utils;
 with VFS;
+with Ada.Unchecked_Deallocation;
 
 package Debugger is
 
@@ -176,6 +177,9 @@ package Debugger is
    function Get_Language
      (Debugger : access Debugger_Root) return Language.Language_Access;
    --  Return the current language associated with a debugger.
+
+   procedure Detect_Language (Debugger : access Debugger_Root);
+   --  Try to detect the current language associated with the debugger.
 
    function Parse_Type
      (Debugger : access Debugger_Root'Class;
@@ -752,18 +756,23 @@ package Debugger is
    -- Source Related Commands --
    -----------------------------
 
-   type Line_Kind is (Have_Code, No_Code, No_More_Code);
-   --  Type used by Line_Contains_Code below.
-   --  - Have_Code means that the line contains some code.
-   --  - No_Code means that the line contains no executable code.
-   --  - No_More_Code means that the current line and all subsequent lines
-   --    in the file have no code.
+   type Line_Array is array (Positive range <>) of Boolean;
+   pragma Pack (Line_Array);
 
-   function Line_Contains_Code
+   type Line_Array_Access is access Line_Array;
+
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Line_Array, Line_Array_Access);
+
+   procedure Lines_With_Code
      (Debugger : access Debugger_Root;
       File     : VFS.Virtual_File;
-      Line     : Positive) return Line_Kind is abstract;
-   --  Indicate whether a given file and line number contain executable code.
+      Result   : out Boolean;
+      Lines    : out Line_Array);
+   --  Set to True every line in File that is associated with code.
+   --  Set Result to False if could not determine the state of the lines.
+   --  In this case, Lines isn't set.
+   --  Default implementation sets Result to False.
 
    -------------------
    -- Assembly code --
