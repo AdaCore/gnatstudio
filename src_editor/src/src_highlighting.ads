@@ -27,6 +27,7 @@
 with Gdk.Color;
 with Gtk.Text_Tag;
 with Pango.Enums;
+with Pango.Font;
 
 with Language;
 
@@ -36,15 +37,6 @@ package Src_Highlighting is
      of Gtk.Text_Tag.Gtk_Text_Tag;
    --  This array contains the tags associated to each Language Entity
    --  Kind that needs to be highlighted in the source editor.
-
-   type Font_Attributes is record
-      Style  : Pango.Enums.Style;
-      Weight : Pango.Enums.Weight;
-   end record;
-   --  A structure describing the font attributes for a given Highlighting Tag.
-   --  Note that the color name is not included, since we can not have Strings
-   --  inside such record, and using Strings access types or chars_ptr types is
-   --  not very simple...
 
    Keyword_Color_Tag_Name   : constant String := "keyword_tag";
    Comment_Color_Tag_Name   : constant String := "comment_tag";
@@ -64,22 +56,16 @@ package Src_Highlighting is
    --  Declared as public so that one can retrieve them from the
    --  Source Buffer using its name.
 
-   function To_Font_Attributes
-     (Style  : Pango.Enums.Style  := Pango.Enums.Pango_Style_Normal;
-      Weight : Pango.Enums.Weight := Pango.Enums.Pango_Weight_Normal)
-      return Font_Attributes;
-   --  Convenience function to create a Font_Attributes structure.
-
    procedure Create_Syntax_Tags
      (Result              : in out Highlighting_Tags;
       Keyword_Color       : Gdk.Color.Gdk_Color;
-      Keyword_Font_Attr   : Font_Attributes := To_Font_Attributes;
+      Keyword_Font_Desc   : Pango.Font.Pango_Font_Description := null;
       Comment_Color       : Gdk.Color.Gdk_Color;
-      Comment_Font_Attr   : Font_Attributes := To_Font_Attributes;
+      Comment_Font_Desc   : Pango.Font.Pango_Font_Description := null;
       Character_Color     : Gdk.Color.Gdk_Color;
-      Character_Font_Attr : Font_Attributes := To_Font_Attributes;
+      Character_Font_Desc : Pango.Font.Pango_Font_Description := null;
       String_Color        : Gdk.Color.Gdk_Color;
-      String_Font_Attr    : Font_Attributes := To_Font_Attributes);
+      String_Font_Desc    : Pango.Font.Pango_Font_Description := null);
    --  Create or update a Highlighting_Tags object using the given color names.
    --  If some colors name can not be parsed, then no special color will be
    --  used to highlight the associated source parts.
