@@ -62,7 +62,7 @@ package Src_Info is
    --  memory allocated for this list. The new list becomes empty.
 
    function Locate
-     (List : LI_File_List;
+     (List        : LI_File_List;
       LI_Filename : VFS.Virtual_File) return LI_File_Ptr;
    --  Return a pointer to the LI_File whose filename is LI_Filename.
    --  Return No_LI_File if no such LI_File is found.
@@ -180,11 +180,11 @@ package Src_Info is
    --  Free the memory occupied by Handler. By default, this does nothing
 
    procedure Create_Or_Complete_LI
-     (Handler                : access LI_Handler_Record;
-      File                   : in out LI_File_Ptr;
-      Source_Filename        : VFS.Virtual_File;
-      List                   : LI_File_List;
-      Project                : Projects.Project_Type) is abstract;
+     (Handler         : access LI_Handler_Record;
+      File            : in out LI_File_Ptr;
+      Source_Filename : VFS.Virtual_File;
+      List            : LI_File_List;
+      Project         : Projects.Project_Type) is abstract;
    --  Find the LI file for Source_Filename, or create one if there is none
    --  yet.
    --  On calling this subprogram, File is always null, and must be looked for
@@ -195,9 +195,9 @@ package Src_Info is
    --  This subprogram garantees that the returned File has been fully parsed.
 
    function LI_Filename_From_Source
-     (Handler                : access LI_Handler_Record;
-      Source_Filename        : VFS.Virtual_File;
-      Project                : Projects.Project_Type)
+     (Handler         : access LI_Handler_Record;
+      Source_Filename : VFS.Virtual_File;
+      Project         : Projects.Project_Type)
       return VFS.Virtual_File is abstract;
    --  Return the name of the Library Information file associated with
    --  Source_Filename. In Ada, there is one such file per source
@@ -212,10 +212,10 @@ package Src_Info is
    --  storer in lower cases in the LI structure.
 
    procedure Parse_All_LI_Information
-     (Handler                : access LI_Handler_Record;
-      List                   : LI_File_List;
-      In_Directory           : String;
-      Project                : Projects.Project_Type) is abstract;
+     (Handler      : access LI_Handler_Record;
+      List         : LI_File_List;
+      In_Directory : String;
+      Project      : Projects.Project_Type) is abstract;
    --  Parse all the existing LI information in the directory In_Directory, and
    --  store it in the internal structures. No recompilation or parsing of the
    --  sources needs to be done in general.
@@ -235,10 +235,10 @@ package Src_Info is
    --  LI structures themselves, which will be done by Create_Or_Complete_LI.
 
    function Generate_LI_For_Project
-     (Handler       : access LI_Handler_Record;
-      Root_Project  : Projects.Project_Type;
-      Project       : Projects.Project_Type;
-      Recursive     : Boolean := False)
+     (Handler      : access LI_Handler_Record;
+      Root_Project : Projects.Project_Type;
+      Project      : Projects.Project_Type;
+      Recursive    : Boolean := False)
       return LI_Handler_Iterator'Class is abstract;
    --  Generate the LI information for all the source files in Project (and all
    --  its imported projects if Recursive is True).
@@ -271,7 +271,7 @@ package Src_Info is
    Null_File_Location : constant File_Location;
    Predefined_Entity_Location : constant File_Location;
 
-   function Get_Location (Ref  : E_Reference) return File_Location;
+   function Get_Location (Ref : E_Reference) return File_Location;
    --  Return the location for a declaration or a reference.
 
    function Get_File   (Location : File_Location) return VFS.Virtual_File;
@@ -968,16 +968,16 @@ private
    No_Dependencies : constant Dependency_File_Info_List := null;
 
    type LI_File (Parsed : Boolean := False) is record
-      Handler       : LI_Handler;
+      Handler         : LI_Handler;
       --  The handler used to create this LI_File.
 
-      LI_Filename   : VFS.Virtual_File;
+      LI_Filename     : VFS.Virtual_File;
       LI_Filename_Key : String_Access;
-      Spec_Info     : File_Info_Ptr;
-      Body_Info     : File_Info_Ptr;
-      Separate_Info : File_Info_Ptr_List;
-      LI_Timestamp  : Timestamp;
-      Project       : Projects.Project_Type;
+      Spec_Info       : File_Info_Ptr;
+      Body_Info       : File_Info_Ptr;
+      Separate_Info   : File_Info_Ptr_List;
+      LI_Timestamp    : Timestamp;
+      Project         : Projects.Project_Type;
 
       case Parsed is
          when True =>
@@ -1047,14 +1047,14 @@ private
    package LI_File_HTable is
      new HTables.Static_HTable
        (Header_Num => LI_File_HTable_Index,
-        Elmt_Ptr => LI_File_Node_Ptr,
-        Null_Ptr => null,
-        Set_Next => Set_Next,
-        Next => Next,
-        Key => String_Access,
-        Get_Key => Get_LI_Filename_Key,
-        Hash => Hash,
-        Equal => Equal);
+        Elmt_Ptr   => LI_File_Node_Ptr,
+        Null_Ptr   => null,
+        Set_Next   => Set_Next,
+        Next       => Next,
+        Key        => String_Access,
+        Get_Key    => Get_LI_Filename_Key,
+        Hash       => Hash,
+        Equal      => Equal);
    --  A hash-table of LI_File_Ptr objects. There will always be at most
    --  one element per key (that is one unit per unit name).
    --
@@ -1083,10 +1083,10 @@ private
    end record;
 
    procedure Compute_Sources
-     (Iterator     : in out LI_Handler_Iterator'Class;
-      Project      : Projects.Project_Type;
-      Recursive    : Boolean;
-      Languages    : Projects.Name_Id_Array);
+     (Iterator  : in out LI_Handler_Iterator'Class;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean;
+      Languages : Projects.Name_Id_Array);
    --  Compute the list of source files that will need to be analyzed by the
    --  iterator. Elements from this list can be read using
    --  Current_Source_File. Only the files belonging to Language will be
@@ -1121,8 +1121,8 @@ private
    --  lists.
 
    procedure Add
-     (HT      : in out LI_File_HTable.HTable;
-      LIFP    : LI_File_Ptr);
+     (HT   : in out LI_File_HTable.HTable;
+      LIFP : LI_File_Ptr);
    --  Saves the given LI_File_Ptr in the hash-table. If a LI_File_Ptr with
    --  the same unit name is already stored, then nothing is done and success
    --  is set to False (Rationale: the LI_File structure already stored might
