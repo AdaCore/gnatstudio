@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -34,6 +34,7 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
+with Shell;                     use Shell;
 
 package body VFS_Module is
 
