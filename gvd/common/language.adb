@@ -40,6 +40,7 @@ package body Language is
       Column    : out Natural);
    --  Internal version of Looking_At, which also returns the Line and Column,
    --  considering that Buffer (First) is at line 1 column 1.
+   --  Column is a byte index, not a character index.
 
    ---------------------------
    -- Can_Tooltip_On_Entity --
@@ -147,6 +148,7 @@ package body Language is
         Keywords (Language_Access (Lang));
       C             : Gunichar;
       Buffer_Length : constant Natural := Buffer'Last - First + 1;
+      Tmp           : Natural;
 
    begin
       Line   := 1;
@@ -177,8 +179,9 @@ package body Language is
              (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
            /= Context.Comment_End
          loop
-            Next_Char := UTF8_Next_Char (Buffer, Next_Char);
-            Column := Column + 1;
+            Tmp := UTF8_Next_Char (Buffer, Next_Char);
+            Column := Column + (Tmp - Next_Char);
+            Next_Char := Tmp;
 
             if Buffer (Next_Char) = ASCII.LF then
                Column := 1;
@@ -203,8 +206,9 @@ package body Language is
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ASCII.LF
          loop
-            Next_Char := UTF8_Next_Char (Buffer, Next_Char);
-            Column := Column + 1;
+            Tmp := UTF8_Next_Char (Buffer, Next_Char);
+            Column := Column + (Tmp - Next_Char);
+            Next_Char := Tmp;
          end loop;
 
          return;
@@ -236,8 +240,9 @@ package body Language is
          end if;
 
          if Next_Char <= Buffer'Last then
-            Next_Char := UTF8_Next_Char (Buffer, Next_Char);
-            Column := Column + 1;
+            Tmp := UTF8_Next_Char (Buffer, Next_Char);
+            Column := Column + (Tmp - Next_Char);
+            Next_Char := Tmp;
          end if;
 
          return;
@@ -291,7 +296,7 @@ package body Language is
       then
          Entity := Normal_Text;
          Next_Char := UTF8_Next_Char (Buffer, First);
-         Column := Column + 1;
+         Column := Column + (Next_Char - First);
 
          while Next_Char <= Buffer'Last loop
             C := UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last));
@@ -299,8 +304,9 @@ package body Language is
             exit when C = Character'Pos (ASCII.LF)
               or else not Is_Space (C);
 
-            Next_Char := UTF8_Next_Char (Buffer, Next_Char);
-            Column := Column + 1;
+            Tmp := UTF8_Next_Char (Buffer, Next_Char);
+            Column := Column + (Tmp - Next_Char);
+            Next_Char := Tmp;
          end loop;
 
          return;
@@ -310,7 +316,7 @@ package body Language is
       --  starting with a letter
 
       Next_Char := UTF8_Next_Char (Buffer, First);
-      Column := Column + 1;
+      Column := Column + (Next_Char - First);
       Entity := Normal_Text;
 
       if Buffer (Next_Char) = ASCII.LF then
@@ -323,8 +329,9 @@ package body Language is
         and then Is_Entity_Letter
           (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
       loop
-         Next_Char := UTF8_Next_Char (Buffer, Next_Char);
-         Column := Column + 1;
+         Tmp := UTF8_Next_Char (Buffer, Next_Char);
+         Column := Column + (Tmp - Next_Char);
+         Next_Char := Tmp;
       end loop;
    end Looking_At;
 
