@@ -53,6 +53,7 @@ with Naming_Editors;   use Naming_Editors;
 with Prj_API;          use Prj_API;
 with Pixmaps_Prj;      use Pixmaps_Prj;
 with Glide_Kernel;     use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Intl;       use Glide_Intl;
 with String_Utils;     use String_Utils;
 
@@ -461,7 +462,7 @@ package body Creation_Wizard is
       --  Append the naming scheme
       Create_Project_Entry (Wiz.Naming, Wiz.Kernel, Project);
 
-      Save_Project (Project, Recursive => False);
+      Save_Project (Wiz.Kernel, Project, Recursive => False);
 
       return Dir & Name & Project_File_Extension;
    end Generate_Prj;
