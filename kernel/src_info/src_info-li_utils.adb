@@ -19,7 +19,8 @@ package body Src_Info.LI_Utils is
    function Find_Declaration_Internal
      (Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String;
-      Location                : in Point) return E_Declaration_Info_List;
+      Location                : in Point := Invalid_Point)
+   return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
    --  specified E_Declaration_Info_List
 
@@ -292,8 +293,8 @@ package body Src_Info.LI_Utils is
      (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
       Class_Name              : in String := "";
-      Location                : in Point) return E_Declaration_Info_List
-   is
+      Location                : in Point := Invalid_Point)
+   return E_Declaration_Info_List is
       pragma Unreferenced (Class_Name);
    begin
       if (File = No_LI_File)
@@ -316,8 +317,8 @@ package body Src_Info.LI_Utils is
       Symbol_Name             : in String;
       Class_Name              : in String := "";
       Filename                : in String := "";
-      Location                : in Point) return E_Declaration_Info_List
-   is
+      Location                : in Point := Invalid_Point)
+   return E_Declaration_Info_List is
       pragma Unreferenced (Class_Name);
       Dep_Ptr : Dependency_File_Info_List;
    begin
@@ -381,11 +382,12 @@ package body Src_Info.LI_Utils is
       else
          D_Ptr.Value.Declaration.Parent_Location :=
                (File => (LI => No_LI_File,
-         --  FIX ME
                          Part => Unit_Body,
                          Source_Filename => new String'(Parent_Filename)),
                 Line => Parent_Location.Line,
                 Column => Parent_Location.Column);
+         --  FIX ME (we need to search for appropriate File in which
+         --  parent is really declared)
       end if;
       D_Ptr.Value.Declaration.Scope := Scope;
       if End_Of_Scope_Location = Invalid_Point then
@@ -403,11 +405,12 @@ package body Src_Info.LI_Utils is
       else
          D_Ptr.Value.Declaration.Rename :=
                    (File => (LI => No_LI_File,
-         --  FIX ME
                              Part => Unit_Body,
                              Source_Filename => new String'(Rename_Filename)),
                     Line => Rename_Location.Line,
                     Column => Rename_Location.Column);
+         --  FIX ME (we need to search for appropriate File in which
+         --  renamed entity is really declared)
       end if;
    end Insert_Declaration_Internal;
 
@@ -418,16 +421,22 @@ package body Src_Info.LI_Utils is
    function Find_Declaration_Internal
      (Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String;
-      Location                : in Point) return E_Declaration_Info_List
-   is
+      Location                : in Point := Invalid_Point)
+   return E_Declaration_Info_List is
       D_Ptr : E_Declaration_Info_List;
    begin
       D_Ptr := Declaration_Info_Ptr;
       loop
          exit when D_Ptr = null;
          if eq (D_Ptr.Value.Declaration.Name.all, Symbol_Name)
-           and then (D_Ptr.Value.Declaration.Location.Line = Location.Line)
-           and then (D_Ptr.Value.Declaration.Location.Column = Location.Column)
+           and then (
+             (Location /= Invalid_Point
+                and then (D_Ptr.Value.Declaration.Location.Line
+                                                    = Location.Line)
+                and then (D_Ptr.Value.Declaration.Location.Column
+                                                    = Location.Column))
+             or else Location = Invalid_Point
+           )
          then
             return D_Ptr;
          end if;

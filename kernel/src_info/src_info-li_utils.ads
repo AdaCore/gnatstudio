@@ -70,7 +70,8 @@ private package Src_Info.LI_Utils is
      (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
       Class_Name              : in String := "";
-      Location                : in Point) return E_Declaration_Info_List;
+      Location                : in Point := Invalid_Point)
+   return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
 
    function Find_Dependency_Declaration
@@ -78,7 +79,8 @@ private package Src_Info.LI_Utils is
       Symbol_Name             : in String;
       Class_Name              : in String := "";
       Filename                : in String := "";
-      Location                : in Point) return E_Declaration_Info_List;
+      Location                : in Point := Invalid_Point)
+   return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
 
    function eq (str1 : String; str2 : String) return Boolean;
