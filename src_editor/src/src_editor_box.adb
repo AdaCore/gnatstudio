@@ -18,80 +18,80 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;             use Ada.Exceptions;
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with Glib;                       use Glib;
-with Glib.Object;                use Glib.Object;
-with Glib.Values;                use Glib.Values;
-with Glide_Kernel;               use Glide_Kernel;
-with Glide_Kernel.Console;       use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;      use Glide_Kernel.Contexts;
-with Glide_Kernel.Modules;       use Glide_Kernel.Modules;
-with Glide_Kernel.Project;       use Glide_Kernel.Project;
-with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
-with Glide_Kernel.Scripts;       use Glide_Kernel.Scripts;
+with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with Glib;                        use Glib;
+with Glib.Object;                 use Glib.Object;
+with Glib.Values;                 use Glib.Values;
+with Glide_Kernel;                use Glide_Kernel;
+with Glide_Kernel.Console;        use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Project;        use Glide_Kernel.Project;
+with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Gdk;                        use Gdk;
-with Gdk.Color;                  use Gdk.Color;
-with Gdk.Event;                  use Gdk.Event;
-with Gdk.GC;                     use Gdk.GC;
-with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gdk;                         use Gdk;
+with Gdk.Color;                   use Gdk.Color;
+with Gdk.Event;                   use Gdk.Event;
+with Gdk.GC;                      use Gdk.GC;
+with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Types;
-with Gdk.Window;                 use Gdk.Window;
-with Pango.Layout;               use Pango.Layout;
-with Pango.Font;                 use Pango.Font;
+with Gdk.Window;                  use Gdk.Window;
+with Pango.Layout;                use Pango.Layout;
+with Pango.Font;                  use Pango.Font;
 
-with Gtk;                        use Gtk;
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Clipboard;              use Gtk.Clipboard;
-with Gtk.Container;              use Gtk.Container;
-with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Event_Box;              use Gtk.Event_Box;
-with Gtk.Frame;                  use Gtk.Frame;
-with Gtk.Handlers;               use Gtk.Handlers;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Main;                   use Gtk.Main;
-with Gtk.Menu;                   use Gtk.Menu;
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Separator;              use Gtk.Separator;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Text_Mark;              use Gtk.Text_Mark;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Text_View;              use Gtk.Text_View;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.File_Selector;       use Gtkada.File_Selector;
-with Gtkada.MDI;                 use Gtkada.MDI;
-with GUI_Utils;                  use GUI_Utils;
-with Glide_Intl;                 use Glide_Intl;
+with Gtk;                         use Gtk;
+with Gtk.Box;                     use Gtk.Box;
+with Gtk.Clipboard;               use Gtk.Clipboard;
+with Gtk.Container;               use Gtk.Container;
+with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
+with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Event_Box;               use Gtk.Event_Box;
+with Gtk.Frame;                   use Gtk.Frame;
+with Gtk.Handlers;                use Gtk.Handlers;
+with Gtk.Label;                   use Gtk.Label;
+with Gtk.Main;                    use Gtk.Main;
+with Gtk.Menu;                    use Gtk.Menu;
+with Gtk.Menu_Item;               use Gtk.Menu_Item;
+with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Gtk.Separator;               use Gtk.Separator;
+with Gtk.Text_Iter;               use Gtk.Text_Iter;
+with Gtk.Text_Mark;               use Gtk.Text_Mark;
+with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
+with Gtk.Text_View;               use Gtk.Text_View;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtkada.Dialogs;              use Gtkada.Dialogs;
+with Gtkada.File_Selector;        use Gtkada.File_Selector;
+with Gtkada.MDI;                  use Gtkada.MDI;
+with GUI_Utils;                   use GUI_Utils;
+with Glide_Intl;                  use Glide_Intl;
 
 with Basic_Types;
-with Language;                   use Language;
-with Language.Ada;               use Language.Ada;
-with Language_Handlers;          use Language_Handlers;
-with String_Utils;               use String_Utils;
-with Src_Editor_Buffer;          use Src_Editor_Buffer;
+with Language;                    use Language;
+with Language.Ada;                use Language.Ada;
+with Language_Handlers;           use Language_Handlers;
+with String_Utils;                use String_Utils;
+with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_View;            use Src_Editor_View;
-with Src_Editor_Module;          use Src_Editor_Module;
-with Src_Info;                   use Src_Info;
-with Src_Info.Queries;           use Src_Info.Queries;
-with Traces;                     use Traces;
-with VFS;                        use VFS;
+with Src_Editor_View;             use Src_Editor_View;
+with Src_Editor_Module;           use Src_Editor_Module;
+with Src_Info;                    use Src_Info;
+with Src_Info.Queries;            use Src_Info.Queries;
+with Traces;                      use Traces;
+with VFS;                         use VFS;
 with Projects;
-with GVD.Dialogs;                use GVD.Dialogs;
+with GVD.Dialogs;                 use GVD.Dialogs;
 --  ??? Used for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
 
-with Commands;                   use Commands;
-with Commands.Editor;            use Commands.Editor;
-with Find_Utils;                 use Find_Utils;
+with Commands;                    use Commands;
+with Commands.Editor;             use Commands.Editor;
+with Find_Utils;                  use Find_Utils;
 
-with Gtkada.Types;              use Gtkada.Types;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtkada.Types;                use Gtkada.Types;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 
 package body Src_Editor_Box is
 
@@ -851,6 +851,16 @@ package body Src_Editor_Box is
       Set_Text (Box.Function_Label, Name);
    end Show_Which_Function;
 
+   ---------------------------
+   -- Clear_Subprogram_Name --
+   ---------------------------
+
+   procedure Clear_Subprogram_Name
+     (Editor : access Source_Editor_Box_Record) is
+   begin
+      Set_Text (Editor.Function_Label, "");
+   end Clear_Subprogram_Name;
+
    ----------------------------
    -- Status_Changed_Handler --
    ----------------------------
@@ -954,6 +964,9 @@ package body Src_Editor_Box is
       Line : constant Gint :=
         Gint (Values.Get_Int (Values.Nth (Params, 1)));
 
+      Pref_Display_Subprogram_Name : constant Boolean :=
+        Get_Pref (Box.Kernel, Display_Subprogram_Name);
+
       function Get_Enclosing_Subprogram return String;
       --  Returns the name of the enclosing subprogram or package. This is
       --  done by using the block information.
@@ -993,7 +1006,10 @@ package body Src_Editor_Box is
            (Box,
             Line   => Line,
             Column => Values.Get_Int (Values.Nth (Params, 2)));
-         Show_Which_Function (Box, Name => Get_Enclosing_Subprogram);
+
+         if Pref_Display_Subprogram_Name then
+            Show_Which_Function (Box, Name => Get_Enclosing_Subprogram);
+         end if;
       end if;
 
    exception
