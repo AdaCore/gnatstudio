@@ -747,6 +747,11 @@ will modify the current filter. From then on, pressing
 @key{Alt-Tab} will only iterate through those windows that match
 the filter.
 
+The filter is matched by any window whose name contains the letter you
+have typed. For instance, if you are currently editing the files
+@file{unit1.adb} and @file{file.adb}, pressing @key{t} will only leave
+@file{unit1.adb} selectable.
+
 @c --------------------------------------------------------------------
 @node Closing Windows
 @section Closing Windows
@@ -3472,20 +3477,39 @@ the standard menu:
 This menu entry will display an external dialog in which you can
 select the name of a file to analyze.
 
-@item Hide system files
-@cindex hide system files
+@item Refresh
+@cindex refresh
 
-This menu entry is currently deactivated. It indicates whether
-standard system files (runtime files for instance in the case of Ada)
-are displayed in the browser. By default, these files will only be
-displayed if you explicitely select them through the @code{Open file}
-menu, or the contextual menu in the project explorer.
+This menu entry will check that all links displays in the dependency
+browser are still valid. If not, they are removed. The arrows in the
+title bar are also reset if necessary, in case new dependencies were
+added for the files.
 
-@item Hide implicit dependencies
-@cindex hide implicit dependencies
+The browser is not refreshed automatically, since there are lots of
+cases where the dependencies might change (editing source files,
+changing the project hierarchy or the value of the scenario
+variables,...)
 
-This menu entry is currently deactivated. It indicates whether
-indirect dependencies should also be displayed for the files.
+@item Show system files
+@cindex show system files
+
+This menu entry indicates whether standard system files (runtime files
+for instance in the case of Ada) are displayed in the browser. By
+default, these files will only be displayed if you explicitely select
+them through the @code{Open file} menu, or the contextual menu in the
+project explorer.
+
+@item Show implicit dependencies
+@cindex show implicit dependencies
+
+This menu entry indicates whether implicit dependencies should also be
+displayed for the files. Implicit dependencies are files that are
+required to compile the selected file, but that are not explicitely
+imported through a @code{with} or @code{#include} statement. For
+instance, the body of generics in Ada is an implicit dependency.
+Any time one of the implicit dependencies is modified, the selected
+file should be recompiled as well.
+
 @end table
 
 The contextual menu available by right clicking on an item also adds a
