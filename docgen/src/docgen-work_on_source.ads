@@ -41,6 +41,7 @@
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Language;                  use Language;
+with Src_Info;                  use Src_Info;
 
 package Docgen.Work_On_Source is
 
@@ -53,9 +54,9 @@ package Docgen.Work_On_Source is
       Source_File_List   : in out Type_Source_File_List.List;
       Source_Filename    : String;
       Package_Name       : String;
-      Def_In_Line        : Integer;
       Entity_List        : in out Type_Entity_List.List;
       Process_Body_File  : Boolean;
+      LI_Unit            : LI_File_Ptr;
       Options            : All_Options);
    --  with the data from the lists, the soucre file and the config file,
    --  create the Strings for the output.
@@ -83,8 +84,9 @@ private
    procedure Process_One_Body_File
      (Doc_File           : File_Type;
       Source_File        : String;
-      Entity_List        : Type_Entity_List.List;
       File_Text          : GNAT.OS_Lib.String_Access;
+      LI_Unit            : LI_File_Ptr;
+      Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options);
    --  will pass the information about the body file to the output
    --  subprogram. This is the only subprogram working on the contents
@@ -120,46 +122,53 @@ private
    --  output subprogram
 
    procedure Process_With_Clause
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options);
+     (Doc_File         : File_Type;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options);
    --  will process the lines at the beginning of the source file
    --  starting with "with" and pass them to the output subprogram
 
    procedure Process_Packages
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options);
+     (Doc_File         : File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options);
    --  will process renamed and instantiated packages and pass
    --  them to the output subprogram
 
    procedure Process_Vars
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options);
+     (Doc_File         : File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options);
    --  called by Process_Source to work on the constants
    --  and named numbers and pass each of them to the output subprogram
 
    procedure Process_Exceptions
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options);
+     (Doc_File         : File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options);
    --  called by Process_Source to work on the exceptions and
    --  pass each of them to the output subprogram
 
@@ -171,6 +180,8 @@ private
       Package_Name       : String;
       Parsed_List        : Construct_List;
       File_Text          : GNAT.OS_Lib.String_Access;
+      LI_Unit            : LI_File_Ptr;
+      Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options);
    --  called by Process_Source to work on the entires and entry
    --  families and pass each of them to the output subprogram
@@ -183,25 +194,28 @@ private
       Package_Name       : String;
       Parsed_List        : Construct_List;
       File_Text          : GNAT.OS_Lib.String_Access;
+      LI_Unit            : LI_File_Ptr;
+      Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options);
    --  called by Process_Source to work on the subprograms and
    --  pass each of them to the output subprogram
 
    procedure Process_Types
-     (Doc_File        : File_Type;
-      Entity_List     : in out Type_Entity_List.List;
-      Source_Filename : String;
-      Package_Name    : String;
-      Parsed_List     : Construct_List;
-      File_Text       : GNAT.OS_Lib.String_Access;
-      Options         : All_Options);
+     (Doc_File         : File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      Source_Filename  : String;
+      Package_Name     : String;
+      Parsed_List      : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options);
    --  called by Process_Source to work on the types and
    --  pass each of them to the output subprogram
 
    procedure Process_Header
      (Doc_File           : File_Type;
       Package_Name       : String;
-      Def_In_Line        : Integer;
       Package_File       : String;
       Process_Body_File  : Boolean;
       Options            : All_Options);
