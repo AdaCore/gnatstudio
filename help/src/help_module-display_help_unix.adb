@@ -66,6 +66,11 @@ is
          Free (Cmd);
          Free (File);
 
+         Insert (Kernel,
+                 (-"Launching ") & Browser & (-" to view ")
+                 & Full_Name (Help_File).all,
+                 Mode => Info);
+
          return Process /= Invalid_Pid;
       end if;
    end Launch_Browser;
