@@ -277,6 +277,17 @@ procedure GPS is
       OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
       Projects.Registry.Initialize;
 
+      Charset := Getenv ("CHARSET");
+
+      if Charset.all = "" then
+         --  Gtk+ does not like if CHARSET is not defined.
+         --  Need to set CHARSET *before* calling Gtk.Main.Init, so cannot
+         --  use Get_Pref here
+
+         Setenv ("CHARSET", "ISO=8859-1");
+      end if;
+
+      Free (Charset);
       Startup_Dir := new String'(Get_Current_Dir);
 
       Gtk.Main.Init;
@@ -464,15 +475,6 @@ procedure GPS is
 
       GPS.Debug_Mode := True;
       GPS.Log_Level  := GVD.Types.Hidden;
-
-      Charset := Getenv ("CHARSET");
-
-      if Charset.all = "" then
-         --  Gtk+ does not like if CHARSET is not defined.
-         Setenv ("CHARSET", Get_Pref (GPS.Kernel, Default_Charset));
-      end if;
-
-      Free (Charset);
 
       Parse_Switches;
       Display_Splash_Screen;
