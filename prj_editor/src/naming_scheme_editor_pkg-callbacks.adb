@@ -30,7 +30,7 @@ with Gtk.Enums; use Gtk.Enums;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Combo;  use Gtk.Combo;
 with Gtk.List;   use Gtk.List;
-with Naming_Editors; use Naming_Editors;
+with Ada_Naming_Editors; use Ada_Naming_Editors;
 
 package body Naming_Scheme_Editor_Pkg.Callbacks is
 
@@ -40,7 +40,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
    --  Index of the "<custom>" choice in the list of predefined schemes.
 
    procedure Handle_Key
-     (E : Naming_Editor; Event : Gdk_Event; Field : Gtk_Entry);
+     (E : Ada_Naming_Editor; Event : Gdk_Event; Field : Gtk_Entry);
    --  Handle a keypress (escape,...) in Field
 
    --------------------------------
@@ -52,7 +52,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
    is
       use Widget_List;
 
-      E     : constant Naming_Editor := Naming_Editor (Object);
+      E     : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
       List  : constant Gtk_List      := Get_List (E.Standard_Scheme);
       Value : Gint;
 
@@ -79,7 +79,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
    procedure Customized
      (Object : access Gtk_Widget_Record'Class)
    is
-      E : Naming_Editor := Naming_Editor (Object);
+      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
    begin
       Select_Item (Get_List (E.Standard_Scheme), Custom_Scheme);
    end Customized;
@@ -92,7 +92,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      E : Naming_Editor := Naming_Editor (Object);
+      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
       Row : Gint := To_Gint (Params, 1);
 --        Column : Gint := To_Gint (Params, 2);
 --        Arg3 : Gdk_Event := To_Event (Params, 3);
@@ -122,7 +122,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
    is
       Event : Gdk_Event := To_Event (Params, 1);
       use Gint_List;
-      E : Naming_Editor := Naming_Editor (Object);
+      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
       List : constant Gint_List.Glist := Get_Selection (E.Exception_List);
    begin
       if Get_Key_Val (Event) = GDK_Delete then
@@ -142,7 +142,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
-      Add_New_Exception (Naming_Editor (Object));
+      Add_New_Exception (Ada_Naming_Editor (Object));
    end On_Update_Clicked;
 
    ----------------
@@ -150,7 +150,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
    ----------------
 
    procedure Handle_Key
-     (E : Naming_Editor; Event : Gdk_Event; Field : Gtk_Entry) is
+     (E : Ada_Naming_Editor; Event : Gdk_Event; Field : Gtk_Entry) is
    begin
       if Get_Key_Val (Event) = GDK_Escape then
          Reset_Exception_Fields (E, Field);
@@ -166,7 +166,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Arg1 : Gdk_Event := To_Event (Params, 1);
-      E : Naming_Editor := Naming_Editor (Object);
+      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
    begin
       Clear_Unit_Name (E);
       Handle_Key (E, Arg1, E.Unit_Name_Entry);
@@ -182,7 +182,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Arg1 : Gdk_Event := To_Event (Params, 1);
-      E : Naming_Editor := Naming_Editor (Object);
+      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
    begin
       Clear_Spec_Name (E);
       Handle_Key (E, Arg1, E.Spec_Filename_Entry);
@@ -198,7 +198,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Arg1 : Gdk_Event := To_Event (Params, 1);
-      E : Naming_Editor := Naming_Editor (Object);
+      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
    begin
       Clear_Body_Name (E);
       Handle_Key (E, Arg1, E.Body_Filename_Entry);
