@@ -1691,6 +1691,9 @@ package body Src_Info.Queries is
                     Iterator.Importing (Iterator.Current_Project),
                   Predefined_Source_Path => "",
                   Predefined_Object_Path => "");
+               Assert (Me, LI = null or else LI.LI.Parsed,
+                       "Unparsed LI returned for file "
+                       & Iterator.Source_Files (Iterator.Current_File).all);
             end if;
 
             if LI /= null then
