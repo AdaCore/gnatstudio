@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.2.1
 
+- C422-016 Under Windows, the Directory Selection dialog raises error windows.
+  Problem:    Under Windows, using the Directory Selection dialog might bring
+              up error dialogs saying
+                "There is no disk in the drive.
+                 Please insert a disk into drive A:"
+  Workaround: These errors can be safely ignored.
+
 - C312-004 Under Windows, docking the Search dialog causes undesired resizing.
   Problem:    Under Windows only, when the Search dialog is docked and the
               main GPS window is maximized, pressing CTRL-F causes the GPS
