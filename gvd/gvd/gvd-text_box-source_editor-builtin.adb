@@ -1557,7 +1557,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
             return;
          else
             Parse_Value
-              (Debugger.Debugger, Variable_Name.all, Entity, Value_Found);
+              (Debugger.Debugger, Variable_Name.all, Entity,
+               Value_Found => Value_Found);
          end if;
 
          if Value_Found then
