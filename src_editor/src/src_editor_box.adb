@@ -883,36 +883,42 @@ package body Src_Editor_Box is
 
       Info : constant Extra_Information_Array_Access
         := Get_Extra_Information (Box.Source_Buffer);
+      Label : Gtk_Label;
 
       use type Basic_Types.String_Access;
    begin
-      if Box.Buffer_Info_Labels /= null then
-         for J in Box.Buffer_Info_Labels'Range loop
-            Unref (Box.Buffer_Info_Labels (J));
+      if Box.Buffer_Info_Frames /= null then
+         for J in Box.Buffer_Info_Frames'Range loop
+            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J));
          end loop;
 
-         Unchecked_Free (Box.Buffer_Info_Labels);
+         Unchecked_Free (Box.Buffer_Info_Frames);
       end if;
 
       if Info = null then
          return;
       end if;
 
-      Box.Buffer_Info_Labels := new Label_Array (Info'Range);
+      Box.Buffer_Info_Frames := new Frames_Array (Info'Range);
 
-      for J in Box.Buffer_Info_Labels'Range loop
+      for J in Box.Buffer_Info_Frames'Range loop
          if Info (J).Info.Text /= null then
-            Gtk_New (Box.Buffer_Info_Labels (J), Info (J).Info.Text.all);
+            Gtk_New (Label, Info (J).Info.Text.all);
          else
-            Gtk_New (Box.Buffer_Info_Labels (J));
+            Gtk_New (Label);
          end if;
 
-         Pack_Start
+         Gtk_New (Box.Buffer_Info_Frames (J));
+         Set_Shadow_Type (Box.Buffer_Info_Frames (J), Shadow_In);
+
+         Add (Box.Buffer_Info_Frames (J), Label);
+
+         Pack_End
            (Box.Label_Box,
-            Box.Buffer_Info_Labels (J),
+            Box.Buffer_Info_Frames (J),
             Expand  => False,
-            Fill    => False,
-            Padding => 3);
+            Fill    => True,
+            Padding => 0);
       end loop;
 
       Show_All (Box.Label_Box);
@@ -1015,7 +1021,7 @@ package body Src_Editor_Box is
       --  The status bar, at the bottom of the window...
 
       Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_Out);
+      Set_Shadow_Type (Frame, Shadow_In);
       Pack_Start (Box.Root_Container, Frame, Expand => False, Fill => False);
 
       Gtk_New_Hbox (Box.Label_Box, Homogeneous => False, Spacing => 2);
@@ -1053,7 +1059,7 @@ package body Src_Editor_Box is
       --  Filename area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
-      Pack_End (Box.Label_Box, Frame, Expand => True, Fill => True);
+      Pack_Start (Box.Label_Box, Frame, Expand => True, Fill => True);
       --  Gtk_New (Box.Filename_Label);
       --  ??? Commented out as not used for the moment.
 
