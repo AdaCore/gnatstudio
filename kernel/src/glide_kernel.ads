@@ -758,6 +758,10 @@ private
       Next    : Key_Handler_List_Access;
    end record;
 
+   type Kernel_Scripting_Data_Record is abstract tagged null record;
+   type Kernel_Scripting_Data is access all Kernel_Scripting_Data_Record'Class;
+   --  Derived in Glide_Kernel.Scripts to store internal data
+
    type Event_Data_Record is record
       Widget : Gtk.Widget.Gtk_Widget;
       Event  : Gdk.Event.Gdk_Event;
@@ -780,6 +784,9 @@ private
 
       Registry : Projects.Registry.Project_Registry_Access;
       --  The project registry
+
+      Scripts : Kernel_Scripting_Data;
+      --  Data used to store information for the scripting languages
 
       GNAT_Version : GNAT.OS_Lib.String_Access;
       --  Full GNAT Version, if relevant

@@ -56,6 +56,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Main_Window;           use GVD.Main_Window;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -256,6 +257,8 @@ package body Glide_Kernel is
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
       Event_Handler_Set (General_Event_Handler'Access, Convert (Handle));
+
+      Glide_Kernel.Scripts.Initialize (Handle);
    end Gtk_New;
 
    ------------------------------
