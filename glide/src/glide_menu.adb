@@ -322,7 +322,7 @@ package body Glide_Menu is
          Gtk_New (Edit & (-"_Preferences"), "",
                   Stock_Preferences, On_Preferences'Access),
 
-         Gtk_New (Project & (-"_Open..."), "", Stock_Open,
+         Gtk_New (Project & (-"_Open..."), "", "",
                   On_Open_Project'Access),
          Gtk_New (Project & "sep1", Item_Type => Separator),
 
