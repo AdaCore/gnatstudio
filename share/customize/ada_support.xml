@@ -95,8 +95,8 @@
            <check label="Unassigned variable" switch="-gnatwv" />
            <check label="Size/align warnings for unchecked conversion"
                   switch="-gnatwz" />
-           <expansion switch="-gnatw" alias="-gnatwcfijkmopruvz" />
-           <expansion switch="-gnatwa" >
+           <expansion switch="-gnatw" />
+           <expansion switch="-gnatwa" alias="-gnatwcfijkmopruvz" >
                <entry switch="-gnatwc" />
                <entry switch="-gnatwf" />
                <entry switch="-gnatwi" />
