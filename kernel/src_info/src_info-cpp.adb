@@ -66,6 +66,7 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table);
    procedure Sym_E_Handler       (Sym : FIL_Table);
    procedure Sym_EC_Handler      (Sym : FIL_Table);
+   procedure Sym_T_Handler       (Sym : FIL_Table);
    procedure Sym_CON_Handler     (Sym : FIL_Table);
    procedure Sym_MA_Handler      (Sym : FIL_Table);
 
@@ -78,6 +79,7 @@ package body Src_Info.CPP is
       FU     => Sym_FU_Handler'Access,
       E      => Sym_E_Handler'Access,
       EC     => Sym_EC_Handler'Access,
+      T      => Sym_T_Handler'Access,
       MA     => Sym_MA_Handler'Access,
       CON    => Sym_CON_Handler'Access,
       others => Sym_Default_Handler'Access);
@@ -342,6 +344,14 @@ package body Src_Info.CPP is
       end if;
    end Builtin_Type_To_Kind;
 
+   procedure Original_Type
+     (Type_Name : String;
+      Desc      : out CType_Description;
+      Success   : out Boolean);
+   --  Gets E_Kind of original type for specified typedef type.
+   --  Sets Success to True if type found and fills Desc structure
+   --  with appropriate information.
+
    procedure Type_Name_To_Kind
      (Type_Name : in String; Desc : out CType_Description;
       Success : out Boolean);
@@ -376,6 +386,7 @@ package body Src_Info.CPP is
       Desc.IsVolatile := False;
       Desc.IsConst    := False;
       Desc.IsTemplate := False;
+      Success         := False;
 
       --  check for leading volatile/const modifier
       if Type_Name'Length > Volatile_Str'Length
@@ -440,28 +451,9 @@ package body Src_Info.CPP is
       end if;
 
       --  look in typedefs
-      if Is_Open (SN_Table (T)) then
-         declare
-            Typedef   : T_Table;
-         begin
-            Typedef   := Find (SN_Table (T), Type_Name);
-            Type_Name_To_Kind (Typedef.Buffer (
-                    Typedef.Original.First .. Typedef.Original.Last),
-                    Desc, Success);
-            if Success then
-               Free (Typedef);
-               Success := True;
-               return;
-            end if;
-            Free (Typedef);
-            --  This is a typedef but base type is not found :(
-            Success := False;
-            return;
-         exception
-            when  DB_Error |   -- non-existent table
-                  Not_Found => -- missed, fall thru'
-               null;
-         end;
+      Original_Type (Type_Name, Desc, Success);
+      if Success then -- original type found
+         return;
       end if;
 
       --  look in classes
@@ -506,9 +498,48 @@ package body Src_Info.CPP is
          end;
       end if;
 
-      --  when everything else failed
-      Success := False;
+      --  when everything else failed (Success is False)
    end Type_Name_To_Kind;
+
+   -------------------
+   -- Original_Type --
+   -------------------
+
+   procedure Original_Type
+     (Type_Name : String;
+      Desc      : out CType_Description;
+      Success   : out Boolean)
+   is
+      Typedef   : T_Table;
+   begin
+
+      Success := False;
+
+      if not Is_Open (SN_Table (T)) then
+         --  typedef table does not exist
+         return;
+      end if;
+
+      Typedef   := Find (SN_Table (T), Type_Name);
+      Type_Name_To_Kind (Typedef.Buffer (
+              Typedef.Original.First .. Typedef.Original.Last),
+              Desc, Success);
+      if Success then
+         Free (Typedef);
+         Success := True;
+         return;
+      end if;
+
+      Free (Typedef);
+
+      --  original type not found
+      return;
+
+   exception
+      when  DB_Error |   -- non-existent table
+            Not_Found => -- missed, fall thru'
+         null;
+   end Original_Type;
 
    procedure Info (Msg : String) is
    begin
@@ -534,6 +565,7 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_EC_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_T_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_CON_Handler     (Sym : FIL_Table) is separate;
    procedure Sym_MA_Handler      (Sym : FIL_Table) is separate;
 
