@@ -997,7 +997,6 @@ package body VCS_View_API is
      (Kernel  : Kernel_Handle;
       Context : Selection_Context_Access) return MDI_Child
    is
-      MDI      : constant MDI_Window := Get_MDI (Kernel);
       Explorer : VCS_View_Access := Get_Explorer (Kernel);
       Child    : MDI_Child;
       Dirs     : String_List.List;
@@ -1013,9 +1012,10 @@ package body VCS_View_API is
 
          Gtk_New (Explorer, Kernel);
          Child := Put
-           (MDI, Explorer,
+           (Kernel, Explorer,
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module         => VCS_Module_ID);
          Set_Focus_Child (Child);
          Set_Title (Child, -"VCS Explorer");
 
