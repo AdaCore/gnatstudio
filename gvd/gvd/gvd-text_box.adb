@@ -851,4 +851,15 @@ package body GVD.Text_Boxes is
       end if;
    end Highlight_Range;
 
+   -------------------------
+   -- Current_Line_Button --
+   -------------------------
+
+   function Current_Line_Button (Box : access Gvd_Text_Box_Record)
+      return Gtk.Pixmap.Gtk_Pixmap
+   is
+   begin
+      return Box.Current_Line_Button;
+   end Current_Line_Button;
+
 end GVD.Text_Boxes;
