@@ -1059,6 +1059,8 @@ package body GVD.Process is
 
          Send
            (Debugger.Debugger, Command,
+            Wait_For_Prompt =>
+              not Command_In_Process (Get_Process (Debugger.Debugger)),
             Mode => Mode);
       end if;
    end Process_User_Command;
