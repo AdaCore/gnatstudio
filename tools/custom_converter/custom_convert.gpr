@@ -13,5 +13,9 @@ project Custom_Convert is
 
    package Compiler renames Shared.Compiler;
 
+   package Linker is
+      for Default_Switches ("Ada") use ("../../gtkada/src/libgtkada.a");
+   end Linker;
+
 end Custom_Convert;
 
