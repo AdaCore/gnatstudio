@@ -50,7 +50,6 @@ end Gtk_New;
 
 procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
    pragma Suppress (All_Checks);
-   Child : MDI_Child;
 
 begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
@@ -141,25 +140,14 @@ begin
    Add (Process_Tab.Data_Paned, Process_Tab.Data_Scrolledwindow);
 
    Gtk_New (GVD_Canvas (Process_Tab.Data_Canvas));
-   --  Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
    Add (Process_Tab.Data_Scrolledwindow, Process_Tab.Data_Canvas);
 
    Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab);
-   --  Set_Title (Put (Process_Tab.Process_Mdi, Process_Tab.Editor_Text), "Editor");
-   Child := Put (Process_Tab.Process_Mdi, Process_Tab.Editor_Text);
-   Set_Title (Child, "Editor");
-   Maximize_Children (Process_Tab.Process_Mdi);
-   --  Dock_Child (Child, Side => Right);
-   --  Dock_Child (Child, Side => Bottom);
    Return_Callback.Object_Connect
      (Process_Tab.Editor_Text, "delete_event", On_Editor_Text_Delete_Event'Access, Process_Tab);
 
    Gtk_New (Process_Tab.Command_Scrolledwindow);
    Set_Policy (Process_Tab.Command_Scrolledwindow, Policy_Never, Policy_Always);
-   Child := Put (Process_Tab.Process_Mdi, Process_Tab.Command_Scrolledwindow);
-   Set_Title (Child, "Console");
-   Set_Dock_Side (Child, Bottom);
-   Dock_Child (Child);
    Return_Callback.Object_Connect
      (Process_Tab.Command_Scrolledwindow, "delete_event", On_Command_Scrolledwindow_Delete_Event'Access, Process_Tab);
 
