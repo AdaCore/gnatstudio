@@ -78,9 +78,9 @@ package body VCS_View_Pkg is
    Tmp_Dir : constant String := "/tmp/";
    --  <preferences>
 
-   ------------------
-   --  Local types --
-   ------------------
+   -----------------
+   -- Local types --
+   -----------------
 
    type Log_Parameter is record
       Explorer   : VCS_View_Access;
@@ -91,17 +91,27 @@ package body VCS_View_Pkg is
    --  This type is a convenience type used to pass parameters to some
    --  callbacks.
 
-   package Explorer_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Log_Parameter);
-
    type Iter_Action is access
      procedure (Explorer : access VCS_View_Record'Class;
                 Iter     : Gtk_Tree_Iter);
    --  Any action that occurs on one row in the tree view.
 
+   ----------------------
+   -- Local procedures --
+   ----------------------
+
+   function Check_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  ???
+
    --------------------
    -- Local packages --
    --------------------
+
+   package Explorer_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Log_Parameter);
 
    package Explorer_Selection_Foreach is
      new Selection_Foreach (VCS_View_Record);
@@ -244,19 +254,21 @@ package body VCS_View_Pkg is
 
    procedure Refresh (Explorer : VCS_View_Access) is
       use File_Status_List;
-      L        : File_Status_List.List := Explorer.Stored_Status;
+
+      L        : List_Node := First (Explorer.Stored_Status);
       Iter     : Gtk_Tree_Iter;
       Success  : Boolean;
+
    begin
       Clear (Explorer.Model);
 
-      while not Is_Empty (L) loop
+      while L /= Null_Node loop
          if not Explorer.Hide_Up_To_Date
-           or else (Head (L).Status /= Up_To_Date
-                    and then Head (L).Status /= Unknown)
+           or else (Data (L).Status /= Up_To_Date
+                    and then Data (L).Status /= Unknown)
          then
             Append (Explorer.Model, Iter, Null_Iter);
-            Fill_Info (Explorer, Iter, Head (L), Success);
+            Fill_Info (Explorer, Iter, Data (L), Success);
 
             if not Success then
                Remove (Explorer.Model, Iter);
@@ -283,8 +295,8 @@ package body VCS_View_Pkg is
       Child         : MDI_Child
         := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
       Explorer      : VCS_View_Access;
-      Cache_Temp    : File_Status_List.List;
-      Status_Temp   : File_Status_List.List := Status;
+      Cache_Temp    : List_Node;
+      Status_Temp   : List_Node := First (Status);
       Found         : Boolean := False;
 
    begin
@@ -294,15 +306,15 @@ package body VCS_View_Pkg is
          Explorer := VCS_View_Access (Get_Widget (Child));
       end if;
 
-      while not Is_Empty (Status_Temp) loop
-         Cache_Temp := Explorer.Cached_Status;
+      while Status_Temp /= Null_Node loop
+         Cache_Temp := First (Explorer.Cached_Status);
          Found      := False;
 
          while not Found
-           and then not Is_Empty (Cache_Temp)
+           and then Cache_Temp /= Null_Node
          loop
-            if String_List.Head (Head (Status_Temp).File_Name)
-              = String_List.Head (Head (Cache_Temp).File_Name)
+            if String_List.Head (Data (Status_Temp).File_Name)
+              = String_List.Head (Data (Cache_Temp).File_Name)
             then
                --  We have found an entry in the cache with the corresponding
                --  information.
@@ -311,8 +323,8 @@ package body VCS_View_Pkg is
 
                if Override_Cache then
                   --  Enter the new file information into the cache.
-                  Replace_Head (Cache_Temp,
-                                Copy_File_Status (Head (Status_Temp)));
+
+                  Set_Data (Cache_Temp, Copy_File_Status (Data (Status_Temp)));
                end if;
 
                exit;
@@ -326,34 +338,35 @@ package body VCS_View_Pkg is
 
          if not Found then
             Prepend (Explorer.Cached_Status,
-                     Copy_File_Status (Head (Status_Temp)));
-            Cache_Temp := Explorer.Cached_Status;
+                     Copy_File_Status (Data (Status_Temp)));
+            Cache_Temp := First (Explorer.Cached_Status);
          end if;
 
-         --  The info that we want to display is now in Head (Cache_Temp),
+         --  The info that we want to display is now in Data (Cache_Temp),
          --  if it already exists in Explorer.Stored_Status, we simply modify
          --  the element, otherwise we add it to the list.
 
          declare
-            New_Status         : File_Status_Record
-              := Copy_File_Status (Head (Cache_Temp));
-            New_File_Name      : String
-              := String_List.Head (New_Status.File_Name);
-            Temp_Stored_Status : File_Status_List.List
-              := Explorer.Stored_Status;
+            New_Status         : File_Status_Record :=
+              Copy_File_Status (Data (Cache_Temp));
+            New_File_Name      : String :=
+              String_List.Head (New_Status.File_Name);
+            Temp_Stored_Status : File_Status_List.List_Node :=
+              File_Status_List.First (Explorer.Stored_Status);
             Iter               : Gtk_Tree_Iter := Null_Iter;
             Success            : Boolean;
+
          begin
             Found := False;
 
             while not Found
-              and then not Is_Empty (Temp_Stored_Status)
+              and then Temp_Stored_Status /= Null_Node
             loop
                if New_File_Name =
-                 String_List.Head (Head (Temp_Stored_Status).File_Name)
+                 String_List.Head (Data (Temp_Stored_Status).File_Name)
                then
                   Found := True;
-                  Replace_Head (Temp_Stored_Status, New_Status);
+                  Set_Data (Temp_Stored_Status, New_Status);
                   Iter := Get_Iter_From_Name
                     (Explorer, String_List.Head (New_Status.File_Name));
                end if;
@@ -394,12 +407,14 @@ package body VCS_View_Pkg is
       List     : String_List.List;
       M_Type   : Message_Type := Verbose)
    is
-      Temp_List : String_List.List := List;
+      use String_List;
+
+      Temp_List : List_Node := First (List);
    begin
-      while not String_List.Is_Empty (Temp_List) loop
+      while Temp_List /= Null_Node loop
          Push_Message
-           (Kernel, M_Type, "   "  & String_List.Head (Temp_List));
-         Temp_List := String_List.Next (Temp_List);
+           (Kernel, M_Type, "   "  & Data (Temp_List));
+         Temp_List := Next (Temp_List);
       end loop;
    end Display_String_List;
 
@@ -590,21 +605,23 @@ package body VCS_View_Pkg is
       Parameter   : Log_Parameter)
    is
       pragma Unreferenced (Object);
-      Temp_Path : String_List.List := Parameter.Log_Editor.Files;
+      use String_List;
+
+      Temp_Path : List_Node := First (Parameter.Log_Editor.Files);
       Iter      : Gtk_Tree_Iter;
 
    begin
-      while not String_List.Is_Empty (Temp_Path) loop
+      while Temp_Path /= Null_Node loop
          Iter := Get_Iter_From_Name
            (Parameter.Explorer,
-            String_List.Head (Temp_Path));
+            Data (Temp_Path));
 
          if Iter /= Null_Iter then
             Set (Parameter.Explorer.Model, Iter, Log_Column,
                  Get_Text (Parameter.Log_Editor));
          end if;
 
-         Temp_Path := String_List.Next (Temp_Path);
+         Temp_Path := Next (Temp_Path);
       end loop;
    end Log_Editor_Text_Changed;
 
@@ -615,26 +632,24 @@ package body VCS_View_Pkg is
    function Check_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List) return Boolean;
-
-   function Check_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      List_Temp : String_List.List := List;
-      Head_Temp : String_List.List := Head;
+      use String_List;
+
+      List_Temp : String_List.List_Node := First (List);
+      Head_Temp : String_List.List_Node := First (Head);
+
    begin
       if not String_List.Is_Empty (List) then
-         while not String_List.Is_Empty (Head_Temp) loop
-            Push_Message (Kernel, Error, String_List.Head (Head_Temp));
-            Head_Temp := String_List.Next (Head_Temp);
+         while Head_Temp /= Null_Node loop
+            Push_Message (Kernel, Error, Data (Head_Temp));
+            Head_Temp := Next (Head_Temp);
          end loop;
       end if;
 
-      while not String_List.Is_Empty (List_Temp) loop
-         Push_Message (Kernel, Error, String_List.Head (List_Temp));
-         List_Temp := String_List.Next (List_Temp);
+      while List_Temp /= Null_Node loop
+         Push_Message (Kernel, Error, Data (List_Temp));
+         List_Temp := Next (List_Temp);
       end loop;
 
       return String_List.Is_Empty (List);
@@ -649,9 +664,10 @@ package body VCS_View_Pkg is
       Parameter : Log_Parameter)
    is
       pragma Unreferenced (Object);
+      use String_List;
 
       Logs               : String_List.List;
-      Files_Temp         : String_List.List := Parameter.Log_Editor.Files;
+      Files_Temp         : List_Node := First (Parameter.Log_Editor.Files);
 
       Commit_Command     : Commit_Command_Access;
       Get_Status_Command : Get_Status_Command_Access;
@@ -662,26 +678,28 @@ package body VCS_View_Pkg is
       Command            : String_List.List;
       Args               : String_List.List;
 
-      File_Check_Script  : constant String
-        := Get_Pref (Parameter.Kernel, VCS_Commit_File_Check);
+      File_Check_Script  : constant String :=
+        Get_Pref (Parameter.Kernel, VCS_Commit_File_Check);
 
-      Log_Check_Script   : constant String
-        := Get_Pref (Parameter.Kernel, VCS_Commit_Log_Check);
+      Log_Check_Script   : constant String :=
+        Get_Pref (Parameter.Kernel, VCS_Commit_Log_Check);
 
    begin
-      while not String_List.Is_Empty (Files_Temp) loop
+      while Files_Temp /= Null_Node loop
          String_List.Append (Logs, Get_Text (Parameter.Log_Editor));
-         Files_Temp := String_List.Next (Files_Temp);
+         Files_Temp := Next (Files_Temp);
       end loop;
 
-      Create (Commit_Command,
-              Parameter.VCS_Ref,
-              Parameter.Log_Editor.Files,
-              Logs);
+      Create
+        (Commit_Command,
+         Parameter.VCS_Ref,
+         Parameter.Log_Editor.Files,
+         Logs);
 
-      Create (Get_Status_Command,
-              Parameter.VCS_Ref,
-              Parameter.Log_Editor.Files);
+      Create
+        (Get_Status_Command,
+         Parameter.VCS_Ref,
+         Parameter.Log_Editor.Files);
 
       --  ??? Must deal with multiple files log ?
 
@@ -690,20 +708,21 @@ package body VCS_View_Pkg is
          String_List.Append
            (Args, String_List.Head (Parameter.Log_Editor.Files));
 
-         Create (Check_File,
-                 Parameter.Kernel,
-                 Command,
-                 String_List.Null_List,
-                 Args,
-                 String_List.Null_List,
-                 Check_Handler'Access);
+         Create
+           (Check_File,
+            Parameter.Kernel,
+            Command,
+            String_List.Null_List,
+            Args,
+            String_List.Null_List,
+            Check_Handler'Access);
       end if;
 
       if Log_Check_Script /= "" then
          declare
-            Log_File : constant String
-              := Tmp_Dir & Base_Name
-              (String_List.Head (Parameter.Log_Editor.Files)) & "_log";
+            Log_File : constant String :=
+              Tmp_Dir & Base_Name
+                (String_List.Head (Parameter.Log_Editor.Files)) & "_log";
             File     : File_Type;
 
             Head     : String_List.List;
@@ -716,20 +735,21 @@ package body VCS_View_Pkg is
 
             String_List.Append
               (Head,
-               -"File : " & String_List.Head (Parameter.Log_Editor.Files));
+               -"File: " & String_List.Head (Parameter.Log_Editor.Files));
             String_List.Append
               (Head, -"The changelog provided does not pass the checks.");
             Create (File, Name => Log_File);
             Put_Line (File, Get_Text (Parameter.Log_Editor));
             Close (File);
 
-            Create (Check_Log,
-                    Parameter.Kernel,
-                    Command,
-                    String_List.Null_List,
-                    Args,
-                    Head,
-                    Check_Handler'Access);
+            Create
+              (Check_Log,
+               Parameter.Kernel,
+               Command,
+               String_List.Null_List,
+               Args,
+               Head,
+               Check_Handler'Access);
          end;
       end if;
 
@@ -782,25 +802,27 @@ package body VCS_View_Pkg is
       Parameter   : Log_Parameter)
    is
       pragma Unreferenced (Object);
+      use String_List;
+
       Value      : GValue;
       Iter       : Gtk_Tree_Iter;
-      Temp_Paths : String_List.List := Parameter.Log_Editor.Files;
+      Temp_Paths : List_Node := First (Parameter.Log_Editor.Files);
 
    begin
       if Parameter.Explorer /= null then
          Init (Value, GType_String);
 
-         while not String_List.Is_Empty (Temp_Paths) loop
+         while Temp_Paths /= Null_Node loop
             Iter := Get_Iter_From_Name
               (Parameter.Explorer,
-               String_List.Head (Temp_Paths));
+               Data (Temp_Paths));
 
             if Iter /= Null_Iter then
                Set (Parameter.Explorer.Model,
                     Iter, Log_Editor_Column, GObject' (null));
             end if;
 
-            Temp_Paths := String_List.Next (Temp_Paths);
+            Temp_Paths := Next (Temp_Paths);
          end loop;
       end if;
    end Log_Editor_Close;
@@ -880,7 +902,9 @@ package body VCS_View_Pkg is
          end if;
       end Create_And_Launch_Log_Editor;
 
-      Temp_Files : String_List.List := Files;
+      use String_List;
+
+      Temp_Files : List_Node := First (Files);
       Child      : MDI_Child;
 
    begin
@@ -894,14 +918,13 @@ package body VCS_View_Pkg is
          Foreach_Selected_File
            (Explorer, Create_And_Launch_Log_Editor'Unrestricted_Access);
       else
-         while not String_List.Is_Empty (Temp_Files) loop
+         while Temp_Files /= Null_Node loop
             Gtk_New (Log_Editor);
             Parameter_Object.Log_Editor := Log_Editor;
-
             Set_Title
               (Log_Editor, -"Log editor : "
-               & Base_Name (String_List.Head (Temp_Files)));
-            Add_File_Name (Log_Editor, String_List.Head (Temp_Files));
+               & Base_Name (Data (Temp_Files)));
+            Add_File_Name (Log_Editor, Data (Temp_Files));
             Set_Text (Log_Editor, "");
 
             Explorer_Callback.Connect
@@ -916,7 +939,7 @@ package body VCS_View_Pkg is
                Child := Put (Get_MDI (Kernel), Log_Editor);
             end if;
 
-            Temp_Files := String_List.Next (Temp_Files);
+            Temp_Files := Next (Temp_Files);
          end loop;
       end if;
    end Edit_Log;
