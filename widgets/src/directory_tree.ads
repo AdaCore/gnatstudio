@@ -69,11 +69,12 @@ package Directory_Tree is
       Dir            : String;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null);
    --  Expand the tree so that the directory Dir is visible.
-   --  Dir must end with a directory separator.
    --  If Busy_Cursor_On is not null, then the cursor is that window is set to
    --  the busy cursor. It is recommended to use this parameter instead of
    --  setting this parameter yourself, since all this handling is done in an
    --  idle loop, and thus you would restore the cursor too early.
+   --
+   --  If the directory doesn't exist, the closest possible parent is selected.
 
    function Get_Selection (Tree : access Dir_Tree_Record) return String;
    --  Return the absolute directory for the selected node.
@@ -124,6 +125,10 @@ package Directory_Tree is
    --  If Selector only allowed the selection of a single directory, then an
    --  array of size 1 is returned.
    --  The return list must be freed by the caller
+
+   function Get_Tree (Selector : access Directory_Selector_Record)
+      return Dir_Tree;
+   --  Return the directory selector used internal by the selector.
 
    function Run
      (Selector : access Directory_Selector_Record'Class;

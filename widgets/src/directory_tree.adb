@@ -47,6 +47,7 @@ with Pixmaps_IDE;               use Pixmaps_IDE;
 
 with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
+with String_Utils;              use String_Utils;
 with Unchecked_Deallocation;
 
 package body Directory_Tree is
@@ -98,7 +99,9 @@ package body Directory_Tree is
    --  add them to the tree.
    --  Nothing is done if the subdirectories of N have already been parsed
 
-   function Has_Subdirectories (Absolute_Dir : String) return Boolean;
+   function Has_Subdirectories
+     (Tree : access Dir_Tree_Record'Class; Absolute_Dir : String)
+      return Boolean;
    --  Return True if Absolute_Dir contains subdirectories.
    --  Absolute_Dir must end with a directory separator.
 
@@ -170,6 +173,8 @@ package body Directory_Tree is
    function Filter
      (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean;
    --  Should return True if Dir_Name should be displayed in the tree.
+   --  Dir_Name is the last part of the full path, ie shouldn't include its
+   --  parent's name.
 
    procedure On_Destroy (Tree : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
@@ -259,7 +264,10 @@ package body Directory_Tree is
    -- Has_Subdirectories --
    ------------------------
 
-   function Has_Subdirectories (Absolute_Dir : String) return Boolean is
+   function Has_Subdirectories
+     (Tree : access Dir_Tree_Record'Class; Absolute_Dir : String)
+      return Boolean
+   is
       D    : Dir_Type;
       File : String (1 .. 255);
       Last : Natural;
@@ -270,9 +278,8 @@ package body Directory_Tree is
          Read (D, File, Last);
          exit when Last = 0;
 
-         if File (File'First .. Last) /= "."
-           and then File (File'First .. Last) /= ".."
-           and then Is_Directory  (Absolute_Dir & File (File'First .. Last))
+         if Is_Directory  (Absolute_Dir & File (File'First .. Last))
+           and then Filter (Tree, File (File'First .. Last))
          then
             Close (D);
             return True;
@@ -331,10 +338,19 @@ package body Directory_Tree is
    is
       Tree : Dir_Tree := Dir_Tree (Widget);
       Node : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
-      Tmp  : Gtk_Ctree_Node := Row_Get_Children (Node_Get_Row (Node));
+      Tmp  : Gtk_Ctree_Node;
       Tmp2 : Gtk_Ctree_Node;
 
    begin
+      --  It might happen (because of a problem somewhere else in this widget),
+      --  that this signal is emitted with Node = null, for instance if we are
+      --  expanding a directory that in fact has no children. This test is used
+      --  to prevent a crash in that case.
+      if Node = null then
+         return;
+      end if;
+
+      Tmp := Row_Get_Children (Node_Get_Row (Node));
       Freeze (Tree);
 
       --  Leave only one child, so as to keep the "[+]" visible
@@ -437,7 +453,7 @@ package body Directory_Tree is
       Boolean_Data.Node_Set_Row_Data (Tree, N, False);
 
       --  Should add a dummy node
-      if Has_Subdirectories (Parent_Dir & Dir) then
+      if Has_Subdirectories (Tree, Parent_Dir & Dir) then
          N2 := Insert_Node
            (Tree,
             Parent        => N,
@@ -481,14 +497,14 @@ package body Directory_Tree is
    is
       Root     : constant Gtk_Ctree_Node := Node_Nth (Tree, 0);
       Root_Dir : constant String := Directory (Tree, Root, False);
-
+      D : constant String := Name_As_Directory (Dir);
    begin
       if Busy_Cursor_On /= null then
          Set_Busy_Cursor (Busy_Cursor_On, True);
       end if;
 
       if Dir'Length < Root_Dir'Length
-        or else Dir (Dir'First .. Dir'First + Root_Dir'Length - 1) /= Root_Dir
+        or else D (D'First .. D'First + Root_Dir'Length - 1) /= Root_Dir
       then
          return;
       end if;
@@ -496,9 +512,9 @@ package body Directory_Tree is
       Tree.Idle := Dir_Idle.Add
         (Select_Directory_Idle'Access,
          new Idle_Data' (Tree        => Dir_Tree (Tree),
-                         Dir         => new String' (Dir),
+                         Dir         => new String' (D),
                          Node        => Node_Nth (Tree, 0),
-                         Index       => Dir'First + Root_Dir'Length - 1,
+                         Index       => D'First + Root_Dir'Length - 1,
                          Busy_Cursor => Busy_Cursor_On));
    end Show_Directory;
 
@@ -539,10 +555,12 @@ package body Directory_Tree is
       if Tmp = null
         or else Dir_End >= Data.Dir'Last
       then
-         if Tmp /= null then
-            Gtk_Select (Data.Tree, Tmp);
-            Node_Moveto (Data.Tree, Tmp, 0, 0.1, 0.2);
+         if Tmp = null then
+            Tmp := Data.Node;
          end if;
+
+         Gtk_Select (Data.Tree, Tmp);
+         Node_Moveto (Data.Tree, Tmp, 0, 0.1, 0.2);
 
          if Data.Busy_Cursor /= null then
             Set_Busy_Cursor (Data.Busy_Cursor, False);
@@ -1028,5 +1046,15 @@ package body Directory_Tree is
 
       return Response;
    end Run;
+
+   --------------
+   -- Get_Tree --
+   --------------
+
+   function Get_Tree (Selector : access Directory_Selector_Record)
+      return Dir_Tree is
+   begin
+      return Selector.Directory;
+   end Get_Tree;
 
 end Directory_Tree;
