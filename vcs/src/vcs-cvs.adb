@@ -1040,7 +1040,7 @@ package body VCS.CVS is
       Add_Line_Information
         (Kernel,
          Current_File,
-         VCS_CVS_Module_Name,
+         Annotation_Id,
          new Line_Information_Array'(A));
 
       return True;
