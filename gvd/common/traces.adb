@@ -397,6 +397,8 @@ package body Traces is
       Unlock;
 
    exception
+      when Ada.Text_IO.Device_Error =>
+         Unlock;
       when others =>
          Unlock;
          raise;
