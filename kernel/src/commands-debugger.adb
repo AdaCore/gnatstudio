@@ -79,7 +79,19 @@ package body Commands.Debugger is
                Mode => Visible);
       end case;
 
-      Command_Finished (Command, True);
+      --  ??? There is a tricky case here: when Command is executed and
+      --  Break_Source or Remove_Breakpoint is called, the debugger updates
+      --  the breakpoint information accordingly. If the corresponding file
+      --  is currently displayed, this will cause a new action item to be
+      --  inserted in the side column information, and this causes the
+      --  previous action for this column to be freed. Therefore, if the
+      --  command was launched through a click on the column, the variable
+      --  Column is not valid anymore at this point.
+      --  For now, I'll just comment the following line, since it has no
+      --  impact on the behaviour now, until I implement a general way
+      --  to avoid that sort of problem.
+
+      --  Command_Finished (Command, True);
       return True;
    end Execute;
 
