@@ -39,7 +39,6 @@ with Src_Info.Dummy;          use Src_Info.Dummy;
 with Traces;                  use Traces;
 with Commands;                use Commands;
 with Commands.Custom;         use Commands.Custom;
-with String_Utils;            use String_Utils;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 
 with Ada.Unchecked_Deallocation;
@@ -55,8 +54,7 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      File      : constant String :=
-        String_Utils.Name_As_Directory (Get_Home_Dir (Kernel)) & "custom";
+      File      : constant String := Get_Home_Dir (Kernel) & "custom";
       Node      : Node_Ptr;
       File_Node : Node_Ptr;
       Handler   : constant Glide_Language_Handler := Glide_Language_Handler
