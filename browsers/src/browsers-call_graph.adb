@@ -1248,7 +1248,15 @@ package body Browsers.Call_Graph is
       end if;
 
       Insert_Result
-        (Kernel, Category, File, Name, Line, Col, Name'Length);
+        (Kernel,
+         Category  => Category,
+         File      => File,
+         Text      => Name,
+         Line      => Line,
+         Column    => Col,
+         Length    => Name'Length,
+         Highlight => True,
+         Highlight_Category => "Search Results");
    end Print_Ref;
 
    -------------------------
