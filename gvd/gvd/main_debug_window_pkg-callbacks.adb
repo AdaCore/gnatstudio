@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -18,21 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                use Glib;
-with Glib.Object;         use Glib.Object;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
-with Gtk.Window;          use Gtk.Window;
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with GVD;                 use GVD;
-with GVD.Process;         use GVD.Process;
 with GVD.Window_Settings; use GVD.Window_Settings;
 with GVD.Main_Window;     use GVD.Main_Window;
-with Odd_Intl;            use Odd_Intl;
-with Breakpoints_Editor;  use Breakpoints_Editor;
-with Debugger;            use Debugger;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -40,12 +33,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
    function Idle_Exit (Window : GVD_Main_Window) return Boolean;
    --  Idle function called to finish handling of exiting.
-
-   procedure On_Process_Notebook_Switch_Page
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   pragma Unreferenced (On_Process_Notebook_Switch_Page);
-   --  ??? Need to update to new multi-process handling
 
    ---------------
    -- Idle_Exit --
@@ -90,58 +77,5 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       return False;
    end On_Main_Debug_Window_Delete_Event;
-
-   -------------------------------------
-   -- On_Process_Notebook_Switch_Page --
-   -------------------------------------
-
-   procedure On_Process_Notebook_Switch_Page
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      pragma Warnings (Off);
-      pragma Unreferenced (Params);
-
-      --  Arg2 : constant Guint := To_Guint (Params, 2);
-      --  Number of the page that will be displayed
-
-      Main        : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Process     : Visual_Debugger;
-      Widget      : Gtk_Widget;
-      WTX_Version : Natural;
-
-   begin
-      return;
-      --  ??? Need to update when using new process setting
-
-      Update_External_Dialogs (Main, GObject (Process));
-
-      if Main.Breakpoints_Editor /= null then
-         Set_Process
-           (Breakpoint_Editor_Access (Main.Breakpoints_Editor), Process);
-      end if;
-
-      --  Update the sensitivity of the Data/Protection Domains menu
-      --  item
-
-      Widget := Get_Widget (Main.Factory, -"/Data/Protection Domains");
-
-      if Widget = null then
-         --  This means that GVD is part of GPS
-
-         Widget := Get_Widget
-           (Main.Factory, -"/Debug/Data/Protection Domains");
-      end if;
-
-      if Widget /= null then
-         Info_WTX (Process.Debugger, WTX_Version);
-
-         if WTX_Version /= 3 then
-            Set_Sensitive (Widget, False);
-         else
-            Set_Sensitive (Widget, True);
-         end if;
-      end if;
-   end On_Process_Notebook_Switch_Page;
 
 end Main_Debug_Window_Pkg.Callbacks;
