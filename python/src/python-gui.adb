@@ -18,6 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Dialog;        use Gtk.Dialog;
+with Gtk.GEntry;        use Gtk.GEntry;
+with Gtk.Label;         use Gtk.Label;
+with Gtk.Stock;         use Gtk.Stock;
 with Gtk.Text_Buffer;   use Gtk.Text_Buffer;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
@@ -27,12 +32,14 @@ with Gtk.Text_View;     use Gtk.Text_View;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Widget;        use Gtk.Widget;
+with Gtk.Window;        use Gtk.Window;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Glib;              use Glib;
 with Glib.Properties;   use Glib.Properties;
 with Histories;         use Histories;
+with Glide_Intl;        use Glide_Intl;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with System;
@@ -42,9 +49,7 @@ with Ada.Unchecked_Conversion;
 
 package body Python.GUI is
 
-   Trace_Count : Natural := 0;
-
-   Trace_Threshold : constant Natural := 5000;
+   Trace_Threshold : constant Natural := 40_000;
    --  How many traces event should we wait before checking the queue of gdk
    --  events ?
 
@@ -83,7 +88,53 @@ package body Python.GUI is
    pragma Convention (C, Write);
    function Flush (Self : PyObject; Args : PyObject) return PyObject;
    pragma Convention (C, Flush);
+   function Read_Line (Self : PyObject; Args : PyObject) return PyObject;
+   pragma Convention (C, Read_Line);
    --  Override the python's methods of the File class.
+
+   procedure Insert_Text
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Text        : String);
+   --  Insert some text in the interpreter console, and scroll as necessary
+
+   procedure Process_Gtk_Events;
+   --  Process all pending gtk+ events
+
+   ------------------------
+   -- Process_Gtk_Events --
+   ------------------------
+
+   procedure Process_Gtk_Events is
+      Dead   : Boolean;
+      pragma Unreferenced (Dead);
+   begin
+      --  Process all gtk+ events, so that the text becomes visible
+      --  immediately, even if the python program hasn't finished executing
+
+      while Gtk.Main.Events_Pending loop
+         Dead := Gtk.Main.Main_Iteration;
+      end loop;
+   end Process_Gtk_Events;
+
+   -----------------
+   -- Insert_Text --
+   -----------------
+
+   procedure Insert_Text
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Text        : String)
+   is
+      Buffer : constant Gtk_Text_Buffer := Get_Buffer (Interpreter.Console);
+      Iter   : Gtk_Text_Iter;
+      Dead   : Boolean;
+      pragma Unreferenced (Dead);
+   begin
+      Get_End_Iter (Buffer, Iter);
+      Insert (Buffer, Iter, Text);
+      Dead := Scroll_To_Iter
+        (Interpreter.Console, Iter, 0.0,
+         Use_Align => False, Xalign => 0.0, Yalign => 0.0);
+   end Insert_Text;
 
    -----------
    -- Write --
@@ -96,10 +147,6 @@ package body Python.GUI is
       Stdout : aliased PyObject;
       Interpreter : Python_Interpreter;
       Data : PyObject;
-      Buffer : Gtk_Text_Buffer;
-      Iter   : Gtk_Text_Iter;
-      Dead   : Boolean;
-      pragma Unreferenced (Dead);
    begin
       if not PyArg_ParseTuple
         (Args, "Os#", Stdout'Address, S'Address, N'Address)
@@ -110,19 +157,8 @@ package body Python.GUI is
       Data := PyObject_GetAttrString (Stdout, "gpsdata");
       Interpreter := Convert (PyCObject_AsVoidPtr (Data));
 
-      Buffer := Get_Buffer (Interpreter.Console);
-      Get_End_Iter (Buffer, Iter);
-      Insert (Buffer, Iter, Value (S));
---      Get_End_Iter (Buffer, Iter);
-      Dead := Scroll_To_Iter (Interpreter.Console, Iter, 0.0,
-                      Use_Align => False, Xalign => 0.0, Yalign => 0.0);
-
-      --  Process all gtk+ events, so that the text becomes visible
-      --  immediately, even if the python program hasn't finished executing
-
-      while Gtk.Main.Events_Pending loop
-         Dead := Gtk.Main.Main_Iteration;
-      end loop;
+      Insert_Text (Interpreter, Value (S));
+      Process_Gtk_Events;
 
       Py_INCREF (Py_None);
       return Py_None;
@@ -138,6 +174,77 @@ package body Python.GUI is
       Py_INCREF (Py_None);
       return Py_None;
    end Flush;
+
+   ---------------
+   -- Read_Line --
+   ---------------
+
+   function Read_Line (Self : PyObject; Args : PyObject) return PyObject is
+      pragma Unreferenced (Self);
+      File   : aliased PyObject;
+      Size   : aliased Integer := 0;
+      Dialog : Gtk_Dialog;
+      Data   : PyObject;
+      Interpreter : Python_Interpreter;
+      Button : Gtk_Widget;
+      Ent    : Gtk_Entry;
+      Label  : Gtk_Label;
+      Hbox   : Gtk_Box;
+      Iter, Iter2 : Gtk_Text_Iter;
+      Buffer : Gtk_Text_Buffer;
+   begin
+      if not PyArg_ParseTuple (Args, "O|i", File'Address, Size'Address) then
+         return null;
+      end if;
+
+      Data := PyObject_GetAttrString (File, "gpsdata");
+      Interpreter := Convert (PyCObject_AsVoidPtr (Data));
+
+      Gtk_New (Dialog,
+               Title  => -"Python input",
+               Parent => Gtk_Window (Get_Toplevel (Interpreter.Console)),
+               Flags  => Destroy_With_Parent or Modal);
+
+      Gtk_New (Label, -"Some input if needed by the script");
+      Pack_Start (Get_Vbox (Dialog), Label);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Hbox);
+
+      --  Grab the prompt for the input line
+      Buffer := Get_Buffer (Interpreter.Console);
+      Get_End_Iter (Buffer, Iter);
+      Copy (Source => Iter, Dest => Iter2);
+      Set_Line_Offset (Iter2, 0);
+      Gtk_New (Label, Get_Slice (Buffer, Iter2, Iter));
+      Pack_Start (Hbox, Label, Expand => False);
+
+      Gtk_New (Ent);
+      Set_Activates_Default (Ent, True);
+      Pack_Start (Hbox, Ent, Expand => True, Fill => True);
+
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Grab_Default (Button);
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Show_All (Dialog);
+
+      case Run (Dialog) is
+         when Gtk_Response_OK =>
+            declare
+               Text : constant String := Get_Text (Ent);
+            begin
+               Insert_Text (Interpreter, Text & ASCII.LF);
+               Destroy (Dialog);
+               return PyString_FromString (Text);
+            end;
+
+         when others =>
+            Destroy (Dialog);
+            PyErr_SetInterrupt;
+            return PyString_FromString ("");
+      end case;
+   end Read_Line;
 
    ----------------
    -- Initialize --
@@ -193,11 +300,13 @@ package body Python.GUI is
          Name  => PyString_FromString ("GPSStdout"));
       Ignored := PyModule_AddObject (Main_Module, "GPSStdout", Stdout);
 
-      Add_Method (Meths, Create_Method_Def ("write", Write'Access), Stdout);
-      Add_Method (Meths, Create_Method_Def ("flush", Flush'Access), Stdout);
+      Add_Method (Stdout, Create_Method_Def ("write",    Write'Access));
+      Add_Method (Stdout, Create_Method_Def ("flush",    Flush'Access));
+      Add_Method (Stdout, Create_Method_Def ("read",     Read_Line'Access));
+      Add_Method (Stdout, Create_Method_Def ("readline", Read_Line'Access));
 
       if not PyRun_SimpleString
-        ("sys.stdout=sys.stderr=GPSStdout ()" & ASCII.LF)
+        ("sys.stdout=sys.stdin=sys.stderr=GPSStdout ()" & ASCII.LF)
       then
          raise Interpreter_Error;
       end if;
@@ -220,7 +329,8 @@ package body Python.GUI is
 
       Interpreter.Buffer := new String'("");
 
-      PyEval_SetTrace (Trace'Access, null);
+      PyEval_SetTrace
+        (Trace'Access, PyCObject_FromVoidPtr (Interpreter.all'Address));
    end Initialize;
 
    -----------------
@@ -243,7 +353,8 @@ package body Python.GUI is
       end if;
 
       Gtk_New (Interpreter.Uneditable);
-      Set_Property (Interpreter.Uneditable, Editable_Property, False);
+      Set_Property
+        (Interpreter.Uneditable, Gtk.Text_Tag.Editable_Property, False);
       Add (Get_Tag_Table (Get_Buffer (Console)), Interpreter.Uneditable);
       --  ??? Never unref-ed
 
@@ -265,15 +376,14 @@ package body Python.GUI is
       Why      : Why_Trace_Func;
       Obj      : PyObject) return Integer
    is
-      Dead : Boolean;
-      pragma Unreferenced (Dead, Obj, Frame, Why, User_Arg);
+      pragma Unreferenced (Obj, Frame, Why);
+      Interpreter : Python_Interpreter := Convert
+        (PyCObject_AsVoidPtr (User_Arg));
    begin
-      Trace_Count := Trace_Count + 1;
-      if Trace_Count = Trace_Threshold then
-         while Gtk.Main.Events_Pending loop
-            Dead := Gtk.Main.Main_Iteration;
-         end loop;
-         Trace_Count := 0;
+      Interpreter.Trace_Count := Interpreter.Trace_Count + 1;
+      if Interpreter.Trace_Count = Trace_Threshold then
+         Process_Gtk_Events;
+         Interpreter.Trace_Count := 0;
       end if;
       return 0;
    end Trace;
@@ -365,14 +475,13 @@ package body Python.GUI is
       Iter, First_Iter : Gtk_Text_Iter;
       Ps     : PyObject;
    begin
-      Get_End_Iter (Buffer, Iter);
       if Interpreter.Use_Secondary_Prompt then
          Ps := PySys_GetObject ("ps2");
       else
          Ps := PySys_GetObject ("ps1");
       end if;
 
-      Insert (Buffer, Iter, PyString_AsString (Ps));
+      Insert_Text (Interpreter, PyString_AsString (Ps));
 
       Get_End_Iter (Buffer, Iter);
 

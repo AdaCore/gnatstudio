@@ -79,6 +79,11 @@ private
       Uneditable : Gtk.Text_Tag.Gtk_Text_Tag;
       Prompt_End_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       Console : Gtk.Text_View.Gtk_Text_View;
+
+      Trace_Count : Natural := 0;
+      --  Number of calls to the trace function. Every Trace_Threshold calls,
+      --  we check the gtk+ event list so the interface keep reacting to event
+      --  and scripts can be interrupted.
    end record;
 
 end Python.GUI;
