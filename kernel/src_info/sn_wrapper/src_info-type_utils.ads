@@ -95,6 +95,7 @@ package Src_Info.Type_Utils is
       Task_Type                 => Task_Object,
       Private_Type              => Private_Type,      -- ??? what kind
       Unresolved_Entity         => Unresolved_Entity, -- ??? for object?
+      Generic_Class             => Record_Object,
       others                    => Overloaded_Entity);
    --  This array establishes relation between E_Kind type entities
    --  and object entities
@@ -187,6 +188,9 @@ package Src_Info.Type_Utils is
    --  Checks to see if function prototypes are the same.
    --  Strict controls how arguments with ellipsis are compared
    --  (see Cmp_Arg_Types).
+
+   function Is_Template (The_Class : CL_Table) return Boolean;
+   --  Returns True if specified class is class template, False otherwise.
 
 private
 

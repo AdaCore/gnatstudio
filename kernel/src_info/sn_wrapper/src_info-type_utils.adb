@@ -398,7 +398,16 @@ package body Src_Info.Type_Utils is
                        Class_Def.File_Name.First .. Class_Def.File_Name.Last));
       end if;
 
-      Desc.Kind := Record_Type;
+      if Is_Template (Class_Def) then
+         Desc.Is_Template := True;
+      end if;
+
+      if Desc.Is_Template then
+         Desc.Kind := Generic_Class;
+      else
+         Desc.Kind := Record_Type;
+      end if;
+
       Success := True;
 
    exception
@@ -440,7 +449,16 @@ package body Src_Info.Type_Utils is
                        Union_Def.File_Name.First .. Union_Def.File_Name.Last));
       end if;
 
-      Desc.Kind := Record_Type;
+      if (Union_Def.Attributes and SN_TEMPLATE) /= 0 then
+         Desc.Is_Template := True;
+      end if;
+
+      if Desc.Is_Template then
+         Desc.Kind := Generic_Class;
+      else
+         Desc.Kind := Record_Type;
+      end if;
+
       Success := True;
    exception
       when  DB_Error |   -- non-existent table
@@ -567,5 +585,14 @@ package body Src_Info.Type_Utils is
    begin
       Module_Typedefs := new HTable;
    end Init;
+
+   -----------------
+   -- Is_Template --
+   -----------------
+
+   function Is_Template (The_Class : CL_Table) return Boolean is
+   begin
+      return (The_Class.Attributes and SN_TEMPLATE) /= 0;
+   end Is_Template;
 
 end Src_Info.Type_Utils;
