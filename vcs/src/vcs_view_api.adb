@@ -95,21 +95,25 @@ package body VCS_View_API is
    ----------
 
    procedure Open
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       Open (Ref, Files);
 
       declare
-         L_Temp : String_List.List := Files;
+         use String_List;
+
+         L_Temp : List_Node := First (Files);
       begin
-         while not String_List.Is_Empty (L_Temp) loop
-            Open_File_Editor (Kernel, String_List.Head (L_Temp));
-            L_Temp := String_List.Next (L_Temp);
+         while L_Temp /= Null_Node loop
+            Open_File_Editor (Kernel, Data (L_Temp));
+            L_Temp := Next (L_Temp);
          end loop;
       end;
    end Open;
@@ -119,12 +123,14 @@ package body VCS_View_API is
    ------------
 
    procedure Update
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       Update (Ref, Files);
       Get_Status (Ref, Copy_String_List (Files));
@@ -135,10 +141,11 @@ package body VCS_View_API is
    ----------------
 
    procedure Get_Status
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
 
@@ -152,12 +159,14 @@ package body VCS_View_API is
    ---------
 
    procedure Add
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       Add (Ref, Files);
    end Add;
@@ -167,12 +176,14 @@ package body VCS_View_API is
    ------------
 
    procedure Remove
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       Remove (Ref, Files);
    end Remove;
@@ -182,12 +193,14 @@ package body VCS_View_API is
    ------------
 
    procedure Revert
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       Revert (Ref, Files);
    end Revert;
@@ -197,8 +210,8 @@ package body VCS_View_API is
    ------------
 
    procedure Commit
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle) is
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) is
    begin
       --  ??? Right now, commit opens a log editor for the file.
       --  We should decide what the correct behavior should be.
@@ -211,16 +224,18 @@ package body VCS_View_API is
    ---------------
 
    procedure View_Diff
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       while not String_List.Is_Empty (Files) loop
          Diff (Ref, String_List.Head (Files));
-         String_List.Tail (Files);
+         String_List.Next (Files);
       end loop;
    end View_Diff;
 
@@ -229,16 +244,18 @@ package body VCS_View_API is
    --------------
 
    procedure View_Log
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       while not String_List.Is_Empty (Files) loop
          Log (Ref, String_List.Head (Files));
-         String_List.Tail (Files);
+         String_List.Next (Files);
       end loop;
    end View_Log;
 
@@ -247,16 +264,18 @@ package body VCS_View_API is
    -------------------
 
    procedure View_Annotate
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       while not String_List.Is_Empty (Files) loop
          Annotate (Ref, String_List.Head (Files));
-         String_List.Tail (Files);
+         String_List.Next (Files);
       end loop;
    end View_Annotate;
 
@@ -265,14 +284,19 @@ package body VCS_View_API is
    --------------
 
    procedure Edit_Log
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
    begin
       Edit_Log (null, Kernel, Files, Ref);
+
+      --  ??? Why do we free the list here and not in other procedures
+
       String_List.Free (Files);
    end Edit_Log;
 
@@ -411,8 +435,8 @@ package body VCS_View_API is
    ------------------------
 
    procedure On_Context_Changed
-     (Object  : access Gtk_Widget_Record'Class;
-      Args    : Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class;
+      Args   : Gtk_Args)
    is
       pragma Unreferenced (Object);
       Context      : Selection_Context_Access :=
@@ -546,8 +570,10 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
+
    begin
       Open_Explorer (Get_Kernel (Context));
 
@@ -571,8 +597,10 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
+
    begin
       Open_Explorer (Get_Kernel (Context));
 
@@ -595,8 +623,10 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
+
    begin
       Open_Explorer (Get_Kernel (Context));
 
@@ -621,8 +651,10 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
+
    begin
       Open_Explorer (Get_Kernel (Context));
       Clear (Get_Explorer (Get_Kernel (Context)));
@@ -659,16 +691,18 @@ package body VCS_View_API is
    is
       use File_Status_List;
       pragma Unreferenced (Widget);
+
       Files  : String_List.List := Get_Selected_Files (Get_Kernel (Context));
       Ref    : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
       Status : File_Status_List.List := Local_Get_Status (Ref, Files);
-      Status_Temp : File_Status_List.List := Status;
+      Status_Temp : List_Node := First (Status);
+
    begin
-      while not Is_Empty (Status_Temp) loop
-         if not String_List.Is_Empty (Head (Status_Temp).Working_Revision) then
+      while Status_Temp /= Null_Node loop
+         if not String_List.Is_Empty (Data (Status_Temp).Working_Revision) then
             Diff (Ref,
-                  String_List.Head (Head (Status_Temp).File_Name),
-                  String_List.Head (Head (Status_Temp).Working_Revision));
+                  String_List.Head (Data (Status_Temp).File_Name),
+                  String_List.Head (Data (Status_Temp).Working_Revision));
          end if;
 
          Status_Temp := Next (Status_Temp);
