@@ -298,6 +298,19 @@ package body Debugger.Jdb is
       null;
    end Detach_Process;
 
+   ------------------
+   -- Kill_Process --
+   ------------------
+
+   procedure Kill_Process
+     (Debugger : access Jdb_Debugger;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, Mode);
+   begin
+      null;
+   end Kill_Process;
+
    -----------------
    -- Wait_Prompt --
    -----------------
@@ -1102,7 +1115,7 @@ package body Debugger.Jdb is
    is
       pragma Unreferenced (Debugger);
    begin
-      return Big_Endian;
+      return Unknown_Endian;
       --  ??? Must implement this function !
    end Get_Endian_Type;
 

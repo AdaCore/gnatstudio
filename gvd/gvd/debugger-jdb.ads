@@ -112,6 +112,10 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure Kill_Process
+     (Debugger : access Jdb_Debugger;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Step_Into
      (Debugger : access Jdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
