@@ -166,6 +166,8 @@ package body GVD_Module is
       Delete_Id         : Handler_Id := (Null_Signal_Id, null);
       File_Edited_Id    : Handler_Id := (Null_Signal_Id, null);
       Lines_Revealed_Id : Handler_Id := (Null_Signal_Id, null);
+
+      Line_Reveal_Timeout : Timeout_Handler_Id := 0;
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
@@ -1291,6 +1293,8 @@ package body GVD_Module is
    begin
       Id.Initialized := False;
 
+      File_Line_List.Free (Id.Unexplored_Lines);
+
       if Page = null or else Page.Debugger = null then
          return;
       end if;
@@ -1655,6 +1659,7 @@ package body GVD_Module is
         Get_Current_Process (Get_Main_Window (Id.Kernel));
       Debugger   : constant Debugger_Access := Tab.Debugger;
       --  ??? Should attach the right debugger.
+
    begin
       if File_Line_List.Is_Empty (Id.Unexplored_Lines)
         or else Debugger = null
@@ -1664,16 +1669,17 @@ package body GVD_Module is
 
       elsif Command_In_Process (Get_Process (Debugger)) then
          Id.Slow_Query := True;
-         Timeout_Id := Timeout_Add (100, Idle_Reveal_Lines'Access);
+         Id.Line_Reveal_Timeout := Timeout_Add (100, Idle_Reveal_Lines'Access);
          return False;
 
       elsif Id.Slow_Query then
          Id.Slow_Query := False;
-         Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
+         Id.Line_Reveal_Timeout := Timeout_Add (1, Idle_Reveal_Lines'Access);
          return False;
       end if;
 
-      File_Line := File_Line_List.Head (Id.Unexplored_Lines);
+      File_Line := File_Line_List.Head
+        (GVD_Module (GVD_Module_ID).Unexplored_Lines);
 
       Kind := Line_Contains_Code
         (Debugger, File_Line.File.all, File_Line.Line);
@@ -1763,9 +1769,11 @@ package body GVD_Module is
             new Line_Information_Array'(A));
       end;
 
-      File_Line_List.Next (Id.Unexplored_Lines);
+      File_Line_List.Next (GVD_Module (GVD_Module_ID).Unexplored_Lines);
 
-      if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
+      if File_Line_List.Is_Empty
+        (GVD_Module (GVD_Module_ID).Unexplored_Lines)
+      then
          return False;
       end if;
 
@@ -1815,8 +1823,6 @@ package body GVD_Module is
       Context      : constant Selection_Context_Access :=
         To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
       Area_Context : File_Area_Context_Access;
-      Timeout_Id   : Timeout_Handler_Id;
-      pragma Unreferenced (Timeout_Id);
 
       Process      : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
@@ -1841,17 +1847,15 @@ package body GVD_Module is
 
             if Id.Show_Lines_With_Code then
                if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-                  Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
+                  Id.Line_Reveal_Timeout :=
+                    Gtk.Main.Timeout_Add (1, Idle_Reveal_Lines'Access);
                else
                   Id.List_Modified := True;
-                  File_Line_List.Free
-                    (Id.Unexplored_Lines);
-                  Id.Unexplored_Lines
-                    := File_Line_List.Null_List;
+                  Id.Unexplored_Lines := File_Line_List.Null_List;
                end if;
 
                for J in Line1 .. Line2 loop
-                  File_Line_List.Append
+                  File_Line_List.Prepend
                     (Id.Unexplored_Lines, (new String'(File), J));
                   --  ??? We might want to use a LIFO structure here
                   --  instead of FIFO, so that the lines currently shown
