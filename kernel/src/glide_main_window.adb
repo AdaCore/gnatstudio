@@ -374,8 +374,7 @@ package body Glide_Main_Window is
       Command : MDI_Child_Selection_Command_Access;
       Command2 : MDI_Window_Actions_Command_Access;
       MDI_Class : constant Class_Type := New_Class
-        (Main_Window.Kernel, "MDI",
-         -"Represents GPS's Multiple Document Interface");
+        (Main_Window.Kernel, "MDI");
    begin
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
@@ -429,15 +428,9 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description => -("Split the current window in two horizontally"));
       Register_Command
-        (Main_Window.Kernel,
-         Command     => "split_horizontally",
-         Params      => "([reuse])",
-         Description =>
-           -("Split the current window in two parts horizontally."
-             & " If reuse is true, attempt to reuse an existing space."),
+        (Main_Window.Kernel, "split_horizontally",
          Class         => MDI_Class,
          Static_Method => True,
-         Minimum_Args  => 0,
          Maximum_Args  => 1,
          Handler => Default_Command_Handler'Access);
 
@@ -450,12 +443,7 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description => -("Split the current window in two vertically"));
       Register_Command
-        (Main_Window.Kernel,
-         Command     => "split_vertically",
-         Params      => "([reuse])",
-         Description =>
-           -("Split the current window in two parts vertically."
-             & " If reuse is true, attempt to reuse an existing space."),
+        (Main_Window.Kernel, "split_vertically",
          Class         => MDI_Class,
          Static_Method => True,
          Minimum_Args  => 0,
@@ -472,9 +460,7 @@ package body Glide_Main_Window is
          Description =>
            -("Tile the windows in the central area horizontally"));
       Register_Command
-        (Main_Window.Kernel,
-         Command     => "tile_horizontally",
-         Description => -"Tile the windows in the central area horizontally",
+        (Main_Window.Kernel, "tile_horizontally",
          Class         => MDI_Class,
          Static_Method => True,
          Handler => Default_Command_Handler'Access);
@@ -489,9 +475,7 @@ package body Glide_Main_Window is
          Description =>
            -("Tile the windows in the central area vertically"));
       Register_Command
-        (Main_Window.Kernel,
-         Command     => "tile_vertically",
-         Description => -"Tile the windows in the central area vertically",
+        (Main_Window.Kernel, "tile_vertically",
          Class         => MDI_Class,
          Static_Method => True,
          Handler => Default_Command_Handler'Access);
@@ -505,9 +489,7 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description => -("Maximize all windows in the central area"));
       Register_Command
-        (Main_Window.Kernel,
-         Command     => "maximize_windows",
-         Description => -"Maximize all windows in the central area",
+        (Main_Window.Kernel, "maximize_windows",
          Class         => MDI_Class,
          Static_Method => True,
          Handler => Default_Command_Handler'Access);
@@ -521,9 +503,7 @@ package body Glide_Main_Window is
          Command     => Command2,
          Description => -("Unmaximize all windows in the central area"));
       Register_Command
-        (Main_Window.Kernel,
-         Command     => "unmaximize_windows",
-         Description => -"Unmaximize all windows in the central area",
+        (Main_Window.Kernel, "unmaximize_windows",
          Class         => MDI_Class,
          Static_Method => True,
          Handler => Default_Command_Handler'Access);
@@ -538,11 +518,7 @@ package body Glide_Main_Window is
          Description => -("Unsplit the central area of GPS, so that only one"
                           & " window is visible"));
       Register_Command
-        (Main_Window.Kernel,
-         Command     => "single_window",
-         Description =>
-         -("Unsplit the central area of GPS, so that only one window is"
-           & " visible"),
+        (Main_Window.Kernel, "single_window",
          Class         => MDI_Class,
          Static_Method => True,
          Handler => Default_Command_Handler'Access);
@@ -559,55 +535,26 @@ package body Glide_Main_Window is
            & " windows support this operation."));
       Register_Command
         (Main_Window.Kernel, "clone_window",
-         Description =>
-         -("Create a duplicate of the current window if possible. Not all"
-           & " windows support this operation."),
          Class         => MDI_Class,
          Static_Method => True,
          Handler => Default_Command_Handler'Access);
 
       Register_Command
-        (Main_Window.Kernel,
-         Command      => "dialog",
-         Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
-         Description  =>
-           -("Display a modal dialog to report information to a user. This"
-             & " blocks the interpreter until the dialog is closed."),
+        (Main_Window.Kernel, "dialog",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => MDI_Class,
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Main_Window.Kernel,
-         Command      => "yes_no_dialog",
-         Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
-         Return_Value => "boolean",
-         Description  =>
-           -("Display a modal dialog to ask a question to the user. This"
-             & " blocks the interpreter until the dialog is closed. The"
-             & " dialog has two buttons Yes and No, and the selected button"
-             & " is returned to the caller"),
+        (Main_Window.Kernel, "yes_no_dialog",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => MDI_Class,
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Main_Window.Kernel,
-         Command      => "input_dialog",
-         Params       =>
-           Parameter_Names_To_Usage (Input_Dialog_Cmd_Parameters),
-         Return_Value => "list",
-         Description  =>
-           -("Display a modal dialog and request some input from the user."
-             & " The message is displayed at the top, and one input field"
-             & " is displayed for each remaining argument. The arguments"
-             & " can take the form ""label=value"", in which case ""value"" is"
-             & " used as default for this entry. The return value"
-             & " is the value that the user has input for each of these"
-             & " parameters." & ASCII.LF
-             & "An empty list is returned if the user presses Cancel"),
+        (Main_Window.Kernel, "input_dialog",
          Minimum_Args => 2,
          Maximum_Args => 100,
          Class         => MDI_Class,
@@ -615,31 +562,13 @@ package body Glide_Main_Window is
          Handler      => Default_Command_Handler'Access);
 
       Register_Command
-        (Main_Window.Kernel,
-         Command      => "save_all",
-         Params       => Parameter_Names_To_Usage (Save_Windows_Parameters),
-         Description  =>
-           -("Save all currently unsaved windows. This includes open editors,"
-             & " the project, and any other window that has registered some"
-             & " save callbacks." & ASCII.LF
-             & "If the force parameter is false, then a confirmation dialog"
-             & " is displayed so that the user can select which windows"
-             & " to save."),
-         Minimum_Args  => 0,
+        (Main_Window.Kernel, "save_all",
          Maximum_Args  => 1,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
-        (Main_Window.Kernel,
-         Command      => "exit",
-         Params       => Parameter_Names_To_Usage (Exit_Cmd_Parameters, 1),
-         Description  =>
-           -("Exit GPS. If there are unsaved changes, a dialog is first"
-             & " displayed to ask whether these should be saved. If the"
-             & " user cancels the operation through the dialog, GPS will not"
-             & " exit. If force is true, then no dialog is open, and nothing"
-             & " is saved"),
+        (Main_Window.Kernel, "exit",
          Minimum_Args => Exit_Cmd_Parameters'Length - 1,
          Maximum_Args => Exit_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
