@@ -1298,17 +1298,23 @@ package body Project_Explorers is
       end loop;
 
       declare
-         Imported : Project_Type_Array (1 .. Count - 1);
+         Imported : Project_Type_Array (1 .. Count);
+         Index    : Natural := Imported'First;
       begin
          Iter := Start (Project, Recursive => True, Direct_Only => True);
-         for Index in Imported'Range loop
+         while Current (Iter) /= No_Project loop
+            --  In some cases, we get the project itself in the list of its
+            --  dependencies (???). For instance, doing a search in the
+            --  explorer if we didn't have this test would duplicate the
+            --  project node.
             if Current (Iter) /= Project then
                Imported (Index) := Current (Iter);
+               Index := Index + 1;
             end if;
             Next (Iter);
          end loop;
 
-         return Imported;
+         return Imported (Imported'First .. Index - 1);
       end;
    end Get_Imported_Projects;
 
