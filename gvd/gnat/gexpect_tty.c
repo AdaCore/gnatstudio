@@ -9,64 +9,6 @@
  **
  ********************************************************************/
 
-/*  List of #define involved
-    AIX
-    BSD4_1
-    BTTYDISC
-    DONT_REOPEN_PTY
-    DOS_NT
-    EMACS_SET_TTY_PGRP
-    FIONBIO
-    HAVE_LTCHARS
-    HAVE_SETPGID
-    HAVE_SETSID
-    HAVE_TCATTR
-    HAVE_TERMIO
-    HAVE_VFORK
-    HPUX
-    IBMRTAIX
-    IBMR2AIX
-    IRIS
-    ISTRIP
-    IUCLC
-    LDISC1
-    MSDOS
-    NLDLY
-    OLCUC
-    POSIX_SIGNALS
-    RTU
-    SETUP_SLAVE_PTY
-    SET_CHILD_PTY_PGRP
-    SIGCHLD
-    SIGNALS_VIA_CHARACTERS
-    SKTPAIR
-    STRIDE
-    subprocess
-    TIOCNOTTY
-    TIOCSCTTY
-    TIOCSETD
-    WINDOWSNT
-    __sgi
-    pfa
- */
-
-/* known macros
-   USG
-   UNIPLUS
-   BSD_SYSTEM
-   PTY_ITERATION
-   PTY_OPEN
-   PTY_NAME_SPRINTF
-   FIRST_PTY_LETTER
-   PTY_TTY_NAME_SPRINTF
-   HAVE_PTYS
-   EMACS_GET_TTY
-   O_NDELAY
-   O_NOCTTY
-   O_NONBLOCK
- */
-
-
 /*******************************
  **  These macros and constants are defined for maximum compatibility with
  **  Emacs, so that we can easily compare later on the changes done in Emacs
@@ -80,7 +22,7 @@ int Vprocess_connection_type = 1;
 #define Qnil 0
 #define Qt 1
 #define Qrun 2
-#define report_file_error(x, y) fprintf (stderr, x);
+#define report_file_error(x, y) fprintf (stderr, "Error: "x"\n");
 #define XPROCESS(x) (x)
 #define XSETINT(x,y) (x)=(y)
 #define XSETFASTINT(x,y) (x)=(y)
@@ -89,7 +31,20 @@ int Vprocess_connection_type = 1;
 #undef SET_EMACS_PRIORITY
 #define STRING_BYTES(x) strlen(x)
 #define fatal(a, b) fprintf(stderr, a), exit(1)
+#define INTEGERP(x) 1
+#define XINT(x) x
 
+#ifdef WIN32
+#include <windows.h>
+#define pipe __gnat_pipe
+#define HAVE_NTGUI
+#define MAXPATHLEN 1024
+int Vw32_start_process_share_console = 0;
+int Vw32_start_process_inherit_error_mode = 1;
+int Vw32_start_process_show_window = 0;
+int Vw32_quote_process_args = 1;
+int is_cygnus_app = 0;
+#endif /* WIN32 */
 
 /* Include the system-specific definitions */
 #include SYSTEM_INCLUDE
@@ -158,6 +113,238 @@ struct Lisp_Process {
 
 
 #ifdef _WIN32
+
+static int
+nt_spawnve (char *exe, char **argv, char *env)
+{
+  PROCESS_INFORMATION   procinfo;  
+  STARTUPINFO start;
+  SECURITY_ATTRIBUTES sec_attrs;
+  SECURITY_DESCRIPTOR sec_desc;
+  DWORD flags;
+  char dir[ MAXPATHLEN ];
+  int pid;
+  char *cmdline, *parg, **targ;
+  int do_quoting = 0;
+  char escape_char;
+  int arglen;
+
+  /* we have to do some conjuring here to put argv and envp into the
+     form CreateProcess wants...  argv needs to be a space separated/null
+     terminated list of parameters, and envp is a null
+     separated/double-null terminated list of parameters.
+
+     Additionally, zero-length args and args containing whitespace or
+     quote chars need to be wrapped in double quotes - for this to work,
+     embedded quotes need to be escaped as well.  The aim is to ensure
+     the child process reconstructs the argv array we start with
+     exactly, so we treat quotes at the beginning and end of arguments
+     as embedded quotes.
+
+     The w32 GNU-based library from Cygnus doubles quotes to escape
+     them, while MSVC uses backslash for escaping.  (Actually the MSVC
+     startup code does attempt to recognise doubled quotes and accept
+     them, but gets it wrong and ends up requiring three quotes to get a
+     single embedded quote!)  So by default we decide whether to use
+     quote or backslash as the escape character based on whether the
+     binary is apparently a Cygnus compiled app.
+
+     Note that using backslash to escape embedded quotes requires
+     additional special handling if an embedded quote is already
+     preceeded by backslash, or if an arg requiring quoting ends with
+     backslash.  In such cases, the run of escape characters needs to be
+     doubled.  For consistency, we apply this special handling as long
+     as the escape character is not quote.
+
+     Since we have no idea how large argv and envp are likely to be we
+     figure out list lengths on the fly and allocate them.  */
+
+  if (!NILP (Vw32_quote_process_args))
+    {
+      do_quoting = 1;
+      /* Override escape char by binding w32-quote-process-args to
+	 desired character, or use t for auto-selection.  */
+      if (INTEGERP (Vw32_quote_process_args))
+	escape_char = XINT (Vw32_quote_process_args);
+      else
+	escape_char = is_cygnus_app ? '"' : '\\';
+    }
+  
+  /* do argv...  */
+  arglen = 0;
+  targ = argv;
+  while (*targ)
+    {
+      char * p = *targ;
+      int need_quotes = 0;
+      int escape_char_run = 0;
+
+      if (*p == 0)
+	need_quotes = 1;
+      for ( ; *p; p++)
+	{
+	  if (*p == '"')
+	    {
+	      /* allow for embedded quotes to be escaped */
+	      arglen++;
+	      need_quotes = 1;
+	      /* handle the case where the embedded quote is already escaped */
+	      if (escape_char_run > 0)
+		{
+		  /* To preserve the arg exactly, we need to double the
+		     preceding escape characters (plus adding one to
+		     escape the quote character itself).  */
+		  arglen += escape_char_run;
+		}
+	    }
+	  else if (*p == ' ' || *p == '\t')
+	    {
+	      need_quotes = 1;
+	    }
+
+	  if (*p == escape_char && escape_char != '"')
+	    escape_char_run++;
+	  else
+	    escape_char_run = 0;
+	}
+      if (need_quotes)
+	{
+	  arglen += 2;
+	  /* handle the case where the arg ends with an escape char - we
+	     must not let the enclosing quote be escaped.  */
+	  if (escape_char_run > 0)
+	    arglen += escape_char_run;
+	}
+      arglen += strlen (*targ++) + 1;
+    }
+  cmdline = (char*)malloc (arglen + 1);
+  targ = argv;
+  parg = cmdline;
+  while (*targ)
+    {
+      char * p = *targ;
+      int need_quotes = 0;
+
+      if (*p == 0)
+	need_quotes = 1;
+
+      if (do_quoting)
+	{
+	  for ( ; *p; p++)
+	    if (*p == ' ' || *p == '\t' || *p == '"')
+	      need_quotes = 1;
+	}
+      if (need_quotes)
+	{
+	  int escape_char_run = 0;
+	  char * first;
+	  char * last;
+
+	  p = *targ;
+	  first = p;
+	  last = p + strlen (p) - 1;
+	  *parg++ = '"';
+#if 0
+	  /* This version does not escape quotes if they occur at the
+	     beginning or end of the arg - this could lead to incorrect
+	     behaviour when the arg itself represents a command line
+	     containing quoted args.  I believe this was originally done
+	     as a hack to make some things work, before
+	     `w32-quote-process-args' was added.  */
+	  while (*p)
+	    {
+	      if (*p == '"' && p > first && p < last)
+		*parg++ = escape_char;	/* escape embedded quotes */
+	      *parg++ = *p++;
+	    }
+#else
+	  for ( ; *p; p++)
+	    {
+	      if (*p == '"')
+		{
+		  /* double preceding escape chars if any */
+		  while (escape_char_run > 0)
+		    {
+		      *parg++ = escape_char;
+		      escape_char_run--;
+		    }
+		  /* escape all quote chars, even at beginning or end */
+		  *parg++ = escape_char;
+		}
+	      *parg++ = *p;
+
+	      if (*p == escape_char && escape_char != '"')
+		escape_char_run++;
+	      else
+		escape_char_run = 0;
+	    }
+	  /* double escape chars before enclosing quote */
+	  while (escape_char_run > 0)
+	    {
+	      *parg++ = escape_char;
+	      escape_char_run--;
+	    }
+#endif
+	  *parg++ = '"';
+	}
+      else
+	{
+	  strcpy (parg, *targ);
+	  parg += strlen (*targ);
+	}
+      *parg++ = ' ';
+      targ++;
+    }
+  *--parg = '\0';
+  
+
+  memset (&start, 0, sizeof (start));
+  start.cb = sizeof (start);
+  
+#ifdef HAVE_NTGUI
+  if (NILP (Vw32_start_process_show_window))
+    start.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+  else
+    start.dwFlags = STARTF_USESTDHANDLES;
+  start.wShowWindow = SW_HIDE;
+
+  start.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
+  start.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
+  start.hStdError = GetStdHandle (STD_ERROR_HANDLE);
+#endif /* HAVE_NTGUI */
+
+  /* Explicitly specify no security */
+  if (!InitializeSecurityDescriptor (&sec_desc, SECURITY_DESCRIPTOR_REVISION))
+    goto EH_Fail;
+  if (!SetSecurityDescriptorDacl (&sec_desc, TRUE, NULL, FALSE))
+    goto EH_Fail;
+  sec_attrs.nLength = sizeof (sec_attrs);
+  sec_attrs.lpSecurityDescriptor = &sec_desc;
+  sec_attrs.bInheritHandle = FALSE;
+  
+  /*strcpy (dir, process_dir);
+    unixtodos_filename (dir);*/
+
+  flags = (!NILP (Vw32_start_process_share_console)
+	   ? CREATE_NEW_PROCESS_GROUP
+	   : CREATE_NEW_CONSOLE);
+  if (NILP (Vw32_start_process_inherit_error_mode))
+    flags |= CREATE_DEFAULT_ERROR_MODE;
+  if (!CreateProcess (exe, cmdline, &sec_attrs, NULL, TRUE,
+		      flags, env, ".", &start, &procinfo))
+    goto EH_Fail;
+
+  pid = (int) procinfo.dwProcessId;
+
+  /* Hack for Windows 95, which assigns large (ie negative) pids */
+  if (pid < 0)
+    pid = -pid;
+
+  return pid;
+
+ EH_Fail:
+  return -1;
+}
 
 void 
 register_child (int pid, int fd)
@@ -247,8 +434,7 @@ reset_standard_handles (int in, int out, int err, HANDLE handles[3])
   SetStdHandle (STD_ERROR_HANDLE, handles[2]);
 }
 
-
-#else  /* _WIN32 */
+#endif /* _WIN32 */
 
 /******************************************************
  **  emacs_open ()
@@ -492,6 +678,8 @@ emacs_get_tty (fd, settings)
  **
  ***********************************************************/
 
+#ifndef WIN32
+
 sigset_t
 sys_sigunblock (sigset_t new_mask)
 {
@@ -512,6 +700,8 @@ sys_sigblock (sigset_t new_mask)
   sigprocmask (SIG_BLOCK, &new_mask, &old_mask);
   return (old_mask);
 }
+
+#endif /* WIN32 */
 
 /*************************************************************
  **  sys_signal ()
@@ -1031,7 +1221,9 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir)
   setpgrp ();			/* No arguments but equivalent in this case */
 #endif
 #else
+#ifdef HAVE_SETPGID     /* ??? MANU */
   setpgid (pid, pid);   /* ??? MANU: This was setpgrp in Emacs */
+#endif /* HAVE_SETPGID */
 #endif /* USG */
   /* setpgrp_of_tty is incorrect here; it uses input_fd.  */
   EMACS_SET_TTY_PGRP (0, &pid);
@@ -1049,11 +1241,12 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir)
 #else  /* not MSDOS */
 #ifdef WINDOWSNT
   /* Spawn the child.  (See ntproc.c:Spawnve).  */
-  cpid = spawnve (_P_NOWAIT, new_argv[0], new_argv, env);
-  reset_standard_handles (in, out, err, handles);
+  /*cpid = spawnve (_P_NOWAIT, new_argv[0], new_argv, NULL);*/
+  cpid = nt_spawnve (new_argv[0], new_argv, NULL);
   if (cpid == -1)
     /* An error occurred while trying to spawn the process.  */
     report_file_error ("Spawning child process", Qnil);
+  reset_standard_handles (in, out, err, handles);
   return cpid;
 #else /* not WINDOWSNT */
   /* execvp does not accept an environment arg so the only way
@@ -1142,7 +1335,7 @@ setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
       int tem;
       tem = pipe (sv);
       if (tem < 0)
-	report_file_error ("Creating pipe", Qnil);
+	report_file_error ("Can't create pipe", Qnil);
       inchannel = sv[0];
       forkout = sv[1];
       tem = pipe (sv);
@@ -1150,7 +1343,7 @@ setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
 	{
 	  emacs_close (inchannel);
 	  emacs_close (forkout);
-	  report_file_error ("Creating pipe", Qnil);
+	  report_file_error ("Can't create pipe", Qnil);
 	}
       outchannel = sv[1];
       forkin = sv[0];
@@ -1392,7 +1585,10 @@ setupChildCommunication (struct Lisp_Process* process, char** new_argv)
 #endif /* HAVE_PTYS */
   
   signal (SIGINT, SIG_DFL);
+
+#ifndef WIN32 /* ??? Manu */
   signal (SIGQUIT, SIG_DFL);
+#endif /* WIN32 */
   
   /* Stop blocking signals in the child.  */
 #ifdef POSIX_SIGNALS
@@ -1454,7 +1650,7 @@ setupParentCommunication
   else
     {
 #ifdef WINDOWSNT
-      register_child (process->pid, inchannel);
+      register_child (process->pid, 0);
 #endif /* WINDOWSNT */
 
       /* If the subfork execv fails, and it exits,
@@ -1533,5 +1729,3 @@ setupParentCommunication
   *err_fd = process->infd;
   free (process);
 }
-
-#endif /* _WIN32 */
