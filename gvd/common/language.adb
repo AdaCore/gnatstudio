@@ -299,6 +299,8 @@ package body Language is
       end if;
 
       --  A protected constant character
+      --  ??? The following test still does not handle cases such as
+      --  ??? '\012' for instance, or multi-character character constants.
 
       if Buffer'Length > 4
         and then Buffer (Buffer'First) = Context.Constant_Character
