@@ -633,41 +633,44 @@ package body VCS_View_Pkg is
 
       Gtk_New (Menu);
 
-      Files := Get_Selected_Files (Explorer);
-
       --  If there is no selection, select the item under the cursor.
-      if String_List.Is_Empty (Files) then
-         declare
-            X         : Gdouble := Get_X (Event);
-            Y         : Gdouble := Get_Y (Event);
-            Buffer_X  : Gint;
-            Buffer_Y  : Gint;
-            Row_Found : Boolean;
-            Path      : Gtk_Tree_Path;
-            Column    : Gtk_Tree_View_Column := null;
-            Iter      : Gtk_Tree_Iter;
-         begin
-            Path := Gtk_New;
-            Get_Path_At_Pos
-              (Explorer.Tree,
-               Gint (X),
-               Gint (Y),
-               Path,
-               Column,
-               Buffer_X,
-               Buffer_Y,
-               Row_Found);
+      declare
+         X         : Gdouble := Get_X (Event);
+         Y         : Gdouble := Get_Y (Event);
+         Buffer_X  : Gint;
+         Buffer_Y  : Gint;
+         Row_Found : Boolean;
+         Path      : Gtk_Tree_Path;
+         Column    : Gtk_Tree_View_Column := null;
+         Iter      : Gtk_Tree_Iter;
 
-            if Path /= null then
-               Select_Path (Get_Selection (Explorer.Tree), Path);
-               Iter := Get_Iter (Explorer.Model, Path);
-               Path_Free (Path);
+      begin
+         Path := Gtk_New;
+         Get_Path_At_Pos
+           (Explorer.Tree,
+            Gint (X),
+            Gint (Y),
+            Path,
+            Column,
+            Buffer_X,
+            Buffer_Y,
+            Row_Found);
 
-               String_List.Append
-                 (Files, Get_String (Explorer.Model, Iter, Name_Column));
-            end if;
-         end;
-      end if;
+         if Path /= null
+           and then not Path_Is_Selected (Get_Selection (Explorer.Tree), Path)
+         then
+            Unselect_All (Get_Selection (Explorer.Tree));
+            Select_Path (Get_Selection (Explorer.Tree), Path);
+
+            Iter := Get_Iter (Explorer.Model, Path);
+            Path_Free (Path);
+
+            String_List.Append
+              (Files, Get_String (Explorer.Model, Iter, Name_Column));
+         else
+            Files := Get_Selected_Files (Explorer);
+         end if;
+      end;
 
       if not String_List.Is_Empty (Files) then
          declare
