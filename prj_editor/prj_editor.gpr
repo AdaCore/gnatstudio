@@ -1,6 +1,7 @@
 with "../common/common";
 with "../gtkada/gtkada";
-with "../gvd/gvd";
+with "../kernel/kernel";
+with "../gvd/gvd_common";
 
 project Prj_Editor is
 
