@@ -33,7 +33,9 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
    procedure Attach
      (Editor : access GEdit_Record;
-      Parent : access Gtk.Container.Gtk_Container_Record'Class) is
+      Parent : access Gtk.Container.Gtk_Container_Record'Class)
+   is
+      pragma Unreferenced (Editor, Parent);
    begin
       --  Nothing needed within Glide
       null;
@@ -44,6 +46,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    ------------
 
    procedure Detach (Editor : access GEdit_Record) is
+      pragma Unreferenced (Editor);
    begin
       --  Nothing needed within Glide
       null;
@@ -90,7 +93,9 @@ package body GVD.Text_Box.Source_Editor.Glide is
      (Editor   : access GEdit_Record;
       Line     : Natural;
       Column   : Natural;
-      Position : Position_Type) is
+      Position : Position_Type)
+   is
+      pragma Unreferenced (Editor, Line, Column, Position);
    begin
       --  Only needed by the GVD explorer, which is disabled within Glide
       null;
@@ -117,6 +122,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Set_Current : Boolean := True;
       Force       : Boolean := False)
    is
+      pragma Unreferenced (Set_Current, Force);
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
 
    begin
@@ -130,6 +136,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    -------------------------
 
    procedure Preferences_Changed (Editor : access GEdit_Record) is
+      pragma Unreferenced (Editor);
    begin
       null;
    end Preferences_Changed;
@@ -143,6 +150,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Line        : Natural;
       Set_Current : Boolean := True)
    is
+      pragma Unreferenced (Set_Current);
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
 
    begin
@@ -176,7 +184,9 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
    procedure Update_Breakpoints
      (Editor : access GEdit_Record;
-      Br     : GVD.Types.Breakpoint_Array) is
+      Br     : GVD.Types.Breakpoint_Array)
+   is
+      pragma Unreferenced (Editor, Br);
    begin
       --  ???
       null;

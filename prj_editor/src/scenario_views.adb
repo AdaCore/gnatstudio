@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -180,6 +180,7 @@ package body Scenario_Views is
    procedure Edit_Variable
      (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data)
    is
+      pragma Unreferenced (Button);
       Edit : New_Var_Edit;
    begin
       Gtk_New (Edit, Data.View.Kernel, Data.Var, -"Editing a variable");
@@ -199,6 +200,7 @@ package body Scenario_Views is
    procedure Delete_Variable
      (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data)
    is
+      pragma Unreferenced (Button);
       Ext_Variable : constant String :=
         Get_String (External_Reference_Of (Data.Var));
       Str : String_Id;
@@ -237,6 +239,7 @@ package body Scenario_Views is
    -------------
 
    procedure Refresh (View : access GObject_Record'Class; Data : GObject) is
+      pragma Unreferenced (View);
       V      : constant Scenario_View := Scenario_View (Data);
       Label  : Gtk_Label;
       Combo  : Gtk_Combo;
