@@ -74,7 +74,7 @@ package body GVD.Canvas is
    --  would appear in the computation and make zoom_in not the reverse of
    --  zoom_out.
 
-   Zoom_Steps : constant := 15;
+   Zoom_Steps : constant := 7;
    --  Number of steps while zooming in or out.
 
    --------------------
@@ -336,7 +336,6 @@ package body GVD.Canvas is
    --------------------
 
    procedure Allocate_Fonts (Canvas : access GVD_Canvas_Record'Class) is
-      Font_Limit : constant := 3;
       Size : Gint;
    begin
       ------------------
@@ -348,35 +347,23 @@ package body GVD.Canvas is
       end if;
 
       Size := To_Canvas_Coordinates (Canvas, Get_Pref (Value_Font_Size));
-      if Size <= Font_Limit then
-         Canvas.Item_Context.Font := null;
-      else
-         Canvas.Item_Context.Font := Get_Gdkfont (Get_Pref (Value_Font), Size);
-      end if;
+      Canvas.Item_Context.Font := Get_Gdkfont (Get_Pref (Value_Font), Size);
 
       if Canvas.Item_Context.Type_Font /= null then
          Unref (Canvas.Item_Context.Type_Font);
       end if;
 
       Size := To_Canvas_Coordinates (Canvas, Get_Pref (Type_Font_Size));
-      if Size <= Font_Limit then
-         Canvas.Item_Context.Type_Font := null;
-      else
-         Canvas.Item_Context.Type_Font :=
-           Get_Gdkfont (Get_Pref (Type_Font), Size);
-      end if;
+      Canvas.Item_Context.Type_Font :=
+        Get_Gdkfont (Get_Pref (Type_Font), Size);
 
       if Canvas.Item_Context.Command_Font /= null then
          Unref (Canvas.Item_Context.Command_Font);
       end if;
 
       Size := To_Canvas_Coordinates (Canvas, Get_Pref (Value_Font_Size));
-      if Size <= Font_Limit then
-         Canvas.Item_Context.Command_Font := null;
-      else
-         Canvas.Item_Context.Command_Font := Get_Gdkfont
-           (Get_Pref (Command_Font), Size);
-      end if;
+      Canvas.Item_Context.Command_Font :=
+        Get_Gdkfont (Get_Pref (Command_Font), Size);
 
       ---------------------
       -- Tooltip_Context --
@@ -409,12 +396,8 @@ package body GVD.Canvas is
       end if;
 
       Size := To_Canvas_Coordinates (Canvas, Get_Pref (Title_Font_Size));
-      if Size <= Font_Limit then
-         Canvas.Box_Context.Title_Font := null;
-      else
-         Canvas.Box_Context.Title_Font := Get_Gdkfont
-           (Get_Pref (Title_Font), Size);
-      end if;
+      Canvas.Box_Context.Title_Font :=
+        Get_Gdkfont (Get_Pref (Title_Font), Size);
 
       For_Each_Item (Canvas, Refresh_Item'Unrestricted_Access);
    end Allocate_Fonts;
