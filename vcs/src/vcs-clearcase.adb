@@ -198,7 +198,7 @@ package body VCS.ClearCase is
    function Command
      (Command : String;
       Args    : String_List.List)
-     return String_List.List
+      return String_List.List
    is
       Match     : Expect_Match := 1;
       Fd        : TTY_Process_Descriptor;
@@ -222,7 +222,6 @@ package body VCS.ClearCase is
          GNAT.OS_Lib.Free (The_Args (J));
       end loop;
 
-      declare
       begin
          loop
             Expect (Fd, Match, "\n", 10);
@@ -232,7 +231,7 @@ package body VCS.ClearCase is
                   null;
                when others =>
                   declare
-                     S : constant String := Expect_Out (Fd);
+                     S : constant String := Strip_CR (Expect_Out (Fd));
                   begin
                      if S (S'Last) = ASCII.LF then
                         String_List.Append (Result, S (S'First .. S'Last - 1));
