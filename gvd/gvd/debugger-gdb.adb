@@ -62,15 +62,13 @@ package body Debugger.Gdb is
    -- Constants --
    ---------------
 
-   Prompt_Regexp : constant Pattern_Matcher :=
-     Compile ("^\(gdb\) |\(gdb\) $", Multiple_Lines);
+   Prompt_Regexp : constant Pattern_Matcher := Compile ("\(gvd\) ");
    --  Regular expressions used to recognize the prompt.
-   --  ??? The second part of this expression should not be needed but when
-   --  communicating with gdb using a remote protocol (e.g rsh), it seems
-   --  that this case (prompt at the end of the line) is occurring.
+   --  Note that this regexp needs to be as simple as possible, since it will
+   --  be used several times when receiving long results from commands.
 
    Prompt_Length : constant := 6;
-   --  Length of the prompt ("(gdb) ").
+   --  Length of the prompt ("(gvd) ").
 
    Gdb_Command   : constant String := "gdb";
    --  Name of the command to launch gdb.
@@ -80,7 +78,7 @@ package body Debugger.Gdb is
    --  Note that we assume that only one blank is put between each option.
 
    Highlight_Pattern : constant Pattern_Matcher :=
-     Compile ("^\(gdb\) ", Multiple_Lines);
+     Compile ("^\(gvd\) ", Multiple_Lines);
    --  Matches everything that should be highlighted in the debugger window.
 
    File_Name_Pattern : constant Pattern_Matcher :=
@@ -163,6 +161,12 @@ package body Debugger.Gdb is
    --  Value'First will contain the value described in the first line, and
    --  so on.
 
+   procedure Set_Args
+     (Debugger  : access Gdb_Debugger;
+      Arguments : String;
+      Mode      : Command_Type := Hidden);
+   --  Set the debuggee arguments to Arguments.
+
    function To_Main_Debug_Window is new
      Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
@@ -191,7 +195,7 @@ package body Debugger.Gdb is
          else
             Print_Message
               (Process.Window.Statusbar1,
-               Error, (-"Language currently not supported by gdb: ") & Lang);
+               Error, (-"Language currently not supported by GVD: ") & Lang);
             Language := new Gdb_C_Language;
          end if;
 
@@ -434,7 +438,8 @@ package body Debugger.Gdb is
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
       Executable      : String;
-      Arguments       : GNAT.OS_Lib.Argument_List;
+      Debugger_Args   : GNAT.OS_Lib.Argument_List;
+      Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
       Remote_Host     : String := "";
@@ -442,9 +447,10 @@ package body Debugger.Gdb is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
    is
-      Num_Options     : Natural :=
+      Num_Options     : constant Natural :=
         Standard.Ada.Strings.Fixed.Count (Gdb_Options, " ") + 1;
-      Local_Arguments : Argument_List (1 .. Arguments'Length + Num_Options);
+      Local_Arguments : Argument_List
+                          (1 .. Debugger_Args'Length + Num_Options);
       First           : Natural := 1;
       Last            : Natural;
 
@@ -463,7 +469,8 @@ package body Debugger.Gdb is
 
       Local_Arguments (Num_Options) :=
         new String' (Gdb_Options (First .. Gdb_Options'Last));
-      Local_Arguments (Num_Options + 1 .. Local_Arguments'Last) := Arguments;
+      Local_Arguments (Num_Options + 1 .. Local_Arguments'Last) :=
+        Debugger_Args;
 
       if Debugger_Name = "" then
          General_Spawn
@@ -474,10 +481,19 @@ package body Debugger.Gdb is
       end if;
 
       Free (Debugger.Executable);
+      Free (Debugger.Executable_Args);
       Free (Debugger.Target_Command);
+
+      for J in 1 .. Num_Options loop
+         Free (Local_Arguments (J));
+      end loop;
 
       if Executable /= "" then
          Debugger.Executable := new String' (To_Unix_Pathname (Executable));
+      end if;
+
+      if Executable_Args /= "" then
+         Debugger.Executable_Args := new String' (Executable_Args);
       end if;
 
       if Remote_Target = "" then
@@ -545,7 +561,7 @@ package body Debugger.Gdb is
       Wait (Get_Process (Debugger), Num, "\(.+\).*$", Timeout => -1);
 
       --  Make sure that the prompt is what we are expecting.
-      Send (Debugger, "set prompt (gdb) ", Mode => Internal);
+      Send (Debugger, "set prompt (gvd) ", Mode => Internal);
       Send (Debugger, "set width 0", Mode => Internal);
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
@@ -595,6 +611,10 @@ package body Debugger.Gdb is
          Send (Debugger, "info line", Mode => Internal);
       end if;
 
+      if Debugger.Executable_Args /= null then
+         Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Hidden);
+      end if;
+
    exception
       --  If the executable was not found, nothing to be done, we simply
       --  start with an empty debugger
@@ -640,6 +660,18 @@ package body Debugger.Gdb is
             Close (Get_Descriptor (Get_Process (Debugger)).all);
             Free (Debugger.Process);
    end Close;
+
+   --------------
+   -- Set_Args --
+   --------------
+
+   procedure Set_Args
+     (Debugger  : access Gdb_Debugger;
+      Arguments : String;
+      Mode      : Command_Type := Hidden) is
+   begin
+      Send (Debugger, "set args " & Arguments, Mode => Mode);
+   end Set_Args;
 
    --------------------
    -- Set_Executable --
