@@ -478,7 +478,7 @@ $T2H_EXAMPLE_INDENT_CELL = '<td>&nbsp;</td>';
 # same as above, only for @small
 $T2H_SMALL_EXAMPLE_INDENT_CELL = '<td>&nbsp;</td>';
 # font size for @small
-$T2H_SMALL_FONT_SIZE = '+0';
+$T2H_SMALL_FONT_SIZE = '-1';
 
 # if non-empty, and no @..heading appeared in Top node, then
 # use this as header for top node/section, otherwise use value of 
@@ -2213,7 +2213,7 @@ $T2H_OBSOLETE_OPTIONS -> {verbose} =
 # read initialzation from $sysconfdir/texi2htmlrc or $HOME/.texi2htmlrc
 my $home = $ENV{HOME};
 defined($home) or $home = '';
-foreach $i ('/etc/texi2htmlrc', "$home/.texi2htmlrc") {
+foreach $i ('/home/briot/t2/install/etc/texi2htmlrc', "$home/.texi2htmlrc") {
     if (-f $i) {
 	print "# reading initialization file from $i\n" 
 	    if ($T2H_VERBOSE);
@@ -3011,10 +3011,12 @@ INPUT_LINE: while ($_ = &next_line) {
     #
     $tag = '';
     $end_tag = '';
+    $tag_args = '';
     if (/^\s*\@end\s+(\w+)\b/) {
 	$end_tag = $1;
-    } elsif (/^\s*\@(\w+)\b/) {
+    } elsif (/^\s*\@(\w+)\b(.*)$/) {
 	$tag = $1;
+	$tag_args = $2;
     }
     #
     # handle @html / @end html
@@ -3236,8 +3238,16 @@ INPUT_LINE: while ($_ = &next_line) {
 #	      if $tag =~ /example/i;
 	    # sunshine@sunshineco.com: <PRE>bla</PRE> looks better than
 	    # <PRE>\nbla</PRE> (at least on NeXTstep browser
-	    push(@lines, &debug("<$format_map{$tag}>" . 
-				($in_pre ? '' : "\n"), __LINE__));
+	    if ($format_map {$tag} eq "OL"
+		&& $tag_args ne "")
+	      {
+		$tag_args =~ s/ //g;
+		push(@lines, &debug("<$format_map{$tag} start=\"$tag_args\">" . 
+				    ($in_pre ? '' : "\n"), __LINE__));
+	      } else {
+		push(@lines, &debug("<$format_map{$tag}>" . 
+				    ($in_pre ? '' : "\n"), __LINE__));
+	      }
 	    next;
 	}
 	elsif (exists $complex_format_map->{$tag})
@@ -4919,7 +4929,8 @@ sub Sec2PrevNode
     }
     elsif ($i ne '1')
     {
-      $i--;
+      # unfortunately, -- operator is not magical
+      $i = chr(ord($i) + 1);
     }
     else
     {
@@ -5425,4 +5436,4 @@ sub t2h_print_label
 .nr nl 0-1		\" fake up transition to first page again
 .nr % 0			\" start at page 1
 '; __END__ ############# From here on it's a standard manual page ############
-.so /usr/share/man/man1/texi2html.1
+.so /home/briot/t2/install/man/man1/texi2html.1
