@@ -1496,6 +1496,7 @@ package body GVD.Source_Editors is
       --  Save the currently displayed line
       Value : constant Gfloat :=
         Get_Value (Get_Vadj (Get_Child (Editor)));
+      File_Name : constant String := Get_Current_File (Editor);
 
    begin
       Editor.Colors (Comment_Text) := Get_Pref (Comments_Color);
@@ -1507,9 +1508,10 @@ package body GVD.Source_Editors is
       --  Pretend we have changed the contents of the buffer. This removes
       --  all highlighting of the current line, and reset any marker we
       --  might have
-      Set_Buffer (Editor, Get_Buffer (Editor), Clear_Previous => False);
-      Update_Child (Editor);
-      Update_Buttons (Editor);
+      Free (Editor.Current_File);
+      Clear_Cache (Debugger_Process_Tab (Editor.Process).Window,
+                   Force => False);
+      Load_File (Editor, File_Name);
       Set_Value (Get_Vadj (Get_Child (Editor)), Value);
       Set_Line (Editor, Get_Line (Editor));
       Highlight_Current_Line (Editor);
