@@ -67,7 +67,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
       Id         : Idle_Handler_Id;
-      GVD_Window : GVD_Main_Window := GVD_Main_Window (Object);
+      GVD_Window : constant GVD_Main_Window := GVD_Main_Window (Object);
 
    begin
       --  Ref the object since we will destroy it in the main procedure.
@@ -95,7 +95,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       --  Arg1 : Address := To_Address (Params, 1);
-      Arg2 : Guint := To_Guint (Params, 2);
+      Arg2 : constant Guint := To_Guint (Params, 2);
       --  Number of the page that will be displayed
 
       Page      : constant Gtk_Widget := Get_Nth_Page
