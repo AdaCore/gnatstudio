@@ -9,7 +9,7 @@ build:
 
 distrib:
 	@-mkdir -p gvd gnat > /dev/null 2>&1
-	$(CP) ../../common/src/sdefault.adb common
+	$(CP) ../../gnat/sdefault/sdefault.adb common
 	$(CP) ../../common/src/tries.ad? common
 	$(CP) ../../common/src/dynamic_arrays.ad? common
 	$(CP) ../../gvd/common/file_utils.ad? common
