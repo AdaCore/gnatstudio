@@ -1020,11 +1020,12 @@ package body Help_Module is
    is
       D    : constant Html_Hooks_Args := Html_Hooks_Args (Data);
       Args : Argument_List (1 .. 3);
+      Html : Virtual_File := Create_Html (Full_Name (D.File).all, Kernel);
    begin
-      if D.File = VFS.No_File then
+      if Html = VFS.No_File then
          return True;
       else
-         Open_HTML_File (Kernel, D.File, D.Anchor);
+         Open_HTML_File (Kernel, Html, D.Anchor);
       end if;
 
       if D.Enable_Navigation then
