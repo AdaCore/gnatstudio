@@ -319,11 +319,7 @@ package body Odd.Code_Editors is
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
       Data : Editor_Mode_Data) is
    begin
-
-      if Get_Active (Item)
-        and then Data.Editor.Mode /= Data.Mode
-      then
-
+      if Get_Active (Item) and then Data.Editor.Mode /= Data.Mode then
          --  If we are currently processing a command, wait till the current
          --  one is finished, and then change the mode
 
