@@ -1016,4 +1016,14 @@ package body Debugger is
       return Debugger.Continuation_Line;
    end Continuation_Line;
 
+   -------------------------------
+   -- Separate_Execution_Window --
+   -------------------------------
+
+   function Separate_Execution_Window
+     (Debugger : access Debugger_Root) return Boolean is
+   begin
+      return Debugger.Execution_Window;
+   end Separate_Execution_Window;
+
 end Debugger;

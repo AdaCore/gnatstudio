@@ -408,7 +408,6 @@ private
       Default_Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Default_Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
       Debuggee_Pid     : Integer := 0;
-      Execution_Window : Boolean;
    end record;
 
    procedure Internal_Parse_Value

@@ -892,6 +892,10 @@ package Debugger is
      (Debugger : access Debugger_Root) return Boolean;
    --  Whether the debugger is currently handling a multiple line command.
 
+   function Separate_Execution_Window
+     (Debugger : access Debugger_Root) return Boolean;
+   --  Whether the debugger has a separate execution window.
+
 private
 
    type Command_Record;
@@ -925,5 +929,7 @@ private
 
       Handle : GVD.Proc_Utils.Process_Handle;
       --  Handle used to implement Open/Next/Close_Process.
+
+      Execution_Window : Boolean := False;
    end record;
 end Debugger;
