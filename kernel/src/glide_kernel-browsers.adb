@@ -63,11 +63,12 @@ package body Glide_Kernel.Browsers is
       Child   : MDI_Child;
       Browser : Glide_Browser;
 
-      Item     : Dependency_Item;
-      List     : Dependency_List;
-      Dep      : Dependency_List;
+      Item, Initial : File_Item;
+      Link     : Dependency_Link;
+      Dep      : Dependency_File_Info_List;
       Lib_Info : LI_File_Ptr;
       Status   : Dependencies_Query_Status;
+      Source   : Source_File;
 
    begin
       --  Check if there is already such a browser available
@@ -93,18 +94,31 @@ package body Glide_Kernel.Browsers is
 
       --  Put a dummy item for now
       Lib_Info := Locate_From_Source (Kernel, "glide_kernel.adb");
-      Find_Dependencies (Lib_Info, List, Status);
+      Source := Make_Source_File (Lib_Info, "glide_kernel.adb");
+
+      Gtk_New (Initial, Get_Window (MDI), Kernel,  Source);
+      Put (Get_Canvas (Browser), Initial);
+
+      Find_Dependencies (Lib_Info, Dep, Status);
 
       if Status = Success then
-         Dep := List;
-         while Dep /= null loop
-            Gtk_New (Item, Get_Window (MDI), Kernel, Dep.Value);
-            Put (Get_Canvas (Browser), Item);
+         while Dep /= No_Dependencies loop
+            --  Only show explicit dependencies, not implicit ones
+            if Get_Depends_From_Spec (Dependency_Information (Dep))
+              or else Get_Depends_From_Body (Dependency_Information (Dep))
+            then
+               Gtk_New (Item, Get_Window (MDI), Kernel,  File_Information (Dep));
+               Put (Get_Canvas (Browser), Item);
 
-            Dep := Dep.Next;
+               Gtk_New (Link, Dependency_Information (Dep));
+               Add_Link (Get_Canvas (Browser),
+                         Link => Link,
+                         Src  => Initial,
+                         Dest => Item);
+            end if;
+
+            Dep := Next (Dep);
          end loop;
-
-         Destroy (List);
 
          Refresh_Canvas (Get_Canvas (Browser));
       end if;
