@@ -60,7 +60,6 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Basic_Types;
-with Commands.Controls;          use Commands.Controls;
 with Language;                   use Language;
 with Language.Ada;               use Language.Ada;
 with Language_Handlers;          use Language_Handlers;
@@ -1162,7 +1161,6 @@ package body Src_Editor_Box is
       Id        : Idle_Handler_Id;
       pragma Unreferenced (Id);
 
-      Undo_Redo : Undo_Redo_Information;
       B         : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       --  We must do the check in an idle callback: otherwise, when the dialog
@@ -1172,20 +1170,9 @@ package body Src_Editor_Box is
 
       Id := Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
 
-      --  If we are not currently asking the user (it is possible that we still
-      --  get a focus in event, if the mouse has moved outside of the dialog,
-      --  even though the dialog is modal ???
+      --  Connect the Undo/Redo buttons to the buffer.
 
-      if B.Timestamp_Mode /= Checking then
-         Undo_Redo := Undo_Redo_Data.Get (B.Kernel, Undo_Redo_Id);
-
-         Set_Controls
-           (Get_Queue (B.Source_Buffer),
-            Undo_Redo.Undo_Button,
-            Undo_Redo.Redo_Button,
-            Undo_Redo.Undo_Menu_Item,
-            Undo_Redo.Redo_Menu_Item);
-      end if;
+      Add_Controls (B.Source_Buffer);
 
       return False;
    end Focus_In;
@@ -1197,14 +1184,10 @@ package body Src_Editor_Box is
    function Focus_Out (Box : access GObject_Record'Class) return Boolean is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
-      --  If we are not currently asking the user about a timestamp change.
+      --  Disconnect the Undo/Redo buttons from the buffer.
 
-      if B.Timestamp_Mode /= Checking then
-         Unset_Controls (Get_Queue (B.Source_Buffer));
-      end if;
-
+      Remove_Controls (B.Source_Buffer);
       return False;
-
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
