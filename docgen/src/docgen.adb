@@ -506,6 +506,25 @@ package body Docgen is
       end if;
    end Compare_Elements_Name;
 
+   ------------------
+   -- Compare_Name --
+   ------------------
+
+   function Compare_Name
+     (X, Y : Entity_Handle) return Boolean is
+   begin
+      if X /= null and Y /= null then
+         return Get_Name (X.all) < Get_Name (Y.all);
+      else
+         --  this case normaly never happens
+         if X = null then
+            return false;
+         else
+            return true;
+         end if;
+      end if;
+   end Compare_Name;
+
    ---------------------------
    -- Compare_Elements_Line --
    ---------------------------
@@ -640,12 +659,15 @@ package body Docgen is
       if Node /= Type_List_Tagged_Element.Null_Node then
          --  Work on the first node first
          if Is_Equal (Data (Node).Me.all, Target.all) then
-            --  Target found: update and exit
-            Tag_Elem := new Tagged_Element'(Data (Node));
-            List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
-            Tag_Elem.Number_Of_Children := Tag_Elem.Number_Of_Children + 1;
-            Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
-            Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+            --  Target found: update if needed and exit
+            if Find_In_List (Data (Node).My_Children,
+                             Patch.all) = null then
+               Tag_Elem := new Tagged_Element'(Data (Node));
+               List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
+               Tag_Elem.Number_Of_Children := Tag_Elem.Number_Of_Children + 1;
+               Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
+               Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+            end if;
             Found := True;
          end if;
 
@@ -655,14 +677,17 @@ package body Docgen is
 
             while Node /= Type_List_Tagged_Element.Null_Node loop
                if Is_Equal (Data (Node).Me.all, Target.all) then
-                  --  Target found: update and exit
-                  Tag_Elem := new Tagged_Element'(Data (Node));
-                  List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
-                  Tag_Elem.Number_Of_Children
-                    := Tag_Elem.Number_Of_Children + 1;
-                  Type_List_Tagged_Element.Remove_Nodes
-                    (List, Follow_Node, Node);
-                  Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+                  --  Target found: update if needed and exit
+                  if Find_In_List (Data (Node).My_Children,
+                                   Patch.all) = null then
+                     Tag_Elem := new Tagged_Element'(Data (Node));
+                     List_Entity_Handle.Append (Tag_Elem.My_Children, Patch);
+                     Tag_Elem.Number_Of_Children
+                       := Tag_Elem.Number_Of_Children + 1;
+                     Type_List_Tagged_Element.Remove_Nodes
+                       (List, Follow_Node, Node);
+                     Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+                  end if;
                   Found := True;
                else
                   Follow_Node := Node;
@@ -697,12 +722,15 @@ package body Docgen is
       if Node /= Type_List_Tagged_Element.Null_Node then
          --  Work on the first node first
          if Is_Equal (Data (Node).Me.all, Target.all) then
-            --  Target found: update and exit
-            Tag_Elem := new Tagged_Element'(Data (Node));
-            List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
-            Tag_Elem.Number_Of_Parents := Tag_Elem.Number_Of_Parents + 1;
-            Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
-            Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+            --  Target found: update if needed and exit
+            if Find_In_List (Data (Node).My_Parents,
+                             Patch.all) = null then
+               Tag_Elem := new Tagged_Element'(Data (Node));
+               List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
+               Tag_Elem.Number_Of_Parents := Tag_Elem.Number_Of_Parents + 1;
+               Type_List_Tagged_Element.Remove_Nodes (List, Follow_Node, Node);
+               Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+            end if;
             Found := True;
          end if;
 
@@ -712,14 +740,17 @@ package body Docgen is
 
             while Node /= Type_List_Tagged_Element.Null_Node loop
                if Is_Equal (Data (Node).Me.all, Target.all) then
-                  --  Target found: update and exit
-                  Tag_Elem := new Tagged_Element'(Data (Node));
-                  List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
-                  Tag_Elem.Number_Of_Parents
-                    := Tag_Elem.Number_Of_Parents + 1;
-                  Type_List_Tagged_Element.Remove_Nodes
-                    (List, Follow_Node, Node);
-                  Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+                  if Find_In_List (Data (Node).My_Parents,
+                                   Patch.all) = null then
+                     --  Target found: update if needed and exit
+                     Tag_Elem := new Tagged_Element'(Data (Node));
+                     List_Entity_Handle.Append (Tag_Elem.My_Parents, Patch);
+                     Tag_Elem.Number_Of_Parents
+                       := Tag_Elem.Number_Of_Parents + 1;
+                     Type_List_Tagged_Element.Remove_Nodes
+                       (List, Follow_Node, Node);
+                     Type_List_Tagged_Element.Append (List, Tag_Elem.all);
+                  end if;
                   Found := True;
                else
                   Follow_Node := Node;
@@ -863,7 +894,7 @@ package body Docgen is
    ----------
 
    procedure Free (X : in out Entity_Handle) is
-   pragma Unreferenced (X);
+      pragma Unreferenced (X);
    begin
       null;
    end Free;
