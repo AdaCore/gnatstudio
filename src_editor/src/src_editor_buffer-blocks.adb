@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;      use GNAT.Strings;
+with Basic_Types;       use Basic_Types;
 with Language;          use Language;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module; use Src_Editor_Module;
@@ -36,14 +38,32 @@ package body Src_Editor_Buffer.Blocks is
    --------------------
 
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
-      Constructs    : Construct_List;
-      Current       : Construct_Access;
-      Line_Start    : Editable_Line_Type;
-      Line_End      : Editable_Line_Type;
-      Text          : GNAT.OS_Lib.String_Access;
-      Block         : Block_Access;
-      Buffer_Line   : Buffer_Line_Type;
+
+      function Copy
+        (Str : Basic_Types.String_Access)
+         return GNAT.Strings.String_Access;
+      pragma Inline (Copy);
+      --  Returns a copy of Str.
+
+      Constructs        : Construct_List;
+      Current           : Construct_Access;
+      Line_Start        : Editable_Line_Type;
+      Line_End          : Editable_Line_Type;
+      Text              : GNAT.OS_Lib.String_Access;
+      Block             : Block_Access;
+      Buffer_Line       : Buffer_Line_Type;
       First_Buffer_Line : Buffer_Line_Type;
+
+      function Copy
+        (Str : Basic_Types.String_Access)
+         return GNAT.Strings.String_Access is
+      begin
+         if Str = null then
+            return null;
+         else
+            return new String'(Str.all);
+         end if;
+      end Copy;
 
    begin
       Buffer.Blocks_Need_Parsing := False;
@@ -91,6 +111,7 @@ package body Src_Editor_Buffer.Blocks is
                Stored_Offset     => Current.Sloc_Start.Column,
                First_Line        => Line_Start,
                Last_Line         => Line_End,
+               Name              => Copy (Current.Name),
                Block_Type        => Current.Category,
                GC                => null);
 
@@ -110,7 +131,7 @@ package body Src_Editor_Buffer.Blocks is
                Buffer.Line_Data (First_Buffer_Line).Block := Block;
                Append (Buffer.Blocks, Block);
             else
-               Unchecked_Free (Block);
+               Free_Block (Block);
             end if;
          end if;
 
@@ -132,8 +153,8 @@ package body Src_Editor_Buffer.Blocks is
               (Buffer, Editable_Line_Type (Current.Sloc_Start.Line + 1)) /= 0
             then
                declare
-                  Command : Hide_Editable_Lines_Command;
-                  Iter    : Gtk_Text_Iter;
+                  Command     : Hide_Editable_Lines_Command;
+                  Iter        : Gtk_Text_Iter;
                   Buffer_Line : Buffer_Line_Type;
                begin
                   Buffer_Line := Get_Buffer_Line
