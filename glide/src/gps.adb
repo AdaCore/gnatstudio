@@ -600,6 +600,9 @@ procedure GPS is
    procedure Help is
       use ASCII;
    begin
+      --  We do not document the --log-level flag, since it will be replaced
+      --  by the regular Traces mechanism.
+
       if GVD.Can_Output then
          Put_Line ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
                    (-", the GNAT Programming System."));
@@ -614,9 +617,6 @@ procedure GPS is
            (-"   --debugger debugger Specify the debugger's command line");
          Put_Line ((-"   --target=TARG:PRO   ") &
                      (-"Load program on machine TARG using protocol PRO"));
-         Put_Line (-"   --log-level=LEVEL   Set the log level used for the");
-         Put_Line (-"                       debugger. 1 is the minium, 4");
-         Put_Line (-"                       is the maximum");
          Put_Line
            (-"   --load=lang:file    Execute an external file written");
          Put_Line (-"                        in the language lang");
