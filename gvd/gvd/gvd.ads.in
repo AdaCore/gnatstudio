@@ -42,6 +42,9 @@ package GVD is
    Max_Frame : constant := 500;
    --  Maximum number of frames displayed in the backtrace window.
 
+   Max_Tasks : constant := 999;
+   --  Maximum number of tasks/threads displayed in the tasks/threads windows.
+
    Max_Column_Width : constant := 200;
    --  Maximum width (in pixels) for a column in a list.
 
