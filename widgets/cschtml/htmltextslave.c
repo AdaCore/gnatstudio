@@ -175,7 +175,7 @@ fit_line (HTMLObject *o,
 		return_value = HTML_FIT_COMPLETE;
 		goto done;
 	} else {
-		splitPtr = index (text + 1, ' ');
+		splitPtr = strchr (text + 1, ' ');
 	}
 	
 	if (splitPtr) {
@@ -189,7 +189,7 @@ fit_line (HTMLObject *o,
 			gint extraWidth;
 
 			for (;;) {
-				gchar *splitPtr2 = index (splitPtr + 1, ' ');
+				gchar *splitPtr2 = strchr (splitPtr + 1, ' ');
 				if (!splitPtr2)
 					break;
 				extraLen = splitPtr2 - splitPtr;
