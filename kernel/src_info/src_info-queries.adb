@@ -3103,4 +3103,20 @@ package body Src_Info.Queries is
       end if;
    end Create;
 
+   -------------------
+   -- Get_Reference --
+   -------------------
+
+   function Get_Reference (Node : Scope_Tree_Node) return E_Reference is
+   begin
+      case Node.Typ is
+         when Declaration =>
+            return (Location => Node.Decl.Location,
+                    Kind     => Label);
+
+         when Reference =>
+            return Node.Ref.all;
+      end case;
+   end Get_Reference;
+
 end Src_Info.Queries;

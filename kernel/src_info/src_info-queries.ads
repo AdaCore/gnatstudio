@@ -529,6 +529,12 @@ package Src_Info.Queries is
    --  Return the information for the entity defined in Node.
    --  You must call Destroy on the returned information.
 
+   function Get_Reference (Node : Scope_Tree_Node) return E_Reference;
+   --  Return the reference that Node represents (ie the line/column for this
+   --  node in the source file).
+   --  If the node is in fact a declaration, this returns the line/column for
+   --  the declaration
+
    function Get_Kind (Node : Scope_Tree_Node) return E_Kind;
    --  Return the type of the entity pointed to by Node.
 
