@@ -22,7 +22,7 @@ EXEC_PREFIX="$prefix"
 ######## Command line options ###
 
 AC_ARG_WITH(ptys,
-[  --without-ptys          don't use ptys to communicate with the debuggers],
+[   --without-ptys          don't use ptys to communicate with the debuggers],
 [if test "$withval" = yes; then
    USE_PTYS=True
  else
@@ -30,11 +30,17 @@ AC_ARG_WITH(ptys,
  fi],
 USE_PTYS=True)
 
+AC_ARG_WITH(python,
+[ --with-python=<path>     Specify the full path to the Python installation],
+[PYTHON_PATH_WITH=$withval],
+PYTHON_PATH_WITH="")
+
 ######## checking for local tools ###
 AC_PROG_CC
 AC_ISC_POSIX
 AC_HEADER_STDC
 AM_PATH_GNAT
+AM_PATH_PYTHON
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PROG_RANLIB
@@ -209,8 +215,12 @@ AC_SUBST(DEFAULT_PS)
 AC_SUBST(DEFAULT_FONT)
 AC_SUBST(HTML_BROWSER)
 AC_SUBST(OPAQUE_MDI)
+AC_SUBST(PYTHON_BASE)
+AC_SUBST(PYTHON_VERSION)
+AC_SUBST(PYTHON_ADA_SOURCE)
+AC_SUBST(PYTHON_DIR)
 
 AC_CONFIG_SUBDIRS(kernel/src_info/sn)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
 
-AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads)
+AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr)
