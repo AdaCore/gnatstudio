@@ -1880,9 +1880,9 @@ package body Project_Explorers is
       Freeze (Explorer.Tree);
       --  The modified project, if any, is always first
 
-      if Projects.Table (Project).Modifies /= No_Project then
+      if Projects.Table (Project).Extends /= No_Project then
          N := Add_Project_Node
-           (Explorer, Projects.Table (Project).Modifies, Node, True);
+           (Explorer, Projects.Table (Project).Extends, Node, True);
       end if;
 
       --  Imported projects
