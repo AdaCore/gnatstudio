@@ -36,6 +36,9 @@ package body Debugger.Gdb.Ada is
 
    use Language;
 
+   Variant_Name : constant String := "<variant>";
+   --  Name used for fields with a variant part
+
    ---------------------
    -- Break Exception --
    ---------------------
@@ -565,8 +568,12 @@ package body Debugger.Gdb.Ada is
                Tmp_Index := Tmp_Index + 1;
             end loop;
 
-            Set_Field_Name (R.all, Fields, Type_Str (Tmp_Index .. Index - 1),
-                            Variant_Parts => Num_Parts);
+            if Num_Parts > 0 then
+               Set_Field_Name (R.all, Fields, Variant_Name, Num_Parts);
+            else
+               Set_Field_Name
+                 (R.all, Fields, Type_Str (Tmp_Index .. Index - 1), 0);
+            end if;
 
             --  Parses the parts, and create a record for each
 
