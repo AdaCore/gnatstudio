@@ -1165,7 +1165,11 @@ package body Vsearch_Ext is
          On_Search_Previous'Access, Vsearch);
 
       Gtk_New (Vsearch.Options_Toggle, -"Options>>");
-      Set_Active (Vsearch.Options_Toggle, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, "Vsearch_Options_Button", True);
+      Associate
+        (Get_History (Handle).all, "Vsearch_Options_Button",
+         Vsearch.Options_Toggle);
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Options_Toggle, False, False, 0);
       Set_Tip (Get_Tooltips (Handle), Vsearch.Options_Toggle,
