@@ -5,4 +5,4 @@
 @@--
 @@-- Comes after template "header.thtml".
 @@--
-<H4><PRE>@_WEB_ESCAPE:DESCRIPTION_@</PRE></H4>
+<PRE>@_WEB_ESCAPE:DESCRIPTION_@</PRE>
