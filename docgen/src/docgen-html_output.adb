@@ -29,8 +29,12 @@ with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
 with Glide_Kernel;              use Glide_Kernel;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Traces;                   use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
 
 package body Docgen.Html_Output is
+
+   Me : constant Debug_Handle := Create ("Docgen-html_output");
 
    package TEL renames Type_Entity_List;
 
@@ -307,8 +311,6 @@ package body Docgen.Html_Output is
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
-      Put_Line
-        (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
       Put_Line
         (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
 
@@ -953,17 +955,22 @@ package body Docgen.Html_Output is
             when others =>
                null;
          end case;
+
          return False;
       end HTML_Callback;
 
    begin
-      Last_Index := 1;
+      Last_Index := Text'First;
       Last_Line  := 0;
       Parse_Entities (Ada_Lang, Text, HTML_Callback'Unrestricted_Access);
 
       if Last_Index < Text'Last then
          Set_Name_Tags (Text (Last_Index .. Text'Last));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Format_HTML;
 
    ---------------------
@@ -982,17 +989,16 @@ package body Docgen.Html_Output is
       --  check if should set a link to the body file
 
       if Info.Header_Link then
-         Put_Line (File, "<A HREF="""
-                   & Get_Html_File_Name (Kernel, Info.Header_File)
-                   & """> ");
+         Put_Line
+           (File, "<A HREF="""
+            & Get_Html_File_Name (Kernel, Info.Header_File)
+            & """> ");
          Put_Line (File, Info.Header_Package.all & "</A>");
       end if;
 
       Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
       Put_Line (File, "</TD></TR></TABLE>");
-      if not Is_Spec_File (Kernel, Info.Header_File) then
-         Put_Line (File, "<PRE>");
-      end if;
+      Put_Line (File, "<PRE>");
       Put_Line (File, "<HR>");
    end Doc_HTML_Header;
 
@@ -1004,10 +1010,9 @@ package body Docgen.Html_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info;
       Kernel : access Kernel_Handle_Record'Class) is
+      pragma Unreferenced (Info, Kernel);
    begin
-      if not Is_Spec_File (Kernel, Info.Footer_File) then
-         Put_Line (File, "</PRE>");
-      end if;
+      Put_Line (File, "</PRE>");
    end Doc_HTML_Footer;
 
    --------------------------------
@@ -1023,6 +1028,7 @@ package body Docgen.Html_Output is
       Frame_File       : File_Type;
       Source_File_Node : constant Type_Source_File_List.List_Node :=
         Type_Source_File_List.First (Info.Unit_File_List);
+
    begin
       --  Create the main frame file
 
@@ -1202,23 +1208,16 @@ package body Docgen.Html_Output is
 
    function Get_Html_File_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return String is
+      File   : Virtual_File) return String
+   is
+      pragma Unreferenced (Kernel);
+      Ext  : constant String := File_Extension (File);
+      Temp : constant String := Base_Name (File, Ext) & '_'
+        & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
+
    begin
-      if Is_Spec_File (Kernel, File) then
-         declare
-            Ext : constant String := Spec_Suffix (Kernel, File);
-         begin
-            return Base_Name (File, Ext) & "_"
-            & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
-         end;
-      else
-         declare
-            Ext : constant String := Body_Suffix (Kernel, File);
-         begin
-            return Base_Name (File, Ext) & "_"
-            & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
-         end;
-      end if;
+      Trace (Me, "Get_Html_File_Name: " & Temp);
+      return Temp;
    end Get_Html_File_Name;
 
 end Docgen.Html_Output;
