@@ -27,6 +27,9 @@ with GPS.Intl;       use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 
+with GNAT.OS_Lib;
+with GUI_Utils;        use GUI_Utils;
+
 package body Breakpoints_Pkg is
 
    pragma Style_Checks (Off);
@@ -427,20 +430,31 @@ package body Breakpoints_Pkg is
       Set_Policy (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Always);
       Pack_Start (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
 
-      Gtk_New (Breakpoints.Breakpoint_List, 8);
-      Set_Selection_Mode (Breakpoints.Breakpoint_List, Selection_Single);
-      Set_Shadow_Type (Breakpoints.Breakpoint_List, Shadow_In);
-      Set_Show_Titles (Breakpoints.Breakpoint_List, True);
-      Add (Breakpoints.Scrolledwindow2, Breakpoints.Breakpoint_List);
+      declare
+         Column_Types : constant Glib.GType_Array (1 .. 8) :=
+           (Guint (Col_Enb + 1)  => GType_Boolean,
+            others   => GType_String);
 
-      Set_Column_Title (Breakpoints.Breakpoint_List, 0, -"Num");
-      Set_Column_Title (Breakpoints.Breakpoint_List, 1, -"Enb");
-      Set_Column_Title (Breakpoints.Breakpoint_List, 2, -"Type");
-      Set_Column_Title (Breakpoints.Breakpoint_List, 3, -"Disp");
-      Set_Column_Title (Breakpoints.Breakpoint_List, 4, -"File/Variable");
-      Set_Column_Title (Breakpoints.Breakpoint_List, 5, -"Line");
-      Set_Column_Title (Breakpoints.Breakpoint_List, 6, -"Exception");
-      Set_Column_Title (Breakpoints.Breakpoint_List, 7, -"Subprogram");
+         Column_Names : GNAT.OS_Lib.String_List (1 .. 8) :=
+           (new String'(-"Num"),
+            new String'(-"Enb"),
+            new String'(-"Type"),
+            new String'(-"Disp"),
+            new String'(-"File/Variable"),
+            new String'(-"Line"),
+            new String'(-"Exception"),
+            new String'(-"Subprograms"));
+      begin
+         Breakpoints.Breakpoint_List :=
+           Create_Tree_View
+             (Column_Types, Column_Names, Sortable_Columns => False);
+
+         for J in Column_Names'Range loop
+            GNAT.OS_Lib.Free (Column_Names (J));
+         end loop;
+      end;
+
+      Add (Breakpoints.Scrolledwindow2, Breakpoints.Breakpoint_List);
 
       Gtk_New (Breakpoints.Hbuttonbox8);
       Set_Spacing (Breakpoints.Hbuttonbox8, 30);
