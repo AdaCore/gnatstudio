@@ -1621,6 +1621,8 @@ package body Glide_Kernel is
          Unref (Handle.Last_Context_For_Contextual);
       end if;
 
+      Glide_Kernel.Scripts.Finalize (Handle);
+
       Destroy (Glide_Language_Handler (Handle.Lang_Handler));
       Reset (Handle.Source_Info_List);
       Free (Handle.Logs_Mapper);
