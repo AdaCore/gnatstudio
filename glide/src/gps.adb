@@ -561,6 +561,7 @@ begin
       Gtk.Main.Main;
    exception
       when E : others =>
+         Trace (Me, "Unhandled exception: " & Exception_Information (E));
          Button := Message_Dialog
            ((-"Unexpected fatal error, GPS is in an inconsistent state") &
             ASCII.LF & (-"Please report with contents of ") &
@@ -570,7 +571,6 @@ begin
             Title => -"Fatal Error",
             Justification => Justify_Left);
          Result := Save_All_MDI_Children (GPS.Kernel, Force => False);
-         Trace (Me, "Unhandled exception: " & Exception_Information (E));
    end;
 
    Trace (Me, "Saving preferences in "
