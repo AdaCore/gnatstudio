@@ -38,7 +38,6 @@ with Gtk.Image;             use Gtk.Image;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.List;              use Gtk.List;
 with Gtk.List_Item;         use Gtk.List_Item;
-with Gtk.Main;              use Gtk.Main;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
 with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Table;             use Gtk.Table;
@@ -54,6 +53,7 @@ with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
 with Glide_Kernel.Console;  use Glide_Kernel.Console;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with Find_Utils;            use Find_Utils;
@@ -65,6 +65,9 @@ with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Traces; use Traces;
+
+with Commands;              use Commands;
+with Commands.Generic_Asynchronous;
 
 package body Vsearch_Ext is
 
@@ -121,17 +124,28 @@ package body Vsearch_Ext is
       Search_Backward : Boolean;
    end record;
 
-   package Search_Idle_Pkg is new Gtk.Main.Idle (Idle_Search_Data);
+   procedure Search_Iterate
+     (Data      : in out Idle_Search_Data;
+      Command   : Command_Access;
+      Result    : out Command_Return_Type);
+   --  Perform an atomic search operation.
+
+   procedure Replace_Iterate
+     (Data      : in out Idle_Search_Data;
+      Command   : Command_Access;
+      Result    : out Command_Return_Type);
+   --  Perform an atomic replace operation.
+
+   procedure Free (D : in out Idle_Search_Data);
+   --  Free memory associated to D.
+
+   package Search_Commands is new Commands.Generic_Asynchronous
+     (Data_Type   => Idle_Search_Data,
+      Free        => Free);
+   --  Handle the search/replace commands.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Search_Regexps_Array, Search_Regexps_Array_Access);
-
-   function Idle_Search (Data : Idle_Search_Data) return Boolean;
-   --  Performs the search in an idle loop, so that the user can still interact
-   --  with the rest of GPS.
-
-   function Idle_Replace (Data : Idle_Search_Data) return Boolean;
-   --  Performs the replace in an idle loop
 
    procedure Set_First_Next_Mode
      (Vsearch : access Vsearch_Extended_Record'Class;
@@ -319,13 +333,8 @@ package body Vsearch_Ext is
    -------------------
 
    procedure Close_Vsearch (Search : access Gtk_Widget_Record'Class) is
-      Vsearch : Vsearch_Extended := Vsearch_Extended (Search);
+      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Search);
    begin
-      if Vsearch.Search_Idle_Handler /= 0 then
-         Idle_Remove (Vsearch.Search_Idle_Handler);
-         Vsearch.Search_Idle_Handler := 0;
-      end if;
-
       Close (Get_MDI (Vsearch.Kernel), Search, Force => True);
    end Close_Vsearch;
 
@@ -360,11 +369,14 @@ package body Vsearch_Ext is
       Unref (Module.Prev_Menu_Item);
    end Destroy;
 
-   -----------------
-   -- Idle_Search --
-   -----------------
+   --------------------
+   -- Search_Iterate --
+   --------------------
 
-   function Idle_Search (Data : Idle_Search_Data) return Boolean is
+   procedure Search_Iterate
+     (Data      : in out Idle_Search_Data;
+      Command   : Command_Access;
+      Result    : out Command_Return_Type) is
    begin
       if Data.Vsearch.Continue
         and then Search
@@ -372,14 +384,21 @@ package body Vsearch_Ext is
             Data.Vsearch.Kernel,
             Data.Search_Backward)
       then
-         return True;
+         Set_Progress
+           (Command,
+            (Running,
+             Get_Current_Progress (Data.Vsearch.Last_Search_Context),
+             Get_Total_Progress (Data.Vsearch.Last_Search_Context)));
+
+         Result := Execute_Again;
       else
          Free (Data.Vsearch.Last_Search_Context);
          Set_Sensitive (Data.Vsearch.Stop_Button, False);
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
-         return False;
+
+         Result := Success;
       end if;
 
    exception
@@ -387,14 +406,19 @@ package body Vsearch_Ext is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
-         return False;
-   end Idle_Search;
 
-   ------------------
-   -- Idle_Replace --
-   ------------------
+         Result := Success;
+         return;
+   end Search_Iterate;
 
-   function Idle_Replace (Data : Idle_Search_Data) return Boolean is
+   ---------------------
+   -- Replace_Iterate --
+   ---------------------
+
+   procedure Replace_Iterate
+     (Data      : in out Idle_Search_Data;
+      Command   : Command_Access;
+      Result    : out Command_Return_Type) is
    begin
       if Data.Vsearch.Continue
         and then Replace
@@ -404,7 +428,13 @@ package body Vsearch_Ext is
             --  ??? The user could change this interactively in the meantime
             Data.Search_Backward)
       then
-         return True;
+         Set_Progress
+           (Command,
+            (Running,
+             Get_Current_Progress (Data.Vsearch.Last_Search_Context),
+             Get_Total_Progress (Data.Vsearch.Last_Search_Context)));
+
+         Result := Execute_Again;
       else
          Insert (Data.Vsearch.Kernel,
                  -"Finished replacing the string in all the files");
@@ -413,7 +443,7 @@ package body Vsearch_Ext is
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
-         return False;
+         Result := Success;
       end if;
 
    exception
@@ -421,8 +451,8 @@ package body Vsearch_Ext is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
-         return False;
-   end Idle_Replace;
+         Result := Success;
+   end Replace_Iterate;
 
    --------------------
    -- Create_Context --
@@ -497,13 +527,8 @@ package body Vsearch_Ext is
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
       Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
-
+      C              : Search_Commands.Generic_Asynchronous_Command_Access;
    begin
-      if Vsearch.Search_Idle_Handler /= 0 then
-         Idle_Remove (Vsearch.Search_Idle_Handler);
-         Vsearch.Search_Idle_Handler := 0;
-      end if;
-
       if not Vsearch.Find_Next then
          Create_Context (Vsearch);
       end if;
@@ -517,10 +542,16 @@ package body Vsearch_Ext is
             --  put back when the idle loop terminates.
 
             Set_Sensitive (Vsearch.Stop_Button, True);
-            Vsearch.Search_Idle_Handler := Search_Idle_Pkg.Add
-              (Idle_Search'Access,
-               (Vsearch => Vsearch,
-                Search_Backward => False));
+
+            Search_Commands.Create
+              (C,
+                 -"Searching",
+               (Vsearch => Vsearch, Search_Backward => False),
+               Search_Iterate'Access);
+
+            Launch_Background_Command
+              (Vsearch.Kernel, Command_Access (C), True, "Search");
+
             Pop_State (Vsearch.Kernel);
 
          else
@@ -563,6 +594,7 @@ package body Vsearch_Ext is
 
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
+      C              : Search_Commands.Generic_Asynchronous_Command_Access;
    begin
       if not All_Occurences then
          --  First time in Interactive mode ?
@@ -585,10 +617,15 @@ package body Vsearch_Ext is
          Create_Context (Vsearch);
          Push_State (Vsearch.Kernel, Processing);
          Set_Sensitive (Vsearch.Stop_Button, True);
-         Vsearch.Search_Idle_Handler := Search_Idle_Pkg.Add
-           (Idle_Replace'Access,
-            (Vsearch => Vsearch,
-             Search_Backward => False));
+
+         Search_Commands.Create
+           (C,
+              -"Searching/Replacing",
+            (Vsearch => Vsearch, Search_Backward => False),
+            Replace_Iterate'Access);
+
+         Launch_Background_Command
+           (Vsearch.Kernel, Command_Access (C), True, "Search");
       end if;
 
    exception
@@ -608,11 +645,6 @@ package body Vsearch_Ext is
       pragma Unreferenced (Has_Next);
 
    begin
-      if Vsearch.Search_Idle_Handler /= 0 then
-         Idle_Remove (Vsearch.Search_Idle_Handler);
-         Vsearch.Search_Idle_Handler := 0;
-      end if;
-
       if not Vsearch.Find_Next then
          Create_Context (Vsearch);
       end if;
@@ -1516,5 +1548,15 @@ package body Vsearch_Ext is
 
       Register_Default_Search (Kernel);
    end Register_Module;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (D : in out Idle_Search_Data) is
+      pragma Unreferenced (D);
+   begin
+      null;
+   end Free;
 
 end Vsearch_Ext;
