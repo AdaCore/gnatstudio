@@ -31,13 +31,13 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with String_Utils;              use String_Utils;
 with Src_Info;                  use Src_Info;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GUI_Utils;                 use GUI_Utils;
 with Traces;                    use Traces;
 with Projects.Registry;         use Projects, Projects.Registry;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Types;                     use Types;
 with VFS;                       use VFS;
+with Ada.Calendar;              use Ada.Calendar;
 
 package body Project_Explorers_Common is
 
@@ -297,7 +297,7 @@ package body Project_Explorers_Common is
       --  Mark the file information as up-to-date
 
       Set (Model, Node, Timestamp_Column,
-           Gint (To_Timestamp (File_Time_Stamp (File_Name))));
+           Gint (File_Time_Stamp (File_Name) - Src_Info.No_Time));
 
       --  Remove any previous information for this file.
 
@@ -534,10 +534,16 @@ package body Project_Explorers_Common is
    begin
       case Get_Node_Type (Model, Node) is
          when File_Node =>
-            return Timestamp (Get_Int (Model, Node, Timestamp_Column))
-              =  To_Timestamp
-                (File_Time_Stamp
-                     (Get_String (Model, Node, Absolute_Name_Column)));
+            declare
+               --  ??? Virtual_File should be stored directly in the tree
+               File : constant Virtual_File := Create
+                 (Full_Filename =>
+                    Get_String (Model, Node, Absolute_Name_Column));
+            begin
+               return Duration (Get_Int (Model, Node, Timestamp_Column)) +
+                 Src_Info.No_Time =
+                   File_Time_Stamp (File);
+            end;
 
          when others =>
             return Get_Boolean (Model, Node, Up_To_Date_Column);
