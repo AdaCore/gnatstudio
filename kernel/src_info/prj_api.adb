@@ -63,14 +63,37 @@ package body Prj_API is
       Attr_Index : Types.String_Id := Types.No_String) return Project_Node_Id;
    --  Find the last declaration for the attribute Attr_Name, in the
    --  declarative list contained in Parent.
-   --  The returned value is the expression_of of the last such declaration, or
-   --  Empty_Node if there was none.
+   --  The returned value is the last such declaration, or Empty_Node if there
+   --  was none.
 
    function Find_Node_By_Name
      (Project : Project_Node_Id;
       Kind    : Project_Node_Kind;
       Name    : Name_Id) return Project_Node_Id;
    --  Find a node given its name
+
+   procedure Move_From_Common_To_Case_Construct
+     (Project         : Project_Node_Id;
+      Pkg_Name        : String;
+      Attribute_Name  : Types.Name_Id;
+      Attribute_Index : Types.String_Id := Types.No_String);
+   --  Move any declaration for the attribute from the common part of the
+   --  project into each branch of the nested case construct. Nothing is done
+   --  if there is no such declaration.
+
+   function Attribute_Matches
+     (Node            : Project_Node_Id;
+      Attribute_Name  : Name_Id;
+      Attribute_Index : String_Id) return Boolean;
+   --  Return True if Node is an attribute declaration matching Attribute_Name
+   --  and Attribute_Index.
+
+   procedure Remove_Attribute_Declarations
+     (Parent          : Project_Node_Id;
+      Attribute_Name  : Name_Id;
+      Attribute_Index : String_Id);
+   --  Remove all declarations for Attribute_Name in the declarative item list
+   --  of Parent.
 
    ----------------
    -- Get_String --
@@ -1242,6 +1265,57 @@ package body Prj_API is
       return S;
    end To_Argument_List;
 
+   -----------------------
+   -- Attribute_Matches --
+   -----------------------
+
+   function Attribute_Matches
+     (Node            : Project_Node_Id;
+      Attribute_Name  : Name_Id;
+      Attribute_Index : String_Id) return Boolean is
+   begin
+      return Kind_Of (Node) = N_Attribute_Declaration
+        and then Prj.Tree.Name_Of (Node) = Attribute_Name
+        and then
+        ((Attribute_Index = No_String
+          and then Associative_Array_Index_Of (Node) = No_String)
+         or else (Attribute_Index /= No_String
+                  and then Associative_Array_Index_Of (Node) /= No_String
+                  and then String_Equal (Associative_Array_Index_Of (Node),
+                                         Attribute_Index)));
+   end Attribute_Matches;
+
+   -----------------------------------
+   -- Remove_Attribute_Declarations --
+   -----------------------------------
+
+   procedure Remove_Attribute_Declarations
+     (Parent          : Project_Node_Id;
+      Attribute_Name  : Name_Id;
+      Attribute_Index : String_Id)
+   is
+      Decl : Project_Node_Id := First_Declarative_Item_Of (Parent);
+      Previous : Project_Node_Id := Empty_Node;
+   begin
+      while Decl /= Empty_Node loop
+         if Attribute_Matches
+           (Current_Item_Node (Decl), Attribute_Name, Attribute_Index)
+         then
+            if Previous = Empty_Node then
+               Set_First_Declarative_Item_Of
+                 (Parent, Next_Declarative_Item (Decl));
+            else
+               Set_Next_Declarative_Item
+                 (Previous, Next_Declarative_Item (Decl));
+            end if;
+         else
+            Previous := Decl;
+         end if;
+
+         Decl := Next_Declarative_Item (Decl);
+      end loop;
+   end Remove_Attribute_Declarations;
+
    ------------------------------
    -- Find_Last_Declaration_Of --
    ------------------------------
@@ -1252,29 +1326,19 @@ package body Prj_API is
       Attr_Index : String_Id := No_String) return Project_Node_Id
    is
       Decl, Expr : Project_Node_Id;
+      Result : Project_Node_Id := Empty_Node;
    begin
       Decl := First_Declarative_Item_Of (Parent);
       while Decl /= Empty_Node loop
          Expr := Current_Item_Node (Decl);
 
-         if Kind_Of (Expr) = N_Attribute_Declaration
-           and then Prj.Tree.Name_Of (Expr) = Attr_Name
-         then
-            if (Attr_Index = No_String
-                and then Associative_Array_Index_Of (Expr) = No_String)
-              or else (Attr_Index /= No_String
-                       and then Associative_Array_Index_Of (Expr) /= No_String
-                       and then
-                       String_Equal (Associative_Array_Index_Of (Expr),
-                                     Attr_Index))
-            then
-               return Expression_Of (Expr);
-            end if;
+         if Attribute_Matches (Expr, Attr_Name, Attr_Index) then
+            Result := Expr;
          end if;
 
          Decl := Next_Declarative_Item (Decl);
       end loop;
-      return Empty_Node;
+      return Result;
    end Find_Last_Declaration_Of;
 
    ----------------------------------------
@@ -1311,6 +1375,7 @@ package body Prj_API is
          --  If we found a previous declaration, update it
 
          if Previous_Decl /= Empty_Node then
+            Previous_Decl := Expression_Of (Previous_Decl);
             if Prepend then
                Expr := First_Expression_In_List (List);
                while Next_Expression_In_List (Expr) /= Empty_Node loop
@@ -1360,6 +1425,9 @@ package body Prj_API is
       Name_Buffer (1 .. Name_Len) := Attribute_Name;
       Attribute_N := Name_Find;
 
+      Move_From_Common_To_Case_Construct
+        (Project, Pkg_Name, Attribute_N, Attribute_Index);
+
       --  Create the string list for the new values.
       --  This can be prepended later on to the existing list of values.
 
@@ -1383,6 +1451,54 @@ package body Prj_API is
       For_Each_Scenario_Case_Item
         (Project, Pkg, Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
+
+   ----------------------------------------
+   -- Move_From_Common_To_Case_Construct --
+   ----------------------------------------
+
+   procedure Move_From_Common_To_Case_Construct
+     (Project         : Project_Node_Id;
+      Pkg_Name        : String;
+      Attribute_Name  : Types.Name_Id;
+      Attribute_Index : Types.String_Id := Types.No_String)
+   is
+      Parent : Project_Node_Id;
+      Pkg  : Project_Node_Id := Empty_Node;
+      Node : Project_Node_Id;
+
+      procedure Add_Item (Case_Item : Project_Node_Id);
+      --  Add the declaration Node to Case_Item, in front, since the
+      --  declaration necessarily occured before the case item
+
+      --------------
+      -- Add_Item --
+      --------------
+
+      procedure Add_Item (Case_Item : Project_Node_Id) is
+      begin
+         Add_In_Front (Case_Item, Clone_Node (Node, True));
+      end Add_Item;
+
+   begin
+      if Pkg_Name /= "" then
+         Name_Len := Pkg_Name'Length;
+         Name_Buffer (1 .. Name_Len) := Pkg_Name;
+         Parent := Find_Package_Declaration (Project, Name_Find);
+         Pkg := Parent;
+      else
+         Parent := Project_Declaration_Of (Project);
+      end if;
+
+      Node := Find_Last_Declaration_Of
+        (Parent, Attribute_Name, Attribute_Index);
+
+      if Node /= Empty_Node then
+         For_Each_Matching_Case_Item
+           (Project, Pkg, All_Case_Items, Add_Item'Unrestricted_Access);
+         Remove_Attribute_Declarations
+           (Parent, Attribute_Name, Attribute_Index);
+      end if;
+   end Move_From_Common_To_Case_Construct;
 
    ----------------------------------------
    -- Update_Attribute_Value_In_Scenario --
@@ -1416,6 +1532,7 @@ package body Prj_API is
          --  If we found a previous declaration, update it
 
          if Previous_Decl /= Empty_Node then
+            Previous_Decl := Expression_Of (Previous_Decl);
             Set_Current_Term (First_Term (Previous_Decl), Val);
 
          --  Else create the new instruction to be added to the project
@@ -1431,6 +1548,9 @@ package body Prj_API is
       Name_Len := Attribute_Name'Length;
       Name_Buffer (1 .. Name_Len) := Attribute_Name;
       Attribute_N := Name_Find;
+
+      Move_From_Common_To_Case_Construct
+        (Project, Pkg_Name, Attribute_N, Attribute_Index);
 
       --  Create the node for the new value
 
