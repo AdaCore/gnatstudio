@@ -95,6 +95,12 @@ package body Prj_Normalize is
    --  Copy all the declarative items from Decl_List into each of the case
    --  items of Case_Construction (at the beginning of each case item)
 
+   procedure Set_Uniq_Type_Name
+     (Project  : Project_Node_Id; Var_Type : Project_Node_Id);
+   --  Set the name for the N_String_Type_Declaration Var_Type, so that it is
+   --  uniq in the project.
+   --  Var_Type shouldn't have been added to the project yet.
+
    ----------------------------
    -- Internal_Is_Normalized --
    ----------------------------
@@ -328,7 +334,7 @@ package body Prj_Normalize is
       procedure Process_Declarative_List
         (From, To : Project_Node_Id; Case_Stmt : in out Project_Node_Id)
       is
-         Decl_Item : Project_Node_Id := From;
+         Decl_Item, Current : Project_Node_Id := From;
          Next_Item, Choice : Project_Node_Id;
          Name      : String_Id;
          Case_Item : Project_Node_Id;
@@ -354,12 +360,14 @@ package body Prj_Normalize is
 
          while Decl_Item /= Empty_Node loop
 
+            Current := Current_Item_Node (Decl_Item);
+
             --  Save the next item, since the current item will be inserted in
             --  a different list, and thus its next field will be modified.
             Next_Item := Next_Declarative_Item (Decl_Item);
             Set_Next_Declarative_Item (Decl_Item, Empty_Node);
 
-            case Kind_Of (Current_Item_Node (Decl_Item)) is
+            case Kind_Of (Current) is
 
                when N_Package_Declaration =>
                   --  Skip subpackages, since these must appear after every
@@ -368,8 +376,7 @@ package body Prj_Normalize is
 
                when N_Case_Construction =>
                   Name := External_Variable_Name
-                    (Project_Norm, Case_Variable_Reference_Of
-                     (Current_Item_Node (Decl_Item)));
+                    (Project_Norm, Case_Variable_Reference_Of (Current));
 
                   if Name = No_String then
                      Trace (Me, "Normalizing a project with a non-scenario "
@@ -383,8 +390,7 @@ package body Prj_Normalize is
                   end if;
 
                   Var_Type := String_Type_Of
-                    (Case_Variable_Reference_Of
-                     (Current_Item_Node (Decl_Item)));
+                    (Case_Variable_Reference_Of (Current));
 
                   --  Do we already have this variable in values
                   --  If yes, this means we have something similar to:
@@ -404,8 +410,7 @@ package body Prj_Normalize is
                      end if;
                   end loop;
 
-                  Case_Item := First_Case_Item_Of
-                    (Current_Item_Node (Decl_Item));
+                  Case_Item := First_Case_Item_Of (Current);
 
                   --  For all the case items in the current case construction
 
@@ -462,29 +467,42 @@ package body Prj_Normalize is
                   end if;
 
                when N_Typed_Variable_Declaration =>
-                  --  ??? Should make sure that the type declaration is unique
-                  --  ??? for that typed variable, since if we decide to remove
-                  --  ??? the variable we should remove the type as well.
+                  declare
+                     Save_Type : constant Project_Node_Id := String_Type_Of
+                       (Current);
+                  begin
+                     --  Make sure that the type declaration is unique for that
+                     --  typed variable, since if we decide to remove the
+                     --  variable we should remove the type as well.
 
-                  --  ??? In fact, we should probably use a copy of the same
-                  --  ??? type for all instances of that variable, to avoid
-                  --  ??? type mismatch.
+                     Var_Type := Clone_Node (String_Type_Of (Current), True);
+                     Set_Uniq_Type_Name (Project_Norm, Var_Type);
+                     Set_String_Type_Of (Current, Var_Type);
+                     Add_At_End (Project_Norm, Var_Type,
+                                 Add_Before_First_Case_Or_Pkg => True);
 
-                  --  Scenario variables must be defined at the project level
-                  if Current_Pkg /= Empty_Node
-                    and then Is_External_Variable
-                    (Current_Item_Node (Decl_Item))
-                  then
-                     Add_At_End
-                       (Project_Norm,
-                        Clone_Node (Decl_Item, True),
-                        Add_Before_First_Case_Or_Pkg => True);
-                  else
-                     For_Each_Matching_Case_Item
-                       (Project_Norm, Current_Pkg,
-                        Values (Values'First .. Last_Values),
-                        Add_Decl_Item'Unrestricted_Access);
-                  end if;
+                     --  Scenario variables must be defined at the project
+                     --  level
+                     if Current_Pkg /= Empty_Node
+                       and then Is_External_Variable (Current)
+                     then
+                        Add_At_End
+                          (Project_Norm,
+                           Clone_Node (Decl_Item, True),
+                           Add_Before_First_Case_Or_Pkg => True);
+                     else
+                        For_Each_Matching_Case_Item
+                          (Project_Norm, Current_Pkg,
+                           Values (Values'First .. Last_Values),
+                           Add_Decl_Item'Unrestricted_Access);
+                     end if;
+
+                     Set_String_Type_Of (Current, Save_Type);
+                  end;
+
+
+               when N_String_Type_Declaration =>
+                  null;
 
                when others =>
                   --  if Debug_Mode then
@@ -831,6 +849,37 @@ package body Prj_Normalize is
       end loop;
    end Add_To_Case_Items;
 
+   ------------------------
+   -- Get_Uniq_Type_Name --
+   ------------------------
+
+   procedure Set_Uniq_Type_Name
+     (Project  : Project_Node_Id;
+      Var_Type : Project_Node_Id)
+   is
+      Candidate : Name_Id;
+      Attempt   : Natural := 1;
+   begin
+      --  Check the type itself
+      Candidate := Name_Of (Var_Type);
+
+      while Find_Type_Declaration (Project, Candidate) /= Empty_Node loop
+         Get_Name_String (Candidate);
+
+         declare
+            Num : constant String := Natural'Image (Attempt);
+         begin
+            Get_Name_String (Name_Of (Var_Type));
+            Add_Str_To_Name_Buffer (Num (Num'First + 1 .. Num'Last));
+            Attempt := Attempt + 1;
+         end;
+
+         Candidate := Name_Find;
+      end loop;
+
+      Set_Name_Of (Var_Type, Candidate);
+   end Set_Uniq_Type_Name;
+
    ------------------------------
    -- Create_Case_Construction --
    ------------------------------
@@ -841,7 +890,8 @@ package body Prj_Normalize is
       Var_Type      : Project_Node_Id)
       return Project_Node_Id
    is
-      Construct, Str, S, Item : Project_Node_Id;
+      Construct, Str, S : Project_Node_Id;
+      Item : Project_Node_Id := Empty_Node;
       Ref : String_Id;
       Decl : Project_Node_Id;
       New_Type : Project_Node_Id;
@@ -850,7 +900,6 @@ package body Prj_Normalize is
       --  the top-level of the project (not in a package nor in another
       --  project).
       --  This is required so that normalized projects might be standalone.
-
 
       --  Check if there is already a definition for the variable, and if not
       --  add it. Note: we do this before testing for the type, since we are
@@ -878,21 +927,17 @@ package body Prj_Normalize is
          Item := Create_Typed_Variable
            (Project, Name_Buffer (1 .. Name_Len), Var_Type,
             Add_Before_First_Case_Or_Pkg => True);
-      end if;
-
-      if Expression_Of (Item) = Empty_Node then
          String_To_Name_Buffer (External_Name);
          Set_Value_As_External (Item, Name_Buffer (1 .. Name_Len));
-      end if;
 
-      --  Is there already a definition for type ? if not, add it
+         --  Make sure the type is only used for that variable, so that is can
+         --  be freely modified. If we already have a type by the same name,
+         --  find a new name.
 
-      if Find_Type_Declaration (Project, Name_Of (String_Type_Of (Item))) =
-        Empty_Node
-      then
          New_Type := Clone_Node (Var_Type, True);
-         Add_In_Front (Project, New_Type);
+         Set_Uniq_Type_Name (Project, New_Type);
          Set_String_Type_Of (Item, New_Type);
+         Add_In_Front (Project, New_Type);
       end if;
 
       Construct := Default_Project_Node (N_Case_Construction);
