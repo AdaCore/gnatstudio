@@ -90,14 +90,11 @@ package body VCS_View_Pkg is
    -- Local packages --
    --------------------
 
-   function Boolean_Get is new Model_Data_Get (Boolean);
-   function GObject_Get is new Model_Data_Get (GObject);
-
    package Selection_Callback is
-      new Gtk.Handlers.Callback (Gtk_Tree_Selection_Record);
+     new Gtk.Handlers.Callback (Gtk_Tree_Selection_Record);
 
    package Explorer_Selection_Foreach is
-      new Selection_Foreach (VCS_View_Access);
+     new Selection_Foreach (VCS_View_Access);
    use Explorer_Selection_Foreach;
 
    ---------------------
@@ -140,8 +137,6 @@ package body VCS_View_Pkg is
          Log_Editable_Column       => GType_Boolean);
       --  The Log_Editor_Column should contain a procedure which returns the
       --  log string given a filename.
-      --  ??? This is a bit dirty, we are passing a GObject to the underlying C
-      --  structure,
    end Columns_Types;
 
    -----------------------
@@ -446,7 +441,7 @@ package body VCS_View_Pkg is
       Set (Explorer.Model, Iter, Status_Description_Column,
            File_Status'Image (Status_Record.Status));
       Set (Explorer.Model, Iter, Log_Column, "");
-      Set (Explorer.Model, Iter, Log_Editor_Column, System.Null_Address);
+      Set (Explorer.Model, Iter, Log_Editor_Column, GObject' (null));
       Set (Explorer.Model, Iter, Log_Editable_Column, True);
    end Fill_Info;
 
@@ -694,11 +689,8 @@ package body VCS_View_Pkg is
                Head (Temp_Paths));
 
             if Iter /= Null_Iter then
-               Set
-                 (Parameter.Explorer.Model,
-                  Iter,
-                  Log_Editor_Column,
-                  System.Null_Address);
+               Set (Parameter.Explorer.Model,
+                    Iter, Log_Editor_Column, GObject' (null));
             end if;
 
             Temp_Paths := Next (Temp_Paths);
@@ -729,15 +721,12 @@ package body VCS_View_Pkg is
         (Explorer : access VCS_View_Record'Class;
          Iter     : Gtk_Tree_Iter)
       is
-         Stored_Object    : GObject;
-
+         Stored_Object : GObject;
       begin
-         Stored_Object :=
-           GObject_Get (Explorer.Model, Iter, Log_Editor_Column);
+         Stored_Object := Get_Object (Explorer.Model, Iter, Log_Editor_Column);
 
          if Stored_Object = null then
             Gtk_New (Log_Editor);
-
             Parameter_Object.Log_Editor := Log_Editor;
 
             Set_Title (Log_Editor,
@@ -748,9 +737,8 @@ package body VCS_View_Pkg is
                            Get_String (Explorer.Model, Iter, Name_Column));
 
             Set (Explorer.Model,
-                 Iter,
-                 Log_Editor_Column,
-                 Get_Object (Log_Editor));
+                 Iter, Log_Editor_Column,
+                 GObject (Log_Editor));
 
             Set_Text (Log_Editor,
                       Get_String (Explorer.Model, Iter, Log_Column));
@@ -867,7 +855,6 @@ package body VCS_View_Pkg is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Explorer          : constant VCS_View_Access := VCS_View_Access (Object);
-      Stub              : Log_Editor_Window_Record;
       Log_Editor        : Log_Editor_Window_Access;
       Parameter_Object  : Log_Parameter;
       No_Files_Selected : Boolean := True;
@@ -884,25 +871,20 @@ package body VCS_View_Pkg is
       --  log_editor.
 
       procedure Clear_Launch_Log_Editor
-        (View     : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter)
+        (View : access VCS_View_Record'Class;
+         Iter : Gtk_Tree_Iter)
       is
          Stored_Object : GObject;
       begin
          No_Files_Selected := False;
 
-         Stored_Object :=
-           GObject_Get (Explorer.Model, Iter, Log_Editor_Column);
+         Stored_Object := Get_Object (Explorer.Model, Iter, Log_Editor_Column);
 
          if Stored_Object /= null then
-            Log_Editor := Log_Editor_Window_Access
-              (Get_User_Data (Stored_Object.all'Address, Stub));
-
-            Log_Editor_Ok_Clicked (Object,
-                                   (Explorer,
-                                    Explorer.Kernel,
-                                    Log_Editor,
-                                    Explorer.VCS_Ref));
+            Log_Editor := Log_Editor_Window_Access (Stored_Object);
+            Log_Editor_Ok_Clicked
+              (Object,
+               (Explorer, Explorer.Kernel, Log_Editor, Explorer.VCS_Ref));
          end if;
       end Clear_Launch_Log_Editor;
 
@@ -912,12 +894,7 @@ package body VCS_View_Pkg is
       begin
          Add_File_Name
            (Log_Editor, Get_String (Explorer.Model, Iter, Name_Column));
-
-         Set
-           (Explorer.Model,
-            Iter,
-            Log_Editor_Column,
-            Get_Object (Log_Editor));
+         Set (Explorer.Model, Iter, Log_Editor_Column, GObject (Log_Editor));
       end Fill_Launch_Log_Editor;
 
    begin
@@ -929,9 +906,7 @@ package body VCS_View_Pkg is
         (Explorer, Clear_Launch_Log_Editor'Unrestricted_Access);
 
       if No_Files_Selected then
-         Push_Message (Explorer,
-                       Error,
-                       -"No files are selected.");
+         Push_Message (Explorer, Error, -"No files are selected.");
          return;
       end if;
 
@@ -1524,8 +1499,7 @@ package body VCS_View_Pkg is
       Path_String   : String := Get_String (Nth (Params, 1));
       Text_String   : String := Get_String (Nth (Params, 2));
       Text_Value    : GValue := Nth (Params, 2);
-      Stub          : Log_Editor_Window_Record;
-      Log_Editor    : Log_Editor_Window_Access := null;
+      Log_Editor    : Log_Editor_Window_Access;
       Stored_Object : GObject;
 
    begin
@@ -1537,11 +1511,10 @@ package body VCS_View_Pkg is
 
       Set_Value (Explorer.Model, Iter, Log_Column, Text_Value);
 
-      Stored_Object := GObject_Get (Explorer.Model, Iter, Log_Editor_Column);
+      Stored_Object := Get_Object (Explorer.Model, Iter, Log_Editor_Column);
 
       if Stored_Object /= null then
-         Log_Editor := Log_Editor_Window_Access
-           (Get_User_Data (Stored_Object.all'Address, Stub));
+         Log_Editor := Log_Editor_Window_Access (Stored_Object);
          Set_Text (Log_Editor, Text_String);
       end if;
    end Edited_Callback;
