@@ -650,6 +650,7 @@ package body Builder_Module is
          Console.Insert
            (Kernel, -"Compilation of non Ada file not yet supported",
             Mode => Error);
+         return;
       end if;
 
       if Save_All_MDI_Children (Kernel, Force => False) = False then
