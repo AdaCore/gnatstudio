@@ -648,7 +648,7 @@ package body Aliases_Module is
       First, Last : out Integer) is
    begin
       if Current_Pos < Text'First then
-         First := Current_Pos;
+         First := Current_Pos + 1;
          Last  := Current_Pos;
          return;
       end if;
@@ -670,7 +670,8 @@ package body Aliases_Module is
          end loop;
 
          if First < Text'First then
-            exit;
+            First := Text'First;
+            return;
          end if;
 
          exit when Get
@@ -684,6 +685,8 @@ package body Aliases_Module is
             First := UTF8_Find_Prev_Char (Text, First);
          end loop;
       end loop;
+
+      First := UTF8_Find_Next_Char (Text, First);
    end Find_Current_Entity;
 
    -----------------------
@@ -915,16 +918,19 @@ package body Aliases_Module is
                declare
                   Cursor : aliased Integer;
                   Replace : constant String := Expand_Alias
-                    (Command.Kernel,
-                     Text (UTF8_Find_Next_Char (Text, First) .. Last - 1),
+                    (Command.Kernel, Text (First .. Last - 1),
                      Cursor'Unchecked_Access, 0);
+                  F : Gint := Gint (First - Text'First);
                begin
                   if Replace /= "" then
                      Delete_Text
-                       (Gtk_Editable (W), Gint (First), Gint (Last - 1));
-                     Insert_Text (Gtk_Editable (W), Replace, Gint (First));
-                     Set_Position (Gtk_Editable (W),
-                                      Gint (First + Cursor - Replace'Length));
+                       (Gtk_Editable (W),
+                        F,
+                        Gint (Last - Text'First));
+                     Insert_Text (Gtk_Editable (W), Replace, F);
+                     Set_Position
+                       (Gtk_Editable (W),
+                        F + Gint (Cursor - Replace'Length));
                   end if;
                end;
                return Commands.Success;
