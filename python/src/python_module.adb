@@ -259,7 +259,9 @@ package body Python_Module is
          Set_Console (Script.Interpreter, View);
 
          Child := Put
-           (Get_MDI (Kernel), Console, Focus_Widget => Gtk_Widget (View));
+           (Get_MDI (Kernel), Console,
+            Iconify_Button or Maximize_Button,
+            Focus_Widget => Gtk_Widget (View));
          Set_Focus_Child (Child);
          Set_Title (Child, -"Python");
          Set_Dock_Side (Child, Bottom);
