@@ -178,8 +178,8 @@ package Glide_Kernel is
    --  in vfs.ads.
 
    function Create
-     (Name : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record;
+     (Name            : Glib.UTF8_String;
+      Kernel          : access Kernel_Handle_Record;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return VFS.Virtual_File;
    --  Create a new file. This will automatically try to solve Name to an

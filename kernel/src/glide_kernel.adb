@@ -2293,8 +2293,8 @@ package body Glide_Kernel is
    ------------
 
    function Create
-     (Name : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record;
+     (Name            : Glib.UTF8_String;
+      Kernel          : access Kernel_Handle_Record;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return VFS.Virtual_File is
    begin
