@@ -53,6 +53,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 with VCS;
 
@@ -76,7 +77,7 @@ with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 
 with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
+with Histories;                 use Histories;
 
 package body VCS_View_Pkg is
 
@@ -246,6 +247,27 @@ package body VCS_View_Pkg is
       Data  : Line_Record);
    --  Set the cached data.
 
+   function To_History_Key (S : in String) return History_Key;
+   --  Return history key corresponding to S.
+
+   --------------------
+   -- To_History_Key --
+   --------------------
+
+   function To_History_Key (S : in String) return History_Key is
+      Result : History_Key (S'First .. S'Last);
+   begin
+      for J in S'Range loop
+         if not Is_Alphanumeric (S (J)) then
+            Result (J) := '_';
+         else
+            Result (J) := S (J);
+         end if;
+      end loop;
+
+      return Result;
+   end To_History_Key;
+
    ---------------------
    -- Get_Cached_Data --
    ---------------------
@@ -402,18 +424,9 @@ package body VCS_View_Pkg is
      (View     : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean
    is
-      pragma Unreferenced (Event);
-      The_View : constant VCS_View_Access := VCS_View_Access (View);
-
-      Child    : MDI_Child;
+      pragma Unreferenced (Event, View);
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (The_View.Kernel), VCS_View_Record'Tag);
-
-      Set_Child_Visible (Child, False);
-      Hide (The_View);
-      Hide (Child);
-
+      Hide_VCS_Explorer;
       return True;
 
    exception
@@ -550,11 +563,8 @@ package body VCS_View_Pkg is
       Clear_Logs     : Boolean := False;
       Display        : Boolean := True)
    is
-      Child         : constant MDI_Child :=
-                        Find_MDI_Child_By_Tag
-                          (Get_MDI (Kernel), VCS_View_Record'Tag);
-      --  ??? This might be costly, maybe we could cache the VCS Explorer.
-      Explorer      : VCS_View_Access;
+      Explorer      : constant VCS_View_Access :=
+                        Get_Explorer (Kernel, False, False);
       Status_Temp   : File_Status_List.List_Node
         := File_Status_List.First (Status);
       Found         : Boolean := False;
@@ -621,10 +631,8 @@ package body VCS_View_Pkg is
 
       Status_Temp := File_Status_List.First (Status);
 
-      if Child = null then
+      if Explorer = null then
          return;
-      else
-         Explorer := VCS_View_Access (Get_Widget (Child));
       end if;
 
       Page := Get_Page_For_Identifier (Explorer, VCS_Identifier);
@@ -985,6 +993,10 @@ package body VCS_View_Pkg is
 
       for J in Page.Status'Range loop
          Page.Status (J).Display := True;
+         Set_History
+           (Get_History (E.Kernel).all,
+            To_History_Key (Page.Status (J).Status.Label.all),
+            True);
       end loop;
 
       Refresh (E);
@@ -1010,6 +1022,10 @@ package body VCS_View_Pkg is
 
       for J in Page.Status'Range loop
          Page.Status (J).Display := False;
+         Set_History
+           (Get_History (E.Kernel).all,
+            To_History_Key (Page.Status (J).Status.Label.all),
+            False);
       end loop;
 
       Refresh (E);
@@ -1188,6 +1204,10 @@ package body VCS_View_Pkg is
             Page_Status_Callback.To_Marshaller (Toggle_Show_Status'Access),
             Explorer,
             J);
+         Associate
+           (Get_History (Kernel).all,
+            To_History_Key (Page.Status (J).Status.Label.all),
+            Check);
       end loop;
 
       if Context /= null then
@@ -1439,7 +1459,16 @@ package body VCS_View_Pkg is
 
          for J in Page.Status'Range loop
             Page.Status (J).Status  := Status (J);
-            Page.Status (J).Display := True;
+
+            declare
+               Key : constant History_Key :=
+                       To_History_Key (Page.Status (J).Status.Label.all);
+            begin
+               Create_New_Boolean_Key_If_Necessary
+                 (Get_History (Explorer.Kernel).all, Key, True);
+               Page.Status (J).Display := Get_History
+                 (Get_History (Explorer.Kernel).all, Key);
+            end;
          end loop;
       end;
       --  Emit a "clicked" signal on the file column to sort it.
@@ -1448,29 +1477,6 @@ package body VCS_View_Pkg is
 
       return Page;
    end Get_Page_For_Identifier;
-
-   ------------------
-   -- Get_Explorer --
-   ------------------
-
-   function Get_Explorer
-     (Kernel      : Kernel_Handle;
-      Raise_Child : Boolean := True) return VCS_View_Access
-   is
-      Child   : MDI_Child;
-   begin
-      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
-
-      if Child = null then
-         return null;
-      else
-         if Raise_Child then
-            Gtkada.MDI.Raise_Child (Child);
-         end if;
-
-         return VCS_View_Access (Get_Widget (Child));
-      end if;
-   end Get_Explorer;
 
    ---------------------
    -- Get_Current_Ref --
@@ -1688,87 +1694,6 @@ package body VCS_View_Pkg is
       return Get_Cached_Data (Page, File).Status;
    end Get_Cached_Status;
 
-   ----------------
-   -- Save_State --
-   ----------------
-
-   procedure Save_State
-     (Explorer : VCS_View_Access;
-      Node     : Node_Ptr)
-   is
-      N, M : Node_Ptr;
-      Page : VCS_Page_Access;
-   begin
-      for J in 1 .. Explorer.Number_Of_Pages loop
-         Page := VCS_Page_Access
-           (Get_Nth_Page (Explorer.Notebook, Gint (J - 1)));
-
-         N := new Glib.Xml_Int.Node;
-         N.Tag := new String'("page");
-         Set_Attribute (N, "vcs", Name (Page.Reference));
-         Add_Child (Node, N, True);
-
-         for J in Page.Status'Range loop
-            M := new Glib.Xml_Int.Node;
-            M.Tag := new String'("status");
-            Set_Attribute (M, "index", J'Img);
-            Set_Attribute (M, "display", Page.Status (J).Display'Img);
-            Add_Child (N, M, True);
-         end loop;
-      end loop;
-   end Save_State;
-
-   ----------------
-   -- Load_State --
-   ----------------
-
-   procedure Load_State
-     (Explorer : VCS_View_Access;
-      Node     : Node_Ptr)
-   is
-      N, M : Node_Ptr := Node.Child;
-      Page : VCS_Page_Access;
-      Ref  : VCS_Access;
-   begin
-      while N /= null loop
-         if N.Tag.all = "page" then
-            M := N.Child;
-
-            Ref := Get_VCS_From_Id (Get_Attribute (N, "vcs"));
-
-            if Ref /= null then
-               Page := Get_Page_For_Identifier (Explorer, Ref);
-
-               if Page /= null then
-                  while M /= null loop
-                     if M.Tag.all = "status" then
-                        declare
-                           Index   : constant Integer := Safe_Value
-                             (Get_Attribute (M, "index", "0"));
-                        begin
-                           if Index in Page.Status'Range then
-                              Page.Status (Index).Display := Boolean'Value
-                                (Get_Attribute (M, "display", "TRUE"));
-                           end if;
-
-                        exception
-                           when E : others =>
-                              Trace
-                                (Exception_Handle,
-                                 "Could not parse VCS explorer desktop: "
-                                 & Exception_Information (E));
-                        end;
-                     end if;
-
-                     M := M.Next;
-                  end loop;
-               end if;
-            end if;
-         end if;
-
-         N := N.Next;
-      end loop;
-   end Load_State;
 
    ----------
    -- Hash --
