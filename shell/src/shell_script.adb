@@ -623,7 +623,7 @@ package body Shell_Script is
             "GPS> ",
             Interpret_Command_Handler'Access,
             GObject (Kernel),
-            Get_Pref (Kernel, Source_Editor_Font),
+            Get_Pref_Font (Kernel, Default_Style),
             History_List => Get_History (Kernel),
             Key          => "shell",
             Wrap_Mode    => Wrap_Char);

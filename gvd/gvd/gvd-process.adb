@@ -1168,7 +1168,7 @@ package body GVD.Process is
       Process.Debugger_Text_Highlight_Color :=
         Get_Pref (GVD_Prefs, Debugger_Highlight_Color);
 
-      Process.Debugger_Text_Font := Get_Pref (GVD_Prefs, Fixed_Font);
+      Process.Debugger_Text_Font := Get_Pref_Font (GVD_Prefs, Fixed_Style);
 
       Process.Separate_Data := False;
       --  ??? Should use MDI.Save/Load_Desktop instead
@@ -1188,7 +1188,7 @@ package body GVD.Process is
       Configure
         (Process.Editor_Text,
          Source,
-         Get_Pref (GVD_Prefs, Fixed_Font),
+         Get_Pref_Font (GVD_Prefs, Fixed_Style),
          arrow_xpm, stop_xpm,
          Strings_Color  => Get_Pref (GVD_Prefs, Strings_Color),
          Keywords_Color => Get_Pref (GVD_Prefs, Keywords_Color));
@@ -2029,7 +2029,7 @@ package body GVD.Process is
    is
       Process : constant Visual_Debugger := Visual_Debugger (Editor);
       F       : constant Pango_Font_Description :=
-        Get_Pref (GVD_Prefs, Fixed_Font);
+        Get_Pref_Font (GVD_Prefs, Fixed_Style);
       C       : constant Gdk_Color :=
         Get_Pref (GVD_Prefs, Debugger_Highlight_Color);
 

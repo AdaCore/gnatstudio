@@ -325,7 +325,8 @@ package body GVD.Memory_View is
    is
       pragma Unreferenced (Window);
    begin
-      View.View_Font   := From_Description (Get_Pref (GVD_Prefs, Fixed_Font));
+      View.View_Font   := From_Description
+        (Get_Pref_Font (GVD_Prefs, Fixed_Style));
       View.View_Color  := Get_Pref (GVD_Prefs, Memory_View_Color);
       View.Highlighted := Get_Pref (GVD_Prefs, Memory_Highlighted_Color);
       View.White_Color := White (Get_Default_Colormap);

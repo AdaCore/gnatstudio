@@ -231,7 +231,7 @@ package body Vdiff_Utils is
       Color           : Gdk_Color;
       Context_Changed : Boolean;
       Desc            : constant Pango_Font_Description :=
-        Get_Pref (Kernel, Source_Editor_Font);
+        Get_Pref_Font (Kernel, Glide_Kernel.Preferences.Default_Style);
 
       Info_1          : Vdiff_Info_Access;
       Info_2          : Vdiff_Info_Access;
@@ -529,7 +529,7 @@ package body Vdiff_Utils is
       Offset_Line      : Integer := 0;
       Last_Line_Number : Natural;
       Desc             : constant Pango_Font_Description :=
-        Get_Pref (Kernel, Source_Editor_Font);
+        Get_Pref_Font (Kernel, Glide_Kernel.Preferences.Default_Style);
 
       procedure Add_Line
         (List   : access Gtk_Clist_Record'Class;

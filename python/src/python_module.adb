@@ -400,7 +400,7 @@ package body Python_Module is
          Gtk_New (Buffer);
          Gtk_New (View, Buffer);
          Add (Console, View);
-         Modify_Font (View, Get_Pref (Kernel, Source_Editor_Font));
+         Modify_Font (View, Get_Pref_Font (Kernel, Default_Style));
          Set_Wrap_Mode (View, Wrap_Char);
 
          Set_Console

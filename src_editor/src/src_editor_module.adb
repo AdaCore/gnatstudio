@@ -2494,7 +2494,7 @@ package body Src_Editor_Module is
         Get_Source_Box_From_MDI (Child);
       Print_Helper     : constant String := Get_Pref (Kernel, Print_Command);
       Source_Font      : constant Pango_Font_Description :=
-        Get_Pref (Kernel, Source_Editor_Font);
+        Get_Pref_Font (Kernel, Default_Style);
       Source_Font_Name : constant String := Get_Family (Source_Font);
       Source_Font_Size : constant Gint := To_Pixels (Get_Size (Source_Font));
 

@@ -324,7 +324,7 @@ package body Glide_Kernel.Console is
          "",
          null,
          GObject (Kernel),
-         Get_Pref (Kernel, Source_Editor_Font),
+         Get_Pref_Font (Kernel, Default_Style),
          Highlight    => Get_Pref (Kernel, Message_Highlight),
          History_List => null,
          Key          => "",
@@ -381,7 +381,7 @@ package body Glide_Kernel.Console is
 
             Gtk_New
               (Console, "", null,
-               null, Get_Pref (Kernel, Source_Editor_Font),
+               null, Get_Pref_Font (Kernel, Default_Style),
                History_List => Get_History (Kernel),
                Key          => History,
                Wrap_Mode    => Wrap_Char,

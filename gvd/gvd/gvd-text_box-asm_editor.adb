@@ -783,7 +783,7 @@ package body GVD.Text_Box.Asm_Editor is
      (Editor : access Asm_Editor_Record'Class) is
    begin
       Editor.Highlight_Color := Get_Pref (GVD_Prefs, Asm_Highlight_Color);
-      Set_Font (Editor, Get_Pref (GVD_Prefs, Fixed_Font));
+      Set_Font (Editor, Get_Pref_Font (GVD_Prefs, Fixed_Style));
       Update_Child (Editor);
 
       --  The currently highlighted range is reset in Gvd.Code_Editors.
@@ -830,7 +830,7 @@ package body GVD.Text_Box.Asm_Editor is
                Addr : constant String := Address_From_Line
                  (Box, Get_Line (Box));
                F : constant Gdk_Font := From_Description
-                 (Get_Pref (GVD_Prefs, Fixed_Font));
+                 (Get_Pref_Font (GVD_Prefs, Fixed_Style));
                Line : Natural;
             begin
                On_Frame_Changed (Box, "", "-1");
