@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -974,7 +974,13 @@ package body Src_Editor_Box is
             if Block.Block_Type in Enclosing_Entity_Category then
                return Block.Name.all;
             end if;
-            L := L - 1;
+
+            if Block.First_Line /= 0 then
+               L := Get_Buffer_Line (Box.Source_Buffer, Block.First_Line - 1);
+            else
+               L := L - 1;
+            end if;
+
             Block := Get_Block (Box.Source_Buffer, L);
          end loop;
 
