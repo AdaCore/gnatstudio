@@ -125,21 +125,6 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       Add_New_Exception (Naming_Editor (Object));
    end On_Update_Clicked;
 
-   ------------------------------------
-   -- On_Unit_Name_Entry_Insert_Text --
-   ------------------------------------
-
-   procedure On_Unit_Name_Entry_Insert_Text
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
---        Arg1 : String := To_String (Params, 1);
---        Arg2 : Gint := To_Gint (Params, 2);
---        Arg3 : Address := To_Address (Params, 3);
-   begin
-      Clear_Unit_Name (Naming_Editor (Object));
-   end On_Unit_Name_Entry_Insert_Text;
-
    ----------------
    -- Handle_Key --
    ----------------
@@ -163,24 +148,10 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       Arg1 : Gdk_Event := To_Event (Params, 1);
       E : Naming_Editor := Naming_Editor (Object);
    begin
+      Clear_Unit_Name (E);
       Handle_Key (E, Arg1, E.Unit_Name_Entry);
       return False;
    end On_Unit_Name_Entry_Key_Press_Event;
-
-   ----------------------------------------
-   -- On_Spec_Filename_Entry_Insert_Text --
-   ----------------------------------------
-
-   procedure On_Spec_Filename_Entry_Insert_Text
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
---        Arg1 : String := To_String (Params, 1);
---        Arg2 : Gint := To_Gint (Params, 2);
---        Arg3 : Address := To_Address (Params, 3);
-   begin
-      Clear_Spec_Name (Naming_Editor (Object));
-   end On_Spec_Filename_Entry_Insert_Text;
 
    --------------------------------------------
    -- On_Spec_Filename_Entry_Key_Press_Event --
@@ -193,24 +164,10 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       Arg1 : Gdk_Event := To_Event (Params, 1);
       E : Naming_Editor := Naming_Editor (Object);
    begin
+      Clear_Spec_Name (E);
       Handle_Key (E, Arg1, E.Spec_Filename_Entry);
       return False;
    end On_Spec_Filename_Entry_Key_Press_Event;
-
-   ----------------------------------------
-   -- On_Body_Filename_Entry_Insert_Text --
-   ----------------------------------------
-
-   procedure On_Body_Filename_Entry_Insert_Text
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
---        Arg1 : String := To_String (Params, 1);
---        Arg2 : Gint := To_Gint (Params, 2);
---        Arg3 : Address := To_Address (Params, 3);
-   begin
-      Clear_Body_Name (Naming_Editor (Object));
-   end On_Body_Filename_Entry_Insert_Text;
 
    --------------------------------------------
    -- On_Body_Filename_Entry_Key_Press_Event --
@@ -223,6 +180,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       Arg1 : Gdk_Event := To_Event (Params, 1);
       E : Naming_Editor := Naming_Editor (Object);
    begin
+      Clear_Body_Name (E);
       Handle_Key (E, Arg1, E.Body_Filename_Entry);
       return False;
    end On_Body_Filename_Entry_Key_Press_Event;
