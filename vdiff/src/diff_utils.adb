@@ -23,12 +23,9 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Expect; use GNAT.Expect;
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 
 package body Diff_Utils is
-
-   Diff_Cmd  : constant String := "diff";
-   Patch_Cmd : constant String := "patch";
-   --  <preferences>
 
    procedure Compute_Occurrence
      (Ret        : in out Diff_Occurrence_Link;
@@ -106,7 +103,10 @@ package body Diff_Utils is
    -- Diff --
    ----------
 
-   function Diff (File1, File2 : String) return Diff_Occurrence_Link is
+   function Diff
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File1, File2 : String) return Diff_Occurrence_Link
+   is
       Descriptor : Process_Descriptor;
       Pattern    : constant Pattern_Matcher :=
         Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?$",
@@ -117,13 +117,18 @@ package body Diff_Utils is
       Ret        : Diff_Occurrence_Link;
       Occurrence : Diff_Occurrence_Link;
       Cmd        : String_Access;
+      Cmd_Args   : Argument_List_Access;
 
    begin
-      Cmd := Locate_Exec_On_Path (Diff_Cmd);
+      Cmd_Args := Argument_String_To_List (Get_Pref (Kernel, Diff_Cmd));
+      Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
       Args (1) := new String' (File1);
       Args (2) := new String' (File2);
-      Non_Blocking_Spawn (Descriptor, Cmd.all, Args);
+      Non_Blocking_Spawn
+        (Descriptor, Cmd.all,
+         Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
       Free (Cmd);
+      Free (Cmd_Args);
 
       for J in Args'Range loop
          Free (Args (J));
@@ -151,8 +156,13 @@ package body Diff_Utils is
          return Ret;
    end Diff;
 
+   ----------
+   -- Diff --
+   ----------
+
    function Diff
-     (Orig_File : String;
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Orig_File : String;
       New_File  : String;
       Diff_File : String;
       Revert    : Boolean := False) return Diff_Occurrence_Link
@@ -169,9 +179,11 @@ package body Diff_Utils is
       Num_Args   : Natural;
       Buffer     : String (1 .. 8192);
       Last       : Natural;
+      Cmd_Args   : Argument_List_Access;
 
    begin
-      Cmd      := Locate_Exec_On_Path (Patch_Cmd);
+      Cmd_Args := Argument_String_To_List (Get_Pref (Kernel, Patch_Cmd));
+      Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
       Args (1) := new String' ("-s");
       Args (2) := new String' ("-i");
       Args (3) := new String' (Diff_File);
@@ -189,8 +201,10 @@ package body Diff_Utils is
          Num_Args := 6;
       end if;
 
-      Spawn (Cmd.all, Args (1 .. Num_Args), Success);
+      Spawn (Cmd.all, Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last)
+             & Args (1 .. Num_Args), Success);
       Free (Cmd);
+      Free (Cmd_Args);
 
       for J in Args'Range loop
          Free (Args (J));

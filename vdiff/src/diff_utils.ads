@@ -21,6 +21,8 @@
 --  This package provides low-level utilities to handle differences between
 --  files.
 
+with Glide_Kernel;
+
 package Diff_Utils is
 
    type Diff_Range is record
@@ -42,11 +44,14 @@ package Diff_Utils is
       Next   : Diff_Occurrence_Link;
    end record;
 
-   function Diff (File1, File2 : String) return Diff_Occurrence_Link;
+   function Diff
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File1, File2 : String) return Diff_Occurrence_Link;
    --  Execute diff on File1 and File2 and return a list of differences.
 
    function Diff
-     (Orig_File : String;
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Orig_File : String;
       New_File  : String;
       Diff_File : String;
       Revert    : Boolean := False) return Diff_Occurrence_Link;

@@ -84,7 +84,7 @@ package body Vdiff_Module is
             return;
          end if;
 
-         Result := Diff (File1, File2);
+         Result := Diff (Kernel, File1, File2);
 
          if Result = null then
             Button := Message_Dialog
@@ -151,7 +151,7 @@ package body Vdiff_Module is
 
                begin
                   Result := Diff
-                    (Ref_File, New_File, Diff_File, Revert => True);
+                    (Kernel, Ref_File, New_File, Diff_File, Revert => True);
 
                   if Result = null then
                      Button := Message_Dialog
@@ -183,7 +183,7 @@ package body Vdiff_Module is
                       (Get_Pref (Kernel, Tmp_Dir)) & Base & "_ref";
 
                begin
-                  Result := Diff (Orig_File, Ref_File, Diff_File);
+                  Result := Diff (Kernel, Orig_File, Ref_File, Diff_File);
 
                   if Result = null then
                      Button := Message_Dialog
@@ -206,7 +206,7 @@ package body Vdiff_Module is
             else
                --  All arguments are specified
 
-               Result := Diff (Orig_File, New_File, Diff_File);
+               Result := Diff (Kernel, Orig_File, New_File, Diff_File);
 
                if Result = null then
                   Button := Message_Dialog
