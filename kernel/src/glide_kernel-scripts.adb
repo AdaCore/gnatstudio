@@ -228,10 +228,12 @@ package body Glide_Kernel.Scripts is
    Set_Sensitive_Parameters : constant Cst_Argument_List :=
      (1 => Sensitive_Cst'Access);
 
+   Force_Cst        : aliased constant String := "force";
    On_Input_Cst     : aliased constant String := "on_input";
    On_Destroy_Cst   : aliased constant String := "on_destroy";
    Console_Constructor_Args : constant Cst_Argument_List :=
-     (Name_Cst'Access, On_Input_Cst'Access, On_Destroy_Cst'Access);
+     (Name_Cst'Access, Force_Cst'Access,
+      On_Input_Cst'Access, On_Destroy_Cst'Access);
 
    Text_Cst         : aliased constant String := "text";
    Console_Write_Args : constant Cst_Argument_List := (1 => Text_Cst'Access);
@@ -1331,14 +1333,20 @@ package body Glide_Kernel.Scripts is
      (Console    : access Gtk_Widget_Record'Class;
       Subprogram : Subprogram_Type)
    is
-      Inst : constant Class_Instance := Get_Instance (Console);
-      C : Callback_Data'Class := Create (Get_Script (Subprogram.all), 1);
-      Tmp : Boolean;
-      pragma Unreferenced (Tmp);
+      Inst  : constant Class_Instance := Get_Instance (Console);
+      Script : constant Scripting_Language := Get_Script (Subprogram.all);
    begin
-      Set_Nth_Arg (C, 1, Inst);
-      Tmp := Execute (Subprogram, C);
-      Free (C);
+      if Script /= null then
+         declare
+            C : Callback_Data'Class := Create (Script, 1);
+            Tmp : Boolean;
+            pragma Unreferenced (Tmp);
+         begin
+            Set_Nth_Arg (C, 1, Inst);
+            Tmp := Execute (Subprogram, C);
+            Free (C);
+         end;
+      end if;
    end On_Console_Destroy;
 
    -----------------------------
@@ -1356,15 +1364,17 @@ package body Glide_Kernel.Scripts is
       if Command = Constructor_Method then
          Name_Parameters (Data, Console_Constructor_Args);
          declare
-            Title : constant String := Nth_Arg (Data, 2, "");
-            On_Input : constant Subprogram_Type := Nth_Arg (Data, 3, null);
-            On_Destroy : constant Subprogram_Type := Nth_Arg (Data, 4, null);
+            Title      : constant String := Nth_Arg (Data, 2, "");
+            Force      : constant Boolean := Nth_Arg (Data, 3, False);
+            On_Input   : constant Subprogram_Type := Nth_Arg (Data, 4, null);
+            On_Destroy : constant Subprogram_Type := Nth_Arg (Data, 5, null);
          begin
             Console := Create_Interactive_Console
               (Kernel              => Get_Kernel (Data),
                Title               => Title,
                History             => History_Key ("console_" & Title),
-               Create_If_Not_Exist => True);
+               Create_If_Not_Exist => True,
+               Force_Create        => Force);
             Set_Data (Inst, Widget => Gtk_Widget (Console));
 
             if On_Input /= null then
@@ -1383,13 +1393,17 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "write" then
          Name_Parameters (Data, Console_Write_Args);
-         Insert
-           (Interactive_Console (Gtk_Widget'(Get_Data (Inst))),
-            Text   => Nth_Arg (Data, 2),
-            Add_LF => False);
+         if Get_Data (Inst) /= null then
+            Insert
+              (Interactive_Console (Gtk_Widget'(Get_Data (Inst))),
+               Text   => Nth_Arg (Data, 2),
+               Add_LF => False);
+         end if;
 
       elsif Command = "clear" then
-         Clear (Interactive_Console (Gtk_Widget'(Get_Data (Inst))));
+         if Get_Data (Inst) /= null then
+            Clear (Interactive_Console (Gtk_Widget'(Get_Data (Inst))));
+         end if;
 
       elsif Command = "flush" then
          null;
@@ -2521,7 +2535,9 @@ package body Glide_Kernel.Scripts is
          end;
 
       elsif Command = "destroy" then
-         Destroy (Get_Data (Inst));
+         if Get_Data (Inst) /= null then
+            Destroy (Get_Data (Inst));
+         end if;
 
       elsif Command = "hide" then
          Hide (Get_Data (Inst));
