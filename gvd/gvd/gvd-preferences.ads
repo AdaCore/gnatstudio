@@ -50,7 +50,6 @@ package GVD.Preferences is
 
    -- Data Window --
    Xref_Color                    : Param_Spec_Color;
-   Title_Color                   : Param_Spec_Color;
    Change_Color                  : Param_Spec_Color;
    Thaw_Bg_Color                 : Param_Spec_Color;
    Freeze_Bg_Color               : Param_Spec_Color;

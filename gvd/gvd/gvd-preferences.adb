@@ -106,14 +106,6 @@ package body GVD.Preferences is
          Default  => "#0000FF"));
       Register_Property (Prefs, Param_Spec (Xref_Color), Data);
 
-      Title_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Title-Color",
-         Nick     => -"Title background",
-         Blurb    => -"Color used for the background of the title",
-         Flags    => Source_Flags,
-         Default  => "#BEBEBE"));
-      Register_Property (Prefs, Param_Spec (Title_Color), Data);
-
       Change_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Change-Color",
          Nick     => -"Changed data",
