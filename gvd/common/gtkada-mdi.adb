@@ -1175,6 +1175,7 @@ package body Gtkada.MDI is
       C : MDI_Child := MDI_Child (Child);
    begin
       Minimize_Child (C, not (C.State = Iconified));
+      Set_Focus_Child (C);
    end Iconify_Child;
 
    -----------
@@ -2657,9 +2658,15 @@ package body Gtkada.MDI is
       Alloc : Gtk_Allocation;
    begin
       if Child.State /= Floating and then Float then
+         Child.Uniconified_Width  :=
+           Gint (Get_Allocation_Width (Get_Widget (Child)));
+         Child.Uniconified_Height :=
+           Gint (Get_Allocation_Height (Get_Widget (Child)));
+
          Minimize_Child (Child, False);
          Dock_Child (Child, False);
 
+         --  Ref is removed when the child is unfloated.
          Ref (Child);
 
          if Child.MDI.Docks (None) /= null then
@@ -2682,20 +2689,19 @@ package body Gtkada.MDI is
             Set_Title (Win, Child.Title.all);
          end if;
 
-         Reparent (Child.Initial_Child, Win);
-         Show_All (Win);
+         Reparent (Get_Parent (Child.Initial_Child), Win);
          Set_Default_Size
            (Win, Child.Uniconified_Width, Child.Uniconified_Height);
+         Show_All (Win);
 
          Child.State := Floating;
+         Update_Float_Menu (Child);
 
       elsif Child.State = Floating and then not Float then
          --  Reassign the widget to Child instead of the notebook
 
-         Ref (Child.Initial_Child);
-         Win := Gtk_Window (Get_Parent (Child.Initial_Child));
-         Reparent (Child.Initial_Child, Gtk_Box (Get_Child (Child)));
-         Unref (Child.Initial_Child);
+         Win := Gtk_Window (Get_Parent (Get_Parent (Child.Initial_Child)));
+         Reparent (Get_Child (Win), Gtk_Box (Get_Child (Child)));
          Child.State := Normal;
 
          if Gtk_Widget (Child.Initial) = Gtk_Widget (Win) then
@@ -2707,16 +2713,16 @@ package body Gtkada.MDI is
          if Child.MDI.Docks (None) /= null then
             Put_In_Notebook (Child.MDI, None, Child);
          else
+            Put (Child.MDI.Layout, Child, Child.X, Child.Y);
             Alloc := (Child.X, Child.Y,
                       Allocation_Int (Child.Uniconified_Width),
                       Allocation_Int (Child.Uniconified_Height));
-            Put (Child.MDI.Layout, Child, 0, 0);
             Size_Allocate (Child, Alloc);
          end if;
-      end if;
 
-      Set_Focus_Child (Child);
-      Update_Float_Menu (Child);
+         Update_Float_Menu (Child);
+         Unref (Child);
+      end if;
    end Float_Child;
 
    -----------------
@@ -2843,20 +2849,21 @@ package body Gtkada.MDI is
    is
       Note : Gtk_Notebook := Child.MDI.Docks (Side);
       Page : constant Gint := Page_Num (Note, Child);
+      MDI  : constant MDI_Window := MDI_Window (Child.MDI);
    begin
       if Page /= -1 then
          Ref (Child);
-         Remove_Page (Note, Page);
          Unparent (Child);
+         Remove_Page (Note, Page);
       end if;
 
       if Get_Nth_Page (Note, 0) = null then
-         Destroy (Child.MDI.Docks (Side));
-         Child.MDI.Docks (Side) := null;
+         Destroy (MDI.Docks (Side));
+         MDI.Docks (Side) := null;
 
          if Side /= None then
-            Child.MDI.Docks_Size (Side) := 0;
-            Reposition_Handles (Child.MDI);
+            MDI.Docks_Size (Side) := 0;
+            Reposition_Handles (MDI);
          end if;
       else
          Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
@@ -2888,6 +2895,7 @@ package body Gtkada.MDI is
          Minimize_Child (Child, False);
          Put_In_Notebook (MDI, Child.Dock, Child);
          Set_Sensitive (Child.Maximize_Button, False);
+         Update_Dock_Menu (Child);
 
       elsif not Dock and then Child.State = Docked then
          if MDI.Docks (None) /= null then
@@ -2906,10 +2914,8 @@ package body Gtkada.MDI is
          Child.State := Normal;
 
          Set_Sensitive (Child.Maximize_Button, True);
+         Update_Dock_Menu (Child);
       end if;
-
-      Set_Focus_Child (Child);
-      Update_Dock_Menu (Child);
    end Dock_Child;
 
    -------------------
@@ -2997,8 +3003,6 @@ package body Gtkada.MDI is
          Child.State := Normal;
          Set_Sensitive (Child.Maximize_Button, True);
       end if;
-
-      Set_Focus_Child (Child);
    end Minimize_Child;
 
    -----------------------
@@ -3139,8 +3143,8 @@ package body Gtkada.MDI is
    procedure Maximize_Child_Cb (Child : access Gtk_Widget_Record'Class) is
       M : MDI_Window := MDI_Child (Child).MDI;
    begin
-      Set_Focus_Child (MDI_Child (Child));
       Maximize_Children (M, M.Docks (None) = null);
+      Set_Focus_Child (MDI_Child (Child));
    end Maximize_Child_Cb;
 
    -------------------
@@ -3167,6 +3171,8 @@ package body Gtkada.MDI is
 
       if C /= null then
          Dock_Child (C, C.State /= Docked);
+         Set_Focus_Child (C);
+         Raise_Child (C);
       end if;
    end Dock_Cb;
 
@@ -3185,6 +3191,8 @@ package body Gtkada.MDI is
 
       if C /= null then
          Float_Child (C, C.State /= Floating);
+         Set_Focus_Child (C);
+         Raise_Child (C);
       end if;
    end Float_Cb;
 
