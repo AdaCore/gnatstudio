@@ -33,8 +33,8 @@ with Traces;
 with Unchecked_Deallocation;
 with Prj.Tree;
 with Prj_API;
-with HTables;
 with Basic_Types;
+with String_Hash;
 
 package Src_Info.Queries is
 
@@ -339,18 +339,7 @@ private
       Spec_Tree      => null,
       Separate_Trees => null);
 
-   type Name_Htable_Num is new Natural range 0 .. 1000;
-   function Hash (F : GNAT.OS_Lib.String_Access) return Name_Htable_Num;
-   function Hash is new HTables.Hash (Name_Htable_Num);
-   function Equal (F1, F2 : GNAT.OS_Lib.String_Access) return Boolean;
-
-   package Name_Htable is new HTables.Simple_HTable
-     (Header_Num => Name_Htable_Num,
-      Element    => Boolean,
-      No_Element => False,
-      Key        => GNAT.OS_Lib.String_Access,
-      Hash       => Hash,
-      Equal      => Equal);
+   package Name_Htable is new String_Hash (Boolean, False);
 
    type Entity_Reference_Iterator is record
       Entity : Entity_Information;
@@ -363,7 +352,7 @@ private
       Current_Project : Natural;
       --  The current project in the list above
 
-      Examined     : Name_Htable.HTable;
+      Examined     : Name_Htable.String_Hash_Table.HTable;
       --  List of source files in the current project that have already been
       --  examined.
 

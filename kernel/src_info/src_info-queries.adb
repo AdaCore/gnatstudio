@@ -34,7 +34,7 @@ package body Src_Info.Queries is
 
    Me : Debug_Handle := Create ("SRC_INFO");
 
-   use Name_Htable;
+   use Name_Htable.String_Hash_Table;
 
    procedure Free is new
      Unchecked_Deallocation (Dependency_Node, Dependency_List);
@@ -1252,24 +1252,6 @@ package body Src_Info.Queries is
         and then Get_Source_Filename (Decl.Location.File) =
            Entity.Decl_File.all;
    end Is_Same_Entity;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (F : GNAT.OS_Lib.String_Access) return Name_Htable_Num is
-   begin
-      return Hash (F.all);
-   end Hash;
-
-   -----------
-   -- Equal --
-   -----------
-
-   function Equal (F1, F2 : GNAT.OS_Lib.String_Access) return Boolean is
-   begin
-      return F1.all = F2.all;
-   end Equal;
 
    -------------
    -- Destroy --
