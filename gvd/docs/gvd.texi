@@ -1292,11 +1292,21 @@ accessed using the arrow located at the left of the status line.
      contextual menu on top of a variable, or after selecting an expression.
      The display will be done in GVD's canvas window.
 
+     If you activate the option in the menu @i{Ada->Options->Tight Integration
+     with GVD}, then a new frame from Emacs will be swallowed directly in
+     the GVD window (This is currently specific to Unix systems). This means
+     that the source window of GVD will be completely replaced by the Glide
+     window, and thus will be a full editor. It also provides cross-references,
+     which might help you debug your code.
+
 @node Using GVD with Emacs
 @section Using GVD with Emacs
      Use @i{M-x gdb} to start a debugging session. At the prompt, enter
      @i{gvd --tty} and the name of the program to be debugged. Process as
      usual.
+
+     See the Glide integration above for how to swallow the Emacs frame
+     directly into GVD.
 
 @node Using GVD with XEmacs
 @section Using GVD with XEmacs
@@ -1522,6 +1532,9 @@ Use xid as the editor X window id.
 GVD takes advantage of this option by integrating the specified window
 as the source editor.
 This option is not currently supported under Windows.
+Note that the best way to use this option is directly through Glide or Emacs,
+as explained in @ref{Using GVD with Glide}. Glide will automatically pass the
+correct xid value.
 
 @item --tty
 Use controlling tty as the debugger console.
