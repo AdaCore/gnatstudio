@@ -511,10 +511,7 @@ package body Browsers.Call_Graph is
             --  For a label, do not insert it in the browser, but process
             --  its children
 
-            elsif Get_Kind (Get (Iter)) = Label_On_Loop
-              or else Get_Kind (Get (Iter)) = Label_On_Block
-              or else Get_Kind (Get (Iter)) = Label_On_Statement
-            then
+            elsif Is_Label (Get (Iter)) then
                Process_Item (Get (Iter));
             end if;
 
