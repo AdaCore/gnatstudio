@@ -65,10 +65,12 @@ package Language_Handlers is
    --  No copy of Lang is done.
 
    function Known_Languages
-     (Handler : access Language_Handler_Record)
-      return GNAT.OS_Lib.Argument_List is abstract;
+     (Handler : access Language_Handler_Record;
+      Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List is abstract;
    --  Return the list of known languages.
+   --  Sorted indicates whether the list should be sorted.
    --  The returned value must be freed by the caller.
+   --  The name of the languages is normalized through a call to Mixed_Case
 
 private
    type Language_Handler_Record is abstract tagged null record;
