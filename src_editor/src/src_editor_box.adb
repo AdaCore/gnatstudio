@@ -71,6 +71,8 @@ with Language.Ada;               use Language.Ada;
 with Language_Handlers;          use Language_Handlers;
 with String_Utils;               use String_Utils;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
+with Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 with Src_Editor_View;            use Src_Editor_View;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Info;                   use Src_Info;
@@ -409,7 +411,7 @@ package body Src_Editor_Box is
             Lib_Info           => Source_Info,
             File_Name          => Base_Name (Get_Filename (Editor)),
             Entity_Name        => Entity_Name_Information (Context),
-            Line               => Line_Information (Context),
+            Line               => Modules.Line_Information (Context),
             Column             => Column_Information (Context),
             Location           => Location,
             Status             => Status);
@@ -420,7 +422,7 @@ package body Src_Editor_Box is
             Lib_Info           => Source_Info,
             File_Name          => Base_Name (Get_Filename (Editor)),
             Entity_Name        => Entity_Name_Information (Context),
-            Line               => Line_Information (Context),
+            Line               => Modules.Line_Information (Context),
             Column             => Column_Information (Context),
             Entity             => Entity,
             Status             => Status);
@@ -604,7 +606,7 @@ package body Src_Editor_Box is
            (Lib_Info           => Source_Info,
             File_Name          => Base_Name (Filename),
             Entity_Name        => Entity_Name_Information (Context),
-            Line               => Line_Information (Context),
+            Line               => Modules.Line_Information (Context),
             Column             => Column_Information (Context),
             Entity             => Entity,
             Status             => Status);
@@ -839,13 +841,9 @@ package body Src_Editor_Box is
       Line   : Gint;
       Column : Gint) is
    begin
-      --  In the source buffer, the Line and Column indexes start from
-      --  0. It is more natural to start from one, so the Line and Column
-      --  number displayed are incremented by 1 to start from 1.
-
       Set_Text
         (Box.Cursor_Loc_Label,
-         Image (To_Box_Line (Line)) & ':' & Image (To_Box_Column (Column)));
+         Image (Integer (Line)) & ':' & Image (Integer (Column)));
    end Show_Cursor_Position;
 
    ----------------------------
@@ -1172,7 +1170,7 @@ package body Src_Editor_Box is
          On_Box_Destroy'Access,
          User_Data => Source_Editor_Box (Box));
 
-      Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
+      Show_Cursor_Position (Source_Editor_Box (Box), Line => 1, Column => 1);
 
       Add_Events (Box.Source_View, Focus_Change_Mask);
       Object_Return_Callback.Object_Connect
@@ -2424,9 +2422,22 @@ package body Src_Editor_Box is
      (Editor         : access Source_Editor_Box_Record;
       Identifier     : String) is
    begin
-      Remove_Line_Information_Column
-        (Editor.Source_Buffer, Identifier);
+      Remove_Line_Information_Column (Editor.Source_Buffer, Identifier);
    end Remove_Line_Information_Column;
+
+   ---------------------
+   -- Add_Blank_Lines --
+   ---------------------
+
+   procedure Add_Blank_Lines
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type;
+      GC     : Gdk.GC.Gdk_GC;
+      Text   : String;
+      Number : Positive) is
+   begin
+      Add_Blank_Lines (Editor.Source_Buffer, Line, GC, Text, Number);
+   end Add_Blank_Lines;
 
    ------------------
    --  Create_Mark --
@@ -2434,35 +2445,10 @@ package body Src_Editor_Box is
 
    function Create_Mark
      (Editor : access Source_Editor_Box_Record;
-      Line   : Positive;
-      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
-   is
-      Iter : Gtk_Text_Iter;
+      Line   : Src_Editor_Buffer.Editable_Line_Type;
+      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark is
    begin
-      if Is_Valid_Location (Editor, Line, Column) then
-         Get_Iter_At_Line_Offset
-           (Editor.Source_Buffer,
-            Iter,
-            To_Buffer_Line (Line),
-            To_Buffer_Column (Column));
-         return Create_Mark (Editor.Source_Buffer, "", Iter);
-
-      elsif Is_Valid_Location (Editor, Line, 1) then
-         Get_Iter_At_Line_Offset
-           (Editor.Source_Buffer,
-            Iter,
-            To_Buffer_Line (Line),
-            To_Buffer_Column (1));
-         return Create_Mark (Editor.Source_Buffer, "", Iter);
-
-      else
-         Get_Iter_At_Line_Offset
-           (Editor.Source_Buffer,
-            Iter,
-            To_Buffer_Line (1),
-            To_Buffer_Column (1));
-         return Create_Mark (Editor.Source_Buffer, "", Iter);
-      end if;
+      return Create_Mark (Editor.Source_Buffer, Line, Column);
    end Create_Mark;
 
    ---------------------------
@@ -2471,7 +2457,7 @@ package body Src_Editor_Box is
 
    procedure Add_Line_Highlighting
      (Editor : access Source_Editor_Box_Record;
-      Line   : Natural;
+      Line   : Src_Editor_Buffer.Editable_Line_Type;
       Id     : String) is
    begin
       Add_Line_Highlighting (Editor.Source_Buffer, Line, Id);
@@ -2483,7 +2469,7 @@ package body Src_Editor_Box is
 
    procedure Remove_Line_Highlighting
      (Editor : access Source_Editor_Box_Record;
-      Line   : Natural;
+      Line   : Src_Editor_Buffer.Editable_Line_Type;
       Id     : String) is
    begin
       Remove_Line_Highlighting (Editor.Source_Buffer, Line, Id);

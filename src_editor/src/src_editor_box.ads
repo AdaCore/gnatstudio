@@ -30,6 +30,7 @@
 with Glib;
 with Glib.Object;
 with Gdk.Rectangle;
+with Gdk.GC;
 with Gdk.Event;
 
 with Gtk.Box;
@@ -336,7 +337,7 @@ package Src_Editor_Box is
 
    procedure Add_Line_Highlighting
      (Editor : access Source_Editor_Box_Record;
-      Line   : Natural;
+      Line   : Src_Editor_Buffer.Editable_Line_Type;
       Id     : String);
    --  Enable the highlighting of Line using colors defined in category
    --  corresponding to Id.
@@ -344,7 +345,7 @@ package Src_Editor_Box is
 
    procedure Remove_Line_Highlighting
      (Editor : access Source_Editor_Box_Record;
-      Line   : Natural;
+      Line   : Src_Editor_Buffer.Editable_Line_Type;
       Id     : String);
    --  Disable the highlighting of Line using colors defined in category
    --  corresponding to Id.
@@ -352,7 +353,7 @@ package Src_Editor_Box is
 
    function Create_Mark
      (Editor : access Source_Editor_Box_Record;
-      Line   : Positive;
+      Line   : Src_Editor_Buffer.Editable_Line_Type;
       Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Create a mark at Line, Column in the Editor buffer.
    --  If the position specified by Line, Column, the mark is created
@@ -496,6 +497,14 @@ package Src_Editor_Box is
    procedure Undo (Editor : access Source_Editor_Box_Record);
    procedure Redo (Editor : access Source_Editor_Box_Record);
    --  Undo/Redo last edit command.
+
+   procedure Add_Blank_Lines
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type;
+      GC     : Gdk.GC.Gdk_GC;
+      Text   : String;
+      Number : Positive);
+   --  See Src_Editor_Buffer.Add_Blank_Lines.
 
 private
 
