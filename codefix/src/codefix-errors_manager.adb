@@ -173,7 +173,7 @@ package body Codefix.Errors_Manager is
 
          if Current_Message /= Invalid_Error_Message then
 
-            Solutions := Solution_List (Extract_List.Null_List);
+            Solutions := Solution_List (Command_List.Null_List);
             Get_Solutions
               (Source_Text, Errors_List, Current_Message, Solutions);
 
@@ -209,7 +209,7 @@ package body Codefix.Errors_Manager is
          Validate
            (This,
             Error,
-            Get_Extract (Get_Solutions (Error), Choice));
+            Get_Command (Get_Solutions (Error), Choice));
       end if;
    end Validate;
 
@@ -220,31 +220,77 @@ package body Codefix.Errors_Manager is
    procedure Validate
      (This   : in out Correction_Manager;
       Error  : Error_Id;
-      Choice : Extract'Class)
+      Choice : Text_Command'Class)
    is
       pragma Unreferenced (Error);
-
-      Temp_Fix_List          : Extract;
-      Success                : Boolean;
-
    begin
-      Unchecked_Assign (Temp_Fix_List, This.Fix_List);
-      Unchecked_Free (This.Fix_List);
-      Merge (This.Fix_List, Temp_Fix_List, Choice, Success);
-      Free (Temp_Fix_List);
+      Append (This.Fix_List, Choice);
    end Validate;
 
+   -------------------------
+   -- Validate_And_Commit --
+   -------------------------
+
+   procedure Validate_And_Commit
+     (This         : in out Correction_Manager;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Error        : Error_Id;
+      Choice       : Natural)
+   is
+      pragma Unreferenced (This);
+      New_Extract : Extract;
+   begin
+      Execute
+        (Get_Command (Get_Solutions (Error), Choice),
+         Current_Text,
+         New_Extract);
+      Commit (New_Extract, Current_Text);
+
+      Free (New_Extract);
+      --  ??? How can I free the command ?
+   end Validate_And_Commit;
+
+   -------------------------
+   -- Validate_And_Commit --
+   -------------------------
+
+   procedure Validate_And_Commit
+     (This         : in out Correction_Manager;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Error        : Error_Id;
+      Choice       : Text_Command'Class)
+   is
+      pragma Unreferenced (This, Error);
+      New_Extract : Extract;
+   begin
+      Execute
+        (Choice,
+         Current_Text,
+         New_Extract);
+      Commit (New_Extract, Current_Text);
+
+      Free (New_Extract);
+      --  ??? How can I free the command ?
+   end Validate_And_Commit;
    ------------
    -- Commit --
    ------------
 
    procedure Commit
      (This         : in out Correction_Manager;
-      Current_Text : in out Text_Navigator_Abstr'Class) is
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      pragma Unreferenced (Current_Text);
    begin
-      Commit (This.Fix_List, Current_Text);
-      Commit (Current_Text);
-      Free (This.Fix_List);
+      --  Commit (This.Fix_List, Current_Text);
+      --  Replace the line above by the execution of all commands, a commit
+      --  of the current_text between all executions.
+
+      --  Commit (Current_Text);
+      --  I'm not shure that I must commit the entire text after. Just let the
+      --  user choose later.
+
+      Codefix.Formal_Errors.Free (This.Fix_List);
    end Commit;
 
    ----------
@@ -254,7 +300,7 @@ package body Codefix.Errors_Manager is
    procedure Free (This : in out Correction_Manager) is
    begin
       Free (This.Potential_Corrections);
-      Free (This.Fix_List);
+      Codefix.Formal_Errors.Free (This.Fix_List);
    end Free;
 
    ---------------
@@ -306,117 +352,117 @@ package body Codefix.Errors_Manager is
    -- Update_Changes --
    --------------------
 
-   procedure Update_Changes
-     (This          : Correction_Manager;
-      Current_Text  : Text_Navigator_Abstr'Class;
-      Object        : in out Extract'Class;
-      Success       : out Boolean;
-      Already_Fixed : out Boolean)
-   is
-      Line_Object, Line_This : Ptr_Extract_Line;
-      Merged_Extract         : Extract;
-      Little_Fix_List        : Extract;
-      Old_Cursor             : File_Cursor;
-   begin
-      Success := True;
+--   procedure Update_Changes
+--     (This          : Correction_Manager;
+--      Current_Text  : Text_Navigator_Abstr'Class;
+--      Object        : in out Extract'Class;
+--      Success       : out Boolean;
+--      Already_Fixed : out Boolean)
+--   is
+--      Line_Object, Line_This : Ptr_Extract_Line;
+--      Merged_Extract         : Extract;
+--      Little_Fix_List        : Extract;
+--      Old_Cursor             : File_Cursor;
+--   begin
+--      Success := True;
 
-      Line_This := Get_First_Line (This.Fix_List);
-      Line_Object := Get_First_Line (Object);
+--      Line_This := Get_First_Line (This.Fix_List);
+--      Line_Object := Get_First_Line (Object);
 
-      while Line_This /= null and then Line_Object /= null loop
-         if Get_Cursor (Line_This.all) > Get_Cursor (Line_Object.all) then
-            Line_Object := Next (Line_Object.all);
-         elsif Get_Cursor (Line_Object.all) > Get_Cursor (Line_This.all) then
-            Line_This := Next (Line_This.all);
-         elsif Get_Cursor (Line_This.all) = Get_Cursor (Line_Object.all) then
-            Add_Element
-              (Little_Fix_List,
-               new Extract_Line'(Clone (Line_This.all, False)));
-            Old_Cursor := File_Cursor (Get_Cursor (Line_This.all));
-            Line_This := Next (Line_This.all);
+--      while Line_This /= null and then Line_Object /= null loop
+--         if Get_Cursor (Line_This.all) > Get_Cursor (Line_Object.all) then
+--            Line_Object := Next (Line_Object.all);
+--         elsif Get_Cursor (Line_Object.all) > Get_Cursor (Line_This.all) then
+--            Line_This := Next (Line_This.all);
+--         elsif Get_Cursor (Line_This.all) = Get_Cursor (Line_Object.all) then
+--            Add_Element
+--              (Little_Fix_List,
+--               new Extract_Line'(Clone (Line_This.all, False)));
+--            Old_Cursor := File_Cursor (Get_Cursor (Line_This.all));
+--            Line_This := Next (Line_This.all);
 
-            if Line_This /= null
-              and then File_Cursor (Get_Cursor (Line_This.all)) /= Old_Cursor
-            then
-               Old_Cursor := File_Cursor (Get_Cursor (Line_Object.all));
+--            if Line_This /= null
+--              and then File_Cursor (Get_Cursor (Line_This.all)) /= Old_Cursor
+--            then
+--               Old_Cursor := File_Cursor (Get_Cursor (Line_Object.all));
 
-               while Line_Object /= null
-                 and then Old_Cursor =
-                 File_Cursor (Get_Cursor (Line_Object.all))
-               loop
-                  Line_Object := Next (Line_Object.all);
-               end loop;
-            end if;
-         end if;
-      end loop;
+--               while Line_Object /= null
+--                 and then Old_Cursor =
+--                 File_Cursor (Get_Cursor (Line_Object.all))
+--               loop
+--                  Line_Object := Next (Line_Object.all);
+--               end loop;
+--            end if;
+--         end if;
+--      end loop;
 
-      Merge
-        (Merged_Extract,
-         Little_Fix_List,
-         Object,
-         Current_Text,
-         Success);
+--      Merge
+--        (Merged_Extract,
+--         Little_Fix_List,
+--         Object,
+--         Current_Text,
+--         Success);
 
-      if not Success then
-         Free (Little_Fix_List);
-         Free (Merged_Extract);
-         return;
-      end if;
+--      if not Success then
+--         Free (Little_Fix_List);
+--         Free (Merged_Extract);
+--         return;
+--      end if;
 
-      Set_Caption (Merged_Extract, Get_Caption (Object));
-      Free (Object);
-      Unchecked_Assign (Object, Merged_Extract);
+--      Set_Caption (Merged_Extract, Get_Caption (Object));
+--      Free (Object);
+--      Unchecked_Assign (Object, Merged_Extract);
 
-      Line_Object := Get_First_Line (Object);
-      Line_This := Get_First_Line (This.Fix_List);
+--      Line_Object := Get_First_Line (Object);
+--      Line_This := Get_First_Line (This.Fix_List);
 
-      Already_Fixed := True;
+--      Already_Fixed := True;
 
-      while Line_Object /= null loop
-         if Get_Context (Line_Object.all) /= Line_Created then
-            Line_This := Get_Line (Line_This, Get_Cursor (Line_Object.all));
+--      while Line_Object /= null loop
+--         if Get_Context (Line_Object.all) /= Line_Created then
+--            Line_This := Get_Line (Line_This, Get_Cursor (Line_Object.all));
 
-            if Line_This = null then
-               Line_This := Get_First_Line (This.Fix_List);
+--            if Line_This = null then
+--               Line_This := Get_First_Line (This.Fix_List);
 
-               if Get_Context (Line_Object.all) /= Original_Line
-                 and then Get_Coloration (Line_Object.all)
-               then
-                  Already_Fixed := False;
-               end if;
-            else
-               if Get_Context (Line_Object.all) = Original_Line
-                 or else Line_Object.all = Line_This.all
-               then
-                  Set_Coloration (Line_Object.all, False);
-               else
-                  Already_Fixed := False;
-               end if;
-            end if;
-         else
-            Line_This := Get_Line (Line_This, Get_Cursor (Line_Object.all));
+--               if Get_Context (Line_Object.all) /= Original_Line
+--                 and then Get_Coloration (Line_Object.all)
+--               then
+--                  Already_Fixed := False;
+--               end if;
+--            else
+--               if Get_Context (Line_Object.all) = Original_Line
+--                 or else Line_Object.all = Line_This.all
+--               then
+--                  Set_Coloration (Line_Object.all, False);
+--               else
+--                  Already_Fixed := False;
+--               end if;
+--            end if;
+--         else
+--            Line_This := Get_Line (Line_This, Get_Cursor (Line_Object.all));
 
-            while Line_This /= null
-              and then Get_Cursor (Line_This.all) =
-              Get_Cursor (Line_Object.all)
-            loop
-               if Line_Object.all = Line_This.all then
-                  Set_Coloration (Line_Object.all, False);
-                  exit;
-               end if;
-               Line_This := Next (Line_This.all);
-            end loop;
+--            while Line_This /= null
+--              and then Get_Cursor (Line_This.all) =
+--              Get_Cursor (Line_Object.all)
+--            loop
+--               if Line_Object.all = Line_This.all then
+--                  Set_Coloration (Line_Object.all, False);
+--                  exit;
+--               end if;
+--               Line_This := Next (Line_This.all);
+--            end loop;
 
-            if Get_Coloration (Line_Object.all) then
-               Already_Fixed := False;
-            end if;
-         end if;
+--            if Get_Coloration (Line_Object.all) then
+--               Already_Fixed := False;
+--            end if;
+--         end if;
 
-         Line_Object := Next (Line_Object.all);
-      end loop;
+--         Line_Object := Next (Line_Object.all);
+--      end loop;
 
-      Free (Little_Fix_List);
+--      Free (Little_Fix_List);
 
-   end Update_Changes;
+--   end Update_Changes;
 
 end Codefix.Errors_Manager;
