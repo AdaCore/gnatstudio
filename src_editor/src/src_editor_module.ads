@@ -122,7 +122,7 @@ private
       Child  : MDI_Child;
       File   : VFS.Virtual_File;
       Line   : Natural := 0;
-      Column : Natural;
+      Column : Natural := 1;
       Mark   : Gtk_Text_Mark;
       Length : Natural;
    end record;
