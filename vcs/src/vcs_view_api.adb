@@ -2123,7 +2123,7 @@ package body VCS_View_API is
       procedure Query_Status_For_Project (The_Project : Project_Type) is
          use String_List;
          Status         : File_Status_List.List;
-         Dirs           : String_List.List;
+         Files          : String_List.List;
          Ref            : constant VCS_Access := Get_Current_Ref (The_Project);
 
       begin
@@ -2133,17 +2133,17 @@ package body VCS_View_API is
                -"Warning: no VCS set in project properties for project "
                & Project_Name (The_Project));
          else
-            Dirs := Get_Dirs_In_Project (The_Project);
+            Files := Get_Files_In_Project (The_Project, False);
 
             if Real_Query then
-               Get_Status (Ref, Dirs);
+               Get_Status (Ref, Files);
             else
-               Status := Local_Get_Status (Ref, Dirs);
+               Status := Local_Get_Status (Ref, Files);
                Display_File_Status (Kernel, Status, Ref, False, True);
                File_Status_List.Free (Status);
             end if;
 
-            String_List.Free (Dirs);
+            String_List.Free (Files);
          end if;
       end Query_Status_For_Project;
 
