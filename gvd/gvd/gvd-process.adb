@@ -1435,9 +1435,10 @@ package body GVD.Process is
          Buttons :=
            Message_Dialog
              (-"Could not launch the debugger", Error, Button_OK, Button_OK);
-         Process.Debugger := null;
+         Process.Exiting := True;
          Close (Window.Process_Mdi, Process.Debugger_Text);
          Close (Window.Process_Mdi, Process.Data_Paned);
+         Process.Exiting := False;
          Success := False;
 
       when Spawn_Error =>
@@ -1806,6 +1807,10 @@ package body GVD.Process is
       end Pre_User_Command;
 
    begin
+      if Debugger.Debugger = null then
+         return;
+      end if;
+
       if Output_Command then
          Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
       end if;
