@@ -22,7 +22,6 @@ with GNAT.Regpat;  use GNAT.Regpat;
 with Pixmaps_IDE;  use Pixmaps_IDE;
 with String_Utils; use String_Utils;
 with Ada_Analyzer; use Ada_Analyzer;
-with Basic_Types;  use Basic_Types;
 
 package body Language.Ada is
 
@@ -445,29 +444,27 @@ package body Language.Ada is
    ----------------------
 
    procedure Parse_Constructs
-     (Lang            : access Ada_Language;
-      Buffer          : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length   : Natural;
-      Result          : out Construct_List;
-      Indent          : out Natural;
-      Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
+     (Lang   : access Ada_Language;
+      Buffer : String;
+      Result : out Construct_List)
    is
       pragma Unreferenced (Lang);
+
       New_Buffer : Extended_Line_Buffer;
       Constructs : aliased Construct_List;
+      Ignore     : Natural;
 
    begin
       Analyze_Ada_Source
-        (To_Unchecked_String (Buffer) (1 .. Buffer_Length),
-         New_Buffer, Indent_Params,
+        (Buffer,
+         New_Buffer, Default_Indent_Parameters,
          Reserved_Casing  => Unchanged,
          Ident_Casing     => Unchanged,
          Format_Operators => False,
          Indent           => False,
          Constructs       => Constructs'Unchecked_Access,
-         Current_Indent   => Next_Indent,
-         Prev_Indent      => Indent);
+         Current_Indent   => Ignore,
+         Prev_Indent      => Ignore);
       Result := Constructs;
    end Parse_Constructs;
 
@@ -476,17 +473,23 @@ package body Language.Ada is
    --------------------
 
    procedure Parse_Entities
-     (Lang          : access Ada_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
-      Callback      : Entity_Callback)
+     (Lang     : access Ada_Language;
+      Buffer   : String;
+      Callback : Entity_Callback)
    is
       pragma Unreferenced (Lang);
+
+      pragma Suppress (All_Checks);
+      --  See comment in Language.C.Parse_Entities
+      --  We've never got an exception for an Ada file, but on the other hand,
+      --  no checks are required in this procedure anyway.
+
       New_Buffer : Extended_Line_Buffer;
       Ignore     : Natural;
+
    begin
       Analyze_Ada_Source
-        (To_Unchecked_String (Buffer) (1 .. Buffer_Length),
+        (Buffer,
          New_Buffer, Default_Indent_Parameters,
          Reserved_Casing  => Unchanged,
          Ident_Casing     => Unchanged,
@@ -503,17 +506,18 @@ package body Language.Ada is
 
    procedure Next_Indentation
      (Lang          : access Ada_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang);
+
       New_Buffer : Extended_Line_Buffer;
+
    begin
       Analyze_Ada_Source
-        (To_Unchecked_String (Buffer) (1 .. Buffer_Length),
+        (Buffer,
          New_Buffer, Indent_Params,
          Reserved_Casing  => Unchanged,
          Ident_Casing     => Unchanged,

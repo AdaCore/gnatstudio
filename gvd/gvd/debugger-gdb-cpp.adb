@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -194,19 +194,13 @@ package body Debugger.Gdb.Cpp is
    ----------------------
 
    procedure Parse_Constructs
-     (Lang            : access Gdb_Cpp_Language;
-      Buffer          : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length   : Natural;
-      Result          : out Construct_List;
-      Indent          : out Natural;
-      Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
+     (Lang   : access Gdb_Cpp_Language;
+      Buffer : String;
+      Result : out Construct_List)
    is
       pragma Unreferenced (Lang);
    begin
-      Parse_Constructs
-        (Cpp_Lang, Buffer, Buffer_Length, Result,
-         Indent, Next_Indent, Indent_Params);
+      Parse_Constructs (Cpp_Lang, Buffer, Result);
    end Parse_Constructs;
 
    ----------------------
@@ -215,16 +209,14 @@ package body Debugger.Gdb.Cpp is
 
    procedure Next_Indentation
      (Lang          : access Gdb_Cpp_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang);
    begin
-      Next_Indentation
-        (Cpp_Lang, Buffer, Buffer_Length, Indent, Next_Indent, Indent_Params);
+      Next_Indentation (Cpp_Lang, Buffer, Indent, Next_Indent, Indent_Params);
    end Next_Indentation;
 
    ---------------------

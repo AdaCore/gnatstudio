@@ -20,7 +20,6 @@
 
 with GNAT.Regpat;
 with Basic_Types;
-with Interfaces.C.Strings;
 
 package Language is
 
@@ -438,21 +437,14 @@ package Language is
 
    procedure Parse_Constructs
      (Lang            : access Language_Root;
-      Buffer          : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length   : Natural;
-      Result          : out Construct_List;
-      Indent          : out Natural;
-      Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters);
+      Buffer          : String;
+      Result          : out Construct_List);
    --  Parse the constructs contained in Buffer and store all the language
    --  constructs with their source location in Result.
-   --  As a bonus (since it is computed anyway), store the current and
-   --  next indentation levels.
 
    procedure Next_Indentation
      (Lang          : access Language_Root;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
@@ -471,8 +463,7 @@ package Language is
 
    procedure Parse_Entities
      (Lang          : access Language_Root;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Callback      : Entity_Callback);
    --  Parse entities (as defined by Language_Entity) contained in buffer.
    --  For each match, call Callback. Stops at the end of Buffer or when

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -202,18 +202,13 @@ package Debugger.Gdb.C is
       Format_Operators : Boolean           := True);
 
    procedure Parse_Constructs
-     (Lang            : access Gdb_C_Language;
-      Buffer          : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length   : Natural;
-      Result          : out Construct_List;
-      Indent          : out Natural;
-      Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters);
+     (Lang   : access Gdb_C_Language;
+      Buffer : String;
+      Result : out Construct_List);
 
    procedure Next_Indentation
      (Lang          : access Gdb_C_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);

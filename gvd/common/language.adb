@@ -454,17 +454,11 @@ package body Language is
 
    procedure Parse_Constructs
      (Lang          : access Language_Root;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
-      Result        : out Construct_List;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+      Buffer        : String;
+      Result        : out Construct_List)
    is
-      pragma Unreferenced (Lang, Buffer, Buffer_Length, Indent_Params);
+      pragma Unreferenced (Lang, Buffer);
    begin
-      Indent := 0;
-      Next_Indent := 0;
       Result := (null, null, null);
    end Parse_Constructs;
 
@@ -474,24 +468,22 @@ package body Language is
 
    procedure Parse_Entities
      (Lang          : access Language_Root;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Callback      : Entity_Callback)
    is
-      Slice     : Unchecked_String_Access := To_Unchecked_String (Buffer);
-      Index     : Natural := Slice'First;
+      Index     : Natural := Buffer'First;
       Next_Char : Natural;
       End_Char  : Natural;
       Entity    : Language_Entity;
 
    begin
       loop
-         exit when Index >= Buffer_Length;
+         exit when Index >= Buffer'Last;
 
-         Looking_At (Lang, Slice (Index .. Buffer_Length), Entity, Next_Char);
+         Looking_At (Lang, Buffer (Index .. Buffer'Last), Entity, Next_Char);
 
-         if Next_Char = Buffer_Length then
-            End_Char := Buffer_Length;
+         if Next_Char = Buffer'Last then
+            End_Char := Buffer'Last;
          else
             End_Char := Next_Char - 1;
          end if;
@@ -500,7 +492,7 @@ package body Language is
            (Entity,
             (0, 0, Index),
             (0, 0, End_Char),
-            Entity = Comment_Text and then Next_Char > Buffer_Length);
+            Entity = Comment_Text and then Next_Char > Buffer'Last);
 
          Index := Next_Char;
       end loop;
@@ -512,27 +504,25 @@ package body Language is
 
    procedure Next_Indentation
      (Lang          : access Language_Root;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang, Indent_Params);
 
-      S      : Unchecked_String_Access := To_Unchecked_String (Buffer);
-      Index  : Natural := Buffer_Length - 1;
+      Index  : Natural := Buffer'Last - 1;
       Blanks : Natural;
 
    begin
-      while Index > 1 and then S (Index - 1) /= ASCII.LF loop
+      while Index > 1 and then Buffer (Index - 1) /= ASCII.LF loop
          Index := Index - 1;
       end loop;
 
       Blanks := Index;
 
-      while Blanks < Buffer_Length
-        and then (S (Blanks) = ' ' or else S (Blanks) = ASCII.HT)
+      while Blanks < Buffer'Last
+        and then (Buffer (Blanks) = ' ' or else Buffer (Blanks) = ASCII.HT)
       loop
          Blanks := Blanks + 1;
       end loop;
