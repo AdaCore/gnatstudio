@@ -190,6 +190,7 @@ Customizing the Menu and Tool Bar
 * Macro arguments::
 * Filtering actions::
 * Adding new menus::
+* Adding contextual menus::
 * Adding tool bar buttons::
 * Binding actions to keys::
 * Defining new search patterns::
@@ -6155,6 +6156,7 @@ items yet.
 * Macro arguments::
 * Filtering actions::
 * Adding new menus::
+* Adding contextual menus::
 * Adding tool bar buttons::
 * Binding actions to keys::
 * Defining new search patterns::
@@ -6283,6 +6285,8 @@ described in later sections. This includes:
   (@pxref{Adding support for new tools})
 @item <filter>
   (@pxref{Filtering actions})
+@item <contextual>
+  (@pxref{Adding contextual menus})
 @end table
 
 @c -----------------------------------------------------------------------
@@ -6661,6 +6665,17 @@ in this command.
 This attribute specifies in which language the shell command above is written.
 Its default value indicates that the command is written using the GPS shell.
 
+@item module     (optional)
+This attribute specifies that the filter only matches if the current window
+was setup by this specific GPS module. For instance, if you specify
+"Source_Editor", this filter will only match when the active window is a source
+editor.
+
+The list of module names can be obtained by typing @code{lsmod} in the shell
+console at the bottom of the GPS window.
+
+This attribute is mostly useful when creating new contextual menus.
+
 @end table
 
 When several attributes are specified for a @code{<filter>} node (which is not
@@ -6768,12 +6783,50 @@ in "tools".
 Adding an item with an empty title or no title at all inserts a
 menu separator.
 
+@c ----------------------------------------------------------------------
+@node Adding contextual menus
+@subsection Adding contextual menus
+@cindex <contextual>
+@c ----------------------------------------------------------------------
+
+@noindent
+The actions can also be used to contribute new entries in the contextual
+menus everywhere in GPS. These menus are displayed when the user presses
+the right mouse button, and should only show actions relevant to the current
+context.
+
+Such contributions are done through the @code{<contextual>} tag, which takes
+one mandatory attribute @code{action}, which is the name of the action to
+execute, and must be defined elsewhere in one of the customization files.
+
+It accepts one child tag, @code{<Title>} which specifies the name of the
+menu entry. If this child is not specified, the menu entry will use the name
+of the action itself.
+
+The new contextual menu will only be shown if the filters associated with the
+action match the current context.
+
+For instance, the following example inserts a new contextual menu which prints
+the name of the current file in the GPS console. This contextual menu is only
+displayed in source editors.
+
+@smallexample
+<action name="print current file name" >
+   <filter module="Source_Editor" />
+   <shell>echo %f</shell>
+</action>
+
+<contextual action="print current file name" >
+   <Title>Print Current File Name</Title>
+</contextual>
+@end smallexample
 
 
 @c ----------------------------------------------------------------------
 @node Adding tool bar buttons
 @subsection Adding tool bar buttons
 @cindex tool bar
+@cindex <button>
 @c ----------------------------------------------------------------------
 
 @noindent
