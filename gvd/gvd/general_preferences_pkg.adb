@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -321,7 +321,7 @@ begin
    Set_Shadow_Type (General_Preferences.Frame3, Shadow_Etched_In);
    Add (General_Preferences.Notebook1, General_Preferences.Frame3);
 
-   Gtk_New (General_Preferences.Table3, 11, 4, False);
+   Gtk_New (General_Preferences.Table3, 8, 4, False);
    Set_Row_Spacings (General_Preferences.Table3, 2);
    Set_Col_Spacings (General_Preferences.Table3, 2);
    Add (General_Preferences.Frame3, General_Preferences.Table3);
@@ -337,13 +337,7 @@ begin
 
    Gtk_New (General_Preferences.Detect_Aliases_Check, -"Detect Aliases (shared data structures)");
    Set_Active (General_Preferences.Detect_Aliases_Check, True);
-   Attach (General_Preferences.Table3, General_Preferences.Detect_Aliases_Check, 0, 4, 8, 9,
-     Expand or Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Align_Grid_Check, -"Auto-Align Displays on Nearest Grid Point");
-   Set_Active (General_Preferences.Align_Grid_Check, True);
-   Attach (General_Preferences.Table3, General_Preferences.Align_Grid_Check, 0, 4, 10, 11,
+   Attach (General_Preferences.Table3, General_Preferences.Detect_Aliases_Check, 0, 4, 7, 8,
      Expand or Fill, 0,
      0, 0);
 
@@ -388,7 +382,7 @@ begin
    Set_Padding (General_Preferences.Label88, 0, 0);
    Set_Justify (General_Preferences.Label88, Justify_Center);
    Set_Line_Wrap (General_Preferences.Label88, False);
-   Attach (General_Preferences.Table3, General_Preferences.Label88, 0, 1, 4, 5,
+   Attach (General_Preferences.Table3, General_Preferences.Label88, 0, 1, 3, 4,
      Fill, 0,
      0, 0);
 
@@ -397,7 +391,7 @@ begin
    Set_Padding (General_Preferences.Label89, 0, 0);
    Set_Justify (General_Preferences.Label89, Justify_Center);
    Set_Line_Wrap (General_Preferences.Label89, False);
-   Attach (General_Preferences.Table3, General_Preferences.Label89, 0, 1, 5, 6,
+   Attach (General_Preferences.Table3, General_Preferences.Label89, 0, 1, 4, 5,
      Fill, 0,
      0, 0);
 
@@ -406,13 +400,13 @@ begin
    Set_Padding (General_Preferences.Label90, 0, 0);
    Set_Justify (General_Preferences.Label90, Justify_Center);
    Set_Line_Wrap (General_Preferences.Label90, False);
-   Attach (General_Preferences.Table3, General_Preferences.Label90, 0, 1, 6, 7,
+   Attach (General_Preferences.Table3, General_Preferences.Label90, 0, 1, 5, 6,
      Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Hide_Big_Items_Check, -"Hide Big Items");
    Set_Active (General_Preferences.Hide_Big_Items_Check, True);
-   Attach (General_Preferences.Table3, General_Preferences.Hide_Big_Items_Check, 0, 2, 7, 8,
+   Attach (General_Preferences.Table3, General_Preferences.Hide_Big_Items_Check, 0, 2, 6, 7,
      Expand or Fill, 0,
      0, 0);
 
@@ -421,7 +415,7 @@ begin
    Set_Padding (General_Preferences.Label91, 0, 0);
    Set_Justify (General_Preferences.Label91, Justify_Center);
    Set_Line_Wrap (General_Preferences.Label91, False);
-   Attach (General_Preferences.Table3, General_Preferences.Label91, 2, 3, 7, 8,
+   Attach (General_Preferences.Table3, General_Preferences.Label91, 2, 3, 6, 7,
      Fill, 0,
      0, 0);
 
@@ -432,28 +426,22 @@ begin
    Set_Update_Policy (General_Preferences.Big_Item_Spin, Update_Always);
    Set_Value (General_Preferences.Big_Item_Spin, 150.0);
    Set_Wrap (General_Preferences.Big_Item_Spin, False);
-   Attach (General_Preferences.Table3, General_Preferences.Big_Item_Spin, 3, 4, 7, 8,
-     Expand or Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Display_Grid_Check, -"Display Grid Points");
-   Set_Active (General_Preferences.Display_Grid_Check, True);
-   Attach (General_Preferences.Table3, General_Preferences.Display_Grid_Check, 0, 4, 9, 10,
+   Attach (General_Preferences.Table3, General_Preferences.Big_Item_Spin, 3, 4, 6, 7,
      Expand or Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Title_Font_Combo);
-   Attach (General_Preferences.Table3, General_Preferences.Title_Font_Combo, 1, 4, 4, 5,
+   Attach (General_Preferences.Table3, General_Preferences.Title_Font_Combo, 1, 4, 3, 4,
      Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Value_Font_Combo);
-   Attach (General_Preferences.Table3, General_Preferences.Value_Font_Combo, 1, 4, 5, 6,
+   Attach (General_Preferences.Table3, General_Preferences.Value_Font_Combo, 1, 4, 4, 5,
      Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Type_Font_Combo);
-   Attach (General_Preferences.Table3, General_Preferences.Type_Font_Combo, 1, 4, 6, 7,
+   Attach (General_Preferences.Table3, General_Preferences.Type_Font_Combo, 1, 4, 5, 6,
      Fill, 0,
      0, 0);
 
@@ -480,24 +468,6 @@ begin
    Gtk_New (General_Preferences.Freeze_Bg_Color_Combo);
    Attach (General_Preferences.Table3, General_Preferences.Freeze_Bg_Color_Combo, 3, 4, 2, 3,
      0, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Show_Stack_Check, -"Show Call Stack");
-   Set_Active (General_Preferences.Show_Stack_Check, False);
-   Attach (General_Preferences.Table3, General_Preferences.Show_Stack_Check, 0, 4, 11, 12,
-     Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Look_3d_Check, -"3D Look");
-   Set_Active (General_Preferences.Look_3d_Check, False);
-   Attach (General_Preferences.Table3, General_Preferences.Look_3d_Check, 2, 4, 3, 4,
-     Fill, 0,
-     0, 0);
-
-   Gtk_New (General_Preferences.Separate_Data_Check, -"Separate Window");
-   Set_Active (General_Preferences.Separate_Data_Check, False);
-   Attach (General_Preferences.Table3, General_Preferences.Separate_Data_Check, 0, 2, 3, 4,
-     Fill, 0,
      0, 0);
 
    Gtk_New (General_Preferences.Label_Data, -("Data"));

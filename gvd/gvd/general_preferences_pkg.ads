@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -85,7 +85,6 @@ package General_Preferences_Pkg is
       Table3 : Gtk_Table;
       Label83 : Gtk_Label;
       Detect_Aliases_Check : Gtk_Check_Button;
-      Align_Grid_Check : Gtk_Check_Button;
       Label84 : Gtk_Label;
       Label85 : Gtk_Label;
       Label86 : Gtk_Label;
@@ -96,7 +95,6 @@ package General_Preferences_Pkg is
       Hide_Big_Items_Check : Gtk_Check_Button;
       Label91 : Gtk_Label;
       Big_Item_Spin : Gtk_Spin_Button;
-      Display_Grid_Check : Gtk_Check_Button;
       Title_Font_Combo : Gtk_Font_Combo;
       Value_Font_Combo : Gtk_Font_Combo;
       Type_Font_Combo : Gtk_Font_Combo;
@@ -105,9 +103,6 @@ package General_Preferences_Pkg is
       Thaw_Bg_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Title_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Freeze_Bg_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
-      Show_Stack_Check : Gtk_Check_Button;
-      Look_3d_Check : Gtk_Check_Button;
-      Separate_Data_Check : Gtk_Check_Button;
       Label_Data : Gtk_Label;
       Frame13 : Gtk_Frame;
       Table8 : Gtk_Table;
