@@ -33,7 +33,8 @@ package body Commands.External is
    -----------------------
 
    procedure Destroy (D : in External_Command_Access);
-   pragma Unreferenced (Destroy);
+   --  ???
+   pragma Warnings (Off, Destroy);
 
    procedure Free is new Unchecked_Deallocation
      (External_Command, External_Command_Access);
