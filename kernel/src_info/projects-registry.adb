@@ -769,6 +769,7 @@ package body Projects.Registry is
 
       Languages  : Argument_List := Get_Languages (Project);
       Languages2 : Name_Id_Array (Languages'Range);
+      Languages3 : Name_Id_Array (Languages'Range);
       Dirs      : String_Array_Access;
       Dir       : Dir_Type;
       Length    : Natural;
@@ -909,6 +910,7 @@ package body Projects.Registry is
       for L in Languages'Range loop
          Languages2 (L) := Get_String (Languages (L).all);
       end loop;
+      Languages3 := Languages2;
 
       Dirs := Source_Dirs (Project, False);
 
@@ -953,12 +955,11 @@ package body Projects.Registry is
                if Lang /= No_Name
                  and then Lang /= Name_Ada
                then
-                  Record_Source (Buffer (1 .. Length), Lang);
-                  Has_File := True;
-
                   for Index in Languages2'Range loop
                      if Languages2 (Index) = Lang then
-                        Languages2 (Index) := No_Name;
+                        Record_Source (Buffer (1 .. Length), Lang);
+                        Has_File := True;
+                        Languages3 (Index) := No_Name;
                         exit;
                      end if;
                   end loop;
@@ -977,8 +978,8 @@ package body Projects.Registry is
 
       Length := 0;
       for L in Languages2'Range loop
-         if Languages2 (L) /= No_Name
-           and then Languages2 (L) /= Name_Ada
+         if Languages3 (L) /= No_Name
+           and then Languages3 (L) /= Name_Ada
          then
             Length := Length + Languages (L)'Length + 2;
          end if;
@@ -990,8 +991,8 @@ package body Projects.Registry is
             Index : Natural := Error'First;
          begin
             for L in Languages2'Range loop
-               if Languages2 (L) /= No_Name
-                 and then Languages2 (L) /= Name_Ada
+               if Languages3 (L) /= No_Name
+                 and then Languages3 (L) /= Name_Ada
                then
                   Error (Index .. Index + Languages (L)'Length + 1) :=
                     Languages (L).all & ", ";
