@@ -82,6 +82,7 @@ with Traces;                   use Traces;
 with Variable_Editors;         use Variable_Editors;
 with String_Utils;             use String_Utils;
 with Project_Properties;       use Project_Properties;
+with Histories;                use Histories;
 
 with Prj;           use Prj;
 with Prj.Part;      use Prj.Part;
@@ -95,10 +96,20 @@ package body Project_Viewers is
 
    Me : constant Debug_Handle := Create ("Project_Viewers");
 
-   Prj_Editor_Module_ID : Module_ID;
+   type Prj_Editor_Module_Id_Record is new Module_ID_Record with record
+      Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
+   end record;
+   type Prj_Editor_Module_Id_Access is access all
+     Prj_Editor_Module_Id_Record'Class;
+
+   Prj_Editor_Module_ID : Prj_Editor_Module_Id_Access;
    --  Id for the project editor module
 
    Project_Switches_Name : constant String := "Project Switches";
+
+   Hist_Key : constant History_Key := "project_files";
+   --  Key to use in the kernel histories to store the most recently opened
+   --  files.
 
    type View_Display is access procedure
      (Viewer    : access Project_Viewer_Record'Class;
@@ -176,6 +187,13 @@ package body Project_Viewers is
       Directory : String_Id;
    end record;
    package Project_User_Data is new Row_Data (User_Data);
+
+   procedure Refresh_Reopen_Menu (Kernel : access Kernel_Handle_Record'Class);
+   --  Fill the reopen menu.
+
+   procedure On_Reopen
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Project->Reopen menu
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
@@ -441,6 +459,72 @@ package body Project_Viewers is
    procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class);
    --  Remove the selected main units.
 
+   ---------------
+   -- On_Reopen --
+   ---------------
+
+   procedure On_Reopen
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Item  : constant Gtk_Menu_Item := Gtk_Menu_Item (Widget);
+      Label : constant Gtk_Label := Gtk_Label (Get_Child (Item));
+      Filename : constant String := Get_Text (Label);
+   begin
+      Change_Dir (Dir_Name (Filename));
+      Load_Project (Kernel, Filename);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Reopen;
+
+   -------------------------
+   -- Refresh_Reopen_Menu --
+   -------------------------
+
+   procedure Refresh_Reopen_Menu
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Value       : constant String_List_Access := Get_History
+        (Get_History (Kernel), Hist_Key);
+      Reopen_Menu : Gtk_Menu;
+      Mitem       : Gtk_Menu_Item;
+   begin
+      if Get_Submenu (Prj_Editor_Module_ID.Reopen_Menu) /= null then
+         Remove_Submenu (Prj_Editor_Module_ID.Reopen_Menu);
+      end if;
+
+      Gtk_New (Reopen_Menu);
+      Set_Submenu (Prj_Editor_Module_ID.Reopen_Menu, Gtk_Widget (Reopen_Menu));
+
+      if Value /= null then
+         for V in Value'Range loop
+            Gtk_New (Mitem, Value (V).all);
+            Append (Reopen_Menu, Mitem);
+
+            Kernel_Callback.Connect
+              (Mitem,
+               "activate",
+               Kernel_Callback.To_Marshaller (On_Reopen'Access),
+               Kernel_Handle (Kernel));
+         end loop;
+
+         Show_All (Reopen_Menu);
+      end if;
+   end Refresh_Reopen_Menu;
+
+   -------------------
+   -- Add_To_Reopen --
+   -------------------
+
+   procedure Add_To_Reopen
+     (Kernel : access Kernel_Handle_Record'Class;
+      Filename : String) is
+   begin
+      Add_To_History (Kernel, Hist_Key, Filename);
+      Refresh_Reopen_Menu (Kernel);
+   end Add_To_Reopen;
+
    -------------------------
    -- Find_In_Source_Dirs --
    -------------------------
@@ -656,7 +740,8 @@ package body Project_Viewers is
 
             File := new File_Selection_Context;
             Set_Context_Information
-              (File, Kernel => V.Kernel, Creator => Prj_Editor_Module_ID);
+              (File, Kernel => V.Kernel,
+               Creator => Module_ID (Prj_Editor_Module_ID));
             Set_File_Information
               (File,
                Directory    => Get_String (User.Directory),
@@ -799,7 +884,7 @@ package body Project_Viewers is
         (Kernel          => Kernel,
          Event_On_Widget => Viewer,
          Object          => Viewer,
-         ID              => Prj_Editor_Module_ID,
+         ID              => Module_ID (Prj_Editor_Module_ID),
          Context_Func    => Project_Editor_Context_Factory'Access);
 
       Viewer.Kernel := Kernel_Handle (Kernel);
@@ -2339,22 +2424,30 @@ package body Project_Viewers is
    is
       Project : constant String := '/' & (-"Project");
    begin
+      Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
       Register_Module
-        (Module                  => Prj_Editor_Module_ID,
+        (Module                  => Module_ID (Prj_Editor_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => Project_Editor_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Project_Editor_Contextual'Access);
 
-      Register_Menu
-        (Kernel, Project, -"New...", "",
-         On_New_Project'Access, Ref_Item => -"Open...");
+      Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
+                     Add_Before => False);
+
+      Register_Menu (Kernel, Project, -"New...", "", On_New_Project'Access);
+
+      Prj_Editor_Module_ID.Reopen_Menu := Register_Menu
+        (Kernel, Project, -"Reopen", "",
+         null, Ref_Item => -"Open...", Add_Before => False);
+      Refresh_Reopen_Menu (Kernel);
+
       Register_Menu
         (Kernel, Project, -"Edit Switches", "",
-         On_Edit_Switches'Access, Ref_Item => -"Open...", Add_Before => False);
+         On_Edit_Switches'Access, Ref_Item => -"Reopen", Add_Before => False);
       Register_Menu
         (Kernel, Project, -"Edit Properties", "",
-         On_Project_Properties'Access, Ref_Item => -"Open...",
+         On_Project_Properties'Access, Ref_Item => -"Reopen",
          Add_Before => False);
       Register_Menu
         (Kernel, Project, -"Save All", "",
