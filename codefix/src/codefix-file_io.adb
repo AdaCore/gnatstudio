@@ -186,6 +186,15 @@ package body Codefix.File_Io is
       Close (Current_File);
    end Update;
 
+   --------------
+   -- Line_Max --
+   --------------
+
+   function Line_Max (This : File_Interface) return Natural is
+   begin
+      return Length (This.Content);
+   end Line_Max;
+
    ----------
    -- Free --
    ----------
