@@ -1385,7 +1385,7 @@ package body Project_Viewers is
                (On_Add_Dependency_From_Wizard'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, -"From file...");
+            Gtk_New (Item, -"From project file...");
             Add (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
