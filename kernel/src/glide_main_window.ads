@@ -6,7 +6,8 @@ package Glide_Main_Window is
 
    type Glide_Window_Record is new GVD.Main_Window.GVD_Main_Window_Record with
    record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel      : Glide_Kernel.Kernel_Handle;
+      Interrupted : Boolean := False;
    end record;
    type Glide_Window is access all Glide_Window_Record'Class;
 
