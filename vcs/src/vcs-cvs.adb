@@ -1273,7 +1273,7 @@ package body VCS.CVS is
             Rev_Index := S'First;
             Skip_To_Char (S, Rev_Index, '(');
             Create
-              (Command, Kernel,
+              (Command, -"query log", Kernel,
                "vcs_log "
                & String_List.Head (Head)
                & " "
