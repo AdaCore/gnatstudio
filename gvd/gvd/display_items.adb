@@ -513,6 +513,12 @@ package body Display_Items is
         and then Gint (Get_Y (Event)) > Spacing
         and then Gint (Get_Y (Event)) <= Spacing + Buttons_Size
       then
+         if Is_On_Top (Item.Debugger.Data_Canvas, Item) then
+            Lower_Item (Item.Debugger.Data_Canvas, Item);
+         else
+            Raise_Item (Item.Debugger.Data_Canvas, Item);
+         end if;
+
          for B in 0 .. Num_Buttons - 1 loop
             if Gint (Get_X (Event)) >= Buttons_Start
               and then Gint (Get_X (Event))
