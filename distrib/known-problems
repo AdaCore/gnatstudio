@@ -7,12 +7,6 @@ Known Problems fixed in GPS 2.0.0
               program.
   Workaround: Close the execution window before executing the second time.
 
-- CB20-010 Project wizard creates existing object directory
-  Problem:    If you select "use relative paths" in the project wizard, it
-              happens that GPS suggests the creation of the object or exec
-              directories, even though they already exist.
-  Workaround: Answer Cancel to the dialog
-
 - Pretty_Printer package generated in projects even when not used
   Problem:    The project wizard will create a Pretty_Printer package, even if
               no switch was set by the user. This creates a problem with GNAT
@@ -72,6 +66,12 @@ Known Problems fixed in GPS 2.0.0
   Problem:    If you have set the opaque mode in the preferences, and try to
               resize the windows, then GPS moves them instead.
   Workaround: Select the non-opaque mode.
+
+- CB20-010 Project wizard creates existing object directory
+  Problem:    If you select "use relative paths" in the project wizard, it
+              happens that GPS suggests the creation of the object or exec
+              directories, even though they already exist.
+  Workaround: Answer Cancel to the dialog
 
 - CB18-012 Different behavior between VCS global and contextual menus.
   Problem:    When you use the global menu VCS->Query status for all projects,

@@ -3,53 +3,57 @@ details, please see the documentation.
 
 New features in GPS 2.0.0
 
-- Add the capability to use a changelog when adding/removing files from
-  the version control system.
+- Support for custom Version Control Systems through XML files
 
-- Documentation is now provided in PDF format
+- Documentation is now provided in PDF format (which replaces PS format)
 
-- D316-008 Improved startup time with network drives if the project obeys
-  a few restrictions (see preferences)
+- D316-008 Improved startup time with network drives
 
-- Less memory used to keep the cross-references in memory
-
-- Add support for custom Version Control Systems.
+- Less memory used to compute the cross-references (e.g find all references)
 
 - Improved rendering of fonts under Linux and Solaris 8 (using libXft)
 
-- D204-015 Separator between switches and arguments can be specified in the
-  XML files
+- Python interpreter
+  Under Linux, Solaris and Windows, GPS now comes with an integrated python
+  interpreter, giving the ability to write powerful GPS extensions.
+
+- Python files recognized by source and project editors.
 
 - Speed up in block folding
 
-- Add support for casing exceptions for case insensitive languages.
+- Support for casing exceptions for case insensitive languages
 
-- Add support for global ChangeLog file. This file can be used to record
-  revision history, GPS will extract, the revision history for a file to
-  commit, from this file if present.
+- Support for global ChangeLog file. This file can be used to record
+  revision history, GPS will extract from this file the revision history for a
+  file to commit, if present.
 
-- Add function name, under the current cursor location, into the status bar.
+- Ability to enter a revision log when adding/removing files from the VCS
+
+- Display of current function name into the status bar
 
 - New menu Edit->Insert File... to insert the contents of a file in the current
   editor.
 
-- The locations view can now be sorted by category
+- The locations view can be sorted by category
   So that you can e.g. separate error messages from warnings in build output
 
-- The locations view now shows the total number of items belonging to each
+- The locations view displays the total number of items belonging to each
   category and sub-category.
 
-- Custom languages can now specify a pattern for recognizing comments
+- Custom languages can specify a regular expression for recognizing comments
+
+- D204-015 Separator between switches and arguments can be specified in the
+  XML files
 
 - C725-012 If you exit GPS while tasks are running in the background, a window
   will display these running tasks and ask for confirmation.
 
-- Customization files can now create submenus in contextual menus
+- Customization files can create submenus in contextual menus
 
 - Ability to change the default foreground and background colors in the editors
   through the preferences dialog
 
-- Callgraph now shows clickable references location
+- Callgraph displays clickable references location
 
 - CB13-017 Improved handling of C++ classes in the Entity Browser
 
@@ -57,12 +61,6 @@ New features in GPS 2.0.0
   GPS now provides via the menus 'Make->Compile all sources' and 'Make->All'
   the ability to either compile all files from the project, or to compile
   and link all main units in a given project.
-
-- Python interpreter
-  Under Linux, Solaris and Windows, GPS now comes with an integrated python
-  interpreter, giving the ability to write powerful GPS extensions.
-
-- Python files recognized by source and project editors.
 
 - Speed Column
   This column appears on the left of the editors to show an overview of the
