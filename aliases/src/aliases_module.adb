@@ -99,7 +99,7 @@ package body Aliases_Module is
      Interactive_Alias_Expansion_Command'Class;
    function Execute
      (Command : access Interactive_Alias_Expansion_Command;
-      Event   : Gdk_Event)
+      Context : Interactive_Command_Context)
       return Command_Return_Type;
 
    type Param_Record;
@@ -888,9 +888,9 @@ package body Aliases_Module is
 
    function Execute
      (Command : access Interactive_Alias_Expansion_Command;
-      Event   : Gdk_Event) return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Context);
 
       W         : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Command.Kernel);

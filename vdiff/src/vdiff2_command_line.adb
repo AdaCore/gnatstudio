@@ -35,9 +35,9 @@ package body Vdiff2_Command_Line is
 
    function Execute
      (Command : access Diff_Command_Line;
-      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-   pragma Unreferenced (Event);
+   pragma Unreferenced (Context);
    begin
       return Execute (Command);
    end Execute;
