@@ -5726,7 +5726,7 @@ Color to use for the title bar of unselected items.
 Color to use for the title bar of selected items.
 
 @item Show title bars
-If True, each window in GPS will have its own title bars, showing some 
+If True, each window in GPS will have its own title bars, showing some
 particular information (like the name of the file edited for editors), and
 some buttons to iconify, maximize or close the window. This title bar is
 highlighted when the window is the one currently selected.
@@ -8791,7 +8791,7 @@ GPS.Project.root().get_attribute_as_list ("main")
 
 @noindent
 A set of case exceptions can be declared in this file. Each case
-exception is put inside the tag @code{<word>} or @code{<substring>}. These 
+exception is put inside the tag @code{<word>} or @code{<substring>}. These
 exceptions are used by GPS to set identifiers or keywords case when
 editing case insensitive languages (except if corresponding case is
 set to Unchanged). @pxref{The Preferences Dialog}.
@@ -9598,7 +9598,7 @@ file name, and displays each in the Messages window.
 <?xml version="1.0" ?>
 <query_file>
   <action name="query file and dir">
-    <shell lang="python">list=GPS.MDI.input_dialog \ 
+    <shell lang="python">list=GPS.MDI.input_dialog \
       ("Please enter directory and file name", "Directory", "File")</shell>
     <shell lang="python">print ("Dir=" + list[0], "File=" + list[1])</shell>
     </shell>
@@ -9985,7 +9985,7 @@ The list of actions known to GPS can be found through the
 Some of the shell commands take subprograms as parameters. If you are using
 the GPS shell, this means you have to pass the name of a GPS action. If
 you are using Python, this means that you pass a subprogram,
-@xref{Subprogram parameters}. 
+@xref{Subprogram parameters}.
 
 @c ------------------------------------------------------------------------
 @node The GPS Shell
@@ -10735,7 +10735,7 @@ to convert the text file into a postscript document.
 @end ifset
 
 @c -------------------------------------------
-@node Automatically loading python files at startup 
+@node Automatically loading python files at startup
 @subsubsection Automatically loading python files at startup
 
 @noindent
