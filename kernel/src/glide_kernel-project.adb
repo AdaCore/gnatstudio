@@ -338,7 +338,11 @@ package body Glide_Kernel.Project is
         (S       : String;
          Project : Project_Id) is
       begin
-         if not Handle.Project_Is_Default then
+         if Project = No_Project then
+            Console.Insert
+              (Handle, S, Mode => Console.Error, Add_Lf => True);
+
+         elsif not Handle.Project_Is_Default then
             Console.Insert
               (Handle,
                Project_Name (Project) & ": " & S,
