@@ -373,6 +373,8 @@ package body Src_Editor_Module is
 
    procedure File_Search_Command_Handler
      (Data    : in out Callback_Data'Class; Command : String);
+   procedure Project_Search_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the source editor module (Search part)
 
    procedure Add_To_Recent_Menu
@@ -542,6 +544,67 @@ package body Src_Editor_Module is
          end loop;
       end;
    end File_Search_Command_Handler;
+
+   ------------------------------------
+   -- Project_Search_Command_Handler --
+   ------------------------------------
+
+   procedure Project_Search_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Inst   : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
+      Project   : constant Project_Type := Get_Data (Inst);
+      Context : Files_Project_Context_Access;
+
+      function Callback (Match : Match_Result) return Boolean;
+      --  Store the result of the match in Data
+
+      function Callback (Match : Match_Result) return Boolean is
+      begin
+         Set_Return_Value
+           (Data, Current_File (Context) & ':'
+            & Image (Match.Line) & ':'
+            & Image (Match.Column));
+         return True;
+      end Callback;
+
+   begin
+      Name_Parameters (Data, File_Search_Parameters);
+
+      declare
+         Pattern   : constant String  := Nth_Arg (Data, 2);
+         Casing    : constant Boolean := Nth_Arg (Data, 3, False);
+         Regexp    : constant Boolean := Nth_Arg (Data, 4, False);
+         Recursive : constant Boolean := Nth_Arg (Data, 5, True);
+      begin
+         Context := Files_From_Project_Factory
+           (Scope           => Whole,
+            All_Occurrences => True);
+         Set_File_List
+           (Context,
+            Get_Source_Files (Project, Recursive));
+         Set_Context
+           (Context,
+            Look_For => Pattern,
+            Options => (Case_Sensitive => Casing,
+                        Whole_Word     => False,
+                        Regexp         => Regexp));
+
+         Set_Return_Value_As_List (Data);
+
+         while Search
+           (Context => Context,
+            Kernel  => Kernel,
+            Callback => Callback'Unrestricted_Access)
+         loop
+            --  No need to delay, since the search is done in same process.
+            null;
+         end loop;
+      end;
+   end Project_Search_Command_Handler;
 
    --------------------------
    -- Edit_Command_Handler --
@@ -3288,8 +3351,7 @@ package body Src_Editor_Module is
          Minimum_Args => 1,
          Maximum_Args => 4,
          Class        => Get_Project_Class (Kernel),
-         Handler      => File_Search_Command_Handler'Access);
-      --  ???????????
+         Handler      => Project_Search_Command_Handler'Access);
 
       --  Register the search functions
 
