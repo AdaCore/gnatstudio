@@ -272,7 +272,8 @@ in the source editor.
 
 Using the contextual menu, select @code{Goto body of Next};
 scroll through the procedure @code{Next}, and move mouse on
-@code{Instructions.Read} at line 46, select @code{Goto body of Read}.
+@code{Instructions.Read} at line 46, click on Read, and from the
+contextual menu, select @code{Goto body of Read}.
 
 We've now navigated quite a bit through the application source code,
 which you can verify by clicking on the left arrow in the toolbar, to go
