@@ -2050,9 +2050,7 @@ package body Src_Editor_Buffer.Line_Information is
       if Color /= Null_Color then
          Set_Property (Tag, Background_Gdk_Property, Color);
       else
-         Set_Property
-           (Tag, Underline_Property,
-            Pango_Underline_Error);
+         Set_Property (Tag, Underline_Property, Pango_Underline_Error);
       end if;
 
       if New_Tag then
