@@ -1,22 +1,26 @@
 /* systty.h - System-dependent definitions for terminals.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001 ACT-Europe.
 
-This file is part of GNU Emacs.
+This file is part of GVD.
 
-GNU Emacs is free software; you can redistribute it and/or modify
+GVD is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
-GNU Emacs is distributed in the hope that it will be useful,
+GVD is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs; see the file COPYING.  If not, write to
+along with GVD; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
+
+#ifndef _SYS_TTY
+#define _SYS_TTY
 
 #ifdef HAVE_TERMIOS
 #define HAVE_TCATTR
@@ -228,31 +232,31 @@ static struct sensemode {
 
 /* Get the number of characters queued for output.  */
 
-/* EMACS_OUTQSIZE(FD, int *SIZE) stores the number of characters
+/* GVD_OUTQSIZE(FD, int *SIZE) stores the number of characters
    queued for output to the terminal FD in *SIZE, if FD is a tty.
    Returns -1 if there was an error (i.e. FD is not a tty), 0
    otherwise.  */
 #ifdef TIOCOUTQ
-#define EMACS_OUTQSIZE(fd, size) (ioctl ((fd), TIOCOUTQ, (size)))
+#define GVD_OUTQSIZE(fd, size) (ioctl ((fd), TIOCOUTQ, (size)))
 #endif
 
 #ifdef HAVE_TERMIO
 #ifdef TCOUTQ
-#undef EMACS_OUTQSIZE
-#define EMACS_OUTQSIZE(fd, size) (ioctl ((fd), TCOUTQ, (size)))
+#undef GVD_OUTQSIZE
+#define GVD_OUTQSIZE(fd, size) (ioctl ((fd), TCOUTQ, (size)))
 #endif
 #endif
 
 
 /* Manipulate a terminal's current process group.  */
 
-/* EMACS_HAVE_TTY_PGRP is true if we can get and set the tty's current
+/* GVD_HAVE_TTY_PGRP is true if we can get and set the tty's current
    controlling process group.
 
-   EMACS_GET_TTY_PGRP(int FD, int *PGID) sets *PGID the terminal FD's
+   GVD_GET_TTY_PGRP(int FD, int *PGID) sets *PGID the terminal FD's
    current process group.  Return -1 if there is an error.
 
-   EMACS_SET_TTY_PGRP(int FD, int *PGID) sets the terminal FD's
+   GVD_SET_TTY_PGRP(int FD, int *PGID) sets the terminal FD's
    current process group to *PGID.  Return -1 if there is an error.  */
 
 #ifdef HPUX
@@ -260,26 +264,26 @@ static struct sensemode {
    from the past.  */
 #else
 #ifdef TIOCGPGRP
-#define EMACS_HAVE_TTY_PGRP
+#define GVD_HAVE_TTY_PGRP
 #else
 #ifdef HAVE_TERMIOS
-#define EMACS_HAVE_TTY_PGRP
+#define GVD_HAVE_TTY_PGRP
 #endif
 #endif
 #endif
 
-#ifdef EMACS_HAVE_TTY_PGRP
+#ifdef GVD_HAVE_TTY_PGRP
 
 #if defined (HAVE_TERMIOS) && ! defined (BSD_TERMIOS)
 
-#define EMACS_GET_TTY_PGRP(fd, pgid) (*(pgid) = tcgetpgrp ((fd)))
-#define EMACS_SET_TTY_PGRP(fd, pgid) (tcsetpgrp ((fd), *(pgid)))
+#define GVD_GET_TTY_PGRP(fd, pgid) (*(pgid) = tcgetpgrp ((fd)))
+#define GVD_SET_TTY_PGRP(fd, pgid) (tcsetpgrp ((fd), *(pgid)))
 
 #else
 #ifdef TIOCSPGRP
 
-#define EMACS_GET_TTY_PGRP(fd, pgid) (ioctl ((fd), TIOCGPGRP, (pgid)))
-#define EMACS_SET_TTY_PGRP(fd, pgid) (ioctl ((fd), TIOCSPGRP, (pgid)))
+#define GVD_GET_TTY_PGRP(fd, pgid) (ioctl ((fd), TIOCGPGRP, (pgid)))
+#define GVD_SET_TTY_PGRP(fd, pgid) (ioctl ((fd), TIOCSPGRP, (pgid)))
 
 #endif
 #endif
@@ -287,68 +291,42 @@ static struct sensemode {
 #else
 
 /* Just ignore this for now and hope for the best */
-#define EMACS_GET_TTY_PGRP(fd, pgid) 0
-#define EMACS_SET_TTY_PGRP(fd, pgif) 0
+#define GVD_GET_TTY_PGRP(fd, pgid) 0
+#define GVD_SET_TTY_PGRP(fd, pgif) 0
 
 #endif
 
-/* EMACS_GETPGRP (arg) returns the process group of the process.  */
-
-#ifdef __GNU_LIBRARY__
-/* GNU libc by default defines getpgrp with no args on all systems.  */
-#if __GLIBC__  >= 2
-/* glibc-2.1 adds the BSD compatibility getpgrp function
-   if you use _BSD_SOURCE, which Emacs does on GNU/Linux systems.  */
-#if __GLIBC_MINOR__ < 1 || ! defined (__FAVOR_BSD)
-#define GETPGRP_NO_ARG
-#endif
-#else /* __GLIBC__ < 2 */
-#define GETPGRP_NO_ARG
-#endif /* __GLIBC__ < 2 */
-#else /* not __GNU_LIBRARY__ */
-#if defined (USG) && !defined (GETPGRP_NEEDS_ARG)
-#  if !defined (GETPGRP_NO_ARG)
-#    define GETPGRP_NO_ARG
-#  endif
-#endif
-#endif /* not __GNU_LIBRARY__ */
-
-#if defined (GETPGRP_NO_ARG)
-#  define EMACS_GETPGRP(x) getpgrp()
-#else
-#  define EMACS_GETPGRP(x) getpgrp(x)
-#endif /* !GETPGRP_NO_ARG */
 
 /* Manipulate a TTY's input/output processing parameters.  */
 
-/* struct emacs_tty is a structure used to hold the current tty
+/* struct gvd_tty is a structure used to hold the current tty
    parameters.  If the terminal has several structures describing its
    state, for example a struct tchars, a struct sgttyb, a struct
    tchars, a struct ltchars, and a struct pagechars, struct
-   emacs_tty should contain an element for each parameter struct
-   that Emacs may change.
+   gvd_tty should contain an element for each parameter struct
+   that Gvd may change.
 
-   EMACS_GET_TTY (int FD, struct emacs_tty *P) stores the parameters
+   GVD_GET_TTY (int FD, struct gvd_tty *P) stores the parameters
    of the tty on FD in *P.  Return zero if all's well, or -1 if we ran
    into an error we couldn't deal with.
 
-   EMACS_SET_TTY (int FD, struct emacs_tty *P, int flushp)
+   GVD_SET_TTY (int FD, struct gvd_tty *P, int flushp)
    sets the parameters of the tty on FD according to the contents of
    *P.  If flushp is non-zero, we discard queued input to be
    written before making the change.
    Return 0 if all went well, and -1 if anything failed.
 
-   EMACS_TTY_TABS_OK (struct emacs_tty *P) is false iff the kernel
+   GVD_TTY_TABS_OK (struct gvd_tty *P) is false iff the kernel
    expands tabs to spaces upon output; in that case, there is no
    advantage to using tabs over spaces.  */
 
 
-/* For each tty parameter structure that Emacs might want to save and restore,
+/* For each tty parameter structure that Gvd might want to save and restore,
    - include an element for it in this structure, and
-   - extend the emacs_{get,set}_tty functions in sysdep.c to deal with the
+   - extend the gvd_{get,set}_tty functions in sysdep.c to deal with the
      new members.  */
 
-struct emacs_tty {
+struct gvd_tty {
 
 /* There is always one of the following elements, so there is no need
    for dummy get and set definitions.  */
@@ -384,48 +362,45 @@ struct emacs_tty {
 #endif
 };
 
-/* Define EMACS_GET_TTY and EMACS_SET_TTY,
-   the macros for reading and setting parts of `struct emacs_tty'.
+/* Define GVD_GET_TTY and GVD_SET_TTY,
+   the macros for reading and setting parts of `struct gvd_tty'.
 
    These got pretty unmanageable (huge macros are hard to debug), and
    finally needed some code which couldn't be done as part of an
    expression, so we moved them out to their own functions in sysdep.c.  */
-#define EMACS_GET_TTY(fd, p)        (emacs_get_tty ((fd), (p)))
-#define EMACS_SET_TTY(fd, p, waitp) (emacs_set_tty ((fd), (p), (waitp)))
-#ifdef P_  /* Unfortunately this file is sometimes included before lisp.h */
-extern int emacs_get_tty P_ ((int, struct emacs_tty *));
-extern int emacs_set_tty P_ ((int, struct emacs_tty *, int));
-#endif
+#define GVD_GET_TTY(fd, p)        (gvd_get_tty ((fd), (p)))
+#define GVD_SET_TTY(fd, p, waitp) (gvd_set_tty ((fd), (p), (waitp)))
 
 
-/* Define EMACS_TTY_TABS_OK.  */
+/* Define GVD_TTY_TABS_OK.  */
 
 #ifdef HAVE_TERMIOS
 
 #ifdef TABDLY
-#define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
+#define GVD_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
 #else
-#define EMACS_TTY_TABS_OK(p) 1
+#define GVD_TTY_TABS_OK(p) 1
 #endif
 
 #else /* not def HAVE_TERMIOS */
 #ifdef HAVE_TERMIO
 
-#define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
+#define GVD_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
 
 #else /* neither HAVE_TERMIO nor HAVE_TERMIOS */
 #ifdef VMS
 
-#define EMACS_TTY_TABS_OK(p) (((p)->main.tt_char & TT$M_MECHTAB) != 0)
+#define GVD_TTY_TABS_OK(p) (((p)->main.tt_char & TT$M_MECHTAB) != 0)
 
 #else
 
 #ifdef DOS_NT
-#define EMACS_TTY_TABS_OK(p) 0
+#define GVD_TTY_TABS_OK(p) 0
 #else /* not DOS_NT */
-#define EMACS_TTY_TABS_OK(p) (((p)->main.sg_flags & XTABS) != XTABS)
+#define GVD_TTY_TABS_OK(p) (((p)->main.sg_flags & XTABS) != XTABS)
 #endif /* not DOS_NT */
 
 #endif /* not def VMS */
 #endif /* not def HAVE_TERMIO */
 #endif /* not def HAVE_TERMIOS */
+#endif /* _SYS_TTY */
