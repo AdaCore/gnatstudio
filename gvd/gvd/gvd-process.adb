@@ -376,20 +376,6 @@ package body GVD.Process is
 
          --  Display the file
 
-         --  Update the list of breakpoints in the editor.
-         --  If there is no breakpoint defined, we force an update (in fact,
-         --  "start" will always define such a breakpoint, and this is used to
-         --  initialize the list).
-
-         if Process.Breakpoints /= null
-           and then Process.Breakpoints'Length > 0
-         then
-            Update_Breakpoints
-              (Process.Editor_Text, Process.Breakpoints.all);
-         else
-            Update_Breakpoints (Process, Force => True);
-         end if;
-
          Load_File
            (Process.Editor_Text,
             Process.Current_Output (File_First .. File_Last));
@@ -398,6 +384,10 @@ package body GVD.Process is
       if Line /= 0 then
          Set_Line (Process.Editor_Text, Line);
       end if;
+
+      --  Change the current assembly source displayed, before updating
+      --  the breakpoints. Otherwise, they won't be correctly updated for the
+      --  newly displayed frame.
 
       if Addr_First /= 0 then
          Set_Address
@@ -413,6 +403,24 @@ package body GVD.Process is
             Highlight_Stack_Frame
               (Process,
                Integer'Value (Process.Current_Output (First .. Last)));
+         end if;
+      end if;
+
+      --  Last step is to update the breakpoints once all the rest has been
+      --  set up correctly.
+      --  If there is no breakpoint defined, we force an update (in fact,
+      --  "start" will always define such a breakpoint, and this is used to
+      --  initialize the list).
+
+      if File_First /= 0 then
+
+         if Process.Breakpoints /= null
+           and then Process.Breakpoints'Length > 0
+         then
+            Update_Breakpoints
+              (Process.Editor_Text, Process.Breakpoints.all);
+         else
+            Update_Breakpoints (Process, Force => True);
          end if;
       end if;
 
