@@ -292,6 +292,7 @@ package body VCS_View_API is
 
       List_Temp : String_List.List_Node := First (List);
       Head_Temp : String_List.List_Node := First (Head);
+      Length    : Integer := 0;
 
    begin
       if not String_List.Is_Empty (List) then
@@ -302,9 +303,37 @@ package body VCS_View_API is
       end if;
 
       while List_Temp /= Null_Node loop
-         Push_Message (Kernel, Error, Data (List_Temp));
+         declare
+            S : String := Data (List_Temp);
+         begin
+            Push_Message (Kernel, Error, S);
+            Length := Length + S'Length;
+         end;
+
          List_Temp := Next (List_Temp);
       end loop;
+
+      if Length /= 0 then
+         declare
+            S : String (1 .. Length);
+         begin
+            Length := 1;
+            List_Temp := First (List);
+
+            while List_Temp /= Null_Node loop
+               declare
+                  D : String := Data (List_Temp);
+               begin
+                  S (Length .. Length - 1 + D'Length) := D;
+                  Length := Length + D'Length;
+               end;
+
+               List_Temp := Next (List_Temp);
+            end loop;
+
+            Parse_File_Locations (Kernel, S, -"Style/Log Check");
+         end;
+      end if;
 
       return String_List.Is_Empty (List);
    end Check_Handler;
