@@ -901,6 +901,9 @@ package body Src_Editor_View is
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
+
+      use GVD;
+
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
       --  until the widget is realize or mapped. Their initialization is thus
@@ -976,7 +979,7 @@ package body Src_Editor_View is
          View,
          After => False);
 
-      if GVD.Host = GVD.Windows then
+      if Host = Windows then
          --  ??? Under Windows, a click does not refresh the entire area as it
          --  does under X. We need it to properly redraw current line and
          --  current block, therefore we do it manually.
