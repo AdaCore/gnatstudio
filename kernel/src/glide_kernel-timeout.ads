@@ -60,6 +60,7 @@ package Glide_Kernel.Timeout is
       Callback      : Output_Callback := null;
       Exit_Cb       : Exit_Callback := null;
       Success       : out Boolean;
+      Show_Command  : Boolean := True;
       Callback_Data : System.Address := System.Null_Address);
    --  Launch a given command with arguments.
    --  Set Success to True if the command could be spawned.
@@ -70,5 +71,7 @@ package Glide_Kernel.Timeout is
    --  Output is sent to Console, if not null, or discarded otherwise.
    --  Check Glide_Kernel.Console.Create_Interactive_Console and
    --  Glide_Kernel.Console.Get_Console.
+   --  If Show_Command is True and the output is displayed, the command
+   --  itself is displayed in the console.
 
 end Glide_Kernel.Timeout;

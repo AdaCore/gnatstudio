@@ -208,6 +208,7 @@ package body Glide_Kernel.Timeout is
       Callback      : Output_Callback := null;
       Exit_Cb       : Exit_Callback := null;
       Success       : out Boolean;
+      Show_Command  : Boolean := True;
       Callback_Data : System.Address := System.Null_Address)
    is
       Timeout : constant Guint32 := 50;
@@ -239,7 +240,7 @@ package body Glide_Kernel.Timeout is
             return;
          end if;
 
-         if Data.Console /= null then
+         if Data.Console /= null and then Show_Command then
             Insert (Data.Console, Command, Add_LF => False);
             for J in Arguments'Range loop
                Insert
