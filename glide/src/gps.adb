@@ -45,6 +45,7 @@ with Language.C;                use Language.C;
 with Language.Cpp;              use Language.Cpp;
 with Prj;                       use Prj;
 with Src_Info;                  use Src_Info;
+with Traces;                    use Traces;
 
 --  Modules registered by Glide.
 with Aunit_Module;
@@ -69,6 +70,8 @@ with Src_Info.ALI;
 
 procedure Glide2 is
    use Glide_Main_Window;
+
+   Me : Debug_Handle := Create ("Glide2");
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
@@ -170,8 +173,10 @@ begin
    Maximize (Glide);
 
    declare
-      Rc : constant String := Format_Pathname (Prefix.all & "/bin/gtkrc");
+      Rc : constant String :=
+        String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
    begin
+      Trace (Me, "Parsing RC file " & Rc);
       if Is_Regular_File (Rc) then
          Gtk.Rc.Parse (Rc);
       end if;
@@ -320,6 +325,8 @@ begin
 
    Gtk.Main.Main;
 
+   Trace (Me, "Saving preferences in "
+          & String_Utils.Name_As_Directory (Dir.all) & "preferences");
    Save_Preferences
      (Glide.Kernel,
       String_Utils.Name_As_Directory (Dir.all) & "preferences");
