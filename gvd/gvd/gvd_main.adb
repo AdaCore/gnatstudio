@@ -73,6 +73,7 @@ procedure GVD_Main is
    Target            : String_Access := new String' ("");
    Protocol          : String_Access := new String' ("");
    Debuggee_Name     : String_Access;
+   Lang              : Language_Access;
 
    procedure Init;
    --  Set up environment for GVD.
@@ -154,12 +155,19 @@ procedure GVD_Main is
       --  explicit registration.
       --  ??? If we want to support modules, we can not register an explicit
       --  instance. We need to rely on each module for registration.
-      Add_File_Extension (new Ada_Language, "\.adb$");
-      Add_File_Extension (new Ada_Language, "\.ads$");
-      Add_File_Extension (new C_Language, "\.c$");
-      Add_File_Extension (new C_Language, "\.h$");
-      Add_File_Extension (new Cpp_Language, "\.cc$");
-      Add_File_Extension (new Cpp_Language, "\.hh$");
+      Lang := new Ada_Language;
+      Add_File_Extension (Lang, "\.ada$");
+      Add_File_Extension (Lang, "\.a$");
+      Add_File_Extension (Lang, "\.adb$");
+      Add_File_Extension (Lang, "\.ads$");
+      Lang := new C_Language;
+      Add_File_Extension (Lang, "\.c$");
+      Add_File_Extension (Lang, "\.h$");
+      Lang := new Cpp_Language;
+      Add_File_Extension (Lang, "\.cc$");
+      Add_File_Extension (Lang, "\.C$");
+      Add_File_Extension (Lang, "\.hh$");
+      Add_File_Extension (Lang, "\.H$");
    end Init;
 
    function Format (Str : String; Columns : Positive) return String is
