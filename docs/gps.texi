@@ -204,10 +204,10 @@ Adding support for new tools
 Executing external tools
 * Chaining commands::
 * Saving open windows::
-* Querying switches from the project::
+* Querying project switches::
 * Querying switches interactively::
-* Redirecting the output of the command::
-* Processing the output of the tool::
+* Redirecting the command output::
+* Processing the tool output::
 
 Environment
 * Command Line Options::
@@ -6321,7 +6321,7 @@ although it is recommended to avoid XML special characters.
 If specified, this attribute indicates where the output of the commands will
 be sent by default. This can be overriden by each command, using the same
 attribute for @code{<shell>} and @code{<external>} tags,
-@xref{Redirecting the output of the command}.
+@xref{Redirecting the command output}.
 @end table
 
 The @code{<action>} can have one or
@@ -7718,10 +7718,10 @@ for "'gnaty3", one for "-gnatya",@dots{}.
 @menu
 * Chaining commands::
 * Saving open windows::
-* Querying switches from the project::
+* Querying project switches::
 * Querying switches interactively::
-* Redirecting the output of the command::
-* Processing the output of the tool::
+* Redirecting the command output::
+* Processing the tool output::
 @end menu
 
 @noindent
@@ -7815,8 +7815,8 @@ simply put it in its own @code{<shell>} command, as in:
 
 
 @c --------------------------------------------------------------------------
-@node Querying switches from the project
-@subsubsection Querying switches from the project
+@node Querying project switches
+@subsubsection Querying project switches
 @cindex get_tool_switches_as_string
 @cindex get_tool_switches_as_list
 @cindex get_attribute_as_string
@@ -7921,8 +7921,8 @@ file name, and displays each in the Messages window.
 @end ifset
 
 @c --------------------------------------------------------------------------
-@node Redirecting the output of the command
-@subsubsection Redirecting the output of the command
+@node Redirecting the command output
+@subsubsection Redirecting the command output
 @cindex output
 @c --------------------------------------------------------------------------
 
@@ -7963,8 +7963,8 @@ will always be the empty string, i.e. output is sent to the GPS console.
 @end smallexample
 
 @c --------------------------------------------------------------------------
-@node Processing the output of the tool
-@subsubsection Processing the output of the tool
+@node Processing the tool output
+@subsubsection Processing the tool output
 @c --------------------------------------------------------------------------
 
 @noindent
