@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Language;                  use Language;
@@ -30,7 +29,6 @@ with Language.Ada;              use Language.Ada;
 package body Texi_Output is
 
    package TEL renames Type_Entity_List;
-   package ASU renames Ada.Strings.Unbounded;
 
    procedure Doc_TEXI_Create
      (File   : in Ada.Text_IO.File_Type;
@@ -564,7 +562,8 @@ package body Texi_Output is
                   then
                      --  if entity a subprogram and a link should and can be
                      --  set => creat link to body
-                     if not Is_Body and TEL.Data (Entity_Node).File_Found and
+                     if not Is_Body and
+                       TEL.Data (Entity_Node).Line_In_Body > 0 and
                        (TEL.Data (Entity_Node).Kind = Procedure_Entity or
                           TEL.Data (Entity_Node).Kind = Function_Entity) then
                         declare
@@ -743,21 +742,12 @@ package body Texi_Output is
    ------------------------
 
    function Get_TEXI_File_Name
-     (File : String) return String
-   is
-      TEXI_File : ASU.Unbounded_String;
+     (File : String) return String is
    begin
-      TEXI_File := ASU.To_Unbounded_String (File_Name (File));
       if File_Extension (File) = ".ads" then
-         return ASU.To_String
-           ((ASU.Replace_Slice (TEXI_File,
-                               ASU.Index (TEXI_File, "."),
-                               ASU.Index (TEXI_File, ".") + 3, "_ads.texi")));
+         return File (File'First .. File'Last - 4) & "_ads.texi";
       else
-         return ASU.To_String
-           ((ASU.Replace_Slice (TEXI_File,
-                               ASU.Index (TEXI_File, "."),
-                               ASU.Index (TEXI_File, ".") + 3, "_adb.texi")));
+         return File (File'First .. File'Last - 4) & "_adb.texi";
       end if;
    end Get_TEXI_File_Name;
 
