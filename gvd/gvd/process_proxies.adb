@@ -25,6 +25,7 @@ with Gtk.Main;              use Gtk.Main;
 with System;                use System;
 with Unchecked_Conversion;
 with Unchecked_Deallocation;
+with Odd.Types;             use Odd.Types;
 
 package body Process_Proxies is
 
@@ -271,16 +272,6 @@ package body Process_Proxies is
    end Wait;
 
    -------------------------
-   -- Is_Internal_Command --
-   -------------------------
-
-   function Is_Internal_Command
-     (Proxy : access Process_Proxy) return Boolean is
-   begin
-      return Proxy.Internal_Command_Stack (Proxy.Internal_Command);
-   end Is_Internal_Command;
-
-   -------------------------
    -- Set_Parse_File_Name --
    -------------------------
 
@@ -301,32 +292,26 @@ package body Process_Proxies is
       return Proxy.Parse_File_Name;
    end Get_Parse_File_Name;
 
-   ----------------------------------
-   -- Push_Internal_Command_Status --
-   ----------------------------------
+   ----------------------
+   -- Get_Command_Mode --
+   ----------------------
 
-   procedure Push_Internal_Command_Status
-     (Proxy       : access Process_Proxy;
-      Is_Internal : Boolean) is
+   function Get_Command_Mode (Proxy : access Process_Proxy)
+                             return Command_Type is
    begin
-      if Proxy.Internal_Command = Internal_Status_Stack_Size then
-         raise Internal_Command_Status_Stack_Overflow;
-      end if;
+      return Proxy.Internal_Mode;
+   end Get_Command_Mode;
 
-      Proxy.Internal_Command := Proxy.Internal_Command + 1;
-      Proxy.Internal_Command_Stack (Proxy.Internal_Command) := Is_Internal;
-   end Push_Internal_Command_Status;
+   ----------------------
+   -- Set_Command_Mode --
+   ----------------------
 
-   ---------------------------------
-   -- Pop_Internal_Command_Status --
-   ---------------------------------
-
-   procedure Pop_Internal_Command_Status (Proxy : access Process_Proxy) is
+   procedure Set_Command_Mode
+     (Proxy : access Process_Proxy;
+      Mode  : Command_Type) is
    begin
-      --  Constraint_Error will be raised if we are trying to pop too many
-      --  values.
-      Proxy.Internal_Command := Proxy.Internal_Command - 1;
-   end Pop_Internal_Command_Status;
+      Proxy.Internal_Mode := Mode;
+   end Set_Command_Mode;
 
    ----------------
    -- TTY_Filter --
@@ -340,7 +325,7 @@ package body Process_Proxies is
       function To_Proxy is new Unchecked_Conversion
         (System.Address, Process_Proxy_Access);
    begin
-      if not Is_Internal_Command (To_Proxy (Proxy)) then
+      if Get_Command_Mode (To_Proxy (Proxy)) /= Internal then
          Put (Str);
       end if;
    end TTY_Filter;

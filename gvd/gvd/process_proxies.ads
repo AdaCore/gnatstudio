@@ -21,12 +21,9 @@
 with System;
 with GNAT.Expect;
 with GNAT.Regpat;
+with Odd.Types;
 
 package Process_Proxies is
-
-   Internal_Status_Stack_Size : constant := 20;
-   --  Number of successive Push_Internal_Command_Status calls that can be
-   --  emitted.
 
    type Process_Proxy is tagged private;
    type Process_Proxy_Access is access all Process_Proxy'Class;
@@ -45,27 +42,15 @@ package Process_Proxies is
    --  the external debugger can process a single command at a time, the
    --  callback should not do anything.
 
-   function Is_Internal_Command (Proxy : access Process_Proxy) return Boolean;
+   function Get_Command_Mode (Proxy : access Process_Proxy)
+      return Odd.Types.Command_Type;
    --  Return True if the external process is currently process some commands
-   --  internally (ie that was not sent by the user, and whose output should
-   --  be hidden).
+   --  internally (ie whose output should be hidden).
 
-   procedure Push_Internal_Command_Status
-     (Proxy       : access Process_Proxy;
-      Is_Internal : Boolean);
-   --  Set a new internal status for the following commands, and save the
-   --  previous value. If you are trying to call this function more than
-   --  Internal_Status_Stack_Size times (without an Pop_Internal_Command_Status
-   --  in between), an exception Internal_Command_Status_Stack_Overflow is
-   --  emitted.
-   --  The default behavior is False, so as to show as much output as
-   --  possible from the debugger.
-   --  The new value remains active until this function is called again or
-   --  Pop_Internal_Command_Status is called.
-
-   procedure Pop_Internal_Command_Status (Proxy : access Process_Proxy);
-   --  Go back to status preceeding the last call to
-   --  Push_Internal_Command_Status.
+   procedure Set_Command_Mode
+     (Proxy : access Process_Proxy;
+      Mode  : Odd.Types.Command_Type);
+   --  Save the type of the command currently processed.
 
    procedure Set_Parse_File_Name
      (Proxy : access Process_Proxy;
@@ -189,14 +174,9 @@ package Process_Proxies is
    -- Exceptions --
    ----------------
 
-   Internal_Command_Status_Stack_Overflow : exception;
-
 private
 
    type Boolean_Access is access Boolean;
-   type Boolean_Array is array (1 .. Internal_Status_Stack_Size) of
-     Boolean;
-   pragma Pack (Boolean_Array);
 
    type Post_Process_Record;
    type Post_Process_Access is access Post_Process_Record;
@@ -214,10 +194,9 @@ private
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.
 
-      Internal_Command_Stack : Boolean_Array := (others => False);
-      Internal_Command   : Positive := 1;
-      --  Stack of internal command status. Internal_Command is an index to
-      --  the current status;
+      Internal_Mode   : Odd.Types.Command_Type := Odd.Types.Hidden;
+      --  Indicates whether the current output from the debugger should be
+      --  displayed in the output window
 
       Parse_File_Name    : Boolean := True;
       --  True if file name/lines patterns should be recognized in the output
