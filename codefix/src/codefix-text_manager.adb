@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;        use Ada.Exceptions;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Regpat;           use GNAT.Regpat;
@@ -27,6 +26,8 @@ with GNAT.Case_Util;        use GNAT.Case_Util;
 
 with Basic_Types;           use Basic_Types;
 with String_Utils;          use String_Utils;
+
+with Codefix.Merge_Utils; use Codefix.Merge_Utils;
 
 package body Codefix.Text_Manager is
 
@@ -499,7 +500,7 @@ package body Codefix.Text_Manager is
    end Line_Length;
 
    ------------
-   -- Update --
+   -- Commit --
    ------------
 
    procedure Commit (This : Text_Navigator_Abstr) is
@@ -1241,9 +1242,19 @@ package body Codefix.Text_Manager is
    begin
       return Left.Cursor = Right.Cursor
         and then Left.Context = Right.Context
-        and then (Left.Context = Line_Deleted
-                  or else Left.Content.all = Right.Content.all);
+        and then (Left.Context = Unit_Deleted
+                  or else To_String (Left.Content) =
+                    To_String (Right.Content));
    end "=";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left, Right : Ptr_Extract_Line) return Boolean is
+   begin
+      return Left.Cursor < Right.Cursor;
+   end "<";
 
    ------------
    -- Assign --
@@ -1275,7 +1286,7 @@ package body Codefix.Text_Manager is
    -- Get_Context --
    -----------------
 
-   function Get_Context (This : Extract_Line) return Line_Context is
+   function Get_Context (This : Extract_Line) return Merge_Info is
    begin
       return This.Context;
    end Get_Context;
@@ -1283,6 +1294,11 @@ package body Codefix.Text_Manager is
    ----------
    -- Next --
    ----------
+
+   function Next (This : Ptr_Extract_Line) return Ptr_Extract_Line is
+   begin
+      return This.Next;
+   end Next;
 
    function Next (This : Extract_Line) return Ptr_Extract_Line is
    begin
@@ -1295,7 +1311,7 @@ package body Codefix.Text_Manager is
 
    function Get_String (This : Extract_Line) return String is
    begin
-      return This.Content.all;
+      return To_String (This.Content);
    end Get_String;
 
    ----------------
@@ -1321,29 +1337,70 @@ package body Codefix.Text_Manager is
    end Length;
 
    ------------
-   -- Update --
+   -- Commit --
    ------------
 
    procedure Commit
      (This         : Extract_Line;
-      Current_Text : in out Text_Navigator_Abstr'Class) is
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+
+      procedure Commit_Modified_Line;
+
+      procedure Commit_Modified_Line is
+         It      : Mask_Iterator;
+         Len     : Natural;
+         Cursor  : File_Cursor := This.Cursor;
+         Info    : Merge_Info;
+         Content : constant String := Get_String (This);
+      begin
+         Reset (It);
+
+         loop
+            Get_Next_Area (This.Content, It, Cursor.Col, Len, Info);
+
+            exit when Len = 0;
+
+            case Info is
+               when Unit_Modified =>
+                  Replace
+                    (Current_Text,
+                     Cursor,
+                     Len,
+                     Content (Cursor.Col .. Cursor.Col + Len - 1));
+               when Unit_Created =>
+                  Replace
+                    (Current_Text,
+                     Cursor,
+                     0,
+                     Content (Cursor.Col .. Cursor.Col + Len - 1));
+               when Unit_Deleted =>
+                  Replace
+                    (Current_Text,
+                     Cursor,
+                     Len,
+                     "");
+               when Original_Unit =>
+                  null;
+            end case;
+         end loop;
+      end Commit_Modified_Line;
+
    begin
       case This.Context is
-         when Line_Created =>
+         when Unit_Created =>
             Add_Line
               (Current_Text,
                This.Cursor,
-               This.Content.all);
-         when Line_Deleted =>
+               To_String (This.Content));
+         when Unit_Deleted =>
             Delete_Line
               (Current_Text,
                This.Cursor);
-         when others =>
-            Replace
-              (Current_Text,
-               This.Cursor,
-               This.Original_Length,
-               This.Content.all);
+         when Unit_Modified =>
+            Commit_Modified_Line;
+         when Original_Unit =>
+            null;
       end case;
    end Commit;
 
@@ -1359,7 +1416,7 @@ package body Codefix.Text_Manager is
    begin
 
       New_Line.Cursor := Clone (New_Line.Cursor);
-      New_Line.Content := new String'(New_Line.Content.all);
+      New_Line.Content := Clone (New_Line.Content);
 
       if Recursive and then New_Line.Next /= null then
          New_Line.Next := new Extract_Line'(Clone (New_Line.Next.all, True));
@@ -1368,6 +1425,15 @@ package body Codefix.Text_Manager is
       end if;
 
       return New_Line;
+   end Clone;
+
+   -----------
+   -- Clone --
+   -----------
+
+   function Clone (This : Extract_Line) return Extract_Line is
+   begin
+      return Clone (This, False);
    end Clone;
 
    ---------------------
@@ -1381,7 +1447,7 @@ package body Codefix.Text_Manager is
    is
       Matches    : Match_Array (0 .. 1);
       Matcher    : constant Pattern_Matcher := Compile (Format);
-      Str_Parsed : constant String := This.Content.all;
+      Str_Parsed : constant String := To_String (This.Content);
 
    begin
       Match (Matcher, Str_Parsed (Col .. Str_Parsed'Last), Matches);
@@ -1410,19 +1476,20 @@ package body Codefix.Text_Manager is
    is
       pragma Unreferenced (Skip_Strings);
 
-      Result : File_Cursor := File_Cursor (Cursor);
+      Result  : File_Cursor := File_Cursor (Cursor);
+      Content : constant String := To_String (This.Content);
 
    begin
       if Result.Col = 0 then
-         Result.Col := This.Content'Last;
+         Result.Col := To_String (This.Content)'Last;
       end if;
 
       case Step is
          when Normal_Step =>
-            for J in Result.Col .. This.Content'Last - Searched'Last + 1 loop
-               if This.Content (J .. J + Searched'Last - 1) = Searched
+            for J in Result.Col .. Content'Last - Searched'Last + 1 loop
+               if Content (J .. J + Searched'Last - 1) = Searched
                  and then (not Skip_Comments
-                           or else not Is_In_Comment (This.Content.all, J))
+                           or else not Is_In_Comment (Content, J))
                then
                   Result.Col := J;
                   return Result;
@@ -1430,12 +1497,12 @@ package body Codefix.Text_Manager is
             end loop;
 
          when Reverse_Step =>
-            for J in reverse This.Content'First ..
+            for J in reverse Content'First ..
               Result.Col - Searched'Last + 1
             loop
-               if This.Content (J .. J + Searched'Last - 1) = Searched
+               if Content (J .. J + Searched'Last - 1) = Searched
                  and then (not Skip_Comments
-                           or else not Is_In_Comment (This.Content.all, J))
+                           or else not Is_In_Comment (Content, J))
                then
                   Result.Col := J;
                   return Result;
@@ -1457,10 +1524,10 @@ package body Codefix.Text_Manager is
       Destination : in out Extract_Line) is
    begin
       Destination :=
-        (Context         => Original_Line,
+        (Context         => Original_Unit,
          Cursor          => Clone (Cursor),
          Original_Length => Len,
-         Content         => new String'(Get (This, Cursor, Len)),
+         Content         => To_Mergable_String (Get (This, Cursor, Len)),
          Next            => null,
          Coloration      => True);
    end Get;
@@ -1479,12 +1546,13 @@ package body Codefix.Text_Manager is
    begin
       Str := new String'(Get_Line (This, Cursor));
       Destination :=
-        (Context         => Original_Line,
+        (Context         => Original_Unit,
          Cursor          => File_Cursor (Cursor),
          Original_Length => Str.all'Last,
-         Content         => Str,
+         Content         => To_Mergable_String (Str.all),
          Next            => null,
          Coloration      => True);
+      Free (Str);
    end Get_Line;
 
    --------------
@@ -1501,10 +1569,10 @@ package body Codefix.Text_Manager is
    begin
       Str := new String'(Get_Line (This, Cursor));
       Destination :=
-        (Context         => Original_Line,
+        (Context         => Original_Unit,
          Cursor          => Clone (Cursor),
          Original_Length => Str'Last,
-         Content         => Str,
+         Content         => To_Mergable_String (Str.all),
          Next            => null,
          Coloration      => True);
    end Get_Line;
@@ -1518,8 +1586,8 @@ package body Codefix.Text_Manager is
    is
       pragma Unreferenced (Detail);
    begin
-      if This.Context /= Line_Deleted then
-         return This.Content.all;
+      if This.Context /= Unit_Deleted then
+         return To_String (This.Content);
       else
          return "";
       end if;
@@ -1537,7 +1605,7 @@ package body Codefix.Text_Manager is
 
    begin
       case This.Context is
-         when Original_Line | Line_Modified =>
+         when Original_Unit | Unit_Modified =>
             --  Simplifier l'appel de GET pour n'avoir qu'une ligne et pas
             --  un extrait
             Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
@@ -1551,9 +1619,9 @@ package body Codefix.Text_Manager is
                return Res;
             end;
 
-         when Line_Created =>
+         when Unit_Created =>
             null;
-         when Line_Deleted =>
+         when Unit_Deleted =>
             Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
 
             declare
@@ -1634,7 +1702,7 @@ package body Codefix.Text_Manager is
       if Prev = null then
 
          for I in 1 .. Size loop
-            if Current_Line.Context /= Line_Created then
+            if Current_Line.Context /= Unit_Created then
                Line_Cursor.Line := Line_Cursor.Line - 1;
             end if;
 
@@ -1649,7 +1717,7 @@ package body Codefix.Text_Manager is
       else
 
          for I in 1 .. Size loop
-            if Current_Line.Context /= Line_Created then
+            if Current_Line.Context /= Unit_Created then
                Line_Cursor.Line := Line_Cursor.Line - 1;
             end if;
 
@@ -1737,36 +1805,19 @@ package body Codefix.Text_Manager is
 
    end Extend_After;
 
-   ----------------
-   -- Set_String --
-   ----------------
+   -------------
+   -- Replace --
+   -------------
 
-   procedure Set_String
-     (This        : in out Extract_Line;
-      New_String  : String;
-      First, Last : Natural := 0)
-   is
-      First_Used, Last_Used : Natural;
+   procedure Replace
+     (This       : in out Extract_Line;
+      Start, Len : Natural;
+      New_String : String) is
    begin
-      if First = 0 then
-         First_Used := 1;
-      else
-         First_Used := First;
-      end if;
+      This.Context := Unit_Modified;
 
-      if Last = 0 then
-         Last_Used := This.Content'Last;
-      else
-         Last_Used := Last;
-      end if;
-
-      This.Context := Line_Modified;
-      Assign
-        (This.Content, This.Content (This.Content'First .. First_Used - 1) &
-           New_String &
-             This.Content
-               (This.Content'First + Last_Used .. This.Content'Last));
-   end Set_String;
+      Replace (This.Content, Start, Len, New_String);
+   end Replace;
 
    --------------------
    -- Set_Coloration --
@@ -1818,6 +1869,30 @@ package body Codefix.Text_Manager is
          return Get_Line (This.Next, Cursor);
       end if;
    end Get_Line;
+
+   procedure Merge_Lines
+     (Result              : out Extract_Line;
+      Object_1, Object_2  : Extract_Line;
+      Success             : out Boolean;
+      Chronologic_Changes : Boolean) is
+   begin
+      Merge_String
+        (Result.Content,
+         Object_1.Content,
+         Object_2.Content,
+         Success,
+         Chronologic_Changes);
+   end Merge_Lines;
+
+   function Data (This : Ptr_Extract_Line) return Extract_Line is
+   begin
+      return This.all;
+   end Data;
+
+   function Is_Null (This : Ptr_Extract_Line) return Boolean is
+   begin
+      return This = null;
+   end Is_Null;
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -1878,10 +1953,10 @@ package body Codefix.Text_Manager is
       Add_Element
         (Destination,
          new Extract_Line'
-           (Context         => Original_Line,
+           (Context         => Original_Unit,
             Cursor          => File_Cursor (Clone (Cursor)),
             Original_Length => Len,
-            Content         => new String'(Get (This, Cursor, Len)),
+            Content         => To_Mergable_String (Get (This, Cursor, Len)),
             Next            => null,
             Coloration      => True));
    end Get;
@@ -1900,10 +1975,10 @@ package body Codefix.Text_Manager is
       Add_Element
         (Destination,
          new Extract_Line'
-           (Context         => Original_Line,
+           (Context         => Original_Unit,
             Cursor          => Clone (Cursor),
             Original_Length => Str'Length,
-            Content         => new String'(Str),
+            Content         => To_Mergable_String (Str),
             Next            => null,
             Coloration      => True));
    end Get_Line;
@@ -1922,27 +1997,28 @@ package body Codefix.Text_Manager is
          Current_Extract := Current_Extract.Next;
       end loop;
 
-      return Current_Extract.Content.all;
+      return To_String (Current_Extract.Content);
    end Get_String;
 
-   ----------------
-   -- Set_String --
-   ----------------
+   -------------
+   -- Replace --
+   -------------
 
-   procedure Set_String
-     (This     : Extract;
-      Value    : String;
-      Position : Natural := 1)
+   procedure Replace
+     (This          : Extract;
+      Start, Length : Natural;
+      Value         : String;
+      Line_Number   : Natural := 1)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
    begin
-      for J in 1 .. Position - 1 loop
+      for J in 1 .. Line_Number - 1 loop
          Current_Extract := Current_Extract.Next;
       end loop;
 
-      Assign (Current_Extract.Content, Value);
-      Current_Extract.Context := Line_Modified;
-   end Set_String;
+      Replace (Current_Extract.all, Start, Length, Value);
+
+   end Replace;
 
    ------------
    -- Commit --
@@ -2179,10 +2255,9 @@ package body Codefix.Text_Manager is
       Word_Length  : Natural;
       Old_Line     : Dynamic_String;
       Current_Line : Ptr_Extract_Line;
-
    begin
       Current_Line := Get_Line (This, Cursor);
-      Assign (Old_Line, Current_Line.Content);
+      Assign (Old_Line, To_String (Current_Line.Content));
 
       case Format_Old is
          when Regular_Expression =>
@@ -2194,14 +2269,10 @@ package body Codefix.Text_Manager is
 
       end case;
 
-      Assign
-        (Current_Line.Content,
-         Old_Line (1 .. Cursor.Col - 1) & New_String & Old_Line
-           (Cursor.Col + Word_Length .. Old_Line'Last));
+      Replace (Current_Line.all, Cursor.Col, Word_Length, New_String);
 
       Free (Old_Line);
 
-      Current_Line.Context := Line_Modified;
    end Replace_Word;
 
    ------------------
@@ -2212,23 +2283,12 @@ package body Codefix.Text_Manager is
      (This         : in out Extract;
       Cursor       : File_Cursor'Class;
       New_String   : String;
-      Old_Length   : Natural) is
-
-      Old_Line     : Dynamic_String;
+      Old_Length   : Natural)
+   is
       Current_Line : Ptr_Extract_Line;
-
    begin
       Current_Line := Get_Line (This, Cursor);
-      Assign (Old_Line, Current_Line.Content);
-
-      Assign
-        (Current_Line.Content,
-         Old_Line (1 .. Cursor.Col - 1) & New_String & Old_Line
-           (Cursor.Col + Old_Length .. Old_Line'Last));
-
-      Free (Old_Line);
-
-      Current_Line.Context := Line_Modified;
+      Replace (Current_Line.all, Cursor.Col, Old_Length, New_String);
    end Replace_Word;
 
    --------------
@@ -2241,16 +2301,10 @@ package body Codefix.Text_Manager is
       Word   : String)
    is
       Current_Line : Ptr_Extract_Line := Get_Line (This, Cursor);
-      Old_String   : Dynamic_String;
    begin
-      Assign (Old_String, Current_Line.Content);
-      Assign (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
-                Word &
-                  Old_String (Cursor.Col .. Old_String.all'Last));
+      Insert (Current_Line.Content, Cursor.Col, Word);
 
-      Current_Line.Context := Line_Modified;
-
-      Free (Old_String);
+      Current_Line.Context := Unit_Modified;
    end Add_Word;
 
    ----------------------
@@ -2281,10 +2335,10 @@ package body Codefix.Text_Manager is
       Line_Cursor.Col := 1;
       Add_Element
         (This, new Extract_Line'
-           (Context         => Line_Created,
+           (Context         => Unit_Created,
             Cursor          => Line_Cursor,
             Original_Length => 0,
-            Content         => new String'(Text),
+            Content         => To_Mergable_String (Text),
             Next            => null,
             Coloration      => True));
    end Add_Line;
@@ -2300,7 +2354,7 @@ package body Codefix.Text_Manager is
       Line : Ptr_Extract_Line;
    begin
       Line := Get_Line (This, Cursor);
-      Line.Context := Line_Deleted;
+      Line.Context := Unit_Deleted;
    end Delete_Line;
 
    ----------------------
@@ -2311,7 +2365,7 @@ package body Codefix.Text_Manager is
       Line : Ptr_Extract_Line := This.First;
    begin
       while Line /= null loop
-         Line.Context := Line_Deleted;
+         Line.Context := Unit_Deleted;
          Line := Line.Next;
       end loop;
    end Delete_All_Lines;
@@ -2336,10 +2390,10 @@ package body Codefix.Text_Manager is
                Container.First := Element;
             end if;
          elsif This.Cursor = Element.Cursor
-           and then (This.Context = Line_Modified
-                     or else This.Context = Original_Line)
-           and then (Element.Context = Line_Modified
-                     or else Element.Context = Original_Line)
+           and then (This.Context = Unit_Modified
+                     or else This.Context = Original_Unit)
+           and then (Element.Context = Unit_Modified
+                     or else Element.Context = Original_Unit)
          then
             return;
          else
@@ -2360,6 +2414,12 @@ package body Codefix.Text_Manager is
          Add_Element (This.First, null, Element, This);
       end if;
    end Add_Element;
+
+   procedure Add_Element (This : in out Extract; Element : Extract_Line) is
+   begin
+      Add_Element (This, new Extract_Line'(Element));
+   end Add_Element;
+
 
    ---------------------
    -- Get_Word_Length --
@@ -2547,7 +2607,7 @@ package body Codefix.Text_Manager is
          Next_Line := Next (Current_Line.all);
 
          if Current_Line.Coloration = False
-           or else Current_Line.Context = Original_Line
+           or else Current_Line.Context = Original_Unit
          then
             if Left_After = 0 then
                if Size_Before = 0 then
@@ -2597,40 +2657,37 @@ package body Codefix.Text_Manager is
 
       if Start.Line = Stop.Line then
          Current_Line := Get_Line (This, Line_Cursor);
-         Set_String
-           (Current_Line.all,
-            Current_Line.Content
-              (Current_Line.Content'First .. Start.Col - 1) &
-              Current_Line.Content (Stop.Col + 1 ..
-                                      Current_Line.Content'Last));
 
-         if Is_Blank (Current_Line.Content.all) then
-            Current_Line.Context := Line_Deleted;
+         Delete (Current_Line.Content, Start.Col, 1);
+
+         if Is_Blank (To_String (Current_Line.Content)) then
+            Current_Line.Context := Unit_Deleted;
+         else
+            Current_Line.Context := Unit_Modified;
          end if;
       else
          Current_Line := Get_Line (This, Line_Cursor);
-         Set_String
-           (Current_Line.all,
-            Current_Line.Content
-              (Current_Line.Content'First .. Start.Col - 1));
+         Delete (Current_Line.Content, Start.Col, Stop.Col - Start.Col + 1);
 
-         if Is_Blank (Current_Line.Content.all) then
-            Current_Line.Context := Line_Deleted;
+         if Is_Blank (To_String (Current_Line.Content)) then
+            Current_Line.Context := Unit_Deleted;
+         else
+            Current_Line.Context := Unit_Modified;
          end if;
 
          for J in Start.Line + 1 .. Stop.Line - 1 loop
             Current_Line := Next (Current_Line.all);
-            Current_Line.Context := Line_Deleted;
+            Current_Line.Context := Unit_Deleted;
          end loop;
 
          Current_Line := Next (Current_Line.all);
 
-         Set_String
-           (Current_Line.all,
-            Current_Line.Content (Stop.Col + 1 .. Current_Line.Content'Last));
+         Delete (Current_Line.Content, 1, Stop.Col);
 
-         if Is_Blank (Current_Line.Content.all) then
-            Current_Line.Context := Line_Deleted;
+         if Is_Blank (To_String (Current_Line.Content)) then
+            Current_Line.Context := Unit_Deleted;
+         else
+            Current_Line.Context := Unit_Modified;
          end if;
       end if;
    end Erase;
@@ -2802,19 +2859,16 @@ package body Codefix.Text_Manager is
 
       case Word.Mode is
          when Text_Ascii =>
-            Set_String
-              (New_Extract, New_Str (1 .. Word.Col - 1) &
-                 New_Str (Word.Col + Word.String_Match'Length
-                          .. New_Str'Last));
-
+            Delete
+              (Get_First_Line (New_Extract).Content,
+               Word.Col,
+               Word.String_Match'Length);
          when Regular_Expression =>
-            Set_String
-              (New_Extract, New_Str (1 .. Word.Col - 1) &
-                 New_Str
-                   (Word.Col +
-                        Get_Word_Length
-                          (New_Extract, Word, Word.String_Match.all)
-                    .. New_Str'Last));
+            Delete
+              (Get_First_Line (New_Extract).Content,
+               Word.Col,
+               Get_Word_Length
+                 (New_Extract, Word, Word.String_Match.all));
       end case;
 
       Free (Word);
@@ -3000,527 +3054,29 @@ package body Codefix.Text_Manager is
       Execute (This.Step_Word2, Current_Text, New_Extract);
    end Execute;
 
-   ----------------------------------------------------------------------------
-   --  Merge functions and utilities
-   ----------------------------------------------------------------------------
-
-   type Char_Context is (Original, Added, Modified, Removed);
-
-   type Merge_Array is array (Positive range <>) of Char_Context;
-
-   procedure Merge_Tree
-     (Original_Str, New_Str          : String;
-      Original_It, New_It, Result_It : Positive;
-      Offset_Char                    : Integer;
-      Result                         : out Merge_Array);
-
-   function Get_Merge_Array (Original_Str, New_Str : String)
-     return Merge_Array;
-
-   ---------------------
-   -- Get_Merge_Array --
-   ---------------------
-
-   function Get_Merge_Array (Original_Str, New_Str : String)
-     return Merge_Array is
-
-      Offset       : Integer;
-      Array_Length : Natural;
-
-   begin
-
-      Offset := New_Str'Length - Original_Str'Length;
-
-      if Offset > 0 then
-         Array_Length := New_Str'Length;
-      else
-         Array_Length := Original_Str'Length;
-      end if;
-
-      declare
-         Result : Merge_Array (1 .. Array_Length);
-      begin
-         Merge_Tree
-           (Original_Str,
-            New_Str,
-            Original_Str'First,
-            New_Str'First,
-            1,
-            Offset,
-            Result);
-         return Result;
-      end;
-
-   end Get_Merge_Array;
-
-   ----------------
-   -- Merge_Tree --
-   ----------------
-
-   procedure Merge_Tree
-     (Original_Str, New_Str          : String;
-      Original_It, New_It, Result_It : Positive;
-      Offset_Char                    : Integer;
-      Result                         : out Merge_Array) is
-   begin
-
-      if Result_It > Result'Last then
-         return;
-      end if;
-
-      if Original_It <= Original_Str'Last
-        and then New_It <= New_Str'Last
-        and then Original_Str (Original_It) = New_Str (New_It)
-      then
-         Result (Result_It) := Original;
-         Merge_Tree
-           (Original_Str,
-            New_Str,
-            Original_It + 1,
-            New_It + 1,
-            Result_It + 1,
-            Offset_Char,
-            Result);
-      else
-         if Offset_Char > 0 then
-            Result (Result_It) := Added;
-            Merge_Tree
-              (Original_Str,
-               New_Str,
-               Original_It,
-               New_It + 1,
-               Result_It + 1,
-               Offset_Char - 1,
-               Result);
-         elsif Offset_Char < 0 then
-            Result (Result_It) := Removed;
-            Merge_Tree
-              (Original_Str,
-               New_Str,
-               Original_It + 1,
-               New_It,
-               Result_It + 1,
-               Offset_Char + 1,
-               Result);
-         else
-            Result (Result_It) := Modified;
-            Merge_Tree
-              (Original_Str,
-               New_Str,
-               Original_It + 1,
-               New_It + 1,
-               Result_It + 1,
-               Offset_Char,
-               Result);
-         end if;
-      end if;
-
-   end Merge_Tree;
-
-   -----------
-   -- Merge --
-   -----------
-
-
-   procedure Merge
-     (New_Str : out Dynamic_String;
-      Original_Str, Str_1, Str_2 : String;
-      Success : out Boolean) is
-
-      procedure Loop_Add (Num : Integer);
-      procedure Merge_1_Original;
-      procedure Merge_1_Modified;
-      procedure Merge_1_Removed;
-      procedure Merge_1_Added;
-
-      Merge_1                : constant Merge_Array :=
-        Get_Merge_Array (Original_Str, Str_1);
-      Merge_2                : constant Merge_Array :=
-        Get_Merge_Array (Original_Str, Str_2);
-      It_Merge_1, It_Merge_2 : Integer := 1;
-      It_Str_1, It_Str_2     : Integer;
-      Result                 : Unbounded_String;
-
-      procedure Loop_Add (Num : Integer) is
-      begin
-         case Num is
-            when 1 =>
-               while Merge_1 (It_Merge_1) = Added loop
-                  Result := Result & Str_1 (It_Str_1);
-                  It_Str_1 := It_Str_1 + 1;
-                  It_Merge_1 := It_Merge_1 + 1;
-               end loop;
-            when 2 =>
-               while Merge_2 (It_Merge_2) = Added loop
-                  Result := Result & Str_2 (It_Str_2);
-                  It_Str_2 := It_Str_2 + 1;
-                  It_Merge_2 := It_Merge_2 + 1;
-               end loop;
-            when others =>
-               null;
-         end case;
-      end Loop_Add;
-
-      procedure Merge_1_Original is
-      begin
-         case Merge_2 (It_Merge_2) is
-            when Original =>
-               Result := Result & Str_1 (It_Str_1);
-               It_Str_1 := It_Str_1 + 1;
-               It_Str_2 := It_Str_2 + 1;
-               It_Merge_1 := It_Merge_1 + 1;
-               It_Merge_2 := It_Merge_2 + 1;
-            when Modified =>
-               Result := Result & Str_2 (It_Str_2);
-               It_Str_1 := It_Str_1 + 1;
-               It_Str_2 := It_Str_2 + 1;
-               It_Merge_1 := It_Merge_1 + 1;
-               It_Merge_2 := It_Merge_2 + 1;
-            when Removed =>
-               It_Str_1 := It_Str_1 + 1;
-               It_Merge_1 := It_Merge_1 + 1;
-               It_Merge_2 := It_Merge_2 + 1;
-            when Added =>
-               Loop_Add (2);
-         end case;
-      end Merge_1_Original;
-
-      procedure Merge_1_Modified is
-      begin
-         case Merge_2 (It_Merge_2) is
-            when Original =>
-               Result := Result & Str_1 (It_Str_1);
-               It_Str_1 := It_Str_1 + 1;
-               It_Str_2 := It_Str_2 + 1;
-               It_Merge_1 := It_Merge_1 + 1;
-               It_Merge_2 := It_Merge_2 + 1;
-            when Modified =>
-               if Str_1 (It_Str_1) /= Str_2 (It_Str_2) then
-                  Success := False;
-                  return;
-               end if;
-               Result := Result & Str_2 (It_Str_2);
-               It_Str_1 := It_Str_1 + 1;
-               It_Str_2 := It_Str_2 + 1;
-               It_Merge_1 := It_Merge_1 + 1;
-               It_Merge_2 := It_Merge_2 + 1;
-            when Removed =>
-               Success := False;
-            when Added =>
-               Loop_Add (2);
-         end case;
-      end Merge_1_Modified;
-
-      procedure Merge_1_Removed is
-      begin
-         case Merge_2 (It_Merge_2) is
-            when Original =>
-               It_Str_2 := It_Str_2 + 1;
-               It_Merge_1 := It_Merge_1 + 1;
-               It_Merge_2 := It_Merge_2 + 1;
-            when Modified =>
-               Success := False;
-            when Removed =>
-               It_Merge_1 := It_Merge_1 + 1;
-               It_Merge_2 := It_Merge_2 + 1;
-            when Added =>
-               Loop_Add (2);
-         end case;
-      end Merge_1_Removed;
-
-      procedure Merge_1_Added is
-      begin
-         case Merge_2 (It_Merge_2) is
-            when Original =>
-               Loop_Add (1);
-            when Modified =>
-               Loop_Add (1);
-            when Removed =>
-               Loop_Add (1);
-            when Added =>
-               if Str_1 (It_Str_1) = Str_2 (It_Str_2) then
-                  Result := Result & Str_1 (It_Str_1);
-                  It_Str_1 := It_Str_1 + 1;
-                  It_Str_2 := It_Str_2 + 1;
-                  It_Merge_1 := It_Merge_1 + 1;
-                  It_Merge_2 := It_Merge_2 + 1;
-               else
-                  Loop_Add (1);
-                  Loop_Add (2);
-               end if;
-         end case;
-      end Merge_1_Added;
-
-   begin
-      Success := True;
-
-      It_Str_1 := Str_1'First;
-      It_Str_2 := Str_2'First;
-
-      loop
-         case Merge_1 (It_Merge_1) is
-            when Original =>
-               Merge_1_Original;
-            when Modified =>
-               Merge_1_Modified;
-            when Removed =>
-               Merge_1_Removed;
-            when Added =>
-               Merge_1_Added;
-         end case;
-
-         if Success = False then
-            return;
-         end if;
-
-         exit when Merge_1'Last <  It_Merge_1;
-      end loop;
-
-      if It_Merge_2 <= Merge_2'Last then
-         if Merge_2 (It_Merge_2) = Added then
-            Loop_Add (2);
-         else
-            Raise_Exception
-              (Codefix_Panic'Identity,
-               "Merge_2 (It_Merge_2) supposed to be Added");
-         end if;
-      end if;
-
-      Assign (New_Str, To_String (Result));
-
-   end Merge;
-
-   -----------
-   -- Merge --
-   -----------
-
-   type Virtual_Navigator is new Text_Navigator_Abstr with null record;
-
-   function New_Text_Interface (This : Virtual_Navigator) return Ptr_Text;
-
-   function Get_Body_Or_Spec (This : Virtual_Navigator; File_Name : String)
-     return String;
-
-   function Get_Current_Cursor
-     (Current_Text : Virtual_Navigator;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class;
-
-   function New_Text_Interface (This : Virtual_Navigator) return Ptr_Text is
-      pragma Unreferenced (This);
-   begin
-      return null;
-   end New_Text_Interface;
-
-   function Get_Body_Or_Spec (This : Virtual_Navigator; File_Name : String)
-     return String is
-      pragma Unreferenced (This, File_Name);
-   begin
-      return "";
-   end Get_Body_Or_Spec;
-
-   function Get_Current_Cursor
-     (Current_Text : Virtual_Navigator;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class
+   procedure Merge_Extracts
+     (Result              : out Extract'Class;
+      Object_1, Object_2  : Extract'Class;
+      Success             : out Boolean;
+      Chronologic_Changes : Boolean)
    is
-      pragma Unreferenced (Current_Text, Mark);
-   begin
-      return Null_File_Cursor;
-   end Get_Current_Cursor;
 
-   procedure Merge
-     (This                 : out Extract;
-      Extract_1, Extract_2 : Extract'Class;
-      Success              : out Boolean)
-   is
-      Navigator : Virtual_Navigator;
+      procedure Merge_Intern is new Generic_Merge
+        (Merge_Type     => Extract,
+         Merged_Unit    => Extract_Line,
+         Merge_Iterator => Ptr_Extract_Line,
+         First          => Get_First_Line,
+         Get_Merge_Info => Get_Context,
+         Append         => Add_Element,
+         Merge_Units    => Merge_Lines);
+
    begin
-      Merge
-        (This,
-         Extract_1, Extract_2,
-         Navigator,
+      Merge_Intern
+        (Extract (Result),
+         Extract (Object_1), Extract (Object_2),
          Success,
-         False);
-      Free (Navigator);
-   end Merge;
+         Chronologic_Changes);
+   end Merge_Extracts;
 
-   -----------
-   -- Merge --
-   -----------
-
-   procedure Merge
-     (This                 : out Extract;
-      Extract_1, Extract_2 : Extract'Class;
-      Current_Text         : Text_Navigator_Abstr'Class;
-      Success              : out Boolean;
-      Merge_Characters     : Boolean := True) is
-
-      Line_1, Line_2, New_Line : Ptr_Extract_Line;
-
-      procedure Line_1_Original;
-      procedure Line_1_Modified;
-      procedure Line_1_Deleted;
-      procedure Line_1_Created;
-
-      procedure Line_1_Original is
-      begin
-         case Line_2.Context is
-            when Original_Line =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-               Line_1 := Next (Line_1.all);
-               Line_2 := Next (Line_2.all);
-            when Line_Modified =>
-               Put_Line ("Line_2 mod");
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_2.all, False)));
-               Line_1 := Next (Line_1.all);
-               Line_2 := Next (Line_2.all);
-            when Line_Deleted =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_2.all, False)));
-               Line_1 := Next (Line_1.all);
-               Line_2 := Next (Line_2.all);
-            when Line_Created =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-               Line_1 := Next (Line_1.all);
-         end case;
-      end Line_1_Original;
-
-      procedure Line_1_Modified is
-      begin
-         case Line_2.Context is
-            when Original_Line =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-               Line_1 := Next (Line_1.all);
-               Line_2 := Next (Line_2.all);
-            when Line_Modified =>
-               if Merge_Characters then
-                  New_Line := new Extract_Line'(Clone (Line_1.all, False));
-
-                  Merge
-                    (New_Line.Content,
-                     Get_Old_Text (Line_1.all, Current_Text),
-                     Line_1.Content.all,
-                     Line_2.Content.all,
-                     Success);
-
-                  if Is_Blank (New_Line.Content.all) then
-                     New_Line.Context := Line_Deleted;
-                  end if;
-
-                  Add_Element (This, New_Line);
-               else
-                  Add_Element (This, new Extract_Line'(Clone
-                                                         (Line_2.all, False)));
-               end if;
-               Line_1 := Next (Line_1.all);
-               Line_2 := Next (Line_2.all);
-            when Line_Deleted =>
-               Success := False;
-            when Line_Created =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-               Line_1 := Next (Line_1.all);
-         end case;
-      end Line_1_Modified;
-
-      procedure Line_1_Deleted is
-      begin
-         case Line_2.Context is
-            when Original_Line =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-               Line_1 := Next (Line_1.all);
-               Line_2 := Next (Line_2.all);
-            when Line_Modified =>
-               Success := False;
-            when Line_Deleted =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-               Line_1 := Next (Line_1.all);
-               Line_2 := Next (Line_2.all);
-            when Line_Created =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-               Line_1 := Next (Line_1.all);
-         end case;
-      end Line_1_Deleted;
-
-      procedure Line_1_Created is
-      begin
-         case Line_2.Context is
-            when Original_Line =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_2.all, False)));
-               Line_2 := Next (Line_2.all);
-            when Line_Modified =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_2.all, False)));
-               Line_2 := Next (Line_2.all);
-            when Line_Deleted =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_2.all, False)));
-               Line_2 := Next (Line_2.all);
-            when Line_Created =>
-               Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
-               if Line_1.all /= Line_2.all then
-                  Line_1 := Next (Line_1.all);
-               else
-                  Line_1 := Next (Line_1.all);
-                  Line_2 := Next (Line_2.all);
-               end if;
-         end case;
-      end Line_1_Created;
-
-      --  begin of Merge
-
-   begin
-      Line_1 := Get_First_Line (Extract_1);
-      Line_2 := Get_First_Line (Extract_2);
-      Success := True;
-
-      while Line_1 /= null and then Line_2 /= null loop
-         if Line_1.Cursor < Line_2.Cursor then
-            Add_Element (This, new Extract_Line'(Clone (Line_1.all, False)));
-            Line_1 := Next (Line_1.all);
-         elsif Line_2.Cursor < Line_1.Cursor then
-            Add_Element (This, new Extract_Line'(Clone (Line_2.all, False)));
-            Line_2 := Next (Line_2.all);
-         else
-            case Line_1.Context is
-               when Original_Line =>
-                  Line_1_Original;
-               when Line_Modified =>
-                  Line_1_Modified;
-               when Line_Created =>
-                  Line_1_Created;
-               when Line_Deleted =>
-                  Line_1_Deleted;
-            end case;
-         end if;
-
-         if not Success then
-            return;
-         end if;
-      end loop;
-
-      if Line_1 /= null then
-         while Line_1 /= null loop
-            Add_Element (This, new Extract_Line'(Clone
-                                                   (Line_1.all, False)));
-            Line_1 := Next (Line_1.all);
-         end loop;
-      elsif Line_2 /= null then
-         while Line_2 /= null loop
-            Add_Element (This, new Extract_Line'(Clone
-                                                   (Line_2.all, False)));
-            Line_2 := Next (Line_2.all);
-         end loop;
-      end if;
-
-   end Merge;
 
 end Codefix.Text_Manager;
