@@ -27,6 +27,7 @@ package Odd.Pixmaps is
    until_xpm     : Chars_Ptr_Array (0 .. 0);
    up_xpm        : Chars_Ptr_Array (0 .. 0);
    watch_xpm     : Chars_Ptr_Array (0 .. 0);
+   current_xpm   : Chars_Ptr_Array (0 .. 0);
 
 private
    pragma Import (C, breakat_xpm, "breakat_xpm");
@@ -54,4 +55,5 @@ private
    pragma Import (C, until_xpm, "until_xpm");
    pragma Import (C, up_xpm, "up_xpm");
    pragma Import (C, watch_xpm, "watch_xpm");
+   pragma Import (C, current_xpm, "current_xpm");
 end Odd.Pixmaps;

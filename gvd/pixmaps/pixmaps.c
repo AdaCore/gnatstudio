@@ -23,3 +23,5 @@
 #include "up.xpm"
 #include "watch.xpm"
 #include "stop.xpm"
+#include "current.xpm"
+
