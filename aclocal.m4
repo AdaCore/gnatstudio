@@ -77,14 +77,24 @@ AC_DEFUN(AM_PATH_GTK,
 [dnl 
 dnl Get the cflags and libraries from the gtkada-config script
 dnl
+  AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+  AC_MSG_CHECKING(GTK prefix)
+  GTK="gtk+-2.0"
+  if test "$PKG_CONFIG" = "no" ; then
+    GTK_PREFIX=unknown
+    AC_MSG_RESULT(not found)
+  else
+    GTK_PREFIX=`$PKG_CONFIG $GTK --variable=prefix`
+    AC_MSG_RESULT($GTK_PREFIX)
+  fi
+
   AC_PATH_PROG(GTK_CONFIG, gtkada-config, no)
-  min_gtk_version=ifelse([$1], ,1.2.8,$1)
+  min_gtk_version=ifelse([$1], ,2.0.0,$1)
   AC_MSG_CHECKING(for GtkAda - version >= $min_gtk_version)
   no_gtk=""
   if test "$GTK_CONFIG" = "no" ; then
     no_gtk=yes
   else
-    GTK_PREFIX=`$GTK_CONFIG --prefix`
     GTK_CFLAGS=`$GTK_CONFIG --cflags`
     GTK_LIBS=`$GTK_CONFIG --libs`
     GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
@@ -247,4 +257,3 @@ AC_MSG_CHECKING([whether the C++ compiler ($CXX $CXXFLAGS $LDFLAGS) is a cross-c
 AC_MSG_RESULT($ac_cv_prog_cxx_cross)
 cross_compiling=$ac_cv_prog_cxx_cross
 ])
-
