@@ -1,5 +1,8 @@
 New features in GPS 1.0.2
 
+- Opening or closing a file or category node in the project explorer will
+  now force a refresh
+
 - The "File" column in the VCS explorer can now be resized.
 
 - Multiple line comment/uncomment.
