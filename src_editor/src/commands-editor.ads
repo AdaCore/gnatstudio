@@ -159,6 +159,8 @@ package Commands.Editor is
    procedure Free (X : in out Editor_Command_Type);
    procedure Free (X : in out Editor_Replace_Slice_Type);
    procedure Free (X : in out Check_Modified_State_Type);
+   procedure Free (X : in out Remove_Blank_Lines_Command_Type);
+   procedure Free (X : in out Unhide_Editable_Lines_Type);
    --  Free memory associated to X.
 
 private

@@ -84,6 +84,20 @@ package body Commands.Editor is
       null;
    end Free;
 
+   procedure Free (X : in out Remove_Blank_Lines_Command_Type) is
+   begin
+      if not Get_Deleted (X.Mark) then
+         Delete_Mark (X.Buffer, X.Mark);
+      end if;
+   end Free;
+
+   procedure Free (X : in out Unhide_Editable_Lines_Type) is
+   begin
+      if not Get_Deleted (X.Mark) then
+         Delete_Mark (X.Buffer, X.Mark);
+      end if;
+   end Free;
+
    ---------------------
    -- Is_Null_Command --
    ---------------------
