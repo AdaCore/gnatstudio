@@ -489,7 +489,7 @@ package body Glide_Result_View is
    ----------------------
 
    procedure Set_Column_Types (View : access Result_View_Record'Class) is
-      Tree          : constant Smart_Tree := View.Tree;
+      Tree          : constant Tree_View := View.Tree;
       Col           : Gtk_Tree_View_Column;
       Text_Rend     : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
