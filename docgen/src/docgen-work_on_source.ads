@@ -81,7 +81,7 @@ package Docgen.Work_On_Source is
    --  Private_Tagged_Types_List: list of private tagged types.
    --  Options          : options set by the preferences.
    --  Process_Body_File: indicate if bofy files must be processed.
-   --  ???  This last parameter is redondant because Options indicate it.
+   --  ???  This last parameter is redundant because Options indicate it.
    --  Converter        : used to indicate the subprogram used in order to
    --  start making the output (currently, it's Launch_Doc_Create).
    --  Level            : the level of the current package. By default, the
