@@ -99,7 +99,7 @@ package body Find_Utils is
    -----------
 
    function Match
-     (Context : access Search_Context'Class; Buffer : String) return Integer
+     (Context : access Root_Search_Context; Buffer : String) return Integer
    is
       Result : Integer := -1;
 
@@ -130,7 +130,7 @@ package body Find_Utils is
    --------------------------
 
    procedure Scan_Buffer_No_Scope
-     (Context    : access Search_Context;
+     (Context    : access Root_Search_Context;
       Buffer     : String;
       Callback   : Scan_Callback;
       Ref_Index  : in out Integer;
@@ -278,7 +278,7 @@ package body Find_Utils is
    -----------------------
 
    function Context_As_String
-     (Context : access Search_Context) return String is
+     (Context : access Root_Search_Context) return String is
    begin
       if Context.Look_For = null or else Context.Options.Regexp then
          raise Invalid_Context;
@@ -291,7 +291,7 @@ package body Find_Utils is
    -- Context_As_Regexp --
    -----------------------
 
-   function Context_As_Regexp (Context : access Search_Context)
+   function Context_As_Regexp (Context : access Root_Search_Context)
       return GNAT.Regpat.Pattern_Matcher
    is
       Flags : Regexp_Flags := Multiple_Lines;
@@ -331,7 +331,7 @@ package body Find_Utils is
    ----------------------------
 
    procedure Context_As_Boyer_Moore
-     (Context : access Search_Context;
+     (Context : access Root_Search_Context;
       Matcher : out Boyer_Moore.Pattern) is
    begin
       if not Context.BM_Initialized then
@@ -353,11 +353,11 @@ package body Find_Utils is
    -----------------
 
    procedure Set_Context
-     (Context  : access Search_Context'Class;
+     (Context  : access Root_Search_Context'Class;
       Look_For : String;
       Options  : Search_Options) is
    begin
-      Free (Search_Context (Context.all));
+      Free (Root_Search_Context (Context.all));
       Context.Look_For       := new String'(Look_For);
       Context.Options        := Options;
       Context.BM_Initialized := False;
@@ -367,7 +367,7 @@ package body Find_Utils is
    -- Free --
    ----------
 
-   procedure Free (Context : in out Search_Context) is
+   procedure Free (Context : in out Root_Search_Context) is
    begin
       Free (Context.Look_For);
       Free_Pattern_Matcher (Context.RE_Matcher);

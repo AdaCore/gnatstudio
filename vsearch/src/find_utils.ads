@@ -82,30 +82,28 @@ package Find_Utils is
    Supports_Replace : constant Search_Options_Mask := 2 ** 6;
    All_Options      : constant Search_Options_Mask := 255;
 
-   --------------
-   -- Contexts --
-   --------------
+   -------------------
+   -- Simple search --
+   -------------------
+   --  The following types are for use as simple search contexts, that can
+   --  search both constant strings and regular expressions.
 
-   type Search_Context is abstract tagged limited private;
-   type Search_Context_Access is access all Search_Context'Class;
-   --  Defines what the user is looking for.
-   --  Although the user always specifies a string, it should sometimes be
-   --  interpreted differently based on whether it is a regular expression,...
-   --  The subprograms below will compute the fields as needed.
+   type Root_Search_Context is tagged limited private;
 
    procedure Set_Context
-     (Context  : access Search_Context'Class;
+     (Context  : access Root_Search_Context'Class;
       Look_For : String;
       Options  : Search_Options);
    --  Create a new search context
 
-   function Context_As_String (Context : access Search_Context) return String;
+   function Context_As_String
+     (Context : access Root_Search_Context) return String;
    --  Return the search string.
    --  Invalid_Context is raised if the user is in fact looking for a regular
    --  expression.
 
    function Context_As_Regexp
-     (Context : access Search_Context) return GNAT.Regpat.Pattern_Matcher;
+     (Context : access Root_Search_Context) return GNAT.Regpat.Pattern_Matcher;
    --  Return the regular expression to match. The "whole word" and "case
    --  insensitive" options are automatically taken into account when computing
    --  the regular expression.
@@ -114,13 +112,68 @@ package Find_Utils is
    --  expression, or the regular expression is invalid.
 
    procedure Context_As_Boyer_Moore
-     (Context : access Search_Context;
+     (Context : access Root_Search_Context;
       Matcher : out Boyer_Moore.Pattern);
    --  Return the search string as a Boyer-Moore pattern.
    --  Matcher is computed on demand, and cached for efficiency. It
    --  automatically includes the "case insensitive" options.
    --  Invalid_Context is raised if the user is in fact looking for a regular
    --  expression.
+
+   procedure Free (Context : in out Root_Search_Context);
+   --  Free the memory allocated for Context.all. It doesn't free Context
+   --  itself.
+
+   function Match
+     (Context : access Root_Search_Context; Buffer : String) return Integer;
+   --  Check if Context matches Buffer, and return the index of the first
+   --  match, or -1 if there is no match
+   --  This automatically uses either a regexp or a faster Boyer Moore methode
+   --  for constant strings.
+
+   type Match_Result (Length : Natural) is record
+      Index, Line, Column, End_Column : Natural;
+      Text : String (1 .. Length);
+   end record;
+   --  The result of a match. This is a discriminated type so that we don't
+   --  have to worry who is responsible to free it.
+
+   No_Result : constant Match_Result;
+
+   type Scan_Callback is access
+     function (Match : Match_Result) return Boolean;
+   --  Callback for a match in a buffer.
+   --  If it returns False, no more match will be checked.
+
+   procedure Scan_Buffer_No_Scope
+     (Context    : access Root_Search_Context;
+      Buffer     : String;
+      Callback   : Scan_Callback;
+      Ref_Index  : in out Integer;
+      Ref_Line   : in out Integer;
+      Ref_Column : in out Integer);
+   --  Find matches of Context in Buffer, starting at Buffer'First, and until
+   --  either the end of the buffer or Callback returns False.
+   --  Buffer is assumes to be a single valid scope, and thus no scope handling
+   --  is performed.
+   --  The character at index Ref_Index in Buffer is assumed to correspond to
+   --  position Ref_Line and Ref_Column in the original file. They are
+   --  automatically updated when new positions are computed, so that they can
+   --  be used during the next call to Scan_Buffer_No_Scope.
+
+   Invalid_Context : exception;
+   --  Raised when trying to access the components in Search_Context
+
+   --------------
+   -- Contexts --
+   --------------
+
+   type Search_Context is abstract new Root_Search_Context with private;
+   type Search_Context_Access is access all Search_Context'Class;
+   --  Defines what the user is looking for.
+   --  Although the user always specifies a string, it should sometimes be
+   --  interpreted differently based on whether it is a regular expression,...
+   --  The subprograms below will compute the fields as needed.
 
    function Search
      (Context         : access Search_Context;
@@ -144,53 +197,9 @@ package Find_Utils is
    --  string.
    --  The default implementation does nothing.
 
-   procedure Free (Context : in out Search_Context);
-   --  Free the memory allocated for Context.all. It doesn't free Context
-   --  itself.
-
    procedure Free (Context : in out Search_Context_Access);
    --  Free the memory both for the pointer and for the internal fields. It
    --  dispatches to calls to Free for Files_Context
-
-   function Match
-     (Context : access Search_Context'Class; Buffer : String) return Integer;
-   --  Check if Context matches Buffer, and return the index of the first
-   --  match, or -1 if there is no match
-   --  This automatically uses either a regexp or a faster Boyer Moore methode
-   --  for constant strings.
-
-   type Match_Result (Length : Natural) is record
-      Index, Line, Column, End_Column : Natural;
-      Text : String (1 .. Length);
-   end record;
-   --  The result of a match. This is a discriminated type so that we don't
-   --  have to worry who is responsible to free it.
-
-   No_Result : constant Match_Result;
-
-   type Scan_Callback is access
-     function (Match : Match_Result) return Boolean;
-   --  Callback for a match in a buffer.
-   --  If it returns False, no more match will be checked.
-
-   procedure Scan_Buffer_No_Scope
-     (Context    : access Search_Context;
-      Buffer     : String;
-      Callback   : Scan_Callback;
-      Ref_Index  : in out Integer;
-      Ref_Line   : in out Integer;
-      Ref_Column : in out Integer);
-   --  Find matches of Context in Buffer, starting at Buffer'First, and until
-   --  either the end of the buffer or Callback returns False.
-   --  Buffer is assumes to be a single valid scope, and thus no scope handling
-   --  is performed.
-   --  The character at index Ref_Index in Buffer is assumed to correspond to
-   --  position Ref_Line and Ref_Column in the original file. They are
-   --  automatically updated when new positions are computed, so that they can
-   --  be used during the next call to Scan_Buffer_No_Scope.
-
-   Invalid_Context : exception;
-   --  Raised when trying to access the components in Search_Context
 
    ---------------
    -- Searching --
@@ -283,7 +292,7 @@ private
       Factory           => null,
       Extra_Information => null);
 
-   type Search_Context is abstract tagged limited record
+   type Root_Search_Context is tagged limited record
       Options        : Search_Options;
       Look_For       : GNAT.OS_Lib.String_Access := null;
 
@@ -293,5 +302,7 @@ private
       BM_Matcher     : Boyer_Moore.Pattern;
       BM_Initialized : Boolean := False;
    end record;
+
+   type Search_Context is abstract new Root_Search_Context with null record;
 
 end Find_Utils;
