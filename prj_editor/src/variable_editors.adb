@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
 with Glib;                     use Glib;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
@@ -46,6 +45,7 @@ with Prj;                      use Prj;
 with Prj.Ext;                  use Prj.Ext;
 with Prj_Normalize;            use Prj_Normalize;
 
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Types;                    use Types;
 with Stringt;                  use Stringt;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
@@ -82,11 +82,6 @@ package body Variable_Editors is
    procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class);
    procedure Delete_Variable (Editor : access Gtk_Widget_Record'Class);
    --  Callback for the buttons at the bottom of the possible values list
-
-   procedure Edited_Callback
-     (Editor : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Callback for the "edited" signal
 
    Default_Value_Column : constant := 0;
    Value_Column         : constant := 1;
@@ -192,8 +187,6 @@ package body Variable_Editors is
 
       Set_Editable_And_Callback
         (Editor.Model, Editor.Editable_Renderer, Value_Column);
-      Widget_Callback.Object_Connect
-        (Editor.Editable_Renderer, "edited", Edited_Callback'Access, Editor);
 
       --  Add the dialog buttons at the bottom. This is done so that Run can be
       --  called on the dialog.
@@ -261,34 +254,13 @@ package body Variable_Editors is
               (Editor.Model, Iter,
                Is_Default => Is_Default,
                Value => Get_String (String_Value_Of (Data (E))),
-               Is_Editable => False);
+               Is_Editable => True);
 
             Is_Default := False;
             E := Next (E);
          end loop;
       end if;
    end Gtk_New;
-
-   ---------------------
-   -- Edited_Callback --
-   ---------------------
-
-   procedure Edited_Callback
-     (Editor : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      M           : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (New_Var_Edit (Editor).Model);
-      Path_String : constant String := Get_String (Nth (Params, 1));
-      Iter        : Gtk_Tree_Iter;
-
-   begin
-      --  Once a cell has been edited, it is no longer editable, until the user
-      --  presses the Rename button.
-
-      Iter := Get_Iter_From_String (M, Path_String);
-      Set (M, Iter, Editable_Column, False);
-   end Edited_Callback;
 
    ------------------
    -- New_Variable --
@@ -325,7 +297,6 @@ package body Variable_Editors is
       Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
 
       if Iter /= Null_Iter then
-         Set (E.Model, Iter, Editable_Column, True);
          Set_Cursor
            (E.Values_List,
             Path => Get_Path (E.Model, Iter),
@@ -376,6 +347,30 @@ package body Variable_Editors is
             Buttons => Button_OK,
             Parent  => Gtk_Window (Editor));
          return False;
+      end if;
+
+      --  Check that the name is valid
+
+      if not Is_Letter (New_Name (New_Name'First)) then
+         Message := Message_Dialog
+           (Msg     => -"Name must start with a letter",
+            Buttons => Button_OK,
+            Parent  => Gtk_Window (Editor));
+         return False;
+
+      else
+         for N in New_Name'First + 1 .. New_Name'Last loop
+            if not Is_Alphanumeric (New_Name (N))
+              and then New_Name (N) /= '_'
+            then
+               Message := Message_Dialog
+                 (Msg     => -("Name must include only letters, digits and"
+                               & " underscore characters"),
+                  Buttons => Button_OK,
+                  Parent  => Gtk_Window (Editor));
+               return False;
+            end if;
+         end loop;
       end if;
 
       Iter := Get_Iter_First (Editor.Model);
