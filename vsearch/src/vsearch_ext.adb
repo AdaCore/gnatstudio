@@ -1468,7 +1468,7 @@ package body Vsearch_Ext is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Navigate  : constant String := "/_" & (-"Navigate");
-      Goto_Decl : constant String := -"Goto Declaration";
+      Find_All  : constant String := -"Find _All References";
       Mitem     : Gtk_Menu_Item;
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
@@ -1487,13 +1487,13 @@ package body Vsearch_Ext is
       Register_Menu
         (Kernel, Navigate, -"Find/Replace...",
          Stock_Find, Search_Menu_Cb'Access,
-         Ref_Item => Goto_Decl,
+         Ref_Item => Find_All,
          Accel_Key => GDK_F, Accel_Mods => Control_Mask);
 
       Vsearch_Module_Id.Prev_Menu_Item := Register_Menu
         (Kernel, Navigate, -"Find Previous",
          "", Search_Previous_Cb'Access,
-         Ref_Item => Goto_Decl,
+         Ref_Item => Find_All,
          Accel_Key => GDK_P, Accel_Mods => Control_Mask);
       Ref (Vsearch_Module_Id.Prev_Menu_Item);
       Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, False);
@@ -1507,7 +1507,8 @@ package body Vsearch_Ext is
       Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, False);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Navigate, Mitem, Ref_Item => Goto_Decl);
+      Register_Menu
+        (Kernel, Navigate, Mitem, Ref_Item => Find_All, Add_Before => False);
 
       --  Register the default search functions
 
