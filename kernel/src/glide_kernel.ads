@@ -27,6 +27,7 @@ with Glib.Object;  use Glib;
 with Glib.Values;
 with Glib.Xml_Int;
 with Gdk;
+with Gdk.Types;
 with Gdk.Event;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
@@ -47,6 +48,7 @@ with Default_Preferences;
 with Histories;
 with Projects.Registry;
 with Task_Manager;
+with Commands;
 
 package Glide_Kernel is
 
@@ -440,13 +442,8 @@ package Glide_Kernel is
    -- Key handlers --
    ------------------
 
-   type Event_Data is limited private;
-
-   type General_Key_Handler is access
-     function (Data : Event_Data) return Boolean;
-   --  Called when a key is pressed or released in GPS, before it is handled
-   --  by any of the widgets. Propagation to other handlers is stopped if True
-   --  is returned.
+   type Event_Data is private;
+   No_Event_Data : constant Event_Data;
 
    function Get_Widget (Data : Event_Data) return Gtk.Widget.Gtk_Widget;
    --  Get the widget that would have received the key event
@@ -457,16 +454,64 @@ package Glide_Kernel is
    function Get_Kernel (Data : Event_Data) return Kernel_Handle;
    --  Return the kernel
 
-   function Check_Key_Handlers
-     (Kernel : access Kernel_Handle_Record;
-      Event  : Gdk.Event.Gdk_Event) return Boolean;
-   --  Check all key handlers for the key event Event. True is returned if the
-   --  event was processed.
+   function Get_Current_Event_Data
+     (Kernel : access Kernel_Handle_Record'Class) return Event_Data;
+   --  Return the current event data. This returns No_Event_Data unless
+   --  we are processing the event in the context of the key handler
 
-   procedure Register_Key_Handlers
+
+   type Key_Handler_Record is abstract tagged private;
+   type Key_Handler_Access is access all Key_Handler_Record'Class;
+
+   procedure Register_Key
+     (Handler        : access Key_Handler_Record;
+      Name           : String;
+      Default_Key    : Gdk.Types.Gdk_Key_Type;
+      Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
+      Command        : access Commands.Root_Command'Class;
+      Tooltip        : String := "";
+      On_Key_Press   : Boolean := True;
+      On_Key_Release : Boolean := False) is abstract;
+   --  Register a new key/command pair in the Handler.
+   --  Default_Key and Default_Mod are ignored if the key was previously
+   --  overriden by the user.
+   --  Name must be unique in GPS. This is the key used in the XML file
+   --  to save custom key bindings, as well as to display the list of key
+   --  bindings in the GUI interface.
+   --  On_Key_Press and On_Key_Release indicate which type of event should
+   --  force the execution of the command
+
+   function Process_Event
+     (Handler  : access Key_Handler_Record;
+      Event    : Event_Data) return Boolean is abstract;
+   --  Process an event.
+   --  This function should return True if the event was processed, False
+   --  if no command was bound to that key.
+
+   procedure Free (Handler : in out Key_Handler_Record);
+   --  Free the memory used by Handler. This includes saving the redefined
+   --  keys for instance.
+
+
+
+   procedure Set_Key_Handler
      (Kernel  : access Kernel_Handle_Record;
-      Handler : General_Key_Handler);
-   --  Add a new key handler to the list of registered handlers
+      Handler : access Key_Handler_Record'Class);
+   --  Set the key handler for the kernel. Only one such handler can
+   --  be set, so that the keys are all handled in a common place.
+
+   function Get_Key_Handler
+     (Kernel : access Kernel_Handle_Record) return Key_Handler_Access;
+   --  Return the key handler for the kernel.
+   --  A default handler exists in the kernel if no module has replaced it.
+   --  However, this default handler doesn't do anything (and thus all
+   --  custom keys will not be activable.
+
+   procedure Set_Key_Handler_Active
+     (Kernel : access Kernel_Handle_Record; Active : Boolean);
+   --  Change the activation status of the key handler. If it is inactive,
+   --  then no key is processed by the handler. This should be used when
+   --  displaying a modal dialog.
 
    ------------
    -- Saving --
@@ -768,13 +813,6 @@ private
       Ref_Count : Natural := 1;
    end record;
 
-   type Key_Handler_List_Record;
-   type Key_Handler_List_Access is access Key_Handler_List_Record;
-   type Key_Handler_List_Record is record
-      Handler : General_Key_Handler;
-      Next    : Key_Handler_List_Access;
-   end record;
-
    type Kernel_Scripting_Data_Record is abstract tagged null record;
    type Kernel_Scripting_Data is access all Kernel_Scripting_Data_Record'Class;
    --  Derived in Glide_Kernel.Scripts to store internal data
@@ -786,9 +824,31 @@ private
    end record;
    type Event_Data is access all Event_Data_Record;
 
+   No_Event_Data : constant Event_Data := null;
+
+   type Key_Handler_Record is abstract tagged null record;
+   type Default_Key_Handler_Record is new Key_Handler_Record with null record;
+   procedure Register_Key
+     (Handler        : access Default_Key_Handler_Record;
+      Name           : String;
+      Default_Key    : Gdk.Types.Gdk_Key_Type;
+      Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
+      Command        : access Commands.Root_Command'Class;
+      Tooltip        : String := "";
+      On_Key_Press   : Boolean := True;
+      On_Key_Release : Boolean := False);
+   function Process_Event
+     (Handler  : access Default_Key_Handler_Record;
+      Event    : Event_Data) return Boolean;
+
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
-      Key_Handler_List : Key_Handler_List_Access;
-      --   The list of handlers for general key bindings
+      Key_Handler : Key_Handler_Access := new Default_Key_Handler_Record;
+      --  The kandler that processes all key events
+
+      Key_Handler_Active : Boolean := True;
+      --  Whether the key handler is active
+
+      Current_Event_Data : Event_Data;
 
       Modules_List : Module_List.List;
       --  The list of all the modules that have been registered in this kernel.

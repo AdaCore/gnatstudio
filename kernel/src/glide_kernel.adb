@@ -122,6 +122,8 @@ package body Glide_Kernel is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Registry'Class, Project_Registry_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Key_Handler_Record'Class, Key_Handler_Access);
 
    function Process_Anim (Data : Process_Data) return Boolean;
    --  Process_Timeout callback to handle image animations.
@@ -177,6 +179,16 @@ package body Glide_Kernel is
       end if;
    end GNAT_Version;
 
+   ----------------------------
+   -- Get_Current_Event_Data --
+   ----------------------------
+
+   function Get_Current_Event_Data
+     (Kernel : access Kernel_Handle_Record'Class) return Event_Data is
+   begin
+      return Kernel.Current_Event_Data;
+   end Get_Current_Event_Data;
+
    ---------------------------
    -- General_Event_Handler --
    ---------------------------
@@ -186,13 +198,25 @@ package body Glide_Kernel is
    is
       K : constant Kernel_Handle := Convert (Kernel);
    begin
-      if Get_Event_Type (Event) = Key_Press
-        or else Get_Event_Type (Event) = Key_Release
+      if (Get_Event_Type (Event) = Key_Press
+          or else Get_Event_Type (Event) = Key_Release)
+        and then K.Key_Handler_Active
       then
-         --  If this is a special key, no need to further dispatch the event.
-         if Check_Key_Handlers (K, Event) then
-            return;
-         end if;
+         declare
+            Data   : aliased Event_Data_Record :=
+              (Kernel => K,
+               Event  => Event,
+               Widget => null);
+         begin
+            --  If this is a special key, no need to further dispatch the
+            --  event
+            K.Current_Event_Data := Data'Unchecked_Access;
+            if Process_Event (K.Key_Handler, Data'Unchecked_Access) then
+               K.Current_Event_Data := null;
+               return;
+            end if;
+            K.Current_Event_Data := null;
+         end;
       end if;
 
       --  Dispatch the event in the standard gtk+ main loop
@@ -1563,12 +1587,13 @@ package body Glide_Kernel is
    procedure Destroy (Handle : access Kernel_Handle_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (History_Record, History);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Key_Handler_List_Record, Key_Handler_List_Access);
    begin
       Trace
         (Me, "Saving preferences in " & Handle.Home_Dir.all & "preferences");
       Save_Preferences (Handle, Handle.Home_Dir.all & "preferences");
+
+      Free (Handle.Key_Handler.all);
+      Unchecked_Free (Handle.Key_Handler);
 
       Save (Handle.History.all, Handle.Home_Dir.all & "history");
       Free (Handle.History.all);
@@ -1580,17 +1605,6 @@ package body Glide_Kernel is
 
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
-
-      declare
-         Tmp : Key_Handler_List_Access;
-      begin
-         while Handle.Key_Handler_List /= null loop
-            Tmp := Handle.Key_Handler_List.Next;
-            Unchecked_Free (Tmp);
-            Handle.Key_Handler_List := Tmp;
-         end loop;
-      end;
-
 
       if Handle.Current_Context /= null then
          Unref (Handle.Current_Context);
@@ -1754,54 +1768,59 @@ package body Glide_Kernel is
       return Handle.Source_Info_List;
    end Get_LI_File_List;
 
-   ------------------------
-   -- Check_Key_Handlers --
-   ------------------------
+   ---------
+   -- Put --
+   ---------
 
-   function Check_Key_Handlers
-     (Kernel : access Kernel_Handle_Record;
-      Event  : Gdk.Event.Gdk_Event) return Boolean
+   function Put
+     (Handle : access Kernel_Handle_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags : Child_Flags := All_Buttons;
+      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+      Default_Width, Default_Height : Gint := -1;
+      Module : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False) return MDI_Child
    is
-      Tmp    : Key_Handler_List_Access := Kernel.Key_Handler_List;
-      Result : Boolean := False;
-      Data   : aliased Event_Data_Record :=
-        (Kernel => Kernel_Handle (Kernel),
-         Event  => Event,
-         Widget => null);
+      C : GPS_MDI_Child := new GPS_MDI_Child_Record;
    begin
-      while Tmp /= null and then not Result loop
-         Result := Tmp.Handler (Data'Unchecked_Access);
-         Tmp := Tmp.Next;
-      end loop;
-      return Result;
-   end Check_Key_Handlers;
+      Initialize (C, Child, Flags);
+      C.Module := Module_ID (Module);
+      C.Desktop_Independent := Desktop_Independent;
+      return Put
+        (Get_MDI (Handle),
+         C, Flags, Focus_Widget, Default_Width, Default_Height);
+   end Put;
 
-   ---------------------------
-   -- Register_Key_Handlers --
-   ---------------------------
+   ------------------
+   -- Register_Key --
+   ------------------
 
-   procedure Register_Key_Handlers
-     (Kernel  : access Kernel_Handle_Record;
-      Handler : General_Key_Handler)
+   procedure Register_Key
+     (Handler        : access Default_Key_Handler_Record;
+      Name           : String;
+      Default_Key    : Gdk.Types.Gdk_Key_Type;
+      Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
+      Command        : access Commands.Root_Command'Class;
+      Tooltip        : String := "";
+      On_Key_Press   : Boolean := True;
+      On_Key_Release : Boolean := False)
    is
-      Tmp : Key_Handler_List_Access;
+      pragma Unreferenced
+        (Handler, Default_Key, Default_Mod, Command, Tooltip,
+         On_Key_Press, On_Key_Release, Name);
    begin
-      if Kernel.Key_Handler_List = null then
-         Kernel.Key_Handler_List := new Key_Handler_List_Record'
-           (Handler => Handler,
-            Next    => null);
+      null;
+   end Register_Key;
 
-      else
-         Tmp := Kernel.Key_Handler_List;
-         while Tmp.Next /= null loop
-            Tmp := Tmp.Next;
-         end loop;
+   ----------------------------
+   -- Set_Key_Handler_Active --
+   ----------------------------
 
-         Tmp.Next := new Key_Handler_List_Record'
-           (Handler => Handler,
-            Next    => null);
-      end if;
-   end Register_Key_Handlers;
+   procedure Set_Key_Handler_Active
+     (Kernel : access Kernel_Handle_Record; Active : Boolean) is
+   begin
+      Kernel.Key_Handler_Active := Active;
+   end Set_Key_Handler_Active;
 
    ----------------
    -- Get_Widget --
@@ -1853,27 +1872,49 @@ package body Glide_Kernel is
       return Data.Kernel;
    end Get_Kernel;
 
-   ---------
-   -- Put --
-   ---------
+   -------------------
+   -- Process_Event --
+   -------------------
 
-   function Put
-     (Handle : access Kernel_Handle_Record;
-      Child : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags : Child_Flags := All_Buttons;
-      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
-      Default_Width, Default_Height : Gint := -1;
-      Module : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False) return MDI_Child
+   function Process_Event
+     (Handler  : access Default_Key_Handler_Record;
+      Event    : Event_Data) return Boolean
    is
-      C : GPS_MDI_Child := new GPS_MDI_Child_Record;
+      pragma Unreferenced (Handler, Event);
    begin
-      Initialize (C, Child, Flags);
-      C.Module := Module_ID (Module);
-      C.Desktop_Independent := Desktop_Independent;
-      return Put
-        (Get_MDI (Handle),
-         C, Flags, Focus_Widget, Default_Width, Default_Height);
-   end Put;
+      return False;
+   end Process_Event;
 
+   ---------------------
+   -- Set_Key_Handler --
+   ---------------------
+
+   procedure Set_Key_Handler
+     (Kernel  : access Kernel_Handle_Record;
+      Handler : access Key_Handler_Record'Class) is
+   begin
+      Free (Kernel.Key_Handler.all);
+      Unchecked_Free (Kernel.Key_Handler);
+      Kernel.Key_Handler := Key_Handler_Access (Handler);
+   end Set_Key_Handler;
+
+   ---------------------
+   -- Get_Key_Handler --
+   ---------------------
+
+   function Get_Key_Handler
+     (Kernel : access Kernel_Handle_Record) return Key_Handler_Access is
+   begin
+      return Kernel.Key_Handler;
+   end Get_Key_Handler;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Handler : in out Key_Handler_Record) is
+      pragma Unreferenced (Handler);
+   begin
+      null;
+   end Free;
 end Glide_Kernel;
