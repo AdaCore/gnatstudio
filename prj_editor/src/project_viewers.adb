@@ -85,7 +85,6 @@ with Variable_Editors;         use Variable_Editors;
 with String_Utils;             use String_Utils;
 with Project_Properties;       use Project_Properties;
 with Histories;                use Histories;
-with String_List_Utils;        use String_List_Utils;
 with GUI_Utils;                use GUI_Utils;
 
 with Stringt;       use Stringt;
@@ -324,7 +323,7 @@ package body Project_Viewers is
    function Project_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Handle the interactive commands related to the project editor
 
    --------------------------
@@ -2340,22 +2339,16 @@ package body Project_Viewers is
    function Project_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
-   is
+      Args    : GNAT.OS_Lib.Argument_List) return String is
    begin
       if Command = "prj_add_main_unit" then
-         declare
-            A : Argument_List := List_To_Argument_List (Args);
-         begin
-            Update_Attribute_Value_In_Scenario
-              (Project            => Get_Project (Kernel),
-               Scenario_Variables => Scenario_Variables (Kernel),
-               Attribute_Name     => Main_Attribute,
-               Values             => A,
-               Prepend            => True);
-            Recompute_View (Kernel);
-            Free (A);
-         end;
+         Update_Attribute_Value_In_Scenario
+           (Project            => Get_Project (Kernel),
+            Scenario_Variables => Scenario_Variables (Kernel),
+            Attribute_Name     => Main_Attribute,
+            Values             => Args,
+            Prepend            => True);
+         Recompute_View (Kernel);
       end if;
 
       return "";
@@ -2449,12 +2442,14 @@ package body Project_Viewers is
 
       Register_Command
         (Kernel,
-         "prj_add_main_unit",
-         (-"Usage:") & ASCII.LF
-         & "  prj_add_main_unit main1 [main2 ...]" & ASCII.LF
-         & (-("Add some main units to the current project, and for the"
-              & " current scenario. The project is not saved automatically.")),
-         Handler => Project_Command_Handler'Access);
+         Command      => "prj_add_main_unit",
+         Usage        => "prj_add_main_unit main1 [main2 ...]",
+         Description  =>
+           -("Add some main units to the current project, and for the"
+             & " current scenario. The project is not saved automatically."),
+         Minimum_Args => 1,
+         Maximum_Args => Natural'Last,
+         Handler      => Project_Command_Handler'Access);
    end Register_Module;
 
 end Project_Viewers;
