@@ -22,6 +22,7 @@ with Unchecked_Deallocation;
 with GVD.Types;    use GVD.Types;
 with GNAT.Regpat;  use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Fixed;
 
 package body Language is
 
@@ -39,6 +40,137 @@ package body Language is
    --  given file name.
    --  Note that this variable is not thread-safe.
 
+   ------------------------
+   -- Add_File_Extension --
+   ------------------------
+
+   procedure Add_File_Extension
+     (Language : Language_Access;
+      Pattern  : String)
+   is
+      Table_Index : Positive := Positive'Last;
+      Tmp         : Language_Detection_Access;
+      T           : String_Access;
+
+      procedure Free is new Unchecked_Deallocation
+        (Language_Detection_Array, Language_Detection_Access);
+
+   begin
+      --  Do we already have this language in the table
+
+      if Language_Detection /= null then
+         for Index in Language_Detection'Range loop
+            if Language_Detection (Index).Language.all = Language.all then
+               Table_Index := Index;
+               exit;
+            end if;
+         end loop;
+      end if;
+
+      --  If not, extend the table
+
+      if Table_Index = Positive'Last then
+         if Language_Detection = null then
+            Tmp := new Language_Detection_Array (1 .. 1);
+            Table_Index := 1;
+         else
+            Tmp := new Language_Detection_Array
+              (Language_Detection'First .. Language_Detection'Last + 1);
+            Tmp (Language_Detection'Range) := Language_Detection.all;
+            Table_Index := Tmp'Last;
+         end if;
+
+         Free (Language_Detection);
+         Language_Detection := Tmp;
+      end if;
+
+      --  Add the new item in the table
+      Language_Detection (Table_Index).Language := Language;
+
+      if Language_Detection (Table_Index).Pattern = null then
+         Language_Detection (Table_Index).Pattern :=
+           new String'("(" & Pattern & ")");
+
+      else
+         T := Language_Detection (Table_Index).Pattern;
+         Language_Detection (Table_Index).Pattern :=
+           new String'(T.all & "|(" & Pattern & ")");
+         Free (T);
+      end if;
+   end Add_File_Extension;
+
+   -------------------------
+   -- Add_File_Extensions --
+   -------------------------
+
+   procedure Add_File_Extensions
+     (Lang : Language_Access; Extensions : String)
+   is
+      First : Natural;
+      Ind   : Natural;
+
+      function To_Regexp (S : String) return String;
+      --  Transform S into a regexp, by applying the following transformations:
+      --    - "." is transformed into "\."
+      --    - a "$" is appended to S.
+
+      function To_Regexp (S : String) return String is
+         Res : String (1 .. S'Length * 2 + 1);
+         Ind : Positive := 1;
+      begin
+         for J in S'Range loop
+            if S (J) /= '.' then
+               Res (Ind) := S (J);
+            else
+               Res (Ind) := '\';
+               Ind := Ind + 1;
+               Res (Ind) := '.';
+            end if;
+
+            Ind := Ind + 1;
+         end loop;
+
+         Res (Ind) := '$';
+         return Res (1 .. Ind);
+      end To_Regexp;
+
+   begin
+      First := Extensions'First;
+
+      loop
+         Ind := Ada.Strings.Fixed.Index
+           (Extensions (First .. Extensions'Last), ";");
+
+         exit when Ind = 0;
+
+         Add_File_Extension (Lang, To_Regexp (Extensions (First .. Ind - 1)));
+         First := Ind + 1;
+      end loop;
+   end Add_File_Extensions;
+
+   ---------------------------
+   -- Can_Tooltip_On_Entity --
+   ---------------------------
+
+   function Can_Tooltip_On_Entity
+     (Lang   : access Language_Root;
+      Entity : String) return Boolean is
+   begin
+      return True;
+   end Can_Tooltip_On_Entity;
+
+   ----------------------
+   -- Explorer_Regexps --
+   ----------------------
+
+   function Explorer_Regexps
+     (Lang : access Language_Root) return Explorer_Categories
+   is
+      E : Explorer_Categories (1 .. 0);
+   begin
+      return E;
+   end Explorer_Regexps;
+
    ----------
    -- Free --
    ----------
@@ -49,6 +181,35 @@ package body Language is
    begin
       Internal (Lang);
    end Free;
+
+   ----------------------------
+   -- Get_Language_From_File --
+   ----------------------------
+
+   function Get_Language_From_File
+     (File_Name : String) return Language_Access is
+   begin
+      if Language_Detection /= null then
+         for Index in Language_Detection'Range loop
+            if Match (Language_Detection (Index).Pattern.all, File_Name) then
+               return Language_Detection (Index).Language;
+            end if;
+         end loop;
+      end if;
+
+      return null;
+   end Get_Language_From_File;
+
+   --------------------
+   -- Is_System_File --
+   --------------------
+
+   function Is_System_File
+     (Lang      : access Language_Root;
+      File_Name : String) return Boolean is
+   begin
+      return False;
+   end Is_System_File;
 
    ----------------
    -- Looking_At --
@@ -200,112 +361,17 @@ package body Language is
       end loop;
    end Looking_At;
 
-   ----------------------
-   -- Explorer_Regexps --
-   ----------------------
-
-   function Explorer_Regexps
-     (Lang : access Language_Root) return Explorer_Categories
-   is
-      E : Explorer_Categories (1 .. 0);
-   begin
-      return E;
-   end Explorer_Regexps;
-
-   --------------------
-   -- Is_System_File --
-   --------------------
-
-   function Is_System_File
-     (Lang      : access Language_Root;
-      File_Name : String) return Boolean is
-   begin
-      return False;
-   end Is_System_File;
-
-   ------------------------
-   -- Add_File_Extension --
-   ------------------------
-
-   procedure Add_File_Extension
-     (Language : Language_Access;
-      Pattern  : String)
-   is
-      procedure Free is new Unchecked_Deallocation
-        (Language_Detection_Array, Language_Detection_Access);
-      Table_Index : Positive := Positive'Last;
-      Tmp         : Language_Detection_Access;
-      T           : String_Access;
-
-   begin
-      --  Do we already have this language in the table
-      if Language_Detection /= null then
-         for Index in Language_Detection'Range loop
-            if Language_Detection (Index).Language = Language then
-               Table_Index := Index;
-               exit;
-            end if;
-         end loop;
-      end if;
-
-      --  If not, extend the table
-
-      if Table_Index = Positive'Last then
-         if Language_Detection = null then
-            Tmp := new Language_Detection_Array (1 .. 1);
-            Table_Index := 1;
-         else
-            Tmp := new Language_Detection_Array
-              (Language_Detection'First .. Language_Detection'Last + 1);
-            Tmp (Language_Detection'Range) := Language_Detection.all;
-            Table_Index := Tmp'Last;
-         end if;
-         Free (Language_Detection);
-         Language_Detection := Tmp;
-      end if;
-
-      --  Add the new item in the table
-      Language_Detection (Table_Index).Language := Language;
-
-      if Language_Detection (Table_Index).Pattern = null then
-         Language_Detection (Table_Index).Pattern :=
-           new String'("(" & Pattern & ")");
-
-      else
-         T := Language_Detection (Table_Index).Pattern;
-         Language_Detection (Table_Index).Pattern :=
-           new String'(T.all & "|(" & Pattern & ")");
-         Free (T);
-      end if;
-   end Add_File_Extension;
-
-   ----------------------------
-   -- Get_Language_From_File --
-   ----------------------------
-
-   function Get_Language_From_File
-     (File_Name : String) return Language_Access is
-   begin
-      if Language_Detection /= null then
-         for Index in Language_Detection'Range loop
-            if Match (Language_Detection (Index).Pattern.all, File_Name) then
-               return Language_Detection (Index).Language;
-            end if;
-         end loop;
-      end if;
-
-      return null;
-   end Get_Language_From_File;
-
    ---------------------------
-   -- Can_Tooltip_On_Entity --
+   -- Reset_File_Extensions --
    ---------------------------
 
-   function Can_Tooltip_On_Entity
-     (Lang : access Language_Root;
-      Entity : String) return Boolean is
+   procedure Reset_File_Extensions is
    begin
-      return True;
-   end Can_Tooltip_On_Entity;
+      if Language_Detection /= null then
+         for J in Language_Detection'Range loop
+            Free (Language_Detection (J).Pattern);
+         end loop;
+      end if;
+   end Reset_File_Extensions;
 
 end Language;

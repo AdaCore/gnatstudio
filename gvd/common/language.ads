@@ -181,15 +181,20 @@ package Language is
    --  The access returned points to a global instance, and should not be
    --  modified directly.
 
-   procedure Add_File_Extension
-     (Language : Language_Access;
-      Pattern  : String);
+   procedure Add_File_Extension (Language : Language_Access; Pattern : String);
    --  Add a new regexp pattern.
    --  Any file whose name matches Pattern will be associated with Language.
    --  No copy of Language is made.
    --
    --  Thanks to this function, this package doesn't have to know anything
    --  about specific languages.
+
+   procedure Add_File_Extensions (Lang : Language_Access; Extensions : String);
+   --  Add all the extensions contained in Str (separated by semicolons)
+   --  for the language Lang.
+
+   procedure Reset_File_Extensions;
+   --  Remove all registered file extensions.
 
    ----------------------
    -- Language_Context --
