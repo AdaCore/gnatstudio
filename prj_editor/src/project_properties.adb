@@ -39,7 +39,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
@@ -724,13 +723,11 @@ package body Project_Properties is
       end loop;
 
       --  Connect this only once we have created the pages
-      Gtk.Handlers.Add_Watch
-        (Object_User_Callback.Connect
-         (Main_Note, "switch_page",
-          Object_User_Callback.To_Marshaller (Switch_Page'Access),
-          User_Data => GObject (Editor),
-          After => True),
-         Editor);
+      Object_User_Callback.Connect
+        (Main_Note, "switch_page",
+         Object_User_Callback.To_Marshaller (Switch_Page'Access),
+         User_Data => GObject (Editor),
+         After => True);
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Show (Button);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
