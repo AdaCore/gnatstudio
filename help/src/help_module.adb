@@ -30,6 +30,7 @@ with Glide_Kernel;                 use Glide_Kernel;
 with Glide_Kernel.Console;         use Glide_Kernel.Console;
 with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
+with Glide_Main_Window;            use Glide_Main_Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.MDI;                   use Gtkada.MDI;
@@ -58,6 +59,7 @@ package body Help_Module is
    Me : constant Debug_Handle := Create ("Glide_Kernel.Help");
 
    Template_Index : constant String := "help_index.html";
+   Index_File     : constant String := "gps_index.xml";
 
    Font_Adjust : Integer;
    pragma Import (C, Font_Adjust, "_gdk_font_adjust");
@@ -1008,79 +1010,83 @@ package body Help_Module is
    -----------------------
 
    procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class) is
-      Index_File : constant String := "gps_index.xml";
+      Top  : constant Glide_Window := Glide_Window
+        (Get_Main_Window (Kernel));
       Path : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
       Iter : Path_Iterator;
       Node, Tmp, Field : Node_Ptr;
    begin
-      if Path /= null then
-         Iter := Start (Path.all);
-         loop
-            declare
-               Dir : constant String := Current (Path.all, Iter);
-               Full : constant String := Name_As_Directory (Dir) & Index_File;
-               Name, Descr, Menu, Cat : String_Ptr;
-               Empty : aliased String := "";
-            begin
-               exit when Dir = "";
-
-               if Is_Regular_File (Full) then
-                  Trace (Me, "Parsing index " & Full);
-                  Node := Parse (Full);
-
-                  Tmp := Node.Child;
-                  while Tmp /= null loop
-                     if Tmp.Tag.all = "file" then
-                        Name  := Empty'Unrestricted_Access;
-                        Descr := Empty'Unrestricted_Access;
-                        Menu  := Empty'Unrestricted_Access;
-                        Cat   := Empty'Unrestricted_Access;
-
-                        Field := Tmp.Child;
-                        while Field /= null loop
-                           if Field.Tag.all = "name" then
-                              Name := Field.Value;
-
-                           elsif Field.Tag.all = "descr" then
-                              Descr := Field.Value;
-
-                           elsif Field.Tag.all = "menu" then
-                              Menu := Field.Value;
-
-                           elsif Field.Tag.all = "category" then
-                              Cat := Field.Value;
-
-                           else
-                              Insert
-                                (Kernel,
-                                 -"Invalid field in documentation index file "
-                                 & Full);
-                           end if;
-
-                           Field := Field.Next;
-                        end loop;
-
-                        Trace (Me, "Adding " & Name.all & ' ' & Menu.all);
-                        Register_Help
-                          (Kernel,
-                           HTML_File => Name.all,
-                           Descr     => Descr.all,
-                           Category  => Cat.all,
-                           Menu_Path => Menu.all);
-                     end if;
-
-                     Tmp := Tmp.Next;
-                  end loop;
-
-                  Free (Node);
-               end if;
-            end;
-
-            Iter := Next (Path.all, Iter);
-         end loop;
-
+      if Path = null or else Path.all = "" then
          Free (Path);
+         Path := new String'(Top.Prefix_Directory.all & "/doc/gps/html/");
       end if;
+
+      Iter := Start (Path.all);
+      loop
+         declare
+            Dir : constant String := Current (Path.all, Iter);
+            Full : constant String := Name_As_Directory (Dir) & Index_File;
+            Name, Descr, Menu, Cat : String_Ptr;
+            Empty : aliased String := "";
+         begin
+            exit when Dir = "";
+
+            if Is_Regular_File (Full) then
+               Trace (Me, "Parsing index " & Full);
+               Node := Parse (Full);
+
+               Tmp := Node.Child;
+               while Tmp /= null loop
+                  if Tmp.Tag.all = "file" then
+                     Name  := Empty'Unrestricted_Access;
+                     Descr := Empty'Unrestricted_Access;
+                     Menu  := Empty'Unrestricted_Access;
+                     Cat   := Empty'Unrestricted_Access;
+
+                     Field := Tmp.Child;
+                     while Field /= null loop
+                        if Field.Tag.all = "name" then
+                           Name := Field.Value;
+
+                        elsif Field.Tag.all = "descr" then
+                           Descr := Field.Value;
+
+                        elsif Field.Tag.all = "menu" then
+                           Menu := Field.Value;
+
+                        elsif Field.Tag.all = "category" then
+                           Cat := Field.Value;
+
+                        else
+                           Insert
+                             (Kernel,
+                              -"Invalid field in documentation index file "
+                              & Full);
+                        end if;
+
+                        Field := Field.Next;
+                     end loop;
+
+                     Trace (Me, "Adding " & Name.all & ' ' & Menu.all);
+                     Register_Help
+                       (Kernel,
+                        HTML_File => Name.all,
+                        Descr     => Descr.all,
+                        Category  => Cat.all,
+                        Menu_Path => Menu.all);
+                  end if;
+
+                  Tmp := Tmp.Next;
+               end loop;
+
+               Free (Node);
+            end if;
+         end;
+
+         Iter := Next (Path.all, Iter);
+      end loop;
+
+      Free (Path);
    end Parse_Index_Files;
 
    ---------------------
