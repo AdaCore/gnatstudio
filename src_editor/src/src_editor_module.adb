@@ -149,13 +149,15 @@ package body Src_Editor_Module is
    Last_Line_Cst         : aliased constant String := "last_line";
    End_Column_Cst        : aliased constant String := "end_column";
    Writable_Cst          : aliased constant String := "writable";
+   Position_Cst          : aliased constant String := "position";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
       3 => Col_Cst'Access,
       4 => Length_Cst'Access,
-      5 => Force_Cst'Access);
+      5 => Force_Cst'Access,
+      6 => Position_Cst'Access);
    Create_Mark_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
@@ -243,11 +245,14 @@ package body Src_Editor_Module is
       File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
-      Force      : Boolean := False) return Source_Box;
+      Force      : Boolean := False;
+      Position   : Gtkada.MDI.Child_Position :=
+        Gtkada.MDI.Position_Default) return Source_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
    --  If Focus is True, the box will be raised if it is in the MDI.
    --  See Create_File_Exitor.
+   --  Position indicates the position to give to the editor in the MDI.
    --  If Force is true, then the file is reloaded without asking confirmation
    --  from the user
 
@@ -871,6 +876,7 @@ package body Src_Editor_Module is
          declare
             File : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
+            Position : Natural;
          begin
             Line   := Nth_Arg (Data, 2, Default => 1);
             Column := Nth_Arg (Data, 3, Default => 1);
@@ -879,6 +885,9 @@ package body Src_Editor_Module is
             if File /= VFS.No_File then
                if Command = "edit" then
                   Force := Nth_Arg (Data, 5, Default => False);
+                  Position := Nth_Arg
+                    (Data, 6, Default => Natural (Position_Default));
+
                   if Length = 0 then
                      Open_File_Editor
                        (Kernel,
@@ -886,7 +895,8 @@ package body Src_Editor_Module is
                         Line,
                         Column,
                         Enable_Navigation => False,
-                        Force_Reload => Force);
+                        Force_Reload => Force,
+                        Position => Child_Position (Position));
                   else
                      Open_File_Editor
                        (Kernel,
@@ -2570,7 +2580,9 @@ package body Src_Editor_Module is
       File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
-      Force      : Boolean := False) return Source_Box
+      Force      : Boolean := False;
+      Position   : Gtkada.MDI.Child_Position :=
+        Gtkada.MDI.Position_Default) return Source_Box
    is
       No_Name : constant String := -"Untitled";
       MDI     : constant MDI_Window := Get_MDI (Kernel);
@@ -2617,7 +2629,8 @@ package body Src_Editor_Module is
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module         => Src_Editor_Module_Id);
+            Module         => Src_Editor_Module_Id,
+            Position       => Position);
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
          Widget_Callback.Connect
            (Child, "selected", Update_Cache_On_Focus'Access);
@@ -3542,7 +3555,8 @@ package body Src_Editor_Module is
            (Kernel, D.File,
             Create_New => D.New_File,
             Focus      => D.Focus,
-            Force      => D.Force_Reload);
+            Force      => D.Force_Reload,
+            Position   => D.Position);
 
          if Source /= null then
             Edit := Source.Editor;
@@ -4200,7 +4214,7 @@ package body Src_Editor_Module is
          Class         => Editor_Class,
          Static_Method => True,
          Minimum_Args  => 1,
-         Maximum_Args  => 5,
+         Maximum_Args  => 6,
          Handler       => Edit_Command_Handler'Access);
       Register_Command
         (Kernel, "create_mark",
