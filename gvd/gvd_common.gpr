@@ -1,9 +1,9 @@
 with "../gtkada/gtkada";
 with "gnat_gvd";
 
-project GVD is
+project GVD_Common is
 
-  for Source_Dirs use ("common", "gvd");
+  for Source_Dirs use ("common");
   for Object_Dir use "gvd";
 
-end GVD;
+end GVD_Common;
