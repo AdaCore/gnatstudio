@@ -1643,6 +1643,7 @@ package body Glide_Kernel is
       Dialog    : Gtk_Dialog;
       It        : Gtk_Tree_Iter;
       Renderer  : Gtk_Cell_Renderer_Text;
+      Scrolled  : Gtk_Scrolled_Window;
       View      : Gtk_Tree_View;
       Col       : Gtk_Tree_View_Column;
       Col_Num   : Gint;
@@ -1663,6 +1664,7 @@ package body Glide_Kernel is
                      Title  => -"Select the declaration",
                      Parent => Get_Main_Window (Kernel),
                      Flags  => Modal or Destroy_With_Parent);
+            Set_Default_Size (Dialog, 500, 500);
 
             Gtk_New (Label, -"This entity is overloaded.");
             Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
@@ -1670,9 +1672,13 @@ package body Glide_Kernel is
             Gtk_New (Label, -"Please select the appropriate declaration.");
             Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 
+            Gtk_New (Scrolled);
+            Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+            Pack_Start (Get_Vbox (Dialog), Scrolled);
+
             Gtk_New (View);
             Set_Mode (Get_Selection (View), Selection_Single);
-            Pack_Start (Get_Vbox (Dialog), View);
+            Add (Scrolled, View);
 
             Gtk_New (Model, Column_Types);
             Set_Model (View, Gtk_Tree_Model (Model));
