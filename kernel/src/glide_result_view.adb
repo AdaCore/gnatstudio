@@ -523,6 +523,27 @@ package body Glide_Result_View is
       Get_Category_File
         (View, Category, File, Category_Iter, File_Iter, Category_Created);
 
+      --  Check whether the same item already exists.
+
+      if Category_Iter /= Null_Iter
+        and then File_Iter /= Null_Iter
+      then
+         Iter := Children (View.Tree.Model, File_Iter);
+
+         while Iter /= Null_Iter loop
+            if Get_String (View.Tree.Model, Iter, Line_Column) = Image (Line)
+              and then Get_String
+                (View.Tree.Model, Iter, Column_Column) = Image (Column)
+              and then Get_String
+                (View.Tree.Model, Iter, Message_Column) = Message
+            then
+               return;
+            end if;
+
+            Next (View.Tree.Model, Iter);
+         end loop;
+      end if;
+
       Append (View.Tree.Model, Iter, File_Iter);
 
       if Highlight then
@@ -638,9 +659,20 @@ package body Glide_Result_View is
    ----------------
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
-      V : constant Result_View := Result_View (View);
+      V    : constant Result_View := Result_View (View);
+      Iter : Gtk_Tree_Iter;
    begin
+      --  Remove all categories.
+
+      Iter := Get_Iter_First (V.Tree.Model);
+
+      while Iter /= Null_Iter loop
+         Remove_Category_Or_File_Iter (V, Iter);
+         Iter := Get_Iter_First (V.Tree.Model);
+      end loop;
+
       Unref (V.Category_Pixbuf);
+      Unref (V.File_Pixbuf);
    end On_Destroy;
 
    -------------
