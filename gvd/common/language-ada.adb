@@ -18,7 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Regpat;  use GNAT.Regpat;
+
 package body Language.Debugger.Ada is
+
+   Kw : Pattern_Matcher :=
+     Compile ("^(a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
+              & "(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|"
+              & "e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|g(eneric|"
+              & "oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|o(thers|ut|[fr]"
+              & ")|p(ackage|r(agma|ivate|o(cedure|tected)))|r(a(ise|nge)|e("
+              & "cord|m|names|queue|turn|verse))|s(e(lect|parate)|ubtype)|t"
+              & "(a(gged|sk)|erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|"
+              & "xor)\W", Case_Insensitive);
 
    --------------------
    -- Is_Simple_Type --
@@ -32,5 +44,77 @@ package body Language.Debugger.Ada is
         or else Str = "natural"
         or else Str = "character";
    end Is_Simple_Type;
+
+   ----------------
+   -- Looking_At --
+   ----------------
+
+   procedure Looking_At (Lang    : Ada_Language;
+                         Buffer  : String;
+                         Entity  : out Language_Entity;
+                         To_Skip : out Positive)
+   is
+      Matched : Match_Array (0 .. 1);
+
+   begin
+      --  Do we have a keyword ?
+
+      Match (Kw, Buffer, Matched);
+      if Matched (0) /= No_Match then
+         To_Skip := Matched (0).Last - Matched (0).First + 1;
+         Entity := Keyword_Text;
+         return;
+      end if;
+
+      --  Do we have a comment ?
+
+      if Buffer'Length > 2
+        and then Buffer (Buffer'First) = '-'
+        and then Buffer (Buffer'First + 1) = '-'
+      then
+         Entity := Comment_Text;
+         To_Skip := 1;
+         while Buffer'First + To_Skip <= Buffer'Last
+           and then Buffer (Buffer'First + To_Skip) /= ASCII.LF
+         loop
+            To_Skip := To_Skip + 1;
+         end loop;
+         To_Skip := To_Skip + 1;
+         return;
+      end if;
+
+      --  Do we have a string ?
+
+      if Buffer (Buffer'First) = '"' then
+         Entity := String_Text;
+         To_Skip := 1;
+         while Buffer'First + To_Skip <= Buffer'Last
+           and then Buffer (Buffer'First + To_Skip) /= '"'
+         loop
+            To_Skip := To_Skip + 1;
+         end loop;
+         To_Skip := To_Skip + 1;
+         return;
+      end if;
+
+      --  If no, skip to the next meaningfull character
+
+      To_Skip := 1;
+      while Buffer'First + To_Skip <= Buffer'Last
+        and then Buffer (Buffer'First + To_Skip) /= ' '
+        and then Buffer (Buffer'First + To_Skip) /= ASCII.LF
+        and then Buffer (Buffer'First + To_Skip) /= '"'
+        and then Buffer (Buffer'First + To_Skip) /= '-'
+      loop
+         To_Skip := To_Skip + 1;
+      end loop;
+
+      if Buffer (Buffer'First + To_Skip) /= '"'
+        and then Buffer (Buffer'First + To_Skip) /= '-'
+      then
+         To_Skip := To_Skip + 1;
+      end if;
+      Entity := Normal_Text;
+   end Looking_At;
 
 end Language.Debugger.Ada;

@@ -27,6 +27,8 @@ package Language is
 
    Unexpected_Type : exception;
 
+   procedure Free (Lang : in out Language_Access);
+
    procedure Parse_Type
      (Lang     : Language_Root;
       Type_Str : String;
@@ -79,6 +81,22 @@ package Language is
       Index    : in out Natural;
       Result   : in out Array_Type_Access) is abstract;
    --  Parse the value of an array.
+
+   type Language_Entity is (Normal_Text,
+                            Keyword_Text,
+                            Comment_Text,
+                            String_Text);
+   --  The entities found in a language, and that can have a different scheme
+   --  for colors highlighting.
+
+   procedure Looking_At (Lang    : Language_Root;
+                         Buffer  : String;
+                         Entity  : out Language_Entity;
+                         To_Skip : out Positive) is abstract;
+   --  Should return the type of entity that is present at the first position
+   --  in the buffer (ie starting at Buffer'First).
+   --  To_Skip should be set to the number of characters to advance in the
+   --  buffer to find the next entity.
 
 private
    type Language_Root is abstract tagged null record;

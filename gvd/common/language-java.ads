@@ -25,6 +25,11 @@ package Language.Debugger.Java is
    function Is_Simple_Type (Lang : Java_Language; Str : String) return Boolean;
    --  Return True if Str is a simple type, like integer, ...
 
+   procedure Looking_At (Lang    : Java_Language;
+                         Buffer  : String;
+                         Entity  : out Language_Entity;
+                         To_Skip : out Positive);
+
 private
 
    type Java_Language is abstract new Language_Debugger with null record;

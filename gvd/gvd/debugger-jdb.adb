@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Generic_Values;    use Generic_Values;
 with System;            use System;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNAT.Expect;       use GNAT.Expect;
@@ -26,7 +25,6 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Debugger.Jdb.Java; use Debugger.Jdb.Java;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Process_Proxies;   use Process_Proxies;
 
 package body Debugger.Jdb is
@@ -103,10 +101,6 @@ package body Debugger.Jdb is
    ----------------
 
    procedure Initialize (Debugger : access Jdb_Debugger) is
-      Result     : Expect_Match;
-      Matched    : GNAT.Regpat.Match_Array (0 .. 2);
-      Descriptor : Process_Descriptor_Access := Get_Descriptor
-        (Get_Process (Debugger.all));
       Language   : Language_Access;
    begin
       --  Wait for initial prompt

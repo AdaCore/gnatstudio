@@ -24,6 +24,14 @@ package Language.Debugger.Ada is
 
    function Is_Simple_Type (Lang : Ada_Language; Str : String) return Boolean;
    --  Return True if Str is a simple type, like integer, ...
+   --  These are the types that don't need information from the debugger to
+   --  be known, ie we can save a call to the debugger when parsing the value
+   --  of a variable.
+
+   procedure Looking_At (Lang    : Ada_Language;
+                         Buffer  : String;
+                         Entity  : out Language_Entity;
+                         To_Skip : out Positive);
 
 private
 

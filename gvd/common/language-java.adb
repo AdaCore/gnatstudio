@@ -30,4 +30,18 @@ package body Language.Debugger.Java is
       return False;
    end Is_Simple_Type;
 
+   ----------------
+   -- Looking_At --
+   ----------------
+
+   procedure Looking_At (Lang    : Java_Language;
+                         Buffer  : String;
+                         Entity  : out Language_Entity;
+                         To_Skip : out Positive)
+   is
+   begin
+      To_Skip := 1;
+      Entity := Normal_Text;
+   end Looking_At;
+
 end Language.Debugger.Java;

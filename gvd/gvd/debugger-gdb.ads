@@ -23,7 +23,6 @@
 
 with GNAT.OS_Lib;
 with Debugger;
-with Generic_Values;
 
 package Debugger.Gdb is
 

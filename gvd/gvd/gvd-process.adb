@@ -28,16 +28,11 @@ with Gtk.Main;     use Gtk.Main;
 with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
-with Odd_Intl;            use Odd_Intl;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
-with Gdk.Pixmap;      use Gdk.Pixmap;
-with Gtk.Style;       use Gtk.Style;
-with Gtk.Clist;       use Gtk.Clist;
 with Gtkada.Canvas;   use Gtkada.Canvas;
-with Gtkada.Types;    use Gtkada.Types;
 with Odd.Pixmaps;     use Odd.Pixmaps;
 with Display_Items;   use Display_Items;
 with Generic_Values;  use Generic_Values;
@@ -45,12 +40,21 @@ with Debugger.Gdb;    use Debugger.Gdb;
 with Debugger.Jdb;    use Debugger.Jdb;
 with Odd.Strings;     use Odd.Strings;
 with Process_Proxies; use Process_Proxies;
+with Gtkada.Code_Editors; use Gtkada.Code_Editors;
 
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
 
 with Unchecked_Conversion;
 
+pragma Warnings (Off, Debugger.Jdb);
+
 package body Odd.Process is
+
+   Editor_Font_Size : constant Gint := 10;
+   --  Size of the font used in the editor.
+
+   Editor_Font : constant String := "Courier";
+   --  Font used in the editor.
 
    function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
 
@@ -158,7 +162,6 @@ package body Odd.Process is
    is
       Process  : Debugger_Process_Tab;
       Id       : Gint;
-      Infile   : File_Type;
       Top      : Main_Debug_Window_Access renames Main_Debug_Window;
       Label    : Gtk_Label;
 
@@ -190,7 +193,6 @@ package body Odd.Process is
       end if;
 
       Append_Page (Top.Process_Notebook, Process.Process_Paned, Label);
-      --  Set_Page (Top.Process_Notebook, Gint (Next_Tab));
       Show_All (Top.Process_Notebook);
       Set_Page (Top.Process_Notebook, -1);
 
@@ -199,8 +201,6 @@ package body Odd.Process is
       Add_Output_Filter
         (Get_Descriptor (Get_Process (Process.Debugger.all)).all,
          Text_Output_Handler'Access);
---        Add_Input_Filter (Get_Process (Process.Debugger.all).all,
-      --                          Text_Output_Handler'Access);
       Id := My_Input.Add
         (To_Gint (Get_Output_Fd
                   (Get_Descriptor (Get_Process (Process.Debugger.all)).all)),
@@ -210,41 +210,13 @@ package body Odd.Process is
 
       Initialize (Process.Debugger);
 
-      Open (Infile, In_File, "odd_main.adb");
-      declare
-         S      : String (1 .. 1024);
-         Last   : Natural;
-         Row    : Gint;
-         Pixmap : Gdk.Gdk_Pixmap;
-         Mask   : Gdk.Gdk_Bitmap;
-         Style  : Gtk_Style := Get_Style (Process.Editor_Text);
-         Texts  : constant Chars_Ptr_Array := (0 => Null_Ptr);
-         Line   : Natural := 1;
-
-      begin
-         Realize (Process.Editor_Text);
-         Create_From_Xpm_D
-           (Pixmap, Get_Clist_Window (Process.Editor_Text),
-            Mask, Get_White (Style), stop_xpm);
-
-         while not End_Of_File (Infile) loop
-            Get_Line (File => Infile, Item => S, Last => Last);
-            Row := Append (Process.Editor_Text, Texts);
-
-            if Line_Contains_Code
-              (Process.Debugger.all, "odd_main.adb", Line)
-            then
-               Set_Pixtext
-                 (Process.Editor_Text, Row, 0, S (1 .. Last), 5, Pixmap, Mask);
-            else
-               Set_Text
-                 (Process.Editor_Text, Row, 0, S (1 .. Last));
-            end if;
-
-            Line := Line + 1;
-         end loop;
-      end;
-      Close (Infile);
+      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size, Stop_Xpm,
+                 Comments_Color => "red",
+                 Strings_Color  => "brown",
+                 Keywords_Color => "blue");
+      Set_Current_Language (Process.Editor_Text,
+                            Get_Language (Process.Debugger.all));
+      Load_File (Process.Editor_Text, "odd_main.adb", Process.Debugger);
 
       return Process;
    end Create_Debugger;
