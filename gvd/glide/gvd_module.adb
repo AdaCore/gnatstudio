@@ -275,7 +275,7 @@ package body GVD_Module is
       use Debugger;
 
    begin
-      if Process.Debugger /= null then
+      if Process /= null and then Process.Debugger /= null then
          Debug_Command (Top.all'Access, 0, Null_Widget);
       end if;
 
