@@ -47,8 +47,6 @@ package Creation_Wizard is
 
    Invalid_Project_Page : exception;
 
-
-
    type Project_Wizard_Record is
       new Wizards.Wizard_Record with private;
    type Project_Wizard is access all Project_Wizard_Record'Class;
@@ -56,6 +54,7 @@ package Creation_Wizard is
    procedure Gtk_New
      (Wiz                 : out Project_Wizard;
       Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title               : String;
       Show_Toc            : Boolean := True;
       Auto_Save_On_Exit   : Boolean := True;
       Project             : Projects.Project_Type := Projects.No_Project);
@@ -68,6 +67,7 @@ package Creation_Wizard is
    procedure Initialize
      (Wiz                 : access Project_Wizard_Record'Class;
       Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title               : String;
       Show_Toc            : Boolean := True;
       Auto_Save_On_Exit   : Boolean := True;
       Project             : Projects.Project_Type := Projects.No_Project);

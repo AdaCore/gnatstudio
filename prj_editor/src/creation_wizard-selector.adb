@@ -120,7 +120,7 @@ package body Creation_Wizard.Selector is
       Wiz  : Project_Wizard;
       P    : Wizard_Selector_Page_Access;
    begin
-      Gtk_New (Wiz, Kernel);
+      Gtk_New (Wiz, Kernel, -"Create New Project");
       P := new Wizard_Selector_Page;
       Add_Page
         (Wiz,

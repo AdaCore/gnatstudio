@@ -63,12 +63,13 @@ package body Creation_Wizard is
    procedure Gtk_New
      (Wiz                 : out Project_Wizard;
       Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title               : String;
       Show_Toc            : Boolean := True;
       Auto_Save_On_Exit   : Boolean := True;
       Project             : Projects.Project_Type := Projects.No_Project) is
    begin
       Wiz := new Project_Wizard_Record;
-      Initialize (Wiz, Kernel, Show_Toc, Auto_Save_On_Exit, Project);
+      Initialize (Wiz, Kernel, Title, Show_Toc, Auto_Save_On_Exit, Project);
    end Gtk_New;
 
    --------------------------------
@@ -100,6 +101,7 @@ package body Creation_Wizard is
    procedure Initialize
      (Wiz                 : access Project_Wizard_Record'Class;
       Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title               : String;
       Show_Toc            : Boolean := True;
       Auto_Save_On_Exit   : Boolean := True;
       Project             : Projects.Project_Type := Projects.No_Project) is
@@ -107,7 +109,7 @@ package body Creation_Wizard is
       Wizards.Initialize
         (Wiz,
          Kernel   => Kernel,
-         Title    => -"Create New Project",
+         Title    => Title,
          Show_Toc => Show_Toc);
       Wiz.Project := Project;
       Wiz.Auto_Save_On_Exit := Auto_Save_On_Exit;

@@ -588,7 +588,7 @@ package body Creation_Wizard.Dependencies is
       Wiz  : Creation_Wizard.Project_Wizard;
       Iter : Gtk_Tree_Iter;
    begin
-      Creation_Wizard.Gtk_New (Wiz, B.Kernel);
+      Creation_Wizard.Gtk_New (Wiz, B.Kernel, -"Add New Project");
       Add_Full_Wizard_Pages
         (Wiz, Creation_Wizard.Add_Name_And_Location_Page (Wiz));
 
@@ -755,8 +755,7 @@ package body Creation_Wizard.Dependencies is
       P := new Dependency_Project_Page;
       Add_Page (Wiz,
                 Page => P,
-                Description =>
-                   -"Select the dependencies for this project",
+                Description => -"Dependencies for this project",
                 Toc         => -"Dependencies");
    end Add_Project_Dependencies_Page;
 
@@ -776,6 +775,7 @@ package body Creation_Wizard.Dependencies is
    begin
       Gtk_New (Wiz, Get_Kernel (File),
                Project           => Project_Information (File),
+               Title             => -"Project Dependencies",
                Auto_Save_On_Exit => False);
       Add_Project_Dependencies_Page (Wiz);
       Show_All (Wiz);
