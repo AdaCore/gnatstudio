@@ -605,7 +605,6 @@ package body Debugger.Gdb is
       Str : constant String := "frame" & Natural'Image (Frame - 1);
    begin
       Send (Debugger, Str, Display => Display);
-      Wait_Prompt (Debugger);
    end Stack_Frame;
 
    ---------------
