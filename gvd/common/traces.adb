@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -164,8 +164,8 @@ package body Traces is
 
    function Create
      (Unit_Name : String;
-      Default   : Default_Activation_Status := From_Config)
-      return Debug_Handle
+      Default   : Default_Activation_Status := From_Config;
+      Finalize  : Boolean := True) return Debug_Handle
    is
       Tmp : Debug_Handle := null;
       Upper_Case : constant String := To_Upper (Unit_Name);
@@ -182,7 +182,8 @@ package body Traces is
                Stream        => Default_Output,
                Timer         => Ada.Calendar.Clock,
                Count         => 1,
-               Next          => Handles_List);
+               Next          => Handles_List,
+               Finalize      => Finalize);
 
             if Default = On then
                Tmp.Active := True;
@@ -734,28 +735,32 @@ package body Traces is
    begin
       while Tmp /= null loop
          Next := Tmp.Next;
-         Free (Tmp.Name);
 
-         if Tmp.Stream /= null
-           and then Tmp.Stream /= Default_Output
-         then
-            --  Streams can be shared, so avoid freeing and closing them
-            --  multiple times.
-            Tmp2 := Tmp.Next;
+         if Tmp.Finalize then
+            Free (Tmp.Name);
 
-            while Tmp2 /= null loop
-               if Tmp2.Stream = Tmp.Stream then
-                  Tmp2.Stream := null;
-               end if;
+            if Tmp.Stream /= null
+              and then Tmp.Stream /= Default_Output
+            then
+               --  Streams can be shared, so avoid freeing and closing them
+               --  multiple times.
+               Tmp2 := Tmp.Next;
 
-               Tmp2 := Tmp2.Next;
-            end loop;
+               while Tmp2 /= null loop
+                  if Tmp2.Stream = Tmp.Stream then
+                     Tmp2.Stream := null;
+                  end if;
 
-            Close (Tmp.Stream.all);
-            Unchecked_Free (Tmp.Stream);
+                  Tmp2 := Tmp2.Next;
+               end loop;
+
+               Close (Tmp.Stream.all);
+               Unchecked_Free (Tmp.Stream);
+            end if;
+
+            Unchecked_Free (Tmp);
          end if;
 
-         Unchecked_Free (Tmp);
          Tmp := Next;
       end loop;
 

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2004                    --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -101,7 +101,8 @@ package Traces is
    type Default_Activation_Status is (From_Config, On, Off);
    function Create
      (Unit_Name : String;
-      Default   : Default_Activation_Status := From_Config)
+      Default   : Default_Activation_Status := From_Config;
+      Finalize  : Boolean := True)
       return Debug_Handle;
    --  Create a new handle.
    --  Name is upper-cases, and looked-for in the configuration file to check
@@ -114,6 +115,9 @@ package Traces is
    --  status for that handle. To change it, the user must explicitely have
    --  a line for this handle in the config file, and this handle is not
    --  impacted by the use of "+" in this config file.
+   --
+   --  If Finalize is True, the handle will be freed when Finalize is called,
+   --  otherwise it won't be.
 
    function Unit_Name (Handle : Debug_Handle) return String;
    --  Return the unit name (upper-cased) for this handle. This can be used for
@@ -220,13 +224,14 @@ private
    type File_Type_Access is access Ada.Text_IO.File_Type;
 
    type Debug_Handle_Record is record
-      Name   : GNAT.OS_Lib.String_Access;
-      Active : Boolean;
+      Name          : GNAT.OS_Lib.String_Access;
+      Active        : Boolean;
       Forced_Active : Boolean := False;
-      Stream : File_Type_Access;
-      Timer  : Ada.Calendar.Time;
-      Next   : Debug_Handle;
-      Count  : Natural;
+      Stream        : File_Type_Access;
+      Timer         : Ada.Calendar.Time;
+      Next          : Debug_Handle;
+      Count         : Natural;
+      Finalize      : Boolean;
    end record;
    --  ??? Should be controlled so that streams are correctly closed on exit
    --  If Forced_Active is true, then the Active status shouldn't be impacted
