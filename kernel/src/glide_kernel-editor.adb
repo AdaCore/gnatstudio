@@ -33,6 +33,7 @@ with Gtk.Widget;        use Gtk.Widget;
 with Gtkada.MDI;        use Gtkada.MDI;
 with Src_Editor_Box;    use Src_Editor_Box;
 with GVD.Process;       use GVD.Process;
+with String_Utils;      use String_Utils;
 
 package body Glide_Kernel.Editor is
 
@@ -163,20 +164,22 @@ package body Glide_Kernel.Editor is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : String) return Source_Editor_Box
    is
-      Top      : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      MDI      : constant MDI_Window :=
+      Top        : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      MDI        : constant MDI_Window :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Success : Boolean;
-      Editor  : Source_Editor_Box;
-      Box     : Source_Box;
-      Child   : MDI_Child;
+      Short_File : String := Base_File_Name (File);
+      Success    : Boolean;
+      Editor     : Source_Editor_Box;
+      Box        : Source_Box;
+      Child      : MDI_Child;
 
    begin
       if File = "" then
          return null;
       end if;
 
-      Child := Find_MDI_Child (MDI, File);
+      --  ??? Should do a search on the full filename instead
+      Child := Find_MDI_Child (MDI, Short_File);
 
       if Child /= null then
          Raise_Child (Child);
@@ -188,7 +191,7 @@ package body Glide_Kernel.Editor is
       Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
       Attach (Editor, Box);
       Child := Put (MDI, Box);
-      Set_Title (Child, File);
+      Set_Title (Child, Short_File);
       Load_File (Editor, File, Success => Success);
 
       return Editor;
