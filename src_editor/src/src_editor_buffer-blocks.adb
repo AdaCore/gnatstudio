@@ -18,18 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language;    use Language;
-
+with Language;          use Language;
 with Src_Editor_Buffer.Line_Information;
-use Src_Editor_Buffer.Line_Information;
-
 with Src_Editor_Module; use Src_Editor_Module;
 
-with Commands.Editor; use Commands.Editor;
-with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Commands.Editor;   use Commands.Editor;
+with Glib.Unicode;      use Glib.Unicode;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
 
 package body Src_Editor_Buffer.Blocks is
 
+   use Src_Editor_Buffer.Line_Information;
    use Block_List;
 
    --------------------
@@ -175,28 +174,28 @@ package body Src_Editor_Buffer.Blocks is
    is
       Iter      : Gtk_Text_Iter;
       Line, Col : Gint;
+      Result    : Boolean;
+
    begin
       if not Blocks_Valid (Buffer) then
          return;
       end if;
 
-      --  The heuristics to determine the right offset for a block is to look
-      --  at the offsets of the first line of the block.
-
-      --  ??? Looking at the last line of the block is too costly right now.
-      --  We should be able to compute the right information for the whole
-      --  block, and to cache it while the text of the block is not being
-      --  modified.
+      --  The heuristic to determine the right offset for a block is to look
+      --  for the first non blank character on the line.
 
       Get_Iter_At_Line_Offset
         (Buffer,
          Iter,
-         Gint (Get_Buffer_Line (Buffer, Block.First_Line) - 1),
-         Gint (Block.Offset_Start));
+         Gint (Get_Buffer_Line (Buffer, Block.First_Line) - 1), 0);
+
+      while Is_Space (Get_Char (Iter)) and then not Ends_Line (Iter) loop
+         Forward_Char (Iter, Result);
+      end loop;
 
       Get_Screen_Position (Buffer, Iter, Line, Col);
 
-      Block.Stored_Offset := Integer (Col);
+      Block.Stored_Offset := Integer (Col) + 1;
    end Calculate_Screen_Offset;
 
 end Src_Editor_Buffer.Blocks;
