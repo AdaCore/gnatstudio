@@ -26,6 +26,8 @@ with Basic_Types;  use Basic_Types;
 
 with Generic_List;
 
+with Codefix.Merge_Utils; use Codefix.Merge_Utils;
+
 package Codefix.Text_Manager is
 
    Text_Manager_Error : exception;
@@ -44,8 +46,10 @@ package Codefix.Text_Manager is
    --  Return true if the position J in a comment line.
 
    function Without_Last_Blanks (Str : String) return String;
+   --  Return the string Str without the last blanks characters.
 
    function Is_Separator (Char : Character) return Boolean;
+   --  Return True if the character can be considerate as a separator.
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -62,8 +66,10 @@ package Codefix.Text_Manager is
    --  Return True when Left is after Right.
 
    function "<=" (Left, Right : Text_Cursor'Class) return Boolean;
+   --  Return True when Left is before or in the same position than Right.
 
    function ">=" (Left, Right : Text_Cursor'Class) return Boolean;
+   --  Return True when Left is after or in the same position than Right.
 
    type File_Cursor is new Text_Cursor with record
       File_Name : Dynamic_String;
@@ -95,7 +101,10 @@ package Codefix.Text_Manager is
    type Ptr_Mark is access all Mark_Abstr'Class;
 
    procedure Free (This : in out Mark_Abstr) is abstract;
+   --  Free the memory associated to a Mark_Abstr.
+
    procedure Free_Data (This : in out Mark_Abstr'Class);
+   --  Free the memory associated to a Mark_Abstr.
 
    ----------------------------------------------------------------------------
    --  type Text_Interface
@@ -104,21 +113,15 @@ package Codefix.Text_Manager is
    type Text_Interface is abstract tagged private;
    type Ptr_Text is access all Text_Interface'Class;
 
-   --  The abstract part of Text_Interface do not manage the offset line. That
-   --  means that if a line is added after line 1, and then a get line in line
-   --  2 is asked, nothing will be tell the Text_Interface that the old line 2
-   --  is now line 3. The problem is that error messages are all loaded before
-   --  all modifications, and after the first add / delete, their lines numbers
-   --  becomes to be incoherent. The implementation of Text_Interface should
-   --  take care of these problems.
-
    function Get_New_Mark
      (Current_Text : Text_Interface;
       Cursor       : Text_Cursor'Class) return Mark_Abstr'Class is abstract;
+   --  Create a new mark at the position specified by the cursor.
 
    function Get_Current_Cursor
      (Current_Text : Text_Interface;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class is abstract;
+   --  Return the current position of the mark.
 
    procedure Free (This : in out Ptr_Text);
    --  Free the memory associated to Ptr_Text and the object referenced.
@@ -240,12 +243,15 @@ package Codefix.Text_Manager is
    function Get_New_Mark
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class;
+   --  Create a new mark at the position specified by the cursor.
 
    function Get_Current_Cursor
      (Current_Text : Text_Navigator_Abstr;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class is abstract;
+   --  Return the current position of the mark.
 
    procedure Free (This : in out Text_Navigator_Abstr);
+   --  Free the memory associated to a Text_Navigator.
 
    function Get_Unit
      (Current_Text           : Text_Navigator_Abstr;
@@ -365,18 +371,21 @@ package Codefix.Text_Manager is
    type Extract_Line is private;
    type Ptr_Extract_Line is access Extract_Line;
 
-   type Line_Context is
-     (Original_Line,
-      Line_Modified,
-      Line_Created,
-      Line_Deleted);
-
    function "=" (Left, Right : Extract_Line) return Boolean;
+   --  Return True if both Extract_Lines are containing similar lines.
+
+   function "<" (Left, Right : Ptr_Extract_Line) return Boolean;
+   --  Return True if Left is before Right.
 
    procedure Assign (This : in out Extract_Line; Value : Extract_Line);
+   --  Initialize information of This with clones of Value.
 
-   function Get_Context (This : Extract_Line) return Line_Context;
+   function Get_Context (This : Extract_Line) return Merge_Info;
    --  Return the context associated to an Extract_Line.
+
+   function Next (This : Ptr_Extract_Line) return Ptr_Extract_Line;
+   --  If the Extract_Line is a component of a list (typically, a list
+   --  contained in an extract), then Next returns the next entry of the list.
 
    function Next (This : Extract_Line) return Ptr_Extract_Line;
    --  If the Extract_Line is a component of a list (typically, a list
@@ -402,6 +411,9 @@ package Codefix.Text_Manager is
       Recursive : Boolean) return Extract_Line;
    --  Clone an Extract_Line. Recursive True means that all the lines of the
    --  extract that record this line are cloned.
+
+   function Clone (This : Extract_Line) return Extract_Line;
+   --  Same one as the previous but Recursive is consider as True.
 
    function Search_String
      (This          : Extract_Line;
@@ -456,11 +468,11 @@ package Codefix.Text_Manager is
    --  Add to the extract size lines after each beginning of paragraph
    --  recorded.
 
-   procedure Set_String
-     (This        : in out Extract_Line;
-      New_String  : String;
-      First, Last : Natural := 0);
-   --  Set the value of the string contained in the Extract_Line
+   procedure Replace
+     (This       : in out Extract_Line;
+      Start, Len : Natural;
+      New_String : String);
+   --  Replace 'len' characters from 'start' column with 'New_String'.
 
    procedure Set_Coloration (This : in out Extract_Line; Value : Boolean);
    --  Set the boolean used to know if the line has to be colored in the window
@@ -476,6 +488,14 @@ package Codefix.Text_Manager is
    --  If the line is referenced into an extract, this function search the
    --  first line from this one which is at the position specified by the
    --  cursor.
+
+   procedure Merge_Lines
+     (Result              : out Extract_Line;
+      Object_1, Object_2  : Extract_Line;
+      Success             : out Boolean;
+      Chronologic_Changes : Boolean);
+   --  Merge the two lines in result. See declartion of Generic_Merge in
+   --  Codefix.Merge_Utils for more details.
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -510,6 +530,10 @@ package Codefix.Text_Manager is
    --  to preserve the internal order of the lines, not just at the end of the
    --  list.
 
+   procedure Add_Element (This : in out Extract; Element : Extract_Line);
+   --  Add a new line in the line list. The line is always disposed in order
+   --  to preserve the internal order of the lines, not just at the end of the
+   --  list.
    type String_Mode is (Text_Ascii, Regular_Expression);
 
    function Clone (This : Extract) return Extract;
@@ -517,6 +541,7 @@ package Codefix.Text_Manager is
    --  information referenced in pools.
 
    procedure Assign (This : in out Extract'Class; Source : Extract'Class);
+   --  Initiqlize all fields of This by clones from source.
 
    procedure Get
      (This        : Text_Navigator_Abstr'Class;
@@ -537,12 +562,13 @@ package Codefix.Text_Manager is
    --  Get the string of the line of an extract. Strings are ordonned in the
    --  order where they are recorded.
 
-   procedure Set_String
-     (This     : Extract;
-      Value    : String;
-      Position : Natural := 1);
-   --  Set a string recorded in the Extract. Position in the position of the
-   --  record, and not the number of the line.
+   procedure Replace
+     (This          : Extract;
+      Start, Length : Natural;
+      Value         : String;
+      Line_Number   : Natural := 1);
+   --  Replace 'len' characters from 'start' column and 'line_numbner' line
+   --  with 'Value'.
 
    procedure Commit
      (This         : Extract;
@@ -680,31 +706,6 @@ package Codefix.Text_Manager is
       Size_Before, Size_After : Natural);
    --  Reduce the number of non-modified lines before and after each paragraph.
 
-   procedure Merge
-     (This                 : out Extract;
-      Extract_1, Extract_2 : Extract'Class;
-      Current_Text         : Text_Navigator_Abstr'Class;
-      Success              : out Boolean;
-      Merge_Characters     : Boolean := True);
-   --  Merge Extract_1 and Extract_2 into This. If no solution can be found,
-   --  then success is false. If Merge_Characters is True then lines modified
-   --  try to be merged. Otherwise, the line from Extract_2 is chosen.
-
-   procedure Merge
-     (This                 : out Extract;
-      Extract_1, Extract_2 : Extract'Class;
-      Success              : out Boolean);
-   --  Merge Extract_1 and Extract_2 into This. If no solution can be found,
-   --  then success is false. If two lines are modified together, then the line
-   --  from Extract_2 is chosen.
-
-   procedure Merge
-     (New_Str                    : out Dynamic_String;
-      Original_Str, Str_1, Str_2 : String;
-      Success                    : out Boolean);
-   --  Merge Str_1 and Str_2 into This. If no solution can be found,
-   --  then success is false.
-
    procedure Erase
      (This        : in out Extract;
       Start, Stop : File_Cursor'Class);
@@ -716,6 +717,20 @@ package Codefix.Text_Manager is
 
    function Get_Nb_Files (This : Extract) return Natural;
    --  Return the number of different files names contained in the extract.
+
+   function Data (This : Ptr_Extract_Line) return Extract_Line;
+   --  Return the object pointed by This.
+
+   function Is_Null (This : Ptr_Extract_Line) return Boolean;
+   --  Return True if This doesn't references any object.
+
+   procedure Merge_Extracts
+     (Result              : out Extract'Class;
+      Object_1, Object_2  : Extract'Class;
+      Success             : out Boolean;
+      Chronologic_Changes : Boolean);
+   --  Merge the two extracts in result. See declartion of Generic_Merge in
+   --  Codefix.Merge_Utils for more details.
 
    ----------------------------------------------------------------------------
    --  type Text_Command
@@ -919,10 +934,13 @@ private
    ----------------------------------------------------------------------------
 
    type Extract_Line is record
-      Context         : Line_Context := Original_Line;
+      Context         : Merge_Info := Original_Unit;
+
       Cursor          : File_Cursor;
+      --  This cursor specify the position where the line begins.
+
       Original_Length : Natural := 0;
-      Content         : Dynamic_String;
+      Content         : Mergable_String;
       Next            : Ptr_Extract_Line;
       Coloration      : Boolean := False;
    end record;
