@@ -54,10 +54,10 @@ package Commands.Editor is
    procedure Create
      (Item         : out Editor_Replace_Slice;
       Buffer       : Source_Buffer;
-      Start_Line   : Integer;
-      Start_Column : Integer;
-      End_Line     : Integer;
-      End_Column   : Integer;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Natural;
       Text         : String;
       Force_End    : Boolean := False);
    --  Create a new Editor_Replace_Slice command.
@@ -87,11 +87,11 @@ package Commands.Editor is
       Mode          : Editor_Command_Mode;
       Buffer        : Source_Buffer;
       User_Executed : Boolean;
-      Line          : Integer;
-      Column        : Integer;
+      Line          : Editable_Line_Type;
+      Column        : Natural;
       Direction     : Direction_Type := Forward;
-      Cursor_Line   : Integer := 0;
-      Cursor_Column : Integer := 0);
+      Cursor_Line   : Editable_Line_Type := 0;
+      Cursor_Column : Natural := 0);
    --  Create a new Editor_Command.
    --  Set User_Executed to True if the command is being interactively entered
    --  by the user.
@@ -101,8 +101,8 @@ package Commands.Editor is
    procedure Add_Text
      (Item         : Editor_Command;
       UTF8         : String;
-      Start_Line   : Integer := -1;
-      Start_Column : Integer := -1);
+      Start_Line   : Editable_Line_Type := 0;
+      Start_Column : Natural := 0);
    --  Add some text (in UTF-8 format) to the current action.
    --  If values other than -1 are specified, they override the
    --  current values in Item.
@@ -137,24 +137,25 @@ private
       Current_Text_Size         : Natural := 0;
       Edition_Mode              : Editor_Command_Mode;
       User_Executed             : Boolean;
-      Line                      : Integer;
+      Line                      : Editable_Line_Type;
       Column                    : Integer;
       Direction                 : Direction_Type;
 
-      Cursor_Line, Cursor_Column : Integer;
+      Cursor_Line               : Editable_Line_Type;
+      Cursor_Column             : Natural;
    end record;
 
    type Editor_Replace_Slice_Type is new Root_Command with record
       Buffer            : Source_Buffer;
 
-      Start_Line        : Integer;
-      Start_Column      : Integer;
+      Start_Line        : Editable_Line_Type;
+      Start_Column      : Natural;
 
-      End_Line_Before   : Integer;
-      End_Column_Before : Integer;
+      End_Line_Before   : Editable_Line_Type;
+      End_Column_Before : Natural;
 
-      End_Line_After    : Integer := -1;
-      End_Column_After  : Integer := -1;
+      End_Line_After    : Editable_Line_Type := 0;
+      End_Column_After  : Natural := 0;
 
       Text_Before       : String_Access;
       Text_After        : String_Access;

@@ -20,7 +20,6 @@
 
 with Glib;                     use Glib;
 with Glib.Convert;             use Glib.Convert;
-with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Traces;                   use Traces;
 with String_Utils;             use String_Utils;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -121,11 +120,11 @@ package body Commands.Editor is
       Mode          : Editor_Command_Mode;
       Buffer        : Source_Buffer;
       User_Executed : Boolean;
-      Line          : Integer;
-      Column        : Integer;
+      Line          : Editable_Line_Type;
+      Column        : Natural;
       Direction     : Direction_Type := Forward;
-      Cursor_Line   : Integer := 0;
-      Cursor_Column : Integer := 0) is
+      Cursor_Line   : Editable_Line_Type := 0;
+      Cursor_Column : Natural := 0) is
    begin
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
@@ -176,8 +175,8 @@ package body Commands.Editor is
    procedure Add_Text
      (Item         : Editor_Command;
       UTF8         : String;
-      Start_Line   : Integer := -1;
-      Start_Column : Integer := -1)
+      Start_Line   : Editable_Line_Type := 0;
+      Start_Column : Natural := 0)
    is
       Text_Length : constant Integer := UTF8'Length;
       First       : Natural := Item.Current_Text'First;
@@ -227,11 +226,11 @@ package body Commands.Editor is
 
       Item.Current_Text_Size := Item.Current_Text_Size + Text_Length;
 
-      if Start_Line /= -1 then
+      if Start_Line /= 0 then
          Item.Line := Start_Line;
       end if;
 
-      if Start_Column /= -1 then
+      if Start_Column /= 0 then
          Item.Column := Start_Column;
       end if;
    end Add_Text;
@@ -250,13 +249,14 @@ package body Commands.Editor is
          Command.User_Executed := False;
       else
          if not Is_Valid_Position
-           (Command.Buffer, Gint (Command.Line), Gint (Command.Column))
+           (Command.Buffer, Command.Line, Command.Column)
          then
             --  This should never happen. If it does, it probably means
             --  that a command with wrong settings has been recorded.
 
             Trace (Me, "Invalid location: " &
-                   Image (Command.Line) & ':' & Image (Command.Column));
+                   Image (Natural (Command.Line)) &
+                   ':' & Image (Natural (Command.Column)));
             Command_Finished (Command, True);
 
             return Success;
@@ -269,13 +269,13 @@ package body Commands.Editor is
             when Insertion =>
                Set_Cursor_Position
                  (Command.Buffer,
-                  Gint (Command.Line),
-                  Gint (Command.Column));
+                  Command.Line,
+                  Command.Column);
                Scroll_To_Cursor_Location (Editor);
                Insert
                  (Command.Buffer,
-                  Gint (Command.Line),
-                  Gint (Command.Column),
+                  Command.Line,
+                  Command.Column,
                   Command.Current_Text
                     (First .. First + Command.Current_Text_Size - 1),
                   False);
@@ -283,30 +283,30 @@ package body Commands.Editor is
                if Command.Direction = Extended then
                   Set_Cursor_Position
                     (Command.Buffer,
-                     Gint (Command.Cursor_Line),
-                     Gint (Command.Cursor_Column));
+                     Command.Cursor_Line,
+                     Command.Cursor_Column);
                   Scroll_To_Cursor_Location (Editor);
 
                elsif Command.Direction = Backward then
                   Set_Cursor_Position
                     (Command.Buffer,
-                     Gint (Command.Line),
-                     Gint (Command.Column));
+                     Command.Line,
+                     Command.Column);
                   Scroll_To_Cursor_Location (Editor);
                end if;
 
             when Deletion =>
                Delete
                  (Command.Buffer,
-                  Gint (Command.Line),
-                  Gint (Command.Column),
-                  Gint (Command.Current_Text_Size),
+                  Command.Line,
+                  Command.Column,
+                  Command.Current_Text_Size,
                   False);
 
                Set_Cursor_Position
                  (Command.Buffer,
-                  Gint (Command.Line),
-                  Gint (Command.Column));
+                  Command.Line,
+                  Command.Column);
                Scroll_To_Cursor_Location (Editor);
          end case;
       end if;
@@ -347,8 +347,6 @@ package body Commands.Editor is
    function Execute
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type
    is
-      Iter   : Gtk_Text_Iter;
-      Result : Boolean;
       Editor : Source_Editor_Box;
 
       function g_utf8_strlen
@@ -359,19 +357,19 @@ package body Commands.Editor is
       if not
         Is_Valid_Position
           (Command.Buffer,
-           Gint (Command.Start_Line), Gint (Command.Start_Column))
+           Command.Start_Line, Command.Start_Column)
         or else not Is_Valid_Position
           (Command.Buffer,
-           Gint (Command.End_Line_Before), Gint (Command.End_Column_Before))
+           Command.End_Line_Before, Command.End_Column_Before)
       then
          --  This should never happen. If it does, it probably means
          --  that a command with wrong settings has been recorded.
 
          Trace (Me, "Invalid location: start:" &
-                Image (Command.Start_Line) & ':' &
-                Image (Command.Start_Column) & " end: " &
-                Image (Command.End_Line_Before) & ':' &
-                Image (Command.End_Column_Before));
+                Image (Natural (Command.Start_Line)) & ':' &
+                Image (Natural (Command.Start_Column)) & " end: " &
+                Image (Natural (Command.End_Line_Before)) & ':' &
+                Image (Natural (Command.End_Column_Before)));
          Command_Finished (Command, True);
 
          return Success;
@@ -379,34 +377,32 @@ package body Commands.Editor is
 
       Replace_Slice
         (Command.Buffer,
-         Gint (Command.Start_Line),
-         Gint (Command.Start_Column),
-         Gint (Command.End_Line_Before),
-         Gint (Command.End_Column_Before),
+         Command.Start_Line,
+         Command.Start_Column,
+         Command.End_Line_Before,
+         Command.End_Column_Before,
          Command.Text_After.all,
          False);
-      Get_Iter_At_Line_Offset
-        (Command.Buffer,
-         Iter,
-         Gint (Command.Start_Line),
-         Gint (Command.Start_Column));
 
-      if Command.End_Line_After = -1 then
-         Forward_Chars
-           (Iter,
-            Gint (g_utf8_strlen
-              (Command.Text_After.all, Command.Text_After'Length)),
-            Result);
-         Command.End_Line_After := Integer (Get_Line (Iter));
-         Command.End_Column_After := Integer (Get_Line_Offset (Iter));
+      --  If needed, compute Command.End_Line_After, Command.End_Column_After.
+
+      if Command.End_Line_After = 0 then
+         Forward_Position
+           (Command.Buffer,
+            Command.Start_Line,
+            Command.Start_Column,
+            Integer (g_utf8_strlen
+                         (Command.Text_After.all, Command.Text_After'Length)),
+            Command.End_Line_After,
+            Command.End_Column_After);
       end if;
 
       Editor := Get_Source_Box_From_MDI
         (Find_Current_Editor (Get_Kernel (Command.Buffer)));
       Set_Cursor_Position
         (Command.Buffer,
-         Gint (Command.End_Line_After),
-         Gint (Command.End_Column_After));
+         Command.End_Line_After,
+         Command.End_Column_After);
       Scroll_To_Cursor_Location (Editor);
 
       Command_Finished (Command, True);
@@ -423,18 +419,18 @@ package body Commands.Editor is
    begin
       if not Is_Valid_Position
         (Command.Buffer,
-         Gint (Command.End_Line_After),
-         Gint (Command.End_Column_After))
+         Command.End_Line_After,
+         Command.End_Column_After)
       then
          return True;
       end if;
 
       Replace_Slice
         (Command.Buffer,
-         Gint (Command.Start_Line),
-         Gint (Command.Start_Column),
-         Gint (Command.End_Line_After),
-         Gint (Command.End_Column_After),
+         Command.Start_Line,
+         Command.Start_Column,
+         Command.End_Line_After,
+         Command.End_Column_After,
          Command.Text_Before.all,
          False);
 
@@ -444,13 +440,13 @@ package body Commands.Editor is
       if Command.Force_End then
          Set_Cursor_Position
            (Command.Buffer,
-            Gint (Command.End_Line_Before),
-            Gint (Command.End_Column_Before));
+            Command.End_Line_Before,
+            Command.End_Column_Before);
       else
          Set_Cursor_Position
            (Command.Buffer,
-            Gint (Command.Start_Line),
-            Gint (Command.Start_Column));
+            Command.Start_Line,
+            Command.Start_Column);
       end if;
 
       Scroll_To_Cursor_Location (Editor);
@@ -466,14 +462,13 @@ package body Commands.Editor is
    procedure Create
      (Item         : out Editor_Replace_Slice;
       Buffer       : Source_Buffer;
-      Start_Line   : Integer;
-      Start_Column : Integer;
-      End_Line     : Integer;
-      End_Column   : Integer;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Natural;
       Text         : String;
       Force_End    : Boolean := False)
    is
-      Start_Iter, End_Iter : Gtk_Text_Iter;
    begin
       Item := new Editor_Replace_Slice_Type;
       Item.Buffer := Buffer;
@@ -483,13 +478,9 @@ package body Commands.Editor is
       Item.End_Column_Before := End_Column;
       Item.Force_End := Force_End;
 
-      Get_Iter_At_Line_Offset
-        (Buffer, Start_Iter, Gint (Start_Line), Gint (Start_Column));
-      Get_Iter_At_Line_Offset
-        (Buffer, End_Iter, Gint (End_Line), Gint (End_Column));
-
       Item.Text_Before := new String'
-        (Get_Text (Buffer, Start_Iter, End_Iter, True));
+        (Get_Text (Buffer, Start_Line, Start_Column, End_Line, End_Column));
+
       Item.Text_After := new String'
         (Glib.Convert.Convert
            (Text, "UTF-8",
