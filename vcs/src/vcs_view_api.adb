@@ -391,7 +391,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -407,7 +407,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -423,7 +423,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -454,7 +454,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       --  ??? Is this the behaviour we want ?
@@ -472,7 +472,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -488,7 +488,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -504,7 +504,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -520,7 +520,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -536,7 +536,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -552,7 +552,7 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
@@ -568,7 +568,7 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Context :=
+      Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context /= null then
