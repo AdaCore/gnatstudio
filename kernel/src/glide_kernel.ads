@@ -652,11 +652,11 @@ package Glide_Kernel is
       Project_Package   : GNAT.OS_Lib.String_Access;
       Project_Attribute : GNAT.OS_Lib.String_Access;
       Project_Index     : GNAT.OS_Lib.String_Access;
-      Default_Switches  : GNAT.OS_Lib.String_Access;
+      Initial_Cmd_Line  : GNAT.OS_Lib.String_Access;
    end record;
    --  (Project_Package, Project_Attribute, Project_Index) describe where its
    --  switches are stored in a project.
-   --  Default_Switches are the switches when the user hasn't edited them
+   --  Initial_Cmd_Line are the switches when the user hasn't edited them
    --  explicitely.
    --  Any of these field can be left to null if it has no special
    --  signification for this tool.
@@ -676,6 +676,14 @@ package Glide_Kernel is
       Tool_Name : String) return Tool_Properties_Record;
    --  Return the properties of the tool.
    --  The resulting record must not be freed by the caller.
+
+   function Get_Tool_Name
+     (Kernel    : access Kernel_Handle_Record;
+      Pkg_Name  : String;
+      Attribute : String;
+      Index     : String) return String;
+   --  Return the name of the tool associated with a specific attribute to save
+   --  the switches. The empty string is returned if there is no such tool
 
    ------------------
    -- Key handlers --

@@ -2333,7 +2333,7 @@ package body Glide_Kernel is
       Free (Tool.Project_Package);
       Free (Tool.Project_Attribute);
       Free (Tool.Project_Index);
-      Free (Tool.Default_Switches);
+      Free (Tool.Initial_Cmd_Line);
    end Free;
 
    -------------------
@@ -2358,6 +2358,43 @@ package body Glide_Kernel is
    begin
       return Tools_Htable.String_Hash_Table.Get (Kernel.Tools, Tool_Name);
    end Get_Tool_Properties;
+
+   -------------------
+   -- Get_Tool_Name --
+   -------------------
+
+   function Get_Tool_Name
+     (Kernel    : access Kernel_Handle_Record;
+      Pkg_Name  : String;
+      Attribute : String;
+      Index     : String) return String
+   is
+      Iter : Tools_Htable.String_Hash_Table.Iterator;
+      Prop : Tool_Properties_Record;
+   begin
+      Tools_Htable.String_Hash_Table.Get_First (Kernel.Tools, Iter);
+      loop
+         Prop := Tools_Htable.String_Hash_Table.Get_Element (Iter);
+         exit when Prop = No_Tool;
+
+         if Prop.Project_Package /= null
+           and then Prop.Project_Index /= null
+           and then Prop.Project_Attribute /= null
+           and then Case_Insensitive_Equal
+             (Prop.Project_Package.all, Pkg_Name)
+           and then Case_Insensitive_Equal
+             (Prop.Project_Attribute.all, Attribute)
+           and then Case_Insensitive_Equal
+             (Prop.Project_Index.all, Index)
+         then
+            return Tools_Htable.String_Hash_Table.Get_Key (Iter);
+         end if;
+
+         Tools_Htable.String_Hash_Table.Get_Next (Kernel.Tools, Iter);
+      end loop;
+
+      return "";
+   end Get_Tool_Name;
 
    ------------
    -- Create --
