@@ -494,6 +494,20 @@ package body Projects is
                      Get_Full_Path_From_File
                        (Project.Data.Registry.all, File,
                         Use_Source_Path => True, Use_Object_Path => False);
+
+                     --  Sometimes the file cannot be found in the project
+                     --  registry, and Get_Full_Path_From_File above sets
+                     --  an empty name in Name_Buffer.
+                     --  For example, this happens when there are broken links
+                     --  in the sources directory. In this case, we set the
+                     --  file name with the base name, so that other operations
+                     --  (such as search in project files for examples) can go
+                     --  on.
+
+                     if Name_Len <= 0 then
+                        Name_Len := File'Length;
+                        Name_Buffer (1 .. Name_Len) := File;
+                     end if;
                   end;
 
                   if Normalized then
