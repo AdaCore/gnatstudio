@@ -304,6 +304,9 @@ package body Odd.Dialogs is
 
          Move_To_Next (History);
       end loop;
+
+   exception
+      when No_Such_Item => null;
    end Update;
 
    ----------------
