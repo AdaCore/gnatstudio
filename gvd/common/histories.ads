@@ -55,11 +55,13 @@ package Histories is
    --  The most recent entry is returned first.
 
    procedure Get_History
-     (Hist  : History_Record;
-      Key   : History_Key;
-      Combo : access Gtk.Combo.Gtk_Combo_Record'Class);
+     (Hist        : History_Record;
+      Key         : History_Key;
+      Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Clear_Combo : Boolean := True);
    --  Set the contents of the combo to the list of strings associated with
    --  Key.
+   --  If Clear_Combo is False, then the previous contents of the combo is kept
 
    procedure Add_To_History
      (Hist      : in out History_Record;

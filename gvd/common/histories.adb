@@ -22,10 +22,12 @@ with Ada.Text_IO;   use Ada.Text_IO;
 with Glib;          use Glib;
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
 with Gtk.Combo;     use Gtk.Combo;
+with Gtk.GEntry;    use Gtk.GEntry;
 with Glib.Xml_Int;  use Glib.Xml_Int;
 with Gtk.List;      use Gtk.List;
 with Gtk.List_Item; use Gtk.List_Item;
 with Ada.Unchecked_Deallocation;
+with GUI_Utils;     use GUI_Utils;
 
 package body Histories is
 
@@ -155,21 +157,34 @@ package body Histories is
    procedure Get_History
      (Hist  : History_Record;
       Key   : History_Key;
-      Combo : access Gtk.Combo.Gtk_Combo_Record'Class)
+      Combo : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Clear_Combo : Boolean := True)
    is
       Item : Gtk_List_Item;
       List : constant Gtk_List := Get_List (Combo);
       Value : constant String_List_Access := Get_History (Hist, Key);
    begin
-      Clear_Items (List, 0, -1);
+      if Clear_Combo then
+         Clear_Items (List, 0, -1);
+      end if;
 
       if Value /= null then
          for V in Value'Range loop
-            Gtk_New (Item, Value (V).all);
-            Show (Item);
-
-            Add (List, Item);
+            --  Do not add the item directly, in case there was already a
+            --  similar entry in the list if it wasn't cleared
+            if Clear_Combo then
+               Gtk_New (Item, Value (V).all);
+               Show (Item);
+               Add (List, Item);
+            else
+               Add_Unique_List_Entry (List, Value (V).all);
+            end if;
          end loop;
+
+         Set_Text (Get_Entry (Combo), Value (Value'First).all);
+         Select_Region (Get_Entry (Combo), 0, -1);
+      else
+         Set_Text (Get_Entry (Combo), "<null>");
       end if;
    end Get_History;
 
