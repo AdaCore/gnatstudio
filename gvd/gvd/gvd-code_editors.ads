@@ -98,6 +98,8 @@ package GVD.Code_Editors is
    --  If Set_Current is True, then the line becomes the current line (ie the
    --  one on which the debugger is stopped). Otherwise, Line is simply the
    --  line that we want to display in the editor.
+   --  Process is the Debugger_Process_Tab which corresponds to the debugger
+   --  that is stopped.
 
    procedure Set_Address
      (Editor : access Code_Editor_Record;
