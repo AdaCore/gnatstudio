@@ -552,7 +552,7 @@ package body Src_Info.Debug is
       case Scope is
          when Global_Scope => return "*";
          when Local_Scope  => return " ";
-         when Class_Static => return "-";
+         when Class_Static => return ":";
          when Static_Local => return "_";
       end case;
    end Output_E_Scope;
