@@ -32,17 +32,19 @@ package Default_Preferences is
    type Property_Color is new Glib.Property;
    type Property_Font  is new Glib.Property;
 
-
-   function Register_Property (Name : String; Default : Glib.Guint)
+   function Register_Property
+     (Name : String; Default : Glib.Guint)
       return Glib.Properties.Property_Uint;
-   function Register_Property (Name : String; Default : Boolean)
+   function Register_Property
+     (Name : String; Default : Boolean)
       return Glib.Properties.Property_Boolean;
-   function Register_Property (Name : String; Default : String)
+   function Register_Property
+     (Name : String; Default : String)
       return Glib.Properties.Property_String;
-   function Register_Property (Name : String; Default : String)
-      return Property_Color;
-   function Register_Property (Name : String; Default : String)
-      return Property_Font;
+   function Register_Property
+     (Name : String; Default : String) return Property_Color;
+   function Register_Property
+     (Name : String; Default : String) return Property_Font;
    --  Register a new property and its default value.
    --  The returned value should be used later on to retrieve the value of the
    --  property.
