@@ -669,29 +669,32 @@ package body Scenario_Selectors is
    -- Start --
    -----------
 
-   function Start (Selector : access Scenario_Selector_Record'Class)
+   function Start
+     (Selector : access Scenario_Selector_Record'Class)
       return Scenario_Iterator
    is
-      It : Gtk_Tree_Iter := Get_Iter_First (Selector.Model);
+      It    : Gtk_Tree_Iter := Get_Iter_First (Selector.Model);
       Child : Gtk_Tree_Iter;
       Count : Natural := 0;
+
    begin
       --  Count the number of variables
+
       while It /= Null_Iter loop
          Count := Count + 1;
          Next (Selector.Model, It);
       end loop;
 
       declare
-         Iter  : Scenario_Iterator (Count);
+         Iter : Scenario_Iterator (Count);
       begin
          Iter.Selector := Scenario_Selector (Selector);
+         Iter.At_End := False;
          Count := Iter.Current'First;
          It := Get_Iter_First (Selector.Model);
 
          while It /= Null_Iter loop
             Iter.Variables (Count) := It;
-            Iter.At_End := False;
 
             --  Find the first value of the variable
             Child := Children (Selector.Model, It);
