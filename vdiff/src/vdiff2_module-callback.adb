@@ -324,8 +324,11 @@ package body Vdiff2_Module.Callback is
             Base  : constant String := Base_Name (D.New_File);
             Ref_F : constant Virtual_File :=
               Create (Full_Filename => Get_Tmp_Dir & "ref$" & Base);
+            Res   : Boolean;
          begin
-            return Visual_Patch (Ref_F, D.New_File, D.Diff_File, True, Ref_F);
+            Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
+            Delete (Ref_F);
+            return Res;
          end;
 
       elsif D.New_File = VFS.No_File then
@@ -337,9 +340,11 @@ package body Vdiff2_Module.Callback is
             Base  : constant String := Base_Name (D.Orig_File);
             Ref_F : constant Virtual_File := Create
               (Full_Filename => Get_Tmp_Dir & "ref$" & Base);
+            Res   : Boolean;
          begin
-            return Visual_Patch
-              (D.Orig_File, Ref_F, D.Diff_File, False, Ref_F);
+            Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
+            Delete (Ref_F);
+            return Res;
          end;
 
       else
