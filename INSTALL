@@ -7,6 +7,9 @@ a prerequisite.
 You need to use a recent version of the GNAT compiler (version >= GNAT 3.15, or
 GCC >= 3.4).
 
+If you are using a version of GNAT more recent than 3.15p, you need to
+remove the file common/src/stubs.c before building.
+
 You then need to install the Gtk+ 2.2.x suite (e.g 2.2.4).
 To download and build Gtk+, follow the instructions given at www.gtk.org
 
