@@ -27,6 +27,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with VCS;                       use VCS;
+with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_View_Pkg;              use VCS_View_Pkg;
 
 with Glide_Intl;                use Glide_Intl;
@@ -110,15 +111,39 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure List_Project_Files
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean);
+
    procedure On_Menu_List_Project_Files
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+
+   procedure On_Menu_List_Project_Files_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure Get_Status_Project
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean);
 
    procedure On_Menu_Get_Status_Project
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Get_Status_Project_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure Update_Project
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean);
+
    procedure On_Menu_Update_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Project_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
@@ -172,6 +197,23 @@ package body VCS_View_API is
      (Kernel : Kernel_Handle)
      return VCS_Access;
    --  Return the VCS reference corresponding to the current context in Kernel.
+
+   function Get_Current_Ref
+     (Project : Project_Id)
+     return VCS_Access;
+   --  Return the VCS reference registered in Project.
+
+   ---------------------
+   -- Get_Current_Ref --
+   ---------------------
+
+   function Get_Current_Ref
+     (Project : Project_Id)
+     return VCS_Access is
+   begin
+      --  ??? maybe we could cache this information.
+      return Get_VCS_From_Id (Get_Vcs_Kind (Project));
+   end Get_Current_Ref;
 
    ---------------------
    -- Get_Current_Ref --
@@ -609,7 +651,7 @@ package body VCS_View_API is
       if File_Name /= null
         and then Has_Project_Information (File_Name)
       then
-         Gtk_New (Item, Label => -"List all files in project recursively");
+         Gtk_New (Item, Label => -"List all files in project");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate",
@@ -631,6 +673,30 @@ package body VCS_View_API is
            (Item, "activate",
             Context_Callback.To_Marshaller
             (On_Menu_Update_Project'Access),
+            Selection_Context_Access (File_Name));
+
+         Gtk_New (Item, Label => -"List all files in project and subprojects");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate",
+            Context_Callback.To_Marshaller
+            (On_Menu_List_Project_Files_Recursive'Access),
+            Selection_Context_Access (File_Name));
+
+         Gtk_New (Item, Label => -"Query status for project and subprojects");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate",
+            Context_Callback.To_Marshaller
+            (On_Menu_Get_Status_Project_Recursive'Access),
+            Selection_Context_Access (File_Name));
+
+         Gtk_New (Item, Label => -"Update project and subprojects");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate",
+            Context_Callback.To_Marshaller
+            (On_Menu_Update_Project_Recursive'Access),
             Selection_Context_Access (File_Name));
       end if;
    end VCS_Contextual_Menu;
@@ -970,11 +1036,9 @@ package body VCS_View_API is
          File := File_Selection_Context_Access (Context);
 
          if Has_Project_Information (File) then
-            return Get_VCS_From_Id
-              (Get_Vcs_Kind (Project_Information (File)));
+            return Get_Current_Ref (Project_Information (File));
          else
-            return Get_VCS_From_Id
-              (Get_Vcs_Kind (Get_Project_View (Kernel)));
+            return Get_Current_Ref (Get_Project_View (Kernel));
          end if;
       end if;
 
@@ -1295,6 +1359,35 @@ package body VCS_View_API is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Dir;
 
+   --------------------
+   -- Update_Project --
+   --------------------
+
+   procedure Update_Project
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean)
+   is
+      Files        : String_List.List;
+      File_Context : File_Selection_Context_Access;
+      Ref          : VCS_Access := Get_Current_Ref (Context);
+   begin
+      Open_Explorer (Get_Kernel (Context), Context);
+
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_Context) then
+            Files := Get_Files_In_Project
+              (Project_Information (File_Context),
+               Recursive);
+            Update (Ref, Files);
+            Get_Status (Ref, Files);
+
+            String_List.Free (Files);
+         end if;
+      end if;
+   end Update_Project;
+
    ----------------------------
    -- On_Menu_Update_Project --
    ----------------------------
@@ -1304,30 +1397,28 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-
-      Files        : String_List.List;
-      File_Context : File_Selection_Context_Access;
-      Ref          : VCS_Access := Get_Current_Ref (Context);
-
    begin
-      Open_Explorer (Get_Kernel (Context), Context);
-
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File_Context) then
-            Files := Get_Files_In_Project (Project_Information (File_Context));
-            Update (Ref, Files);
-            Get_Status (Ref, Files);
-
-            String_List.Free (Files);
-         end if;
-      end if;
-
+      Update_Project (Context, False);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Project;
+
+   --------------------------------------
+   -- On_Menu_Update_Project_Recursive --
+   --------------------------------------
+
+   procedure On_Menu_Update_Project_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Update_Project (Context, True);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Update_Project_Recursive;
 
    -------------------------
    -- Query_Project_Files --
@@ -1340,47 +1431,69 @@ package body VCS_View_API is
       Real_Query : Boolean;
       Recursive  : Boolean)
    is
-      Blank_Status   : File_Status_Record;
-      Current_Status : File_Status_Record;
-      Status         : File_Status_List.List;
-      Files          : String_List.List;
-      Files_Temp     : String_List.List_Node;
-      Ref            : VCS_Access
-        := Get_VCS_From_Id (Get_Vcs_Kind (Project));
+      procedure Query_Status_For_Project
+        (The_Project : Project_Id);
+      --  Display the status for The_Project only.
 
-      use String_List;
+      procedure Query_Status_For_Project
+        (The_Project : Project_Id)
+      is
+         use String_List;
+         Status         : File_Status_List.List;
+         Blank_Status   : File_Status_Record;
+         Current_Status : File_Status_Record;
+         Files          : String_List.List;
+         Files_Temp     : String_List.List_Node;
+         Ref            : VCS_Access := Get_Current_Ref (The_Project);
+      begin
+         if Ref = Unknown_VCS_Reference then
+            Insert
+              (Kernel,
+               -"Warning: could not determine the VCS system for project: "
+                 & Project_Name (The_Project));
+         else
+            Files := Get_Files_In_Project (The_Project, False);
+            Files_Temp := String_List.First (Files);
+
+            while Files_Temp /= String_List.Null_Node loop
+               Current_Status := Blank_Status;
+               Append (Current_Status.File_Name,
+                       String_List.Data (Files_Temp));
+               Files_Temp := String_List.Next (Files_Temp);
+               File_Status_List.Append (Status, Current_Status);
+            end loop;
+
+            Clear (Explorer);
+            Display_File_Status (Kernel, Status, Ref, False, True);
+            File_Status_List.Free (Status);
+
+            if Real_Query then
+               Get_Status (Ref, Files);
+            end if;
+
+            String_List.Free (Files);
+         end if;
+      end Query_Status_For_Project;
+
+      Iterator        : Imported_Project_Iterator
+        := Start (Get_Project_From_View (Project), Recursive);
+      Current_Project : Project_Id := Current (Iterator);
    begin
-      Files := Get_Files_In_Project (Project, Recursive);
-      Files_Temp := String_List.First (Files);
-
-      while Files_Temp /= String_List.Null_Node loop
-         Current_Status := Blank_Status;
-         Append (Current_Status.File_Name,
-                 String_List.Data (Files_Temp));
-         Files_Temp := String_List.Next (Files_Temp);
-         File_Status_List.Append (Status, Current_Status);
+      while Current_Project /= No_Project loop
+         Query_Status_For_Project (Current_Project);
+         Next (Iterator);
+         Current_Project := Current (Iterator);
       end loop;
-
-      Clear (Explorer);
-      Display_File_Status (Kernel, Status, Ref, False, True);
-      File_Status_List.Free (Status);
-
-      if Real_Query then
-         Get_Status (Ref, Files);
-      end if;
-
-      String_List.Free (Files);
    end Query_Project_Files;
 
-   --------------------------------
-   -- On_Menu_List_Project_Files --
-   --------------------------------
+   ------------------------
+   -- List_Project_Files --
+   ------------------------
 
-   procedure On_Menu_List_Project_Files
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   procedure List_Project_Files
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean)
    is
-      pragma Unreferenced (Widget);
       File_Context : File_Selection_Context_Access;
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
    begin
@@ -1395,27 +1508,53 @@ package body VCS_View_API is
               (Get_Explorer (Kernel),
                Kernel,
                Project_Information (File_Context),
-               False, True);
+               False, Recursive);
          end if;
       end if;
+   end List_Project_Files;
 
+   --------------------------------
+   -- On_Menu_List_Project_Files --
+   --------------------------------
+
+   procedure On_Menu_List_Project_Files
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      List_Project_Files (Context, False);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_List_Project_Files;
 
-   --------------------------------
-   -- On_Menu_Get_Status_Project --
-   --------------------------------
+   ------------------------------------------
+   -- On_Menu_List_Project_Files_Recursive --
+   ------------------------------------------
 
-   procedure On_Menu_Get_Status_Project
+   procedure On_Menu_List_Project_Files_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+   begin
+      List_Project_Files (Context, True);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_List_Project_Files_Recursive;
+
+   ------------------------
+   -- Get_Status_Project --
+   ------------------------
+
+   procedure Get_Status_Project
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean)
+   is
       File_Context : File_Selection_Context_Access;
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
-
    begin
       Open_Explorer (Kernel, Context);
       Clear (Get_Explorer (Kernel));
@@ -1428,14 +1567,44 @@ package body VCS_View_API is
               (Get_Explorer (Kernel),
                Kernel,
                Project_Information (File_Context),
-               True, True);
+               True, Recursive);
          end if;
       end if;
+   end Get_Status_Project;
 
+   --------------------------------
+   -- On_Menu_Get_Status_Project --
+   --------------------------------
+
+   procedure On_Menu_Get_Status_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Get_Status_Project (Context, False);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Project;
+
+   ------------------------------------------
+   -- On_Menu_Get_Status_Project_Recursive --
+   ------------------------------------------
+
+   procedure On_Menu_Get_Status_Project_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Get_Status_Project (Context, True);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Get_Status_Project_Recursive;
 
    ------------------
    -- On_Menu_Diff --
@@ -1576,8 +1745,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Ref      : constant VCS_Access
-        := Get_Current_Ref (Kernel);
+      Ref      : VCS_Access := Get_Current_Ref (Kernel);
       Explorer : VCS_View_Access;
    begin
       Open_Explorer (Kernel, null);
