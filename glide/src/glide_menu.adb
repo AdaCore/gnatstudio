@@ -255,7 +255,7 @@ package body Glide_Menu is
       Project     : constant String := "/_" & (-"Project")  & '/';
       Tools       : constant String := "/_" & (-"Tools")    & '/';
       Debug       : constant String := "/_" & (-"Debug")    & '/';
-      Data_Sub    : constant String := (-"_Data")           & '/';
+      Data_Sub    : constant String := (-"D_ata")           & '/';
       Window      : constant String := "/_" & (-"Window");
 
    begin
