@@ -41,7 +41,7 @@ libgvd:
 	gcc -c $(ALL_CFLAGS) gvd-api.adb
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E -n \
 	  -largs --LINK=true
-	ar r libgvd.a $(C_OBJECTS) b~$(MAIN).o gvd-api.o \
+	ar cr libgvd.a $(C_OBJECTS) b~$(MAIN).o gvd-api.o \
 	  `grep '   --   ' b~$(MAIN).adb | grep '\.o$$' | sed 's/   --   //'`
 
 gvd_test: gvd_test.o libgvd
@@ -56,6 +56,6 @@ install: $(EXEC)
 	$(INSTALL_PROGRAM) $(EXEC) $(bindir)
 
 clean:
-	rm -f *.o *.ali *~ b~* $(EXEC)
+	rm -f *.o *.ali *~ b~* $(EXEC) libgvd.a gvd_test
 
 force:
