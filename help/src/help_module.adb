@@ -76,9 +76,6 @@ package body Help_Module is
 
    Help_History_Key : constant History_Key := "help-recent-files";
 
-   Font_Adjust : Integer;
-   pragma Import (C, Font_Adjust, "_gdk_font_adjust");
-
    Url_Cst    : aliased constant String := "URL";
    Anchor_Cst : aliased constant String := "anchor";
    Dir_Cst    : aliased constant String := "directory";
@@ -198,14 +195,6 @@ package body Help_Module is
 
    procedure On_Copy (Html : access Glib.Object.GObject_Record'Class);
    --  Callback for the "Copy" contextual menu item.
-
-   procedure On_Zoom_In
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Help->Zoom in
-
-   procedure On_Zoom_Out
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Help->Zoom in
 
    procedure On_Load_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1093,66 +1082,6 @@ package body Help_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Load_Done;
 
-   ----------------
-   -- On_Zoom_In --
-   ----------------
-
-   procedure On_Zoom_In
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      MDI   : constant MDI_Window := Get_MDI (Kernel);
-      Help  : Help_Browser;
-      Child : constant MDI_Child :=
-        Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
-      Success : Boolean;
-      pragma Unreferenced (Success);
-
-   begin
-      Font_Adjust := Font_Adjust + 2;
-      Set_Pref (Kernel, Help_Font_Adjust, Gint (Font_Adjust));
-
-      if Child = null then
-         return;
-      end if;
-
-      --  Force a reload of the file to show the new font.
-      Help := Help_Browser (Get_Widget (Child));
-      Success := Load_File (Kernel, Help, Help.Current_Help_File);
-   end On_Zoom_In;
-
-   -----------------
-   -- On_Zoom_Out --
-   -----------------
-
-   procedure On_Zoom_Out
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      MDI   : constant MDI_Window := Get_MDI (Kernel);
-      Help  : Help_Browser;
-      Child : constant MDI_Child :=
-        Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
-      Success : Boolean;
-      pragma Unreferenced (Success);
-
-   begin
-      if Font_Adjust < -6 then
-         return;
-      end if;
-
-      Font_Adjust := Font_Adjust - 2;
-      Set_Pref (Kernel, Help_Font_Adjust, Gint (Font_Adjust));
-
-      if Child = null then
-         return;
-      end if;
-
-      --  Force a reload of the file to show the new font.
-      Help := Help_Browser (Get_Widget (Child));
-      Success := Load_File (Kernel, Help, Help.Current_Help_File);
-   end On_Zoom_Out;
-
    ------------------------
    -- Create_Html_Editor --
    ------------------------
@@ -1189,8 +1118,6 @@ package body Help_Module is
          Return_Callback.To_Marshaller (Key_Press'Access), Html);
       Widget_Callback.Object_Connect
         (Html.Csc, "load_done", On_Load_Done'Access, Html);
-
-      Font_Adjust := Integer (Get_Pref (Kernel, Help_Font_Adjust));
 
       Result := Load_File (Kernel, Html, File);
 
@@ -1711,7 +1638,6 @@ package body Help_Module is
    is
       Help  : constant String := "/_" & (-"Help") & '/';
       Name  : constant String := -"Help";
-      Mitem : Gtk_Menu_Item;
       Recent_Menu_Item : Gtk_Menu_Item;
       Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
 
@@ -1751,12 +1677,6 @@ package body Help_Module is
                       and not Whole_Word and not All_Occurrences));
 
       --  Add help menus
-
-      Register_Menu (Kernel, Help, -"_Zoom in", "", On_Zoom_In'Access);
-      Register_Menu (Kernel, Help, -"Zoom _out", "", On_Zoom_Out'Access);
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Help, Mitem);
 
       Register_Menu
         (Kernel, Help, -"_Welcome", "", On_Welcome'Access);
