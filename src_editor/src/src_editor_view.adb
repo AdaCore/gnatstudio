@@ -296,6 +296,7 @@ package body Src_Editor_View is
       Unref (View.Side_Background_GC);
       Unref (View.Default_GC);
       Unref (View.Current_Line_GC);
+      Unref (View.Current_Block_GC);
 
       Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
 
@@ -356,6 +357,10 @@ package body Src_Editor_View is
       X, Y, W, H, D : Gint;
       Rect          : Gdk_Rectangle;
    begin
+      if Win = null then
+         return;
+      end if;
+
       Get_Geometry (Win, X, Y, W, H, D);
       Rect := Gdk_Rectangle'(X, Y, W, H);
       Gdk.Window.Invalidate_Rect (Win, Rect, True);
@@ -384,13 +389,17 @@ package body Src_Editor_View is
    procedure Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
-      User   : Source_View)
-   is
-      pragma Unreferenced (Params, Buffer);
+      User   : Source_View) is
    begin
       if User.Has_Focus then
          Save_Cursor_Position (User);
          Scroll_To_Cursor_Location (User);
+      end if;
+
+      --  If we are doing block highlighting, re-expose the entire view.
+
+      if User.Highlight_Blocks then
+         Line_Highlight_Change_Handler (Buffer, Params, User);
       end if;
 
    exception
@@ -527,9 +536,45 @@ package body Src_Editor_View is
             GC               : Gdk.GC.Gdk_GC;
             Buffer           : constant Source_Buffer :=
               Source_Buffer (Get_Buffer (View));
+            Block_Start      : Natural;
+            Block            : Block_Record;
+            Block_Stack      : Integer;
+
+            procedure Draw_Block (L : Integer; B : Block_Record);
+            --  Draw block B at line L.
+
+            procedure Draw_Block (L : Integer; B : Block_Record) is
+               Block_Begin_Y : Gint;
+               Y             : Gint;
+               Height        : Gint;
+               Width         : Gint;
+
+            begin
+               Get_Iter_At_Line_Offset
+                 (Buffer, Iter, Gint (L - 1), 0);
+               Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
+
+               Get_Iter_At_Line_Offset
+                 (Buffer, Iter, Gint (B.Other_Line - 1), 0);
+               Get_Line_Yrange (View, Iter, Dummy, Height);
+
+               Height := Dummy + Height - Block_Begin_Y;
+
+               Buffer_To_Window_Coords
+                 (View,
+                  Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
+
+               Width := Gint (Block.Offset - 1) * View.Char_Width;
+
+               Draw_Rectangle
+                 (Window, View.Current_Block_GC, False,
+                  Width, Y,
+                  Rect.Width - Width - 1, Height - 1);
+            end Draw_Block;
 
          begin
             Get_Visible_Rect (View, Rect);
+
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
 
@@ -552,7 +597,6 @@ package body Src_Editor_View is
             Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
             Top_Line := Natural (Get_Line (Iter) + 1);
 
-
             for Line in Top_Line .. Bottom_Line loop
                GC := Get_Highlight_GC (Buffer, Line);
 
@@ -573,13 +617,35 @@ package body Src_Editor_View is
                Forward_Line (Iter, Success);
             end loop;
 
+            Get_Iter_At_Mark
+              (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
+
+            Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
+
+            --  Highlight the current block.
+
+            if View.Highlight_Blocks then
+               Block_Start := Natural (Get_Line (Cursor_Iter));
+               Block_Stack := 0;
+
+               while Block_Start > 0 loop
+                  Block := Get_Block (Buffer, Block_Start);
+
+                  Block_Stack := Block_Stack + Block.Indentation_Level;
+
+                  if Block_Stack > 0 then
+                     Draw_Block (Block_Start, Block);
+
+                     exit;
+                  end if;
+
+                  Block_Start := Block_Start - 1;
+               end loop;
+            end if;
+
             --  Highlight the line that contains the cursor.
 
             if View.Highlight_Current then
-               Get_Iter_At_Mark
-                 (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
-
-               Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
                Buffer_To_Window_Coords
                  (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
@@ -679,6 +745,14 @@ package body Src_Editor_View is
       Color := Get_Pref (View.Kernel, Current_Line_Color);
       Set_Foreground (View.Current_Line_GC, Color);
       View.Highlight_Current :=
+        not Equal (Color, White (Get_Default_Colormap));
+
+      Gdk_New
+        (View.Current_Block_GC,
+         Get_Window (View, Text_Window_Text));
+      Color := Get_Pref (View.Kernel, Current_Block_Color);
+      Set_Foreground (View.Current_Block_GC, Color);
+      View.Highlight_Blocks :=
         not Equal (Color, White (Get_Default_Colormap));
 
       Gdk_New
@@ -880,6 +954,11 @@ package body Src_Editor_View is
          Color := Get_Pref (Source.Kernel, Current_Line_Color);
          Set_Foreground (Source.Current_Line_GC, Color);
          Source.Highlight_Current :=
+           not Equal (Color, White (Get_Default_Colormap));
+
+         Color := Get_Pref (Source.Kernel, Current_Block_Color);
+         Set_Foreground (Source.Current_Block_GC, Color);
+         Source.Highlight_Blocks :=
            not Equal (Color, White (Get_Default_Colormap));
       end if;
 
