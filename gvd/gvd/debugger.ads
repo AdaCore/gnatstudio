@@ -97,6 +97,14 @@ package Debugger is
    --  The initial prompt of the debugger will be displayed on the debugger
    --  console, if any.
 
+   procedure Connect_To_Target
+     (Debugger : access Debugger_Root;
+      Target   : String;
+      Protocol : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   --  If supported by the debugger, connect to the given target, using
+   --  the given communication protocol.
+
    procedure Send
      (Debugger        : access Debugger_Root'Class;
       Cmd             : String;
