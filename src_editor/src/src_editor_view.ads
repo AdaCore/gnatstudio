@@ -110,6 +110,7 @@ private
       Side_Background_GC  : Gdk.GC.Gdk_GC;
       Default_GC          : Gdk.GC.Gdk_GC;
       Current_Line_GC     : Gdk.GC.Gdk_GC;
+      Highlight_Current   : Boolean := False;
 
       Top_Line            : Natural := 1;
       Bottom_Line         : Natural := 0;
