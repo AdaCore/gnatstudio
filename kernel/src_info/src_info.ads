@@ -202,6 +202,9 @@ private
    --    - Library_Info -> LI
 
 
+   --  Overloaded symbols
+   --  ==================
+   --
    --  The internal structure defined in this package can handle overloaded
    --  entities that could not be resolved completely by the parser, generally
    --  for lack of semantic analysis. In that case, it is up to GPS to ask the
@@ -238,6 +241,28 @@ private
    --  special entity kind Overloaded_Entity. It then has to check all the
    --  entities with a matching name that are found either in the file file.c
    --  or in one of its include files.
+
+
+   --  Renaming entities
+   --  =================
+   --
+   --  Some languages, like Ada, have the capacity to provide name aliases for
+   --  other entities, possibly entities defined in other packages or
+   --  namespaces. This renaming can happen for subprograms, variables,
+   --  packages,...
+   --
+   --  This structure handles this through a special field in E_Declaration,
+   --  that points to the renamed entity.
+   --
+   --  For instance, in the following code:
+   --        procedure Bar;
+   --        procedure Foo renames Bar;
+   --  There are two E_Declaration_Info added to the list of entities for the
+   --  current source file.
+   --
+   --   - One E_Declaration_Info for Bar
+   --   - One E_Declaration_Info for Foo, with the field Renames pointing to
+   --     the location of the declaration of Bar (file, line, column).
 
 
    type E_Kind is
@@ -477,7 +502,12 @@ private
       Scope           : E_Scope;
       End_Of_Scope    : E_Reference := No_Reference;
       --  The position at which the body of the entity finishes. It doesn't
-      --  correspond to an actualy cross-reference for the entity.
+      --  correspond to an actualy cross-reference for the entity. Its Kind
+      --  should one for which Is_End_Reference (Kind) is True.
+
+      Rename          : File_Location := Null_File_Location;
+      --  Location of the declaration that this one renames. See the
+      --  explanation about renaming above.
    end record;
    --  All the information about an entity declaration.
    --  ??? Note that, in order to save a little bit of memory space,
@@ -493,7 +523,8 @@ private
       Kind            => E_Kind'First,
       Parent_Location => Null_File_Location,
       Scope           => Local_Scope,
-      End_Of_Scope    => No_Reference);
+      End_Of_Scope    => No_Reference,
+      Rename          => Null_File_Location);
 
    type E_Declaration_Access is access all E_Declaration;
 
