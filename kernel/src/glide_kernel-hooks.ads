@@ -163,7 +163,7 @@ package Glide_Kernel.Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Hooks_Data) return Boolean is abstract;
    --  Execute the shell command Command, passing it the arguments contained

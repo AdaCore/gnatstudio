@@ -69,7 +69,7 @@ package body Glide_Kernel.Hooks is
    --  See inherited doc
 
    type Shell_Wrapper_Record is new Hook_Args_Record with record
-      Func   : GNAT.OS_Lib.String_Access;
+      Func   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook   : GNAT.OS_Lib.String_Access;
       Script : Scripting_Language;
    end record;
@@ -84,7 +84,7 @@ package body Glide_Kernel.Hooks is
    --  This wrapper is used to give access to hooks from shell languages.
 
    type Shell_Wrapper_Return_Record is new Hook_Args_Return_Record with record
-      Func   : GNAT.OS_Lib.String_Access;
+      Func   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook   : GNAT.OS_Lib.String_Access;
       Script : Scripting_Language;
    end record;
@@ -99,7 +99,7 @@ package body Glide_Kernel.Hooks is
    --  This wrapper is used to give access to hooks from shell languages.
 
    type Shell_Wrapper_Shell_Record is new Hook_Shell_Args_Record with record
-      Func   : GNAT.OS_Lib.String_Access;
+      Func   : Glide_Kernel.Scripts.Subprogram_Type;
       Script : Scripting_Language;
    end record;
    type Shell_Wrapper_Shell is access all Shell_Wrapper_Shell_Record'Class;
@@ -115,7 +115,7 @@ package body Glide_Kernel.Hooks is
 
 
    type Shell_Wrapper_No_Args_Record is new Hook_No_Args_Record with record
-      Func   : GNAT.OS_Lib.String_Access;
+      Func   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook   : GNAT.OS_Lib.String_Access;
       Script : Scripting_Language;
    end record;
@@ -361,7 +361,7 @@ package body Glide_Kernel.Hooks is
 
    function Get_Name (Hook : Shell_Wrapper_Record) return String is
    begin
-      return Hook.Func.all;
+      return Get_Name (Hook.Func);
    end Get_Name;
 
    --------------
@@ -370,7 +370,7 @@ package body Glide_Kernel.Hooks is
 
    function Get_Name (Hook : Shell_Wrapper_Return_Record) return String is
    begin
-      return Hook.Func.all;
+      return Get_Name (Hook.Func);
    end Get_Name;
 
    --------------
@@ -379,7 +379,7 @@ package body Glide_Kernel.Hooks is
 
    function Get_Name (Hook : Shell_Wrapper_Shell_Record) return String is
    begin
-      return Hook.Func.all;
+      return Get_Name (Hook.Func);
    end Get_Name;
 
    --------------
@@ -388,7 +388,7 @@ package body Glide_Kernel.Hooks is
 
    function Get_Name (Hook : Shell_Wrapper_No_Args_Record) return String is
    begin
-      return Hook.Func.all;
+      return Get_Name (Hook.Func);
    end Get_Name;
 
    -------------
@@ -1232,7 +1232,7 @@ package body Glide_Kernel.Hooks is
       pragma Unreferenced (Kernel, Tmp);
    begin
       Tmp := Execute_Shell
-        (Wrapper.Script, Wrapper.Func.all, Wrapper.Hook.all, Data);
+        (Wrapper.Script, Wrapper.Func, Wrapper.Hook.all, Data);
    end Execute;
 
    -------------
@@ -1276,7 +1276,7 @@ package body Glide_Kernel.Hooks is
       Tmp : Boolean;
       pragma Unreferenced (Kernel, Tmp);
    begin
-      Tmp := Execute_Command (Wrapper.Script, Wrapper.Func.all, Data);
+      Tmp := Execute (Wrapper.Func, Data);
    end Execute;
 
    -------------
@@ -1291,7 +1291,7 @@ package body Glide_Kernel.Hooks is
       pragma Unreferenced (Kernel);
    begin
       return Execute_Shell
-        (Wrapper.Script, Wrapper.Func.all, Wrapper.Hook.all, Data);
+        (Wrapper.Script, Wrapper.Func, Wrapper.Hook.all, Data);
    end Execute;
 
    -------------
@@ -1307,7 +1307,7 @@ package body Glide_Kernel.Hooks is
       pragma Unreferenced (Kernel, Tmp);
    begin
       Set_Nth_Arg (D, 1, Wrapper.Hook.all);
-      Tmp := Execute_Command (Wrapper.Script, Wrapper.Func.all, D);
+      Tmp := Execute (Wrapper.Func, D);
       Free (D);
    end Execute;
 
@@ -1506,7 +1506,7 @@ package body Glide_Kernel.Hooks is
          Info := Get_Data (Data, 1);
          Name_Parameters (Data, Add_Hook_Args);
          declare
-            Func : constant String := Nth_Arg (Data, 2);
+            Func    : Subprogram_Type := Nth_Arg (Data, 2);
             Wrapper  : Shell_Wrapper;
             Wrapper2 : Shell_Wrapper_No_Args;
             Wrapper3 : Shell_Wrapper_Return;
@@ -1517,28 +1517,28 @@ package body Glide_Kernel.Hooks is
 
             elsif Info.Profile = Hook_Without_Args then
                Wrapper2        := new Shell_Wrapper_No_Args_Record;
-               Wrapper2.Func   := new String'(Func);
+               Wrapper2.Func   := Func;
                Wrapper2.Hook   := new String'(Info.Name.all);
                Wrapper2.Script := Get_Script (Data);
                Add_Hook (Get_Kernel (Data), Info.Name.all, Wrapper2);
 
             elsif Info.Profile = Hook_With_Args then
                Wrapper        := new Shell_Wrapper_Record;
-               Wrapper.Func   := new String'(Func);
+               Wrapper.Func   := Func;
                Wrapper.Hook   := new String'(Info.Name.all);
                Wrapper.Script := Get_Script (Data);
                Add_Hook (Get_Kernel (Data), Info.Name.all, Wrapper);
 
             elsif Info.Profile = Hook_With_Args_And_Return then
                Wrapper3        := new Shell_Wrapper_Return_Record;
-               Wrapper3.Func   := new String'(Func);
+               Wrapper3.Func   := Func;
                Wrapper3.Hook   := new String'(Info.Name.all);
                Wrapper3.Script := Get_Script (Data);
                Add_Hook (Get_Kernel (Data), Info.Name.all, Wrapper3);
 
             elsif Info.Profile = Hook_With_Shell_Args then
                Wrapper4        := new Shell_Wrapper_Shell_Record;
-               Wrapper4.Func   := new String'(Func);
+               Wrapper4.Func   := Func;
                Wrapper4.Script := Get_Script (Data);
                Add_Hook (Get_Kernel (Data), Info.Name.all, Wrapper4);
 
@@ -1547,6 +1547,7 @@ package body Glide_Kernel.Hooks is
                  (Data, "Cannot connect to unknown hook " & Info.Name.all);
                Trace (Me, "Cannot connect to hook " & Info.Name.all
                       & " since profile=" & Info.Profile'Img);
+               Free (Func);
             end if;
          end;
 
