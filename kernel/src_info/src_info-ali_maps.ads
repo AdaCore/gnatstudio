@@ -90,6 +90,7 @@ private package Src_Info.ALI_Maps is
       Implicit                                 => 'i',
       Label                                    => 'l',
       Primitive_Operation                      => 'p',
+      With_Line                                => 'w',
       End_Of_Spec                              => 'e',
       End_Of_Body                              => 't');
 

@@ -501,6 +501,7 @@ private
       Type_Extension,
       Implicit,
       Primitive_Operation,
+      With_Line,
       Label,
       End_Of_Spec,
       End_Of_Body);
@@ -543,6 +544,7 @@ private
       Implicit                                 => False,
       Label                                    => False,
       Primitive_Operation                      => False,
+      With_Line                                => False,
       End_Of_Spec                              => True,
       End_Of_Body                              => True);
    --  True if the matching entity indicates an end-of-scope (end of subprogram
@@ -558,6 +560,7 @@ private
       Implicit                                 => False,
       Label                                    => False,
       Primitive_Operation                      => False,
+      With_Line                                => False,
       End_Of_Spec                              => False,
       End_Of_Body                              => False);
    --  True if the matching entity indicates an start-of-scope (start of
@@ -573,6 +576,7 @@ private
       Implicit                                 => False,
       Label                                    => True,
       Primitive_Operation                      => False,
+      With_Line                                => True,
       End_Of_Spec                              => False,
       End_Of_Body                              => False);
    --  True if the name of the entity really appears at that location in the
