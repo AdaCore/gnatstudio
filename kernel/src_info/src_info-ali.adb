@@ -247,20 +247,11 @@ package body Src_Info.ALI is
    --  Create a new LI_File_Ptr from the given ALIs_Record. This LI_File_Ptr
    --  is left unconnected to the LI_File_List.
 
-   function Locate_Load_And_Scan_ALI
-     (Short_ALI_Filename     : String;
-      Project                : Prj.Project_Id;
-      Predefined_Object_Path : String) return ALI_Id;
-   --  Try to locate ALI_Filename inside the Project object path, then
-   --  in Predefined_Object_Path, and finally in the current directory. Then
-   --  scan the ALI file if found.
-
    procedure Parse_ALI_File
      (Handler                : ALI_Handler;
-      Short_ALI_Filename     : String;
+      Full_ALI_Filename      : String;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
       List                   : in out LI_File_List;
       Unit                   : out LI_File_Ptr;
       Success                : out Boolean);
@@ -271,12 +262,22 @@ package body Src_Info.ALI is
    procedure Create_Or_Complete_LI
      (Handler                : access ALI_Handler_Record'Class;
       File                   : in out LI_File_Ptr;
-      Ali_File               : String;
+      Full_Ali_File          : String;
       List                   : in out LI_File_List;
       Project                : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String);
+      Predefined_Source_Path : String);
    --  Internal version of Create_Or_Complete_LI
+
+   function Locate_ALI
+     (Short_ALI_Filename : String;
+      Project                : Prj.Project_Id;
+      Predefined_Object_Path : String) return String;
+   --  Locate an ALI file on the object path. If not found, it will possibly
+   --  search for the parent unit's ALI file (for proper handling of
+   --  separates). There is no garantee that the returned file matches the
+   --  intended source file, this is just the closest ALI file found on the
+   --  path.
+   --  The empty string is returned if nothing was found.
 
    -------------
    -- Destroy --
@@ -1430,31 +1431,27 @@ package body Src_Info.ALI is
       Source_Path  : String;
       List         : in out LI_File_List)
    is
-      Tmp            : LI_File_Ptr;
       Sfiles         : Sdep_To_Sfile_Table
         (New_ALI.First_Sdep ..  New_ALI.Last_Sdep) :=
           (others => No_Source_File);
       ALI_Filename   : constant String := Get_String (New_ALI.Afile);
 
-      LI_File_Is_New : Boolean;
+      LI_File_Is_New : constant Boolean := New_LI_File = null;
       LI_File_Copy   : LI_File_Constrained;
 
    begin
-      Tmp := Get (List.Table, ALI_Filename);
-      LI_File_Is_New := Tmp = null;
-
       if LI_File_Is_New then
          Create_LI_File
-           (File               => Tmp,
-            List               => List,
-            LI_Filename        => Get_String (New_ALI.Afile),
-            Handler            => LI_Handler (Handler));
-         if Tmp = null then
+           (File        => New_LI_File,
+            List        => List,
+            LI_Filename => Base_Name (ALI_Filename),
+            Handler     => LI_Handler (Handler));
+         if New_LI_File = null then
             raise ALI_Internal_Error;
          end if;
 
          Convert_To_Parsed
-           (Tmp,
+           (New_LI_File,
             Update_Timestamp   => True,
             Compilation_Errors => New_ALI.Compile_Errors);
 
@@ -1462,14 +1459,14 @@ package body Src_Info.ALI is
          --  Make a copy of the old LI_File to be able to restore it later
          --  if we encounter some problems while creating the new one.
 
-         LI_File_Copy := Tmp.all;
+         LI_File_Copy := New_LI_File.all;
 
          --  Blank the LI_File to avoid reading some relics of the old LI_File
-         Tmp.LI :=
+         New_LI_File.LI :=
            (Handler                  => LI_Handler (Handler),
             Parsed                   => True,
             LI_Filename              => new String'
-              (Base_Name (Get_String (New_ALI.Afile))),
+              (Base_Name (ALI_Filename)),
             Spec_Info                => null,
             Body_Info                => null,
             Separate_Info            => null,
@@ -1481,18 +1478,16 @@ package body Src_Info.ALI is
 
       --  Build the rest of the structure
 
-      Process_Units (Tmp, New_ALI);
+      Process_Units (New_LI_File, New_ALI);
       Process_Sdeps
-        (Handler, Tmp, New_ALI, Project, Source_Path, Sfiles, List);
+        (Handler, New_LI_File, New_ALI, Project, Source_Path, Sfiles, List);
 
-      Process_Withs (Tmp, New_ALI, Project);
-      Process_Xrefs (Tmp, New_ALI, Sfiles);
+      Process_Withs (New_LI_File, New_ALI, Project);
+      Process_Xrefs (New_LI_File, New_ALI, Sfiles);
 
       if not LI_File_Is_New then
          Destroy (LI_File_Copy.LI);
       end if;
-
-      New_LI_File := Tmp;
 
    exception
       when others =>
@@ -1501,43 +1496,41 @@ package body Src_Info.ALI is
          --  We also set a minimal entry in the table
 
          if LI_File_Is_New then
-            Destroy (Tmp.LI.Spec_Info);
-            Destroy (Tmp.LI.Body_Info);
-            Destroy (Tmp.LI.Separate_Info);
-            Destroy (Tmp.LI.Dependencies_Info);
-            Tmp.LI := (Handler                  => LI_Handler (Handler),
-                       Parsed                   => False,
-                       LI_Filename              => Tmp.LI.LI_Filename,
-                       LI_Timestamp             => Tmp.LI.LI_Timestamp,
-                       Spec_Info                => null,
-                       Body_Info                => null,
-                       Separate_Info            => null);
+            Destroy (New_LI_File.LI.Spec_Info);
+            Destroy (New_LI_File.LI.Body_Info);
+            Destroy (New_LI_File.LI.Separate_Info);
+            Destroy (New_LI_File.LI.Dependencies_Info);
+            New_LI_File.LI :=
+              (Handler       => LI_Handler (Handler),
+               Parsed        => False,
+               LI_Filename   => New_LI_File.LI.LI_Filename,
+               LI_Timestamp  => New_LI_File.LI.LI_Timestamp,
+               Spec_Info     => null,
+               Body_Info     => null,
+               Separate_Info => null);
          else
-            Destroy (Tmp.LI);
-            Tmp.all := LI_File_Copy;
+            Destroy (New_LI_File.LI);
+            New_LI_File.all := LI_File_Copy;
          end if;
 
-         New_LI_File := Tmp;
          raise;
    end Create_New_ALI;
 
-   ------------------------------
-   -- Locate_Load_And_Scan_ALI --
-   ------------------------------
+   ----------------
+   -- Locate_ALI --
+   ----------------
 
-   function Locate_Load_And_Scan_ALI
-     (Short_ALI_Filename     : String;
+   function Locate_ALI
+     (Short_ALI_Filename : String;
       Project                : Prj.Project_Id;
-      Predefined_Object_Path : String) return ALI_Id
+      Predefined_Object_Path : String) return String
    is
       Current_Dir_Name   : constant Character := '.';
       Dir                : String_Access;
-      Result             : ALI_Id;
       Extension : constant String := File_Extension (Short_ALI_Filename);
       Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
       Dot_Replacement : constant String :=
         Get_String (Projects.Table (Project).Naming.Dot_Replacement);
-
    begin
       --  Compute the search path. If the objects path of the project is
       --  not null, then prepend it to the total search path.
@@ -1575,30 +1568,18 @@ package body Src_Info.ALI is
          Last := Last - 1;
       end loop;
 
-      --  Abort if we did not find the ALI file.
-
       if Dir = null then
-         Trace (Me, "Could not locate ALI file: " & Short_ALI_Filename);
-         return No_ALI_Id;
+         return "";
+
+      else
+         declare
+            D : constant String := Dir.all;
+         begin
+            Free (Dir);
+            return D;
+         end;
       end if;
-
-      --  ??? Should check that the ALI file we have found indeed matches the
-      --  unit name we were looking for (since we were looking for the parent
-      --  ALI file possibly)
-
-      --  Scan the ALI file and return the result. Add a trace if we failed
-      --  to scan it.
-
-      Result := Load_And_Scan_ALI (Dir.all);
-
-      if Result = No_ALI_Id then
-         Trace (Me, "Failed to scan " & Dir.all);
-      end if;
-
-      Free (Dir);
-
-      return Result;
-   end Locate_Load_And_Scan_ALI;
+   end Locate_ALI;
 
    --------------------
    -- Parse_ALI_File --
@@ -1606,27 +1587,26 @@ package body Src_Info.ALI is
 
    procedure Parse_ALI_File
      (Handler                : ALI_Handler;
-      Short_ALI_Filename     : String;
+      Full_ALI_Filename      : String;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
       List                   : in out LI_File_List;
       Unit                   : out LI_File_Ptr;
       Success                : out Boolean)
    is
-      New_ALI_Id    : constant ALI_Id := Locate_Load_And_Scan_ALI
-        (Short_ALI_Filename, Project, Predefined_Object_Path);
+      New_ALI_Id    : ALI_Id := No_ALI_Id;
 
    begin
+      if Full_ALI_Filename /= "" then
+         New_ALI_Id := Load_And_Scan_ALI (Full_ALI_Filename);
+      end if;
+
       if New_ALI_Id = No_ALI_Id then
          Unit    := null;
          Success := False;
-         Trace (Me, "Parse_ALI_File: couldn't locate and load file "
-                & Short_ALI_Filename);
          return;
       end if;
 
-      Trace (Me, "Parse_ALI_File: parsing " & Short_ALI_Filename);
       Create_New_ALI
         (Handler, Unit, ALIs.Table (New_ALI_Id), Project,
          Predefined_Source_Path, List);
@@ -1686,8 +1666,6 @@ package body Src_Info.ALI is
          declare
             Ali : constant String := Get_ALI_Filename (Source_Name_Id);
          begin
-            Trace (Me, "ALI-1 file for " & Source_Filename
-                   & " is " & Ali);
             return Ali;
          end;
       end if;
@@ -1709,8 +1687,6 @@ package body Src_Info.ALI is
                Ali : constant String :=
                  Get_ALI_Filename (Get_Filename (Body_Id));
             begin
-               Trace (Me, "ALI-2 file for " & Source_Filename
-                      & " is " & Ali);
                return Ali;
             end;
          end if;
@@ -1724,8 +1700,6 @@ package body Src_Info.ALI is
                Ali : constant String :=
                  Get_ALI_Filename (Get_Body_Filename (Prj_Unit));
             begin
-               Trace (Me, "ALI-3 file for " & Source_Filename
-                      & " is " & Ali);
                return Ali;
             end;
          end if;
@@ -1740,8 +1714,6 @@ package body Src_Info.ALI is
             declare
                Ali : constant String := Get_ALI_Filename (Filename);
             begin
-               Trace (Me, "ALI-4 file for " & Source_Filename
-                      & " is " & Ali);
                Free (Dir);
                return Ali;
             end;
@@ -1753,8 +1725,6 @@ package body Src_Info.ALI is
             Ali : constant String :=
               Get_ALI_Filename (Get_Filename (Spec_Id));
          begin
-            Trace (Me, "ALI-5 file for " & Source_Filename
-                   & " is " & Ali);
             return Ali;
          end;
 
@@ -1769,8 +1739,6 @@ package body Src_Info.ALI is
          declare
             Ali : constant String := Get_ALI_Filename (Source_Name_Id);
          begin
-            Trace (Me, "ALI-6 file for " & Source_Filename
-                   & " is " & Ali);
             return Ali;
          end;
       end if;
@@ -1808,8 +1776,6 @@ package body Src_Info.ALI is
                Ali : constant String :=
                  Get_ALI_Filename (Get_Filename (Body_Id));
             begin
-               Trace (Me, "ALI-9 file for " & Source_Filename
-                      & " is " & Ali);
                return Ali;
             end;
          end if;
@@ -1823,8 +1789,6 @@ package body Src_Info.ALI is
                Ali : constant String :=
                  Get_ALI_Filename (Get_Body_Filename (Prj_Unit));
             begin
-               Trace (Me, "ALI-10 file for " & Source_Filename
-                      & " is " & Ali);
                return Ali;
             end;
          end if;
@@ -1840,8 +1804,6 @@ package body Src_Info.ALI is
             declare
                Ali : constant String := Get_ALI_Filename (Filename);
             begin
-               Trace (Me, "ALI-11 file for " & Source_Filename
-                      & " is " & Ali);
                Free (Dir);
                return Ali;
             end;
@@ -1851,8 +1813,6 @@ package body Src_Info.ALI is
          declare
             Ali : constant String := Get_ALI_Filename (Source_Name_Id);
          begin
-            Trace (Me, "ALI-12 file for " & Source_Filename
-                   & " is " & Ali);
             Free (Dir);
             return Ali;
          end;
@@ -1875,44 +1835,72 @@ package body Src_Info.ALI is
       F : File_Info_Ptr_List;
       Base : constant String := Base_Name (Source_Filename);
    begin
+      --  If the file has already been parsed, we just check that it is still
+      --  up-to-date
       File := Locate_From_Source (List, Base);
-      Create_Or_Complete_LI
-        (Handler                => Handler,
-         File                   => File,
-         Ali_File               => LI_Filename_From_Source
-           (Handler, Base, Project, Predefined_Source_Path),
-         List                   => List,
-         Project                => Project,
-         Predefined_Source_Path => Predefined_Source_Path,
-         Predefined_Object_Path => Predefined_Object_Path);
-
-      --  Make sure that the LI file we just parsed does contain the
-      --  information for the initial source file name. Since for separate
-      --  units we might have been looking for the parent ALI file (see
-      --  Locate_Load_And_Scan_ALI), we now have to make sure we found the
-      --  correct LI file.
 
       if File /= No_LI_File then
-         if (File.LI.Spec_Info /= null
-             and then File.LI.Spec_Info.Source_Filename.all = Base)
-           or else (File.LI.Body_Info /= null
-             and then File.LI.Body_Info.Source_Filename.all = Base)
-         then
-            return;
-         end if;
+         Create_Or_Complete_LI
+           (Handler                => Handler,
+            File                   => File,
+            Full_Ali_File          => Find_File
+              (File.LI.LI_Filename.all, Object_Path (Project, True),
+               Predefined_Object_Path),
+            List                   => List,
+            Project                => Project,
+            Predefined_Source_Path => Predefined_Source_Path);
 
-         F := File.LI.Separate_Info;
-         while F /= null loop
-            if F.Value /= null
-              and then F.Value.Source_Filename.all = Base
-            then
-               return;
+      else
+         declare
+            LI_Name : constant String := LI_Filename_From_Source
+              (Handler, Base, Project, Predefined_Source_Path);
+            Full_LI_Name : constant String := Locate_ALI
+              (LI_Name, Project, Predefined_Object_Path);
+
+         begin
+            --  Else we might already have an incomplete version of the LI
+            --  file.
+            File := Locate (List, Base_Name (Full_LI_Name));
+
+            Create_Or_Complete_LI
+              (Handler                => Handler,
+               File                   => File,
+               Full_Ali_File          => Full_LI_Name,
+               List                   => List,
+               Project                => Project,
+               Predefined_Source_Path => Predefined_Source_Path);
+
+            --  Make sure that the LI file we just parsed does contain the
+            --  information for the initial source file name. Since for
+            --  separate units we might have been looking for the parent ALI
+            --  file (see Locate_ALI), we now have to make sure we found the
+            --  correct LI file.
+
+            if File /= No_LI_File then
+               if (File.LI.Spec_Info /= null
+                   and then File.LI.Spec_Info.Source_Filename.all = Base)
+                 or else (File.LI.Body_Info /= null
+                         and then File.LI.Body_Info.Source_Filename.all = Base)
+               then
+                  return;
+               end if;
+
+               F := File.LI.Separate_Info;
+               while F /= null loop
+                  if F.Value /= null
+                    and then F.Value.Source_Filename.all = Base
+                  then
+                     return;
+                  end if;
+                  F := F.Next;
+               end loop;
+
+               Trace
+                 (Me, "Parsed LI file didn't contain the info for "
+                  & Base & " " & Full_LI_Name);
+               File := No_LI_File;
             end if;
-            F := F.Next;
-         end loop;
-
-         Trace (Me, "Parsed LI file didn't contain the info for " & Base);
-         File := No_LI_File;
+         end;
       end if;
    end Create_Or_Complete_LI;
 
@@ -1923,46 +1911,38 @@ package body Src_Info.ALI is
    procedure Create_Or_Complete_LI
      (Handler                : access ALI_Handler_Record'Class;
       File                   : in out LI_File_Ptr;
-      Ali_File               : String;
+      Full_Ali_File          : String;
       List                   : in out LI_File_List;
       Project                : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String)
+      Predefined_Source_Path : String)
    is
       Success : Boolean := True;
    begin
-      if File = No_LI_File then
-         Parse_ALI_File
-           (ALI_Handler (Handler), Ali_File, Project,
-            Predefined_Source_Path, Predefined_Object_Path,
-            List, File, Success);
+      if Full_Ali_File /= "" then
+         if File = No_LI_File then
+            Trace (Me, "Creating LI file: " & Full_Ali_File);
+            Parse_ALI_File
+              (ALI_Handler (Handler), Full_Ali_File, Project,
+               Predefined_Source_Path, List, File, Success);
 
-         if not Success then
-            Trace (Me, "Couldn't parse LI file " & Ali_File);
-            File := No_LI_File;
-         end if;
+            if not Success then
+               File := No_LI_File;
+            end if;
 
-      else
-         declare
-            Full_File : constant String := Find_File
-              (File.LI.LI_Filename.all, Object_Path (Project, True),
-               Predefined_Object_Path);
-         begin
+         else
             if Is_Incomplete (File)
-              or else To_Timestamp (File_Time_Stamp (Full_File)) >
+              or else To_Timestamp (File_Time_Stamp (Full_Ali_File)) >
               File.LI.LI_Timestamp
             then
                Parse_ALI_File
-                 (ALI_Handler (Handler), File.LI.LI_Filename.all, Project,
-                  Predefined_Source_Path, Predefined_Object_Path,
-                  List, File, Success);
+                 (ALI_Handler (Handler), Full_Ali_File, Project,
+                  Predefined_Source_Path, List, File, Success);
 
                if not Success then
-                  Trace (Me, "Couldn't parse LI file " & Full_File);
                   File := No_LI_File;
                end if;
             end if;
-         end;
+         end if;
       end if;
    end Create_Or_Complete_LI;
 
@@ -2006,11 +1986,12 @@ package body Src_Info.ALI is
             Create_Or_Complete_LI
               (Handler                => Handler,
                File                   => LI,
-               Ali_File               => File (File'First .. Last),
+               Full_Ali_File          => Find_File
+                 (File (File'First .. Last), Object_Path (Project, True),
+                  Predefined_Object_Path),
                List                   => List,
                Project                => Project,
-               Predefined_Source_Path => Predefined_Source_Path,
-               Predefined_Object_Path => Predefined_Object_Path);
+               Predefined_Source_Path => Predefined_Source_Path);
          end if;
       end loop;
 
