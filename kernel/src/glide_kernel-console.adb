@@ -191,8 +191,7 @@ package body Glide_Kernel.Console is
    -- Raise_Console --
    -------------------
 
-   procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class)
-   is
+   procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class) is
       MDI   : constant MDI_Window := Get_MDI (Kernel);
       Child : constant MDI_Child :=
         Find_MDI_Child_By_Tag (MDI, Glide_Console_Record'Tag);
