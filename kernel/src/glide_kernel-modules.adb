@@ -717,8 +717,7 @@ package body Glide_Kernel.Modules is
    is
    begin
       Add_To_Tree
-        (Get_MDI (Kernel),
-         Kernel.Default_Desktop,
+        (Kernel.Default_Desktop,
          Node,
          X, Y, Width, Height,
          Short_Title, Title,
