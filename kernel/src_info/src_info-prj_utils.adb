@@ -25,7 +25,6 @@ with Prj.Com;                 use Prj.Com;
 with Stringt;                 use Stringt;
 with Types;                   use Types;
 with Snames;
-with Prj.Env;                 use Prj.Env;
 with Prj.Util;                use Prj.Util;
 with Prj_API;                 use Prj_API;
 
@@ -345,39 +344,35 @@ package body Src_Info.Prj_Utils is
       return Namet.Name_Find;
    end Get_Unit_Name;
 
-   ----------------------
-   -- Find_Object_File --
-   ----------------------
+   ---------------
+   -- Find_File --
+   ---------------
 
-   function Find_Object_File
-     (Project_View           : Prj.Project_Id;
-      Short_File_Name        : String;
-      Predefined_Object_Path : String := "")
-      return String
+   function Find_File
+     (Short_File_Name, Path, Predefined_Path : String) return String
    is
-      Path : String_Access;
+      File : String_Access;
    begin
       --  First, try on the project object path
-      Path := Locate_Regular_File
-        (Short_File_Name, Ada_Objects_Path (Project_View).all);
+      File := Locate_Regular_File (Short_File_Name, Path);
 
-      if Path /= null then
+      if File /= null then
          declare
-            Full_Path : constant String := Path.all;
+            Full_Path : constant String := File.all;
          begin
-            Free (Path);
+            Free (File);
             return Full_Path;
          end;
       end if;
 
       --  Fallback, try on the Predefined_Object_Path if set
-      if Predefined_Object_Path /= "" then
-         Path := Locate_Regular_File (Short_File_Name, Predefined_Object_Path);
-         if Path /= null then
+      if Predefined_Path /= "" then
+         File := Locate_Regular_File (Short_File_Name, Predefined_Path);
+         if File /= null then
             declare
-               Full_Path : constant String := Path.all;
+               Full_Path : constant String := File.all;
             begin
-               Free (Path);
+               Free (File);
                return Full_Path;
             end;
          end if;
@@ -385,6 +380,6 @@ package body Src_Info.Prj_Utils is
 
       --  Object file not found anywhere, return the empty string
       return "";
-   end Find_Object_File;
+   end Find_File;
 
 end Src_Info.Prj_Utils;

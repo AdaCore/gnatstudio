@@ -26,7 +26,7 @@ with Namet;                     use Namet;
 with Prj;                       use Prj;
 with Prj_API;                   use Prj_API;
 with Prj.Com;
-with Prj.Env;
+with Prj.Env;                   use Prj.Env;
 with Src_Info.ALI_Maps;         use Src_Info.ALI_Maps;
 with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with Types;                     use Types;
@@ -751,6 +751,7 @@ package body Src_Info.ALI is
                File.LI.LI.Spec_Info := new File_Info'
                  (Unit_Name         => null,
                   Source_Filename   => new String'(Sname),
+                  Directory_Name    => null,
                   File_Timestamp    => Empty_Time_Stamp,
                   Original_Filename => null,
                   Original_Line     => 1,
@@ -762,6 +763,7 @@ package body Src_Info.ALI is
                File.LI.LI.Body_Info := new File_Info'
                  (Unit_Name         => null,
                   Source_Filename   => new String'(Sname),
+                  Directory_Name    => null,
                   File_Timestamp    => Empty_Time_Stamp,
                   Original_Filename => null,
                   Original_Line     => 1,
@@ -939,6 +941,7 @@ package body Src_Info.ALI is
              (Value => new File_Info'
                (Unit_Name         => new String'(File.Unit_Name.all),
                 Source_Filename   => new String'(Sname),
+                Directory_Name    => null,
                 File_Timestamp    => Empty_Time_Stamp,
                 Original_Filename => null,
                 Original_Line     => 1,
@@ -1035,6 +1038,7 @@ package body Src_Info.ALI is
          Source_Filename => new String'(Get_Name_String (Current_Unit.Sfile)),
          --  The following fields can not be set yet, so we just
          --  put null values, signaling that they are not set yet.
+         Directory_Name    => null,
          File_Timestamp => Empty_Time_Stamp,
          Original_Filename => null,
          Original_Line => 1,
@@ -1919,8 +1923,10 @@ package body Src_Info.ALI is
          declare
             Ali_File : constant String := ALI_Filename_From_Source
               (Source_Filename, Project, Predefined_Source_Path);
-            Full_File : constant String := Find_Object_File
-              (Project, Ali_File, Predefined_Object_Path);
+            Full_File : constant String := Find_File
+              (Ali_File,
+               Ada_Objects_Path (Project).all,
+               Predefined_Object_Path);
 
          begin
             Parse_ALI_File
