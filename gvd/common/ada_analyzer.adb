@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,6 @@
 
 with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.IO;                 use GNAT.IO;
 with Ada.Unchecked_Deallocation;
 
@@ -2268,8 +2267,14 @@ package body Ada_Analyzer is
       Clear (Indents);
 
    exception
-      when E : others =>
-         Put_Line ("Unexpected exception " & Exception_Information (E));
+      when others =>
+         --  Do not put calls to Put_Line here, these are undesirable, in
+         --  particular under Windows when compiled with -mwindows where this
+         --  will raise Device_Error.
+         --  Also, this is not an unexpected exception: it is somewhat
+         --  expected that exceptions (e.g. Constraint_Error) may be raised,
+         --  and we do not want to behave unexpectedly in such cases.
+
          Prev_Indent    := 0;
          Current_Indent := 0;
          Clear (Tokens);
