@@ -76,6 +76,15 @@ package Src_Info.Queries is
    --  Return the scope of the entity.  See glide_kernel.ads on how to convert
    --  this to a string.
 
+   function Get_Full_Name
+     (Entity    : Entity_Information;
+      Decl_File : LI_File_Ptr;
+      Separator : String      := ".") return String;
+   --  Compute the fully qualified name of the entity. For an entity defined in
+   --  the function F of package P, the name would
+   --     "P" & Separator & "F" & Separator & Get_Name (Entity)
+   --  Decl_File must be the file in which the entity is declared
+
    function Copy (Entity : Entity_Information) return Entity_Information;
    --  Return a copy of Entity. The result must be explicitely destroyed.
 

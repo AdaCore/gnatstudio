@@ -1536,6 +1536,74 @@ package body Src_Info.Queries is
            Entity.Decl_File.all;
    end Is_Same_Entity;
 
+   -------------------
+   -- Get_Full_Name --
+   -------------------
+
+   function Get_Full_Name
+     (Entity    : Entity_Information;
+      Decl_File : LI_File_Ptr;
+      Separator : String      := ".") return String
+   is
+      Tree : Scope_Tree;
+      Node, Tmp : Scope_Tree_Node;
+      Depth  : Natural := 0;
+      Length : Natural := 0;
+   begin
+      Tree := Create_Tree (Decl_File);
+
+      if Tree = Null_Scope_Tree then
+         return Get_Name (Entity);
+      end if;
+
+      Node := Find_Entity_Scope (Tree, Entity);
+
+      if Node = Null_Scope_Tree_Node then
+         return Get_Name (Entity);
+      end if;
+
+      Tmp := Node;
+      while Tmp /= Null_Scope_Tree_Node loop
+         Depth := Depth + 1;
+         Tmp := Get_Parent (Tmp);
+      end loop;
+
+      declare
+         type Entity_Array is array (1 .. Depth) of Entity_Information;
+         Entities : Entity_Array;
+      begin
+         Depth := Entities'First;
+         Tmp   := Node;
+
+         while Tmp /= Null_Scope_Tree_Node loop
+            Entities (Depth) := Get_Entity (Tmp);
+            Length := Length + Get_Name (Entities (Depth))'Length
+              + Separator'Length;
+            Tmp := Get_Parent (Tmp);
+            Depth := Depth + 1;
+         end loop;
+
+         Free (Tree);
+
+         declare
+            Str : String (1 .. Length);
+            Index : Natural := Str'First;
+         begin
+            for E in reverse Entities'Range loop
+               Str (Index .. Index + Get_Name (Entities (E))'Length - 1) :=
+                 Get_Name (Entities (E));
+               Index := Index + Get_Name (Entities (E))'Length;
+               Str (Index .. Index + Separator'Length - 1) := Separator;
+               Index := Index + Separator'Length;
+
+               Destroy (Entities (E));
+            end loop;
+
+            return Str (Str'First .. Str'Last - Separator'Length);
+         end;
+      end;
+   end Get_Full_Name;
+
    -------------
    -- Destroy --
    -------------
