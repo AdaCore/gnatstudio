@@ -20,7 +20,6 @@
 
 with Glib;
 with Gtk.Widget;
-with GVD.Canvas;
 with Gdk.Window;
 with Items;
 with GVD.Process;
@@ -77,7 +76,7 @@ package Display_Items is
    --  aliases of Item are also removed.
 
    function Find_Item
-     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Num    : Integer) return Display_Item;
    --  Return the item whose identifier is Num, or null if there is none
 
@@ -96,8 +95,8 @@ package Display_Items is
    --  if necessary.
 
    procedure On_Background_Click
-     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
-      Event  : Gdk.Event.Gdk_Event);
+     (The_Canvas : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event      : Gdk.Event.Gdk_Event);
    --  Called for clicks in the background of the canvas.
 
    procedure On_Canvas_Process_Stopped
@@ -106,7 +105,7 @@ package Display_Items is
    --  stops to update the display items.
 
    procedure Recompute_All_Aliases
-     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Recompute_Values : Boolean := True);
    --  Recompute all the aliases, and reparse the values for all the
    --  displayed items if Recompute_Values is True
@@ -122,7 +121,7 @@ package Display_Items is
    --  This does not redraw the canvas or the item on the canvas.
 
    procedure Update
-     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Item   : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False);
    --  Unconditionally update the value of Item after parsing the new value.
@@ -169,7 +168,7 @@ package Display_Items is
    --  forced to hidden state.
 
    function Create_Drawing_Context
-     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Mode   : Items.Display_Mode := Items.Value;
       Lang   : Language.Language_Access := null) return Items.Drawing_Context;

@@ -37,7 +37,6 @@ with Items.Simples;    use Items.Simples;
 
 with Odd_Intl;         use Odd_Intl;
 with GVD.Canvas;       use GVD.Canvas;
-with GVD.Menus;        use GVD.Menus;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
 with GVD.Status_Bar;   use GVD.Status_Bar;
@@ -153,10 +152,9 @@ package body Display_Items is
    --  that is being derefenced.
 
    function Search_Item
-     (Canvas : access GVD_Canvas_Record'Class;
+     (Canvas : access Interactive_Canvas_Record'Class;
       Id     : String;
-      Name   : String := "")
-     return Display_Item;
+      Name   : String := "") return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
    --  If Name is not "", then the item returned must also have the same name
    --  as Name.
@@ -227,6 +225,7 @@ package body Display_Items is
                --  simply show and select it.
                Alias_Item :=
                  Search_Item (Debugger.Data_Canvas, Id, Variable_Name);
+
                if Alias_Item /= null then
                   Select_Item (Alias_Item, Alias_Item.Entity);
                   Show_Item (Debugger.Data_Canvas, Alias_Item);
@@ -259,7 +258,8 @@ package body Display_Items is
 
                Item := new Display_Item_Record;
                Item.Entity := Entity;
-               Item.Num := Get_Next_Item_Num (Debugger.Data_Canvas);
+               Item.Num :=
+                 Get_Next_Item_Num (GVD_Canvas (Debugger.Data_Canvas));
                Set_Valid (Item.Entity, Value_Found);
 
                --  If we got an exception while parsing the value, we do not
@@ -286,7 +286,7 @@ package body Display_Items is
          Item := new Display_Item_Record;
          Item.Entity := Default_Entity;
          Item.Is_A_Variable := False;
-         Item.Num := Get_Next_Item_Num (Debugger.Data_Canvas);
+         Item.Num := Get_Next_Item_Num (GVD_Canvas (Debugger.Data_Canvas));
          Set_Valid (Item.Entity, True);
       end if;
 
@@ -336,7 +336,7 @@ package body Display_Items is
             --  Do we have an existing item that matches this ? (same address
             --  as in the current access type itself)
 
-            if Get_Detect_Aliases (Debugger.Data_Canvas) then
+            if Get_Detect_Aliases (GVD_Canvas (Debugger.Data_Canvas)) then
                Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
             end if;
 
@@ -403,7 +403,7 @@ package body Display_Items is
    ---------------
 
    function Find_Item
-     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
+     (Canvas : access Interactive_Canvas_Record'Class;
       Num    : Integer) return Display_Item
    is
       Found : Display_Item := null;
@@ -445,7 +445,7 @@ package body Display_Items is
       Num_Width    : Gint;
 
       Context : constant Box_Drawing_Context :=
-        Get_Box_Context (Item.Debugger.Data_Canvas);
+        Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
 
    begin
       --  Compute the required size for the value itself.
@@ -608,7 +608,7 @@ package body Display_Items is
       Component : Generic_Type_Access := null)
    is
       Context : constant Box_Drawing_Context :=
-        Get_Box_Context (Item.Debugger.Data_Canvas);
+        Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
    begin
       if not Get_Selected (Component) then
          if Item.Auto_Refresh then
@@ -645,10 +645,9 @@ package body Display_Items is
    -----------------
 
    function Search_Item
-     (Canvas    : access GVD_Canvas_Record'Class;
-      Id        : String;
-      Name      : String := "")
-     return Display_Item
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Id     : String;
+      Name   : String := "") return Display_Item
    is
       Alias_Item : Display_Item := null;
 
@@ -694,7 +693,7 @@ package body Display_Items is
    begin
       --  Always search if we have a special name to look for, so as to avoid
       --  creating the same item multiple times
-      if Name = "" or else Get_Detect_Aliases (Canvas) then
+      if Name = "" or else Get_Detect_Aliases (GVD_Canvas (Canvas)) then
          For_Each_Item (Canvas, Alias_Found'Unrestricted_Access);
       end if;
 
@@ -726,8 +725,8 @@ package body Display_Items is
    ------------
 
    procedure Update
-     (Canvas : access GVD_Canvas_Record'Class;
-      Item   : access Display_Item_Record'Class;
+     (Canvas           : access Interactive_Canvas_Record'Class;
+      Item             : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False)
    is
       Value_Found : Boolean;
@@ -1041,7 +1040,7 @@ package body Display_Items is
       then
          Popup
            (Item_Contextual_Menu
-             (Item.Debugger.Data_Canvas,
+             (GVD_Canvas (Item.Debugger.Data_Canvas),
               Item,
               Component,
               Get_Component_Name
@@ -1146,7 +1145,7 @@ package body Display_Items is
    is
       Width : Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
-        Get_Box_Context (Item.Debugger.Data_Canvas);
+        Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
    begin
       Item.Auto_Refresh := Auto_Refresh;
 
@@ -1245,7 +1244,7 @@ package body Display_Items is
          return True;
       end Free_Alias;
 
-      Canvas : GVD_Canvas := Item.Debugger.Data_Canvas;
+      Canvas : constant GVD_Canvas := GVD_Canvas (Item.Debugger.Data_Canvas);
 
    begin
       if Item.Debugger.Selected_Item = Canvas_Item (Item) then
@@ -1276,9 +1275,11 @@ package body Display_Items is
    -------------------------
 
    procedure On_Background_Click
-     (Canvas : access GVD_Canvas_Record'Class;
-      Event  : Gdk.Event.Gdk_Event)
+     (The_Canvas : access Gtk_Widget_Record'Class;
+      Event      : Gdk.Event.Gdk_Event)
    is
+      Canvas : constant GVD_Canvas := GVD_Canvas (The_Canvas);
+
       --  This is slightly complicated since we need to get a valid item
       --  to undo the selection.
 
@@ -1517,7 +1518,8 @@ package body Display_Items is
    procedure On_Canvas_Process_Stopped
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Canvas : GVD_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
+      Canvas : constant GVD_Canvas :=
+        GVD_Canvas (Debugger_Process_Tab (Object).Data_Canvas);
    begin
       Recompute_All_Aliases (Canvas);
       Refresh_Canvas (Canvas);
@@ -1528,7 +1530,7 @@ package body Display_Items is
    ---------------------------
 
    procedure Recompute_All_Aliases
-     (Canvas           : access GVD.Canvas.GVD_Canvas_Record'Class;
+     (Canvas           : access Interactive_Canvas_Record'Class;
       Recompute_Values : Boolean := True)
    is
       function Recompute_Sizes
@@ -1608,7 +1610,7 @@ package body Display_Items is
       For_Each_Item (Canvas, Remove_Aliases'Unrestricted_Access);
 
       --  First: Recompile all the addresses, and detect the aliases.
-      if Get_Detect_Aliases (Canvas) then
+      if Get_Detect_Aliases (GVD_Canvas (Canvas)) then
          For_Each_Item (Canvas, Recompute_Address'Access);
       end if;
 
@@ -1719,13 +1721,12 @@ package body Display_Items is
    ----------------------------
 
    function Create_Drawing_Context
-     (Canvas : access GVD_Canvas_Record'Class;
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Mode   : Items.Display_Mode := Value;
-      Lang   : Language.Language_Access := null)
-     return Drawing_Context
+      Lang   : Language.Language_Access := null) return Drawing_Context
    is
-      D : Drawing_Context := Get_Item_Context (Canvas);
+      D : Drawing_Context := Get_Item_Context (GVD_Canvas (Canvas));
    begin
       D.Pixmap := Pixmap;
       D.Mode := Mode;
