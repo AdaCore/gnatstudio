@@ -384,8 +384,8 @@ package body Browsers.Call_Graph is
       Location : File_Location;
       Name     : String;
       Category : String);
-   --  Print a reference in the console, after looking for the directory
-   --  containing File.
+   --  Display a reference in the locations tree, after looking for the
+   --  directory containing File.
    --  Category corresponds to the purpose of the print. All references
    --  corresponding to the same category will be printed as a group.
 
@@ -1270,10 +1270,11 @@ package body Browsers.Call_Graph is
            (Iter   => Data.Iter.all,
             Entity => Data.Entity);
          Data.Iter_Started := True;
-         Set_Progress (Command,
-                       (Running,
-                        Get_Current_Progress (Data.Iter.all),
-                        Get_Total_Progress (Data.Iter.all)));
+         Set_Progress
+           (Command,
+            (Running,
+             Get_Current_Progress (Data.Iter.all),
+             Get_Total_Progress (Data.Iter.all)));
          return;
       end if;
 
@@ -1304,6 +1305,7 @@ package body Browsers.Call_Graph is
                   Get_Name (Data.Entity).all,
                   Data.Category.all & Get_Name (Data.Entity).all);
             end if;
+
             Count := Count + 1;
          end if;
 
@@ -1441,32 +1443,35 @@ package body Browsers.Call_Graph is
       Info := Get_Entity (Entity);
 
       if Info /= null then
-         --  Print the declaration of the entity, but only if it is in the
-         --  current file. Otherwise, this is too surprising for the use
+         declare
+            Title : constant String :=
+                      -"References for " & Get_Name (Info).all
+                      & " declared at line "  &
+                      Image (Get_Declaration_Of (Info).Line);
 
-         Remove_Result_Category
-           (Kernel, -"References for: " & Get_Name (Info).all);
+         begin
+            --  Print the declaration of the entity, but only if it is in the
+            --  current file, as expected by users.
 
-         Find_All_References
-           (Iter    => Iter,
-            Entity  => Info,
-            In_File => Get_Or_Create
-              (Get_Database (Kernel), File_Information (Entity)));
+            Remove_Result_Category (Kernel, Title);
 
-         while not At_End (Iter) loop
-            if Get (Iter) /= No_Entity_Reference then
-               Location := Get_Location (Get (Iter));
-               Print_Ref
-                 (Kernel,
-                  Location,
-                  Get_Name (Info).all,
-                  -"References for: " & Get_Name (Info).all);
-            end if;
+            Find_All_References
+              (Iter    => Iter,
+               Entity  => Info,
+               In_File => Get_Or_Create
+                 (Get_Database (Kernel), File_Information (Entity)));
 
-            Next (Iter);
-         end loop;
+            while not At_End (Iter) loop
+               if Get (Iter) /= No_Entity_Reference then
+                  Location := Get_Location (Get (Iter));
+                  Print_Ref (Kernel, Location, Get_Name (Info).all, Title);
+               end if;
 
-         Destroy (Iter);
+               Next (Iter);
+            end loop;
+
+            Destroy (Iter);
+         end;
       end if;
 
       Pop_State (Kernel);
