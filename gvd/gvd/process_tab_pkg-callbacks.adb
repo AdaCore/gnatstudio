@@ -40,7 +40,6 @@ with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
 with Basic_Types;           use Basic_Types;
 with GVD.Types;             use GVD.Types;
-with String_Utils;          use String_Utils;
 
 package body Process_Tab_Pkg.Callbacks is
 
@@ -342,15 +341,14 @@ package body Process_Tab_Pkg.Callbacks is
             Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
 
             declare
-               C      : constant String :=
+               C     : constant String :=
                  Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos));
-               S      : String_Array := Complete (Top.Debugger, C);
-               Max    : Integer := 0;
-               Min    : Integer := 0;
-               Prefix : Integer;
-               Width  : constant Integer := 100;
+               S     : String_Array := Complete (Top.Debugger, C);
+               Max   : Integer := 0;
+               Min   : Integer := 0;
+               Width : constant Integer := 100;
                --  Width of the console window, in number of characters;
-               Num   : Integer;
+               Num  : Integer;
 
             begin
                if S'First > S'Last then
@@ -388,30 +386,6 @@ package body Process_Tab_Pkg.Callbacks is
                   --  Compute number of words to display per line.
                   Num := Width / (Max + 2);
 
-                  --  Find the common prefix in all the words.
-                  Prefix := 0;
-
-                  declare
-                     Prefix_Found : Boolean := True;
-                     J            : Integer;
-                  begin
-                     while Prefix <= Min and then Prefix_Found loop
-                        Prefix := Prefix + 1;
-                        J := S'First;
-
-                        while J <= S'Last and then Prefix_Found loop
-                           if S (J) (S (J)'First + Prefix - 1)
-                             = S (S'First) (S (S'First)'First + Prefix - 1)
-                           then
-                              J := J + 1;
-                           else
-                              Prefix := Prefix - 1;
-                              Prefix_Found := False;
-                           end if;
-                        end loop;
-                     end loop;
-                  end;
-
                   --  Print the list of possibilities.
                   Freeze (Top.Debugger_Text);
                   Output ((1 => ASCII.LF));
@@ -434,29 +408,10 @@ package body Process_Tab_Pkg.Callbacks is
                   --  Display the prompt and the common prefix.
                   Display_Prompt (Top.Debugger);
 
-                  declare
-                     Common_Pref : Integer := C'Last;
-                  begin
-                     Skip_To_Char (C, Common_Pref, ' ', -1);
-                     Common_Pref := Common_Pref - C'First;
-                     Output_Text
-                       (Top,
-                        C (C'First .. C'First + Common_Pref),
-                        Is_Command => True);
-                     Set_Position
-                       (Top.Debugger_Text,
-                        Get_Position (Top.Debugger_Text) +
-                          Gint (Common_Pref) + 1);
-                  end;
-
-                  Output_Text
-                    (Top,
-                     S (S'First)
-                       (S (S'First)'First .. S (S'First)'First + Prefix - 1),
-                     Is_Command => True);
+                  Output_Text (Top, C, Is_Command => True);
                   Set_Position
                     (Top.Debugger_Text,
-                     Get_Position (Top.Debugger_Text) + Gint (Prefix));
+                     Get_Position (Top.Debugger_Text) + C'Length);
                end if;
 
                Free (S);
