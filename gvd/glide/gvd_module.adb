@@ -48,9 +48,9 @@ package body GVD_Module is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar   : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Window    : constant Gtk_Window  := Get_Main_Window (Kernel);
-      Button    : Gtk_Widget;
+      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Window  : constant Gtk_Window  := Get_Main_Window (Kernel);
+      Button  : Gtk_Widget;
 
    begin
       Append_Space (Toolbar);
