@@ -55,6 +55,8 @@ with GVD.Types;        use GVD.Types;
 with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 package body Breakpoints_Editor is
 
    Enable_Column : constant := 1;
@@ -227,8 +229,10 @@ package body Breakpoints_Editor is
 
             if Br.File /= null then
                Set_Active (Editor.Location_Selected, True);
-               Add_Unique_Combo_Entry (Editor.File_Combo, Br.File.all);
-               Set_Text (Get_Entry (Editor.File_Combo), Br.File.all);
+               Add_Unique_Combo_Entry
+                 (Editor.File_Combo, Base_Name (Br.File.all));
+               Set_Text
+                 (Get_Entry (Editor.File_Combo), Base_Name (Br.File.all));
                Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
             else
                Set_Active (Editor.Address_Selected, True);
@@ -474,7 +478,7 @@ package body Breakpoints_Editor is
             --  ??? Should also check Temporary
             if Current = -1
               or else Br.File = null
-              or else Br.File.all /= File
+              or else Base_Name (Br.File.all) /= File
               or else Br.Line /= Line
             then
                Remove := True;
@@ -702,7 +706,7 @@ package body Breakpoints_Editor is
          end if;
 
          if Br.File /= null then
-            Set_Text (Editor.Breakpoint_List, Row, 4, Br.File.all);
+            Set_Text (Editor.Breakpoint_List, Row, 4, Base_Name (Br.File.all));
             Set_Text (Editor.Breakpoint_List, Row, 5, Integer'Image (Br.Line));
          end if;
 
