@@ -593,7 +593,7 @@ package body Aliases_Module is
          Trace (Me, "No aliases file " & Filename);
 
       when E : others =>
-         Trace (Me, "Unexcepted exception "
+         Trace (Exception_Handle, "Unexcepted exception "
                 & Exception_Information (E));
          Free (File);
    end Parse_File;
@@ -1018,7 +1018,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexception exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexception exception: " & Exception_Information (E));
          return Failure;
    end Execute;
 
@@ -1141,7 +1142,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Alias_Selection_Changed;
 
    -------------------
@@ -1200,7 +1202,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Alias_Renamed;
 
    -------------------
@@ -1228,7 +1231,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Alias_Deleted;
 
    -------------------
@@ -1241,7 +1245,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Alias_Created;
 
    -----------------------
@@ -1267,7 +1272,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Param_Env_Changed;
 
    -------------------------
@@ -1426,7 +1432,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Expansion_Inserted;
 
    -----------------------
@@ -1451,7 +1458,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Expansion_Deleted;
 
    -------------------------------
@@ -1511,7 +1519,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Insert_Special;
 
    ------------------------
@@ -1560,7 +1569,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return Menu;
    end Contextual_Factory;
 
@@ -1577,7 +1587,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Contextual_Destroy;
 
    ----------------------------
@@ -1956,7 +1967,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Edit_Aliases;
 
    -----------------------------------
@@ -2021,7 +2033,8 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexception exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexception exception: " & Exception_Information (E));
          return Invalid_Expansion;
    end Special_Entities;
 

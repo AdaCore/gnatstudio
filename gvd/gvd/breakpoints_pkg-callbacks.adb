@@ -36,8 +36,6 @@ with Traces;                  use Traces;
 
 package body Breakpoints_Pkg.Callbacks is
 
-   Me : constant Debug_Handle := Create ("Breakpoints_Pkg.Callbacks");
-
    use Gtk.Arguments;
 
    ---------------------------------
@@ -55,7 +53,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Breakpoints_Delete_Event;
 
@@ -77,7 +76,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Breakpoints_Key_Press_Event;
 
@@ -99,7 +99,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Location_Selected_Toggled;
 
    -----------------------------------
@@ -120,7 +121,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Subprogam_Selected_Toggled;
 
    ---------------------------------
@@ -140,7 +142,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Address_Selected_Toggled;
 
    --------------------------------
@@ -160,7 +163,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Regexp_Selected_Toggled;
 
    -----------------------------
@@ -175,7 +179,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Add_Location_Clicked;
 
    -------------------------------
@@ -191,7 +196,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Add_Watchpoint_Clicked;
 
    ------------------------------------
@@ -232,7 +238,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Load_Exception_List_Clicked;
 
    ------------------------------
@@ -250,7 +257,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Add_Exception_Clicked;
 
    -----------------------
@@ -274,7 +282,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Remove_Clicked;
 
    ---------------------
@@ -301,7 +310,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_View_Clicked;
 
    ----------------------------------
@@ -322,7 +332,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Advanced_Location_Clicked;
 
    ----------------------
@@ -337,7 +348,8 @@ package body Breakpoints_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Ok_Bp_Clicked;
 
 end Breakpoints_Pkg.Callbacks;

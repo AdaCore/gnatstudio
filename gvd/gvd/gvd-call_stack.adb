@@ -47,8 +47,6 @@ with Ada.Exceptions;           use Ada.Exceptions;
 
 package body GVD.Call_Stack is
 
-   Me : constant Debug_Handle := Create ("Debugger");
-
    type Call_Stack_Frame_Record is record
       Stack      : Call_Stack;
       Mask       : Stack_List_Mask;
@@ -126,7 +124,8 @@ package body GVD.Call_Stack is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Selection_Changed;
 
    -----------------
@@ -232,7 +231,8 @@ package body GVD.Call_Stack is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Button_Press_Event;
 

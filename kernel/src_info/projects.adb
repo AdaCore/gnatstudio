@@ -1532,7 +1532,8 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Compute_Importing_Projects;
 
    ---------------------------------
@@ -2209,7 +2210,8 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return "";
    end Get_String;
 

@@ -1265,7 +1265,7 @@ package body Switches_Editors is
 
    exception
       when E : others =>
-         Trace (Me, "Create_Combo: Unexpected exception "
+         Trace (Exception_Handle, "Create_Combo: Unexpected exception "
                 & Exception_Information (E));
          return Gtk_Widget (Hbox);
    end Create_Combo;
@@ -1698,7 +1698,8 @@ package body Switches_Editors is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Revert_To_Default;
 
    ----------------------------
@@ -2022,7 +2023,8 @@ package body Switches_Editors is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Fill_Editor;
 
    -------------------
@@ -2055,7 +2057,8 @@ package body Switches_Editors is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Edit_Switches;
 
    -----------------------------

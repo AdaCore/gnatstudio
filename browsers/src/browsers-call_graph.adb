@@ -683,7 +683,8 @@ package body Browsers.Call_Graph is
    exception
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Examine_Entity_Call_Graph_Iterator;
 
    -------------------------------
@@ -726,7 +727,8 @@ package body Browsers.Call_Graph is
    exception
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Examine_Entity_Call_Graph;
 
    ------------------
@@ -762,7 +764,8 @@ package body Browsers.Call_Graph is
    exception
       when E : others =>
          Clean;
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Destroy_Idle;
 
    ---------------------------------------
@@ -803,7 +806,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return False;
    end Examine_Ancestors_Call_Graph_Idle;
 
@@ -984,7 +988,8 @@ package body Browsers.Call_Graph is
    exception
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestors_Call_Graph;
 
    -------------------------------
@@ -1022,7 +1027,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Edit_Body_From_Contextual;
 
    -------------------------------
@@ -1054,7 +1060,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Edit_Spec_From_Contextual;
 
    --------------------------------------------
@@ -1094,7 +1101,8 @@ package body Browsers.Call_Graph is
                  -"Internal error when creating the call graph for "
                  & Entity_Name_Information (Entity),
                  Mode => Error);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Pop_State (Get_Kernel (Entity));
    end Edit_Entity_Call_Graph_From_Contextual;
 
@@ -1133,7 +1141,8 @@ package body Browsers.Call_Graph is
                  -"Internal error when creating the call graph for "
                  & Entity_Name_Information (Entity),
                  Mode => Error);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Pop_State (Get_Kernel (Entity));
    end Edit_Ancestors_Call_Graph_From_Contextual;
 
@@ -1268,14 +1277,16 @@ package body Browsers.Call_Graph is
 
          exception
             when E : others =>
-               Trace (Me, "Unexpected exception " & Exception_Information (E));
+               Trace (Exception_Handle,
+                      "Unexpected exception " & Exception_Information (E));
                Destroy (Data.Iter);
          end;
       end if;
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Find_All_References_Internal;
 
    -----------------------------------------
@@ -1394,7 +1405,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          Destroy (Iter);
          Pop_State (Get_Kernel (Entity));
    end Find_All_Local_References_From_Contextual;
@@ -1520,7 +1532,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Call_Graph_Contextual_Menu;
 
    ------------------------
@@ -1600,7 +1613,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return null;
    end Contextual_Factory;
 
@@ -1637,7 +1651,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Call_Graph;
 
    ----------------------------
@@ -1671,7 +1686,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Find_All_References;
 
    ---------------------
@@ -1796,7 +1812,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Call_Graph_Command_Handler;
 
    ---------------------

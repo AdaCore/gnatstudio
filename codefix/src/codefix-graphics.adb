@@ -414,7 +414,8 @@ package body Codefix.Graphics is
                Success := False;
                Trace
                  (Me, "Fix of current error is no longer pertinent");
-               Trace (Me, "Exception got: " & Exception_Information (E));
+               Trace (Exception_Handle,
+                      "Exception got: " & Exception_Information (E));
                Insert
                  (Graphic_Codefix.Kernel,
                   "Fix of current error is no longer pertinent");

@@ -228,7 +228,8 @@ package body Glide_Kernel.Console is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Save_Console_As;
 
    ------------------------
@@ -277,7 +278,8 @@ package body Glide_Kernel.Console is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Load_To_Console;
 
    ----------------------
@@ -293,7 +295,8 @@ package body Glide_Kernel.Console is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Clear_Console;
 
    -------------

@@ -1120,7 +1120,8 @@ package body Glide_Kernel is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Load_Desktop;
 
@@ -1586,7 +1587,8 @@ package body Glide_Kernel is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
 
          if Dialog /= null then
             Destroy (Dialog);

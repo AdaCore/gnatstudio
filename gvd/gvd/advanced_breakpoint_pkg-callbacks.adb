@@ -24,8 +24,6 @@ with Gtk.Main; use Gtk.Main;
 
 package body Advanced_Breakpoint_Pkg.Callbacks is
 
-   Me : constant Debug_Handle := Create ("Advanced_Breakpoint_Pkg.Callbacks");
-
    -----------------------------
    -- On_Start_Record_Clicked --
    -----------------------------
@@ -39,7 +37,8 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Start_Record_Clicked;
 
    ----------------------------
@@ -55,7 +54,8 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Stop_Record_Clicked;
 
    ----------------------
@@ -74,7 +74,8 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Apply_Clicked;
 
    ----------------------
@@ -93,7 +94,8 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Close_Clicked;
 
 end Advanced_Breakpoint_Pkg.Callbacks;

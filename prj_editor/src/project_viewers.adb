@@ -593,7 +593,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Activate;
 
    -------------------------
@@ -696,7 +697,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Select_Row;
 
@@ -719,7 +721,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Execute;
 
    ---------------------
@@ -807,7 +810,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Explorer_Selection_Changed;
 
    -------------
@@ -1038,7 +1042,8 @@ package body Project_Viewers is
    exception
       when E : others =>
          Destroy (Wiz);
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_New_Project;
 
    ------------------------
@@ -1088,7 +1093,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          Unref (Context);
    end On_Edit_Switches;
 
@@ -1134,7 +1140,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Project_Properties;
 
    -----------------------
@@ -1196,7 +1203,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Read_Project_Name;
 
    -----------------------
@@ -1217,7 +1225,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Save_All_Projects;
 
    ---------------------------
@@ -1242,7 +1251,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Save_Specific_Project;
 
    -----------------------
@@ -1273,7 +1283,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Edit_Project_File;
 
    -----------------------------------
@@ -1310,7 +1321,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Add_Dependency_From_Wizard;
 
    -------------------------------
@@ -1335,7 +1347,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Remove_Project_Dependency;
 
    -----------------------------
@@ -1456,7 +1469,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Add_Dependency_From_Existing;
 
    -------------------------------
@@ -1580,7 +1594,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Project_Editor_Contextual;
 
    ------------------------------------
@@ -1639,7 +1654,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return Selection_Context_Access (Context);
    end Project_Editor_Context_Factory;
 
@@ -1701,7 +1717,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Edit_Multiple_Switches;
 
    -------------------
@@ -1782,7 +1799,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Add_Main_Unit;
 
    ----------------------
@@ -1808,7 +1826,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Remove_Main_Unit;
 
    --------------------
@@ -1923,7 +1942,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return null;
    end Widget_Factory;
 
@@ -2052,7 +2072,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return False;
    end Project_Editor;
 
@@ -2109,7 +2130,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return null;
    end Widget_Factory;
 
@@ -2187,7 +2209,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return False;
    end Project_Editor;
 
@@ -2311,7 +2334,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return null;
    end Widget_Factory;
 
@@ -2448,7 +2472,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return False;
    end Project_Editor;
 
@@ -2474,7 +2499,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return null;
    end Widget_Factory;
 
@@ -2501,7 +2527,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return False;
    end Project_Editor;
 
@@ -2547,7 +2574,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return null;
    end Widget_Factory;
 
@@ -2573,7 +2601,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return False;
    end Project_Editor;
 
@@ -2733,7 +2762,8 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Project_Changed;
 
    -------------
@@ -3590,7 +3620,8 @@ package body Project_Viewers is
 
          exception
             when E : others =>
-               Trace (Me, "Unexpected exception " & Exception_Information (E));
+               Trace (Exception_Handle,
+                      "Unexpected exception " & Exception_Information (E));
          end;
 
          N := N.Next;

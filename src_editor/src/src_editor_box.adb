@@ -510,7 +510,8 @@ package body Src_Editor_Box is
    exception
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Goto_Declaration_Or_Body;
 
    --------------------------
@@ -549,7 +550,8 @@ package body Src_Editor_Box is
    exception
       when E : others =>
          Pop_State (Editor.Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Entity := null;
    end Get_Declaration_Info;
 
@@ -713,7 +715,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Draw_Tooltip;
 
    -----------------
@@ -905,7 +908,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Cursor_Position_Changed_Handler;
 
    --------------------
@@ -949,7 +953,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Box_Destroy;
 
    -------------------------
@@ -973,7 +978,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Toggle_Overwrite;
 
    --------------------
@@ -1203,7 +1209,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
 
          return False;
    end Key_Press;
@@ -1234,7 +1241,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
 
          return False;
    end On_Read_Only_Pressed;
@@ -1301,7 +1309,8 @@ package body Src_Editor_Box is
       return False;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Focus_Out;
 
@@ -1602,7 +1611,8 @@ package body Src_Editor_Box is
    exception
       when E : others =>
          Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Other_File;
 
    ------------------
@@ -1635,7 +1645,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Line;
 
    ------------------
@@ -1681,7 +1692,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Declaration;
 
    -----------------------
@@ -1704,7 +1716,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Next_Body;
 
    -------------

@@ -47,7 +47,6 @@ package body Refactoring.Rename is
    use File_Arrays;
    use Location_Arrays;
 
-   Me : constant Debug_Handle := Create ("Refactor");
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
    Auto_Compile_Hist      : constant History_Key := "refactor_auto_compile";
    Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
@@ -234,7 +233,8 @@ package body Refactoring.Rename is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Unref (Selection_Context_Access (Ent));
          Destroy (Dialog);
    end On_Rename_Entity;

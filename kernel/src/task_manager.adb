@@ -27,8 +27,6 @@ with Task_Manager.GUI; use Task_Manager.GUI;
 
 package body Task_Manager is
 
-   Me : constant Debug_Handle := Create ("Task Manager");
-
    Timeout : constant := 100;
 
    package Task_Manager_Idle is new Gtk.Main.Idle (Task_Manager_Access);
@@ -75,7 +73,8 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return Failure;
    end Safe_Execute;
 
@@ -108,7 +107,8 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Active_Incremental;
 
@@ -139,7 +139,8 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Passive_Incremental;
 

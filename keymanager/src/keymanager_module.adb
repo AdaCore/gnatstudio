@@ -460,7 +460,8 @@ package body KeyManager_Module is
          exception
             when E : others =>
                Trace
-                 (Me, "Unexpected exception: " & Exception_Information (E));
+                 (Exception_Handle,
+                  "Unexpected exception: " & Exception_Information (E));
          end;
 
       elsif Event_Type = Key_Press or else Event_Type = Key_Release then
@@ -869,7 +870,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Process_Event;
 
@@ -967,7 +969,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Insert (Kernel, -"Could not parse " & Filename, Mode => Error);
    end Load_Custom_Keys;
 
@@ -1017,7 +1020,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Macro_Command_Handler;
 
    -----------------
@@ -1425,7 +1429,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Grab_Key;
 
    -------------------
@@ -1451,7 +1456,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Remove_Key;
 
    ---------------------------
@@ -1485,7 +1491,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Add_Selection_Changed;
 
    ------------------
@@ -1639,7 +1646,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Edit_Keys;
 
    ------------------------
@@ -1655,7 +1663,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Start_Recording;
 
    ------------------
@@ -1708,7 +1717,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Stop_Recording;
 
    ----------------------
@@ -1762,7 +1772,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return False;
    end Play_Macro_Timer;
 
@@ -1803,7 +1814,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Play_Macro;
 
    -------------------
@@ -1842,7 +1854,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Load_Macro;
 
    -------------------
@@ -1885,7 +1898,8 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Save_Macro;
 
    ----------------

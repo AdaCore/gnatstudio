@@ -295,7 +295,8 @@ package body Diff_Utils2 is
          return Ret;
 
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Close (Descriptor);
          return Diff_Chunk_List.Null_List;
    end Diff;
@@ -393,7 +394,8 @@ package body Diff_Utils2 is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Close (File);
          return Diff_Chunk_List.Null_List;
    end Diff;

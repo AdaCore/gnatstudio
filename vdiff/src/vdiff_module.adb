@@ -46,8 +46,6 @@ with VFS;                       use VFS;
 
 package body Vdiff_Module is
 
-   Me : constant Debug_Handle := Create (Vdiff_Module_Name);
-
    function Diff_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
       Data      : Hooks_Data'Class) return Boolean;
@@ -229,7 +227,8 @@ package body Vdiff_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Compare_Two_Files;
 
    ---------------

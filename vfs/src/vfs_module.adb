@@ -261,7 +261,8 @@ package body VFS_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Pop_State (Get_Kernel (File));
    end On_Delete;
 

@@ -269,7 +269,8 @@ package body Display_Items is
             Entity := Parse_Type (Debugger.Debugger, Variable_Name);
          exception
             when E : Language.Unexpected_Type | Constraint_Error =>
-               Trace (Me, "Exception when getting type of entity: "
+               Trace (Exception_Handle,
+                      "Exception when getting type of entity: "
                       & Exception_Information (E));
                Output_Error
                  (Debugger.Window,
@@ -1090,7 +1091,8 @@ package body Display_Items is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Button_Click;
 
    -----------------------
@@ -1322,7 +1324,8 @@ package body Display_Items is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Background_Click;
 
    -----------------------

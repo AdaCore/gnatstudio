@@ -52,8 +52,6 @@ package body Vdiff_Utils is
 
    package ICS renames Interfaces.C.Strings;
 
-   Me : constant Debug_Handle := Create ("Vdiff_Utils");
-
    type Vdiff_Info is new GObject_Record with record
       Kernel : Kernel_Handle;
       File   : VFS.Virtual_File;
@@ -150,7 +148,8 @@ package body Vdiff_Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return Selection_Context_Access (Context);
    end Context_Factory;
 

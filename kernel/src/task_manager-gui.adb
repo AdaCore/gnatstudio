@@ -48,8 +48,6 @@ with Traces;                   use Traces;
 
 package body Task_Manager.GUI is
 
-   Me : constant Debug_Handle := Create ("Task_Manager");
-
    ---------------------
    -- Local constants --
    ---------------------
@@ -174,7 +172,8 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Progress_Bar_Button_Pressed;
 
@@ -195,7 +194,8 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Pause_Command;
 
    -----------------------
@@ -215,7 +215,8 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Resume_Command;
 
    --------------------------
@@ -235,7 +236,8 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Interrupt_Command;
 
    -----------------
@@ -416,7 +418,8 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_View_Destroy;
 
    -------------------------------
@@ -453,7 +456,8 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_View_Selection_Changed;
 
    -------------

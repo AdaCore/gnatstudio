@@ -570,7 +570,8 @@ package body Directory_Tree is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Add_Directory_Cb;
 
    ----------------------
@@ -631,7 +632,8 @@ package body Directory_Tree is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Remove_Directory_Cb;
 
    -----------------------------
@@ -840,7 +842,8 @@ package body Directory_Tree is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Create_Directory_Cb;
 
    ---------------------------------
@@ -1280,7 +1283,8 @@ package body Directory_Tree is
          return False;
 
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Read_Directory;
 
@@ -1676,7 +1680,8 @@ package body Directory_Tree is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Button_Press;
 
@@ -1696,7 +1701,8 @@ package body Directory_Tree is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end File_Button_Press;
 
@@ -1777,7 +1783,8 @@ package body Directory_Tree is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Refresh;
 
    -------------------

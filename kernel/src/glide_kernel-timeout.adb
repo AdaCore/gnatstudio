@@ -51,8 +51,6 @@ with Ada.Unchecked_Deallocation;
 
 package body Glide_Kernel.Timeout is
 
-   Me : constant Debug_Handle := Create ("Glide_Kernel.Timeout");
-
    type Console_Process_Data is new GObject_Record with record
       Console   : Interactive_Console;
       Delete_Id : Gtk.Handlers.Handler_Id;
@@ -190,7 +188,8 @@ package body Glide_Kernel.Timeout is
          Cleanup (Data.D);
          Unchecked_Free (Data.Expect_Regexp);
          Unref (Data);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Process_Cb;
 
@@ -216,7 +215,8 @@ package body Glide_Kernel.Timeout is
          Unchecked_Free (Console.Expect_Regexp);
          Cleanup (Console.D);
          Unref (Console);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return "";
    end Data_Handler;
 
@@ -358,7 +358,8 @@ package body Glide_Kernel.Timeout is
    exception
       when E : others =>
          Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Launch_Process;
 
    --------------------
@@ -404,7 +405,8 @@ package body Glide_Kernel.Timeout is
          Unchecked_Free (Console.Expect_Regexp);
          Cleanup (Console.D);
          Unref (Console);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Delete_Handler;
 

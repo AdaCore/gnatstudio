@@ -209,7 +209,8 @@ package body Vdiff2_Module.Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Append;
 
    -------------------------
@@ -815,7 +816,8 @@ package body Vdiff2_Module.Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Differences3;
 
    ---------------------

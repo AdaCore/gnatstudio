@@ -1246,7 +1246,8 @@ package body Commands.Custom is
                     -("An unexpected error occurred while executing the custom"
                       & " command. See the log file for more information."),
                     Mode => Error);
-            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
             return False;
       end Execute_Simple_Command;
 

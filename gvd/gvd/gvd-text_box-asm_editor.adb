@@ -54,8 +54,6 @@ with Traces;            use Traces;
 
 package body GVD.Text_Box.Asm_Editor is
 
-   Me : constant Debug_Handle := Create ("GVD.Text_Box.Asm_Editor");
-
    package Editor_Cb is new Callback (Asm_Editor_Record);
    package Editor_Event_Cb is new Return_Callback (Asm_Editor_Record, Boolean);
 
@@ -359,7 +357,8 @@ package body GVD.Text_Box.Asm_Editor is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Set_Busy (Process, False);
    end On_Frame_Changed;
 
@@ -400,7 +399,8 @@ package body GVD.Text_Box.Asm_Editor is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return True;
    end On_Pixmap_Clicked;
 
@@ -762,7 +762,8 @@ package body GVD.Text_Box.Asm_Editor is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Executable_Changed;
 
    ----------------------------
@@ -794,7 +795,8 @@ package body GVD.Text_Box.Asm_Editor is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Preferences_Changed;
 
    -----------------
@@ -938,7 +940,8 @@ package body GVD.Text_Box.Asm_Editor is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Key_Press;
 

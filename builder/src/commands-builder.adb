@@ -51,8 +51,6 @@ with Builder_Module; use Builder_Module;
 
 package body Commands.Builder is
 
-   Me : constant Debug_Handle := Create ("Commands.Builder");
-
    procedure Parse_Compiler_Output
      (Kernel           : Kernel_Handle;
       Category         : String;
@@ -124,7 +122,8 @@ package body Commands.Builder is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Parse_Compiler_Output;
 
    ----------
@@ -164,7 +163,8 @@ package body Commands.Builder is
       Free (D.Style_Category);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Free;
 
    -------------
@@ -309,7 +309,8 @@ package body Commands.Builder is
          Set_Sensitive_Menus (Kernel, True);
          Close (Fd);
          Free (Data.Descriptor);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
 
          return Failure;
    end Execute;

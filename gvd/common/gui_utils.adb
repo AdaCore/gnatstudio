@@ -347,7 +347,8 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Unmap_Menu;
 
@@ -386,7 +387,8 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Key_Press_For_Contextual_Menu;
 
@@ -426,7 +428,8 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press_For_Contextual_Menu;
 
@@ -497,7 +500,8 @@ package body GUI_Utils is
 
       exception
          when E : others =>
-            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
             return False;
       end Unmap_User_Menu;
 
@@ -538,7 +542,8 @@ package body GUI_Utils is
 
       exception
          when E : others =>
-            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
             return False;
       end Key_Press_For_Contextual_Menu;
 
@@ -578,7 +583,8 @@ package body GUI_Utils is
 
       exception
          when E : others =>
-            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
             return False;
       end Button_Press_For_Contextual_Menu;
 
@@ -695,7 +701,8 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Radio_Callback;
 
    -------------------------------
@@ -731,7 +738,8 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Edited_Callback;
 
    -----------------------------
@@ -1033,7 +1041,8 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Key_Press_In_Grab;
 

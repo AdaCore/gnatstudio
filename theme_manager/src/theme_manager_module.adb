@@ -343,7 +343,8 @@ package body Theme_Manager_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Selection_Changed;
 
    ---------

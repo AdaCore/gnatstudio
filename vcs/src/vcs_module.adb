@@ -170,7 +170,8 @@ package body VCS_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Open_Interface;
 
    -------------------------
@@ -1024,7 +1025,8 @@ package body VCS_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
 
 end VCS_Module;

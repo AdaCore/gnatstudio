@@ -107,8 +107,6 @@ package body Builder_Module is
    --      -"Compile all sources"
    --      -"All"
 
-   Me : constant Debug_Handle := Create (Builder_Module_Name);
-
    Quiet_Opt      : aliased String := "-q";
    Unique_Compile : aliased String := "-u";
    Syntax_Check   : aliased String := "-gnats";
@@ -762,7 +760,8 @@ package body Builder_Module is
          Free (Fd);
 
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Change_Dir (Old_Dir);
    end On_Build;
 
@@ -816,7 +815,8 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Check_Syntax;
 
    ------------------
@@ -1159,7 +1159,8 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Compile;
 
    ---------------
@@ -1230,7 +1231,8 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Custom;
 
    ------------------
@@ -1313,7 +1315,8 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Compute_Xref;
 
    ------------
@@ -1461,7 +1464,8 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Run;
 
    -------------------
@@ -1790,7 +1794,8 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
 
    ------------------------

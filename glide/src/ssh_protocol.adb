@@ -1001,7 +1001,8 @@ package body SSH_Protocol is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return VFS.No_Time;
    end File_Time_Stamp;
 

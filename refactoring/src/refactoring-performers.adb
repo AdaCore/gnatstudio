@@ -33,8 +33,6 @@ with Commands.Generic_Asynchronous;
 
 package body Refactoring.Performers is
 
-   Me : constant Debug_Handle := Create ("Refactor");
-
    use Location_Arrays;
    use File_Arrays;
 
@@ -151,7 +149,8 @@ package body Refactoring.Performers is
    exception
       when E : others =>
          Free (Data);
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Get_All_Locations;
 
    ------------------------

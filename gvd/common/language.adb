@@ -22,11 +22,11 @@ with Ada.Unchecked_Deallocation;
 with Basic_Types;                 use Basic_Types;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.OS_Lib;
-with GNAT.IO;                     use GNAT.IO;
 with Odd_Intl;                    use Odd_Intl;
 with String_Utils;                use String_Utils;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Glib.Unicode;                use Glib, Glib.Unicode;
+with Traces;                      use Traces;
 
 package body Language is
 
@@ -469,7 +469,8 @@ package body Language is
 
    exception
       when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Free (Buffer);
    end Parse_File_Constructs;
 

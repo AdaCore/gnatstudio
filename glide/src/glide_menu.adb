@@ -44,8 +44,6 @@ with VFS;                          use VFS;
 
 package body Glide_Menu is
 
-   Me : constant Debug_Handle := Create ("Menu");
-
    type Close_Command is new Interactive_Command with record
       Kernel    : Kernel_Handle;
       Close_All : Boolean;
@@ -127,7 +125,8 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Open_Project;
 
    -------------------
@@ -195,7 +194,8 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Exit;
 
    ---------------------
@@ -212,7 +212,8 @@ package body Glide_Menu is
       Save_Desktop (Glide_Window (Object).Kernel, As_Default_Desktop => False);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Save_Desktop;
 
    -----------------------------
@@ -229,7 +230,8 @@ package body Glide_Menu is
       Save_Desktop (Glide_Window (Object).Kernel, As_Default_Desktop => True);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Save_Default_Desktop;
 
    --------------------
@@ -248,7 +250,8 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Preferences;
 
    ---------------------------

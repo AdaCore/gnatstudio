@@ -55,8 +55,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Welcome is
 
-   Me : constant Debug_Handle := Create ("Welcome");
-
    function On_New_Project
      (Screen : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user wants to create a new widget
@@ -320,7 +318,8 @@ package body Welcome is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_New_Project;
 
@@ -336,7 +335,8 @@ package body Welcome is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Default_Project;
 
    ---------------------
@@ -379,7 +379,8 @@ package body Welcome is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Button := Message_Dialog
            ((-"Project file ") & Project_Name & (-" couldn't be loaded"),
             Error, Button_OK, Parent => Gtk_Window (S));
@@ -405,7 +406,8 @@ package body Welcome is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Browse_Default;
 
    --------------------
@@ -447,7 +449,8 @@ package body Welcome is
    exception
       when E : others =>
          Pop_State (S.Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Browse_Load;
 
    --------------------------------
@@ -466,7 +469,8 @@ package body Welcome is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Default_Project_Clicked;
 
    -------------------------------
@@ -485,7 +489,8 @@ package body Welcome is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Create_Project_Clicked;
 
    -----------------------------
@@ -504,7 +509,8 @@ package body Welcome is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Open_Project_Clicked;
 
 end Welcome;

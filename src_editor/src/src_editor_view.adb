@@ -70,8 +70,6 @@ package body Src_Editor_View is
    Margin : constant := 3;
    --  The margin left of the text.
 
-   Me : constant Debug_Handle := Create ("Source_View");
-
    use type Pango.Font.Pango_Font_Description;
    procedure Setup (Data : Source_View; Id : Gtk.Handlers.Handler_Id);
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback_With_Setup
@@ -409,7 +407,8 @@ package body Src_Editor_View is
       return False;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Button_Press;
 
@@ -429,7 +428,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Delete;
 
@@ -446,7 +446,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Realize_Cb;
 
    -----------------------
@@ -497,7 +498,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Line_Highlight_Change_Handler;
 
    ---------------------------------------
@@ -517,7 +519,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Buffer_Information_Change_Handler;
 
    ---------------------------------
@@ -544,7 +547,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Side_Columns_Change_Handler;
 
    ----------------------------------------
@@ -571,7 +575,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Side_Columns_Config_Change_Handler;
 
    ------------------------
@@ -600,7 +605,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Idle_Column_Redraw;
 
@@ -632,7 +638,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Change_Handler;
 
    --------------------
@@ -649,7 +656,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Size_Allocated;
 
    ---------------------
@@ -682,7 +690,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Speed_Bar_Size_Allocate_Cb;
 
    -------------------------------
@@ -703,7 +712,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Speed_Bar_Expose_Event_Cb;
 
@@ -995,7 +1005,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Expose_Event_Cb;
 
@@ -1016,7 +1027,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Focus_Out_Event_Cb;
 
@@ -1040,7 +1052,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Focus_In_Event_Cb;
 
@@ -1104,7 +1117,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Map_Cb;
 
    -------------
@@ -1417,7 +1431,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
    -------------
@@ -1438,7 +1453,8 @@ package body Src_Editor_View is
       end if;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
    --------------
@@ -1628,7 +1644,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Speed_Bar_Button_Press_Event_Cb;
 
@@ -1644,7 +1661,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Speed_Bar_Button_Release_Event_Cb;
 
@@ -1727,7 +1745,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press_Event_Cb;
 
@@ -1783,7 +1802,8 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Key_Press_Event_Cb;
 

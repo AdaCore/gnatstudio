@@ -593,7 +593,8 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Set_Error_Msg (Data, -"Internal error");
    end Show_Entity_Command_Handler;
 
@@ -724,7 +725,8 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Type_Browser;
 
    -------------
@@ -1267,7 +1269,8 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Find_Parent_Types;
 
    ------------------------------
@@ -1296,7 +1299,8 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Find_Children_Types_Idle;
 
@@ -1338,7 +1342,8 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Pop_State (Kernel);
    end Find_Children_Types;
 
@@ -1599,7 +1604,8 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Add_Or_Select_Item;
 
    ------------------

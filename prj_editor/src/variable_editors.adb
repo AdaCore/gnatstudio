@@ -592,7 +592,8 @@ package body Variable_Editors is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Update_Variable;
 
@@ -621,7 +622,8 @@ package body Variable_Editors is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Add_Variable;
 
 end Variable_Editors;

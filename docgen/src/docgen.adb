@@ -33,8 +33,6 @@ with Language;                  use Language;
 
 package body Docgen is
 
-   Me : constant Debug_Handle := Create ("Docgen");
-
    function String_Hash is new HTables.Hash (HTable_Header);
 
    -------------------------
@@ -322,7 +320,8 @@ package body Docgen is
 
       exception
          when E : others =>
-            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
       end Format_Code;
    end Docgen_Backend;
 

@@ -77,8 +77,6 @@ with Commands.Generic_Asynchronous;
 
 package body Vsearch_Ext is
 
-   Me : constant Debug_Handle := Create ("Vsearch_Project");
-
    Pattern_Hist_Key : constant History_Key := "search_patterns";
    Replace_Hist_Key : constant History_Key := "search_replace";
    --  The key for the histories.
@@ -425,7 +423,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
 
@@ -470,7 +469,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
          Result := Success;
@@ -603,7 +603,8 @@ package body Vsearch_Ext is
    exception
       when E : others =>
          Pop_State (Vsearch.Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Search;
 
    -----------------------
@@ -652,7 +653,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Search_Replace;
 
    ------------------------
@@ -692,7 +694,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Search_Previous;
 
    --------------------
@@ -706,7 +709,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Stop_Search;
 
    ----------------------
@@ -752,7 +756,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Options_Toggled;
 
    ------------------------------
@@ -823,7 +828,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Context_Entry_Changed;
 
    -------------------------
@@ -897,7 +903,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Set_First_Next_Mode_Cb;
 
    ---------------
@@ -1336,7 +1343,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Search_Menu_Cb;
 
    --------------------
@@ -1354,7 +1362,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Search_Next_Cb;
 
    ------------------------
@@ -1372,7 +1381,8 @@ package body Vsearch_Ext is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Search_Previous_Cb;
 
    ------------------------------

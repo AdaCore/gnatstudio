@@ -303,7 +303,8 @@ package body Codefix_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Fix;
 
    ------------
@@ -458,7 +459,8 @@ package body Codefix_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Activate_Codefix;
 
    -----------------------------
@@ -479,7 +481,8 @@ package body Codefix_Module is
          Compilation_Data.Category);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Compilation_Finished_Cb;
 
    ---------------------
@@ -527,7 +530,8 @@ package body Codefix_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Codefix_Handler;
 
    -------------------------
@@ -602,7 +606,8 @@ package body Codefix_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Codefix_Contextual_Menu;
 
    -------------------
@@ -804,7 +809,8 @@ package body Codefix_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Register_Module;
 
    ---------------------------

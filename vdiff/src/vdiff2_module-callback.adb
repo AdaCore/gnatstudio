@@ -48,8 +48,6 @@ package body Vdiff2_Module.Callback is
 
    use Diff_Head_List;
 
-   Me : constant Debug_Handle := Create (Vdiff_Module_Name);
-
    ---------------------------
    -- On_Compare_Tree_Files --
    ---------------------------
@@ -109,7 +107,8 @@ package body Vdiff2_Module.Callback is
       end;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Compare_Three_Files;
 
    --------------------------
@@ -155,7 +154,8 @@ package body Vdiff2_Module.Callback is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Compare_Two_Files;
 
    -------------------------
@@ -235,7 +235,8 @@ package body Vdiff2_Module.Callback is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Merge_Three_Files;
 
    ------------------------
@@ -297,7 +298,8 @@ package body Vdiff2_Module.Callback is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Merge_Two_Files;
 
    ---------------
@@ -394,7 +396,8 @@ package body Vdiff2_Module.Callback is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end File_Closed_Cb;
 
    --------------------------
@@ -444,7 +447,8 @@ package body Vdiff2_Module.Callback is
       end loop;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Preferences_Changed;
 
    ---------------------

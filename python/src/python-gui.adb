@@ -735,7 +735,8 @@ package body Python.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          Interpreter.In_Process := False;
          Interpreter.Hide_Output := False;
          Errors.all := True;
@@ -999,7 +1000,8 @@ package body Python.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          return False;
    end Key_Press_Handler;
 

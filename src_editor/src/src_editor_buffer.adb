@@ -668,7 +668,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Check_Blocks;
 
@@ -861,7 +862,8 @@ package body Src_Editor_Buffer is
       return False;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Cursor_Stop_Hook;
 
@@ -1174,7 +1176,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Changed_Handler;
 
    ----------------------
@@ -1223,7 +1226,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Mark_Set_Handler;
 
    --------------------
@@ -1242,7 +1246,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Insert_Text_Cb;
 
    -------------------------
@@ -1283,7 +1288,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Insert_Text_Handler;
 
    -----------------------
@@ -1366,7 +1372,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end First_Insert_Text;
 
    ---------------------
@@ -1404,7 +1411,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Delete_Range_Handler;
 
    ---------------------------------
@@ -1559,7 +1567,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Delete_Range_Before_Handler;
 
    -----------------------------
@@ -2412,7 +2421,8 @@ package body Src_Editor_Buffer is
    exception
       when E : others =>
          Success := False;
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Load_File;
 
    ---------------------------
@@ -2596,7 +2606,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
 
          --  To avoid consuming up all File Descriptors, we catch all
          --  exceptions here, and close the current file descriptor.
@@ -2660,7 +2671,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Save_To_File;
 
    -----------
@@ -4502,7 +4514,8 @@ package body Src_Editor_Buffer is
             g_free (C_Str);
          end if;
 
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Do_Indentation;
 

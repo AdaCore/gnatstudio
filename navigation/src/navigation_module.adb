@@ -365,7 +365,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Back;
 
    ----------------
@@ -395,7 +396,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Forward;
 
    ------------------------
@@ -445,7 +447,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Start_Statement;
 
    ------------------------
@@ -495,7 +498,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_End_Statement;
 
    ------------------------
@@ -550,7 +554,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Next_Subprogram;
 
    --------------------
@@ -571,7 +576,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Next_Result;
 
    ----------------------------
@@ -624,7 +630,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Previous_Subprogram;
 
    ------------------------
@@ -645,7 +652,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Previous_Result;
 
    -------------------
@@ -690,7 +698,8 @@ package body Navigation_Module is
    exception
       when E : others =>
          Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Other_File;
 
    ---------------------

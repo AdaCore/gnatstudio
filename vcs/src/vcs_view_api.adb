@@ -63,8 +63,6 @@ with String_Utils;                use String_Utils;
 
 package body VCS_View_API is
 
-   Me : constant Debug_Handle := Create ("VCS_Api");
-
    Max_Rev_Length : constant := 10;
    --  The maximum length of a revision string, in characters. Revisions longer
    --  than this will be krunched when displayed in the editors.
@@ -1029,7 +1027,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Edit_ChangeLog;
 
    ----------------------
@@ -1075,7 +1074,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Edit_Log;
 
    ----------------
@@ -1385,7 +1385,8 @@ package body VCS_View_API is
       Free (Files);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Remove_Log;
 
    --------------------
@@ -1402,7 +1403,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Commit;
 
    -------------------
@@ -1542,7 +1544,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Open;
 
    -----------------
@@ -1559,7 +1562,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Add;
 
    --------------------
@@ -1591,7 +1595,8 @@ package body VCS_View_API is
       String_List.Free (Files);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Revert;
 
    --------------------
@@ -1607,7 +1612,8 @@ package body VCS_View_API is
       On_Log_Action (Context, Remove);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Remove;
 
    ----------------------
@@ -1651,7 +1657,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Annotate;
 
    -----------------------------
@@ -1685,7 +1692,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Remove_Annotate;
 
    --------------------
@@ -1718,7 +1726,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update;
 
    ------------------------
@@ -1749,7 +1758,8 @@ package body VCS_View_API is
       String_List.Free (Files);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status;
 
    ------------------
@@ -1891,7 +1901,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Dir;
 
    ----------------------------------
@@ -1910,7 +1921,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Dir_Recursive;
 
    ----------------------------
@@ -1929,7 +1941,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Dir;
 
    --------------------------------------
@@ -1948,7 +1961,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Dir_Recursive;
 
    --------------------
@@ -1998,7 +2012,8 @@ package body VCS_View_API is
       Update_Project (Context, False);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Project;
 
    --------------------------------------
@@ -2014,7 +2029,8 @@ package body VCS_View_API is
       Update_Project (Context, True);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Project_Recursive;
 
    -------------------------
@@ -2116,7 +2132,8 @@ package body VCS_View_API is
       List_Project_Files (Context, False);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_List_Project_Files;
 
    ------------------------------------------
@@ -2132,7 +2149,8 @@ package body VCS_View_API is
       List_Project_Files (Context, True);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_List_Project_Files_Recursive;
 
    ------------------------
@@ -2182,7 +2200,8 @@ package body VCS_View_API is
       Get_Status_Project (Context, False);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Project;
 
    ------------------------------------------
@@ -2199,7 +2218,8 @@ package body VCS_View_API is
       Get_Status_Project (Context, True);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Project_Recursive;
 
    ------------------
@@ -2235,7 +2255,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff;
 
    ----------------------
@@ -2269,7 +2290,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_View_Log;
 
    --------------------------
@@ -2328,7 +2350,8 @@ package body VCS_View_API is
       String_List.Free (Files);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_View_Log_Rev;
 
    -------------------------------
@@ -2380,7 +2403,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff_Working_Head;
 
    ---------------------------
@@ -2396,7 +2420,8 @@ package body VCS_View_API is
       Comparison (Context, True);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff_Specific;
 
    -------------------
@@ -2412,7 +2437,8 @@ package body VCS_View_API is
       Comparison (Context, False);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff2;
 
    ----------------
@@ -2561,7 +2587,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff_Local;
 
    --------------------------
@@ -2627,7 +2654,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Query_Status_For_Project;
 
    ----------------
@@ -2648,7 +2676,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Update_All;
 
    ---------------------
@@ -2672,7 +2701,8 @@ package body VCS_View_API is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return null;
    end Context_Factory;
 

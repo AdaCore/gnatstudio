@@ -1334,7 +1334,8 @@ package body Project_Properties is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Edit_Project_Properties;
 
 end Project_Properties;

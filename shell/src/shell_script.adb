@@ -576,7 +576,8 @@ package body Shell_Script is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return "";
    end Interpret_Command_Handler;
 
@@ -1299,7 +1300,7 @@ package body Shell_Script is
          return -"Invalid parameter for " & Command;
 
       when E : others =>
-         Trace (Me, "Unexpected exception in Execute_Command: "
+         Trace (Exception_Handle, "Unexpected exception in Execute_Command: "
                 & Exception_Information (E));
          return "";
    end Execute_GPS_Shell_Command;

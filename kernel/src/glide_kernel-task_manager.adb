@@ -55,8 +55,6 @@ package body Glide_Kernel.Task_Manager is
    Task_Manager_Module_Id   : Task_Manager_Module_Id_Access;
    Task_Manager_Module_Name : constant String := "Glide_Kernel.Task_Manager";
 
-   Me : constant Debug_Handle := Create (Task_Manager_Module_Name);
-
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -191,7 +189,8 @@ package body Glide_Kernel.Task_Manager is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Task_Manager;
 
    ----------------------------------------------

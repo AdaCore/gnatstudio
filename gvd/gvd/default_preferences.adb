@@ -1874,7 +1874,8 @@ package body Default_Preferences is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected information " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected information " & Exception_Information (E));
          Destroy (Dialog);
    end Edit_Preferences;
 

@@ -45,8 +45,6 @@ with Case_Handling;            use Case_Handling;
 
 package body Cpp_Module is
 
-   Me : constant Debug_Handle := Create ("Cpp_Module");
-
    CPP_LI_Handler_Name : constant String := "c/c++";
    --  The name the source navigator is registered under.
 
@@ -141,7 +139,8 @@ package body Cpp_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Project_View_Changed;
 
    ---------------------
@@ -233,7 +232,7 @@ package body Cpp_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception in Register_Module: "
+         Trace (Exception_Handle, "Unexpected exception in Register_Module: "
                 & Exception_Information (E));
    end Register_Module;
 

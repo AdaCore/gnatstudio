@@ -2319,7 +2319,8 @@ package body CPP_Parser is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Release_Cursor (Handler.SN_Table (FIL));
          --  Free (Module_Typedefs);
    end Parse_File;
@@ -2876,7 +2877,8 @@ package body CPP_Parser is
 
    exception
       when E : others   =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Parse_File_Constructs;
 
 end CPP_Parser;

@@ -567,7 +567,8 @@ package body Docgen_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Generate_Project;
 
    ----------------------
@@ -659,7 +660,8 @@ package body Docgen_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Generate_File;
 
    -----------------
@@ -725,7 +727,8 @@ package body Docgen_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Pop_State (Kernel);
    end Generate;
 

@@ -36,8 +36,6 @@ with VFS;                     use VFS;
 
 package body Casing_Exceptions is
 
-   Me : constant Debug_Handle := Create ("Casing");
-
    Case_Exceptions_Filename : constant String := "case_exceptions.xml";
 
    type Casing_Module_Record is new Module_ID_Record with record
@@ -137,7 +135,8 @@ package body Casing_Exceptions is
       Add_Exception (Name);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Add_Case_Exception;
 
    ------------------------------
@@ -156,7 +155,8 @@ package body Casing_Exceptions is
       Remove_Exception (Name);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Remove_Case_Exception;
 
    ----------------
@@ -200,7 +200,8 @@ package body Casing_Exceptions is
       Set_Casing (C, To_Lower (Name));
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Set_Lower;
 
    ------------------
@@ -219,7 +220,8 @@ package body Casing_Exceptions is
       Set_Casing (C, To_Upper (Name));
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Set_Upper;
 
    ------------------
@@ -240,7 +242,8 @@ package body Casing_Exceptions is
       Set_Casing (C, New_Name);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Set_Mixed;
 
    ------------------------
@@ -261,7 +264,8 @@ package body Casing_Exceptions is
       Set_Casing (C, New_Name);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Set_Smart_Mixed;
 
    ----------------------

@@ -44,8 +44,6 @@ package body GVD.Dialogs.Callbacks is
    use GVD;
    use Gtk.Arguments;
 
-   Me : constant Debug_Handle := Create ("GVD.Dialogs");
-
    -----------------------------
    -- On_Task_List_Select_Row --
    -----------------------------
@@ -112,7 +110,8 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Task_List_Select_Row;
 
    -----------------------------
@@ -126,7 +125,8 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Close_Button_Clicked;
 
    -----------------------------
@@ -163,7 +163,8 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Question_Yes_Clicked;
 
    -----------------------------
@@ -199,7 +200,8 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Question_No_Clicked;
 
    ----------------------------
@@ -257,7 +259,8 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Question_OK_Clicked;
 
    -------------------------------
@@ -279,7 +282,8 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Question_Close_Clicked;
 
    ---------------------------------
@@ -333,7 +337,8 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Replay_Selection_Clicked;
 
    -------------------------------
@@ -347,7 +352,8 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_History_Cancel_Clicked;
 
 end GVD.Dialogs.Callbacks;

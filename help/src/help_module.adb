@@ -346,7 +346,8 @@ package body Help_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Activate;
 
    ----------
@@ -431,7 +432,8 @@ package body Help_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Load_HTML;
 
    -------------------
@@ -618,7 +620,8 @@ package body Help_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Url_Requested;
 
    ------------------
@@ -653,7 +656,8 @@ package body Help_Module is
       end if;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Link_Clicked;
 
    -------------------
@@ -679,7 +683,8 @@ package body Help_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Title_Changed;
 
    ---------------
@@ -734,7 +739,8 @@ package body Help_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return True;
    end Key_Press;
 
@@ -760,7 +766,8 @@ package body Help_Module is
       Queue_Resize (Browser);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Load_Done;
 
    ----------------
@@ -1073,7 +1080,8 @@ package body Help_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_About;
 
    ------------------
@@ -1103,7 +1111,8 @@ package body Help_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Open_HTML;
 
    ------------
@@ -1168,7 +1177,8 @@ package body Help_Module is
       Open_Html (Kernel, Create_Html ("gps-tutorial.html", Kernel));
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Tutorial;
 
    -------------------------

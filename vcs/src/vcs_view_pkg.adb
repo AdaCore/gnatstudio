@@ -385,7 +385,8 @@ package body VCS_View_Pkg is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Delete;
 
@@ -408,7 +409,8 @@ package body VCS_View_Pkg is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
 
    -------------
@@ -603,7 +605,7 @@ package body VCS_View_Pkg is
 
          exception
             when E : others =>
-               Trace (Me, "Unexpected exception: "
+               Trace (Exception_Handle, "Unexpected exception: "
                       & Exception_Information (E));
          end;
 
@@ -1009,7 +1011,8 @@ package body VCS_View_Pkg is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_All_Status;
 
    ---------------------
@@ -1033,7 +1036,8 @@ package body VCS_View_Pkg is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Hide_All_Status;
 
    ------------------------
@@ -1058,7 +1062,8 @@ package body VCS_View_Pkg is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Toggle_Show_Status;
 
    -----------------------
@@ -1214,7 +1219,8 @@ package body VCS_View_Pkg is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return null;
    end Context_Func;
 
@@ -1255,7 +1261,8 @@ package body VCS_View_Pkg is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press;
 
@@ -1321,7 +1328,8 @@ package body VCS_View_Pkg is
       end if;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
    ----------------
@@ -1789,7 +1797,8 @@ package body VCS_View_Pkg is
                         exception
                            when E : others =>
                               Trace
-                                (Me, "Could not parse VCS explorer desktop: "
+                                (Exception_Handle,
+                                 "Could not parse VCS explorer desktop: "
                                  & Exception_Information (E));
                         end;
                      end if;

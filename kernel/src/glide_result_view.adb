@@ -389,7 +389,8 @@ package body Glide_Result_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
    -----------------
@@ -579,7 +580,8 @@ package body Glide_Result_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Goto_Location;
 
    ----------------------------------
@@ -694,7 +696,8 @@ package body Glide_Result_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Remove_Category;
 
    ---------------
@@ -1150,7 +1153,8 @@ package body Glide_Result_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
 
    -------------
@@ -1297,7 +1301,8 @@ package body Glide_Result_View is
       Clicked (Explorer.Sorting_Column);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Toggle_Sort;
 
    ----------------
@@ -1387,7 +1392,8 @@ package body Glide_Result_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Row_Expanded;
 
    -------------------
@@ -1549,7 +1555,8 @@ package body Glide_Result_View is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press;
 

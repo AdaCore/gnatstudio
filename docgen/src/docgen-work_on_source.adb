@@ -38,8 +38,6 @@ package body Docgen.Work_On_Source is
 
    use Docgen_Backend;
 
-   Me : constant Debug_Handle := Create ("Docgen-work_on_source");
-
    package TEL renames Type_Entity_List;
 
 
@@ -594,7 +592,8 @@ package body Docgen.Work_On_Source is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Process_Source;
 
    -------------------------

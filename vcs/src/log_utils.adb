@@ -37,8 +37,6 @@ with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 
 package body Log_Utils is
 
-   Me : constant Debug_Handle := Create ("Log_Utils");
-
    --  The format for the mappings file is as follows :
    --
    --      File_1
@@ -82,7 +80,8 @@ package body Log_Utils is
          Load_Mapper (Mapper, Full_Name (Mapping).all);
       exception
          when E : others =>
-            Trace (Me, "unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle,
+                   "unexpected exception: " & Exception_Information (E));
 
             Button := Message_Dialog
               (Msg     =>

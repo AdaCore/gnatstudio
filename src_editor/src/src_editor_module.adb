@@ -1719,7 +1719,8 @@ package body Src_Editor_Module is
       Fill_Marks (Kernel_Handle (Kernel), D.File);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
 
    -----------------------------
@@ -1829,7 +1830,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end File_Closed_Cb;
 
    -------------------
@@ -1853,7 +1855,8 @@ package body Src_Editor_Module is
       end if;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end File_Saved_Cb;
 
    -----------------------
@@ -1879,7 +1882,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Cursor_Stopped_Cb;
 
    ---------------------
@@ -1902,7 +1906,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Delete_Callback;
 
@@ -1934,7 +1939,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end File_Edit_Callback;
 
@@ -2014,7 +2020,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return null;
    end Load_Desktop;
 
@@ -2503,7 +2510,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Location_Callback;
 
@@ -2572,7 +2580,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Open_File;
 
    -----------------------
@@ -2684,7 +2693,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Open_From_Path;
 
    --------------
@@ -2697,7 +2707,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Activate;
 
    -----------------
@@ -2714,7 +2725,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_New_File;
 
    -------------
@@ -2731,7 +2743,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Save;
 
    ----------------
@@ -2770,7 +2783,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Save_As;
 
    -----------------
@@ -2788,7 +2802,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Save_All;
 
    --------------
@@ -2892,7 +2907,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Select_All;
 
    --------------------
@@ -2931,7 +2947,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Insert_File;
 
    -----------------
@@ -2947,7 +2964,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_New_View;
 
    ---------------------------------
@@ -2968,7 +2986,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Line_Current_Editor;
 
    -------------------------
@@ -2995,7 +3014,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Declaration;
 
    ------------------
@@ -3022,7 +3042,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Body;
 
    -----------------------
@@ -3158,7 +3179,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Comment_Lines;
 
    --------------------
@@ -3178,7 +3200,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Fold_Blocks;
 
    ----------------------
@@ -3198,7 +3221,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Unfold_Blocks;
 
    ------------------------
@@ -3215,7 +3239,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Uncomment_Lines;
 
    ----------------------
@@ -3335,7 +3360,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end File_Line_Hook;
 
@@ -3370,7 +3396,8 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Edit_File;
 
    ------------------------------

@@ -661,7 +661,8 @@ package body Project_Explorers_Common is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return No_Project;
    end Get_Project_From_Node;
 

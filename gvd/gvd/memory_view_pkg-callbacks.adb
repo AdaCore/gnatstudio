@@ -36,8 +36,6 @@ with Ada.Exceptions;    use Ada.Exceptions;
 
 package body Memory_View_Pkg.Callbacks is
 
-   Me : constant Debug_Handle := Create ("Memory_View_Pkg.Callbacks");
-
    use Gtk.Arguments;
 
    ---------------------------------
@@ -55,7 +53,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Memory_View_Delete_Event;
 
@@ -79,7 +78,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Memory_View_Size_Allocate;
 
    -------------------------------
@@ -96,7 +96,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Address_Entry_Activate;
 
    -----------------------------
@@ -113,7 +114,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Address_View_Clicked;
 
    ---------------------------
@@ -130,7 +132,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Size_Entry_Changed;
 
    ---------------------------
@@ -147,7 +150,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Data_Entry_Changed;
 
    ---------------------------
@@ -164,7 +168,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Show_Ascii_Toggled;
 
    ---------------------
@@ -181,7 +186,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Pgup_Clicked;
 
    ---------------------
@@ -198,7 +204,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Pgdn_Clicked;
 
    -----------------------------
@@ -260,7 +267,8 @@ package body Memory_View_Pkg.Callbacks is
          return False;
 
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_View_Key_Press_Event;
 
@@ -278,7 +286,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_View_Move_Cursor;
 
    ----------------------------------
@@ -310,7 +319,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
       return False;
    end On_View_Button_Release_Event;
 
@@ -329,7 +339,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Reset_Clicked;
 
    -----------------------
@@ -346,7 +357,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Submit_Clicked;
 
    -----------------------
@@ -361,7 +373,8 @@ package body Memory_View_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Cancel_Clicked;
 
 end Memory_View_Pkg.Callbacks;

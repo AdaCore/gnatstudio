@@ -483,7 +483,8 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press;
 
@@ -1278,7 +1279,8 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
 
@@ -1333,7 +1335,8 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Expand_File_Node;
 
    ----------------------
@@ -1480,7 +1483,8 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Expand_Tree_Cb;
 
    ----------------------
@@ -1989,7 +1993,8 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Refresh;
 
    --------------------------------
@@ -2042,7 +2047,8 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Open_Explorer;
 
    ---------------------
@@ -2656,7 +2662,8 @@ package body Project_Explorers is
       end if;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Locate_File;
 
    --------------------
@@ -2700,7 +2707,8 @@ package body Project_Explorers is
       end if;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Locate_Project;
 
    -------------------------

@@ -1114,7 +1114,8 @@ package body Python_Module is
          return null;
 
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
 
          if not Callback.Has_Return_Value
            or else  Callback.Return_Value /= null

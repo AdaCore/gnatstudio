@@ -72,8 +72,6 @@ with Project_Explorers_Common; use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
 
-   Me : constant Debug_Handle := Create ("Project_Files");
-
    Explorer_Files_Module_Id   : Glide_Kernel.Module_ID := null;
 
    File_View_Shows_Only_Project : constant History_Key :=
@@ -468,7 +466,8 @@ package body Project_Explorers_Files is
          return False;
 
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Read_Directory;
 
@@ -777,7 +776,8 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end File_Tree_Collapse_Row_Cb;
 
    ---------------------
@@ -804,7 +804,8 @@ package body Project_Explorers_Files is
       return True;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return True;
    end Expose_Event_Cb;
 
@@ -878,7 +879,8 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end File_Tree_Expand_Row_Cb;
 
    ----------------------------
@@ -901,7 +903,8 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end File_Selection_Changed;
 
    -----------------------
@@ -920,7 +923,8 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end File_Button_Press;
 
@@ -1021,7 +1025,8 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Refresh;
 
    ----------------
@@ -1185,7 +1190,8 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Open_Explorer;
 
    ------------------

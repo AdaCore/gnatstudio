@@ -227,7 +227,8 @@ package body Case_Handling is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Load_Exceptions;
 
    ---------------------

@@ -79,8 +79,6 @@ package body Browsers.Canvas is
    Zoom_Steps : constant := 3;
    --  Number of steps while zooming in or out.
 
-   Me : constant Debug_Handle := Create ("Browsers.Canvas");
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Active_Area_Tree_Array, Active_Area_Tree_Array_Access);
 
@@ -743,7 +741,8 @@ package body Browsers.Canvas is
    exception
       when E : others =>
          Pop_State (Get_Kernel (Data.Browser));
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Set_Root;
 
    ------------------
@@ -808,7 +807,8 @@ package body Browsers.Canvas is
             Pop_State (Get_Kernel (B));
          end if;
 
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Export;
 
    ----------------
@@ -826,7 +826,8 @@ package body Browsers.Canvas is
    exception
       when E : others =>
          Pop_State (Get_Kernel (B));
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Refresh;
 
    -----------------------
@@ -1289,7 +1290,8 @@ package body Browsers.Canvas is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Button_Click;
 
    -----------------

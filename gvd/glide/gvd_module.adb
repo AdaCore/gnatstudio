@@ -531,7 +531,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Generic_Debug_Command;
 
    --------------------
@@ -948,7 +949,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Add_Symbols;
 
    ----------------
@@ -1027,7 +1029,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Assembly;
 
    -------------------------
@@ -1104,7 +1107,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Connect_To_Board;
 
    -------------------------
@@ -1179,7 +1183,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Executable;
 
    ------------------
@@ -1228,7 +1233,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Load_Core;
 
    --------------------
@@ -1419,7 +1425,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end GVD_Contextual;
 
    ---------------------
@@ -1502,7 +1509,8 @@ package body GVD_Module is
          Pop_State (Kernel);
       when E : others =>
          Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Tooltip_Handler;
 
    -------------------
@@ -1698,7 +1706,8 @@ package body GVD_Module is
    exception
       when E : others =>
          Pop_State (K);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Init;
 
    ---------------------
@@ -1861,7 +1870,8 @@ package body GVD_Module is
    exception
       when E : others =>
          Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Terminate;
 
    --------------------------------
@@ -1879,7 +1889,8 @@ package body GVD_Module is
    exception
       when E : others =>
          Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Terminate_Current;
 
    -------------------------------
@@ -1916,7 +1927,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Set_Breakpoint;
 
    -------------------------------
@@ -1941,7 +1953,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Set_Subprogram_Breakpoint;
 
    ---------------------
@@ -1968,7 +1981,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Till_Breakpoint;
 
    -----------------------
@@ -2031,7 +2045,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Print_Variable;
 
    --------------------------------
@@ -2055,7 +2070,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Print_Dereference_Variable;
 
    ----------------------------------------
@@ -2081,7 +2097,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Graph_Display_Dereference_Variable;
 
    ----------------------------
@@ -2107,7 +2124,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Graph_Display_Variable;
 
    ----------------------
@@ -2141,7 +2159,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end View_Into_Memory;
 
    ---------------
@@ -2186,7 +2205,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Set_Value;
 
    ----------------------------
@@ -2212,7 +2232,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Current_Line_Menu;
 
    -----------------------
@@ -2232,7 +2253,8 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Start_Continue;
 
    ---------------------------
@@ -2271,7 +2293,8 @@ package body GVD_Module is
       when E : others =>
          Debug_Terminate
            (Kernel_Handle (Kernel), Get_Current_Process (Hook.Top));
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
    -------------
@@ -2374,7 +2397,8 @@ package body GVD_Module is
    exception
       when E : others =>
          Debug_Terminate (Kernel_Handle (Kernel), Process);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
    ---------------------
@@ -2443,7 +2467,8 @@ package body GVD_Module is
    exception
       when E : others =>
          Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
 
    -------------------------

@@ -105,7 +105,7 @@ package body Glide_Kernel.Custom is
                      when E : others =>
                         Trace (Me, "Could not parse XML file: " & F);
                         Insert (Kernel, -"Could not parse XML file: " & F);
-                        Trace (Me, Exception_Information (E));
+                        Trace (Exception_Handle, Exception_Information (E));
                         File_Node := null;
                   end;
 

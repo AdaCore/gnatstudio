@@ -904,7 +904,9 @@ package body VCS.Generic_VCS is
                            & ASCII.LF & Field.all,
                            Mode => Error);
 
-                        Trace (Me, Exception_Information (E));
+                        Trace (Exception_Handle,
+                               "Unexpected exception "
+                               & Exception_Information (E));
                   end;
                end if;
 
@@ -926,7 +928,9 @@ package body VCS.Generic_VCS is
                         & ASCII.LF & Field.all,
                         Mode => Error);
 
-                     Trace (Me, Exception_Information (E));
+                     Trace (Exception_Handle,
+                            "Unexpected exception "
+                            & Exception_Information (E));
                end;
             end if;
 

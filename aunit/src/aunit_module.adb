@@ -38,8 +38,6 @@ with Traces;                  use Traces;
 
 package body Aunit_Module is
 
-   Me : constant Debug_Handle := Create ("Aunit_Module");
-
    procedure On_New_Test_Case
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -85,7 +83,8 @@ package body Aunit_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception in On_New_Test_Case: "
+         Trace (Exception_Handle,
+                "Unexpected exception in On_New_Test_Case: "
                 & Exception_Information (E));
    end On_New_Test_Case;
 
@@ -117,7 +116,7 @@ package body Aunit_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception in On_New_Test_Case: "
+         Trace (Exception_Handle, "Unexpected exception in On_New_Test_Case: "
                 & Exception_Information (E));
    end On_New_Test_Suite;
 
@@ -149,7 +148,7 @@ package body Aunit_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception in On_New_Test_Case: "
+         Trace (Exception_Handle, "Unexpected exception in On_New_Test_Case: "
                 & Exception_Information (E));
    end On_New_Test_Harness;
 

@@ -1152,7 +1152,7 @@ package body ALI_Parser is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected error while parsing "
+         Trace (Exception_Handle, "Unexpected error while parsing "
                 & Full_Name (Get_LI_Filename (LI)).all & ": "
                 & Exception_Information (E));
          return False;

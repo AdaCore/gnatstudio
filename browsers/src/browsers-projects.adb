@@ -380,7 +380,8 @@ package body Browsers.Projects is
    exception
       when E : others =>
          Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Examine_Project_Hierarchy;
 
    ----------------------------------------
@@ -423,7 +424,8 @@ package body Browsers.Projects is
    exception
       when E : others =>
          Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestor_Project_Hierarchy;
 
    ---------------------

@@ -828,7 +828,8 @@ procedure GPS is
                     -"Error when executing the script for --script switch",
                     Mode => Error);
          end if;
-         Trace (Me, "Exception was " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Exception was " & Exception_Information (E));
    end Execute_Batch;
 
    ------------------
@@ -1281,7 +1282,8 @@ procedure GPS is
    exception
       when E : others =>
          Unexpected_Exception := True;
-         Trace (Me, "Unhandled exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unhandled exception: " & Exception_Information (E));
 
          if Is_Regular_File (Pid_File) then
             Str := Pid_File'Unchecked_Access;
@@ -1370,5 +1372,6 @@ begin
 
 exception
    when E : others =>
-      Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      Trace (Exception_Handle,
+             "Unexpected exception: " & Exception_Information (E));
 end GPS;

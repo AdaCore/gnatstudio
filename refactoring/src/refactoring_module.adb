@@ -33,8 +33,6 @@ with Ada.Exceptions;        use Ada.Exceptions;
 
 package body Refactoring_Module is
 
-   Me : constant Debug_Handle := Create ("Refactoring");
-
    procedure Refactoring_Contextual
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -89,7 +87,8 @@ package body Refactoring_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Refactoring_Contextual;
 
    ---------------------

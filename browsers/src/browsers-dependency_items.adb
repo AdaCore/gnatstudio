@@ -636,7 +636,8 @@ package body Browsers.Dependency_Items is
    exception
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Examine_Dependencies;
 
    ------------------
@@ -668,7 +669,8 @@ package body Browsers.Dependency_Items is
    exception
       when E : others =>
          Clean;
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Destroy_Idle;
 
    ----------------------------
@@ -718,7 +720,8 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Examine_Ancestors_Idle;
 
@@ -787,7 +790,8 @@ package body Browsers.Dependency_Items is
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
          Destroy (Data.Iter);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Examine_From_Dependencies;
 
    --------------------
@@ -884,7 +888,8 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception in On_Dependency_Browser "
+         Trace (Exception_Handle,
+                "Unexpected exception in On_Dependency_Browser "
                 & Exception_Information (E));
          Unref (Context);
    end On_Dependency_Browser;
@@ -905,7 +910,7 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
-         Trace (Me,
+         Trace (Exception_Handle,
                 "Unexpected exception in Edit_Dependencies_From_Contextual "
                 & Exception_Information (E));
    end Edit_Dependencies_From_Contextual;
@@ -926,7 +931,7 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
-         Trace (Me,
+         Trace (Exception_Handle,
                 "Unexpected exception in Edit_Dependencies_From_Contextual "
                 & Exception_Information (E));
    end Edit_Ancestor_Dependencies_From_Contextual;
@@ -1242,7 +1247,8 @@ package body Browsers.Dependency_Items is
       end if;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Examine_Other_File;
 
    ------------------------

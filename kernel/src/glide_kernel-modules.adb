@@ -510,7 +510,8 @@ package body Glide_Kernel.Modules is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Execute_Command;
 
    -------------------
@@ -656,7 +657,8 @@ package body Glide_Kernel.Modules is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end Create_Menu;
 
    ---------------------------

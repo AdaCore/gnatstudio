@@ -1265,7 +1265,8 @@ package body Src_Contexts is
 
    exception
       when E : others =>
-         Trace (Me, "unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "unexpected exception: " & Exception_Information (E));
          return False;
    end Search;
 
@@ -1367,7 +1368,8 @@ package body Src_Contexts is
 
    exception
       when E : others =>
-         Trace (Me, "unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "unexpected exception: " & Exception_Information (E));
          return False;
    end Replace;
 

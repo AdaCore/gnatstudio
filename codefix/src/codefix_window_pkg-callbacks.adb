@@ -35,8 +35,6 @@ with Traces;                      use Traces;
 
 package body Codefix_Window_Pkg.Callbacks is
 
-   Me : constant Debug_Handle := Create ("Codefix_Window_Pkg.Callbacks");
-
    --------------------------
    -- On_Fix_Entry_Changed --
    --------------------------
@@ -55,7 +53,8 @@ package body Codefix_Window_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Fix_Entry_Changed;
 
    ---------------------
@@ -71,7 +70,8 @@ package body Codefix_Window_Pkg.Callbacks is
       Load_Previous_Error (Graphic_Codefix);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Prev_Clicked;
 
    ---------------------
@@ -88,7 +88,8 @@ package body Codefix_Window_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Next_Clicked;
 
    ----------------------
@@ -106,7 +107,8 @@ package body Codefix_Window_Pkg.Callbacks is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Apply_Clicked;
 
    ---------------------
@@ -122,7 +124,8 @@ package body Codefix_Window_Pkg.Callbacks is
       Undo_Last_Fix (Graphic_Codefix);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Undo_Clicked;
 
    ------------------------
@@ -140,7 +143,8 @@ package body Codefix_Window_Pkg.Callbacks is
       --  ??? What may I do when the fix is no longer pertinent ?
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Refresh_Clicked;
 
 end Codefix_Window_Pkg.Callbacks;
