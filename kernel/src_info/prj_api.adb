@@ -3067,9 +3067,18 @@ package body Prj_API is
                Remove_Node (Project, Node);
 
             when N_Case_Item =>
-               Tree_Private_Part.Project_Nodes.Table (Parent) :=
-                 Tree_Private_Part.Project_Nodes.Table
-                 (First_Declarative_Item_Of (Node));
+               --  The first declarative item might be null when there was no
+               --  actual "when ..." for Keep_Choice. In that case, Prj.Proc
+               --  inserts an entry with no declarative item.
+
+               if First_Declarative_Item_Of (Node) /= Empty_Node then
+                  Tree_Private_Part.Project_Nodes.Table (Parent) :=
+                    Tree_Private_Part.Project_Nodes.Table
+                    (First_Declarative_Item_Of (Node));
+
+               else
+                  Set_Current_Item_Node (Parent, Empty_Node);
+               end if;
 
             when others =>
                null;
