@@ -14,112 +14,12 @@ is
    P              : Pair_Ptr;
    FU_Tab         : FU_Table;
    MI_Tab         : MI_Table;
-   MD_Tab         : MD_Table;
    Start_Position : Point := Sym.Start_Position;
    Body_Position  : Point := Invalid_Point;
    End_Position   : Point;
 
    Fu_Id          : constant String := Sym.Buffer
      (Sym.Identifier.First .. Sym.Identifier.Last);
-
-   function Find_First_Forward_Declaration
-     (Fn : FU_Table) return E_Declaration_Info_List;
-   --  Attempts to find the first forward declaration
-   --  for the function. Returns null if not found or
-   --  forward declaration is in another file which
-   --  has not been yet processed
-
-   function Find_First_Forward_Declaration
-     (Fn : FU_Table) return E_Declaration_Info_List
-   is
-      P            : Pair_Ptr;
-      FD_Tab       : FD_Table;
-      FD_Tab_Tmp   : FD_Table;
-      First_FD_Pos : Point := Invalid_Point;
-   begin
-
-      if not Is_Open (SN_Table (FD)) then
-         return null; -- .fd table does not exist
-      end if;
-
-      --  First we have to find the first forward declaration
-      --  that corresponds to our function, that is prototypes
-      --  should be the same
-      --  ??? What should we do when forward declarations are
-      --  found in different files, which to choose?
-      --  So far we take the first one.
-      --  ??? What should we do when forward declaration located
-      --  in another file has not been processed yet?
-      Set_Cursor
-        (SN_Table (FD),
-         By_Key,
-         Fu_Id & Field_Sep,
-         False);
-
-      loop
-         P := Get_Pair (SN_Table (FD), Next_By_Key);
-         if P = null then -- no fwd decls at all
-            return null;
-         end if;
-         FD_Tab := Parse_Pair (P.all);
-         Free (P);
-         --  Update position of the first forward declaration
-         exit when Cmp_Prototypes
-              (FD_Tab.Buffer,
-               Fn.Buffer,
-               FD_Tab.Arg_Types,
-               Fn.Arg_Types,
-               FD_Tab.Return_Type,
-               Fn.Return_Type);
-         Free (FD_Tab);
-      end loop;
-
-      --  now find the first declaration in the file
-      Set_Cursor
-        (SN_Table (FD),
-         By_Key,
-         Fu_Id & Field_Sep,
-         False);
-
-      loop
-         P := Get_Pair (SN_Table (FD), Next_By_Key);
-         exit when P = null;
-         FD_Tab_Tmp := Parse_Pair (P.all);
-         Free (P);
-         --  Update position of the first forward declaration
-         if FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
-            = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                                 FD_Tab_Tmp.File_Name.Last)
-            and then Cmp_Prototypes
-              (FD_Tab.Buffer,
-               FD_Tab_Tmp.Buffer,
-               FD_Tab.Arg_Types,
-               FD_Tab_Tmp.Arg_Types,
-               FD_Tab.Return_Type,
-               FD_Tab_Tmp.Return_Type)
-            and then ((First_FD_Pos = Invalid_Point)
-            or else Less (FD_Tab_Tmp.Start_Position, First_FD_Pos)) then
-            First_FD_Pos := FD_Tab_Tmp.Start_Position;
-         end if;
-         Free (FD_Tab_Tmp);
-      end loop;
-
-      pragma Assert (First_FD_Pos /= Invalid_Point);
-      begin
-         return Find_Declaration
-           (File        => Global_LI_File,
-            Symbol_Name => Fu_Id,
-            Location    => First_FD_Pos);
-      exception
-         when Declaration_Not_Found =>
-            return null;
-      end;
-
-   exception
-      when DB_Error =>
-         return null;
-
-   end Find_First_Forward_Declaration;
 
 begin
    Info ("Sym_FU_Hanlder: '"
@@ -129,11 +29,14 @@ begin
 
    if Sym.Symbol = MI then
       begin
+         --  TODO templates
          MI_Tab := Find (SN_Table (MI),
              Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-             Fu_Id);
-         if MI_Tab.Buffer (MI_Tab.Return_Type.First
-                                 .. MI_Tab.Return_Type.Last) = "void" then
+             Fu_Id,
+             Sym.Start_Position,
+             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
+         if MI_Tab.Buffer (MI_Tab.Return_Type.First ..
+                           MI_Tab.Return_Type.Last) = "void" then
             Target_Kind := Non_Generic_Procedure;
          else
             Target_Kind := Non_Generic_Function_Or_Operator;
@@ -147,9 +50,13 @@ begin
       end;
    else
       begin
-         FU_Tab := Find (SN_Table (FU), Fu_Id);
-         if FU_Tab.Buffer (FU_Tab.Return_Type.First
-                                    .. FU_Tab.Return_Type.Last) = "void" then
+         FU_Tab := Find
+           (SN_Table (FU),
+            Fu_Id,
+            Sym.Start_Position,
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
+         if FU_Tab.Buffer (FU_Tab.Return_Type.First ..
+                           FU_Tab.Return_Type.Last) = "void" then
             Target_Kind := Non_Generic_Procedure;
          else
             Target_Kind := Non_Generic_Function_Or_Operator;
@@ -170,50 +77,20 @@ begin
    --  We should also try to find GPS declaration created during
    --  FD processing and not create new declaration.
    if Sym.Symbol = MI then
+      Decl_Info      := Find_First_Forward_Declaration (MI_Tab);
+      if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
+         Body_Position  := Sym.Start_Position;
+      end if;
       Free (MI_Tab);
-      begin
-         Set_Cursor
-           (SN_Table (MD),
-            By_Key,
-            Sym.Buffer (Sym.Class.First .. Sym.Class.Last)
-               & Field_Sep
-               & Fu_Id
-               & Field_Sep,
-            False);
-         P := Get_Pair (SN_Table (MD), Next_By_Key);
-         if P /= null then
-            MD_Tab := Parse_Pair (P.all);
-            Free (P);
-            P := Get_Pair (SN_Table (MD), Next_By_Key);
-            if P = null then -- not overloaded fwd declaration
-               Body_Position  := Sym.Start_Position;
-               Start_Position := MD_Tab.Start_Position;
-               begin -- locate forward declaration
-                  Decl_Info := Find_Declaration
-                    (File        => Global_LI_File,
-                     Symbol_Name => Fu_Id,
-                     Class_Name  => Sym.Buffer
-                           (Sym.Class.First .. Sym.Class.Last),
-                     Location    => MD_Tab.Start_Position);
-               exception
-                  when Declaration_Not_Found =>
-                     null;
-               end;
-            else -- overloaded or many forward declarations
-               Free (P);
-            end if;
-            Free (MD_Tab);
-         end if;
-      exception
-         when DB_Error =>
-            null;
-      end;
    else
       --  Try to find forward declaration
       Decl_Info      := Find_First_Forward_Declaration (FU_Tab);
-      Body_Position  := Sym.Start_Position;
+      if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
+         Body_Position  := Sym.Start_Position;
+      end if;
       Free (FU_Tab);
    end if;
+
    if Decl_Info = null then
       Insert_Declaration
         (Handler               => LI_Handler (Global_CPP_Handler),
@@ -228,17 +105,7 @@ begin
          End_Of_Scope_Location => End_Position,
          Declaration_Info      => Decl_Info);
    else
-      Start_Position.Line   := Decl_Info.Value.Declaration.Location.Line;
-      Start_Position.Column := Decl_Info.Value.Declaration.Location.Column;
-      Decl_Info.Value.Declaration.End_Of_Scope.Kind := End_Of_Body;
-      Decl_Info.Value.Declaration.End_Of_Scope.Location.Line
-         := End_Position.Line;
-      Decl_Info.Value.Declaration.End_Of_Scope.Location.Column
-         := End_Position.Column;
-      Decl_Info.Value.Declaration.End_Of_Scope.Location.File :=
-        (LI               => Global_LI_File,
-         Part             => Unit_Body,
-         Source_Filename  => new String'(Get_LI_Filename (Global_LI_File)));
+      Set_End_Of_Scope (Decl_Info, End_Position);
    end if;
 
    if Body_Position /= Invalid_Point then

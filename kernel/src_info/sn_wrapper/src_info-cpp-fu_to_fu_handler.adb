@@ -17,6 +17,7 @@ procedure Fu_To_Fu_Handler (Ref : TO_Table) is
    function Find_Function (Fn : FU_Table) return E_Declaration_Info_List;
    --  searches for forward declaration. if no fwd decl found, searches for
    --  implementation. If nothing found throws Declaration_Not_Found
+   --  TODO multiple forward declarations
 
    function Find_Function (Fn : FU_Table) return E_Declaration_Info_List is
       Decl_Info    : E_Declaration_Info_List;

@@ -17,6 +17,7 @@ procedure Fu_To_Mi_Handler (Ref : TO_Table) is
    function Find_Method (Fn : MI_Table) return E_Declaration_Info_List;
    --  searches for forward declaration. if no fwd decl found, searches for
    --  implementation. If nothing found throws Declaration_Not_Found
+   --  TODO multiple forward declarations
 
    function Find_Method (Fn : MI_Table) return E_Declaration_Info_List is
       Decl_Info    : E_Declaration_Info_List;
@@ -24,6 +25,7 @@ procedure Fu_To_Mi_Handler (Ref : TO_Table) is
    begin
       MD_Tab := Find
         (SN_Table (MD),
+         Fn.Buffer (Fn.Class.First .. Fn.Class.Last),
          Fn.Buffer (Fn.Name.First .. Fn.Name.Last));
       Decl_Info := Find_Declaration
         (File           => Global_LI_File,
@@ -109,11 +111,13 @@ begin
          end;
       else
          begin
-            --  this function is defined somewhere else...
+            --  this method is defined somewhere else...
             Decl_Info := Find_Dependency_Declaration
               (File                 => Global_LI_File,
                Symbol_Name          => Fn.Buffer
                  (Fn.Name.First .. Fn.Name.Last),
+               Class_Name          => Fn.Buffer
+                 (Fn.Class.First .. Fn.Class.Last),
                Filename             => Fn.Buffer
                  (Fn.File_Name.First .. Fn.File_Name.Last),
                Location             => Fn.Start_Position);
@@ -171,6 +175,7 @@ exception
       Fail ("Method "
          & Ref.Buffer (Ref.Referred_Class.First ..
                        Ref.Referred_Symbol_Name.Last)
+         & "::"
          & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                        Ref.Referred_Symbol_Name.Last)
          & " not found");

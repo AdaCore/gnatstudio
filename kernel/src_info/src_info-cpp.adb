@@ -187,7 +187,7 @@ package body Src_Info.CPP is
       CL     => Sym_CL_Handler'Access,
       UN     => Sym_UN_Handler'Access,
       MA     => Sym_MA_Handler'Access,
---      MI     => Sym_FU_Handler'Access,
+      MI     => Sym_FU_Handler'Access,
       MD     => Sym_MD_Handler'Access,
       IV     => Sym_IV_Handler'Access,
       IU     => Sym_IU_Handler'Access,
@@ -1056,6 +1056,200 @@ package body Src_Info.CPP is
       return Buffer_A (Ret_Type_A.First .. Ret_Type_A.Last)
          = Buffer_B (Ret_Type_B.First .. Ret_Type_B.Last);
    end Cmp_Prototypes;
+
+   function Find_First_Forward_Declaration
+     (Fn : FU_Table) return E_Declaration_Info_List;
+   --  Attempts to find the first forward declaration
+   --  for the function. Returns null if not found or
+   --  forward declaration is in another file which
+   --  has not been yet processed
+
+   function Find_First_Forward_Declaration
+     (Fn : MI_Table) return E_Declaration_Info_List;
+   --  Attempts to find the first forward declaration
+   --  for the method. Returns null if not found or
+   --  forward declaration is in another file which
+   --  has not been yet processed
+
+   ------------------------------------
+   -- Find_First_Forward_Declaration --
+   ------------------------------------
+   function Find_First_Forward_Declaration
+     (Fn : MI_Table) return E_Declaration_Info_List
+   is
+      P            : Pair_Ptr;
+      MD_Tab       : MD_Table;
+      MD_Tab_Tmp   : MD_Table;
+      First_MD_Pos : Point := Invalid_Point;
+   begin
+
+      if not Is_Open (SN_Table (MD)) then
+         return null; -- .md table does not exist
+      end if;
+
+      --  First we have to find the first forward declaration
+      --  that corresponds to our method, that is prototypes
+      --  should be the same
+      --  ??? What should we do when forward declarations are
+      --  found in different files, which to choose?
+      --  So far we take the first one.
+      --  ??? What should we do when forward declaration located
+      --  in another file has not been processed yet?
+      Set_Cursor
+        (SN_Table (MD),
+         By_Key,
+         Fn.Buffer (Fn.Class.First .. Fn.Class.Last) & Field_Sep
+            & Fn.Buffer (Fn.Name.First .. Fn.Name.Last) & Field_Sep,
+         False);
+
+      loop
+         P := Get_Pair (SN_Table (MD), Next_By_Key);
+         if P = null then -- no fwd decls at all
+            return null;
+         end if;
+         MD_Tab := Parse_Pair (P.all);
+         Free (P);
+         --  Update position of the first forward declaration
+         exit when Cmp_Prototypes
+              (MD_Tab.Buffer,
+               Fn.Buffer,
+               MD_Tab.Arg_Types,
+               Fn.Arg_Types,
+               MD_Tab.Return_Type,
+               Fn.Return_Type);
+         Free (MD_Tab);
+      end loop;
+
+      --  now find the first declaration in the file
+      Set_Cursor
+        (SN_Table (MD),
+         By_Key,
+         Fn.Buffer (Fn.Class.First .. Fn.Class.Last) & Field_Sep
+            & Fn.Buffer (Fn.Name.First .. Fn.Name.Last) & Field_Sep,
+         False);
+
+      loop
+         P := Get_Pair (SN_Table (MD), Next_By_Key);
+         exit when P = null;
+         MD_Tab_Tmp := Parse_Pair (P.all);
+         Free (P);
+         --  Update position of the first forward declaration
+         if MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
+            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
+                                 MD_Tab_Tmp.File_Name.Last)
+            and then Cmp_Prototypes
+              (MD_Tab.Buffer,
+               MD_Tab_Tmp.Buffer,
+               MD_Tab.Arg_Types,
+               MD_Tab_Tmp.Arg_Types,
+               MD_Tab.Return_Type,
+               MD_Tab_Tmp.Return_Type)
+            and then ((First_MD_Pos = Invalid_Point)
+            or else Less (MD_Tab_Tmp.Start_Position, First_MD_Pos)) then
+            First_MD_Pos := MD_Tab_Tmp.Start_Position;
+         end if;
+         Free (MD_Tab_Tmp);
+      end loop;
+
+      pragma Assert (First_MD_Pos /= Invalid_Point); -- DB inconsistency?
+      return Find_Declaration
+        (File        => Global_LI_File,
+         Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+         Location    => First_MD_Pos);
+
+   exception
+      when DB_Error | Declaration_Not_Found =>
+         return null;
+   end Find_First_Forward_Declaration;
+
+   ------------------------------------
+   -- Find_First_Forward_Declaration --
+   ------------------------------------
+   function Find_First_Forward_Declaration
+     (Fn : FU_Table) return E_Declaration_Info_List
+   is
+      P            : Pair_Ptr;
+      FD_Tab       : FD_Table;
+      FD_Tab_Tmp   : FD_Table;
+      First_FD_Pos : Point := Invalid_Point;
+   begin
+
+      if not Is_Open (SN_Table (FD)) then
+         return null; -- .md table does not exist
+      end if;
+
+      --  First we have to find the first forward declaration
+      --  that corresponds to our method, that is prototypes
+      --  should be the same
+      --  ??? What should we do when forward declarations are
+      --  found in different files, which to choose?
+      --  So far we take the first one.
+      --  ??? What should we do when forward declaration located
+      --  in another file has not been processed yet?
+      Set_Cursor
+        (SN_Table (FD),
+         By_Key,
+         Fn.Buffer (Fn.Name.First .. Fn.Name.Last) & Field_Sep,
+         False);
+
+      loop
+         P := Get_Pair (SN_Table (FD), Next_By_Key);
+         if P = null then -- no fwd decls at all
+            return null;
+         end if;
+         FD_Tab := Parse_Pair (P.all);
+         Free (P);
+         --  Update position of the first forward declaration
+         exit when Cmp_Prototypes
+              (FD_Tab.Buffer,
+               Fn.Buffer,
+               FD_Tab.Arg_Types,
+               Fn.Arg_Types,
+               FD_Tab.Return_Type,
+               Fn.Return_Type);
+         Free (FD_Tab);
+      end loop;
+
+      --  now find the first declaration in the file
+      Set_Cursor
+        (SN_Table (FD),
+         By_Key,
+         Fn.Buffer (Fn.Name.First .. Fn.Name.Last) & Field_Sep,
+         False);
+
+      loop
+         P := Get_Pair (SN_Table (FD), Next_By_Key);
+         exit when P = null;
+         FD_Tab_Tmp := Parse_Pair (P.all);
+         Free (P);
+         --  Update position of the first forward declaration
+         if FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
+            = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
+                                 FD_Tab_Tmp.File_Name.Last)
+            and then Cmp_Prototypes
+              (FD_Tab.Buffer,
+               FD_Tab_Tmp.Buffer,
+               FD_Tab.Arg_Types,
+               FD_Tab_Tmp.Arg_Types,
+               FD_Tab.Return_Type,
+               FD_Tab_Tmp.Return_Type)
+            and then ((First_FD_Pos = Invalid_Point)
+            or else Less (FD_Tab_Tmp.Start_Position, First_FD_Pos)) then
+            First_FD_Pos := FD_Tab_Tmp.Start_Position;
+         end if;
+         Free (FD_Tab_Tmp);
+      end loop;
+
+      pragma Assert (First_FD_Pos /= Invalid_Point); -- DB inconsistency?
+      return Find_Declaration
+        (File        => Global_LI_File,
+         Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+         Location    => First_FD_Pos);
+
+   exception
+      when DB_Error | Declaration_Not_Found =>
+         return null;
+   end Find_First_Forward_Declaration;
 
    --------------
    -- Handlers --
