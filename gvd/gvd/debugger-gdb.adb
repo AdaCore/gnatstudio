@@ -575,7 +575,6 @@ package body Debugger.Gdb is
       Send (Debugger, "list");
       Send (Debugger, "info line");
       Pop_Internal_Command_Status (Get_Process (Debugger));
-
    end Set_Executable;
 
    -----------------
