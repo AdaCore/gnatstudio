@@ -39,6 +39,9 @@ with Glide_Main_Window;       use Glide_Main_Window;
 with GVD.Dialogs;             use GVD.Dialogs;
 
 with GNAT.Expect;             use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
+pragma Warnings (On);
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
@@ -50,10 +53,6 @@ package body Builder_Module is
 
    Timeout : constant Guint32 := 50;
    --  Timeout in millisecond to check the build process
-   --  <preferences>
-
-   Builder_Module_Id   : Module_ID;
-   Builder_Module_Name : constant String := "Builder";
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
@@ -189,9 +188,12 @@ package body Builder_Module is
 
       Free (Title);
       Top.Interrupted := False;
-      Fd := new Process_Descriptor;
+      Fd := new TTY_Process_Descriptor;
       Non_Blocking_Spawn
-        (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
+        (Fd.all,
+         Args (Args'First).all,
+         Args (Args'First + 1 .. Args'Last),
+         Buffer_Size => 0,
          Err_To_Out  => True);
       Free (Args);
       Id := Process_Timeout.Add
@@ -209,10 +211,50 @@ package body Builder_Module is
    procedure On_Check_Syntax
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget, Kernel);
+      pragma Unreferenced (Widget);
+
+      Context : constant Selection_Context_Access :=
+        Get_Current_Explorer_Context (Kernel);
+
    begin
-      --  ???
-      null;
+      if Context = null then
+         return;
+      end if;
+
+      declare
+         Top  : constant Glide_Window :=
+           Glide_Window (Get_Main_Window (Kernel));
+         File_Context : constant File_Selection_Context_Access :=
+           File_Selection_Context_Access (Context);
+
+         --  ??? Should get the name of the real main
+         Cmd  : constant String := "gnatmake -q -u -gnats " &
+           Directory_Information (File_Context) &
+           File_Information (File_Context);
+         Fd   : Process_Descriptor_Access;
+         Args : Argument_List_Access;
+         Id   : Timeout_Handler_Id;
+
+      begin
+         --  ??? Ask for saving sources/projects before building
+         Push_State (Kernel, Processing);
+         Console.Clear (Kernel);
+         Set_Sensitive_Menus (Kernel, False);
+         Args := Argument_String_To_List (Cmd);
+         Console.Insert (Kernel, Cmd, False);
+         Top.Interrupted := False;
+         Fd := new Process_Descriptor;
+         Non_Blocking_Spawn
+           (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
+            Err_To_Out  => True);
+         Free (Args);
+         Id := Process_Timeout.Add
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Check_Syntax;
 
    ----------------
@@ -222,10 +264,66 @@ package body Builder_Module is
    procedure On_Compile
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget, Kernel);
+      pragma Unreferenced (Widget);
    begin
-      --  ???
-      null;
+      if Get_Current_Explorer_Context (Kernel) = null then
+         return;
+      end if;
+
+      declare
+         Top     : constant Glide_Window :=
+           Glide_Window (Get_Main_Window (Kernel));
+         Project : constant String := Get_Project_File_Name (Kernel);
+         Cmd     : constant String := "gnatmake -q -u ";
+
+         --  ??? Should get the name of the real main
+         File    : constant String :=
+           File_Information (File_Selection_Context_Access
+             (Get_Current_Explorer_Context (Kernel)));
+         Fd      : Process_Descriptor_Access;
+         Args    : Argument_List_Access;
+         Id      : Timeout_Handler_Id;
+
+      begin
+         --  ??? Ask for saving sources/projects before building
+         Push_State (Kernel, Processing);
+         Console.Clear (Kernel);
+         Set_Sensitive_Menus (Kernel, False);
+
+         if Project = "" then
+            declare
+               Full_Cmd : constant String := Cmd & File;
+            begin
+               Args := Argument_String_To_List (Full_Cmd);
+               Console.Insert (Kernel, Full_Cmd, False);
+            end;
+
+         else
+            declare
+               Full_Cmd : constant String :=
+                 Cmd & "-P" & Project & " "
+                  & Scenario_Variables_Cmd_Line (Kernel)
+                  & " " & File;
+
+            begin
+               Args := Argument_String_To_List (Full_Cmd);
+               Console.Insert (Kernel, Full_Cmd, False);
+            end;
+         end if;
+
+         Top.Interrupted := False;
+         Fd := new Process_Descriptor;
+         Non_Blocking_Spawn
+           (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
+            Err_To_Out  => True);
+         Free (Args);
+         Id := Process_Timeout.Add
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Compile;
 
    ----------------
@@ -247,6 +345,8 @@ package body Builder_Module is
       Line_Matcher : constant Pattern_Matcher := Compile (".+");
       Buffer       : String_Access := new String (1 .. 1024);
       Buffer_Pos   : Natural := Buffer'First;
+      Min_Size     : Natural;
+      New_Size     : Natural;
       Tmp          : String_Access;
       Status       : Integer;
 
@@ -274,9 +374,17 @@ package body Builder_Module is
                --  Coalesce all the output into one single chunck, which is
                --  much faster to display in the console.
 
-               if Buffer_Pos + S'Length > Buffer'Last then
-                  Tmp := new String (1 .. Buffer'Length * 2);
-                  Tmp (1 .. Buffer'Length) := Buffer.all;
+               Min_Size := Buffer_Pos + S'Length;
+
+               if Buffer'Last < Min_Size then
+                  New_Size := Buffer'Length * 2;
+
+                  while New_Size < Min_Size loop
+                     New_Size := New_Size * 2;
+                  end loop;
+
+                  Tmp := new String (1 .. New_Size);
+                  Tmp (1 .. Buffer_Pos - 1) := Buffer (1 .. Buffer_Pos - 1);
                   Free (Buffer);
                   Buffer := Tmp;
                end if;
@@ -359,6 +467,7 @@ package body Builder_Module is
    begin
       if Arguments = "" or else Arguments (Arguments'First) /= ASCII.NUL then
          null;
+         --  ???
       end if;
 
    exception
@@ -411,10 +520,12 @@ package body Builder_Module is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      Builder_Module_Id := Register_Module
-        (Module_Name  => Builder_Module_Name,
+      Builder_Module_ID := Register_Module
+        (Kernel       => Kernel,
+         Module_Name  => Builder_Module_Name,
          Priority     => Default_Priority,
          Initializer  => Initialize_Module'Access);
    end Register_Module;
