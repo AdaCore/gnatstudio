@@ -676,7 +676,7 @@ package body Glide_Kernel.Modules is
       use type Module_List.List_Node;
    begin
       if User.Kernel.Last_Context_For_Contextual /= null then
-         Free (User.Kernel.Last_Context_For_Contextual);
+         Unref (User.Kernel.Last_Context_For_Contextual);
       end if;
 
       --  Create the menu and add all the modules information

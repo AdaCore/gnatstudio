@@ -869,10 +869,11 @@ package body Project_Viewers is
       pragma Unreferenced (Widget);
       Child   : MDI_Child;
       Viewer  : Project_Viewer;
-      Context : constant Selection_Context_Access :=
+      Context : Selection_Context_Access :=
         Get_Current_Context (Kernel);
 
    begin
+      Ref (Context);
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Viewer_Record'Tag);
 
@@ -896,9 +897,12 @@ package body Project_Viewers is
       --  Set the focus child only afterward, otherwise Context becomes invalid
       Set_Focus_Child (Child);
 
+      Unref (Context);
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Unref (Context);
    end On_Edit_Switches;
 
    --------------------------
