@@ -226,7 +226,7 @@ package body Src_Info.Debug is
             Dump_Source_File (ED.Parent_Location.File);
             Put ('|');
          end if;
-         Dump_Pos_And_E_Kind (ED.Parent_Location, ED.Parent_Kind);
+         Dump_Pos_And_E_Kind (ED.Parent_Location, Overloaded_Entity);
          Put ('>');
       end if;
       --  If there is an end of scope reference, print it too.
