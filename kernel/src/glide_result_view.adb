@@ -802,26 +802,21 @@ package body Glide_Result_View is
 
    function Button_Press
      (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event)
-     return Boolean
+      Event    : Gdk_Event) return Boolean
    is
       Explorer : constant Result_View := Result_View (View);
-      Path     : Gtk_Tree_Path;
-      Column   : Gtk_Tree_View_Column;
+      X         : constant Gdouble := Get_X (Event);
+      Y         : constant Gdouble := Get_Y (Event);
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column;
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
+      Success   : Boolean;
+      pragma Unreferenced (Success);
 
-      procedure Get_Path_At_Event;
-      --  Return the path at which Event has occured, and the Column.
-      --  User must free memory associated to path.
-
-      procedure Get_Path_At_Event is
-         X         : constant Gdouble := Get_X (Event);
-         Y         : constant Gdouble := Get_Y (Event);
-         Buffer_X  : Gint;
-         Buffer_Y  : Gint;
-         Row_Found : Boolean;
-
-      begin
-         Path := Gtk_New;
+   begin
+      if Get_Button (Event) = 1 then
          Get_Path_At_Pos
            (Explorer.Tree,
             Gint (X),
@@ -831,31 +826,17 @@ package body Glide_Result_View is
             Buffer_X,
             Buffer_Y,
             Row_Found);
-      end Get_Path_At_Event;
-
-      Success : Boolean;
-      pragma Unreferenced (Success);
-
-   begin
-      if Get_Button (Event) = 1 then
-         Get_Path_At_Event;
 
          if Path /= null then
-            if Get_Depth (Path) in 1 .. 2 then
-               if Row_Expanded (Explorer.Tree, Path) then
-                  Success := Collapse_Row (Explorer.Tree, Path);
-               else
-                  Success := Expand_Row (Explorer.Tree, Path, False);
-               end if;
-
-            elsif Get_Depth (Path) = 3 then
+            if Get_Depth (Path) /= 3 then
+               Path_Free (Path);
+               return False;
+            else
                if Column = Explorer.Action_Column then
                   declare
                      Value   : GValue;
                      Iter    : Gtk_Tree_Iter;
                      Action  : Action_Item;
-                     Success : Boolean;
-                     pragma Unreferenced (Success);
 
                   begin
                      Iter := Get_Iter (Explorer.Tree.Model, Path);
@@ -881,11 +862,20 @@ package body Glide_Result_View is
          end if;
 
          return True;
+
       else
          Grab_Focus (Explorer.Tree);
 
          --  If there is no selection, select the item under the cursor.
-         Get_Path_At_Event;
+         Get_Path_At_Pos
+           (Explorer.Tree,
+            Gint (X),
+            Gint (Y),
+            Path,
+            Column,
+            Buffer_X,
+            Buffer_Y,
+            Row_Found);
 
          if Path /= null then
             if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
