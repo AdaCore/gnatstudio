@@ -57,35 +57,45 @@
 
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Toolbar;         use Gtk.Toolbar;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Combo;           use Gtk.Combo;
 with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist;           use Gtk.Clist;
 with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Image;           use Gtk.Image;
+with Gtk.Style;           use Gtk.Style;
+with Gtk.Main;            use Gtk.Main;
 
 with Gdk.Pixmap;
 with Gdk.Bitmap;
+
 
 with Directory_Tree; use Directory_Tree;
 with Generic_Stack;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
+with Unchecked_Deallocation;
 
 package Gtkada.File_Selector is
 
-   type File_State is (Normal, Highlighted, Inactive, Invisible);
+   function Select_File (Base_Directory : String := "") return String;
+   --  Create a file selection dialog, display it, and return the absolute file
+   --  name that was selected, if any, or return an empty string.
+   --  Base_Directory is the directory on which the dialog starts. If the
+   --  directory is invalid, then the dialog will point to the current
+   --  directory.
+
+   type File_State is (Normal, Highlighted, Insensitive, Invisible);
    --  The state of a file :
    --    Normal means the file is shown and selectable.
    --    Highlighted means the file is shown with a different color and
    --      selectable
-   --    Inactive means the file is shown but cannot be selected.
+   --    Insensitive means the file is shown but cannot be selected.
    --    Invisible means the file is not shown.
 
    type File_Selector_Window_Record is new
@@ -93,6 +103,24 @@ package Gtkada.File_Selector is
    type File_Selector_Window_Access is
      access all File_Selector_Window_Record'Class;
    --  A file selector window.
+
+   function Get_Selection (Dialog : File_Selector_Window_Access) return String;
+   --  Return the selected file.
+
+   function Get_Ok_Button
+     (File_Selection : access File_Selector_Window_Record)
+     return Gtk.Button.Gtk_Button;
+   --  Return the OK button.
+   --  The callbacks on this button should close the dialog and do something
+   --  with the file selected by the user.
+
+   function Get_Cancel_Button
+     (File_Selection : access File_Selector_Window_Record)
+      return Gtk.Button.Gtk_Button;
+   --  Return the Cancel button.
+   --  To remove this button from the dialog, call Hide on the return value.
+   --  The callbacks on this button should simply close the dialog, but should
+   --  ignore the file selected by the user.
 
    type File_Filter_Record
      (Label : String_Access)
@@ -141,6 +169,9 @@ package Gtkada.File_Selector is
 
 private
 
+   package File_Selector_Idle is new Idle (File_Selector_Window_Access);
+   use File_Selector_Idle;
+
    package String_Stack is new Generic_Stack (String_Access);
    use String_Stack;
 
@@ -153,11 +184,8 @@ private
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out String_Access);
-   --  ???
-
-   -----------------
-   -- Filter_List --
-   -----------------
+   --  Implementation of the Use_File_Filter procedure for
+   --  the Filter_Show_All filter.
 
    type Filter_List_Node;
    type Filter_List is access Filter_List_Node;
@@ -167,23 +195,65 @@ private
       Next    : Filter_List;
    end record;
 
+   type String_List_Node;
+   type String_List is access String_List_Node;
+
+   type String_List_Node is record
+      Element : String_Access;
+      Next    : String_List;
+   end record;
+
+   procedure Free is new
+     Unchecked_Deallocation (String_List_Node, String_List);
+
+   procedure Free_String_List (List : in out String_List);
+   --  Free the memory associated with List;
+
+   type Dir_Type_Access is access Dir_Type;
+
    type File_Selector_Window_Record is new Gtk_Window_Record with record
-      --  ??? Fields that do not need to be referenced directly should not
-      --  be in this record, but only declared as local variables in Initialize
+      Current_Directory    : String_Access := new String'("");
+      Current_Directory_Id : Dir_Type_Access := new Dir_Type;
+      --  The directory that is currently being explored.
+      --  Current_Directory must always end with a Directory_Separator.
+
+      Current_Directory_Is_Open : Boolean := False;
+      --  Tells whether the current directory is being read.
+
+      Files : String_List;
+      --  The list of files in the current directory.
+
+      Remaining_Files : String_List;
+      --  The list of files that are in the current directory but not yet
+      --  filtered nor shown in the file list.
+      --  This list should never be allocated any memory explicitly, but
+      --  should be a subset of Files.
+
+      Current_Filter : File_Filter;
+      --  The filter that is currently used for displaying files.
 
       Filters : Filter_List;
+      --  A list of all registered filters.
+
+      Normal_Style : Gtk_Style;
+      --  The style for displaying normal state;
+
+      Highlighted_Style : Gtk_Style;
+      --  How the highlighted file names should be displayed.
+
+      Insensitive_Style : Gtk_Style;
+      --  How the inactive file names should be displayed.
 
       Moving_Through_History : Boolean := True;
-      Current_Directory : String_Access := new String'("");
+      --  Set to true in case we are navigating using the back/forward buttons.
+
       Home_Directory : String_Access := new String'("");
 
       Past_History : Simple_Stack;
       Future_History : Simple_Stack;
 
       File_Selector_Vbox : Gtk_Vbox;
-      Hbox1 : Gtk_Hbox;
-      Hbox3 : Gtk_Hbox;
-      Toolbar1 : Gtk_Toolbar;
+
       Back_Button : Gtk_Button;
       Forward_Button : Gtk_Button;
       Home_Button : Gtk_Button;
@@ -194,30 +264,22 @@ private
       Refresh_Button : Gtk_Widget;
       Refresh_Icon   : Gtk_Image;
 
-      Hbox2 : Gtk_Hbox;
-      Label10 : Gtk_Label;
       Location_Combo : Gtk_Combo;
       Location_Combo_Entry : Gtk_Entry;
-      Hpaned1 : Gtk_Hpaned;
+
       Explorer_Tree_Scrolledwindow : Gtk_Scrolled_Window;
 
       Explorer_Tree : Dir_Tree;
 
-      Label7 : Gtk_Label;
-      Label8 : Gtk_Label;
-      Label9 : Gtk_Label;
       Files_Scrolledwindow : Gtk_Scrolled_Window;
       File_List : Gtk_Clist;
       File_Icon_Label : Gtk_Label;
       File_Name_Label : Gtk_Label;
       File_Text_Label : Gtk_Label;
-      Hbox4 : Gtk_Hbox;
+
       Filter_Combo : Gtk_Combo;
       Filter_Combo_Entry : Gtk_Entry;
-      Hbox5 : Gtk_Hbox;
       Selection_Entry : Gtk_Entry;
-      Hbox6 : Gtk_Hbox;
-      Hbuttonbox2 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
    end record;

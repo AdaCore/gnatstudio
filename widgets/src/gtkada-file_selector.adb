@@ -28,14 +28,19 @@
 
 with Glib;            use Glib;
 with Gtk;             use Gtk;
+with Gdk;             use Gdk;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Arguments;   use Gtk.Arguments;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Main;
 with Gtk.Ctree;       use Gtk.Ctree;
+with Gtk.Paned;       use Gtk.Paned;
+with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
+with Gtk.Toolbar;     use Gtk.Toolbar;
 with Gdk.Pixmap;      use Gdk.Pixmap;
 with Gdk.Bitmap;      use Gdk.Bitmap;
+with Gdk.Color;       use Gdk.Color;
 with GUI_Utils;       use GUI_Utils;
 
 with Gtkada.Types;    use Gtkada.Types;
@@ -61,6 +66,138 @@ package body Gtkada.File_Selector is
 
    procedure Refresh_Files
      (Win : File_Selector_Window_Access);
+
+   function Read_File (Win : in File_Selector_Window_Access) return Boolean;
+   --  Read one file from the current directory and insert it in Files.
+
+   function Display_File (Win : in File_Selector_Window_Access) return Boolean;
+
+   --  This function gets one entry from Win.Remaining_Files, applies
+   --  a filter to it, and displays the corresponding information in the
+   --  file list.
+
+   -----------------------
+   -- String_List Utils --
+   -----------------------
+
+   procedure Prepend
+     (L    : in out String_List;
+      Item : String);
+   --  Add an item at the beginning of a list. The cost is O(1).
+
+   procedure List_Fusion_Sort (L : in out String_List);
+   --  Sorts a String_List alphabetically. The cost is O(n*log(n)).
+
+   procedure List_Split (L : in out String_List; L1, L2 : out String_List);
+   --  Splits a list into two lists of equal size.
+   --  The cost is O(n) where n = length(L).
+
+   function List_Fuse (L1, L2 : in String_List) return String_List;
+   --  Fuses two sorted lists into a sorted list.
+   --  The cost is O(n) where n = (length(L1), length(L2)).
+
+   procedure List_Fusion_Sort (L : in out String_List)
+   is
+      L1, L2 : String_List;
+   begin
+      if L /= null
+        and then L.Next /= null
+      then
+         List_Split (L, L1, L2);
+         List_Fusion_Sort (L1);
+         List_Fusion_Sort (L2);
+         L := List_Fuse (L1, L2);
+      end if;
+   end List_Fusion_Sort;
+
+   procedure List_Split (L : in out String_List; L1, L2 : out String_List) is
+      Append_To_L1 : Boolean := True;
+      L1_First : String_List;
+      L2_First : String_List;
+      L1_Last  : String_List;
+      L2_Last  : String_List;
+   begin
+      if L = null then
+         L1 := null;
+         L2 := null;
+      elsif L.Next = null then
+         L1 := L;
+         L2 := null;
+      else
+         L1_First := L;
+         L2_First := L.Next;
+         L1_Last := L1_First;
+         L2_Last := L2_First;
+         L := L.Next.Next;
+         while L /= null loop
+            if Append_To_L1 then
+               L1_Last.Next := L;
+               L1_Last := L1_Last.Next;
+               Append_To_L1 := False;
+            else
+               L2_Last.Next := L;
+               L2_Last := L2_Last.Next;
+               Append_To_L1 := True;
+            end if;
+            L := L.Next;
+         end loop;
+         L1_Last.Next := null;
+         if L2_Last /= null then
+            L2_Last.Next := null;
+         end if;
+         L1 := L1_First;
+         L2 := L2_First;
+      end if;
+   end List_Split;
+
+   function List_Fuse (L1, L2 : in String_List) return String_List
+   is
+      List_First : String_List;
+      List_Last : String_List;
+      LL1 : String_List := L1;
+      LL2 : String_List := L2;
+   begin
+      if LL1 = null then
+         return LL2;
+      elsif LL2 = null then
+         return LL1;
+      else
+         if LL1.Element.all'Length = 0
+           or else (LL2.Element.all'Length /= 0
+                    and then LL1.Element.all < LL2.Element.all)
+         then
+            List_First := LL1;
+            LL1 := LL1.Next;
+         else
+            List_First := LL2;
+            LL2 := LL2.Next;
+         end if;
+      end if;
+
+      List_Last := List_First;
+
+      while LL1 /= null and then LL2 /= null loop
+         if LL1.Element.all'Length = 0
+           or else (LL2.Element.all'Length /= 0
+                    and then LL1.Element.all < LL2.Element.all)
+         then
+            List_Last.Next := LL1;
+            LL1 := LL1.Next;
+         else
+            List_Last.Next := LL2;
+            LL2 := LL2.Next;
+         end if;
+         List_Last := List_Last.Next;
+      end loop;
+
+      if LL1 = null then
+         List_Last.Next := LL2;
+      else
+         List_Last.Next := LL1;
+      end if;
+
+      return List_First;
+   end List_Fuse;
 
    ---------------
    -- Callbacks --
@@ -115,6 +252,77 @@ package body Gtkada.File_Selector is
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
+   -------------------
+   -- Get_Selection --
+   -------------------
+
+   function Get_Selection
+     (Dialog : File_Selector_Window_Access)
+     return String
+   is
+   begin
+      if Dialog = null
+        or else Dialog.Selection_Entry = null
+        or else Get_Text (Dialog.Selection_Entry) = ""
+      then
+         return ("");
+      else
+         return (Dialog.Current_Directory.all
+                 & Get_Text (Dialog.Selection_Entry));
+      end if;
+   end Get_Selection;
+
+   -------------------
+   -- Get_Ok_Button --
+   -------------------
+
+   function Get_Ok_Button
+     (File_Selection : access File_Selector_Window_Record)
+     return Gtk.Button.Gtk_Button
+   is
+   begin
+      return File_Selection.Ok_Button;
+   end Get_Ok_Button;
+
+   -----------------------
+   -- Get_Cancel_Button --
+   -----------------------
+
+   function Get_Cancel_Button
+     (File_Selection : access File_Selector_Window_Record)
+     return Gtk.Button.Gtk_Button
+   is
+   begin
+      return File_Selection.Cancel_Button;
+   end Get_Cancel_Button;
+
+   -----------------
+   -- Select_File --
+   -----------------
+
+   function Select_File (Base_Directory : String := "") return String is
+      Filter_A  : Filter_Show_All_Access := new Filter_Show_All;
+      File_Selector_Window : File_Selector_Window_Access;
+   begin
+      Gtk.Main.Init;
+      Gtk_New (File_Selector_Window, Base_Directory);
+
+      Register_Filter (File_Selector_Window, Filter_A);
+
+      Show_All (File_Selector_Window);
+
+      Widget_Callback.Connect
+        (File_Selector_Window.Ok_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access));
+      Widget_Callback.Connect
+        (File_Selector_Window.Cancel_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
+
+      Gtk.Main.Main;
+
+      return Get_Selection (File_Selector_Window);
+   end Select_File;
+
    -------------
    -- Realize --
    -------------
@@ -128,6 +336,130 @@ package body Gtkada.File_Selector is
    begin
       Refresh_Files (Win);
    end Realize;
+
+   ------------------
+   -- Display_File --
+   ------------------
+
+   function Display_File
+     (Win : in File_Selector_Window_Access)
+     return Boolean
+   is
+      Text         : String_Access;
+      State        : File_State;
+      Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
+      Mask         : Gdk.Bitmap.Gdk_Bitmap;
+      Current_Row  : Gint;
+      Style        : Gtk_Style;
+   begin
+      if Win.Remaining_Files = null then
+         return False;
+      end if;
+
+      Use_File_Filter
+        (Win.Current_Filter,
+         Win,
+         Win.Current_Directory.all,
+         Win.Remaining_Files.Element.all,
+         State,
+         Pixmap,
+         Mask,
+         Text);
+
+      case State is
+         when Invisible =>
+            Style := null;
+         when Normal =>
+            Current_Row := Append (Win.File_List,
+                                   "" + "" + "");
+            Style := Win.Normal_Style;
+         when Highlighted =>
+            Current_Row := Append (Win.File_List,
+                                   "" + "" + "");
+            Style := Win.Highlighted_Style;
+         when Insensitive =>
+            Current_Row := Append (Win.File_List,
+                                   "" + "" + "");
+            Style := Win.Insensitive_Style;
+            Set_Selectable (Win.File_List,
+                            Current_Row,
+                            False);
+      end case;
+
+      if Style /= null then
+         Set_Row_Style (Win.File_List,
+                        Current_Row,
+                        Style);
+
+         Set_Text (Win.File_List,
+                   Current_Row, 1,
+                   Win.Remaining_Files.Element.all);
+         if Text /= null then
+            Set_Text (Win.File_List,
+                      Current_Row, 2,
+                      Text.all);
+         end if;
+         if Pixmap /= Null_Pixmap then
+            Set_Pixmap (Win.File_List,
+                        Current_Row, 0,
+                        Pixmap, Mask);
+         end if;
+      end if;
+
+      Free (Text);
+
+      Win.Remaining_Files := Win.Remaining_Files.Next;
+
+      if Win.Remaining_Files = null then
+         return False;
+      else
+         return True;
+      end if;
+   end Display_File;
+
+   ---------------
+   -- Read_File --
+   ---------------
+
+   function Read_File
+     (Win : in File_Selector_Window_Access)
+     return Boolean
+   is
+      Buffer       : String (1 .. 256);
+      Last         : Natural;
+   begin
+      if not Win.Current_Directory_Is_Open then
+         return False;
+      end if;
+
+      Read (Win.Current_Directory_Id.all, Buffer, Last);
+      if Last = 0 then
+         Close (Win.Current_Directory_Id.all);
+         Win.Current_Directory_Is_Open := False;
+
+         Clear (Win.File_List);
+         List_Fusion_Sort (Win.Files);
+         Win.Remaining_Files := Win.Files;
+
+         --  Register the function that will fill the list in the background.
+         declare
+            Id : Idle_Handler_Id;
+         begin
+            Id := Add (Display_File'Access, Win);
+         end;
+         return False;
+      end if;
+
+      if Is_Directory
+        (Win.Current_Directory.all & Buffer (1 .. Last))
+      then
+         null;
+         --  ??? or should we display directories in the File_List ?
+      else
+         Prepend (Win.Files, Buffer (1 .. Last));
+      end if;
+      return True;
+   end Read_File;
 
    ---------------------
    -- Register_Filter --
@@ -174,6 +506,21 @@ package body Gtkada.File_Selector is
       Text := new String'("");
    end Use_File_Filter;
 
+   -------------
+   -- Prepend --
+   -------------
+
+   procedure Prepend
+     (L    : in out String_List;
+      Item : String)
+   is
+      L2 : String_List := L;
+   begin
+      L := new String_List_Node'
+       (Element => new String' (Item),
+        Next    => L2);
+   end Prepend;
+
    -------------------
    -- Refresh_Files --
    -------------------
@@ -181,9 +528,19 @@ package body Gtkada.File_Selector is
    procedure Refresh_Files
      (Win : File_Selector_Window_Access)
    is
-      Dir : String := Win.Current_Directory.all;
-      Filter : File_Filter := null;
+      Dir        : String := Win.Current_Directory.all;
+      Filter     : File_Filter := null;
+      Id         : Idle_Handler_Id;
    begin
+      if Get_Window (Win) = null then
+         return;
+      end if;
+
+      Set_Busy_Cursor (Get_Window (Win), True, True);
+      Clear (Win.File_List);
+      Free_String_List (Win.Files);
+      Win.Remaining_Files := null;
+
       --  Find out which filter to use.
       declare
          S : String := Get_Text (Win.Filter_Combo_Entry);
@@ -200,64 +557,28 @@ package body Gtkada.File_Selector is
       end;
 
       if Filter = null then
+         Set_Busy_Cursor (Get_Window (Win), False, False);
          return;
       end if;
 
+      Insert (Win.File_List, -1, "" + ("Opening ... ") + "");
+      Win.Current_Filter := Filter;
+
       --  Fill the File_List.
-      declare
-         Directory    : Dir_Type;
-         Buffer       : String (1 .. 256);
-         Last         : Natural;
-
-         Text         : String_Access;
-         State        :  File_State;
-         Pixmap       :  Gdk.Pixmap.Gdk_Pixmap;
-         Mask         :  Gdk.Bitmap.Gdk_Bitmap;
       begin
-         GNAT.Directory_Operations.Open (Directory, Dir);
-         Clear (Win.File_List);
-
-         loop
-            Read (Directory, Buffer, Last);
-
-            exit when Last = 0;
-
-            if Is_Directory
-              (Dir & Directory_Separator & Buffer (1 .. Last))
-            then
-               null;
-            else
-               Use_File_Filter
-                 (Filter,
-                  Win,
-                  Dir,
-                  Buffer (1 .. Last),
-                  State,
-                  Pixmap,
-                  Mask,
-                  Text);
-
-               case State is
-                  when Invisible =>
-                     null;
-                  when Normal =>
-                     Insert (Win.File_List, -1,
-                             "" + Buffer (1 .. Last) + Text.all);
-                  when Highlighted =>
-                     null;
-                  when Inactive =>
-                     null;
-               end case;
-               Free (Text);
-            end if;
-         end loop;
-         Close (Directory);
-
+         if Win.Current_Directory_Is_Open then
+            Close (Win.Current_Directory_Id.all);
+            Win.Current_Directory_Is_Open := False;
+         end if;
+         GNAT.Directory_Operations.Open (Win.Current_Directory_Id.all, Dir);
+         Win.Current_Directory_Is_Open := True;
+         Id := Add (Read_File'Access, Win);
       exception
          when Directory_Error =>
             Clear (Win.File_List);
             Insert (Win.File_List, -1, "" + ("Could not open " & Dir) + "");
       end;
+      Set_Busy_Cursor (Get_Window (Win), False, False);
    end Refresh_Files;
 
    ----------------------
@@ -271,6 +592,7 @@ package body Gtkada.File_Selector is
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
+      Set_Text (Win.Selection_Entry, "");
 
       if Dir /= ""
         and then Dir (Dir'First) = Directory_Separator
@@ -321,10 +643,8 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
       S   : String_Access;
-
    begin
       Pop (Win.Past_History, S);
-
       if Is_Empty (Win.Past_History) then
          Set_Sensitive (Win.Back_Button, False);
       end if;
@@ -339,6 +659,7 @@ package body Gtkada.File_Selector is
       Set_Text (Win.Location_Combo_Entry, S.all);
       Win.Moving_Through_History := True;
       Show_Directory (Win.Explorer_Tree, S.all);
+      Free (S);
    end On_Back_Button_Clicked;
 
    ----------------------------
@@ -421,6 +742,7 @@ package body Gtkada.File_Selector is
       Win.Moving_Through_History := True;
       Show_Directory (Win.Explorer_Tree, S.all);
 
+      Free (S);
    exception
       when Stack_Empty =>
          null;
@@ -494,12 +816,12 @@ package body Gtkada.File_Selector is
         Get_Selection (Win.File_List);
 
    begin
-      Set_Text
-        (Win.Selection_Entry,
-         Get_Text
-           (Win.File_List,
-            Gtk.Enums.Gint_List.Get_Data (Row_List),
-            1));
+      if Gtk.Enums.Gint_List.Length (Row_List) /= 0 then
+         Set_Text (Win.Selection_Entry,
+                   Get_Text (Win.File_List,
+                             Gtk.Enums.Gint_List.Get_Data (Row_List),
+                             1));
+      end if;
    end On_File_List_End_Selection;
 
    --------------------------------
@@ -521,7 +843,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
-      Gtk.Main.Main_Quit;
+      Main_Quit;
    end On_Ok_Button_Clicked;
 
    ------------------------------
@@ -531,9 +853,32 @@ package body Gtkada.File_Selector is
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
+      Win      : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Get_Toplevel (Object));
    begin
-      Gtk.Main.Main_Quit;
+      if Win /= null
+        and then Win.Selection_Entry /= null
+      then
+         Set_Text (Win.Selection_Entry, "");
+      end if;
+      Main_Quit;
    end On_Cancel_Button_Clicked;
+
+   ----------------------
+   -- Free_String_List --
+   ----------------------
+
+   procedure Free_String_List (List : in out String_List)
+   is
+      Previous : String_List;
+   begin
+      while List /= null loop
+         Previous := List;
+         Free (List.Element);
+         List := List.Next;
+         Free (Previous);
+      end loop;
+   end Free_String_List;
 
    -------------
    -- Gtk_New --
@@ -545,7 +890,14 @@ package body Gtkada.File_Selector is
    is
    begin
       File_Selector_Window := new File_Selector_Window_Record;
-      Initialize (File_Selector_Window, Directory);
+
+      if Is_Absolute_Path (Directory)
+        and then Directory (Directory'Last) = Directory_Separator
+      then
+         Initialize (File_Selector_Window, Directory);
+      else
+         Initialize (File_Selector_Window, Get_Current_Dir);
+      end if;
    end Gtk_New;
 
    ----------------
@@ -554,8 +906,35 @@ package body Gtkada.File_Selector is
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Directory            : in String) is
+      Directory            : in String)
+   is
+      Toolbar1    : Gtk_Toolbar;
+
+      Label1      : Gtk_Label;
+
+      Hpaned1     : Gtk_Hpaned;
+
+      Hbox1       : Gtk_Hbox;
+      Hbox2       : Gtk_Hbox;
+      Hbox3       : Gtk_Hbox;
+      Hbox4       : Gtk_Hbox;
+      Hbox5       : Gtk_Hbox;
+      Hbox6       : Gtk_Hbox;
+      Hbox7       : Gtk_Hbox;
+
+      Hbuttonbox1 : Gtk_Hbutton_Box;
+
+      Style       : Gtk_Style := Get_Default_Style;
    begin
+      File_Selector_Window.Highlighted_Style := Copy (Style);
+      File_Selector_Window.Insensitive_Style := Copy (Style);
+      File_Selector_Window.Normal_Style      := Copy (Style);
+
+      Set_Foreground (File_Selector_Window.Insensitive_Style,
+                      State_Normal,
+                      Gdk_Color'(Get_Foreground
+                                 (Style, State_Insensitive)));
+
       File_Selector_Window.Home_Directory := new String' (Directory);
 
       Gtk_New
@@ -563,6 +942,7 @@ package body Gtkada.File_Selector is
          File_Selector_Window.Home_Directory.all);
 
       Set_Indent (File_Selector_Window.Explorer_Tree, 10);
+      Set_Row_Height (File_Selector_Window.Explorer_Tree, 15);
 
       Gtk.Window.Initialize (File_Selector_Window, Window_Toplevel);
       Set_Default_Size (File_Selector_Window, 600, 500);
@@ -574,24 +954,21 @@ package body Gtkada.File_Selector is
       Gtk_New_Vbox (File_Selector_Window.File_Selector_Vbox, False, 0);
       Add (File_Selector_Window, File_Selector_Window.File_Selector_Vbox);
 
-      Gtk_New_Hbox (File_Selector_Window.Hbox1, False, 0);
-      Pack_Start
-        (File_Selector_Window.File_Selector_Vbox,
-         File_Selector_Window.Hbox1, False, False, 3);
+      Gtk_New_Hbox (Hbox1, False, 0);
+      Pack_Start (File_Selector_Window.File_Selector_Vbox,
+                  Hbox1, False, False, 3);
 
-      Gtk_New_Hbox (File_Selector_Window.Hbox3, False, 0);
-      Pack_Start
-        (File_Selector_Window.Hbox1,
-         File_Selector_Window.Hbox3, True, True, 0);
+      Gtk_New_Hbox (Hbox3, False, 0);
+      Pack_Start (Hbox1, Hbox3, True, True, 0);
 
       Gtk_New
-        (File_Selector_Window.Toolbar1,
+        (Toolbar1,
          Orientation_Horizontal, Toolbar_Both);
 
-      Set_Icon_Size (File_Selector_Window.Toolbar1, Icon_Size_Button);
-      Set_Style (File_Selector_Window.Toolbar1,  Toolbar_Icons);
+      Set_Icon_Size (Toolbar1, Icon_Size_Button);
+      Set_Style (Toolbar1,  Toolbar_Icons);
       File_Selector_Window.Back_Button := Insert_Stock
-        (Toolbar => File_Selector_Window.Toolbar1,
+        (Toolbar => Toolbar1,
          Stock_Id => Stock_Go_Back,
          Position => 0);
       Set_Sensitive (File_Selector_Window.Back_Button, False);
@@ -602,7 +979,7 @@ package body Gtkada.File_Selector is
 
       Gtk_New (File_Selector_Window.Up_Icon, Stock_Go_Up, Icon_Size_Button);
       File_Selector_Window.Up_Button := Append_Element
-        (Toolbar => File_Selector_Window.Toolbar1,
+        (Toolbar => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Icon => Gtk_Widget (File_Selector_Window.Up_Icon));
       Widget_Callback.Connect
@@ -610,7 +987,7 @@ package body Gtkada.File_Selector is
          On_Up_Button_Clicked'Access);
 
       File_Selector_Window.Forward_Button := Insert_Stock
-        (Toolbar => File_Selector_Window.Toolbar1,
+        (Toolbar => Toolbar1,
          Stock_Id => Stock_Go_Forward,
          Position => 0);
       Set_Sensitive (File_Selector_Window.Forward_Button, False);
@@ -622,7 +999,7 @@ package body Gtkada.File_Selector is
       Gtk_New
         (File_Selector_Window.Refresh_Icon, Stock_Refresh, Icon_Size_Button);
       File_Selector_Window.Refresh_Button := Append_Element
-        (Toolbar => File_Selector_Window.Toolbar1,
+        (Toolbar => Toolbar1,
          The_Type => Toolbar_Child_Button,
          Icon => Gtk_Widget (File_Selector_Window.Refresh_Icon));
       Widget_Callback.Connect
@@ -630,7 +1007,7 @@ package body Gtkada.File_Selector is
          On_Refresh_Button_Clicked'Access);
 
       File_Selector_Window.Home_Button := Insert_Stock
-        (Toolbar => File_Selector_Window.Toolbar1,
+        (Toolbar => Toolbar1,
          Stock_Id => Stock_Home,
          Position => 0);
       Set_Sensitive (File_Selector_Window.Home_Button, True);
@@ -638,25 +1015,20 @@ package body Gtkada.File_Selector is
         (File_Selector_Window.Home_Button, "clicked",
          On_Home_Button_Clicked'Access);
 
-      Pack_Start
-        (File_Selector_Window.Hbox3,
-         File_Selector_Window.Toolbar1, True, True, 3);
+      Pack_Start (Hbox3, Toolbar1, True, True, 3);
 
-      Gtk_New_Hbox (File_Selector_Window.Hbox2, False, 0);
+      Gtk_New_Hbox (Hbox2, False, 0);
       Pack_Start
         (File_Selector_Window.File_Selector_Vbox,
-         File_Selector_Window.Hbox2, False, False, 3);
+         Hbox2, False, False, 3);
 
-      Gtk_New (File_Selector_Window.Label10, -("Exploring :"));
-      Pack_Start
-        (File_Selector_Window.Hbox2,
-         File_Selector_Window.Label10, False, False, 3);
+      Gtk_New (Label1, -("Exploring :"));
+      Pack_Start (Hbox2, Label1, False, False, 3);
 
       Gtk_New (File_Selector_Window.Location_Combo);
       Set_Case_Sensitive (File_Selector_Window.Location_Combo, True);
-      Pack_Start
-        (File_Selector_Window.Hbox2,
-         File_Selector_Window.Location_Combo, True, True, 3);
+      Pack_Start (Hbox2,
+                  File_Selector_Window.Location_Combo, True, True, 3);
       Widget_Callback.Object_Connect
         (Get_Popup_Window (File_Selector_Window.Location_Combo),
          "hide",
@@ -673,21 +1045,24 @@ package body Gtkada.File_Selector is
          Widget_Callback.To_Marshaller
          (On_Location_Combo_Entry_Activate'Access));
 
-      Gtk_New_Hpaned (File_Selector_Window.Hpaned1);
-      Set_Position (File_Selector_Window.Hpaned1, 200);
-      Set_Handle_Size (File_Selector_Window.Hpaned1, 10);
-      Set_Gutter_Size (File_Selector_Window.Hpaned1, 6);
+      Gtk_New_Hpaned (Hpaned1);
+      Set_Position (Hpaned1, 200);
+      Set_Handle_Size (Hpaned1, 10);
+      Set_Gutter_Size (Hpaned1, 6);
+
+      Gtk_New_Hbox (Hbox7, False, 0);
       Pack_Start
         (File_Selector_Window.File_Selector_Vbox,
-         File_Selector_Window.Hpaned1, True, True, 3);
+         Hbox7, True, True, 3);
+
+      Pack_Start (Hbox7, Hpaned1, True, True, 3);
 
       Gtk_New (File_Selector_Window.Explorer_Tree_Scrolledwindow);
       Set_Policy
         (File_Selector_Window.Explorer_Tree_Scrolledwindow,
          Policy_Automatic, Policy_Always);
 
-      Add (File_Selector_Window.Hpaned1,
-           File_Selector_Window.Explorer_Tree_Scrolledwindow);
+      Add (Hpaned1, File_Selector_Window.Explorer_Tree_Scrolledwindow);
 
       Set_Column_Width (File_Selector_Window.Explorer_Tree, 0, 80);
       Set_Column_Width (File_Selector_Window.Explorer_Tree, 1, 80);
@@ -702,16 +1077,17 @@ package body Gtkada.File_Selector is
       Set_Policy
         (File_Selector_Window.Files_Scrolledwindow,
          Policy_Automatic, Policy_Always);
-      Add (File_Selector_Window.Hpaned1,
-           File_Selector_Window.Files_Scrolledwindow);
+      Add (Hpaned1, File_Selector_Window.Files_Scrolledwindow);
 
       Gtk_New (File_Selector_Window.File_List, 3);
       Set_Selection_Mode (File_Selector_Window.File_List, Selection_Single);
       Set_Shadow_Type (File_Selector_Window.File_List, Shadow_In);
-      Set_Show_Titles (File_Selector_Window.File_List, False);
+      Set_Show_Titles (File_Selector_Window.File_List, True);
       Set_Column_Width (File_Selector_Window.File_List, 0, 20);
       Set_Column_Width (File_Selector_Window.File_List, 1, 180);
       Set_Column_Width (File_Selector_Window.File_List, 2, 80);
+      Set_Row_Height (File_Selector_Window.File_List, 15);
+
       Widget_Callback.Connect
         (File_Selector_Window.File_List, "select_row",
          Widget_Callback.To_Marshaller (On_File_List_End_Selection'Access));
@@ -723,20 +1099,22 @@ package body Gtkada.File_Selector is
         (File_Selector_Window.File_List, 0,
          File_Selector_Window.File_Icon_Label);
 
-      Gtk_New (File_Selector_Window.File_Name_Label, -(""));
+      Gtk_New (File_Selector_Window.File_Name_Label, -("Name"));
+      Set_Justify (File_Selector_Window.File_Name_Label, Justify_Left);
       Set_Column_Widget
         (File_Selector_Window.File_List, 1,
          File_Selector_Window.File_Name_Label);
 
-      Gtk_New (File_Selector_Window.File_Text_Label, -(""));
+      Gtk_New (File_Selector_Window.File_Text_Label, -("Info"));
+      Set_Justify (File_Selector_Window.File_Text_Label, Justify_Left);
       Set_Column_Widget
         (File_Selector_Window.File_List, 2,
          File_Selector_Window.File_Text_Label);
 
-      Gtk_New_Hbox (File_Selector_Window.Hbox4, False, 0);
+      Gtk_New_Hbox (Hbox4, False, 0);
       Pack_Start
         (File_Selector_Window.File_Selector_Vbox,
-         File_Selector_Window.Hbox4, False, False, 3);
+         Hbox4, False, False, 3);
 
       Gtk_New (File_Selector_Window.Filter_Combo);
       Set_Case_Sensitive (File_Selector_Window.Filter_Combo, False);
@@ -747,9 +1125,8 @@ package body Gtkada.File_Selector is
          Widget_Callback.To_Marshaller (Filter_Selected'Access),
          File_Selector_Window.Filter_Combo);
 
-      Pack_Start
-        (File_Selector_Window.Hbox4,
-         File_Selector_Window.Filter_Combo, True, True, 3);
+      Pack_Start (Hbox4,
+                  File_Selector_Window.Filter_Combo, True, True, 3);
 
       File_Selector_Window.Filter_Combo_Entry :=
         Get_Entry (File_Selector_Window.Filter_Combo);
@@ -757,50 +1134,42 @@ package body Gtkada.File_Selector is
       Set_Max_Length (File_Selector_Window.Filter_Combo_Entry, 0);
       Set_Visibility (File_Selector_Window.Filter_Combo_Entry, True);
 
-      Gtk_New_Hbox (File_Selector_Window.Hbox5, False, 0);
+      Gtk_New_Hbox (Hbox5, False, 0);
       Pack_Start
         (File_Selector_Window.File_Selector_Vbox,
-         File_Selector_Window.Hbox5, False, False, 3);
+         Hbox5, False, False, 3);
 
       Gtk_New (File_Selector_Window.Selection_Entry);
       Set_Editable (File_Selector_Window.Selection_Entry, True);
       Set_Max_Length (File_Selector_Window.Selection_Entry, 0);
       Set_Visibility (File_Selector_Window.Selection_Entry, True);
       Pack_Start
-        (File_Selector_Window.Hbox5,
-         File_Selector_Window.Selection_Entry, True, True, 3);
+        (Hbox5, File_Selector_Window.Selection_Entry, True, True, 3);
       Widget_Callback.Connect
         (File_Selector_Window.Selection_Entry, "changed",
          Widget_Callback.To_Marshaller (On_Selection_Entry_Changed'Access));
 
-      Gtk_New_Hbox (File_Selector_Window.Hbox6, False, 0);
+      Gtk_New_Hbox (Hbox6, False, 0);
       Pack_Start
         (File_Selector_Window.File_Selector_Vbox,
-         File_Selector_Window.Hbox6, False, False, 3);
+         Hbox6, False, False, 3);
 
-      Gtk_New (File_Selector_Window.Hbuttonbox2);
-      Set_Spacing (File_Selector_Window.Hbuttonbox2, 30);
-      Set_Layout (File_Selector_Window.Hbuttonbox2, Buttonbox_Spread);
-      Set_Child_Size (File_Selector_Window.Hbuttonbox2, 85, 27);
-      Set_Child_Ipadding (File_Selector_Window.Hbuttonbox2, 7, 0);
-      Add (File_Selector_Window.Hbox6, File_Selector_Window.Hbuttonbox2);
+      Gtk_New (Hbuttonbox1);
+      Set_Spacing (Hbuttonbox1, 30);
+      Set_Layout (Hbuttonbox1, Buttonbox_Spread);
+      Set_Child_Size (Hbuttonbox1, 85, 27);
+      Set_Child_Ipadding (Hbuttonbox1, 7, 0);
+      Add (Hbox6, Hbuttonbox1);
 
       Gtk_New_From_Stock (File_Selector_Window.Ok_Button, Stock_Ok);
       Set_Relief (File_Selector_Window.Ok_Button, Relief_Normal);
       Set_Flags (File_Selector_Window.Ok_Button, Can_Default);
-      Widget_Callback.Connect
-        (File_Selector_Window.Ok_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access));
-      Add (File_Selector_Window.Hbuttonbox2, File_Selector_Window.Ok_Button);
+      Add (Hbuttonbox1, File_Selector_Window.Ok_Button);
 
       Gtk_New_From_Stock (File_Selector_Window.Cancel_Button, Stock_Cancel);
       Set_Relief (File_Selector_Window.Cancel_Button, Relief_Normal);
       Set_Flags (File_Selector_Window.Cancel_Button, Can_Default);
-      Widget_Callback.Connect
-        (File_Selector_Window.Cancel_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
-      Add (File_Selector_Window.Hbuttonbox2,
-           File_Selector_Window.Cancel_Button);
+      Add (Hbuttonbox1, File_Selector_Window.Cancel_Button);
 
       Show_Directory
         (File_Selector_Window.Explorer_Tree,
