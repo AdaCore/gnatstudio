@@ -57,7 +57,7 @@ with Traces;           use Traces;
 
 package body Browsers.Call_Graph is
 
-   Me : Debug_Handle := Create ("Browsers.Call_Graph");
+   Me : constant Debug_Handle := Create ("Browsers.Call_Graph");
 
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
@@ -210,7 +210,7 @@ package body Browsers.Call_Graph is
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information)
    is
-      B : Call_Graph_Browser := Call_Graph_Browser (Browser);
+      B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
       Font : Gdk_Font;
       Width, Height : Gint;
    begin
@@ -251,8 +251,8 @@ package body Browsers.Call_Graph is
      (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Item    : access Entity_Item_Record)
    is
-      B : Call_Graph_Browser := Call_Graph_Browser (Browser);
-      Font : Gdk_Font := Get_Text_Font (Browser);
+      B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
+      Font : constant Gdk_Font := Get_Text_Font (Browser);
    begin
       Draw_Item_Background (Browser, Item);
       Draw_Text
@@ -306,7 +306,7 @@ package body Browsers.Call_Graph is
    ----------------
 
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class) is
-      B : Call_Graph_Browser := Call_Graph_Browser (Browser);
+      B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
    begin
       if B.Idle_Id /= 0 then
          Idle_Remove (B.Idle_Id);
@@ -788,7 +788,7 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Widget);
 
-      C : Entity_Selection_Context_Access :=
+      C : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Location : Src_Info.File_Location;
       Status   : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
@@ -834,7 +834,7 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Widget);
 
-      Entity      : Entity_Selection_Context_Access :=
+      Entity      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Node_Entity : Entity_Information;
 
@@ -875,7 +875,7 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Widget);
 
-      Entity   : Entity_Selection_Context_Access :=
+      Entity   : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Info : Entity_Information;
 
@@ -961,7 +961,7 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Widget);
 
-      Entity   : Entity_Selection_Context_Access :=
+      Entity   : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Data     : Entity_Idle_Data;
       Info     : Entity_Information;
@@ -1111,7 +1111,8 @@ package body Browsers.Call_Graph is
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
    is
       pragma Unreferenced (Event);
-      Context : Selection_Context_Access := new Entity_Selection_Context;
+      Context : constant Selection_Context_Access :=
+        new Entity_Selection_Context;
       Filename : constant String := Find_Source_File
         (Kernel                     => Get_Kernel (Browser),
          Short_File_Name            => Get_Declaration_File_Of (Item.Entity),
@@ -1136,7 +1137,7 @@ package body Browsers.Call_Graph is
            (Mitem, "activate",
             Context_Callback.To_Marshaller
               (Edit_Entity_Call_Graph_From_Contextual'Access),
-            Selection_Context_Access (Context));
+            Context);
          Set_Sensitive (Mitem, not Item.To_Parsed);
 
          Gtk_New (Mitem, Get_Name (Item.Entity) & (-" is called by..."));
@@ -1169,7 +1170,8 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Widget);
       Child       : MDI_Child;
-      Context     : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context     : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
       Entity      : Entity_Selection_Context_Access;
       Node_Entity : Entity_Information;
    begin
@@ -1200,7 +1202,7 @@ package body Browsers.Call_Graph is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel);
-      Browser : Call_Graph_Browser := Call_Graph_Browser (Child);
+      Browser : constant Call_Graph_Browser := Call_Graph_Browser (Child);
    begin
       if Selected_Item (Browser) = null then
          return null;
