@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -52,35 +52,43 @@ package body Metrics_Module is
 
    begin
       Gtk_New (Menu_Item, -"Cyclomatic Complexity");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Complex, Menu_Item);
-      --  Kernel_Callback.Connect
-      --    (Menu_Item, "activate",
-      --     Kernel_Callback.To_Marshaller (On_Open_Interface'Access),
-      --     Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Maximum nesting level");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Complex, Menu_Item);
       Gtk_New (Menu_Item, -"Number of statements");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Complex, Menu_Item);
 
       Gtk_New (Menu_Item, -"Number of types");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Packages, Menu_Item);
       Gtk_New (Menu_Item, -"Number of routines");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Packages, Menu_Item);
       Gtk_New (Menu_Item, -"Number of specification lines");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Packages, Menu_Item);
       Gtk_New (Menu_Item, -"Number of body lines");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Packages, Menu_Item);
 
       Gtk_New (Menu_Item, -"Number of lines");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Lines, Menu_Item);
       Gtk_New (Menu_Item, -"Number of blank lines");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Lines, Menu_Item);
       Gtk_New (Menu_Item, -"Number of code lines");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Lines, Menu_Item);
       Gtk_New (Menu_Item, -"Number of comment lines");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Lines, Menu_Item);
       Gtk_New (Menu_Item, -"Number of mixed code and comment lines");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Lines, Menu_Item);
    end Initialize_Module;
 
