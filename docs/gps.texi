@@ -3519,8 +3519,9 @@ explorer.
 The wizard gives access to the following list of pages:
 
 @itemize @bullet
+@item Wizard Types
 @item Project Naming
-@item Languages selection
+@item Languages Selection
 @item Version Control System Selection
 @item Source Directories Selection
 @item Build Directory
@@ -3530,11 +3531,48 @@ The wizard gives access to the following list of pages:
 @end itemize
 
 @c ------------------------------------------------------------------
+@subsection Wizard Types
+@c ------------------------------------------------------------------
+
+@noindent
+Several types of project wizards are provided in GPS. Depending on the
+information you have or your current setup, you will choose one or the
+other.
+
+@itemize @bullet
+@item From Scratch
+
+This is likely the wizard you will use most often. It creates a project
+file from scratch, and asks you for the location of source directories,
+the object directory,... The rest of this chapter describes this wizard
+in more details
+
+@item From Existing Ada Sources
+
+This wizard will attempt to create a set of one or more project files to
+try and represent your current build environment. It will analyze what
+your sources are, where the corresponding object files are, and will try
+and find some possible setup for the project files (remember that a given
+@file{.gpr} project file can be associated with a single object directory.
+
+This wizard might not work in all cases, but is worth a try to get you
+started if you already have an existing set of sources
+
+@item From .adp project
+
+This wizard will help you convert a @file{.adp} project file that is used
+by the Glide environment distributed by AdaCore. The same restrictions
+apply as above, but the list of source directories, object directories
+and tool switches are read directly from that file.
+@end itemize
+
+
+@c ------------------------------------------------------------------
 @subsection Project Naming
 @c ------------------------------------------------------------------
 
 @noindent
-This is the first page displayed by the wizard.
+This is the first page displayed by any of the wizard.
 
 You must enter the name and location of the project to create. This
 name must be a valid Ada identifier (i.e. start with a letter,
@@ -3544,11 +3582,9 @@ must be avoided. If the name is invalid, GPS will display an error
 message when you press the @code{Forward} button.
 
 Child projects can be created from this dialog. These are project whose
-name is of the form @code{Parent.Child}. However, the generated project
-is invalid, since one of the restrictions for these projects, which is
-currently not enforced by GPS, is that the project must import or
-extend its parent project. Therefore, you will not be able to
-load this project in GPS until you have manually edited it.
+name is of the form @code{Parent.Child}. GPS will automatically generate
+the dependency to the parent project so as to make the child project
+valid.
 
 In this page, you should also select what languages the source files
 in this project are written in. Currently supported languages are @code{Ada},
