@@ -73,8 +73,10 @@ with Glide_Intl;               use Glide_Intl;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Traces;                   use Traces;
 with Find_Utils;               use Find_Utils;
+with File_Utils;               use File_Utils;
 with Project_Explorers_Files;  use Project_Explorers_Files;
 with Src_Info;
+with String_Hash;
 
 package body Project_Explorers is
 
@@ -155,11 +157,37 @@ package body Project_Explorers is
    -- Searching --
    ---------------
 
+   type Search_Status is (Match, Indirect_Match, No_Match);
+   --  Values stored in the String_Status hash table:
+   --    - Match: the entry is a direct match
+   --    - Indirect_Match: the entry is only relevant because one of its
+   --      imported subprojects, directories or files matches
+   --    - No_Match: the node doesn't match and neither do its chidlren.
+
+   procedure Nop (X : in out Search_Status);
+   --  Do nothing, required for instanciation of string_boolean_hash
+
+   package String_Status_Hash is new String_Hash
+     (Data_Type => Search_Status,
+      Free_Data => Nop,
+      Null_Ptr  => No_Match);
+   use String_Status_Hash;
+   use String_Status_Hash.String_Hash_Table;
+
    type Explorer_Search_Context is new Search_Context with record
       Current : Gtk_Ctree_Node;
       Include_Entities : Boolean;
+
+      Matches : String_Status_Hash.String_Hash_Table.HTable;
+      --  The search is performed on the internal Ada structures first, and for
+      --  each matching project, directory or file, an entry is made in this
+      --  table (set to true). This then speeds up the traversing of the tree
+      --  to find the matching entities.
    end record;
    type Explorer_Search_Context_Access is access all Explorer_Search_Context;
+
+   procedure Free (Context : in out Explorer_Search_Context);
+   --  Free the memory allocated for Context
 
    type Explorer_Search_Extra_Record is new Gtk_Frame_Record with record
       Include_Entities : Gtk_Check_Button;
@@ -376,14 +404,6 @@ package body Project_Explorers is
    --  This means we need to start up with a completely new tree, no need to
    --  try to keep the current one.
 
-   function Next_Node
-     (Explorer         : Project_Explorer;
-      Current_Node     : Gtk_Ctree_Node;
-      Include_Entities : Boolean)
-      return Gtk_Ctree_Node;
-   --  Jump to the node following Current_Node. This subprogram will perform a
-   --  depth-first search, and eventually return all the nodes in Explorer.
-
    procedure Jump_To_Node
      (Explorer    : Project_Explorer;
       Target_Node : Gtk_Ctree_Node);
@@ -461,6 +481,16 @@ package body Project_Explorers is
       Row2 : Gtk_Clist_Row) return Gint;
    --  The ordering function used for the project view.
 
+   ---------
+   -- Nop --
+   ---------
+
+   procedure Nop (X : in out Search_Status) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Nop;
+
    --------------------------
    -- Project_View_Compare --
    --------------------------
@@ -486,10 +516,11 @@ package body Project_Explorers is
 
       --  Use basename so that we get proper handling of case-insensitive file
       --  systems.
-      Text1 : constant String :=
-        Base_Name (Node_Get_Text (T, N1, 0));
-      Text2 : constant String :=
-        Base_Name (Node_Get_Text (T, N2, 0));
+
+      Text1 : constant String := Node_Get_Text (T, N1, 0);
+      --  Base_Name (Node_Get_Text (T, N1, 0));
+      Text2 : constant String := Node_Get_Text (T, N2, 0);
+      --  Base_Name (Node_Get_Text (T, N2, 0));
 
    begin
       --  At least one of the nodes is a project
@@ -2308,6 +2339,15 @@ package body Project_Explorers is
       return Explorer_Context_Factory (Kernel, Child, Child, null, null);
    end Default_Factory;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Context : in out Explorer_Search_Context) is
+   begin
+      Reset (Context.Matches);
+   end Free;
+
    -----------------------------
    -- Explorer_Search_Factory --
    -----------------------------
@@ -2318,12 +2358,20 @@ package body Project_Explorers is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (Kernel, All_Occurences, Extra_Information);
+      pragma Unreferenced (Kernel, All_Occurences);
       Context : Explorer_Search_Context_Access;
 
    begin
       Context := new Explorer_Search_Context;
-      Context.Include_Entities := False;
+
+      if Extra_Information = null then
+         Context.Include_Entities := False;
+      else
+         Context.Include_Entities := Get_Active
+           (Explorer_Search_Extra (Extra_Information).Include_Entities);
+      end if;
+
+      Reset (Context.Matches);
       return Search_Context_Access (Context);
    end Explorer_Search_Factory;
 
@@ -2339,80 +2387,344 @@ package body Project_Explorers is
       pragma Unreferenced (Search_Backward);
       C        : constant Explorer_Search_Context_Access :=
         Explorer_Search_Context_Access (Context);
-      Explorer : Project_Explorer;
+      Explorer : constant Project_Explorer :=
+        Get_Or_Create_Project_View (Kernel);
 
-   begin
-      --  ??? Problem: this algorithm will analyze the same files multiple
-      --  times if they appear multiple times in the explorer. This might not
-      --  be necessary if every time we expand a file we duplicate the entity
-      --  information for all the occurences of this file.
+      procedure Initialize_Parser;
+      --  Compute all the matching files and mark them in the htable.
 
-      --  Make sure the explorer is visible, and get a handle on it
+      function Next return Gtk_Ctree_Node;
+      --  Return the next matching node
 
-      Explorer := Get_Or_Create_Project_View (Kernel);
+      function Next_Or_Child
+        (Name : String; Start : Gtk_Ctree_Node) return Gtk_Ctree_Node;
+      pragma Inline (Next_Or_Child);
+      --  Move to the next node, starting from a project or directory node by
+      --  name Name.
 
-      --  Find the next matching node
+      procedure Next_File_Node
+        (Start  : Gtk_Ctree_Node;
+         Result : out Gtk_Ctree_Node;
+         Finish : out Boolean);
+      pragma Inline (Next_File_Node);
+      --  Move to the next node, starting from a file node
 
-      if C.Current = null then
-         C.Current := Node_Nth (Explorer.Tree, 0);
-      else
-         C.Current := Next_Node (Explorer, C.Current, C.Include_Entities);
-      end if;
+      function Check_Entities
+        (File      : String;
+         Languages : Glide_Language_Handler;
+         Project   : Project_Id)
+         return Boolean;
+      pragma Inline (Check_Entities);
+      --  Check if File contains any entity matching C.
+      --  Return True if there is a match
 
-      Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
+      procedure Mark_File_And_Projects
+        (Base           : String;
+         Full_Name      : String;
+         Project_Marked : in out Boolean;
+         Project        : Project_Id);
+      pragma Inline (Mark_File_And_Projects);
+      --  Mark the file Full_Name/Base as matching, as well as the project it
+      --  belongs to and all its importing projects
 
-      while C.Current /= null loop
-         if Match (C, Node_Get_Text (Explorer.Tree, C.Current, 0)) /= -1 then
-            Jump_To_Node (Explorer, C.Current);
-            Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
-            return True;
+      -------------------
+      -- Next_Or_Child --
+      -------------------
+
+      function Next_Or_Child
+        (Name : String; Start : Gtk_Ctree_Node) return Gtk_Ctree_Node is
+      begin
+         if Get (C.Matches, Name'Unrestricted_Access) /= No_Match then
+            Compute_Children (Explorer, Start);
+            return Row_Get_Children (Node_Get_Row (Start));
+         else
+            return Row_Get_Sibling (Node_Get_Row (Start));
          end if;
-         C.Current := Next_Node (Explorer, C.Current, C.Include_Entities);
-      end loop;
+      end Next_Or_Child;
 
-      Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
-      return False;
-   end Search;
+      --------------------
+      -- Next_File_Node --
+      --------------------
 
-   ---------------
-   -- Next_Node --
-   ---------------
+      procedure Next_File_Node
+        (Start  : Gtk_Ctree_Node;
+         Result : out Gtk_Ctree_Node;
+         Finish : out Boolean)
+      is
+         N : aliased constant String := Node_Get_Text
+           (Explorer.Tree, Start, 0);
+      begin
+         if Get (C.Matches, N'Unrestricted_Access) /= No_Match then
+            if C.Include_Entities then
+               Compute_Children (Explorer, Start);
+               Result := Row_Get_Children (Node_Get_Row (Start));
+               Finish := False;
+               return;
 
-   function Next_Node
-     (Explorer         : Project_Explorer;
-      Current_Node     : Gtk_Ctree_Node;
-      Include_Entities : Boolean)
-      return Gtk_Ctree_Node
-   is
-      Tmp        : Gtk_Ctree_Node;
-      Start_Node : Gtk_Ctree_Node := Current_Node;
-   begin
-      if not Row_Get_Is_Leaf (Node_Get_Row (Start_Node)) then
-         if Include_Entities
-           or else Node_Get_Row_Data
-           (Explorer.Tree, Start_Node).Node_Type /= File_Node
-         then
-            Compute_Children (Explorer, Start_Node);
-            Tmp := Row_Get_Children (Node_Get_Row (Start_Node));
-
-            if Tmp /= null then
-               return Tmp;
+            --  Do not return the initial node
+            elsif C.Current /= Start then
+               Result := Start;
+               Finish := True;
+               return;
             end if;
          end if;
+
+         Result := Row_Get_Sibling (Node_Get_Row (Start));
+         Finish := False;
+      end Next_File_Node;
+
+      ----------
+      -- Next --
+      ----------
+
+      function Next return Gtk_Ctree_Node is
+         Start_Node : Gtk_Ctree_Node := C.Current;
+         Tmp        : Gtk_Ctree_Node;
+         Finish     : Boolean;
+
+      begin
+         while Start_Node /= null loop
+            declare
+               User : constant User_Data :=
+                 Node_Get_Row_Data (Explorer.Tree, Start_Node);
+            begin
+               case User.Node_Type is
+                  when Project_Node | Extends_Project_Node =>
+                     Tmp := Next_Or_Child
+                       (Get_Name_String (User.Name), Start_Node);
+
+                  when Directory_Node =>
+                     Tmp := Next_Or_Child
+                       (Get_String (User.Directory), Start_Node);
+
+                  when Obj_Directory_Node =>
+                     Tmp := Row_Get_Sibling (Node_Get_Row (Start_Node));
+
+                  when File_Node =>
+                     Next_File_Node (Start_Node, Tmp, Finish);
+                     if Finish then
+                        return Tmp;
+                     end if;
+
+                  when Category_Node =>
+                     Tmp := Row_Get_Children (Node_Get_Row (Start_Node));
+
+                  when Entity_Node =>
+                     if C.Current /= Start_Node
+                       and then Get
+                         (C.Matches, User.Entity_Name'Unrestricted_Access)
+                       /= No_Match
+                     then
+                        return Start_Node;
+                     else
+                        Tmp := Row_Get_Sibling (Node_Get_Row (Start_Node));
+                     end if;
+               end case;
+
+               while Tmp = null loop
+                  Start_Node := Row_Get_Parent (Node_Get_Row (Start_Node));
+                  exit when Start_Node = null;
+
+                  Tmp := Row_Get_Sibling (Node_Get_Row (Start_Node));
+               end loop;
+
+               Start_Node := Tmp;
+            end;
+         end loop;
+         return null;
+      end Next;
+
+      --------------------
+      -- Check_Entities --
+      --------------------
+
+      function Check_Entities
+        (File      : String;
+         Languages : Glide_Language_Handler;
+         Project   : Project_Id)
+         return Boolean
+      is
+         Handler : constant Src_Info.LI_Handler := Get_LI_Handler_From_File
+           (Languages, File, Project);
+         Constructs : Construct_List;
+         Status : Boolean := False;
+      begin
+         Src_Info.Parse_File_Constructs
+           (Handler, Project, Languages, File, Constructs);
+
+         Constructs.Current := Constructs.First;
+
+         while Constructs.Current /= null loop
+            if Filter_Category (Constructs.Current.Category) /=
+              Cat_Unknown
+              and then Match (C, Constructs.Current.Name.all) /= -1
+            then
+               Status := True;
+
+               if Get (C.Matches, Constructs.Current.Name.all'Access) /=
+                 Match
+               then
+                  Set (C.Matches,
+                       new String'(Constructs.Current.Name.all),
+                       Match);
+               end if;
+            end if;
+
+            Constructs.Current := Constructs.Current.Next;
+         end loop;
+
+         Free (Constructs);
+         return Status;
+      end Check_Entities;
+
+      ----------------------------
+      -- Mark_File_And_Projects --
+      ----------------------------
+
+      procedure Mark_File_And_Projects
+        (Base           : String;
+         Full_Name      : String;
+         Project_Marked : in out Boolean;
+         Project        : Project_Id)
+      is
+         --  Directory name without a directory separator.
+         Dir  : constant String := Full_Name
+           (Full_Name'First ..
+            Full_Name'Last - Base'Length - 1);
+         Status : Search_Status;
+
+      begin
+         Set (C.Matches, new String'(Base), Match);
+
+         Status := Get (C.Matches, Dir'Unrestricted_Access);
+         case Status is
+            when No_Match       =>
+               Set (C.Matches, new String'(Dir), Match);
+
+            when Indirect_Match =>
+               Set (C.Matches, Dir'Unrestricted_Access, Match);
+
+            when Match          =>
+               null;
+         end case;
+
+         if not Project_Marked then
+            --  Mark the current project and all its importing
+            --  projects as matching
+
+            declare
+               P_Name : aliased constant String := Project_Name (Project);
+            begin
+               Status := Get (C.Matches, P_Name'Unrestricted_Access);
+               case Status is
+                  when No_Match       =>
+                     Set (C.Matches, new String'(P_Name), Match);
+
+                  when Indirect_Match =>
+                     Set (C.Matches, P_Name'Unrestricted_Access,  Match);
+
+                  when Match          =>
+                     null;
+               end case;
+            end;
+
+
+            declare
+               Prjs : constant Project_Id_Array := Find_All_Projects_Importing
+                 (Root_Project => Get_Project (Kernel),
+                  Project      => Project);
+            begin
+               for P in Prjs'Range loop
+                  declare
+                     P_Name : aliased constant String :=
+                       Project_Name (Prjs (P));
+                  begin
+                     Status := Get (C.Matches, P_Name'Unrestricted_Access);
+
+                     case Status is
+                        when No_Match               =>
+                           Set
+                             (C.Matches, new String'(P_Name), Indirect_Match);
+
+                        when Indirect_Match | Match =>
+                           null;
+                     end case;
+                  end;
+               end loop;
+            end;
+
+            Project_Marked := True;
+         end if;
+      end Mark_File_And_Projects;
+
+      -----------------------
+      -- Initialize_Parser --
+      -----------------------
+
+      procedure Initialize_Parser is
+         Iter : Imported_Project_Iterator := Start
+           (Get_Project (Kernel), Recursive => True);
+         Languages : constant Glide_Language_Handler :=
+           Glide_Language_Handler (Get_Language_Handler (Kernel));
+      begin
+         while Current (Iter) /= No_Project loop
+            declare
+               Sources : String_Array_Access := Get_Source_Files
+                 (Project_View => Current (Iter),
+                  Recursive    => False,
+                  Full_Path    => True,
+                  Normalized   => False);
+               Project_Marked : Boolean := False;
+            begin
+               for S in Sources'Range loop
+                  declare
+                     Base : constant String := Base_Name (Sources (S).all);
+                  begin
+                     if Match (C, Base) /= -1
+                       or   --  not "or else", we need to evaluate the second
+                       (C.Include_Entities
+                        and then Check_Entities
+                          (Sources (S).all, Languages, Current (Iter)))
+                     then
+                        Mark_File_And_Projects
+                          (Base           => Base,
+                           Full_Name      => Sources (S).all,
+                           Project_Marked => Project_Marked,
+                           Project        => Current (Iter));
+                     end if;
+                  end;
+               end loop;
+
+               Free (Sources);
+            end;
+
+            Next (Iter);
+         end loop;
+      end Initialize_Parser;
+
+   begin
+      if C.Current = null then
+         Initialize_Parser;
+         C.Current := Node_Nth (Explorer.Tree, 0);
       end if;
 
-      loop
-         Tmp := Row_Get_Sibling (Node_Get_Row (Start_Node));
-         exit when Tmp /= null;
+      --  We need to freeze and block the handlers to speed up the display of
 
-         Start_Node := Row_Get_Parent (Node_Get_Row (Start_Node));
-         if Start_Node = null then
-            return null;
-         end if;
-      end loop;
+      --  the node on the screen.
+      Freeze (Explorer.Tree);
+      Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
+      C.Current := Next;
 
-      return Tmp;
-   end Next_Node;
+      Thaw (Explorer.Tree);
+
+      if C.Current /= null then
+         Jump_To_Node (Explorer, C.Current);
+      end if;
+
+      Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
+
+      return C.Current /= null;
+   end Search;
 
    --------------------
    --  Jump_To_Node  --
@@ -2439,8 +2751,6 @@ package body Project_Explorers is
       then
          Node_Moveto (Explorer.Tree, Target_Node, 0, 0.5, 0.0);
       end if;
-
-      return;
    end Jump_To_Node;
 
    -------------------
@@ -2452,39 +2762,28 @@ package body Project_Explorers is
       Context : Glide_Kernel.Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Explorer : Project_Explorer;
       File_C   : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
-      Node   : Gtk_Ctree_Node;
+      C        : Search_Context_Access;
    begin
       if Has_File_Information (File_C) then
-         declare
-            Current_File : constant String := File_Information (File_C);
-         begin
-            --  Make sure the explorer is visible, and get a handle on it
-            Explorer := Get_Or_Create_Project_View (Kernel);
+         C := Explorer_Search_Factory
+           (Kernel, All_Occurences => False, Extra_Information => null);
+         Set_Context
+           (Context  => C,
+            Look_For => File_Information (File_C),
+            Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
+                         Whole_Word     => True,
+                         Regexp         => False));
 
-            --  Find the next matching node
-            Node := Node_Nth (Explorer.Tree, 0);
-
-            Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
-
-            while Node /= null loop
-               if Current_File = Node_Get_Text (Explorer.Tree, Node, 0) then
-                  Jump_To_Node (Explorer, Node);
-                  Gtk.Handlers.Handler_Unblock
-                    (Explorer.Tree, Explorer.Expand_Id);
-                  Gtk.Ctree.Expand (Explorer.Tree, Node);
-                  return;
-               end if;
-               Node := Next_Node (Explorer, Node, Include_Entities => False);
-            end loop;
+         if not Search (C, Kernel, Search_Backward => False) then
             Insert (Kernel,
-                    -"File not found in the explorer: " & Current_File);
-            Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
-         end;
+                    -"File not found in the explorer: "
+                    & File_Information (File_C));
+         end if;
+
+         Free (C);
       end if;
    end Locate_File;
 
@@ -2524,7 +2823,6 @@ package body Project_Explorers is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Enable_Entity_Search : constant Boolean := False;
       Project : constant String := '/' & (-"Project");
       N       : Node_Ptr;
       Extra   : Explorer_Search_Extra;
@@ -2569,27 +2867,25 @@ package body Project_Explorers is
       Register_Menu
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
 
-      if Enable_Entity_Search then
-         Extra := new Explorer_Search_Extra_Record;
-         Gtk.Frame.Initialize (Extra);
+      Extra := new Explorer_Search_Extra_Record;
+      Gtk.Frame.Initialize (Extra);
 
-         Gtk_New_Vbox (Box, Homogeneous => False);
-         Add (Extra, Box);
+      Gtk_New_Vbox (Box, Homogeneous => False);
+      Add (Extra, Box);
 
-         Gtk_New (Extra.Include_Entities, -"search entities (might be slow)");
-         Pack_Start (Box, Extra.Include_Entities);
-         Set_Active (Extra.Include_Entities, False);
-         Kernel_Callback.Connect
-           (Extra.Include_Entities, "toggled",
-            Kernel_Callback.To_Marshaller (Reset_Search'Access),
-            Kernel_Handle (Kernel));
-         Widget := Gtk_Widget (Extra);
-      end if;
+      Gtk_New (Extra.Include_Entities, -"search entities (might be slow)");
+      Pack_Start (Box, Extra.Include_Entities);
+      Set_Active (Extra.Include_Entities, False);
+      Kernel_Callback.Connect
+        (Extra.Include_Entities, "toggled",
+         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+         Kernel_Handle (Kernel));
+      Widget := Gtk_Widget (Extra);
 
       declare
          Name : constant String := -"Project explorer";
       begin
-         Register_Search_Function
+         Find_Utils.Register_Search_Function
            (Kernel            => Kernel,
             Data => (Length            => Name'Length,
                      Label             => Name,
