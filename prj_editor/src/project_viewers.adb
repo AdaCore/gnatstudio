@@ -128,6 +128,12 @@ package body Project_Viewers is
 
    Project_Switches_Name : constant String := "Project Switches";
 
+   Full_Path_Cst : aliased constant String := "full_path";
+   Recursive_Cst : aliased constant String := "recursive";
+   Sources_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
+     (1 => Full_Path_Cst'Access,
+      2 => Recursive_Cst'Access);
+
    File_Name_Column         : constant := 0;
    Compiler_Switches_Column : constant := 1;
    Compiler_Color_Column    : constant := 2;
@@ -2459,30 +2465,49 @@ package body Project_Viewers is
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Command);
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Instance   : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_Project_Class (Kernel));
       Project    : constant Project_Type := Get_Data (Instance);
-      Args       : Argument_List (1 .. Number_Of_Arguments (Data) - 1);
    begin
-      for Index in 2 .. Number_Of_Arguments (Data) loop
-         Args (Index - 1) := new String'(Nth_Arg (Data, Index));
-      end loop;
+      if Command = "add_main_unit" then
+         declare
+            Args : Argument_List (1 .. Number_Of_Arguments (Data) - 1);
+         begin
+            for Index in 2 .. Number_Of_Arguments (Data) loop
+               Args (Index - 1) := new String'(Nth_Arg (Data, Index));
+            end loop;
 
-      Update_Attribute_Value_In_Scenario
-        (Project            => Project,
-         Scenario_Variables => Scenario_Variables (Kernel),
-         Attribute          => Main_Attribute,
-         Values             => Args,
-         Prepend            => True);
-      Recompute_View (Kernel);
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables (Kernel),
+               Attribute          => Main_Attribute,
+               Values             => Args,
+               Prepend            => True);
+            Recompute_View (Kernel);
+            Free (Args);
+         end;
 
-      Free (Args);
+      elsif Command = "sources" then
+         Name_Parameters (Data, Sources_Cmd_Parameters);
+         declare
+            Full_Path : constant Boolean := Nth_Arg (Data, 2, False);
+            Recursive : constant Boolean := Nth_Arg (Data, 3, False);
+            Sources   : String_Array_Access := Get_Source_Files
+              (Project    => Project,
+               Recursive  => Recursive,
+               Full_Path  => Full_Path,
+               Normalized => True);
+         begin
+            Set_Return_Value_As_List (Data);
+            for S in Sources'Range loop
+               Set_Return_Value
+                 (Data, Create_File (Get_Script (Data), Sources (S).all));
+            end loop;
+            Free (Sources);
+         end;
 
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
+      end if;
    end Project_Command_Handler;
 
    ------------------------
@@ -2881,10 +2906,29 @@ package body Project_Viewers is
          Params       => "(main1, [main2 ...])",
          Description  =>
            -("Add some main units to the current project, and for the"
-             & ASCII.LF
-             & "current scenario. The project is not saved automatically."),
+             & " current scenario. The project is not saved automatically."),
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "sources",
+         Params       =>
+           Parameter_Names_To_Usage (Sources_Cmd_Parameters, 2),
+         Return_Value => "list",
+         Description  =>
+           -("Return the list of source files for this project."
+             & " If recursive is true, then all sources from imported projects"
+             & " are also returned. Otherwise, only the direct sources are"
+             & " returned. If full_path is true, then the full path of the"
+             & " files is returned, otherwise only the base names are"
+             & " returned. The basenames of the returned files are alwayse"
+             & " unique: not two files with the same basenames are returned,"
+             & " and the one returned is the first one see while traversing"
+             & " the project hierarchy."),
+         Minimum_Args => 0,
+         Maximum_Args => Sources_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
    end Register_Module;
