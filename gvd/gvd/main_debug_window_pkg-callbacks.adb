@@ -307,6 +307,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Put_Line (File, Tab.Descriptor.Protocol.all);
                Put_Line (File, "[History]");
                Wind (Tab.Command_History, Backward);
+               Move_To_Next (Tab.Command_History);
 
                for J in reverse 1 .. Length (Tab.Command_History) loop
                   for Count in 1
