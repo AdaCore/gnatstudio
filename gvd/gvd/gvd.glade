@@ -62,8 +62,8 @@
 	    <name>open_program1</name>
 	    <sensitive>False</sensitive>
 	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_O</key>
+	      <modifiers>0</modifiers>
+	      <key>GDK_F3</key>
 	      <signal>activate</signal>
 	    </accelerator>
 	    <signal>
@@ -576,7 +576,7 @@
 	    <name>finish1</name>
 	    <accelerator>
 	      <modifiers>0</modifiers>
-	      <key>GDK_F8</key>
+	      <key>GDK_F7</key>
 	      <signal>activate</signal>
 	    </accelerator>
 	    <signal>
@@ -600,7 +600,7 @@
 	    <name>continue1</name>
 	    <accelerator>
 	      <modifiers>0</modifiers>
-	      <key>GDK_F9</key>
+	      <key>GDK_F8</key>
 	      <signal>activate</signal>
 	    </accelerator>
 	    <signal>
@@ -619,7 +619,7 @@
 	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_SHIFT_MASK</modifiers>
-	      <key>GDK_F9</key>
+	      <key>GDK_F8</key>
 	      <signal>activate</signal>
 	    </accelerator>
 	    <signal>
@@ -642,11 +642,6 @@
 	    <class>GtkMenuItem</class>
 	    <name>kill1</name>
 	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>0</modifiers>
-	      <key>GDK_F4</key>
-	      <signal>activate</signal>
-	    </accelerator>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_kill1_activate</handler>
@@ -777,19 +772,6 @@
 	<widget>
 	  <class>GtkMenu</class>
 	  <name>data1_menu</name>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>backtrace1</name>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_backtrace1_activate</handler>
-	      <object>main_debug_window</object>
-	      <last_modification_time>Tue, 28 Mar 2000 02:38:07 GMT</last_modification_time>
-	    </signal>
-	    <label>Call Stack...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
 
 	  <widget>
 	    <class>GtkMenuItem</class>
@@ -1278,14 +1260,13 @@
       <widget>
 	<class>GtkNotebook</class>
 	<name>process_notebook</name>
-	<can_focus>True</can_focus>
 	<signal>
 	  <name>switch_page</name>
 	  <handler>on_process_notebook_switch_page</handler>
 	  <object>Main_Debug_Window</object>
 	  <last_modification_time>Tue, 05 Sep 2000 04:59:06 GMT</last_modification_time>
 	</signal>
-	<show_tabs>True</show_tabs>
+	<show_tabs>False</show_tabs>
 	<show_border>True</show_border>
 	<tab_pos>GTK_POS_TOP</tab_pos>
 	<scrollable>True</scrollable>
@@ -3310,38 +3291,92 @@
     <name>process_paned</name>
     <handle_size>10</handle_size>
     <gutter_size>6</gutter_size>
-    <position>0</position>
+    <position>500</position>
 
     <widget>
       <class>GtkVPaned</class>
       <name>vpaned6</name>
       <handle_size>10</handle_size>
       <gutter_size>6</gutter_size>
-      <position>0</position>
+      <position>200</position>
       <child>
 	<shrink>True</shrink>
 	<resize>False</resize>
       </child>
 
       <widget>
-	<class>GtkScrolledWindow</class>
-	<name>scrolledwindow9</name>
-	<hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
-	<vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
-	<hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-	<vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+	<class>GtkHPaned</class>
+	<name>hpaned1</name>
+	<handle_size>10</handle_size>
+	<gutter_size>6</gutter_size>
+	<position>200</position>
 	<child>
 	  <shrink>True</shrink>
 	  <resize>False</resize>
 	</child>
 
 	<widget>
-	  <class>GtkViewport</class>
-	  <name>data_canvas</name>
-	  <shadow_type>GTK_SHADOW_IN</shadow_type>
+	  <class>GtkScrolledWindow</class>
+	  <name>scrolledwindow13</name>
+	  <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
+	  <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
+	  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+	  <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+	  <child>
+	    <shrink>True</shrink>
+	    <resize>False</resize>
+	  </child>
 
 	  <widget>
-	    <class>Placeholder</class>
+	    <class>GtkCList</class>
+	    <name>stack_list</name>
+	    <can_focus>True</can_focus>
+	    <signal>
+	      <name>select_row</name>
+	      <handler>on_stack_list_select_row</handler>
+	      <last_modification_time>Wed, 11 Oct 2000 10:48:46 GMT</last_modification_time>
+	    </signal>
+	    <columns>1</columns>
+	    <column_widths>80</column_widths>
+	    <selection_mode>GTK_SELECTION_SINGLE</selection_mode>
+	    <show_titles>False</show_titles>
+	    <shadow_type>GTK_SHADOW_IN</shadow_type>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <child_name>CList:title</child_name>
+	      <name>label101</name>
+	      <label></label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	    </widget>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkScrolledWindow</class>
+	  <name>scrolledwindow12</name>
+	  <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
+	  <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
+	  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+	  <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+	  <child>
+	    <shrink>True</shrink>
+	    <resize>True</resize>
+	  </child>
+
+	  <widget>
+	    <class>GtkViewport</class>
+	    <name>data_canvas</name>
+	    <shadow_type>GTK_SHADOW_IN</shadow_type>
+
+	    <widget>
+	      <class>Placeholder</class>
+	    </widget>
 	  </widget>
 	</widget>
       </widget>
