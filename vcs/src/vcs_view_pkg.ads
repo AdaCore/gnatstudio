@@ -99,8 +99,12 @@ package VCS_View_Pkg is
    --  Return the currently selected files, as a list.
    --  Caller must free this list afterwards.
 
-   function Get_Explorer (Kernel : Kernel_Handle) return VCS_View_Access;
+   function Get_Explorer
+     (Kernel      : Kernel_Handle;
+      Raise_Child : Boolean := True)
+     return VCS_View_Access;
    --  Return the vcs explorer, if created, null otherwise.
+   --  If Raise_Child is True, the MDI_Child is raised.
 
    function Get_Current_Ref
      (Explorer : access VCS_View_Record)

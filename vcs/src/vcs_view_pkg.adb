@@ -1168,7 +1168,10 @@ package body VCS_View_Pkg is
    -- Get_Explorer --
    ------------------
 
-   function Get_Explorer (Kernel : Kernel_Handle) return VCS_View_Access is
+   function Get_Explorer
+     (Kernel      : Kernel_Handle;
+      Raise_Child : Boolean := True) return VCS_View_Access
+   is
       Child   : MDI_Child;
    begin
       Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
@@ -1176,6 +1179,10 @@ package body VCS_View_Pkg is
       if Child = null then
          return null;
       else
+         if Raise_Child then
+            Gtkada.MDI.Raise_Child (Child);
+         end if;
+
          return VCS_View_Access (Get_Widget (Child));
       end if;
    end Get_Explorer;
