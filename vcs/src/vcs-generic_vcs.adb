@@ -137,7 +137,8 @@ package body VCS.Generic_VCS is
       Parser         : Status_Parser_Record;
       Text           : String;
       Override_Cache : Boolean;
-      Clear_Logs     : Boolean);
+      Clear_Logs     : Boolean;
+      Dir            : String);
    --  Parse the status for Text using Parser.
    --  See Parse_Status for description of the parameters.
 
@@ -157,6 +158,7 @@ package body VCS.Generic_VCS is
       Parser         : Status_Parser_Record;
       Status         : File_Status_List.List;
       Rep            : Generic_VCS_Access;
+      Dir            : String_Access;
    end record;
 
    --  ??? Need to implement destroy
@@ -176,6 +178,7 @@ package body VCS.Generic_VCS is
    procedure Free (Command : in out Parser_Command_Type) is
    begin
       Free (Command.Text);
+      Free (Command.Dir);
       File_Status_List.Free (Command.Status);
    end Free;
 
@@ -1151,11 +1154,20 @@ package body VCS.Generic_VCS is
       end if;
 
       if Command.Parser.File_Index /= 0 then
-         St.File := Glide_Kernel.Create
-           (S (Matches (Command.Parser.File_Index).First
-               .. Matches (Command.Parser.File_Index).Last),
-            Command.Rep.Kernel,
-            True, False);
+         if Command.Dir = null
+           or else Command.Dir.all = ""
+         then
+            St.File := Glide_Kernel.Create
+              (S (Matches (Command.Parser.File_Index).First
+                  .. Matches (Command.Parser.File_Index).Last),
+               Command.Rep.Kernel,
+               True, False);
+         else
+            St.File := Create
+              (Command.Dir.all &
+               S (Matches (Command.Parser.File_Index).First
+                  .. Matches (Command.Parser.File_Index).Last));
+         end if;
 
       elsif not Is_Empty (Command.Rep.Current_Query_Files) then
          St.File := Glide_Kernel.Create
@@ -1231,7 +1243,8 @@ package body VCS.Generic_VCS is
       Parser         : Status_Parser_Record;
       Text           : String;
       Override_Cache : Boolean;
-      Clear_Logs     : Boolean)
+      Clear_Logs     : Boolean;
+      Dir            : String)
    is
       Command : Parser_Command_Access;
    begin
@@ -1249,6 +1262,7 @@ package body VCS.Generic_VCS is
       Command.Override_Cache := Override_Cache;
       Command.Clear_Logs := Clear_Logs;
       Command.Rep        := Generic_VCS_Access (Rep);
+      Command.Dir        := new String'(Dir);
 
       Launch_Background_Command
         (Rep.Kernel, Command_Access (Command), True, False, "");
@@ -1262,14 +1276,15 @@ package body VCS.Generic_VCS is
      (Rep        : access Generic_VCS_Record;
       Text       : String;
       Local      : Boolean;
-      Clear_Logs : Boolean) is
+      Clear_Logs : Boolean;
+      Dir        : String) is
    begin
       if Local then
          Generic_Parse_Status
-           (Rep, Rep.Local_Status_Parser, Text, False, Clear_Logs);
+           (Rep, Rep.Local_Status_Parser, Text, False, Clear_Logs, Dir);
       else
          Generic_Parse_Status
-           (Rep, Rep.Status_Parser, Text, True, Clear_Logs);
+           (Rep, Rep.Status_Parser, Text, True, Clear_Logs, Dir);
       end if;
    end Parse_Status;
 
