@@ -21,7 +21,9 @@
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Arguments;             use Gtk.Arguments;
+with Gtk.Enums;
 
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -40,6 +42,7 @@ with VCS_Module;                use VCS_Module;
 with Log_Utils;                 use Log_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with OS_Utils;                  use OS_Utils;
 
 with Basic_Types;               use Basic_Types;
 
@@ -950,6 +953,8 @@ package body VCS_View_API is
       Success            : Boolean;
       pragma Unreferenced (Success);
 
+      Cancel_All         : Boolean := False;
+
       Log_Checks         : External_Command_Access;
       File_Checks        : External_Command_Access;
 
@@ -1022,9 +1027,58 @@ package body VCS_View_API is
                end if;
 
                if Log_Check_Script /= "" then
+                  --  Check that the log file is not empty.
+
+                  declare
+                     S : GNAT.OS_Lib.String_Access;
+
+                     use type GNAT.OS_Lib.String_Access;
+                  begin
+                     S := Read_File (Log_File);
+
+                     if S = null then
+                        Cancel_All := True;
+                        Insert (Kernel,
+                                  (-"File could not be read: ") & Log_File);
+
+                        Free (File_Args);
+                        Free (Log_Args);
+                        Free (Head_List);
+                        exit;
+
+                     elsif S.all = "" then
+                        declare
+                           M : Message_Dialog_Buttons;
+                        begin
+                           M := Message_Dialog
+                             ((-"File: ") & Data (Files_Temp)
+                              & ASCII.LF & ASCII.LF &
+                                (-"The revision log for this file is empty,")
+                              & ASCII.LF &
+                                (-"Commit anyways ?"),
+                              Confirmation,
+                              Button_Yes or Button_No,
+                              Button_Yes,
+                              "", -"Empty log detected",
+                              Gtk.Enums.Justify_Left);
+
+                           if M = Button_No then
+                              Cancel_All := True;
+
+                              Free (File_Args);
+                              Free (Log_Args);
+                              Free (Head_List);
+                              exit;
+                           end if;
+                        end;
+                     end if;
+
+                     GNAT.OS_Lib.Free (S);
+                  end;
+
                   Append (Log_Args, Log_File);
                   Append
-                    (Head_List, -"File: " & Head (Files) & ASCII.LF
+                    (Head_List, -"File: " & Data (Files_Temp) & ASCII.LF
                      & (-"The revision log does not pass the checks."));
 
                   Create
@@ -1062,7 +1116,11 @@ package body VCS_View_API is
          First_Check := Command_Access (Commit_Command);
       end if;
 
-      Enqueue (Get_Queue (Ref), First_Check);
+      if Cancel_All then
+         Destroy (First_Check);
+      else
+         Enqueue (Get_Queue (Ref), First_Check);
+      end if;
 
       Free (Logs);
    end Commit_Files;
