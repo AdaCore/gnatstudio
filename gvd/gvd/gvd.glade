@@ -2871,7 +2871,7 @@
 	  <widget>
 	    <class>GtkLabel</class>
 	    <name>label92</name>
-	    <label>Color Hilighting</label>
+	    <label>Color Highlighting</label>
 	    <justify>GTK_JUSTIFY_CENTER</justify>
 	    <wrap>False</wrap>
 	    <xalign>7.45058e-09</xalign>

@@ -493,7 +493,7 @@ begin
    Set_Row_Spacings (General_Preferences.Table8, 2);
    Set_Col_Spacings (General_Preferences.Table8, 2);
 
-   Gtk_New (General_Preferences.Label92, -("Color Hilighting"));
+   Gtk_New (General_Preferences.Label92, -("Color Highlighting"));
    Attach (General_Preferences.Table8, General_Preferences.Label92, 0, 1, 0, 1,
      Fill, 0,
      0, 0);
