@@ -52,6 +52,7 @@ with VCS_Module;
 with VCS.CVS;
 with Glide_Kernel.Help;
 with Vdiff_Module;
+with Builder_Module;
 
 --  The LI parsers
 with Src_Info.ALI;
@@ -166,6 +167,7 @@ begin
    Src_Editor_Module.Register_Module;
    Glide_Kernel.Help.Register_Module;
    GVD_Module.Register_Module;
+   Builder_Module.Register_Module;
    Vdiff_Module.Register_Module;
 
    --  Register all LI parsers
