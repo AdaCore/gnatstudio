@@ -320,7 +320,9 @@ package body Glide_Menu is
         File_Selection_Dialog (Title => "Open Project", Must_Exist => True);
 
    begin
-      Load_Project (Top.Kernel, Filename);
+      if Filename /= "" then
+         Load_Project (Top.Kernel, Filename);
+      end if;
    end On_Open_Project;
 
    --------------------
@@ -335,7 +337,7 @@ package body Glide_Menu is
       Wiz : Creation_Wizard.Prj_Wizard;
    begin
       Gtk_New (Wiz);
-      Set_Page (Wiz, 1);
+      Set_Current_Page (Wiz, 1);
       Show_All (Wiz);
       Main;
    end On_New_Project;
