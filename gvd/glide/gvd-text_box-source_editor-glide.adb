@@ -245,7 +245,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    begin
       Free (Editor.Current_File);
       Editor.Current_File := new String'("");
-      Console.Insert (Kernel, Message);
+      Console.Insert (Kernel, Message, Mode => Error);
    end Show_Message;
 
    ------------------------
