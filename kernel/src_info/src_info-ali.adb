@@ -1234,14 +1234,22 @@ package body Src_Info.ALI is
       Decl      : E_Declaration renames Decl_Info.Declaration;
 
       Current_Sfile : Source_File;
+      Ent : constant String := To_Lower (Get_String (Xref_Ent.Entity));
+      Col : Natural := Natural (Xref_Ent.Col);
+      Is_Operator : constant Boolean := Ent (Ent'First) = '"';
 
    begin
-      Decl.Name := new String'
-        (To_Lower (Get_String (Xref_Ent.Entity)));
+      if Is_Operator then
+         Decl.Name := new String'(Ent (Ent'First + 1 .. Ent'Last - 1));
+         Col := Col + 1;
+      else
+         Decl.Name := new String'(Ent);
+      end if;
+
       Decl.Location :=
         (File   => Sfile,
          Line   => Positive (Xref_Ent.Line),
-         Column => Positive (Xref_Ent.Col));
+         Column => Col);
       Decl.Kind := Char_To_E_Kind (Xref_Ent.Etype);
 
       if Xref_Ent.Lib then
@@ -1333,6 +1341,12 @@ package body Src_Info.ALI is
 
             if Is_End_Reference (E_Ref.Kind) then
                Decl.End_Of_Scope := E_Ref;
+
+               --  For an operator, ignore the quotes
+               if Is_Operator then
+                  E_Ref.Location.Column := E_Ref.Location.Column + 1;
+               end if;
+
             elsif Decl_Info.References = null then
                Decl_Info.References := new E_Reference_Node'
                  (Value => E_Ref, Next => null);
