@@ -49,6 +49,11 @@ Known Problems fixed in GPS 2.1.0
               the status for files in the sub-directories as well.
   Workaround: Prefer the use of "Query status for project"
 
+- DA07-015 Bad indentation of C code
+  Problem:    In C sources, the wrong indentation may be computed on lines
+              starting with a '(' and only spaces before.
+  Workaround: Indent the line by hand.
+
 - DA05-024 In VCS XML definitions, <diff_working> node has no effect
   Problem:    When writing or modifying XML files for supporting a new VCS,
               the <diff_working> node has no effect.
