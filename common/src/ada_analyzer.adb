@@ -1051,6 +1051,7 @@ package body Ada_Analyzer is
                  or else Token = Tok_Array
                  or else Prev_Token = Tok_Colon_Equal
                  or else Prev_Token = Tok_Access
+                 or else Prev_Token = Tok_Of
                  or else (Prev_Token = Tok_Exit and then Token = Tok_When)
                  or else (Prev_Token = Tok_With and then Token = Tok_Private)
                  or else (Prev_Token = Tok_Null and then Token = Tok_Record)
