@@ -459,6 +459,7 @@ package Entities is
 
    procedure Unref (Entity : in out Entity_Information);
    procedure Ref   (Entity : Entity_Information);
+   pragma Inline (Ref);
    --  Change reference counting for the file. When it reaches 0, the memory
    --  is freed.
 
