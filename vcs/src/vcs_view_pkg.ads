@@ -30,6 +30,8 @@ with String_List_Utils;        use String_List_Utils;
 
 with VCS;                      use VCS;
 
+with Generic_List;
+
 package VCS_View_Pkg is
 
    type VCS_View_Record is new Gtk_Hbox_Record with private;
@@ -115,14 +117,29 @@ package VCS_View_Pkg is
 
 
 private
+   type Line_Record is record
+      Status : File_Status_Record;
+      --  The file status.
+
+      Log    : Boolean;
+      --  Whether the file is associated with a changelog.
+   end record;
+   --  The information stored in one line of the VCS explorer.
+
+   procedure Free (X : in out Line_Record);
+   --  Free memory associated with X.
+
+   package Line_Record_List is new Generic_List (Line_Record);
+   use Line_Record_List;
+
    type VCS_Page_Record is new Gtk_Hbox_Record with record
       Reference : VCS_Access;
 
       Tree   : Gtk_Tree_View;
       Model  : Gtk_Tree_Store;
 
-      Stored_Status   : File_Status_List.List;
-      Cached_Status   : File_Status_List.List;
+      Stored_Status   : List;
+      Cached_Status   : List;
 
       Shown : Boolean := False;
    end record;
