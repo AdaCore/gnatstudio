@@ -4,7 +4,6 @@ with "../kernel/kernel";
 with "../gvd/gvd_common";
 with "../widgets/widgets";
 with "../vsearch/vsearch";
-with "../src_editor/src_editor";
 
 project Prj_Editor is
 
