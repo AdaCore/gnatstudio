@@ -34,7 +34,6 @@ with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
 with Breakpoints_Pkg;     use Breakpoints_Pkg;
 with Odd.Process;         use Odd.Process;
-with GNAT.Expect;         use GNAT.Expect;
 with Ada.Text_IO;         use Ada.Text_IO;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Display_Items;       use Display_Items;
@@ -64,20 +63,18 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access) is
       Tab      : Debugger_Process_Tab;
-      Page_Num : Gint := 0;
       Page     : Gtk_Widget;
 
    begin
       Free (Top.Command_History);
 
       loop
-         Page := Get_Nth_Page (Top.Process_Notebook, Page_Num);
-
+         Page := Get_Nth_Page (Top.Process_Notebook, 0);
          exit when Page = null;
 
-         Page_Num := Page_Num + 1;
          Tab := Process_User_Data.Get (Page);
          Close (Tab.Debugger);
+         Remove_Page (Top.Process_Notebook, 0);
       end loop;
    end Cleanup_Debuggers;
 
@@ -689,7 +686,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
-      Tmp : Boolean;
 
    begin
       if Tab = null then
@@ -699,25 +695,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
       --  Give some visual feedback to the user
       Text_Output_Handler (Tab, "<^C>" & ASCII.LF, Is_Command => True);
 
-      --  Process the events so as to show the text.
-      while Gtk.Main.Events_Pending loop
-         Tmp := Gtk.Main.Main_Iteration;
-      end loop;
-
-      --  Empty all the buffers to avoid waiting for a long time that all
-      --  the output is processed.
-      Interrupt (Tab.Debugger);
-      Flush (Get_Descriptor (Get_Process (Tab.Debugger)).all, Timeout => 100);
-
-      --  Make sure a final prompt is displayed for the user.
-      --  If we are already processing a command (such as "run"), that command
-      --  is already waiting for the prompt, and we don't need to do it.
-      --  Otherwise, we need to do it ourselves, so that the new prompt
-      --  appears as well.
-      Display_Prompt
+      Interrupt
         (Tab.Debugger,
          Wait_For_Prompt =>
            not Command_In_Process (Get_Process (Tab.Debugger)));
+
+      --  We used to flush the output here, so that if the program was
+      --  outputting a lot of things, we just stop there.
+      --  However, this is not doable, since it in fact also flushes the
+      --  prompt that the debugger prints after interruption. Calling
+      --  Display_Prompt is also not acceptable, since we might be busy
+      --  processing another command.
    end On_Interrupt1_Activate;
 
    ------------------------
