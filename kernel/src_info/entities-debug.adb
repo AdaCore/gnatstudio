@@ -20,13 +20,15 @@
 
 with Ada.Calendar; use Ada.Calendar;
 with GNAT.Calendar; use GNAT.Calendar;
-with Ada.Text_IO;   use Ada.Text_IO;
 with String_Utils; use String_Utils;
 with VFS;          use VFS;
 with GNAT.Strings; use GNAT.Strings;
 with GNAT.Bubble_Sort; use GNAT.Bubble_Sort;
+with Traces; use Traces;
 
 package body Entities.Debug is
+
+   Me : constant Debug_Handle := Create ("Entities.Debug");
 
    Dump_Full_File_Names : constant Boolean := False;
    Show_Timestamps      : Boolean := True;
@@ -54,7 +56,6 @@ package body Entities.Debug is
    procedure Dump (Timestamp : Ada.Calendar.Time);
    procedure Dump (Files : Source_File_List; Name : String);
    procedure Dump (Files     : Dependency_List; Name : String);
-   procedure Dump (E         : Entity_Information_List_Access);
    procedure Dump (Dep       : File_Dependency);
    procedure Dump
      (Entities  : Entity_Information_List;
@@ -70,9 +71,6 @@ package body Entities.Debug is
 
    function Image (Col : Column_Type) return String;
    --  Image of the column number
-
-   procedure Low_Level_Dump is new Entities_Tries.Dump (Put, Dump);
-   pragma Unreferenced (Low_Level_Dump);
 
    Reference_Kind_To_Char : constant array (Reference_Kind) of Character :=
      (Reference                                => 'r',
@@ -123,9 +121,9 @@ package body Entities.Debug is
    procedure Dump (File : Virtual_File) is
    begin
       if Dump_Full_File_Names then
-         Put (Full_Name (File).all);
+         Output (Full_Name (File).all);
       else
-         Put (Base_Name (File));
+         Output (Base_Name (File));
       end if;
    end Dump;
 
@@ -137,7 +135,7 @@ package body Entities.Debug is
    begin
       Dump (Get_Filename (Dep.File));
       if Dep.Explicit then
-         Put (":W");
+         Output (":W");
       end if;
    end Dump;
 
@@ -148,9 +146,9 @@ package body Entities.Debug is
    procedure Dump (Kind : E_Kind) is
    begin
       if Kind = Unresolved_Entity_Kind then
-         Put ("(Unresolved)");
+         Output ("(Unresolved)");
       else
-         Put ('(' & Kind.Kind'Img & " type=" & Boolean'Image (Kind.Is_Type)
+         Output ('(' & Kind.Kind'Img & " type=" & Boolean'Image (Kind.Is_Type)
               & " generic=" & Boolean'Image (Kind.Is_Generic)
               & " abstract=" & Boolean'Image (Kind.Is_Abstract) & ')');
       end if;
@@ -167,33 +165,20 @@ package body Entities.Debug is
    begin
       if Length (Entities) /= 0 then
          if not Full and then Name /= "" then
-            Put ("   " & Name & "= ");
+            Output ("   " & Name & "= ");
          end if;
 
          for E in Entity_Information_Arrays.First .. Last (Entities) loop
             Dump (Entities.Table (E), Full => Full, Name => "");
 
             if not Full then
-               Put (' ');
+               Output (" ");
             end if;
          end loop;
 
          if not Full and then Name /= "" then
-            New_Line;
+            Output_Line ("");
          end if;
-      end if;
-   end Dump;
-
-   ----------
-   -- Dump --
-   ----------
-
-   procedure Dump (E : Entity_Information_List_Access) is
-   begin
-      if E = null then
-         Put ("<empty_list>");
-      else
-         Dump (E.all, Full => False, Name => "");
       end if;
    end Dump;
 
@@ -203,9 +188,9 @@ package body Entities.Debug is
 
    procedure Dump (Ref : E_Reference; Full : Boolean) is
    begin
-      Dump (Ref.Location); Put (':' & Reference_Kind_To_Char (Ref.Kind));
+      Dump (Ref.Location); Output (':' & Reference_Kind_To_Char (Ref.Kind));
       if Full and then Ref.Caller /= null then
-         Put ('@'); Dump (Ref.Caller, Full => False, Name => "");
+         Output ("@"); Dump (Ref.Caller, Full => False, Name => "");
       end if;
    end Dump;
 
@@ -217,11 +202,11 @@ package body Entities.Debug is
      (Locs : Entity_Reference_List; Name : String; Full : Boolean) is
    begin
       if Length (Locs) /= 0 then
-         Put ("   " & Name & "= ");
+         Output ("   " & Name & "= ");
          for L in Entity_Reference_Arrays.First .. Last (Locs) loop
-            Dump (Locs.Table (L), Full); Put (' ');
+            Dump (Locs.Table (L), Full); Output (" ");
          end loop;
-         New_Line;
+         Output_Line ("");
       end if;
    end Dump;
 
@@ -232,10 +217,10 @@ package body Entities.Debug is
    procedure Dump (Loc : File_Location) is
    begin
       if Loc = No_File_Location then
-         Put ("<no_location>");
+         Output ("<no_location>");
       else
          Dump (Get_Filename (Loc.File));
-         Put (':' & Image (Loc.Line) & ':' & Image (Loc.Column));
+         Output (':' & Image (Loc.Line) & ':' & Image (Loc.Column));
       end if;
    end Dump;
 
@@ -253,12 +238,12 @@ package body Entities.Debug is
       Sub     : Second_Duration;
    begin
       if Timestamp = No_Time then
-         Put ("@<no_time>");
+         Output ("@<no_time>");
       elsif not Show_Timestamps then
-         Put ("@<hidden time>");
+         Output ("@<hidden time>");
       else
          Split (Timestamp, Year, Month, Day, Hour, Minutes, Seconds, Sub);
-         Put ("@" & Image (Integer (Year)) & ':'
+         Output ("@" & Image (Integer (Year)) & ':'
               & Image (Integer (Month)) & ':'
               & Image (Integer (Day)) & '-'
               & Image (Integer (Hour)) & ':'
@@ -274,12 +259,12 @@ package body Entities.Debug is
    procedure Dump (Files : Dependency_List; Name : String) is
    begin
       if Length (Files) /= 0 then
-         Put ("   " & Name & "= ");
+         Output ("   " & Name & "= ");
          for L in Dependency_Arrays.First .. Last (Files) loop
             Dump (Files.Table (L));
-            Put (' ');
+            Output (" ");
          end loop;
-         New_Line;
+         Output_Line ("");
       end if;
    end Dump;
 
@@ -290,12 +275,12 @@ package body Entities.Debug is
    procedure Dump (Files : Source_File_List; Name : String) is
    begin
       if Length (Files) /= 0 then
-         Put ("   " & Name & "= ");
+         Output ("   " & Name & "= ");
          for L in Source_File_Arrays.First .. Last (Files) loop
             Dump (Get_Filename (Files.Table (L)));
-            Put (' ');
+            Output (" ");
          end loop;
-         New_Line;
+         Output_Line ("");
       end if;
    end Dump;
 
@@ -306,9 +291,9 @@ package body Entities.Debug is
    procedure Dump (LI : LI_File) is
    begin
       Dump (Get_LI_Filename (LI));
-      Put (' ');
+      Output (" ");
       Dump (LI.Timestamp);
-      Put_Line (" ref_count=" & Image (LI.Ref_Count));
+      Output_Line (" ref_count=" & Image (LI.Ref_Count));
 
       Dump (LI.Files, "sources");
    end Dump;
@@ -321,7 +306,7 @@ package body Entities.Debug is
       Iter : LI_HTable.Iterator;
       LI   : LI_File_Item;
    begin
-      Put_Line ("====== LI files =====");
+      Output_Line ("====== LI files =====");
       Get_First (LIs, Iter);
       loop
          LI := Get_Element (Iter);
@@ -338,16 +323,16 @@ package body Entities.Debug is
    procedure Dump (File : Source_File; Show_Entities : Boolean) is
    begin
       Dump (Get_Filename (File));
-      Put (' ');
+      Output (" ");
       Dump (File.Timestamp);
-      Put_Line
+      Output_Line
         (" ref_count=" & Image (File.Ref_Count)
-         & " has_scope_tree=" & Boolean'Image (File.Scope_Tree_Computed));
+         & " Has_Scope_tree=" & Boolean'Image (File.Scope_Tree_Computed));
 
       if File.LI /= null then
-         Put ("   li=");
+         Output ("   li=");
          Dump (Get_LI_Filename (File.LI));
-         New_Line;
+         Output_Line ("");
       end if;
 
       Dump (File.Depends_On,  "depends_on");
@@ -369,29 +354,29 @@ package body Entities.Debug is
    begin
       if Entity /= null then
          if not Full and then Name /= "" then
-            Put ("   " & Name & "= ");
+            Output ("   " & Name & "= ");
          end if;
 
          if Get_Name (Entity) = null then
-            Put ("<no_name>:");
+            Output ("<no_name>:");
          else
-            Put (Get_Name (Entity).all & ':');
+            Output (Get_Name (Entity).all & ':');
          end if;
          Dump (Entity.Declaration);
 
          if Full then
             if not Entity.Is_Valid then
-               Put (" is_valid=FALSE");
+               Output (" is_valid=FALSE");
             end if;
 
-            Put_Line (" ref_count=" & Image (Entity.Ref_Count));
+            Output_Line (" ref_count=" & Image (Entity.Ref_Count));
             if Entity.Kind /= Unresolved_Entity_Kind then
-               Put ("   kind="); Dump (Entity.Kind); New_Line;
+               Output ("   kind="); Dump (Entity.Kind); Output_Line ("");
             end if;
             if Entity.End_Of_Scope.Location /= No_File_Location then
-               Put ("   end_of_scope=");
+               Output ("   end_of_scope=");
                Dump (Entity.End_Of_Scope, Full => True);
-               New_Line;
+               Output_Line ("");
             end if;
 
             Dump (Entity.Caller_At_Declaration, False, "caller_at_decl");
@@ -405,7 +390,7 @@ package body Entities.Debug is
             Dump (Entity.Called_Entities, False, "calls");
             Dump (Entity.References, "references", Full => True);
          elsif Name /= "" then
-            New_Line;
+            Output_Line ("");
          end if;
       end if;
    end Dump;
@@ -451,7 +436,8 @@ package body Entities.Debug is
             elsif OpF2 = VFS.No_File then
                return False;
             else
-               return OpF1 < OpF2;
+               --  We want <=, but it is more efficient to compute it this way
+               return not (OpF2 < OpF1);
             end if;
          end Lt;
 
@@ -475,7 +461,7 @@ package body Entities.Debug is
    procedure Dump
      (Sorted_Files : Source_File_Array; Show_Entities : Boolean) is
    begin
-      Put_Line ("====== Source files =====");
+      Output_Line ("====== Source files =====");
       for F in Sorted_Files'Range loop
          Dump (Sorted_Files (F), Show_Entities);
       end loop;
@@ -493,9 +479,9 @@ package body Entities.Debug is
       Is_Empty : constant Boolean := Get (Iter) = null;
    begin
       if Full then
-         Put_Line ("====== Entities =====");
+         Output_Line ("====== Entities =====");
       elsif not Is_Empty then
-         Put ("   " & Name & "= ");
+         Output ("   " & Name & "= ");
       end if;
 
       loop
@@ -507,7 +493,7 @@ package body Entities.Debug is
       Free (Iter);
 
       if not Full and then not Is_Empty then
-         New_Line;
+         Output_Line ("");
       end if;
    end Dump;
 
@@ -517,7 +503,7 @@ package body Entities.Debug is
 
    procedure Dump_Entities_From_Files (Files : Source_File_Array) is
    begin
-      Put_Line ("====== Entities from files =====");
+      Output_Line ("====== Entities from files =====");
       for F in Files'Range loop
          Dump (Files (F).Entities, Full => True, Name => "");
       end loop;
@@ -530,14 +516,27 @@ package body Entities.Debug is
    procedure Dump (Db : Entities_Database) is
    begin
       if Db /= null then
+         Trace (Me, "MANU Getting Sorted List of Files");
          declare
             Files : constant Source_File_Array := Get_Sorted_List_Of_Files
               (Db.Files'Unrestricted_Access);
          begin
+            Trace (Me, "MANU sorting LIs");
             Dump (Db.LIs);
             Dump (Files, Show_Entities => False);
             Dump_Entities_From_Files (Files);
          end;
       end if;
    end Dump;
+
+   ------------------------
+   -- Set_Default_Output --
+   ------------------------
+
+   procedure Set_Default_Output is
+   begin
+      Output      := GNAT.IO.Put'Access;
+      Output_Line := GNAT.IO.Put_Line'Access;
+   end Set_Default_Output;
+
 end Entities.Debug;
