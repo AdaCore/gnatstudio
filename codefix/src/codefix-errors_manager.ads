@@ -136,6 +136,9 @@ package Codefix.Errors_Manager is
       Object        : in out Extract'Class;
       Success       : out Boolean;
       Already_Fixed : out Boolean);
+   --  Merge Object with all the changes made in the correction manager. If all
+   --  modifications made in Object are already made in the correction manager,
+   --  then Already_Fixed is True, otherwise it is False.
 
 private
 
