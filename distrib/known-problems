@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.0.0
 
+- E317-016 Changing fonts using the font selector
+  Problem:    In the preferences dialog, when changing a font using the font
+              selector, GPS does not take into account the new preference.
+  Workaround: Type the name of the font manually in the text entry.
+
 - E310-003 Casing of project names not preserved in the Project View
   Problem:    The project view doesn't show the proper casing for project names,
               ie the one specified in the project file itself.
