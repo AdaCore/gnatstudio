@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                       Copyright (C) 2001-2003                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -2278,6 +2278,7 @@ package body Src_Info.Queries is
          LI      : LI_File_Ptr;
          Handler : LI_Handler;
          Sep_List : File_Info_Ptr_List;
+
       begin
          if not Get
            (Iterator.Examined,
@@ -2344,13 +2345,9 @@ package body Src_Info.Queries is
                end if;
             end if;
          end if;
+
          Iterator.LI := null;
          return null;
-
-      exception
-         when Unsupported_Language =>
-            Iterator.LI := null;
-            return null;
       end Check_File;
 
       -------------------
@@ -2533,6 +2530,8 @@ package body Src_Info.Queries is
    is
       Decl_Project : Project_Type := Project;
       Iterator_Decl_Project : Project_Type := Project;
+      Handler      : LI_Handler;
+
    begin
       Trace (Me, "Find_Ancestor_Dependencies: "
              & Source_Filename
@@ -2560,13 +2559,21 @@ package body Src_Info.Queries is
       Iterator.Include_Self     := Include_Self;
       Iterator.Indirect_Imports := Indirect_Imports;
 
+      Handler := Get_LI_Handler_From_File
+        (Glide_Language_Handler (Lang_Handler), Source_Filename);
+
+      if Handler = null then
+         Trace (Me, "Find_Ancestor_Dependencies: Unsupported language");
+         Destroy (Iterator);
+         return;
+      end if;
+
       Create_Or_Complete_LI
-        (Handler                => Get_LI_Handler_From_File
-           (Glide_Language_Handler (Lang_Handler), Source_Filename),
-         File                   => Iterator.Decl_LI,
-         Source_Filename        => Source_Filename,
-         List                   => List,
-         Project                => Decl_Project);
+        (Handler         => Handler,
+         File            => Iterator.Decl_LI,
+         Source_Filename => Source_Filename,
+         List            => List,
+         Project         => Decl_Project);
 
       Assert (Me,
               Iterator.Decl_LI /= null,
@@ -2585,15 +2592,12 @@ package body Src_Info.Queries is
             Recursive => False,
             Full_Path => False);
       end if;
+
       Iterator.Current_File := Iterator.Source_Files'First - 1;
 
       Next (Lang_Handler, Iterator, List);
 
    exception
-      when Unsupported_Language =>
-         Trace (Me, "Find_Ancestor_Dependencies: Unsupported language");
-         Destroy (Iterator);
-
       when Assert_Failure =>
          Destroy (Iterator);
 
