@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                       Copyright (C) 2003                          --
+--                    Copyright (C) 2003-2004                        --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -41,8 +41,7 @@ package body Src_Editor_Buffer.Buffer_Commands is
 
    function Execute
      (Command : access Jump_To_Delimiter_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
       View   : Source_View;
@@ -52,6 +51,7 @@ package body Src_Editor_Buffer.Buffer_Commands is
       On_Cursor_Iter       : Gtk_Text_Iter;
       First_Highlight_Iter : Gtk_Text_Iter;
       Last_Highlight_Iter  : Gtk_Text_Iter;
+
    begin
       if Widget /= null
         and then Widget.all'Tag = Source_View_Record'Tag
@@ -77,6 +77,7 @@ package body Src_Editor_Buffer.Buffer_Commands is
       else
          Place_Cursor (Buffer, First_Highlight_Iter);
       end if;
+
       return Commands.Success;
    end Execute;
 
@@ -86,11 +87,12 @@ package body Src_Editor_Buffer.Buffer_Commands is
 
    function Execute
      (Command : access Completion_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
+
       use String_List_Utils.String_List;
+
       Widget : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Command.Kernel);
       View   : Source_View;
@@ -106,18 +108,17 @@ package body Src_Editor_Buffer.Buffer_Commands is
       -----------------------------
 
       procedure Extend_Completions_List is
-         Data       : Completion_Data renames Buffer.Completion;
-         Word_Begin : Gtk_Text_Iter;
-         Word_End   : Gtk_Text_Iter;
-         Iter_Back  : Gtk_Text_Iter;
+         Data         : Completion_Data renames Buffer.Completion;
+         Word_Begin   : Gtk_Text_Iter;
+         Word_End     : Gtk_Text_Iter;
+         Iter_Back    : Gtk_Text_Iter;
          Iter_Forward : Gtk_Text_Iter;
+         Aux          : Gtk_Text_Iter;
+         Success      : Boolean := True;
+         Found        : Boolean := False;
+         Word_Found   : Boolean := False;
+         Count        : Gint := 1;
 
-         Aux        : Gtk_Text_Iter;
-         Success    : Boolean := True;
-         Found      : Boolean := False;
-         Word_Found : Boolean := False;
-
-         Count      : Gint := 1;
       begin
          if Data.Complete then
             if Data.Node = Null_Node then
@@ -365,6 +366,7 @@ package body Src_Editor_Buffer.Buffer_Commands is
       GNAT.OS_Lib.Free (Text);
 
       Buffer.Inserting := False;
+
       return Commands.Success;
    end Execute;
 

@@ -1303,6 +1303,7 @@ package body Src_Editor_Module is
                end if;
             end if;
          end;
+
       elsif Command = "add_blank_lines" then
          declare
             Filename    : constant Virtual_File :=
@@ -3325,8 +3326,7 @@ package body Src_Editor_Module is
          Default_Key => "control-slash");
 
       Command := new Jump_To_Delimiter_Command;
-      Jump_To_Delimiter_Command (Command.all).Kernel :=
-        Kernel_Handle (Kernel);
+      Jump_To_Delimiter_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Jump to matching delimiter", Command,
          -"Jump to the matching delimiter ()[]{}",

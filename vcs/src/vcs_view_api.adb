@@ -1207,16 +1207,19 @@ package body VCS_View_API is
 
          loop
             declare
-               L_Img : aliased String := Image (Line);
+               L_Img   : aliased String  := Image (Line);
                B_Line  : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel,
                     "Editor.get_chars",
                     (ChangeLog_Filename'Unchecked_Access,
                      L_Img'Unchecked_Access));
+
             begin
                Entry_Found := Index (B_Line, Filename) /= 0;
+
                exit when Entry_Found or else Line = Last;
+
                Line := Line + 1;
             end;
          end loop;
@@ -1333,6 +1336,7 @@ package body VCS_View_API is
                C_Img              : aliased String := Image (Column);
                ChangeLog_Filename : aliased String :=
                  Full_Name (ChangeLog_File).all;
+
             begin
                Execute_GPS_Shell_Command
                  (Kernel,
