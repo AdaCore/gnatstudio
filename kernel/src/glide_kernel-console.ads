@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
-with Glide_Result_View;          use Glide_Result_View;
 
 package Glide_Kernel.Console is
 
@@ -73,10 +72,5 @@ package Glide_Kernel.Console is
      (Kernel : access Kernel_Handle_Record'Class)
       return Glide_Interactive_Console;
    --  Return the interactive console associated with the kernel.
-
-   function Get_Result_View
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Result_View;
-   --  Return the results view widget.
 
 end Glide_Kernel.Console;
