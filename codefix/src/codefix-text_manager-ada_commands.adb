@@ -778,20 +778,66 @@ package body Codefix.Text_Manager.Ada_Commands is
       Destination  : File_Cursor'Class;
       Source       : File_Cursor'Class)
    is
+      procedure Initialize_Profile
+        (Position                 : File_Cursor;
+         Begin_Cursor, End_Cursor : out File_Cursor);
+
+      procedure Initialize_Profile
+        (Position                 : File_Cursor;
+         Begin_Cursor, End_Cursor : out File_Cursor)
+      is
+         Garbage_Cursor : File_Cursor;
+         Next_Word_End  : Dynamic_String;
+      begin
+         Begin_Cursor := File_Cursor
+           (Search_String
+              (Current_Text, Position, "(", Std_Ada_Escape));
+
+         End_Cursor := File_Cursor
+           (Get_Right_Paren (Current_Text, Begin_Cursor));
+
+
+         Garbage_Cursor := End_Cursor;
+         Garbage_Cursor.Col := Garbage_Cursor.Col + 1;
+         Next_Word (Current_Text, Garbage_Cursor, Next_Word_End);
+
+         if To_Lower (Next_Word_End.all) = "return" then
+            declare
+               Is_Cursor, Semicol_Cursor : File_Cursor;
+            begin
+               Is_Cursor := File_Cursor
+                 (Search_String
+                    (Current_Text, End_Cursor, "is", Std_Ada_Escape));
+               Semicol_Cursor := File_Cursor
+                 (Search_String
+                    (Current_Text, End_Cursor, ";", Std_Ada_Escape));
+
+               Free (End_Cursor);
+
+               if Is_Cursor = Null_File_Cursor
+                 or else Semicol_Cursor < Is_Cursor
+               then
+                  End_Cursor := File_Cursor
+                    (Previous_Char (Current_Text, Semicol_Cursor));
+                  Free (Is_Cursor);
+               else
+                  End_Cursor := File_Cursor
+                    (Previous_Char (Current_Text, Is_Cursor));
+                  Free (Semicol_Cursor);
+               end if;
+            end;
+         end if;
+
+      end Initialize_Profile;
+
       Destination_Begin, Destination_End : File_Cursor;
       Source_Begin, Source_End           : File_Cursor;
-   begin
-      Destination_Begin := File_Cursor
-        (Search_String
-           (Current_Text, Destination, "(", Std_Ada_Escape));
-      Source_Begin := File_Cursor
-        (Search_String
-           (Current_Text, Source, "(", Std_Ada_Escape));
 
-      Destination_End := File_Cursor
-        (Get_Right_Paren (Current_Text, Destination_Begin));
-      Source_End := File_Cursor
-        (Get_Right_Paren (Current_Text, Source_Begin));
+   begin
+
+      Initialize_Profile
+        (File_Cursor (Destination), Destination_Begin, Destination_End);
+      Initialize_Profile (File_Cursor (Source), Source_Begin, Source_End);
 
       This.Destination_Begin := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Destination_Begin));
