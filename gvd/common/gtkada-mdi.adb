@@ -1539,6 +1539,13 @@ package body Gtkada.MDI is
       Curs := Side (C, Gint (Get_X (Event)), Gint (Get_Y (Event)));
       MDI.Current_Cursor := Curs;
 
+      if C.State = Iconified
+        and then Curs /= Left_Ptr
+      then
+         MDI.Selected_Child := null;
+         return False;
+      end if;
+
       Gdk_New (Cursor, Curs);
       Tmp := Pointer_Grab
         (Get_Window (C),
@@ -2809,8 +2816,7 @@ package body Gtkada.MDI is
 
          List := First (MDI.Items);
          Child.X := 0;
-         Child.Y := (Gint (Get_Allocation_Height (MDI.Layout)) / Icon_Height)
-           * Icon_Height;
+         Child.Y := Gint (Get_Allocation_Height (MDI.Layout)) - Icon_Height;
 
          --  Find the best placement for the icon
          while List /= Null_List loop
