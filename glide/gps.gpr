@@ -16,6 +16,9 @@ with "../custom/custom";
 with "../help/help";
 with "../vfs/vfs";
 with "../docgen/docgen";
+with "../ada_module/ada_module";
+with "../cpp_module/cpp_module";
+with "../aliases/aliases";
 with "../shared";
 
 project GPS is
