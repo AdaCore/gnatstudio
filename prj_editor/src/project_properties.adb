@@ -22,10 +22,12 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
@@ -1301,7 +1303,7 @@ package body Project_Properties is
                --  that stored the name of the projects are now obsolete), we
                --  act as if a new project had been loaded.
 
-               Project_Changed (Kernel);
+               Run_Hook (Kernel, Project_Changed_Hook);
 
                Changed := True;
                Trace (Me, "Project was renamed or moved");
