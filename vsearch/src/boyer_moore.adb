@@ -97,7 +97,7 @@ package body Boyer_Moore is
       K, K2 : Natural;
       Max : constant Natural := From_String'Length + Motif_First;
    begin
-      --  Compute the last occurence function
+      --  Compute the last occurrence function
       --  Compute the two prefix functions (both from left-to-right and
       --  from right-to-left for the suffixes).
       --  We use a single loop over the pattern for these, for efficiency.
@@ -105,14 +105,15 @@ package body Boyer_Moore is
       pragma Assert (From_String'Length <= Max_Pattern_Length);
 
       Motif.Case_Sensitive := Case_Sensitive;
-      Motif.Last_Occurence := (others => 1);
-      Motif.Last_Occurence (From_String (From_String'First)) := 2;
+      Motif.Last_Occurrence := (others => 1);
       Motif.Motif := new String (Motif_First .. From_String'Length);
       if Case_Sensitive then
          Motif.Motif.all := From_String;
       else
          Motif.Motif.all := To_Lower (From_String);
       end if;
+
+      Motif.Last_Occurrence (Motif.Motif (Motif_First)) := 2;
 
       K := Motif_First - 1;
       Prefix_Func (Motif_First) := K;
@@ -121,9 +122,9 @@ package body Boyer_Moore is
 
       for Q in Motif_First + 1 .. From_String'Length loop
 
-         --  The last occurence function
+         --  The last occurrence function
 
-         Motif.Last_Occurence (Motif.Motif (Q)) := Q - Motif_First + 2;
+         Motif.Last_Occurrence (Motif.Motif (Q)) := Q - Motif_First + 2;
 
          --  The prefix function
 
@@ -188,7 +189,7 @@ package body Boyer_Moore is
                    & " forward");
          Put_Line ("   and restart match at location F[i]+1 in pattern");
          Put_Line ("Good_Suffix_Function: SF");
-         Put_Line ("Last_Occurence_Function: L");
+         Put_Line ("Last_Occurrence_Function: L");
 
          Put ("   i   =  ");
          for J in From_String'Range loop
@@ -204,7 +205,7 @@ package body Boyer_Moore is
 
          Put ("   L   =  ");
          for J in From_String'Range loop
-            Put (Item => Motif.Last_Occurence (From_String (J)), Width => 3);
+            Put (Item => Motif.Last_Occurrence (Motif.Motif (J)), Width => 3);
          end loop;
          New_Line;
 
@@ -259,32 +260,46 @@ package body Boyer_Moore is
       procedure Dump;
       --  Print the current state of the search
 
+      procedure Dump_Str (Str : String);
+      --  Print string, replacing the newlines with spaces for clarity
+
+      procedure Dump_Str (Str : String) is
+      begin
+         for S in Str'Range loop
+            if Str (S) = ASCII.LF then
+               Put (' ');
+            else
+               Put (Str (S));
+            end if;
+         end loop;
+         New_Line;
+      end Dump_Str;
+
       procedure Dump is
       begin
          --  Show current automaton state
-         if Debug then
-            Num_Comp := Num_Comp + M - J + 1;
+         Num_Comp := Num_Comp + M - J + 1;
 
-            if Debug_Run then
-               Put_Line ("Offset : J=" & J'Img
-                         & " Last_Occ=" & In_String (Shift + J)
-                         & " Max ("
-                         & Motif.Good_Suffix (J)'Img
-                         & ","
-                         & Natural'Image
-                         (J - Motif.Last_Occurence (In_String (Shift + J)))
-                         & ")");
-               Put_Line (In_String);
-               Put ((1 .. Shift - In_String'First + 1 => ' '));
-               Put_Line (Motif.Motif.all);
-               Put ((1 .. Shift + J - In_String'First => ' '));
-               Put_Line ("^");
-            end if;
+         if Debug_Run then
+            New_Line;
+            Put_Line ("Offset : J=" & J'Img
+                      & " Last_Occ=" & In_String (Shift + J)
+                      & " Max ("
+                      & Motif.Good_Suffix (J)'Img
+                      & ","
+                      & Natural'Image
+                      (J - Motif.Last_Occurrence (In_String (Shift + J)))
+                      & ")");
+            Dump_Str (In_String);
+            Put ((1 .. Shift - In_String'First + 1 => ' '));
+            Dump_Str (Motif.Motif.all);
+            Put ((1 .. Shift + J - In_String'First => ' '));
+            Put_Line ("^");
+         end if;
 
-            if J = 0 then
-               Put_Line ("Matched at position" & Natural'Image (Shift + 1)
-                         & " after" & Num_Comp'Img & " comparisons");
-            end if;
+         if J = 0 then
+            Put_Line ("Matched at position" & Natural'Image (Shift + 1)
+                      & " after" & Num_Comp'Img & " comparisons");
          end if;
       end Dump;
 
@@ -311,7 +326,7 @@ package body Boyer_Moore is
 
             Shift := Shift +
               Natural'Max (Motif.Good_Suffix (J),
-                           J - Motif.Last_Occurence
+                           J - Motif.Last_Occurrence
                            (To_Lower (In_String (Shift + J))));
          end loop;
 
@@ -333,7 +348,7 @@ package body Boyer_Moore is
 
             Shift := Shift +
               Natural'Max (Motif.Good_Suffix (J),
-                           J - Motif.Last_Occurence (In_String (Shift + J)));
+                           J - Motif.Last_Occurrence (In_String (Shift + J)));
          end loop;
       end if;
 

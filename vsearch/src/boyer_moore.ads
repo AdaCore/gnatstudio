@@ -97,15 +97,15 @@ private
    --  a slightly less efficient processing for patterns longer than this in
    --  extreme cases, but these are for very rare cases.
 
-   type Occurence_Array is array (Character) of Offset;
+   type Occurrence_Array is array (Character) of Offset;
    type Offset_Array is array (Natural range <>) of Offset;
    type Offset_Array_Access is access Offset_Array;
    type String_Access is access String;
 
    type Pattern is record
-      Last_Occurence : Occurence_Array;
-      Good_Suffix    : Offset_Array_Access;
-      Motif          : String_Access;
-      Case_Sensitive : Boolean;
+      Last_Occurrence : Occurrence_Array;
+      Good_Suffix     : Offset_Array_Access;
+      Motif           : String_Access;
+      Case_Sensitive  : Boolean;
    end record;
 end Boyer_Moore;
