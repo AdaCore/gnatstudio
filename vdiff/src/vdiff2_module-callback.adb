@@ -39,7 +39,6 @@ with Vdiff2_Command;            use Vdiff2_Command;
 with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with OS_Utils;                  use OS_Utils;
 with VFS;                       use VFS;
 
@@ -49,7 +48,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 package body Vdiff2_Module.Callback is
 
    use Diff_Head_List;
-   use Diff_Chunk_List;
 
    Me : constant Debug_Handle := Create (Vdiff_Module_Name);
 
@@ -314,12 +312,8 @@ package body Vdiff2_Module.Callback is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
-      Id      : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item    : Diff_Head;
-      Result  : Diff_List;
-      Success : Boolean;
-      Button  : Message_Dialog_Buttons;
-      pragma Unreferenced (Mode, Button);
+      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Mode);
 
    begin
 
@@ -347,26 +341,7 @@ package body Vdiff2_Module.Callback is
                   Diff_F := Create (Full_Filename => Diff_File);
                   Ref_F  := Create (Full_Filename => Ref_File);
 
-                  Result :=
-                    Diff (Kernel, Ref_F, New_F, Diff_F, Revert => True);
-
-                  if Result = Diff_Chunk_List.Null_List then
-                     Button := Message_Dialog
-                       (Msg         => -"No differences found.",
-                        Buttons     => Button_OK,
-                        Parent      => Get_Main_Window (Kernel));
-                     return False;
-                  end if;
-
-                  Item :=
-                    (List => Result,
-                     File1 => Ref_F,
-                     File2 => New_F,
-                     File3 => VFS.No_File,
-                     Current_Node => First (Result),
-                     Ref_File => 2);
-                  Process_Differences (Kernel, Item, Id.List_Diff);
-                  Delete_File (Ref_File, Success);
+                  return Visual_Patch (Ref_F, New_F, Diff_F, True);
                end;
 
             elsif New_File = "" then
@@ -383,23 +358,7 @@ package body Vdiff2_Module.Callback is
                   Ref_F  := Create (Full_Filename => Ref_File);
                   Diff_F := Create (Full_Filename => Diff_File);
 
-                  Result := Diff (Kernel, Orig_F, Ref_F, Diff_F);
-
-                  if Result = Diff_Chunk_List.Null_List then
-                     Button := Message_Dialog
-                       (Msg         => -"No differences found.",
-                        Buttons     => Button_OK,
-                        Parent      => Get_Main_Window (Kernel));
-                     return False;
-                  end if;
-                  Item := (List => Result,
-                                 File1 => Orig_F,
-                                 File2 => Ref_F,
-                                 File3 => VFS.No_File,
-                                 Current_Node => First (Result),
-                                 Ref_File => 2);
-                  Process_Differences (Kernel, Item, Id.List_Diff);
-                  Delete_File (Ref_File, Success);
+                  return Visual_Patch (Orig_F, Ref_F, Diff_F);
                end;
 
             else
@@ -408,27 +367,9 @@ package body Vdiff2_Module.Callback is
                Orig_F := Create (Full_Filename => Orig_File);
                New_F  := Create (Full_Filename => New_File);
                Diff_F := Create (Full_Filename => Diff_File);
-               Result := Diff (Kernel, Orig_F, New_F, Diff_F);
 
-               if Result = Diff_Chunk_List.Null_List then
-                  Button := Message_Dialog
-                    (Msg         => -"No differences found.",
-                     Buttons     => Button_OK,
-                     Parent      => Get_Main_Window (Kernel));
-                  return False;
-               end if;
-
-               Item :=
-                 (List => Result,
-                  File1 => Orig_F,
-                  File2 => New_F,
-                  File3 => VFS.No_File,
-                  Current_Node => First (Result),
-                  Ref_File => 2);
-               Process_Differences (Kernel, Item, Id.List_Diff);
+               return Visual_Patch (Orig_F, New_F, Diff_F);
             end if;
-
-            return True;
          end;
       end if;
 
