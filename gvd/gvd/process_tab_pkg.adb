@@ -31,7 +31,6 @@ with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gtk.Object;      use Gtk.Object;
 with Gtkada.Intl;     use Gtkada.Intl;
-with GVD.Canvas;      use GVD.Canvas;
 --  with Gtk.Style;       use Gtk.Style;
 --  with Gdk.Color;       use Gdk.Color;
 --  with Gtk.Widget;      use Gtk.Widget;
@@ -138,9 +137,6 @@ begin
    Gtk_New (Process_Tab.Data_Scrolledwindow);
    Set_Policy (Process_Tab.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
    Add (Process_Tab.Data_Paned, Process_Tab.Data_Scrolledwindow);
-
-   Gtk_New (GVD_Canvas (Process_Tab.Data_Canvas));
-   Add (Process_Tab.Data_Scrolledwindow, Process_Tab.Data_Canvas);
 
    Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab);
    Return_Callback.Object_Connect

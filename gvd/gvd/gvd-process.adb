@@ -751,6 +751,10 @@ package body GVD.Process is
         (Process, Signals, Class_Record,
          Type_Name => "GvdDebuggerProcessTab");
 
+      --  Create the canvas for this process tab.
+      Gtk_New (GVD_Canvas (Process.Data_Canvas), Window.GVD_Accel_Group);
+      Add (Process.Data_Scrolledwindow, Process.Data_Canvas);
+
       Menu_Item :=
         Gtk_Menu_Item (Get_Widget (Window.Factory, '/' & (-"Window")));
       Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
