@@ -24,13 +24,20 @@ with Gtk.Label;       use Gtk.Label;
 with Gtk.Text;        use Gtk.Text;
 with Gtk.Button;      use Gtk.Button;
 
+with VCS;
+
 package Log_Editor_Window_Pkg is
+
+   use VCS.String_List;
 
    type Log_Editor_Window_Record is new Gtk_Window_Record with record
       Files_Label   : Gtk_Label;
       Labels_Vbox   : Gtk_Hbox;
       Log_Text      : Gtk_Text;
       Ok_Button     : Gtk_Button;
+
+      Files         : List;
+      --  A list of base file names that correspond to the log.
    end record;
    type Log_Editor_Window_Access is access all Log_Editor_Window_Record'Class;
 
@@ -55,5 +62,8 @@ package Log_Editor_Window_Pkg is
      (Log_Editor_Window : access Log_Editor_Window_Record'Class;
       File_Name         : String);
    --  Add an entry to the list of file names corresponding to the log.
+
+   procedure Close (Log_Editor_Window : access Log_Editor_Window_Record'Class);
+   --  Free memory associated with the log editor and destroy the window.
 
 end Log_Editor_Window_Pkg;
