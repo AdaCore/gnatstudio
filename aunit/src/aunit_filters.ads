@@ -56,6 +56,8 @@ package Aunit_Filters is
      end record;
    type Filter_Show_Ada_Access is access all Filter_Show_Ada'Class;
    --  This filter shows all files, leaving only Ada files selectable.
+   --  ??? Should eventually be replaced by a filter that only shows the files
+   --  ??? belonging to a project. This is easier to implement and more general
 
    type Filter_Show_Tests is
      new File_Filter_Record (new String'("Suite and Test files"))
