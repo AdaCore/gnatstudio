@@ -64,22 +64,8 @@ package body Traces is
    --  Grey_Bg    : constant String := ASCII.ESC & "[47m";
    Default_Bg : constant String := ASCII.ESC & "[49m";
 
-   type File_Type_Access is access File_Type;
    function Convert is new Unchecked_Conversion
      (File_Access, File_Type_Access);
-
-   type Debug_Handle_Record is record
-      Name   : String_Access;
-      Active : Boolean;
-      Forced_Active : Boolean := False;
-      Stream : File_Type_Access;
-      Timer  : Ada.Calendar.Time;
-      Next   : Debug_Handle;
-      Count  : Natural;
-   end record;
-   --  ??? Should be protected so that streams are correctly closed on exit
-   --  If Forced_Active is true, then the Active status shouldn't be impacted
-   --  by a '+' in the configuration file
 
    procedure Unchecked_Free is new Unchecked_Deallocation
      (Debug_Handle_Record, Debug_Handle);
@@ -730,4 +716,6 @@ package body Traces is
       end if;
    end Finalize;
 
+begin
+   Exception_Handle := Create ("UNEXPECTED_EXCEPTION", Default => On);
 end Traces;

@@ -4,7 +4,7 @@
 --                        Copyright (C) 2001-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -19,10 +19,14 @@
 -----------------------------------------------------------------------
 
 with GNAT.Source_Info;
+with GNAT.OS_Lib;
+with Ada.Calendar;
+with Ada.Text_IO;
 
 package Traces is
 
-   type Debug_Handle is private;
+   type Debug_Handle_Record is private;
+   type Debug_Handle is access Debug_Handle_Record;
    --  A handle for a debug stream.
    --  One such handle should be created for each module/unit/package where it
    --  is relevant. They are associated with a specific name and output stream,
@@ -193,7 +197,25 @@ package Traces is
    --  conditional breakpoints for a specific trace (break on traces.Log or
    --  traces.Trace, and check the value of Handle.Count
 
+   --  "UNEXPECTED_EXCEPTION"
+   --  All unexpected exceptions are logged in this handle
+
+   Exception_Handle : Debug_Handle;
+
 private
-   type Debug_Handle_Record;
-   type Debug_Handle is access Debug_Handle_Record;
+   type File_Type_Access is access Ada.Text_IO.File_Type;
+
+   type Debug_Handle_Record is record
+      Name   : GNAT.OS_Lib.String_Access;
+      Active : Boolean;
+      Forced_Active : Boolean := False;
+      Stream : File_Type_Access;
+      Timer  : Ada.Calendar.Time;
+      Next   : Debug_Handle;
+      Count  : Natural;
+   end record;
+   --  ??? Should be controlled so that streams are correctly closed on exit
+   --  If Forced_Active is true, then the Active status shouldn't be impacted
+   --  by a '+' in the configuration file
+
 end Traces;
