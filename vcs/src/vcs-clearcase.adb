@@ -1707,7 +1707,6 @@ package body VCS.ClearCase is
          History      => new String'(-"View revision history"),
          Annotate     => new String'(-"Annotate"),
          Diff_Head    => new String'(-"Diff against head rev."),
-         Diff_Working => new String'(-"Diff against working rev."),
          Diff         => new String'(-"Diff against specific rev."),
          Diff2        => new String'(-"Diff between two revisions"),
          Add          => new String'(-"Add to repository"),

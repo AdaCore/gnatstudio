@@ -1542,7 +1542,6 @@ package body VCS.CVS is
          History      => new String'(-"View revision history"),
          Annotate     => new String'(-"Annotate"),
          Diff_Head    => new String'(-"Compare against head rev."),
-         Diff_Working => new String'(-"Compare against working rev."),
          Diff         => new String'(-"Compare against specific rev."),
          Diff2        => new String'(-"Compare between two revisions"),
          Add          => new String'(-"Add to repository"),
