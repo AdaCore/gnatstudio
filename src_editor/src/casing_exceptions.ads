@@ -22,9 +22,9 @@
 --  to add or remove a casing exception and to initialize the casing
 --  GPS feature (create menu, read/write casing XML files).
 
-with Glib.Xml_Int;          use Glib.Xml_Int;
-with Glide_Kernel;          use Glide_Kernel;
-with Case_Handling;         use Case_Handling;
+with Glib.Xml_Int;  use Glib.Xml_Int;
+with Glide_Kernel;  use Glide_Kernel;
+with Case_Handling; use Case_Handling;
 with VFS;
 
 package Casing_Exceptions is
@@ -32,7 +32,13 @@ package Casing_Exceptions is
    procedure Add_Exception (Ident : String);
    --  Add Ident into the case exception table
 
+   procedure Add_Substring_Exception (Ident : String);
+   --  Add Ident into the case exception table
+
    procedure Remove_Exception (Ident : String);
+   --  Remove Ident from the case exception table
+
+   procedure Remove_Substring_Exception (Ident : String);
    --  Remove Ident from the case exception table
 
    function Get_Case_Exceptions return Case_Handling.Casing_Exceptions;
