@@ -273,6 +273,11 @@ package body Switches_Editors is
    procedure Destroy_Popup (Button : access Gtk_Widget_Record'Class);
    --  Callback when the Switch_Popup_Widget is destroyed.
 
+   function Filter_Matches
+     (Page : access Switches_Editor_Page_Record'Class;
+      Language : String) return Boolean;
+   --  Return True if Page applies to Language.
+
    -----------------------
    -- Get_Switch_Widget --
    -----------------------
@@ -679,9 +684,7 @@ package body Switches_Editors is
          --  the splitting of composite switches like "-gnatwue" into
          --  "-gnatwu -gnatwe"
 
-         if Page.Lang_Filter /= null
-           and then Page.Lang_Filter.all = Ada_String
-         then
+         if Filter_Matches (Page, Ada_String) then
             declare
                Arr : constant Argument_List :=
                  Normalize_Compiler_Switches (Switches (Index).all);
@@ -1182,7 +1185,6 @@ package body Switches_Editors is
      (Page            : out Switches_Editor_Page;
       Title           : String;
       Project_Package : String;
-      Language_Filter : String := "";
       Attribute_Index : String := "";
       Lines, Cols     : Glib.Guint;
       Tips            : access Gtk.Tooltips.Gtk_Tooltips_Record'Class) is
@@ -1192,12 +1194,7 @@ package body Switches_Editors is
       Set_Row_Spacings (Page, 0);
       Set_Col_Spacings (Page, 0);
 
-      if Language_Filter /= "" then
-         Page.Lang_Filter  := new String'(Language_Filter);
-         To_Lower (Page.Lang_Filter.all);
-      else
-         Page.Lang_Filter := null;
-      end if;
+      Page.Lang_Filter := null;
 
       Page.Attribute_Index := new String'(To_Lower (Attribute_Index));
       Page.Title := new String'(Title);
@@ -1215,6 +1212,40 @@ package body Switches_Editors is
       Attach (Page, Page.Cmd_Line, 0, Cols, Lines, Lines + 1,
               Expand or Fill, 0, 5, 0);
    end Gtk_New;
+
+   ------------------
+   -- Add_Language --
+   ------------------
+
+   procedure Add_Language
+     (Page : access Switches_Editor_Page_Record;
+      Language_Filter : String) is
+   begin
+      Append (Page.Lang_Filter, (1 => new String'(Language_Filter)));
+      To_Lower (Page.Lang_Filter (Page.Lang_Filter'Last).all);
+   end Add_Language;
+
+   --------------------
+   -- Filter_Matches --
+   --------------------
+
+   function Filter_Matches
+     (Page : access Switches_Editor_Page_Record'Class;
+      Language : String) return Boolean
+   is
+   begin
+      if Page.Lang_Filter = null then
+         return True;
+      end if;
+
+      for F in Page.Lang_Filter'Range loop
+         if Language = Page.Lang_Filter (F).all then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Filter_Matches;
 
    -------------
    -- Gtk_New --
@@ -1314,9 +1345,8 @@ package body Switches_Editors is
          Visible := False;
 
          for L in Languages'Range loop
-            if Editor.Pages (P).Lang_Filter = null
-              or else To_Lower (Languages (L).all) =
-                Editor.Pages (P).Lang_Filter.all
+            if Filter_Matches
+              (Editor.Pages (P), To_Lower (Languages (L).all))
             then
                Visible := True;
                exit;

@@ -56,19 +56,28 @@ package Switches_Editors is
      (Page             : out Switches_Editor_Page;
       Title            : String;
       Project_Package  : String;
-      Language_Filter  : String := "";
       Attribute_Index  : String := "";
       Lines, Cols      : Glib.Guint;
       Tips             : access Gtk.Tooltips.Gtk_Tooltips_Record'Class);
-   --  Create a new page, that should be displayed when a file with the given
-   --  language is displayed, or all the time if Language_Filter is the empty
-   --  string. The page is setup as a table of (Line + 1) x Cols, the last line
+   --  Create a new page, that should be displayed.
+   --  You can restrict the display of this page to specific languages by
+   --  calling Add_Language below. However, by default it is displayed for
+   --  all languages.
+   --  The page is setup as a table of (Line + 1) x Cols, the last line
    --  being automatically created for the command line.
    --  Title is displayed in the notebook tab of the switches editor.
    --
    --  Project_Package is the name of the package, in the project files, where
    --  the switches are stored. Attribute_Index is the index of the attribute
    --  to be created in Project_Package.
+
+   procedure Add_Language
+     (Page : access Switches_Editor_Page_Record;
+      Language_Filter : String);
+   --  Add a new language to the list of languages for which this page should
+   --  be displayed.
+   --  By default, the page is displayed for all languages, until you have
+   --  added at least one filter.
 
    procedure Create_Check
      (Page   : access Switches_Editor_Page_Record;
@@ -314,7 +323,8 @@ private
    --  created.
 
    type Switches_Editor_Page_Record is new Gtk_Table_Record with record
-      Lang_Filter : GNAT.OS_Lib.String_Access;
+      Lang_Filter : GNAT.OS_Lib.Argument_List_Access;
+      --  List of languages for which this page applies
 
       Dependencies : Dependency_Description_Access;
 
