@@ -1182,6 +1182,7 @@ package body VCS_View_API is
            Full_Name (ChangeLog_File).all;
          --  The global ChangeLog file
          L, C, Last         : Natural;
+         Entry_Found        : Boolean;
       begin
          L := 1;
          C := 0;
@@ -1202,7 +1203,8 @@ package body VCS_View_API is
                     "Editor.get_chars " &
                     ChangeLog_Filename & Natural'Image (L));
             begin
-               exit when Index (Line, Filename) /= 0 or else L = Last;
+               Entry_Found := Index (Line, Filename) /= 0;
+               exit when Entry_Found or else L = Last;
                L := L + 1;
             end;
          end loop;
@@ -1210,7 +1212,7 @@ package body VCS_View_API is
          --  Look for the first empty line, this is where the cursor
          --  needs to be set.
 
-         if L = Last then
+         if not Entry_Found then
             --  No entry found, this should not happen, returns the first
             --  position in the file.
             return " 1 1";
@@ -1239,30 +1241,37 @@ package body VCS_View_API is
                end loop;
 
                if Is_Empty then
-                  if Line (Line'First) = ASCII.HT then
-                     --  A line with a single HT, place cursor just after
-                     C := 2;
-
-                  elsif Line'Length = 0
-                    or else Line (Line'First) = ASCII.LF
-                  then
+                  if Line'Length = 0 or else Line (Line'First) = ASCII.LF then
                      --  An empty line, insert an HT
 
                      declare
-                        Line : aliased String := Natural'Image (L);
-                        Col  : aliased String := "1";
-                        Text : aliased String :=
+                        Line  : aliased String := Natural'Image (L);
+                        Col   : aliased String := "1";
+                        Text1 : aliased String :=
+                          String'(1 => ASCII.HT);
+                        Text2 : aliased String :=
                           ASCII.HT & ASCII.LF & ASCII.LF;
+                        Args  : GNAT.OS_Lib.Argument_List (1 .. 4);
                      begin
+                        Args (1) := ChangeLog_Filename'Unchecked_Access;
+                        Args (2) := Line'Unchecked_Access;
+                        Args (3) := Col'Unchecked_Access;
+
+                        if L >= Last then
+                           --  This is the end of the file
+                           Args (4) := Text1'Unchecked_Access;
+                        else
+                           Args (4) := Text2'Unchecked_Access;
+                        end if;
+
                         Execute_GPS_Shell_Command
-                          (Kernel,
-                           "Editor.replace_text",
-                           (ChangeLog_Filename'Unchecked_Access,
-                            Line'Unchecked_Access,
-                            Col'Unchecked_Access,
-                            Text'Unchecked_Access));
+                          (Kernel, "Editor.replace_text", Args);
                      end;
 
+                     C := 2;
+
+                  elsif Line (Line'First) = ASCII.HT then
+                     --  A line with a single HT, place cursor just after
                      C := 2;
 
                   else
@@ -1375,8 +1384,8 @@ package body VCS_View_API is
    ----------------
 
    function Save_Files
-     (Kernel : Kernel_Handle;
-      Files  : String_List.List;
+     (Kernel    : Kernel_Handle;
+      Files     : String_List.List;
       Save_Logs : Boolean := False) return Boolean
    is
       use String_List;
