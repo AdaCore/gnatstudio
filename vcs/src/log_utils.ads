@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -36,11 +36,14 @@ package Log_Utils is
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : VFS.Virtual_File;
-      Create    : Boolean) return VFS.Virtual_File;
+      Create    : Boolean;
+      Suffix    : String := "$log") return VFS.Virtual_File;
    --  Return the name for the log file corresponding to File_Name.
    --  If the log file doesn't exist and Create is True, then
    --  the function will create the file, return an empty string
    --  otherwise.
+   --  Suffix is the suffix to append at the end of the log file to identify
+   --  it as log.
 
    function Get_File_From_Log
      (Kernel   : access Kernel_Handle_Record'Class;
@@ -54,10 +57,12 @@ package Log_Utils is
 
    procedure Get_Log_From_ChangeLog
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File);
+      File_Name : VFS.Virtual_File;
+      Suffix    : String := "$log");
    --  Read the global ChangeLog entry for File_Name and write it into the
    --  log file corresponding to File_Name. If a current log file exists it
    --  does nothing.
+   --  Suffix is the default suffix to use for the log when creating it.
 
    procedure Remove_File_From_Mapping
      (Kernel    : access Kernel_Handle_Record'Class;

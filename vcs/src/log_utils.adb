@@ -273,7 +273,8 @@ package body Log_Utils is
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : VFS.Virtual_File;
-      Create    : Boolean) return VFS.Virtual_File
+      Create    : Boolean;
+      Suffix    : String := "$log") return VFS.Virtual_File
    is
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
       Real_Name   : constant String :=
@@ -293,7 +294,7 @@ package body Log_Utils is
             S        : Virtual_File := VFS.Create
               (Full_Filename =>
                  Logs_Dir & Directory_Separator & Base_Name (Real_Name)
-                   & "$log");
+                   & Suffix);
             --  In case there are multiple files with the same base name, see
             --  the loop below to use an alternate name and store it in the
             --  mapping file.
@@ -314,7 +315,7 @@ package body Log_Utils is
                   S := VFS.Create
                     (Full_Filename =>
                        Logs_Dir & Directory_Separator
-                       & Base_Name (Real_Name) & "$" & Image (J) & "$log");
+                       & Base_Name (Real_Name) & "$" & Image (J) & Suffix);
 
                   if not Is_Regular_File (S) then
                      File := Create_New_File (Locale_Full_Name (S), Text);
@@ -387,7 +388,8 @@ package body Log_Utils is
 
    procedure Get_Log_From_ChangeLog
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File)
+      File_Name : VFS.Virtual_File;
+      Suffix    : String := "$log")
    is
       ChangeLog : constant String := Dir_Name (File_Name).all & "ChangeLog";
       Log_File  : constant Virtual_File :=
@@ -396,7 +398,7 @@ package body Log_Utils is
       if Log_File = VFS.No_File then
          declare
             Log_File     : constant Virtual_File :=
-              Get_Log_From_File (Kernel, File_Name, True);
+              Get_Log_From_File (Kernel, File_Name, True, Suffix);
             CL_File      : constant Virtual_File := Create (ChangeLog);
             Date_Tag     : constant String := Image (Clock, ISO_Date);
             Base_Name    : constant String := VFS.Base_Name (File_Name);
@@ -495,13 +497,20 @@ package body Log_Utils is
                                             and then CL (P1 - 2) = ASCII.LF));
                            end loop;
 
-                           P1 := P1 + 1;
+                           --  Now we have either an HT or 8 spaces
 
-                           --  Skip spaces at the start of the line
-
-                           while CL (P1) = ' ' and then P1 < Last loop
+                           if CL (P1) = ASCII.HT then
                               P1 := P1 + 1;
-                           end loop;
+
+                           else
+                              --  Skip at most 8 spaces at the start of the
+                              --  line.
+
+                              for K in 1 .. 8 loop
+                                 exit when CL (P1) /= ' ' or else P1 = Last;
+                                 P1 := P1 + 1;
+                              end loop;
+                           end if;
 
                            P2 := P1;
 
