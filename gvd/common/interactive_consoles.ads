@@ -33,8 +33,10 @@ with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Scrolled_Window;
 
+with GNAT.OS_Lib;
 with Basic_Types;       use Basic_Types;
 with String_List_Utils; use String_List_Utils;
+with Histories;
 
 with Pango.Font;
 
@@ -60,13 +62,18 @@ package Interactive_Consoles is
    --  begin with Input, or a list containing only Input.
 
    procedure Gtk_New
-     (Console   : out Interactive_Console;
-      Prompt    : String;
-      Handler   : Command_Handler;
-      User_Data : GObject;
-      Font      : Pango.Font.Pango_Font_Description;
-      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None);
+     (Console      : out Interactive_Console;
+      Prompt       : String;
+      Handler      : Command_Handler;
+      User_Data    : GObject;
+      Font         : Pango.Font.Pango_Font_Description;
+      History_List : Histories.History;
+      Key          : Histories.History_Key;
+      Wrap_Mode    : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None);
    --  Create a new console for glide.
+   --  History_List and Key are used to handle the history of commands entered
+   --  by the user in the interactive window. No history is provided if
+   --  History_List is null
 
    procedure Initialize
      (Console   : access Interactive_Console_Record'Class;
@@ -74,6 +81,8 @@ package Interactive_Consoles is
       Handler   : Command_Handler;
       User_Data : GObject;
       Font      : Pango.Font.Pango_Font_Description;
+      History_List : Histories.History;
+      Key          : Histories.History_Key;
       Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode);
    --  Internal initialization function.
 
@@ -121,8 +130,6 @@ package Interactive_Consoles is
    --  Grab the focus on the console text view.
 
 private
-
-   use String_List;
 
    type Interactive_Console_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
@@ -177,11 +184,12 @@ private
       --  Indicate that a message was displayed, ie the last input point is
       --  not a prompt.
 
-      History : List;
+      History : Histories.History;
+      Key     : GNAT.OS_Lib.String_Access;
       --  The command history. The most recent commands are at the
       --  beginning.
 
-      Current_Position : List_Node;
+      Current_Position : Integer := -1;
       --  The current position when browsing the command history.
 
       Idle_Id : Gtk.Main.Idle_Handler_Id := 0;

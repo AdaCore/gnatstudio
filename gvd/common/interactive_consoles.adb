@@ -41,9 +41,11 @@ with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
 
 with System;               use System;
+with Histories;            use Histories;
 
 with Traces;               use Traces;
 with Ada.Exceptions;       use Ada.Exceptions;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
 package body Interactive_Consoles is
 
@@ -171,11 +173,14 @@ package body Interactive_Consoles is
          Insert (Console.Buffer, Last_Iter, Text);
       end if;
 
-      if Add_To_History then
+      if Add_To_History and then Console.History /= null then
          if Text (Text'Last) = ASCII.LF then
-            Prepend (Console.History, Text (Text'First .. Text'Last - 1));
+            Histories.Add_To_History
+              (Console.History.all, History_Key (Console.Key.all),
+               Text (Text'First .. Text'Last - 1));
          else
-            Prepend (Console.History, Text);
+            Histories.Add_To_History
+              (Console.History.all, History_Key (Console.Key.all), Text);
          end if;
       end if;
 
@@ -294,72 +299,61 @@ package body Interactive_Consoles is
    begin
       case Key is
          when GDK_Up =>
-            if Console.Current_Position = Null_Node then
-               Console.Current_Position := First (Console.History);
+            if Console.History /= null then
+               declare
+                  Hist : constant GNAT.OS_Lib.String_List_Access := Get_History
+                    (Console.History.all, History_Key (Console.Key.all));
+               begin
+                  if Hist /= null
+                    and then Console.Current_Position + Hist'First < Hist'Last
+                  then
+                     Console.Current_Position := Console.Current_Position + 1;
 
-               Get_Iter_At_Mark
-                 (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-               Get_End_Iter (Console.Buffer, Last_Iter);
-               Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+                     Get_Iter_At_Mark
+                       (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+                     Get_End_Iter (Console.Buffer, Last_Iter);
+                     Delete (Console.Buffer, Prompt_Iter, Last_Iter);
 
-               if Console.Current_Position /= Null_Node then
-                  Get_Iter_At_Mark
-                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-                  Insert
-                    (Console.Buffer,
-                     Prompt_Iter,
-                     Data (Console.Current_Position));
-                  Get_End_Iter (Console.Buffer, Last_Iter);
-                  Place_Cursor (Console.Buffer, Last_Iter);
-               end if;
-            else
-               if Next (Console.Current_Position) = Null_Node then
-                  null;
-               else
-                  Console.Current_Position := Next (Console.Current_Position);
+                     Get_Iter_At_Mark
+                       (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+                     Insert
+                       (Console.Buffer,
+                        Prompt_Iter,
+                        Hist (Hist'First + Console.Current_Position).all);
+                     Get_End_Iter (Console.Buffer, Last_Iter);
+                     Place_Cursor (Console.Buffer, Last_Iter);
+                  end if;
+               end;
+            end if;
+            return True;
 
+         when GDK_Down =>
+            if Console.History /= null
+              and then Console.Current_Position /= -1
+            then
+               declare
+                  Hist : constant GNAT.OS_Lib.String_List_Access := Get_History
+                    (Console.History.all, History_Key (Console.Key.all));
+               begin
                   Get_Iter_At_Mark
                     (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
                   Get_End_Iter (Console.Buffer, Last_Iter);
                   Delete (Console.Buffer, Prompt_Iter, Last_Iter);
 
-                  Get_Iter_At_Mark
-                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-                  Insert
-                    (Console.Buffer,
-                     Prompt_Iter,
-                     Data (Console.Current_Position));
-                  Get_End_Iter (Console.Buffer, Last_Iter);
-                  Place_Cursor (Console.Buffer, Last_Iter);
-               end if;
+                  Console.Current_Position := Console.Current_Position - 1;
+
+                  if Console.Current_Position /= -1 then
+                     Get_Iter_At_Mark
+                       (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+                     Insert
+                       (Console.Buffer,
+                        Prompt_Iter,
+                        Hist (Hist'First + Console.Current_Position).all);
+                     Get_End_Iter (Console.Buffer, Last_Iter);
+                     Place_Cursor (Console.Buffer, Last_Iter);
+                  end if;
+               end;
             end if;
-
-            return True;
-
-         when GDK_Down =>
-            if Console.Current_Position = Null_Node then
-               null;
-            else
-               Console.Current_Position :=
-                 Prev (Console.History, Console.Current_Position);
-
-               Get_Iter_At_Mark
-                 (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-               Get_End_Iter (Console.Buffer, Last_Iter);
-               Delete (Console.Buffer, Prompt_Iter, Last_Iter);
-
-               if Console.Current_Position /= Null_Node then
-                  Get_Iter_At_Mark
-                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-                  Insert
-                    (Console.Buffer,
-                     Prompt_Iter,
-                     Data (Console.Current_Position));
-                  Get_End_Iter (Console.Buffer, Last_Iter);
-                  Place_Cursor (Console.Buffer, Last_Iter);
-               end if;
-            end if;
-
             return True;
 
          when GDK_Tab =>
@@ -372,6 +366,7 @@ package body Interactive_Consoles is
             Get_End_Iter (Console.Buffer, Last_Iter);
 
             declare
+               use String_List_Utils.String_List;
                Text        : constant String :=
                  Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
                Completions : List :=
@@ -515,9 +510,11 @@ package body Interactive_Consoles is
 
                Insert (Console.Buffer, Last_Iter, Output);
 
-               if Command /= "" then
-                  Prepend (Console.History, Command);
-                  Console.Current_Position := Null_Node;
+               if Command /= "" and then Console.History /= null then
+                  Add_To_History
+                    (Console.History.all,
+                     History_Key (Console.Key.all), Command);
+                  Console.Current_Position := -1;
                end if;
 
                Get_Iter_At_Mark
@@ -690,10 +687,13 @@ package body Interactive_Consoles is
       Handler   : Command_Handler;
       User_Data : GObject;
       Font      : Pango.Font.Pango_Font_Description;
+      History_List : Histories.History;
+      Key          : Histories.History_Key;
       Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None) is
    begin
       Console := new Interactive_Console_Record;
-      Initialize (Console, Prompt, Handler, User_Data, Font, Wrap_Mode);
+      Initialize (Console, Prompt, Handler, User_Data, Font,
+                  History_List, Key, Wrap_Mode);
    end Gtk_New;
 
    ----------------
@@ -706,9 +706,10 @@ package body Interactive_Consoles is
       Handler   : Command_Handler;
       User_Data : GObject;
       Font      : Pango.Font.Pango_Font_Description;
+      History_List : Histories.History;
+      Key          : Histories.History_Key;
       Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode)
    is
-      --  ???
       Iter : Gtk_Text_Iter;
    begin
       --  Initialize the text buffer and the text view.
@@ -716,6 +717,8 @@ package body Interactive_Consoles is
       Console.Prompt := new String'(Prompt);
       Console.Handler := Handler;
       Console.User_Data := User_Data;
+      Console.Key := new String'(String (Key));
+      Console.History := History_List;
 
       Gtk.Scrolled_Window.Initialize (Console);
       Set_Policy
