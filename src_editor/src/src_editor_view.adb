@@ -1032,6 +1032,7 @@ package body Src_Editor_View is
       Kernel        : constant Kernel_Handle := Get_Kernel (Buffer);
       Tab_Len       : constant Integer :=
         Integer (Get_Pref (Kernel, Tab_Width));
+      Indent_Style  : Indentation_Kind;
 
       Start         : Gtk_Text_Iter;
       Pos           : Gtk_Text_Iter;
@@ -1072,6 +1073,14 @@ package body Src_Editor_View is
       --  Set Index to the first non blank character in Slice (Index .. Last)
       --  Also set Tabs_Used to True if any tab character is found.
 
+      procedure Local_Next_Indentation
+        (Lang          : Language_Access;
+         Buffer        : String;
+         Indent        : out Natural;
+         Next_Indent   : out Natural;
+         Indent_Params : Indent_Parameters);
+      --  Wrapper around Next_Indentation to take into account Indent_Style.
+
       -----------------
       -- Blank_Slice --
       -----------------
@@ -1105,15 +1114,40 @@ package body Src_Editor_View is
          end loop;
       end Find_Non_Blank;
 
+      ----------------------------
+      -- Local_Next_Indentation --
+      ----------------------------
+
+      procedure Local_Next_Indentation
+        (Lang          : Language_Access;
+         Buffer        : String;
+         Indent        : out Natural;
+         Next_Indent   : out Natural;
+         Indent_Params : Indent_Parameters) is
+      begin
+         if Indent_Style = Simple then
+            Next_Indentation
+              (Language_Root (Lang.all)'Access,
+               Buffer, Indent, Next_Indent, Indent_Params);
+
+         else
+            Next_Indentation
+              (Lang, Buffer, Indent, Next_Indent, Indent_Params);
+         end if;
+      end Local_Next_Indentation;
+
    begin  --  Do_Indentation
       if Lang = null
-        or else not Can_Indent (Lang)
+        or else not Get_Language_Context (Lang).Can_Indent
       then
          return False;
       end if;
 
       if Lang.all in Ada_Language'Class then
-         if not Get_Pref (Kernel, Ada_Automatic_Indentation) then
+         Indent_Style := Indentation_Kind'Val
+           (Get_Pref (Kernel, Ada_Automatic_Indentation));
+
+         if Indent_Style = None then
             return False;
          end if;
 
@@ -1129,7 +1163,10 @@ package body Src_Editor_View is
             Indent_Case_Extra => Get_Pref (Kernel, Ada_Indent_Case_Extra));
 
       elsif Lang.all in C_Language'Class then
-         if not Get_Pref (Kernel, C_Automatic_Indentation) then
+         Indent_Style := Indentation_Kind'Val
+           (Get_Pref (Kernel, Ada_Automatic_Indentation));
+
+         if Indent_Style = None then
             return False;
          end if;
 
@@ -1207,21 +1244,21 @@ package body Src_Editor_View is
          end loop;
 
          if Line_Ends then
-            Next_Indentation
+            Local_Next_Indentation
               (Lang, Slice (1 .. Slice_Length), Indent, Next_Indent,
                Indent_Params);
          else
             Index := Integer (Get_Offset (Pos)) + 1;
             Char  := Slice (Index);
             Slice (Index) := ASCII.LF;
-            Next_Indentation
+            Local_Next_Indentation
               (Lang, Slice (1 .. Index), Indent, Ignore, Indent_Params);
             Slice (Index) := Char;
 
-            --  ??? Would be nice to call Next_Indentation once, which would
-            --  be possible with e.g a Prev_Indent parameter
+            --  ??? Would be nice to call Local_Next_Indentation once, which
+            --  would be possible with e.g a Prev_Indent parameter
 
-            Next_Indentation
+            Local_Next_Indentation
               (Lang,
                Slice (1 .. Index - 1) & ASCII.LF &
                  Slice (Index .. Slice_Length),
@@ -1279,7 +1316,7 @@ package body Src_Editor_View is
             end if;
 
             Line_End := Natural (Get_Offset (Start)) + 1 - Global_Offset;
-            Next_Indentation
+            Local_Next_Indentation
               (Lang, Slice (1 .. Line_End),
                Indent, Next_Indent, Indent_Params);
 
