@@ -29,7 +29,9 @@ with Gdk.Event;           use Gdk.Event;
 
 with Gtk;                 use Gtk;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Text;            use Gtk.Text;
 with Gtk.Menu;            use Gtk.Menu;
@@ -38,7 +40,7 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Object;          use Gtk.Object;
-with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 
@@ -796,6 +798,8 @@ package body GVD.Process is
       Process.Debugger_Text_Font :=
         Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
 
+      Process.Separate_Data := Get_Pref (Separate_Data);
+
       Align_On_Grid
         (Process.Data_Canvas, Get_Pref (Align_Items_On_Grid));
 
@@ -1238,6 +1242,7 @@ package body GVD.Process is
 
       Close (Debugger.Debugger);
       Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Paned));
+      Destroy (Debugger);
 
       --  If the last notebook page was destroyed, disable "Open Program"
       --  in the menu.
@@ -1457,7 +1462,7 @@ package body GVD.Process is
 
    function Get_Current_Process
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Debugger_Process_Tab
+      return Debugger_Process_Tab
    is
       Page : Gtk.Gtk_Notebook_Page := Get_Cur_Page
         (Main_Debug_Window_Access (Main_Window).Process_Notebook);
@@ -1511,11 +1516,12 @@ package body GVD.Process is
    procedure Preferences_Changed
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor);
-      Str : constant String := Get_Chars (Process.Debugger_Text);
-      F : Gdk_Font :=
+      Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Editor);
+      Str     : constant String := Get_Chars (Process.Debugger_Text);
+      F       : constant Gdk_Font :=
         Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
-      C : Gdk_Color := Get_Pref (Debugger_Highlight_Color);
+      C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
+
    begin
       if F /= Process.Debugger_Text_Font
         or else Process.Debugger_Text_Highlight_Color /= C
@@ -1537,6 +1543,44 @@ package body GVD.Process is
                  Null_Color,
                  Str);
          Thaw (Process.Debugger_Text);
+      end if;
+
+      if Process.Separate_Data /= Get_Pref (Separate_Data) then
+         Process.Separate_Data := not Process.Separate_Data;
+
+         if Process.Separate_Data then
+            --  Ref the widget so that it is not destroyed.
+            Ref (Process.Data_Editor_Paned);
+            Remove (Process.Process_Paned, Process.Data_Editor_Paned);
+
+            Ref (Process.Data_Paned);
+            Remove (Process.Data_Editor_Paned, Process.Data_Paned);
+            Add (Process, Process.Data_Paned);
+            Unref (Process.Data_Paned);
+
+            Ref (Process.Editor_Frame);
+            Remove (Process.Data_Editor_Paned, Process.Editor_Frame);
+            Add (Process.Process_Paned, Process.Editor_Frame);
+            Unref (Process.Editor_Frame);
+            Show_All (Process);
+         else
+            Hide (Process);
+
+            --  Put back the Data into the paned
+            Ref (Process.Data_Paned);
+            Remove (Process, Process.Data_Paned);
+            Add (Process.Data_Editor_Paned, Process.Data_Paned);
+            Unref (Process.Data_Paned);
+
+            Ref (Process.Editor_Frame);
+            Remove (Process.Process_Paned, Process.Editor_Frame);
+            Add (Process.Data_Editor_Paned, Process.Editor_Frame);
+            Unref (Process.Editor_Frame);
+
+            Add (Process.Process_Paned, Process.Data_Editor_Paned);
+            Unref (Process.Data_Editor_Paned);
+            Show_All (Process.Process_Paned);
+         end if;
       end if;
    end Preferences_Changed;
 

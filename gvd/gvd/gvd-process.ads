@@ -183,6 +183,9 @@ package GVD.Process is
 
       Contextual_Menu         : Gtk.Menu.Gtk_Menu;
       Call_Stack_Contextual_Menu : Gtk.Menu.Gtk_Menu;
+
+      Separate_Data           : Boolean;
+      --  Store current value of the Separate_Data preference.
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
