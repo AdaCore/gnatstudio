@@ -190,32 +190,35 @@ package body Creation_Wizard is
    ------------------
 
    procedure Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
-      W : constant Prj_Wizard := Prj_Wizard (Wiz);
+      W      : constant Prj_Wizard := Prj_Wizard (Wiz);
       Result : Message_Dialog_Buttons;
    begin
       if Get_Current_Page (W) = 1 then
-         if not Is_Valid_Project_Name (Get_Text (W.Project_Name)) then
-            Result := Message_Dialog
-              (Msg => -("Invalid name for the project (only lower case letters"
-                        & ", digits and underscores"),
-               Title => -"Invalid name",
-               Dialog_Type => Error,
-               Buttons => Button_OK);
-
-            Gtk.Handlers.Emit_Stop_By_Name (Next_Button (W), "clicked");
-         end if;
-
          declare
-            Name : constant String := Base_Name
-              (Get_Text (W.Project_Name), Prj.Project_File_Extension);
+            Project  : constant String := Get_Text (W.Project_Name);
+            Location : constant String :=
+              Dir_Name (Get_Text (W.Project_Location));
+
          begin
+            if not Is_Valid_Project_Name (Project) then
+               Result := Message_Dialog
+                 (Msg =>
+                    -("Invalid name for the project (only lower case letters"
+                      & ", digits and underscores"),
+                  Title => -"Invalid name",
+                  Dialog_Type => Error,
+                  Buttons => Button_OK);
+
+               Gtk.Handlers.Emit_Stop_By_Name (Next_Button (W), "clicked");
+               return;
+            end if;
+
             if Is_Regular_File
-              (Dir_Name (Get_Text (W.Project_Location))
-               & Name & Prj.Project_File_Extension)
+              (Location & Project & Prj.Project_File_Extension)
             then
                Result := Message_Dialog
-                 (Msg => Dir_Name (Get_Text (W.Project_Location))
-                  & Name & Prj.Project_File_Extension
+                 (Msg => Location
+                  & Project & Prj.Project_File_Extension
                   & (-" already exists. Do you want to overwrite ?"),
                   Title => -"File exists",
                   Dialog_Type => Error,
