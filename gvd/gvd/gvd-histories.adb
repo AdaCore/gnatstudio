@@ -18,38 +18,41 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System; use System;
+with Unchecked_Deallocation;
 
 package body Odd.Histories is
-
-   use Hlist;
 
    ------------
    -- Append --
    ------------
 
-   procedure Append
-     (History : in out History_List;
-      Data    : Data_Type) is
+   procedure Append (History : in out History_List;
+                     Data    : Data_Type)
+   is
+      Element : Hlist_Link;
    begin
-      if History.List = Null_List then
-         Hlist.Append
-           (History.List,
-            new Data_Record'
-              (Data => new Data_Type' (Data), Num_Repeats => 1));
+      if History.First = null then
+         History.First := new Hlist' (Data        => new Data_Type' (Data),
+                                      Previous    => null,
+                                      Next        => null,
+                                      Num_Repeats => 1);
+         History.Last := History.First;
+         History.Current := History.First;
+         History.Position := After_End;
+         History.Length := 1;
 
-      elsif Hlist.Get_Data (Hlist.Last (History.List)).Data.all = Data then
-         Hlist.Get_Data (Hlist.Last (History.List)).Num_Repeats :=
-           Hlist.Get_Data (Hlist.Last (History.List)).Num_Repeats + 1;
-
+      elsif History.Last.Data.all = Data then
+         History.Last.Num_Repeats := History.Last.Num_Repeats + 1;
       else
-         Hlist.Append
-           (History.List,
-            new Data_Record'
-              (Data => new Data_Type' (Data), Num_Repeats => 1));
+         Element := new Hlist' (Data        => new Data_Type' (Data),
+                                Previous    => History.Last,
+                                Next        => null,
+                                Num_Repeats => 1);
+         History.Last.Next := Element;
+         History.Last := Element;
+         History.Length := History.Length + 1;
       end if;
-
-      History.Current := Hlist.Last (History.List);
+      History.Current := History.Last;
       History.Position := After_End;
    end Append;
 
@@ -59,12 +62,86 @@ package body Odd.Histories is
 
    function Get_Current (History : History_List) return Data_Type is
    begin
-      if History.Current /= Null_List then
-         return Hlist.Get_Data (History.Current).Data.all;
+      if History.Current /= null
+        and then History.Position = Inside_History
+      then
+         return History.Current.Data.all;
       else
          raise No_Such_Item;
       end if;
    end Get_Current;
+
+   -----------------
+   -- Set_Current --
+   -----------------
+
+   procedure Set_Current (History : History_List; Data : in Data_Type)
+   is
+      procedure Free_Data_Pointer is new Unchecked_Deallocation
+        (Data_Type, Data_Pointer);
+   begin
+      if History.Current /= null
+        and then History.Position = Inside_History
+      then
+         Free_Data_Pointer (History.Current.Data);
+         History.Current.Data := new Data_Type' (Data);
+      else
+         raise No_Such_Item;
+      end if;
+   end Set_Current;
+
+   --------------------
+   -- Remove_Current --
+   --------------------
+
+   procedure Remove_Current (History : in out History_List)
+   is
+      procedure Free_Data_Pointer is new Unchecked_Deallocation
+        (Data_Type, Data_Pointer);
+      procedure Free_Hlist is new Unchecked_Deallocation
+        (Hlist, Hlist_Link);
+      Buffer : Hlist_Link;
+   begin
+      if History.Current /= null
+        and then History.Position = Inside_History
+      then
+         if History.Current.Previous /= null then
+            if History.Current.Next /= null then
+               History.Current.Previous.Next := History.Current.Next;
+               History.Current.Next.Previous := History.Current.Previous;
+               Buffer := History.Current.Previous;
+               Free_Data_Pointer (History.Current.Data);
+               Free_Hlist (History.Current);
+               History.Current := Buffer;
+            else
+               History.Last := History.Current.Previous;
+               History.Current.Previous.Next := null;
+               Buffer := History.Current.Previous;
+               Free_Data_Pointer (History.Current.Data);
+               Free_Hlist (History.Current);
+               History.Current := Buffer;
+            end if;
+         else
+            History.Position := Before_Beginning;
+            if History.Current.Next /= null then
+               History.First := History.Current.Next;
+               Free_Data_Pointer (History.Current.Data);
+               Free_Hlist (History.Current);
+               History.Current := History.First;
+               History.Current.Previous := null;
+            else
+               Free_Data_Pointer (History.Current.Data);
+               Free_Hlist (History.Current);
+               History.First := null;
+               History.Last := null;
+               History.Current := null;
+            end if;
+         end if;
+         History.Length := History.Length - 1;
+      else
+         raise No_Such_Item;
+      end if;
+   end Remove_Current;
 
    ----------------------------
    -- Get_Current_Repeat_Num --
@@ -72,8 +149,8 @@ package body Odd.Histories is
 
    function Get_Current_Repeat_Num (History : History_List) return Natural is
    begin
-      if History.Current /= Null_List then
-         return Hlist.Get_Data (History.Current).Num_Repeats;
+      if History.Current /= null then
+         return History.Current.Num_Repeats;
       else
          raise No_Such_Item;
       end if;
@@ -87,18 +164,16 @@ package body Odd.Histories is
    begin
       if History.Position = After_End then
          History.Position := Inside_History;
-      elsif History.Current /= Null_List then
-         if Prev (History.Current) = Null_List then
+      elsif History.Current /= null then
+         if History.Current.Previous = null then
             if History.Position = Inside_History then
-               History.Position := Before_Beginnning;
+               History.Position := Before_Beginning;
+            else
+               raise No_Such_Item;
             end if;
-
-            raise No_Such_Item;
-
          else
-            History.Current := Hlist.Prev (History.Current);
+            History.Current := History.Current.Previous;
          end if;
-
       else
          raise No_Such_Item;
       end if;
@@ -110,19 +185,18 @@ package body Odd.Histories is
 
    procedure Move_To_Next (History : in out History_List) is
    begin
-      if History.Position = Before_Beginnning then
+      if History.Position = Before_Beginning then
          History.Position := Inside_History;
-      elsif History.Current /= Hlist.Null_List then
-         if Next (History.Current) = Hlist.Null_List then
+      elsif History.Current /= null then
+         if History.Current.Next = null then
             if History.Position = Inside_History then
                History.Position := After_End;
+            else
+               raise No_Such_Item;
             end if;
-
-            raise No_Such_Item;
          else
-            History.Current := Next (History.Current);
+            History.Current := History.Current.Next;
          end if;
-
       else
          raise No_Such_Item;
       end if;
@@ -134,12 +208,12 @@ package body Odd.Histories is
 
    procedure Wind (History : in out History_List; D : Direction) is
    begin
-      if History.List /= Hlist.Null_List then
+      if History.First /= null then
          if D = Backward then
-            History.Current := Hlist.First (History.List);
-            History.Position := Before_Beginnning;
+            History.Current := History.First;
+            History.Position := Inside_History;
          else
-            History.Current := Hlist.Last (History.List);
+            History.Current := History.Last;
             History.Position := After_End;
          end if;
       end if;
@@ -151,7 +225,7 @@ package body Odd.Histories is
 
    function Length (History : in History_List) return Integer is
    begin
-      return Integer (Hlist.Length (History.List));
+      return History.Length;
    end Length;
 
    ----------
@@ -159,9 +233,25 @@ package body Odd.Histories is
    ----------
 
    procedure Free (History : in out History_List) is
+      procedure Free_Data_Pointer is new Unchecked_Deallocation
+        (Data_Type, Data_Pointer);
+      procedure Free_Hlist is new Unchecked_Deallocation
+        (Hlist, Hlist_Link);
    begin
-      Hlist.Free (History.List);
-      --  ??? is this enough ?
+      if History.First /= null then
+         History.Current := History.First;
+         History.Position := Inside_History;
+         loop
+            Free_Data_Pointer (History.Current.Data);
+            exit when History.Current.Next = null;
+            History.Current := History.Current.Next;
+            Free_Hlist (History.Current.Previous);
+         end loop;
+         Free_Hlist (History.Current);
+         History.Current := null;
+         History.Last := null;
+         History.First := null;
+      end if;
    end Free;
 
 end Odd.Histories;

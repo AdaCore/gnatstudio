@@ -33,10 +33,6 @@
 --        when No_Such_Item => null;
 --     end;
 
-with Glib.Glist; use Glib.Glist;
-with System;
-with Unchecked_Conversion;
-
 generic
    type Data_Type (<>) is private;
 package Odd.Histories is
@@ -54,6 +50,13 @@ package Odd.Histories is
    function Get_Current (History : History_List) return Data_Type;
    --  Return the item currently pointed to.
    --  No_Such_Item is raised if the list is empty.
+
+   procedure Set_Current (History : History_List; Data : in Data_Type);
+   --  Change the current item data.
+
+   procedure Remove_Current (History : in out History_List);
+   --  Removes current item. After this procedure is called, the pointer to
+   --  the current value points to the last entry before the deleted one.
 
    procedure Move_To_Previous (History : in out History_List);
    --  Move the pointer to the value preceding the current one.
@@ -85,29 +88,28 @@ package Odd.Histories is
 
 private
 
-   type History_Position is (Inside_History, After_End, Before_Beginnning);
+   type History_Position is (Inside_History, After_End, Before_Beginning);
 
    type Data_Pointer is access Data_Type;
 
-   type Data_Record is record
+   type Hlist;
+
+   type Hlist_Link is access Hlist;
+
+   type Hlist is record
       Data        : Data_Pointer;
+      Previous    : Hlist_Link;
+      Next        : Hlist_Link;
       Num_Repeats : Natural;
    end record;
-
-   type Data_Access is access Data_Record;
-
-   for Data_Access'Size use Standard'Address_Size;
-
-   function Convert is new Unchecked_Conversion (Data_Access, System.Address);
-   function Convert is new Unchecked_Conversion (System.Address, Data_Access);
-
-   package Hlist is new Glib.Glist.Generic_List (Data_Access);
 
    type History_List is record
       Position : History_Position := Inside_History;
       Collapse : Boolean;
-      List     : Hlist.Glist;
-      Current  : Hlist.Glist;
+      First    : Hlist_Link;
+      Last     : Hlist_Link;
+      Current  : Hlist_Link;
+      Length   : Integer := 0;
    end record;
 
 end Odd.Histories;
