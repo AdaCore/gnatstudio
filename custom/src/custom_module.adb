@@ -243,7 +243,8 @@ package body Custom_Module is
          Name  : constant String := Get_Attribute (Node, "name");
          Pack  : constant String :=
            Get_Attribute (Node, "package", Projects.Ide_Package);
-         Index : constant String := Get_Attribute (Node, "index", Name);
+         Index : constant String :=
+           To_Lower (Get_Attribute (Node, "index", Name));
          Attribute : constant String :=
            Get_Attribute (Node, "attribute", "default_switches");
          Switches : String_Access;
