@@ -906,7 +906,7 @@ package body Glide_Kernel is
    is
       Handler : Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Kernel));
-      Num : constant Natural := Languages_Count (Handler);
+      Num : constant Natural := LI_Handlers_Count (Handler);
       LI  : LI_Handler;
    begin
       for L in 1 .. Num loop
