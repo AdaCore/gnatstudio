@@ -4,7 +4,7 @@
 @settitle Using the GNU Visual Debugger
 @syncodeindex fn cp
 
-@set GVDVersion 1.0.3
+@set GVDVersion 1.1.0
 
 @titlepage
 
@@ -254,19 +254,23 @@ To enable the new preferences, you simply need to confirm by pressing the
 @file{$HOME/.gvd/preferences} under Unix systems, and
 @file{%HOME%\.gvd\preferences} under Windows systems.
 
-???image
+To simply test you changes, you can use the @i{Test} button. Pressing
+the @i{Cancel} button will undo all your changes.
 
 The preferences dialog is composed of five pages, accessible through the
 tabs at the top of the dialog, labelled @i{General}, @i{Source}, @i{Data},
-@i{Command}, @i{Helpers}. Each page corresponds to a section of preferences.
+@i{Command}, @i{Memory}, @i{Helpers}. Each page corresponds to a section of
+preferences.
 
 @itemize @bullet
 @item General.
 Give access to the general preferences in GVD.
 
 @itemize @bullet
-@item Automatic Display of Variable Values.
 @item Status Bar Time Out.
+Time after which a message in the status bar will disappear. Messages that
+have disappeared can be displayed using the arrow in the bottom left area
+of the main window.
 @end itemize
 
 @item Source.
@@ -276,15 +280,46 @@ elements.
 
 @itemize @bullet
 @item Display Explorer Tree.
+Whether the list of files should be displayed.
+
 @item File Name Background.
+Color used for the background of the file name in the editor.
+This is also used for the background of the current frame in the Call Stack
+window.
+
 @item Font.
+Font used in the editor.
+
 @item Show Line Numbers.
+Whether line numbers should be displayed in the code editor.
+
 @item Show Lines with Code.
+Whether dots should be displayed in the code editor for lines that
+contain code.
+
+@item Automatic Display of Variables.
+Whether tooltips should appear automatically to display the value of the
+variable pointed by the cursor.
+
 @item Syntax Highlighting.
+Indicate whether the editor should provide color highlighting.
+
+@item Strip Carriage Return.
+Whether Carriage Return characters will be stripped when reading a file.
+GVD tries to detect this automatically but in some rare cases, it can be useful
+to enable to option by hand.
+
 @item Comments.
+Color used for comments.
+
 @item Strings.
+Color used for strings.
+
 @item Keywords.
+Color used for keywords.
+
 @item Current Line.
+The color to use to highlight the current line in the editor
 @end itemize
 
 @item Data.
@@ -293,19 +328,50 @@ the fonts and colors used to display the data graphically.
 
 @itemize @bullet
 @item Clickable Item.
+Color to use for the items that are clickable (e.g pointers).
+
 @item Title Background.
+Color to use for the background of the title.
+
 @item Changed Data.
+Color used to highlight fields that have changed since the last update.
+
 @item Auto-Refreshed.
+Color used for auto-refreshed items.
+
 @item Frozen.
+Color used for frozen items.
+
 @item 3D Look.
+Should the items have a 3d look ?
+
+@item Separate Window.
+Whether the Data window should be a separate window.
+
 @item Item Name.
+Font used for the name of the item.
+
 @item Item Value.
+Font used to display the value of the item.
+
 @item Item Type.
+Font used to display the type of the item.
+
 @item Hide Big Items.
+Whether items higher than a given limit will start in a hidden state.
+
 @item Big Item Height
+Items taller than this value will start hidden.
+
 @item Detect Aliased (shared data structures).
+If enabled, do not create new items when an item with the same address is
+already present in the canvas.
+
 @item Display Grid Points.
+Whether the grid should be displayed in the canvas.
+
 @item Auto-Align Displays on Nearest Grid Point.
+Should items be aligned on the grid.
 @end itemize
 
 @item Command.
@@ -316,9 +382,31 @@ known as the @i{Command Window}.
 @item Color Highlighting.
 Set the color used to highlight debugger commands and prompts.
 @item Font.
-Set the font name, size and style for the @i{Debugger Console}. Note that it
+Set the font name and size for the @i{Debugger Console}. Note that it
 is recommended to use a fixed size font such as Courier to get a proportional
 display.
+@end itemize
+
+@item Memory.
+Gives access to the preferences related to the memory view window.
+The values following have currently no effect.
+
+@itemize @bullet
+@item Font.
+Set the font name and size to display the contents of the memory. It
+is recommended to use a fixed size font such as Courier to get a proportional
+display.
+@item Default Color.
+Color used by default in the memory view window.
+
+@item Color Highlighting.
+Color used for highlighted items in the memory view.
+
+@item Selection.
+Color used for selected items in the memory view.
+
+@item Modified.
+Color used for modified items in the memory view.
 @end itemize
 
 @item Helpers.
@@ -327,9 +415,23 @@ actions.
 
 @itemize @bullet
 @item Edit Sources.
-@item Get Core File.
+Program used by the @i{Edit Current Source} menu. Special arguments are
+@c{%f} that is replaced by the full path name to the current file, using forward
+slashes as the directory separator, and @c{%l} that is replacd by the current
+line number.
+This value is superceded by the environment variable
+@c{GVD_EDITOR} if it exists.
+Try e.g using "xterm -e /bin/vi %f +%l" if you prefer vi.
+
 @item List Processes.
-@item Web Browser.
+Currently not used. This is the command that generates a list of processes
+suitable for process actions such as attach.
+@item Remote Shell.
+Command used to establish a remote connection
+(see @ref{Using GVD with a Remote Debugger}).
+@item Remote Copy.
+Command used to copy files remotely
+(see @ref{Using GVD with a Remote Debugger}).
 @end itemize
 
 @end itemize
@@ -935,6 +1037,8 @@ GVD, GDB and the debugged program each on a different machine.
 @smallexample
 Usage:
    gvd [options...] executable-file
+       [--dargs [debugger options]] [--pargs [program options]]
+
 Options:
    --debugger DEBUG  use DEBUG as the underlying debugger.
    --jdb             assume a Java debugger.
