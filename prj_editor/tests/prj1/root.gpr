@@ -5,7 +5,7 @@ project Root is
    type OS_Type is ("linux", "windows");
    OS : OS_Type := external ("OS", "linux");
 
-   package gnatmake is
+   package compiler is
       case OS is
          when "linux" =>
             for Switches use ("-g");
@@ -13,7 +13,7 @@ project Root is
          when "windows" =>
             for Switches use ("-gnaty");
       end case;
-   end gnatmake;
+   end compiler;
 
    case OS is
       when "linux" =>
