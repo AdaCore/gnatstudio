@@ -1203,6 +1203,10 @@ package body Projects is
       end Add_Language;
 
    begin
+      if Get_View (Project) = Prj.No_Project then
+         return GNAT.OS_Lib.Argument_List'(1 .. 1 => new String'("ada"));
+      end if;
+
       loop
          P := Current (Iter);
          exit when P = No_Project;
@@ -1242,7 +1246,6 @@ package body Projects is
             Next (Iter);
          end loop;
 
-         --  If no project specified the
          return Lang (Lang'First .. Index - 1);
       end;
    end Get_Languages;
@@ -1929,7 +1932,6 @@ package body Projects is
    function Get_View (Project : Project_Type) return Prj.Project_Id is
    begin
       if Project.Node = Empty_Node then
-         Trace (Me, "Get_View: Project is No_Project");
          return Prj.No_Project;
       elsif Project.Data.View = Prj.No_Project then
          Project.Data.View := Get_View (Prj.Tree.Name_Of (Project.Node));
