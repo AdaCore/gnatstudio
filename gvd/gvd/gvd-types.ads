@@ -106,4 +106,31 @@ package Odd.Types is
 
    procedure Free (Exception_Access : in out Exception_Array);
 
+   -----------------
+   -- File caches --
+   -----------------
+
+   type Packed_Boolean_Array is array (Positive range <>) of Boolean;
+   pragma Pack (Packed_Boolean_Array);
+   type Packed_Boolean_Access is access Packed_Boolean_Array;
+
+   procedure Free is new Unchecked_Deallocation
+     (Packed_Boolean_Array, Packed_Boolean_Access);
+
+   type File_Cache;
+   type File_Cache_Access is access File_Cache;
+   type File_Cache is record
+      Line_Has_Code : Packed_Boolean_Access := null;
+      Line_Parsed   : Packed_Boolean_Access := null;
+
+      Current_Line  : Natural := 0;
+      --  Last line that was parsed. No line before that one will be tested
+      --  any more.
+   end record;
+   --  Data associated with each file, and that contain cached data for the
+   --  file.
+   --  Line_Parsed indicates whether the line at a given index has been parsed.
+   --  This array is freed once the parsing has been finished (and in the
+   --  case Current_Line points to the last line with a breakpoint.
+
 end Odd.Types;
