@@ -350,6 +350,7 @@ package body Src_Info.Type_Utils is
       HTTypedef : Type_Parse_State;
       Enclosed_Class  : CL_Table := Invalid_CL_Table;
       Enclosed_Symbol : Symbol_Type := Undef;
+      Find_Success : Boolean;
    begin
       Success := False;
 
@@ -358,99 +359,100 @@ package body Src_Info.Type_Utils is
          return;
       end if;
 
-      Find (SN_Table (T), Type_Name, Tab => Typedef);
+      Find (SN_Table (T), Type_Name, Tab => Typedef, Success => Find_Success);
 
-      Set (Module_Typedefs.all, Type_Name, Incomplete);
-      --  add this type as an unidentified one
+      if Find_Success then
+         Set (Module_Typedefs.all, Type_Name, Incomplete);
+         --  add this type as an unidentified one
 
-      --  lookup left side of the typedef in our type
-      --  hash table
-      HTTypedef := Get
-        (Module_Typedefs.all,
-         String
-           (Typedef.Data (Typedef.Original.First .. Typedef.Original.Last)));
+         --  lookup left side of the typedef in our type
+         --  hash table
+         HTTypedef := Get
+           (Module_Typedefs.all,
+            String
+             (Typedef.Data (Typedef.Original.First .. Typedef.Original.Last)));
 
-      if Desc.Is_Typedef
-         and then Desc.Ancestor_Point = Invalid_Point
-      then -- was not set yet
-         Desc.Ancestor_Point    := Typedef.Start_Position;
-         Desc.Ancestor_Filename := Create
-           (String
-              (Typedef.Key
-                 (Typedef.File_Name.First .. Typedef.File_Name.Last)));
-      end if;
-
-      Desc.Is_Typedef := True;
-
-      if HTTypedef = Incomplete then -- loop detected
-         Desc.Kind := Unresolved_Entity_Kind;
-         if Desc.Parent_Point = Invalid_Point then
-            Desc.Parent_Point    := Typedef.Start_Position;
-            Desc.Parent_Filename := Create
-              (String (Typedef.Key
-                 (Typedef.File_Name.First .. Typedef.File_Name.Last)));
+         if Desc.Is_Typedef
+           and then Desc.Ancestor_Point = Invalid_Point
+         then -- was not set yet
+            Desc.Ancestor_Point    := Typedef.Start_Position;
+            Desc.Ancestor_Filename := Create
+              (String
+                 (Typedef.Key
+                    (Typedef.File_Name.First .. Typedef.File_Name.Last)));
          end if;
-         Success   := True;
-         return;
-      end if;
 
-      --  load enclosed class/union (if exists)
-      if Typedef.Class_Name /= Empty_Segment then
-         declare
-            Success : Boolean := False;
-            Desc    : CType_Description;
-         begin
-            Find_Class
-              (Type_Name => String (Typedef.Data
-                 (Typedef.Class_Name.First .. Typedef.Class_Name.Last)),
-               SN_Table  => SN_Table,
-               Desc      => Desc,
-               Class_Def => Enclosed_Class,
-               Success   => Success);
-            if Success then
-               Enclosed_Symbol := CL;
-            else
-               Find_Union
+         Desc.Is_Typedef := True;
+
+         if HTTypedef = Incomplete then -- loop detected
+            Desc.Kind := Unresolved_Entity_Kind;
+            if Desc.Parent_Point = Invalid_Point then
+               Desc.Parent_Point    := Typedef.Start_Position;
+               Desc.Parent_Filename := Create
+                 (String (Typedef.Key
+                    (Typedef.File_Name.First .. Typedef.File_Name.Last)));
+            end if;
+            Success   := True;
+            return;
+         end if;
+
+         --  load enclosed class/union (if exists)
+         if Typedef.Class_Name /= Empty_Segment then
+            declare
+               Success : Boolean := False;
+               Desc    : CType_Description;
+            begin
+               Find_Class
                  (Type_Name => String (Typedef.Data
                     (Typedef.Class_Name.First .. Typedef.Class_Name.Last)),
                   SN_Table  => SN_Table,
                   Desc      => Desc,
-                  Union_Def => Enclosed_Class,
+                  Class_Def => Enclosed_Class,
                   Success   => Success);
                if Success then
-                  Enclosed_Symbol := UN;
+                  Enclosed_Symbol := CL;
+               else
+                  Find_Union
+                    (Type_Name => String (Typedef.Data
+                       (Typedef.Class_Name.First .. Typedef.Class_Name.Last)),
+                     SN_Table  => SN_Table,
+                     Desc      => Desc,
+                     Union_Def => Enclosed_Class,
+                     Success   => Success);
+                  if Success then
+                     Enclosed_Symbol := UN;
+                  end if;
                end if;
-            end if;
-         end;
-      end if;
+            end;
+         end if;
 
-      Type_Name_To_Kind
-        (Type_Name       => String (Typedef.Data
-           (Typedef.Original.First .. Typedef.Original.Last)),
-         SN_Table        => SN_Table,
-         Module_Typedefs => Module_Typedefs,
-         Desc            => Desc,
-         Success         => Success,
-         Symbol          => Enclosed_Symbol,
-         CL_Tab          => Enclosed_Class);
+         Type_Name_To_Kind
+           (Type_Name       => String
+              (Typedef.Data (Typedef.Original.First .. Typedef.Original.Last)),
+            SN_Table        => SN_Table,
+            Module_Typedefs => Module_Typedefs,
+            Desc            => Desc,
+            Success         => Success,
+            Symbol          => Enclosed_Symbol,
+            CL_Tab          => Enclosed_Class);
 
-      if Success then
-         Desc.Parent_Point    := Typedef.Start_Position;
-         Desc.Parent_Filename := Create
-           (String (Typedef.Key
-              (Typedef.File_Name.First .. Typedef.File_Name.Last)));
+         if Success then
+            Desc.Parent_Point    := Typedef.Start_Position;
+            Desc.Parent_Filename := Create
+              (String (Typedef.Key
+                         (Typedef.File_Name.First .. Typedef.File_Name.Last)));
+            Success := True;
+            Set (Module_Typedefs.all, Type_Name, Complete);
+            return;
+         end if;
+
+         --  original type not found, but typedef clause present
+         Desc.Kind := Unresolved_Entity_Kind;
          Success := True;
-         Set (Module_Typedefs.all, Type_Name, Complete);
-         return;
       end if;
-
-      --  original type not found, but typedef clause present
-      Desc.Kind := Unresolved_Entity_Kind;
-      Success := True;
 
    exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- missed, fall thru'
+      when  DB_Error =>
          Success := False;
    end Find_Original_Type;
 
@@ -476,36 +478,39 @@ package body Src_Info.Type_Utils is
          Find
            (SN_Table (CL),
             Type_Name (Matches (1).First .. Matches (1).Last),
-            Tab => Class_Def);
+            Tab => Class_Def,
+            Success => Success);
          Desc.Is_Template := True;
       else
-         Find (SN_Table (CL), Type_Name, Tab => Class_Def);
+         Find (SN_Table (CL), Type_Name, Tab => Class_Def,
+               Success => Success);
       end if;
 
-      Desc.Parent_Point    := Class_Def.Start_Position;
-      Desc.Parent_Filename := Create
-        (String (Class_Def.Key
-           (Class_Def.File_Name.First .. Class_Def.File_Name.Last)));
-
-      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
-         Desc.Ancestor_Point    := Class_Def.Start_Position;
-         Desc.Ancestor_Filename := Create
+      if Success then
+         Desc.Parent_Point    := Class_Def.Start_Position;
+         Desc.Parent_Filename := Create
            (String (Class_Def.Key
               (Class_Def.File_Name.First .. Class_Def.File_Name.Last)));
-      end if;
 
-      if Is_Template (Class_Def) then
-         Desc.Is_Template := True;
-      end if;
+         if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+            Desc.Ancestor_Point    := Class_Def.Start_Position;
+            Desc.Ancestor_Filename := Create
+              (String (Class_Def.Key
+                 (Class_Def.File_Name.First .. Class_Def.File_Name.Last)));
+         end if;
 
-      Desc.Kind :=
-        (Class, Is_Type => True, Is_Generic => Desc.Is_Template,
-         Is_Abstract => False);
-      Success := True;
+         if Is_Template (Class_Def) then
+            Desc.Is_Template := True;
+         end if;
+
+         Desc.Kind :=
+           (Class, Is_Type => True, Is_Generic => Desc.Is_Template,
+            Is_Abstract => False);
+         Success := True;
+      end if;
 
    exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- missed, fall thru'
+      when  DB_Error =>
          Success := False;
    end Find_Class;
 
@@ -531,36 +536,38 @@ package body Src_Info.Type_Utils is
          Find
            (SN_Table (UN),
             Type_Name (Matches (1).First .. Matches (1).Last),
-            Tab => Union_Def);
+            Tab => Union_Def,
+            Success => Success);
          Desc.Is_Template := True;
       else
-         Find (SN_Table (UN), Type_Name, Tab => Union_Def);
+         Find (SN_Table (UN), Type_Name, Tab => Union_Def,
+               Success => Success);
       end if;
 
-      Desc.Parent_Point    := Union_Def.Start_Position;
-      Desc.Parent_Filename := Create
-        (String (Union_Def.Key
-           (Union_Def.File_Name.First .. Union_Def.File_Name.Last)));
-
-      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
-         Desc.Ancestor_Point    := Union_Def.Start_Position;
-         Desc.Ancestor_Filename := Create
+      if Success then
+         Desc.Parent_Point    := Union_Def.Start_Position;
+         Desc.Parent_Filename := Create
            (String (Union_Def.Key
               (Union_Def.File_Name.First .. Union_Def.File_Name.Last)));
+
+         if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+            Desc.Ancestor_Point    := Union_Def.Start_Position;
+            Desc.Ancestor_Filename := Create
+              (String (Union_Def.Key
+                 (Union_Def.File_Name.First .. Union_Def.File_Name.Last)));
+         end if;
+
+         if (Union_Def.Attributes and SN_TEMPLATE) /= 0 then
+            Desc.Is_Template := True;
+         end if;
+
+         Desc.Kind :=
+           (Class, Is_Type => True, Is_Generic => Desc.Is_Template,
+            Is_Abstract => False);
       end if;
 
-      if (Union_Def.Attributes and SN_TEMPLATE) /= 0 then
-         Desc.Is_Template := True;
-      end if;
-
-      Desc.Kind :=
-        (Class, Is_Type => True, Is_Generic => Desc.Is_Template,
-         Is_Abstract => False);
-
-      Success := True;
    exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- missed, fall thru'
+      when  DB_Error =>
          Success := False;
    end Find_Union;
 
@@ -587,29 +594,32 @@ package body Src_Info.Type_Utils is
          Find
            (SN_Table (E),
             Type_Name (Matches (1).First .. Matches (1).Last),
-            Tab => Enum_Def);
+            Tab => Enum_Def,
+            Success => Success);
          Desc.Is_Template := True;
       else
-         Find (SN_Table (E), Type_Name, Tab => Enum_Def);
+         Find (SN_Table (E), Type_Name, Tab => Enum_Def,
+               Success => Success);
       end if;
 
-      Desc.Parent_Point    := Enum_Def.Start_Position;
-      Desc.Parent_Filename := Create
-        (String (Enum_Def.Key
-          (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
-
-      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
-         Desc.Ancestor_Point    := Enum_Def.Start_Position;
-         Desc.Ancestor_Filename := Create
+      if Success then
+         Desc.Parent_Point    := Enum_Def.Start_Position;
+         Desc.Parent_Filename := Create
            (String (Enum_Def.Key
-             (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
+                      (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
+
+         if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+            Desc.Ancestor_Point    := Enum_Def.Start_Position;
+            Desc.Ancestor_Filename := Create
+              (String (Enum_Def.Key
+                 (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
+         end if;
+
+         Desc.Kind := Enumeration_Kind_Entity;
       end if;
 
-      Desc.Kind := Enumeration_Kind_Entity;
-      Success := True;
    exception
-      when DB_Error |   -- non-existent table
-           Not_Found => -- missed, fall thru'
+      when DB_Error =>
          Success := False;
    end Find_Enum;
 

@@ -93,6 +93,7 @@ package Src_Info.Type_Utils is
       Attributes          => 0,
       Return_Type         => Invalid_Segment,
       Arg_Types           => Invalid_Segment,
+      Arg_Names           => Invalid_Segment,
       Comments            => Invalid_Segment,
       Template_Parameters => Invalid_Segment,
       Data                => Null_Buffer,
