@@ -53,6 +53,7 @@ with Items.Records;     use Items.Records;
 with Items.Classes;     use Items.Classes;
 
 with Unchecked_Conversion;
+with Unchecked_Deallocation;
 
 package body Debugger.Gdb is
 
@@ -75,7 +76,6 @@ package body Debugger.Gdb is
 
    Gdb_Options   : constant String := "-nw -q";
    --  Options always passed to gdb.
-   --  Note that we assume that only one blank is put between each option.
 
    Highlight_Pattern : constant Pattern_Matcher :=
      Compile ("^\(gvd\) ", Multiple_Lines);
@@ -458,30 +458,22 @@ package body Debugger.Gdb is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
    is
-      Num_Options     : constant Natural :=
-        Standard.Ada.Strings.Fixed.Count (Gdb_Options, " ") + 1;
+      Gdb_Arguments   : Argument_List_Access :=
+        Argument_String_To_List (Gdb_Options);
+      Num_Options     : constant Natural := Gdb_Arguments'Length;
       Local_Arguments : Argument_List
                           (1 .. Debugger_Args'Length + Num_Options);
-      First           : Natural := 1;
-      Last            : Natural;
+
+      procedure Free is new
+        Unchecked_Deallocation (Argument_List, Argument_List_Access);
 
    begin
       Debugger.Window := Window;
 
-      --  Cut each blank separated word into an argument.
-      --  Note that we assume here that only one blank is put between each
-      --  option (in the computation of Num_Options).
-
-      for J in 1 .. Num_Options - 1 loop
-         Last := Index (Gdb_Options (First .. Gdb_Options'Last), " ");
-         Local_Arguments (J) := new String' (Gdb_Options (First .. Last - 1));
-         First := Index_Non_Blank (Gdb_Options (Last .. Gdb_Options'Last));
-      end loop;
-
-      Local_Arguments (Num_Options) :=
-        new String' (Gdb_Options (First .. Gdb_Options'Last));
+      Local_Arguments (1 .. Num_Options) := Gdb_Arguments.all;
       Local_Arguments (Num_Options + 1 .. Local_Arguments'Last) :=
         Debugger_Args;
+      Free (Gdb_Arguments);
 
       if Debugger_Name = "" then
          General_Spawn
