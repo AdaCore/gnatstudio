@@ -123,12 +123,9 @@ procedure GPS is
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
    Docgen_Trace   : constant Debug_Handle := Create ("MODULE.Docgen", Off);
-   Vdiff2_Trace   : constant Debug_Handle := Create ("MODULE.Vdiff2", Off);
    Metrics_Trace  : constant Debug_Handle := Create ("MODULE.Metrics", On);
    Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", Off);
    Python_Trace   : constant Debug_Handle := Create ("MODULE.Python", On);
-   Vdiff_Trace            : constant Debug_Handle :=
-     Create ("MODULE.Vdiff", On);
    Call_Graph_Trace       : constant Debug_Handle :=
      Create ("MODULE.Call_Graph", On);
    Dependency_Trace       : constant Debug_Handle :=
@@ -1262,12 +1259,10 @@ procedure GPS is
 
       Builder_Module.Register_Module (GPS.Kernel);
 
-      if Active (Vdiff2_Trace) then
-         Vdiff2_Module.Register_Module (GPS.Kernel);
-      end if;
-
-      if Active (Vdiff_Trace) then
+      if Get_Pref (GPS.Kernel, Old_Vdiff) then
          Vdiff_Module.Register_Module (GPS.Kernel);
+      else
+         Vdiff2_Module.Register_Module (GPS.Kernel);
       end if;
 
       if Active (VCS_Trace) then
