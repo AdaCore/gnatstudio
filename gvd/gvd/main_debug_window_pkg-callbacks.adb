@@ -1253,6 +1253,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Hide (Top.Print_Dialog);
 
       if Top.Print_Dialog.Variable /= null then
+         Text_Output_Handler
+           (Process, "graph print " & Top.Print_Dialog.Variable.all & ASCII.LF,
+            Is_Command => True);
          Process_User_Command
            (Process, "graph print " & Top.Print_Dialog.Variable.all);
       end if;
