@@ -46,13 +46,9 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 package body Odd.Dialogs is
 
-   pragma Suppress (All_Checks);
-   --  Checks are expensive (in code size) and not needed in this package.
-
    type Odd_Dialog_Access is access all Odd_Dialog;
 
-   Question_Titles : constant Chars_Ptr_Array :=
-     "" + "Choice";
+   Question_Titles : constant Chars_Ptr_Array := "" + "Choice";
    --  ??? Should be translatable.
 
    Backtrace_Titles : constant Chars_Ptr_Array :=
@@ -165,7 +161,12 @@ package body Odd.Dialogs is
         Get_Process (Debugger_Process_Tab (Debugger).Debugger);
       Num_Columns : Thread_Fields;
       Row         : Gint;
+
    begin
+      if not Visible_Is_Set (Task_Dialog) then
+         return;
+      end if;
+
       if Task_Dialog.List /= null then
          Freeze (Task_Dialog.List);
          Clear (Task_Dialog.List);
@@ -177,6 +178,7 @@ package body Odd.Dialogs is
          if Task_Dialog.List /= null then
             Thaw (Task_Dialog.List);
          end if;
+
          return;
       end if;
 
@@ -225,6 +227,10 @@ package body Odd.Dialogs is
       Process  : Process_Proxy_Access :=
         Get_Process (Debugger_Process_Tab (Debugger).Debugger);
    begin
+      if not Visible_Is_Set (Backtrace_Dialog) then
+         return;
+      end if;
+
       Freeze (Backtrace_Dialog.List);
       Clear (Backtrace_Dialog.List);
 
@@ -620,6 +626,7 @@ package body Odd.Dialogs is
          else
             Hide (Dialog);
          end if;
+
          return ASCII.Nul & "";
 
       else
@@ -632,11 +639,13 @@ package body Odd.Dialogs is
                Show (Item);
                Add (Get_List (Dialog.Entry_Field), Item);
             end if;
+
             if Key = "" then
                Destroy (Dialog);
             else
                Hide (Dialog);
             end if;
+
             return S;
          end;
       end if;

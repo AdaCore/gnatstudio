@@ -135,16 +135,16 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Change_Directory1_Activate;
 
-   --------------------------
-   -- On_Restart1_Activate --
-   --------------------------
+   ------------------------
+   -- On_Close1_Activate --
+   ------------------------
 
-   procedure On_Restart1_Activate
+   procedure On_Close1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Restart1_Activate;
+   end On_Close1_Activate;
 
    -----------------------
    -- On_Exit1_Activate --

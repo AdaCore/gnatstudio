@@ -622,6 +622,13 @@ package body Debugger.Gdb is
          begin
             Set_Parse_File_Name (Get_Process (Debugger), True);
 
+            --  If attach failed, "up" will return an error message
+
+            if Str = "No stack." then
+               Set_Is_Started (Debugger, False);
+               return;
+            end if;
+
             exit when Str = "Initial frame selected; you cannot go up.";
 
             Found_File_Name

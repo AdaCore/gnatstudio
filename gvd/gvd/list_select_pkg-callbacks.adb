@@ -42,7 +42,7 @@ package body List_Select_Pkg.Callbacks is
 
       use Widget_List;
 
-      Text : String :=
+      Text : constant String :=
         Get (Gtk_Label (Get_Data (Children (Gtk_Container (Arg1)))));
 
    begin

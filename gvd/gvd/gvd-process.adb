@@ -1030,7 +1030,6 @@ package body Odd.Process is
       Skip_Blanks (Command2, First);
 
       if Looking_At (Command2, First, "graph") then
-
          Data.Mode := Mode;
          Data.Debugger_Num := Integer (Get_Num (Debugger));
          Skip_Blanks (Command, First);
@@ -1043,17 +1042,18 @@ package body Odd.Process is
          Close_Debugger (Debugger);
       else
          --  Regular debugger command, send it.
-         Send (Debugger.Debugger, Command,
-               Wait_For_Prompt =>
-                 not Command_In_Process (Get_Process (Debugger.Debugger)),
-               Mode => Mode);
+
+         Send
+           (Debugger.Debugger, Command,
+            Wait_For_Prompt =>
+              not Command_In_Process (Get_Process (Debugger.Debugger)),
+            Mode => Mode);
       end if;
 
       --  Put back the standard cursor
+
       Set_Busy_Cursor (Debugger, False);
-
       Unregister_Dialog (Debugger);
-
    end Process_User_Command;
 
    ---------------------

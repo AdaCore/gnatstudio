@@ -287,16 +287,21 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end;
    end On_Change_Directory1_Activate;
 
-   --------------------------
-   -- On_Restart1_Activate --
-   --------------------------
+   ------------------------
+   -- On_Close1_Activate --
+   ------------------------
 
-   procedure On_Restart1_Activate
+   procedure On_Close1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
-   end On_Restart1_Activate;
+      if Tab = null then
+         return;
+      end if;
+
+      Close_Debugger (Tab);
+   end On_Close1_Activate;
 
    -----------------------
    -- On_Exit1_Activate --

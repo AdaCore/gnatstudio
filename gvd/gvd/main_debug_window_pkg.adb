@@ -181,13 +181,12 @@ begin
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Separator4);
    Set_Right_Justify (Main_Debug_Window.Separator4, False);
 
-   Gtk_New (Main_Debug_Window.Restart1, -"Restart");
-   Set_Sensitive (Main_Debug_Window.Restart1, False);
+   Gtk_New (Main_Debug_Window.Close1, -"Close");
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Restart1, "activate",
-      Widget_Callback.To_Marshaller (On_Restart1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Restart1);
-   Set_Right_Justify (Main_Debug_Window.Restart1, False);
+     (Main_Debug_Window.Close1, "activate",
+      Widget_Callback.To_Marshaller (On_Close1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Close1);
+   Set_Right_Justify (Main_Debug_Window.Close1, False);
 
    Gtk_New (Main_Debug_Window.Exit1, -"Exit");
    Add_Accelerator (Main_Debug_Window.Exit1, "activate",

@@ -35,7 +35,7 @@ package Main_Debug_Window_Pkg is
       Separator3 : Gtk_Menu_Item;
       Change_Directory1 : Gtk_Menu_Item;
       Separator4 : Gtk_Menu_Item;
-      Restart1 : Gtk_Menu_Item;
+      Close1 : Gtk_Menu_Item;
       Exit1 : Gtk_Menu_Item;
       Edit2 : Gtk_Menu_Item;
       Edit2_Menu : Gtk_Menu;

@@ -56,7 +56,7 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Change_Directory1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Restart1_Activate
+   procedure On_Close1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Exit1_Activate

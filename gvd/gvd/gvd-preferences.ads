@@ -156,4 +156,11 @@ package Odd.Preferences is
    Debugger_Font_Size : constant Gint := 12;
    --  Size of the font used in the debugger text window.
 
+   -------------
+   -- Helpers --
+   -------------
+
+   List_Processes : constant String :=
+     "ps x 2> /dev/null || ps -ef 2> /dev/null || ps";
+
 end Odd.Preferences;
