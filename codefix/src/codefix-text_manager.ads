@@ -127,7 +127,7 @@ package Codefix.Text_Manager is
    function Get_File_Name (This : Text_Interface) return String;
    --  Return the name of the file.
 
-   procedure Update (This : Text_Interface) is abstract;
+   procedure Commit (This : Text_Interface) is abstract;
    --  Update the changes previously made in the real text.
 
    function Search_String
@@ -217,7 +217,7 @@ package Codefix.Text_Manager is
       Cursor : File_Cursor'Class) return Natural;
    --  Return le length of a line from the position of the cursor.
 
-   procedure Update (This : Text_Navigator_Abstr);
+   procedure Commit (This : Text_Navigator_Abstr);
    --  Update the changes previously made in the real text.
 
    function New_Text_Interface (This : Text_Navigator_Abstr)
@@ -259,6 +259,8 @@ package Codefix.Text_Manager is
       Line_Created,
       Line_Deleted);
 
+   procedure Assign (This : in out Extract_Line; Value : Extract_Line);
+
    function Get_Context (This : Extract_Line) return Line_Context;
    --  Return the context associated to an Extract_Line.
 
@@ -272,7 +274,7 @@ package Codefix.Text_Manager is
    function Get_Cursor (This : Extract_Line) return File_Cursor'Class;
    --  Return the cursor memorized in an Extract_Line.
 
-   procedure Update
+   procedure Commit
      (This         : Extract_Line;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Integer);
@@ -284,7 +286,7 @@ package Codefix.Text_Manager is
 
    function Clone
      (This      : Extract_Line;
-      Recursive : Boolean := True) return Extract_Line;
+      Recursive : Boolean) return Extract_Line;
    --  Clone an Extract_Line. Recursive True means that all the lines of the
    --  extract that record this line are cloned.
 
@@ -345,6 +347,10 @@ package Codefix.Text_Manager is
       New_String  : String;
       First, Last : Natural := 0);
 
+   procedure Set_Coloration (This : in out Extract_Line; Value : Boolean);
+
+   function Get_Coloration (This : Extract_Line) return Boolean;
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
@@ -386,7 +392,7 @@ package Codefix.Text_Manager is
    --  Set a string recorded in the Extract. Position in the position of the
    --  record, and not the number of the line.
 
-   procedure Update
+   procedure Commit
      (This         : Extract;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Natural);
@@ -521,9 +527,11 @@ package Codefix.Text_Manager is
      (This                 : out Extract;
       Extract_1, Extract_2 : Extract'Class;
       Current_Text         : Text_Navigator_Abstr'Class;
-      Success              : out Boolean);
+      Success              : out Boolean;
+      Partial_Merge        : Boolean := False);
    --  Merge Extract_1 and Extract_2 into This. If no solution can be found,
-   --  then success is false.
+   --  then success is false. If Partial_Merge is True, then only lines
+   --  contained in Extract_1 and Extract_2 will be merged.
 
    procedure Merge
      (New_Str : out Dynamic_String;
@@ -594,11 +602,16 @@ private
       Original_Length : Natural := 0;
       Content         : Dynamic_String;
       Next            : Ptr_Extract_Line;
+      Coloration      : Boolean := False;
    end record;
 
    procedure Add_Element
-    (This, Previous, Element : Ptr_Extract_Line;
-     Container : in out Extract);
+     (This, Previous, Element : Ptr_Extract_Line;
+      Container               : in out Extract);
+   --  Add a new line in the line list. The line is always disposed in order
+   --  to preserve the internal order of the lines, not just at the end of the
+   --  list.
+
    procedure Free is
       new Ada.Unchecked_Deallocation (Extract_Line, Ptr_Extract_Line);
 
