@@ -29,30 +29,38 @@ package Debugger.Gdb is
 
    type Gdb_Debugger is new Debugger.Debugger_Root with private;
 
-   procedure Spawn (Debugger       : access Gdb_Debugger;
-                    Arguments      : GNAT.OS_Lib.Argument_List;
-                    Proxy          : Process_Proxies.Process_Proxy_Access;
-                    Remote_Machine : String := "");
+   procedure Spawn
+     (Debugger        : access Gdb_Debugger;
+      Executable      : String;
+      Arguments       : GNAT.OS_Lib.Argument_List;
+      Proxy           : Process_Proxies.Process_Proxy_Access;
+      Window          : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "");
+
    procedure Initialize (Debugger : access Gdb_Debugger);
 
    procedure Close (Debugger : access Gdb_Debugger);
 
    procedure Wait_Prompt (Debugger : access Gdb_Debugger);
 
-   function Highlighting_Pattern (Debugger : access Gdb_Debugger)
-                                 return GNAT.Regpat.Pattern_Matcher;
+   function Highlighting_Pattern
+     (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher;
 
    procedure Display_Prompt (Debugger : access Gdb_Debugger);
 
-   procedure Found_File_Name (Debugger   : access Gdb_Debugger;
-                              Str        : String;
-                              Name_First : out Natural;
-                              Name_Last  : out Positive;
-                              Line       : out Natural);
+   procedure Found_File_Name
+     (Debugger   : access Gdb_Debugger;
+      Str        : String;
+      Name_First : out Natural;
+      Name_Last  : out Positive;
+      Line       : out Natural);
 
    function Type_Of
      (Debugger : access Gdb_Debugger;
-      Entity : String) return String;
+      Entity   : String) return String;
 
    function Value_Of
      (Debugger : access Gdb_Debugger;
@@ -60,7 +68,7 @@ package Debugger.Gdb is
       Format   : Value_Format := Decimal) return String;
 
    procedure Set_Executable
-     (Debugger : access Gdb_Debugger;
+     (Debugger   : access Gdb_Debugger;
       Executable : String);
 
    procedure Run (Debugger : access Gdb_Debugger);
@@ -70,6 +78,12 @@ package Debugger.Gdb is
    procedure Step_Into (Debugger : access Gdb_Debugger);
 
    procedure Step_Over (Debugger : access Gdb_Debugger);
+
+   procedure Continue (Debugger : access Gdb_Debugger);
+
+   procedure Stack_Down (Debugger : access Gdb_Debugger);
+
+   procedure Stack_Up (Debugger : access Gdb_Debugger);
 
    procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
@@ -90,5 +104,11 @@ package Debugger.Gdb is
       Line     : Positive) return Boolean;
 
 private
-   type Gdb_Debugger is new Debugger.Debugger_Root with null record;
+
+   type Gdb_Debugger is new Debugger.Debugger_Root with record
+      Executable     : GNAT.OS_Lib.String_Access;
+      Remote_Target  : Boolean;
+      Target_Command : GNAT.OS_Lib.String_Access;
+   end record;
+
 end Debugger.Gdb;
