@@ -177,6 +177,7 @@ is
    Advanced : Advanced_Breakpoint_Access;
 
 begin
+   Descriptor := (Dummy => 0);
    Gtk_New (Advanced);
    Show_All (Advanced);
    Gtk.Main.Main;

@@ -57,7 +57,7 @@ package Advanced_Breakpoint_Pkg is
    type Advanced_Breakpoint_Access is access all Advanced_Breakpoint_Record'Class;
 
    type Advanced_Breakpoint_Descriptor is record
-      null;
+      Dummy : Integer;
    end record;
 
    procedure Advanced_Breakpoint_Editor
