@@ -581,6 +581,13 @@ package body Project_Explorers_Files is
            (File_Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Explorer.File_Tree,
+         "button_release_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (File_Button_Press'Access),
+         Slot_Object => Explorer,
+         After       => False);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Explorer.File_Tree),
