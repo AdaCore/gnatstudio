@@ -1477,6 +1477,7 @@ package body Browsers.Call_Graph is
                Next (Iter);
             end loop;
 
+            Recount_Category (Kernel, Title);
             Destroy (Iter);
          end;
       end if;
