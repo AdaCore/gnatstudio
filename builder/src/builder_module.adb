@@ -715,8 +715,9 @@ package body Builder_Module is
 
       while Not_Finished loop
          D.LI := D.LI + 1;
+
          if D.LI > Num_Handlers then
-            Insert (D.Kernel, "Finished parsing all source files");
+            Insert (D.Kernel, -"Finished parsing all source files");
             return False;
          end if;
 
@@ -736,7 +737,7 @@ package body Builder_Module is
       end loop;
 
       if New_Handler then
-         Insert (D.Kernel, "Parsing source files for "
+         Insert (D.Kernel, -"Parsing source files for "
                  & Get_LI_Name (Handler, D.LI));
       end if;
 
@@ -1014,6 +1015,7 @@ package body Builder_Module is
       Has_Child : Boolean := False;
    begin
       --  Remove all existing menus
+
       Remove_All_Children (Menu1);
       Remove_All_Children (Menu2);
 
