@@ -62,6 +62,7 @@ package body Custom_Combos is
 
    type Custom_Combo_Record is new Gtk_Combo_Record with record
       Id                   : String_Access;
+      Instance             : Class_Instance;
       On_Change_Subprogram : Glide_Kernel.Scripts.Subprogram_Type;
    end record;
    type Custom_Combo is access all Custom_Combo_Record'Class;
@@ -85,10 +86,11 @@ package body Custom_Combos is
       Return_Type => Boolean,
       User_Type   => Item_Callback);
 
-   function Create_Combo
+   procedure Create_Combo
      (Kernel     : access Kernel_Handle_Record'Class;
       Id         : String;
-      On_Changed : Subprogram_Type) return Custom_Combo;
+      On_Changed : Subprogram_Type;
+      Instance   : Class_Instance);
    --  Create a new combo
 
    procedure Add_Combo_Entry
@@ -220,7 +222,7 @@ package body Custom_Combos is
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
          begin
-            Set_Nth_Arg (D, 1, Data.Combo.Id.all);
+            Set_Nth_Arg (D, 1, Data.Combo.Instance);
             Set_Nth_Arg (D, 2, Text);
             Tmp := Execute (Data.On_Selected, D);
             Free (D);
@@ -240,15 +242,7 @@ package body Custom_Combos is
       Combo       : constant Custom_Combo := Custom_Combo (Combo_Box);
       Combo_Text  : constant String := Get_Text (Get_Entry (Combo));
    begin
-      --  Do not react on empty string.
-
-      if Combo_Text = "" then
-         return;
-      end if;
-
-      --  Execute the actions to call whenever changing, if any.
-
-      if Combo.On_Change_Subprogram /= null then
+      if Combo_Text /= "" and then Combo.On_Change_Subprogram /= null then
          declare
             D : Callback_Data'Class := Create
               (Get_Script (Combo.On_Change_Subprogram.all),
@@ -256,7 +250,7 @@ package body Custom_Combos is
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
          begin
-            Set_Nth_Arg (D, 1, Combo.Id.all);
+            Set_Nth_Arg (D, 1, Combo.Instance);
             Set_Nth_Arg (D, 2, Combo_Text);
             Tmp := Execute (Combo.On_Change_Subprogram, D);
             Free (D);
@@ -268,10 +262,11 @@ package body Custom_Combos is
    -- Create_Combo --
    ------------------
 
-   function Create_Combo
+   procedure Create_Combo
      (Kernel     : access Kernel_Handle_Record'Class;
       Id         : String;
-      On_Changed : Subprogram_Type) return Custom_Combo
+      On_Changed : Subprogram_Type;
+      Instance   : Class_Instance)
    is
       Combo   : Custom_Combo := Lookup_Custom_Combo (Kernel, Id);
    begin
@@ -279,22 +274,24 @@ package body Custom_Combos is
          Insert
            (Kernel, -"Entry already registered: " & Id,
             Mode => Error);
-         return Combo;
+      else
+         Combo := new Custom_Combo_Record;
+         Gtk.Combo.Initialize (Combo);
+         Set_Editable (Get_Entry (Combo), False);
+
+         Widget_Callback.Object_Connect
+           (Get_Entry (Combo), "changed",
+            Widget_Callback.To_Marshaller (Combo_Changed'Access),
+            Slot_Object => Combo,
+            After       => True);
+
+         Combo.Id := new String'(Id);
+         Combo.On_Change_Subprogram := On_Changed;
+         Combo.Instance := Instance;
+         Ref (Instance);
+
+         Set_Data (Instance, Convert (Combo));
       end if;
-
-      Combo := new Custom_Combo_Record;
-      Gtk.Combo.Initialize (Combo);
-      Set_Editable (Get_Entry (Combo), False);
-
-      Widget_Callback.Object_Connect
-        (Get_Entry (Combo), "changed",
-         Widget_Callback.To_Marshaller (Combo_Changed'Access),
-         Slot_Object => Combo,
-         After       => True);
-
-      Combo.Id := new String'(Id);
-      Combo.On_Change_Subprogram := On_Changed;
-      return Combo;
    end Create_Combo;
 
    ---------------------
@@ -362,9 +359,7 @@ package body Custom_Combos is
          if Combo = null then
             Set_Error_Msg (Data, -"Entry not found: " & Nth_Arg (Data, 2));
          else
-            EntInst := New_Instance (Get_Script (Data), EntClass);
-            Set_Data (EntInst, Convert (Combo));
-            Set_Return_Value (Data, EntInst);
+            Set_Return_Value (Data, Combo.Instance);
          end if;
 
       elsif Command = "append" then
@@ -398,17 +393,16 @@ package body Custom_Combos is
    procedure Custom_Entry_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel    : constant Kernel_Handle := Custom_Module_ID.Kernel;
-      Class     : constant Class_Type := New_Class (Kernel, "ToolbarEntry");
-      Inst      : constant Class_Instance := Nth_Arg (Data, 1, Class);
-      Combo     : Custom_Combo;
+      Kernel : constant Kernel_Handle  := Custom_Module_ID.Kernel;
+      Class  : constant Class_Type     := New_Class (Kernel, "ToolbarEntry");
+      Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Create_Args);
-         Combo := Create_Combo
+         Create_Combo
            (Kernel, Id => Nth_Arg (Data, 2),
-            On_Changed => Nth_Arg (Data, 3, null));
-         Set_Data (Inst, Convert (Combo));
+            On_Changed => Nth_Arg (Data, 3, null),
+            Instance   => Inst);
 
       elsif Command = "add" then
          Name_Parameters (Data, Add_Args);
@@ -436,8 +430,6 @@ package body Custom_Combos is
          Name_Parameters (Data, Set_Text_Args);
          Set_Combo_Text (Convert (Get_Data (Inst)), Nth_Arg (Data, 2));
       end if;
-
-      Free (Inst);
    end Custom_Entry_Handler;
 
    -----------------------
