@@ -56,6 +56,7 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Shell;             use Shell;
 
 package body Glide_Kernel.Modules is
 
@@ -1473,9 +1474,9 @@ package body Glide_Kernel.Modules is
    is
       Value      : GValue_Array (1 .. 6);
       File_Found : Boolean := False;
-
+      Real_File  : Basic_Types.String_Access;
+      Length     : Integer := Column_End - Column;
    begin
-      Init (Value (1), Glib.GType_String);
 
       if From_Path then
          declare
@@ -1488,16 +1489,34 @@ package body Glide_Kernel.Modules is
             File_Found := (Full /= Filename) and then Is_Regular_File (Full);
 
             if File_Found then
-               Set_String (Value (1), Full);
+               Real_File := new String'(Full);
             end if;
          end;
       end if;
 
-      if not File_Found then
+      if Real_File = null then
          --  Else just open the relative paths. This is mostly intended
          --  for files opened from the command line.
-         Set_String (Value (1), Normalize_Pathname (Filename));
+         Real_File := new String'(Normalize_Pathname (Filename));
       end if;
+
+      if Enable_Navigation then
+         if Length < 0 then
+            Length := 0;
+         end if;
+
+         Interpret_Command
+           (Kernel,
+            "add_location_command """ &
+            "edit -l " & Image (Line) & " -c " & Image (Column)
+            & " -L " & Image (Length) & " "
+            & Real_File.all
+            & """");
+      end if;
+
+      Init (Value (1), Glib.GType_String);
+      Set_String (Value (1), Real_File.all);
+      Free (Real_File);
 
       Init (Value (2), Glib.GType_Int);
       Set_Int (Value (2), Gint (Line));
