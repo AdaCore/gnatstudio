@@ -182,7 +182,7 @@ package body Navigation_Module is
                                & File_Information (Entity),
                              Line_Information (Entity),
                              Entity_Col,
-                             Entity_Col,
+                             0,
                              False);
 
                      if N_Data.Current_Location /= null then
