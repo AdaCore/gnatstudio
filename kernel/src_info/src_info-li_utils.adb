@@ -610,7 +610,6 @@ package body Src_Info.LI_Utils is
       if D_Ptr = null then
          return;
       end if;
-      D_Ptr.Value.References := null;
       D_Ptr.Value.Declaration.Name := new String'(Symbol_Name);
       D_Ptr.Value.Declaration.Location :=
                    (File => (LI => File,
