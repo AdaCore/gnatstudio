@@ -32,7 +32,6 @@ with Types;        use Types;
 with Gtk.Window;      use Gtk.Window;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
 
 with Project_Trees;   use Project_Trees;
