@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.40 
+# From configure.in Revision: 1.41 
 #############################################################
 #
 #  Checking for Gnat
@@ -576,7 +576,7 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 COLOR_SELECTION="#000000"
 EXEC_COMMAND="sh -c"
-BUILTIN_PS="stub"
+DEFAULT_PS="ps x 2> /dev/null || ps -u $USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
 
 ac_aux_dir=
@@ -1575,7 +1575,7 @@ case "${host}" in
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c"
-	BUILTIN_PS="winnt"
+	DEFAULT_PS="winps"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
@@ -1944,7 +1944,7 @@ s%@TARGET_CFLAGS@%$TARGET_CFLAGS%g
 s%@TARGET_LFLAGS@%$TARGET_LFLAGS%g
 s%@TARGET@%$TARGET%g
 s%@EXEC_COMMAND@%$EXEC_COMMAND%g
-s%@BUILTIN_PS@%$BUILTIN_PS%g
+s%@DEFAULT_PS@%$DEFAULT_PS%g
 s%@HTML_BROWSER@%$HTML_BROWSER%g
 s%@EXEC_PREFIX@%$EXEC_PREFIX%g
 
