@@ -859,8 +859,15 @@ package body Glide_Kernel.Modules is
 
       while Current /= Module_List.Null_Node loop
          if Module_List.Data (Current).Info.Mime_Handler /= null then
-            Result := Module_List.Data (Current).Info.Mime_Handler
-              (Kernel, Mime_Type, Data, Mode);
+            begin
+               Result := Module_List.Data (Current).Info.Mime_Handler
+                 (Kernel, Mime_Type, Data, Mode);
+            exception
+               when E : others =>
+                  Trace (Me, "Unexpected exception: " &
+                         Exception_Information (E));
+            end;
+
             exit when Result;
          end if;
 
