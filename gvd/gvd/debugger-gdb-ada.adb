@@ -24,6 +24,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Odd.Strings; use Odd.Strings;
+with Text_IO;
 
 package body Debugger.Gdb.Ada is
 
@@ -57,6 +58,18 @@ package body Debugger.Gdb.Ada is
       Index    : in out Natural;
       Result   : in out Array_Type_Access);
    --  Parse the value of an array.
+
+   procedure Internal_Parse_Value
+     (Lang       : access Gdb_Ada_Language;
+      Type_Str   : String;
+      Index      : in out Natural;
+      Result     : in out Generic_Values.Generic_Type_Access;
+      Repeat_Num : out Positive;
+      Parent     : Generic_Values.Generic_Type_Access);
+   --  Internal function used to parse the value.
+   --  The parameters are the same as for Parse_Value, plus Parent that is
+   --  the item that contains Result.
+   --  Parent should be null for the top-level item.
 
    ---------------------
    -- Break Exception --
@@ -263,6 +276,19 @@ package body Debugger.Gdb.Ada is
       Repeat_Num : out Positive)
    is
    begin
+      Internal_Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num,
+                            Parent => null);
+   end Parse_Value;
+
+   procedure Internal_Parse_Value
+     (Lang       : access Gdb_Ada_Language;
+      Type_Str   : String;
+      Index      : in out Natural;
+      Result     : in out Generic_Values.Generic_Type_Access;
+      Repeat_Num : out Positive;
+      Parent     : Generic_Values.Generic_Type_Access)
+   is
+   begin
       Repeat_Num := 1;
 
       -------------------
@@ -365,9 +391,15 @@ package body Debugger.Gdb.Ada is
          --  never need to go back to an array type.
 
          if Type_Str (Index) /= '(' then   --   ??? Start of array
-            Free (Result);
-            Result := New_Access_Type;
-            Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num);
+            if Parent /= null then
+               Result := Replace (Parent, Result, New_Access_Type);
+            else
+               Free (Result, Only_Value => False);
+               Result := New_Access_Type;
+            end if;
+
+            Internal_Parse_Value
+              (Lang, Type_Str, Index, Result, Repeat_Num, Parent => Parent);
          else
             Parse_Array_Value
               (Lang, Type_Str, Index, Array_Type_Access (Result));
@@ -406,7 +438,9 @@ package body Debugger.Gdb.Ada is
 
                      Skip_To_Char (Type_Str, Index, '=');
                      Index := Index + 3;
-                     Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
+                     Internal_Parse_Value
+                       (Lang, Type_Str, Index, V, Repeat_Num,
+                        Parent => Result);
                   end;
 
                --  Else we have a variant part record
@@ -433,7 +467,9 @@ package body Debugger.Gdb.Ada is
                         Field    => J,
                         Contains => Type_Str (Index .. Int - 1));
 
-                     Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
+                     Internal_Parse_Value
+                       (Lang, Type_Str, Index, V, Repeat_Num,
+                        Parent => Result);
                   end;
                end if;
             end loop;
@@ -456,13 +492,15 @@ package body Debugger.Gdb.Ada is
          begin
             for A in 1 .. Get_Num_Ancestors (Class_Type (Result.all)) loop
                R := Get_Ancestor (Class_Type (Result.all), A);
-               Parse_Value (Lang, Type_Str, Index, R, Repeat_Num);
+               Internal_Parse_Value
+                 (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
             end loop;
             R := Get_Child (Class_Type (Result.all));
-            Parse_Value (Lang, Type_Str, Index, R, Repeat_Num);
+            Internal_Parse_Value
+              (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
          end;
       end if;
-   end Parse_Value;
+   end Internal_Parse_Value;
 
    ----------------------
    -- Parse_Array_Type --
@@ -815,7 +853,9 @@ package body Debugger.Gdb.Ada is
 
          --  Parse the next item
          Tmp := Clone (Get_Item_Type (Result.all).all);
-         Parse_Value (Lang, Type_Str, Index, Tmp, Repeat_Num);
+         Internal_Parse_Value
+           (Lang, Type_Str, Index, Tmp, Repeat_Num,
+            Parent => Generic_Type_Access (Result));
          Set_Value (Item       => Result.all,
                     Elem_Value => Tmp,
                     Elem_Index => Current_Index,
