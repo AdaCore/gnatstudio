@@ -627,6 +627,15 @@ package body GVD.Process is
         (Process.Data_Canvas, "background_click",
          Canvas_Handler.To_Marshaller (On_Background_Click'Access));
 
+      --  Connect the various components so that they are refreshed when the
+      --  preferences are changed
+
+      Widget_Callback.Object_Connect
+        (Process.Window, "preferences_changed",
+         Widget_Callback.To_Marshaller
+           (GVD.Code_Editors.Preferences_Changed'Access),
+         Process.Editor_Text);
+
       --  Set up the command window for the contextual menus
 
       Add_Events (Process.Debugger_Text, Button_Press_Mask);
