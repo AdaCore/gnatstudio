@@ -38,7 +38,7 @@ package body Glide_Kernel.Preferences is
 
       Default_Font := Param_Spec_Font (Gnew_Font
         (Name    => "General-Default-Font",
-         Default => "Sans 9",
+         Default => GVD.Default_Font,
          Blurb   => -"The default font used in GPS",
          Nick    => -"Default font"));
       Register_Property
