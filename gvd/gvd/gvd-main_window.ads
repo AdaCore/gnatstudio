@@ -69,7 +69,6 @@ package GVD.Main_Window is
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
       Log_Level           : GVD.Types.Command_Type := GVD.Types.Internal;
-      External_Editor     : String_Access;
       Prefix_Directory    : String_Access;
       External_XID        : Glib.Guint32 := 0;
 
