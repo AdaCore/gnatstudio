@@ -948,8 +948,8 @@ procedure GPS is
       --  these earlier anyway, but these add shell commands, and therefore
       --  must be loaded after the script modules
 
-      Register_Standard_Hooks (GPS.Kernel);
       Register_Action_Hooks (GPS.Kernel);
+      Register_Standard_Hooks (GPS.Kernel);
 
       --  Load the theme manager module immediately, so that any customization
       --  file or module can provide its own themes.
