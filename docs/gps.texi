@@ -2392,8 +2392,7 @@ Currently, GPS will not recompute the contents of the various browsers
 expensive to do every time the value changes, and therefore you need
 to explicitly request an update.
 
-@c ??? Need to explain how to force an update, once this is
-@c implemented
+@c ??? Need to explain how to force an update, once this is implemented
 
 You can change the list of possible values for a configuration
 variable at any time by clicking on the button to the far left of the
@@ -2821,8 +2820,6 @@ The general page gives access to more attributes than the general page
 of the project wizard does. In addtion, you can select the name of all the
 external tools that GPS uses (compilers for the various languages,
 linker, pretty-printer, @dots{}).
-
-@c ??? missing documentation of Project and Scenario check box trees
 
 @item the project selector
 This area, in the top-right corner of the properties editor, contains
@@ -3408,21 +3405,21 @@ browser has the following new entries, in addition to the ones added by
 other modules of GPS.
 
 @table @command
-@item @i{Entity} @code{calls}
+@item @i{Entity} calls
 Same as described above.
 
-@item @i{Entity} @code{is called by}
+@item @i{Entity} is called by
 Same as described above.
 
-@item @code{Go To Spec}
+@item Go To Spec
 Selecting this item will open a source editor that displays the
 declaration of the entity.
 
-@item @code{Go To Body}
+@item Go To Body
 Selecting this item will open a source editor that displays the
 body of the entity.
 
-@item @code{Locate in explorer}
+@item Locate in explorer
 Selecting this menu entry will move the focus to the project explorer,
 and select the first node representing the file in which the entity is
 declared. This makes it easier to see which other entities are
@@ -3502,9 +3499,7 @@ menu, or the contextual menu in the project explorer.
 
 This menu entry is currently deactivated. It indicates whether
 indirect dependencies should also be displayed for the files.
-
 @end table
-
 
 The contextual menu available by right clicking on an item also adds a
 number of entries:
@@ -3580,7 +3575,7 @@ the selected entity.
 
 @end table
 
-Most information in the items is clickable (by default, they appear as
+Most information in the items are clickable (by default, they appear as
 underlined blue text). Clicking on one of these hyper links will open
 a new item in the entity browser for the selected entity.
 
