@@ -58,7 +58,9 @@ package Src_Contexts is
    -- File context --
    ------------------
 
-   type Current_File_Context is new Search_Context with private;
+   type File_Search_Context is abstract new Search_Context with private;
+
+   type Current_File_Context is new File_Search_Context with private;
    type Current_File_Context_Access is access all Current_File_Context'Class;
    --  A special context for searching interactively in the current file.
    --  It doesn't support All_Occurrences.
@@ -69,14 +71,23 @@ package Src_Contexts is
    function Search
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean;
    --  Search function for "Current File"
+
+   function Replace
+     (Context         : access Current_File_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean;
+   --  Replace function for "Current File"
 
    -------------------
    -- Files context --
    -------------------
 
-   type Files_Context is new Search_Context with private;
+   type Files_Context is new File_Search_Context with private;
    type Files_Context_Access is access all Files_Context'Class;
    --  A special context for searching in a specific list of files
 
@@ -93,14 +104,23 @@ package Src_Contexts is
    function Search
      (Context         : access Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean;
    --  Search function for "Files..."
+
+   function Replace
+     (Context         : access Files_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean;
+   --  Replace function for "Files..."
 
    --------------------------------
    -- Files From Project context --
    --------------------------------
 
-   type Files_Project_Context is new Search_Context with private;
+   type Files_Project_Context is new File_Search_Context with private;
    type Files_Project_Context_Access is access all Files_Project_Context'Class;
 
    procedure Set_File_List
@@ -115,8 +135,17 @@ package Src_Contexts is
    function Search
      (Context         : access Files_Project_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean;
    --  Search function for "Files From Project"
+
+   function Replace
+     (Context         : access Files_Project_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean;
+   --  Replace function for "Files From Project"
 
    -----------------------------
    -- Standard search support --
@@ -173,7 +202,15 @@ private
    procedure Free (D : in out Dir_Data_Access);
    package Directory_List is new Generic_List (Dir_Data_Access);
 
-   type Current_File_Context is new Search_Context with record
+   type File_Search_Context is abstract new Search_Context with record
+      Replace_Valid : Boolean := False;
+      --  Whether the current search item that the context refers to
+      --  is acceptable for a replace operation.
+
+      Begin_Line, Begin_Column, End_Line, End_Column : Natural;
+   end record;
+
+   type Current_File_Context is new File_Search_Context with record
       Scope                : Search_Scope              := Whole;
       All_Occurrences      : Boolean;
       Next_Matches_In_File : Match_Result_Array_Access := null;
@@ -186,7 +223,7 @@ private
 
    --  No additional data is needed for searching in the current file.
 
-   type Files_Context is new Search_Context with record
+   type Files_Context is new File_Search_Context with record
       Scope         : Search_Scope              := Whole;
       Files_Pattern : GNAT.Regexp.Regexp;
       Directory     : GNAT.OS_Lib.String_Access := null;
@@ -198,7 +235,7 @@ private
       Last_Match_Returned  : Natural                   := 0;
    end record;
 
-   type Files_Project_Context is new Search_Context with record
+   type Files_Project_Context is new File_Search_Context with record
       Scope        : Search_Scope                    := Whole;
       Files        : Basic_Types.String_Array_Access := null;
       Current_File : Natural;
