@@ -18,14 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.MDI;      use Gtkada.MDI;
 with GVD.Process;
-with Glide_Kernel;    use Glide_Kernel;
-with Glide_Consoles;  use Glide_Consoles;
 with GVD.Text_Box.Source_Editor.Glide;
+with Glib.Object;              use Glib.Object;
+with Glide_Consoles;           use Glide_Consoles;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Main_Window;        use Glide_Main_Window;
+with Gtkada.MDI;               use Gtkada.MDI;
 
 package body Glide_Page is
    use GVD.Text_Box.Source_Editor;
+
+   procedure Preferences_Changed
+     (Page   : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Called when preferences have changed
 
    -------------
    -- Gtk_New --
@@ -54,7 +62,38 @@ package body Glide_Page is
       GVD.Process.Initialize (Page, Window, Source_Editor (Edit));
       Set_Priorities
         (Page.Process_Mdi, (Left => 1, Right => 4, Top => 2, Bottom => 3));
+
+      Preferences_Changed (Page, Window.Kernel);
+
+      Kernel_Callback.Object_Connect
+        (Window.Kernel, Preferences_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
+         Slot_Object => Page,
+         User_Data   => Kernel_Handle (Window.Kernel));
    end Initialize;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Page   : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Page);
+   begin
+      Configure
+        (Get_MDI (Kernel),
+         Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque_Resize),
+         Opaque_Move       => Get_Pref (Kernel, MDI_Opaque_Move),
+         Opaque_Docks      => Get_Pref (Kernel, MDI_Opaque_Docks),
+         Close_Floating_Is_Unfloat =>
+           not Get_Pref (Kernel, MDI_Destroy_Floats),
+         Title_Font        => Get_Pref (Kernel, MDI_Title_Font),
+         Background_Color  => Get_Pref (Kernel, MDI_Background_Color),
+         Title_Bar_Color   => Get_Pref (Kernel, MDI_Title_Bar_Color),
+         Focus_Title_Color => Get_Pref (Kernel, MDI_Focus_Title_Color));
+   end Preferences_Changed;
 
    ------------------
    -- Load_Desktop --
