@@ -22,6 +22,7 @@ with Glib;
 with Gtk.Widget; use Gtk.Widget;
 with Gdk.Pixmap;
 with Gdk.Window;
+with Gdk.Rectangle;
 with Gtk.Main;
 with Gtk.Handlers;
 with Gdk.Event;
@@ -45,19 +46,25 @@ with Gdk.Window;
 --  (For an example showing the use of that package, please see
 --  Odd.Source_Editors)
 
-
 generic
    type User_Type (<>) is private;
    type Widget_Type is new Gtk.Widget.Gtk_Widget_Record with private;
    with procedure Draw_Tooltip (Widget : access Widget_Type'Class;
                                 Data   : in out User_Type;
                                 Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-                                Width, Height : out Glib.Gint) is <>;
+                                Width, Height : out Glib.Gint;
+                                Area   : out Gdk.Rectangle.Gdk_Rectangle)
+   is <>;
    --  Subprogram called every time a tooltip needs to be drawn.
    --  Width and Height should either contain the size of the pixmap on exit,
    --  or (0, 0) if no tooltip could be displayed.
    --  It is the responsability of this function to get the coordinates of
    --  the pointer, using Gdk.Window.Get_Pointer.
+   --  Area indicates the area of effectiveness of the tooltip : if the user
+   --  moves the mouse within this area after the tooltip is displayed, then
+   --  the tooltip is hidden, and not will not be displayed again as long as
+   --  the user stays within this area. The X, Y coordinates of the rectangle
+   --  should be relative to Widget.
 
 package Odd.Tooltips is
 
@@ -121,8 +128,14 @@ private
 
       Widget : Widget_Type_Access;
       --  The widget on which the tooltip is set.
-   end record;
 
+      X, Y : Glib.Gint;
+      --  The mouse coordinates associated with the last call to Draw_Tooltip.
+
+      Area : Gdk.Rectangle.Gdk_Rectangle;
+      --  The area of efficiency for the tooltip.
+      --  (See Draw_Tooltip specification for details).
+   end record;
 
    procedure Mouse_Moved_Cb
      (Widget  : access Widget_Type'Class;

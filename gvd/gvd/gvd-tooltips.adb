@@ -1,7 +1,28 @@
+----------------------------------------------------------------------
+--                 Odd - The Other Display Debugger                  --
+--                                                                   --
+--                         Copyright (C) 2000                        --
+--                 Emmanuel Briot and Arnaud Charlet                 --
+--                                                                   --
+-- Odd is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Glib;            use Glib;
 with Gtk.Widget;      use Gtk.Widget;
 with Gdk.Pixmap;      use Gdk.Pixmap;
 with Gdk.Window;      use Gdk.Window;
+with Gdk.Rectangle;   use Gdk.Rectangle;
 with Gtk.Main;        use Gtk.Main;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gdk.Types;       use Gdk.Types;
@@ -98,7 +119,13 @@ package body Odd.Tooltips is
       Tooltip       : out Tooltips)
    is
       use type Gdk.Window.Gdk_Window;
+      Area : Gdk_Rectangle;
    begin
+      Area.X := 0;
+      Area.Y := 0;
+      Area.Width := 0;
+      Area.Height := 0;
+
       Add_Events (Widget, Pointer_Motion_Mask or Enter_Notify_Mask);
       Tooltip := new Tooltips_Record'
         (Timeout        => Default_Timeout,
@@ -107,7 +134,10 @@ package body Odd.Tooltips is
          Parent_Window  => Get_Window (Widget),
          Handler_Id     => 0,
          Active         => False,
-         Widget         => Widget_Type_Access (Widget));
+         Widget         => Widget_Type_Access (Widget),
+         X              => 0,
+         Y              => 0,
+         Area           => Area);
       Tooltip_Handler.Connect
         (Widget, "motion_notify_event",
          Tooltip_Handler.To_Marshaller (Mouse_Moved_Cb'Access),
@@ -152,7 +182,8 @@ package body Odd.Tooltips is
                     Tooltip.Data.all,
                     Pixmap,
                     Width,
-                    Height);
+                    Height,
+                    Tooltip.Area);
 
       if Width /= 0 and then Height /= 0 then
 
@@ -178,6 +209,7 @@ package body Odd.Tooltips is
          Move (Tooltip.Display_Window, X + 10, Y + 10);
          Gdk.Pixmap.Unref (Pixmap);
          Show (Tooltip.Display_Window);
+
       end if;
       return False;
    end Display_Tooltip;
@@ -186,11 +218,30 @@ package body Odd.Tooltips is
    -- Set_Tooltip --
    -----------------
 
-   procedure Set_Tooltip (Tooltip : Tooltips) is
+   procedure Set_Tooltip (Tooltip : Tooltips)
+   is
+      Mask        : Gdk_Modifier_Type;
+      Window      : Gdk_Window;
+      X, Y        : Gint;
    begin
       if Tooltip.Active = True then
          Remove_Tooltip (Tooltip);
       end if;
+
+      Get_Pointer (Tooltip.Parent_Window, X, Y, Mask, Window);
+
+      if X <= Tooltip.X + Tooltip.Area.X + Gint16 (Tooltip.Area.Width)
+        and then Y <= Tooltip.Y + Tooltip.Area.Y + Gint16 (Tooltip.Area.Height)
+        and then X >= Tooltip.X + Tooltip.Area.X
+        and then Y >= Tooltip.Y + Tooltip.Area.Y
+      then
+         return;
+      end if;
+
+      Tooltip.X := X;
+      Tooltip.Y := Y;
+      Tooltip.Area.Width := 0;
+      Tooltip.Area.Height := 0;
       Tooltip.Active := True;
       Tooltip.Handler_Id := Odd_Tooltips_Timeout.Add
         (Tooltip.Timeout,
