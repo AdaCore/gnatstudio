@@ -88,6 +88,11 @@ package Glide_Kernel.Hooks is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Register all predefined hooks.
 
+   function Get_Hook_Name
+     (Data : Glide_Kernel.Scripts.Callback_Data'Class; Nth : Natural)
+      return String;
+   --  Return the name of the hook instance stored in Data
+
    -----------------------------
    -- Hooks with no arguments --
    -----------------------------
