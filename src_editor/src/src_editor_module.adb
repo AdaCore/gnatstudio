@@ -1752,7 +1752,7 @@ package body Src_Editor_Module is
                --  Add the location in the navigations button.
                declare
                   Args : Argument_List :=
-                    (new String'("edit"),
+                    (new String'("Editor.edit"),
                      new String'(Full_Name (F).all),
                      new String'(Image (Line)),
                      new String'(Image (Column)));
