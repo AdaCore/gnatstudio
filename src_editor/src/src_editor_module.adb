@@ -1001,8 +1001,8 @@ package body Src_Editor_Module is
 
          if Filename /= null then
             declare
-               Child : constant MDI_Child
-                := Find_Editor (Kernel, Filename.all);
+               Child : constant MDI_Child :=
+                 Find_Editor (Kernel, Filename.all);
             begin
                if Child /= null then
                   Free (Filename);
@@ -3511,6 +3511,10 @@ package body Src_Editor_Module is
       Child : MDI_Child;
 
    begin
+      if File = "" then
+         return null;
+      end if;
+
       if File /= Base_Name (File) then
          loop
             Child := Get (Iter);
