@@ -1580,9 +1580,13 @@ package body Src_Editor_Box is
            (Entity_Selection_Context_Access (Context));
          if Entity /= null then
             if Is_Container (Get_Kind (Entity).Kind) then
-               return -"Goto body of " & Get_Name (Entity).all;
+               return -"Goto body of "
+                 & Entity_Name_Information
+                   (Entity_Selection_Context_Access (Context));
             else
-               return -"Goto full declaration of " & Get_Name (Entity).all;
+               return -"Goto full declaration of "
+                 & Entity_Name_Information
+                   (Entity_Selection_Context_Access (Context));
             end if;
          end if;
       end if;
