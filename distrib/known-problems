@@ -22,13 +22,12 @@ Known Problems fixed in GPS 2.2.0
   Workaround: none found, the contextual menu will appear both in the Files
               and Project view if you use (module="Explorer")
 
-- D713-012 Improper substitution in XML files
-  Problem:    When chaining multiple shell commands in an XML action, the
-              second command can refer to the output of the first by using %1.
-              However, this is improperly detected by GPS when using
-              "%1.suffix" (ie the 1 character immediately followed by other
-              chars
-  Workaround: Put a blank after "%1 "
+- DB23-002 Retrieve project attribute with spaces
+  Problem:    When retrieving through a call to get_attribute_as_string() an
+              attribute that contains spaces, they are all quoted by a
+              backslash in the result string.
+  Workaround: Use get_attribute_as_list and recreate a string from the
+              output, without the backslashes.
 
 - DA17-002 Extra spaces added in GPS shell commands
   Problem:    When chaining multiple commands in an action for instance, the
@@ -38,10 +37,12 @@ Known Problems fixed in GPS 2.2.0
   Workaround: Write commands in python when possible, or surround parameters
               in triple quotes
 
-- DB23-002 Retrieve project attribute with spaces
-  Problem:    When retrieving through a call to get_attribute_as_string() an
-              attribute that contains spaces, they are all quoted by a
-              backslash in the result string.
-  Workaround: Use get_attribute_as_list and recreate a string from the
-              output, without the backslashes.
+- D713-012 Improper substitution in XML files
+  Problem:    When chaining multiple shell commands in an XML action, the
+              second command can refer to the output of the first by using %1.
+              However, this is improperly detected by GPS when using
+              "%1.suffix" (ie the 1 character immediately followed by other
+              chars
+  Workaround: Put a blank after "%1 "
+
 
