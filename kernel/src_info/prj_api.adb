@@ -25,6 +25,7 @@ with Prj.Tree;         use Prj.Tree;
 with Prj.Part;         use Prj.Part;
 with Prj.Attr;         use Prj.Attr;
 with Prj.Util;         use Prj.Util;
+with Prj.Ext;          use Prj.Ext;
 with Prj_Normalize;    use Prj_Normalize;
 with Snames;           use Snames;
 pragma Elaborate_All (Snames);
@@ -134,6 +135,12 @@ package body Prj_API is
    --  Remove Node from the declaration list in Parent.
    --  This doesn't search recursively inside nested packages, case
    --  constructions, ...
+
+   procedure Remove_Variable_Declaration
+     (Project_Or_Package : Project_Node_Id;
+      Declaration        : Project_Node_Id);
+   --  Remove the variable declaration from the list of variables in
+   --  Project_Or_Package.
 
    ----------------
    -- Get_String --
@@ -961,6 +968,8 @@ package body Prj_API is
             end if;
 
             --  For all the imported projects
+            --  ??? Should avoid parsing again the projects we have already
+            --  ??? parsed.
             Prj := First_With_Clause_Of (In_Project);
             while Prj /= Empty_Node loop
                Register_Vars (Project_Node_Of (Prj));
@@ -2618,6 +2627,12 @@ package body Prj_API is
    begin
       For_Each_Environment_Variable
         (Root_Project, Old_Name, "", Callback'Unrestricted_Access);
+
+      --  Create the new variable, to avoid errors when computing the view of
+      --  the project.
+      Name_Len := Old_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Old_Name;
+      Add (Get_String (New_Name), Get_String (Value_Of (Name_Find)));
    end Rename_External_Variable;
 
    ----------------------
@@ -2677,6 +2692,46 @@ package body Prj_API is
       end loop;
    end Remove_Node;
 
+   ---------------------------------
+   -- Remove_Variable_Declaration --
+   ---------------------------------
+
+   procedure Remove_Variable_Declaration
+     (Project_Or_Package : Project_Node_Id;
+      Declaration        : Project_Node_Id)
+   is
+      Tmp, Next : Project_Node_Id;
+      Pkg : Project_Node_Id := Project_Or_Package;
+   begin
+      while Pkg /= Empty_Node loop
+         Tmp := First_Variable_Of (Pkg);
+
+         if Tmp = Declaration then
+            Set_First_Variable_Of (Pkg, Next_Variable (Tmp));
+            return;
+         else
+            loop
+               Next := Next_Variable (Tmp);
+               exit when Next = Empty_Node;
+
+               if Next = Declaration then
+                  Set_Next_Variable (Tmp, Next_Variable (Next));
+                  return;
+               end if;
+            end loop;
+         end if;
+
+         if Kind_Of (Pkg) = N_Project then
+            Pkg := First_Package_Of (Pkg);
+         else
+            Pkg := Next_Package_In_Project (Pkg);
+         end if;
+      end loop;
+
+      Trace (Me, "Remove_Variable_Declaration: did not find the declaration"
+             & " for the variable");
+   end Remove_Variable_Declaration;
+
    ------------------------------
    -- Delete_External_Variable --
    ------------------------------
@@ -2706,8 +2761,11 @@ package body Prj_API is
                Store_String_Chars (Keep_Choice);
                Set_Current_Term (Parent, Create_Literal_String (End_String));
 
-            when N_Typed_Variable_Declaration
-              | N_String_Type_Declaration =>
+            when N_Typed_Variable_Declaration =>
+               Remove_Node (Project, Node);
+               Remove_Variable_Declaration (Project, Node);
+
+            when N_String_Type_Declaration =>
                Remove_Node (Project, Node);
 
             when N_Case_Item =>
@@ -2726,8 +2784,6 @@ package body Prj_API is
       For_Each_Environment_Variable
         (Root_Project, Ext_Variable_Name, Keep_Choice,
          Callback'Unrestricted_Access);
-      --  ??? Should update the cached value of scenario variables in the
-      --  ??? kernel.
    end Delete_External_Variable;
 
    ----------------------------------------
@@ -2779,7 +2835,41 @@ package body Prj_API is
       For_Each_Environment_Variable
         (Root_Project, Ext_Variable_Name, Old_Value_Name,
          Callback'Unrestricted_Access);
+
+      Name_Len := Ext_Variable_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Ext_Variable_Name;
+
+      if Get_String (Value_Of (Name_Find)) = Old_Value_Name then
+         Add (Ext_Variable_Name, Get_String (New_Value_Name));
+      end if;
    end Rename_Value_For_External_Variable;
+
+   ---------------------------------------------
+   -- Set_Default_Value_For_External_Variable --
+   ---------------------------------------------
+
+   procedure Set_Default_Value_For_External_Variable
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Default           : String_Id)
+   is
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
+      --  Called for each mtching node for the env. variable.
+
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+      begin
+         if Kind_Of (Node) = N_Typed_Variable_Declaration then
+            Set_External_Default_Of
+              (Current_Term (First_Term (Expression_Of (Node))),
+               Create_Literal_String (Default));
+         end if;
+      end Callback;
+
+   begin
+      For_Each_Environment_Variable
+        (Root_Project, Ext_Variable_Name, "",
+         Callback'Unrestricted_Access);
+   end Set_Default_Value_For_External_Variable;
 
    ------------------
    -- Remove_Value --
@@ -2791,6 +2881,7 @@ package body Prj_API is
       Value_Name        : String)
    is
       Delete_Variable : exception;
+      Type_Decl : Project_Node_Id := Empty_Node;
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
@@ -2800,6 +2891,8 @@ package body Prj_API is
       begin
          case Kind_Of (Node) is
             when N_String_Type_Declaration =>
+               Type_Decl := Node;
+
                C := First_Literal_String (Node);
 
                if Next_Literal_String (C) = Empty_Node then
@@ -2859,6 +2952,19 @@ package body Prj_API is
       For_Each_Environment_Variable
         (Root_Project, Ext_Variable_Name, Value_Name,
          Callback'Unrestricted_Access);
+
+      --  Reset the value of the external variable if needed
+      Name_Len := Ext_Variable_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Ext_Variable_Name;
+      if Get_String (Value_Of (Name_Find)) = Value_Name then
+         if Type_Decl /= Empty_Node then
+            Add (Ext_Variable_Name,
+                 Get_String (String_Value_Of
+                             (First_Literal_String (Type_Decl))));
+         else
+            Add (Ext_Variable_Name, "");
+         end if;
+      end if;
 
    exception
       when Delete_Variable =>

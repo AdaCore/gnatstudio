@@ -507,6 +507,13 @@ package Prj_API is
    --  Old_Name is given as a string so that we don't need to allocate a new
    --  string_id.
 
+   procedure Set_Default_Value_For_External_Variable
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Default           : Types.String_Id);
+   --  Change the default value for all the scenario variables based on
+   --  Ext_Variable_Name.
+
    procedure Delete_External_Variable
      (Root_Project      : Project_Node_Id;
       Ext_Variable_Name : String;
