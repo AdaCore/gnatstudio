@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -72,7 +72,7 @@ package body Src_Editor_Buffer is
    Class_Record : GObject_Class := Uninitialized_Class;
    --  A pointer to the 'class record'.
 
-   Signals : Interfaces.C.Strings.chars_ptr_array :=
+   Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => New_String ("cursor_position_changed"));
    --  The list of new signals supported by this GObject
 
@@ -282,11 +282,11 @@ package body Src_Editor_Buffer is
       --  changed.
 
       if Get_Object (Mark) /= Get_Object (Buffer.Insert_Mark) then
-
          --  If the mark corresponds to a cursor position, set the stored
          --  Insert_Mark accordingly.
+
          declare
-            Mark_Name : String := Get_Name (Mark);
+            Mark_Name : constant String := Get_Name (Mark);
          begin
             if Mark_Name = "insert"
               or else Mark_Name = "gtk_drag_target"
