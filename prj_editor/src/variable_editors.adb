@@ -36,6 +36,7 @@ with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Editable;        use Gtk.Editable;
+with Gtk.Pixmap;          use Gtk.Pixmap;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Check_Button;    use Gtk.Check_Button;
 with Gtk.Radio_Button;    use Gtk.Radio_Button;
@@ -54,7 +55,8 @@ with System;     use System;
 with Ada.Text_IO; use Ada.Text_IO;
 with Unchecked_Deallocation;
 
-with Prj_API;    use Prj_API;
+with Pixmaps_IDE;   use Pixmaps_IDE;
+with Prj_API;       use Prj_API;
 with Value_Editors; use Value_Editors;
 
 package body Variable_Editors is
@@ -341,9 +343,10 @@ package body Variable_Editors is
    is
       procedure Free is new Unchecked_Deallocation
         (Row_Data_Array, Row_Data_Array_Access);
-      Button  : Gtk_Button;
-      Data    : Var_Handler_Data;
+      Button   : Gtk_Button;
+      Data     : Var_Handler_Data;
       Row_Data : Row_Data_Array_Access;
+
    begin
       if Row > Editor.Num_Rows then
          Resize (Editor.List_Variables, Rows => Row, Columns => 5);
@@ -358,7 +361,8 @@ package body Variable_Editors is
          Editor.Data (Row).Var := Var;
 
          --  Insert the widgets
-         Gtk_New (Button, "E");
+         Gtk_New (Button);
+         Add (Button, Create_Pixmap (stock_preferences_xpm, Editor));
          Attach (Editor.List_Variables, Button, 0, 1,
                  Editor.Num_Rows - 1, Editor.Num_Rows,
                  Xoptions => 0, Yoptions => 0);
@@ -367,7 +371,8 @@ package body Variable_Editors is
            (Button, "clicked",
             Var_Handler.To_Marshaller (Edit_Variable'Access), Data);
 
-         Gtk_New (Button, "D");
+         Gtk_New (Button);
+         Add (Button, Create_Pixmap (trash_xpm, Editor));
          Attach (Editor.List_Variables, Button, 1, 2,
                  Editor.Num_Rows - 1, Editor.Num_Rows,
                  Xoptions => 0, Yoptions => 0);
