@@ -551,12 +551,6 @@ expose (GtkWidget *widget, GdkEventExpose *event)
 {
 	CscHTML *html = CSC_HTML (widget);
 
-	/* ??? From the old draw callback:
-	HTMLPainter *painter = html->engine->painter;
-
-	html_painter_clear (painter);
-	*/
-
 	html_engine_draw (html->engine,
 			  event->area.x, event->area.y,
 			  event->area.width, event->area.height);
