@@ -349,8 +349,9 @@ package body Browsers.Dependency_Items is
 
       Initial := File_Item (Find_File (Browser, F));
       if Initial = null then
-         Gtk_New (Initial, Get_Window (Browser), Browser, Kernel,  F);
+         Gtk_New (Initial, Get_Window (Browser), Browser, Kernel, F);
          Put (Get_Canvas (Browser), Initial);
+         Refresh (Browser, Initial);
       end if;
 
       if not Initial.To_Parsed then
@@ -388,6 +389,8 @@ package body Browsers.Dependency_Items is
                                Src  => Initial,
                                Dest => Item);
                   end if;
+
+                  Refresh (Browser, Item);
 
                   if New_Item then
                      Put (Get_Canvas (Browser), Item);
@@ -480,6 +483,8 @@ package body Browsers.Dependency_Items is
                     (Get_Canvas (Data.Browser), Link => Link,
                      Src => Child, Dest => Data.Item);
                end if;
+
+               Refresh (Data.Browser, Child);
             end;
          end if;
 
@@ -519,6 +524,7 @@ package body Browsers.Dependency_Items is
       if Item = null then
          Gtk_New (Item, Get_Window (Browser), Browser,  Kernel, File);
          Put (Get_Canvas (Browser), Item);
+         Refresh (Browser, Item);
       end if;
 
       Item.From_Parsed := True;
@@ -872,8 +878,6 @@ package body Browsers.Dependency_Items is
 
       Set_Screen_Size_And_Pixmap
         (Item, Get_Window (Item.Browser), Width, Height);
-
-      Refresh (Item.Browser, Item);
    end Initialize;
 
    -------------
@@ -1041,6 +1045,7 @@ package body Browsers.Dependency_Items is
             Gtk_New (Item, Get_Window (B), B,  Get_Kernel (Context),
                      Other_File);
             Put (Get_Canvas (B), Item);
+            Refresh (B, Item);
 
             Set_Auto_Layout (Get_Canvas (B), True);
             Layout (Get_Canvas (B),

@@ -232,10 +232,6 @@ package body Browsers.Call_Graph is
 
       Set_Screen_Size_And_Pixmap
         (Item, Get_Window (Browser), Width, Height);
-
-      --  Set_Orthogonal_Links (Get_Canvas (Browser), True);
-
-      Refresh (Browser, Item);
    end Initialize;
 
    -------------
@@ -540,6 +536,7 @@ package body Browsers.Call_Graph is
                   Src => Item, Dest => Child, Arrow => Both_Arrow);
             end if;
             Destroy (Rename);
+            Refresh (Browser, Child);
 
          elsif Is_Renaming then
             Insert (Kernel,
@@ -559,6 +556,7 @@ package body Browsers.Call_Graph is
                                Src => Item,
                                Dest => Child);
                   end if;
+                  Refresh (Browser, Child);
                end if;
 
                Next (Iter);
@@ -648,6 +646,7 @@ package body Browsers.Call_Graph is
                      Src => Child, Dest => Data.Item,
                      Arrow => Both_Arrow);
                end if;
+               Refresh (Data.Browser, Child);
 
                --  An entity that calls our entity.
             else
@@ -669,6 +668,7 @@ package body Browsers.Call_Graph is
                        (Get_Canvas (Data.Browser), Link => Link,
                         Src => Child, Dest => Data.Item);
                   end if;
+                  Refresh (Data.Browser, Child);
                end if;
             end if;
          end if;
@@ -747,6 +747,7 @@ package body Browsers.Call_Graph is
               (Get_Canvas (Browser), Link => Link,
                Src => Item, Dest => Child, Arrow => Both_Arrow);
          end if;
+         Refresh (Browser, Child);
          Destroy (Rename);
 
       elsif Is_Renaming then
