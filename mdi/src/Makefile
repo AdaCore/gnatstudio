@@ -1,6 +1,6 @@
 
 MAIN=test_mdi
-MODULES=gtkada gvd
+MODULES=gtkada debugger_common
 NO_STYLE_FILES=
 
 include ../../Makefile.common
