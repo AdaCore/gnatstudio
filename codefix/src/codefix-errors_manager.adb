@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with String_Utils; use String_Utils;
+
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 
 package body Codefix.Errors_Manager is
@@ -159,7 +161,17 @@ package body Codefix.Errors_Manager is
       Free (This.Message);
       Codefix.Formal_Errors.Free (This.Solutions);
       Free (This.Category);
+      Free (This.Fixed);
    end Free;
+
+   --------------
+   -- Is_Fixed --
+   --------------
+
+   function Is_Fixed (This : Error_Id) return Boolean is
+   begin
+      return Data (This).Fixed.all;
+   end Is_Fixed;
 
    -------------
    -- Analyse --
@@ -238,7 +250,7 @@ package body Codefix.Errors_Manager is
       Choice : Text_Command'Class) is
    begin
       Append (This.Fix_List, Choice);
-      Remove_Error (This, Error);
+      Data (Error).Fixed.all := True;
    end Validate;
 
    -------------------------
@@ -251,6 +263,8 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Natural)
    is
+      pragma Unreferenced (This);
+
       New_Extract : Extract;
    begin
       Execute
@@ -260,7 +274,7 @@ package body Codefix.Errors_Manager is
       Commit (New_Extract, Current_Text);
 
       Free (New_Extract);
-      Remove_Error (This, Error);
+      Data (Error).Fixed.all := True;
    end Validate_And_Commit;
 
    -------------------------
@@ -273,6 +287,8 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Text_Command'Class)
    is
+      pragma Unreferenced (This);
+
       New_Extract : Extract;
    begin
       Execute
@@ -282,7 +298,7 @@ package body Codefix.Errors_Manager is
       Commit (New_Extract, Current_Text);
 
       Free (New_Extract);
-      Remove_Error (This, Error);
+      Data (Error).Fixed.all := True;
    end Validate_And_Commit;
 
    ------------
@@ -354,14 +370,63 @@ package body Codefix.Errors_Manager is
      (This : Correction_Manager; Message : String) return Error_Id
    is
       Current_Id : Error_Id := Get_First_Error (This);
+
+      function Cmp_Messages (Str1, Str2 : String) return Boolean;
+
+      function Cmp_Messages (Str1, Str2 : String) return Boolean is
+         Ind_Begin_1, Ind_End_1 : Natural := Str1'First;
+         Ind_Begin_2, Ind_End_2 : Natural := Str2'First;
+      begin
+         Skip_To_Char (Str1, Ind_End_1, ':');
+         Skip_To_Char (Str2, Ind_End_2, ':');
+
+         if Str1 (Ind_Begin_1 .. Ind_End_1) /=
+           Str2 (Ind_Begin_2 .. Ind_End_2)
+         then
+            return False;
+         end if;
+
+         Ind_End_1 := Ind_End_1 + 1;
+         Ind_End_2 := Ind_End_2 + 1;
+         Ind_Begin_1 := Ind_End_1;
+         Ind_Begin_2 := Ind_End_2;
+         Skip_To_Char (Str1, Ind_End_1, ':');
+         Skip_To_Char (Str2, Ind_End_2, ':');
+
+         if Integer'Value (Str1 (Ind_Begin_1 .. Ind_End_1 - 1)) /=
+           Integer'Value (Str2 (Ind_Begin_2 .. Ind_End_2 - 1))
+         then
+            return False;
+         end if;
+
+         Ind_End_1 := Ind_End_1 + 1;
+         Ind_End_2 := Ind_End_2 + 1;
+         Ind_Begin_1 := Ind_End_1;
+         Ind_Begin_2 := Ind_End_2;
+         Skip_To_Char (Str1, Ind_End_1, ':');
+         Skip_To_Char (Str2, Ind_End_2, ':');
+
+         if Integer'Value (Str1 (Ind_Begin_1 .. Ind_End_1 - 1)) /=
+           Integer'Value (Str2 (Ind_Begin_2 .. Ind_End_2 - 1))
+         then
+            return False;
+         end if;
+
+         return Str1 (Ind_End_1 .. Str1'Last) =
+           Str2 (Ind_End_2 .. Str2'Last);
+
+      end Cmp_Messages;
+
    begin
       while Current_Id /= Null_Error_Id loop
-         exit when Get_Message (Get_Error_Message (Current_Id)) = Message;
+         exit when Cmp_Messages
+             (Get_Message (Get_Error_Message (Current_Id)), Message);
          Current_Id := Next (Current_Id);
       end loop;
 
       return Current_Id;
    end Search_Error;
+
 
    --------------------
    -- Update_Changes --
@@ -527,19 +592,5 @@ package body Codefix.Errors_Manager is
 
       return Unknown;
    end Get_Error_State;
-
-   ------------------
-   -- Remove_Error --
-   ------------------
-
-   procedure Remove_Error
-     (This : in out Correction_Manager;
-      Id   : Error_Id) is
-   begin
-      Remove_Nodes
-        (This.Potential_Corrections,
-         Prev (This.Potential_Corrections, Id),
-         Id);
-   end Remove_Error;
 
 end Codefix.Errors_Manager;
