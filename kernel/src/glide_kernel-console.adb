@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;         use Ada.Calendar;
+with GNAT.Calendar;        use GNAT.Calendar;
+with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Glib.Values;          use Glib.Values;
@@ -190,15 +193,18 @@ package body Glide_Kernel.Console is
       Mode   : Message_Type := Info)
    is
       Console : constant Interactive_Console := Get_Console (Kernel);
+      T       : constant Ada.Calendar.Time := Ada.Calendar.Clock;
    begin
       if Console = null then
          Put_Line (Text);
       elsif Text /= "" then
-         Insert (Console, Text, Add_LF, Mode = Error);
-
          if Mode = Error then
+            Insert
+              (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
+               Add_LF, Mode = Error);
             Raise_Console (Kernel);
          else
+            Insert (Console, Text, Add_LF, Mode = Error);
             Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
          end if;
       end if;
@@ -509,6 +515,7 @@ package body Glide_Kernel.Console is
                null,
                GObject (Kernel),
                Get_Pref (Kernel, Source_Editor_Font),
+               Highlight    => Get_Pref (Kernel, Message_Highlight),
                History_List => null,
                Key          => "",
                Wrap_Mode    => Wrap_Char);
