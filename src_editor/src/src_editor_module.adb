@@ -535,7 +535,6 @@ package body Src_Editor_Module is
       end Parse_Argument;
 
    begin
-      Trace (Me, "Handler=" & Command & "--");
       if Command = "edit" or else Command = "create_mark" then
          Node := Args'First;
 
@@ -3004,10 +3003,12 @@ package body Src_Editor_Module is
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
-      Register_Menu (Kernel, Edit, -"Comment Lines", "",
-                     On_Comment_Lines'Access, Ref_Item => -"Preferences");
-      Register_Menu (Kernel, Edit, -"Uncomment Lines", "",
-                     On_Uncomment_Lines'Access, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, -"Comment _Lines", "",
+                     On_Comment_Lines'Access, null,
+                     GDK_minus, Control_Mask, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, -"Uncomment L_ines", "",
+                     On_Uncomment_Lines'Access, null,
+                     GDK_underscore, Control_Mask, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
