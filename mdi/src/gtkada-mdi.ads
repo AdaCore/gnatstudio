@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--               GtkAda - Ada95 binding for Gtk+/Gnome               --
+--                                                                   --
+--                   Copyright (C) 2001 ACT-Europe                   --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Glib;
 with Gdk.GC;
 with Gdk.Types;
@@ -39,7 +67,7 @@ package Gtkada.MDI is
    type MDI_Child_Record is new Gtk.Event_Box.Gtk_Event_Box_Record
      with private;
    type MDI_Child is access all MDI_Child_Record'Class;
-   --  A child of the MDI,  that encapsulate the widgets you have put in the
+   --  A child of the MDI, that encapsulates the widgets you have put in the
    --  MDI window.
    --  You can easily convert from this to the initial widget using the
    --  functions Find_MDI_Child and Get_Widget.
@@ -68,12 +96,12 @@ package Gtkada.MDI is
    --  Internal initialization function.
    --  See the section "Creating your own widgets" in the documentation.
 
-   procedure Put (MDI : access MDI_Window_Record;
-                  Child : access Gtk.Widget.Gtk_Widget_Record'Class);
-   function Put
+   procedure Put
      (MDI : access MDI_Window_Record;
-      Child : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return MDI_Child;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class);
+   function Put
+     (MDI   : access MDI_Window_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class) return MDI_Child;
    --  Add a new child to the MDI window, and return its embedding widget.
    --  Note that there is a small difference between adding a toplevel
    --  Gtk_Window and a standard widget.
@@ -133,8 +161,8 @@ package Gtkada.MDI is
    --  If this function is called several times, the same menu is returned
    --  every time.
 
-   function Create_Child_Menu (Child : access MDI_Child_Record'Class)
-      return Gtk.Menu.Gtk_Menu;
+   function Create_Child_Menu
+     (Child : access MDI_Child_Record'Class) return Gtk.Menu.Gtk_Menu;
    --  Create and return a static menu that should be put in a child-specific
    --  menu bar. The recommended way to use this is to put this menu in the
    --  menu bar for a floating child. This will allow thie child to be
@@ -147,24 +175,23 @@ package Gtkada.MDI is
    -- MDI_Child and encapsulated children --
    -----------------------------------------
 
-   function Get_Widget (Child : access MDI_Child_Record)
-      return Gtk.Widget.Gtk_Widget;
+   function Get_Widget
+     (Child : access MDI_Child_Record) return Gtk.Widget.Gtk_Widget;
    --  Return the widget that Child encapsulates. This is the widget you
    --  initially Put() in MDI.
    --  Note that if you put a toplevel Gtk_Window initially, this returns the
    --  child of the window.
 
-   function Get_Window (Child : access MDI_Child_Record)
-      return Gtk.Window.Gtk_Window;
+   function Get_Window
+     (Child : access MDI_Child_Record) return Gtk.Window.Gtk_Window;
    --  If you initially Put() a Gtk_Window in the MDI, this returns that
    --  window, although with no child (see Get_Widget instead).
    --  If you have put something else than a toplevel window, this function
    --  returns null.
 
    function Find_MDI_Child
-     (MDI : access MDI_Window_Record;
-      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return MDI_Child;
+     (MDI    : access MDI_Window_Record;
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return MDI_Child;
    --  Return the MDI_Child that encapsulates Widget.
    --  Widget must be the exact same one you gave in argument to Put.
 
