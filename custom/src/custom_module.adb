@@ -105,6 +105,7 @@ package body Custom_Module is
         (Kernel          => Kernel_Handle (Kernel),
          Command         => Action.Command,
          Active          => True,
+         Show_Bar        => False,
          Destroy_On_Exit => False);
    end Contextual_Action;
 

@@ -744,7 +744,11 @@ package body Builder_Module is
 
       else
          Launch_Background_Command
-           (Kernel, Command_Access (C), Active => False, Queue_Id => "");
+           (Kernel,
+            Command_Access (C),
+            Active   => False,
+            Show_Bar => True,
+            Queue_Id => "");
       end if;
 
       Change_Dir (Old_Dir);
@@ -1037,7 +1041,11 @@ package body Builder_Module is
 
       else
          Launch_Background_Command
-           (Kernel, Command_Access (C), Active => False, Queue_Id => "");
+           (Kernel,
+            Command_Access (C),
+            Active   => False,
+            Show_Bar => True,
+            Queue_Id => "");
       end if;
 
       Change_Dir (Old_Dir);
@@ -1210,7 +1218,10 @@ package body Builder_Module is
          Create (C, (Kernel, Fd, null, null, System.Null_Address));
 
          Launch_Background_Command
-           (Kernel, Command_Access (C), Active => False, Queue_Id => "");
+           (Kernel, Command_Access (C),
+            Active   => False,
+            Show_Bar => True,
+            Queue_Id => "");
 
       exception
          when Invalid_Process =>
@@ -1301,7 +1312,7 @@ package body Builder_Module is
          Xref_Iterate'Access);
 
       Launch_Background_Command
-        (Kernel, Command_Access (C), True, "");
+        (Kernel, Command_Access (C), True, True, "");
 
    exception
       when E : others =>

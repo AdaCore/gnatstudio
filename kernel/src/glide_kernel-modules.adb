@@ -484,7 +484,7 @@ package body Glide_Kernel.Modules is
       if Filter_Matches (Command.Filter, Context, Kernel_Handle (Widget)) then
          Launch_Background_Command
            (Kernel_Handle (Widget), Command.Command, Destroy_On_Exit => False,
-            Active => False, Queue_Id => "");
+            Active => False, Show_Bar => False, Queue_Id => "");
       elsif Get_Error_Message (Command.Filter) /= "" then
          Insert (Kernel_Handle (Widget), Get_Error_Message (Command.Filter),
                  Mode => Error);

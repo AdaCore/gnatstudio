@@ -286,7 +286,7 @@ package body VCS.CVS is
          -"CVS: Basic query");
 
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
+        (Rep.Kernel, Command_Access (C), False, True, CVS_Identifier);
 
       Free (Args);
    end Real_Simple_Action;
@@ -595,7 +595,7 @@ package body VCS.CVS is
               -"CVS: Querying status");
 
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
+        (Rep.Kernel, Command_Access (C), False, True, CVS_Identifier);
 
       Check_Files (Rep, Filenames);
 
@@ -910,7 +910,7 @@ package body VCS.CVS is
             Launch_Background_Command
               (Rep.Kernel,
                Command_Access (Checkin_File_Command),
-               False, CVS_Identifier);
+               False, True, CVS_Identifier);
 
             Free (Arguments);
             Free (Head);
@@ -1167,7 +1167,7 @@ package body VCS.CVS is
                     -"CVS: Querying differences");
 
             Launch_Background_Command
-              (Rep.Kernel, Command_Access (C_2), False, CVS_Identifier);
+              (Rep.Kernel, Command_Access (C_2), False, True, CVS_Identifier);
 
             Free (Args_2);
          end;
@@ -1200,7 +1200,7 @@ package body VCS.CVS is
               -"CVS: Querying differences");
 
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
+        (Rep.Kernel, Command_Access (C), False, True, CVS_Identifier);
 
       Free (Command_Head);
       Free (Args);
@@ -1394,7 +1394,7 @@ package body VCS.CVS is
          -"CVS: Querying revision history");
 
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
+        (Rep.Kernel, Command_Access (C), False, True, CVS_Identifier);
 
       Free (Command_Head);
       Free (Args);
@@ -1430,7 +1430,7 @@ package body VCS.CVS is
          -"CVS: Querying annotations");
 
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
+        (Rep.Kernel, Command_Access (C), False, True, CVS_Identifier);
 
       Free (Command_Head);
       Free (Args);

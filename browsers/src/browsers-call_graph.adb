@@ -1343,7 +1343,7 @@ package body Browsers.Call_Graph is
                            Get_Current_Progress (Data.Iter.all),
                            Get_Total_Progress (Data.Iter.all)));
             Launch_Background_Command
-              (Kernel, Command_Access (C), True, "xrefs");
+              (Kernel, Command_Access (C), True, True, "xrefs");
 
          exception
             when E : others =>

@@ -191,7 +191,7 @@ package body VCS is
    begin
       Create (C, Rep.Kernel, Filenames);
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (C), False, Name (VCS_Access (Rep)));
+        (Rep.Kernel, Command_Access (C), False, True, Name (VCS_Access (Rep)));
    end Check_Files;
 
 end VCS;

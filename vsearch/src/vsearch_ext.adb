@@ -569,7 +569,7 @@ package body Vsearch_Ext is
                Search_Iterate'Access);
 
             Launch_Background_Command
-              (Vsearch.Kernel, Command_Access (C), True, "Search");
+              (Vsearch.Kernel, Command_Access (C), True, True, "Search");
 
          else
             Push_State (Vsearch.Kernel, Processing);
@@ -645,7 +645,7 @@ package body Vsearch_Ext is
             Replace_Iterate'Access);
 
          Launch_Background_Command
-           (Vsearch.Kernel, Command_Access (C), True, "Search");
+           (Vsearch.Kernel, Command_Access (C), True, True, "Search");
       end if;
 
    exception

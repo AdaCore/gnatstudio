@@ -809,6 +809,7 @@ package body KeyManager_Module is
                        (Kernel, Create_Proxy (Command.Command, Event),
                         Destroy_On_Exit => False,
                         Active          => False,
+                        Show_Bar        => False,
                         Queue_Id        => "");
                      Unref (Context);
                      return True;
@@ -827,6 +828,7 @@ package body KeyManager_Module is
               (Kernel, Create_Proxy (Any_Context_Command.Command, Event),
                Destroy_On_Exit => False,
                Active          => False,
+               Show_Bar        => False,
                Queue_Id        => "");
             return True;
          end if;

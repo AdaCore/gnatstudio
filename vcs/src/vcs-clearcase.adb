@@ -474,7 +474,7 @@ package body VCS.ClearCase is
          -"ClearCase : Querying status");
 
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (C), False, ClearCase_Identifier);
+        (Rep.Kernel, Command_Access (C), False, True, ClearCase_Identifier);
 
       Free (Command_Head);
       Free (Args);
@@ -756,12 +756,14 @@ package body VCS.ClearCase is
               (Rep.Kernel,
                Command_Access (Checkout_File_Command),
                False,
+               True,
                ClearCase_Identifier);
 
             Launch_Background_Command
               (Rep.Kernel,
                Command_Access (Open_File_Command),
                False,
+               True,
                ClearCase_Identifier);
          end;
 
@@ -871,6 +873,7 @@ package body VCS.ClearCase is
               (Rep.Kernel,
                Command_Access (Checkin_File_Command),
                False,
+               True,
                ClearCase_Identifier);
          end;
 
@@ -934,12 +937,14 @@ package body VCS.ClearCase is
               (Rep.Kernel,
                Command_Access (Update_Command),
                False,
+               True,
                ClearCase_Identifier);
 
             Launch_Background_Command
               (Rep.Kernel,
                Command_Access (Success_Message),
                False,
+               True,
                ClearCase_Identifier);
          end;
 
@@ -1245,12 +1250,14 @@ package body VCS.ClearCase is
               (Rep.Kernel,
                Command_Access (Checkout_Dir_Command),
                False,
+               True,
                ClearCase_Identifier);
 
             Launch_Background_Command
               (Rep.Kernel,
                Command_Access (Checkin_Dir_Command),
                False,
+               True,
                ClearCase_Identifier);
          end;
 
@@ -1393,12 +1400,14 @@ package body VCS.ClearCase is
               (Rep.Kernel,
                Command_Access (Checkout_Dir_Command),
                False,
+               True,
                ClearCase_Identifier);
 
             Launch_Background_Command
               (Rep.Kernel,
                Command_Access (Checkin_Dir_Command),
                False,
+               True,
                ClearCase_Identifier);
          end;
 
@@ -1448,6 +1457,7 @@ package body VCS.ClearCase is
               (Rep.Kernel,
                Command_Access (Revert_Command),
                False,
+               True,
                ClearCase_Identifier);
          end;
 
@@ -1544,12 +1554,14 @@ package body VCS.ClearCase is
         (Rep.Kernel,
          Command_Access (Diff_File_Command),
          False,
+         True,
          ClearCase_Identifier);
 
       Launch_Background_Command
         (Rep.Kernel,
          Command_Access (Success_Message),
          False,
+         True,
          ClearCase_Identifier);
    end Diff;
 
@@ -1588,6 +1600,7 @@ package body VCS.ClearCase is
         (Rep.Kernel,
          Command_Access (C),
          False,
+         True,
          ClearCase_Identifier);
 
       Free (Command_Head);
@@ -1634,6 +1647,7 @@ package body VCS.ClearCase is
         (Rep.Kernel,
          Command_Access (C),
          False,
+         True,
          ClearCase_Identifier);
 
       Free (Command_Head);

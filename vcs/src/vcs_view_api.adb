@@ -1382,7 +1382,8 @@ package body VCS_View_API is
       if Cancel_All then
          Destroy (First_Check);
       else
-         Launch_Background_Command (Kernel, First_Check, True, Name (Ref));
+         Launch_Background_Command
+           (Kernel, First_Check, True, True, Name (Ref));
       end if;
 
       Free (Logs);

@@ -619,7 +619,9 @@ package body Glide_Kernel.Scripts is
                --  external commands in background
                Launch_Background_Command
                  (Kernel, Action.Command, Destroy_On_Exit => False,
-                  Active => False, Queue_Id => "");
+                  Active   => False,
+                  Show_Bar => False,
+                  Queue_Id => "");
             end if;
          end;
 
