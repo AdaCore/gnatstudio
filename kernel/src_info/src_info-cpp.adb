@@ -2613,9 +2613,7 @@ package body Src_Info.CPP is
       Ref_Id         : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Buffer   : String_Access;
-      Filename       : Segment;
       Return_Type    : Segment;
-      Start_Position : Point;
 
    begin
       --  Info ("Fu_To_Fu_Handler: " & Ref_Id);
@@ -2711,13 +2709,9 @@ package body Src_Info.CPP is
            "Hey, what's up?");
          if Forward_Declared then
             Buffer         := FDecl.Buffer;
-            Filename       := FDecl.File_Name;
-            Start_Position := FDecl.Start_Position;
             Return_Type    := FDecl.Return_Type;
          else
             Buffer         := Fn.Buffer;
-            Filename       := Fn.File_Name;
-            Start_Position := Fn.Start_Position;
             Return_Type    := Fn.Return_Type;
          end if;
 
@@ -3255,7 +3249,6 @@ package body Src_Info.CPP is
       Decl_Info     : E_Declaration_Info_List;
       Overloaded    : Boolean := False;
       Init          : Boolean := True;
-      Pure_Virtual  : Boolean := False;
       Kind          : E_Kind;
       Ref_Id        : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
@@ -3339,7 +3332,6 @@ package body Src_Info.CPP is
                Free (MDecl);
                return;
             end if;
-            Pure_Virtual := True;
          else
             Free (Fn);
          end if;
@@ -5795,14 +5787,12 @@ package body Src_Info.CPP is
    is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (SN_Prj_HTable_Record, SN_Prj_HTable);
-      Prj_Data : SN_Prj_Data;
    begin
       if Prj_HTable = null or Keys = null then
          return;
       end if;
 
       for I in Keys.all'Range loop
-         Prj_Data := SN_Prj_HTables.Get (Prj_HTable.all, Keys (I).all);
          SN_Prj_HTables.Remove (Prj_HTable.all, Keys (I).all);
       end loop;
 
