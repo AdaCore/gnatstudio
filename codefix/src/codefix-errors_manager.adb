@@ -258,6 +258,8 @@ package body Codefix.Errors_Manager is
 
                Free (Category);
             end if;
+         else
+            Previous_Message := Invalid_Error_Message;
          end if;
 
          Free (Current_Message);
@@ -329,10 +331,9 @@ package body Codefix.Errors_Manager is
       Message   : Error_Message;
       Solutions : Solution_List;
       Category  : String;
-      New_Error : out Error_Id) is
-
+      New_Error : out Error_Id)
+   is
       New_Error_Record : Error_Id_Record;
-
    begin
       New_Error_Record.Solutions := Solutions;
       New_Error_Record.Message := Clone (Message);
