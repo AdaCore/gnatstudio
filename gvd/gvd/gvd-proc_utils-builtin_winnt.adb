@@ -18,22 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with System;
+with Interfaces.C;
+
 separate (GVD.Proc_Utils) 
 
-with System;
-with Interfaces.C.Strings;
-
 package body Builtin is
+
+   pragma Linker_Options ("-lpsapi");
 
    PROCESS_QUERY_INFORMATION : constant := 16#400#;
    PROCESS_VM_READ           : constant := 16#010#;
 
-   type HANDLE is new System.Address;
+   type WIN_HANDLE is new System.Address;
    type HMODULE is new System.Address;
    type DWORD is new Interfaces.C.Unsigned_Long;
    type BOOL is new Integer;
 
-   Null_Handle : constant HANDLE := HANDLE (System.Null_Address);
+   Null_Handle : constant WIN_HANDLE := WIN_HANDLE (System.Null_Address);
 
    type Handle_Set is array (Positive range <>) of aliased DWORD;
 
@@ -41,7 +43,7 @@ package body Builtin is
 
    type Builtin_Record is record
       Processes : aliased Handle_Set (1 .. Max_Process);
-      N_Process : Positive := 0;
+      N_Process : Natural := 0;
       Index     : Positive := 1;
    end record;
 
@@ -55,23 +57,23 @@ package body Builtin is
    pragma Import (Stdcall, EnumProcesses, "EnumProcesses");
 
    function EnumProcessModules
-     (hProcess   : HANDLE;
+     (hProcess   : WIN_HANDLE;
       lphModule  : access DWORD;
       cb         : DWORD;
-      lpcbNeeded : access DWORD);
+      lpcbNeeded : access DWORD) return BOOL;
    pragma Import (Stdcall, EnumProcessModules, "EnumProcessModules");
 
    function OpenProcess
      (dwDesiredAccess : DWORD;
       bInheritHandle  : BOOL;
-      dwProcessId     : DWORD) return HANDLE;
+      dwProcessId     : DWORD) return WIN_HANDLE;
    pragma Import (Stdcall, OpenProcess, "OpenProcess");
 
-   procedure CloseHandle (H : HANDLE);
+   procedure CloseHandle (H : WIN_HANDLE);
    pragma Import (Stdcall, CloseHandle, "CloseHandle");
 
    function GetModuleBaseName
-     (hProcess   : HANDLE;
+     (hProcess   : WIN_HANDLE;
       haModule   : DWORD;
       lpBaseName : System.Address;
       nSize      : DWORD) return DWORD;
@@ -108,12 +110,18 @@ package body Builtin is
       --  Return info about a given process ID.
 
       function Process_Info (PID : DWORD) return String is
-         hProcess : HANDLE;
+         hProcess : WIN_HANDLE;
          hMod     : Handle_Set (1 .. Max_Process);
          cbNeeded : aliased DWORD;
          szProcessName : Interfaces.C.char_array (1 .. 1024);
 
       begin
+         if PID = 0 then
+            return "System Idle Process";
+         elsif PID < 16 then
+            return "System";
+         end if;
+
          hProcess :=
            OpenProcess
              (PROCESS_QUERY_INFORMATION + PROCESS_VM_READ, 0, PID);
@@ -141,21 +149,21 @@ package body Builtin is
       end Process_Info;
 
    begin
-      if Handle.Index >= N_Process then
+      if Handle.Index >= Handle.N_Process then
          Success := False;
       else
          declare
-            Pid  : DWORD renames Handle.Processes (Handle.Index);
-            Id1  : constant String := "     " & DWORD'Image (Pid);
-            Id2  : constant String := Id1 (Id1'Last - 5 .. Id1'Last);
-            Info : constant String := Process_Info (Pid);
+            Pid   : DWORD renames Handle.Processes (Handle.Index);
+            Id1   : constant String := "     " & DWORD'Image (Pid);
+            Id2   : constant String := Id1 (Id1'Last - 5 .. Id1'Last);
+            PInfo : constant String := Process_Info (Pid);
 
          begin
             Info :=
               (Id_Len   => Id2'Length,
-               Info_Len => Info'Length,
+               Info_Len => PInfo'Length,
                Id       => Id2,
-               Info     => Info);
+               Info     => PInfo);
             Handle.Index := Handle.Index + 1;
             Success := True;
          end;
