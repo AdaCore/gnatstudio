@@ -73,18 +73,24 @@ package Commands is
    --  that this Action will be executed before all the actions that
    --  were enqueued with High_Priority set to False.
 
+   procedure Add_Consequence_Action
+     (Item   : Command_Access;
+      Action : Command_Access);
+   --  Add an action that will be enqueued if Item executes successfully.
+
 private
-
-   procedure Execute_Next_Action (Queue : Command_Queue);
-   --  Execute the next action in the queue, or do nothing if there is none.
-
    procedure Execute (Command : access Root_Command);
    --  Convenience subprogram : same as function Execute, but does not
    --  return any value.
 
-   procedure Command_Finished (Queue : Command_Queue);
+   procedure Command_Finished (Queue   : Command_Queue;
+                               Action  : access Root_Command;
+                               Success : Boolean);
    --  This procedure should be called every time the execution of a Command
-   --  ends. This starts the execution of the next Command in the Queue.
+   --  ends. This starts the execution of the next Command in the
+   --  Queue.
+   --  Action is the Action that has just finished. Success indicates
+   --  the success of Action.
 
    procedure Free (X : in out Command_Access);
    package Command_Queues is new Generic_List (Command_Access);
@@ -96,7 +102,8 @@ private
    type Command_Queue is access Command_Queue_Record;
 
    type Root_Command is abstract tagged limited record
-      Queue : Command_Queue;
+      Queue         : Command_Queue;
+      Next_Commands : Command_Queues.List;
    end record;
 
 end Commands;
