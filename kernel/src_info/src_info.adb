@@ -889,4 +889,22 @@ package body Src_Info is
       Unchecked_Free (Handler);
    end Destroy;
 
+   -----------------------
+   -- Is_Read_Reference --
+   -----------------------
+
+   function Is_Read_Reference  (Ref : E_Reference) return Boolean is
+   begin
+      return Read_Reference (Ref.Kind);
+   end Is_Read_Reference;
+
+   ------------------------
+   -- Is_Write_Reference --
+   ------------------------
+
+   function Is_Write_Reference (Ref : E_Reference) return Boolean is
+   begin
+      return Write_Reference (Ref.Kind);
+   end Is_Write_Reference;
+
 end Src_Info;

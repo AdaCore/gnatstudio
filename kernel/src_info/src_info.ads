@@ -292,6 +292,11 @@ package Src_Info is
    function Get_Column (Location : File_Location) return Natural;
    --  Return the fields of a location
 
+   function Is_Read_Reference  (Ref : E_Reference) return Boolean;
+   function Is_Write_Reference (Ref : E_Reference) return Boolean;
+   --  Return true if this is a read-only or write reference to an entity. It
+   --  is possible that known of the two return True for some special entities.
+
    ------------
    -- E_Kind --
    ------------
@@ -637,6 +642,48 @@ private
    --  True if the name of the entity really appears at that location in the
    --  file (for instance, a primitive operation doesn't point directly to the
    --  entity, but only provides more information about the entity).
+
+   Read_Reference : constant Reference_Kind_To_Boolean_Map :=
+     (Reference                                => True,
+      Instantiation_Reference                  => True,
+      Modification                             => False,
+      Body_Entity                              => True,
+      Completion_Of_Private_Or_Incomplete_Type => True,
+      Type_Extension                           => True,
+      Implicit                                 => False,
+      Label                                    => True,
+      Primitive_Operation                      => False,
+      With_Line                                => True,
+      Subprogram_In_Parameter                  => False,
+      Subprogram_In_Out_Parameter              => False,
+      Subprogram_Out_Parameter                 => False,
+      Subprogram_Access_Parameter              => False,
+      Formal_Generic_Parameter                 => False,
+      Parent_Package                           => False,
+      End_Of_Spec                              => False,
+      End_Of_Body                              => False);
+   --  True if the reference is a read-only reference to the entity
+
+   Write_Reference : constant Reference_Kind_To_Boolean_Map :=
+     (Reference                                => False,
+      Instantiation_Reference                  => False,
+      Modification                             => True,
+      Body_Entity                              => False,
+      Completion_Of_Private_Or_Incomplete_Type => False,
+      Type_Extension                           => False,
+      Implicit                                 => False,
+      Label                                    => False,
+      Primitive_Operation                      => False,
+      With_Line                                => False,
+      Subprogram_In_Parameter                  => False,
+      Subprogram_In_Out_Parameter              => False,
+      Subprogram_Out_Parameter                 => False,
+      Subprogram_Access_Parameter              => False,
+      Formal_Generic_Parameter                 => False,
+      Parent_Package                           => False,
+      End_Of_Spec                              => False,
+      End_Of_Body                              => False);
+   --  True if the reference is a write reference to the entity
 
    type LI_File_Constrained;
    type LI_File_Ptr is access LI_File_Constrained;
