@@ -1119,9 +1119,9 @@ package body Browsers.Canvas is
    -- Call --
    ----------
 
-   procedure Call (Callback : Widget_Active_Area_Callback;
-                   Event    : Gdk.Event.Gdk_Event)
-   is
+   procedure Call
+     (Callback : Widget_Active_Area_Callback;
+      Event    : Gdk.Event.Gdk_Event) is
    begin
       Callback.Cb (Event, Callback.User_Data);
    end Call;
