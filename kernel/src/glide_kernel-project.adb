@@ -35,6 +35,7 @@ with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 
 with Traces;  use Traces;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package body Glide_Kernel.Project is
 
@@ -136,7 +137,7 @@ package body Glide_Kernel.Project is
          Recompute_View (Kernel);
       else
          Trace (Me, "Couldn't load or parse the project " & Project);
-         Insert_In_Console
+         Insert
            (Kernel, Text => "Couldn't parse the project " & Project);
       end if;
    end Load_Project;
