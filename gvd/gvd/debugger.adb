@@ -26,7 +26,6 @@ pragma Warnings (On);
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with Glib;              use Glib;
