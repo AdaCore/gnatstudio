@@ -513,7 +513,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
         Main_Debug_Window_Access (Object);
    begin
       if Top.GVD_Preferences = null then
-         Gtk_New (Top.GVD_Preferences);
+         Gtk_New (Top.Gvd_Preferences, Top);
       end if;
 
       GVD.Preferences.Fill_Dialog (Top.GVD_Preferences);
