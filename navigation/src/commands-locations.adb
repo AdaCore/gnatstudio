@@ -49,22 +49,57 @@ package body Commands.Locations is
    function Execute
      (Command : access Source_Location_Command_Type) return Boolean
    is
+      Other_Command    : Command_Access;
+      Location_Command : Source_Location_Command;
+      Open_At_Line     : Boolean := True;
    begin
       case Command.Mode is
          when Normal =>
-            Open_File_Editor (Command.Kernel,
-                              Command.Filename.all,
-                              Command.Line,
-                              Command.Column,
-                              Command.Highlight_Line,
-                              False);
+            Open_At_Line := True;
 
-         when Done | Undone =>
-            Open_File_Editor (Command.Kernel,
-                              Command.Filename.all,
-                              Enable_Navigation => False);
+         when Done =>
+            Open_At_Line := False;
 
+            Other_Command := Get_Next_Command (Command.Queue);
+
+            if Other_Command /= null
+              and then Other_Command.all in Source_Location_Command_Type'Class
+            then
+               Location_Command := Source_Location_Command (Other_Command);
+
+               if Location_Command.Filename.all = Command.Filename.all then
+                  Open_At_Line := True;
+               end if;
+            end if;
+
+         when Undone =>
+            Other_Command := Get_Previous_Command (Command.Queue);
+
+            if Other_Command /= null
+              and then Other_Command.all in Source_Location_Command_Type'Class
+            then
+               Open_At_Line := False;
+
+               Location_Command := Source_Location_Command (Other_Command);
+
+               if Location_Command.Filename.all = Command.Filename.all then
+                  Open_At_Line := True;
+               end if;
+            end if;
       end case;
+
+      if Open_At_Line then
+         Open_File_Editor (Command.Kernel,
+                           Command.Filename.all,
+                           Command.Line,
+                           Command.Column,
+                           Command.Highlight_Line,
+                           False);
+      else
+         Open_File_Editor (Command.Kernel,
+                           Command.Filename.all,
+                           Enable_Navigation => False);
+      end if;
 
       Command_Finished (Command, True);
 
