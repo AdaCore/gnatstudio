@@ -823,61 +823,139 @@ package body Prj_API is
    -- Find_Scenario_Variables --
    -----------------------------
 
-   function Find_Scenario_Variables (Project : Project_Node_Id)
-      return Variable_Decl_Array
+   function Find_Scenario_Variables
+     (Project : Project_Node_Id;
+      Parse_Imported : Boolean := True) return Variable_Decl_Array
    is
-      Var : Project_Node_Id;
-      Pkg : Project_Node_Id := Project;
-      Count : Natural := 0;
-   begin
-      pragma Assert (Kind_Of (Project) = N_Project);
+      function Count_Vars (In_Project : Project_Node_Id) return Natural;
+      --  Return the number of scenario variables in In_Project, its
+      --  packages and imported projects
 
-      while Pkg /= Empty_Node loop
-         Var := First_Variable_Of (Pkg);
-         while Var /= Empty_Node loop
-            if Kind_Of (Var) = N_Typed_Variable_Declaration
-              and then Is_External_Variable (Var)
-            then
-               Count := Count + 1;
-            end if;
+      procedure Register_Vars (In_Project : Project_Node_Id);
+      --  Register all the scenario variables from In_Projects, its
+      --  packages and imported projects in List.
 
-            Var := Next_Variable (Var);
-         end loop;
+      procedure Add_If_Not_In_List (Var : Project_Node_Id);
+      --  Add Var in the list of scenario if it is not already there (see the
+      --  documentation for Find_Scenario_Variables for the exact rules used to
+      --  detect aliases).
 
-         if Pkg = Project then
-            Pkg := First_Package_Of (Project);
-         else
-            Pkg := Next_Package_In_Project (Pkg);
-         end if;
-      end loop;
+      ----------------
+      -- Count_Vars --
+      ----------------
 
-      declare
-         List : Variable_Decl_Array (1 .. Count);
-         Current : Positive := 1;
+      function Count_Vars (In_Project : Project_Node_Id) return Natural is
+         Prj : Project_Node_Id;
+         Count : Natural := 0;
+         Pkg : Project_Node_Id := In_Project;
+         Var : Project_Node_Id;
       begin
-         Pkg := Project;
+         --  For all the packages and the common section
          while Pkg /= Empty_Node loop
             Var := First_Variable_Of (Pkg);
             while Var /= Empty_Node loop
                if Kind_Of (Var) = N_Typed_Variable_Declaration
                  and then Is_External_Variable (Var)
                then
-                  List (Current) := Var;
-                  Current := Current + 1;
+                  Count := Count + 1;
                end if;
 
                Var := Next_Variable (Var);
             end loop;
 
-            if Pkg = Project then
-               Pkg := First_Package_Of (Project);
+            if Pkg = In_Project then
+               Pkg := First_Package_Of (In_Project);
             else
                Pkg := Next_Package_In_Project (Pkg);
             end if;
          end loop;
 
-         return List;
-      end;
+         if Parse_Imported then
+            --  Add the modified project
+            Prj := Modified_Project_Of (Project_Declaration_Of (In_Project));
+            if  Prj /= Empty_Node then
+               Count := Count + Count_Vars (Prj);
+            end if;
+
+            --  For all the imported projects
+            Prj := First_With_Clause_Of (In_Project);
+            while Prj /= Empty_Node loop
+               Count := Count + Count_Vars (Project_Node_Of (Prj));
+               Prj := Next_With_Clause_Of (Prj);
+            end loop;
+         end if;
+
+         return Count;
+      end Count_Vars;
+
+
+      List : Variable_Decl_Array (1 .. Count_Vars (Project));
+      Current : Positive := 1;
+
+      ------------------------
+      -- Add_If_Not_In_List --
+      ------------------------
+
+      procedure Add_If_Not_In_List (Var : Project_Node_Id) is
+         V : constant String_Id := External_Reference_Of (Var);
+      begin
+         for Index in 1 .. Current - 1 loop
+            if String_Equal (External_Reference_Of (List (Index)), V) then
+               return;
+            end if;
+         end loop;
+         List (Current) := Var;
+         Current := Current + 1;
+      end Add_If_Not_In_List;
+
+      -------------------
+      -- Register_Vars --
+      -------------------
+
+      procedure Register_Vars (In_Project : Project_Node_Id) is
+         Prj : Project_Node_Id;
+         Pkg : Project_Node_Id := In_Project;
+         Var : Project_Node_Id;
+      begin
+         --  For all the packages and the common section
+         while Pkg /= Empty_Node loop
+            Var := First_Variable_Of (Pkg);
+            while Var /= Empty_Node loop
+               if Kind_Of (Var) = N_Typed_Variable_Declaration
+                 and then Is_External_Variable (Var)
+               then
+                  Add_If_Not_In_List (Var);
+               end if;
+
+               Var := Next_Variable (Var);
+            end loop;
+
+            if Pkg = In_Project then
+               Pkg := First_Package_Of (In_Project);
+            else
+               Pkg := Next_Package_In_Project (Pkg);
+            end if;
+         end loop;
+
+         if Parse_Imported then
+            --  Add the modified project
+            Prj := Modified_Project_Of (Project_Declaration_Of (In_Project));
+            if  Prj /= Empty_Node then
+               Register_Vars (Prj);
+            end if;
+
+            --  For all the imported projects
+            Prj := First_With_Clause_Of (In_Project);
+            while Prj /= Empty_Node loop
+               Register_Vars (Project_Node_Of (Prj));
+               Prj := Next_With_Clause_Of (Prj);
+            end loop;
+         end if;
+      end Register_Vars;
+
+   begin
+      Register_Vars (Project);
+      return List (1 .. Current - 1);
    end Find_Scenario_Variables;
 
    ---------------------------
@@ -911,6 +989,39 @@ package body Prj_API is
       end loop;
       return No_Project;
    end Get_Project_View_From_Name;
+
+   ---------------------------
+   -- Get_Project_From_View --
+   ---------------------------
+
+   function Get_Project_From_View (View : Project_Id) return Project_Node_Id is
+   begin
+      return Tree_Private_Part.Projects_Htable.Get
+        (Projects.Table (View).Name).Node;
+   end Get_Project_From_View;
+
+   -------------------------------
+   -- Create_Variable_Reference --
+   -------------------------------
+
+   function Create_Variable_Reference (Var : Project_Node_Id)
+      return Project_Node_Id
+   is
+      Ref : Project_Node_Id;
+   begin
+      pragma Assert
+        (Kind_Of (Var) = N_Typed_Variable_Declaration
+         or else Kind_Of (Var) = N_Variable_Declaration);
+
+      Ref := Default_Project_Node (N_Variable_Reference);
+      Set_Name_Of (Ref, Prj.Tree.Name_Of (Var));
+      Set_Expression_Kind_Of (Ref, Expression_Kind_Of (Var));
+
+      if Kind_Of (Var) = N_Typed_Variable_Declaration then
+         Set_String_Type_Of (Ref, String_Type_Of (Var));
+      end if;
+      return Ref;
+   end Create_Variable_Reference;
 
 begin
    Namet.Initialize;

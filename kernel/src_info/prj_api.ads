@@ -29,6 +29,10 @@
 --  <description>
 --  This package contains a number of high-level functions to manipulate
 --  a project tree (see Prj.Tree).
+--
+--  Note that normalized projects are handled and manipulated in the
+--  Prj_Normalize package.
+--
 --  </description>
 
 with Types;
@@ -46,6 +50,9 @@ package Prj_API is
    --  Return the project whose name is Name.
    --  Note that this returns an entry in the processed project, not in the
    --  tree itself.
+
+   function Get_Project_From_View (View : Project_Id) return Project_Node_Id;
+   --  Converts from a project view to the associated node in the tree.
 
    function Get_Or_Create_Declaration (Project : Project_Node_Id)
       return Project_Node_Id;
@@ -96,6 +103,11 @@ package Prj_API is
    function Get_Or_Create_Package
      (Project : Project_Node_Id; Pkg : String) return Project_Node_Id;
    --  Create (or get an existing) package in project.
+
+   function Create_Variable_Reference (Var : Project_Node_Id)
+      return Project_Node_Id;
+   --  Create and return a reference to the variable Var.
+   --  Var must be a variable declaration
 
    ---------------------
    -- Variable values --
@@ -203,10 +215,18 @@ package Prj_API is
 
    type Variable_Decl_Array is array (Positive range <>) of Project_Node_Id;
 
-   function Find_Scenario_Variables (Project : Project_Node_Id)
-      return Variable_Decl_Array;
+   function Find_Scenario_Variables
+     (Project : Project_Node_Id;
+      Parse_Imported : Boolean := True) return Variable_Decl_Array;
    --  Create and return an array that contains the declarations of all the
-   --  scenario variables in Project and its packages.
+   --  scenario variables in Project and its packages. It also includes
+   --  variables from imported projects if Parse_Imported is True.
+   --  Two candidates are considered the same if they reference the same
+   --  environment variable. The reason is that they might not have the same
+   --  name internally in imported projects, however, they will always have the
+   --  same value.
+   --  We not check the list of possible values for efficiency reasons.
+   --  ??? Probably we should report an error if they'don't have the same type.
 
    function Is_External_Variable (Var : Project_Node_Id) return Boolean;
    --  Return True if Var is a reference to an external variable
