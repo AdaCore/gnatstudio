@@ -265,6 +265,15 @@ package Prj_API is
    --  Returns the name of the external variable referenced by Var.
    --  No_String is returned if Var doesn't reference an external variable.
 
+   function External_Variable_Name
+     (Current_Project : Project_Node_Id; Ref : Project_Node_Id)
+      return Types.String_Id;
+   --  Return the name of the external variable referenced by Ref.
+   --  The declaration of the variable is looked in Current_Project, unless
+   --  another project is specified in the variable reference
+   --
+   --  Ref should a N_Variable_Reference.
+
    Invalid_Value : exception;
 
 private

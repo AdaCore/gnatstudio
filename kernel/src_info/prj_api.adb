@@ -1100,6 +1100,48 @@ package body Prj_API is
       Set_String_Value_Of (With_Clause, End_String);
    end Add_Imported_Project;
 
+   ----------------------------
+   -- External_Variable_Name --
+   ----------------------------
+
+   function External_Variable_Name
+     (Current_Project : Project_Node_Id; Ref : Project_Node_Id)
+      return String_Id
+   is
+      N : constant Name_Id := Prj.Tree.Name_Of (Ref);
+      Project : Project_Node_Id := Current_Project;
+      Decl, Item, Pkg : Project_Node_Id;
+   begin
+      if Project_Node_Of (Ref) /= Empty_Node then
+         Project := Project_Node_Of (Ref);
+      end if;
+
+      if Package_Node_Of (Ref) /= Empty_Node then
+         Pkg := First_Package_Of (Project);
+         while Pkg /= Package_Node_Of (Ref) loop
+            Pkg := Next_Package_In_Project (Pkg);
+         end loop;
+         Decl := First_Declarative_Item_Of (Pkg);
+      else
+         Decl := First_Declarative_Item_Of (Project_Declaration_Of (Project));
+      end if;
+
+      while Decl /= Empty_Node loop
+         Item := Current_Item_Node (Decl);
+         if (Kind_Of (Item) = N_Variable_Declaration
+             or else Kind_Of (Item) = N_Typed_Variable_Declaration)
+           and then Prj.Tree.Name_Of (Item) = N
+         then
+            return External_Reference_Of (Item);
+         end if;
+
+         Decl := Next_Declarative_Item (Decl);
+      end loop;
+
+      return No_String;
+   end External_Variable_Name;
+
+
 begin
    Namet.Initialize;
    Csets.Initialize;
