@@ -311,8 +311,8 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      Id : Source_Editor_Module
-        := Source_Editor_Module (Src_Editor_Module_Id);
+      Id    : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
       Infos : Line_Information_Data;
       File  : constant String := Get_String (Nth (Args, 1));
    begin
@@ -1943,10 +1943,11 @@ package body Src_Editor_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (K);
-      Id : Source_Editor_Module
-        := Source_Editor_Module (Src_Editor_Module_Id);
-      Pref_Display_Line_Numbers : Boolean
-        := Get_Pref (Kernel, Display_Line_Numbers);
+      Id                        : Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Pref_Display_Line_Numbers : constant Boolean :=
+        Get_Pref (Kernel, Display_Line_Numbers);
+
    begin
       if Pref_Display_Line_Numbers = Id.Display_Line_Numbers then
          return;
