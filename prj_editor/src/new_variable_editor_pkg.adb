@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                          G L I D E  I I                           --
+--                                                                   --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Glib; use Glib;
 with Gtk; use Gtk;
 with Gdk.Types;       use Gdk.Types;
@@ -64,7 +84,7 @@ begin
       Widget_Callback.To_Marshaller (On_Get_Environment_Toggled'Access), New_Variable_Editor);
 
    Gtk_New
-     (New_Variable_Editor.Alignment7, 1.0, 0.5, 0.9, 
+     (New_Variable_Editor.Alignment7, 1.0, 0.5, 0.9,
       0.9);
    Pack_Start (New_Variable_Editor.Vbox38, New_Variable_Editor.Alignment7, False, False, 0);
 
@@ -151,7 +171,7 @@ begin
       Widget_Callback.To_Marshaller (On_Typed_Variable_Toggled'Access), New_Variable_Editor);
 
    Gtk_New
-     (New_Variable_Editor.Alignment4, 1.0, 0.5, 0.9, 
+     (New_Variable_Editor.Alignment4, 1.0, 0.5, 0.9,
       0.9);
    Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Alignment4, True, True, 0);
 
@@ -175,7 +195,7 @@ begin
       Widget_Callback.To_Marshaller (On_Typed_Variable_Toggled'Access), New_Variable_Editor);
 
    Gtk_New
-     (New_Variable_Editor.Untyped_Alignment, 1.0, 0.5, 0.9, 
+     (New_Variable_Editor.Untyped_Alignment, 1.0, 0.5, 0.9,
       0.9);
    Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Untyped_Alignment, True, True, 0);
 
@@ -196,7 +216,7 @@ begin
       Widget_Callback.To_Marshaller (On_Typed_Variable_Toggled'Access), New_Variable_Editor);
 
    Gtk_New
-     (New_Variable_Editor.Single_Alignment, 1.0, 0.5, 0.9, 
+     (New_Variable_Editor.Single_Alignment, 1.0, 0.5, 0.9,
       0.9);
    Pack_Start (New_Variable_Editor.Vbox39, New_Variable_Editor.Single_Alignment, False, False, 0);
 
