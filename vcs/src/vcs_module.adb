@@ -745,10 +745,12 @@ package body VCS_Module is
          return;
       end if;
 
---        Open_Explorer (Kernel, null);
-
       Status := Parse_Status (Ref, S, Local);
-      Display_File_Status (Kernel, Status, Ref, True, True, Clear_Logs);
+      Display_File_Status
+        (Kernel, Status, Ref,
+         Override_Cache => not Local,
+         Force_Display  => True,
+         Clear_Logs     => Clear_Logs);
 
       --  ??? Should we free Status ?
    end Status_Parse_Handler;
