@@ -64,9 +64,11 @@ package body Glide_Kernel.Editor is
    --  Internal initialization function.
 
    function Open_File
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : String) return Source_Editor_Box;
-   --  Open a file and return the handle associated with it.
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : String;
+      Create_New : Boolean := True) return Source_Editor_Box;
+   --  Open a file and return the handle associated with it. If the given
+   --  file does not exist, create an empty editor only if Create_New is True.
    --  ??? Need more comments.
 
    function Get_Current_Editor
@@ -229,17 +231,19 @@ package body Glide_Kernel.Editor is
    ---------------
 
    function Open_File
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : String) return Source_Editor_Box
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : String;
+      Create_New : Boolean := True) return Source_Editor_Box
    is
-      Top        : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      MDI        : constant MDI_Window :=
+      Top         : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      MDI         : constant MDI_Window :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Short_File : String := Base_File_Name (File);
-      Success    : Boolean;
-      Editor     : Source_Editor_Box;
-      Box        : Source_Box;
-      Child      : MDI_Child;
+      Short_File  : String := Base_File_Name (File);
+      Success     : Boolean;
+      Editor      : Source_Editor_Box;
+      Box         : Source_Box;
+      Child       : MDI_Child;
+      File_Exists : Boolean;
 
    begin
       if File = "" then
@@ -255,25 +259,65 @@ package body Glide_Kernel.Editor is
          return Source_Box (Get_Widget (Child)).Editor;
       end if;
 
-      Gtk_New (Editor, Top.Kernel);
-      Gtk_New (Box, Editor);
-      Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
-      Attach (Editor, Box);
-      Child := Put (MDI, Box);
-      Set_Title (Child, Short_File);
-      Load_File (Editor, File, Success => Success);
+      --  At this point, we know that this file has not been opened yet,
+      --  so we need to open it.
+
+      File_Exists := Is_Regular_File (File);
+
+      --  Create a new editor only if the file exists or we are asked to
+      --  create a new empty one anyway.
+      if File_Exists or else Create_New then
+         Gtk_New (Editor, Top.Kernel);
+      end if;
+
+      if File_Exists then
+         Load_File (Editor, File, Success => Success);
+         if not Success then
+            Destroy (Editor);
+         end if;
+      end if;
+
+      --  If we have created an editor, put it into a box, and give it
+      --  to the MDI to handle
+
+      if Editor /= null then
+         Gtk_New (Box, Editor);
+         Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
+         Attach (Editor, Box);
+         Child := Put (MDI, Box);
+         Set_Title (Child, Short_File);
+      else
+         Console.Insert
+           (Kernel, "Can not open file '" & File & "'",
+            Highlight_Sloc => False);
+      end if;
 
       return Editor;
    end Open_File;
 
    procedure Open_File
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : String;
+      Success : out Boolean)
+   is
+      Editor  : Source_Editor_Box;
+   begin
+      Editor := Open_File (Kernel, File, Create_New => False);
+      Success := Editor /= null;
+   end Open_File;
+
+   --------------------
+   -- Open_Or_Create --
+   --------------------
+
+   procedure Open_Or_Create
      (Kernel : access Kernel_Handle_Record'Class;
       File   : String)
    is
       Editor  : Source_Editor_Box;
    begin
       Editor := Open_File (Kernel, File);
-   end Open_File;
+   end Open_Or_Create;
 
    -----------------------
    -- Location_Callback --
@@ -294,12 +338,19 @@ package body Glide_Kernel.Editor is
       File      : String;
       Line      : Natural := 0;
       Column    : Natural := 0;
-      Highlight : Boolean := True)
+      Highlight : Boolean := True;
+      Success   : out Boolean)
    is
       Edit : Source_Editor_Box;
-      Id : Idle_Handler_Id;
+      Id   : Idle_Handler_Id;
    begin
-      Edit := Open_File (Kernel, File);
+      Edit := Open_File (Kernel, File, Create_New => False);
+      Success := Edit /= null;
+
+      --  Abort if we failed to read the file
+      if not Success then
+         return;
+      end if;
 
       --  For some reason, we can not directly call Set_Cursor_Location, since
       --  the source editor won't be scrolled the first time the editor is
@@ -439,6 +490,7 @@ package body Glide_Kernel.Editor is
       End_Line     : Positive;
       End_Column   : Positive;
       Status       : Src_Info.Queries.Query_Status;
+      Is_Success   : Boolean;
 
    begin
       if Get_Filename (Source) = "" then
@@ -510,7 +562,15 @@ package body Glide_Kernel.Editor is
       --  Open the file, and reset Source to the new editor in order to
       --  highlight the region returned by the Xref query.
       Go_To
-        (Kernel, Filename.all, Start_Line, Start_Column, Highlight => False);
+        (Kernel, Filename.all, Start_Line, Start_Column,
+         Highlight => False, Success => Is_Success);
+
+      --  Abort if we failed to go to the xref location. An error message
+      --  has already been printed, so just bail-out.
+      if not Is_Success then
+         return;
+      end if;
+
       Source := Get_Current_Editor (Top);
       Unhighlight_All (Source);
       Highlight_Region
