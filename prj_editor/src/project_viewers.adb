@@ -35,7 +35,6 @@ with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Event_Box;                use Gtk.Event_Box;
 with Gtk.Frame;                    use Gtk.Frame;
 with Gtk.GEntry;                   use Gtk.GEntry;
-with Gtk.Handlers;
 with Gtk.Label;                    use Gtk.Label;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
@@ -73,10 +72,14 @@ with Projects.Registry;        use Projects.Registry;
 with Creation_Wizard;          use Creation_Wizard;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Result_View;        use Glide_Result_View;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;               use Glide_Intl;
 with Switches_Editors;         use Switches_Editors;
 with Naming_Editors;           use Naming_Editors;
@@ -183,8 +186,8 @@ package body Project_Viewers is
 
       Kernel  : Glide_Kernel.Kernel_Handle;
 
-      View_Changed_Id : Gtk.Handlers.Handler_Id;
-      --  Id for the "project_view_changed" handler
+      View_Changed_Blocked : Boolean := False;
+      --  True if the hook for "project_view_changed" should be ignored
 
       Current_Project : Projects.Project_Type;
       --  The project to which the files currently in the viewer belong. This
@@ -315,16 +318,9 @@ package body Project_Viewers is
       Context : Glide_Kernel.Selection_Context_Access);
    --  Callback for a menu item. Edits the project source file.
 
-   procedure Project_View_Changed (Viewer  : access Gtk_Widget_Record'Class);
-   --  Called when the project view has changed.
-
    procedure Read_Project_Name
      (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type);
    --  Open a popup dialog to select a new name for Project.
-
-   procedure Preferences_Changed
-     (Viewer : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Called when the preferences have changed.
 
    procedure Edit_Multiple_Switches
      (Viewer : access Gtk_Widget_Record'Class);
@@ -363,7 +359,7 @@ package body Project_Viewers is
    --  name has already been set on that line
 
    procedure On_Project_Changed
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project has just changed
 
    procedure On_File_Edited
@@ -395,6 +391,25 @@ package body Project_Viewers is
       Node   : Node_Ptr);
    --  Subprogram for Parse_Switches_Page, this is used to handle both the
    --  <switches> and the <popup> tags
+
+   type Preferences_Hook_Record is new Hook_No_Args_Record with record
+      Viewer : Project_Viewer;
+   end record;
+   type Preferences_Hook is access all Preferences_Hook_Record'Class;
+   procedure Execute
+     (Hook : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  Hook called when the preferences change
+
+   type Project_View_Hook_Record is new Hook_No_Args_Record with record
+      Viewer : Project_Viewer;
+   end record;
+   type Project_View_Hook is access all Project_View_Hook_Record'Class;
+   procedure Execute
+     (Hook : Project_View_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  Hook called when the project view changes
+
 
    --------------------------
    -- Project editor pages --
@@ -661,24 +676,27 @@ package body Project_Viewers is
          return False;
    end Select_Row;
 
-   --------------------------
-   -- Project_View_Changed --
-   --------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Project_View_Changed (Viewer : access Gtk_Widget_Record'Class) is
-      V : Project_Viewer := Project_Viewer (Viewer);
+   procedure Execute
+     (Hook : Project_View_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Clear (V.Model);  --  ??? Should delete selectively
+      if not Hook.Viewer.View_Changed_Blocked then
+         Clear (Hook.Viewer.Model);  --  ??? Should delete selectively
 
-      if V.Current_Project /= No_Project then
-         V.Current_Project := Get_Project (V.Kernel);
-         Show_Project (V, V.Current_Project);
+         if Hook.Viewer.Current_Project /= No_Project then
+            Hook.Viewer.Current_Project := Get_Project (Kernel);
+            Show_Project (Hook.Viewer, Hook.Viewer.Current_Project);
+         end if;
       end if;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
-   end Project_View_Changed;
+   end Execute;
 
    ---------------------
    -- Update_Contents --
@@ -812,6 +830,8 @@ package body Project_Viewers is
       Col        : Gtk_Tree_View_Column;
       Render     : Gtk_Cell_Renderer_Text;
       Col_Number : Gint;
+      Hook       : Preferences_Hook;
+      Hook2      : Project_View_Hook;
       pragma Unreferenced (Col_Number);
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
@@ -860,33 +880,34 @@ package body Project_Viewers is
         (Kernel, Context_Changed_Signal,
          Explorer_Selection_Changed'Access,
          Viewer);
-      Viewer.View_Changed_Id := Widget_Callback.Object_Connect
-        (Kernel, Project_View_Changed_Signal,
-         Widget_Callback.To_Marshaller (Project_View_Changed'Access),
-         Viewer);
 
-      Preferences_Changed (Viewer, Kernel_Handle (Kernel));
+      Hook2 := new Project_View_Hook_Record'
+        (Hook_No_Args_Record with Viewer => Project_Viewer (Viewer));
+      Add_Hook
+        (Kernel, Project_View_Changed_Hook, Hook2, Watch => GObject (Viewer));
 
-      Kernel_Callback.Object_Connect
-        (Kernel, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
-         Slot_Object => Viewer,
-         User_Data   => Kernel_Handle (Kernel));
+      Hook := new Preferences_Hook_Record'
+        (Hook_No_Args_Record with Viewer => Project_Viewer (Viewer));
+      Execute (Hook.all, Kernel);
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook,
+         Hook, Watch => GObject (Viewer));
+
       Show_All (Viewer);
    end Initialize;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Viewer : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      V     : constant Project_Viewer := Project_Viewer (Viewer);
+   procedure Execute
+     (Hook : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class) is
    begin
-      V.Default_Switches_Color := Get_Pref (Kernel, Default_Switches_Color);
+      Hook.Viewer.Default_Switches_Color :=
+        Get_Pref (Kernel, Default_Switches_Color);
       --  ??? Do we need to change the model to reflect this change
-   end Preferences_Changed;
+   end Execute;
 
    ------------------
    -- Show_Project --
@@ -1134,7 +1155,7 @@ package body Project_Viewers is
             New_Name      => Get_Text (Text),
             New_Path      => Project_Directory (Project),
             Report_Errors => Report_Error'Unrestricted_Access);
-         Project_Changed (Kernel);
+         Run_Hook (Kernel, Project_Changed_Hook);
          Recompute_View (Kernel);
       end if;
 
@@ -1629,9 +1650,9 @@ package body Project_Viewers is
          if Edit_Switches_For_Files (V.Kernel, V.Current_Project, Names) then
             --  Temporarily block the handlers so that the the editor is not
             --  cleared, or we would lose the selection
-            Gtk.Handlers.Handler_Block (V.Kernel, V.View_Changed_Id);
+            V.View_Changed_Blocked := True;
             Recompute_View (V.Kernel);
-            Gtk.Handlers.Handler_Unblock (V.Kernel, V.View_Changed_Id);
+            V.View_Changed_Blocked := False;
 
             Iter := Get_Iter_First (V.Model);
 
@@ -2673,10 +2694,7 @@ package body Project_Viewers is
    -- On_Project_Changed --
    ------------------------
 
-   procedure On_Project_Changed
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Object);
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
       Filename : constant String := Normalize_Pathname
         (Project_Path (Get_Project (Kernel)), Resolve_Links => False);
    begin
@@ -3713,10 +3731,7 @@ package body Project_Viewers is
                  new On_Reopen'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
 
-      Kernel_Callback.Connect
-        (Kernel, Project_Changed_Signal,
-         Kernel_Callback.To_Marshaller (On_Project_Changed'Access),
-         Kernel_Handle (Kernel));
+      Add_Hook (Kernel, Project_Changed_Hook, On_Project_Changed'Access);
 
       --  ??? Disabled for now, pending resolution of related problems
       --  encountered during testing
