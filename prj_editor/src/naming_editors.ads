@@ -80,7 +80,6 @@ private
       Language       : GNAT.OS_Lib.String_Access;
       Ada_Naming     : Ada_Naming_Editors.Ada_Naming_Editor;
       Foreign_Naming : Foreign_Naming_Editors.Foreign_Naming_Editor;
-      Is_Visible     : Boolean;
       --  ??? Should have a common ancestor for all naming editors, registered
       --  in Language_Handlers.Glide. However, the latter must be independent
       --  of GtkAda...

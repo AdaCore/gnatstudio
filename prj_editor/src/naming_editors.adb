@@ -51,13 +51,6 @@ package body Naming_Editors is
    begin
       for P in Naming.Pages'Range loop
          Free (Naming.Pages (P).Language);
-         if not Naming.Pages (P).Is_Visible then
-            if Naming.Pages (P).Ada_Naming /= null then
-               Unref (Naming.Pages (P).Ada_Naming);
-            else
-               Unref (Naming.Pages (P).Foreign_Naming);
-            end if;
-         end if;
       end loop;
    end On_Destroy;
 
@@ -113,7 +106,6 @@ package body Naming_Editors is
          Old    : Language_Naming_Array_Access;
          Last   : Natural;
          Exists : Boolean := False;
-
       begin
          --  Has the page already been created ?
 
@@ -123,28 +115,10 @@ package body Naming_Editors is
                  To_Lower (Name)
                then
                   Exists := True;
-
-                  --  If the page has already been created, but is not visible,
-                  --  then show it.
-
-                  if not Editor.Pages (P).Is_Visible then
-                     Editor.Pages (P).Is_Visible := True;
-                     Gtk_New (Label, Editor.Pages (P).Language.all);
-
-                     if Editor.Pages (P).Ada_Naming /= null then
-                        Append_Page
-                          (Editor,
-                           Get_Window (Editor.Pages (P).Ada_Naming),
-                           Label);
-                        Unref (Editor.Pages (P).Ada_Naming);
-
-                     else
-                        Append_Page
-                          (Editor,
-                           Get_Window (Editor.Pages (P).Foreign_Naming),
-                           Label);
-                        Unref (Editor.Pages (P).Foreign_Naming);
-                     end if;
+                  if Editor.Pages (P).Ada_Naming /= null then
+                     Show (Get_Window (Editor.Pages (P).Ada_Naming));
+                  else
+                     Show (Get_Window (Editor.Pages (P).Foreign_Naming));
                   end if;
 
                   exit;
@@ -172,7 +146,6 @@ package body Naming_Editors is
          Last := Editor.Pages'Last;
          Editor.Pages (Last).Language := new String' (Name);
          Mixed_Case (Editor.Pages (Last).Language.all);
-         Editor.Pages (Last).Is_Visible := True;
 
          Gtk_New (Label, Editor.Pages (Last).Language.all);
 
@@ -180,6 +153,7 @@ package body Naming_Editors is
             Gtk_New (Editor.Pages (Last).Ada_Naming);
             Append_Page
               (Editor, Get_Window (Editor.Pages (Last).Ada_Naming), Label);
+            Show_All (Get_Window (Editor.Pages (Last).Ada_Naming));
 
             if Project_View /= No_Project then
                Show_Project_Settings
@@ -193,6 +167,7 @@ package body Naming_Editors is
             Append_Page
               (Editor, Get_Window (Editor.Pages (Last).Foreign_Naming),
                Label);
+            Show_All (Get_Window (Editor.Pages (Last).Foreign_Naming));
 
             if Project_View /= No_Project then
                Show_Project_Settings
@@ -204,25 +179,10 @@ package body Naming_Editors is
    begin
       if Editor.Pages /= null then
          for P in Editor.Pages'Range loop
-            if Editor.Pages (P).Is_Visible
-              and then not Contains
-                (Languages, Editor.Pages (P).Language.all, False)
-            then
-               Editor.Pages (P).Is_Visible := False;
-
-               if Editor.Pages (P).Ada_Naming /= null then
-                  Ref (Editor.Pages (P).Ada_Naming);
-                  Remove_Page
-                    (Editor,
-                     Page_Num (Editor,
-                               Get_Window (Editor.Pages (P).Ada_Naming)));
-               else
-                  Ref (Editor.Pages (P).Foreign_Naming);
-                  Remove_Page
-                    (Editor,
-                     Page_Num (Editor,
-                               Get_Window (Editor.Pages (P).Foreign_Naming)));
-               end if;
+            if Editor.Pages (P).Ada_Naming /= null then
+               Hide (Get_Window (Editor.Pages (P).Ada_Naming));
+            else
+               Hide (Get_Window (Editor.Pages (P).Foreign_Naming));
             end if;
          end loop;
       end if;
@@ -234,8 +194,6 @@ package body Naming_Editors is
       if Languages'Length = 0 then
          Create_Page (Ada_String);
       end if;
-
-      Show_All (Editor);
    end Set_Visible_Pages;
 
    --------------------------
@@ -257,16 +215,18 @@ package body Naming_Editors is
       --  has actually changed.
 
       for P in Editor.Pages'Range loop
-         if Editor.Pages (P).Is_Visible then
-            if Editor.Pages (P).Ada_Naming /= null then
-               Changed := Changed or Create_Project_Entry
-                 (Editor.Pages (P).Ada_Naming, Kernel,
-                  Project, Project_View, Ignore_Scenario);
-            else
-               Changed := Changed or Create_Project_Entry
-                 (Editor.Pages (P).Foreign_Naming, Kernel, Project,
-                  Project_View, Ignore_Scenario);
-            end if;
+         if Editor.Pages (P).Ada_Naming /= null
+           and then Visible_Is_Set (Editor.Pages (P).Ada_Naming)
+         then
+            Changed := Changed or Create_Project_Entry
+              (Editor.Pages (P).Ada_Naming, Kernel,
+               Project, Project_View, Ignore_Scenario);
+         elsif Editor.Pages (P).Foreign_Naming /= null
+           and then Visible_Is_Set (Editor.Pages (P).Foreign_Naming)
+         then
+            Changed := Changed or Create_Project_Entry
+              (Editor.Pages (P).Foreign_Naming, Kernel, Project,
+               Project_View, Ignore_Scenario);
          end if;
       end loop;
 
@@ -280,8 +240,12 @@ package body Naming_Editors is
    procedure Show_Project_Settings
      (Editor : access Naming_Editor_Record;
       Project_View : Prj.Project_Id;
-      Display_Exceptions : Boolean := True) is
+      Display_Exceptions : Boolean := True)
+   is
+      Languages : Argument_List := Get_Languages (Project_View);
    begin
+      Set_Visible_Pages (Editor, Languages, Project_View);
+
       for P in Editor.Pages'Range loop
          if Editor.Pages (P).Ada_Naming /= null then
             Show_Project_Settings
@@ -292,6 +256,8 @@ package body Naming_Editors is
                Project_View, Display_Exceptions);
          end if;
       end loop;
+
+      Free (Languages);
    end Show_Project_Settings;
 
 end Naming_Editors;
