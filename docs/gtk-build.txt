@@ -137,7 +137,9 @@ cd glib-2.0.4
 ./configure --prefix=$prefix --enable-debug=minimum
 # on other systems:
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
-# --enable-gc-friendly --disable-mem-pools --with-threads=posix
+
+# possible switches for debugging:
+# --enable-gc-friendly --disable-mem-pools
 
 make
 make install
@@ -172,9 +174,6 @@ cd pango-1.0.3
 # Under HP-UX, apply the patch libtool-hpux.diff:
 # patch -p0 < .../libtool-hpux.diff
 
-# Under HP-UX and Tru64, apply the patch pango-1.0.2.diff:
-# patch -p0 < .../pango-1.0.2.diff
-
 ./configure --prefix=$prefix --with-included-modules=basic-x
 make
 make install
@@ -190,9 +189,6 @@ cd gtk+-2.0.5
 # patch -p0 < .../libtool-hpux.diff
 # Also, make sure that libX11.sl, libXt.sl and libXext.sl can be found under
 # e.g /usr/lib
-
-# Under HP-UX and Tru64, apply the patch gtk+-2.0.3.diff:
-# patch -p0 < .../gtk+-2.0.3.diff
 
 # Under Solaris 2.5.1, plain Gtk+ will not compile because it uses X11R6
 # specific features. The following patch tries to disable this feature, but
