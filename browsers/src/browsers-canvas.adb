@@ -748,7 +748,7 @@ package body Browsers.Canvas is
    begin
       if Coord.Width = 1 and then Coord.Height = 1 then
          Size_Request (Browser_Item (Item), Coord.Width, Coord.Height);
-         Set_Screen_Size (Item, Coord.Width, Coord.Height);
+         Set_Screen_Size (Browser_Item (Item), Coord.Width, Coord.Height);
       end if;
 
       if Canvas_Item (Item) = Selected_Item (Browser) then
@@ -988,6 +988,22 @@ package body Browsers.Canvas is
       Set_Font_Description
         (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
    end Initialize;
+
+   --------------
+   -- Set_Text --
+   --------------
+
+   procedure Set_Text
+     (Item    : access Text_Item_Record'Class;
+      Text    : String)
+   is
+   begin
+      Set_Text (Item.Layout, Text);
+
+      --  Force a recomputation of the size next time the item is displayed
+      Set_Screen_Size (Item, 1, 1);
+      Refresh (Get_Browser (Item), Browser_Item (Item));
+   end Set_Text;
 
    -------------
    -- Destroy --

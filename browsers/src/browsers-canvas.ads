@@ -179,6 +179,15 @@ package Browsers.Canvas is
       Text    : String);
    --  Initialize a new item, that displays Text. Text can be a multi-line text
 
+   procedure Set_Text
+     (Item    : access Text_Item_Record'Class;
+      Text    : String);
+   --  Add Text to the current text at the end of the current text. No newline
+   --  is appended between the two.
+   --  The double-buffer for the item is immediately redrawn, but the item is
+   --  not refresh on the screen. You need to call Item_Updated or
+   --  Refresh_Canvas for this.
+
    ---------------------------
    -- Text_Item with arrows --
    ---------------------------
