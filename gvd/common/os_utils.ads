@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -70,6 +70,13 @@ package OS_Utils is
    function Get_Tmp_Dir return String;
    --  Return a string representing a valid directory that can be used to
    --  create temporary files.
+
+   procedure Make_Dir_Recursive (Name : String);
+   --  Create the directory Name, and its parents if necessary (for instance,
+   --  if Name is /tmp/foo/bar, the directories /tmp, /tmp/foo and /tmp/foo/bar
+   --  are created if they don't exist yet).
+   --  Directory_Error is raised if the directory or one of its parents
+   --  couldn't be created.
 
 private
    pragma Import (C, Install_Ctrl_C_Handler, "__gnat_install_int_handler");

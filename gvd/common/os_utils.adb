@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -25,6 +25,7 @@ with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
 pragma Warnings (On);
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with String_Utils;         use String_Utils;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body OS_Utils is
 
@@ -230,5 +231,29 @@ package body OS_Utils is
       when Process_Died =>
          Close (Fd);
    end Spawn;
+
+   ------------------------
+   -- Make_Dir_Recursive --
+   ------------------------
+
+   procedure Make_Dir_Recursive (Name : String) is
+      Last : Natural := Name'First + 1;
+   begin
+      --  Strictly inferior to ignore '/' at the end of Name
+      while Last < Name'Last loop
+         while Last <= Name'Last
+           and then Name (Last) /= Directory_Separator
+           and then Name (Last) /= '/'
+         loop
+            Last := Last + 1;
+         end loop;
+
+         if not Is_Directory (Name (Name'First .. Last - 1)) then
+            GNAT.Directory_Operations.Make_Dir (Name (Name'First .. Last - 1));
+         end if;
+
+         Last := Last + 1;
+      end loop;
+   end Make_Dir_Recursive;
 
 end OS_Utils;
