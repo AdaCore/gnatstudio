@@ -374,11 +374,6 @@ package body Glide_Kernel.Project is
 
       --  Evaluate the current project
 
-      if Debug_Mode and then Active (Me) then
-         Trace (Me, "Recompute_View:");
-         Trace_Pretty_Print (Me, Handle.Project);
-      end if;
-
       Prj.Reset;
       Prj.Proc.Process
         (Handle.Project_View, Handle.Project,
