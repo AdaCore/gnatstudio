@@ -4277,6 +4277,7 @@ package body Src_Editor_Buffer is
       Force       : Boolean := False) return Boolean
    is
       Lang          : constant Language_Access := Get_Language (Buffer);
+      Tab_Width     : constant Integer := Integer (Buffer.Tab_Width);
       Indent_Style  : Indentation_Kind;
       End_Pos       : Gtk_Text_Iter;
       Iter          : Gtk_Text_Iter;
@@ -4287,11 +4288,15 @@ package body Src_Editor_Buffer is
       Current_Line  : Gint;
       Cursor_Line   : Natural;
       Cursor_Offset : Gint;
+      Indent_Offset : Integer := 0;
       Result        : Boolean;
       Buffer_Text   : GNAT.OS_Lib.String_Access;
       Indent_Params : Indent_Parameters;
       From_Line     : Editable_Line_Type;
       To_Line       : Editable_Line_Type;
+      Offset_Line   : Editable_Line_Type := 0;
+      Block         : Block_Record;
+      Char          : Gunichar;
 
       procedure Local_Format_Buffer
         (Lang          : Language_Access;
@@ -4302,7 +4307,7 @@ package body Src_Editor_Buffer is
       --  Wrapper around Format_Buffer to take into account Indent_Style.
 
       procedure Replace_Text
-        (Line    : Natural;
+        (L       : Natural;
          First   : Natural;
          Last    : Natural;
          Replace : String);
@@ -4347,11 +4352,11 @@ package body Src_Editor_Buffer is
             Format_Buffer
               (Language_Root (Lang.all)'Access,
                Buffer, Replace, From, To,
-               Indent_Params, Get_Case_Exceptions);
+               Indent_Params, Indent_Offset, Get_Case_Exceptions);
          else
             Format_Buffer
               (Lang, Buffer, Replace, From, To,
-               Indent_Params, Get_Case_Exceptions);
+               Indent_Params, Indent_Offset, Get_Case_Exceptions);
          end if;
       end Local_Format_Buffer;
 
@@ -4360,11 +4365,12 @@ package body Src_Editor_Buffer is
       ------------------
 
       procedure Replace_Text
-        (Line    : Natural;
+        (L       : Natural;
          First   : Natural;
          Last    : Natural;
          Replace : String)
       is
+         Line         : Natural := L;
          Iter         : Gtk_Text_Iter;
          Buffer_Line  : Buffer_Line_Type;
          Start_Column : Integer;
@@ -4372,6 +4378,10 @@ package body Src_Editor_Buffer is
          Replace_Cmd  : Editor_Replace_Slice;
 
       begin
+         if Offset_Line /= 0 then
+            Line := L + Natural (Offset_Line) - 1;
+         end if;
+
          Unfold_Line (Buffer, Editable_Line_Type (Line));
          Buffer_Line := Get_Buffer_Line (Buffer, Editable_Line_Type (Line));
 
@@ -4452,28 +4462,77 @@ package body Src_Editor_Buffer is
 
       Line := Get_Line (End_Pos);
 
-      if Lines_Are_Real (Buffer) then
-         --  We're spending most of our time getting this string.
-         --  Consider saving the current line, indentation level and
-         --  the stacks used by Format_Buffer to avoid parsing
-         --  the buffer from scratch each time.
+      if Line = Current_Line + 1 and then Has_Block_Information (Buffer) then
+         --  Take advantage of the precomputed block information to only
+         --  compute indentation inside the current block, since this is
+         --  much more efficient, in particular on big files.
 
-         C_Str := Get_Slice (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
-         Slice := To_Unchecked_String (C_Str);
-         Local_Format_Buffer
-           (Lang,
-            Slice (1 .. Integer (Strlen (C_Str))),
-            Replace_Text'Unrestricted_Access,
-            Integer (Current_Line + 1),
-            Integer (Line + 1),
-            Indent_Params);
+         Block := Get_Block
+           (Buffer, Buffer_Line_Type (Line + 1), Force_Compute => False);
+         Offset_Line := Block.First_Line;
+         Get_Iter_At_Line_Offset
+           (Buffer, Iter, Gint (Get_Buffer_Line (Buffer, Offset_Line) - 1), 0);
+
+         loop
+            exit when Ends_Line (Iter);
+
+            Char := Get_Char (Iter);
+
+            exit when not Is_Space (Char);
+
+            if Char = Character'Pos (ASCII.HT) then
+               Indent_Offset :=
+                 Indent_Offset + Tab_Width - (Indent_Offset mod Tab_Width);
+            else
+               Indent_Offset := Indent_Offset + 1;
+            end if;
+
+            Forward_Char (Iter, Result);
+         end loop;
+      end if;
+
+      if Lines_Are_Real (Buffer) then
+         if Offset_Line /= 0 then
+            C_Str := Get_Slice
+              (Buffer,
+               Gint (Offset_Line) - 1, 0, Line, Get_Line_Offset (End_Pos));
+            Slice := To_Unchecked_String (C_Str);
+            Local_Format_Buffer
+              (Lang,
+               Slice (1 .. Integer (Strlen (C_Str))),
+               Replace_Text'Unrestricted_Access,
+               Integer (Current_Line - Gint (Offset_Line - 1) + 1),
+               Integer (Line - Gint (Offset_Line - 1) + 1),
+               Indent_Params);
+
+         else
+            C_Str := Get_Slice (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
+            Slice := To_Unchecked_String (C_Str);
+            Local_Format_Buffer
+              (Lang,
+               Slice (1 .. Integer (Strlen (C_Str))),
+               Replace_Text'Unrestricted_Access,
+               Integer (Current_Line + 1),
+               Integer (Line + 1),
+               Indent_Params);
+         end if;
+
          g_free (C_Str);
 
       else
          From_Line :=
            Get_Editable_Line (Buffer, Buffer_Line_Type (Current_Line + 1));
          To_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1));
-         Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
+
+         if Offset_Line /= 0 then
+            Buffer_Text := Get_Buffer_Lines (Buffer, Offset_Line, To_Line);
+            From_Line := From_Line - Offset_Line + 1;
+            To_Line := To_Line - Offset_Line + 1;
+
+         else
+            Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
+         end if;
+
          Local_Format_Buffer
            (Lang,
             Buffer_Text.all,
