@@ -43,7 +43,6 @@ with Language;              use Language;
 with Debugger;              use Debugger;
 
 with GVD.Code_Editors;      use GVD.Code_Editors;
-with GVD.Menus;             use GVD.Menus;
 with GVD.Pixmaps;           use GVD.Pixmaps;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
@@ -103,16 +102,12 @@ package body GVD.Explorer is
    --  Show and select the node that matches the current source file.
 
    function Explorer_Contextual_Menu
-     (Explorer : access Explorer_Record'Class)
-     return Gtk.Menu.Gtk_Menu;
+     (Explorer : access Explorer_Record'Class) return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) the contextual menu for an explorer widget.
 
    function Convert (Explorer : access Explorer_Record'Class)
      return Debugger_Process_Tab;
    --  Return the Process_Tab associated with an explorer.
-
-   Explorer_Contextual_Menu_Name : constant String := "gvd_debugger_context";
-   --  String used to store the explorer menu in the user data of the explorer.
 
    function Find_Node_From_File
      (Explorer  : access Explorer_Record'Class;
@@ -848,23 +843,17 @@ package body GVD.Explorer is
      (Explorer : access Explorer_Record'Class)
      return Gtk.Menu.Gtk_Menu
    is
-      Menu  : Gtk_Menu;
-
       --  Check : Gtk_Check_Menu_Item;
       Mitem : Gtk_Menu_Item;
       Tips  : Gtk_Tooltips;
       Process : Debugger_Process_Tab := Convert (Explorer);
 
    begin
-      begin
-         Menu := Menu_User_Data.Get (Explorer, Explorer_Contextual_Menu_Name);
-         Destroy (Menu);
-      exception
-         when Gtkada.Types.Data_Error =>
-            null;
-      end;
+      if Explorer.Contextual_Menu /= null then
+         Destroy (Explorer.Contextual_Menu);
+      end if;
 
-      Gtk_New (Menu);
+      Gtk_New (Explorer.Contextual_Menu);
       Gtk_New (Tips);
       Ref (Tips);
 
@@ -879,7 +868,7 @@ package body GVD.Explorer is
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Show_System_Files'Access),
          Explorer);
-      Append (Menu, Mitem);
+      Append (Explorer.Contextual_Menu, Mitem);
       --  Set_Tip (Tips, Check, -"Foo", "");
 
       Gtk_New (Mitem, Label => -"Display Files In Shared Libraries");
@@ -888,7 +877,7 @@ package body GVD.Explorer is
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Display_Shared'Access),
          Explorer);
-      Append (Menu, Mitem);
+      Append (Explorer.Contextual_Menu, Mitem);
       --  Set_Tip (Tips, Mitem,
       --     -"Activated only when the executable has started", "");
 
@@ -897,20 +886,18 @@ package body GVD.Explorer is
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Delete_Not_Found'Access),
          Explorer);
-      Append (Menu, Mitem);
+      Append (Explorer.Contextual_Menu, Mitem);
 
       Gtk_New (Mitem, Label => -"Show Current File");
       Tree_Cb.Object_Connect
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Show_Current_File'Access),
          Explorer);
-      Append (Menu, Mitem);
+      Append (Explorer.Contextual_Menu, Mitem);
 
-      Show_All (Menu);
-      Menu_User_Data.Set (Explorer, Menu, Explorer_Contextual_Menu_Name);
-
+      Show_All (Explorer.Contextual_Menu);
       Enable (Tips);
-      return Menu;
+      return Explorer.Contextual_Menu;
    end Explorer_Contextual_Menu;
 
    --------------------

@@ -20,6 +20,7 @@
 
 with Gtk.Ctree;
 with Gtk.Widget;
+with Gtk.Menu;
 with Gtk.Style;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
@@ -104,5 +105,6 @@ private
       Folder_Mask        : Gdk.Bitmap.Gdk_Bitmap;
       Folder_Open_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Open_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+      Contextual_Menu    : Gtk.Menu.Gtk_Menu;
    end record;
 end GVD.Explorer;
