@@ -465,11 +465,13 @@ package body Src_Contexts is
       File_Name : String;
       Match     : Match_Result) is
    begin
-      Insert (Kernel,
-              File_Name
-              & ":" & Image (Match.Line)
-              & ":" & Image (Match.Column)
-              & ": " & Match.Text);
+      Insert_Result
+        (Kernel,
+         -"Search Results",
+         File_Name,
+         Match.Text,
+         Match.Line, Match.Column,
+         Match.End_Column - Match.Column);
    end Highlight_Result;
 
    ---------------
