@@ -314,6 +314,10 @@ package body KeyManager_Module is
 
       --  Dispatch the event in the standard gtk+ main loop
       Gtk.Main.Do_Event (Event);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end General_Event_Handler;
 
    ----------
