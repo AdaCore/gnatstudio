@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- C109-012 Ability to force saving of a read-only file
+
 - BC09-010 Filtering of duplicate messages in the Locations Tree.
 
 - BB13-008 Confirmation dialog asking to wrap around during a search
