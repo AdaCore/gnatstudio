@@ -669,7 +669,7 @@ package body Gtkada.MDI is
                First := M.Docks_Size (Left) + Handle_Size - 1;
                Draw_Line
                  (M.Handles (Top), Get_Black_GC (Get_Style (M)), 0,
-                  Handle_Size - 1, M.Docks_Size (Left) + 1, Handle_Size - 1);
+                  Handle_Size - 1, M.Docks_Size (Left), Handle_Size - 1);
             end if;
             Draw_Line
               (M.Handles (Top), Get_White_GC (Get_Style (M)),
@@ -1800,8 +1800,8 @@ package body Gtkada.MDI is
         (Child, "motion_notify_event",
          Return_Callback.To_Marshaller (Button_Motion'Access));
       if Gtk.Major_Version = 1
-         and then Gtk.Minor_Version <= 2
-      then 
+        and then Gtk.Minor_Version <= 2
+      then
          Widget_Callback.Connect (Child, "draw", Draw_Child'Access);
       end if;
       Widget_Callback.Connect
