@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -168,9 +168,13 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Edit->Select All menu
 
-   procedure On_Goto_Declaration_Or_Body
+   procedure On_Goto_Declaration
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Navigate->Goto Declaration<->Body
+   --  Navigate->Goto Declaration
+
+   procedure On_Goto_Body
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Goto the next body of the entity under the cursor
 
    procedure On_Generate_Body
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -721,26 +725,29 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_New_View;
 
-   ---------------------------------
-   -- On_Goto_Declaration_Or_Body --
-   ---------------------------------
+   -------------------------
+   -- On_Goto_Declaration --
+   -------------------------
 
-   procedure On_Goto_Declaration_Or_Body
+   procedure On_Goto_Declaration
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
    begin
-      if Get_Editor_Filename (Kernel) /= "" then
-         Push_State (Kernel, Busy);
-         Goto_Declaration_Or_Body (Kernel);
-         Pop_State (Kernel);
-      end if;
+      Goto_Declaration_Or_Body (Kernel, To_Body => False);
+   end On_Goto_Declaration;
 
-   exception
-      when E : others =>
-         Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Declaration_Or_Body;
+   ------------------
+   -- On_Goto_Body --
+   ------------------
+
+   procedure On_Goto_Body
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Goto_Declaration_Or_Body (Kernel, To_Body => True);
+   end On_Goto_Body;
 
    ---------------------------
    -- Generate_Body_Timeout --
@@ -1071,9 +1078,12 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Edit, -"Pretty Print", "",
                      On_Pretty_Print'Access, Ref_Item => -"Preferences");
 
-      Register_Menu (Kernel, Gotom, -"Goto Declaration<->Body", Stock_Home,
-                     On_Goto_Declaration_Or_Body'Access,
+      Register_Menu (Kernel, Gotom, -"Goto Declaration", Stock_Home,
+                     On_Goto_Declaration'Access,
                      Ref_Item => -"Goto Line...");
+      Register_Menu (Kernel, Gotom, -"Goto Body", Stock_Home,
+                     On_Goto_Body'Access,
+                     Ref_Item => -"Goto Declaration");
 
       --  ??? Not implemented yet
       Register_Menu (Kernel, Gotom, -"Goto Body", "", null,
