@@ -98,6 +98,18 @@ package body Glide_Interactive_Consoles is
      (Console : in Glide_Interactive_Console) return Boolean;
    --  Place the cursor at the prompt mark.
 
+   procedure Destroy_Idle (Console : in out Glide_Interactive_Console);
+   --  Destroy handler for idle callbacks.
+
+   ------------------
+   -- Destroy_Idle --
+   ------------------
+
+   procedure Destroy_Idle (Console : in out Glide_Interactive_Console) is
+   begin
+      Console.Idle_Registered := False;
+   end Destroy_Idle;
+
    ---------------------------
    -- Enable_Prompt_Display --
    ---------------------------
@@ -164,9 +176,6 @@ package body Glide_Interactive_Consoles is
 
       Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
       Get_End_Iter (Console.Buffer, Last_Iter);
-
-      Success :=
-        Scroll_To_Iter (Console.View, Last_Iter, 0.0, False, 0.0, 0.0);
 
       Apply_Tag
         (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
@@ -249,11 +258,18 @@ package body Glide_Interactive_Consoles is
       Console : constant Glide_Interactive_Console :=
         Glide_Interactive_Console (Object);
    begin
-      if Console.Idle_Id /= 0 then
+      if Console.Idle_Registered then
          Idle_Remove (Console.Idle_Id);
       end if;
 
-      Console.Idle_Id := 0;
+      --  When a Gtk_Text_View is deleted, a "mark_set" signal is sent
+      --  internally, which causes an additional idle callback to be
+      --  registered through Mark_Set_Handler.
+      --  The following two lines are used to prevent adding unnecessary
+      --  idle callbacks when we are deleting the console.
+      Console.Internal_Insert := True;
+      Console.Idle_Registered := True;
+
       return False;
    end Delete_Event_Handler;
 
@@ -449,6 +465,7 @@ package body Glide_Interactive_Consoles is
                   Set_Line_Offset (Prompt_Iter, Offset);
 
                   Move_Mark (Console.Buffer, Console.Prompt_Mark, Prompt_Iter);
+                  Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
                end if;
 
                --  Insert the completion, if needed.
@@ -460,6 +477,8 @@ package body Glide_Interactive_Consoles is
                              .. First_S'First - 1 + Length));
 
                Console.Internal_Insert := False;
+
+
                Free (Completions);
             end;
 
@@ -507,6 +526,7 @@ package body Glide_Interactive_Consoles is
 
       Move_Mark (Console.Buffer, Console.Prompt_Mark, Prompt_Iter);
 
+      Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
    end Display_Prompt;
 
    -----------------------
@@ -587,7 +607,6 @@ package body Glide_Interactive_Consoles is
 
    begin
       if Selection_Exists (Console.Buffer) then
-         Console.Idle_Id := 0;
          return False;
       end if;
 
@@ -599,7 +618,6 @@ package body Glide_Interactive_Consoles is
          Console.Insert_Mark := Get_Insert (Console.Buffer);
       end if;
 
-      Console.Idle_Id := 0;
       return False;
    end Place_Cursor_At_Prompt;
 
@@ -609,12 +627,17 @@ package body Glide_Interactive_Consoles is
 
    procedure Replace_Cursor (Console : Glide_Interactive_Console) is
    begin
-      if Console.Idle_Id /= 0 then
+      if Console.Idle_Registered then
          return;
       end if;
 
+      Console.Idle_Registered := True;
+
       Console.Idle_Id :=
-        Console_Idle.Add (Place_Cursor_At_Prompt'Access, Console);
+        Console_Idle.Add
+          (Place_Cursor_At_Prompt'Access,
+           Console,
+           Destroy => Destroy_Idle'Access);
    end Replace_Cursor;
 
    ----------------------
@@ -715,8 +738,8 @@ package body Glide_Interactive_Consoles is
       Gtk_New (Console.External_Messages_Tag);
       Set_Property
         (Console.External_Messages_Tag,
-         Gtk.Text_Tag.Weight_Property,
-         Pango_Weight_Bold);
+         Gtk.Text_Tag.Style_Property,
+         Pango_Style_Normal);
       Add (Get_Tag_Table (Console.Buffer), Console.External_Messages_Tag);
 
       Gtk_New (Console.Highlight_Tag);
