@@ -151,6 +151,11 @@ package GVD.Source_Editors is
    procedure Highlight_Current_Line (Editor : access Source_Editor_Record);
    --  Highlight the current line in the editor, if required by the user.
 
+   procedure Preferences_Changed
+     (Editor : access Source_Editor_Record'Class);
+   --  Called when the preferences have changed, and the editor should be
+   --  redisplayed with the new setup.
+
 private
    type Editor_Tooltip_Data is record
       Box  : Source_Editor;

@@ -1461,4 +1461,43 @@ package body GVD.Source_Editors is
       end if;
    end Highlight_Current_Line;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Editor : access Source_Editor_Record'Class)
+   is
+      Changed : Boolean := False;
+      File : String_Access := Editor.Current_File;
+
+   begin
+--        if Get_Pref (Editor_Font)
+--        Configure (Editor, Ps_Font_Name, Font_Size, Current_Line_Icon);
+
+      if Get_Pref (Comments_Color) /= Editor.Colors (Comment_Text) then
+         Changed := True;
+         Editor.Colors (Comment_Text) := Get_Pref (Comments_Color);
+      else
+         Put_Line ("Comments color is the same");
+      end if;
+
+      if Get_Pref (Strings_Color) /= Editor.Colors (String_Text) then
+         Changed := True;
+         Editor.Colors (String_Text) := Get_Pref (Strings_Color);
+      end if;
+
+      if Get_Pref (Keywords_Color) /= Editor.Colors (Keyword_Text) then
+         Changed := True;
+         Editor.Colors (Keyword_Text) := Get_Pref (Keywords_Color);
+      end if;
+
+      if Changed then
+         Editor.Current_File := null;
+         Load_File (Editor, File.all);
+         Set_Line (Editor, Get_Line (Editor));
+         Free (File);
+      end if;
+   end Preferences_Changed;
+
 end GVD.Source_Editors;
