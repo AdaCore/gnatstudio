@@ -542,11 +542,8 @@ package body VFS is
      (File : Virtual_File) return Ada.Calendar.Time is
    begin
       if File.Value.Connection = null then
-         if Is_Regular_File (File) then
-            return File_Utils.File_Time_Stamp (Locale_Full_Name (File));
-         else
-            return No_Time;
-         end if;
+         --  This returns No_Time if the file doesn't exist
+         return File_Utils.File_Time_Stamp (Locale_Full_Name (File));
       else
          return File_Time_Stamp
            (File.Value.Connection, File.Value.Full_Name.all);

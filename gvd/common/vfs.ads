@@ -32,9 +32,9 @@ with Ada.Calendar;
 package VFS is
 
    No_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
-     (Ada.Calendar.Year_Number'First,
-      Ada.Calendar.Month_Number'First,
-      Ada.Calendar.Day_Number'First);
+     (GNAT.OS_Lib.GM_Year (GNAT.OS_Lib.Invalid_Time),
+      GNAT.OS_Lib.GM_Month (GNAT.OS_Lib.Invalid_Time),
+      GNAT.OS_Lib.GM_Day (GNAT.OS_Lib.Invalid_Time));
 
    subtype UTF8_String_Access is GNAT.OS_Lib.String_Access;
    type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
