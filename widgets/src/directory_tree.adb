@@ -1264,7 +1264,9 @@ package body Directory_Tree is
 
          for J in Initial_Selection'Range loop
             Insert (Selector.List, -1,
-                    (1 => New_String (Initial_Selection (J).all)));
+                    (1 => New_String (Normalize_Pathname
+                                      (Initial_Selection (J).all,
+                                       Resolve_Links => False))));
          end loop;
 
          --  ??? This is a workaround for a horizontal scrollbar problem: When
