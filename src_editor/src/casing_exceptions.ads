@@ -18,6 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  Add support routines for the casing exceptions feature. It has services
+--  to add or remove a casing exception and to initialize the casing
+--  GPS feature (create menu, read/write casing XML files).
+
 with Glib.Object;           use Glib.Object;
 with Glib.Xml_Int;          use Glib.Xml_Int;
 with Glide_Kernel;          use Glide_Kernel;
