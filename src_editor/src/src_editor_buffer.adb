@@ -763,10 +763,12 @@ package body Src_Editor_Buffer is
       Start_Iter   : Gtk_Text_Iter;
       End_Iter     : Gtk_Text_Iter;
       Command      : Editor_Command := Editor_Command (Buffer.Current_Command);
-      Direction    : Direction_Type;
+      Direction    : Direction_Type := Extended;
       Line, Column : Gint;
       Line_Start   : Gint;
       Column_Start : Gint;
+      Line_End     : Gint;
+      Column_End   : Gint;
 
    begin
       if Buffer.Inserting then
@@ -778,8 +780,30 @@ package body Src_Editor_Buffer is
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
 
+      --  Determine the direction mode for the delete action.
+
+      Get_Cursor_Position (Buffer, Line, Column);
+
+      Line_Start   := Get_Line (Start_Iter);
+      Column_Start := Get_Line_Offset (Start_Iter);
+      Line_End     := Get_Line (End_Iter);
+      Column_End   := Get_Line_Offset (End_Iter);
+
+      if Line = Line_Start
+        and then Column = Column_Start
+      then
+         Direction := Backward;
+      end if;
+
+      if Line = Line_End
+        and then Column = Column_End
+      then
+         Direction := Forward;
+      end if;
+
       if not Is_Null_Command (Command)
-        and then Get_Mode (Command) /= Deletion
+        and then (Get_Mode (Command) /= Deletion
+                  or else (Get_Direction (Command) /= Direction))
       then
          End_Action (Buffer);
          Command := Editor_Command (Buffer.Current_Command);
@@ -787,20 +811,7 @@ package body Src_Editor_Buffer is
          pragma Assert (Is_Null_Command (Command));
       end if;
 
-      Line_Start   := Get_Line (Start_Iter);
-      Column_Start := Get_Line_Offset (Start_Iter);
-
       if Is_Null_Command (Command) then
-         Get_Cursor_Position (Buffer, Line, Column);
-
-         if Line = Line_Start
-           and then Column = Column_Start
-         then
-            Direction := Backward;
-         else
-            Direction := Forward;
-         end if;
-
          Create
            (Command,
             Deletion,
@@ -808,24 +819,37 @@ package body Src_Editor_Buffer is
             True,
             Integer (Line_Start),
             Integer (Column_Start),
-            Direction);
+            Direction,
+            Integer (Line), Integer (Column));
 
          Buffer.Inserting := True;
          Enqueue (Buffer, Command_Access (Command));
          Buffer.Inserting := False;
 
+         Add_Text
+           (Command,
+            Get_Slice (Buffer, Start_Iter, End_Iter),
+            Integer (Line_Start),
+            Integer (Column_Start));
       else
-         Direction := Get_Direction (Command);
+         if Direction = Forward then
+            Add_Text
+              (Command,
+               Get_Slice (Buffer, Start_Iter, End_Iter),
+               Integer (Line_Start),
+               Integer (Column_Start));
+         else
+            Add_Text
+              (Command,
+               Get_Slice (Buffer, Start_Iter, End_Iter));
+         end if;
       end if;
 
-      Add_Text
-        (Command,
-         Get_Slice (Buffer, Start_Iter, End_Iter),
-         Integer (Line_Start),
-         Integer (Column_Start));
       Buffer.Current_Command := Command_Access (Command);
 
-      if Direction = Backward then
+      if Direction = Extended
+        or else Line_Start /= Line_End
+      then
          End_Action (Buffer);
       end if;
 
