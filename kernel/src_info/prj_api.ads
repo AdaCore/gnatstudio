@@ -52,6 +52,17 @@ package Prj_API is
    Cpp_String : constant String := "c++";  --  See also Name_C_Plus_Plus.
    --  Strings used for the various languages supported by Glide
 
+
+   Default_Switches1 : aliased String := "-g";
+   Default_Switches2 : aliased String := "-gnatQ";
+   Default_Builder_Switches  : constant GNAT.OS_Lib.Argument_List :=
+     (1 => Default_Switches1'Access, 2 => Default_Switches2'Access);
+   --  Default switches for new projects (From wizard, or default initial
+   --  project).
+   --  ??? gnatmake -s is apparently not fully functionnal, so disable this
+   --  default setting for now
+
+
    Name_C_Plus_Plus : Types.Name_Id;
    --  The equivalent of Cpp_String. You should never use Name_CPP, which
    --  contains "cpp" instead of the expect "c++" in projects.
