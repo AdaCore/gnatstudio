@@ -39,9 +39,8 @@ package Docgen is
    No_Body_Line_Needed : constant Natural := 0;
 
    type Source_File_Information is record
-      File_Name        : VFS.Virtual_File;
-      Package_Name     : GNAT.OS_Lib.String_Access;
-      Other_File_Found : Boolean;
+      File_Name    : aliased VFS.Virtual_File;
+      Package_Name : GNAT.OS_Lib.String_Access;
    end record;
    --  Description of a source file for which documentation should be
    --  generated.
@@ -321,7 +320,7 @@ package Docgen is
 
    type Doc_Info_Header is new Doc_Info_Base with record
       Header_Package : GNAT.OS_Lib.String_Access;
-      Header_File    : VFS.Virtual_File;
+      Header_File    : VFS.Virtual_File_Access;
       Header_Link    : Boolean;
       Header_Line    : Natural;
    end record;
@@ -345,7 +344,7 @@ package Docgen is
 
    type Doc_Info_With is new Doc_Info_Base with record
       With_Header      : GNAT.OS_Lib.String_Access;
-      With_File        : VFS.Virtual_File;
+      With_File        : VFS.Virtual_File_Access;
       With_Header_Line : Natural;
    end record;
    --  With clauses for imported packages
@@ -473,7 +472,7 @@ package Docgen is
 
    type Doc_Info_Index_Item is new Doc_Info_Base with record
       Item_Name     : GNAT.OS_Lib.String_Access;
-      Item_File     : VFS.Virtual_File;
+      Item_File     : VFS.Virtual_File_Access;
       Item_Line     : Natural;
       Item_Doc_File : GNAT.OS_Lib.String_Access;
    end record;
@@ -481,7 +480,7 @@ package Docgen is
    --  and subprograms index)
 
    type Doc_Info_Body_Line is new Doc_Info_Base with record
-      Body_File : VFS.Virtual_File;
+      Body_File : VFS.Virtual_File_Access;
       Body_Text : GNAT.OS_Lib.String_Access;
    end record;
    --  Used to pass the information of one line in the body file
@@ -516,10 +515,11 @@ package Docgen is
       --  Called each time a file is closed
 
       procedure Doc_Header
-        (B                : access Backend;
-         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File             : File_Descriptor;
-         Info             : in out Docgen.Doc_Info_Header) is abstract;
+        (B       : access Backend;
+         Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+         LI_Unit : LI_File_Ptr;
+         File    : File_Descriptor;
+         Info    : in out Docgen.Doc_Info_Header) is abstract;
 
       procedure Doc_Header_Private
         (B                : access Backend;
@@ -917,7 +917,7 @@ package Docgen is
    --  Return the number of point in the given string
 
    function Get_Doc_File_Name
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : VFS.Virtual_File_Access;
       Source_Path     : String;
       Doc_Suffix      : String) return String;
    --  Return a string with the name for the new doc file:
@@ -927,27 +927,15 @@ package Docgen is
 
    function Source_File_In_List
      (Source_File_List : Type_Source_File_List.List;
-      Name             : VFS.Virtual_File) return Boolean;
+      Name             : VFS.Virtual_File_Access) return Boolean;
    --  Return true if the file is found in the source file list
-
-   function Spec_Suffix
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return String;
-   --  Return the spec suffix, without the "." in front, corresponding to
-   --  the given file name. This given file can be a body or a spec.
-   --  As using Other_File_Name this function works for all suffix's.
-   --  ??? Wrong, due to call to Is_Spec_File
-
-   function Body_Suffix
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return String;
-   --  Return the body suffix, without the "." in front, corresponding to
-   --  the given file name. This given file can be a body or a spec.
-   --  As using Other_File_Name this function works for all suffix's.
 
    function Is_Spec_File
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Boolean;
+   function Is_Spec_File
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File_Access) return Boolean;
    --  Return whether the File is a Spec file
 
 end Docgen;
