@@ -5,7 +5,7 @@
   <name>aunit_make_suite</name>
   <program_name>aunit_make_suite</program_name>
   <directory></directory>
-  <source_directory>make_suite</source_directory>
+  <source_directory>.</source_directory>
   <pixmaps_directory>pixmaps</pixmaps_directory>
   <language>Ada 95</language>
   <gnome_support>False</gnome_support>
