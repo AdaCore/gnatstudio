@@ -55,10 +55,4 @@ private
    --  will examine that file and call the function needed (see below)
 
 
-   function Kind_To_String
-     (Kind : Src_Info.E_Kind) return String;
-   --  returns the string of the E_Kind name: this is copied
-   --  from one of the kernel packages
-
-
 end Work_on_File;
