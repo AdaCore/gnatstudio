@@ -636,34 +636,26 @@ package body Find_Utils is
       Lang     : Language_Access := null) return Match_Result_Array_Access
    is
       Result : Match_Result_Array_Access := null;
-      Count  : Natural := 0;
 
       function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
 
       function Callback (Match : Match_Result) return Boolean is
          Tmp  : Match_Result_Array_Access;
-         Size : Natural := 0;
       begin
-         Count := Count + 1;
-
-         if Result = null then
-            Size := 16;
-         elsif Count > Result'Last then
-            Size := Result'Last * 2;
+         Tmp := Result;
+         if Tmp = null then
+            Result := new Match_Result_Array (1 .. 1);
+         else
+            Result := new Match_Result_Array (1 .. Tmp'Last + 1);
          end if;
 
-         if Size /= 0 then
-            Tmp := Result;
-            Result := new Match_Result_Array (1 .. Size);
-
-            if Tmp /= null then
-               Result (1 .. Count - 1) := Tmp (1 .. Count - 1);
-               Unchecked_Free (Tmp);
-            end if;
+         if Tmp /= null then
+            Result (1 .. Tmp'Last) := Tmp.all;
+            Unchecked_Free (Tmp);
          end if;
 
-         Result (Count) := new Match_Result' (Match);
+         Result (Result'Last) := new Match_Result' (Match);
          return True;
       end Callback;
 
@@ -1060,6 +1052,8 @@ package body Find_Utils is
          if not Context.All_Occurences then
             Get_Cursor_Location (Editor, Line, Column);
 
+            while Context.Last_Match_Returned <=
+              Context.Next_Matches_In_File'Last
             loop
                Match :=
                  Context.Next_Matches_In_File (Context.Last_Match_Returned);
@@ -1067,6 +1061,13 @@ package body Find_Utils is
                  or else (Match.Line = Line and then Match.Column >= Column);
                Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
             end loop;
+
+            if Context.Last_Match_Returned >
+              Context.Next_Matches_In_File'Last
+            then
+               Context.Last_Match_Returned :=
+                 Context.Next_Matches_In_File'First;
+            end if;
          end if;
       end if;
 
