@@ -71,22 +71,26 @@ package Glide_Kernel.Project is
    --  If Load_Desktop is true, then all current MDI children are removed, and
    --  the default desktop is reloaded.
 
-   procedure Save_Project
+   function Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;
       Project   : Projects.Project_Type;
-      Recursive : Boolean := False);
+      Recursive : Boolean := False) return Boolean;
    --  Save Project to a file. If Recursive is True, all the imported projects
    --  are saved at the same time.
    --  The kernel registers that it is no longer using the default project.
    --
    --  There must be a project_view associated with the project
+   --
+   --  Return False if at least one of the projects couldn't be saved
+   --  successfully.
 
-   procedure Save_Single_Project
+   function Save_Single_Project
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Projects.Project_Type);
+      Project : Projects.Project_Type) return Boolean;
    --  Save project, but none of its imported projects. As opposed to
    --  Save_Project, the project doesn't need to have an associated view in
    --  this procedure.
+   --  Return True if the project could be successfully saved
 
    function Get_Project
      (Handle : access Kernel_Handle_Record'Class) return Projects.Project_Type;

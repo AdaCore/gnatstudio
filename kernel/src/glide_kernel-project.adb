@@ -338,17 +338,18 @@ package body Glide_Kernel.Project is
    -- Save_Project --
    ------------------
 
-   procedure Save_Project
+   function Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;
       Project   : Project_Type;
-      Recursive : Boolean := False)
+      Recursive : Boolean := False) return Boolean
    is
       Iter     : Imported_Project_Iterator := Start (Project, Recursive);
       Modified : Boolean := False;
+      Result   : Boolean := True;
    begin
       while Current (Iter) /= No_Project loop
          Modified := Modified or else Project_Modified (Current (Iter));
-         Save_Single_Project (Kernel, Current (Iter));
+         Result := Save_Single_Project (Kernel, Current (Iter)) and Result;
 
          Next (Iter);
       end loop;
@@ -359,16 +360,20 @@ package body Glide_Kernel.Project is
       if Modified then
          Run_Hook (Kernel, Project_View_Changed_Hook);
       end if;
+
+      return Result;
    end Save_Project;
 
    -------------------------
    -- Save_Single_Project --
    -------------------------
 
-   procedure Save_Single_Project
+   function Save_Single_Project
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Projects.Project_Type)
+      Project : Projects.Project_Type) return Boolean
    is
+      Result : Boolean := True;
+
       procedure Report_Error (Msg : String);
       --  Report errors to the user
 
@@ -380,10 +385,12 @@ package body Glide_Kernel.Project is
       begin
          Insert (Kernel, Msg, Mode => Glide_Kernel.Console.Error);
          Parse_File_Locations (Kernel, Msg, "Project save");
+         Result := False;
       end Report_Error;
 
    begin
       Save_Project (Project, Report_Error'Unrestricted_Access);
+      return Result;
    end Save_Single_Project;
 
    ------------------
