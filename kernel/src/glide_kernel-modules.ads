@@ -560,6 +560,14 @@ package Glide_Kernel.Modules is
    --  Set_Busy tells whether the busy cursor should be set while processing
    --  the query.
 
+   function Create_Mark
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Filename          : String;
+      Line              : Natural := 1;
+      Column            : Natural := 1) return String;
+   --  Create a mark for Filename, at position given by Line, Column.
+   --  Return the identifier corresponding to the mark that has been created.
+
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : String;
