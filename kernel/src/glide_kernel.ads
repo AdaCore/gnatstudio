@@ -44,7 +44,7 @@ package Glide_Kernel is
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
    --  A kernel handle used to share information throughout Glide.
 
-   package Kernel_Sessions is new Gtkada.MDI.Sessions (Kernel_Handle);
+   package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);
 
    procedure Gtk_New
      (Handle      : out Kernel_Handle;
@@ -92,14 +92,13 @@ package Glide_Kernel is
    --  Parse the given ALI file and return the new LI_File_Ptr created if
    --  the parsing was successful.
 
-   procedure Save_Session
+   procedure Save_Desktop
      (Handle : access Kernel_Handle_Record);
-   --  Save the current session
+   --  Save the current desktop.
 
-   function Load_Session
-     (Handle : access Kernel_Handle_Record) return Boolean;
-   --  Reload a saved session.
-   --  Return False if no session could be loaded.
+   function Load_Desktop (Handle : access Kernel_Handle_Record) return Boolean;
+   --  Reload a saved desktop.
+   --  Return False if no desktop could be loaded.
 
    ---------------------
    -- Signal emission --
