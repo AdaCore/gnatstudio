@@ -1805,7 +1805,8 @@ package body GVD.Process is
      (Process : access GObject_Record'Class;
       Force   : Boolean)
    is
-      Debugger : constant Visual_Debugger := Visual_Debugger (Process);
+      Debugger  : constant Visual_Debugger := Visual_Debugger (Process);
+      Bp_Editor : Breakpoint_Editor_Access;
    begin
       --  We only need to update the list of breakpoints when we have a
       --  temporary breakpoint (since its status might be changed upon
@@ -1833,11 +1834,11 @@ package body GVD.Process is
          Update_Breakpoints (Debugger.Editor_Text, Debugger.Breakpoints.all);
 
          --  Update the breakpoints dialog if necessary
-         if GVD_Module.Breakpoints_Editor /= null
-           and then Mapped_Is_Set (GVD_Module.Breakpoints_Editor)
-         then
-            Update_Breakpoint_List
-              (Breakpoint_Editor_Access (GVD_Module.Breakpoints_Editor));
+         Bp_Editor := Breakpoint_Editor_Access
+           (Get_Breakpoints_Editor (Debugger.Window.Kernel));
+
+         if Bp_Editor /= null and then Mapped_Is_Set (Bp_Editor) then
+            Update_Breakpoint_List (Bp_Editor);
          end if;
       end if;
    end Update_Breakpoints;

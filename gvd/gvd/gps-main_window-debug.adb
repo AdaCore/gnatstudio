@@ -20,7 +20,6 @@
 
 with Glib;               use Glib;
 with Gtk;                use Gtk;
-with Gtk.Dialog;         use Gtk.Dialog;
 with Gtk.Menu_Item;      use Gtk.Menu_Item;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
@@ -103,7 +102,10 @@ package body GPS.Main_Window.Debug is
    is
       use type Glib.Object.GObject;
 
-      Tab : Visual_Debugger := Visual_Debugger (Debugger);
+      Tab           : Visual_Debugger := Visual_Debugger (Debugger);
+      Thread_Dialog : Thread_Dialog_Access;
+      Task_Dialog   : Task_Dialog_Access;
+      PD_Dialog     : PD_Dialog_Access;
 
    begin
       if Debugger = null then
@@ -114,20 +116,21 @@ package body GPS.Main_Window.Debug is
         and then Tab.Debugger /= null
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
+         Thread_Dialog :=
+           Thread_Dialog_Access (Get_Thread_Dialog (Window.Kernel));
+         Task_Dialog := Task_Dialog_Access (Get_Task_Dialog (Window.Kernel));
+         PD_Dialog := PD_Dialog_Access (Get_PD_Dialog (Window.Kernel));
+
          if Thread_Dialog /= null then
-            Update (Thread_Dialog_Access (Thread_Dialog), Tab);
+            Update (Thread_Dialog, Tab);
          end if;
 
          if Task_Dialog /= null then
-            Update (Task_Dialog_Access (Task_Dialog), Tab);
-         end if;
-
-         if History_Dialog /= null then
-            Update (History_Dialog_Access (History_Dialog), Tab);
+            Update (Task_Dialog, Tab);
          end if;
 
          if PD_Dialog /= null then
-            Update (PD_Dialog_Access (PD_Dialog), Tab);
+            Update (PD_Dialog, Tab);
          end if;
       end if;
    end Update_External_Dialogs;
@@ -153,6 +156,7 @@ package body GPS.Main_Window.Debug is
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
       Widget      : Gtk_Menu_Item;
       WTX_Version : Natural;
+      Bp_Editor   : Breakpoint_Editor_Access;
 
       use type Glib.Object.GObject;
 
@@ -168,10 +172,11 @@ package body GPS.Main_Window.Debug is
       end if;
 
       Update_External_Dialogs (Window, Debugger);
+      Bp_Editor := Breakpoint_Editor_Access
+        (Get_Breakpoints_Editor (Window.Kernel));
 
-      if GVD_Module.Breakpoints_Editor /= null then
-         Set_Process
-           (Breakpoint_Editor_Access (GVD_Module.Breakpoints_Editor), Process);
+      if Bp_Editor /= null then
+         Set_Process (Bp_Editor, Process);
       end if;
 
       --  ??? Replace by a signal "debugger_switch" on the main window

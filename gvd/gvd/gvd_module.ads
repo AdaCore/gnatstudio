@@ -41,16 +41,6 @@ package GVD_Module is
    procedure Free is new
      Ada.Unchecked_Deallocation (Debugger_List_Node, Debugger_List_Link);
 
-   --  ??? The following global variables should be moved either as part of
-   --  GVD_Module_ID, or as part of Visual_Debugger.
-
-   Memory_View        : Gtk.Window.Gtk_Window;
-   History_Dialog     : Gtk.Dialog.Gtk_Dialog;
-   Thread_Dialog      : Gtk.Dialog.Gtk_Dialog;
-   Task_Dialog        : Gtk.Dialog.Gtk_Dialog;
-   PD_Dialog          : Gtk.Dialog.Gtk_Dialog;
-   Breakpoints_Editor : Gtk.Window.Gtk_Window;
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
@@ -79,5 +69,30 @@ package GVD_Module is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Current : Glib.Object.GObject);
    --  Set the current active visual debugger
+
+   function Get_Or_Create_Memory_View
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Window.Gtk_Window;
+   --  Return (create if necessary) the memory view associated with Kernel
+
+   function Get_Breakpoints_Editor
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Window.Gtk_Window;
+   --  Return the breakpoint editor associated with Kernel, if any
+
+   function Get_Thread_Dialog
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Dialog.Gtk_Dialog;
+   --  Return the thread dialog associated with Kernel, if any
+
+   function Get_Task_Dialog
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Dialog.Gtk_Dialog;
+   --  Return the tasj dialog associated with Kernel, if any
+
+   function Get_PD_Dialog
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Dialog.Gtk_Dialog;
+   --  Return the PD dialog associated with Kernel, if any
 
 end GVD_Module;

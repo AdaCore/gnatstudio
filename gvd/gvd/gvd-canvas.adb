@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                               G P S
+--                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
 --                               AdaCore                             --
@@ -35,7 +35,6 @@ with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtk.Window;          use Gtk.Window;
 
 with Gtkada.Canvas;          use Gtkada.Canvas;
 with Gtkada.Handlers;        use Gtkada.Handlers;
@@ -1064,16 +1063,10 @@ package body GVD.Canvas is
 
       Top  : constant GPS_Window :=
         GPS_Window (Visual_Debugger (Item.Canvas.Process).Window);
-      View : GVD_Memory_View;
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (GVD_Module.Get_Or_Create_Memory_View (Top.Kernel));
 
    begin
-      if GVD_Module.Memory_View = null then
-         Gtk_New (View, Gtk_Widget (Top));
-         GVD_Module.Memory_View := Gtk_Window (View);
-      else
-         View := GVD_Memory_View (GVD_Module.Memory_View);
-      end if;
-
       if not Visible_Is_Set (View) then
          Show_All (View);
       end if;

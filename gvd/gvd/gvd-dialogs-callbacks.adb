@@ -20,12 +20,8 @@
 
 with Glib;                  use Glib;
 with Gtk.Clist;             use Gtk.Clist;
-with Gtk.Container;         use Gtk.Container;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;          use Gtk.Handlers;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.List;              use Gtk.List;
-with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 
@@ -54,41 +50,42 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Index       : constant Gint := To_Gint (Params, 1);
-      Str         : constant String :=
+      Index         : constant Gint := To_Gint (Params, 1);
+      Str           : constant String :=
         Get_Text (Gtk_Clist (Object), Index, 0);
-      Top         : constant GVD_Dialog := GVD_Dialog (Get_Toplevel (Object));
-      Main_Window : constant GPS_Window :=
+      Top           : constant GVD_Dialog :=
+        GVD_Dialog (Get_Toplevel (Object));
+      Main_Window   : constant GPS_Window :=
         GPS_Window (Top.Main_Window);
-      Process     : constant Visual_Debugger :=
+      Process       : constant Visual_Debugger :=
         Get_Current_Process (Main_Window);
-      Matched     : Match_Array (0 .. 0);
-      Info        : PD_Information_Array (1 .. Max_PD);
-      Len         : Natural;
+      Matched       : Match_Array (0 .. 0);
+      Info          : PD_Information_Array (1 .. Max_PD);
+      Len           : Natural;
+      Thread_Dialog : constant GVD_Dialog :=
+        GVD_Dialog (Get_Thread_Dialog (Main_Window.Kernel));
+      Task_Dialog   : constant GVD_Dialog :=
+        GVD_Dialog (Get_Task_Dialog (Main_Window.Kernel));
+      PD_Dialog     : constant GVD_Dialog :=
+        GVD_Dialog (Get_PD_Dialog (Main_Window.Kernel));
 
    begin
       if Process.Debugger = null then
          Hide (Top);
       end if;
 
-      if Thread_Dialog /= null
-        and then Top = GVD_Dialog (Thread_Dialog)
-      then
+      if Thread_Dialog /= null and then Top = Thread_Dialog then
          Match ("[0-9]+", Str, Matched);
          Thread_Switch
            (Process.Debugger,
             Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
             Mode => GVD.Types.Visible);
 
-      elsif Task_Dialog /= null
-        and then Top = GVD_Dialog (Task_Dialog)
-      then
+      elsif Task_Dialog /= null and then Top = Task_Dialog then
          Task_Switch
            (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
 
-      elsif PD_Dialog /= null
-        and then Top = GVD_Dialog (PD_Dialog)
-      then
+      elsif PD_Dialog /= null and then Top = PD_Dialog then
          Match ("(0x)?[0-9a-fA-F]+", Str, Matched);
 
          --  ??? The Command_Type was changed from Visible to Hidden
@@ -108,10 +105,10 @@ package body GVD.Dialogs.Callbacks is
          Info_PD (Process.Debugger, Info, Len);
          Freeze (Gtk_Clist (Object));
 
-         Update_PD (PD_Dialog_Access (PD_Dialog), Info (1 .. Len));
-         Handler_Block (Object, PD_Dialog_Access (PD_Dialog).Select_Row_Id);
+         Update_PD (PD_Dialog, Info (1 .. Len));
+         Handler_Block (Object, PD_Dialog.Select_Row_Id);
          Select_Row (Gtk_Clist (Object), Index, 0);
-         Handler_Unblock (Object, PD_Dialog_Access (PD_Dialog).Select_Row_Id);
+         Handler_Unblock (Object, PD_Dialog.Select_Row_Id);
          Thaw (Gtk_Clist (Object));
 
       else
@@ -295,75 +292,5 @@ package body GVD.Dialogs.Callbacks is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Question_Close_Clicked;
-
-   ---------------------------------
-   -- On_Replay_Selection_Clicked --
-   ---------------------------------
-
-   procedure On_Replay_Selection_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-      History_Dialog : constant History_Dialog_Access :=
-        History_Dialog_Access (Get_Toplevel (Object));
-      Top  : constant GPS_Window :=
-        GPS_Window (History_Dialog.Window);
-      Tab  : constant Visual_Debugger := Get_Current_Process (Top);
-      List : constant Gtk_List :=
-        History_Dialog_Access (Get_Toplevel (Object)).List;
-      Item : Gtk_List_Item;
-
-      use Widget_List;
-      Selected   : Widget_List.Glist := First (Get_Children (List));
-      Current    : constant Widget_List.Glist := Get_Selection (List);
-
-   begin
-      Freeze (History_Dialog);
-
-      while Selected /= Null_List loop
-         if Index (Current, Get_Data (Selected)) /= -1 then
-            declare
-               Command : constant String :=
-                 Get (Gtk_Label
-                       (Get_Data
-                         (Children
-                           (Gtk_Container (Get_Data (Selected))))));
-            begin
-               Process_User_Command
-                 (Tab,
-                  Command,
-                  Output_Command => True,
-                  Mode           => GVD.Types.User);
-               Wait_User_Command (Tab.Debugger);
-               Gtk_New (Item, Label => Command);
-               Show (Item);
-               Add (History_Dialog.List, Item);
-            end;
-         end if;
-
-         Selected := Next (Selected);
-      end loop;
-
-      Thaw (History_Dialog);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Replay_Selection_Clicked;
-
-   -------------------------------
-   -- On_History_Cancel_Clicked --
-   -------------------------------
-
-   procedure On_History_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class) is
-   begin
-      Hide (Get_Toplevel (Object));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_History_Cancel_Clicked;
 
 end GVD.Dialogs.Callbacks;

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -26,7 +26,6 @@ with Gtk.Clist; use Gtk.Clist;
 with Gtk.Handlers;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
-with Gtk.List; use Gtk.List;
 with Gtk.Window; use Gtk.Window;
 with Debugger; use Debugger;
 with Basic_Types;
@@ -47,9 +46,6 @@ package GVD.Dialogs is
 
    type Question_Dialog_Record is new GVD_Dialog_Record with private;
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
-
-   type History_Dialog_Record is new Gtk_Dialog_Record with private;
-   type History_Dialog_Access is access all History_Dialog_Record'Class;
 
    type Question_Record is record
       Choice : Basic_Types.String_Access;
@@ -166,27 +162,6 @@ package GVD.Dialogs is
       Questions                  : Question_Array;
       Question_Description       : String := "");
 
-   procedure Gtk_New
-     (History_Dialog : out History_Dialog_Access;
-      Main_Window    : Gtk_Window);
-   --  Create a new history dialog.
-   --  Main_Window should be the main debug window. The information will be
-   --  blank, so you should call Update to add data.
-
-   procedure Initialize
-     (History_Dialog : access History_Dialog_Record'Class);
-   --  Internal inititialization function.
-
-   procedure Update
-     (History_Dialog : History_Dialog_Access;
-      Debugger       : access Glib.Object.GObject_Record'Class);
-   --  Reads the commands history from the main debug window, and fills the
-   --  list with the User and Visible commands that were sent to Debugger.
-
-   procedure Freeze (Dialog : History_Dialog_Access);
-   procedure Thaw (Dialog : History_Dialog_Access);
-   --  These procedures are used to lock the list of commands.
-
 private
    type GVD_Dialog_Record is new Gtk_Dialog_Record with record
       Main_Window     : Gtk_Window;
@@ -213,22 +188,6 @@ private
    --  We have to store the debugger for this dialog, since the user's choice
    --  should be sent to the right debugger, even if the user has switched
    --  tabs in between.
-
-   type History_Dialog_Record is new Gtk_Dialog_Record with record
-      Vbox1            : Gtk_Vbox;
-      Scrolledwindow1  : Gtk_Scrolled_Window;
-      List             : Gtk_List;
-      Hbuttonbox1      : Gtk_Hbutton_Box;
-      Replay_Selection : Gtk_Button;
-      Cancel           : Gtk_Button;
-      Help             : Gtk_Button;
-
-      Window           : Gtk_Window;
-      --  This is in fact the main debug window.
-
-      Freeze_Count     : Integer := 0;
-      --  Used to lock the History_Dialog while replaying commands.
-   end record;
 
    procedure Update_PD
      (Dialog   : access GVD_Dialog_Record'Class;

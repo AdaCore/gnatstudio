@@ -39,11 +39,8 @@ with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Stock;             use Gtk.Stock;
 with Process_Proxies;       use Process_Proxies;
-with GNAT.OS_Lib;
-with Interactive_Consoles;  use Interactive_Consoles;
 with Config;                use Config;
 
 package body GVD.Dialogs is
@@ -73,15 +70,6 @@ package body GVD.Dialogs is
    -------------
    -- Gtk_New --
    -------------
-
-   procedure Gtk_New
-     (History_Dialog : out History_Dialog_Access;
-      Main_Window    : Gtk_Window) is
-   begin
-      History_Dialog := new History_Dialog_Record;
-      GVD.Dialogs.Initialize (History_Dialog);
-      History_Dialog.Window := Main_Window;
-   end Gtk_New;
 
    procedure Gtk_New
      (Task_Dialog : out Task_Dialog_Access;
@@ -281,41 +269,6 @@ package body GVD.Dialogs is
       Update (Tab.Stack, Tab.Debugger);
    end Update_Call_Stack;
 
-   procedure Update
-     (History_Dialog : History_Dialog_Access;
-      Debugger       : access Glib.Object.GObject_Record'Class)
-   is
-      Tab     : constant Visual_Debugger :=
-        Visual_Debugger (Debugger);
-      Item    : Gtk_List_Item;
-
-      History : constant GNAT.OS_Lib.String_List_Access :=
-        Get_History (Tab.Debugger_Text);
-
-      use GNAT.OS_Lib;
-   begin
-      if not Visible_Is_Set (History_Dialog)
-        or else History_Dialog.Freeze_Count /= 0
-      then
-         return;
-      end if;
-
-      Remove_Items (History_Dialog.List, Get_Children (History_Dialog.List));
-
-      if History /= null then
-         for J in History.all'Range loop
-            if History (J) = null then
-               Gtk_New (Item, Label => "");
-            else
-               Gtk_New (Item, Label => History (J).all);
-            end if;
-
-            Show (Item);
-            Add (History_Dialog.List, Item);
-         end loop;
-      end if;
-   end Update;
-
    -----------------------------
    -- On_Task_Process_Stopped --
    -----------------------------
@@ -323,10 +276,13 @@ package body GVD.Dialogs is
    procedure On_Task_Process_Stopped
      (Widget : access Glib.Object.GObject_Record'Class)
    is
-      Tab : constant Visual_Debugger := Visual_Debugger (Widget);
+      Tab         : constant Visual_Debugger := Visual_Debugger (Widget);
+      Task_Dialog : constant Task_Dialog_Access :=
+        Task_Dialog_Access (Get_Task_Dialog (Tab.Window.Kernel));
+
    begin
       if Task_Dialog /= null then
-         Update (Task_Dialog_Access (Task_Dialog), Tab);
+         Update (Task_Dialog, Tab);
       end if;
    end On_Task_Process_Stopped;
 
@@ -337,10 +293,13 @@ package body GVD.Dialogs is
    procedure On_Thread_Process_Stopped
      (Widget : access Glib.Object.GObject_Record'Class)
    is
-      Tab : constant Visual_Debugger := Visual_Debugger (Widget);
+      Tab           : constant Visual_Debugger := Visual_Debugger (Widget);
+      Thread_Dialog : constant Thread_Dialog_Access :=
+        Thread_Dialog_Access (Get_Thread_Dialog (Tab.Window.Kernel));
+
    begin
       if Thread_Dialog /= null then
-         Update (Thread_Dialog_Access (Thread_Dialog), Tab);
+         Update (Thread_Dialog, Tab);
       end if;
    end On_Thread_Process_Stopped;
 
@@ -351,10 +310,13 @@ package body GVD.Dialogs is
    procedure On_PD_Process_Stopped
      (Widget : access Glib.Object.GObject_Record'Class)
    is
-      Tab : constant Visual_Debugger := Visual_Debugger (Widget);
+      Tab       : constant Visual_Debugger := Visual_Debugger (Widget);
+      PD_Dialog : constant PD_Dialog_Access :=
+        PD_Dialog_Access (Get_PD_Dialog (Tab.Window.Kernel));
+
    begin
       if PD_Dialog /= null then
-         Update (PD_Dialog_Access (PD_Dialog), Tab);
+         Update (PD_Dialog, Tab);
       end if;
    end On_PD_Process_Stopped;
 
@@ -567,55 +529,6 @@ package body GVD.Dialogs is
       Register_Dialog (Convert (Main_Window, Debugger), Question_Dialog);
    end Initialize;
 
-   procedure Initialize
-     (History_Dialog : access History_Dialog_Record'Class) is
-   begin
-      Gtk.Window.Initialize (History_Dialog, Window_Toplevel);
-      Set_Title (History_Dialog, -"Command History");
-      Set_Policy (History_Dialog, False, True, False);
-      Set_Position (History_Dialog, Win_Pos_Mouse);
-      Set_Default_Size (History_Dialog, 0, 200);
-      Set_Modal (History_Dialog, False);
-
-      Gtk_New_Vbox (History_Dialog.Vbox1, False, 0);
-      Add (History_Dialog, History_Dialog.Vbox1);
-
-      Gtk_New (History_Dialog.Scrolledwindow1);
-      Pack_Start
-        (History_Dialog.Vbox1,
-         History_Dialog.Scrolledwindow1, True, True, 0);
-      Set_Policy
-        (History_Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
-
-      Gtk_New (History_Dialog.List);
-      Add_With_Viewport (History_Dialog.Scrolledwindow1, History_Dialog.List);
-      Set_Selection_Mode (History_Dialog.List, Selection_Multiple);
-
-      Gtk_New (History_Dialog.Hbuttonbox1);
-      Pack_Start
-        (History_Dialog.Vbox1, History_Dialog.Hbuttonbox1, False, False, 0);
-      Set_Spacing (History_Dialog.Hbuttonbox1, 30);
-      Set_Layout (History_Dialog.Hbuttonbox1, Buttonbox_Spread);
-      Set_Child_Size (History_Dialog.Hbuttonbox1, 85, 27);
-
-      Gtk_New (History_Dialog.Replay_Selection, -"Replay selection");
-      Set_Flags (History_Dialog.Replay_Selection, Can_Default);
-      Button_Callback.Connect
-        (History_Dialog.Replay_Selection, "clicked",
-         Button_Callback.To_Marshaller (On_Replay_Selection_Clicked'Access));
-      Add (History_Dialog.Hbuttonbox1, History_Dialog.Replay_Selection);
-
-      Gtk_New_From_Stock (History_Dialog.Cancel, Stock_Close);
-      Button_Callback.Connect
-        (History_Dialog.Cancel, "clicked",
-         Button_Callback.To_Marshaller (On_History_Cancel_Clicked'Access));
-      Add (History_Dialog.Hbuttonbox1, History_Dialog.Cancel);
-
-      Return_Callback.Connect
-        (History_Dialog, "delete_event",
-         Return_Callback.To_Marshaller (Delete_Dialog'Access));
-   end Initialize;
-
    ----------
    -- Free --
    ----------
@@ -638,23 +551,5 @@ package body GVD.Dialogs is
       Hide (Dialog);
       return True;
    end Delete_Dialog;
-
-   ------------
-   -- Freeze --
-   ------------
-
-   procedure Freeze (Dialog : History_Dialog_Access) is
-   begin
-      Dialog.Freeze_Count := Dialog.Freeze_Count + 1;
-   end Freeze;
-
-   ----------
-   -- Thaw --
-   ----------
-
-   procedure Thaw (Dialog : History_Dialog_Access) is
-   begin
-      Dialog.Freeze_Count := Dialog.Freeze_Count - 1;
-   end Thaw;
 
 end GVD.Dialogs;

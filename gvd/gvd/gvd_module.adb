@@ -204,6 +204,12 @@ package body GVD_Module is
 
       Current_Debugger               : Glib.Object.GObject;
       --  The current visual debugger
+
+      Memory_View                    : GVD_Memory_View;
+      Breakpoints_Editor             : Breakpoint_Editor_Access;
+      Thread_Dialog                  : Thread_Dialog_Access;
+      Task_Dialog                    : Task_Dialog_Access;
+      PD_Dialog                      : PD_Dialog_Access;
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
@@ -779,6 +785,74 @@ package body GVD_Module is
          Pop_State (GPS_Window (Debugger.Window).Kernel);
       end if;
    end Set_Busy;
+
+   -------------------------------
+   -- Get_Or_Create_Memory_View --
+   -------------------------------
+
+   function Get_Or_Create_Memory_View
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Window.Gtk_Window is
+   begin
+      if GVD_Module_ID.Memory_View = null then
+         Gtk_New
+           (GVD_Module_ID.Memory_View, Gtk_Widget (Get_Main_Window (Kernel)));
+      end if;
+
+      return Gtk_Window (GVD_Module_ID.Memory_View);
+   end Get_Or_Create_Memory_View;
+
+   ----------------------------
+   -- Get_Breakpoints_Editor --
+   ----------------------------
+
+   function Get_Breakpoints_Editor
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Window.Gtk_Window
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Gtk_Window (GVD_Module_ID.Breakpoints_Editor);
+   end Get_Breakpoints_Editor;
+
+   -----------------------
+   -- Get_Thread_Dialog --
+   -----------------------
+
+   function Get_Thread_Dialog
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Dialog.Gtk_Dialog
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Gtk_Dialog (GVD_Module_ID.Thread_Dialog);
+   end Get_Thread_Dialog;
+
+   ---------------------
+   -- Get_Task_Dialog --
+   ---------------------
+
+   function Get_Task_Dialog
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Dialog.Gtk_Dialog
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Gtk_Dialog (GVD_Module_ID.Task_Dialog);
+   end Get_Task_Dialog;
+
+   -------------------
+   -- Get_PD_Dialog --
+   -------------------
+
+   function Get_PD_Dialog
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Dialog.Gtk_Dialog
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Gtk_Dialog (GVD_Module_ID.PD_Dialog);
+   end Get_PD_Dialog;
 
    -----------------------
    -- Get_Debugger_List --
@@ -1457,7 +1531,6 @@ package body GVD_Module is
       Process : constant Visual_Debugger := Get_Current_Process (Top);
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
-      Dialog : Thread_Dialog_Access;
 
    begin
       if Process = null or else Process.Debugger = null then
@@ -1474,14 +1547,13 @@ package body GVD_Module is
          return;
       end if;
 
-      if Thread_Dialog = null then
-         Gtk_New (Dialog, Gtk_Window (Top));
-         Thread_Dialog := Gtk_Dialog (Dialog);
+      if GVD_Module_ID.Thread_Dialog = null then
+         Gtk_New (GVD_Module_ID.Thread_Dialog, Gtk_Window (Top));
       end if;
 
-      Show_All (Thread_Dialog);
-      Gdk_Raise (Get_Window (Thread_Dialog));
-      Update (Dialog, Process);
+      Show_All (GVD_Module_ID.Thread_Dialog);
+      Gdk_Raise (Get_Window (GVD_Module_ID.Thread_Dialog));
+      Update (GVD_Module_ID.Thread_Dialog, Process);
 
    exception
       when E : others =>
@@ -1519,13 +1591,13 @@ package body GVD_Module is
          return;
       end if;
 
-      if Task_Dialog = null then
-         Gtk_New (Task_Dialog_Access (Task_Dialog), Gtk_Window (Top));
+      if GVD_Module_ID.Task_Dialog = null then
+         Gtk_New (GVD_Module_ID.Task_Dialog, Gtk_Window (Top));
       end if;
 
-      Show_All (Task_Dialog);
-      Gdk_Raise (Get_Window (Task_Dialog));
-      Update (Task_Dialog_Access (Task_Dialog), Process);
+      Show_All (GVD_Module_ID.Task_Dialog);
+      Gdk_Raise (Get_Window (GVD_Module_ID.Task_Dialog));
+      Update (GVD_Module_ID.Task_Dialog, Process);
 
    exception
       when E : others =>
@@ -1564,13 +1636,13 @@ package body GVD_Module is
          return;
       end if;
 
-      if PD_Dialog = null then
-         Gtk_New (PD_Dialog_Access (PD_Dialog), Gtk_Window (Top));
+      if GVD_Module_ID.PD_Dialog = null then
+         Gtk_New (GVD_Module_ID.PD_Dialog, Gtk_Window (Top));
       end if;
 
-      Show_All (PD_Dialog);
-      Gdk_Raise (Get_Window (PD_Dialog));
-      Update (PD_Dialog_Access (PD_Dialog), Process);
+      Show_All (GVD_Module_ID.PD_Dialog);
+      Gdk_Raise (Get_Window (GVD_Module_ID.PD_Dialog));
+      Update (GVD_Module_ID.PD_Dialog, Process);
 
    exception
       when E : others =>
@@ -1608,8 +1680,7 @@ package body GVD_Module is
          return;
       end if;
 
-      Breakpoint_Editor
-        (Breakpoint_Editor_Access (Breakpoints_Editor), Process);
+      Breakpoint_Editor (GVD_Module_ID.Breakpoints_Editor, Process);
 
    exception
       when E : others =>
@@ -1626,19 +1697,17 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top     : constant GPS_Window :=
+      Top         : constant GPS_Window :=
         GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Process     : constant Visual_Debugger := Get_Current_Process (Top);
+      Memory_View : Gtk_Window;
 
    begin
       if Process = null or else Process.Debugger = null then
          return;
       end if;
 
-      if Memory_View = null then
-         Gtk_New (GVD_Memory_View (Memory_View), Gtk_Widget (Top));
-      end if;
-
+      Memory_View := Get_Or_Create_Memory_View (Kernel);
       Show_All (Memory_View);
       Gdk_Raise (Get_Window (Memory_View));
 
@@ -2272,16 +2341,12 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Entity  : constant Entity_Selection_Context_Access :=
+      Entity      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context.Context);
-      Top  : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Get_Kernel (Entity)));
+      Memory_View : constant Gtk_Window :=
+        Get_Or_Create_Memory_View (Get_Kernel (Entity));
 
    begin
-      if Memory_View = null then
-         Gtk_New (GVD_Memory_View (Memory_View), Gtk_Widget (Top));
-      end if;
-
       Show_All (Memory_View);
       Display_Memory
         (GVD_Memory_View (Memory_View), Entity_Name_Information (Entity));
@@ -2794,24 +2859,24 @@ package body GVD_Module is
          Set_Pref (Kernel, Show_Call_Stack, Debugger.Stack /= null);
          Remove_Debugger_Columns (Kernel, VFS.No_File);
 
-         if History_Dialog /= null then
-            Hide (History_Dialog);
+         if GVD_Module_ID.Thread_Dialog /= null then
+            Hide (GVD_Module_ID.Thread_Dialog);
          end if;
 
-         if Thread_Dialog /= null then
-            Hide (Thread_Dialog);
+         if GVD_Module_ID.Task_Dialog /= null then
+            Hide (GVD_Module_ID.Task_Dialog);
          end if;
 
-         if Task_Dialog /= null then
-            Hide (Task_Dialog);
+         if GVD_Module_ID.PD_Dialog /= null then
+            Hide (GVD_Module_ID.PD_Dialog);
          end if;
 
-         if PD_Dialog /= null then
-            Hide (PD_Dialog);
+         if GVD_Module_ID.Breakpoints_Editor /= null then
+            Hide (GVD_Module_ID.Breakpoints_Editor);
          end if;
 
-         if Breakpoints_Editor /= null then
-            Hide (Breakpoints_Editor);
+         if GVD_Module_ID.Memory_View /= null then
+            Hide (GVD_Module_ID.Memory_View);
          end if;
 
          Set_Sensitive (Kernel, Debug_None);
@@ -3536,24 +3601,20 @@ package body GVD_Module is
    begin
       Debug_Terminate (Get_Kernel (Id));
 
-      if Task_Dialog /= null then
-         Destroy (Task_Dialog);
+      if Id.Task_Dialog /= null then
+         Destroy (Id.Task_Dialog);
       end if;
 
-      if Thread_Dialog /= null then
-         Destroy (Thread_Dialog);
+      if Id.Thread_Dialog /= null then
+         Destroy (Id.Thread_Dialog);
       end if;
 
-      if PD_Dialog /= null then
-         Destroy (PD_Dialog);
+      if Id.PD_Dialog /= null then
+         Destroy (Id.PD_Dialog);
       end if;
 
-      if History_Dialog /= null then
-         Destroy (History_Dialog);
-      end if;
-
-      if Memory_View /= null then
-         Destroy (Memory_View);
+      if Id.Memory_View /= null then
+         Destroy (Id.Memory_View);
       end if;
    end Destroy;
 
