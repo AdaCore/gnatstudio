@@ -34,6 +34,7 @@ with Unchecked_Conversion;
 with Odd.Strings;       use Odd.Strings;
 with Gtk.Window;        use Gtk.Window;
 with Text_IO;
+with Odd.Dialogs;       use Odd.Dialogs;
 
 package body Debugger.Gdb is
 
@@ -69,6 +70,7 @@ package body Debugger.Gdb is
    Language_Pattern : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)", Multiple_Lines);
+   --  Pattern used to detect language changes in the debugger.
 
    Frame_Pattern : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+) at (.+)$", Multiple_Lines);
@@ -79,6 +81,15 @@ package body Debugger.Gdb is
       Window     : System.Address);
    --  Filter used to detect a change in the current language.
 
+   procedure Question_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String;
+      Window     : System.Address);
+   --  Filter used to detect questions from gdb.
+
+   function To_Main_Debug_Window is new
+     Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+
    ---------------------
    -- Language_Filter --
    ---------------------
@@ -88,9 +99,6 @@ package body Debugger.Gdb is
       Str        : String;
       Window     : System.Address)
    is
-      function To_Main_Debug_Window is new
-        Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
-
       Matched    : GNAT.Regpat.Match_Array (0 .. 3);
       Debugger   : Debugger_Access;
       Language   : Language_Access;
@@ -119,6 +127,73 @@ package body Debugger.Gdb is
          end;
       end if;
    end Language_Filter;
+
+   ---------------------
+   -- Question_Filter --
+   ---------------------
+
+   procedure Question_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String;
+      Window     : System.Address)
+   is
+      function To_Window is new
+        Unchecked_Conversion (System.Address, Gtk_Window);
+
+      Dialog     : Question_Dialog_Access;
+      Index      : Positive;
+   begin
+      --  Do we have a question ?
+
+      if Str'Length > 4
+        and then Str (Str'First .. Str'First + 3) = "[0] "
+      then
+         Index := Str'First;
+         while Index < Str'Last loop
+            if Str (Index) = ASCII.LF
+              and then Str (Index + 1) = '>'
+            then
+               declare
+                  Choices : Question_Array (1 .. 1000);
+                  --  ??? This is an arbitrary hard-coded limit, that should
+                  --  be enough. Might be nice to remove it though.
+
+                  Num     : Natural := 1;
+                  First   : Positive;
+                  Last    : Positive := Str'First;
+               begin
+                  while Last < Index loop
+                     --  Skips the choice number ("[n] ")
+                     Last := Last + 4;
+                     First := Last;
+                     while Last < Index
+                       and then Str (Last) /= ASCII.LF
+                     loop
+                        Last := Last + 1;
+                     end loop;
+
+                     Choices (Num).Choice :=
+                       new String'(Natural'Image (Num - 1));
+                     Choices (Num).Description :=
+                       new String'(Str (First .. Last - 1));
+                     Num := Num + 1;
+
+                     Last := Last + 1;
+                  end loop;
+
+                  Gtk_New (Dialog,
+                           To_Window (Window),
+                           Convert (To_Main_Debug_Window (Window),
+                                    Descriptor).Debugger,
+                           Choices (1 .. Num - 1));
+                  Show_All (Dialog);
+               end;
+               return;
+            end if;
+            Index := Index + 1;
+         end loop;
+      end if;
+   end Question_Filter;
 
    -------------
    -- Type_Of --
@@ -263,13 +338,21 @@ package body Debugger.Gdb is
       end if;
 
       --  Set up an output filter to detect changes of the current language
-      --  ??? We do that only in graphical mode, since the filter needs to
+      --  We do that only in graphical mode, since the filter needs to
       --  access the main_debug_window.
 
       if Proxy.all in Gui_Process_Proxy'Class then
          Add_Output_Filter
            (Get_Descriptor (Debugger.Process).all,
             Language_Filter'Access,
+            Window.all'Address);
+
+         --  Set another filter to detect the cases when gdb asks questions,
+         --  so that we can display dialogs.
+
+         Add_Output_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            Question_Filter'Access,
             Window.all'Address);
       end if;
 
@@ -305,20 +388,24 @@ package body Debugger.Gdb is
 
       if Debugger.Executable /= null then
          Set_Executable (Debugger, Debugger.Executable.all);
+      else
+         --  ??? This part should not be required if the executable was
+         --  correctly parsed from the command line.
+
+         --  Detect the current language. Note that most of the work is done
+         --  in fact directly by Language_Filter.
+
+         Send (Debugger, "show lang");
+
+         --  Get the initial file name, so that we can display the appropriate
+         --  file in the code editor.
+         --  This should be done only after we have detected the current
+         --  language, or no color highlighting will be provided.
+
+         Send (Debugger, "list");
+         Send (Debugger, "info line");
       end if;
 
-      --  Detect the current language. Note that most of the work is done in
-      --  fact directly by Language_Filter.
-
-      Send (Debugger, "show lang");
-
-      --  Get the initial file name, so that we can display the appropriate
-      --  file in the code editor.
-      --  This should be done only after we have detected the current language,
-      --  or no color highlighting will be provided.
-
-      Send (Debugger, "list");
-      Send (Debugger, "info line");
       Set_Internal_Command (Get_Process (Debugger), False);
    end Initialize;
 
