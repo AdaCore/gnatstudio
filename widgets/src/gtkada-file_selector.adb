@@ -76,7 +76,6 @@ package body Gtkada.File_Selector is
 
    function Display_File
      (Win : File_Selector_Window_Access) return Boolean;
-
    --  This function gets one entry from Win.Remaining_Files, applies
    --  a filter to it, and displays the corresponding information in the
    --  file list.
@@ -88,59 +87,74 @@ package body Gtkada.File_Selector is
    procedure Realize
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
+   --  ???
 
    procedure On_Back_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
+   --  ???
 
    procedure On_Up_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
+   --  ???
 
    procedure On_Home_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
+   --  ???
 
    procedure On_Refresh_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
+   --  ???
 
    procedure On_Forward_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
+   --  ???
 
-   procedure Directory_Selected
-     (Object : access Gtk_Widget_Record'Class);
+   procedure Directory_Selected (Object : access Gtk_Widget_Record'Class);
+   --  ???
 
    procedure Filter_Selected
      (Object : access Gtk_Widget_Record'Class);
+   --  ???
 
    procedure On_Location_Combo_Entry_Activate
      (Object : access Gtk_Widget_Record'Class);
+   --  ???
 
    procedure On_Explorer_Tree_Select_Row
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
+   --  ???
 
    procedure On_File_List_End_Selection
      (Object : access Gtk_Widget_Record'Class; Args : Gtk_Args);
+   --  ???
 
    procedure On_Selection_Entry_Changed
      (Object : access Gtk_Widget_Record'Class);
+   --  ???
 
    procedure On_Ok_Button_Clicked
      (Object : access Gtk_Widget_Record'Class);
+   --  ???
 
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Widget_Record'Class);
+   --  ???
 
    function On_File_List_Key_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   --  ???
 
    function On_Selection_Entry_Key_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   --  ???
 
    -------------------
    -- Get_Selection --
@@ -152,10 +166,10 @@ package body Gtkada.File_Selector is
       if Dialog.Selection_Entry = null
         or else Get_Text (Dialog.Selection_Entry) = ""
       then
-         return ("");
+         return "";
       else
-         return (Dialog.Current_Directory.all
-                 & Get_Text (Dialog.Selection_Entry));
+         return Dialog.Current_Directory.all
+                 & Get_Text (Dialog.Selection_Entry);
       end if;
    end Get_Selection;
 
@@ -165,8 +179,7 @@ package body Gtkada.File_Selector is
 
    function Get_Ok_Button
      (File_Selection : access File_Selector_Window_Record)
-     return Gtk.Button.Gtk_Button
-   is
+      return Gtk.Button.Gtk_Button is
    begin
       return File_Selection.Ok_Button;
    end Get_Ok_Button;
@@ -177,8 +190,7 @@ package body Gtkada.File_Selector is
 
    function Get_Cancel_Button
      (File_Selection : access File_Selector_Window_Record)
-     return Gtk.Button.Gtk_Button
-   is
+      return Gtk.Button.Gtk_Button is
    begin
       return File_Selection.Cancel_Button;
    end Get_Cancel_Button;
@@ -198,10 +210,10 @@ package body Gtkada.File_Selector is
    -- Select_File --
    -----------------
 
-   function Select_File (File_Selector : access File_Selector_Window_Record)
-      return String
+   function Select_File
+     (File_Selector : access File_Selector_Window_Record) return String
    is
-      Filter_A  : Filter_Show_All_Access := new Filter_Show_All;
+      Filter_A : Filter_Show_All_Access := new Filter_Show_All;
    begin
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
@@ -233,8 +245,8 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Win : File_Selector_Window_Access
-        := File_Selector_Window_Access (Get_Toplevel (Object));
+      Win : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Refresh_Files (Win);
    end Realize;
@@ -243,15 +255,14 @@ package body Gtkada.File_Selector is
    -- Display_File --
    ------------------
 
-   function Display_File (Win : File_Selector_Window_Access)
-      return Boolean
-   is
-      Text         : String_Access;
-      State        : File_State;
-      Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
-      Mask         : Gdk.Bitmap.Gdk_Bitmap;
-      Current_Row  : Gint;
-      Style        : Gtk_Style;
+   function Display_File (Win : File_Selector_Window_Access) return Boolean is
+      Text        : String_Access;
+      State       : File_State;
+      Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
+      Mask        : Gdk.Bitmap.Gdk_Bitmap;
+      Current_Row : Gint;
+      Style       : Gtk_Style;
+
    begin
       begin
          Use_File_Filter
@@ -310,9 +321,7 @@ package body Gtkada.File_Selector is
    -- Read_File --
    ---------------
 
-   function Read_File (Win : File_Selector_Window_Access)
-      return Boolean
-   is
+   function Read_File (Win : File_Selector_Window_Access) return Boolean is
       Buffer : String (1 .. 1024);
       Last   : Natural;
       Id     : Idle_Handler_Id;
@@ -383,10 +392,10 @@ package body Gtkada.File_Selector is
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out String_Access) is
    begin
-      State := Normal;
-      Mask := Gdk.Bitmap.Null_Bitmap;
+      State  := Normal;
+      Mask   := Gdk.Bitmap.Null_Bitmap;
       Pixmap := Gdk.Pixmap.Null_Pixmap;
-      Text := new String'("");
+      Text   := new String'("");
    end Use_File_Filter;
 
    -------------------
@@ -430,7 +439,7 @@ package body Gtkada.File_Selector is
          return;
       end if;
 
-      Insert (Win.File_List, -1, "" + ("Opening ... ") + "");
+      Insert (Win.File_List, -1, "" + (-"Opening ... ") + "");
       Win.Current_Filter := Filter;
 
       --  Fill the File_List.
@@ -448,7 +457,7 @@ package body Gtkada.File_Selector is
       exception
          when Directory_Error =>
             Clear (Win.File_List);
-            Insert (Win.File_List, -1, "" + ("Could not open " & Dir) + "");
+            Insert (Win.File_List, -1, "" + (-"Could not open " & Dir) + "");
       end;
 
       Set_Busy_Cursor (Get_Window (Win), False, False);
@@ -940,6 +949,7 @@ package body Gtkada.File_Selector is
       Hbuttonbox1 : Gtk_Hbutton_Box;
 
       Style       : Gtk_Style := Get_Default_Style;
+
    begin
       File_Selector_Window.Highlighted_Style := Copy (Style);
       File_Selector_Window.Insensitive_Style := Copy (Style);
@@ -1214,8 +1224,8 @@ package body Gtkada.File_Selector is
       end if;
 
       --  ??? temporarily commented out: If this is left, then Select_File
-      --  ??? won't work, since on exit it destroys the dialog, and thus exists
-      --  ??? a second main loop
+      --  won't work, since on exit it destroys the dialog, and thus exists
+      --  a second main loop
       --  Widget_Callback.Connect
       --    (File_Selector_Window, "destroy",
       --     Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
@@ -1225,8 +1235,7 @@ package body Gtkada.File_Selector is
    -- Destroy --
    -------------
 
-   procedure Destroy (Filter : access File_Filter_Record)
-   is
+   procedure Destroy (Filter : access File_Filter_Record) is
    begin
       null;
    end Destroy;
@@ -1235,8 +1244,7 @@ package body Gtkada.File_Selector is
    -- Free --
    ----------
 
-   procedure Free (S : in out String)
-   is
+   procedure Free (S : in out String) is
    begin
       null;
    end Free;
@@ -1245,8 +1253,7 @@ package body Gtkada.File_Selector is
    -- Free --
    ----------
 
-   procedure Free (Filter : in out File_Filter)
-   is
+   procedure Free (Filter : in out File_Filter) is
    begin
       Destroy (Filter);
    end Free;
