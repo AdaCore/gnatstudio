@@ -420,7 +420,7 @@ package body VCS_View_API is
               File_Name /= null and then
               Get_Log_From_File
                 (Kernel, File_Information (File_Name), False) /= VFS.No_File;
-            Add_Action (Status, On_Menu_Get_Status'Access);
+            Add_Action (Status_Files, On_Menu_Get_Status'Access);
             Add_Action (Update, On_Menu_Update'Access);
             Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
 
@@ -515,9 +515,10 @@ package body VCS_View_API is
             Submenu := Gtk_Menu (Menu);
          end if;
 
-         if Actions (Status) /= null then
+         if Actions (Status_Files) /= null then
             Gtk_New
-              (Item, Label => Actions (Status).all & (-" for directory"));
+              (Item,
+               Label => Actions (Status_Files).all & (-" for directory"));
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -539,9 +540,9 @@ package body VCS_View_API is
             Set_Sensitive (Item, Section_Active);
          end if;
 
-         if Actions (Status) /= null then
+         if Actions (Status_Files) /= null then
             Gtk_New
-              (Item, Label => Actions (Status).all
+              (Item, Label => Actions (Status_Files).all
                & (-" for directory recursively"));
             Append (Submenu, Item);
             Context_Callback.Connect
@@ -599,8 +600,9 @@ package body VCS_View_API is
               (On_Menu_List_Project_Files'Access),
             Selection_Context_Access (File_Name));
 
-         if Actions (Status) /= null then
-            Gtk_New (Item, Label => Actions (Status).all & (-" for project"));
+         if Actions (Status_Files) /= null then
+            Gtk_New
+              (Item, Label => Actions (Status_Files).all & (-" for project"));
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -629,9 +631,9 @@ package body VCS_View_API is
               (On_Menu_List_Project_Files_Recursive'Access),
             Selection_Context_Access (File_Name));
 
-         if Actions (Status) /= null then
+         if Actions (Status_Files) /= null then
             Gtk_New
-              (Item, Label => Actions (Status).all &
+              (Item, Label => Actions (Status_Files).all &
                  (-" for project and subprojects"));
             Append (Submenu, Item);
             Context_Callback.Connect
@@ -728,7 +730,8 @@ package body VCS_View_API is
 
    function Open_Explorer
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access) return MDI_Child
+      Context : Selection_Context_Access;
+      Visible : Boolean := True) return MDI_Child
    is
       Explorer : VCS_View_Access := Get_Explorer (Kernel);
       Child    : MDI_Child;
@@ -752,6 +755,12 @@ package body VCS_View_API is
          Set_Focus_Child (Child);
          Set_Title (Child, -"VCS Explorer");
 
+         if not Visible then
+            Set_Child_Visible (Child, False);
+            Hide (Explorer);
+            Hide (Child);
+         end if;
+
          if Context /= null then
             Change_Context (Explorer, Context);
          end if;
@@ -762,6 +771,7 @@ package body VCS_View_API is
 
          if Child /= null then
             Set_Child_Visible (Child, True);
+            Show (Explorer);
             Show (Child);
          end if;
 
@@ -1757,7 +1767,7 @@ package body VCS_View_API is
             if not Is_Directory (F (J)) then
                File_Status_List.Append
                  (Status,
-                  (F (J), Unknown,
+                  (F (J), VCS.Unknown,
                    Null_List, Null_List, Null_List, Null_List));
             end if;
          end loop;
@@ -2592,39 +2602,6 @@ package body VCS_View_API is
          return null;
    end Context_Factory;
 
-   ---------------------
-   -- Get_Status_Name --
-   ---------------------
-
-   function Get_Status_Name (Status : File_Status) return String is
-   begin
-      case Status is
-         when Unknown =>
-            return -"unknown";
-
-         when Not_Registered =>
-            return -"not registered";
-
-         when Up_To_Date =>
-            return -"up to date";
-
-         when Modified =>
-            return -"locally modified";
-
-         when Removed =>
-            return -"removed from repository";
-
-         when Added =>
-            return -"added to repository";
-
-         when Needs_Merge =>
-            return -"needs merge";
-
-         when Needs_Update =>
-            return -"needs update";
-      end case;
-   end Get_Status_Name;
-
    ---------------------------
    -- Display_Editor_Status --
    ---------------------------
@@ -2643,11 +2620,13 @@ package body VCS_View_API is
          return;
       end if;
 
-      if Status.Status = Unknown then
+      if Status.Status = VCS.Unknown
+        or else Status.Status.Label = null
+      then
          Status_Label := new String'("");
       else
          Status_Label := new String'
-           (" (" & Get_Status_Name (Status.Status) & ")");
+           (" (" & Status.Status.Label.all & ")");
       end if;
 
       if not Is_Empty (Status.Working_Revision) then
