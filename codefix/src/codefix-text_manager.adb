@@ -1139,6 +1139,7 @@ package body Codefix.Text_Manager is
    begin
       Free (This.First.all);
       Free (This.First);
+      Free (This.Caption);
    end Free;
 
    ------------------
@@ -1186,7 +1187,6 @@ package body Codefix.Text_Manager is
          Current_Col := Current_Col + Current_Length;
          Current_Extract := Current_Extract.Next;
       end loop;
-
       return Buffer;
    end Get_Old_Text;
 
@@ -1501,5 +1501,27 @@ package body Codefix.Text_Manager is
       end loop;
       return Current;
    end Previous;
+
+   -----------------
+   -- Set_Caption --
+   -----------------
+
+   procedure Set_Caption (This : in out Extract; Caption : String) is
+   begin
+      Assign (This.Caption, Caption);
+   end Set_Caption;
+
+   -----------------
+   -- Get_Caption --
+   -----------------
+
+   function Get_Caption (This : Extract) return String is
+   begin
+      if This.Caption /= null then
+         return This.Caption.all;
+      else
+         return "Uncaptionned correction";
+      end if;
+   end Get_Caption;
 
 end Codefix.Text_Manager;
