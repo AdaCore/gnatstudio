@@ -194,7 +194,7 @@ package body GVD.Text_Box is
    begin
       Set_Upper
         (Get_Vadjustment (Box.Buttons),
-         Gfloat'Max
+         Grange_Float'Max
            (Get_Upper (Get_Vadj (Box.Child)),
             Get_Value (Get_Vadj (Box.Child))));
       Set_Lower
@@ -285,8 +285,8 @@ package body GVD.Text_Box is
       Freeze (Box.Child);
       Clamp_Page
         (Get_Vadj (Box.Child),
-         Lower => Gfloat (Y - Box.Line_Height),
-         Upper => Gfloat (Y + 2 * Box.Line_Height));
+         Lower => Grange_Float (Y - Box.Line_Height),
+         Upper => Grange_Float (Y + 2 * Box.Line_Height));
       Thaw (Box.Child);
 
       if Set_Current then

@@ -764,9 +764,10 @@ package body GVD.Text_Box.Asm_Editor is
    procedure Meta_Scroll
      (Box : access Asm_Editor_Record'Class; Down : Boolean)
    is
-      Pos : Gfloat;
+      Pos      : Grange_Float;
       Src_Line : constant Natural :=
         Get_Line (Debugger_Process_Tab (Box.Process).Editor_Text);
+
    begin
       if Box.Current_Range /= null
         and then Get_Pref (Assembly_Range_Size) /= "0"
@@ -795,8 +796,8 @@ package body GVD.Text_Box.Asm_Editor is
                On_Frame_Changed (Box, "", "-1");
                Line := Line_From_Address (Box, Addr);
                Set_Line (Box, Line);
-               Pos :=
-                 Gfloat (Gint (Line) * (Get_Ascent (F) + Get_Descent (F)));
+               Pos := Grange_Float
+                 (Gint (Line) * (Get_Ascent (F) + Get_Descent (F)));
             end;
          end if;
 

@@ -821,7 +821,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       --  Set the adjustment directly, so that the text is not scrolled
       --  on the screen (which is too slow for big files)
 
-      Set_Value (Get_Vadj (Text), Gfloat (Pixels_From_Line (Edit, Line)));
+      Set_Value
+        (Get_Vadj (Text), Grange_Float (Pixels_From_Line (Edit, Line)));
       Changed (Get_Vadj (Text));
 
       --  Change the cursor position, and highlight the entity.
@@ -902,7 +903,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       --  Save the currently displayed line
 
-      Value : constant Gfloat :=
+      Value : constant Grange_Float :=
         Get_Value (Get_Vadj (Get_Child (Edit)));
 
    begin
@@ -1068,7 +1069,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         Builtin_Text_Box (Editor.Widget);
       Pix       : Gtk_Pixmap;
       Num_Lines : Natural := 0;
-      Value     : Gfloat;
+      Value     : Grange_Float;
 
    begin
       if Is_Empty (Edit) then
@@ -1705,7 +1706,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         Builtin_Text_Box (Editor.Widget);
 
       --  Save the currently displayed line
-      Value     : constant Gfloat := Get_Value (Get_Vadj (Get_Child (Edit)));
+      Value     : constant Grange_Float :=
+        Get_Value (Get_Vadj (Get_Child (Edit)));
       File_Name : constant String := Get_Current_File (Editor);
 
    begin
