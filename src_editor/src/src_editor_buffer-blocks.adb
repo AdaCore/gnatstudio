@@ -167,4 +167,40 @@ package body Src_Editor_Buffer.Blocks is
       Free (Constructs);
    end Compute_Blocks;
 
+   -----------------------
+   -- Get_Screen_Offset --
+   -----------------------
+
+   function Get_Screen_Offset
+     (Buffer : access Source_Buffer_Record'Class;
+      Block  : Block_Record) return Integer
+   is
+      Iter             : Gtk_Text_Iter;
+      Line, Col1, Col2 : Gint;
+   begin
+      --  The heuristics to determine the right offset for a block is to look
+      --  at the offsets of the first and last lines of the block, and to hope
+      --  that no line of the block will be indented less than either of those
+      --  lines. This is in order to get a good compromise between aesthetics
+      --  and speed.
+
+      Get_Iter_At_Line_Offset
+        (Buffer,
+         Iter,
+         Gint (Get_Buffer_Line (Buffer, Block.First_Line) - 1),
+         Gint (Block.Offset));
+
+      Get_Screen_Position (Buffer, Iter, Line, Col1);
+
+      Get_Iter_At_Line_Offset
+        (Buffer,
+         Iter,
+         Gint (Get_Buffer_Line (Buffer, Block.Last_Line) - 1),
+         Gint (Block.Offset));
+
+      Get_Screen_Position (Buffer, Iter, Line, Col2);
+
+      return Integer'Min (Integer (Col1), Integer (Col2));
+   end Get_Screen_Offset;
+
 end Src_Editor_Buffer.Blocks;
