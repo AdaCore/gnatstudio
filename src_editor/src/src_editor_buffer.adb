@@ -1867,7 +1867,7 @@ package body Src_Editor_Buffer is
       --  Initialize the data for timeout highlighting
 
       Buffer.First_Highlight_Mark := Create_Mark (Buffer, "", Iter);
-      Buffer.Last_Highlight_Mark  := Create_Mark (Buffer, "", Iter);
+      Buffer.Last_Highlight_Mark  := Create_Mark (Buffer, "", Iter, False);
 
       --  Initialize the line info.
 
@@ -4554,6 +4554,7 @@ package body Src_Editor_Buffer is
       Iter   : Gtk_Text_Iter)
    is
       First_Mark_Iter : Gtk_Text_Iter;
+      Last_Mark_Iter  : Gtk_Text_Iter;
    begin
       if not Buffer.Highlight_Needed then
          Buffer.Highlight_Needed := True;
@@ -4563,11 +4564,15 @@ package body Src_Editor_Buffer is
       else
          Get_Iter_At_Mark
            (Buffer, First_Mark_Iter, Buffer.First_Highlight_Mark);
+         Get_Iter_At_Mark
+           (Buffer, Last_Mark_Iter, Buffer.Last_Highlight_Mark);
 
-         if Get_Offset (First_Mark_Iter) < Get_Offset (Iter) then
-            Move_Mark (Buffer, Buffer.Last_Highlight_Mark, Iter);
-         else
+         if Get_Offset (First_Mark_Iter) > Get_Offset (Iter) then
             Move_Mark (Buffer, Buffer.First_Highlight_Mark, Iter);
+         end if;
+
+         if Get_Offset (Last_Mark_Iter) < Get_Offset (Iter) then
+            Move_Mark (Buffer, Buffer.Last_Highlight_Mark, Iter);
          end if;
       end if;
 
@@ -4588,6 +4593,7 @@ package body Src_Editor_Buffer is
       Tags : Highlighting_Tags renames Buffer.Syntax_Tags;
 
       Entity_Kind : Language_Entity;
+
    begin
       if not Buffer.Highlight_Needed then
          return;
