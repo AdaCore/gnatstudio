@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -50,19 +50,23 @@ package body Codefix_Module is
    procedure On_Fix
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure Codefix_Handler
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  ???
 
    procedure Codefix_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  ???
 
    procedure Compilation_Finished_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
       Args    : GValues;
       Kernel  : Kernel_Handle);
+   --  ???
 
    type GPS_Navigator is new Text_Navigator_Abstr with record
       Kernel : Kernel_Handle;
@@ -71,16 +75,19 @@ package body Codefix_Module is
    function New_Text_Interface (This : GPS_Navigator) return Ptr_Text;
    --  Create and initialise a new Text_Interface used by the text navigator.
 
-   function Get_Body_Or_Spec (This : GPS_Navigator; File_Name : String)
-     return String;
+   function Get_Body_Or_Spec
+     (This : GPS_Navigator; File_Name : String) return String;
+   --  ???
 
    procedure Initialize
      (This : GPS_Navigator;
       File : in out Text_Interface'Class);
+   --  ???
 
    function Get_Current_Cursor
      (Current_Text : GPS_Navigator;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class;
+   --  ???
 
    ------------
    -- On_Fix --
@@ -160,7 +167,7 @@ package body Codefix_Module is
 
       Window := Get_MDI (Kernel);
       Child := Put (Window, Graphic_Codefix);
-      Set_Title (Child, "Code fixing", "Codefix");
+      Set_Title (Child, -"Code fixing", -"Codefix");
 
    exception
       when E : others =>
@@ -289,8 +296,9 @@ package body Codefix_Module is
    -- Get_Body_Or_Spec --
    ----------------------
 
-   function Get_Body_Or_Spec (This : GPS_Navigator; File_Name : String)
-     return String is
+   function Get_Body_Or_Spec
+     (This : GPS_Navigator; File_Name : String) return String
+   is
       pragma Unreferenced (This);
    begin
       --  ??? Should ask the project for the body file instead
@@ -360,8 +368,7 @@ package body Codefix_Module is
 
    procedure Initialize
      (Menu_Item : access Codefix_Menu_Item_Record;
-      Label     : String)
-   is
+      Label     : String) is
    begin
       Gtk.Menu_Item.Initialize (Menu_Item, Label);
    end Initialize;
