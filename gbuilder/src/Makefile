@@ -1,2 +1,8 @@
-all:
-	gnatmake -m -g -gnata radical `gtkada-config` -largs ../pixmaps/pixmaps.o
+
+C_FILES=../pixmaps/gui_pixmaps.c
+MAIN=radical
+MODULES=gtkada
+NO_STYLE_FILES=
+
+include ../../Makefile.common
+
