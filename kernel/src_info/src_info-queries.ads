@@ -39,6 +39,21 @@ with String_Hash;
 
 package Src_Info.Queries is
 
+   ----------------
+   -- Scope Tree --
+   ----------------
+
+   --  A scope tree is the base structure for the call graph and the type
+   --  browser.
+   --  Such a tree is generated from an LI structure, and becomes obsolete as
+   --  soon as that structure is scanned again (since we keep pointers to the
+   --  internal nodes of the structure
+
+   type Scope_Tree is private;
+   Null_Scope_Tree : constant Scope_Tree;
+
+   --  See below for operations on Scope_Tree
+
    -------------------------
    --  Entity information --
    -------------------------
@@ -79,11 +94,13 @@ package Src_Info.Queries is
    function Get_Full_Name
      (Entity    : Entity_Information;
       Decl_File : LI_File_Ptr;
-      Separator : String      := ".") return String;
+      Separator : String := ".";
+      Scope     : Scope_Tree := Null_Scope_Tree) return String;
    --  Compute the fully qualified name of the entity. For an entity defined in
    --  the function F of package P, the name would
    --     "P" & Separator & "F" & Separator & Get_Name (Entity)
    --  Decl_File must be the file in which the entity is declared
+   --  Scope, if provided, is the scope tree corresponding to Decl_File.
 
    function Copy (Entity : Entity_Information) return Entity_Information;
    --  Return a copy of Entity. The result must be explicitely destroyed.
@@ -465,14 +482,6 @@ package Src_Info.Queries is
    ----------------
    -- Scope tree --
    ----------------
-   --  A scope tree is the base structure for the call graph and the type
-   --  browser.
-   --  Such a tree is generated from an LI structure, and becomes obsolete as
-   --  soon as that structure is scanned again (since we keep pointers to the
-   --  internal nodes of the structure
-
-   type Scope_Tree is private;
-   Null_Scope_Tree : constant Scope_Tree;
 
    type Scope_Tree_Node is private;
    Null_Scope_Tree_Node : constant Scope_Tree_Node;
