@@ -15,6 +15,13 @@ Wish List:
 2.  Path handling - that is, adding the paths needed at the harness level for all the tests and suites involved into the Glide project.
 
 
+Build:
+
+1. Create a "utils" link to the gvd/gvd source directory, e.g:
+   ln -s $HOME/gvd-src/gvd utils
+
+2. type 'make'
+
 Installation:
 
 1.  After building the three programs:
@@ -23,7 +30,7 @@ aunit_make_harness
 aunit_make_suite
 aunit_make_test
 
-Move them into the gnat/bin directory. There are makefiles and .adp files in each subdirectory.  The .adp files may need to be modified for directories used.
-A master makefile is in the top-level directory.
+Move them into the gnat/bin directory.
 
-2.  When building test cases etc, aunit-1.01/aunit/* needs to be in the source and object paths.
+2.  When building test cases etc, aunit-1.01/aunit/* needs to be in the source
+    and object paths.
