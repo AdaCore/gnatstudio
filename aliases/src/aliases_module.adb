@@ -81,7 +81,7 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Intl;               use Glide_Intl;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
-with Commands;                 use Commands;
+with Commands.Interactive;     use Commands, Commands.Interactive;
 
 package body Aliases_Module is
 
@@ -92,13 +92,15 @@ package body Aliases_Module is
    Highlight_Color : constant String := "#DD0000";
    --  Color used to highlight special entities in the expansion
 
-   type Interactive_Alias_Expansion_Command is new Root_Command with record
+   type Interactive_Alias_Expansion_Command is new Interactive_Command with
+   record
       Kernel : Kernel_Handle;
    end record;
    type Interactive_Alias_Expansion_Command_Access is access all
      Interactive_Alias_Expansion_Command'Class;
    function Execute
-     (Command : access Interactive_Alias_Expansion_Command)
+     (Command : access Interactive_Alias_Expansion_Command;
+      Event   : Gdk_Event)
       return Command_Return_Type;
 
    type Param_Record;
@@ -196,7 +198,7 @@ package body Aliases_Module is
    --  ??? Should accept unicode
 
    function Expand_Alias
-     (Data          : Event_Data;
+     (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Cursor        : access Integer;
       Offset_Column : Gint)
@@ -330,7 +332,8 @@ package body Aliases_Module is
    procedure Insert_Special (Item : access Gtk_Widget_Record'Class);
    --  Insert the special entity associated with Item
 
-   function Special_Entities (Data : Event_Data; Special : Character)
+   function Special_Entities
+     (Kernel : access Kernel_Handle_Record'Class; Special : Character)
       return String;
    --  Provide expansion for some of the special entities
 
@@ -729,7 +732,7 @@ package body Aliases_Module is
    ------------------
 
    function Expand_Alias
-     (Data          : Event_Data;
+     (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Cursor        : access Integer;
       Offset_Column : Gint)
@@ -766,7 +769,7 @@ package body Aliases_Module is
                   while Tmp /= null loop
                      declare
                         Replace : constant String :=
-                          Tmp.Func (Data, Str (S + 1));
+                          Tmp.Func (Kernel, Str (S + 1));
                      begin
                         if Replace /= Invalid_Expansion then
                            Result := Result & Replace;
@@ -827,7 +830,7 @@ package body Aliases_Module is
             if Dialog = null then
                Gtk_New (Dialog,
                         Title  => -"Alias Parameter Selection",
-                        Parent => Get_Main_Window (Get_Kernel (Data)),
+                        Parent => Get_Main_Window (Kernel),
                         Flags  => Destroy_With_Parent);
                Gtk_New (S);
 
@@ -885,17 +888,15 @@ package body Aliases_Module is
    -------------
 
    function Execute
-     (Command : access Interactive_Alias_Expansion_Command)
+     (Command : access Interactive_Alias_Expansion_Command;
+      Event   : Gdk_Event)
       return Command_Return_Type
    is
-      Data  : constant Event_Data := Get_Current_Event_Data
-        (Command.Kernel);
-      W : Gtk_Widget;
+      pragma Unreferenced (Event);
+      W : constant Gtk_Widget := Get_Current_Focus_Widget (Command.Kernel);
       Had_Focus : Boolean;
    begin
-      W := Get_Widget (Data);
-
-      if W.all in Gtk_Editable_Record'Class then
+      if W /= null and then W.all in Gtk_Editable_Record'Class then
          if Get_Editable (Gtk_Editable (W)) then
             declare
                Text : constant String := Get_Chars (Gtk_Editable (W));
@@ -912,7 +913,7 @@ package body Aliases_Module is
                declare
                   Cursor : aliased Integer;
                   Replace : constant String := Expand_Alias
-                    (Data,
+                    (Command.Kernel,
                      Text (First + 1 .. Last - 1),
                      Cursor'Unchecked_Access, 0);
                begin
@@ -928,7 +929,7 @@ package body Aliases_Module is
             end;
          end if;
 
-      elsif W.all in Gtk_Text_View_Record'Class then
+      elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
          if Get_Editable (Gtk_Text_View (W)) then
             declare
                Buffer : constant Gtk_Text_Buffer := Get_Buffer
@@ -951,7 +952,7 @@ package body Aliases_Module is
                   Cursor : aliased Integer;
                   Column : constant Gint := Get_Line_Offset (First_Iter);
                   Replace : constant String := Expand_Alias
-                    (Data,
+                    (Command.Kernel,
                      Get_Slice (Buffer, First_Iter, Last_Iter),
                      Cursor'Unchecked_Access,
                      Column);
@@ -1930,10 +1931,11 @@ package body Aliases_Module is
    -- Special_Entities --
    ----------------------
 
-   function Special_Entities (Data : Event_Data; Special : Character)
+   function Special_Entities
+     (Kernel : access Kernel_Handle_Record'Class; Special : Character)
       return String
    is
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Kernel);
    begin
       case Special is
          when 'D'    => return Image (Ada.Calendar.Clock, ISO_Date);
@@ -1974,12 +1976,16 @@ package body Aliases_Module is
 
       Command := new Interactive_Alias_Expansion_Command;
       Command.Kernel := Kernel_Handle (Kernel);
-      Register_Key
-        (Get_Key_Handler (Kernel),
+      Register_Action
+        (Kernel,
          Name        => "Expand alias",
+         Command     => Command,
+         Description => -"Expand the alias found just before the cursor");
+      Bind_Default_Key
+        (Get_Key_Handler (Kernel),
+         Action      => "Expand alias",
          Default_Key => GDK_LC_o,
-         Default_Mod => Control_Mask,
-         Command => Command_Access (Command));
+         Default_Mod => Control_Mask);
 
       Register_Special_Alias_Entity
         (Kernel, "Current Date", 'D', Special_Entities'Access);

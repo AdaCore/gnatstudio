@@ -29,7 +29,7 @@ package Aliases_Module is
    Invalid_Expansion : constant String := "!@#$%";
 
    type Alias_Expansion_Function is access
-     function (Data    : Glide_Kernel.Event_Data;
+     function (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
                Special : Character) return String;
    --  Function called to test alias expansion.
    --  It is passed the current context in which the expansion takes module,
