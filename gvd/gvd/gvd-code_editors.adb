@@ -1162,7 +1162,7 @@ package body Odd.Code_Editors is
       Gtk_New (Mitem);
       Append (Menu, Mitem);
 
-      Gtk_New (Mitem, Label => -"Show Current Line");
+      Gtk_New (Mitem, Label => -"Show Current Location");
       Append (Menu, Mitem);
       Editor_Cb.Object_Connect
         (Mitem, "activate",
