@@ -462,6 +462,9 @@ project node in the @code{Project View}, or directly mimicking their
 physical organization on the disk (including Windows drives) in the
 @code{File View}.
 
+Special nodes are created for object and executables directories. No
+files are shown for these.
+
 @item files
 @cindex file
 @cindex file view
@@ -471,8 +474,11 @@ displayed under the corresponding nodes. Note that in the
 project (i.e. are written in a language supported by that project and
 follow its naming scheme) are actually visible.
 
+@cindex Show files from project only
 The @code{File View} will display all the files that actually exist
-on the disk.
+on the disk. Filters can be set through the contextual menu to only
+show the files and directories that belong to the project
+hierarchy. See the menu @code{Show files from project only}.
 
 A given file might appear multiple times in the @code{Project View},
 if the project it belongs to is imported by several other projects.
