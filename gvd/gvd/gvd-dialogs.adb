@@ -845,7 +845,7 @@ package body GVD.Dialogs is
          declare
             S : constant String := Get_Text (Get_Entry (Dialog.Entry_Field));
          begin
-            if S /= "" then
+            if S /= "" and then History /= null then
                Add_To_History (History.all, Key, S);
             end if;
 
@@ -867,7 +867,7 @@ package body GVD.Dialogs is
       Title    : String;
       Message  : String;
       Position : Gtk_Window_Position := Win_Pos_Mouse;
-      History   : Histories.History := null;
+      History  : Histories.History := null;
       Key      : History_Key := "") return String
    is
       Dialog          : Simple_Entry_Dialog_Access;
