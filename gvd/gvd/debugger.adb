@@ -600,25 +600,32 @@ package body Debugger is
                   end if;
 
                when Visible_Command =>
-                  if not Async_Commands then
-                     Wait_Prompt (Debugger);
-                     Send_Internal_Post
-                       (Debugger, Cmd (First .. Last - 1), Mode);
+                  if Wait_For_Prompt then
+                     if not Async_Commands then
+                        -- Synchronous handling of commands, simple case
 
-                  elsif Wait_For_Prompt then
-                     Process := Convert (Debugger.Window, Debugger);
-                     Process.Current_Command :=
-                       new String' (Cmd (First .. Last - 1));
+                        Wait_Prompt (Debugger);
+                        Send_Internal_Post
+                          (Debugger, Cmd (First .. Last - 1), Mode);
 
-                     pragma Assert (Process.Input_Id = 0);
+                     else
+                        -- Asynchronous handling of commands, install a
+                        -- callback on the debugger's output file descriptor.
 
-                     Process.Input_Id := My_Input.Add
-                       (To_Gint
-                        (Get_Output_Fd
-                         (Get_Descriptor (Get_Process (Debugger)).all)),
-                        Gdk.Types.Input_Read,
-                        Output_Available'Access,
-                        My_Input.Data_Access (Process));
+                        Process := Convert (Debugger.Window, Debugger);
+                        Process.Current_Command :=
+                          new String' (Cmd (First .. Last - 1));
+
+                        pragma Assert (Process.Input_Id = 0);
+
+                        Process.Input_Id := My_Input.Add
+                          (To_Gint
+                           (Get_Output_Fd
+                            (Get_Descriptor (Get_Process (Debugger)).all)),
+                           Gdk.Types.Input_Read,
+                           Output_Available'Access,
+                           My_Input.Data_Access (Process));
+                     end if;
                   end if;
             end case;
          end if;
