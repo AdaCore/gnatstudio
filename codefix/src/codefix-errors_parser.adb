@@ -585,50 +585,6 @@ package body Codefix.Errors_Parser is
             Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
-   -------------------
-   -- Missing_Begin --
-   -------------------
-
-   procedure Initialize (This : in out Missing_Begin) is
-   begin
-      This.Matcher :=
-        (new Pattern_Matcher'
-           (Compile
-              ("missing ""(begin)"" for ""declare"" at line ([\d]+)",
-               Case_Insensitive)),
-         new Pattern_Matcher'
-           (Compile
-              ("missing ""(begin)"" for procedure ""?[\w]+""? at line ([\d]+)",
-               Case_Insensitive)));
-   end Initialize;
-
-   procedure Fix
-     (This         : Missing_Begin;
-      Errors_List  : in out Errors_Interface'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Message      : Error_Message;
-      Solutions    : out Solution_List;
-      Matches      : Match_Array)
-   is
-      pragma Unreferenced (This, Errors_List);
-
-      Line_Cursor : File_Cursor;
-   begin
-      Line_Cursor.File_Name := Message.File_Name;
-      Line_Cursor.Col := 1;
-      Line_Cursor.Line :=
-        Integer'Value (Get_Message (Message)
-                         (Matches (2).First .. Matches (2).Last));
-
-      Append
-        (Solutions,
-         Expected
-           (Current_Text,
-            Line_Cursor,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Position => After));
-   end Fix;
-
    ----------------
    -- Missing_Kw --
    ----------------
@@ -656,7 +612,9 @@ package body Codefix.Errors_Parser is
         (Str_Red,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last));
 
-      if Str_Red.all = "return" or else Str_Red.all = "RETURN" then
+      if Str_Red.all = "return" or else Str_Red.all = "RETURN"
+        or else Str_Red.all = "begin" or else Str_Red.all = "BEGIN"
+      then
          raise Uncorrectable_Message;
       end if;
 
@@ -744,10 +702,9 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (Errors_List);
 
       Col_Matches        : Match_Array (0 .. 1);
-      New_Message        : Error_Message;
       Declaration_Line   : Positive;
       Line_Red           : Dynamic_String;
-      Declaration_Cursor : File_Cursor := Clone (File_Cursor (Message));
+      Declaration_Cursor : File_Cursor;
 
    begin
 
@@ -757,6 +714,9 @@ package body Codefix.Errors_Parser is
          Assign
            (Declaration_Cursor.File_Name,
             Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+      else
+         Assign
+           (Declaration_Cursor.File_Name, Message.File_Name);
       end if;
 
       Declaration_Line :=
@@ -773,17 +733,11 @@ package body Codefix.Errors_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Initialize
-        (New_Message,
-         Declaration_Line,
-         Col_Matches (1).Last + 1);
+      Declaration_Cursor.Col := Col_Matches (1).Last + 1;
 
-      Assign (New_Message.File_Name, Message.File_Name);
-
-      Append (Solutions, Expected (Current_Text, New_Message, "all"));
+      Append (Solutions, Expected (Current_Text, Declaration_Cursor, "all"));
 
       Free (Declaration_Cursor);
-      Free (New_Message);
       Free (Line_Red);
    end Fix;
 
@@ -1460,14 +1414,17 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Possible_Interpretation) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("ambiguous expression \(cannot resolve ""([^""]+)""")));
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile
+              ("ambiguous expression \(cannot resolve """"?([^""]+)""""?")));
    end Initialize;
 
    procedure Free (This : in out Possible_Interpretation) is
    begin
       Free (Error_Parser (This));
       Free (This.Source_Matcher);
+      Free (This.Local_Matcher);
    end Free;
 
    procedure Fix
@@ -1481,31 +1438,57 @@ package body Codefix.Errors_Parser is
       Matches_Prev    : Match_Array (0 .. 2);
       Preview         : Error_Message;
       Solution_Cursor : File_Cursor;
+      Cursor_List     : Cursor_Lists.List;
    begin
       Solution_Cursor.Col := 1;
 
       loop
+
          Get_Preview (Errors_List, Current_Text, Preview);
          exit when Preview = Invalid_Error_Message;
+
          Match (This.Source_Matcher.all, Get_Message (Preview), Matches_Prev);
-         exit when Matches_Prev (0) = No_Match;
 
-         Assign
-           (Solution_Cursor.File_Name, Get_Message (Preview)
-              (Matches_Prev (1).First .. Matches_Prev (1).Last));
+         if Matches_Prev (0) = No_Match then
+            Match
+              (This.Local_Matcher.all, Get_Message (Preview), Matches_Prev);
 
-         Solution_Cursor.Line := Integer'Value
-           (Get_Message (Preview)
-              (Matches_Prev (2).First .. Matches_Prev (2).Last));
+            exit when Matches_Prev (0) = No_Match;
 
-         Append (Solutions, Resolve_Ambiguity
-                   (Current_Text,
-                    Message,
-                    Solution_Cursor,
-                    Get_Message (Message)
-                      (Matches (1).First .. Matches (1).Last)));
+            Assign
+              (Solution_Cursor.File_Name, Message.File_Name);
+
+            Solution_Cursor.Line := Integer'Value
+              (Get_Message (Preview)
+                 (Matches_Prev (1).First .. Matches_Prev (1).Last));
+         else
+            Assign
+              (Solution_Cursor.File_Name, Get_Message (Preview)
+                 (Matches_Prev (1).First .. Matches_Prev (1).Last));
+
+            Solution_Cursor.Line := Integer'Value
+              (Get_Message (Preview)
+                 (Matches_Prev (2).First .. Matches_Prev (2).Last));
+         end if;
+
+         Append (Cursor_List, Solution_Cursor);
+         Unchecked_Free (Solution_Cursor);
+
          Skip_Message (Errors_List);
       end loop;
+
+
+      Concat (Solutions, Resolve_Ambiguity
+                (Current_Text,
+                 Message,
+                 Cursor_List,
+                 Get_Message (Message)
+                   (Matches (1).First .. Matches (1).Last)));
+
+      if Length (Solutions) = 0 then
+         raise Uncorrectable_Message;
+      end if;
+
    end Fix;
 
    ------------------------
@@ -1515,7 +1498,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Hidden_Declaration) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("""([^""]+)"" is not visible")));
+         (Compile ("""""?([^""]+)""""? is not visible")));
    end Initialize;
 
    procedure Free (This : in out Hidden_Declaration) is
@@ -1538,6 +1521,7 @@ package body Codefix.Errors_Parser is
       Matches_Loc     : Match_Array (0 .. 2);
       Preview         : Error_Message;
       Solution_Cursor : File_Cursor;
+      Cursor_List     : Cursor_Lists.List;
    begin
       Solution_Cursor.Col := 1;
 
@@ -1588,16 +1572,23 @@ package body Codefix.Errors_Parser is
                  (Matches_Loc (2).First .. Matches_Loc (2).Last));
          end if;
 
-         Append (Solutions, Resolve_Ambiguity
-                   (Current_Text,
-                    Message,
-                    Solution_Cursor,
-                    Get_Message (Message)
-                      (Matches (1).First .. Matches (1).Last)));
+         Append (Cursor_List, Solution_Cursor);
+         Unchecked_Free (Solution_Cursor);
 
-         Free (Solution_Cursor);
          Skip_Message (Errors_List);
       end loop;
+
+      Concat (Solutions, Resolve_Ambiguity
+                (Current_Text,
+                 Message,
+                 Cursor_List,
+                 Get_Message (Message)
+                   (Matches (1).First .. Matches (1).Last)));
+
+      if Length (Solutions) = 0 then
+         raise Uncorrectable_Message;
+      end if;
+
    end Fix;
 
    --------------------------
@@ -1633,8 +1624,11 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Missplaced_With) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("with clause can be moved to body")));
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("with clause can be moved to body")),
+         new Pattern_Matcher'
+           (Compile ("with clause might be moved to body")));
    end Initialize;
 
    procedure Fix
@@ -1665,7 +1659,6 @@ begin
    Add_Parser (new Sth_Expected_3);
    Add_Parser (new Sth_Expected_2);
    Add_Parser (new Sth_Expected);
-   Add_Parser (new Missing_Begin);
    Add_Parser (new Missing_Kw);
    Add_Parser (new Missing_Sep);
    Add_Parser (new Missing_All);
