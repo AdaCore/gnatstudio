@@ -156,6 +156,8 @@ package body Project_Viewers is
    Recursive_Cst : aliased constant String := "recursive";
    Directory_Cst : aliased constant String := "directory";
    Imported_Cst  : aliased constant String := "imported";
+   Src_Path_Cst  : aliased constant String := "sources";
+   Obj_Path_Cst  : aliased constant String := "objects";
    Sources_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
      (1 => Recursive_Cst'Access);
    Source_Dirs_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
@@ -167,6 +169,8 @@ package body Project_Viewers is
      (1 => Directory_Cst'Access);
    Remove_Dep_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
      := (1 => Imported_Cst'Access);
+   Add_Predefined_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
+     := (1 => Src_Path_Cst'Access, 2 => Obj_Path_Cst'Access);
 
    Base_File_Name_Column     : constant := 0;
    Absolute_File_Name_Column : constant := 1;
@@ -340,6 +344,10 @@ package body Project_Viewers is
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle the interactive commands related to the project editor
+
+   procedure Project_Static_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handle static methods for the GPS.Project class
 
    procedure Update_Contents
      (Viewer    : access Project_Viewer_Record'Class;
@@ -1338,7 +1346,7 @@ package body Project_Viewers is
          exit when Result = Button_Cancel;
 
          Imported_Project := Load_Or_Find
-           (Get_Registry (Kernel), Imported_Project_Path);
+           (Get_Registry (Kernel).all, Imported_Project_Path);
 
          Replace_Project_Occurrences
            (Root_Project      => Get_Project (Kernel),
@@ -1790,6 +1798,39 @@ package body Project_Viewers is
       Set_Visible_Pages
         (Naming_Editor (Widget), Page.Kernel, Languages, Project);
    end Refresh;
+
+   ------------------------------------
+   -- Project_Static_Command_Handler --
+   ------------------------------------
+
+   procedure Project_Static_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+   begin
+      if Command = "add_predefined_paths" then
+         Name_Parameters (Data, Add_Predefined_Parameters);
+         declare
+            Old_Src : constant String :=
+              Get_Predefined_Source_Path (Get_Registry (Kernel).all);
+            Old_Obj : constant String :=
+              Get_Predefined_Object_Path (Get_Registry (Kernel).all);
+            New_Src : constant String := Nth_Arg (Data, 1, "");
+            New_Obj : constant String := Nth_Arg (Data, 2, "");
+         begin
+            if New_Src /= "" then
+               Set_Predefined_Source_Path
+                 (Get_Registry (Kernel).all,
+                  Old_Src & Path_Separator & New_Src);
+            end if;
+            if Old_Obj /= "" then
+               Set_Predefined_Object_Path
+                 (Get_Registry (Kernel).all,
+                  Old_Obj & Path_Separator & New_Obj);
+            end if;
+         end;
+      end if;
+   end Project_Static_Command_Handler;
 
    -----------------------------
    -- Project_Command_Handler --
@@ -3098,6 +3139,12 @@ package body Project_Viewers is
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "add_predefined_paths",
+         Maximum_Args => 2,
+         Class        => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler      => Project_Static_Command_Handler'Access);
       Register_Command
         (Kernel, "object_dirs",
          Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
