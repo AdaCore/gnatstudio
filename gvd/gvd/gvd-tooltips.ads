@@ -61,7 +61,7 @@ generic
    --  or (0, 0) if no tooltip could be displayed.
    --  It is the responsability of this function to get the coordinates of
    --  the pointer, using Gdk.Window.Get_Pointer.
-   --  Area indicates the area of effectiveness of the tooltip : if the user
+   --  Area indicates the area of effectiveness of the tooltip: if the user
    --  moves the mouse within this area after the tooltip is displayed, then
    --  the tooltip is hidden, and will not be displayed again as long as the
    --  user stays within this area. The X, Y coordinates of the rectangle
