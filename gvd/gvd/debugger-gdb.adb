@@ -260,10 +260,10 @@ package body Debugger.Gdb is
          Language_Filter'Access,
          Window.all'Address);
 
-   --   Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
-   --                      Trace_Filter'Access);
-   --   Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
-   --                     Trace_Filter'Access);
+      Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
+                         Trace_Filter'Access);
+      Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
+                        Trace_Filter'Access);
    end Spawn;
 
    ----------------
@@ -409,6 +409,15 @@ package body Debugger.Gdb is
       Wait_Prompt (Debugger);
    end Continue;
 
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   procedure Interrupt (Debugger : access Gdb_Debugger) is
+   begin
+      Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
+   end Interrupt;
+
    ----------------
    -- Stack_Down --
    ----------------
@@ -428,26 +437,6 @@ package body Debugger.Gdb is
       Send (Get_Process (Debugger), "up");
       Wait_Prompt (Debugger);
    end Stack_Up;
-
-   ---------------------
-   -- Break_Exception --
-   ---------------------
-
-   procedure Break_Exception
-     (Debugger  : access Gdb_Debugger;
-      Name      : String  := "";
-      Unhandled : Boolean := False) is
-   begin
-      --  ??? If language = "Ada"
-      if Unhandled then
-         Send (Get_Process (Debugger), "break exception unhandled");
-      elsif Name /= "" then
-         Send (Get_Process (Debugger), "break exception " & Name);
-      else
-         raise Unknown_Command;
-      end if;
-      Wait_Prompt (Debugger);
-   end Break_Exception;
 
    ---------------
    -- Backtrace --
@@ -475,6 +464,36 @@ package body Debugger.Gdb is
       Send (Get_Process (Debugger), "break " & Name);
       Wait_Prompt (Debugger);
    end Break_Subprogram;
+
+   ------------------
+   -- Break_Source --
+   ------------------
+
+   procedure Break_Source
+     (Debugger : access Gdb_Debugger;
+      File     : String;
+      Line     : Positive)
+   is
+      Str : constant String := Positive'Image (Line);
+   begin
+      Send (Get_Process (Debugger),
+        "break " & File & ':' & Str (Str'First + 1 .. Str'Last));
+      Wait_Prompt (Debugger);
+   end Break_Source;
+
+   ---------------------
+   -- Break_Exception --
+   ---------------------
+
+   procedure Break_Exception
+     (Debugger  : access Gdb_Debugger;
+      Name      : String  := "";
+      Unhandled : Boolean := False) is
+   begin
+      Send (Get_Process (Debugger),
+            Break_Exception (Get_Language (Debugger), Name, Unhandled));
+      Wait_Prompt (Debugger);
+   end Break_Exception;
 
    ------------
    -- Finish --

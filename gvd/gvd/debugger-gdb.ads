@@ -86,18 +86,25 @@ package Debugger.Gdb is
 
    procedure Continue (Debugger : access Gdb_Debugger);
 
+   procedure Interrupt (Debugger : access Gdb_Debugger);
+
    procedure Stack_Down (Debugger : access Gdb_Debugger);
 
    procedure Stack_Up (Debugger : access Gdb_Debugger);
+
+   procedure Break_Subprogram
+     (Debugger : access Gdb_Debugger;
+      Name     : String);
+
+   procedure Break_Source
+     (Debugger : access Gdb_Debugger;
+      File     : String;
+      Line     : Positive);
 
    procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Unhandled : Boolean := False);
-
-   procedure Break_Subprogram
-     (Debugger : access Gdb_Debugger;
-      Name     : String);
 
    procedure Finish (Debugger : access Gdb_Debugger);
 
