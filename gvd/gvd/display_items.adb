@@ -936,7 +936,9 @@ package body Display_Items is
       --  Unselect the current selection
 
       if Has_New_Selection then
-         if Item.Debugger.Selected_Component /= null then
+         if Item.Debugger.Selected_Component /= null
+           and then Item.Debugger.Selected_Item /= null
+         then
             Set_Selected (Item.Debugger.Selected_Component, False);
             Update_Component
               (Display_Item (Item.Debugger.Selected_Item),
@@ -944,7 +946,9 @@ package body Display_Items is
 
             --  Avoid refreshing the same item twice, if we're going to do it
             --  in the second part of this procedure anyway.
-            if Component = null then
+            if Item.Debugger.Selected_Item /= Canvas_Item (Item)
+              or else Component = null
+            then
                Item_Updated
                  (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
             end if;
