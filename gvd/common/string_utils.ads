@@ -302,10 +302,15 @@ package String_Utils is
 
    function Argument_List_To_Quoted_String
      (Args  : GNAT.OS_Lib.Argument_List;
-      Quote : Character := '"') return String;
+      Quote : Character := '"';
+      Quote_Backslash : Boolean := True) return String;
    --  Return the arguments as a full string.
    --  Arguments that contain spaces but do not already contain quotes
    --  will be put into quotes.
+   --  Backslashes are duplicated if Quote_Baskslash is True.
+   --  The result of this subprogram on the string     A simple\ "string"
+   --  is:     Quote_Backslash =>   "A simple\\ \"string\""
+   --      not Quote_Backslash =>   "A simple\ \"string\""
 
    function Argument_String_To_List_With_Triple_Quotes
      (Arg_String : String)

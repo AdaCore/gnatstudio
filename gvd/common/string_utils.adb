@@ -1079,7 +1079,8 @@ package body String_Utils is
 
    function Argument_List_To_Quoted_String
      (Args  : GNAT.OS_Lib.Argument_List;
-      Quote : Character := '"') return String
+      Quote : Character := '"';
+      Quote_Backslash : Boolean := True) return String
    is
       Len : Natural := 1;
    begin
@@ -1114,7 +1115,9 @@ package body String_Utils is
          procedure Append (Str : String) is
          begin
             for J in Str'Range loop
-               if Str (J) = Quote or else Str (J) = '\' then
+               if Str (J) = Quote
+                 or else (Quote_Backslash and then Str (J) = '\')
+               then
                   Result (Ind)     := '\';
                   Result (Ind + 1) := Str (J);
                   Ind := Ind + 2;
