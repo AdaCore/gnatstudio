@@ -18,8 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides support for DDE queries, as defined by Windows.
---  It is only supported under Windows platforms, and provides no op on other
+--  This package provides support for DDE queries.
+--  DDE, or Dynamic Data Exchange, allows running applications to request
+--  services from each other. In the context of GPS, this allows Windows
+--  Explorer to notify a running instance of GPS of the File Open request,
+--  enabling GPS to open the file in the same instance.
+--  It is only supported on Windows platforms, and provides no op on other
 --  platforms.
 
 with Glide_Kernel;
