@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -1563,8 +1563,7 @@ package body Default_Preferences is
       Title             : Gtk_Label;
 
       function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget)
-         return Gtk_Widget;
+        (Name : String; Widget : Gtk_Widget) return Gtk_Widget;
       --  Return the iterator in Model matching Name.
       --  If no such page already exists, then eithe Widget (if non null) is
       --  inserted for it, or a new table is created and inserted
@@ -1573,18 +1572,18 @@ package body Default_Preferences is
       --  Called when the selected page has changed.
 
       function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget)
-         return Gtk_Widget
+        (Name : String; Widget : Gtk_Widget) return Gtk_Widget
       is
-         Current : Gtk_Tree_Iter := Null_Iter;
-         Child   : Gtk_Tree_Iter;
+         Current     : Gtk_Tree_Iter := Null_Iter;
+         Child       : Gtk_Tree_Iter;
          First, Last : Integer := Name'First;
-         Table   : Gtk_Table;
-         W       : Gtk_Widget;
+         Table       : Gtk_Table;
+         W           : Gtk_Widget;
 
       begin
          while First <= Name'Last loop
             Last := First;
+
             while Last <= Name'Last and then Name (Last) /= ':' loop
                Last := Last + 1;
             end loop;
@@ -1604,10 +1603,11 @@ package body Default_Preferences is
             if Child = Null_Iter then
                if Widget = null then
                   Gtk_New (Table, Rows => 0, Columns => 2,
-                        Homogeneous => False);
+                           Homogeneous => False);
                   Set_Row_Spacings (Table, 1);
                   Set_Col_Spacings (Table, 5);
                   W := Gtk_Widget (Table);
+
                else
                   W := Widget;
                end if;
@@ -1669,7 +1669,7 @@ package body Default_Preferences is
       Info        : Pref_Description_Access;
 
       Sorted_Prefs : array (0 .. Manager.Current_Index - 1)
-         of Pref_Description_Access;
+        of Pref_Description_Access;
       --  All the preferences sorted by order of registration. This is needed
       --  so that the order in the preferences dialog is predictible.
 
@@ -1755,9 +1755,12 @@ package body Default_Preferences is
       --  Add all custom pages first
 
       for P in Custom_Pages'Range loop
-         Custom_Widgets (P) := Find_Or_Create_Page
-           (Name (Custom_Pages (P)), Create (Custom_Pages (P)));
+         Widget := Create (Custom_Pages (P));
 
+         if Widget /= null then
+            Custom_Widgets (P) := Find_Or_Create_Page
+              (Name (Custom_Pages (P)), Widget);
+         end if;
       end loop;
 
       --  Then add all implicitely defined pages
@@ -1771,7 +1774,7 @@ package body Default_Preferences is
          then
             Table := Gtk_Table (Find_Or_Create_Page (Info.Page.all, null));
             Row := Get_Property (Table, N_Rows_Property);
-            Resize (Table, Rows =>  Row + 1, Columns => 2);
+            Resize (Table, Rows => Row + 1, Columns => 2);
 
             Gtk_New (Event);
             Gtk_New (Label, Nick_Name (Info.Param));
@@ -1782,6 +1785,7 @@ package body Default_Preferences is
                     Xoptions => Fill, Yoptions => 0);
 
             Widget := Editor_Widget (Manager, Info.Param, Tips);
+
             if Widget /= null then
                Attach (Table, Widget, 1, 2, Row, Row + 1, Yoptions => 0);
             end if;
@@ -1800,30 +1804,39 @@ package body Default_Preferences is
          case Run (Dialog) is
             when Gtk_Response_OK =>
                for P in Custom_Pages'Range loop
-                  Validate (Custom_Pages (P), Custom_Widgets (P));
+                  if Custom_Widgets (P) /= null then
+                     Validate (Custom_Pages (P), Custom_Widgets (P));
+                  end if;
                end loop;
 
                Manager.Pref_Editor := null;
                Destroy (Saved);
                Destroy (Dialog);
+
                if On_Changed /= null then
                   On_Changed (Manager);
                end if;
+
                exit;
 
             when Gtk_Response_Apply =>
                for P in Custom_Pages'Range loop
-                  Validate (Custom_Pages (P), Custom_Widgets (P));
+                  if Custom_Widgets (P) /= null then
+                     Validate (Custom_Pages (P), Custom_Widgets (P));
+                  end if;
                end loop;
 
                if On_Changed /= null then
                   On_Changed (Manager);
                end if;
+
                Had_Apply := True;
 
             when others =>  --  including Cancel
                for P in Custom_Pages'Range loop
-                  Undo (Custom_Pages (P), Custom_Widgets (P));
+                  if Custom_Widgets (P) /= null then
+                     Undo (Custom_Pages (P), Custom_Widgets (P));
+                  end if;
                end loop;
 
                Manager.Pref_Editor := null;
@@ -1842,8 +1855,7 @@ package body Default_Preferences is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected information "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected information " & Exception_Information (E));
          Destroy (Dialog);
    end Edit_Preferences;
 
