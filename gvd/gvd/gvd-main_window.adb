@@ -354,14 +354,7 @@ package body GVD.Main_Window is
       --  Update the sensitivity of the Data/Protection Domains menu
       --  item
 
-      Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
-
-      if Widget = null then
-         --  This means that GVD is part of GPS
-
-         Widget := Get_Widget
-           (Window.Factory, -"/Debug/Data/Protection Domains");
-      end if;
+      Widget := Get_Widget (Window.Factory, -"/Debug/Data/Protection Domains");
 
       if Widget /= null then
          Info_WTX (Process.Debugger, WTX_Version);
