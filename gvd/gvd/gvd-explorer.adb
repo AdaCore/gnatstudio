@@ -106,6 +106,11 @@ package body Odd.Explorer is
    procedure Display_Shared (Explorer : access Explorer_Record'Class);
    --  Load and display the files found in shared libraries.
 
+   procedure Delete_Not_Found (Explorer : access Explorer_Record'Class);
+   --  Delete from the tree all the files that can not be found on the PATH.
+   --  These are files that we won't be able to display in the code_editor,
+   --  and that can't be explored anyway.
+
    function Explorer_Contextual_Menu
      (Explorer : access Explorer_Record'Class)
      return Gtk.Menu.Gtk_Menu;
@@ -726,10 +731,16 @@ package body Odd.Explorer is
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Display_Shared'Access),
          Explorer);
-
       Append (Menu, Mitem);
       --  Set_Tip (Tips, Mitem,
       --     -"Activated only when the executable has started", "");
+
+      Gtk_New (Mitem, Label => -"Delete Files Not Found");
+      Tree_Cb.Object_Connect
+        (Mitem, "activate",
+         Tree_Cb.To_Marshaller (Delete_Not_Found'Access),
+         Explorer);
+      Append (Menu, Mitem);
 
       Show_All (Menu);
       Menu_User_Data.Set (Explorer, Menu, Explorer_Contextual_Menu_Name);
@@ -763,4 +774,45 @@ package body Odd.Explorer is
       return Debugger_Process_Tab
         (Get_Process (Code_Editor (Explorer.Code_Editor)));
    end Convert;
+
+   ----------------------
+   -- Delete_Not_Found --
+   ----------------------
+
+   procedure Delete_Not_Found (Explorer : access Explorer_Record'Class) is
+      use type Row_List.Glist;
+      Extension_Nodes : Row_List.Glist := Get_Row_List (Explorer);
+      Extension_Node  : Gtk_Ctree_Node;
+      Data            : Node_Data_Access;
+      Node            : Gtk_Ctree_Node;
+      Next            : Gtk_Ctree_Node;
+      Process : Debugger_Process_Tab := Convert (Explorer);
+   begin
+      Set_Busy_Cursor (Process, True);
+      --  Find the extension node for the current file
+      if Extension_Nodes /= Row_List.Null_List then
+         Extension_Node :=
+           Find_Node_Ptr (Explorer, Row_List.Get_Data (Extension_Nodes));
+         while Extension_Node /= null loop
+
+            Node := Row_Get_Children (Node_Get_Row (Extension_Node));
+            while Node /= null loop
+               Next := Row_Get_Sibling (Node_Get_Row (Node));
+               Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
+
+               if not Is_Regular_File
+                 (Find_File (Process.Debugger, Data.Extension))
+               then
+                  Remove_Node (Explorer, Node);
+               end if;
+
+               Node := Next;
+            end loop;
+
+            Extension_Node := Row_Get_Sibling (Node_Get_Row (Extension_Node));
+         end loop;
+      end if;
+      Set_Busy_Cursor (Process, False);
+   end Delete_Not_Found;
+
 end Odd.Explorer;
