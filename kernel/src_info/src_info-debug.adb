@@ -103,7 +103,7 @@ package body Src_Info.Debug is
 
    procedure Dump_LI_File_Ptr (LIFP : LI_File_Ptr) is
    begin
-      Dump_LI_File (LIFP.all);
+      Dump_LI_File (LIFP.LI);
    end Dump_LI_File_Ptr;
 
    ----------------------------
@@ -350,8 +350,8 @@ package body Src_Info.Debug is
              and then Current_Dep_File_Info.Value.Dep_Info.Depends_From_Body)
          then
             Put ("W ");
-            Put
-              (Get_File_Info (Current_Dep_File_Info.Value.File).Unit_Name.all);
+            Put (Get_File_Info
+               (Current_Dep_File_Info.Value.File).Unit_Name.all);
             New_Line;
          end if;
          Current_Dep_File_Info := Current_Dep_File_Info.Next;
@@ -370,13 +370,15 @@ package body Src_Info.Debug is
       --  Generate the line for the spec if applicable
       if LIF.Spec_Info /= null then
          Dump_D_Line
-           (LIF.Spec_Info.Source_Filename.all, LIF.Spec_Info.File_Timestamp);
+           (LIF.Spec_Info.Source_Filename.all,
+            LIF.Spec_Info.File_Timestamp);
       end if;
 
       --  Generate the line for the body if applicable
       if LIF.Body_Info /= null then
          Dump_D_Line
-           (LIF.Body_Info.Source_Filename.all, LIF.Body_Info.File_Timestamp);
+           (LIF.Body_Info.Source_Filename.all,
+            LIF.Body_Info.File_Timestamp);
       end if;
 
       --  Generate all the other lines...
