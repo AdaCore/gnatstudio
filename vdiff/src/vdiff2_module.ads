@@ -29,8 +29,7 @@ with Gtk.Handlers;             use Gtk.Handlers;
 with Glib;                     use Glib;
 
 package Vdiff2_Module is
-   use Diff_Head_List;
-   use Diff_Chunk_List;
+
 
    type VDiff2_Module_Record is private;
    Vdiff_Module_ID        : Glide_Kernel.Module_ID;
