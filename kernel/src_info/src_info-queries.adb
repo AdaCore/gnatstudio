@@ -36,6 +36,9 @@ with Basic_Types;             use Basic_Types;
 
 package body Src_Info.Queries is
 
+   pragma Suppress (All_Checks);
+   --  For efficiency
+
    Me : constant Debug_Handle := Create ("SRC_INFO");
 
    type E_Kind_To_Boolean_Map is array (E_Kinds) of Boolean;
@@ -99,8 +102,7 @@ package body Src_Info.Queries is
      Unchecked_Deallocation (Dependency_Node, Dependency_List);
 
    function Search_Is_Completed
-     (Status : Find_Decl_Or_Body_Query_Status)
-      return Boolean;
+     (Status : Find_Decl_Or_Body_Query_Status) return Boolean;
    --  Return False unless Status is equal to Entity_Not_Found. The idea
    --  implemented behind this function is to have a single function to decide,
    --  given an xref query, whether the results from a sub-query should be
@@ -111,8 +113,7 @@ package body Src_Info.Queries is
      (Location  : File_Location;
       File_Name : String;
       Line      : Positive;
-      Column    : Positive)
-      return Integer;
+      Column    : Positive) return Integer;
    --  Return 0 if the given File_Location is pointing to the same
    --  Line, Column, and Filename. The filename comparison is done after
    --  comparing the position for better performance.
@@ -960,11 +961,13 @@ package body Src_Info.Queries is
       L : Scope_List;
    begin
       while Scope /= null loop
-         L := Scope;
+         L     := Scope;
          Scope := Scope.Sibling;
+
          if L.Typ = Declaration then
             Free (L.Contents);
          end if;
+
          Unchecked_Free (L);
       end loop;
    end Free;
@@ -978,10 +981,12 @@ package body Src_Info.Queries is
       Free (Tree.LI_Filename);
       Free (Tree.Body_Tree);
       Free (Tree.Spec_Tree);
+
       if Tree.Separate_Trees /= null then
          for P in Tree.Separate_Trees'Range loop
             Free (Tree.Separate_Trees (P));
          end loop;
+
          Free (Tree.Separate_Trees);
       end if;
    end Free;
@@ -1017,11 +1022,15 @@ package body Src_Info.Queries is
       --  True if L1 is before L2 (line and column)
 
       function In_Range (Decl : Scope_List; Loc : Scope_List) return Integer;
-      --  True if Loc is in the range of Decl.
+      --  Whether Loc is in the range of Decl.
       --  -1 is returned if Decl is before Loc, 0 if within, 1 if after, or
       --  2 if Loc is contained in the scope of Decl.
       --  Both Decl and Loc must reference the same source file, or no
       --  comparison can be done.
+
+      function Is_Contained (Loc, Decl : Scope_List) return Boolean;
+      --  True if Loc is contained in the scope of Decl.
+      --  This is a simplified (and more efficient) version of In_Range.
 
       procedure Add_In_List
         (L        : in out Scope_List;
@@ -1064,11 +1073,12 @@ package body Src_Info.Queries is
             if Is_Start_Reference (R.Value.Kind)
               and then (L.Decl.End_Of_Scope = No_Reference
                         or else L.Decl.End_Of_Scope.Location.File =
-                        R.Value.Location.File)
+                          R.Value.Location.File)
             then
                L.Start_Of_Scope := R.Value.Location;
                return;
             end if;
+
             R := R.Next;
          end loop;
       end Compute_Scope;
@@ -1163,6 +1173,31 @@ package body Src_Info.Queries is
          end case;
       end In_Range;
 
+      ------------------
+      -- Is_Contained --
+      ------------------
+
+      function Is_Contained (Loc, Decl : Scope_List) return Boolean is
+      begin
+         if Decl.Typ = Declaration then
+            case Loc.Typ is
+               when Declaration =>
+                  return Decl.Decl.End_Of_Scope /= No_Reference
+                    and then not (Decl.Decl.End_Of_Scope.Location <
+                                    Loc.Start_Of_Scope)
+                    and then Decl.Start_Of_Scope < Loc.Start_Of_Scope;
+
+               when Reference =>
+                  return Decl.Decl.End_Of_Scope /= No_Reference
+                    and then not (Decl.Decl.End_Of_Scope.Location <
+                                    Loc.Ref.Location)
+                    and then Decl.Start_Of_Scope < Loc.Ref.Location;
+            end case;
+         end if;
+
+         return False;
+      end Is_Contained;
+
       -----------------
       -- Add_In_List --
       -----------------
@@ -1176,6 +1211,7 @@ package body Src_Info.Queries is
          Assert (Me, New_Item.Sibling = null,
                  "Inserting item with existing sibling");
          New_Item.Parent := Parent;
+
          if Previous = null then
             New_Item.Sibling := L;
             L := New_Item;
@@ -1222,7 +1258,8 @@ package body Src_Info.Queries is
                      Decl.Sibling := Save;
                      List := Save;
 
-                     exit when List = null or else In_Range (Decl, List) /= 2;
+                     exit when List = null
+                       or else not Is_Contained (Loc => List, Decl => Decl);
                   end loop;
 
                   return;
@@ -1321,6 +1358,7 @@ package body Src_Info.Queries is
                   Ref         => R.Value'Unrestricted_Access);
                Add_Single_Entity (New_Item, T);
             end if;
+
             R := R.Next;
          end loop;
       end Add_References;
@@ -1414,12 +1452,14 @@ package body Src_Info.Queries is
       end if;
 
       File_List := Lib_Info.LI.Separate_Info;
+
       while File_List /= null loop
          Add_Declarations (File_List.Value.Declarations, T);
          File_List := File_List.Next;
       end loop;
 
       Dep := Lib_Info.LI.Dependencies_Info;
+
       while Dep /= null loop
          Add_Declarations (Dep.Value.Declarations, T);
          Dep := Dep.Next;
@@ -1715,19 +1755,24 @@ package body Src_Info.Queries is
    function Get_Full_Name
      (Entity    : Entity_Information;
       Decl_File : LI_File_Ptr;
-      Separator : String      := ".") return String
+      Separator : String := ".";
+      Scope     : Scope_Tree := Null_Scope_Tree) return String
    is
-      Tree : Scope_Tree;
+      Tree            : Scope_Tree;
       Node, Tmp, Tmp2 : Scope_Tree_Node;
-      Full_Name : Unbounded_String;
-      T, T2 : Entity_Information;
+      Full_Name       : Unbounded_String;
+      T, T2           : Entity_Information;
 
    begin
       if Decl_File = null then
          return Get_Name (Entity);
       end if;
 
-      Tree := Create_Tree (Decl_File);
+      if Scope = Null_Scope_Tree then
+         Tree := Create_Tree (Decl_File);
+      else
+         Tree := Scope;
+      end if;
 
       if Tree = Null_Scope_Tree then
          return Get_Name (Entity);
@@ -1736,6 +1781,10 @@ package body Src_Info.Queries is
       Node := Find_Entity_Scope (Tree, Entity);
 
       if Node = Null_Scope_Tree_Node then
+         if Scope = Null_Scope_Tree then
+            Free (Tree);
+         end if;
+
          return Get_Name (Entity);
       end if;
 
@@ -1743,7 +1792,8 @@ package body Src_Info.Queries is
       while Tmp /= Null_Scope_Tree_Node loop
          --  Only include the names that are actually part of a scope (the
          --  entity itself is automatically part of the scope, whatever its
-         --  kind)
+         --  kind).
+
          if Tmp = Node or else Is_Scope_Entity (Get_Kind (Tmp).Kind) then
             T := Get_Entity (Tmp);
 
@@ -1776,6 +1826,10 @@ package body Src_Info.Queries is
             Tmp := Get_Parent (Tmp);
          end if;
       end loop;
+
+      if Scope = Null_Scope_Tree then
+         Free (Tree);
+      end if;
 
       return To_String (Full_Name);
    end Get_Full_Name;
