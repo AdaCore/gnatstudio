@@ -4,6 +4,8 @@ project Shared is
 
    package IDE is
       for VCS_Kind use "cvs";
+      for VCS_Log_Check use "log_check";
+      for VCS_File_Check use "ci_check";
    end IDE;
 
 end Shared;
