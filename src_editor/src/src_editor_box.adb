@@ -1232,6 +1232,13 @@ package body Src_Editor_Box is
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Overwrite_Label, -"Insert");
       Add (Frame, Box.Overwrite_Label);
+
+      --  ??? Using an Event_Box should not be necessary, but it avoids
+      --  some overlaps when resizing the editor window
+
+      Gtk_New (Event_Box);
+      Add (Frame, Event_Box);
+      Add (Event_Box, Box.Overwrite_Label);
       Box_Callback.Connect
         (Box.Source_View,
          "toggle_overwrite",
@@ -1243,7 +1250,13 @@ package body Src_Editor_Box is
       Set_Shadow_Type (Frame, Shadow_None);
       Pack_Start (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Function_Label);
-      Add (Frame, Box.Function_Label);
+
+      --  ??? Using an Event_Box should not be necessary, but it avoids
+      --  some overlaps when resizing the editor window
+
+      Gtk_New (Event_Box);
+      Add (Frame, Event_Box);
+      Add (Event_Box, Box.Function_Label);
 
       --  Connect to source buffer signals.
 
