@@ -1060,6 +1060,19 @@ package body Project_Properties is
             if New_Name /= Project_Name (Project_View)
               or else New_Path /= Dir_Name (Project_Path (Project_View))
             then
+               --  Mark all the importing projects as modified
+               declare
+                  Importing : constant Project_Id_Array :=
+                    Find_All_Projects_Importing
+                    (Root_Project => Get_Project (Kernel),
+                     Project      => Project_View);
+               begin
+                  for P in Importing'Range loop
+                     Set_Project_Modified
+                       (Kernel, Get_Project_From_View (Importing (P)), True);
+                  end loop;
+               end;
+
                Rename_And_Move
                  (Root_Project  => Get_Project (Kernel),
                   Project       => Project,
