@@ -936,13 +936,18 @@ package body GVD.Process is
         (Process.Stack, "delete_event",
          On_Stack_Delete_Event'Access, Process);
 
-      Show_All (Process.Stack);
-
+      --  ??? Would be nicer to use GPS.Kernel.MDI.Put, but we need access to
+      --  the kernel
       Child := Put
         (Process.Window.MDI,
          Process.Stack,
-         Position => Position_Right);
+         Position => Position_Default);
       Set_Focus_Child (Child);
+      Split (Process.Window.MDI,
+             Orientation_Horizontal,
+             Reuse_If_Possible => True,
+             Width => 200,
+             After => True);
 
       if Process.Debugger_Num = 1 then
          Set_Title (Child, -"Call Stack");
@@ -992,12 +997,18 @@ package body GVD.Process is
       Configure (Process.Data_Canvas, Annotation_Font => Annotation_Font);
       Free (Annotation_Font);
 
-      Set_Size_Request (Process.Data_Scrolledwindow, 200, 200);
+      --  ??? Would be nicer to use GPS.Kernel.MDI.Put, but we need access to
+      --  the kernel
       Child := Put
         (Process.Window.MDI, Process.Data_Scrolledwindow,
-         Position => Position_Top,
+         Position => Position_Default,
          Flags => All_Buttons);
       Set_Focus_Child (Child);
+      Split (Process.Window.MDI,
+             Orientation_Vertical,
+             Reuse_If_Possible => True,
+             Height => 200,
+             After => False);
 
       if Process.Debugger_Num = 1 then
          Set_Title (Child, -"Debugger Data");
