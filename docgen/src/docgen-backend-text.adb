@@ -371,7 +371,7 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Exception_Kind),
-               (Assoc ("LINE", Line),
+               (Assoc ("DECL_LINE", Line),
                 Assoc ("BLOCK", Block),
                 Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
                Cache)));
@@ -1468,8 +1468,8 @@ package body Docgen.Backend.Text is
                                   (Project_Registry
                                      (Get_Registry (Kernel).all), Decl_File),
                                 Decl_File))),
-                   Assoc ("LINE", Image (Line_In_Body)),
-                   Assoc ("VALUE", Text (Loc_Start .. Loc_End))),
+                   Assoc ("DECL_LINE", Image (Line_In_Body)),
+                   Assoc ("NAME", Text (Loc_Start .. Loc_End))),
                   Cache)));
          Set_Last_Index (B.all, Loc_End + 1);
       end Create_Special_Link_To_Body;
@@ -1504,8 +1504,8 @@ package body Docgen.Backend.Text is
                            (Get_Filename
                               (Get_File
                                  (Get_Declaration_Of (Entity_Info)))).all)),
-                   Assoc ("LINE", Image (Line_To_Use)),
-                   Assoc ("VALUE", Text (Loc_Start .. Loc_End))),
+                   Assoc ("DECL_LINE", Image (Line_To_Use)),
+                   Assoc ("NAME", Text (Loc_Start .. Loc_End))),
                   Cache)));
          Set_Last_Index (B.all, Loc_End + 1);
       end Create_Regular_Link;
