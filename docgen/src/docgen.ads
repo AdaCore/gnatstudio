@@ -314,16 +314,10 @@ package Docgen is
 
    type Doc_Info_Open is new Doc_Info_Base with record
       Open_Title        : GNAT.OS_Lib.String_Access;
-      Open_File         : VFS.Virtual_File;
       Open_Package_Next : GNAT.OS_Lib.String_Access;
       Open_Package_Prev : GNAT.OS_Lib.String_Access;
    end record;
    --  Used at the very beginning of the file
-
-   type Doc_Info_Close is new Doc_Info_Base with record
-      Close_File_Name : VFS.Virtual_File;
-   end record;
-   --  Used at the end of the file
 
    type Doc_Info_Header is new Doc_Info_Base with record
       Header_Package : GNAT.OS_Lib.String_Access;
@@ -340,7 +334,6 @@ package Docgen is
 
    type Doc_Info_Footer is new Doc_Info_Base with record
       Footer_Title : GNAT.OS_Lib.String_Access;
-      Footer_File  : VFS.Virtual_File;
    end record;
    --  Used to finish an entity information
 
@@ -519,7 +512,7 @@ package Docgen is
         (B      : access Backend;
          Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
          File   : File_Descriptor;
-         Info   : in out Docgen.Doc_Info_Close) is abstract;
+         Info   : in out Docgen.Doc_Info_Base) is abstract;
       --  Called each time a file is closed
 
       procedure Doc_Header
