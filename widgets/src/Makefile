@@ -6,6 +6,6 @@ MAIN=make_widgets run_test_file_selector
 
 # List of modules we depend on (Check ../../Makefile.common for list of
 # supported modules)
-MODULES=debugger_common prj_editor gtkada
+MODULES=debugger_common gtkada
 
 include ../../Makefile.common
