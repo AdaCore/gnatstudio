@@ -144,30 +144,33 @@ package Docgen is
       Subprogram_Index_Info, End_Of_Index_Info,
       Index_Item_Info, Body_Line_Info, Var_Info,
       Package_Info, Entry_Info);
-   --  the structure used in the type Doc_Info.
+   --  The structure used in the type Doc_Info.
+
+   type Type_Api_Doc is (HTML, TEXI);
+   --  Type of documentation that can be generated
+   for Type_Api_Doc'Size use Integer'Size;
 
    type All_Options is record
+      Type_Of_File  : Type_Api_Doc := HTML;
+      --  Type of the documentation
       Process_Body_Files   : Boolean := False;
-      --  create also the body documentation?
+      --  Create also the body documentation?
       Ignorable_Comments   : Boolean := False;
-      --  ignore all comments with "--!"
+      --  Ignore all comments with "--!"
       Comments_Above       : Boolean := False;
-      --  doc comments for entities above the header
+      --  Doc comments for entities above the header
       Show_Private         : Boolean := False;
-      --  show also private entities
+      --  Show also private entities
       References           : Boolean := False;
       --  True if the program should search for the references
-      --  adding information like "subprogram called by..."
+      --  Adding information like "subprogram called by..."
       One_Doc_File         : Boolean := False;
-      --  used for TexInfo: True, if the project.texi file should be
+      --  Used for TexInfo: True, if the project.texi file should be
       --  build and the package files should be included there later.
       Link_All             : Boolean := False;
       --  Should links be created to entities whose declaration files
       --  aren't being processed
    end record;
-   --  the type containing all the information which can be
-   --  set by using the opions of the command line
-
 
    --  The data structure used to pass the information
    --  to the procedure which is defined
@@ -181,30 +184,30 @@ package Docgen is
          Doc_File_List             : Type_Source_File_List.List;
 
          case Info_Type is
-               --  used at the very beginning of the file
+               --  Used at the very beginning of the file
             when Open_Info =>
                Open_Title                    : GNAT.OS_Lib.String_Access;
                Open_File                     : VFS.Virtual_File;
                Open_Package_Next             : GNAT.OS_Lib.String_Access;
                Open_Package_Prev             : GNAT.OS_Lib.String_Access;
 
-               --  used at the end of the file
+               --  Used at the end of the file
             when Close_Info =>
                Close_File_Name               : VFS.Virtual_File;
 
-               --  used to start an entity information
+               --  Used to start an entity information
             when Header_Info =>
                Header_Package                : GNAT.OS_Lib.String_Access;
                Header_File                   : VFS.Virtual_File;
                Header_Link                   : Boolean;
                Header_Line                   : Natural;
 
-               --  used to finish an entity information
+               --  Used to finish an entity information
             when Footer_Info =>
                Footer_Title                  : GNAT.OS_Lib.String_Access;
                Footer_File                   : VFS.Virtual_File;
 
-               --  used to add a subtitle to the information file
+               --  Used to add a subtitle to the information file
             when Subtitle_Info =>
                Subtitle_Name                 : GNAT.OS_Lib.String_Access;
                Subtitle_Package              : GNAT.OS_Lib.String_Access;
@@ -221,32 +224,32 @@ package Docgen is
                Package_Header_Line           : Natural;
                Package_Description           : GNAT.OS_Lib.String_Access;
 
-               --  used to add the package description
+               --  Used to add the package description
             when Package_Desc_Info =>
                Package_Desc_Description      : GNAT.OS_Lib.String_Access;
 
-               --  used to add a constant and named numbers
+               --  Used to add a constant and named numbers
             when Var_Info =>
                Var_Entity                    : Entity_List_Information;
                Var_Header                    : GNAT.OS_Lib.String_Access;
                Var_Header_Line               : Natural;
                Var_Description               : GNAT.OS_Lib.String_Access;
 
-               --  used to add an exception info to the information file
+               --  Used to add an exception info to the information file
             when Exception_Info =>
                Exception_Entity              : Entity_List_Information;
                Exception_Header              : GNAT.OS_Lib.String_Access;
                Exception_Header_Line              : Natural;
                Exception_Description         : GNAT.OS_Lib.String_Access;
 
-               --  used to add a type info to the information file
+               --  Used to add a type info to the information file
             when Type_Info =>
                Type_Entity                   : Entity_List_Information;
                Type_Header                   : GNAT.OS_Lib.String_Access;
                Type_Header_Line              : Natural;
                Type_Description              : GNAT.OS_Lib.String_Access;
 
-               --  used to add an entry info to the information file
+               --  Used to add an entry info to the information file
             when Entry_Info =>
                Entry_Entity                  : Entity_List_Information;
                Entry_Header                  : GNAT.OS_Lib.String_Access;
@@ -254,7 +257,7 @@ package Docgen is
                Entry_Description             : GNAT.OS_Lib.String_Access;
                Entry_Link                    : Boolean;
 
-               --  used to add a subprogram info to the information file
+               --  Used to add a subprogram info to the information file
             when Subprogram_Info =>
                Subprogram_Entity             : Entity_List_Information;
                Subprogram_Header             : GNAT.OS_Lib.String_Access;
@@ -263,36 +266,36 @@ package Docgen is
                Subprogram_Link               : Boolean;
                Subprogram_List               : Type_Entity_List.List;
 
-               --  used to start the package index file
+               --  Used to start the package index file
             when Unit_Index_Info =>
-               --  the list of the files
+               --  The list of the files
                Unit_File_List                : Type_Source_File_List.List;
-               --  the name doc file name without the suffix
+               --  The name doc file name without the suffix
                Unit_Index_File_Name          : GNAT.OS_Lib.String_Access;
                Unit_Project_Name             : Projects.Project_Type;
 
-               --  used to start the subprogram index file
+               --  Used to start the subprogram index file
             when Subprogram_Index_Info =>
-               --  the doc file name without the suffix
+               --  The doc file name without the suffix
                Subprogram_Index_File_Name    : GNAT.OS_Lib.String_Access;
 
-               --  used to start the type index file
+               --  Used to start the type index file
             when Type_Index_Info =>
-               --  the name doc file name without the suffix
+               --  The name doc file name without the suffix
                Type_Index_File_Name          : GNAT.OS_Lib.String_Access;
 
-               --  used to finish all 3 kinds of index files
+               --  Used to finish all 3 kinds of index files
             when End_Of_Index_Info =>
                End_Index_Title               : GNAT.OS_Lib.String_Access;
 
-               --  used to add items to all 3 kindes of index files
+               --  Used to add items to all 3 kindes of index files
             when Index_Item_Info =>
                Item_Name                     : GNAT.OS_Lib.String_Access;
                Item_File                     : VFS.Virtual_File;
                Item_Line                     : Natural;
                Item_Doc_File                 : GNAT.OS_Lib.String_Access;
 
-               --  used to pass the information of one line in the body file
+               --  Used to pass the information of one line in the body file
             when Body_Line_Info =>
                Body_File                     : VFS.Virtual_File;
                Body_Text                     : GNAT.OS_Lib.String_Access;
@@ -310,13 +313,13 @@ package Docgen is
       Info          : in out Doc_Info;
       Doc_Directory : String;
       Doc_Suffix    : String);
-   --  the procedure to define for each new output format
+   --  The procedure to define for each new output format
 
    function Count_Lines (Line : String) return Natural;
    --  Returns the number of lines in the String
 
    function Count_Points (Text : String) return Natural;
-   --  returns the number of point in the given string
+   --  Returns the number of point in the given string
 
    function Get_Doc_File_Name
      (Source_Filename : VFS.Virtual_File;
@@ -335,7 +338,7 @@ package Docgen is
    function Spec_Suffix
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return String;
-   --  return the spec suffix, without the "." in front, corresponding to
+   --  Return the spec suffix, without the "." in front, corresponding to
    --  the given file name. This given file can be a body or a spec.
    --  As using Other_File_Name this function works for all suffix's.
    --  ??? Wrong, due to call to Is_Spec_File
@@ -343,13 +346,13 @@ package Docgen is
    function Body_Suffix
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return String;
-   --  return the body suffix, without the "." in front, corresponding to
+   --  Return the body suffix, without the "." in front, corresponding to
    --  the given file name. This given file can be a body or a spec.
    --  As using Other_File_Name this function works for all suffix's.
 
    function Is_Spec_File
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Boolean;
-   --  returns True, if the File is a Spec file
+   --  Returns True, if the File is a Spec file
 
 end Docgen;
