@@ -31,6 +31,7 @@ with Gtk.Box;
 with Gtk.Handlers;
 with Gtk.Hbutton_Box;
 with Gtk.Menu;
+with Gtk.Stock;
 with Gtk.Widget;
 with Pango.Layout;
 with Ada.Unchecked_Deallocation;
@@ -54,11 +55,15 @@ package Browsers.Canvas is
    procedure Initialize
      (Browser : access General_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Create_Toolbar : Boolean);
+      Create_Toolbar  : Boolean;
+      Parents_Pixmap  : String := Gtk.Stock.Stock_Go_Back;
+      Children_Pixmap : String := Gtk.Stock.Stock_Go_Forward);
    --  Initialize a new browser.
    --  It sets up all the contextual menu for this browser, as well as the key
    --  shortcuts to manipulate the browser.
    --  If Create_Toolbar is True, then a button_bar is added at the bottom.
+   --  Parents_Pixmap and Children_Pixmap are the pixmaps to use in the title
+   --  bar to get access to the parents/ancestors of an item or its children.
 
    function Get_Toolbar (Browser : access General_Browser_Record)
       return Gtk.Hbutton_Box.Gtk_Hbutton_Box;

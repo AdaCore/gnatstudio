@@ -247,7 +247,9 @@ package body Browsers.Canvas is
    procedure Initialize
      (Browser : access General_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Create_Toolbar : Boolean)
+      Create_Toolbar  : Boolean;
+      Parents_Pixmap  : String := Stock_Go_Back;
+      Children_Pixmap : String := Stock_Go_Forward)
    is
       Scrolled : Gtk_Scrolled_Window;
       Canvas : Image_Canvas;
@@ -283,9 +285,9 @@ package body Browsers.Canvas is
       end if;
 
       Browser.Up_Arrow := Render_Icon
-        (Browser, Stock_Go_Up, Icon_Size_Menu);
+        (Browser, Parents_Pixmap, Icon_Size_Menu);
       Browser.Down_Arrow := Render_Icon
-        (Browser, Stock_Go_Down, Icon_Size_Menu);
+        (Browser, Children_Pixmap, Icon_Size_Menu);
       Browser.Close_Pixmap := Render_Icon
         (Browser, Stock_Close, Icon_Size_Menu);
 
