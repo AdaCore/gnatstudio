@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_dock_xpm[] = {
+char * gnome_dock_xpm[] = {
 "21 21 5 1",
 " 	c None",
 ".	c #FFFFFF",

@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_dateedit_xpm[] = {
+char * gnome_dateedit_xpm[] = {
 "21 21 5 1",
 " 	c None",
 ".	c #000000",

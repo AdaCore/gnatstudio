@@ -1,5 +1,5 @@
 /* XPM */
-static char *placeholder_xpm[] = {
+char *placeholder_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "8 8 2 1",
 "  c #bbbbbb",

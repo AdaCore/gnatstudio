@@ -1,5 +1,5 @@
 /* XPM */
-static char * button_xpm[] = {
+char * button_xpm[] = {
 "21 21 5 1",
 " 	c None",
 ".	c #FFFFFF",

@@ -1,5 +1,5 @@
 /* XPM */
-static char *vscrollbar_xpm[] = {
+char *vscrollbar_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "20 21 6 1",
 "  c Gray0",

@@ -1,5 +1,5 @@
 /* XPM */
-static char * gtk_clock_xpm[] = {
+char * gtk_clock_xpm[] = {
 "21 21 2 1",
 " 	c None",
 ".	c #000000",

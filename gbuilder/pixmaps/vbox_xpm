@@ -1,5 +1,5 @@
 /* XPM */
-static char *vbox_xpm[] = {
+char *vbox_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "21 21 4 1",
 "  c Gray0",

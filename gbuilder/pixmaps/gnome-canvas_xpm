@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_canvas_xpm[] = {
+char * gnome_canvas_xpm[] = {
 "21 21 7 1",
 " 	c None",
 ".	c #7B797B",

@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_db_error_dlg_xpm[] = {
+char * gnome_db_error_dlg_xpm[] = {
 "21 21 11 1",
 " 	c None",
 ".	c #B5B5B5",

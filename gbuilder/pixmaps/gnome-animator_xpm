@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_animator_xpm[] = {
+char * gnome_animator_xpm[] = {
 "21 21 8 1",
 " 	c None",
 ".	c #898989",

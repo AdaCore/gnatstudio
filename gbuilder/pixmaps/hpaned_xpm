@@ -1,5 +1,5 @@
 /* XPM */
-static char *hpaned_xpm[] = {
+char *hpaned_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "21 21 4 1",
 "  c Gray0",

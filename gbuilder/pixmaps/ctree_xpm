@@ -1,5 +1,5 @@
 /* XPM */
-static char *ctree_xpm[] = {
+char *ctree_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "21 21 5 1",
 "  c Gray0",

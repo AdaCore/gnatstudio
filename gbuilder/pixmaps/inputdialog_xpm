@@ -1,5 +1,5 @@
 /* XPM */
-static char *inputdialog_xpm[] = {
+char *inputdialog_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "21 21 12 1",
 "  c Gray0",

@@ -1,5 +1,5 @@
 /* XPM */
-static char * checkmenuitem_xpm[] = {
+char * checkmenuitem_xpm[] = {
 "21 21 4 1",
 " 	c None",
 ".	c #FFFFFF",

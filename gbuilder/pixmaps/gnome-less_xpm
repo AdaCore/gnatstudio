@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_less_xpm[] = {
+char * gnome_less_xpm[] = {
 "21 21 6 1",
 " 	c None",
 ".	c #D5D6D5",

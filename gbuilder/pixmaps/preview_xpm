@@ -1,5 +1,5 @@
 /* XPM */
-static char *preview_xpm[] = {
+char *preview_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "21 21 9 1",
 "  c Gray0",

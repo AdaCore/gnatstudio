@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_spell_xpm[] = {
+char * gnome_spell_xpm[] = {
 "21 21 9 1",
 " 	c None",
 ".	c #000000",

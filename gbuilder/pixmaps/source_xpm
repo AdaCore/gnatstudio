@@ -1,5 +1,5 @@
 /* XPM */
-static char * source_xpm[] = {
+char * source_xpm[] = {
 "24 24 80 1",
 " 	c None",
 ".	c #000000",

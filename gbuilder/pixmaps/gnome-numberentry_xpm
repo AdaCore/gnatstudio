@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_numberentry_xpm[] = {
+char * gnome_numberentry_xpm[] = {
 "21 21 6 1",
 " 	c None",
 ".	c #000000",

@@ -1,5 +1,5 @@
 /* XPM */
-static char * scrolledwindow_xpm[] = {
+char * scrolledwindow_xpm[] = {
 "21 21 4 1",
 " 	c None",
 ".	c #FFFFFF",

@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_about_xpm[] = {
+char * gnome_about_xpm[] = {
 "21 21 11 1",
 " 	c None",
 ".	c #7B7B7B",

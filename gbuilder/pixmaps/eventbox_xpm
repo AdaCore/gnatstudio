@@ -1,5 +1,5 @@
 /* XPM */
-static char *eventbox_xpm[] = {
+char *eventbox_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "21 21 7 1",
 "  c Gray0",

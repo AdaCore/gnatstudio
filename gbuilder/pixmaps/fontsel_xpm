@@ -1,5 +1,5 @@
 /* XPM */
-static char *fontsel_xpm[] = {
+char *fontsel_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "21 21 8 1",
 "  c Gray0",

@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_fileentry_xpm[] = {
+char * gnome_fileentry_xpm[] = {
 "21 21 7 1",
 " 	c None",
 ".	c #000000",

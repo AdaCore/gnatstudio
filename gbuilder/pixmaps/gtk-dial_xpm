@@ -1,5 +1,5 @@
 /* XPM */
-static char * gtk_dial_xpm[] = {
+char * gtk_dial_xpm[] = {
 "21 21 4 1",
 " 	c None",
 ".	c #000000",

@@ -1,5 +1,5 @@
 /* XPM */
-static char * gnome_fontpicker_xpm[] = {
+char * gnome_fontpicker_xpm[] = {
 "21 21 7 1",
 " 	c None",
 ".	c #FFFFFF",
