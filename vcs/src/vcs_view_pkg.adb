@@ -741,12 +741,13 @@ package body VCS_View_Pkg is
          Enqueue (Get_Queue (Parameter.VCS_Ref), Commit_Command);
       else
          if Log_Check_Script /= "" then
-            Add_Consequence_Action (Check_Log,
-                                    Command_Access (Commit_Command));
+            Add_Consequence_Action
+              (Command_Access (Check_Log), Command_Access (Commit_Command));
             if File_Check_Script /= "" then
                --  Log check and file check.
 
-               Add_Consequence_Action (Check_File, Command_Access (Check_Log));
+               Add_Consequence_Action
+                 (Command_Access (Check_File), Command_Access (Check_Log));
                Enqueue (Get_Queue (Parameter.VCS_Ref), Check_File);
             else
                --  Log check, no file check.
@@ -757,7 +758,7 @@ package body VCS_View_Pkg is
             --  No log check, file check.
 
             Add_Consequence_Action
-              (Check_File, Command_Access (Commit_Command));
+              (Command_Access (Check_File), Command_Access (Commit_Command));
 
             Enqueue (Get_Queue (Parameter.VCS_Ref), Check_File);
          end if;
