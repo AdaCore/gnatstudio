@@ -1287,6 +1287,7 @@ package body Browsers.Entities is
       Layout (Data.Browser, Force => False);
       Destroy (Data.Iter);
       Pop_State (Data.Kernel);
+      Refresh_Canvas (Get_Canvas (Data.Browser));
       Data.Browser.Idle_Id := 0;
    end Destroy_Idle;
 
