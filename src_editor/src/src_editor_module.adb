@@ -87,8 +87,10 @@ with Generic_List;
 with GVD.Preferences; use GVD.Preferences;
 
 with Src_Editor_Module.Line_Highlighting;
-with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer. Buffer_Commands;
+with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
 with Src_Editor_Buffer.Line_Information;
+
+with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
 
 package body Src_Editor_Module is
 
@@ -795,9 +797,11 @@ package body Src_Editor_Module is
          begin
             Set_Return_Value
               (Data,
-               Get_Chars (Source_Box (Get_Widget (Child)).Editor,
-                          Line, Column,
-                          Before, After));
+               Get_Chars
+                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                  Editable_Line_Type (Line),
+                  Natural (Column),
+                  Before, After));
          end;
 
       elsif Command = "replace_text" then
@@ -811,11 +815,11 @@ package body Src_Editor_Module is
             Child  : constant MDI_Child :=
               Find_Editor (Kernel, Create (File, Kernel));
          begin
-            Replace_Slice_At_Position
-              (Source_Box (Get_Widget (Child)).Editor,
-               Line, Column,
-               Before, After,
-               Text);
+            Replace_Slice
+              (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+               Text,
+               Editable_Line_Type (Line), Natural (Column),
+               Before, After);
          end;
 
       elsif Command = "get_line"
