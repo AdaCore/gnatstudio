@@ -1104,7 +1104,7 @@ package body C_Analyzer is
       --  Push a dummy indentation so that stack will never be empty.
       Push (Indents, None);
 
-      while Index < Buffer'Last loop
+      while Index <= Buffer'Last loop
          case Buffer (Index) is
             when '{' =>
                Token := Tok_Left_Bracket;
