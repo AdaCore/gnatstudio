@@ -2046,6 +2046,14 @@ package body Ada_Analyzer is
          Current_Indent := Top (Indents).all;
       end if;
 
+      --  Try to register partial constructs, friendlier
+
+      if Constructs /= null then
+         while Top (Tokens).Token /= No_Token loop
+            Pop (Tokens);
+         end loop;
+      end if;
+
       Clear (Tokens);
       Clear (Indents);
 
