@@ -442,6 +442,7 @@ package body Shell_Script is
    procedure Destroy (Module : in out Shell_Module_Id_Record) is
    begin
       Command_List.Free (Module.Commands_List);
+      Shell_Module_Id := null;
    end Destroy;
 
    ----------
