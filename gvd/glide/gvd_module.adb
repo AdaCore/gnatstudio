@@ -108,7 +108,7 @@ package body GVD_Module is
 
    package File_Line_List is new Generic_List (File_Line_Record);
 
-   type GVD_Module_User_Data is new Module_ID_Record with record
+   type GVD_Module_Record is new Module_ID_Record with record
       Kernel           : Kernel_Handle;
 
       Unexplored_Lines : File_Line_List.List := File_Line_List.Null_List;
@@ -120,6 +120,10 @@ package body GVD_Module is
 
       Initialize_Menu  : Gtk_Menu;
    end record;
+   type GVD_Module is access all GVD_Module_Record'Class;
+
+   procedure Destroy (Id : in out GVD_Module_Record);
+   --  Terminate the debugger the module, and kill the underlying debugger.
 
    procedure GVD_Contextual
      (Object  : access GObject_Record'Class;
@@ -975,11 +979,14 @@ package body GVD_Module is
       Top   : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
       Page  : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
-      MDI   : constant MDI_Window := Page.Process_Mdi;
 
       use Debugger;
 
    begin
+      if Page = null then
+         return;
+      end if;
+
       if Page.Debugger /= null then
          Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
          Push_State (Kernel, Busy);
@@ -988,11 +995,11 @@ package body GVD_Module is
 
          --  This might have been closed by the user
          if Page.Command_Scrolledwindow /= null then
-            Close (MDI, Page.Command_Scrolledwindow);
+            Close (Page.Process_Mdi, Page.Command_Scrolledwindow);
          end if;
 
          if Page.Data_Paned /= null then
-            Close (MDI, Page.Data_Paned);
+            Close (Page.Process_Mdi, Page.Data_Paned);
          end if;
 
          Set_Sensitive (Kernel, False);
@@ -1226,13 +1233,12 @@ package body GVD_Module is
       File_Line    : File_Line_Record;
       Debugger     : constant Debugger_Access :=
         Get_Current_Process
-        (Get_Main_Window (GVD_Module_User_Data
-                          (GVD_Module_ID.all).Kernel)).Debugger;
+          (Get_Main_Window (GVD_Module (GVD_Module_ID).Kernel)).Debugger;
       --  ??? Should attach the right debugger with GVD_Module_Id.
 
    begin
       if File_Line_List.Is_Empty
-        (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines)
+        (GVD_Module (GVD_Module_ID).Unexplored_Lines)
       then
          return False;
 
@@ -1241,13 +1247,13 @@ package body GVD_Module is
       end if;
 
       File_Line := File_Line_List.Head
-        (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines);
+        (GVD_Module (GVD_Module_ID).Unexplored_Lines);
 
       Kind := Line_Contains_Code
         (Debugger, File_Line.File.all, File_Line.Line);
 
-      if GVD_Module_User_Data (GVD_Module_ID.all).List_Modified then
-         GVD_Module_User_Data (GVD_Module_ID.all).List_Modified := False;
+      if GVD_Module (GVD_Module_ID).List_Modified then
+         GVD_Module (GVD_Module_ID).List_Modified := False;
          return True;
       end if;
 
@@ -1259,7 +1265,7 @@ package body GVD_Module is
       begin
          if Kind = Have_Code then
             Create (C,
-                    GVD_Module_User_Data (GVD_Module_ID.all).Kernel,
+                    GVD_Module (GVD_Module_ID).Kernel,
                     Debugger,
                     Set,
                     File_Line.File.all,
@@ -1269,17 +1275,17 @@ package body GVD_Module is
          end if;
 
          Add_Line_Information
-           (GVD_Module_User_Data (GVD_Module_ID.all).Kernel,
+           (GVD_Module (GVD_Module_ID).Kernel,
             File_Line.File.all,
             Breakpoints_Column_Id,
             new Line_Information_Array' (A));
       end;
 
       File_Line_List.Next
-        (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines);
+        (GVD_Module (GVD_Module_ID).Unexplored_Lines);
 
       if File_Line_List.Is_Empty
-        (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines)
+        (GVD_Module (GVD_Module_ID).Unexplored_Lines)
       then
          return False;
       end if;
@@ -1334,21 +1340,21 @@ package body GVD_Module is
             Get_Area (Area_Context, Line1, Line2);
 
             if File_Line_List.Is_Empty
-              (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines)
+              (GVD_Module (GVD_Module_ID).Unexplored_Lines)
             then
                Timeout_Id := Timeout_Add
                  (1, Idle_Reveal_Lines'Access);
             else
-               GVD_Module_User_Data (GVD_Module_ID.all).List_Modified := True;
+               GVD_Module (GVD_Module_ID).List_Modified := True;
                File_Line_List.Free
-                 (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines);
-               GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines
+                 (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+               GVD_Module (GVD_Module_ID).Unexplored_Lines
                  := File_Line_List.Null_List;
             end if;
 
             for J in Line1 .. Line2 loop
                File_Line_List.Append
-                 (GVD_Module_User_Data (GVD_Module_ID.all).Unexplored_Lines,
+                 (GVD_Module (GVD_Module_ID).Unexplored_Lines,
                   (new String' (File), J));
                --  ??? We might want to use a LIFO structure here
                --  instead of FIFO, so that the lines currently shown
@@ -1367,8 +1373,7 @@ package body GVD_Module is
    is
       pragma Unreferenced (K);
       Mitem : Gtk_Menu_Item;
-      Menu : Gtk_Menu renames
-        GVD_Module_User_Data (GVD_Module_ID.all).Initialize_Menu;
+      Menu : Gtk_Menu renames GVD_Module (GVD_Module_ID).Initialize_Menu;
       Iter : Imported_Project_Iterator := Start (Get_Project (Kernel));
 
    begin
@@ -1441,9 +1446,8 @@ package body GVD_Module is
       Menu         : Gtk_Menu;
       --  ??? Should get the right process
    begin
-      GVD_Module_ID := new GVD_Module_User_Data;
-      GVD_Module_User_Data (GVD_Module_ID.all).Kernel :=
-        Kernel_Handle (Kernel);
+      GVD_Module_ID := new GVD_Module_Record;
+      GVD_Module (GVD_Module_ID).Kernel := Kernel_Handle (Kernel);
 
       Register_Module
         (Module                  => GVD_Module_ID,
@@ -1458,7 +1462,7 @@ package body GVD_Module is
                               Ref_Item => -"Data");
       Gtk_New (Menu);
       Set_Submenu (Mitem, Menu);
-      GVD_Module_User_Data (GVD_Module_ID.all).Initialize_Menu := Menu;
+      GVD_Module (GVD_Module_ID).Initialize_Menu := Menu;
       Kernel_Callback.Connect
         (Kernel, "project_view_changed",
          Kernel_Callback.To_Marshaller (On_View_Changed'Access),
@@ -1622,5 +1626,14 @@ package body GVD_Module is
    begin
       Free (X.File);
    end Free;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Id : in out GVD_Module_Record) is
+   begin
+      On_Debugger_Terminate (Id.Kernel, Id.Kernel);
+   end Destroy;
 
 end GVD_Module;
