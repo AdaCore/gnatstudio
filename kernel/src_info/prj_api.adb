@@ -3742,7 +3742,8 @@ package body Prj_API is
                      if S /= null then
                         if Normalized then
                            Sources (Index) := new String'
-                             (Normalize_Pathname (S.all));
+                             (Normalize_Pathname
+                              (S.all, Resolve_Links => False));
                            Free (S);
                         else
                            Sources (Index) := Basic_Types.String_Access (S);
