@@ -1488,7 +1488,9 @@ package body Src_Editor_Box is
       --  Else click in the text area
 
       else
-         if Event = null or else Get_Event_Type (Event) /= Button_Press then
+         if Event = null
+           or else Get_Event_Type (Event) not in Button_Press .. Button_Release
+         then
             Get_Iter_At_Mark (Editor.Source_Buffer, Start_Iter,
                               Get_Insert (Editor.Source_Buffer));
             Line   := Get_Line (Start_Iter);
