@@ -2412,13 +2412,16 @@ package body Src_Editor_Buffer is
    is
       Iter : Gtk_Text_Iter;
    begin
-      Assert (Me, Is_Valid_Position (Buffer, Line, Column),
-              "Invalid position for Set_Cursor_Position "
-              & Full_Name (Get_Filename (Buffer)) & Line'Img & Column'Img);
+      if not Is_Valid_Position (Buffer, Line, Column) then
+         Trace (Me, "invalid position for Set_Cursor_Position "
+                & Full_Name (Get_Filename (Buffer)) & Line'Img & Column'Img);
+         return;
+      end if;
 
       if not Buffer.Inserting then
          --  At this point, we know that the (Line, Column) position is
          --  valid, so we can safely get the iterator at this position.
+
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
          Place_Cursor (Buffer, Iter);
       end if;
@@ -3191,7 +3194,7 @@ package body Src_Editor_Buffer is
 
          if New_Timestamp > Buffer.Timestamp then
             if Force then
-               Response := Gtk_Response_Accept;
+               Response := Gtk_Response_No;
             else
                if not Ask_User then
                   return False;
@@ -3201,17 +3204,18 @@ package body Src_Editor_Buffer is
                  (Msg         => Base_Name (Buffer.Filename)
                   & (-" changed on disk. Really edit ?")
                   & ASCII.LF & ASCII.LF
-                  & (-"Clicking on Revert will reload the file from disk.")
+                  & (-"Clicking on Yes will ignore the file on disk and " &
+                      "continue editing the file in memory.")
                   & ASCII.LF
-                  & (-"Clicking on Yes will keep the current file in memory."),
+                  & (-"Clicking on No will reload the file from disk and " &
+                      "lose the current file in memory."),
                   Dialog_Type   => Confirmation,
                   Title         => -"File changed on disk",
                   Justification => Justify_Left,
                   Parent        => Get_Main_Window (Buffer.Kernel));
 
                Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
-               Button := Add_Button
-                 (Dialog, Stock_Revert_To_Saved, Gtk_Response_Accept);
+               Button := Add_Button (Dialog, Stock_No, Gtk_Response_No);
 
                Show_All (Dialog);
                Response := Run (Dialog);
@@ -3222,7 +3226,7 @@ package body Src_Editor_Buffer is
                when Gtk_Response_Yes =>
                   Buffer.Timestamp := New_Timestamp;
 
-               when Gtk_Response_Accept =>
+               when Gtk_Response_No =>
                   Get_Cursor_Position (Buffer, Line, Column);
                   Load_File
                     (Buffer,
