@@ -6,6 +6,7 @@ New features in GVD 1.0.3
 - Menu "Print" in the code editor contextual menu now prints the
   variable inside the command window instead of the canvas.
 - Support for preferences (menu Edit->Preferences)
+- Scrolling of assembly window outside of displayed range now possible
 
 New features in GVD 1.0.2
 
