@@ -289,9 +289,9 @@ package body Debugger.Gdb is
       --  ??? This is an arbitrary hard-coded limit, that should
       --  be enough. Might be nice to remove it though.
 
-      Num      : Natural := 0;
-      First    : Positive;
-      Last     : Positive := Matched (0).First;
+      Num   : Natural := 0;
+      First : Positive;
+      Last  : Positive := Matched (0).First;
 
    begin
       --  If we are processing an internal command, we cancel any question
@@ -301,8 +301,8 @@ package body Debugger.Gdb is
 
       if Get_Command_Mode (Get_Process (Debugger)) = Internal then
          Send (Debugger, "0",
-               Mode => Internal,
-               Empty_Buffer => False,
+               Mode            => Internal,
+               Empty_Buffer    => False,
                Wait_For_Prompt => False);
          return;
       end if;
@@ -1466,14 +1466,19 @@ package body Debugger.Gdb is
       Error_String : constant String := "void";
    begin
       Skip_To_String (S, Index, Error_String);
+
       if Index <= S'Last - Error_String'Length + 1 then
-         return Breakpoint_Identifier (0);
+         return 0;
       end if;
 
       Index := S'First;
       Skip_To_Char (S, Index, '=');
 
       return Breakpoint_Identifier'Value (S (Index + 1 .. S'Last));
+
+   exception
+      when Constraint_Error =>
+         return 0;
    end Get_Last_Breakpoint_Id;
 
    ----------------------
@@ -3437,7 +3442,7 @@ package body Debugger.Gdb is
             Blank := Debugger.WTX_Index;
             Debugger.WTX_Index := Debugger.WTX_Index + 1;
 
-            if Debugger.WTX_List.all (Debugger.WTX_Index) = '{' then
+            if Debugger.WTX_List (Debugger.WTX_Index) = '{' then
                Skip_To_Char (Debugger.WTX_List.all, Debugger.WTX_Index, '}');
             end if;
 
