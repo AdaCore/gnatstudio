@@ -125,7 +125,7 @@ package body Basic_Types is
    procedure Add_And_Grow (List         : in out Arr_Access;
                            Last_In_List : in out Index;
                            Item         : Data;
-                           Minimal_Inc  : Index := 1)
+                           Minimal_Inc  : Index := 10)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Arr, Arr_Access);
@@ -137,8 +137,8 @@ package body Basic_Types is
            (Index'First .. Index'First + Index'Max (Minimal_Inc, 20));
          Last_In_List := List'First;
       elsif Last_In_List > List'Last then
-         Inc := Index'Max (Minimal_Inc, List'Length);
-         Tmp := new Arr (List'First .. List'Last + Inc);
+         Inc := Index'Max (List'Last + Minimal_Inc, List'Length * Multiplier);
+         Tmp := new Arr (List'First .. Inc);
          Tmp (List'Range) := List.all;
          Unchecked_Free (List);
          List := Tmp;

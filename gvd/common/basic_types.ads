@@ -138,10 +138,14 @@ package Basic_Types is
       type Index is range <>;
       type Arr is array (Index range <>) of Data;
       type Arr_Access is access Arr;
+      Multiplier : Index := 2;
+      --  The amount by which to multiply the old size when the array needs to
+      --  be grown. Using 1 will result in a fixed growth, independent of the
+      --  current size of the array
    procedure Add_And_Grow (List         : in out Arr_Access;
                            Last_In_List : in out Index;
                            Item         : Data;
-                           Minimal_Inc  : Index := 1);
+                           Minimal_Inc  : Index := 10);
    --  Add a new element in the array pointed to by List, at location
    --  Last_In_List. The latter is incremented to reflect the future insertion
    --  point in LIst.
