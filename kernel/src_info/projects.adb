@@ -2035,6 +2035,7 @@ package body Projects is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Type_Data, Project_Type_Data_Access);
    begin
+      Reset (Project);
       Unchecked_Free (Project.Data.Imported_Projects);
       Unchecked_Free (Project.Data.Importing_Projects);
       Unchecked_Free (Project.Data.Registry);

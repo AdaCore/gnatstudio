@@ -1244,7 +1244,7 @@ package body Projects.Registry is
 
    procedure Destroy (Registry : in out Project_Registry) is
    begin
-      Reset (Registry, View_Only => False);
+      Unload_Project (Registry);
    end Destroy;
 
    ------------------
