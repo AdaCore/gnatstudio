@@ -103,8 +103,8 @@ package body Builder_Module is
    procedure Timeout_Xref_Destroy (D : in out Compute_Xref_Data_Access);
    --  Destroy the memory associated with an Xref_Timeout.
 
-   function Timeout_Compute_Xref (D : Compute_Xref_Data_Access)
-      return Boolean;
+   function Timeout_Compute_Xref
+     (D : Compute_Xref_Data_Access) return Boolean;
    --  Compute the cross-references for the next files in the project.
 
    procedure Set_Sensitive_Menus
