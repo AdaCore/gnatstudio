@@ -275,12 +275,12 @@ package body Glide_Result_View is
                        (View.Model, Location, Mark_Column,
                         Interpret_Command
                           (View.Kernel,
-                           "create_mark -l"
+                           "create_mark -l "
                              & Get_String (View.Model, Location, Line_Column)
-                           & " -c"
+                           & " -c "
                              & Get_String
                                (View.Model, Location, Column_Column)
-                           & " -L"
+                           & " -L "
                              & Get_String
                                (View.Model, Location, Length_Column)
                            & " " & File));
@@ -321,23 +321,20 @@ package body Glide_Result_View is
          if File /= "" then
             if not Is_Open (View.Kernel, File) then
                declare
-                  Line   :  constant String :=
-                    Get_String (Model, Iter, Line_Column);
-                  Column :  constant String :=
-                    Get_String (Model, Iter, Column_Column);
-                  Length :  constant String :=
-                    Get_String (Model, Iter, Length_Column);
+                  Line   :  constant Positive := Positive'Value
+                    (Get_String (Model, Iter, Line_Column));
+                  Column :  constant Positive := Positive'Value
+                    (Get_String (Model, Iter, Column_Column));
+                  Length :  constant Natural := Natural'Value
+                    (Get_String (Model, Iter, Length_Column));
 
-                  Col    : constant Natural := Natural'Value
-                    (Column (Column'First + 1 .. Column'Last));
                begin
                   Open_File_Editor
                     (View.Kernel,
                      File,
-                     Natural'Value (Line (Line'First + 1 .. Line'Last)),
-                     Col,
-                     Col + Natural'Value
-                       (Length (Length'First + 1 .. Length'Last)));
+                     Line,
+                     Column,
+                     Column + Length);
                   File_Opened (View, File);
                end;
             end if;
@@ -407,6 +404,62 @@ package body Glide_Result_View is
               Convert (View.Leaf_Color'Address));
       end if;
    end Fill_Iter;
+
+   ---------------
+   -- Next_Item --
+   ---------------
+
+   procedure Next_Item (View : access Result_View_Record'Class) is
+      Iter          : Gtk_Tree_Iter;
+      Path          : Gtk_Tree_Path;
+      File_Path     : Gtk_Tree_Path;
+      Category_Path : Gtk_Tree_Path;
+      Model         : Gtk_Tree_Model;
+      Success       : Boolean;
+
+   begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Path := Get_Path (View.Model, Iter);
+
+      if Get_Depth (Path) /= 3 then
+         Path_Free (Path);
+         return;
+      end if;
+
+      File_Path := Copy (Path);
+      Success := Up (File_Path);
+
+      Category_Path := Copy (File_Path);
+      Success := Up (Category_Path);
+
+      Next (Path);
+
+      if Get_Iter (View.Model, Path) = Null_Iter then
+         Next (File_Path);
+
+         if Get_Iter (View.Model, File_Path) = Null_Iter then
+            File_Path := Copy (Category_Path);
+            Down (File_Path);
+         end if;
+
+         Success := Expand_Row (View.Tree, File_Path, True);
+         Path := Copy (File_Path);
+         Down (Path);
+      end if;
+
+      Select_Path (Get_Selection (View.Tree), Path);
+      Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
+      Goto_Location (View);
+
+      Path_Free (File_Path);
+      Path_Free (Path);
+      Path_Free (Category_Path);
+   end Next_Item;
 
    -----------------------
    -- Get_Category_File --
