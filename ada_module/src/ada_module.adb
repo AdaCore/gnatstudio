@@ -967,8 +967,9 @@ package body Ada_Module is
         (Gnew_Boolean
           (Name    => "Ada-Format-Operators",
            Default => False,
-           Blurb   => -"Indent case statements with an extra level",
-           Nick    => -"RM style case indentation"));
+           Blurb   =>
+             -"Whether to add spaces around operators and delimiters",
+           Nick    => -"Format operators/delimiters"));
       Register_Property
         (Kernel, Param_Spec (Ada_Format_Operators), -"Editor:Ada");
 
