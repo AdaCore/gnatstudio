@@ -98,6 +98,11 @@ package Odd.Text_Boxes is
       Y    : Glib.Gint) return Natural;
    --  Return the line for a given location in pixels.
 
+   function Index_From_Line
+     (Box : access Odd_Text_Box_Record'Class; Line : Natural)
+     return Natural;
+   --  Return the index in the buffer at which Line starts.
+
    procedure Hide_Current_Line_Button (Box : access Odd_Text_Box_Record);
    --  Hide the arrow that shows the current line.
 
@@ -160,11 +165,6 @@ package Odd.Text_Boxes is
    --  the text child (which is the default behavior).
    --  It can be overriden if one wants to provide syntax highlighting.
 
-   function Get_Entity
-     (Box : access Odd_Text_Box_Record'Class;
-      X, Y : Glib.Gint) return String;
-   --  Return the entity pointed to by the mouse.
-
    procedure Get_Entity_Area
      (Box    : access Odd_Text_Box_Record'Class;
       X, Y   : in Glib.Gint;
@@ -173,6 +173,17 @@ package Odd.Text_Boxes is
    --  Return the entity pointed to by the mouse, as well as the smallest
    --  rectangle containing the entity. The X,Y coordinates of the rectangle
    --  should be relative to the X,Y arguments passed to the procedure.
+   --  Area is not relevant if the Entity returned is null.
+
+   procedure Highlight_Range
+     (Box    : access Odd_Text_Box_Record;
+      From, To : Glib.Gint;
+      Line   : Natural;
+      Fore  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Back  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color);
+   --  Highlight a specific range in the text area (the background becomes
+   --  Color). If any range was already highlighted, it is restored to the
+   --  default background color.
 
 private
    type Odd_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with record
@@ -190,5 +201,10 @@ private
       Font                : Gdk.Font.Gdk_Font;
       Line_Height         : Glib.Gint;
       --  Height in pixel of a single line in the editor
+
+      Highlight_Start     : Glib.Gint := 0;
+      Highlight_End       : Glib.Gint := 0;
+      Highlight_Index     : Glib.Gint := 0;
+      Highlight_Index_End : Glib.Gint := 0;
    end record;
 end Odd.Text_Boxes;

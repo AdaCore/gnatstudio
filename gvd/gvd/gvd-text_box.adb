@@ -320,6 +320,34 @@ package body Odd.Text_Boxes is
       return Box.Buttons;
    end Get_Buttons;
 
+   ---------------------
+   -- Index_From_Line --
+   ---------------------
+
+   function Index_From_Line
+     (Box : access Odd_Text_Box_Record'Class; Line : Natural)
+     return Natural
+   is
+      Index : Natural;
+      Current_Line : Natural := 1;
+   begin
+      if Box.Buffer = null then
+         return 0;
+      end if;
+
+      Index := Box.Buffer'First;
+      while Index <= Box.Buffer'Last
+        and then Current_Line < Line
+      loop
+         if Box.Buffer (Index) = ASCII.LF then
+            Current_Line := Current_Line + 1;
+         end if;
+
+         Index := Index + 1;
+      end loop;
+      return Index;
+   end Index_From_Line;
+
    ------------
    -- Insert --
    ------------
@@ -417,6 +445,8 @@ package body Odd.Text_Boxes is
       Menu    : Gtk_Menu;
       Line    : Natural := 0;
       Y       : Gint;
+      Area    : Gdk.Rectangle.Gdk_Rectangle;
+      Entity  : Odd.Types.String_Access;
    begin
       case Get_Button (Event) is
          when 3 =>
@@ -425,9 +455,15 @@ package body Odd.Text_Boxes is
                Y := Gint (Get_Y (Event)) - 1
                  + Gint (Get_Value (Get_Vadj (Box.Child)));
                Line := Line_From_Pixels (Box, Y);
-               Menu := Child_Contextual_Menu
-                 (Box, Line, Get_Entity
-                  (Box, Gint (Get_X (Event)), Gint (Get_Y (Event))));
+               Get_Entity_Area
+                 (Box, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+                  Area, Entity);
+               if Entity /= null then
+                  Menu := Child_Contextual_Menu (Box, Line, Entity.all);
+                  Free (Entity);
+               else
+                  Menu := Child_Contextual_Menu (Box, Line, "");
+               end if;
 
                Popup (Menu,
                       Button        => Gdk.Event.Get_Button (Event),
@@ -466,6 +502,9 @@ package body Odd.Text_Boxes is
 
       Box.Buffer := Buffer;
       Delete_Text (Box.Child);
+
+      --  No more highlighting is done
+      Box.Highlight_Start := 0;
    end Set_Buffer;
 
    -----------------
@@ -574,124 +613,6 @@ package body Odd.Text_Boxes is
       return Box.Buffer;
    end Get_Buffer;
 
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   function Get_Entity
-     (Box : access Odd_Text_Box_Record'Class;
-      X, Y : Gint) return String
-   is
-      Line    : Natural := 0;
-      Index   : Integer;
-      Current_Line : Natural := 1;
-      Start_Index : Integer;
-      Min : Gint := Gint (Guint'Min (Get_Selection_Start_Pos (Box.Child),
-                                     Get_Selection_End_Pos (Box.Child)));
-      Max : Gint := Gint (Guint'Max (Get_Selection_Start_Pos (Box.Child),
-                                     Get_Selection_End_Pos (Box.Child)));
-      X2 : Gint;
-   begin
-      if Box.Buffer /= null then
-         Index := Box.Buffer'First;
-
-         Line := Line_From_Pixels
-           (Box, Y - 1 + Gint (Get_Value (Get_Vadj (Box.Child))));
-         X2 := X / Char_Width (Box.Font, Character' ('m'))
-           - Invisible_Column_Width (Box) + 1;
-
-         if X2 <= 0 then
-            Index := -1;
-         else
-            while Index <= Box.Buffer'Last
-              and then Current_Line < Line
-            loop
-               if Box.Buffer (Index) = ASCII.LF then
-                  Current_Line := Current_Line + 1;
-               end if;
-
-               Index := Index + 1;
-            end loop;
-
-            --  Go to the right column, but make sure we are still on
-            --  the current line.
-            --  Index is the index in the buffer, while J is the current
-            --  column number (after processing horizontal tabs).
-
-            Index := Index - Box.Buffer'First;
-            declare
-               J : Integer := 1;
-            begin
-               while J <= Integer (X2) loop
-
-                  Index := Index + 1;
-                  exit when Box.Buffer'Last < Index
-                    or else Box.Buffer (Index) = ASCII.LF;
-
-                  if Box.Buffer (Index) = ASCII.HT
-                    and then J mod Tab_Size /= 0
-                  then
-                     --  Go to the next column that is a multiple of Tab_Size
-                     J := (1 + J / Tab_Size) * Tab_Size + 1;
-                  else
-                     J := J + 1;
-                  end if;
-               end loop;
-            end;
-         end if;
-
-         Start_Index := Index +
-           Line * Integer (Invisible_Column_Width (Box));
-
-         if Get_Has_Selection (Box.Child)
-           and then Min <= Gint (Start_Index)
-           and then Gint (Start_Index) <= Max
-         then
-            declare
-               S : String := Get_Chars (Box.Child, Min, Max);
-            begin
-               for J in S'Range loop
-
-                  if S (J) = ASCII.LF then
-                     Max := Gint (J - S'First) + Min;
-                     exit;
-                  end if;
-               end loop;
-
-               return Get_Chars (Box.Child, Min, Max);
-            end;
-         else
-            if Index < 0 or Index > Box.Buffer'Last then
-               return "";
-            else
-               Start_Index := Index;
-               while Start_Index >= Box.Buffer'First
-                 and then (Is_Letter (Box.Buffer (Start_Index))
-                           or else
-                 Is_Digit (Box.Buffer (Start_Index))
-                 or else
-                 Box.Buffer (Start_Index) = '_')
-               loop
-                  Start_Index := Start_Index - 1;
-               end loop;
-               while Index <= Box.Buffer'Last
-                 and then (Is_Letter (Box.Buffer (Index))
-                           or else
-                 Is_Digit (Box.Buffer (Index))
-                 or else
-                 Box.Buffer (Index) = '_')
-               loop
-                  Index := Index + 1;
-               end loop;
-               return Box.Buffer (Start_Index + 1 .. Index - 1);
-            end if;
-         end if;
-
-      end if;
-      return "";
-
-   end Get_Entity;
-
    ---------------------
    -- Get_Entity_Area --
    ---------------------
@@ -705,7 +626,6 @@ package body Odd.Text_Boxes is
       Line         : Natural := 0;
       Index        : Integer;
       Line_Index   : Integer;
-      Current_Line : Natural := 1;
       Start_Index  : Integer;
       X2           : Gint;
 
@@ -722,16 +642,7 @@ package body Odd.Text_Boxes is
          if X2 <= 0 then
             Index := -1;
          else
-            while Index <= Box.Buffer'Last
-              and then Current_Line < Line
-            loop
-               if Box.Buffer (Index) = ASCII.LF then
-                  Current_Line := Current_Line + 1;
-                  Line_Index := Index;
-               end if;
-
-               Index := Index + 1;
-            end loop;
+            Index := Index_From_Line (Box, Line);
 
             --  Go to the right column, but make sure we are still on
             --  the current line.
@@ -739,6 +650,7 @@ package body Odd.Text_Boxes is
             --  column number (after processing horizontal tabs).
 
             Index := Index - Box.Buffer'First;
+            Line_Index := Index;
 
             declare
                J : Integer := 1;
@@ -787,25 +699,86 @@ package body Odd.Text_Boxes is
                Index := Index + 1;
             end loop;
 
-            Area.X := Gint16
-              (Integer (-X) +
-                (Start_Index - Line_Index +
-                  Integer (Invisible_Column_Width (Box))) *
-                Integer (Char_Width (Box.Font, Character' ('m'))));
-            Area.Width := Guint16
-              (Gint ((Index - Start_Index - 1)) *
-                (Char_Width (Box.Font, Character' ('m'))));
+            if Index >= Start_Index + 2 then
+               Entity := new String'
+                 (Box.Buffer (Start_Index + 1 .. Index - 1));
 
-            Area.Y := -Gint16
-              ((Y mod (Get_Ascent (Box.Font) + Get_Descent (Box.Font))));
+               Area.X := Gint16
+                 (Integer (-X) +
+                  (Start_Index - Line_Index +
+                   Integer (Invisible_Column_Width (Box))) *
+                  Integer (Char_Width (Box.Font, Character' ('m'))));
 
-            Area.Height :=
-              Guint16 (Get_Ascent (Box.Font) + Get_Descent (Box.Font));
+               Area.Width := Guint16
+                 (Gint ((Index - Start_Index - 1)) *
+                  (Char_Width (Box.Font, Character' ('m'))));
 
-            Entity := new String'
-              (Box.Buffer (Start_Index + 1 .. Index - 1));
+               Area.Y := -Gint16
+                 ((Y mod (Get_Ascent (Box.Font) + Get_Descent (Box.Font))));
+
+               Area.Height :=
+                 Guint16 (Get_Ascent (Box.Font) + Get_Descent (Box.Font));
+            end if;
          end if;
       end if;
    end Get_Entity_Area;
+
+   ---------------------
+   -- Highlight_Range --
+   ---------------------
+
+   procedure Highlight_Range
+     (Box    : access Odd_Text_Box_Record;
+      From, To : Glib.Gint;
+      Line   : Natural;
+      Fore  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Back  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color)
+   is
+   begin
+      --  If this range is currently highlighted, do nothing for efficiency
+
+      if From = Box.Highlight_Start
+        and then To = Box.Highlight_End
+      then
+         return;
+      end if;
+
+      --  Restore the previous range tothe default color
+
+      if Box.Highlight_Start /= 0 then
+         Freeze (Box.Child);
+         Delete_Text
+           (Box.Child,
+            Gint (Box.Highlight_Index),
+            Gint (Box.Highlight_Index_End));
+         Set_Point (Box.Child, Guint (Box.Highlight_Index));
+         Insert
+           (Box,
+            Chars => Box.Buffer (Integer (Box.Highlight_Start)
+                                 .. Integer (Box.Highlight_End) - 1));
+         Box.Highlight_Start := 0;
+         Thaw (Box.Child);
+      end if;
+
+      --  Highlight the new range
+      if From /= 0 and then To /= 0 then
+         Freeze (Box.Child);
+         Box.Highlight_Start := From;
+         Box.Highlight_End   := To;
+         Box.Highlight_Index := From
+           + Gint (Line) * Invisible_Column_Width (Odd_Text_Box (Box)) - 1;
+         Box.Highlight_Index_End := To
+           + Gint (Line) * Invisible_Column_Width (Odd_Text_Box (Box)) - 1;
+
+         Delete_Text (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
+         Set_Point (Box.Child, Guint (Box.Highlight_Index));
+         Insert
+           (Box,
+            Fore  => Fore,
+            Back  => Back,
+            Chars => Box.Buffer (Integer (From) .. Integer (To) - 1));
+         Thaw (Box.Child);
+      end if;
+   end Highlight_Range;
 
 end Odd.Text_Boxes;
