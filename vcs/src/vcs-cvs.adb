@@ -1030,7 +1030,6 @@ package body VCS.CVS is
         (Kernel,
          Current_File,
          VCS_CVS_Module_Name,
-         Index * 6 + 2,
          new Line_Information_Array'(A));
 
       return True;
