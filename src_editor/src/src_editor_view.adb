@@ -38,15 +38,12 @@ with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gtk;                         use Gtk;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Handlers;                use Gtk.Handlers;
-with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Text_Attributes;         use Gtk.Text_Attributes;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Layout;             use Gtk.Text_Layout;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Widget;                  use Gtk.Widget;
-with GUI_Utils;                   use GUI_Utils;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Defaults;         use Src_Editor_Defaults;
 with String_Utils;                use String_Utils;
@@ -144,11 +141,6 @@ package body Src_Editor_View is
       Left_Window : Gdk.Window.Gdk_Window;
       Area        : Gdk_Rectangle);
    --  Redraw the line numbers for Area of the given Left_Window.
-
-   function View_Contextual_Menu
-     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event)
-      return Gtk_Menu;
-   --  Return the contextual menu to use for the source view.
 
    ----------------
    -- Realize_Cb --
@@ -378,56 +370,6 @@ package body Src_Editor_View is
 
    end Redraw_Line_Numbers;
 
-   --------------------------
-   -- View_Contextual_Menu --
-   --------------------------
-
-   function View_Contextual_Menu
-     (View : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Gtk_Menu
-   is
-      V : Source_View := Source_View (View);
-      Item : Gtk_Menu_Item;
-   begin
-      if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
-         if V.Left_Contextual_Menu /= null then
-            Destroy (V.Left_Contextual_Menu);
-         end if;
-
-         Gtk_New (V.Left_Contextual_Menu);
-         Gtk_New (Item, "Go to line");
-         Add (V.Left_Contextual_Menu, Item);
-         Gtk_New (Item, "Go to previous reference");
-         Add (V.Left_Contextual_Menu, Item);
-         Gtk_New (Item, "Go to file spec/body");
-         Add (V.Left_Contextual_Menu, Item);
-         Gtk_New (Item, "Go to parent unit");
-         Add (V.Left_Contextual_Menu, Item);
-
-         return V.Left_Contextual_Menu;
-
-      else
-         if V.Contextual_Menu /= null then
-            Destroy (V.Contextual_Menu);
-         end if;
-
-         Gtk_New (V.Contextual_Menu);
-         Gtk_New (Item, "Go to declaration/body");
-         Add (V.Contextual_Menu, Item);
-         Gtk_New (Item, "Go to previous reference");
-         Add (V.Contextual_Menu, Item);
-         Gtk_New (Item, "List references");
-         Add (V.Contextual_Menu, Item);
-         Gtk_New (Item);
-         Add (V.Contextual_Menu, Item);
-         Gtk_New (Item, "Go to file spec/body");
-         Add (V.Contextual_Menu, Item);
-         Gtk_New (Item, "Go to parent unit");
-         Add (V.Contextual_Menu, Item);
-         return V.Contextual_Menu;
-      end if;
-   end View_Contextual_Menu;
-
    -------------
    -- Gtk_New --
    -------------
@@ -460,7 +402,6 @@ package body Src_Editor_View is
       --  done at that point.
 
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
-      Register_Contextual_Menu (View, View_Contextual_Menu'Access);
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
       View.Saved_Insert_Mark := Create_Mark (Buffer, Where => Insert_Iter);
