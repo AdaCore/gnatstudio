@@ -176,6 +176,10 @@ read_lock_file(char *lock_file, unsigned long *lck_sn_pid,char *lck_host,
 static	int
 check_running(char *lock_file)
 {
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 1024
+#endif
+
   /* This is a legacy variable. */
   char dummy[MAXHOSTNAMELEN + 2];
   
@@ -200,7 +204,8 @@ check_running(char *lock_file)
       /* Yes, it is unusable. */
       return -1;
     }
-  
+
+#ifndef _WIN32
   /* Does the S-N process still exist? */
   if (kill(0, (pid_t) lck_sn_pid) == -1 && errno == ESRCH)
     {
@@ -236,6 +241,7 @@ check_running(char *lock_file)
       /* Here it is pretty sure that the database project has died. */
       return -1;
     }
+#endif
   
   /* Return TRUE or -1? Bleah. */
   return TRUE;
