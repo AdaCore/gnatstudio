@@ -206,6 +206,7 @@ package body Codefix.Errors_Manager is
       Codefix.Formal_Errors.Free (This.Solutions);
       Free (This.Category);
       Free (This.Fixed);
+      Free (This.Solution_Chosen);
    end Free;
 
    --------------
@@ -225,6 +226,18 @@ package body Codefix.Errors_Manager is
    begin
       return Length (Data (This).Solutions);
    end Get_Number_Of_Fixes;
+
+   ----------
+   -- Undo --
+   ----------
+
+   procedure Undo (This : Error_Id; Current_Text : Text_Navigator_Abstr'Class)
+   is
+   begin
+      Undo (Data (This).Solution_Chosen.all, Current_Text);
+      Data (This).Fixed.all := False;
+      Free (Data (This).Solution_Chosen.all);
+   end Undo;
 
    -------------
    -- Analyse --
@@ -323,8 +336,8 @@ package body Codefix.Errors_Manager is
          This.Error_Cb);
       Commit (New_Extract, Current_Text);
 
-      Free (New_Extract);
       Data (Error).Fixed.all := True;
+      Extract (Data (Error).Solution_Chosen.all) := New_Extract;
    end Validate_And_Commit;
 
    -------------------------
@@ -347,8 +360,8 @@ package body Codefix.Errors_Manager is
 
       Commit (New_Extract, Current_Text);
 
-      Free (New_Extract);
       Data (Error).Fixed.all := True;
+      Extract (Data (Error).Solution_Chosen.all) := New_Extract;
    end Validate_And_Commit;
 
    ------------
@@ -489,6 +502,16 @@ package body Codefix.Errors_Manager is
    begin
       This.Error_Cb := Error_Cb;
    end Set_Error_Cb;
+
+   ------------------------
+   -- Get_Previous_Error --
+   ------------------------
+
+   function Get_Previous_Error
+     (This : Correction_Manager; Error : Error_Id) return Error_Id is
+   begin
+      return Prev (This.Potential_Corrections, Error);
+   end Get_Previous_Error;
 
    ----------
    -- Free --
