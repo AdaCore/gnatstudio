@@ -124,14 +124,16 @@ package body Navigation_Module is
          --  an unnecessary step and could be avoided.
 
          declare
-            File      : constant String  := Get_String (Data (Data'First));
-            Line      : constant Gint    := Get_Int (Data (Data'First + 1));
-            Column    : constant Gint    := Get_Int (Data (Data'First + 2));
-            Highlight : constant Boolean :=
-              Get_Boolean (Data (Data'First + 3));
-            Navigate  : constant Boolean :=
+            File       : constant String  := Get_String (Data (Data'First));
+            Line       : constant Gint    := Get_Int (Data (Data'First + 1));
+            Column     : constant Gint    := Get_Int (Data (Data'First + 2));
+            Column_End : constant Gint    := Get_Int (Data (Data'First + 3));
+            Highlight  : constant Boolean :=
               Get_Boolean (Data (Data'First + 4));
-            Success   : Boolean;
+            Navigate   : constant Boolean :=
+              Get_Boolean (Data (Data'First + 5));
+            Success    : Boolean;
+
          begin
             if not Navigate then
                return False;
@@ -142,6 +144,7 @@ package body Navigation_Module is
                     File,
                     Integer (Line),
                     Integer (Column),
+                    Integer (Column_End),
                     Highlight);
 
             if N_Data.Current_Location /= null then
