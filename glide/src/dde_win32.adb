@@ -20,13 +20,18 @@
 
 --  Windows implementation
 
+with System;
 with Interfaces.C;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Exceptions;    use Ada.Exceptions;
+
 with Glide_Kernel.Standard_Hooks;
-with System;
-with VFS; use VFS;
+with Traces;            use Traces;
+with VFS;               use VFS;
 
 package body DDE is
+
+   Me : constant Debug_Handle := Create ("DDE");
 
    type DDE_Operation is (Unsupported, FileOpen);
    --  DDE operations supported by GPS
@@ -132,8 +137,6 @@ package body DDE is
       dwData1    : DWORD;
       dwData2    : DWORD) return HDDEDATA
    is
-      Data_Raw : System.Address;
-      Data_Len : aliased DWORD;
       Res      : INT;
       pragma Unreferenced (wFmt, hCnv, hsz1, hsz2, dwData1, dwData2, Res);
 
@@ -146,9 +149,11 @@ package body DDE is
             return 1;
 
          when XTYP_EXECUTE =>
-            Data_Raw := DdeAccessData (hData, Data_Len'Unchecked_Access);
 
             declare
+               Data_Len : aliased DWORD;
+               Data_Raw : constant System.Address :=
+                 DdeAccessData (hData, Data_Len'Unchecked_Access);
                Data : String (1 .. Integer (Data_Len));
                for Data'Address use Data_Raw;
 
@@ -171,8 +176,17 @@ package body DDE is
                   when Unsupported =>
                      null;
                   when FileOpen =>
-                     Glide_Kernel.Standard_Hooks.Open_File_Editor
-                       (Kernel_Local, Create (Full_Filename => Argument));
+                     begin
+                        Glide_Kernel.Standard_Hooks.Open_File_Editor
+                          (Kernel_Local, Create (Full_Filename => Argument));
+                     exception
+                        when Constraint_Error =>
+                           --  ??? Currently Constraint_Error is raised if
+                           --  file editor is unavailable. This needs redesign
+                           --  if better feedback from invalid hooks is
+                           --  available.
+                           null;
+                     end;
                end case;
 
             end;
@@ -185,6 +199,10 @@ package body DDE is
 
       return 1;
 
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return 1;
    end DDE_Callback;
 
    -------------------------
