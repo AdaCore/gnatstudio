@@ -99,7 +99,6 @@ package body Welcome is
       Sep          : Gtk_Separator;
       Size         : Gtk_Size_Group;
       Stock_Button : Gtk_Widget;
-      pragma Unreferenced (Stock_Button);
 
    begin
       Screen := new Welcome_Screen_Record;
@@ -229,6 +228,7 @@ package body Welcome is
       Pack_End (Box, Sep, Expand => False, Padding => 5);
 
       Stock_Button := Add_Button (Screen, Stock_Ok, Gtk_Response_OK);
+      Grab_Default (Stock_Button);
       Stock_Button := Add_Button (Screen, Stock_Quit, Gtk_Response_Close);
    end Gtk_New;
 
