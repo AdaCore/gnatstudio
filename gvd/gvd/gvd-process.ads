@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -35,7 +35,6 @@ with Gtk.Dialog;
 with Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Main;
-with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Window;
 with Gtk.Widget;
@@ -54,23 +53,12 @@ with Histories;
 
 with Interactive_Consoles; use Interactive_Consoles;
 
+with GVD.Call_Stack;       use GVD.Call_Stack;
+
 package GVD.Process is
 
    Command_History_Collapse_Entries : constant Boolean := True;
    --  Whether we should collapse entries in the history list.
-
-   ----------------------
-   -- Backtrace window --
-   ----------------------
-
-   type Stack_List_Mask is mod 2 ** 16;
-   Frame_Num       : constant Stack_List_Mask := 2 ** 0;
-   Program_Counter : constant Stack_List_Mask := 2 ** 1;
-   Subprog_Name    : constant Stack_List_Mask := 2 ** 2;
-   Params          : constant Stack_List_Mask := 2 ** 3;
-   File_Location   : constant Stack_List_Mask := 2 ** 4;
-   All_Info        : constant Stack_List_Mask := 2 ** 5 - 1;
-   --  Lists the information to be displayed in the stack list window.
 
    ---------------------
    -- Visual_Debugger --
@@ -128,8 +116,8 @@ package GVD.Process is
       Stack_List_Select_Id    : Gtk.Handlers.Handler_Id;
       Destroy_Id              : Gtk.Handlers.Handler_Id;
 
-      Stack_Scrolledwindow    : Gtk_Scrolled_Window;
-      Stack_List              : Gtk_Clist;
+      Stack                   : GVD.Call_Stack.Call_Stack;
+
       Data_Scrolledwindow     : Gtk_Scrolled_Window;
       Data_Canvas             : Interactive_Canvas;
 
@@ -178,9 +166,6 @@ package GVD.Process is
       Timeout_Id              : Gtk.Main.Timeout_Handler_Id := 0;
       --  Timeout Id used to handle async. commands.
 
-      Backtrace_Mask          : Stack_List_Mask := Subprog_Name;
-      --  What columns to be displayed in the stack list window
-
       Current_Command         : String_Access;
       --  Async command currently running in the underlying debugger, if any.
 
@@ -207,7 +192,6 @@ package GVD.Process is
       --  optimize the handling of regexp filters.
 
       Contextual_Menu         : Gtk.Menu.Gtk_Menu;
-      Call_Stack_Contextual_Menu : Gtk.Menu.Gtk_Menu;
 
       Separate_Data           : Boolean;
       --  Store current value of the Separate_Data preference.
@@ -301,12 +285,6 @@ package GVD.Process is
 
    procedure Create_Call_Stack (Process : access Visual_Debugger_Record'Class);
    --  Create the call stack widget associated with Process.
-
-   function Call_Stack_Contextual_Menu
-     (Process : access Visual_Debugger_Record'Class)
-      return Gtk.Menu.Gtk_Menu;
-   --  Create (if necessary) and reset the contextual menu used in the
-   --  debugger call stack window.
 
    procedure Final_Post_Process
      (Process : access Visual_Debugger_Record'Class;
