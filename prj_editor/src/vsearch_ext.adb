@@ -298,19 +298,6 @@ package body Vsearch_Ext is
             Vsearch.Search_Idle_Handler := 0;
          end if;
       else
-         --  Update the contents of the combo boxes
-         if Get_Selection (Get_List (Vsearch.Pattern_Combo)) =
-           Widget_List.Null_List
-         then
-            Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, Pattern);
-
-            --  It sometimes happen that another entry is selected, for some
-            --  reason.
-            Set_Text (Vsearch.Pattern_Entry, Pattern);
-         end if;
-         Add_Unique_Combo_Entry (Vsearch.Replace_Combo,
-                                 Get_Text (Vsearch.Replace_Entry));
-
          Data := Find_Module (Get_Text (Get_Entry (Vsearch.Context_Combo)));
          Free (Vsearch.Last_Search_Context);
 
@@ -328,6 +315,24 @@ package body Vsearch_Ext is
                Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
             end if;
          end if;
+
+         --  Update the contents of the combo boxes
+         if Get_Selection (Get_List (Vsearch.Pattern_Combo)) =
+           Widget_List.Null_List
+         then
+            Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, Pattern);
+
+            --  It sometimes happen that another entry is selected, for some
+            --  reason. This also resets the options to the unwanted selection,
+            --  so we also need to override them.
+            Set_Text (Vsearch.Pattern_Entry, Pattern);
+            Set_Active (Vsearch.Case_Check, Options.Case_Sensitive);
+            Set_Active (Vsearch.Whole_Word_Check, Options.Whole_Word);
+            Set_Active (Vsearch.Regexp_Check, Options.Regexp);
+         end if;
+
+         Add_Unique_Combo_Entry
+           (Vsearch.Replace_Combo, Get_Text (Vsearch.Replace_Entry));
       end if;
 
       if Vsearch.Last_Search_Context /= null then
