@@ -26,6 +26,8 @@ with Prj;                       use Prj;
 with Prj.Env;                   use Prj.Env;
 with Traces;                    use Traces;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Basic_Types;
+with Prj_API;                   use Prj_API;
 
 package body Src_Info is
 
@@ -794,5 +796,72 @@ package body Src_Info is
    begin
       return Location.Column;
    end Get_Column;
+
+   ---------------------
+   -- Compute_Sources --
+   ---------------------
+
+   procedure Compute_Sources
+     (Iterator     : in out LI_Handler_Iterator'Class;
+      Project_View : Prj.Project_Id;
+      Recursive    : Boolean) is
+   begin
+      Basic_Types.Free (Iterator.Source_Files);
+      Iterator.Source_Files := Get_Source_Files
+        (Project_View => Project_View,
+         Recursive    => Recursive,
+         Full_Path    => True);
+      Iterator.Current_File := Iterator.Source_Files'First;
+   end Compute_Sources;
+
+   ---------------------
+   -- Compute_Sources --
+   ---------------------
+
+   procedure Compute_Sources
+     (Iterator    : in out LI_Handler_Iterator'Class;
+      Source_File : String) is
+   begin
+      Basic_Types.Free (Iterator.Source_Files);
+      Iterator.Source_Files := new Basic_Types.String_Array'
+        (1 => new String' (Source_File));
+      Iterator.Current_File := Iterator.Source_Files'First;
+   end Compute_Sources;
+
+   -------------------------
+   -- Current_Source_File --
+   -------------------------
+
+   function Current_Source_File
+     (Iterator : LI_Handler_Iterator'Class) return String
+   is
+      use type Basic_Types.String_Array_Access;
+   begin
+      if Iterator.Source_Files /= null
+        and then Iterator.Current_File <= Iterator.Source_Files'Last
+      then
+         return Iterator.Source_Files (Iterator.Current_File).all;
+      else
+         return "";
+      end if;
+   end Current_Source_File;
+
+   ----------------------
+   -- Next_Source_File --
+   ----------------------
+
+   procedure Next_Source_File (Iterator : in out LI_Handler_Iterator'Class) is
+   begin
+      Iterator.Current_File := Iterator.Current_File + 1;
+   end Next_Source_File;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iterator : in out LI_Handler_Iterator'Class) is
+   begin
+      Basic_Types.Free (Iterator.Source_Files);
+   end Destroy;
 
 end Src_Info;

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with HTables;
+with Basic_Types;
 with Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Prj;
@@ -133,6 +134,37 @@ package Src_Info is
    --  Return True if the given Dep is an explicit dependency from the
    --  implementation part.
 
+   --------------------------
+   --  LI handler iterator --
+   --------------------------
+
+   type LI_Handler_Iterator is abstract tagged private;
+   --  An iterator to generate the LI database for a set of source files.
+   --  See the functions Generate_LI_For_Source and Generate_LI_For_Project
+   --  for the factories used to create this type.
+   --  See the private part for some subprograms that can be helpful when
+   --  writting your own iterators.
+
+   procedure Continue
+     (Iterator : in out LI_Handler_Iterator;
+      Finished : out Boolean) is abstract;
+   --  This function should move to the next source file that has been
+   --  analyzed, providing the previous file is fully parsed.
+   --  If the files are analyzed by external processes, the call to
+   --  Generate_LI_For_Project would for instance start the external process
+   --  for the first file, and when Next is called, it should check that the
+   --  first process as finished executing before processing the next file.
+   --
+   --  If an extra phase needs to be done after parsing all the source files,
+   --  it should also be done as a result of a call to Next.
+   --
+   --  Nothing needs to be done if the previous source file hasn't been fully
+   --  analyzed yet.
+   --
+   --  Finished should be True if the Iterator has finished regenerating the
+   --  database. The memory used for the iterator should be freed at the same
+   --  time.
+
    ------------------
    --  LI handlers --
    ------------------
@@ -182,8 +214,31 @@ package Src_Info is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String) is abstract;
-   --  Parse all the LI information in the directory In_Directory, and store it
-   --  in the internal structures
+   --  Parse all the existing LI information in the directory In_Directory, and
+   --  store it in the internal structures. No recompilation or parsing of the
+   --  sources needs to be done in general.
+
+   function Generate_LI_For_Source
+     (Handler       : access LI_Handler_Record;
+      Root_Project  : Prj.Project_Id;
+      File_Project  : Prj.Project_Id;
+      Full_Filename : String) return LI_Handler_Iterator'Class is abstract;
+   --  Generate the LI information for a given file. In Ada, this means
+   --  recompiling the file so as to generate the corresponding ALI
+   --  file. However, for some languages the database can only be regenerated
+   --  by parsing all the files, and so nothing should be done in this
+   --  subprogram.
+
+   function Generate_LI_For_Project
+     (Handler       : access LI_Handler_Record;
+      Root_Project  : Prj.Project_Id;
+      Project       : Prj.Project_Id;
+      Recursive     : Boolean := False)
+      return LI_Handler_Iterator'Class is abstract;
+   --  Generate the LI information for all the source files in Project (and all
+   --  its imported projects if Recursive is True).
+   --  This function should do as few work as possible, and the iterator will
+   --  be called until all the files are processed.
 
    --------------
    -- Entities --
@@ -863,6 +918,41 @@ private
    end record;
    --  The list of LI_File is implemented as a hash-table rather than
    --  a plain chained list to improve the lookup performances.
+
+   --------------------------
+   --  LI handler iterator --
+   --------------------------
+
+   type LI_Handler_Iterator is abstract tagged record
+      Source_Files : Basic_Types.String_Array_Access;
+      Current_File : Integer;
+   end record;
+
+   procedure Compute_Sources
+     (Iterator     : in out LI_Handler_Iterator'Class;
+      Project_View : Prj.Project_Id;
+      Recursive    : Boolean);
+   --  Compute the list of source files that will need to be analyzed by the
+   --  iterator. Elements from this list can be read using Current_Source_File.
+   --
+   --  This subprogram is provided as a help when writting your own iterators.
+
+   procedure Compute_Sources
+     (Iterator    : in out LI_Handler_Iterator'Class;
+      Source_File : String);
+   --  The list of files will be a single file.
+
+   function Current_Source_File
+     (Iterator : LI_Handler_Iterator'Class) return String;
+   --  Return the full path name to the next source file that needs to be
+   --  analyzed by the iterator.
+
+   procedure Next_Source_File (Iterator : in out LI_Handler_Iterator'Class);
+   --  Move to the next source file.
+   --  The empty string "" is returned if there are no more source files.
+
+   procedure Destroy (Iterator : in out LI_Handler_Iterator'Class);
+   --  Free the memory used by the list of source files.
 
    -----------------------------
    -- LI_File_HTable services --
