@@ -1056,4 +1056,13 @@ package body Src_Info is
       return Location.Column;
    end Get_Column;
 
+   ---------------------
+   -- Get_Entity_Name --
+   ---------------------
+
+   function Get_Entity_Name (Decl : E_Declaration_Info) return String is
+   begin
+      return Decl.Declaration.Name.all;
+   end Get_Entity_Name;
+
 end Src_Info;

@@ -193,6 +193,12 @@ package Src_Info is
    --  associated with the same LI file.
    --  This name is used as an index into the LI_File_List.
 
+   function Case_Insensitive_Identifiers (Handler : access LI_Handler_Record)
+      return Boolean is abstract;
+   --  Return True if the language associated with Handler is case-insensitive.
+   --  Note that for case insensitive languages, the identifier names must be
+   --  storer in lower cases in the LI structure.
+
    --------------
    -- Entities --
    --------------
@@ -214,6 +220,11 @@ package Src_Info is
    function Get_Line   (Location : File_Location) return Positive;
    function Get_Column (Location : File_Location) return Positive;
    --  Return the fields of a location
+
+   function Get_Entity_Name (Decl : E_Declaration_Info) return String;
+   --  Return the name of the entity.
+   --  Note that this name will always be lower-case for case-insensitive
+   --  languages
 
 private
 
@@ -427,6 +438,9 @@ private
 
    type E_Declaration is record
       Name            : String_Access;
+      --  Name of the entity. For case-insensitive languages, this must be all
+      --  lower-cases.
+
       Location        : File_Location;
       Kind            : E_Kind;
       Parent_Location : File_Location;
@@ -570,6 +584,9 @@ private
    No_Dependencies : constant Dependency_File_Info_List := null;
 
    type LI_File (Parsed : Boolean := False) is record
+      Handler       : LI_Handler;
+      --  The handler used to create this LI_File.
+
       LI_Filename   : String_Access;
       Spec_Info     : File_Info_Ptr;
       Body_Info     : File_Info_Ptr;
