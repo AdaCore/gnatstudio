@@ -474,6 +474,28 @@ package body GVD.Strings is
    end File_Extension;
 
    ----------------------
+   -- To_Host_Pathname --
+   ----------------------
+
+   function To_Host_Pathname (Path : String) return String is
+      Result : String (Path'Range);
+   begin
+      if GNAT.OS_Lib.Directory_Separator = '/' then
+         return Path;
+      end if;
+
+      for J in Result'Range loop
+         if Path (J) = '/' then
+            Result (J) := GNAT.OS_Lib.Directory_Separator;
+         else 
+            Result (J) := Path (J);
+         end if;
+      end loop;
+
+      return Result;
+   end To_Host_Pathname;
+
+   ----------------------
    -- To_Unix_Pathname --
    ----------------------
 

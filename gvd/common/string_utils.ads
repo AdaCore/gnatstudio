@@ -132,6 +132,9 @@ package GVD.Strings is
    function To_Unix_Pathname (Path : String) return String;
    --  Convert all occurences of Directory_Separator to '/'.
 
+   function To_Host_Pathname (Path : String) return String;
+   --  Convert all occurences of '/' to Directory_Separator.
+
    function Do_Tab_Expansion
      (Text : String; Tab_Size : Integer) return String;
    --  Return a version of Text after all tabs have been correctly expanded
