@@ -45,7 +45,7 @@ package Commands.Debugger is
 
    function Execute (Command : access Set_Breakpoint_Command) return Boolean;
 
-   procedure Destroy (Command : access Set_Breakpoint_Command);
+   procedure Free (Command : in out Set_Breakpoint_Command);
    --  Free memory associated to Command.
 
 private
