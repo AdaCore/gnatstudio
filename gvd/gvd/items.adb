@@ -33,7 +33,7 @@ package body Items is
    Max_Item_Width : constant := 1200;
    --  Maximal width (in pixels) an item can have
 
-   Max_Item_Height : constant := 1200;
+   Max_Item_Height : constant := 12000;
    --  Maximal height (in pixels) an item can have
 
    ---------------
