@@ -872,7 +872,8 @@ package body Entities.Queries is
    begin
       return Iter.Handler = null
         and then Iter.Dep_Index > Last (Iter.File.Depended_On)
-        and then Current (Iter.Importing) = No_Project;
+        and then (Iter.Single_Source_File
+                  or else Current (Iter.Importing) = No_Project);
    end At_End;
 
    ----------
