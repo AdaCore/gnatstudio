@@ -25,6 +25,7 @@ with Gdk.Event;                use Gdk.Event;
 with Gdk.GC;                   use Gdk.GC;
 with Gdk.Main;                 use Gdk.Main;
 with Gdk.Pixmap;               use Gdk.Pixmap;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Window;               use Gdk.Window;
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
@@ -65,6 +66,12 @@ package body GUI_Utils is
      (Gtk_Widget_Record, Boolean, Contextual_Menu_Data);
 
    function Button_Press_For_Contextual_Menu
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event;
+      Data   : Contextual_Menu_Data) return Boolean;
+   --  Callback that pops up the contextual menu if needed
+
+   function Key_Press_For_Contextual_Menu
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk.Event.Gdk_Event;
       Data   : Contextual_Menu_Data) return Boolean;
@@ -275,7 +282,7 @@ package body GUI_Utils is
       Force_Refresh : Boolean := False)
    is
       use type Gdk_Window;
-      Cursor     : Gdk_Cursor;
+      Cursor     : Gdk.Cursor.Gdk_Cursor;
    begin
       if Window /= null then
          if Busy then
@@ -306,6 +313,41 @@ package body GUI_Utils is
       return False;
    end Unmap_Menu;
 
+   -----------------------------------
+   -- Key_Press_For_Contextual_Menu --
+   -----------------------------------
+
+   function Key_Press_For_Contextual_Menu
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event;
+      Data   : Contextual_Menu_Data) return Boolean
+   is
+      Menu : Gtk_Menu;
+      use type Gdk.Types.Gdk_Key_Type;
+
+   begin
+      if Get_Key_Val (Event) = GDK_Menu then
+         Menu := Data.Create (Widget, Event);
+
+         if Menu /= null then
+            Contextual_Callback.Connect
+              (Menu, "unmap_event",
+               Contextual_Callback.To_Marshaller
+                 (Unmap_Menu'Unrestricted_Access), Data);
+
+            Grab_Focus (Widget);
+            Show_All (Menu);
+            Popup (Menu,
+                   Button        => 3,
+                   Activate_Time => Gdk.Event.Get_Time (Event));
+            Emit_Stop_By_Name (Widget, "key_press_event");
+            return True;
+         end if;
+      end if;
+
+      return False;
+   end Key_Press_For_Contextual_Menu;
+
    --------------------------------------
    -- Button_Press_For_Contextual_Menu --
    --------------------------------------
@@ -321,11 +363,12 @@ package body GUI_Utils is
         and then Get_Event_Type (Event) = Button_Press
       then
          Menu := Data.Create (Widget, Event);
+
          if Menu /= null then
             Contextual_Callback.Connect
               (Menu, "unmap_event",
                Contextual_Callback.To_Marshaller
-               (Unmap_Menu'Unrestricted_Access), Data);
+                 (Unmap_Menu'Unrestricted_Access), Data);
 
             Grab_Focus (Widget);
             Show_All (Menu);
@@ -336,6 +379,7 @@ package body GUI_Utils is
             return True;
          end if;
       end if;
+
       return False;
    end Button_Press_For_Contextual_Menu;
 
@@ -352,14 +396,22 @@ package body GUI_Utils is
       --  the children have windows and do not handle the event, this might get
       --  propagated, and the contextual menu will be properly displayed.
       --  So we just avoid a gtk warning
+
       if not No_Window_Is_Set (Widget) then
-         Add_Events (Widget, Button_Press_Mask or Button_Release_Mask);
+         Add_Events
+           (Widget,
+            Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
       end if;
 
       Contextual_Callback.Connect
         (Widget, "button_press_event",
          Contextual_Callback.To_Marshaller
-         (Button_Press_For_Contextual_Menu'Access),
+           (Button_Press_For_Contextual_Menu'Access),
+         (Menu_Create, Menu_Destroy, Gtk_Widget (Widget)));
+      Contextual_Callback.Connect
+        (Widget, "key_press_event",
+         Contextual_Callback.To_Marshaller
+           (Key_Press_For_Contextual_Menu'Access),
          (Menu_Create, Menu_Destroy, Gtk_Widget (Widget)));
    end Register_Contextual_Menu;
 
@@ -370,6 +422,11 @@ package body GUI_Utils is
    package body User_Contextual_Menus is
 
       function Button_Press_For_Contextual_Menu
+        (Widget : access Gtk_Widget_Record'Class;
+         Event  : Gdk.Event.Gdk_Event;
+         User   : Callback_User_Data) return Boolean;
+
+      function Key_Press_For_Contextual_Menu
         (Widget : access Gtk_Widget_Record'Class;
          Event  : Gdk.Event.Gdk_Event;
          User   : Callback_User_Data) return Boolean;
@@ -392,6 +449,42 @@ package body GUI_Utils is
          return False;
       end Unmap_User_Menu;
 
+      -----------------------------------
+      -- Key_Press_For_Contextual_Menu --
+      -----------------------------------
+
+      function Key_Press_For_Contextual_Menu
+        (Widget : access Gtk_Widget_Record'Class;
+         Event  : Gdk.Event.Gdk_Event;
+         User   : Callback_User_Data) return Boolean
+      is
+         Menu : Gtk_Menu;
+         use type Gdk.Types.Gdk_Key_Type;
+
+      begin
+         if Get_Key_Val (Event) = GDK_Menu then
+            Menu := User.Menu_Create (User.User, Event);
+
+            if Menu /= null then
+               Contextual_Callback.Connect
+                 (Menu, "unmap_event",
+                  Contextual_Callback.To_Marshaller
+                  (Unmap_User_Menu'Unrestricted_Access), User);
+
+               Grab_Focus (Widget);
+               Show_All (Menu);
+               Popup (Menu,
+                      Button        => 3,
+                      Activate_Time => Gdk.Event.Get_Time (Event));
+               Show_All (Menu);
+               Emit_Stop_By_Name (Widget, "key_press_event");
+               return True;
+            end if;
+         end if;
+
+         return False;
+      end Key_Press_For_Contextual_Menu;
+
       --------------------------------------
       -- Button_Press_For_Contextual_Menu --
       --------------------------------------
@@ -407,6 +500,7 @@ package body GUI_Utils is
            and then Get_Event_Type (Event) = Button_Press
          then
             Menu := User.Menu_Create (User.User, Event);
+
             if Menu /= null then
                Contextual_Callback.Connect
                  (Menu, "unmap_event",
@@ -422,6 +516,7 @@ package body GUI_Utils is
                return True;
             end if;
          end if;
+
          return False;
       end Button_Press_For_Contextual_Menu;
 
@@ -436,13 +531,24 @@ package body GUI_Utils is
          Menu_Destroy : Contextual_Menu_Destroy := null) is
       begin
          if not No_Window_Is_Set (Widget) then
-            Add_Events (Widget, Button_Press_Mask or Button_Release_Mask);
+            Add_Events
+              (Widget,
+               Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
          end if;
+
          Contextual_Callback.Connect
            (Widget, "button_press_event",
             Contextual_Callback.To_Marshaller
-            (User_Contextual_Menus.Button_Press_For_Contextual_Menu'
-              Unrestricted_Access),
+              (User_Contextual_Menus.Button_Press_For_Contextual_Menu'
+                 Unrestricted_Access),
+            (Menu_Create  => Menu_Create,
+             Menu_Destroy => Menu_Destroy,
+             User         => User));
+         Contextual_Callback.Connect
+           (Widget, "key_press_event",
+            Contextual_Callback.To_Marshaller
+              (User_Contextual_Menus.Key_Press_For_Contextual_Menu'
+                 Unrestricted_Access),
             (Menu_Create  => Menu_Create,
              Menu_Destroy => Menu_Destroy,
              User         => User));
