@@ -45,6 +45,13 @@ package Debugger is
    --  Type of debugger handled.
    --  Beware that some debuggers might not be available.
 
+   type Command_Type is (Internal, Hidden, User);
+   --  Internal commands are not stored into the command history.
+   --  Hidden commands are stored into the history but not shown in
+   --  the debugger window.
+   --  User commands are shown into the command history and displayed in
+   --  the debugger window.
+
    procedure Spawn
      (Debugger        : access Debugger_Root;
       Executable      : String;
@@ -106,7 +113,7 @@ package Debugger is
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Is_Internal     : Boolean := False);
+      Mode            : Command_Type := Hidden);
    --  Send a command to the underlying process associated with Debugger.
    --  If Display is True, display the command in the debugger window.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
@@ -122,7 +129,7 @@ package Debugger is
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Is_Internal     : Boolean := False) return String is abstract;
+      Mode            : Command_Type := Hidden) return String is abstract;
    --  Same as above, but also returns the output of the debugger.
    --  The empty string is returned if Wait_For_Prompt is False.
 

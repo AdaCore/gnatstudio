@@ -26,6 +26,7 @@ with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Odd.Types;         use Odd.Types;
 with Odd.Process;       use Odd.Process;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Gtk.Window;
@@ -251,22 +252,35 @@ package body Debugger is
       Display          : Boolean := False;
       Empty_Buffer     : Boolean := True;
       Wait_For_Prompt  : Boolean := True;
-      Is_Internal      : Boolean := False)
+      Mode             : Command_Type := Hidden)
    is
       use type Gtk.Window.Gtk_Window;
+      Data : History_Data;
    begin
-      if Is_Internal then
-         Push_Internal_Command_Status (Get_Process (Debugger), Is_Internal);
+
+      Data.Mode := Mode;
+
+      if Mode = Internal then
+         Push_Internal_Command_Status (Get_Process (Debugger), True);
       end if;
 
       if Display and then Debugger.Window /= null then
          Text_Output_Handler
            (Convert (Debugger.Window, Debugger),
             Cmd & ASCII.LF, True);
-         Append (Convert (Debugger.Window, Debugger).Command_History,
-                 Cmd (Index_Non_Blank (Cmd)
-                      .. Index_Non_Blank (Cmd, Backward)));
+      end if;
 
+      if Index_Non_Blank (Cmd) /= 0
+        and then Debugger.Window /= null
+        and then Mode /= Internal
+      then
+         Data.Debugger_Num := Integer (Get_Num
+                                       (Convert (Debugger.Window, Debugger)));
+         Data.Command := new String'
+           (Cmd (Index_Non_Blank (Cmd)
+                 .. Index_Non_Blank (Cmd, Backward)));
+         Append (Convert (Debugger.Window, Debugger).Window.Command_History,
+                 Data);
       end if;
 
       Send (Get_Process (Debugger), Cmd, Empty_Buffer);
@@ -289,7 +303,7 @@ package body Debugger is
 
             --  Should we update the list of breakpoints => No if we are in
             --  an internal command, since that would be too costly
-            if not Is_Internal then
+            if Mode /= Internal then
                Update_Breakpoints
                  (Convert (Debugger.Window, Debugger),
                   Force => Is_Break_Command (Debugger, Cmd));
@@ -297,7 +311,7 @@ package body Debugger is
          end if;
       end if;
 
-      if Is_Internal then
+      if Mode = Internal then
          Pop_Internal_Command_Status (Get_Process (Debugger));
       end if;
    end Send;
