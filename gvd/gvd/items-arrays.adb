@@ -472,7 +472,11 @@ package body Items.Arrays is
    begin
       Tmp := Item.Values;
       Item.Values := new Array_Item_Array (1 .. Item.Last_Value);
-      Item.Values.all := Tmp (1 .. Item.Last_Value);
+
+      if Item.Last_Value > 0 then
+         Item.Values.all := Tmp (1 .. Item.Last_Value);
+      end if;
+
       Free (Tmp);
    end Shrink_Values;
 
