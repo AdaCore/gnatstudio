@@ -26,6 +26,10 @@ use Codefix.Formal_Errors.Command_List;
 
 package Codefix.Errors_Manager is
 
+   function Cut_Message (Str : String) return String;
+   --  Return the message lable of a message without line / cloumn / file
+   --  indication
+
    ----------------------------------------------------------------------------
    --  type Errors_Interface
    ----------------------------------------------------------------------------
