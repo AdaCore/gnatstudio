@@ -100,6 +100,28 @@ package body Switches_Editor_Pkg.Callbacks is
       null;
    end On_Cpp_Switches_Entry_Changed;
 
+   ----------------------------------
+   -- On_Pp_Switches_Entry_Changed --
+   ----------------------------------
+
+   procedure On_Pp_Switches_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Pp_Switches_Entry_Changed;
+
+   -------------------------
+   -- Refresh_Pp_Switches --
+   -------------------------
+
+   procedure Refresh_Pp_Switches
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end Refresh_Pp_Switches;
+
    --------------------------------------
    -- On_Binder_Switches_Entry_Changed --
    --------------------------------------
