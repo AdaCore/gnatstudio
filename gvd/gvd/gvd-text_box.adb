@@ -865,7 +865,7 @@ package body GVD.Text_Boxes is
    --------------
 
    procedure Set_Font
-     (Box          : access Gvd_Text_Box_Record;
+     (Box          : access GVD_Text_Box_Record;
       Ps_Font_Name : String;
       Font_Size    : Glib.Gint)
    is
