@@ -22,10 +22,22 @@ with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Tooltips;              use Gtk.Tooltips;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
@@ -35,6 +47,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with String_Utils;              use String_Utils;
+with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -86,6 +99,21 @@ package body Glide_Kernel is
 
    function Process_Anim (Data : Process_Data) return Boolean;
    --  Process_Timeout callback to handle image animations.
+
+   procedure Row_Activated (Widget : access Gtk_Widget_Record'Class);
+   --  Called when a specific entity declaration has been selected in the
+   --  overloaded entities dialog.
+
+   procedure Select_Entity_Declaration
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Lib_Info      : LI_File_Ptr;
+      Entity_Name   : String;
+      Decl          : out Entity_Information;
+      Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
+   --  Open a dialog to ask the user to select among multiple declaration for
+   --  the entity with name Entity_Name.
+   --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
+   --  the user didn't select any declaration.
 
    --------------------------
    -- Get_Language_Handler --
@@ -966,6 +994,7 @@ package body Glide_Kernel is
    is
       Project : Prj.Project_Id := Get_Project_From_File
         (Get_Project_View (Kernel), File_Name);
+      Entity : Entity_Information;
    begin
       if Project = Prj.No_Project then
          Project := Get_Project_View (Kernel);
@@ -980,6 +1009,205 @@ package body Glide_Kernel is
                       Get_Predefined_Source_Path (Kernel),
                       Get_Predefined_Object_Path (Kernel),
                       Location, Status);
+
+      if Status = Overloaded_Entity_Found then
+         --  Ask the user what entity he is speaking about
+         Find_Declaration_Or_Overloaded
+           (Kernel             => Kernel,
+            Lib_Info           => Lib_Info,
+            File_Name          => File_Name,
+            Entity_Name        => Entity_Name,
+            Line               => Line,
+            Column             => Column,
+            Entity             => Entity,
+            Status             => Status);
+
+         --  And search for the body of that one
+         if Status = Success then
+            Find_Next_Body
+              (Kernel      => Kernel,
+               Lib_Info    => Lib_Info,
+               File_Name   => Get_Declaration_File_Of (Entity),
+               Entity_Name => Entity_Name,
+               Line        => Get_Declaration_Line_Of (Entity),
+               Column      => Get_Declaration_Column_Of (Entity),
+               Location    => Location,
+               Status      => Status);
+            Destroy (Entity);
+         end if;
+      end if;
    end Find_Next_Body;
+
+   -------------------
+   -- Row_Activated --
+   -------------------
+
+   procedure Row_Activated (Widget : access Gtk_Widget_Record'Class) is
+   begin
+      Response (Gtk_Dialog (Widget), Gtk_Response_OK);
+   end Row_Activated;
+
+   -------------------------------
+   -- Select_Entity_Declaration --
+   -------------------------------
+
+   procedure Select_Entity_Declaration
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Lib_Info      : LI_File_Ptr;
+      Entity_Name   : String;
+      Decl          : out Entity_Information;
+      Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status)
+   is
+      procedure Set (Tree, Iter : System.Address;
+                     Col1 : Gint; Value1 : String;
+                     Col2, Value2, Col3, Value3 : Gint;
+                     Col4 : Gint; Value4 : String;
+                     Final : Gint := -1);
+      pragma Import (C, Set, "gtk_tree_store_set");
+
+      Column_Types : constant GType_Array :=
+        (0 => GType_String,
+         1 => GType_Int,
+         2 => GType_Int,
+         3 => GType_String);
+
+      Iter      : Entity_Declaration_Iterator;
+      Candidate : Entity_Information;
+      Button    : Gtk_Widget;
+      Count     : Natural := 0;
+
+      Label     : Gtk_Label;
+      Model     : Gtk_Tree_Store;
+      Dialog    : Gtk_Dialog;
+      It        : Gtk_Tree_Iter;
+      Renderer  : Gtk_Cell_Renderer_Text;
+      View      : Gtk_Tree_View;
+      Col       : Gtk_Tree_View_Column;
+      Col_Num   : Gint;
+
+   begin
+      Iter := Find_All_Possible_Declarations (Lib_Info, Entity_Name);
+
+      while not At_End (Iter) loop
+         Count := Count + 1;
+         Candidate := Get (Iter);
+
+         if Count = 1 then
+            Gtk_New (Dialog,
+                     Title  => -"Select the declaration",
+                     Parent => Get_Main_Window (Kernel),
+                     Flags  => Modal or Destroy_With_Parent);
+
+            Gtk_New (Label, -"This entity is overloaded.");
+            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+            Gtk_New (Label, -"Please select the appropriate declaration.");
+            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+            Gtk_New (View);
+            Set_Mode (Get_Selection (View), Selection_Single);
+            Pack_Start (Get_Vbox (Dialog), View);
+
+            Gtk_New (Model, Column_Types);
+            Set_Model (View, Gtk_Tree_Model (Model));
+
+            Gtk_New (Renderer);
+
+            Gtk_New (Col);
+            Col_Num := Append_Column (View, Col);
+            Set_Title (Col, -"File");
+            Pack_Start (Col, Renderer, False);
+            Add_Attribute (Col, Renderer, "text", 0);
+
+            Gtk_New (Col);
+            Col_Num := Append_Column (View, Col);
+            Set_Title (Col, -"Line");
+            Pack_Start (Col, Renderer, False);
+            Add_Attribute (Col, Renderer, "text", 1);
+
+            Gtk_New (Col);
+            Col_Num := Append_Column (View, Col);
+            Set_Title (Col, -"Column");
+            Pack_Start (Col, Renderer, False);
+            Add_Attribute (Col, Renderer, "text", 2);
+
+            Gtk_New (Col);
+            Col_Num := Append_Column (View, Col);
+            Set_Title (Col, -"Entity name");
+            Pack_Start (Col, Renderer, False);
+            Add_Attribute (Col, Renderer, "text", 3);
+
+            Widget_Callback.Object_Connect
+              (View, "row_activated",
+               Widget_Callback.To_Marshaller (Row_Activated'Access),
+               Dialog);
+
+            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+            Button := Add_Button
+              (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+         end if;
+
+         Append (Model, It, Null_Iter);
+         Set (Get_Object (Model), It'Address,
+              0, Get_Declaration_File_Of (Candidate) & ASCII.NUL,
+              1, Gint (Get_Declaration_Line_Of (Candidate)),
+              2, Gint (Get_Declaration_Column_Of (Candidate)),
+              3, Entity_Name & ASCII.NUL);
+
+         Destroy (Candidate);
+
+         Next (Iter);
+      end loop;
+
+      Destroy (Iter);
+
+      Decl := No_Entity_Information;
+      Status := Entity_Not_Found;
+
+      if Count > 0 then
+         Show_All (Dialog);
+         if Run (Dialog) = Gtk_Response_OK then
+            Status := Success;
+            Get_Selected (Get_Selection (View), Gtk_Tree_Model (Model), It);
+            Decl := Create
+              (Name   => Entity_Name,
+               Line   => Positive (Get_Int (Model, It, 1)),
+               Column => Natural (Get_Int (Model, It, 2)),
+               File   => Get_String (Model, It, 0));
+         end if;
+         Destroy (Dialog);
+      end if;
+
+   exception
+      when others =>
+         if Dialog /= null then
+            Destroy (Dialog);
+         end if;
+         Destroy (Iter);
+         raise;
+   end Select_Entity_Declaration;
+
+   ------------------------------------
+   -- Find_Declaration_Or_Overloaded --
+   ------------------------------------
+
+   procedure Find_Declaration_Or_Overloaded
+     (Kernel        : access Kernel_Handle_Record;
+      Lib_Info      : Src_Info.LI_File_Ptr;
+      File_Name     : String;
+      Entity_Name   : String;
+      Line          : Positive;
+      Column        : Positive;
+      Entity        : out Src_Info.Queries.Entity_Information;
+      Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status) is
+   begin
+      Find_Declaration
+        (Lib_Info, File_Name, Entity_Name, Line, Column, Entity, Status);
+
+      if Status = Overloaded_Entity_Found then
+         Select_Entity_Declaration
+           (Kernel, Lib_Info, Entity_Name, Entity, Status);
+      end if;
+   end Find_Declaration_Or_Overloaded;
 
 end Glide_Kernel;

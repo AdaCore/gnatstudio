@@ -219,6 +219,21 @@ package Glide_Kernel is
    --  See Src_Info.Queries.
    --  You must call Destroy on the returned entity.
 
+   procedure Find_Declaration_Or_Overloaded
+     (Kernel        : access Kernel_Handle_Record;
+      Lib_Info      : Src_Info.LI_File_Ptr;
+      File_Name     : String;
+      Entity_Name   : String;
+      Line          : Positive;
+      Column        : Positive;
+      Entity        : out Src_Info.Queries.Entity_Information;
+      Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
+   --  See Src_Info.Queries.Find_Declaration.
+   --  If the request to Src_Info.Queries.Find_Declaration returns an
+   --  unresolved overloaded entity, this subprogram automatically asks the
+   --  user to chose among the possible completions. The declaration for the
+   --  user's choice is returned, and Status set to Success if necessary.
+
    procedure Find_Next_Body
      (Kernel      : access Kernel_Handle_Record;
       Lib_Info    : Src_Info.Li_File_Ptr;
@@ -229,6 +244,9 @@ package Glide_Kernel is
       Location    : out Src_Info.File_Location;
       Status      : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
    --  See Src_Info.Queries.
+   --  If the request to Src_Info.Queries.Find_Next_Body returns an unresolved
+   --  overloaded entity, this subprogram automatically asks the user to chose
+   --  among the possible completions.
 
    procedure Parse_All_LI_Information
      (Kernel       : access Kernel_Handle_Record;
