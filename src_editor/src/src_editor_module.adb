@@ -75,7 +75,7 @@ package body Src_Editor_Module is
       List                     : String_List_Utils.String_List.List;
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
-      Location_Open_Id         : Idle_Handler_Id;
+      Location_Open_Id         : Idle_Handler_Id := 0;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
@@ -161,6 +161,10 @@ package body Src_Editor_Module is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean;
    --  Idle callback used to scroll the source editors.
+
+   procedure Location_Destroy (D : in out Location_Idle_Data);
+   --  Called when the Idle callback to scroll the source editors is
+   --  destroyed.
 
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean;
    --  Emit the File_Edited signal.
@@ -803,6 +807,16 @@ package body Src_Editor_Module is
          return False;
    end Location_Callback;
 
+   ----------------------
+   -- Location_Destroy --
+   ----------------------
+
+   procedure Location_Destroy (D : in out Location_Idle_Data) is
+      pragma Unreferenced (D);
+   begin
+      Source_Editor_Module (Src_Editor_Module_Id).Location_Open_Id := 0;
+   end Location_Destroy;
+
    ------------------
    -- Save_To_File --
    ------------------
@@ -1405,7 +1419,9 @@ package body Src_Editor_Module is
 
 
          begin
-            Idle_Remove (The_Data.Location_Open_Id);
+            if The_Data.Location_Open_Id /= 0 then
+               Idle_Remove (The_Data.Location_Open_Id);
+            end if;
 
             Edit := Open_File (Kernel, File, Create_New => New_File).Editor;
 
@@ -1423,7 +1439,8 @@ package body Src_Editor_Module is
 
                The_Data.Location_Open_Id := Location_Idle.Add
                  (Location_Callback'Access,
-                  (Edit, Natural (Line), Natural (Column)));
+                  (Edit, Natural (Line), Natural (Column)),
+                  Destroy => Location_Destroy'Access);
 
                if Highlight then
                   Highlight_Line (Edit, Natural (Line));
