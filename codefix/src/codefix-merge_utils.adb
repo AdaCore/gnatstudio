@@ -204,6 +204,10 @@ package body Codefix.Merge_Utils is
       J := Position;
       K := 1;
 
+      if J not in This.Infos'Range then
+         raise Codefix_Panic;
+      end if;
+
       loop
          while Copy_Infos (J) = Unit_Deleted loop
             J := J + 1;
