@@ -1271,6 +1271,29 @@ package body Glide_Kernel.Modules is
       end loop;
    end General_Line_Information;
 
+   ----------------------
+   -- Add_Editor_Label --
+   ----------------------
+
+   procedure Add_Editor_Label
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : String;
+      Identifier : String;
+      Label      : String)
+   is
+      Infos  : Line_Information_Data;
+
+   begin
+      Infos := new Line_Information_Array (-1 .. -1);
+      Infos (-1).Text := new String'(Label);
+
+      Add_Line_Information
+        (Kernel,
+         File,
+         Identifier,
+         Infos);
+   end Add_Editor_Label;
+
    ------------------------------------
    -- Create_Line_Information_Column --
    ------------------------------------
