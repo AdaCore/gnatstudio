@@ -108,6 +108,7 @@ procedure GPS is
    File_Opened    : Boolean := False;
    Splash         : Gtk_Window;
    Timeout_Id     : Timeout_Handler_Id;
+   User_Directory_Existed : Boolean;
    pragma Unreferenced (Timeout_Id);
    Result         : Boolean;
    pragma Unreferenced (Result);
@@ -194,7 +195,9 @@ procedure GPS is
       end if;
 
       begin
-         if not Is_Directory (Dir.all) then
+         User_Directory_Existed := Is_Directory (Dir.all);
+
+         if not User_Directory_Existed then
             Make_Dir (Dir.all);
             Button := Message_Dialog
               ((-"Created config directory ") & Dir.all,
@@ -458,9 +461,11 @@ procedure GPS is
             --  Load the project selected by the user
 
             if Project_Name = null then
-               Gtk_New (Screen, GPS.Kernel, "");
+               Gtk_New (Screen, GPS.Kernel, "",
+                        Default_Is_Tutorial => not User_Directory_Existed);
             else
-               Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+               Gtk_New (Screen, GPS.Kernel, Project_Name.all,
+                        Default_Is_Tutorial => not User_Directory_Existed);
             end if;
 
             --  Remove the splash screen, since it conflicts with the welcome
@@ -473,15 +478,23 @@ procedure GPS is
 
             --  If the user wants to quit immediately, so be it.
 
-            if not Run (Screen) then
-               Destroy (Screen);
-               Gtk.Main.Main_Quit;
-               return False;
-            end if;
+            case Run_Welcome (Screen) is
+               when Quit_GPS =>
+                  Destroy (Screen);
+                  Gtk.Main.Main_Quit;
+                  return False;
 
-            --  We can now load the desktop
+               when Project_Loaded =>
+                  --  We can now load the desktop
+                  Had_Project_Desktop := Load_Desktop (GPS.Kernel);
 
-            Had_Project_Desktop := Load_Desktop (GPS.Kernel);
+               when Welcome.Show_Tutorial =>
+                  Help_Module.Show_Tutorial (GPS.Kernel);
+                  Maximize_Children (Get_MDI (GPS.Kernel));
+
+                  --  Avoid displaying the standard help
+                  File_Opened := True;
+            end case;
 
             Destroy (Screen);
          end if;
