@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -254,7 +254,7 @@ package body Glide_Kernel.Timeout is
          when Invalid_Process =>
             Success := False;
             Glide_Kernel.Console.Insert
-              (Kernel, -"Invalid command", Mode => Error);
+              (Kernel, -"invalid command", Mode => Error);
       end Spawn;
 
    begin
