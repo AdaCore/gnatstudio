@@ -5,3 +5,5 @@ htables.ads
 sdefault.adb
 traces.adb
 traces.ads
+string_hash.adb
+string_hash.ads
