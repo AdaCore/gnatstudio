@@ -541,26 +541,29 @@ package body Docgen.Texi_Output is
 
       procedure Print_Ref_List
         (Local_List    : TRL.List;
-         Called_Subp   : Boolean) is
+         Called_Subp   : Boolean)
+      is
          Node      : TRL.List_Node;
          Suffix    : GNAT.OS_Lib.String_Access;
          pragma Unreferenced (Suffix);
       begin
          if not TRL.Is_Empty (Local_List) then
             if Called_Subp then
-               Ada.Text_IO.Put_Line (File,
-                                     "@strong{Subprogram is called by:}");
+               Ada.Text_IO.Put_Line
+                 (File,
+                  "@strong{Subprogram is called by:}");
             else
-               Ada.Text_IO.Put_Line (File,
-                                     "@strong{Subprogram calles:}");
+               Ada.Text_IO.Put_Line
+                 (File,
+                  "@strong{Subprogram calles:}");
             end if;
+
             Ada.Text_IO.Put_Line (File, "@itemize @bullet");
 
             Node := TRL.First (Local_List);
 
             --  for every reference found write the information to doc file
             for J in 1 .. TRL.Length (Local_List) loop
-
                Ada.Text_IO.Put_Line (File, "@item");
 
                --  check if the creating of a link is possible
