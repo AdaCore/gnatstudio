@@ -29,8 +29,8 @@
 with Glib;
 with Gdk.GC;
 pragma Warnings (Off);
-with Gdk.Cursor;
-with Gdk.Types;
+with Gdk.Cursor; use Gdk.Cursor;
+with Gdk.Types; use Gdk.Types;
 pragma Warnings (On);
 with Gdk.Window;
 with Gtk.Button;
@@ -394,7 +394,7 @@ private
          --  The various graphic contexts used to draw the titles of the
          --  children.
 
-         Current_Cursor : Gdk.Cursor.Gdk_Cursor_Type;
+         Current_Cursor : Gdk_Cursor_Type;
          --  The cursor currently used within the MDI. It also indicates which
          --  kind of operation is processing (moving, resizing a corner, ...)
 
