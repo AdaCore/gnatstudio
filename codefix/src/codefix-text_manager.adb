@@ -997,22 +997,25 @@ package body Codefix.Text_Manager is
       Last, Increment    : Integer;
       Ext_Red            : Extract_Line;
       New_Cursor, Result : File_Cursor;
+      Line_Cursor        : File_Cursor;
       Old_Col            : Integer;
 
    begin
       New_Cursor := File_Cursor (Cursor);
+      Line_Cursor := New_Cursor;
+      Line_Cursor.Col := 1;
 
       case Step is
          when Normal_Step =>
             Last := Line_Max (This);
             Increment := 1;
-            Get_Line (This, New_Cursor, Ext_Red);
+            Get_Line (This, Line_Cursor, Ext_Red);
          when Reverse_Step =>
             Last := 1;
             Increment := -1;
             Old_Col := New_Cursor.Col;
             New_Cursor.Col := 1;
-            Get (This, New_Cursor, Old_Col, Ext_Red);
+            Get (This, Line_Cursor, Old_Col, Ext_Red);
             New_Cursor.Col := Old_Col;
       end case;
 
