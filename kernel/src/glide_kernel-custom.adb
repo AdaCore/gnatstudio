@@ -55,6 +55,7 @@ package body Glide_Kernel.Custom is
       use type Module_List.List_Node;
       Current : Module_List.List_Node :=
         Module_List.First (Kernel.Modules_List);
+
    begin
       while Current /= Module_List.Null_Node loop
          if Module_List.Data (Current).Info.Customization_Handler /= null then
