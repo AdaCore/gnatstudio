@@ -1245,7 +1245,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
 
-      Real_Number : Buffer_Line_Type;
+      Real_Number : Buffer_Line_Type := 0;
       Result      : Boolean := True;
       Buffer_Line : Buffer_Line_Type;
    begin
@@ -1261,20 +1261,10 @@ package body Src_Editor_Buffer.Line_Information is
       while Result loop
          Forward_Line (End_Iter, Result);
          Buffer_Line := Buffer_Line + 1;
-         exit when Buffer_Lines (Buffer_Line).Editable_Line /= 0;
+         Real_Number := Real_Number + 1;
+         exit when Real_Number = Buffer_Line_Type (Number)
+           or else Buffer_Lines (Buffer_Line).Editable_Line /= 0;
       end loop;
-
-      Trace (Me, Gint'Image (Get_Line (Iter))
-             & Gint'Image (Get_Line_Offset (Iter)));
-
-      Trace (Me, Gint'Image (Get_Line (End_Iter))
-             & Gint'Image (Get_Line_Offset (End_Iter)));
-
-      Real_Number := Buffer_Line - Buffer_Line_At_Blanks;
-
-      if Number /= 0 and then Number < Natural (Real_Number) then
-         Real_Number := Buffer_Line_Type (Number);
-      end if;
 
       Buffer.Modifying_Editable_Lines := False;
       Buffer.Inserting := True;
