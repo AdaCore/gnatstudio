@@ -399,7 +399,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       Current_Line := Get_First_Line (Destination);
 
-      Current_Col := 1;
+      Current_Col := Destination.Start.Col;
 
       Get_Token
         (Current_Line, Current_Col, Current_Token);
