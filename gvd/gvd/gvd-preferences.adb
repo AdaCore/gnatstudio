@@ -74,7 +74,7 @@ package body GVD.Preferences is
    begin
       --  In standalone mode, the source editor prefs are also editable
 
-      if Page_Prefix = "" then
+      if XML_Prefix = "" then
          Source_Flags := Source_Flags or Param_Writable;
          Default_Font := Param_Spec_Font
            (Gnew_Font
