@@ -1321,7 +1321,7 @@
   <title>Preferences</title>
   <type>GTK_WINDOW_DIALOG</type>
   <position>GTK_WIN_POS_CENTER</position>
-  <modal>True</modal>
+  <modal>False</modal>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
   <auto_shrink>False</auto_shrink>
