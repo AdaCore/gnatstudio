@@ -68,9 +68,13 @@ package Commands.Custom is
      (Item         : out Custom_Command_Access;
       Kernel       : Kernel_Handle;
       Command      : String;
-      Args         : Argument_List_Access);
+      Args         : Argument_List_Access;
+      GPS_Command  : Boolean);
    --  Create a new custom command.
    --  Caller must not free memory allocated to Args.
+   --  If GPS_Command is True, the command will be interpreted as a
+   --  a GPS internal command, otherwise it will be launched as a
+   --  system command.
 
    procedure Free (X : in out Custom_Command);
    --  Free memory associated to X.
@@ -86,9 +90,10 @@ package Commands.Custom is
 private
 
    type Custom_Command is new Root_Command with record
-      Kernel  : Kernel_Handle;
-      Command : String_Access;
-      Args    : Argument_List_Access;
+      Kernel      : Kernel_Handle;
+      Command     : String_Access;
+      Args        : Argument_List_Access;
+      GPS_Command : Boolean;
    end record;
 
 end Commands.Custom;

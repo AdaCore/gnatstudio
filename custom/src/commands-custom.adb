@@ -51,12 +51,14 @@ package body Commands.Custom is
      (Item         : out Custom_Command_Access;
       Kernel       : Kernel_Handle;
       Command      : String;
-      Args         : Argument_List_Access) is
+      Args         : Argument_List_Access;
+      GPS_Command  : Boolean) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
       Item.Command := new String'(Command);
       Item.Args := Args;
+      Item.GPS_Command := GPS_Command;
    end Create;
 
    -------------
@@ -79,6 +81,38 @@ package body Commands.Custom is
 
       procedure Free_Array is new Ada.Unchecked_Deallocation
         (Object => String_List, Name => String_List_Access);
+
+      function Command_To_String
+        (Command : String; Args : String_List) return String;
+      --  Transform a command and its arguments into a string.
+
+      function Command_To_String
+        (Command : String; Args : String_List) return String
+      is
+         Length : Integer;
+      begin
+         Length := Command'Length;
+
+         for J in Args'Range loop
+            Length := Length + Args (J)'Length + 1;
+         end loop;
+
+         declare
+            Result : String (1 .. Length);
+            Index : Integer := 1;
+         begin
+            Result (Index .. Index + Command'Length - 1) := Command;
+            Index := Index + Command'Length;
+
+            for J in Args'Range loop
+               Result (Index .. Index + Args (J)'Length) := " " & Args (J).all;
+               Index := Index + Args (J)'Length + 1;
+            end loop;
+
+            return Result;
+         end;
+      end Command_To_String;
+
    begin
       --  Perform arguments substitutions for the command.
 
@@ -220,13 +254,19 @@ package body Commands.Custom is
 
          --  Arguments have been substituted, launch the command.
 
-         Launch_Process
-           (Command.Kernel,
-            Command.Command.all,
-            New_Args.all,
-            null,
-            "",
-            Success);
+         if Command.GPS_Command then
+            Interpret_Command
+              (Command.Kernel,
+               Command_To_String (Command.Command.all, New_Args.all));
+         else
+            Launch_Process
+              (Command.Kernel,
+               Command.Command.all,
+               New_Args.all,
+               null,
+               "",
+               Success);
+         end if;
 
          for J in New_Args'Range loop
             Free (New_Args (J));
@@ -235,13 +275,17 @@ package body Commands.Custom is
          Free (New_Args);
 
       else
-         Launch_Process
-           (Command.Kernel,
-            Command.Command.all,
-            No_Args,
-            null,
-            "",
-            Success);
+         if Command.GPS_Command then
+            Interpret_Command (Command.Kernel, Command.Command.all);
+         else
+            Launch_Process
+              (Command.Kernel,
+               Command.Command.all,
+               No_Args,
+               null,
+               "",
+               Success);
+         end if;
       end if;
 
       return Success;
