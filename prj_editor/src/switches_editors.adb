@@ -1342,6 +1342,9 @@ package body Switches_Editors is
       --  of this dialog.
 
       if Run (Dialog) = Gtk_Response_OK then
+         Set_Project_Modified
+           (Get_Kernel (Context),
+            Get_Project_From_View (Project_Information (File)), True);
          Close_Switch_Editor (Switches, Context, File_Name.all);
       end if;
 
