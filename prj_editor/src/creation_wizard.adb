@@ -38,13 +38,12 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Prj.Tree; use Prj.Tree;
-with Prj;      use Prj;
+with Projects.Editor; use Projects, Projects.Editor;
+with Projects.Registry; use Projects.Registry;
 with Snames;   use Snames;
 
 with Basic_Types;      use Basic_Types;
 with Wizards;          use Wizards;
-with Prj_API;          use Prj_API;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -145,7 +144,7 @@ package body Creation_Wizard is
               (W, Integer (Page_Num),
                Widget_Factory
                (Get_Nth_Project_Editor_Page (W.Kernel, Integer (Page_Num - 1)),
-                Get_Project_View (W.Kernel),
+                Get_Project (W.Kernel),
                 Name_As_Directory (Get_Text (W.Project_Location)) &
                 Get_Text (W.Project_Name),
                 W.Kernel));
@@ -158,7 +157,7 @@ package body Creation_Wizard is
               (Page         => Get_Nth_Project_Editor_Page
                (W.Kernel, Integer (Page_Num - 1)),
                Widget       => Get_Nth_Page (W, Integer (Page_Num)),
-               Project_View => Get_Project_View (W.Kernel),
+               Project      => Get_Project (W.Kernel),
                Languages    => Languages);
             Free (Languages);
          end;
@@ -205,11 +204,11 @@ package body Creation_Wizard is
             end if;
 
             if Is_Regular_File
-              (Location & Prj_File & Prj.Project_File_Extension)
+              (Location & Prj_File & Project_File_Extension)
             then
                Result := Message_Dialog
                  (Msg => Location
-                  & Prj_File & Prj.Project_File_Extension
+                  & Prj_File & Project_File_Extension
                   & (-" already exists. Do you want to overwrite ?"),
                   Title => -"File exists",
                   Dialog_Type => Error,
@@ -377,19 +376,24 @@ package body Creation_Wizard is
       Name           : constant String := Get_Text (Wiz.Project_Name);
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
       Languages      : Argument_List := Get_Languages (Wiz);
-      Project        : Project_Node_Id;
+      Project        : Project_Type;
       Changed        : Boolean;
       pragma Unreferenced (Changed);
 
    begin
       Push_State (Wiz.Kernel, Processing);
 
-      Project := Create_Project (Name => Name, Path => Dir);
-      Set_Project_Uses_Relative_Paths (Wiz.Kernel, Project, Relative_Paths);
+      Project := Create_Project
+        (Get_Registry (Wiz.Kernel), Name => Name, Path => Dir);
+      if Relative_Paths then
+         Set_Paths_Type (Project, Relative);
+      else
+         Set_Paths_Type (Project, Absolute);
+      end if;
 
       Update_Attribute_Value_In_Scenario
         (Project            => Project,
-         Scenario_Variables => (1 .. 0 => Empty_Node),
+         Scenario_Variables => (1 .. 0 => No_Variable),
          Attribute_Name     => Get_String (Name_Languages),
          Values             => Languages);
 
@@ -397,16 +401,12 @@ package body Creation_Wizard is
          --  We are only interested in the side effect of Project_Editor
          Changed := Project_Editor
            (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
-            Project, No_Project,
+            Project,
             Wiz.Kernel, Get_Nth_Page (Wiz, 1 + P),
-            Scenario_Variables => (1 .. 0 => Empty_Node),
-            Ref_Project => Project)'Length /= 0;
+            Scenario_Variables => (1 .. 0 => No_Variable),
+            Ref_Project => Project);
       end loop;
 
-      --  Mark the project as modified, otherwise it won't actually be saved
-      --  in case we are overwritting an existing file.
-
-      Set_Project_Modified (Wiz.Kernel, Project, True);
       Save_Single_Project (Wiz.Kernel, Project, Langs => Languages);
       Free (Languages);
       Pop_State (Wiz.Kernel);
