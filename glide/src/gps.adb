@@ -35,7 +35,7 @@ begin
          Load_Project (Glide.Kernel, Argument (J));
          Project_Loaded := True;
       else
-         Open_File (Glide.Kernel, Argument (J));
+         Open_Or_Create (Glide.Kernel, Argument (J));
       end if;
    end loop;
 
