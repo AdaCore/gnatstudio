@@ -106,8 +106,12 @@ private
 
       Bar          : Gtk.Progress_Bar.Gtk_Progress_Bar := null;
    end record;
+   type Task_Queue_Access is access Task_Queue_Record;
 
-   type Task_Queue_Array is array (Natural range <>) of Task_Queue_Record;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Task_Queue_Record, Task_Queue_Access);
+
+   type Task_Queue_Array is array (Natural range <>) of Task_Queue_Access;
    type Task_Queue_Array_Access is access Task_Queue_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -137,9 +141,6 @@ private
       --  The command currently referenced by the contextual menu.
       --  This is an index in Queues, set to <0 when the command is not valid
       --  or the menu not created.
-
-      Running_Queue        : Integer := -1;
-      --  The queue containing the command that is currently being run.
 
       Push_Command, Pop_Command : Command_Access;
       --  Commands used to push/pop the "busy" state.
