@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -187,7 +187,7 @@ package body VCS_Module is
      (Radio    : access Glib.Object.GObject_Record'Class;
       Selector : Glib.Object.GObject)
    is
-      R : Gtk_Radio_Button := Gtk_Radio_Button (Radio);
+      R : constant Gtk_Radio_Button := Gtk_Radio_Button (Radio);
    begin
       if Get_Active (R) then
          VCS_Selector (Selector).Selected := R;
@@ -206,14 +206,15 @@ package body VCS_Module is
       return Gtk_Widget
    is
       pragma Unreferenced (Page, Full_Project);
-      Systems : Argument_List := Get_VCS_List (VCS_Module_ID);
-      Radio : Gtk_Radio_Button;
-      Main : VCS_Selector;
-      Frame : Gtk_Frame;
-      Box   : Gtk_Box;
-      Table : Gtk_Table;
-      Label : Gtk_Label;
-      Event : Gtk_Event_Box;
+      Systems : constant Argument_List := Get_VCS_List (VCS_Module_ID);
+      Radio   : Gtk_Radio_Button;
+      Main    : VCS_Selector;
+      Frame   : Gtk_Frame;
+      Box     : Gtk_Box;
+      Table   : Gtk_Table;
+      Label   : Gtk_Label;
+      Event   : Gtk_Event_Box;
+
    begin
       Main := new VCS_Selector_Record;
       Initialize_Vbox (Main, Homogeneous => False);
@@ -319,8 +320,9 @@ package body VCS_Module is
       return Project_Node_Array
    is
       pragma Unreferenced (Page, Kernel, Ref_Project);
-      Selector : VCS_Selector := VCS_Selector (Widget);
-      Changed : Boolean := False;
+      Selector : constant VCS_Selector := VCS_Selector (Widget);
+      Changed  : Boolean := False;
+
    begin
       if Project_View = No_Project or else
         (Get_Label (Selector.Selected) /= Get_Vcs_Kind (Project_View)
