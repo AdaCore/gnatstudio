@@ -225,6 +225,30 @@ package body Src_Info.CPP is
    procedure Fail (Msg : String); -- print error message
    pragma Inline (Info, Warn, Fail);
 
+   function Get_Full_Filename_In_Project
+     (Project : Prj.Project_Id; Source_File : String)
+     return SN.String_Access;
+   --  Returns full name of specified source file or null, if file not found
+   --  in project. User has to free returned string.
+
+
+   function Get_Full_Filename_In_Project
+     (Project : Prj.Project_Id; Source_File : String)
+     return SN.String_Access
+   is
+      FP  : SN.String_Access;
+      NFP : SN.String_Access;
+   begin
+      FP := Locate_Regular_File
+        (Source_File, Include_Path (Project, Recursive => True));
+      if FP = null then
+         return null;
+      end if;
+      NFP := new String' (Normalize_Pathname (FP.all));
+      Free (FP);
+      return NFP;
+   end Get_Full_Filename_In_Project;
+
    -------------------
    -- Open_DB_Files --
    -------------------
@@ -341,7 +365,7 @@ package body Src_Info.CPP is
         & Browse.DB_Dir_Name;
       --  SN project directory
 
-      Full_Filename : GNAT.OS_Lib.String_Access;
+      Full_Filename : SN.String_Access;
    begin
       --  try to load xref pool
       Load (Xrefs,
@@ -352,24 +376,15 @@ package body Src_Info.CPP is
       end if;
 
       for F in File_List.all'Range loop -- iterate thru files in list
-         Full_Filename := Locate_Regular_File
-           (File_List (F).all, Include_Path (Project, Recursive => True));
+         Full_Filename :=
+           Get_Full_Filename_In_Project (Project, File_List (F).all);
 
          if Full_Filename = null then
             Warn ("File not found: " & File_List (F).all);
          else
-            declare
-               Real_Filename : String :=
-                 Normalize_Pathname (Full_Filename.all);
-            begin
-               if Real_Filename = "" then
-                  Warn ("Could not normalize file name " & Full_Filename.all);
-               else
-                  --  run cbrowser
-                  Browse.Browse (Full_Filename.all, SN_Dir, "cbrowser", Xrefs);
-               end if;
-            end;
-            Free (Full_Filename);
+            --  run cbrowser
+            Browse.Browse (Full_Filename.all, SN_Dir, "cbrowser", Xrefs);
+            Free_String (Full_Filename);
          end if;
 
       end loop;
@@ -498,13 +513,21 @@ package body Src_Info.CPP is
          Prj_API.Object_Path (Project, False) & Browse.DB_Dir_Name;
       Xref_Pool_Filename : constant String :=
          DB_Dir & Directory_Separator & SN.Browse.Xref_Pool_Filename;
+      Full_Filename : SN.String_Access :=
+        Get_Full_Filename_In_Project (Project, Source_Filename);
    begin
+
+      if Full_Filename = null then
+         return "";
+      end if;
+
       Load (Xrefs, Xref_Pool_Filename);
       declare
          Xref_Filename : String := Xref_Filename_For
-            (Source_Filename, DB_Dir, Xrefs).all;
+            (Full_Filename.all, DB_Dir, Xrefs).all;
       begin
          Save (Xrefs, Xref_Pool_Filename);
+         Free (Full_Filename);
          Free (Xrefs);
          return Xref_Filename;
       end;
