@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Widget; use Gtk.Widget;
 with Gtk.Text;   use Gtk.Text;
 with Gtk.Box;    use Gtk.Box;
 
@@ -56,19 +55,6 @@ package VCS_View_Pkg is
 
       VCS_Ref : VCS_Access := null;
 
-      Edit_Log_Button            : Gtk_Widget;
-      Edit_Multiple_Log_Button   : Gtk_Widget;
-      View_Log_Button            : Gtk_Widget;
-      View_Diff_Button           : Gtk_Widget;
-      Annotate_Button            : Gtk_Widget;
-      Get_Status_Button          : Gtk_Widget;
-      Update_Button              : Gtk_Widget;
-      Open_Button                : Gtk_Widget;
-      Commit_Button              : Gtk_Widget;
-      Revert_Button              : Gtk_Widget;
-      Add_Button                 : Gtk_Widget;
-      Remove_Button              : Gtk_Widget;
-
       Message_Text               : Gtk_Text;
       --  When in independant mode, this acts as a console for displaying text.
 
@@ -86,31 +72,29 @@ package VCS_View_Pkg is
                          Directory : String;
                          Ref       : VCS_Access);
 
+   procedure Display_File_Status
+     (Kernel : Kernel_Handle;
+      Status : File_Status_List.List);
+   --  ???
+
    function Get_Selected_Files
      (Explorer : VCS_View_Access) return String_List.List;
    --  Return the list of files that are selected.
 
-   procedure Get_Status
-     (Explorer : VCS_View_Access;
-      Files    : String_List.List);
-   --  Updates the status for Files.
-
-   procedure Open_Files
+   procedure Display_String_List
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access);
-   --  Open a list of files.
-   --  User must free Files afterwards.
+      List     : String_List.List;
+      M_Type   : Message_Type := Verbose);
+   --  Convenience procedure to output a String_List.List.
+   --  One of Explorer or Kernel can be Null.
 
-   procedure Commit
+   procedure Push_Message
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Log      : String;
-      Ref      : VCS_Access);
-   --  Commit a list of files with a given log.
-   --  User must free Files afterwards.
+      M_Type   : Message_Type;
+      Message  : String);
+   --  Display a message.
 
    procedure Edit_Log
      (Explorer : VCS_View_Access;
@@ -118,14 +102,6 @@ package VCS_View_Pkg is
       Files    : String_List.List;
       Ref      : VCS_Access);
    --  Launch log editors for these files.
-   --  User must free Files afterwards.
-
-   procedure Diff_Files
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access);
-   --  View differences between Files and the head revision.
    --  User must free Files afterwards.
 
    procedure Update_File_List
@@ -136,18 +112,4 @@ package VCS_View_Pkg is
    --  Updates a list of files.
    --  User must free Files afterwards.
 
-   procedure Push_Message
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      M_Type   : Message_Type;
-      Message  : String);
-   --  Display a message.
-
-   procedure Display_String_List
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      List     : String_List.List;
-      M_Type   : Message_Type := Verbose);
-   --  Convenience procedure to output a String_List.List.
-   --  One of Explorer or Kernel can be Null.
 end VCS_View_Pkg;
