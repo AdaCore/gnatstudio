@@ -24,6 +24,10 @@ with Ada.Tags;          use Ada.Tags;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNAT.Expect;       use GNAT.Expect;
 
+pragma Warnings (Off);
+with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
+pragma Warnings (On);
+
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -686,6 +690,8 @@ package body Debugger.Gdb is
       Num  : Expect_Match;
       Lang : Language_Access;
 
+      use GVD;
+
    begin
       --  Wait for initial output and prompt (and display it in the window)
       Wait
@@ -699,10 +705,14 @@ package body Debugger.Gdb is
       Send (Debugger, "set annotate 1", Mode => Internal);
 
       if Get_Pref (GVD_Prefs, Execution_Window) then
-         --  Only relevant to Windows, but does not really matter if we do it
-         --  on other platforms.
+         if Host = Windows then
+            Send (Debugger, "set new-console", Mode => Internal);
+         end if;
 
-         Send (Debugger, "set new-console", Mode => Internal);
+         Debugger.Execution_Window := True;
+
+      else
+         Debugger.Execution_Window := False;
       end if;
 
       --  Make sure gdb will not ask too much interactive questions.
@@ -1298,9 +1308,28 @@ package body Debugger.Gdb is
    ---------------
 
    procedure Interrupt (Debugger : access Gdb_Debugger) is
+      Proxy      : constant Process_Proxy_Access := Get_Process (Debugger);
+      Descriptor : constant Process_Descriptor_Access :=
+        Get_Descriptor (Proxy);
+
+      use GVD;
+
    begin
-      Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
-      Set_Interrupted (Get_Process (Debugger));
+      --  Should only do this when running under Windows, in native mode,
+      --  with an external execution window, and the debuggee running.
+
+      if Debugger.Debuggee_Pid /= 0           -- valid pid
+        and then Is_Started (Debugger)        -- debuggee started
+        and then Command_In_Process (Proxy)   -- and likely running
+        and then Host = Windows               -- Windows host
+        and then Debugger.Remote_Host = null  -- native debugging
+        and then Debugger.Execution_Window    -- external window
+      then
+         GNAT.Expect.TTY.Interrupt (Debugger.Debuggee_Pid);
+      else
+         Interrupt (Descriptor.all);
+         Set_Interrupted (Proxy);
+      end if;
    end Interrupt;
 
    ------------------------
