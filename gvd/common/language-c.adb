@@ -21,7 +21,6 @@
 with GNAT.Regpat;       use GNAT.Regpat;
 with Pixmaps_IDE;       use Pixmaps_IDE;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Basic_Types;       use Basic_Types;
 with String_Utils;      use String_Utils;
 
 package body Language.C is
@@ -324,10 +323,10 @@ package body Language.C is
       return
         (Comment_Start_Length          => 2,
          Comment_End_Length            => 2,
-         New_Line_Comment_Start_Length => 0,
+         New_Line_Comment_Start_Length => 2,
          Comment_Start                 => "/*",
          Comment_End                   => "*/",
-         New_Line_Comment_Start        => "",
+         New_Line_Comment_Start        => "//",
          String_Delimiter              => '"',
          Quote_Character               => '\',
          Constant_Character            => ''');
@@ -347,9 +346,11 @@ package body Language.C is
       pragma Suppress (All_Checks);
       --  For efficiency
 
-      First : Natural;
-      Index : Natural := Buffer'First;
-      Token : Token_Type;
+      First       : Natural;
+      Index       : Natural := Buffer'First;
+      Token       : Token_Type;
+      Curly_Level : Integer := 0;
+      Paren_Level : Integer := 0;
 
    begin
       No_Contents := True;
@@ -362,10 +363,20 @@ package body Language.C is
                   No_Contents := True;
                end if;
 
-            when '{' | '(' =>
+            when '{' =>
+               Curly_Level := Curly_Level + 1;
                Indent := Indent + Indent_Params.Indent_Level;
 
-            when '}' | ')' =>
+            when '(' =>
+               Paren_Level := Paren_Level + 1;
+               Indent := Indent + Indent_Params.Indent_Level;
+
+            when '}' =>
+               Curly_Level := Curly_Level - 1;
+               Indent := Indent - Indent_Params.Indent_Level;
+
+            when ')' =>
+               Paren_Level := Paren_Level - 1;
                Indent := Indent - Indent_Params.Indent_Level;
 
             when '"' =>
@@ -420,18 +431,17 @@ package body Language.C is
                if Buffer (Index + 1) = '/' then
                   --  C++ style comment, skip whole line
 
-                  Index := Index + 2;
+                  Index := Index + 1;
 
-                  while Index < Buffer'Last
-                    and then Buffer (Index) /= ASCII.LF
+                  while Index <= Buffer'Last
+                    and then Buffer (Index + 1) /= ASCII.LF
                   loop
                      Index := Index + 1;
                   end loop;
 
                   if Callback /= null then
                      exit when Callback
-                       (Comment_Text,
-                        (0, 0, First), (0, 0, Index - 1), False);
+                       (Comment_Text, (0, 0, First), (0, 0, Index), False);
                   end if;
 
                elsif Buffer (Index + 1) = '*' then
@@ -460,24 +470,23 @@ package body Language.C is
                --  Skip identifier or reserved word
 
                First := Index;
-               Index := Index + 1;
 
-               while Index < Buffer'Last
-                 and then Is_Word_Char (Buffer (Index))
+               while Index <= Buffer'Last
+                 and then Is_Word_Char (Buffer (Index + 1))
                loop
                   Index := Index + 1;
                end loop;
 
-               Token := Get_Token (Buffer (First .. Index - 1));
+               Token := Get_Token (Buffer (First .. Index));
 
                if Callback /= null then
                   if Token = Tok_Identifier then
                      exit when Callback
                        (Identifier_Text,
-                        (0, 0, First), (0, 0, Index - 1), False);
+                        (0, 0, First), (0, 0, Index), False);
                   else
                      exit when Callback
-                       (Keyword_Text, (0, 0, First), (0, 0, Index - 1), False);
+                       (Keyword_Text, (0, 0, First), (0, 0, Index), False);
                   end if;
                end if;
 
@@ -493,26 +502,51 @@ package body Language.C is
          null;
    end Analyze_C_Source;
 
+   ----------------------
+   -- Parse_Constructs --
+   ----------------------
+
+   procedure Parse_Constructs
+     (Lang            : access C_Language;
+      Buffer          : String;
+      Result          : out Construct_List)
+   is
+      pragma Unreferenced (Lang);
+
+      Offset      : Integer := 0;
+      No_Contents : Boolean;
+
+   begin
+      Result := (null, null, null);
+
+      Analyze_C_Source
+        (Buffer        => Buffer,
+         Indent        => Offset,
+         Indent_Params => Default_Indent_Parameters,
+         No_Contents   => No_Contents,
+         Callback      => null);
+   end Parse_Constructs;
+
    --------------------
    -- Parse_Entities --
    --------------------
 
    procedure Parse_Entities
-     (Lang          : access C_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
-      Callback      : Entity_Callback)
+     (Lang     : access C_Language;
+      Buffer   : String;
+      Callback : Entity_Callback)
    is
       pragma Unreferenced (Lang);
       pragma Suppress (All_Checks);
+      --  ??? For some reason we're sometimes getting a CE in this procedure
+      --  with no apparent reason if checks are enabled.
 
-      S           : Unchecked_String_Access := To_Unchecked_String (Buffer);
       Ignored     : Natural;
       No_Contents : Boolean;
 
    begin
       Analyze_C_Source
-        (Buffer        => S (1 .. Buffer_Length),
+        (Buffer        => Buffer,
          Indent        => Ignored,
          Indent_Params => Default_Indent_Parameters,
          No_Contents   => No_Contents,
@@ -525,16 +559,14 @@ package body Language.C is
 
    procedure Next_Indentation
      (Lang          : access C_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang);
 
-      S           : Unchecked_String_Access := To_Unchecked_String (Buffer);
-      First       : Natural := Buffer_Length - 1;
+      First       : Natural := Buffer'Last - 1;
       Index       : Natural;
       Offset      : Integer := 0;
       No_Contents : Boolean := True;
@@ -542,21 +574,21 @@ package body Language.C is
    begin
       --  Go to beginning of line
 
-      while First > 1 and then S (First - 1) /= ASCII.LF loop
+      while First > 1 and then Buffer (First - 1) /= ASCII.LF loop
          First := First - 1;
       end loop;
 
       Index := First;
 
-      while Index < Buffer_Length
-        and then (S (Index) = ' ' or else S (Index) = ASCII.HT)
+      while Index < Buffer'Last
+        and then (Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT)
       loop
          Index := Index + 1;
       end loop;
 
       Indent := Index - First;
       Analyze_C_Source
-        (Buffer        => S (Index .. Buffer_Length),
+        (Buffer        => Buffer (Index .. Buffer'Last),
          Indent        => Offset,
          Indent_Params => Indent_Params,
          No_Contents   => No_Contents,

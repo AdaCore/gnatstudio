@@ -82,16 +82,19 @@ package Language.C is
    -- Source Analyzing --
    ----------------------
 
+   procedure Parse_Constructs
+     (Lang   : access C_Language;
+      Buffer : String;
+      Result : out Construct_List);
+
    procedure Parse_Entities
-     (Lang          : access C_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
-      Callback      : Entity_Callback);
+     (Lang     : access C_Language;
+      Buffer   : String;
+      Callback : Entity_Callback);
 
    procedure Next_Indentation
      (Lang          : access C_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
