@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Object;              use Glib.Object;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
@@ -30,35 +31,214 @@ with Python.GUI;               use Python, Python.GUI;
 with Python.Ada;               use Python.Ada;
 with Glide_Intl;               use Glide_Intl;
 with Gtk.Enums;                use Gtk.Enums;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
+with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;           use Ada.Exceptions;
+with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with System;                   use System;
+with Traces;                   use Traces;
 
 package body Python_Module is
 
-   type Python_Module_Record is new Module_ID_Record with record
-      Interpreter : Python_Interpreter;
-   end record;
-   type Python_Module_Access is access all Python_Module_Record'Class;
+   Me : constant Debug_Handle := Create ("Python_Module");
 
-   Python_Module_Id : Python_Module_Access;
+   Python_Module_Id : Module_ID;
+
+   GPS_Module_Name : constant String := "GPS";
+   --  Name of the GPS module in the python interpreter.
+
+   GPS_Data_Attr : constant String := "__gps_data__";
+   --  Internal name of the attributes reserved for GPS
+
+   ----------------------
+   -- Python_scripting --
+   ----------------------
+
+   type Python_Scripting_Record is new Scripting_Language_Record with record
+      Kernel                   : Glide_Kernel.Kernel_Handle;
+      Interpreter              : Python_Interpreter;
+      GPS_Exception            : PyObject;
+      GPS_Module               : PyObject;
+      GPS_Missing_Args         : PyObject;
+      GPS_Invalid_Arg          : PyObject;
+      GPS_Unexpected_Exception : PyObject;
+   end record;
+   type Python_Scripting is access all Python_Scripting_Record'Class;
+
+   procedure Register_Command
+     (Script       : access Python_Scripting_Record;
+      Command      : String;
+      Usage        : String;
+      Description  : String;
+      Minimum_Args : Natural := 0;
+      Maximum_Args : Natural := 0;
+      Handler      : Module_Command_Function;
+      Class        : Class_Type := No_Class);
+   procedure Register_Class
+     (Script        : access Python_Scripting_Record;
+      Name          : String;
+      Description   : String := "";
+      As_Dictionary : Boolean := False);
+   procedure Execute_Command
+     (Script             : access Python_Scripting_Record;
+      Command            : String;
+      Display_In_Console : Boolean := True);
+   function Get_Name (Script : access Python_Scripting_Record) return String;
+   --  See doc from inherited subprograms
+
+   --------------------------
+   -- Python_Callback_Data --
+   --------------------------
+
+   type Python_Callback_Data is new Callback_Data with record
+      Script           : Python_Scripting;
+      Args             : PyObject;
+      Return_Value     : PyObject;
+      Has_Return_Value : Boolean := False;
+   end record;
+
+   function Get_Kernel (Data : Python_Callback_Data)
+      return Glide_Kernel.Kernel_Handle;
+   function Number_Of_Arguments (Data : Python_Callback_Data) return Natural;
+   function Nth_Arg (Data : Python_Callback_Data; N : Positive) return String;
+   function Nth_Arg (Data : Python_Callback_Data; N : Positive) return Integer;
+   function Nth_Arg
+     (Data : Python_Callback_Data; N : Positive) return System.Address;
+   function Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Class : Class_Type)
+      return Class_Instance;
+   procedure Set_Error_Msg (Data : in out Python_Callback_Data; Msg : String);
+   procedure Set_Return_Value_As_List
+     (Data : in out Python_Callback_Data; Size : Natural := 0);
+   procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data;
+      Value  : Integer; Append : Boolean := False);
+   procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data;
+      Value  : String; Append : Boolean := False);
+   procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data;
+      Value  : System.Address; Append : Boolean := False);
+   procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data;
+      Value  : Class_Instance; Append : Boolean := False);
+   --  See doc from inherited subprogram
+
+   ---------------------------
+   -- Python_Class_Instance --
+   ---------------------------
+
+   type Python_Class_Instance_Record is new Class_Instance_Record with record
+      Script : Python_Scripting;
+      Data   : PyObject;
+   end record;
+   type Python_Class_Instance is access all Python_Class_Instance_Record'Class;
+
+   function New_Instance
+     (Data : Python_Callback_Data; Class : Class_Type) return Class_Instance;
+   function Get_Class (Instance : access Python_Class_Instance_Record)
+      return Class_Type;
+   function Get_Data (Instance : access Python_Class_Instance_Record)
+      return Glib.Object.GObject;
+   function Get_Data
+     (Instance : access Python_Class_Instance_Record) return String;
+   function Get_Data (Instance : access Python_Class_Instance_Record)
+      return System.Address;
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record;
+      Value    : access Glib.Object.GObject_Record'Class);
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record; Value : String);
+   procedure Set_Data
+     (Instance   : access Python_Class_Instance_Record;
+      Value      : System.Address;
+      On_Destroy : Destroy_Handler := null);
+   procedure Primitive_Free (Instance : in out Python_Class_Instance_Record);
+   --  See doc from inherited subprogram
+
+   ------------------
+   -- Handler_Data --
+   ------------------
+
+   type Handler_Data (Length : Natural) is record
+      Script  : Python_Scripting;
+      Handler : Module_Command_Function;
+      Command : String (1 .. Length);
+      Minimum_Args, Maximum_Args : Natural;
+   end record;
+   type Handler_Data_Access is access Handler_Data;
+   --  Information stores with each python function to call the right Ada
+   --  subprogram.
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Handler_Data_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Handler_Data, Handler_Data_Access);
+
+   procedure Destroy_Handler_Data (Handler : System.Address);
+   pragma Convention (C, Destroy_Handler_Data);
+   --  Called when the python object associated with Handler is destroyed.
+
+   ----------------------
+   -- Interpreter_View --
+   ----------------------
 
    type Interpreter_View_Record is new Gtk_Scrolled_Window_Record
      with null record;
    type Interpreter_View is access all Interpreter_View_Record'Class;
 
    procedure Create_Python_Console
-     (Item   : access Gtk_Widget_Record'Class;
+     (Script : access Python_Scripting_Record'Class;
       Kernel : Kernel_Handle);
    --  Create the python console if it doesn't exist yet.
+
+   function First_Level (Self, Args : PyObject) return PyObject;
+   pragma Convention (C, First_Level);
+   --  First level handler for all functions exported to python. This function
+   --  is in charge of dispatching to the actual Ada subprogram.
+
+   procedure Setup_Return_Value (Data : in out Python_Callback_Data'Class);
+   --  Mark Data as containing a return value, and free the previous value if
+   --  there is any
+
+   function Convert is new Ada.Unchecked_Conversion (System.Address, GObject);
+   function Convert is new Ada.Unchecked_Conversion (GObject, System.Address);
+
+   procedure Unref_Gobject (Data : System.Address);
+   pragma Convention (C, Unref_Gobject);
+   --  Called when the GObject Data is no longer necessary in the python object
+   --  it is associated with.
+
+   procedure Trace_Dump (Name : String; Obj : PyObject);
+   pragma Unreferenced (Trace_Dump);
+   --  Print debug info for Obj
+
+   ----------------
+   -- Trace_Dump --
+   ----------------
+
+   procedure Trace_Dump (Name : String; Obj : PyObject) is
+   begin
+      if Obj = null then
+         Trace (Me, Name & "=<null>");
+      else
+         Trace (Me, Name & "="""
+                & PyString_AsString (PyObject_Str (Obj)) & '"' & ASCII.LF
+                & PyString_AsString (PyObject_Str (PyObject_Dir (Obj)))
+                & ASCII.LF
+                & PyString_AsString (PyObject_Repr (Obj)));
+      end if;
+   end Trace_Dump;
 
    ---------------------------
    -- Create_Python_Console --
    ---------------------------
 
    procedure Create_Python_Console
-     (Item   : access Gtk_Widget_Record'Class;
+     (Script : access Python_Scripting_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Item);
       Child   : MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Interpreter_View_Record'Tag);
       Console : Interpreter_View;
@@ -76,7 +256,7 @@ package body Python_Module is
          Modify_Font (View, Get_Pref (Kernel, Source_Editor_Font));
          Set_Wrap_Mode (View, Wrap_Char);
 
-         Set_Console (Python_Module_Id.Interpreter, View);
+         Set_Console (Script.Interpreter, View);
 
          Child := Put
            (Get_MDI (Kernel), Console, Focus_Widget => Gtk_Widget (View));
@@ -87,77 +267,6 @@ package body Python_Module is
       end if;
    end Create_Python_Console;
 
-   ----------
-   -- Test --
-   ----------
-
-   --  function Test (Self : PyObject; Args : PyObject) return PyObject;
-   --  pragma Convention (C, Test);
-
-   --  function Test (Self : PyObject; Args : PyObject) return PyObject is
-   --     pragma Unreferenced (Self, Args);
-   --  begin
-   --     --  if Self = GPS_Module then
-   --     --     return PyString_FromString ("test: first arg is gps_module");
-   --     --  elsif Self = Kernel_Class then
-   --     --     return PyString_FromString ("Test: first arg is Kernel");
-   --     --  elsif Self = null then
-   --     --     return PyString_FromString ("Test: first arg is null");
-   --     --  else
-   --     return PyString_FromString ("Calling test");
-   --     --  end if;
-   --  end Test;
-
-   ---------
-   -- Foo --
-   ---------
-
-   --  function Foo (Self : PyObject; Args : PyObject) return PyObject;
-   --  pragma Convention (C, Foo);
-
-   --  function Foo (Self : PyObject; Args : PyObject) return PyObject is
-   --     A : aliased Integer;
-   --  begin
-   --     if not PyArg_ParseTuple (Args, "i", A'Address) then
-   --        return null;
-   --     end if;
-
-   --     if Self = null then
-   --        return PyString_FromString ("<null> Calling foo" & A'Img);
-   --     else
-   --        return PyString_FromString
-   --          (PyString_AsString (PyObject_Str (Self))
-   --           & "Calling foo" & A'Img);
-   --     end if;
-   --  end Foo;
-
-   ---------------
-   -- Foo_Class --
-   ---------------
-
-   --  function Foo_Class (Self : PyObject; Args : PyObject) return PyObject;
-   --  pragma Convention (C, Foo_Class);
-
-   --  function Foo_Class (Self : PyObject; Args : PyObject) return PyObject is
-   --     A : aliased Integer;
-   --     O : aliased PyObject;
-   --     pragma Unreferenced (Self);
-   --  begin
-   --     --  Self is always null
-   --     --  O is always set to the class that contains the method (ie Kernel)
-   --     if not PyArg_ParseTuple (Args, "Oi", O'Address, A'Address) then
-   --        return null;
-   --     end if;
-
-   --     if O = null then
-   --        return PyString_FromString ("<null> Calling foo_class" & A'Img);
-   --     else
-   --        return PyString_FromString
-   --          (PyString_AsString (PyObject_Str (O))
-   --           & "Calling foo_class" & A'Img);
-   --     end if;
-   --  end Foo_Class;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -165,66 +274,557 @@ package body Python_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      GPS_Module   : PyObject;
-      Kernel_Class : PyObject;
-      Dict         : PyDictObject;
       Ignored      : Integer;
       pragma Unreferenced (Ignored);
+      Script       : Python_Scripting;
+
    begin
-      Python_Module_Id := new Python_Module_Record;
       Register_Module
-        (Module      => Module_ID (Python_Module_Id),
+        (Module      => Python_Module_Id,
          Kernel      => Kernel,
          Module_Name => "Python");
 
-      Python_Module_Id.Interpreter := new Python_Interpreter_Record;
-      Initialize (Python_Module_Id.Interpreter, Get_History (Kernel));
+      Script := new Python_Scripting_Record;
+      Script.Kernel := Kernel_Handle (Kernel);
+      Register_Scripting_Language (Kernel, Script);
 
-      Create_Python_Console (Get_Main_Window (Kernel), Kernel_Handle (Kernel));
+      Script.Interpreter := new Python_Interpreter_Record;
+      Initialize (Script.Interpreter, Get_History (Kernel));
 
-      --  Create the new GPS module
+      Create_Python_Console (Script, Kernel_Handle (Kernel));
 
-      GPS_Module := Py_InitModule
-        ("GPS", Doc => "Interface with the GPS environment");
-      Run_Command
-        (Python_Module_Id.Interpreter, "import GPS", Hide_Output => True);
+      --  Create the GPS module, in which all functions and classes are
+      --  registered
 
-      --  Create a new type
+      Script.GPS_Module := Py_InitModule
+        (GPS_Module_Name, Doc => "Interface with the GPS environment");
+      Run_Command (Script.Interpreter, "import GPS", Hide_Output => True);
 
-      Dict := PyDict_New;
-      --  PyDict_SetItemString (Dict, "editors", PyDict_New);
+      Script.GPS_Unexpected_Exception := PyErr_NewException
+        (GPS_Module_Name & ".Unexpected_Exception", null, null);
+      Script.GPS_Exception := PyErr_NewException
+        (GPS_Module_Name & ".Exception", null, null);
+      Script.GPS_Missing_Args := PyErr_NewException
+        (GPS_Module_Name & ".Missing_Arguments", null, null);
+      Script.GPS_Invalid_Arg := PyErr_NewException
+        (GPS_Module_Name & ".Invalid_Argument", null, null);
+   end Register_Module;
+
+   --------------------------
+   -- Destroy_Handler_Data --
+   --------------------------
+
+   procedure Destroy_Handler_Data (Handler : System.Address) is
+      H : Handler_Data_Access := Convert (Handler);
+   begin
+      Unchecked_Free (H);
+   end Destroy_Handler_Data;
+
+   -----------------
+   -- First_Level --
+   -----------------
+
+   function First_Level (Self, Args : PyObject) return PyObject is
+      Handler : constant Handler_Data_Access :=
+        Convert (PyCObject_AsVoidPtr (Self));
+      Size : constant Integer := PyTuple_Size (Args);
+      Callback : Python_Callback_Data;
+   begin
+      --  Check number of arguments
+      if Handler.Minimum_Args > Size
+        or else Size > Handler.Maximum_Args
+      then
+         if Handler.Minimum_Args > Size then
+            PyErr_SetString (Handler.Script.GPS_Missing_Args,
+                             "Wrong number of parameters, expecting at least"
+                             & Handler.Minimum_Args'Img);
+         else
+            PyErr_SetString (Handler.Script.GPS_Missing_Args,
+                             "Wrong number of parameters, expecting at most"
+                             & Handler.Maximum_Args'Img);
+         end if;
+         return null;
+      end if;
+
+      Callback.Args         := Args;
+      Callback.Return_Value := Py_None;
+      Callback.Script       := Handler.Script;
+      Py_INCREF (Py_None);
+
+      Handler.Handler.all (Callback, Handler.Command);
+
+      if Callback.Has_Return_Value then
+         return Callback.Return_Value;
+      else
+         Py_INCREF (Py_None);
+         return Py_None;
+      end if;
+
+   exception
+      when Invalid_Parameter =>
+         Trace (Me, "Raised invalid_parameter");
+         PyErr_SetString (Handler.Script.GPS_Invalid_Arg,
+                          "Invalid argument to GPS function");
+         return null;
+
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         PyErr_SetString (Handler.Script.GPS_Unexpected_Exception,
+                          "unexpected exception in GPS");
+         return null;
+   end First_Level;
+
+   ----------------------
+   -- Register_Command --
+   ----------------------
+
+   procedure Register_Command
+     (Script       : access Python_Scripting_Record;
+      Command      : String;
+      Usage        : String;
+      Description  : String;
+      Minimum_Args : Natural := 0;
+      Maximum_Args : Natural := 0;
+      Handler      : Module_Command_Function;
+      Class        : Class_Type := No_Class)
+   is
+      H   : Handler_Data_Access := new Handler_Data'
+        (Length       => Command'Length,
+         Command      => Command,
+         Handler      => Handler,
+         Script       => Python_Scripting (Script),
+         Minimum_Args => Minimum_Args,
+         Maximum_Args => Maximum_Args);
+      User_Data : constant PyObject := PyCObject_FromVoidPtr
+        (H.all'Address, Destroy_Handler_Data'Access);
+      Klass : PyObject;
+   begin
+      if Class = No_Class then
+         Add_Function
+           (Module => Script.GPS_Module,
+            Func   => Create_Method_Def
+              (Command, First_Level'Access,
+               Usage & ASCII.LF & ASCII.LF & Description),
+            Self   => User_Data);
+      else
+         H.Minimum_Args := H.Minimum_Args + 1;
+         H.Maximum_Args := H.Maximum_Args + 1;
+         Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
+         Add_Method
+           (Class => Klass,
+            Func  => Create_Method_Def
+              (Command, First_Level'Access,
+               Usage & ASCII.LF & ASCII.LF & Description),
+            Self   => User_Data);
+      end if;
+   end Register_Command;
+
+   --------------------
+   -- Register_Class --
+   --------------------
+
+   procedure Register_Class
+     (Script        : access Python_Scripting_Record;
+      Name          : String;
+      Description   : String := "";
+      As_Dictionary : Boolean := False)
+   is
+      Dict  : constant PyDictObject := PyDict_New;
+      Class : PyClassObject;
+      Ignored : Integer;
+      pragma Unreferenced (As_Dictionary, Ignored);
+   begin
       PyDict_SetItemString
-        (Dict, "__doc__", PyString_FromString ("doc for Kernel"));
-      PyDict_SetItemString (Dict, "__module__", PyString_FromString ("GPS"));
+        (Dict, "__doc__", PyString_FromString (Description));
+      PyDict_SetItemString
+        (Dict, "__module__", PyString_FromString (GPS_Module_Name));
 
-      Kernel_Class := PyClass_New
+      Class := PyClass_New
         (Bases => null,
          Dict  => Dict,
-         Name  => PyString_FromString ("Kernel"));
+         Name  => PyString_FromString (Name));
       Ignored := PyModule_AddObject
-        (GPS_Module, New_String ("Kernel"), Kernel_Class);
+        (Script.GPS_Module, New_String (Name), Class);
+   end Register_Class;
 
-      --  Methods : constant PyMethodDef_Array :=
-      --    (0 => Create_Method_Def ("test", Test'Access, "test function"));
+   ---------------------
+   -- Execute_Command --
+   ---------------------
 
-      --  GPS_Module := Py_InitModule
-      --    ("GPS", Methods, "Interface with the GPS environment");
+   procedure Execute_Command
+     (Script             : access Python_Scripting_Record;
+      Command            : String;
+      Display_In_Console : Boolean := True) is
+   begin
+      Run_Command
+        (Script.Interpreter, Command, Hide_Output => not Display_In_Console);
+   end Execute_Command;
 
-      --  Add new functions
+   --------------
+   -- Get_Name --
+   --------------
 
-      --  Add_Function
-      --   (GPS_Module, Create_Method_Def ("foo", Foo'Access, "foo function"));
+   function Get_Name (Script : access Python_Scripting_Record) return String is
+      pragma Unreferenced (Script);
+   begin
+      return "Python";
+   end Get_Name;
 
-      --  Add_Method
-      --    (Kernel_Class,
-      --     Create_Method_Def ("foo", Foo'Access, "foo method"));
-      --  Add_Class_Method
-      --    (Kernel_Class,
-      --     Create_Method_Def ("foo_class", Foo_Class'Access, "foo method"));
-      --  Add_Static_Method
-      --    (Kernel_Class,
-      --     Create_Method_Def ("foo_static", Foo'Access, "foo method"));
-   end Register_Module;
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (Data : Python_Callback_Data)
+      return Glide_Kernel.Kernel_Handle is
+   begin
+      return Data.Script.Kernel;
+   end Get_Kernel;
+
+   -------------------------
+   -- Number_Of_Arguments --
+   -------------------------
+
+   function Number_Of_Arguments (Data : Python_Callback_Data) return Natural is
+   begin
+      return PyTuple_Size (Data.Args);
+   end Number_Of_Arguments;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg (Data : Python_Callback_Data; N : Positive) return String
+   is
+      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+   begin
+      if Item = null or not PyString_Check (Item) then
+         raise Invalid_Parameter;
+      end if;
+      return PyString_AsString (Item);
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Python_Callback_Data; N : Positive) return Integer
+   is
+      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+   begin
+      if Item = null or else not PyInt_Check (Item) then
+         raise Invalid_Parameter;
+      end if;
+
+      return Integer (PyInt_AsLong (Item));
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Python_Callback_Data; N : Positive) return System.Address
+   is
+      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+   begin
+      if Item = null or else not PyCObject_Check (Item) then
+         raise Invalid_Parameter;
+      end if;
+      return PyCObject_AsVoidPtr (Item);
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Class : Class_Type)
+      return Class_Instance
+   is
+      Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
+      C    : constant PyObject := Lookup_Class_Object
+        (Data.Script.GPS_Module, Get_Name (Class));
+      Item_Class : PyObject;
+   begin
+      if Item = null or else not PyInstance_Check (Item) then
+         Trace (Me, "Nth_Arg: Item is null or not an instance");
+         raise Invalid_Parameter;
+      end if;
+
+      Item_Class := PyObject_GetAttrString (Item, "__class__");
+      if Item_Class = null then
+         Trace (Me, "Nth_Arg: Couldn't find class of instance");
+      end if;
+
+      if not PyClass_IsSubclass (Item_Class, Base => C) then
+         Trace (Me, "Nth_Arg: invalid class");
+         raise Invalid_Parameter;
+      end if;
+
+      return new Python_Class_Instance_Record'
+        (Class_Instance_Record with Script => Data.Script, Data => Item);
+   end Nth_Arg;
+
+   ------------------------
+   -- Setup_Return_Value --
+   ------------------------
+
+   procedure Setup_Return_Value (Data : in out Python_Callback_Data'Class) is
+   begin
+      if Data.Return_Value /= null then
+         Py_DECREF (Data.Return_Value);
+      end if;
+
+      Data.Has_Return_Value := True;
+      Data.Return_Value := null;
+   end Setup_Return_Value;
+
+   -------------------
+   -- Set_Error_Msg --
+   -------------------
+
+   procedure Set_Error_Msg
+     (Data : in out Python_Callback_Data; Msg : String) is
+   begin
+      Trace (Me, "Set_Error_Msg: " & Msg);
+      Setup_Return_Value (Data);
+      PyErr_SetString (Data.Script.GPS_Exception, Msg);
+   end Set_Error_Msg;
+
+   ------------------------------
+   -- Set_Return_Value_As_List --
+   ------------------------------
+
+   procedure Set_Return_Value_As_List
+     (Data : in out Python_Callback_Data; Size : Natural := 0)
+   is
+      pragma Unreferenced (Size);
+   begin
+      Setup_Return_Value (Data);
+      Data.Has_Return_Value := True;
+      Data.Return_Value := PyList_New;
+   end Set_Return_Value_As_List;
+
+   ----------------------
+   -- Set_Return_Value --
+   ----------------------
+
+   procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data;
+      Value  : Integer; Append : Boolean := False)
+   is
+      Num : Integer;
+      pragma Unreferenced (Num);
+   begin
+      Setup_Return_Value (Data);
+      if Append then
+         Num := PyList_Append
+           (Data.Return_Value, PyInt_FromLong (long (Value)));
+      else
+         Data.Return_Value := PyInt_FromLong (long (Value));
+      end if;
+   end Set_Return_Value;
+
+   ----------------------
+   -- Set_Return_Value --
+   ----------------------
+
+   procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data;
+      Value  : String; Append : Boolean := False)
+   is
+      Num : Integer;
+      pragma Unreferenced (Num);
+   begin
+      Setup_Return_Value (Data);
+      if Append then
+         Num := PyList_Append (Data.Return_Value, PyString_FromString (Value));
+      else
+         Data.Return_Value := PyString_FromString (Value);
+      end if;
+   end Set_Return_Value;
+
+   ----------------------
+   -- Set_Return_Value --
+   ----------------------
+
+   procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data;
+      Value  : System.Address; Append : Boolean := False)
+   is
+      Num : Integer;
+      pragma Unreferenced (Num);
+   begin
+      Setup_Return_Value (Data);
+      if Append then
+         Num := PyList_Append
+           (Data.Return_Value, PyCObject_FromVoidPtr (Value));
+      else
+         Data.Return_Value := PyCObject_FromVoidPtr (Value);
+      end if;
+   end Set_Return_Value;
+
+   ----------------------
+   -- Set_Return_Value --
+   ----------------------
+
+   procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data;
+      Value  : Class_Instance; Append : Boolean := False)
+   is
+      V   : constant Python_Class_Instance := Python_Class_Instance (Value);
+      Num : Integer;
+      pragma Unreferenced (Num);
+   begin
+      Setup_Return_Value (Data);
+      if Append then
+         Num := PyList_Append (Data.Return_Value, V.Data);
+      else
+         Py_INCREF (V.Data);
+         Data.Return_Value := V.Data;
+      end if;
+   end Set_Return_Value;
+
+   ------------------
+   -- New_Instance --
+   ------------------
+
+   function New_Instance
+     (Data : Python_Callback_Data; Class : Class_Type) return Class_Instance
+   is
+      Klass : constant PyObject := Lookup_Class_Object
+        (Data.Script.GPS_Module, Get_Name (Class));
+   begin
+      if Klass = null then
+         return null;
+      end if;
+
+      return new Python_Class_Instance_Record'
+        (Class_Instance_Record with
+         Script => Data.Script,
+         Data   => PyInstance_New (Klass, null));
+   end New_Instance;
+
+   ---------------
+   -- Get_Class --
+   ---------------
+
+   function Get_Class (Instance : access Python_Class_Instance_Record)
+      return Class_Type
+   is
+      Class : constant PyObject :=
+        PyObject_GetAttrString (Instance.Data, "__class__");
+   begin
+      if Class = null then
+         return No_Class;
+      else
+         return New_Class
+           (Instance.Script.Kernel,
+            PyString_AsString (PyObject_GetAttrString (Class, "__name__")));
+      end if;
+   end Get_Class;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Python_Class_Instance_Record)
+      return Glib.Object.GObject
+   is
+      Addr : constant System.Address := Get_Data (Instance);
+   begin
+      return Convert (Addr);
+   end Get_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : access Python_Class_Instance_Record) return String
+   is
+      Item : constant PyObject := PyObject_GetAttrString
+        (Instance.Data, GPS_Data_Attr);
+   begin
+      if Item = null or else not PyString_Check (Item) then
+         raise Invalid_Data;
+      end if;
+      return PyString_AsString (Item);
+   end Get_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Python_Class_Instance_Record)
+      return System.Address
+   is
+      Item : constant PyObject := PyObject_GetAttrString
+        (Instance.Data, GPS_Data_Attr);
+   begin
+      if Item = null or else not PyCObject_Check (Item) then
+         raise Invalid_Data;
+      end if;
+      return PyCObject_AsVoidPtr (Item);
+   end Get_Data;
+
+   -------------------
+   -- Unref_Gobject --
+   -------------------
+
+   procedure Unref_Gobject (Data : System.Address) is
+   begin
+      Unref (GObject'(Convert (Data)));
+   end Unref_Gobject;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record;
+      Value    : access Glib.Object.GObject_Record'Class) is
+   begin
+      Set_Data
+        (Instance, Convert (GObject (Value)),
+         On_Destroy => Unref_Gobject'Access);
+   end Set_Data;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record; Value : String) is
+   begin
+      PyObject_SetAttrString
+        (Instance.Data, GPS_Data_Attr, PyString_FromString (Value));
+   end Set_Data;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance   : access Python_Class_Instance_Record;
+      Value      : System.Address;
+      On_Destroy : Destroy_Handler := null)
+   is
+      Data : constant PyObject := PyCObject_FromVoidPtr
+        (Value, PyCObject_Destructor (On_Destroy));
+   begin
+      PyObject_SetAttrString (Instance.Data, GPS_Data_Attr, Data);
+   end Set_Data;
+
+   --------------------
+   -- Primitive_Free --
+   --------------------
+
+   procedure Primitive_Free (Instance : in out Python_Class_Instance_Record) is
+   begin
+      Py_DECREF (Instance.Data);
+   end Primitive_Free;
 
 end Python_Module;
 
