@@ -58,7 +58,7 @@ package body Display_Items is
    Spacing : constant Gint := 2;
    --  Space on each sides of the title.
 
-   Buttons_Size : constant Gint := 15;
+   Buttons_Size : constant Gint := 16;
    --  Size of the buttons in the title bar of the items
 
    Border_Spacing : constant Gint := 2;
@@ -107,10 +107,12 @@ package body Display_Items is
    Title_Font : Gdk.Font.Gdk_Font;
    Refresh_Button_Gc : Gdk.GC.Gdk_GC;
 
-   Close_Pixmap  : Gdk_Pixmap;
-   Close_Mask    : Gdk_Bitmap;
-   Locked_Pixmap : Gdk_Pixmap;
-   Locked_Mask   : Gdk_Bitmap;
+   Close_Pixmap        : Gdk_Pixmap;
+   Close_Mask          : Gdk_Bitmap;
+   Locked_Pixmap       : Gdk_Pixmap;
+   Locked_Mask         : Gdk_Bitmap;
+   Auto_Display_Pixmap : Gdk_Pixmap;
+   Auto_Display_Mask   : Gdk_Bitmap;
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
@@ -258,6 +260,9 @@ package body Display_Items is
            (Close_Pixmap, Win, Close_Mask, Null_Color, cancel_xpm);
          Create_From_Xpm_D
            (Locked_Pixmap, Win, Locked_Mask, Null_Color, lock_xpm);
+         Create_From_Xpm_D
+           (Auto_Display_Pixmap,
+            Win, Auto_Display_Mask, Null_Color, display_small_xpm);
          Create_From_Xpm_D (Box_Pixmap, Win, Box_Mask, Null_Color, box_xpm);
 
          Set_Hidden_Pixmap (Box_Pixmap, Box_Mask);
@@ -659,23 +664,23 @@ package body Display_Items is
 
       if Item.Auto_Refresh then
          Draw_Rectangle (Pixmap (Item),
-                         GC     => Black_GC,
-                         Filled => False,
+                         GC     => Grey_GC,
+                         Filled => True,
                          X      => Width - 2 * Buttons_Size - 2 * Spacing,
                          Y      => Spacing,
-                         Width  => Buttons_Size - 1,
-                         Height => Buttons_Size - 1);
-         Color := Parse ("green");
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-         Set_Foreground (Refresh_Button_Gc, Color);
-
-         Draw_Rectangle (Pixmap (Item),
-                         GC     => Refresh_Button_Gc,
-                         Filled => True,
-                         X      => Width - 2 * Buttons_Size - 2 * Spacing + 1,
-                         Y      => Spacing + 1,
-                         Width  => Buttons_Size - 2,
-                         Height => Buttons_Size - 2);
+                         Width  => Buttons_Size,
+                         Height => Buttons_Size);
+         Set_Clip_Mask (Black_Gc, Auto_Display_Mask);
+         Set_Clip_Origin (Black_Gc,
+                          Width - 2 * Buttons_Size - 2 * Spacing,
+                          Spacing);
+         Draw_Pixmap (Pixmap (Item),
+                      GC     => Black_Gc,
+                      Src    => Auto_Display_Pixmap,
+                      Xsrc   => 0,
+                      Ysrc   => 0,
+                      Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
+                      Ydest  => Spacing);
       else
          Draw_Rectangle (Pixmap (Item),
                          GC     => Grey_Gc,
