@@ -978,8 +978,6 @@ private
       Iterator : Actions_Htable.String_Hash_Table.Iterator;
    end record;
 
-
-
    type Hook_Function_Record is abstract tagged record
       Ref_Count : Natural := 0;
    end record;
@@ -993,9 +991,6 @@ private
    procedure Free (L : in out Hook_Description_Base_Access);
    package Hooks_Hash is new String_Hash
      (Hook_Description_Base_Access, Free, null);
-
-
-
 
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
       Module              : Module_ID;

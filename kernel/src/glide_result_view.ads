@@ -40,8 +40,6 @@ package Glide_Result_View is
    --  subprogram, since the console is loaded before all other modules,
    --  including the scripting languages
 
-
-
    type Result_View_Record is new Gtk_Hbox_Record with private;
    type Result_View is access all Result_View_Record'Class;
 

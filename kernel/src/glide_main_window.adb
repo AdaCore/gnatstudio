@@ -63,7 +63,7 @@ package body Glide_Main_Window is
    --  Callback for the delete event.
 
    procedure Preferences_Changed
-     (Kernel      : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
