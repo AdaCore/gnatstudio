@@ -220,8 +220,8 @@ msgstr "Déboggueur"
 msgid  "  debugger: "
 msgstr "  déboggueur : "
 
-msgid  "   --debugger DEBUG  use DEBUG as the underlying debugger."
-msgstr "   --debugger DEBUG  utilise DEBUG comme moteur de déboggueur."
+msgid  "   --debugger DEBUG    use DEBUG as the underlying debugger."
+msgstr "   --debugger DEBUG    utilise DEBUG comme moteur de déboggueur."
 
 msgid  "Debugger Host"
 msgstr "Hôte pour le déboggueur"
@@ -300,6 +300,9 @@ msgstr "Éditer le source courant..."
 
 msgid  "Edit Displays..."
 msgstr "Éditer les valeurs affichées..."
+
+msgid  "   --editor-window=xid Use xid as the editor X window."
+msgstr "   --editor-window=xid Utiliser xid comme fenêtre X d'éditeur."
 
 msgid  "Edit Sources"
 msgstr "Édition de fichiers"
@@ -424,8 +427,8 @@ msgstr "Cacher les gros éléments"
 msgid  "Hide System Files"
 msgstr "Cacher les fichiers systèmes"
 
-msgid  "   --host HOST       Run inferior debugger on HOST."
-msgstr "   --host HOST       Exécuter le déboggueur sur HOST."
+msgid  "   --host HOST         Run inferior debugger on HOST."
+msgstr "   --host HOST         Exécuter le déboggueur sur HOST."
 
 msgid  "HTML Browser"
 msgstr "Navigateur HTML"
@@ -445,6 +448,9 @@ msgstr "Interrompre"
 msgid  "Interrupt debugged program"
 msgstr "Interrompre le programme déboggué"
 
+msgid  " Invalid command: "
+msgstr " Command invalide : "
+
 msgid  "is"
 msgstr "est"
 
@@ -460,8 +466,8 @@ msgstr "Valeur de l'élément"
 msgid  "JDB"
 msgstr "JDB"
 
-msgid  "   --jdb             assume a java debugger."
-msgstr "   --jdb             suppose un déboggueur java."
+msgid  "   --jdb               assume a java debugger."
+msgstr "   --jdb               suppose un déboggueur java."
 
 msgid  "keep"
 msgstr "garder"
@@ -499,8 +505,8 @@ msgstr "Charger la liste"
 msgid  "Location"
 msgstr "Endroit"
 
-msgid  "   --log-level [0-4] Set level of logging (Default is 3)."
-msgstr "   --log-level [0-4] Selectionner le niveau de log (3 par defaut)."
+msgid  "   --log-level [0-4]   Set level of logging (Default is 3)."
+msgstr "   --log-level [0-4]   Selectionner le niveau de log (3 par defaut)."
 
 msgid  "  machine: "
 msgstr "  machine : "
@@ -832,8 +838,8 @@ msgstr "Mise en évidence de la syntaxe"
 msgid  "Target: "
 msgstr "Cible : "
 
-msgid  "   --target TARG:PRO "
-msgstr "   --target TARG:PRO "
+msgid  "   --target TARG:PRO   "
+msgstr "   --target TARG:PRO   "
 
 msgid  "Tasks..."
 msgstr "Tâches..."
@@ -871,8 +877,8 @@ msgstr "État des threads"
 msgid  "Title Background"
 msgstr "Titre"
 
-msgid  "   --tty             Use controlling tty as additional "
-msgstr "   --tty             Utilise le terminal comme additionel "
+msgid  "   --tty               Use controlling tty as additional "
+msgstr "   --tty               Utilise le terminal comme additionel "
 
 msgid  "Type"
 msgstr "Type"
@@ -913,11 +919,14 @@ msgstr "Version : "
 msgid  "Version"
 msgstr "Version"
 
-msgid  "   --version         Show the GVD version and exit."
-msgstr "   --version         Afficher la version de GVD et quitter."
+msgid  "   --version           Show the GVD version and exit."
+msgstr "   --version           Afficher la version de GVD et quitter."
 
 msgid  "View"
 msgstr "Voir"
+
+msgid  "View memory at &"
+msgstr "Afficher la mémoire à &"
 
 msgid  "vxworks"
 msgstr "vxworks"

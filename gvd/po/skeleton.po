@@ -226,8 +226,8 @@ msgstr "Debugger"
 msgid  "  debugger: "
 msgstr "  debugger: "
 
-msgid  "   --debugger DEBUG  use DEBUG as the underlying debugger."
-msgstr "   --debugger DEBUG  use DEBUG as the underlying debugger."
+msgid  "   --debugger DEBUG    use DEBUG as the underlying debugger."
+msgstr "   --debugger DEBUG    use DEBUG as the underlying debugger."
 
 msgid  "Debugger Host"
 msgstr "Debugger Host"
@@ -306,6 +306,9 @@ msgstr "Edit Current Source"
 
 msgid  "Edit Displays..."
 msgstr "Edit Displays..."
+
+msgid  "   --editor-window=xid Use xid as the editor X window."
+msgstr "   --editor-window=xid Use xid as the editor X window."
 
 msgid  "Edit Sources"
 msgstr "Edit Sources"
@@ -430,8 +433,8 @@ msgstr "Hide Big Items"
 msgid  "Hide System Files"
 msgstr "Hide System Files"
 
-msgid  "   --host HOST       Run inferior debugger on HOST."
-msgstr "   --host HOST       Run inferior debugger on HOST."
+msgid  "   --host HOST         Run inferior debugger on HOST."
+msgstr "   --host HOST         Run inferior debugger on HOST."
 
 msgid  "HTML Browser"
 msgstr "HTML Browser"
@@ -451,6 +454,9 @@ msgstr "Interrupt"
 msgid  "Interrupt debugged program"
 msgstr "Interrupt debugged program"
 
+msgid  " Invalid command: "
+msgstr " Invalid command: "
+
 msgid  "is"
 msgstr "is"
 
@@ -466,8 +472,8 @@ msgstr "Item Value"
 msgid  "JDB"
 msgstr "JDB"
 
-msgid  "   --jdb             assume a java debugger."
-msgstr "   --jdb             assume a java debugger."
+msgid  "   --jdb               assume a java debugger."
+msgstr "   --jdb               assume a java debugger."
 
 msgid  "keep"
 msgstr "keep"
@@ -505,8 +511,8 @@ msgstr "Load List"
 msgid  "Location"
 msgstr "Location"
 
-msgid  "   --log-level [0-4] Set level of logging (Default is 3)."
-msgstr "   --log-level [0-4] Set level of logging (Default is 3)."
+msgid  "   --log-level [0-4]   Set level of logging (Default is 3)."
+msgstr "   --log-level [0-4]   Set level of logging (Default is 3)."
 
 msgid  "  machine: "
 msgstr "  machine: "
@@ -838,8 +844,8 @@ msgstr "Syntax Highlighting"
 msgid  "Target: "
 msgstr "Target: "
 
-msgid  "   --target TARG:PRO "
-msgstr "   --target TARG:PRO "
+msgid  "   --target=TARG:PRO   "
+msgstr "   --target=TARG:PRO   "
 
 msgid  "Tasks..."
 msgstr "Tasks..."
@@ -877,8 +883,8 @@ msgstr "Thread Status"
 msgid  "Title Background"
 msgstr "Title Background"
 
-msgid  "   --tty             Use controlling tty as additional "
-msgstr "   --tty             Use controlling tty as additional "
+msgid  "   --tty               Use controlling tty as additional "
+msgstr "   --tty               Use controlling tty as additional "
 
 msgid  "Type"
 msgstr "Type"
@@ -919,11 +925,14 @@ msgstr "Version: "
 msgid  "Version"
 msgstr "Version"
 
-msgid  "   --version         Show the GVD version and exit."
-msgstr "   --version         Show the GVD version and exit."
+msgid  "   --version           Show the GVD version and exit."
+msgstr "   --version           Show the GVD version and exit."
 
 msgid  "View"
 msgstr "View"
+
+msgid  "View memory at &"
+msgstr "View memory at &"
 
 msgid  "vxworks"
 msgstr "vxworks"
