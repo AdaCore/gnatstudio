@@ -604,16 +604,18 @@ package body Browsers.Entities is
       pragma Unreferenced (Widget, Item);
 
    begin
+      Ref (Context);
+      Child := Open_Type_Browser_Child (Kernel);
+
       if Context /= null
         and then Context.all in Entity_Selection_Context'Class
       then
-         Ref (Context);
-         Child := Open_Type_Browser_Child (Kernel);
          Item := Add_Or_Select_Item
            (Browser => Type_Browser (Get_Widget (Child)),
             Entity  => Get_Entity (Entity_Selection_Context_Access (Context)));
-         Unref (Context);
       end if;
+
+      Unref (Context);
 
    exception
       when E : others =>
