@@ -2775,7 +2775,7 @@ package body Project_Viewers is
       Register_Command
         (Kernel,
          Command      => "add_main_unit",
-         Usage        => "add_main_unit (main1, [main2 ...]) -> None",
+         Usage        => "(main1, [main2 ...]) -> None",
          Description  =>
            -("Add some main units to the current project, and for the"
              & " current scenario. The project is not saved automatically."),

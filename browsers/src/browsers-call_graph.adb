@@ -1540,7 +1540,7 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel,
          Command      => "find_all_refs",
-         Usage        => "find_all_refs () -> None",
+         Usage        => "() -> None",
          Description  =>
            -"Display in the location window all the references to the entity.",
          Minimum_Args => 0,
@@ -1550,7 +1550,7 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel,
          Command      => "calls",
-         Usage        => "calls () -> None",
+         Usage        => "() -> None",
          Description  => -"Display the list of entities called by the entity.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -1559,7 +1559,7 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel,
          Command      => "called_by",
-         Usage        => "called_by () -> None",
+         Usage        => "() -> None",
          Description  => -"Display the list of entities that call the entity.",
          Minimum_Args => 0,
          Maximum_Args => 0,

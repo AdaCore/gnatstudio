@@ -1268,7 +1268,7 @@ package body Help_Module is
       Register_Command
         (Kernel,
          Command      => "html_browse",
-         Usage        => "html_browse (URL, [anchor]) -> None",
+         Usage        => "(URL, [anchor]) -> None",
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => 1,
          Maximum_Args => 2,

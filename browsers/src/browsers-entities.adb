@@ -442,7 +442,7 @@ package body Browsers.Entities is
       Register_Command
         (Kernel,
          Command      => "show",
-         Usage        => "show () -> None",
+         Usage        => "() -> None",
          Description  =>
            -("Display in the type browser the informations known about the"
              & " entity: list of fields for records, list of primitive"

@@ -2964,9 +2964,11 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "edit",
-         Usage        => "edit (filename, [line], [column], [len]) -> None",
+         Usage        => "(filename, [line=1], [column=1], [length=0])"
+           & " -> None",
          Description  => -"Open a file editor for file_name." & ASCII.LF
-           & (-"Len is the number of characters to select after the cursor."),
+         & (-"Length is the number of characters to select after the"
+            & " cursor."),
          Minimum_Args => 1,
          Maximum_Args => 4,
          Handler      => Edit_Command_Handler'Access);
@@ -2975,7 +2977,7 @@ package body Src_Editor_Module is
         (Kernel,
          Command => "create_mark",
          Usage   =>
-           "create_mark (filename, [line], [column], [length]) -> String",
+           "(filename, [line=1], [column=1], [length=0]) -> String",
          Description =>
            -("Create a mark for file_name, at position given by line and"
              & " column."
@@ -2991,7 +2993,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "highlight",
-         Usage        => "highlight (file, category, [line]) -> None",
+         Usage        => "(file, category, [line=0]) -> None",
          Description  =>
            -("Marks a line as belonging to a highlighting category."
              & ASCII.LF
@@ -3004,7 +3006,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "unhighlight",
-         Usage        => "unhighlight (file, category, [line]) -> None",
+         Usage        => "(file, category, [line=0]) -> None",
          Description  =>
            -("Unmarks the line for the specified category"
              & ASCII.LF
@@ -3016,7 +3018,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "register_highlighting",
-         Usage        => "register_highlighting (category, color) -> None",
+         Usage        => "(category, color) -> None",
          Description  => -("Create a new highlighting category with"
                            & " the given color. The format for color is"
                            & " ""#RRGGBB""."),
@@ -3027,7 +3029,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "goto_mark",
-         Usage        => "goto_mark (identifier) -> None",
+         Usage        => "(identifier) -> None",
          Description  =>
            -"Jump to the location of the mark corresponding to identifier.",
          Minimum_Args => 1,
@@ -3038,7 +3040,7 @@ package body Src_Editor_Module is
         (Kernel,
          Command    => "get_chars",
          Usage      =>
-           "get_chars (file, line, column, [before], [after]) -> String",
+           "(file, line, column, [before=-1], [after=-1]) -> String",
          Description  =>
            -("Get the characters around a certain mark or position."
              & ASCII.LF
@@ -3055,7 +3057,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "get_line",
-         Usage        => "get_line (mark) -> Integer",
+         Usage        => "(mark) -> Integer",
          Description  => -"Returns the current line of mark.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -3064,7 +3066,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "get_column",
-         Usage        => "get_column (mark) -> Integer",
+         Usage        => "(mark) -> Integer",
          Description  => -"Returns the current column of mark.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -3073,7 +3075,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "get_file",
-         Usage        => "get_file (mark) -> String",
+         Usage        => "(mark) -> String",
          Description  => -"Returns the current file of mark.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -3082,7 +3084,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "get_last_line",
-         Usage        => "get_last_line (file) -> Integer",
+         Usage        => "(file) -> Integer",
          Description  => -"Returns the number of the last line in file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -3091,7 +3093,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "get_buffer",
-         Usage        => "get_buffer (file) -> String",
+         Usage        => "(file) -> String",
          Description  =>
            -"Returns the text contained in the current buffer for file.",
          Minimum_Args => 1,
@@ -3102,7 +3104,7 @@ package body Src_Editor_Module is
         (Kernel,
          Command      => "replace_text",
          Usage        =>
-          "replace_text (file, line, column, text, [before], [after]) -> None",
+           "(file, line, column, text, [before=-1], [after=-1]) -> None",
          Description  =>
            -("Replace the characters around a certain mark or position."
              & ASCII.LF
@@ -3119,7 +3121,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "undo",
-         Usage        => "undo (file) -> None",
+         Usage        => "(file) -> None",
          Description  => -"Undo the last edition command for file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -3128,7 +3130,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "redo",
-         Usage        => "redo (file) -> None",
+         Usage        => "(file) -> None",
          Description  => -"Redo the last edition command for file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -3137,7 +3139,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "close",
-         Usage        => "close (file) -> None",
+         Usage        => "(file) -> None",
          Description  => -"Close all file editors for file_name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -3146,7 +3148,7 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "save",
-         Usage        => "save (interactive, all) -> None",
+         Usage        => "(interactive=true, all=true) -> None",
          Description  => -("Save current or all files." & ASCII.LF
            & "  If interactive is true, then prompt before each save."
            & ASCII.LF

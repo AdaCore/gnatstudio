@@ -312,7 +312,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "pwd",
-         Usage        => "pwd () -> None",
+         Usage        => "() -> None",
          Description  => -"Print name of current/working directory.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -320,7 +320,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "cd",
-         Usage        => "cd (dir) -> None",
+         Usage        => "(dir) -> None",
          Description  => -"Change the current directory to dir.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -328,7 +328,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "delete",
-         Usage        => "delete (name) -> None",
+         Usage        => "(name) -> None",
          Description  => -"Delete file/directory name from the file system.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -336,7 +336,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "dir",
-         Usage        => "dir ([pattern]) -> None",
+         Usage        => "([pattern]) -> None",
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
@@ -345,7 +345,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "ls",
-         Usage        => "ls ([pattern]) -> list of files",
+         Usage        => "([pattern]) -> list of files",
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
