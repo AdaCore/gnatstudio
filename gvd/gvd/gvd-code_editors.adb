@@ -450,9 +450,10 @@ package body GVD.Code_Editors is
          GVD.Source_Editors.Preferences_Changed (Edit.Source);
       end if;
 
---        if Edit.Mode = Asm_Only or else Edit.Mode = Source_Asm then
---           Preferences_Changed (Edit.Asm);
---        end if;
+      if Edit.Mode = Asm_Only or else Edit.Mode = Source_Asm then
+         GVD.Asm_Editors.Preferences_Changed (Edit.Asm);
+         Highlight_Address_Range (Edit.Asm, Edit.Source_Line);
+      end if;
    end Preferences_Changed;
 
 end GVD.Code_Editors;
