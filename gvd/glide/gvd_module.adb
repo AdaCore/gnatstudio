@@ -566,6 +566,7 @@ package body GVD_Module is
            Select_File
              (Title             => -"Select Module",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
          if S = "" then
@@ -768,6 +769,7 @@ package body GVD_Module is
               File_Pattern      => "*" & Exec_Suffix,
               Pattern_Name      => -"Executable files",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
          if S = "" then
@@ -826,6 +828,7 @@ package body GVD_Module is
               File_Pattern      => "core*",
               Pattern_Name      => -"Core files",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Open_File,
               History           => Get_History (Kernel));
 
       begin

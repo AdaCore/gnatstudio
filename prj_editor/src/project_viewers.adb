@@ -1369,6 +1369,7 @@ package body Project_Viewers is
                  Pattern_Name      => "Project files",
                  Use_Native_Dialog =>
                    Get_Pref (Get_Kernel (File), Use_Native_Dialogs),
+                 Kind              => Unspecified,
                  History           => Get_History (Get_Kernel (File)));
 
          begin
@@ -1628,6 +1629,7 @@ package body Project_Viewers is
             File_Pattern      => "*.ad*",
             Pattern_Name      => -"Ada source files",
             Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs),
+            Kind              => Unspecified,
             History           => Get_History (Ed.Kernel));
 
       begin

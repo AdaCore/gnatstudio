@@ -1889,6 +1889,7 @@ package body Src_Editor_Box is
                     Default_Name      => New_Name.all,
                     Use_Native_Dialog =>
                       Get_Pref (Editor.Kernel, Use_Native_Dialogs),
+                    Kind              => Save_File,
                     History           => Get_History (Editor.Kernel));
 
             begin
