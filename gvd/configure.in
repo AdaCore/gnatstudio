@@ -142,13 +142,19 @@ opsysfile="'\"system/${opsys}.h\"'"
 
 AC_SUBST(opsysfile)
 
-
+# On AIX machines, we must use -mminimal-toc or we won't be able to link
+TARGET_CFLAGS=""
+case "${host}" in
+   *aix*) TARGET_CFLAGS="-mminimal-toc";;          
+   *)  TARGET_CFLAGS="";;
+esac
 
 # checking for gtk
 AM_PATH_GTK(1.2.9,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 # Set the version number of Odd
 AC_SUBST(ODD_VERSION)
+AC_SUBST(TARGET_CFLAGS)
 
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
