@@ -29,6 +29,7 @@ with Gtk.Combo;               use Gtk.Combo;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Check_Button;        use Gtk.Check_Button;
 with Gtk.Spin_Button;         use Gtk.Spin_Button;
+with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
 with GVD.Color_Combo;         use GVD.Color_Combo;
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
@@ -521,11 +522,14 @@ package body GVD.Preferences is
         (Dialog.File_Name_Bg_Combo, Get_Pref (File_Name_Bg_Color));
 
       --  Source font (??? Should handle bold and italic)
-      Font_Combo_Select        (Dialog.Editor_Font_Combo,
+      Font_Combo_Select
+        (Dialog.Editor_Font_Combo,
          Get_Pref (Editor_Font),
          Bold => False,
          Italic => False,
          Height => Get_Pref (Editor_Font_Size));
+      Hide (Get_Bold_Button (Dialog.Editor_Font_Combo));
+      Hide (Get_Italic_Button (Dialog.Editor_Font_Combo));
 
       --  Show line numbers
       Set_Active
@@ -564,6 +568,8 @@ package body GVD.Preferences is
          Bold => False,
          Italic => False,
          Height => Get_Pref (Title_Font_Size));
+      Hide (Get_Bold_Button (Dialog.Title_Font_Combo));
+      Hide (Get_Italic_Button (Dialog.Title_Font_Combo));
 
       --  Value font (??? Should handle bold and italic)
       Font_Combo_Select
@@ -572,6 +578,8 @@ package body GVD.Preferences is
          Bold => False,
          Italic => False,
          Height => Get_Pref (Value_Font_Size));
+      Hide (Get_Bold_Button (Dialog.Value_Font_Combo));
+      Hide (Get_Italic_Button (Dialog.Value_Font_Combo));
 
       --  Type font (??? Should handle bold and italic)
       Font_Combo_Select
@@ -580,6 +588,8 @@ package body GVD.Preferences is
          Bold => False,
          Italic => False,
          Height => Get_Pref (Type_Font_Size));
+      Hide (Get_Bold_Button (Dialog.Type_Font_Combo));
+      Hide (Get_Italic_Button (Dialog.Type_Font_Combo));
 
       --  Big items
       Set_Active (Dialog.Hide_Big_Items_Check, Get_Pref (Hide_Big_Items));
@@ -603,6 +613,8 @@ package body GVD.Preferences is
          Bold => False,
          Italic => False,
          Height => Get_Pref (Debugger_Font_Size));
+      Hide (Get_Bold_Button (Dialog.Debug_Font_Combo));
+      Hide (Get_Italic_Button (Dialog.Debug_Font_Combo));
 
       --  Helpers
       Set_Text (Dialog.Edit_Source_Entry, Get_Pref (Default_External_Editor));
