@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -681,9 +681,6 @@ package body Glide_Kernel is
       Files : File_Array_Access := Handle.Open_Files;
    begin
       if not Is_Open (Handle, File) then
-         Run_Hook (Handle, File_Edited_Hook,
-                   File_Hooks_Args'(Hooks_Data with File => File));
-
          if Files = null then
             Handle.Open_Files := new File_Array (1 .. 1);
          else
@@ -694,6 +691,9 @@ package body Glide_Kernel is
          end if;
 
          Handle.Open_Files (Handle.Open_Files'Last) := File;
+
+         Run_Hook (Handle, File_Edited_Hook,
+                   File_Hooks_Args'(Hooks_Data with File => File));
       end if;
    end File_Edited;
 
