@@ -56,6 +56,7 @@ with Ada.Unchecked_Deallocation;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Project_Viewers;           use Project_Viewers;
 
 package body Project_Properties is
    use Widget_List;
