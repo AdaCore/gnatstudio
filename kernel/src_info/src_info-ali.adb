@@ -2026,7 +2026,7 @@ package body Src_Info.ALI is
    is
       Success : Boolean := True;
       F       : File_Info_Ptr_List;
-      Base    : constant String := To_Lower (Source_Filename);
+      Base    : constant String := Base_Name (Source_Filename);
    begin
       if File = No_LI_File then
          declare
