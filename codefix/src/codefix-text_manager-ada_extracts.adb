@@ -24,16 +24,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
    --  Internal subprograms
    ----------------------------------------------------------------------------
 
-   --------------
-   -- Is_Blank --
-   --------------
-
-   function Is_Blank (Str : String) return Boolean is
-      Blank_Str : constant String (Str'First .. Str'Last) := (others => ' ');
-   begin
-      return Str = Blank_Str;
-   end Is_Blank;
-
    ----------------
    -- Is_Comment --
    ----------------
@@ -366,9 +356,15 @@ package body Codefix.Text_Manager.Ada_Extracts is
               (Current_Line, Current_Col, Current_Token);
          end loop;
 
-         exit when Current_Token.Content.all = ":";
+         exit when Current_Token.Content.all = ":"
+           or else Current_Token.Content.all = ";";
 
-         Append (Destination.Elements_List, Current_Token);
+            --  ??? Make the same tests without case problems
+         if Current_Token.Content.all /= "with"
+           and then Current_Token.Content.all /= "use"
+         then
+            Append (Destination.Elements_List, Current_Token);
+         end if;
 
          Get_Token
            (Current_Line, Current_Col, Current_Token);
