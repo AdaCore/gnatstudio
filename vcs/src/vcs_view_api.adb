@@ -673,7 +673,12 @@ package body VCS_View_API is
                     (On_Menu_Edit_Log'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Commit");
+               if Get_Log_From_File (Kernel, File_S, False) = "" then
+                  Gtk_New (Item, Label => -"Commit via revision log");
+               else
+                  Gtk_New (Item, Label => -"Commit");
+               end if;
+
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
