@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GNAT.IO; use GNAT.IO;
 
 package body Odd.Trace is
@@ -27,7 +26,7 @@ package body Odd.Trace is
 
    procedure Output_String (Str : String) is
    begin
-      for J in Str'Range loop 
+      for J in Str'Range loop
          case Str (J) is
             when ASCII.LF =>
                Put ("\n");
