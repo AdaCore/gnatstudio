@@ -604,7 +604,7 @@ package body Src_Info.LI_Utils is
                (Declaration_Info_Ptr => Dep_Ptr.Value.Declarations,
                 Symbol_Name          => Symbol_Name,
                 Class_Name           => Class_Name,
-      --  ??? Is the dependency declaration of class should
+      --  ??? Should the dependency declaration of class
       --  necessary be located together with method dependency
       --  declaration?
                 Kind                 => Kind,

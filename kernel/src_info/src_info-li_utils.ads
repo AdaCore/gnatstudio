@@ -40,8 +40,8 @@ private package Src_Info.LI_Utils is
    --  This procedure:
    --    1. Inserts new declaration into the LI structrure tree
    --    2. Returns pointer to created declaration (Declaration_Info param)
-   --  Throws Parent_Not_Available exception if LI_Structure for the source
-   --  file with parent is not created yet.
+   --  Throws Parent_Not_Available exception if LI_Structure for the file with
+   --  parent is not created yet.
 
    procedure Insert_Dependency
      (Handler                 : in LI_Handler;
@@ -69,7 +69,7 @@ private package Src_Info.LI_Utils is
       Declaration_Info        : out E_Declaration_Info_List);
    --  Inserts new dependency declaration with specified parameters
    --  to given LI structure tree.
-   --  Throws Parent_Not_Available exception if LI_Structure for the source
+   --  Throws Parent_Not_Available exception if LI_Structure for the
    --  file with parent is not created yet.
 
    procedure Add_Parent
@@ -83,7 +83,7 @@ private package Src_Info.LI_Utils is
      (Declaration_Info        : in out E_Declaration_Info_List;
       Location                : in Point;
       Kind                    : in Reference_Kind := End_Of_Body);
-   --  Sets given value for End_Of_Scope attribute
+   --  Sets given value for End_Of_Scope attribute of specified declaration
 
    procedure Insert_Reference
      (Declaration_Info        : in out E_Declaration_Info_List;
@@ -108,6 +108,7 @@ private package Src_Info.LI_Utils is
    --  Finds declaration in LI tree by it's Name, Location or (and) Kind
    --  If value for some attribute is not given then this attribute doesn't
    --  affect on searching.
+   --  Throws Declaration_Not_Found exception if not found.
 
    function Find_Dependency_Declaration
      (File                    : in LI_File_Ptr;
@@ -120,6 +121,7 @@ private package Src_Info.LI_Utils is
    --  Finds declaration in LI tree by it's Name and Location.
    --  If value for some attribute is not given then this attribute doesn't
    --  affect on searching.
+   --  Throws Declaration_Not_Found exception if not found.
 
    function Convert_Filename_To_LI (Filename : String) return String;
    --  Converts filename to LI_Filename.
