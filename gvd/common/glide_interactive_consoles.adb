@@ -111,6 +111,7 @@ package body Glide_Interactive_Consoles is
       Last_Iter : Gtk_Text_Iter;
    begin
       Set_Editable (Console.View, Enable);
+      Set_Cursor_Visible (Console.View, Enable);
       Console.Input_Blocked := not Enable;
 
       if Enable and then Console.Message_Was_Displayed then
