@@ -2,7 +2,7 @@
    Adapted from process.c in GNU Emacs.
    Copyright (C) 1985, 86, 87, 88, 93, 94, 95, 96, 1998
       Free Software Foundation, Inc.
-   Copyright (C) 2000, 2002, 2003 ACT-Europe.
+   Copyright (C) 2000, 2002 ACT-Europe.
 
 This file is part of GVD.
 
@@ -122,43 +122,10 @@ static int Vprocess_connection_type = 1;
 #define HAVE_NTGUI
 #define MAXPATHLEN 1024
 
-/* The major and minor versions of NT.  */
-static int w32_major_version;
-static int w32_minor_version;
-
-/* Distinguish between Windows NT and Windows 95.  */
-static enum {OS_UNKNOWN, OS_WIN95, OS_NT} os_subtype = OS_UNKNOWN;
-
-/* Cache information describing the NT system for later use.  */
-static void
-cache_system_info (void)
-{
-  union
-    {
-      struct info
-        {
-          char  major;
-          char  minor;
-          short platform;
-        } info;
-      DWORD data;
-    } version;
-
-  /* Cache the version of the operating system.  */
-  version.data = GetVersion ();
-  w32_major_version = version.info.major;
-  w32_minor_version = version.info.minor;
-
-  if (version.info.platform & 0x8000)
-    os_subtype = OS_WIN95;
-  else
-    os_subtype = OS_NT;
-}
-
 /* Control whether create_child causes the process to inherit GVD'
    console window, or be given a new one of its own.  The default is
-   0, meaning that there is no console created for the child process. Having
-   separate consoles also allows Gvd to cleanly terminate process groups.  */
+   0, to allow multiple DOS programs to run on Win95.  Having separate
+   consoles also allows Gvd to cleanly terminate process groups.  */
 static int Vw32_start_process_share_console = 0;
 
 /* Control whether create_child cause the process to inherit GVD'
@@ -167,17 +134,14 @@ static int Vw32_start_process_share_console = 0;
 static int Vw32_start_process_inherit_error_mode = 1;
 
 /* Control whether create_child causes the process' window to be
-   hidden.  The default is 1. For GUI processes this affects the main
-   application Window, for console application it affects the application's
-   console. Note that for console processes the console has been desactivated
-   and should not show-up.  */
-static int Vw32_start_process_show_window = 1;
+   hidden.  The default is 0. */
+static int Vw32_start_process_show_window = 0;
 
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
    are careful about constructing argv arrays, we make this behaviour
    conditional (off by default, since a similar operation is already done
-   in g-expect.adb by calling Normalize_Argument).  */
+   in g-expect.adb by calling Normalize_Argument). */
 static int Vw32_quote_process_args = 0;
 
 static int
@@ -193,9 +157,6 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
   int do_quoting = 0;
   char escape_char;
   int arglen;
-
-  if (os_subtype == OS_UNKNOWN)
-    cache_system_info ();
 
   /* we have to do some conjuring here to put argv and envp into the
      form CreateProcess wants...  argv needs to be a space separated/null
@@ -368,7 +329,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 
   flags = (!NILP (Vw32_start_process_share_console)
 	   ? CREATE_NEW_PROCESS_GROUP
-	   : (os_subtype == OS_WIN95) ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW);
+	   : CREATE_NEW_CONSOLE);
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
   if (!CreateProcess (exe, cmdline, &sec_attrs, NULL, TRUE,
@@ -821,7 +782,7 @@ setup_pty (fd)
   /* Beeing able to trap exceptional conditions like a "close" on the
      slave side is useful and requires an explicit ioctl call to be enabled on
      HPUX.  */
-#ifdef HPUX
+#ifdef HPUX 
   ioctl (fd, TIOCTRAP, &on);
 #endif
 }
@@ -1858,6 +1819,39 @@ typedef struct _child_process
   HWND                  hwnd;
   PROCESS_INFORMATION   *procinfo;
 } child_process;
+
+/* The major and minor versions of NT.  */
+static int w32_major_version;
+static int w32_minor_version;
+
+/* Distinguish between Windows NT and Windows 95.  */
+static enum {OS_UNKNOWN, OS_WIN95, OS_NT} os_subtype = OS_UNKNOWN;
+
+/* Cache information describing the NT system for later use.  */
+static void
+cache_system_info (void)
+{
+  union
+    {
+      struct info
+        {
+          char  major;
+          char  minor;
+          short platform;
+        } info;
+      DWORD data;
+    } version;
+
+  /* Cache the version of the operating system.  */
+  version.data = GetVersion ();
+  w32_major_version = version.info.major;
+  w32_minor_version = version.info.minor;
+
+  if (version.info.platform & 0x8000)
+    os_subtype = OS_WIN95;
+  else
+    os_subtype = OS_NT;
+}
 
 static BOOL CALLBACK
 find_child_console (HWND hwnd, child_process * cp)
