@@ -854,7 +854,7 @@ package body Directory_Tree is
 
          --  Show the first selected item
          Moveto (Selector.List,
-                 Gint_List.Get_Data (Get_Selection (Selector.Directory)),
+                 Gint_List.Get_Data (Get_Selection (Selector.List)),
                  0, 0.0, 0.2);
       end if;
 
@@ -950,8 +950,14 @@ package body Directory_Tree is
    procedure Add_Single_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : constant Directory_Selector := Directory_Selector (W);
    begin
+      Unselect_All (Selector.List);
       Add_Directory (Selector, Get_Selection (Selector.Directory), False);
       Sort (Selector.List);
+
+      --  Show the first selected item
+      Moveto (Selector.List,
+              Gint_List.Get_Data (Get_Selection (Selector.List)),
+              0, 0.2, 0.0);
    end Add_Single_Directory_Cb;
 
    --------------------------
