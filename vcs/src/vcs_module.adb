@@ -539,6 +539,9 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS,
                      -"Compare working _against head rev.", "",
                      View_Work_Head_Diff'Access);
+      Register_Menu (Kernel, VCS,
+                     -"Compare against _specific rev.", "",
+                     View_Specific_Diff'Access);
       Gtk_New (Menu_Item);
 
       Register_Menu (Kernel, VCS, Menu_Item);
