@@ -394,11 +394,12 @@ package body Interactive_Consoles is
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
       Success     : Boolean;
+      pragma Unreferenced (Success);
 
    begin
       case Key is
          when GDK_Up | GDK_Down =>
-            if Console.Input_Blocked then
+            if Console.Input_Blocked or else Console.Waiting_For_Input then
                return True;
             end if;
 
@@ -444,7 +445,7 @@ package body Interactive_Consoles is
             return True;
 
          when GDK_Tab | GDK_KP_Tab =>
-            if Console.Completion = null then
+            if Console.Completion = null or else Console.Waiting_For_Input then
                return False;
             else
                Do_Completion
@@ -457,6 +458,17 @@ package body Interactive_Consoles is
                return True;
             end if;
 
+         when GDK_LC_c =>
+            if not Console.Waiting_For_Input
+              and then Console.Interrupt /= null
+              and then Get_State (Event) = Control_Mask
+            then
+               Console.Interrupt (Console, Console.User_Data);
+               return True;
+            else
+               return False;
+            end if;
+
          when GDK_Return | GDK_KP_Enter =>
             if Console.Input_Blocked then
                return True;
@@ -465,43 +477,40 @@ package body Interactive_Consoles is
             Get_End_Iter (Console.Buffer, Last_Iter);
             Insert (Console.Buffer, Last_Iter, ASCII.LF & "");
 
+            if Console.Waiting_For_Input then
+               Gtk.Main.Main_Quit;
+               return True;
+            end if;
+
             if Console.Handler = null then
                return True;
             end if;
 
-            Get_End_Iter (Console.Buffer, Last_Iter);
-            Get_Iter_At_Mark
-              (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-
-            Backward_Char (Last_Iter, Success);
-
             declare
-               Command : GNAT.OS_Lib.String_Access := new String'
-                 (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
+               Command : constant String :=
+                 Read (Console, Whole_Line => False);
+               H       : String_List_Access;
             begin
-               if Command.all = ""
+               if Command = ""
                  and then Console.Empty_Equals_Repeat
                  and then Console.History /= null
                then
-                  declare
-                     H : constant String_List_Access :=
-                       Get_History
-                         (Console.History.all, History_Key (Console.Key.all));
-                  begin
-                     if H /= null
-                       and then H (H'First) /= null
-                     then
-                        Free (Command);
-                        Command := new String'
-                          (H (H'First + Console.Current_Position + 1).all);
-                     end if;
-                  end;
-
-                  Insert (Console.Buffer, Last_Iter, Command.all);
+                  H := Get_History
+                    (Console.History.all, History_Key (Console.Key.all));
+                  if H /= null
+                    and then H (H'First) /= null
+                  then
+                     Insert
+                       (Console.Buffer, Last_Iter,
+                        H (H'First + Console.Current_Position + 1).all);
+                     Execute_Command
+                       (Console,
+                        H (H'First + Console.Current_Position + 1).all);
+                     return True;
+                  end if;
                end if;
 
-               Execute_Command (Console, Command.all);
-               Free (Command);
+               Execute_Command (Console, Command);
             end;
 
             return True;
@@ -849,6 +858,17 @@ package body Interactive_Consoles is
       Console.Completion := Handler;
    end Set_Completion_Handler;
 
+   ---------------------------
+   -- Set_Interrupt_Handler --
+   ---------------------------
+
+   procedure Set_Interrupt_Handler
+     (Console : access Interactive_Console_Record'Class;
+      Handler : Interrupt_Handler) is
+   begin
+      Console.Interrupt := Handler;
+   end Set_Interrupt_Handler;
+
    -------------------------
    -- Set_Highlight_Color --
    -------------------------
@@ -1034,5 +1054,37 @@ package body Interactive_Consoles is
    begin
       return Console.View;
    end Get_View;
+
+   ----------
+   -- Read --
+   ----------
+
+   function Read
+     (Console    : access Interactive_Console_Record;
+      Whole_Line : Boolean) return String
+   is
+      Last_Iter, Prompt_Iter : Gtk_Text_Iter;
+      End_Mark : Gtk_Text_Mark;
+      Success  : Boolean;
+   begin
+      if Whole_Line then
+         Get_End_Iter (Console.Buffer, Last_Iter);
+         End_Mark := Create_Mark (Console.Buffer, "", Last_Iter);
+
+         Console.Waiting_For_Input := True;
+         Grab_Focus (Get_View (Console));
+         Gtk.Main.Main;
+         Console.Waiting_For_Input := False;
+
+         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, End_Mark);
+         Delete_Mark (Console.Buffer, End_Mark);
+      else
+         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+      end if;
+
+      Get_End_Iter (Console.Buffer, Last_Iter);
+      Backward_Char (Last_Iter, Success);
+      return Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
+   end Read;
 
 end Interactive_Consoles;

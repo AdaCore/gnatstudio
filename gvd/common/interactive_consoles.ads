@@ -53,6 +53,11 @@ package Interactive_Consoles is
         User_Data : System.Address)
         return String;
 
+   type Interrupt_Handler is access procedure
+     (Console   : access Interactive_Console_Record'Class;
+      User_Data : System.Address);
+   --  Called when ctrl-c is pressed in an interactive console
+
    procedure Gtk_New
      (Console      : out Interactive_Console;
       Prompt       : String;
@@ -94,6 +99,13 @@ package Interactive_Consoles is
    --  If Add_To_History is True, the inserted text will be inserted in the
    --  user command history.
 
+   function Read
+     (Console    : access Interactive_Console_Record;
+      Whole_Line : Boolean) return String;
+   --  Read the characters currently available in the console.
+   --  If Whole_Line is true, then this call is blocking until a newline
+   --  character has been read
+
    procedure Clear (Console : access Interactive_Console_Record);
    --  Clear all the text in the Console.
 
@@ -130,6 +142,12 @@ package Interactive_Consoles is
    --  User_Data passed to Handler is the same one that is passed to the
    --  Command_Handler.
 
+   procedure Set_Interrupt_Handler
+     (Console : access Interactive_Console_Record'Class;
+      Handler : Interrupt_Handler);
+   --  Set Handler to be called when ctrl-c is pressed in the interactive
+   --  console.
+
    procedure Set_Highlight_Color
      (Console : access Interactive_Console_Record'Class;
       Color   : Gdk_Color);
@@ -157,6 +175,7 @@ private
    with record
       Handler    : Command_Handler;
       Completion : GUI_Utils.Completion_Handler;
+      Interrupt  : Interrupt_Handler;
       User_Data  : System.Address;
 
       Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
@@ -223,6 +242,9 @@ private
 
       Highlight    : Gdk_Color := Null_Color;
       --  The color used for highlighting.
+
+      Waiting_For_Input : Boolean := False;
+      --  Whether the console is blocked in a call to readline()
    end record;
 
 end Interactive_Consoles;
