@@ -1,7 +1,2 @@
-include ../Makefile.common
-
-PROJECT_FILE = src_editor.gpr
-ADA_SOURCES = src.adb
-
-include $(ROOT)/builder/src/Makefile.glide
-
+all build compile link ada c c++ clean internal-clean :
+	$(MAKE) -s -f Makefile.src_editor $@
