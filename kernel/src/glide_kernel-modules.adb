@@ -112,7 +112,8 @@ package body Glide_Kernel.Modules is
 
    type Contextual_Label_Parameters is new Contextual_Menu_Label_Creator_Record
       with record
-         Label : GNAT.OS_Lib.String_Access;
+         Label  : GNAT.OS_Lib.String_Access;
+         Custom : Custom_Expansion;
       end record;
    type Contextual_Label_Param is access Contextual_Label_Parameters'Class;
    function Get_Label
@@ -240,9 +241,7 @@ package body Glide_Kernel.Modules is
            and then Context.all in Entity_Selection_Context'Class
          then
             Entity := Get_Entity (Entity_Selection_Context_Access (Context));
-            if Entity = null then
-               raise Invalid_Substitution;
-            else
+            if Entity /= null then
                --  Get the name from the context, to have the proper casing
                return Krunch (Entity_Name_Information
                                 (Entity_Selection_Context_Access (Context)));
@@ -259,13 +258,23 @@ package body Glide_Kernel.Modules is
                return Project_Name
                  (Importing_Project_Information
                     (File_Selection_Context_Access (Context)));
-            else
-               raise Invalid_Substitution;
             end if;
 
-         else
-            raise Invalid_Substitution;
+         elsif Param = "C"
+           and then Creator.Custom /= null
+         then
+            declare
+               Result : constant String := Creator.Custom (Context);
+            begin
+               if Result = "" then
+                  raise Invalid_Substitution;
+               else
+                  return Result;
+               end if;
+            end;
          end if;
+
+         raise Invalid_Substitution;
       end Substitution;
 
    begin
@@ -1192,13 +1201,15 @@ package body Glide_Kernel.Modules is
      (Kernel          : access Kernel_Handle_Record'Class;
       Name            : String;
       Action          : Action_Record_Access;
-      Label           : String := "")
+      Label           : String := "";
+      Custom          : Custom_Expansion := null)
    is
       T : Contextual_Label_Param;
    begin
       if Label /= "" then
-         T := new Contextual_Label_Parameters;
-         T.Label := new String'(Label);
+         T        := new Contextual_Label_Parameters;
+         T.Label  := new String'(Label);
+         T.Custom := Custom;
       end if;
 
       Add_Contextual_Menu
@@ -1262,13 +1273,15 @@ package body Glide_Kernel.Modules is
       Name           : String;
       Action         : Commands.Interactive.Interactive_Command_Access := null;
       Filter         : Glide_Kernel.Action_Filter := null;
-      Label          : String := "")
+      Label          : String := "";
+      Custom         : Custom_Expansion := null)
    is
       T : Contextual_Label_Param;
    begin
       if Label /= "" then
-         T := new Contextual_Label_Parameters;
-         T.Label := new String'(Label);
+         T        := new Contextual_Label_Parameters;
+         T.Label  := new String'(Label);
+         T.Custom := Custom;
       end if;
 
       Add_Contextual_Menu

@@ -302,15 +302,31 @@ package Glide_Kernel.Modules is
    --  Create the name to use for a contextual menu.
    --  If this function returns the empty string, the menu will be filtered out
 
+   type Custom_Expansion is access function
+     (Context : access Selection_Context'Class) return String;
+   --  Provide the custom expansion for %C when expanding a label. If the
+   --  empty string is returned, the contextual entry will not be displayed
+
    procedure Register_Contextual_Menu
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Name            : String;
-      Action          : Action_Record_Access;
-      Label           : String := "");
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Name             : String;
+      Action           : Action_Record_Access;
+      Label            : String := "";
+      Custom           : Custom_Expansion := null);
    --  Register a new contextual menu entry to tbe displayed.
    --  This menu will only be shown when the filter associated with the Action
    --  matches. The name used in the menu will be Title (or Name if label isn't
-   --  specified), interpreted with the usual %P, %F parameters substitution.
+   --  specified), interpreted with the usual parameter substitution:
+   --     %f => current file basename
+   --     %d => current directory
+   --     %p => current project name
+   --     %l => current line
+   --     %c => current column
+   --     %a => current category
+   --     %e => current entity name
+   --     %i => current importing project
+   --     %C => value returned by Custom (the menu will not appear if this
+   --           returns the empty string or Custom is undefined)
    --  The label might contain a path to indicate submenus.
 
    procedure Register_Contextual_Menu
@@ -335,7 +351,8 @@ package Glide_Kernel.Modules is
       Name           : String;
       Action         : Commands.Interactive.Interactive_Command_Access := null;
       Filter         : Glide_Kernel.Action_Filter := null;
-      Label          : String := "");
+      Label          : String := "";
+      Custom         : Custom_Expansion := null);
    --  Same as above, but the menu title is a string where %P, %F,... are
    --  substituted.
    --  A separator is inserted if Action is null
