@@ -110,9 +110,9 @@ package Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Default_Format) return String;
 
-   procedure Print_Value
+   function Print_Value_Cmd
      (Debugger : access Gdb_Debugger;
-      Entity   : String);
+      Entity   : String) return String;
 
    function Info_Locals (Debugger : access Gdb_Debugger) return String;
 

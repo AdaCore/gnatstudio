@@ -267,12 +267,12 @@ package Debugger is
    --  GDB_COMMAND: "print"
    --  JDB_COMMAND: "dump"
 
-   procedure Print_Value
+   function Print_Value_Cmd
      (Debugger : access Debugger_Root;
-      Entity   : String) is abstract;
-   --  Print the value of the entity in the command window
-   --  GDB_COMMAND: "print"
-   --  JDB_COMMAND: "dump"
+      Entity   : String) return String is abstract;
+   --  Return the command to execute to get the value of the entity.
+   --  GDB_COMMAND: "print " & Entity
+   --  JDB_COMMAND: "dump " & Entity
 
    procedure Set_Variable
      (Debugger : access Debugger_Root;

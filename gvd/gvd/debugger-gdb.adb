@@ -549,16 +549,18 @@ package body Debugger.Gdb is
       return S (Index + 1 .. S'Last);
    end Value_Of;
 
-   -----------------
-   -- Print_Value --
-   -----------------
+   ---------------------
+   -- Print_Value_Cmd --
+   ---------------------
 
-   procedure Print_Value
+   function Print_Value_Cmd
      (Debugger : access Gdb_Debugger;
-      Entity   : String) is
+      Entity   : String) return String
+   is
+      pragma Unreferenced (Debugger);
    begin
-      Send (Debugger, "print " & Entity, Mode => Visible);
-   end Print_Value;
+      return "print " & Entity;
+   end Print_Value_Cmd;
 
    -----------------
    -- Get_Uniq_Id --
