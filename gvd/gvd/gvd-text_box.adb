@@ -270,6 +270,15 @@ package body Odd.Text_Boxes is
          end if;
       end if;
 
+      --  Force a realize on the text widget, so that scrolling always works.
+      --  Scrolling is always reset to 0.0 when the Gtk_Text is realized,
+      --  which, for the initial file, happens only after Set_Line has been
+      --  called.
+      --  The call below thus make sure that no unwanted scrolling will happen
+      --  later on.
+
+      Realize (Box.Child);
+
       --  Scroll the code editor to make sure the line is visible on screen.
 
       Freeze (Box.Child);
