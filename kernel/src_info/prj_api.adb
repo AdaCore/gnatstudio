@@ -3459,6 +3459,7 @@ package body Prj_API is
      (Project_View       : Prj.Project_Id;
       Recursive          : Boolean;
       Full_Path          : Boolean := True;
+      Normalized         : Boolean := True;
       Matching_Languages : Project_Browsers.Name_Id_Array := All_Languages)
       return Basic_Types.String_Array_Access
    is
@@ -3522,9 +3523,13 @@ package body Prj_API is
                      S := Locate_Regular_File
                        (Get_String (String_Elements.Table (Src).Value), Path);
                      if S /= null then
-                        Sources (Index) := new String'
-                          (Normalize_Pathname (S.all));
-                        Free (S);
+                        if Normalized then
+                           Sources (Index) := new String'
+                             (Normalize_Pathname (S.all));
+                           Free (S);
+                        else
+                           Sources (Index) := Basic_Types.String_Access (S);
+                        end if;
                      end if;
                   else
                      Sources (Index) := new String'

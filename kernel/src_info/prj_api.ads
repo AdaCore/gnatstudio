@@ -168,6 +168,7 @@ package Prj_API is
      (Project_View       : Prj.Project_Id;
       Recursive          : Boolean;
       Full_Path          : Boolean := True;
+      Normalized         : Boolean := True;
       Matching_Languages : Project_Browsers.Name_Id_Array := All_Languages)
       return Basic_Types.String_Array_Access;
    --  Return the list of source files belonging to the project described in
@@ -175,7 +176,9 @@ package Prj_API is
    --  i.e. not those found in subprojects, unless Recursive is True.
    --  It is the caller's responsability to free the list.
    --  If Full_Path is true, then the file names will also include the
-   --  directory. The directory names are normalized.
+   --  directory. The directory names are the ones found in the project,
+   --  although they are absolute directories. Links or ".." haven't been
+   --  resolved unless Normalized is True.
    --
    --  If Matching_Language is not No_Name, then only the source files matching
    --  the specific language are returned.
