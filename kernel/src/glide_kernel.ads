@@ -26,7 +26,6 @@ with Basic_Types;
 with GNAT.OS_Lib;
 with Generic_List;
 with Glib.Object;
-with Glib.Xml_Int;
 with Glib.Values;
 with Gdk;
 with Gtk.Handlers;
@@ -46,6 +45,7 @@ with Src_Info;
 with Src_Info.Queries;
 with System;
 with Unchecked_Conversion;
+with Default_Preferences;
 
 package Glide_Kernel is
 
@@ -62,6 +62,9 @@ package Glide_Kernel is
    --  Create a new Glide kernel.
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
+
+   procedure Destroy (Handle : access Kernel_Handle_Record);
+   --  Free the memory occupied by the kernel.
 
    function Get_Default_Accelerators
      (Handle : access Kernel_Handle_Record)
@@ -169,6 +172,8 @@ package Glide_Kernel is
      (Handle         : access Kernel_Handle_Record;
       VCS_Identifier : String);
    --  Add a VCS identifier to the list of recognized VCS systems.
+   --  ??? This is temporary, until we VCS module can directly add a page in
+   --  the wizard or the project properties editor.
 
    -------------
    -- Queries --
@@ -273,7 +278,7 @@ package Glide_Kernel is
 
    type Module_ID_Information (<>) is private;
    type Module_ID_Record is tagged private;
-   type Module_ID is access Module_Id_Record'Class;
+   type Module_ID is access all Module_Id_Record'Class;
    --  Module identifier. Each of the registered module in Glide has such a
    --  identifier, that contains its name and all the callbacks associated with
    --  the module.
@@ -643,8 +648,8 @@ private
       --  The semantic information associated to the files for the current
       --  project.
 
-      Preferences : Glib.Xml_Int.Node_Ptr;
-      --  The XML tree that contains the current preferences
+      Preferences : Default_Preferences.Preferences_Manager;
+      --  The current setting for the preferences.
 
       Scenario_Variables : Prj_API.Project_Node_Array_Access := null;
       --  The (cached) list of scenario variables for the current project. Note

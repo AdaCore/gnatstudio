@@ -49,6 +49,7 @@ with Ada.Unchecked_Deallocation;
 with String_Utils;              use String_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
+with Default_Preferences;       use Default_Preferences;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -171,8 +172,11 @@ package body Glide_Kernel is
       Reset_Source_Info_List (Handle);
 
       Gtk_New (Handle.Tooltips);
+
+      Register_Global_Preferences (Handle);
       Load_Preferences
-        (Handle, String_Utils.Name_As_Directory (Home_Dir) & "preferences");
+        (Handle.Preferences,
+         String_Utils.Name_As_Directory (Home_Dir) & "preferences");
    end Gtk_New;
 
    ------------------------------
@@ -1245,5 +1249,33 @@ package body Glide_Kernel is
            (Kernel, Lib_Info, Entity_Name, Entity, Status);
       end if;
    end Find_Declaration_Or_Overloaded;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Handle : access Kernel_Handle_Record) is
+   begin
+      Destroy (Handle.Preferences);
+      Project_Hash.Project_Htable.Reset (Handle.Projects_Data);
+      Free (Handle.Predefined_Source_Path);
+      Free (Handle.Predefined_Object_Path);
+      Free (Handle.Gnatls_Cache);
+      Free (Handle.Home_Dir);
+      Free (Handle.Scenario_Variables);
+      if Handle.Current_Context /= null then
+         Free (Handle.Current_Context);
+      end if;
+
+      if Handle.Last_Context_For_Contextual /= null then
+         Free (Handle.Last_Context_For_Contextual);
+      end if;
+
+      Reset (Handle.Source_Info_List);
+
+      --  ??? Should free Module_List
+      --  ??? Should free VCS_List
+      --  ??? Should free Logs_Mapper
+   end Destroy;
 
 end Glide_Kernel;
