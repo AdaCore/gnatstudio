@@ -69,23 +69,6 @@ package body GVD.Code_Editors is
       Data : Editor_Mode_Data);
    --  Change the display mode for the editor
 
-   -----------------------
-   -- Local subprograms --
-   -----------------------
-
-   procedure Update_Editor_Frame (Editor : access Gtk_Widget_Record'Class);
-   --  Updates the label on top of the source editor.
-
-   -------------------------
-   -- Update_Editor_Frame --
-   -------------------------
-
-   procedure Update_Editor_Frame (Editor : access Gtk_Widget_Record'Class) is
-   begin
-      Update_Editor_Frame
-        (Process => Debugger_Process_Tab (Code_Editor (Editor).Process));
-   end Update_Editor_Frame;
-
    ------------------
    -- Gtk_New_Hbox --
    ------------------
