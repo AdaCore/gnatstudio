@@ -581,7 +581,7 @@ button to close the properties window.
 @section Variable editor
 @noindent
 
-Select the menu @code{Tools/Scenario View}. This will add a new window in
+Select the menu @code{Tools->Scenario View}. This will add a new window in
 GPS, which contains a @code{Build} label.
 
 This is a configuration variable. With GPS and the GNAT
