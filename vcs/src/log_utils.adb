@@ -18,14 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
+with Traces;                    use Traces;
+
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Basic_Mapper;              use Basic_Mapper;
 with OS_Utils;                  use OS_Utils;
 with String_Utils;              use String_Utils;
+with Glide_Intl;                use Glide_Intl;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 package body Log_Utils is
+
+   Me : constant Debug_Handle := Create ("Log_Utils");
 
    --  The format for the mappings file is as follows :
    --
@@ -47,6 +54,12 @@ package body Log_Utils is
       Mapping  : constant String :=
         Normalize_Pathname (Logs_Dir & "/mapping");
       Mapper   : File_Mapper_Access;
+      Button   : Message_Dialog_Buttons;
+      Dummy    : Boolean;
+      pragma Unreferenced (Button);
+
+      --  Create the mappings file and read it.
+
    begin
       if not Is_Directory (Logs_Dir) then
          Make_Dir (Logs_Dir);
@@ -61,7 +74,33 @@ package body Log_Utils is
          end;
       end if;
 
-      Load_Mapper (Mapper, Mapping);
+      begin
+         Load_Mapper (Mapper, Mapping);
+      exception
+         when E : others =>
+            Trace (Me, "unexpected exception: " & Exception_Information (E));
+
+            Button := Message_Dialog
+              (Msg     =>
+                 (-"The file") & ASCII.LF & Mapping & ASCII.LF
+                 & (-"is corrupted, and will be deleted."),
+               Dialog_Type => Warning,
+               Title   => -"Corrupted file.",
+               Buttons => Button_OK,
+               Parent  => Get_Main_Window (Kernel));
+
+            Delete_File (Mapping, Dummy);
+
+            declare
+               File : File_Descriptor;
+            begin
+               File := Create_New_File (Mapping, Text);
+               Close (File);
+            end;
+
+            Empty_Mapper (Mapper);
+      end;
+
       Set_Logs_Mapper (Kernel, Mapper);
    end Initialize;
 
