@@ -53,10 +53,16 @@ package Task_Manager is
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
       Area    : Gtk.Box.Gtk_Hbox);
-   --  Indicate an area in which progress bars can be displayed.
+   --  Indicate an area in which progress bars can be displayed.<
+
+   procedure Set_Busy_Commands
+     (Manager      : Task_Manager_Access;
+      Push_Command : Command_Access;
+      Pop_Command  : Command_Access);
+   --  Set the commands used to push/pop the busy state.
 
 private
-   type Queue_Status is (Not_Started, Running, Paused, Completed);
+   type Queue_Status is (Not_Started, Running, Paused, Completed, Interrupted);
 
    type Task_Queue_Record is record
       Status   : Queue_Status := Running;
@@ -113,6 +119,10 @@ private
       --  The command currently referenced by the contextual menu.
       --  This is an index in Queues, set to <0 when the command is not valid
       --  or the menu not created.
+
+      Push_Command, Pop_Command : Command_Access;
+      --  Commands used to push/pop the "busy" state.
+      --  ??? Memory associated to these commands is never freed.
    end record;
 
 end Task_Manager;
