@@ -1897,10 +1897,11 @@ package body Browsers.Call_Graph is
       Widget    : Gtk_Widget;
       Button    : Gtk_Button;
       pragma Unreferenced (Command, Widget);
+
    begin
       Dialog := new References_Filter_Dialog_Record;
       Initialize (Dialog,
-                  Title  => -"Find Preferences Options",
+                  Title  => -"Find References Options",
                   Parent => Get_Main_Window (Kernel),
                   Flags  => Modal);
 
