@@ -352,6 +352,20 @@ wizard allowing you to specify most of the properties for a new project. Once
 the project is created, GPS will save it and load it automatically.
 See @ref{The Project Wizard} for more details on the project wizard.
 
+Several kinds of wizard are available. Depending on the kind of project,
+you will get asked different type of information. In the end, GPS will create
+one or more project files, and automatically load them.
+
+One of the wizard, "From existing Ada sources", will try and import a set of
+sources and object files, and attempt to create one or more project files so
+that building your application through these project files will put the objects
+in the same directory they are currently in. If you have not compiled your
+application when launching this wizard, GPS will create a single project file
+and all object files will be put in the same object directory. This is the
+prefered method when importing sources with duplicate file names, since the
+latter is only authorized in a single project file, not across various project
+files.
+
 @item Open existing project
 @cindex project
 You can select an existing project by clicking on the @code{Browse} button,
@@ -3354,6 +3368,10 @@ This menu will open the project wizard (@ref{The Project Wizard}), so
 that you can create new project. On exit, the wizard asks whether the
 newly created project should be loaded. If you select @code{Yes}, the new
 project will replace the currently loaded project hierarchy.
+
+You will get asked what information you would like to create the project from.
+In particular, you can create a set of project files from existing Ada
+sources.
 
 @item Open
 This menu opens a file selection dialog, so that any existing project
