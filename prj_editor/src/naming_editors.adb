@@ -25,6 +25,8 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Notebook;            use Gtk.Notebook;
 with Gtk.Widget;              use Gtk.Widget;
+with Glide_Kernel;            use Glide_Kernel;
+with Language_Handlers;       use Language_Handlers;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Projects;                use Projects;
 with String_Utils;            use String_Utils;
@@ -63,78 +65,26 @@ package body Naming_Editors is
    procedure Gtk_New
      (Editor    : out Naming_Editor;
       Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Languages : Argument_List) is
+      Languages : Argument_List)
+   is
+      Supported : Argument_List := Known_Languages
+        (Get_Language_Handler (Kernel));
+      Naming : Language_Naming_Editor;
+      Old    : Language_Naming_Array_Access;
+      Last   : Natural;
+      Label  : Gtk_Label;
    begin
       Editor := new Naming_Editor_Record;
       Gtk.Notebook.Initialize (Editor);
-      Set_Visible_Pages (Editor, Kernel, Languages, No_Project);
 
-      Set_Current_Page (Editor, 0);
+      --  Create all possible pages. Creating on the fly seems to hit some gtk+
+      --  bugs: when a new page is added, it is not immediately selectable by
+      --  the user, until a page change has occurred. The performance hit when
+      --  creating the pages at once is minimal, since the pages are not
+      --  filled.
 
-      Widget_Callback.Connect
-        (Editor, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
-   end Gtk_New;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Editor       : out Naming_Editor;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project      : Project_Type)
-   is
-      Languages : Argument_List := Get_Languages (Project);
-   begin
-      Gtk_New (Editor, Kernel, Languages);
-      Free (Languages);
-   end Gtk_New;
-
-   -----------------------
-   -- Set_Visible_Pages --
-   -----------------------
-
-   procedure Set_Visible_Pages
-     (Editor       : access Naming_Editor_Record;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Languages    : GNAT.OS_Lib.Argument_List;
-      Project      : Projects.Project_Type)
-   is
-      procedure Create_Page (Name : String);
-      --  Create a page for the language Name
-
-      -----------------
-      -- Create_Page --
-      -----------------
-
-      procedure Create_Page (Name : String) is
-         Label  : Gtk_Label;
-         Old    : Language_Naming_Array_Access;
-         Last   : Natural;
-         Exists : Boolean := False;
-         Naming : Language_Naming_Editor;
-      begin
-         --  Has the page already been created ?
-
-         if Editor.Pages /= null then
-            for P in Editor.Pages'Range loop
-               if To_Lower (Editor.Pages (P).Language.all) =
-                 To_Lower (Name)
-               then
-                  Exists := True;
-                  Show (Get_Window (Editor.Pages (P).Naming));
-                  Editor.Pages (P).Is_Visible := True;
-                  exit;
-               end if;
-            end loop;
-         end if;
-
-         if Exists then
-            return;
-         end if;
-
-         Naming := Get_Naming_Scheme_Page (Kernel, Name);
+      for L in Supported'Range loop
+         Naming := Get_Naming_Scheme_Page (Kernel, Supported (L).all);
 
          if Naming /= null then
             --  Extend the array that stores all the editors
@@ -152,46 +102,89 @@ package body Naming_Editors is
             --  Create the new page
 
             Last := Editor.Pages'Last;
-            Editor.Pages (Last).Language := new String'(Name);
+            Editor.Pages (Last).Language := new String'(Supported (L).all);
             Mixed_Case (Editor.Pages (Last).Language.all);
             Editor.Pages (Last).Naming := Naming;
 
             Gtk_New (Label, Editor.Pages (Last).Language.all);
-
             Append_Page
               (Editor, Get_Window (Editor.Pages (Last).Naming), Label);
-            Show_All (Get_Window (Editor.Pages (Last).Naming));
-
-            if Project /= No_Project then
-               Show_Project_Settings
-                 (Editor.Pages (Last).Naming, Kernel, Project, True);
-            end if;
-
-            Editor.Pages (Last).Is_Visible := True;
          end if;
-      end Create_Page;
-
-      Current : constant Gint := Get_Current_Page (Editor);
-   begin
-      if Editor.Pages /= null then
-         for P in Editor.Pages'Range loop
-            Hide (Get_Window (Editor.Pages (P).Naming));
-            Editor.Pages (P).Is_Visible := False;
-         end loop;
-      end if;
-
-      for L in Languages'Range loop
-         Create_Page (Languages (L).all);
       end loop;
 
-      if Languages'Length = 0 then
-         Create_Page (Ada_String);
-      end if;
+      Show_All (Editor);
+
+      Set_Current_Page (Editor, 0);
+      Set_Visible_Pages (Editor, Kernel, Languages, No_Project);
+
+      Widget_Callback.Connect
+        (Editor, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
+
+      Free (Supported);
+   end Gtk_New;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Editor       : out Naming_Editor;
+      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project      : Project_Type)
+   is
+      Languages : Argument_List := Get_Languages (Project);
+   begin
+      Gtk_New (Editor, Kernel, Languages);
+      Set_Visible_Pages (Editor, Kernel, Languages, Project);
+      Free (Languages);
+   end Gtk_New;
+
+   -----------------------
+   -- Set_Visible_Pages --
+   -----------------------
+
+   procedure Set_Visible_Pages
+     (Editor       : access Naming_Editor_Record;
+      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Languages    : GNAT.OS_Lib.Argument_List;
+      Project      : Projects.Project_Type)
+   is
+      Current : constant Gint := Get_Current_Page (Editor);
+      Exists  : Boolean;
+   begin
+      for P in Editor.Pages'Range loop
+         Exists := Languages'Length = 0
+           and then To_Lower (Editor.Pages (P).Language.all) = "ada";
+
+         for L in Languages'Range loop
+            if Case_Insensitive_Equal
+              (Editor.Pages (P).Language.all, Languages (L).all)
+            then
+               Exists := True;
+               exit;
+            end if;
+         end loop;
+
+         Editor.Pages (P).Is_Visible := Exists;
+
+         if Exists then
+            Show_All (Get_Window (Editor.Pages (P).Naming));
+         else
+            Hide_All (Get_Window (Editor.Pages (P).Naming));
+         end if;
+
+         if Exists and then Project /= No_Project then
+            Show_Project_Settings
+              (Editor.Pages (P).Naming, Kernel, Project, True);
+         end if;
+      end loop;
 
       --  Work around an apparent bug in gtk+: when the contents of a page is
       --  hidden, and the shown again, it is always displayed on top of the
       --  current page in the notebook. We thus see the contents of two or more
       --  pages at the same time...
+      Set_Current_Page (Editor, Current + 1);
       Set_Current_Page (Editor, Current);
    end Set_Visible_Pages;
 
