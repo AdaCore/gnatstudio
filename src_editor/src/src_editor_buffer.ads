@@ -673,6 +673,11 @@ package Src_Editor_Buffer is
    procedure Refresh_Side_Column (Buffer : access Source_Buffer_Record);
    --  Refresh the side columns in Buffer.
 
+   function Position_Set_Explicitely
+     (Buffer : access Source_Buffer_Record) return Boolean;
+   --  Return True if the position of the cursor has been set explicitely (ie
+   --  not as a side effect of a text change)
+
 private
 
    procedure Get_Cursor_Position
@@ -1085,6 +1090,9 @@ private
 
       Tab_Width : Gint := 8;
       --  Width of a Tab character
+
+      Cursor_Set_Explicitely : Natural := 0;
+      --  > 0 when the cursor position has been set explicitely in the code
    end record;
 
 end Src_Editor_Buffer;
