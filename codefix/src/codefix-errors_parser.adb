@@ -674,7 +674,7 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Space_Missing) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher' (Compile ("space required")));
+      This.Matcher := (1 => new Pattern_Matcher'(Compile ("space required")));
    end Initialize;
 
    procedure Fix
@@ -707,7 +707,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Name_Missing) is
    begin
       This.Matcher :=
-        (new Pattern_Matcher' (Compile ("\(style\) ""end ([\w]+)"" required")),
+        (new Pattern_Matcher'(Compile ("\(style\) ""end ([\w]+)"" required")),
          new Pattern_Matcher'
            (Compile ("\(style\) ""exit ([\w]+)"" required")),
          new Pattern_Matcher'
@@ -811,7 +811,7 @@ package body Codefix.Errors_Parser is
 
       Str_Red : Dynamic_String;
    begin
-      Str_Red := new String' (Get_Message (Message)
+      Str_Red := new String'(Get_Message (Message)
                    (Matches (1).First .. Matches (1).Last));
 
       if Str_Red.all = "colon" then
@@ -875,10 +875,10 @@ package body Codefix.Errors_Parser is
 
       Str_Red_1, Str_Red_2 : Dynamic_String;
    begin
-      Str_Red_1 := new String' (Get_Message (Message)
+      Str_Red_1 := new String'(Get_Message (Message)
                                  (Matches (1).First .. Matches (1).Last));
 
-      Str_Red_2 := new String' (Get_Message (Message)
+      Str_Red_2 := new String'(Get_Message (Message)
                                  (Matches (2).First .. Matches (2).Last));
 
       if Str_Red_1.all = "semicolon" and then Str_Red_2.all = "ignored" then
@@ -1014,9 +1014,9 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Bad_Column) is
    begin
       This.Matcher :=
-        (new Pattern_Matcher' (Compile ("bad column")),
-         new Pattern_Matcher' (Compile ("incorrect layout")),
-         new Pattern_Matcher' (Compile ("bad indentation")));
+        (new Pattern_Matcher'(Compile ("bad column")),
+         new Pattern_Matcher'(Compile ("incorrect layout")),
+         new Pattern_Matcher'(Compile ("bad indentation")));
    end Initialize;
 
    procedure Fix
@@ -1269,7 +1269,9 @@ package body Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This);
    begin
       Append (Solutions, Not_Modified
                 (Current_Text,
