@@ -39,8 +39,6 @@ with Doc_Utils;                 use Doc_Utils;
 
 package body Docgen.Work_On_Source is
 
-   Me : constant Debug_Handle := Create ("Docgen.Work_On_Source");
-
    package TEL renames Type_Entity_List;
 
    procedure Process_Source_Spec
@@ -49,8 +47,9 @@ package body Docgen.Work_On_Source is
       Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
-      Package_Name              : String;
-      Package_Info              : Entity_Information;
+      Unit_Name                 : String;
+      Unit_Info                 : Entity_Information;
+      Main_Unit                 : Boolean;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Tagged_Types_List         : in out List_Entity_Information.List;
@@ -63,9 +62,9 @@ package body Docgen.Work_On_Source is
    --  exceptions, entries. It can be called recursively for inner package.
    --  Source_File_List : list of all files that must be processed by docgen.
    --  Source_Filename  : current file processed.
-   --  Package_Name     : name of the current package. The first time, it's
-   --  the name of the main package which is defined in the file. Then, in the
-   --  case of inner package, this subprogram is called recursively and this
+   --  Unit_Name        : name of the current unit. The first time, it's
+   --  the name of the main unit which is defined in the file. Then, in the
+   --  case of an inner package, this subprogram is called recursively and this
    --  field is the name of the inner package.
    --  Package_Info     : Entity_Information of the current package.
    --  Tree_Package     : scope tree of entities in the current package (it
@@ -98,12 +97,12 @@ package body Docgen.Work_On_Source is
      (B            : access Docgen.Backend.Backend'Class;
       Kernel       : access Kernel_Handle_Record'Class;
       Result       : in out Unbounded_String;
-      Package_Name : String);
+      Unit_Name    : String);
    --  Is always the first subprogram to be called, as it creates the
    --  very beginning of the documentation by calling the output
    --  subprogram
 
-   procedure Process_Package_Description
+   procedure Process_File_Description
      (B        : access Docgen.Backend.Backend'Class;
       Kernel   : access Kernel_Handle_Record'Class;
       Result   : in out Unbounded_String;
@@ -151,6 +150,7 @@ package body Docgen.Work_On_Source is
       Source_Filename           : VFS.Virtual_File;
       Package_Name              : String;
       Package_Information       : Entity_Information;
+      Main_Unit                 : Boolean;
       File_Text                 : GNAT.OS_Lib.String_Access;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Options                   : All_Options;
@@ -382,6 +382,7 @@ package body Docgen.Work_On_Source is
      (Package_Entity : Entity_Information;
       Entity_List    : Type_Entity_List.List)
       return Boolean;
+   pragma Unreferenced (Package_Contains_Entity_From_List);
    --  Determine whether at least one entity from a list is defined in
    --  a package.
 
@@ -421,7 +422,7 @@ package body Docgen.Work_On_Source is
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
       Source_Is_Spec            : Boolean;
-      Package_Name              : String;
+      Unit_Name                 : String;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Tagged_Types_List         : in out List_Entity_Information.List;
@@ -432,12 +433,10 @@ package body Docgen.Work_On_Source is
       use TEL;
       use type Basic_Types.String_Access;
       File_Text            : GNAT.OS_Lib.String_Access;
-      Previous_Entity_Node : Type_Entity_List.List_Node := TEL.Null_Node;
       Entity_Node          : Type_Entity_List.List_Node;
-      Found_Main_Package   : Boolean;
+      Found_Main_Unit      : Boolean;
       Parsed_List          : Construct_List;
       Entity               : TEL.Data_Access;
-      Main_Package_Entity  : Entity_Information;
 
    begin
       File_Text := Read_File (Source_Filename);
@@ -448,12 +447,12 @@ package body Docgen.Work_On_Source is
          return;
       end if;
 
-      Process_Open_File (B, Kernel, Result, Package_Name);
+      Process_Open_File (B, Kernel, Result, Unit_Name);
       Process_Header
         (B, Kernel, Result,
          Entity_List,
          Source_Filename,
-         Package_Name,
+         Unit_Name,
          Source_Filename,
          Options);
 
@@ -473,72 +472,58 @@ package body Docgen.Work_On_Source is
                File_Text.all,
                Parsed_List);
 
-            --  Find the main package entity
+            --  Find the main unit
 
-            Found_Main_Package := False;
+            Found_Main_Unit := False;
             Entity_Node := TEL.First (Entity_List);
 
             while Entity_Node /= TEL.Null_Node loop
                Entity := TEL.Data_Ref (Entity_Node);
 
-               if Entity.Kind = Package_Entity
-                 and then Get_Full_Name (Entity.Entity) = Package_Name
-               then
-                  Found_Main_Package := True;
+               if Get_Full_Name (Entity.Entity) = Unit_Name then
+                  Found_Main_Unit := True;
                   exit;
                end if;
 
-               Previous_Entity_Node := Entity_Node;
-               Entity_Node          := TEL.Next (Entity_Node);
+               Entity_Node := TEL.Next (Entity_Node);
             end loop;
 
-            if Found_Main_Package then
-               --  The main package must be removed form the entity list.
+            if Found_Main_Unit then
+                  Process_File_Description
+                    (B, Kernel, Result,
+                     File_Text.all, Options,
+                     Get_Language_From_File
+                       (Get_Language_Handler (Kernel), Source_Filename),
+                     Level);
 
-               Main_Package_Entity := Entity.Entity;
-               Ref (Main_Package_Entity);
+                  Process_With_Clause
+                    (B, Kernel, Result,
+                     Parsed_List,
+                     List_Ref_In_File,
+                     Source_Filename,
+                     File_Text,
+                     Source_File_List,
+                     Options,
+                     Level);
 
-               TEL.Remove_Nodes
-                 (Entity_List,
-                  Previous_Entity_Node,
-                  Entity_Node);
+                  --  Process types, variables, subprograms, entries,
+                  --  exceptions, packages (recursive calls for inner packages)
 
-               Process_Package_Description
-                 (B, Kernel, Result,
-                  File_Text.all, Options,
-                  Get_Language_From_File
-                    (Get_Language_Handler (Kernel), Source_Filename),
-                  Level);
-
-               Process_With_Clause
-                 (B, Kernel, Result,
-                  Parsed_List,
-                  List_Ref_In_File,
-                  Source_Filename,
-                  File_Text,
-                  Source_File_List,
-                  Options,
-                  Level);
-
-               --  Process types, variables, subprograms, entries, exceptions,
-               --  packages (recursive calls for inner packages)
-
-               Process_Source_Spec
-                 (B, Kernel, Result,
-                  Source_File_List,
-                  Source_Filename,
-                  Package_Name,
-                  Main_Package_Entity,
-                  Entity_List,
-                  List_Ref_In_File,
-                  Tagged_Types_List,
-                  Private_Tagged_Types_List,
-                  Options,
-                  Level,
-                  File_Text,
-                  Parsed_List);
-
-               Unref (Main_Package_Entity);
+                  Process_Source_Spec
+                    (B, Kernel, Result,
+                     Source_File_List,
+                     Source_Filename,
+                     Unit_Name,
+                     Entity.Entity,
+                     True,
+                     Entity_List,
+                     List_Ref_In_File,
+                     Tagged_Types_List,
+                     Private_Tagged_Types_List,
+                     Options,
+                     Level,
+                     File_Text,
+                     Parsed_List);
             end if;
 
             Free (Parsed_List);
@@ -574,8 +559,9 @@ package body Docgen.Work_On_Source is
       Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
-      Package_Name              : String;
-      Package_Info              : Entity_Information;
+      Unit_Name                 : String;
+      Unit_Info                 : Entity_Information;
+      Main_Unit                 : Boolean;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Tagged_Types_List         : in out List_Entity_Information.List;
@@ -599,8 +585,9 @@ package body Docgen.Work_On_Source is
          Tagged_Types_List,
          Private_Tagged_Types_List,
          Source_Filename,
-         Package_Name,
-         Package_Info,
+         Unit_Name,
+         Unit_Info,
+         Main_Unit,
          File_Text,
          Source_File_List,
          Options,
@@ -612,7 +599,7 @@ package body Docgen.Work_On_Source is
          Entity_List,
          List_Ref_In_File,
          Source_Filename,
-         Package_Info,
+         Unit_Info,
          File_Text,
          Source_File_List,
          Options,
@@ -624,7 +611,7 @@ package body Docgen.Work_On_Source is
          Entity_List,
          List_Ref_In_File,
          Source_Filename,
-         Package_Info,
+         Unit_Info,
          File_Text,
          Source_File_List,
          Options,
@@ -638,7 +625,7 @@ package body Docgen.Work_On_Source is
          Tagged_Types_List,
          Private_Tagged_Types_List,
          Source_Filename,
-         Package_Info,
+         Unit_Info,
          File_Text,
          Source_File_List,
          Options,
@@ -650,7 +637,7 @@ package body Docgen.Work_On_Source is
          Entity_List,
          List_Ref_In_File,
          Source_Filename,
-         Package_Info,
+         Unit_Info,
          File_Text,
          Source_File_List,
          Options,
@@ -662,7 +649,7 @@ package body Docgen.Work_On_Source is
          Entity_List,
          List_Ref_In_File,
          Source_Filename,
-         Package_Info,
+         Unit_Info,
          File_Text,
          Source_File_List,
          Options,
@@ -680,8 +667,9 @@ package body Docgen.Work_On_Source is
             Tagged_Types_List,
             Private_Tagged_Types_List,
             Source_Filename,
-            Package_Name,
-            Package_Info,
+            Unit_Name,
+            Unit_Info,
+            Main_Unit,
             File_Text,
             Source_File_List,
             Options,
@@ -693,7 +681,7 @@ package body Docgen.Work_On_Source is
             Entity_List,
             List_Ref_In_File,
             Source_Filename,
-            Package_Info,
+            Unit_Info,
             File_Text,
             Source_File_List,
             Options,
@@ -705,7 +693,7 @@ package body Docgen.Work_On_Source is
             Entity_List,
             List_Ref_In_File,
             Source_Filename,
-            Package_Info,
+            Unit_Info,
             File_Text,
             Source_File_List,
             Options,
@@ -719,7 +707,7 @@ package body Docgen.Work_On_Source is
             Tagged_Types_List,
             Private_Tagged_Types_List,
             Source_Filename,
-            Package_Info,
+            Unit_Info,
             File_Text,
             Source_File_List,
             Options,
@@ -731,7 +719,7 @@ package body Docgen.Work_On_Source is
             Entity_List,
             List_Ref_In_File,
             Source_Filename,
-            Package_Info,
+            Unit_Info,
             File_Text,
             Source_File_List,
             Options,
@@ -743,7 +731,7 @@ package body Docgen.Work_On_Source is
             Entity_List,
             List_Ref_In_File,
             Source_Filename,
-            Package_Info,
+            Unit_Info,
             File_Text,
             Source_File_List,
             Options,
@@ -760,9 +748,9 @@ package body Docgen.Work_On_Source is
      (B            : access Docgen.Backend.Backend'Class;
       Kernel       : access Kernel_Handle_Record'Class;
       Result       : in out Unbounded_String;
-      Package_Name : String) is
+      Unit_Name    : String) is
    begin
-      Doc_Open (B, Kernel, Result, Open_Title => Package_Name);
+      Doc_Open (B, Kernel, Result, Open_Title => Unit_Name);
    end Process_Open_File;
 
    ---------------------------
@@ -1190,42 +1178,44 @@ package body Docgen.Work_On_Source is
       Package_File    : Virtual_File;
       Options         : All_Options)
    is
+      pragma Unreferenced (Entity_List, Package_Name);
       use TEL;
-      Declar_Line : Natural := First_File_Line;
-      Entity_Node : Type_Entity_List.List_Node;
-      Entity      : TEL.Data_Access;
+--        Declar_Line : Natural := First_File_Line;
+--        Entity_Node : Type_Entity_List.List_Node;
+--        Entity      : TEL.Data_Access;
    begin
-      if not TEL.Is_Empty (Entity_List) then
-         Entity_Node := TEL.First (Entity_List);
-
-         while Entity_Node /= TEL.Null_Node loop
-            Entity := TEL.Data_Ref (Entity_Node);
-
-            if Entity.Kind = Package_Entity
-              and then Get_Name (Entity.Entity).all = Package_Name
-            then
-               --  It's a library level package declaration
-               if Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
-                 = Source_Filename
-               then
-                  --  Clauses with may be above the declaration
-                  --  of the main package
-                  Declar_Line := Get_Line (Get_Declaration_Of (Entity.Entity));
-               else
-                  Declar_Line := Get_Line (Entity.Line_In_Body);
-               end if;
-
-               exit;
-            end if;
-
-            Entity_Node := TEL.Next (Entity_Node);
-         end loop;
-      end if;
+--        if not TEL.Is_Empty (Entity_List) then
+--           Entity_Node := TEL.First (Entity_List);
+--
+--           while Entity_Node /= TEL.Null_Node loop
+--              Entity := TEL.Data_Ref (Entity_Node);
+--
+--              if Entity.Kind = Package_Entity
+--                and then Get_Name (Entity.Entity).all = Package_Name
+--              then
+--                 --  It's a library level package declaration
+--              if Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
+--                   = Source_Filename
+--                 then
+--                    --  Clauses with may be above the declaration
+--                    --  of the main package
+--                Declar_Line := Get_Line (Get_Declaration_Of (Entity.Entity));
+--                 else
+--                    Declar_Line := Get_Line (Entity.Line_In_Body);
+--                 end if;
+--
+--                 exit;
+--              end if;
+--
+--              Entity_Node := TEL.Next (Entity_Node);
+--           end loop;
+--        end if;
 
       Doc_Header (B, Kernel, Result,
                   Header_File    => Package_File,
-                  Header_Package => Package_Name,
-                  Header_Line    => Declar_Line,
+                  Header_Package => Base_Name (Source_Filename), --  ???
+--                    Header_Line    => Declar_Line,
+                  Header_Line    => 1,
                   Header_Link    => Options.Process_Body_Files
                      and then Other_File_Base_Name
                        (Get_Project_From_File
@@ -1266,7 +1256,7 @@ package body Docgen.Work_On_Source is
    -- Process_Package_Description --
    ---------------------------------
 
-   procedure Process_Package_Description
+   procedure Process_File_Description
      (B        : access Docgen.Backend.Backend'Class;
       Kernel   : access Kernel_Handle_Record'Class;
       Result   : in out Unbounded_String;
@@ -1301,7 +1291,7 @@ package body Docgen.Work_On_Source is
       Doc_Package_Desc
         (B, Kernel, Result, Level, Description => Description.all);
       Free (Description);
-   end Process_Package_Description;
+   end Process_File_Description;
 
    --------------------------
    -- Process_With_Clauses --
@@ -1414,6 +1404,7 @@ package body Docgen.Work_On_Source is
       Source_Filename           : VFS.Virtual_File;
       Package_Name              : String;
       Package_Information       : Entity_Information;
+      Main_Unit                 : Boolean;
       File_Text                 : GNAT.OS_Lib.String_Access;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Options                   : All_Options;
@@ -1421,16 +1412,12 @@ package body Docgen.Work_On_Source is
       Display_Private           : in out Boolean;
       Level                     : in out Natural)
    is
+      pragma Unreferenced (Package_Name);
       use TEL;
       Entity_Node              : Type_Entity_List.List_Node;
-      Entity_Node_Prec         : Type_Entity_List.List_Node;
       Description              : GNAT.OS_Lib.String_Access;
-      Header                   : GNAT.OS_Lib.String_Access;
-      Header_Lines             : Natural;
-      Header_Start, Header_End : Natural;
-      First_Already_Set        : Boolean;
+      First_Already_Set        : Boolean := False;
       Entity                   : TEL.Data_Access;
-      Info                     : Entity_Information;
 
    begin
       if Entity_List /= TEL.Null_List
@@ -1438,233 +1425,108 @@ package body Docgen.Work_On_Source is
       then
          First_Already_Set := False;
          Entity_Node       := TEL.First (Entity_List);
-         Entity_Node_Prec  := TEL.Null_Node;
 
-         while Entity_Node /= TEL.Null_Node loop
-
+         loop
             Entity := TEL.Data_Ref (Entity_Node);
 
-            if Entity.Is_Private = Private_Entity -- ???
+            if not Entity.Processed
+              and then Entity.Is_Private = Private_Entity
               and then Entity.Kind = Package_Entity
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
               and then
-                Get_Name
-                  (Get_Caller (Declaration_As_Reference (Entity.Entity))).all =
-                Get_Name (Package_Information).all
-              and then Entity_Defined_In_Package
-                (Entity.Entity, Package_Information) -- ??? Is that needed ?
-
+                ((Main_Unit and then Entity.Entity = Package_Information)
+                 or else
+                   (not Main_Unit
+                    and then
+                      (Get_Name
+                         (Get_Caller
+                            (Declaration_As_Reference
+                               (Entity.Entity))) /= null
+                       and then
+                         Get_Name
+                           (Get_Caller
+                              (Declaration_As_Reference (Entity.Entity))).all =
+                         Get_Name (Package_Information).all
+                       and then Entity_Defined_In_Package
+                         (Entity.Entity, Package_Information))))
             then
-               --  A nested or a child package has been found.
+               Entity.Processed := True;
 
-               if Package_Contains_Entity_From_List
-                 (Entity.Entity, Entity_List)
-               then
-                  --  Some entities from the list are declared in the current
-                  --  package.
-
-                  Get_Whole_Header
-                    (File_Text.all,
-                     Parsed_List,
-                     Get_Name (Entity.Entity).all,
-                     Get_Line (Get_Declaration_Of (Entity.Entity)),
-                     Header_Start, Header_End);
-
-                  if Header_Start <= Header_End then
-                     Header_Lines := Count_Lines
-                       (File_Text (Header_Start .. Header_End));
-
-                     if Entity.Is_Private and then not Display_Private then
-                        --  Print title "private" required and not done
-                        Process_Header_Private (B, Kernel, Result, Level);
-                        Display_Private := True;
-                     end if;
-
-                     --  Check if the subtitle "Packages" has already been
-                     --  set.
-
-                     if not First_Already_Set then -- ??? To be renamed.
-                        Process_Header_Packages (B, Kernel, Result, Level);
-                        First_Already_Set := True;
-                     end if;
-
-                     Description := new String'
-                       (Get_Documentation
-                          (Get_Language_Handler (Kernel),
-                           Entity.Entity,
-                           File_Text.all));
-
-                     --  We save in an Entity_Information the current package
-                     --  because it must be removed from Entity_List.
-
-                     Info := Entity.Entity;
-                     Ref (Info);
-
-                     Type_Entity_List.Remove_Nodes
-                       (Entity_List,
-                        Entity_Node_Prec,
-                        Entity_Node);
-                     Doc_Package_Open_Close
-                       (B, Kernel, Result,
-                        List_Ref_In_File,
-                        Source_File_List,
-                        Options,
-                        Level,
-                        Entity => Info,
-                        Header => "package " & Get_Name (Info).all & " is");
-
-                     --  ??? This does not work for generic packages...
-
-                     Level := Level + 1;
-
-                     --  Recursive call in order to deal with entities defined
-                     --  in the current package.
-
-                     Process_Source_Spec
-                       (B, Kernel, Result,
-                        Source_File_List,
-                        Source_Filename,
-                        Get_Name (Info).all,
-                        Info,
-                        Entity_List,
-                        List_Ref_In_File,
-                        Tagged_Types_List,
-                        Private_Tagged_Types_List,
-                        Options,
-                        Level,
-                        File_Text,
-                        Parsed_List);
-                     Level := Level - 1;
-
-                     Doc_Package_Open_Close
-                       (B, Kernel, Result,
-                        List_Ref_In_File,
-                        Source_File_List,
-                        Options,
-                        Level,
-                        Entity => Info,
-                        Header => "end " & Get_Name (Info).all);
-
-                     if Description.all /= "" then
-                        Process_Description
-                          (B, Kernel, Result,
-                           Level,
-                           Description.all);
-                     end if;
-
-                     Unref (Info);
-                     Free (Description);
-
-                     --  At least one item has been removed from the list and
-                     --  potentially more depending on the processing done
-                     --  during the recursive call.
-                     --  Items previously pointed in the list may have been
-                     --  removed.
-                     --  If the list is empty, the package processing is done.
-                     --  Otherwise we start over from the first element in the
-                     --  list. Remove packages from the list before they are
-                     --  processed should prevent from infinite loop or
-                     --  recursion.
-
-                     exit when TEL.Is_Empty (Entity_List);
-
-                     Entity_Node := TEL.First (Entity_List);
-
-                  else
-                     --  No header ??? Not sure about the meaning.
-
-                     exit when Entity_Node = TEL.Last (Entity_List);
-
-                     --  No processing. Just step forward in the entity list.
-
-                     Entity_Node_Prec := Entity_Node;
-                     Entity_Node      := TEL.Next (Entity_Node);
-                  end if;
-
-               else
-                  --  The current package doesn't contain any declaration from
-                  --  any entity from the list.
-                  --  ??? Is all the following processing needed in that case?
-
-                  Get_Whole_Header
-                    (File_Text.all,
-                     Parsed_List,
-                     Get_Name (Entity.Entity).all,
-                     Get_Line (Get_Declaration_Of (Entity.Entity)),
-                     Header_Start, Header_End);
-
-                  if Header_Start <= Header_End then
-                     Remove_Indent
-                       (File_Text (Header_Start .. Header_End),
-                        Level * Get_Indent (B.all),
-                        Header, Header_Lines);
-
-                     if Entity.Is_Private and then not Display_Private then
-                        Process_Header_Private (B, Kernel, Result, Level);
-                        Display_Private := True;
-                     end if;
-
-                     if not First_Already_Set then
-                        Process_Header_Packages (B, Kernel, Result, Level);
-                        First_Already_Set := True;
-                     end if;
-
-                     Description := new String'
-                       (Get_Documentation
-                          (Get_Language_Handler (Kernel), Entity.Entity,
-                           File_Text.all));
-
-                     Doc_Package
-                       (B, Kernel, Result,
-                        List_Ref_In_File, Source_File_List, Options, Level,
-                        Package_Entity => Entity.Entity,
-                        Package_Header => Header.all);
-
-                     if Description.all /= "" then
-                        Process_Description
-                          (B, Kernel, Result, Level, Description.all);
-                     end if;
-
-                     Free (Header);
-                     Free (Description);
-
-                     Type_Entity_List.Remove_Nodes
-                       (Entity_List,
-                        Entity_Node_Prec,
-                        Entity_Node);
-
-                     exit when Is_Empty (Entity_List)
-                       or else Entity_Node_Prec = TEL.Last (Entity_List);
-
-                     if Entity_Node_Prec = TEL.Null_Node then
-                        Entity_Node := TEL.First (Entity_List);
-                     else
-                        Entity_Node := TEL.Next (Entity_Node_Prec);
-                     end if;
-                  else
-                     --  No header for the package. It might be a good idea
-                     --  to remove it from the list in order to prevent from
-                     --  infinite loop or recursion to happen.
-
-                     exit when Entity_Node = TEL.Last (Entity_List);
-
-                     Entity_Node_Prec := Entity_Node;
-                     Entity_Node      := TEL.Next (Entity_Node);
-                  end if;
+               if Entity.Is_Private and then not Display_Private then
+                  --  Print title "private" required and not done
+                  Process_Header_Private (B, Kernel, Result, Level);
+                  Display_Private := True;
                end if;
-            else
-               --  The current entity is not a package and is therefore not
-               --  to be processed here.
 
-               exit when Entity_Node = TEL.Last (Entity_List);
+               --  Check if the subtitle "Packages" has already been
+               --  set.
 
-               Entity_Node_Prec := Entity_Node;
-               Entity_Node      := TEL.Next (Entity_Node);
+               if not First_Already_Set then -- ??? To be renamed.
+                  Process_Header_Packages (B, Kernel, Result, Level);
+                  First_Already_Set := True;
+               end if;
+
+               Doc_Package_Open_Close
+                 (B, Kernel, Result,
+                  List_Ref_In_File,
+                  Source_File_List,
+                  Options,
+                  Level,
+                  Entity => Entity.Entity,
+                  Header =>
+                    "package " & Get_Full_Name (Entity.Entity) & " is");
+
+               Description := new String'
+                 (Get_Documentation
+                    (Get_Language_Handler (Kernel),
+                     Entity.Entity,
+                     File_Text.all));
+
+               --  Recursive call in order to deal with entities defined
+               --  in the current package.
+
+               Level := Level + 1;
+
+               Process_Source_Spec
+                 (B, Kernel, Result,
+                  Source_File_List,
+                  Source_Filename,
+                  Get_Name (Entity.Entity).all,
+                  Entity.Entity,
+                  False,
+                  Entity_List,
+                  List_Ref_In_File,
+                  Tagged_Types_List,
+                  Private_Tagged_Types_List,
+                  Options,
+                  Level,
+                  File_Text,
+                  Parsed_List);
+               Level := Level - 1;
+
+               Doc_Package_Open_Close
+                 (B, Kernel, Result,
+                  List_Ref_In_File,
+                  Source_File_List,
+                  Options,
+                  Level,
+                  Entity => Entity.Entity,
+                  Header => "end " & Get_Full_Name (Entity.Entity));
+
+               if Description.all /= "" then
+                  Process_Description
+                    (B, Kernel, Result,
+                     Level,
+                     Description.all);
+               end if;
             end if;
+
+            exit when Entity_Node = TEL.Last (Entity_List);
+
+            Entity_Node := TEL.Next (Entity_Node);
          end loop;
       end if;
-      Trace (Me, Package_Name & " processed");
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -2420,7 +2282,11 @@ package body Docgen.Work_On_Source is
               and then Entity.Kind = Subprogram_Entity
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
-              and then Entity_Defined_In_Package (Entity.Entity, Package_Info)
+              and then
+                (Entity_Defined_In_Package (Entity.Entity, Package_Info)
+                 or else Package_Info = null)
+            --  The subprogram must either belong to the package currently
+            --  processed or be the main unit itself in order to be processed.
             then
                Get_Whole_Header
                  (File_Text.all,
