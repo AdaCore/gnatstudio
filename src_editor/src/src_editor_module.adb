@@ -3811,6 +3811,18 @@ package body Src_Editor_Module is
          Action => Command,
          Filter => Lookup_Filter (Kernel, "File"));
 
+      Command := new Control_Command;
+      Control_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Control_Command (Command.all).Mode := As_Is;
+      Register_Action
+        (Kernel, "No casing/indentation on next key",
+         Command, -"Disable the casing and indentation on next key",
+         Src_Action_Context);
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => "No casing/indentation on next key",
+         Default_Key => "control-q");
+
       Register_Module
         (Module                  => Src_Editor_Module_Id,
          Kernel                  => Kernel,
