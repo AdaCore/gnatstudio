@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -28,7 +28,7 @@ package Aunit_Filters is
    --  This package provides file selector filters to use with Aunit dialogs.
 
    procedure Get_Suite_Name
-     (File_Name : in String;
+     (File_Name    : String;
       Package_Name : out GNAT.OS_Lib.String_Access;
       Suite_Name   : out GNAT.OS_Lib.String_Access);
    --  Open File_Name, do a basic parsing on it to look for aunit tests or
