@@ -184,7 +184,7 @@ package body Histories is
          Set_Text (Get_Entry (Combo), Value (Value'First).all);
          Select_Region (Get_Entry (Combo), 0, -1);
       else
-         Set_Text (Get_Entry (Combo), "<null>");
+         Set_Text (Get_Entry (Combo), "");
       end if;
    end Get_History;
 
