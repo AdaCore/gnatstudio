@@ -88,6 +88,8 @@ package body GVD.Menu is
            or else Is_Regular_File (S)
          then
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
+            Change_Dir (Dir_Name (S));
+
          else
             Output_Error
               (GVD_Main_Window (Get_Toplevel (Object)),
@@ -289,7 +291,7 @@ package body GVD.Menu is
 
       if Command_In_Process (Get_Process (Tab.Debugger)) then
          Button := Message_Dialog
-           ((-"Cannot detach the process while the") & ASCII.LF &
+           ((-"Cannot change directory while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
            Dialog_Type => Warning,
@@ -306,6 +308,7 @@ package body GVD.Menu is
       begin
          if Dir /= "" then
             Change_Directory (Tab.Debugger, Dir, Mode => GVD.Types.Visible);
+            Change_Dir (Dir);
          end if;
       end;
    end On_Change_Directory;
