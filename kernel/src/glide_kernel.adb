@@ -912,6 +912,14 @@ package body Glide_Kernel is
          end if;
       end if;
 
+      if Kernel.Current_Context = null then
+         Kernel.Current_Context := new Selection_Context;
+         Set_Context_Information
+           (Kernel.Current_Context,
+            Kernel  => Kernel,
+            Creator => null);
+      end if;
+
       return Kernel.Current_Context;
    end Get_Current_Context;
 
