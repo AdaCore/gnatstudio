@@ -6,14 +6,6 @@ with Generic_Stack;
 
 package body Source_Analyzer is
 
-   ---------------
-   -- Constants --
-   ---------------
-
-   None   : constant := -1;
-   Spaces : constant String (1 .. 256) := (others => ' ');
-   --  Use to handle indentation in procedure Do_Indent below.
-
    -----------
    -- Types --
    -----------
@@ -126,15 +118,6 @@ package body Source_Analyzer is
       Last    : Natural;
       Replace : String);
    --  Replace the slice First .. Last - 1 in Buffer by Replace.
-
-   procedure Do_Indent
-     (Buffer      : String;
-      New_Buffer  : in out Extended_Line_Buffer;
-      Prec        : Natural;
-      Indents     : Indent_Stack.Simple_Stack;
-      Num_Spaces  : Integer;
-      Indent_Done : in out Boolean);
-   --  Perform indentation by inserting spaces in the buffer.
 
    type Construct_List_Access is access all Construct_List;
 
@@ -488,42 +471,6 @@ package body Source_Analyzer is
       return P - 1;
    end Prev_Char;
 
-   ---------------
-   -- Do_Indent --
-   ---------------
-
-   procedure Do_Indent
-     (Buffer      : String;
-      New_Buffer  : in out Extended_Line_Buffer;
-      Prec        : Natural;
-      Indents     : Indent_Stack.Simple_Stack;
-      Num_Spaces  : Integer;
-      Indent_Done : in out Boolean)
-   is
-      Start       : Natural;
-      Indentation : Integer;
-      Index       : Natural;
-
-   begin
-      if not Indent_Done then
-         Start := Line_Start (Buffer, Prec);
-         Index := Start;
-
-         while Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT loop
-            Index := Index + 1;
-         end loop;
-
-         if Top (Indents).all = None then
-            Indentation := Num_Spaces;
-         else
-            Indentation := Top (Indents).all;
-         end if;
-
-         Replace_Text (New_Buffer, Start, Index, Spaces (1 .. Indentation));
-         Indent_Done := True;
-      end if;
-   end Do_Indent;
-
    ------------------------
    -- Analyze_Ada_Source --
    ------------------------
@@ -541,15 +488,26 @@ package body Source_Analyzer is
       Current_Indent   : out Natural;
       Prev_Indent      : out Natural)
    is
+      ---------------
+      -- Constants --
+      ---------------
+
+      None   : constant := -1;
+      Spaces : constant String (1 .. 256) := (others => ' ');
+      --  Use to handle indentation in procedure Do_Indent below.
+
+      ---------------
+      -- Variables --
+      ---------------
+
       Line_Count          : Integer           := 1;
       Str                 : String (1 .. 1024);
       Str_Len             : Natural           := 0;
       Current             : Natural;
       Prec                : Natural           := 1;
-      Prev_Prev_Spaces    : Integer           := 0;
       Prev_Spaces         : Integer           := 0;
       Num_Spaces          : Integer           := 0;
-      Indent_Done         : Boolean           := not Indent;
+      Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
       Prev_Num_Parens     : Integer           := 0;
       In_Generic          : Boolean           := False;
@@ -584,6 +542,11 @@ package body Source_Analyzer is
       pragma Inline (New_Line);
       --  Increment Count and poll if needed (e.g for graphic events).
 
+      procedure Do_Indent
+        (Prec       : Natural;
+         Num_Spaces : Integer);
+      --  Perform indentation by inserting spaces in the buffer.
+
       --------------------
       -- Stack Routines --
       --------------------
@@ -599,14 +562,49 @@ package body Source_Analyzer is
       procedure Pop (Stack : in out Token_Stack.Simple_Stack);
       --  Pop Value on top of Stack. Ignore returned value.
 
+      ---------------
+      -- Do_Indent --
+      ---------------
+
+      procedure Do_Indent
+        (Prec       : Natural;
+         Num_Spaces : Integer)
+      is
+         Start       : Natural;
+         Indentation : Integer;
+         Index       : Natural;
+
+      begin
+         if not Indent_Done then
+            Start := Line_Start (Buffer, Prec);
+            Index := Start;
+
+            while Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT loop
+               Index := Index + 1;
+            end loop;
+
+            if Top (Indents).all = None then
+               Indentation := Num_Spaces;
+            else
+               Indentation := Top (Indents).all;
+            end if;
+
+            if Indent then
+               Replace_Text
+                 (New_Buffer, Start, Index, Spaces (1 .. Indentation));
+            end if;
+
+            Indent_Done := True;
+            Prev_Spaces := Indentation;
+         end if;
+      end Do_Indent;
+
       --------------
       -- New_Line --
       --------------
 
       procedure New_Line (Count : in out Natural) is
       begin
-         Prev_Prev_Spaces := Prev_Spaces;
-         Prev_Spaces := Num_Spaces;
          Count := Count + 1;
       end New_Line;
 
@@ -687,8 +685,7 @@ package body Source_Analyzer is
             Push (Tokens, Temp);
 
          elsif Prev_Token /= Tok_End and then Reserved = Tok_Case then
-            Do_Indent
-              (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
+            Do_Indent (Prec, Num_Spaces);
             Push (Tokens, Temp);
             Num_Spaces := Num_Spaces + Indent_Level;
 
@@ -883,8 +880,7 @@ package body Source_Analyzer is
                   end if;
                end if;
 
-               Do_Indent
-                 (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
+               Do_Indent (Prec, Num_Spaces);
                Num_Spaces := Num_Spaces + Indent_Level;
             end if;
 
@@ -917,8 +913,7 @@ package body Source_Analyzer is
             --  generic
             --     type ...;
 
-            Do_Indent
-              (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
+            Do_Indent (Prec, Num_Spaces);
             Num_Spaces := Num_Spaces + Indent_Level;
             In_Generic := True;
 
@@ -937,8 +932,7 @@ package body Source_Analyzer is
 
             if not Val.Declaration then
                Num_Spaces := Num_Spaces - Indent_Level;
-               Do_Indent
-                 (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
+               Do_Indent (Prec, Num_Spaces);
                Num_Spaces := Num_Spaces + 2 * Indent_Level;
                Push (Tokens, Temp);
             end if;
@@ -964,7 +958,7 @@ package body Source_Analyzer is
          Offs          : Natural;
          Insert_Spaces : Boolean;
          Char          : Character;
-         Padding       : Integer;
+         Padding       : Integer := 0;
 
          procedure Handle_Two_Chars (Second_Char : Character);
          --  Handle a two char operator, whose second char is Second_Char.
@@ -983,7 +977,7 @@ package body Source_Analyzer is
 
             P := Next_Char (P);
 
-            if Buffer (Next_Char (P)) /= ' ' then
+            if P < Buffer'Last and then Buffer (Next_Char (P)) /= ' ' then
                Long := Long + 1;
             end if;
 
@@ -993,6 +987,7 @@ package body Source_Analyzer is
       begin
          if Buffer (P) = ASCII.LF then
             New_Line (Line_Count);
+            Indent_Done := False;
          end if;
 
          Start_Of_Line := Line_Start (Buffer, P);
@@ -1004,10 +999,7 @@ package body Source_Analyzer is
                  New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
             else
                Padding := 0;
-
-               if Indent then
-                  Indent_Done := False;
-               end if;
+               Indent_Done := False;
             end if;
          end if;
 
@@ -1017,10 +1009,7 @@ package body Source_Analyzer is
                End_Of_Line   := Line_End (Buffer, Start_Of_Line);
                New_Line (Line_Count);
                Padding       := 0;
-
-               if Indent then
-                  Indent_Done := False;
-               end if;
+               Indent_Done   := False;
             end if;
 
             --  Skip comments
@@ -1033,10 +1022,7 @@ package body Source_Analyzer is
                End_Of_Line   := Line_End (Buffer, P);
                New_Line (Line_Count);
                Padding       := 0;
-
-               if Indent then
-                  Indent_Done := False;
-               end if;
+               Indent_Done   := False;
             end loop;
 
             exit when P = Buffer'Last or else Is_Word_Char (Buffer (P));
@@ -1059,11 +1045,12 @@ package body Source_Analyzer is
                      --  Indent with 2 extra spaces if the '(' is the first
                      --  non blank character on the line
 
-                     Do_Indent
-                       (Buffer, New_Buffer, P, Indents,
-                        Num_Spaces + Indent_Continue, Indent_Done);
-                     Padding :=
-                       New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
+                     Do_Indent (P, Num_Spaces + Indent_Continue);
+
+                     if Indent then
+                        Padding := New_Buffer.Current.Line'Length
+                          - New_Buffer.Current.Len;
+                     end if;
                   end if;
 
                   Push (Indents, P - Start_Of_Line + Padding + 1);
@@ -1396,8 +1383,7 @@ package body Source_Analyzer is
          end case;
 
          if Started then
-            Do_Indent
-              (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
+            Do_Indent (Prec, Num_Spaces);
          else
             Started := True;
          end if;
@@ -1406,18 +1392,23 @@ package body Source_Analyzer is
          Prec            := Current + 1;
          Prev_Token      := Token;
          Next_Word (Prec);
-
-         if Syntax_Error then
-            Put_Line (">>> Syntax Error at line" & Line_Count'Img);
-         end if;
-
          Current := End_Of_Word (Buffer, Prec);
       end loop;
 
+      if Prev_Spaces < 0 then
+         Prev_Indent := 0;
+      else
+         Prev_Indent := Prev_Spaces;
+      end if;
+
+      if Top (Indents).all = None then
+         Current_Indent := Num_Spaces;
+      else
+         Current_Indent := Top (Indents).all;
+      end if;
+
       Clear (Tokens);
       Clear (Indents);
-      Current_Indent := Num_Spaces;
-      Prev_Indent := Prev_Prev_Spaces;
    end Analyze_Ada_Source;
 
    --------------------
