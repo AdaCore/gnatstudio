@@ -2826,8 +2826,7 @@ package body Src_Info.Queries is
 
          Iterator.Source_Files := Get_Source_Files
            (Current (Iterator.Importing),
-            Recursive => False,
-            Full_Path => True);
+            Recursive => False);
          Iterator.Current_File := Iterator.Source_Files'First - 1;
       end loop;
 
@@ -2915,8 +2914,7 @@ package body Src_Info.Queries is
             Include_Self => True);
          Iterator.Source_Files := Get_Source_Files
            (Current (Iterator.Importing),
-            Recursive => False,
-            Full_Path => True);
+            Recursive => False);
 
          Iterator.Total_Progress := 0;
          Tmp := Iterator.Importing;
