@@ -22,6 +22,8 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -31,6 +33,7 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Result_View;         use Glide_Result_View;
 with Glide_Intl;                use Glide_Intl;
 
 with Commands;                  use Commands;
@@ -101,6 +104,14 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Open the spec if a body or separate is currently selected, and the spec
    --  otherwise.
+
+   procedure On_Next_Result
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Navigate->Next Result menu.
+
+   procedure On_Previous_Result
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Navigate->Previous Result menu.
 
    -----------------
    -- Mime_Action --
@@ -305,6 +316,48 @@ package body Navigation_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Forward;
 
+   --------------------
+   -- On_Next_Result --
+   --------------------
+
+   procedure On_Next_Result
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Results : constant Result_View :=
+        Get_Or_Create_Result_View (Kernel, False);
+   begin
+      if Results /= null then
+         Next_Item (Results);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Next_Result;
+
+   ------------------------
+   -- On_Previous_Result --
+   ------------------------
+
+   procedure On_Previous_Result
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Results : constant Result_View :=
+        Get_Or_Create_Result_View (Kernel, False);
+   begin
+      if Results /= null then
+         Next_Item (Results, Backwards => True);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Previous_Result;
+
    -------------------
    -- On_Other_File --
    -------------------
@@ -370,8 +423,7 @@ package body Navigation_Module is
    is
       Toolbar       : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       Button        : Gtk_Button;
-      Navigate_Root : constant String := -"Navigate";
-      Navigate      : constant String := "/" & Navigate_Root;
+      Navigate      : constant String := "/_" & (-"Navigate");
       Menu_Item     : Gtk_Menu_Item;
    begin
       Navigation_Module_ID := new Navigation_Module_Record;
@@ -386,7 +438,7 @@ package body Navigation_Module is
 
       Register_Menu
         (Kernel,
-         "/_" & Navigate_Root,
+         Navigate,
          Ref_Item => -"Edit",
          Add_Before => False);
 
@@ -403,12 +455,23 @@ package body Navigation_Module is
       Register_Menu (Kernel, Navigate, -"Next Procedure", "", null);
       Register_Menu (Kernel, Navigate, -"Previous Procedure", "", null);
 
+      Gtk_New (Menu_Item);
+      Register_Menu (Kernel, Navigate, Menu_Item);
+      Register_Menu
+        (Kernel, Navigate, -"Previous Result", "", On_Previous_Result'Access,
+         Accel_Key  => GDK_less,
+         Accel_Mods => Control_Mask);
+      Register_Menu
+        (Kernel, Navigate, -"Next Result", "", On_Next_Result'Access,
+         Accel_Key  => GDK_greater,
+         Accel_Mods => Control_Mask);
+
       Append_Space (Toolbar);
 
       Button := Insert_Stock
         (Toolbar, Stock_Go_Back, -"Goto Previous Location");
-      Navigation_Module (Navigation_Module_ID).Back_Button
-        := Gtk_Widget (Button);
+      Navigation_Module (Navigation_Module_ID).Back_Button :=
+        Gtk_Widget (Button);
 
       Kernel_Callback.Connect
         (Button, "clicked",
@@ -417,8 +480,8 @@ package body Navigation_Module is
 
       Button := Insert_Stock
         (Toolbar, Stock_Go_Forward, -"Goto Next Location");
-      Navigation_Module (Navigation_Module_ID).Forward_Button
-        := Gtk_Widget (Button);
+      Navigation_Module (Navigation_Module_ID).Forward_Button :=
+        Gtk_Widget (Button);
 
       Kernel_Callback.Connect
         (Button, "clicked",
@@ -439,10 +502,12 @@ package body Navigation_Module is
       Data : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
    begin
-      Set_Sensitive (Data.Back_Button,
-                     not Is_Empty (Data.Back));
-      Set_Sensitive (Data.Forward_Button,
-                     not Is_Empty (Data.Forward));
+      Set_Sensitive
+        (Data.Back_Button,
+         not Is_Empty (Data.Back));
+      Set_Sensitive
+        (Data.Forward_Button,
+         not Is_Empty (Data.Forward));
    end Refresh_Location_Buttons;
 
    -------------
