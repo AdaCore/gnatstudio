@@ -1,0 +1,8 @@
+with "prj3";
+with "prj4";
+
+project Prj2 is
+
+   for Source_Dirs use ("prj2");
+
+end Prj2;
