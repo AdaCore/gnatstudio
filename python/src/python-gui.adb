@@ -382,7 +382,11 @@ package body Python.GUI is
       if Code /= null and then not Indented_Input then
          --  Grab the mouse, keyboard,... so as to avoid recursive loops in
          --  GPS (user selecting a menu while python is running)
-         Grab_Widget := Gtk_Widget (Get_View (Interpreter.Console));
+         if Interpreter.Console /= null then
+            Grab_Widget := Gtk_Widget (Get_View (Interpreter.Console));
+         else
+            Grab_Widget := null;
+         end if;
 
          if Grab_Widget /= null then
             Ref (Grab_Widget);
