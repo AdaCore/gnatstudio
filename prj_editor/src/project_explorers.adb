@@ -32,13 +32,24 @@ with Gdk.Bitmap;           use Gdk.Bitmap;
 with Gdk.Color;            use Gdk.Color;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixmap;           use Gdk.Pixmap;
+with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Glib.Values;          use Glib.Values;
+with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Label;            use Gtk.Label;
+with Gtk.Notebook;         use Gtk.Notebook;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Tree_View;        use Gtk.Tree_View;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Types;         use Gtkada.Types;
 with Gtkada.MDI;           use Gtkada.MDI;
@@ -53,8 +64,10 @@ with Prj_API;                  use Prj_API;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Pixmaps_Prj;              use Pixmaps_Prj;
 with Language;                 use Language;
+with Language.Unknown;         use Language.Unknown;
 with Basic_Types;              use Basic_Types;
 with String_Utils;             use String_Utils;
+with String_List_Utils;        use String_List_Utils;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -62,13 +75,41 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 
+with Unchecked_Deallocation;
+with System;
+with Unchecked_Conversion;
+
 package body Project_Explorers is
+
+   ---------------------
+   -- Local constants --
+   ---------------------
+
+   function Columns_Types return GType_Array;
+   --  Returns the types for the columns in the Model.
+   --  This is not implemented as
+   --       Columns_Types : constant GType_Array ...
+   --  because Gdk.Pixbuf.Get_Type cannot be called before
+   --  Gtk.Main.Init.
+
+   --  The following list must be synchronized with the array of types
+   --  in Columns_Types.
+
+   Icon_Column               : constant := 0;
+   Base_Name_Column          : constant := 1;
+   Absolute_Name_Column      : constant := 2;
+   Node_Type_Column          : constant := 3;
+   User_Data_Column          : constant := 4;
 
    Number_Of_Columns : constant := 1;
    --  Number of columns in the ctree.
 
    Explorer_Module_ID : Module_ID := null;
    --  Id for the explorer module
+
+   -----------------
+   -- Local types --
+   -----------------
 
    subtype String_Access is Basic_Types.String_Access;
 
@@ -110,8 +151,20 @@ package body Project_Explorers is
    end record;
    --  Information kept with each node in the tree.
 
+   type User_Data_Access is access User_Data;
+   procedure Free is new Unchecked_Deallocation (User_Data, User_Data_Access);
+   function To_User_Data is new
+     Unchecked_Conversion (System.Address, User_Data_Access);
+
    package Project_Row_Data is new Gtk.Ctree.Row_Data (User_Data);
    use Project_Row_Data;
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   procedure Set_Column_Types (Tree : Gtk_Tree_View);
+   --  Sets the types of columns to be displayed in the tree_view.
 
    function Create_Line_Text (Column1 : String) return Tree_Chars_Ptr_Array;
    --  Create an array of strings suitable for display in the ctree.
@@ -164,6 +217,47 @@ package body Project_Explorers is
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node;
    --  Add a new entity node in the tree, for Entity_Name
 
+   function File_Append_Category_Node
+     (Explorer    : access Project_Explorer_Record'Class;
+      Category    : Language_Category;
+      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+   --  Add a category node in the file view.
+
+   function File_Append_Entity_Node
+     (Explorer    : access Project_Explorer_Record'Class;
+      File        : String;
+      Construct   : Construct_Information;
+      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+   --  Add an entity node in the file view.
+
+   procedure File_Append_File_Info
+     (Explorer  : access Project_Explorer_Record'Class;
+      Node      : Gtk_Tree_Iter;
+      File_Name : String);
+   --  Add info to a file node in the file view.
+
+   procedure File_Append_Dummy_Iter
+     (Explorer : access Project_Explorer_Record'Class;
+      Base     : Gtk_Tree_Iter);
+   --  Add an empty item to an iter in the file view.
+
+   procedure File_Append_File
+     (Explorer  : access Project_Explorer_Record'Class;
+      Base      : Gtk_Tree_Iter;
+      File      : String);
+   --  Append a file node to Base in the file view.
+   --  File must be an absolute file name.
+
+   procedure File_Append_Directory
+     (Explorer  : access Project_Explorer_Record'Class;
+      Dir       : String;
+      Base      : Gtk_Tree_Iter;
+      Depth     : Integer := 0;
+      Append_To_Dir : String := "");
+   --  Add to the file view the directory Dir, at node given by Iter.
+   --  If Append_To_Dir is not "", and is a sub-directory of Dir, then
+   --  the path is expanded recursively all the way to Append_To_Dir.
+
    ---------------------
    -- Expanding nodes --
    ---------------------
@@ -199,6 +293,18 @@ package body Project_Explorers is
    --  Called every time a node is expanded. It is responsible for
    --  automatically adding the children of the current node if they are not
    --  there already.
+
+   procedure File_Tree_Expand_Row_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Values   : GValues);
+   --  Called every time a node is expanded in the file view.
+   --  It is responsible for automatically adding the children of the current
+   --  node if they are not there already.
+
+   procedure File_Tree_Collapse_Row_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Values   : GValues);
+   --  Called every time a node is collapsed in the file view.
 
    --------------------
    -- Updating nodes --
@@ -300,6 +406,22 @@ package body Project_Explorers is
       return Boolean;
    --  Callback for the "button_press" event
 
+   function Find_Iter_For_Event
+     (Explorer : access Project_Explorer_Record'Class;
+      Event    : Gdk_Event)
+     return Gtk_Tree_Iter;
+   --  Get the iter in the file view under the cursor corresponding to Event,
+   --  if any.
+
+   function File_Button_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean;
+   --  Callback for the "button_press" event on the file view.
+
+   procedure File_Selection_Changed
+     (Explorer : access Gtk_Widget_Record'Class);
+   --  Callback for the "button_press" event on the file view.
+
    function Filter_Category
      (Category : Language_Category) return Language_Category;
    --  Return the category to use when an entity is Category.
@@ -341,6 +463,414 @@ package body Project_Explorers is
    --  Called every time a new child is selected in the MDI. This makes sure
    --  that the selected not in the explorer doesn't reflect false information.
 
+   -------------------
+   -- Columns_Types --
+   -------------------
+
+   function Columns_Types return GType_Array is
+   begin
+      return GType_Array'
+        (Icon_Column               => Gdk.Pixbuf.Get_Type,
+         Absolute_Name_Column      => GType_String,
+         Base_Name_Column          => GType_String,
+         Node_Type_Column          => GType_Int,
+         User_Data_Column          => GType_Pointer);
+   end Columns_Types;
+
+   -------------------------------
+   -- File_Append_Category_Node --
+   -------------------------------
+
+   function File_Append_Category_Node
+     (Explorer    : access Project_Explorer_Record'Class;
+      Category    : Language_Category;
+      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
+   is
+      N : Gtk_Tree_Iter;
+   begin
+      --  ??? code duplication from Add_Category_Node
+
+      Append (Explorer.File_Model, N, Parent_Iter);
+
+      Set (Explorer.File_Model, N, Absolute_Name_Column, "");
+      Set (Explorer.File_Model, N, Base_Name_Column, Category_Name (Category));
+      Set (Explorer.File_Model, N, Icon_Column,
+           C_Proxy (Explorer.Close_Pixbufs (Category_Node)));
+      Set (Explorer.File_Model, N, Node_Type_Column,
+           Gint (Node_Types'Pos (Category_Node)));
+      return N;
+   end File_Append_Category_Node;
+
+   -----------------------------
+   -- File_Append_Entity_Node --
+   -----------------------------
+
+   function File_Append_Entity_Node
+     (Explorer    : access Project_Explorer_Record'Class;
+      File        : String;
+      Construct   : Construct_Information;
+      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
+   is
+      N    : Gtk_Tree_Iter;
+      User : User_Data_Access;
+      Val  : GValue;
+   begin
+      Append (Explorer.File_Model, N, Parent_Iter);
+
+      Set (Explorer.File_Model, N, Absolute_Name_Column, File);
+
+      if Construct.Is_Declaration then
+         if Construct.Profile /= null then
+            Set (Explorer.File_Model, N, Base_Name_Column,
+                 Construct.Name.all & " (spec) " &
+                 Reduce (Construct.Profile.all));
+         else
+            Set (Explorer.File_Model, N, Base_Name_Column,
+                 Construct.Name.all & " (spec)");
+
+         end if;
+
+      elsif Construct.Profile /= null then
+         Set (Explorer.File_Model, N, Base_Name_Column,
+              Construct.Name.all & " " & Reduce (Construct.Profile.all));
+      else
+         Set (Explorer.File_Model, N, Base_Name_Column,
+              Construct.Name.all);
+      end if;
+
+      Set (Explorer.File_Model, N, Icon_Column,
+           C_Proxy (Explorer.Close_Pixbufs (Entity_Node)));
+      Set (Explorer.File_Model, N, Node_Type_Column,
+           Gint (Node_Types'Pos (Entity_Node)));
+
+      User := new User_Data' (Node_Type   => Entity_Node,
+                              Name_Length => Construct.Name'Length,
+                              Entity_Name => Construct.Name.all,
+                              Sloc_Start  => Construct.Sloc_Start,
+                              Sloc_Entity => Construct.Sloc_Entity,
+                              Sloc_End    => Construct.Sloc_End,
+                              Up_To_Date  => True);
+      Init (Val, GType_Pointer);
+      Set_Address (Val, User.all'Address);
+      Set_Value (Explorer.File_Model, N, User_Data_Column, Val);
+      Unset (Val);
+      return N;
+   end File_Append_Entity_Node;
+
+   ---------------------------
+   -- File_Append_File_Info --
+   ---------------------------
+
+   procedure File_Append_File_Info
+     (Explorer  : access Project_Explorer_Record'Class;
+      Node      : Gtk_Tree_Iter;
+      File_Name : String)
+   is
+      Buffer     : String_Access;
+      N          : Gtk_Tree_Iter;
+      F          : File_Descriptor;
+      Lang       : Language_Access;
+      Constructs : Construct_List;
+      Length     : Natural;
+      Category   : Language_Category;
+
+      type Gtk_Tree_Iter_Array is array (Language_Category'Range)
+        of Gtk_Tree_Iter;
+      Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
+
+   begin
+      --  ??? code duplication from Expand_File_Node.
+
+      F := Open_Read (File_Name, Binary);
+
+      if F = Invalid_FD then
+         return;
+      end if;
+
+      Buffer := new String (1 .. Integer (File_Length (F)));
+      Length := Read (F, Buffer.all'Address, Buffer'Length);
+      Close (F);
+
+      Lang := Get_Language_From_File
+        (Glide_Language_Handler (Get_Language_Handler (Explorer.Kernel)),
+         File_Name);
+
+      if Lang /= Unknown_Lang then
+         Parse_Constructs (Lang, Buffer (1 .. Length), Constructs);
+
+         Constructs.Current := Constructs.First;
+
+         while Constructs.Current /= null loop
+            if Constructs.Current.Name /= null then
+               Category := Filter_Category (Constructs.Current.Category);
+
+               if Category /= Cat_Unknown then
+                  if Categories (Category) = Null_Iter then
+                     Categories (Category) := File_Append_Category_Node
+                       (Explorer,
+                        Category    => Category,
+                        Parent_Iter => Node);
+                  end if;
+
+                  N := File_Append_Entity_Node
+                    (Explorer, File_Name,
+                     Constructs.Current.all, Categories (Category));
+               end if;
+            end if;
+
+            Constructs.Current := Constructs.Current.Next;
+         end loop;
+
+         Free (Constructs);
+      end if;
+
+      Free (Buffer);
+   end File_Append_File_Info;
+
+   ----------------------------
+   -- File_Append_Dummy_Iter --
+   ----------------------------
+
+   procedure File_Append_Dummy_Iter
+     (Explorer : access Project_Explorer_Record'Class;
+      Base     : Gtk_Tree_Iter)
+   is
+      Iter      : Gtk_Tree_Iter;
+   begin
+      Append (Explorer.File_Model, Iter, Base);
+   end File_Append_Dummy_Iter;
+
+   ----------------------
+   -- File_Append_File --
+   ----------------------
+
+   procedure File_Append_File
+     (Explorer  : access Project_Explorer_Record'Class;
+      Base      : Gtk_Tree_Iter;
+      File      : String)
+   is
+      Iter      : Gtk_Tree_Iter;
+      Lang      : Language_Access;
+   begin
+      Append (Explorer.File_Model, Iter, Base);
+
+      Set (Explorer.File_Model, Iter, Absolute_Name_Column, File);
+
+      Set (Explorer.File_Model, Iter, Base_Name_Column, Base_Name (File));
+
+      Set (Explorer.File_Model, Iter, Icon_Column,
+           C_Proxy (Explorer.Close_Pixbufs (File_Node)));
+
+      Set (Explorer.File_Model, Iter, Node_Type_Column,
+           Gint (Node_Types'Pos (File_Node)));
+
+      Lang := Get_Language_From_File
+        (Glide_Language_Handler (Get_Language_Handler (Explorer.Kernel)),
+         File);
+
+      if Lang /= Unknown_Lang then
+         File_Append_Dummy_Iter (Explorer, Iter);
+      end if;
+   end File_Append_File;
+
+   ---------------------------
+   -- File_Append_Directory --
+   ---------------------------
+
+   procedure File_Append_Directory
+     (Explorer  : access Project_Explorer_Record'Class;
+      Dir       : String;
+      Base      : Gtk_Tree_Iter;
+      Depth     : Integer := 0;
+      Append_To_Dir : String := "")
+   is
+      Norm_Dest : String := Normalize_Pathname (Append_To_Dir);
+      Norm_Dir  : String := Normalize_Pathname (Dir);
+      D         : Dir_Type;
+      File      : String (1 .. 255);
+      Last      : Natural;
+      Iter      : Gtk_Tree_Iter;
+
+      use String_List_Utils.String_List;
+
+      Dirs      : String_List_Utils.String_List.List;
+      Files     : String_List_Utils.String_List.List;
+
+      Path_Found : Boolean := False;
+
+      procedure Insert_Sorted
+        (L : in out String_List_Utils.String_List.List;
+         S : String);
+      --  Adds S to list L in the right place so that L is ordered.
+      --  L must be sorted before call.
+
+      procedure Insert_Sorted
+        (L : in out String_List_Utils.String_List.List;
+         S : String)
+      is
+         Prev   : String_List_Utils.String_List.List_Node;
+         Node   : String_List_Utils.String_List.List_Node;
+
+      begin
+         Node := First (L);
+         Prev := Null_Node;
+
+         while Node /= Null_Node loop
+            if S < Data (Node) then
+               Append (L, Prev, S);
+               return;
+            end if;
+
+            Prev := Node;
+            Node := Next (Node);
+         end loop;
+
+         Append (L, S);
+      end Insert_Sorted;
+
+   begin
+      --  ??? This could be done in an idle loop.
+
+      Open (D, Dir);
+
+      loop
+         Read (D, File, Last);
+         exit when Last = 0;
+
+         if not (Last = 1 and then File (1) = '.')
+           and then not (Last = 2 and then File (1 .. 2) = "..")
+         then
+            if Is_Directory (Norm_Dir & File (File'First .. Last)) then
+               Insert_Sorted (Dirs, File (File'First .. Last));
+            else
+               Insert_Sorted (Files, File (File'First .. Last));
+            end if;
+         end if;
+      end loop;
+
+      Close (D);
+
+      while not Is_Empty (Dirs) loop
+         declare
+            Dir : String := Head (Dirs);
+         begin
+            Append (Explorer.File_Model, Iter, Base);
+
+            Set (Explorer.File_Model, Iter, Absolute_Name_Column,
+                 Norm_Dir & Dir & Directory_Separator);
+
+            Set (Explorer.File_Model, Iter, Base_Name_Column,
+                 Dir);
+
+            Set (Explorer.File_Model, Iter, Node_Type_Column,
+                 Gint (Node_Types'Pos (Directory_Node)));
+
+            if Depth = 0 then
+               exit;
+            end if;
+
+            --  Are we on the path to the target directory ?
+
+            if not Path_Found
+              and then Norm_Dir'Length + Dir'Length <= Norm_Dest'Length
+              and then Norm_Dest
+              (Norm_Dest'First
+               .. Norm_Dest'First + Norm_Dir'Length + Dir'Length - 1)
+              = Norm_Dir & Dir
+            then
+               Path_Found := True;
+
+               declare
+                  Success   : Boolean;
+                  Path      : Gtk_Tree_Path;
+               begin
+                  if Base = Null_Iter then
+                     Path := Gtk_New ("");
+                  else
+                     Path := Get_Path (Explorer.File_Model, Base);
+                  end if;
+
+                  Success := Expand_Row (Explorer.File_Tree, Path, False);
+
+                  if Base /= Null_Iter then
+                     Set (Explorer.File_Model, Base, Icon_Column,
+                          C_Proxy (Explorer.Open_Pixbufs (Directory_Node)));
+                  end if;
+
+                  Path_Free (Path);
+               end;
+
+               File_Append_Directory
+                 (Explorer, Norm_Dir & Dir
+                  & Directory_Separator, Iter, Depth, Norm_Dest);
+
+               --  Are we on the target directory ?
+
+               if Norm_Dest = Norm_Dir & Dir
+                 & Directory_Separator
+               then
+                  declare
+                     Success   : Boolean;
+                     Path      : Gtk_Tree_Path;
+                  begin
+                     Path := Get_Path (Explorer.File_Model, Iter);
+                     Success := Expand_Row (Explorer.File_Tree, Path, False);
+                     Set (Explorer.File_Model, Iter, Icon_Column,
+                          C_Proxy (Explorer.Open_Pixbufs (Directory_Node)));
+
+                     Scroll_To_Cell (Explorer.File_Tree,
+                                     Path, null, True, 0.9, 0.9);
+                     Path_Free (Path);
+                  end;
+               end if;
+
+            else
+               File_Append_Directory
+                 (Explorer, Norm_Dir & Dir
+                  & Directory_Separator, Iter, Depth - 1, Norm_Dest);
+               Set (Explorer.File_Model, Iter, Icon_Column,
+                    C_Proxy (Explorer.Close_Pixbufs (Directory_Node)));
+            end if;
+
+            Next (Dirs);
+         end;
+      end loop;
+
+      while not Is_Empty (Files) loop
+         File_Append_File (Explorer, Base, Norm_Dir & Head (Files));
+         Next (Files);
+      end loop;
+
+   exception
+      when Directory_Error =>
+         --  The directory couldn't be open, probably because of permissions.
+         return;
+   end File_Append_Directory;
+
+   ----------------------
+   -- Set_Column_Types --
+   ----------------------
+
+   procedure Set_Column_Types (Tree : Gtk_Tree_View) is
+      Col           : Gtk_Tree_View_Column;
+      Text_Rend     : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
+      Dummy         : Gint;
+
+   begin
+      Gtk_New (Text_Rend);
+      Gtk_New (Pixbuf_Rend);
+
+      Set_Rules_Hint (Tree, False);
+
+      Gtk_New (Col);
+      Pack_Start (Col, Pixbuf_Rend, False);
+      Pack_Start (Col, Text_Rend, True);
+      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
+      Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
+      Dummy := Append_Column (Tree, Col);
+   end Set_Column_Types;
+
    -------------
    -- Gtk_New --
    -------------
@@ -379,9 +909,13 @@ package body Project_Explorers is
          Create_From_Xpm_D
            (Explorer.Close_Pixmaps (Node_Type), null, Get_System,
             Explorer.Close_Masks (Node_Type), Null_Color, Close);
+
+         Explorer.Open_Pixbufs (Node_Type) := Gdk_New_From_Xpm_Data (Open);
+         Explorer.Close_Pixbufs (Node_Type) := Gdk_New_From_Xpm_Data (Close);
       end Create_Pixmaps;
 
       Scrolled : Gtk_Scrolled_Window;
+      Label    : Gtk_Label;
 
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
@@ -398,8 +932,13 @@ package body Project_Explorers is
       Gtk_New (Explorer.Scenario, Kernel);
       Pack_Start (Explorer, Explorer.Scenario, Fill => True, Expand => False);
 
+      Gtk_New (Explorer.Notebook);
+      Set_Tab_Pos (Explorer.Notebook, Pos_Bottom);
+      Pack_Start (Explorer, Explorer.Notebook, Fill => True, Expand => True);
+
       Gtk_New (Scrolled);
-      Pack_Start (Explorer, Scrolled, Fill => True, Expand => True);
+      Gtk_New (Label, -"Project View");
+      Append_Page (Explorer.Notebook, Scrolled, Label);
 
       Gtk_New (Explorer.Tree, Number_Of_Columns, 0);
       Add (Scrolled, Explorer.Tree);
@@ -419,6 +958,53 @@ package body Project_Explorers is
         (Obj_Directory_Node, mini_folder_object_xpm, mini_folder_object_xpm);
       Create_Pixmaps (File_Node, mini_page_xpm, mini_page_xpm);
       Create_Pixmaps (Category_Node, var_xpm, var_xpm);
+
+      --  Create the Tree View for the files view.
+
+      Gtk_New (Explorer.File_Model, Columns_Types);
+      Gtk_New (Explorer.File_Tree, Explorer.File_Model);
+      Set_Headers_Visible (Explorer.File_Tree, False);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Explorer.File_Tree,
+         "button_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (File_Button_Press'Access),
+         Explorer,
+         After => False);
+
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Get_Selection (Explorer.File_Tree),
+         "changed",
+         Gtkada.Handlers.Widget_Callback.To_Marshaller
+           (File_Selection_Changed'Access),
+         Explorer,
+         After => True);
+
+      Gtk_New (Scrolled);
+      Gtk_New (Label, -"Files View");
+      Append_Page (Explorer.Notebook, Scrolled, Label);
+
+      Add (Scrolled, Explorer.File_Tree);
+      Set_Column_Types (Explorer.File_Tree);
+
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Explorer.File_Tree,
+         Object          => Explorer,
+         ID              => Explorer_Module_ID,
+         Context_Func    => Explorer_Context_Factory'Access);
+
+      File_Append_Directory
+        (Explorer, "/", Null_Iter, 1, Get_Current_Dir);
+
+      Widget_Callback.Object_Connect
+        (Explorer.File_Tree, "row_expanded",
+         File_Tree_Expand_Row_Cb'Access, Explorer, False);
+
+      Widget_Callback.Object_Connect
+        (Explorer.File_Tree, "row_collapsed",
+         File_Tree_Collapse_Row_Cb'Access, Explorer, False);
 
       Set_Line_Style (Explorer.Tree, Ctree_Lines_Solid);
 
@@ -521,71 +1107,240 @@ package body Project_Explorers is
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel, Event_Widget, Menu);
-      use type Node_List.Glist;
-      Context      : Selection_Context_Access;
       T            : Project_Explorer := Project_Explorer (Object);
-      Row, Column  : Gint;
-      Is_Valid     : Boolean;
-      Node, Parent : Gtk_Ctree_Node;
-      Importing_Project : Project_Id := No_Project;
+      Context      : Selection_Context_Access;
 
    begin
-      if Event /= null then
-         Get_Selection_Info
-           (T.Tree, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-            Row, Column, Is_Valid);
+      if Get_Current_Page (T.Notebook) = 0 then
+         declare
+            use type Node_List.Glist;
+            Row, Column  : Gint;
+            Is_Valid     : Boolean;
+            Node, Parent : Gtk_Ctree_Node;
+            Importing_Project : Project_Id := No_Project;
 
-         if not Is_Valid then
-            return null;
-         end if;
+         begin
+            if Event /= null then
+               Get_Selection_Info
+                 (T.Tree, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+                  Row, Column, Is_Valid);
 
-         Node := Node_Nth (T.Tree, Guint (Row));
-         Gtk_Select (T.Tree, Node);
-      else
-         if Get_Selection (T.Tree) /= Node_List.Null_List then
-            Node := Node_List.Get_Data (Get_Selection (T.Tree));
-         else
-            return null;
-         end if;
-      end if;
+               if not Is_Valid then
+                  return null;
+               end if;
 
-      Parent := Row_Get_Parent (Node_Get_Row (Node));
-
-      declare
-         Data : User_Data := Node_Get_Row_Data (T.Tree, Node);
-      begin
-         if Data.Node_Type = Entity_Node then
-            Context := new Entity_Selection_Context;
-         else
-            Context := new File_Selection_Context;
-         end if;
-
-         Set_File_Name_Information
-           (Context      => File_Name_Selection_Context_Access (Context),
-            Directory    => Get_Directory_From_Node (T, Node),
-            File_Name    => Base_Name (Get_File_From_Node (T, Node)));
-
-         if Data.Node_Type = Entity_Node then
-            Set_Entity_Information
-              (Context     => Entity_Selection_Context_Access (Context),
-               Entity_Name => Data.Entity_Name,
-               Category    => Node_Get_Row_Data (T.Tree, Parent).Category,
-               Line        => Data.Sloc_Entity.Line,
-               Column      => Data.Sloc_Entity.Column);
-
-         else
-            if Parent /= null then
-               Importing_Project := Get_Project_From_Node (T, Parent);
+               Node := Node_Nth (T.Tree, Guint (Row));
+               Gtk_Select (T.Tree, Node);
+            else
+               if Get_Selection (T.Tree) /= Node_List.Null_List then
+                  Node := Node_List.Get_Data (Get_Selection (T.Tree));
+               else
+                  return null;
+               end if;
             end if;
 
-            Set_File_Information
-              (Context      => File_Selection_Context_Access (Context),
-               Project_View => Get_Project_From_Node (T, Node),
-               Importing_Project => Importing_Project);
-         end if;
-      end;
-      return Context;
+            Parent := Row_Get_Parent (Node_Get_Row (Node));
+
+            declare
+               Data : User_Data := Node_Get_Row_Data (T.Tree, Node);
+            begin
+               if Data.Node_Type = Entity_Node then
+                  Context := new Entity_Selection_Context;
+               else
+                  Context := new File_Selection_Context;
+               end if;
+
+               Set_File_Name_Information
+                 (Context      => File_Name_Selection_Context_Access (Context),
+                  Directory    => Get_Directory_From_Node (T, Node),
+                  File_Name    => Base_Name (Get_File_From_Node (T, Node)));
+
+               if Data.Node_Type = Entity_Node then
+                  Set_Entity_Information
+                    (Context     => Entity_Selection_Context_Access (Context),
+                     Entity_Name => Data.Entity_Name,
+                     Category    => Node_Get_Row_Data
+                       (T.Tree, Parent).Category,
+                     Line        => Data.Sloc_Entity.Line,
+                     Column      => Data.Sloc_Entity.Column);
+
+               else
+                  if Parent /= null then
+                     Importing_Project := Get_Project_From_Node (T, Parent);
+                  end if;
+
+                  Set_File_Information
+                    (Context      => File_Selection_Context_Access (Context),
+                     Project_View => Get_Project_From_Node (T, Node),
+                     Importing_Project => Importing_Project);
+               end if;
+            end;
+
+            return Context;
+         end;
+      else
+         declare
+            Iter      : Gtk_Tree_Iter;
+            File      : String_Access := null;
+            Node_Type : Node_Types;
+         begin
+            Iter := Find_Iter_For_Event (T, Event);
+
+            if Iter /= Null_Iter then
+               Node_Type := Node_Types'Val
+                 (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
+
+               case Node_Type is
+                  when Directory_Node | File_Node =>
+                     File := new String'
+                       (Get_String
+                        (T.File_Model, Iter, Absolute_Name_Column));
+                     Context := new File_Name_Selection_Context;
+
+                  when Entity_Node =>
+                     Context := new Entity_Selection_Context;
+
+                  when others =>
+                     null;
+
+               end case;
+            end if;
+
+            if File /= null then
+               if Context.all in File_Name_Selection_Context'Class then
+                  Set_File_Name_Information
+                    (Context
+                     => File_Name_Selection_Context_Access (Context),
+                     Directory    => Dir_Name (File.all),
+                     File_Name    => Base_Name (File.all));
+               end if;
+            end if;
+
+            Free (File);
+            return Context;
+         end;
+      end if;
    end Explorer_Context_Factory;
+
+   -------------------------------
+   -- File_Tree_Collapse_Row_Cb --
+   -------------------------------
+
+   procedure File_Tree_Collapse_Row_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Values   : GValues)
+   is
+      T       : Project_Explorer := Project_Explorer (Explorer);
+      Path    : Gtk_Tree_Path := Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+      Iter    : Gtk_Tree_Iter;
+   begin
+      Iter := Get_Iter (T.File_Model, Path);
+
+      if Iter /= Null_Iter then
+         declare
+            Iter_Name : String
+              := Get_String (T.File_Model, Iter, Absolute_Name_Column);
+         begin
+            if Is_Directory (Iter_Name) then
+               Set (T.File_Model, Iter, Icon_Column,
+                    C_Proxy (T.Close_Pixbufs (Directory_Node)));
+            end if;
+         end;
+      end if;
+   end File_Tree_Collapse_Row_Cb;
+
+   -----------------------------
+   -- File_Tree_Expand_Row_Cb --
+   -----------------------------
+
+   procedure File_Tree_Expand_Row_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Values   : GValues)
+   is
+      T       : Project_Explorer := Project_Explorer (Explorer);
+      Path    : Gtk_Tree_Path := Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+      Iter    : Gtk_Tree_Iter;
+      Success : Boolean;
+
+      procedure Free_Children;
+
+      procedure Free_Children is
+         Child_Iter : Gtk_Tree_Iter
+           := Children (T.File_Model, Iter);
+         Current    : Gtk_Tree_Iter;
+         Val        : GValue;
+         User       : User_Data_Access;
+      begin
+         if Has_Child (T.File_Model, Iter) then
+            Current := Child_Iter;
+
+            while Current /= Null_Iter loop
+               --  ??? There might be a problem here : we must free children
+               --  recursively, this frees only one level.
+
+               if Node_Types'Val
+                 (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)))
+                 = Entity_Node
+               then
+                  Get_Value (T.File_Model, Current, User_Data_Column, Val);
+                  User := To_User_Data (Get_Address (Val));
+                  Free (User);
+               end if;
+
+               Remove (T.File_Model, Current);
+               Current := Children (T.File_Model, Iter);
+            end loop;
+         end if;
+      end Free_Children;
+
+   begin
+      Iter := Get_Iter (T.File_Model, Path);
+
+      if T.Expanding then
+         return;
+      end if;
+
+      if Iter /= Null_Iter then
+         T.Expanding := True;
+
+         declare
+            Iter_Name : String
+              := Get_String (T.File_Model, Iter, Absolute_Name_Column);
+            N_Type : Node_Types := Node_Types'Val
+              (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
+         begin
+
+            case N_Type is
+               when Directory_Node =>
+                  Free_Children;
+
+                  File_Append_Directory (T, Iter_Name, Iter, 1);
+                  Set (T.File_Model, Iter, Icon_Column,
+                       C_Proxy (T.Open_Pixbufs (Directory_Node)));
+
+               when File_Node =>
+                  Free_Children;
+                  File_Append_File_Info (T, Iter, Iter_Name);
+
+               when Modified_Project_Node =>
+                  null;
+
+               when Category_Node | Entity_Node =>
+                  null;
+
+               when Project_Node =>
+                  null;
+
+               when Obj_Directory_Node =>
+                  null;
+
+            end case;
+         end;
+
+         Success := Expand_Row (T.File_Tree, Path, False);
+         T.Expanding := False;
+      end if;
+   end File_Tree_Expand_Row_Cb;
 
    ------------------------
    -- Tree_Select_Row_Cb --
@@ -826,6 +1581,7 @@ package body Project_Explorers is
       if not Is_Leaf then
          Add_Dummy_Node (Explorer, N);
       end if;
+
       return N;
    end Add_File_Node;
 
@@ -1823,6 +2579,145 @@ package body Project_Explorers is
 
       end case;
    end Node_Selected;
+
+   ----------------------------
+   -- File_Selection_Changed --
+   ----------------------------
+
+   procedure File_Selection_Changed
+     (Explorer : access Gtk_Widget_Record'Class)
+   is
+      T        : constant Project_Explorer := Project_Explorer (Explorer);
+      Context  : Selection_Context_Access;
+   begin
+      Context := Explorer_Context_Factory (T.Kernel, T, T, null, null);
+
+      if Context /= null then
+         Set_Context_Information (Context, T.Kernel, Explorer_Module_ID);
+         Context_Changed (T.Kernel, Context);
+      end if;
+   end File_Selection_Changed;
+
+   -------------------------
+   -- Find_Iter_For_Event --
+   -------------------------
+
+   function Find_Iter_For_Event
+     (Explorer : access Project_Explorer_Record'Class;
+      Event    : Gdk_Event)
+     return Gtk_Tree_Iter
+   is
+      X         : Gdouble;
+      Y         : Gdouble;
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column := null;
+      Iter      : Gtk_Tree_Iter := Null_Iter;
+      Model     : Gtk_Tree_Model;
+   begin
+      if Event /= null then
+         X := Get_X (Event);
+         Y := Get_Y (Event);
+         Path := Gtk_New;
+         Get_Path_At_Pos
+           (Explorer.File_Tree,
+            Gint (X),
+            Gint (Y),
+            Path,
+            Column,
+            Buffer_X,
+            Buffer_Y,
+            Row_Found);
+
+         if Path = null then
+            return Iter;
+         end if;
+
+         Select_Path (Get_Selection (Explorer.File_Tree), Path);
+         Iter := Get_Iter (Explorer.File_Model, Path);
+         Path_Free (Path);
+      else
+         Get_Selected (Get_Selection (Explorer.File_Tree),
+                       Model,
+                       Iter);
+      end if;
+
+      return Iter;
+   end Find_Iter_For_Event;
+
+   -----------------------
+   -- File_Button_Press --
+   -----------------------
+
+   function File_Button_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean
+   is
+      T        : constant Project_Explorer := Project_Explorer (Explorer);
+      Iter     : Gtk_Tree_Iter;
+   begin
+      if Get_Button (Event) = 1 then
+         Iter := Find_Iter_For_Event (T, Event);
+
+         if Iter /= Null_Iter then
+            case Node_Types'Val
+              (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column))) is
+
+               when Directory_Node =>
+                  return False;
+
+               when File_Node =>
+                  if (Get_Event_Type (Event) = Gdk_2button_Press
+                      or else Get_Event_Type (Event) = Gdk_3button_Press)
+                  then
+                     Open_File_Editor
+                       (T.Kernel,
+                        Get_String (T.File_Model, Iter, Absolute_Name_Column));
+                     return True;
+                  end if;
+
+               when Entity_Node =>
+
+                  declare
+                     Val        : GValue;
+                     User       : User_Data_Access;
+                  begin
+                     --  ??? the following two lines are due to a possible
+                     --  mapping error in GtkAda : I need to call "Unset" on
+                     --  Val before calling Get_Value below, otherwise I get
+                     --  a critical error saying "cannot init val because it
+                     --  was initialized before with value null"... and I need
+                     --  to call Init before Unset otherwise I get a similar
+                     --  message when calling Unset
+
+                     Init (Val, GType_Pointer);
+                     Unset (Val);
+
+                     Get_Value (T.File_Model, Iter, User_Data_Column, Val);
+                     User := To_User_Data (Get_Address (Val));
+
+                     Open_File_Editor
+                       (T.Kernel,
+                        Get_String (T.File_Model, Iter, Absolute_Name_Column),
+                        Line   => User.Sloc_Entity.Line,
+                        Column => User.Sloc_Entity.Column);
+
+                     Unset (Val);
+                  end;
+
+                  return False;
+
+               when others =>
+                  return False;
+            end case;
+
+         end if;
+      end if;
+
+      return False;
+   end File_Button_Press;
 
    ------------------
    -- Button_Press --
