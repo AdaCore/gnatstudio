@@ -52,16 +52,21 @@ package body Odd.Canvas is
 
       function Add_Item
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class)
-        return Boolean
-      is
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  ??? Spec needed.
+
+      function Add_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean is
       begin
          --  Make sure we move all the aliases at the same time.
          if Is_Alias_Of (Display_Item (Item)) = Selection then
             Add_To_Selection (Canvas, Item);
          end if;
+
          return True;
       end Add_Item;
+
    begin
       For_Each_Item (Canvas, Add_Item'Unrestricted_Access);
    end Item_Selected_Cb;
@@ -70,9 +75,8 @@ package body Odd.Canvas is
    -- Get_Detect_Aliases --
    ------------------------
 
-   function Get_Detect_Aliases (Canvas : access Odd_Canvas_Record'Class)
-                               return Boolean
-   is
+   function Get_Detect_Aliases
+     (Canvas : access Odd_Canvas_Record'Class) return Boolean is
    begin
       return Canvas.Detect_Aliases;
    end Get_Detect_Aliases;
@@ -83,8 +87,7 @@ package body Odd.Canvas is
 
    procedure Set_Detect_Aliases
      (Canvas   : access Odd_Canvas_Record'Class;
-      Activate : Boolean)
-   is
+      Activate : Boolean) is
    begin
       --  ??? We should modify the items displayed so as to remove currently
       --  detected aliases. This is part of the whole aliases detection
