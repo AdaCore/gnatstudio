@@ -547,8 +547,7 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS, -"Remove a_nnotations", "",
                      Remove_Annotations'Access);
       Register_Menu (Kernel, VCS, -"Edit revision _log", "", Edit_Log'Access);
-      Register_Menu (Kernel, VCS, -"_Revert", "", Revert'Access,
-                     Sensitive => False);
+      Register_Menu (Kernel, VCS, -"_Revert", "", Revert'Access);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, VCS, Menu_Item);
       Register_Menu (Kernel, VCS, -"A_dd to repository", "", Add'Access);
