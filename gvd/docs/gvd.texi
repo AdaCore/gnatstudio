@@ -12,7 +12,7 @@
 @subtitle Version @value{GVDVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
-@author ACT-Europe.
+@author ACT-Europe
 
 @page
 @vskip 0pt plus 1filll
