@@ -31,16 +31,17 @@ with Glib;                     use Glib;
 package Vdiff2_Module is
 
    type VDiff2_Module is private;
-   Vdiff_Module_ID        : Glide_Kernel.Module_ID;
-   Vdiff_Module_Name  : constant String := "Visual_Diff2";
-   Diff3_Cmd                : Param_Spec_String;
 
-   Diff_Default_Color      : Param_Spec_Color;
-   Diff_Old_Color          : Param_Spec_Color;
-   Diff_Append_Color       : Param_Spec_Color;
-   Diff_Remove_Color       : Param_Spec_Color;
-   Diff_Change_Color       : Param_Spec_Color;
-   Diff_Fine_Change_Color  : Param_Spec_Color;
+   Vdiff_Module_ID        : Glide_Kernel.Module_ID;
+   Vdiff_Module_Name      : constant String := "Visual_Diff2";
+
+   Diff3_Cmd              : Param_Spec_String;
+   Diff_Default_Color     : Param_Spec_Color;
+   Diff_Old_Color         : Param_Spec_Color;
+   Diff_Append_Color      : Param_Spec_Color;
+   Diff_Remove_Color      : Param_Spec_Color;
+   Diff_Change_Color      : Param_Spec_Color;
+   Diff_Fine_Change_Color : Param_Spec_Color;
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -51,16 +52,18 @@ private
    No_Handler : constant Handler_Id := (Null_Signal_Id, null);
 
    type VDiff2_Module_Record is new Module_ID_Record with record
-      Kernel              : Kernel_Handle;
-      Is_Active           : Boolean := False;
-      Number_active       : Natural := 0;
-      List_Diff           : Diff_Head_List_Access;
-      Command_Prev        : Diff_Command_Access;
-      Command_Next        : Diff_Command_Access;
-      Command_First       : Diff_Command_Access;
-      Command_Last        : Diff_Command_Access;
-      File_Closed_Id      : Handler_Id := No_Handler;
+      Kernel           : Kernel_Handle;
+      Is_Active        : Boolean := False;
+      Number_active    : Natural := 0;
+      List_Diff        : Diff_Head_List_Access;
+      Command_Prev     : Diff_Command_Access;
+      Command_Next     : Diff_Command_Access;
+      Command_First    : Diff_Command_Access;
+      Command_Last     : Diff_Command_Access;
+      File_Closed_Id   : Handler_Id := No_Handler;
+      Enable_Fine_Diff : Boolean := True;
    end record;
+
    type VDiff2_Module is access all VDiff2_Module_Record'Class;
    procedure Destroy (Id : in out VDiff2_Module_Record);
 
