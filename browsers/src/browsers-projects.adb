@@ -179,7 +179,6 @@ package body Browsers.Projects is
 
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser          : access Project_Browser_Record'Class;
-      Root_Project     : Project_Type;
       Project          : Project_Type);
    --  Add to the browser all the projects that with Project.
 
@@ -390,7 +389,6 @@ package body Browsers.Projects is
 
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser          : access Project_Browser_Record'Class;
-      Root_Project     : Project_Type;
       Project          : Project_Type)
    is
       Kernel      : constant Kernel_Handle := Get_Kernel (Browser);
@@ -405,8 +403,7 @@ package body Browsers.Projects is
       Set_Parents_Shown (Dest, True);
 
       Iter := Find_All_Projects_Importing
-        (Root_Project => Root_Project,
-         Project      => Project,
+        (Project      => Project,
          Include_Self => False,
          Direct_Only  => True);
 
@@ -509,7 +506,6 @@ package body Browsers.Projects is
    begin
       Examine_Ancestor_Project_Hierarchy
         (Browser      => B,
-         Root_Project => Get_Project (Get_Kernel (B)),
          Project      => Project_Of (Browser_Project_Vertex_Access (Item)));
    end On_Examine_Ancestor_Hierarchy;
 
@@ -545,8 +541,7 @@ package body Browsers.Projects is
       B : constant Project_Browser := Project_Browser (Get_Widget (Browser));
    begin
       Examine_Ancestor_Project_Hierarchy
-        (B, Get_Project (Get_Kernel (B)),
-         Project_Information (File_Selection_Context_Access (Context)));
+        (B, Project_Information (File_Selection_Context_Access (Context)));
    end On_Examine_Ancestor_From_Contextual;
 
    ------------------------
