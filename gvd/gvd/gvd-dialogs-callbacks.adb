@@ -107,7 +107,8 @@ package body Odd.Dialogs.Callbacks is
           (Notebook, Get_Current_Page (Notebook)));
 
    begin
-      Thread_Switch (Process.Debugger, Natural (Thread));
+      Thread_Switch
+        (Process.Debugger, Natural (Thread), Mode => Odd.Types.Visible);
    end On_Task_List_Select_Row;
 
    -----------------------------
