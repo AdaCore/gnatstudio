@@ -659,14 +659,6 @@ package body VCS_Module is
       Ref    : VCS_Access;
 
    begin
-      Create_Line_Information_Column
-        (Kernel,
-         File,
-         VCS_Module_Name,
-         Stick_To_Data => False,
-         Every_Line    => False,
-         Normalize     => False);
-
       Append (Files, File);
       Ref    := Get_Current_Ref
         (Get_Project_From_File (Get_Registry (Kernel), File, True));
