@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- C511-002 Project not recomputed after using "save as"
+  Problem:    When a file is saved with "save as", the file doesn't appear
+              immediately in the project view, and will not be loaded correctly
+              if it contains compilation errors
+  Workaround: Select the menu Project->Recompute Project after saving
+
 - C509-003 Incorrect expansion of -gnatVa compiler switch
   Problem:    If your project used -gnatVa, and you edit the compiler switches
               through the project properties editor, none of the check boxes
