@@ -1184,7 +1184,7 @@ package body Shell_Script is
       if N > Data.Args'Last then
          Trace (Me, "Missing parameters: " & N'Img
                 & " > " & Data.Args'Last'Img);
-         raise Invalid_Parameter;
+         raise No_Such_Parameter;
       else
          return Data.Args (N).all;
       end if;
