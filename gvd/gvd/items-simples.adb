@@ -539,12 +539,12 @@ package body Items.Simples is
          end loop;
 
          Item.Width := Gint'Max
-           (Item.Width,
+           (Width,
             Text_Width (Context.Font,
                         Item.Value (Line_Start .. Item.Value'Last)));
-            Item.Height :=
-              (Get_Ascent (Context.Font) + Get_Descent (Context.Font))
-              * Num_Lines;
+         Item.Height :=
+           (Get_Ascent (Context.Font) + Get_Descent (Context.Font))
+           * Num_Lines;
       else
          Item.Width := Unknown_Width;
          Item.Height := Unknown_Height;
