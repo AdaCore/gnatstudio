@@ -2300,7 +2300,9 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         if Save_All_MDI_Children (Kernel, Force => False) = False then
+         if not Save_All_MDI_Children
+           (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+         then
             return;
          end if;
 
@@ -2564,7 +2566,9 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         if Save_All_MDI_Children (Kernel, Force => False) = False then
+         if not Save_All_MDI_Children
+           (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+         then
             return;
          end if;
 

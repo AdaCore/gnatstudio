@@ -511,7 +511,9 @@ package body Builder_Module is
       --  Do this before checking the project, in case we have a default
       --  project whose name is changed when saving
 
-      if Save_All_MDI_Children (K, Force => False) = False then
+      if not Save_All_MDI_Children
+        (K, Force => Get_Pref (K, Auto_Save))
+      then
          Free (Args);
          return;
       end if;
@@ -766,7 +768,9 @@ package body Builder_Module is
          return;
       end if;
 
-      if Save_All_MDI_Children (Kernel, Force => False) = False then
+      if not Save_All_MDI_Children
+        (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+      then
          return;
       end if;
 
@@ -949,7 +953,9 @@ package body Builder_Module is
          pragma Unreferenced (Id);
 
       begin
-         if Save_All_MDI_Children (Kernel, Force => False) = False then
+         if not Save_All_MDI_Children
+           (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+         then
             return;
          end if;
 
