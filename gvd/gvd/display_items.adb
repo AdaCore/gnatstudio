@@ -330,12 +330,13 @@ package body Display_Items is
       Link_Name      : String := "";
       Default_Entity : Items.Generic_Type_Access := null)
    is
-      Id : String := Get_Uniq_Id (Debugger.Debugger, Variable_Name);
+      Id         : constant String :=
+        Get_Uniq_Id (Debugger.Debugger, Variable_Name);
       Alias_Item : Display_Item;
-   begin
 
-      --  Is the item already on the canvas ? If yes, do not display it
-      --  again
+   begin
+      --  Is the item already on the canvas ? If yes, do not display it again
+
       Alias_Item := Search_Item (Debugger.Data_Canvas, Id, Variable_Name);
 
       if Alias_Item = null then
@@ -349,8 +350,8 @@ package body Display_Items is
          if Item /= null then
             Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
 
-            --  Do we have an existing item that matches this ? (same address as
-            --  in the current access type itself)
+            --  Do we have an existing item that matches this ? (same address
+            --  as in the current access type itself)
 
             Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
             Put (Debugger.Data_Canvas, Item);
@@ -387,8 +388,8 @@ package body Display_Items is
       Box_Mask      : Gdk_Bitmap;
 
    begin
-      Item.Name         := new String'(Variable_Name);
-      Item.Auto_Refresh := Auto_Refresh;
+      Item.Name          := new String'(Variable_Name);
+      Item.Auto_Refresh  := Auto_Refresh;
       Item.Is_Dereference := False;
 
       if not Is_Visible (Item) then
