@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides a P4 object implementating the VCS abstract
+--  This package provides a perforce object implementing the VCS abstract
 --  specification.
 --
 --  See package VCS for a complete spec of this package.
 
-with Basic_Types;    use Basic_Types;
+with Basic_Types; use Basic_Types;
 
 package VCS.P4 is
 
@@ -35,67 +35,58 @@ package VCS.P4 is
    function Get_Status
      (Rep         : access P4_Record;
       Filenames   : String_List.List;
-      Get_Status  : Boolean          := True;
-      Get_Version : Boolean          := True;
-      Get_Tags    : Boolean          := False;
-      Get_Users   : Boolean          := False)
-     return File_Status_List.List;
+      Get_Status  : Boolean := True;
+      Get_Version : Boolean := True;
+      Get_Tags    : Boolean := False;
+      Get_Users   : Boolean := False) return File_Status_List.List;
 
    function Local_Get_Status
      (Rep         : access P4_Record;
-      Filenames   :        String_List.List)
-     return File_Status_List.List;
+      Filenames   : String_List.List) return File_Status_List.List;
 
    procedure Open
      (Rep       : access P4_Record;
-      Filenames      : String_List.List;
+      Filenames : String_List.List;
       User_Name : String := "");
 
    procedure Commit
      (Rep       : access P4_Record;
-      Filenames :        String_List.List;
-      Logs      :        String_List.List);
+      Filenames : String_List.List;
+      Logs      : String_List.List);
 
    procedure Update
      (Rep       : access P4_Record;
-      Filenames :        String_List.List);
+      Filenames : String_List.List);
 
-   procedure Merge
-     (Rep       : access P4_Record;
-      Filenames :        String_List.List);
+   procedure Merge (Rep : access P4_Record; Filenames : String_List.List);
 
-   procedure Add
-     (Rep       : access P4_Record;
-      Filenames :        String_List.List);
+   procedure Add (Rep : access P4_Record; Filenames : String_List.List);
 
    procedure Remove
      (Rep       : access P4_Record;
-      Filenames :        String_List.List);
+      Filenames : String_List.List);
 
    function Diff
      (Rep       : access P4_Record;
-      File      :        String;
-      Version_1 :        String     := "";
-      Version_2 :        String     := "")
-     return String_List.List;
+      File      : String;
+      Version_1 : String     := "";
+      Version_2 : String     := "") return String_List.List;
 
    function Log
      (Rep  : access P4_Record;
-      File :        String)
-      return String_List.List;
+      File : String) return String_List.List;
 
    function Annotate
      (Rep  : access P4_Record;
-      File :        String)
-      return String_List.List;
+      File : String) return String_List.List;
 
    function Success (Rep : access P4_Record) return Boolean;
 
    function Get_Message (Rep : access P4_Record) return String;
 
    procedure Register_Idle_Function
-     (Rep  : access P4_Record;
-      Func : Idle_Function;
+     (Rep     : access P4_Record;
+      Func    : Idle_Function;
       Timeout : Integer := 100);
 
 private
