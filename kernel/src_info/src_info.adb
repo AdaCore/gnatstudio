@@ -83,9 +83,9 @@ package body Src_Info is
    --  Hash function for strings.
 
    function Get_Separate_File_Info
-     (LIF : LI_File_Ptr; Unit_Name : String_Access) return File_Info_Ptr;
-   --  Return a pointer to the file info which Unit_Name matches the given
-   --  Unit_Name. Return null if such unit could not be found.
+     (LIF : LI_File_Ptr; File_Name : String_Access) return File_Info_Ptr;
+   --  Return a pointer to the file info whose File_Name matches
+   --  Return null if such unit could not be found.
 
    function Find_Source_File
      (Source_Info_List : LI_File_List; File : Internal_File)
@@ -104,12 +104,12 @@ package body Src_Info is
    ----------------------------
 
    function Get_Separate_File_Info
-     (LIF : LI_File_Ptr; Unit_Name : String_Access) return File_Info_Ptr
+     (LIF : LI_File_Ptr; File_Name : String_Access) return File_Info_Ptr
    is
       Current_Node : File_Info_Ptr_List := LIF.LI.Separate_Info;
    begin
       while Current_Node /= null loop
-         if Current_Node.Value.Unit_Name.all = Unit_Name.all then
+         if Current_Node.Value.Source_Filename.all = File_Name.all then
             return Current_Node.Value;
          end if;
       end loop;
@@ -225,11 +225,11 @@ package body Src_Info is
    function "=" (Left, Right : Source_File) return Boolean is
    begin
       if Left.LI = Right.LI and then Left.Part = Right.Part then
-         if Left.Unit_Name = null then
-            return Right.Unit_Name = null;
+         if Left.Source_Filename = null then
+            return Right.Source_Filename = null;
          else
-            return Right.Unit_Name /= null
-              and then Left.Unit_Name.all = Right.Unit_Name.all;
+            return Right.Source_Filename /= null
+              and then Left.Source_Filename.all = Right.Source_Filename.all;
          end if;
       else
          return False;
@@ -411,7 +411,7 @@ package body Src_Info is
          when Unit_Body =>
             return SF.LI.LI.Body_Info;
          when Unit_Separate =>
-            return Get_Separate_File_Info (SF.LI, SF.Unit_Name);
+            return Get_Separate_File_Info (SF.LI, SF.Source_Filename);
       end case;
    end Get_File_Info;
 
@@ -444,7 +444,7 @@ package body Src_Info is
       --  Do not deallocate SF.LI, we are just pointing to it, we did
       --  not allocate it for this object.
 
-      Free (SF.Unit_Name);
+      Free (SF.Source_Filename);
    end Destroy;
 
    procedure Destroy (FL : in out File_Location) is
@@ -497,7 +497,6 @@ package body Src_Info is
 
    procedure Destroy (FI : in out File_Info) is
    begin
-      Free (FI.Unit_Name);
       Free (FI.Source_Filename);
       Free (FI.Original_Filename);
       Destroy (FI.Declarations);
@@ -560,8 +559,8 @@ package body Src_Info is
    function Copy (SF : Source_File) return Source_File is
       Result : Source_File := SF;
    begin
-      if SF.Unit_Name /= null then
-         Result.Unit_Name := new String'(SF.Unit_Name.all);
+      if SF.Source_Filename /= null then
+         Result.Source_Filename := new String'(SF.Source_Filename.all);
       end if;
 
       return Result;
@@ -585,32 +584,6 @@ package body Src_Info is
       return Dep.Depends_From_Body;
    end Get_Depends_From_Body;
 
-   -------------------
-   -- Get_Unit_Name --
-   -------------------
-
-   procedure Get_Unit_Name
-     (Source                 : in out Source_File;
-      Source_Info_List       : in out LI_File_List;
-      Project                : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
-      Unit_Name              : out String_Access)
-   is
-      Source_Filename : constant String := Get_Source_Filename (Source);
-   begin
-      Create_Or_Complete_LI
-        (Handler                =>
-           Handler_From_Filename (Project, Source_Filename),
-         File                   => Source.LI,
-         Source_Filename        => Source_Filename,
-         List                   => Source_Info_List,
-         Project                => Project,
-         Predefined_Source_Path => Predefined_Source_Path,
-         Predefined_Object_Path => Predefined_Object_Path);
-      Unit_Name := Get_File_Info (Source).Unit_Name;
-   end Get_Unit_Name;
-
    ----------------------
    -- Make_Source_File --
    ----------------------
@@ -629,7 +602,6 @@ package body Src_Info is
 
    begin
       return (File_Name => new String' (Source_Filename),
-              Unit_Name => null,
               LI_Name   => new String' (ALI));
    end Make_Source_File;
 
@@ -640,7 +612,6 @@ package body Src_Info is
    procedure Destroy (File : in out Internal_File) is
    begin
       Free (File.File_Name);
-      Free (File.Unit_Name);
       Free (File.LI_Name);
    end Destroy;
 
@@ -652,11 +623,7 @@ package body Src_Info is
       Result : Internal_File;
    begin
       Result := (File_Name => new String' (File.File_Name.all),
-                 Unit_Name => null,
                  LI_Name   => new String' (File.LI_Name.all));
-      if File.Unit_Name /= null then
-         Result.Unit_Name := new String' (File.Unit_Name.all);
-      end if;
       return Result;
    end Copy;
 
@@ -698,32 +665,6 @@ package body Src_Info is
       return FI.Source_Filename.all;
    end Get_Source_Filename;
 
-   -------------------
-   -- Get_Unit_Name --
-   -------------------
-
-   procedure Get_Unit_Name
-     (File              : in out Internal_File;
-      Source_Info_List  : in out Src_Info.LI_File_List;
-      Project           : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
-      Unit_Name         : out String_Access)
-   is
-      Source : Source_File;
-   begin
-      Source := Find_Source_File (Source_Info_List, File);
-      pragma Assert (Source /= No_Source_File);
-
-      Get_Unit_Name
-        (Source                 => Source,
-         Source_Info_List       => Source_Info_List,
-         Project                => Project,
-         Predefined_Source_Path => Predefined_Source_Path,
-         Predefined_Object_Path => Predefined_Object_Path,
-         Unit_Name              => Unit_Name);
-   end Get_Unit_Name;
-
    ----------------------
    -- Find_Source_File --
    ----------------------
@@ -747,16 +688,16 @@ package body Src_Info is
       if LI.LI.Spec_Info /= null
         and then LI.LI.Spec_Info.Source_Filename.all = Source
       then
-         return (LI        => LI,
-                 Unit_Name => null,
-                 Part      => Unit_Spec);
+         return (LI              => LI,
+                 Source_Filename => null,
+                 Part            => Unit_Spec);
 
       elsif LI.LI.Body_Info /= null
         and then LI.LI.Body_Info.Source_Filename.all = Source
       then
-         return (LI        => LI,
-                 Unit_Name => null,
-                 Part      => Unit_Body);
+         return (LI              => LI,
+                 Source_Filename => null,
+                 Part            => Unit_Body);
 
       else
          Current_Node := LI.LI.Separate_Info;
@@ -764,7 +705,7 @@ package body Src_Info is
          while Current_Node /= null loop
             if Current_Node.Value.Source_Filename.all = Source then
                return (LI        => LI,
-                       Unit_Name => Current_Node.Value.Unit_Name,
+                       Source_Filename => Current_Node.Value.Source_Filename,
                        Part      => Unit_Separate);
             end if;
          end loop;

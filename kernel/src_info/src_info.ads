@@ -112,22 +112,6 @@ package Src_Info is
    --  See also Prj_API.Get_Unit_Part_From_Filename if you are working with
    --  filenames that don't have a matching LI_File.
 
-   procedure Get_Unit_Name
-     (File                   : in out Internal_File;
-      Source_Info_List       : in out Src_Info.LI_File_List;
-      Project                : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
-      Unit_Name              : out String_Access);
-   --  Return the Unit Name from the given File. The returned string must not
-   --  be freed by the caller, as it is cached in File for later retrieval.
-   --
-   --  Note that, for implicit dependencies, the unit name is sometimes
-   --  computed in a lazy manor, that is only when read for the first time. In
-   --  cases where computing the unit_name fails, null is returned.
-   --
-   --  Project should be the project to which Source_Filename belongs (so that
-
    ----------------------------
    -- Dependency Information --
    ----------------------------
@@ -360,40 +344,28 @@ private
    No_LI_File : constant LI_File_Ptr := null;
 
    type Source_File is record
-      LI        : LI_File_Ptr;
-      Part      : Unit_Part;
-      Unit_Name : String_Access;
+      LI              : LI_File_Ptr;
+      Part            : Unit_Part;
+      Source_Filename : String_Access;
       --  Allocated only when Part is set to Unit_Separate. Set to null
       --  otherwise.
    end record;
    --  A source file is represented by two or three elements:
    --    - its LI_File
    --    - its unit part
-   --    - its unit name when it is a separate
+   --    - its file name when it is a separate, so that it can be found in the
+   --      LI file
 
    No_Source_File : constant Source_File :=
-     (LI        => null,
-      Part      => Unit_Spec,
-      Unit_Name => null);
+     (LI              => null,
+      Part            => Unit_Spec,
+      Source_Filename => null);
    --  To check that a Source_File is not null, a quick and good enough
    --  check is to verify that Source_File.LI is not null.
 
    function "=" (Left, Right : Source_File) return Boolean;
    --  A redefined equality function that compares the Unit_Name values, not
    --  the access value.
-
-   procedure Get_Unit_Name
-     (Source                 : in out Source_File;
-      Source_Info_List       : in out LI_File_List;
-      Project                : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
-      Unit_Name              : out String_Access);
-   --  Return the Unit Name from the given Source. The returned string must not
-   --  be freed by the caller.
-   --
-   --  This Unit_Name is computed lazily, that is only when read for the first
-   --  time. In cases where computing the unit_name fails, null is returned.
 
    type File_Location is record
       File   : Source_File;
@@ -489,13 +461,11 @@ private
    --  E_Declaration_Info_Node is a node of this list.
 
    type Internal_File is record
-      Unit_Name : String_Access := null;
       File_Name : String_Access;
       LI_Name   : String_Access;
    end record;
    --  The information associated to a source file, and that remains valid even
    --  when the LI file is parsed again.
-   --  Unit_Name is null until Get_Unit_Name is called.
 
    type Timestamp is new Integer;
 
@@ -505,6 +475,9 @@ private
 
    type File_Info is record
       Unit_Name         : String_Access;
+      --  ??? Should be only for languages where it makes sense, for instance
+      --  in derived type. Can be left to null otherwise.
+
       Source_Filename   : String_Access;
       Directory_Name    : String_Access;
       File_Timestamp    : Timestamp;
