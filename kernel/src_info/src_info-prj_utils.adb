@@ -409,7 +409,7 @@ package body Src_Info.Prj_Utils is
          end if;
       end if;
 
-      --  Object file not found anywhere, return the empty string
+      --  Source file not found anywhere, return the empty string
       return "";
    end Find_File;
 
