@@ -25,6 +25,7 @@ with Glide_Consoles;       use Glide_Consoles;
 with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with GVD.Process;          use GVD.Process;
 with GNAT.IO;              use GNAT.IO;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -78,6 +79,22 @@ package body Glide_Kernel.Console is
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Clear menu.
+
+   function Interpret_Command_Handler
+     (Input  : in String;
+      Kernel : access GObject_Record'Class) return String;
+   --  Launch the command interpreter for Input and return the output.
+
+   -------------------------------
+   -- Interpret_Command_Handler --
+   -------------------------------
+
+   function Interpret_Command_Handler
+     (Input  : in String;
+      Kernel : access GObject_Record'Class) return String is
+   begin
+      return Interpret_Command (Kernel_Handle (Kernel), Input);
+   end Interpret_Command_Handler;
 
    -----------------------------
    -- Get_Interactive_Console --
@@ -249,9 +266,9 @@ package body Glide_Kernel.Console is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save_Console_As;
 
-   ----------------------
+   ------------------------
    -- On_Load_To_Console --
-   ----------------------
+   ------------------------
 
    procedure On_Load_To_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
@@ -323,7 +340,11 @@ package body Glide_Kernel.Console is
          Dock_Child (Child);
          Raise_Child (Child);
 
-         Gtk_New (Interactive_Console, Kernel);
+         Gtk_New (Interactive_Console,
+                  "[GPS in the Shell]$ ",
+                  Interpret_Command_Handler'Access,
+                  GObject (Kernel),
+                  Get_Pref (Kernel, Keyword_Font));
          Child := Put (Get_MDI (Kernel), Interactive_Console);
          Set_Title (Child, -"Console");
          Set_Dock_Side (Child, Bottom);
