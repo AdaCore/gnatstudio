@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -56,6 +56,9 @@ package Basic_Mapper is
      (Mapper    : out File_Mapper_Access;
       File_Name : String);
    --  Load Mapper from file File_Name.
+
+   procedure Empty_Mapper (Mapper : out File_Mapper_Access);
+   --  Return an empty mapper.
 
    procedure Free (Mapper : in out File_Mapper_Access);
    --  Free the memory occupied by Mapper and its components.

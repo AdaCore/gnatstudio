@@ -173,6 +173,15 @@ package body Basic_Mapper is
       Ada.Text_IO.Close (File);
    end Load_Mapper;
 
+   ------------------
+   -- Empty_Mapper --
+   ------------------
+
+   procedure Empty_Mapper (Mapper : out File_Mapper_Access) is
+   begin
+      Mapper := new File_Mapper;
+   end Empty_Mapper;
+
    ----------
    -- Free --
    ----------
