@@ -739,6 +739,7 @@ package body GVD_Module is
       Gtk_New (Ent_Protocol);
       Set_Width_Chars (Ent_Protocol, 20);
       Attach (Table, Ent_Protocol, 1, 2, 1, 2);
+      Set_Activates_Default (Ent_Protocol, True);
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
