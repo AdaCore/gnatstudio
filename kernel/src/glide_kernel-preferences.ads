@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
+--                      Copyright (C) 2001-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -166,18 +166,18 @@ package Glide_Kernel.Preferences is
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
 
    -- Messages --
-   Message_Highlight     : Param_Spec_Color;
-   Error_Src_Highlight   : Param_Spec_Color;
-   Warning_Src_Highlight : Param_Spec_Color;
-   Style_Src_Highlight   : Param_Spec_Color;
-   Search_Src_Highlight  : Param_Spec_Color;
-   File_Pattern          : Param_Spec_String;
-   File_Pattern_Index    : Param_Spec_Int;
-   Line_Pattern_Index    : Param_Spec_Int;
-   Column_Pattern_Index  : Param_Spec_Int;
+   Message_Highlight      : Param_Spec_Color;
+   Error_Src_Highlight    : Param_Spec_Color;
+   Warning_Src_Highlight  : Param_Spec_Color;
+   Style_Src_Highlight    : Param_Spec_Color;
+   Search_Src_Highlight   : Param_Spec_Color;
+   File_Pattern           : Param_Spec_String;
+   File_Pattern_Index     : Param_Spec_Int;
+   Line_Pattern_Index     : Param_Spec_Int;
+   Column_Pattern_Index   : Param_Spec_Int;
    Message_Pattern_Index  : Param_Spec_Int;
-   Style_Pattern_Index   : Param_Spec_Int;
-   Warning_Pattern_Index : Param_Spec_Int;
+   Style_Pattern_Index    : Param_Spec_Int;
+   Warning_Pattern_Index  : Param_Spec_Int;
 
    -- Diff_Utils --
    Diff_Context_Length : Param_Spec_Int;
@@ -201,6 +201,7 @@ package Glide_Kernel.Preferences is
    Strip_Blanks              : Param_Spec_Boolean;
    Line_Terminator           : Param_Spec_Enum;
    Display_Line_Numbers      : Param_Spec_Boolean;
+   Display_Subprogram_Name   : Param_Spec_Boolean;
    Display_Tooltip           : Param_Spec_Boolean;
    Highlight_Delimiters      : Param_Spec_Boolean;
    Periodic_Save             : Param_Spec_Int;
