@@ -1941,6 +1941,13 @@ package body Projects.Registry is
                Set_Predefined_Source_Path (Registry, Current.all);
                Free (Current);
                Current := new String'("");
+
+            elsif S = "Project Search Path:" & ASCII.LF then
+               Set_Predefined_Object_Path (Registry, Current.all);
+               Free (Current);
+               Close (Fd);
+               return;
+
             else
                Add_Directory (S (S'First .. S'Last - 1));
             end if;
