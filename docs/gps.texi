@@ -4,7 +4,7 @@
 @settitle Using GPS
 @syncodeindex fn cp
 
-@set GPSVersion 0.9.1
+@set GPSVersion 0.9.2
 
 @titlepage
 
