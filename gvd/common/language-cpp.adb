@@ -110,14 +110,13 @@ package body Language.Cpp is
    -- Get_Language_Context --
    --------------------------
 
-   Comment_Start_Pattern   : aliased Pattern_Matcher := Compile ("^//");
-
    Cpp_Context             : aliased Language_Context :=
      (Comment_Start_Length          => 2,
       Comment_End_Length            => 2,
       Comment_Start                 => "/*",
       Comment_End                   => "*/",
-      New_Line_Comment_Start        => Comment_Start_Pattern'Access,
+      New_Line_Comment_Start        => new String'("//"),
+      New_Line_Comment_Start_Regexp => null,
       String_Delimiter              => '"',
       Quote_Character               => '\',
       Constant_Character            => ''',

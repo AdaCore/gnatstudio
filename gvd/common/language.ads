@@ -181,8 +181,13 @@ package Language is
       Comment_End : String (1 .. Comment_End_Length);
       --  How comments end for this language
 
-      New_Line_Comment_Start : Pattern_Matcher_Access;
+      New_Line_Comment_Start : Basic_Types.String_Access;
       --  How comments start. These comments end on the next newline character.
+      --  If null, use New_Line_Comment_Start_Regexp instead.
+
+      New_Line_Comment_Start_Regexp : Pattern_Matcher_Access;
+      --  How comments start. These comments end on the next newline character.
+      --  If null, use New_Line_Comment_Start instead.
 
       String_Delimiter : Character;
       --  How strings start and end
