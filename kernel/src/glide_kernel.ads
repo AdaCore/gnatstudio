@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software;  you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,12 +13,12 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package is the root of the glide's kernel API.
+--  This package is the root of the GPS' kernel API.
 
 with Ada.Tags;
 with Basic_Mapper;
@@ -27,6 +27,7 @@ with Generic_List;
 with Gint_Xml;
 with Glib.Object;
 with Glib.Values;
+with Gdk;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Menu;
@@ -301,7 +302,7 @@ package Glide_Kernel is
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Callback used every time some contextual menu event happens in Glide.
+   --  Callback used every time some contextual menu event happens in GPS.
    --  The module that initiated the event (ie the one that is currently
    --  displaying the contextual menu) can be found by reading Get_Creator for
    --  the context.
@@ -353,6 +354,22 @@ package Glide_Kernel is
    --  ask the user first.
    --  If the user has refused to save the widget, return False,
    --  otherwise return True.
+
+   type Module_Tooltip_Handler is access procedure
+     (Context : access Selection_Context'Class;
+      Pixmap  : out Gdk.Gdk_Pixmap;
+      Width   : out Glib.Gint;
+      Height  : out Glib.Gint);
+   --  Callback used every time some tooltip event happens in GPS.
+   --  Context contains all the information about the context of the tooltip.
+   --
+   --  The first callback that will decide to handle the tooltip will set
+   --  pixmap, width and height (of the pixmap), which will stop the
+   --  propagation of the tooltip message (since only one module can display
+   --  a tooltip at a time).
+   --
+   --  Since only one module will handle the tooltip, putting proper priorities
+   --  when registering the modules is very important.
 
    ------------
    -- Saving --
@@ -490,6 +507,7 @@ private
       Default_Factory : Module_Default_Context_Factory;
       Save_Function   : Module_Save_Function;
       Child_Tag       : Ada.Tags.Tag;
+      Tooltip_Handler : Module_Tooltip_Handler;
    end record;
 
    type Selection_Context is tagged record
