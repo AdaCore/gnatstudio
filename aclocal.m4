@@ -87,6 +87,50 @@ AC_DEFUN(AM_PATH_GNATPREP,
 
 #############################################################
 #
+#  Checking for python
+#
+#############################################################
+
+
+AC_DEFUN(AM_PATH_PYTHON,
+[
+   if test -z ${PYTHON_PATH_WITH}; then 
+      AC_PATH_PROG(PYTHON_BASE, python, no)
+
+      if test x$PYTHON = xno ; then
+         AC_MSG_ERROR(I could not find python.)
+      else
+         PYTHON_BASE=`dirname ${PYTHON_BASE}`
+         PYTHON_BASE=`dirname ${PYTHON_BASE}`
+      fi
+   else
+      PYTHON_BASE=${PYTHON_PATH_WITH}
+   fi
+
+   if test -d ${PYTHON_BASE}/lib/python2.3 ; then
+      PYTHON_VERSION=2.3
+      PYTHON_DIR=${PYTHON_BASE}/lib
+   elif test -d ${PYTHON_BASE}/lib/python2.2 ; then
+      PYTHON_VERSION=2.2
+      PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
+   elif test -d ${PYTHON_BASE}/lib/python1.5 ; then
+      AC_MSG_ERROR(Incorrect version of python. You need 2.0 at least)
+   fi
+
+   if test ${PYTHON_BASE} = "no" ; then
+      echo "checking for python ... run with --without-python"
+      PYTHON_ADA_SOURCE="src2"
+   elif test -d ${PYTHON_BASE}; then
+      echo "checking for python ... ok"
+      PYTHON_ADA_SOURCE="src"
+   else
+      echo "checking for python ... not found"
+      PYTHON_ADA_SOURCE="src2"
+   fi
+])
+
+#############################################################
+#
 # Configure paths for GtkAda
 #
 #############################################################
@@ -215,4 +259,3 @@ AC_DEFUN(AM_GNATPREP,
    echo "creating $1"
    $GNATPREP $1.in $1 config.defs
 ])
-
