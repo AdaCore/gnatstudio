@@ -74,7 +74,7 @@ package body Src_Info.LI_Utils is
         and then Is_Regular_File (Full_LI_Name)
       then
          File.LI.LI_Timestamp := To_Timestamp
-           (File_Time_Stamp (Full_Name (Full_LI_Name)));
+           (File_Time_Stamp (Full_LI_Name));
       end if;
    end Convert_To_Parsed;
 
@@ -333,7 +333,7 @@ package body Src_Info.LI_Utils is
       end if;
 
       if Set_Time_Stamp then
-         Time := To_Timestamp (File_Time_Stamp (Full_Name (Full_Filename)));
+         Time := To_Timestamp (File_Time_Stamp (Full_Filename));
       end if;
 
       FI_Ptr := new File_Info'
