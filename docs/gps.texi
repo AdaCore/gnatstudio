@@ -6559,7 +6559,7 @@ For instance, if you want to analyze an entity in the entity browser
 from the command line, you would pass the following command switches:
 
 @smallexample
-gps --eval=shell:'Entity entity_name file_name; Entity.show $1'
+gps --eval=shell:'Entity entity_name file_name; Entity.show %1'
 @end smallexample
 
 
@@ -6606,13 +6606,13 @@ course you can run these commands again to get a new reference.
 
 
 The return value of the 9 previous commands can easily be recalled by
-passing @code{$1}, @code{$2},@dots on the command line. For instance,
+passing @code{%1}, @code{%2},@dots on the command line. For instance,
 the previous example could be rewritten as
 
 @smallexample
 GPS> Entity my_entity file_name.adb
 <Entity_0x09055790>
-GPS> Entity.find_all_refs $1
+GPS> Entity.find_all_refs %1
 @end smallexample
 
 In future versions of GPS, it will be possible to use more advanced scripting
