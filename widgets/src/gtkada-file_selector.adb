@@ -1591,7 +1591,8 @@ package body Gtkada.File_Selector is
         (File_Selector_Window, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
 
-      Grab_Focus (File_Selector_Window.Ok_Button);
+      Grab_Default (File_Selector_Window.Ok_Button);
+      Grab_Focus (File_Selector_Window.Selection_Entry);
    end Initialize;
 
    -------------
