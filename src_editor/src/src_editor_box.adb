@@ -1944,6 +1944,7 @@ package body Src_Editor_Box is
 
       if Editor.Writable then
          Set_Text (Editor.Read_Only_Label, -"Writable");
+         Set_Editable (Editor.Source_View, True);
       else
          Set_Text (Editor.Read_Only_Label, -"Read Only");
          Set_Editable (Editor.Source_View, False);
