@@ -174,13 +174,6 @@ private
    --  Duplicate all the information used in Error_Message, specially the
    --  object referenced in.
 
-   function Delete_With
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class;
-      Name         : String;
-      Move_To      : File_Cursor := Null_File_Cursor)
-     return Text_Command'Class;
-
    Invalid_Error_Message : constant Error_Message := (0, 0, null, null);
 
 end Codefix.Formal_Errors;
