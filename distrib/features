@@ -10,7 +10,7 @@ New features in GPS 2.0.0
 
 - Callgraph now shows clickable references location
 
-- Improved handling of C++ classes in the Entity Browser
+- CB13-017 Improved handling of C++ classes in the Entity Browser
 
 - CB14-004 New menu Make->All mains
   GPS now provides via the menus 'Make->Project' and 'Make->All mains' the
@@ -21,6 +21,8 @@ New features in GPS 2.0.0
   Under Linux, Solaris and Windows, GPS now comes with an integrated python
   interpreter, giving the ability to write powerful GPS extensions.
 
+- Python files recognized by source and project editors.
+
 - Speed Column
   This column appears on the left of the editors to show an overview of the
   lines highlighted in the file, for example to show the current debugger
@@ -29,6 +31,8 @@ New features in GPS 2.0.0
 - CB13-012 Improved search result display
   When searching in an editor, if a search result is off the screen, scrolling
   will ensure that some context is visible before and after the search result.
+
+- BC08-007 Faster loading and rendering of big files
 
 - Support for hooks, including from scripting languages
 
