@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -463,6 +463,11 @@ package body File_Utils is
       Second : Second_Type;
    begin
       GM_Split (T, Year, Month, Day, Hour, Minute, Second);
+
+      if T = Invalid_Time then
+         return No_Time;
+      end if;
+
       return GNAT.Calendar.Time_Of
         (Year   => Year,
          Month  => Month,
