@@ -104,14 +104,16 @@ package body Glide_Kernel is
       Values := (1 => new String' ("."));
       Update_Attribute_Value_In_Scenario
         (Kernel.project,
-         Attribute_Name => "source_dirs",
-         Values         => Values);
+         Scenario_Variables => Scenario_Variables (Kernel),
+         Attribute_Name     => "source_dirs",
+         Values             => Values);
       Free (Values (1));
 
       Update_Attribute_Value_In_Scenario
         (Kernel.project,
-         Attribute_Name => "object_dir",
-         Value          => ".");
+         Scenario_Variables => Scenario_Variables (Kernel),
+         Attribute_Name     => "object_dir",
+         Value              => ".");
       Recompute_View (Kernel);
    end Create_Default_Project;
 

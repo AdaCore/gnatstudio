@@ -143,6 +143,7 @@ package body Glide_Kernel.Project is
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'class; Project : String) is
    begin
+      Free (Kernel.Scenario_Variables);
       Kernel.Project_Is_Default := False;
       Prj.Part.Parse (Kernel.Project, Project, True);
       Kernel.Project_View := No_Project;
@@ -189,17 +190,19 @@ package body Glide_Kernel.Project is
          null;
       end Report_Error;
 
-      Scenario_Variables : constant Project_Node_Array :=
-        Find_Scenario_Variables (Get_Project (Handle));
+      Scenario_Vars : constant Project_Node_Array :=
+        Scenario_Variables (Handle);
       Ext_Ref : String_Id;
 
    begin
       --  To avoid any problem with invalid variable values, we need to provide
       --  a current value when no default value is provided by the user
+      --  ??? Is this really needed, when Glide should always have a value for
+      --  ??? the variable, set through the combo boxes.
 
-      for J in Scenario_Variables'Range loop
-         if External_Default (Scenario_Variables (J)) = Empty_Node then
-            Ext_Ref := External_Reference_Of (Scenario_Variables (J));
+      for J in Scenario_Vars'Range loop
+         if External_Default (Scenario_Vars (J)) = Empty_Node then
+            Ext_Ref := External_Reference_Of (Scenario_Vars (J));
             pragma Assert
               (Ext_Ref /= No_String,
                "Scenario variable is not an external reference");
@@ -212,7 +215,7 @@ package body Glide_Kernel.Project is
                if Prj.Ext.Value_Of (Name_Find) = No_String then
                   String_To_Name_Buffer
                     (String_Value_Of (First_Literal_String
-                      (String_Type_Of (Scenario_Variables (J)))));
+                      (String_Type_Of (Scenario_Vars (J)))));
                   Prj.Ext.Add
                     (Name, Name_Buffer (Name_Buffer'First .. Name_Len));
                end if;
@@ -241,8 +244,8 @@ package body Glide_Kernel.Project is
       --  the default value is defined through other variables these are
       --  already evaluated.
 
-      for J in Scenario_Variables'Range loop
-         Ext_Ref := External_Reference_Of (Scenario_Variables (J));
+      for J in Scenario_Vars'Range loop
+         Ext_Ref := External_Reference_Of (Scenario_Vars (J));
          String_To_Name_Buffer (Ext_Ref);
 
          declare
@@ -252,7 +255,7 @@ package body Glide_Kernel.Project is
          begin
             if Prj.Ext.Value_Of (Name_Find) = No_String then
                Value := Prj.Util.Value_Of
-                 (Variable_Name => Name_Of (Scenario_Variables (J)),
+                 (Variable_Name => Name_Of (Scenario_Vars (J)),
                   In_Variables => Projects.Table
                     (Handle.Project_View).Decl.Variables);
                pragma Assert
@@ -264,10 +267,6 @@ package body Glide_Kernel.Project is
             end if;
          end;
       end loop;
-
-      --  ??? In fact, we should also cache the list of scenario variables
-      --  ??? here, so that all the prj_editor packages do not need to
-      --  ??? recompute them every time.
 
       --  Report the change to every listener
       Project_View_Changed (Handle);
@@ -397,8 +396,8 @@ package body Glide_Kernel.Project is
      (Handle : access Kernel_Handle_Record'Class)
       return String
    is
-      Scenario_Variables : constant Project_Node_Array :=
-        Find_Scenario_Variables (Get_Project (Handle));
+      Scenario_Vars : constant Project_Node_Array :=
+        Scenario_Variables (Handle);
 
       function Concat (Current : String; Index : Natural) return String;
       --  Concat the command line line for the Index-nth variable and the
@@ -411,11 +410,11 @@ package body Glide_Kernel.Project is
       function Concat (Current : String; Index : Natural) return String is
          Ext_Ref : String_Id;
       begin
-         if Index > Scenario_Variables'Last then
+         if Index > Scenario_Vars'Last then
             return Current;
          end if;
 
-         Ext_Ref := External_Reference_Of (Scenario_Variables (Index));
+         Ext_Ref := External_Reference_Of (Scenario_Vars (Index));
          String_To_Name_Buffer (Ext_Ref);
 
          declare
@@ -438,8 +437,22 @@ package body Glide_Kernel.Project is
       --  A recursive function is probably not the most efficient way, but this
       --  prevents limits on the command line lengths. This also avoids the use
       --  of unbounded strings.
-      return Concat ("", Scenario_Variables'First);
+      return Concat ("", Scenario_Vars'First);
    end Scenario_Variables_Cmd_Line;
+
+   ------------------------
+   -- Scenario_Variables --
+   ------------------------
+
+   function Scenario_Variables (Kernel : access Kernel_Handle_Record'Class)
+      return Project_Node_Array is
+   begin
+      if Kernel.Scenario_Variables = null then
+         Kernel.Scenario_Variables := new Project_Node_Array'
+           (Find_Scenario_Variables (Get_Project (Kernel)));
+      end if;
+      return Kernel.Scenario_Variables.all;
+   end Scenario_Variables;
 
 end Glide_Kernel.Project;
 
