@@ -764,7 +764,7 @@ package body VCS_View_Pkg is
       Set_Title (Col, -"Log");
       Pack_Start (Col, Pixbuf_Rend, False);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Log_Column);
-      Set_Clickable (Col, True);
+      Set_Clickable (Col, False);
       Dummy := Append_Column (Explorer.Tree, Col);
 
       Gtk_New (Col);
