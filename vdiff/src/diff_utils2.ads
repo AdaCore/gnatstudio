@@ -80,6 +80,7 @@ package Diff_Utils2 is
       File3        : VFS.Virtual_File := VFS.No_File;
       Current_Node : Diff_List_Node;
       Ref_File     : T_Loc := 2;
+      Tmp_File     : VFS.Virtual_File := VFS.No_File;
    end record;
    type Diff_Head_Access is access all Diff_Head;
 
@@ -150,6 +151,5 @@ private
    --  Execute diff on File1 and File2 and return a list of differences.
 
 end Diff_Utils2;
-
 
 
