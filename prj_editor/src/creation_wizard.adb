@@ -107,7 +107,7 @@ package body Creation_Wizard is
       Wizards.Initialize
         (Wiz,
          Kernel   => Kernel,
-         Title    => -"Project setup",
+         Title    => -"Create New Project",
          Show_Toc => Show_Toc);
       Wiz.Project := Project;
       Wiz.Auto_Save_On_Exit := Auto_Save_On_Exit;
