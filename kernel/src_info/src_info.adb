@@ -263,24 +263,13 @@ package body Src_Info is
    -- Add --
    ---------
 
-   procedure Add
-     (HT      : in out LI_File_HTable.HTable;
-      LIFP    : LI_File_Ptr;
-      Success : out Boolean)
-   is
-      Tmp : constant LI_File_Node_Ptr :=
-        LI_File_HTable.Get (HT, LIFP.LI.LI_Filename);
+   procedure Add (HT : in out LI_File_HTable.HTable; LIFP : LI_File_Ptr) is
    begin
-      --  Make sure no LI_File with the same unit name already exists before
-      --  inserting in the table.
-
-      if Tmp /= null then
-         Success := False;
-         return;
-      end if;
-
+      Assert
+        (Me,
+         LI_File_HTable.Get (HT, LIFP.LI.LI_Filename) = null,
+         "File " & LIFP.LI.LI_Filename.all & " is already in the list");
       LI_File_HTable.Set (HT, new LI_File_Node'(Value => LIFP, Next => null));
-      Success := True;
    end Add;
 
    -----------
@@ -319,7 +308,7 @@ package body Src_Info is
    function Get
      (HT : LI_File_HTable.HTable; LI_Filename : String) return LI_File_Ptr
    is
-      Name : aliased String := Base_Name (LI_Filename);
+      Name : aliased String := LI_Filename;
       Node : constant LI_File_Node_Ptr :=
         LI_File_HTable.Get (HT, Name'Unchecked_Access);
 

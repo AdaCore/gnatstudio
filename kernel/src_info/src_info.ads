@@ -1002,8 +1002,7 @@ private
 
    procedure Add
      (HT      : in out LI_File_HTable.HTable;
-      LIFP    : LI_File_Ptr;
-      Success : out Boolean);
+      LIFP    : LI_File_Ptr);
    --  Saves the given LI_File_Ptr in the hash-table. If a LI_File_Ptr with
    --  the same unit name is already stored, then nothing is done and success
    --  is set to False (Rationale: the LI_File structure already stored might
