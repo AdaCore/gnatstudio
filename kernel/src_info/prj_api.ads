@@ -627,6 +627,6 @@ private
 
    type Imported_Project_Iterator (Number : Natural) is record
       List    : Project_Browsers.Name_Id_Array (1 .. Number);
-      Current : Natural;
+      Current : Integer;
    end record;
 end Prj_API;

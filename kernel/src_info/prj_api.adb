@@ -3170,7 +3170,7 @@ package body Prj_API is
             Iter : Imported_Project_Iterator (List'Length);
          begin
             Iter.List := List;
-            Iter.Current := Iter.List'First;
+            Iter.Current := Iter.List'Last;
             return Iter;
          end;
       else
@@ -3188,7 +3188,7 @@ package body Prj_API is
    function Current (Iterator : Imported_Project_Iterator)
       return Project_Node_Id is
    begin
-      if Iterator.Current > Iterator.List'Last then
+      if Iterator.Current < Iterator.List'First then
          return Empty_Node;
       else
          return Get_Project_From_Name (Iterator.List (Iterator.Current));
@@ -3202,7 +3202,7 @@ package body Prj_API is
    function Current (Iterator : Imported_Project_Iterator)
       return Project_Id is
    begin
-      if Iterator.Current > Iterator.List'Last then
+      if Iterator.Current < Iterator.List'First then
          return No_Project;
       else
          return Get_Project_View_From_Name (Iterator.List (Iterator.Current));
@@ -3215,7 +3215,7 @@ package body Prj_API is
 
    procedure Next (Iterator : in out Imported_Project_Iterator) is
    begin
-      Iterator.Current := Iterator.Current + 1;
+      Iterator.Current := Iterator.Current - 1;
    end Next;
 
    -----------
@@ -3224,7 +3224,7 @@ package body Prj_API is
 
    procedure Reset (Iterator : in out Imported_Project_Iterator) is
    begin
-      Iterator.Current := Iterator.List'First;
+      Iterator.Current := Iterator.List'Last;
    end Reset;
 
    ----------------------
