@@ -30,8 +30,7 @@ package body GVD.Open_Program_Dialog is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Open : out GVD_Open_Program)
-   is
+   procedure Gtk_New (Open : out GVD_Open_Program) is
    begin
       Open := new GVD_Open_Program_Record;
       Open_Program_Pkg.Initialize (Open);
