@@ -1711,7 +1711,7 @@ package body Glide_Kernel.Modules is
          Command_Node := Command_List.First (Kernel.Commands_List);
 
          if Is_Empty (The_Args) then
-            Insert ("The following commands are defined :");
+            Insert (-"The following commands are defined:");
          else
             The_Command := new String'(Head (The_Args));
          end if;
