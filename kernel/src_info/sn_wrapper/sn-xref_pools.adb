@@ -277,13 +277,16 @@ package body SN.Xref_Pools is
       Data  : Xref_Elmt_Ptr;
       N     : Integer := 0;
    begin
-      --  get hashed value
+      --  Get hashed value
+
       Data := STable.Get (Pool.HTable, Source_Filename'Unrestricted_Access);
+
       if Data /= null then
          return Data.Xref_Filename;
       end if;
 
-      --  generate new xref file name
+      --  Generate new xref file name
+
       Data := new Xref_Elmt_Record; -- new hashtable value
       Data.Source_Filename := new String'(Source_Filename);
       loop
@@ -295,11 +298,13 @@ package body SN.Xref_Pools is
             if not Is_Directory (Directory) then
                Make_Dir (Directory);
             end if;
+
             if not Is_Regular_File (Full_Name) then
                Data.Xref_Filename := new String'(Full_Name);
 
                --  touch this file
                FD := Create_New_File (Full_Name, Binary);
+
                if FD = Invalid_FD then -- unable to create a new file
                   --  raise an exception if unable to create new xref file
                   Free (Data.Source_Filename);
@@ -307,10 +312,12 @@ package body SN.Xref_Pools is
                   Raise_Exception (Xref_File_Error'Identity,
                     "unable to create a new file: " & Full_Name);
                end if;
+
                Close (FD);
                exit;
             end if;
          end;
+
          N := N + 1;
       end loop;
 
@@ -337,6 +344,7 @@ package body SN.Xref_Pools is
       if Xref_Elmt = null then -- nothing to do
          return;
       end if;
+
       declare
          Result     : Boolean;
          Full_Name  : constant String := Name_As_Directory (Directory) &
