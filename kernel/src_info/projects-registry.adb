@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with ALI;
 with Atree;
 with Basic_Types;               use Basic_Types;
@@ -106,6 +107,13 @@ package body Projects.Registry is
       Null_Ptr  => No_Source_File_Data);
    use Source_Htable.String_Hash_Table;
 
+   procedure Do_Nothing (Name : in out Name_Id);
+   package Languages_Htable is new String_Hash
+     (Data_Type => Name_Id,
+      Free_Data => Do_Nothing,
+      Null_Ptr  => No_Name);
+   use Languages_Htable.String_Hash_Table;
+
    type Project_Registry_Data is record
       Root    : Project_Type := No_Project;
       --  The root of the project hierarchy
@@ -134,6 +142,9 @@ package body Projects.Registry is
 
       Predefined_Source_Files : VFS.File_Array_Access;
       --  The list of source files in Predefined_Source_Path.
+
+      Extensions : Languages_Htable.String_Hash_Table.HTable;
+      --  The extensions registered for each language.
 
       --  Implicit dependency on the global htables in the Prj.* packages.
    end record;
@@ -206,6 +217,12 @@ package body Projects.Registry is
 
    procedure Do_Nothing (Dep : in out Directory_Dependency) is
       pragma Unreferenced (Dep);
+   begin
+      null;
+   end Do_Nothing;
+
+   procedure Do_Nothing (Name : in out Name_Id) is
+      pragma Unreferenced (Name);
    begin
       null;
    end Do_Nothing;
@@ -820,9 +837,8 @@ package body Projects.Registry is
       Dir       : Dir_Type;
       Length    : Natural;
       Buffer    : String (1 .. 2048);
-      Part      : Unit_Part;
-      Unit, Lang : Name_Id;
-      Has_File : Boolean;
+      Lang      : Name_Id;
+      Has_File  : Boolean;
       Dirs_List : String_List_Id;
 
    begin
@@ -997,16 +1013,8 @@ package body Projects.Registry is
                     Source_Filename   => Create_From_Base (UTF8),
                     Root_If_Not_Found => False) = No_Project
                then
-                  --  Have to use the naming scheme, since the hash-table
-                  --  hasn't been filled yet (Get_Language_From_File wouldn't
-                  --  work)
-
-                  Get_Unit_Part_And_Name_From_Filename
-                    (Filename  => UTF8,
-                     Project   => Project,
-                     Part      => Part,
-                     Unit_Name => Unit,
-                     Lang      => Lang);
+                  Lang := Languages_Htable.String_Hash_Table.Get
+                    (Registry.Data.Extensions, File_Extension (UTF8));
 
                   --  Check if the returned language belongs to the supported
                   --  languages for the project
@@ -1177,8 +1185,9 @@ package body Projects.Registry is
    is
       S : constant Source_File_Data := Get
         (Registry.Data.Sources, Base_Name (Source_Filename));
-      Part : Unit_Part;
-      Unit, Lang : Name_Id;
+--        Part : Unit_Part;
+--        Unit,
+      Lang : Name_Id;
    begin
       if S = No_Source_File_Data then
          --  This is most probably one of the runtime files.
@@ -1202,12 +1211,8 @@ package body Projects.Registry is
                --  If there is no root project, this will use the default
                --  naming scheme
 
-               Get_Unit_Part_And_Name_From_Filename
-                 (Filename  => Base_Name (Source_Filename),
-                  Project   => Get_Root_Project (Registry),
-                  Part      => Part,
-                  Unit_Name => Unit,
-                  Lang      => Lang);
+               Lang := Languages_Htable.String_Hash_Table.Get
+                 (Registry.Data.Extensions, File_Extension (Source_Filename));
                return Lang;
             end if;
          end;
@@ -1215,6 +1220,86 @@ package body Projects.Registry is
          return S.Lang;
       end if;
    end Get_Language_From_File;
+
+   -----------------------------------------
+   -- Register_Default_Language_Extension --
+   -----------------------------------------
+
+   procedure Register_Default_Language_Extension
+     (Registry            : Project_Registry;
+      Language_Name       : String;
+      Default_Spec_Suffix : String;
+      Default_Body_Suffix : String) is
+   begin
+      Prj.Register_Default_Naming_Scheme
+        (Language            => Get_String (To_Lower (Language_Name)),
+         Default_Spec_Suffix => Get_String (Default_Spec_Suffix),
+         Default_Body_Suffix => Get_String (Default_Body_Suffix));
+
+      Add_Language_Extension (Registry, Language_Name, Default_Spec_Suffix);
+      Add_Language_Extension (Registry, Language_Name, Default_Body_Suffix);
+   end Register_Default_Language_Extension;
+
+   ----------------------------
+   -- Add_Language_Extension --
+   ----------------------------
+
+   procedure Add_Language_Extension
+     (Registry      : Project_Registry;
+      Language_Name : String;
+      Extension     : String)
+   is
+      Lang : constant Name_Id := Get_String (To_Lower (Language_Name));
+   begin
+      Languages_Htable.String_Hash_Table.Set
+        (Registry.Data.Extensions, Extension, Lang);
+   end Add_Language_Extension;
+
+   -------------------------------
+   -- Get_Registered_Extensions --
+   -------------------------------
+
+   function Get_Registered_Extensions
+     (Registry      : Project_Registry;
+      Language_Name : String) return GNAT.OS_Lib.Argument_List
+   is
+      Lang : constant Name_Id := Get_String (To_Lower (Language_Name));
+      Iter : Languages_Htable.String_Hash_Table.Iterator;
+      Name : Name_Id;
+      Count : Natural := 0;
+   begin
+      Get_First (Registry.Data.Extensions, Iter);
+      loop
+         Name := Get_Element (Iter);
+         exit when Name = No_Name;
+
+         if Name = Lang then
+            Count := Count + 1;
+         end if;
+
+         Get_Next (Registry.Data.Extensions, Iter);
+      end loop;
+
+      declare
+         Args : Argument_List (1 .. Count);
+      begin
+         Count := Args'First;
+         Get_First (Registry.Data.Extensions, Iter);
+         loop
+            Name := Get_Element (Iter);
+            exit when Name = No_Name;
+
+            if Name = Lang then
+               Args (Count) := new String'(Get_Key (Iter));
+               Count := Count + 1;
+            end if;
+
+            Get_Next (Registry.Data.Extensions, Iter);
+         end loop;
+
+         return Args;
+      end;
+   end Get_Registered_Extensions;
 
    ----------------------
    -- Language_Matches --

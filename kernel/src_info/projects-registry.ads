@@ -237,6 +237,32 @@ package Projects.Registry is
       return Types.Name_Id;
    --  Return the language for a file
 
+   procedure Add_Language_Extension
+     (Registry      : Project_Registry;
+      Language_Name : String;
+      Extension     : String);
+   --  Register Extension (which should include '.') as a valid extension for
+   --  the language. This is used by Get_Language_From_File.
+   --  Language_Name is case-insensitive.
+
+   procedure Register_Default_Language_Extension
+     (Registry            : Project_Registry;
+      Language_Name       : String;
+      Default_Spec_Suffix : String;
+      Default_Body_Suffix : String);
+   --  Register Default_Spec_Suffix and Default_Body_Suffix as the default
+   --  extensions for the language. These are the extensions given by default
+   --  in the naming scheme editor, and also when the user uses the
+   --  "other file" navigation.
+   --  Language_Name is case-insensitive.
+
+   function Get_Registered_Extensions
+     (Registry      : Project_Registry;
+      Language_Name : String) return GNAT.OS_Lib.Argument_List;
+   --  Return the list of registered extensions for Language_Name.
+   --  The returned value must be freed by the user. Language_Name is
+   --  case-insensitive.
+
    function Language_Matches
      (Registry        : Project_Registry;
       Source_Filename : VFS.Virtual_File;
