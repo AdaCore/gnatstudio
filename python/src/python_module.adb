@@ -91,72 +91,72 @@ package body Python_Module is
    -- Test --
    ----------
 
-   function Test (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Test);
+   --  function Test (Self : PyObject; Args : PyObject) return PyObject;
+   --  pragma Convention (C, Test);
 
-   function Test (Self : PyObject; Args : PyObject) return PyObject is
-      pragma Unreferenced (Self, Args);
-   begin
-      --  if Self = GPS_Module then
-      --     return PyString_FromString ("test: first arg is gps_module");
-      --  elsif Self = Kernel_Class then
-      --     return PyString_FromString ("Test: first arg is Kernel");
-      --  elsif Self = null then
-      --     return PyString_FromString ("Test: first arg is null");
-      --  else
-      return PyString_FromString ("Calling test");
-      --  end if;
-   end Test;
+   --  function Test (Self : PyObject; Args : PyObject) return PyObject is
+   --     pragma Unreferenced (Self, Args);
+   --  begin
+   --     --  if Self = GPS_Module then
+   --     --     return PyString_FromString ("test: first arg is gps_module");
+   --     --  elsif Self = Kernel_Class then
+   --     --     return PyString_FromString ("Test: first arg is Kernel");
+   --     --  elsif Self = null then
+   --     --     return PyString_FromString ("Test: first arg is null");
+   --     --  else
+   --     return PyString_FromString ("Calling test");
+   --     --  end if;
+   --  end Test;
 
    ---------
    -- Foo --
    ---------
 
-   function Foo (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Foo);
+   --  function Foo (Self : PyObject; Args : PyObject) return PyObject;
+   --  pragma Convention (C, Foo);
 
-   function Foo (Self : PyObject; Args : PyObject) return PyObject is
-      A : aliased Integer;
-   begin
-      if not PyArg_ParseTuple (Args, "i", A'Address) then
-         return null;
-      end if;
+   --  function Foo (Self : PyObject; Args : PyObject) return PyObject is
+   --     A : aliased Integer;
+   --  begin
+   --     if not PyArg_ParseTuple (Args, "i", A'Address) then
+   --        return null;
+   --     end if;
 
-      if Self = null then
-         return PyString_FromString ("<null> Calling foo" & A'Img);
-      else
-         return PyString_FromString
-           (PyString_AsString (PyObject_Str (Self))
-            & "Calling foo" & A'Img);
-      end if;
-   end Foo;
+   --     if Self = null then
+   --        return PyString_FromString ("<null> Calling foo" & A'Img);
+   --     else
+   --        return PyString_FromString
+   --          (PyString_AsString (PyObject_Str (Self))
+   --           & "Calling foo" & A'Img);
+   --     end if;
+   --  end Foo;
 
    ---------------
    -- Foo_Class --
    ---------------
 
-   function Foo_Class (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Foo_Class);
+   --  function Foo_Class (Self : PyObject; Args : PyObject) return PyObject;
+   --  pragma Convention (C, Foo_Class);
 
-   function Foo_Class (Self : PyObject; Args : PyObject) return PyObject is
-      A : aliased Integer;
-      O : aliased PyObject;
-      pragma Unreferenced (Self);
-   begin
-      --  Self is always null
-      --  O is always set to the class that contains the method (ie Kernel)
-      if not PyArg_ParseTuple (Args, "Oi", O'Address, A'Address) then
-         return null;
-      end if;
+   --  function Foo_Class (Self : PyObject; Args : PyObject) return PyObject is
+   --     A : aliased Integer;
+   --     O : aliased PyObject;
+   --     pragma Unreferenced (Self);
+   --  begin
+   --     --  Self is always null
+   --     --  O is always set to the class that contains the method (ie Kernel)
+   --     if not PyArg_ParseTuple (Args, "Oi", O'Address, A'Address) then
+   --        return null;
+   --     end if;
 
-      if O = null then
-         return PyString_FromString ("<null> Calling foo_class" & A'Img);
-      else
-         return PyString_FromString
-           (PyString_AsString (PyObject_Str (O))
-            & "Calling foo_class" & A'Img);
-      end if;
-   end Foo_Class;
+   --     if O = null then
+   --        return PyString_FromString ("<null> Calling foo_class" & A'Img);
+   --     else
+   --        return PyString_FromString
+   --          (PyString_AsString (PyObject_Str (O))
+   --           & "Calling foo_class" & A'Img);
+   --     end if;
+   --  end Foo_Class;
 
    ---------------------
    -- Register_Module --
@@ -165,14 +165,10 @@ package body Python_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Methods : constant PyMethodDef_Array :=
-        (0 => Create_Method_Def ("test", Test'Access, "test function"));
-
-      GPS_Module : PyObject;
+      GPS_Module   : PyObject;
       Kernel_Class : PyObject;
-      Dict   : PyDictObject;
-      Kernel_Obj : PyObject;
-      Ignored : Integer;
+      Dict         : PyDictObject;
+      Ignored      : Integer;
       pragma Unreferenced (Ignored);
    begin
       Python_Module_Id := new Python_Module_Record;
@@ -189,24 +185,17 @@ package body Python_Module is
       --  Create the new GPS module
 
       GPS_Module := Py_InitModule
-        ("GPS", Methods, "Interface with the GPS environment");
+        ("GPS", Doc => "Interface with the GPS environment");
       Run_Command
         (Python_Module_Id.Interpreter, "import GPS", Hide_Output => True);
-
-      --  Add new functions
-
-      Add_Function
-        (GPS_Module, Create_Method_Def ("foo", Foo'Access, "foo function"));
 
       --  Create a new type
 
       Dict := PyDict_New;
-      Ignored :=
-        PyDict_SetItemString (Dict, New_String ("editors"), PyDict_New);
-      Ignored := PyDict_SetItemString
-        (Dict, New_String ("__doc__"), PyString_FromString ("doc for Kernel"));
-      Ignored := PyDict_SetItemString
-        (Dict, New_String ("__module__"), PyString_FromString ("GPS"));
+      --  PyDict_SetItemString (Dict, "editors", PyDict_New);
+      PyDict_SetItemString
+        (Dict, "__doc__", PyString_FromString ("doc for Kernel"));
+      PyDict_SetItemString (Dict, "__module__", PyString_FromString ("GPS"));
 
       Kernel_Class := PyClass_New
         (Bases => null,
@@ -215,20 +204,26 @@ package body Python_Module is
       Ignored := PyModule_AddObject
         (GPS_Module, New_String ("Kernel"), Kernel_Class);
 
-      Add_Method
-        (Kernel_Class,
-         Create_Method_Def ("foo", Foo'Access, "foo method"));
-      Add_Class_Method
-        (Kernel_Class,
-         Create_Method_Def ("foo_class", Foo_Class'Access, "foo method"));
-      Add_Static_Method
-        (Kernel_Class,
-         Create_Method_Def ("foo_static", Foo'Access, "foo method"));
+      --  Methods : constant PyMethodDef_Array :=
+      --    (0 => Create_Method_Def ("test", Test'Access, "test function"));
 
-      Kernel_Obj := PyCObject_FromVoidPtr (Kernel.all'Address);
+      --  GPS_Module := Py_InitModule
+      --    ("GPS", Methods, "Interface with the GPS environment");
 
+      --  Add new functions
 
-      Py_DECREF (Kernel_Obj);
+      --  Add_Function
+      --   (GPS_Module, Create_Method_Def ("foo", Foo'Access, "foo function"));
+
+      --  Add_Method
+      --    (Kernel_Class,
+      --     Create_Method_Def ("foo", Foo'Access, "foo method"));
+      --  Add_Class_Method
+      --    (Kernel_Class,
+      --     Create_Method_Def ("foo_class", Foo_Class'Access, "foo method"));
+      --  Add_Static_Method
+      --    (Kernel_Class,
+      --     Create_Method_Def ("foo_static", Foo'Access, "foo method"));
    end Register_Module;
 
 end Python_Module;
