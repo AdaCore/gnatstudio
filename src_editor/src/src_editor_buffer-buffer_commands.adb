@@ -344,24 +344,5 @@ package body Src_Editor_Buffer.Buffer_Commands is
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   function Execute
-     (Command : access Indentation_Command; Event : Gdk.Event.Gdk_Event)
-      return Command_Return_Type
-   is
-      pragma Unreferenced (Event);
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-   begin
-      if Do_Indentation (Buffer, Get_Language (Buffer), False) then
-         return Success;
-      else
-         return Failure;
-      end if;
-   end Execute;
 
 end Src_Editor_Buffer.Buffer_Commands;

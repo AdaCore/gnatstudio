@@ -46,12 +46,4 @@ package Src_Editor_Buffer.Buffer_Commands is
    --  This command completes the word under the cursor based on the
    --  contents of the buffer.
 
-   type Indentation_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
-   end record;
-   function Execute
-     (Command : access Indentation_Command; Event : Gdk.Event.Gdk_Event)
-      return Command_Return_Type;
-   --  This command reindents the current line
-
 end Src_Editor_Buffer.Buffer_Commands;
