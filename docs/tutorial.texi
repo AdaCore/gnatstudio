@@ -409,8 +409,7 @@ be useful when the graph becomes complex, to hide some parts. If you go back to
 the contextual menu, you can now select @code{Show links} to show the links
 again.
 
-Click on right arrow of @code{process} (@file{instructions.ads:12},
-the item at the top right of the graph).
+Click on right arrow of @code{process} (@file{instructions.ads:12}.
 
 The items can also be moved: move e.g @code{msg} item around.
 
