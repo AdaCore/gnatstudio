@@ -548,12 +548,9 @@ package body Docgen is
       if X /= null and Y /= null then
          return Get_Name (X.all) < Get_Name (Y.all);
       else
-         --  this case normaly never happens
-         if X = null then
-            return False;
-         else
-            return True;
-         end if;
+         --  This case normally never happens
+
+         return X /= null;
       end if;
    end Compare_Name;
 
