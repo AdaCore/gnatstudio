@@ -3,20 +3,13 @@
 #include <windows.h>
 #include "system/windows.h"
 
-/* ??/ Provide a no-op for now */
-
-void
-kill ()
-{
-}
-
 int
-ada_g_expect_fork () {
+__gnat_expect_fork () {
   return 0;
 }
 
 void
-ada_g_expect_portable_execvp (char* cmd, char* argv[]) {
+__gnat_expect_portable_execvp (char* cmd, char* argv[]) {
   int pid = spawnve (_P_NOWAIT, cmd, argv, NULL);
 }
 
@@ -101,12 +94,12 @@ __gnat_pipe (int *fd)
 }
 
 int
-ada_g_expect_fork () {
+__gnat_expect_fork () {
   return fork ();
 }
 
 void
-ada_g_expect_portable_execvp (char* cmd, char* argv[]) {
+__gnat_expect_portable_execvp (char* cmd, char* argv[]) {
   execvp (cmd, argv);
 }
 
