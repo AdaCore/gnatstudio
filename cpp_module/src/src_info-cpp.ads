@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -17,6 +17,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Language; use Language;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;
@@ -175,6 +177,14 @@ package Src_Info.CPP is
    pragma Inline (Get_Root_Project);
    --  Returns root project for given Handler. This functions is used
    --  outside Src_Info.CPP package to get Root_Project field.
+
+   procedure Parse_File_Constructs
+     (Handler      : access CPP_LI_Handler_Record;
+      Root_Project : Projects.Project_Type;
+      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name    : String;
+      Result       : out Language.Construct_List);
+   --  Build a Construct_List using the SN databases
 
 private
 
