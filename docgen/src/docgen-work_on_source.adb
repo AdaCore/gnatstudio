@@ -34,11 +34,11 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Docgen.Backend;            use Docgen.Backend;
+with Language.Ada;              use Language.Ada;
 
 package body Docgen.Work_On_Source is
 
    package TEL renames Type_Entity_List;
-
 
    procedure Process_Source_Spec
      (B                         : access Docgen.Backend.Backend'Class;
@@ -367,48 +367,6 @@ package body Docgen.Work_On_Source is
    --  if TexInfo doc is created, the file is closed only once,
    --  but the Footer has to be set behind each package.
 
-   function Get_Location_Start
-     (Text            : String;
-      Line            : Natural;
-      Comments_Before : Boolean) return Natural;
-   --  Return the index in Text which is the begin or the end of Line.
-   --  The search start at Text'First.
-   --  Begin: if Comments_Before is True.
-   --  End: if Comments_Before is False.
-
-   function Get_Next_Location
-     (Text            : in String;
-      Old_Location    : in Natural;
-      Comments_Before : in Boolean) return Natural;
-   --  Return the index in Text which correspond to the previous or the next
-   --  new line. The search begin to the old location of new line.
-   --  Previous: if Comments_Before is True.
-   --  Next: if Comments_Before is False.
-
-   function Get_Line_From_Location_And_String
-     (Text            : in String;
-      Location        : in Natural;
-      Comments_Before : in Boolean) return String;
-   --  Return the line of Text which starts (if Comments_Before is False) or
-   --  ends (if Comments_Before is True) at Location.
-
-   function Extract_Comment
-     (File_Text           : String;
-      Line                : Natural;
-      Header_Lines        : Natural;
-      Package_Description : Boolean;
-      Options             : All_Options) return GNAT.OS_Lib.String_Access;
-   --  Get the doc comments from the source file. The File_Text gives the
-   --  String where to search, Line is the line number of the entity and
-   --  Header_Lines says how many lines takes the header of the entity.
-   --  Within Options it can be chosen, if the comments are placed
-   --  below or above the entity header.
-   --  If Package_Description is set, empty lines between the comment lines
-   --  will be ignored, the direction of the processing is always the same
-   --  and it stops when the first command is found.
-   --
-   --  ??? Should use Entities.Get_Documentation instead to share code
-
    function Entity_Defined_In_Package
      (Entity_Info       : Entity_Information;
       Package_Container : Entity_Information) return Boolean;
@@ -419,21 +377,10 @@ package body Docgen.Work_On_Source is
       Entity_List    : Type_Entity_List.List) return Boolean;
    --  Determines if there's entities defined in a the package
 
-   function Line_Is_Comment
-     (Line : String) return Boolean;
-   --  Return true, if the first chars of the line are "--"
-
-   function Line_Is_Empty
-     (Line : String) return Boolean;
-   --  Return true, if there is no text in this line
-
-   function Is_Ignorable_Comment
-     (Comment_Line : String) return Boolean;
+--     function Is_Ignorable_Comment
+--       (Comment_Line : String) return Boolean;
    --  Return true, if the comment line starts with a "--!"
    --  It must be sure, that Comment_List is a comment line!
-
-   function Skip_Comment_Prefix (Text : String) return Natural;
-   --  Return the first index in Text after the beginning-of-comment mark.
 
    procedure Get_Whole_Header
      (File_Text    : String;
@@ -453,11 +400,6 @@ package body Docgen.Work_On_Source is
       Line_Count : out Natural);
    --  The header returned by Get_Whole_Header contains indent spaces (except
    --  those of the first line). This function removes those spaces.
-
-   function Get_Line_From_String
-     (Text    : String;
-      Line_Nr : Natural) return String;
-   --  Return the wished Line from the String
 
    --------------------
    -- Process_Source --
@@ -915,7 +857,8 @@ package body Docgen.Work_On_Source is
       Source_File_List              : Type_Source_File_Table.HTable;
       Options                       : All_Options)
    is
-      Index_File : File_Descriptor;
+      Index_File    : File_Descriptor;
+      Doc_File_Name : constant String := "index_sub";
 
       procedure Process_List
         (List : Type_Entity_List.List; Public : Boolean);
@@ -960,8 +903,6 @@ package body Docgen.Work_On_Source is
             end loop;
          end if;
       end Process_List;
-
-      Doc_File_Name         : constant String := "index_sub";
 
    begin
       Index_File := Create_File
@@ -1304,41 +1245,31 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Level            : in out Natural)
    is
-      Description_Found : Boolean;
-      Start_Found       : Boolean;
-      Line              : Natural;
-      Max_Lines         : constant Natural := Count_Lines (Text);
-      Description       : GNAT.OS_Lib.String_Access;
-      Temp_Line         : GNAT.OS_Lib.String_Access;
+      pragma Unreferenced (Options);
+
+      Description : GNAT.OS_Lib.String_Access;
+      Start_Line  : Natural := Text'First;
+      End_Line    : Natural;
+
    begin
-      --  Try to find the first line of the description of the package
-      --  if something else is found than a comment line => no description
-      Description_Found := False;
-      Start_Found       := False;
-      Line              := 1;
 
-      while not Start_Found and Line < Max_Lines + 1 loop
-         Temp_Line := new String'(Get_Line_From_String (Text, Line));
-         if Line_Is_Comment (Temp_Line.all) then
-            Description_Found := True;
-            Start_Found       := True;
 
-         elsif not Line_Is_Empty (Temp_Line.all) then
-            Start_Found := True;
-         else
-            Line := Line + 1;
-         end if;
-         Free (Temp_Line);
-      end loop;
+      Skip_Blanks (Text, Start_Line);
+      End_Line := Start_Line;
 
-      if Description_Found then
-         Doc_Subtitle (B, Kernel, Doc_File, Level,
-                       Subtitle_Name    => "Description");
-         Description := Extract_Comment (Text, Line, 0, True, Options);
-         Doc_Package_Desc
-           (B, Kernel, Doc_File, Level, Description => Description.all);
-         Free (Description);
-      end if;
+      Skip_To_Current_Comment_Block_End
+        (Get_Language_Context (Ada_Lang).all, Text, End_Line, True);
+
+      Description := new String'
+        (Text (Line_Start (Text, Start_Line) .. Line_End (Text, End_Line)));
+
+      Doc_Subtitle
+        (B, Kernel, Doc_File, Level, Subtitle_Name => "Description");
+
+      Doc_Package_Desc
+        (B, Kernel, Doc_File, Level, Description => Description.all);
+      Free (Description);
+
    end Process_Package_Description;
 
    --------------------------
@@ -1514,12 +1445,10 @@ package body Docgen.Work_On_Source is
                         First_Already_Set := True;
                      end if;
 
-                     Description := Extract_Comment
-                       (File_Text.all,
-                        Get_Line (Get_Declaration_Of (Entity.Entity)),
-                        Header_Lines,
-                        False,
-                        Options);
+                     Description := new String'
+                       (Entities.Get_Documentation
+                          (Entity.Entity,
+                           File_Text.all));
 
                      --  We save in an Entity_Information the current package
                      --  because it must be removed from Entity_List
@@ -1624,12 +1553,10 @@ package body Docgen.Work_On_Source is
                         First_Already_Set := True;
                      end if;
 
-                     Description := Extract_Comment
-                       (File_Text.all,
-                        Get_Line (Get_Declaration_Of (Entity.Entity)),
-                        Header_Lines,
-                        False,
-                        Options);
+                     Description := new String'
+                       (Entities.Get_Documentation
+                          (Entity.Entity,
+                           File_Text.all));
 
                      Doc_Package
                        (B, Kernel, Doc_File,
@@ -1762,12 +1689,10 @@ package body Docgen.Work_On_Source is
                      First_Already_Set := True;
                   end if;
 
-                  Description := Extract_Comment
-                    (File_Text.all,
-                     Get_Line (Get_Declaration_Of (Entity.Entity)),
-                     Header_Lines,
-                     False,
-                     Options);
+                  Description := new String'
+                    (Entities.Get_Documentation
+                       (Entity.Entity,
+                        File_Text.all));
 
                   Doc_Var
                     (B, Kernel, Doc_File, List_Ref_In_File,
@@ -1891,12 +1816,11 @@ package body Docgen.Work_On_Source is
                      First_Already_Set := True;
                   end if;
 
-                  Description := Extract_Comment
-                    (File_Text.all,
-                     Get_Line (Get_Declaration_Of (Entity.Entity)),
-                     Header_Lines,
-                     False,
-                     Options);
+                  Description := new String'
+                    (Entities.Get_Documentation
+                       (Entity.Entity,
+                        File_Text.all));
+
                   Doc_Exception
                     (B, Kernel, Doc_File,
                      List_Ref_In_File, Source_File_List, Options, Level,
@@ -2082,12 +2006,10 @@ package body Docgen.Work_On_Source is
                      First_Already_Set := True;
                   end if;
 
-                  Description := Extract_Comment
-                    (File_Text.all,
-                     Get_Line (Get_Declaration_Of (Entity.Entity)),
-                     Header_Lines,
-                     False,
-                     Options);
+                  Description := new String'
+                    (Entities.Get_Documentation
+                       (Entity.Entity,
+                        File_Text.all));
 
                   Doc_Type
                     (B, Kernel, Doc_File, List_Ref_In_File, Source_File_List,
@@ -2250,12 +2172,10 @@ package body Docgen.Work_On_Source is
                      First_Already_Set := True;
                   end if;
 
-                  Description := Extract_Comment
-                    (File_Text.all,
-                     Get_Line (Get_Declaration_Of (Entity.Entity)),
-                     Header_Lines,
-                     False,
-                     Options);
+                  Description := new String'
+                    (Entities.Get_Documentation
+                       (Entity.Entity,
+                        File_Text.all));
 
                   Doc_Entry
                     (B, Kernel, Doc_File, List_Ref_In_File,
@@ -2409,7 +2329,8 @@ package body Docgen.Work_On_Source is
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
       Header_Lines      : Natural;
-      Header_Start, Header_End : Natural;
+      Header_Start      : Natural;
+      Header_End        : Natural;
       First_Already_Set : Boolean;
       Delete_Node       : Boolean;
       Entity            : TEL.Data_Access;
@@ -2457,12 +2378,10 @@ package body Docgen.Work_On_Source is
                      First_Already_Set := True;
                   end if;
 
-                  Description := Extract_Comment
-                    (File_Text.all,
-                     Get_Line (Get_Declaration_Of (Entity.Entity)),
-                     Header_Lines,
-                     False,
-                     Options);
+                  Description := new String'
+                    (Entities.Get_Documentation
+                       (Entity.Entity,
+                        File_Text.all));
 
                   Doc_Subprogram
                     (B, Kernel, Doc_File,
@@ -2570,312 +2489,21 @@ package body Docgen.Work_On_Source is
       return False;
    end Package_Contain_Entity;
 
-   ---------------------
-   -- Line_Is_Comment --
-   ---------------------
-
-   function Line_Is_Comment (Line : String) return Boolean is
-   begin
-      --  ??? Should be language insensitive
-      for J in Line'First .. Line'Last - 1 loop
-         if Line (J) = '-' and Line (J + 1) = '-' then
-            return True;
-         elsif not Is_Blank (Line (J)) then
-            return False;
-         end if;
-      end loop;
-
-      return False;
-   end Line_Is_Comment;
-
-   -------------------
-   -- Line_Is_Empty --
-   -------------------
-
-   function Line_Is_Empty (Line : String) return Boolean is
-   begin
-      for J in Line'First .. Line'Last loop
-         if not Is_Blank (Line (J)) then
-            return False;
-         end if;
-      end loop;
-
-      return True;
-   end Line_Is_Empty;
-
    --------------------------
    -- Is_Ignorable_Comment --
    --------------------------
 
-   function Is_Ignorable_Comment (Comment_Line : String) return Boolean is
-   begin
-      --  ??? Should be language-insensitive
-      for J in Comment_Line'First .. Comment_Line'Last - 2 loop
-         if Comment_Line (J .. J + 1) = "--" then
-            return Comment_Line (J + 2) = '!';
-         end if;
-      end loop;
-
-      return False;
-   end Is_Ignorable_Comment;
-
-   ---------------------
-   -- Extract_Comment --
-   ---------------------
-
-   function Extract_Comment
-     (File_Text           : String;
-      Line                : Natural;
-      Header_Lines        : Natural;
-      Package_Description : Boolean;
-      Options             : All_Options) return GNAT.OS_Lib.String_Access
-   is
-      use type Ada.Strings.Unbounded.Unbounded_String;
-      Location : Natural;
-      Result_Line         : Ada.Strings.Unbounded.Unbounded_String;
-      New_Line            : GNAT.OS_Lib.String_Access;
-      Temp                : Natural;
-   begin
-      --  Search the index of the text which correspond to the comments
-      --  that we must extract.
-      --  The search is done from the beginning of the string Text.
-      --  If the option Comments Above is false or if it's a package
-      --  description, this index is the "new line" which ends the source code.
-      --  Otherwise, this index is the begin of source code.
-      if (not Options.Comments_Above) or else Package_Description then
-         Location := Get_Location_Start
-           (File_Text,
-            Line + Header_Lines,
-            Options.Comments_Above and not Package_Description);
-      else
-         Location := Get_Location_Start
-           (File_Text,
-            Line,
-            Options.Comments_Above and not Package_Description);
-      end if;
-
-      New_Line := new String'
-        (Get_Line_From_Location_And_String
-           (File_Text,
-            Location,
-            Options.Comments_Above and not Package_Description));
-
-      while Line_Is_Comment (New_Line.all) loop
-         --  ??? if there's an empty line the search stop.
-         --  It's necessary to write at least "--"
-         Location := Get_Next_Location
-           (File_Text,
-            Location,
-            Options.Comments_Above and not Package_Description);
-
-         if (not Options.Comments_Above) or Package_Description then
-            if not (Options.Ignorable_Comments and then
-                      Is_Ignorable_Comment (New_Line.all)) then
-               if Package_Description then
-                  --  Comments at the head of file
-                  Result_Line := Result_Line & New_Line.all;
-               else
-                  --  Comments after the source code
-                  Temp := Skip_Comment_Prefix (New_Line.all);
-                  Result_Line :=
-                    Result_Line & New_Line (Temp .. New_Line'Last);
-               end if;
-            end if;
-         else
-            if not (Options.Ignorable_Comments and then
-                      Is_Ignorable_Comment (New_Line.all))
-            then
-               --  Comments before the source code
-               Temp := Skip_Comment_Prefix (New_Line.all);
-               Result_Line := New_Line (Temp .. New_Line'Last) & Result_Line;
-            end if;
-         end if;
-
-         Free (New_Line);
-
-         --  Now, we don't parse File_Text since the begining. We start
-         --  the search immediatly at the good place. This place is given
-         --  by subprogram Get_Next_Location which begins its search at the
-         --  previous location and not at the begining of File_Text.
-         --  For memory: before, at each loop, Get_Line_From_String was
-         --  called. This subprogram made a search from the begining of
-         --  File_Text.
-         New_Line := new String'
-           (Get_Line_From_Location_And_String
-              (File_Text,
-               Location,
-               Options.Comments_Above
-               and not Package_Description));
-      end loop;
-
-      Free (New_Line);
-
-      return new String'(Ada.Strings.Unbounded.To_String (Result_Line));
-   end Extract_Comment;
-
-   ------------------------
-   -- Get_Location_Start --
-   ------------------------
-
-   function Get_Location_Start
-     (Text            : String;
-      Line            : Natural;
-      Comments_Before : Boolean) return Natural
-   is
-      Lines          : Natural;
-      Index          : Natural;
-      Index_Line     : Natural;
-      Old_Index_Line : Natural;
-   begin
-      Lines          := 1;
-      Index          := Text'First;
-      Index_Line     := Index;
-      Old_Index_Line := Index_Line;
-
-      if Line > 1 then
-         while Index < Text'Length and Lines < Line loop
-            if Text (Index) = ASCII.LF then
-               Lines          := Lines + 1;
-               Old_Index_Line := Index;
-               Index_Line     := Index;
-            end if;
-            Index := Index + 1;
-         end loop;
-      end if;
-
-      if Comments_Before then
-         return Old_Index_Line;
-      else
-         return Index_Line;
-      end if;
-   end Get_Location_Start;
-
-   ---------------------------------------
-   -- Get_Line_From_Location_And_String --
-   ---------------------------------------
-
-   function Get_Line_From_Location_And_String
-     (Text            : String;
-      Location        : Natural;
-      Comments_Before : Boolean) return String
-   is
-      Index_Start : Natural;
-      Index_End   : Natural;
-   begin
-      if Comments_Before then
-         if Location - 1 >= Text'First then
-            Index_Start := Location - 1;
-            Index_End   := Index_Start;
-
-            while Index_End > Text'First
-              and then Text (Index_End) /=  ASCII.LF
-            loop
-               Index_End := Index_End - 1;
-            end loop;
-
-            return Text (Index_End .. Index_Start + 1);
-         else
-            return "";
-         end if;
-      else
-         if Location + 1 <= Text'Last then
-            Index_Start := Location + 1;
-            Index_End   := Index_Start;
-
-            while Index_End < Text'Last
-              and then Text (Index_End) /=  ASCII.LF
-            loop
-               Index_End := Index_End + 1;
-            end loop;
-            return Text (Location .. Index_End - 1);
-         else
-            return "";
-         end if;
-      end if;
-   end Get_Line_From_Location_And_String;
-
-   -----------------------
-   -- Get_Next_Location --
-   -----------------------
-
-   function Get_Next_Location
-     (Text            : String;
-      Old_Location    : Natural;
-      Comments_Before : Boolean) return Natural
-   is
-      Index : Natural;
-   begin
-      if Comments_Before then
-         if Old_Location - 1 >= Text'First then
-            Index := Old_Location - 1;
-            while Index > Text'First and then Text (Index) /=  ASCII.LF loop
-               Index := Index - 1;
-            end loop;
-            return Index;
-         else
-            return Text'First;
-         end if;
-      else
-         if Old_Location + 1 <= Text'Last then
-            Index := Old_Location + 1;
-            while Index < Text'Last and then Text (Index) /=  ASCII.LF loop
-               Index := Index + 1;
-            end loop;
-            return Index;
-         else
-            return Text'Last;
-         end if;
-      end if;
-   end Get_Next_Location;
-
-   -------------------------
-   -- Skip_Comment_Prefix --
-   -------------------------
-
-   function Skip_Comment_Prefix (Text : String) return Natural is
-      J : Natural := Text'First;
-   begin
-      Skip_Blanks (Text, J);
-
-      --  ??? Should be language insensitive
-      if J <= Text'Last and then Text (J .. J + 1) = "--" then
-         J := J + 2;
-      end if;
-
-      Skip_Blanks (Text, J);
-      return J;
-   end Skip_Comment_Prefix;
-
-   --------------------------
-   -- Get_Line_From_String --
-   --------------------------
-
-   function Get_Line_From_String
-     (Text    : String;
-      Line_Nr : Natural) return String
-   is
-      Lines, Index_Start, Index_End : Natural;
-   begin
-      Lines       := 1;
-      Index_Start := 1;
-
-      if Line_Nr > 1 then
-         while Index_Start < Text'Length and Lines < Line_Nr loop
-            if Text (Index_Start) = ASCII.LF then
-               Lines := Lines + 1;
-            end if;
-
-            Index_Start := Index_Start + 1;
-         end loop;
-      end if;
-
-      Index_End := Index_Start;
-      while Index_End < Text'Length and then Text (Index_End) /=  ASCII.LF loop
-         Index_End := Index_End + 1;
-      end loop;
-
-      return Text (Index_Start .. Index_End);
-   end Get_Line_From_String;
+--     function Is_Ignorable_Comment (Comment_Line : String) return Boolean is
+--     begin
+--        --  ??? Should be language-insensitive
+--        for J in Comment_Line'First .. Comment_Line'Last - 2 loop
+--           if Comment_Line (J .. J + 1) = "--" then
+--              return Comment_Line (J + 2) = '!';
+--           end if;
+--        end loop;
+--
+--        return False;
+--     end Is_Ignorable_Comment;
 
    ------------------------
    --  Get_Whole_Header  --
