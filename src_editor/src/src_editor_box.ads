@@ -302,6 +302,11 @@ package Src_Editor_Box is
    --  Returns the line number where block enclosing Line ends. Returns 0
    --  if Line is not in a block.
 
+   function Get_Block_Name
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
+   --  Returns the name for the block enclosing Line.
+
    function Get_Block_Type
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
@@ -424,6 +429,7 @@ private
 
       --  The status bar
       Filename_Label       : Gtk.Label.Gtk_Label;
+      Function_Label       : Gtk.Label.Gtk_Label;
       Read_Only_Label      : Gtk.Label.Gtk_Label;
       Modified_Label       : Gtk.Label.Gtk_Label;
       Overwrite_Label      : Gtk.Label.Gtk_Label;
