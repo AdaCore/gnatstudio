@@ -140,7 +140,8 @@ package body Python_Module is
    type Python_Class_Instance is access all Python_Class_Instance_Record'Class;
 
    function New_Instance
-     (Data : Python_Callback_Data; Class : Class_Type) return Class_Instance;
+     (Script : access Python_Scripting_Record;
+      Class : Class_Type) return Class_Instance;
    function Get_Class (Instance : access Python_Class_Instance_Record)
       return Class_Type;
    function Get_Data (Instance : access Python_Class_Instance_Record)
@@ -342,6 +343,10 @@ package body Python_Module is
       Size : constant Integer := PyTuple_Size (Args);
       Callback : Python_Callback_Data;
    begin
+      Trace (Me, "First_Level: Number of parameters is "
+             & PyTuple_Size (Args)'Img & ' '
+             & Handler.Command);
+
       --  Check number of arguments
       if Handler.Minimum_Args > Size
         or else Size > Handler.Maximum_Args
@@ -410,14 +415,16 @@ package body Python_Module is
       User_Data : constant PyObject := PyCObject_FromVoidPtr
         (H.all'Address, Destroy_Handler_Data'Access);
       Klass : PyObject;
+      Def   : PyMethodDef;
    begin
       if Class = No_Class then
          Add_Function
            (Module => Script.GPS_Module,
             Func   => Create_Method_Def
               (Command, First_Level'Access,
-               Usage & ASCII.LF & ASCII.LF & Description),
+               Command & ' ' & Usage & ASCII.LF & ASCII.LF & Description),
             Self   => User_Data);
+
       else
          H.Minimum_Args := H.Minimum_Args + 1;
 
@@ -425,12 +432,20 @@ package body Python_Module is
             H.Maximum_Args := H.Maximum_Args + 1;
          end if;
          Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
-         Add_Method
-           (Class => Klass,
-            Func  => Create_Method_Def
+
+         if Command = Constructor_Method then
+            Def := Create_Method_Def
+              ("__init__", First_Level'Access,
+               Get_Name (Class) & ' ' & Usage
+               & ASCII.LF & ASCII.LF & Description);
+         else
+            Def := Create_Method_Def
               (Command, First_Level'Access,
-               Usage & ASCII.LF & ASCII.LF & Description),
-            Self   => User_Data);
+               Command & ' ' & Usage & ASCII.LF & ASCII.LF & Description);
+         end if;
+
+         Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
+         Add_Method (Class => Klass, Func  => Def, Self   => User_Data);
       end if;
    end Register_Command;
 
@@ -563,11 +578,15 @@ package body Python_Module is
    is
       Item : constant PyObject := PyTuple_GetItem (Data.Args, N - 1);
    begin
-      if Item = null or else not PyBool_Check (Item) then
+      if Item = null then
+         raise Invalid_Parameter;
+      elsif PyBool_Check (Item) then
+         return Item = Py_True;
+      elsif PyInt_Check (Item) then
+         return PyInt_AsLong (Item) = 1;
+      else
          raise Invalid_Parameter;
       end if;
-
-      return Item = Py_True;
    end Nth_Arg;
 
    -------------
@@ -756,10 +775,11 @@ package body Python_Module is
    ------------------
 
    function New_Instance
-     (Data : Python_Callback_Data; Class : Class_Type) return Class_Instance
+     (Script : access Python_Scripting_Record;
+      Class : Class_Type) return Class_Instance
    is
       Klass : constant PyObject := Lookup_Class_Object
-        (Data.Script.GPS_Module, Get_Name (Class));
+        (Script.GPS_Module, Get_Name (Class));
    begin
       if Klass = null then
          return null;
@@ -767,7 +787,7 @@ package body Python_Module is
 
       return new Python_Class_Instance_Record'
         (Class_Instance_Record with
-         Script => Data.Script,
+         Script => Python_Scripting (Script),
          Data   => PyInstance_New (Klass, null));
    end New_Instance;
 
