@@ -76,6 +76,11 @@ package body GVD.Menus is
    package Item_Register is new Register_Generic
      (Item_Record, Gtk_Widget_Record);
 
+   type Call_Stack_Record is record
+      Process : Debugger_Process_Tab;
+      Filter  : Stack_List_Filter;
+   end record;
+
    --------------------
    -- local packages --
    --------------------
@@ -86,6 +91,8 @@ package body GVD.Menus is
      (Gtk_Widget_Record, Item_Record);
    package Item_Canvas_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Menu_Item_Record, GVD_Canvas);
+   package Call_Stack_Cb is new Gtk.Handlers.User_Callback
+     (Gtk_Menu_Item_Record, Call_Stack_Record);
 
    ----------------------
    -- local procedures --
@@ -136,6 +143,11 @@ package body GVD.Menus is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
    --  Hide all the subcomponents of the selected item.
+
+   procedure Change_Filter
+     (Widget : access Gtk_Menu_Item_Record'Class;
+      Filter : Call_Stack_Record);
+   --  Toggle the display of a specific column in the Stack_List window.
 
    --------------------------
    -- Change_Align_On_Grid --
@@ -293,6 +305,20 @@ package body GVD.Menus is
          end if;
       end if;
    end Set_Value;
+
+   -------------------
+   -- Change_Filter --
+   -------------------
+
+   procedure Change_Filter
+     (Widget : access Gtk_Menu_Item_Record'Class;
+      Filter : Call_Stack_Record)
+   is
+   begin
+      Filter.Process.Backtrace_Filter :=
+        Filter.Process.Backtrace_Filter xor Filter.Filter;
+      Show_Call_Stack_Columns (Filter.Process);
+   end Change_Filter;
 
    --------------------------------
    -- Contextual_Background_Menu --
@@ -549,9 +575,40 @@ package body GVD.Menus is
          --  The menu has not been created yet
 
          Gtk_New (Menu);
-         Gtk_New (Mitem, Label => -"Show file");
-         Set_State (Mitem, State_Insensitive);
+         Gtk_New (Mitem, Label => -"Toggle Frame Num");
          Append (Menu, Mitem);
+         Call_Stack_Cb.Connect
+           (Mitem, "activate",
+            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            (Debugger_Process_Tab (Process), Frame_Num));
+
+         Gtk_New (Mitem, Label => -"Toggle Subprogram Name");
+         Append (Menu, Mitem);
+         Call_Stack_Cb.Connect
+           (Mitem, "activate",
+            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            (Debugger_Process_Tab (Process), Subprog_Name));
+
+         Gtk_New (Mitem, Label => -"Toggle Parameters");
+         Append (Menu, Mitem);
+         Call_Stack_Cb.Connect
+           (Mitem, "activate",
+            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            (Debugger_Process_Tab (Process), Params));
+
+         Gtk_New (Mitem, Label => -"Toggle File Location");
+         Append (Menu, Mitem);
+         Call_Stack_Cb.Connect
+           (Mitem, "activate",
+            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            (Debugger_Process_Tab (Process), File_Location));
+
+         Gtk_New (Mitem, Label => -"Toggle Program Counter");
+         Append (Menu, Mitem);
+         Call_Stack_Cb.Connect
+           (Mitem, "activate",
+            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            (Debugger_Process_Tab (Process), Program_Counter));
 
          Show_All (Menu);
          Menu_User_Data.Set
