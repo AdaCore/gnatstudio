@@ -60,6 +60,10 @@ private
       Switches          : Switches_Editors.Switches_Edit;
       Naming            : Naming_Editors.Naming_Editor;
       Load_Project      : Gtk.Check_Button.Gtk_Check_Button;
+      Ada_Support       : Gtk.Check_Button.Gtk_Check_Button;
+      C_Support         : Gtk.Check_Button.Gtk_Check_Button;
+      Cpp_Support       : Gtk.Check_Button.Gtk_Check_Button;
+      Language_Changed  : Boolean := True;
 
       Kernel            : Glide_Kernel.Kernel_Handle;
 
