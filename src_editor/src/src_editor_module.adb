@@ -3159,10 +3159,8 @@ package body Src_Editor_Module is
    is
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
-
-      Base  : String := Base_Name (File);
    begin
-      if File /= Base then
+      if File /= Base_Name (File) then
          --  If the file name is not a base name, the heuristics is
          --  straightforward.
 
