@@ -27,52 +27,112 @@ with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 with Gtk.Label;                 use Gtk.Label;
 with Glide_Intl;                use Glide_Intl;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with VFS;                       use VFS;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Traces;                    use Traces;
+with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Adp is
 
-   procedure On_Browse (Wiz : access Gtk_Widget_Record'Class);
+   type Adp_Selection_Page is new Project_Wizard_Page_Record with record
+      Kernel        : Kernel_Handle;
+      Adp_File_Name : Gtk.GEntry.Gtk_Entry;
+   end record;
+   type Adp_Selection_Page_Access is access all Adp_Selection_Page'Class;
+   procedure Generate_Project
+     (Page               : access Adp_Selection_Page;
+      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean);
+   function Create_Content
+     (Page : access Adp_Selection_Page;
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
+   function Is_Complete
+     (Page : access Adp_Selection_Page;
+      Wiz  : access Wizards.Wizard_Record'Class) return Boolean;
+   --  See inherited documentation
+
+   procedure On_Browse
+     (Widget : access Gtk_Widget_Record'Class;
+      Page   : Project_Wizard_Page);
    --  Called when the browse button is pressed.
 
-   -------------
-   -- Gtk_New --
-   -------------
+   --------------------------
+   -- Add_Adp_Wizard_Pages --
+   --------------------------
 
-   procedure Gtk_New
-     (Wiz    : out Adp_Wizard;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   procedure Add_Adp_Wizard_Pages
+     (Wiz : access Project_Wizard_Record'Class)
+   is
+      Adp_Page : constant Adp_Selection_Page_Access := new Adp_Selection_Page;
    begin
-      Wiz := new Adp_Wizard_Record;
-      Creation_Wizard.Adp.Initialize (Wiz, Kernel);
-   end Gtk_New;
+      Adp_Page.Kernel := Kernel_Handle (Wiz.Kernel);
+      Add_Page (Wiz, Adp_Page,
+                Toc         => -".adp file selection",
+                Description => -"Select .adp file name");
+   end Add_Adp_Wizard_Pages;
 
-   ----------------
-   -- Initialize --
-   ----------------
+   -----------------
+   -- Is_Complete --
+   -----------------
 
-   procedure Initialize
-     (Wiz    : access Adp_Wizard_Record'Class;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   function Is_Complete
+     (Page : access Adp_Selection_Page;
+      Wiz  : access Wizards.Wizard_Record'Class) return Boolean is
+   begin
+      if Page.Adp_File_Name /= null
+        and then Get_Text (Page.Adp_File_Name) /= ""
+      then
+         return True;
+      else
+         Display_Error (Wiz, -"You must specify a .adp file");
+         return False;
+      end if;
+   end Is_Complete;
+
+   ----------------------
+   -- Generate_Project --
+   ----------------------
+
+   procedure Generate_Project
+     (Page               : access Adp_Selection_Page;
+      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean)
+   is
+      pragma Unreferenced (Scenario_Variables);
+      Adp_File : constant String := Get_Text (Page.Adp_File_Name);
+   begin
+      if Adp_File /= "" then
+         Convert_Adp_File
+           (Adp_Filename   => Adp_File,
+            Registry       => Get_Registry (Kernel).all,
+            Project        => Project,
+            Spec_Extension => ".ads",
+            Body_Extension => ".adb");
+         Changed := True;
+      end if;
+   end Generate_Project;
+
+   --------------------
+   -- Create_Content --
+   --------------------
+
+   function Create_Content
+     (Page : access Adp_Selection_Page;
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       Label  : Gtk_Label;
       Box    : Gtk_Box;
       Box2   : Gtk_Box;
       Button : Gtk_Button;
    begin
-      Creation_Wizard.Initialize
-        (Wiz, Kernel,
-         Force_Relative_Dirs       => True,
-         Ask_About_Loading         => False,
-         Activate_Finish_From_Page => -1);
-
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Add_Page (Wiz, Box, -".adp file selection", -"Select .adp file name");
 
       Gtk_New (Label, -"Enter the name of the .adp file:");
       Pack_Start (Box, Label, Expand => False);
@@ -80,57 +140,45 @@ package body Creation_Wizard.Adp is
       Gtk_New_Hbox (Box2, Homogeneous => False);
       Pack_Start (Box, Box2, Expand => False);
 
-      Gtk_New (Wiz.Adp_File_Name);
-      Pack_Start (Box2, Wiz.Adp_File_Name, Expand => True);
+      Gtk_New (Page.Adp_File_Name);
+      Pack_Start (Box2, Page.Adp_File_Name, Expand => True);
 
       Gtk_New (Button, -"Browse");
       Pack_Start (Box2, Button, Expand => False);
-      Widget_Callback.Object_Connect
+      Page_Handlers.Connect
         (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Browse'Access), Wiz);
+         Page_Handlers.To_Marshaller (On_Browse'Access),
+         User_Data => Project_Wizard_Page (Page));
 
-      Show_All (Box);
-   end Initialize;
+      Widget_Callback.Object_Connect
+        (Page.Adp_File_Name, "changed",
+         Widget_Callback.To_Marshaller (Update_Buttons_Sensitivity'Access),
+         Wiz);
+
+      Grab_Focus (Page.Adp_File_Name);
+
+      return Gtk_Widget (Box);
+   end Create_Content;
 
    ---------------
    -- On_Browse --
    ---------------
 
-   procedure On_Browse (Wiz : access Gtk_Widget_Record'Class) is
-      W    : constant Adp_Wizard := Adp_Wizard (Wiz);
+   procedure On_Browse
+     (Widget : access Gtk_Widget_Record'Class;
+      Page   : Project_Wizard_Page)
+   is
+      P    : constant Adp_Selection_Page_Access :=
+        Adp_Selection_Page_Access (Page);
       Name : constant VFS.Virtual_File := Select_File
-        (Use_Native_Dialog  => Get_Pref (W.Kernel, Use_Native_Dialogs),
+        (Use_Native_Dialog  => Get_Pref (P.Kernel, Use_Native_Dialogs),
          File_Pattern       => "*.adp",
-         Parent             => Get_Main_Window (W.Kernel),
+         Parent             => Gtk_Window (Get_Toplevel (Widget)),
          Kind               => Open_File);
    begin
       if Name /= VFS.No_File then
-         Set_Text (W.Adp_File_Name, Full_Name (Name).all);
+         Set_Text (P.Adp_File_Name, Full_Name (Name).all);
       end if;
    end On_Browse;
-
-   ----------------------
-   -- Generate_Project --
-   ----------------------
-
-   procedure Generate_Project
-     (Wiz     : access Adp_Wizard_Record;
-      Project : in out Projects.Project_Type)
-   is
-      Adp_File : constant String := Get_Text (Wiz.Adp_File_Name);
-   begin
-      if Adp_File /= "" then
-         Convert_Adp_File
-           (Adp_Filename   => Adp_File,
-            Registry       => Get_Registry (Wiz.Kernel).all,
-            Project        => Project,
-            Spec_Extension => ".ads",
-            Body_Extension => ".adb");
-      end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
-   end Generate_Project;
 
 end Creation_Wizard.Adp;

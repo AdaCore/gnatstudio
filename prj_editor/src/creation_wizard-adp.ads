@@ -20,33 +20,12 @@
 
 --  A wizard to create some .gpr files from a .adp file
 
-with Glide_Kernel;
-with Gtk.GEntry;
-
 package Creation_Wizard.Adp is
 
-   type Adp_Wizard_Record is new Wizard_Base_Record with private;
-   type Adp_Wizard is access all Adp_Wizard_Record'Class;
+   procedure Add_Adp_Wizard_Pages
+     (Wiz : access Project_Wizard_Record'Class);
+   --  Add the required pages to a wizard to make it an adp converter wizard.
+   --  Such a wizard converts a Glide project file (.adp) into a set of .gpr
+   --  project files.
 
-   procedure Gtk_New
-     (Wiz    : out Adp_Wizard;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Create a new simple project creation, which creates a set of projects
-   --  given a set of object directories and source directories.
-
-   procedure Initialize
-     (Wiz    : access Adp_Wizard_Record'Class;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Internal function for the creation of a new wizard
-
-   procedure Generate_Project
-     (Wiz     : access Adp_Wizard_Record;
-      Project : in out Projects.Project_Type);
-   --  Generate additional attributes for the project, as well as other
-   --  projects if needed
-
-private
-   type Adp_Wizard_Record is new Wizard_Base_Record with record
-      Adp_File_Name : Gtk.GEntry.Gtk_Entry;
-   end record;
 end Creation_Wizard.Adp;
