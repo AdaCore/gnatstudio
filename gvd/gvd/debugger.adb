@@ -24,9 +24,9 @@ with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with GNAT.IO;           use GNAT.IO;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Ada.Text_IO;       use Ada.Text_IO;
 with Unchecked_Conversion;
 
 with Glib;              use Glib;
@@ -620,7 +620,8 @@ package body Debugger is
       --  not reliable.
 
       if Command_In_Process (Get_Process (Debugger)) then
-         Put_Line ("!!! already running a Wait command!!");
+         pragma Debug (Put_Line ("!!! already running a Wait command!!"));
+         null;
       end if;
 
       --  Block if the global lock is set
