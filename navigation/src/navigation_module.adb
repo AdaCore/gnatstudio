@@ -113,16 +113,13 @@ package body Navigation_Module is
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
       pragma Unreferenced (Mode);
-      Location_Command : Source_Location_Command;
 
       N_Data : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
+      Success : Boolean;
 
    begin
       if Mime_Type = Mime_Source_File then
-         --  ??? The decapsulating and re-encapsulating of Values is
-         --  an unnecessary step and could be avoided.
-
          declare
             File       : constant String  := Get_String (Data (Data'First));
             Line       : constant Gint    := Get_Int (Data (Data'First + 1));
@@ -132,11 +129,11 @@ package body Navigation_Module is
               Get_Boolean (Data (Data'First + 4));
             Navigate   : constant Boolean :=
               Get_Boolean (Data (Data'First + 5));
-            Success    : Boolean;
 
             Context    : Selection_Context_Access;
             Entity     : Entity_Selection_Context_Access;
             Entity_Col : Natural := 0;
+            Location_Command : Source_Location_Command;
 
          begin
             if not Navigate then
@@ -211,6 +208,32 @@ package body Navigation_Module is
             end if;
 
             N_Data.Current_Location := Command_Access (Location_Command);
+            Success := Execute (N_Data.Current_Location);
+            Free (N_Data.Forward);
+
+            Refresh_Location_Buttons (Kernel);
+
+            return True;
+         end;
+
+      elsif Mime_Type = Mime_Html_File then
+         declare
+            File       : constant String  := Get_String (Data (Data'First));
+            Navigate   : constant Boolean :=
+              Get_Boolean (Data (Data'First + 1));
+            Html_Command : Html_Location_Command;
+         begin
+            if not Navigate then
+               return False;
+            end if;
+
+            Create (Html_Command, Kernel_Handle (Kernel), File);
+
+            if N_Data.Current_Location /= null then
+               Prepend (N_Data.Back, N_Data.Current_Location);
+            end if;
+
+            N_Data.Current_Location := Command_Access (Html_Command);
             Success := Execute (N_Data.Current_Location);
             Free (N_Data.Forward);
 
