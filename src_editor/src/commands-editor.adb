@@ -55,7 +55,8 @@ package body Commands.Editor is
       Buffer        : Source_Buffer;
       User_Executed : Boolean;
       Line          : Integer;
-      Column        : Integer) is
+      Column        : Integer;
+      Direction     : Direction_Type := Forward) is
    begin
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
@@ -64,6 +65,7 @@ package body Commands.Editor is
       Item.User_Executed := User_Executed;
       Item.Line := Line;
       Item.Column := Column;
+      Item.Direction := Direction;
    end Create;
 
    --------------
@@ -161,6 +163,13 @@ package body Commands.Editor is
                     (First .. First + Command.Current_Text_Size - 1),
                   False);
 
+               if Command.Direction = Backward then
+                  Set_Cursor_Position
+                    (Command.Buffer,
+                     Gint (Command.Line),
+                     Gint (Command.Column));
+               end if;
+
             when Deletion =>
                Delete
                  (Command.Buffer,
@@ -168,10 +177,12 @@ package body Commands.Editor is
                   Gint (Command.Column),
                   Gint (Command.Current_Text_Size),
                   False);
+
                Set_Cursor_Position
                  (Command.Buffer,
                   Gint (Command.Line),
                   Gint (Command.Column));
+
          end case;
       end if;
 
