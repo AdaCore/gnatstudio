@@ -92,19 +92,19 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Remove_Entity_Cmd --
    -----------------------
 
---   type Remove_Entity_Cmd is new Text_Command with private;
+   type Remove_Entity_Cmd is new Text_Command with private;
 
---   procedure Initialize
---     (This         : in out Remove_Entity_Cmd;
---      Current_Text : Text_Navigator_Abstr'Class;
---      Start_Entity : File_Cursor'Class);
+   procedure Initialize
+     (This         : in out Remove_Entity_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Start_Entity : File_Cursor'Class);
 
---   procedure Execute
---     (This         : Remove_Entity_Cmd;
---      Current_Text : Text_Navigator_Abstr'Class;
---      New_Extract  : in out Extract'Class);
+   procedure Execute
+     (This         : Remove_Entity_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
 
---   procedure Free (This : in out Remove_Entity_Cmd);
+   procedure Free (This : in out Remove_Entity_Cmd);
 
 private
 
@@ -134,9 +134,9 @@ private
       Is_Instantiation  : Boolean;
    end record;
 
---   type Remove_Entity_Cmd is new Text_Command with record
---      Spec_Begin, Spec_End : Ptr_Mark;
---      Body_Begin, Body_End : Ptr_Mark;
---   end record;
+   type Remove_Entity_Cmd is new Text_Command with record
+      Spec_Begin, Spec_End : Ptr_Mark;
+      Body_Begin, Body_End : Ptr_Mark;
+   end record;
 
 end Codefix.Text_Manager.Ada_Commands;
