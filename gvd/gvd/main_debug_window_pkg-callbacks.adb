@@ -433,7 +433,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Run (Tab.Debugger);
+      Run (Tab.Debugger, Gtk_Window (Top));
    end On_Run1_Activate;
 
    ----------------------------
@@ -459,7 +459,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Start (Tab.Debugger);
+      Start (Tab.Debugger, Gtk_Window (Top));
    end On_Start1_Activate;
 
    ------------------------------------------
@@ -485,7 +485,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Step_Into (Tab.Debugger);
+      Step_Into (Tab.Debugger, Gtk_Window (Top));
    end On_Step1_Activate;
 
    -----------------------------------
@@ -511,7 +511,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Step_Over (Tab.Debugger);
+      Step_Over (Tab.Debugger, Gtk_Window (Top));
    end On_Next1_Activate;
 
    -----------------------------------
@@ -548,7 +548,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Finish (Tab.Debugger);
+      Finish (Tab.Debugger, Gtk_Window (Top));
    end On_Finish1_Activate;
 
    ---------------------------
@@ -563,7 +563,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Continue (Tab.Debugger);
+      Continue (Tab.Debugger, Gtk_Window (Top));
    end On_Continue1_Activate;
 
    ------------------------------------------
@@ -845,7 +845,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Stack_Up (Tab.Debugger);
+      Stack_Up (Tab.Debugger, Gtk_Window (Top));
    end On_Up1_Activate;
 
    -----------------------
@@ -860,7 +860,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Stack_Down (Tab.Debugger);
+      Stack_Down (Tab.Debugger, Gtk_Window (Top));
    end On_Down1_Activate;
 
    --------------------------
