@@ -311,22 +311,25 @@ package body Builder_Module is
          when GNAT_Syntax =>
             --  gnatmake -d -Pproject main -XVAR1=value1 ...
 
-            if File = All_Files then
-               File_Arg := new String'("");
-            else
-               File_Arg := new String'(File);
-            end if;
+            declare
+               R_Tmp : Argument_List (1 .. 3);
+               K     : Natural := 0;
+            begin
+               if Build_Progress then
+                  K := K + 1;
+                  R_Tmp (K) := new String'("-d");
+               end if;
 
-            if Build_Progress then
-               Result := new Argument_List'
-                 ((new String'("-d"),
-                   new String'("-P" & Project),
-                   File_Arg) & Vars.all);
-            else
-               Result := new Argument_List'
-                 ((new String'("-P" & Project),
-                   File_Arg) & Vars.all);
-            end if;
+               K := K + 1;
+               R_Tmp (K) := new String'("-P" & Project);
+
+               if File /= All_Files then
+                  K := K + 1;
+                  R_Tmp (K) := new String'(File);
+               end if;
+
+               Result := new Argument_List'(R_Tmp (1 .. K) & Vars.all);
+            end;
 
          when Make_Syntax =>
             --  make -s -C dir -f Makefile.project build VAR1=value1 ...
