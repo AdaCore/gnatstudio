@@ -123,8 +123,11 @@ package body Docgen is
          Link_All         : Boolean;
          Is_Body          : Boolean;
          Process_Body     : Boolean;
-         Info             : Doc_Info)
+         Info             : Doc_Info;
+         Level            : Natural;
+         Indent           : Natural)
       is
+
          function Is_Operator (Op : String) return Boolean;
          --  Indicates if op is a subprogram which overloads an operator
 
@@ -236,25 +239,27 @@ package body Docgen is
                             = Get_Name (Info.Subprogram_Entity.Entity))
                      then
                         --  Function which overrides an operator
-                        Format_Identifier
-                          (B,
-                           List_Ref_In_File,
-                           Sloc_Start.Index + 1,
-                           Sloc_Start.Line,
-                           Sloc_Start.Column,
-                           Sloc_End.Index - 1,
-                           Sloc_End.Line,
-                           Kernel,
-                           File,
-                           LI_Unit,
-                           Text,
-                           File_Name,
-                           Entity_Line,
-                           Line_In_Body,
-                           Source_File_List,
-                           Link_All,
-                           Is_Body,
-                           Process_Body);
+                           Format_Identifier
+                             (B,
+                              List_Ref_In_File,
+                              Sloc_Start.Index + 1,
+                              Sloc_Start.Line,
+                              Sloc_Start.Column,
+                              Sloc_End.Index - 1,
+                              Sloc_End.Line,
+                              Kernel,
+                              File,
+                              LI_Unit,
+                              Text,
+                              File_Name,
+                              Entity_Line,
+                              Line_In_Body,
+                              Source_File_List,
+                              Link_All,
+                              Is_Body,
+                              Process_Body,
+                              Level,
+                              Indent);
                      else
                         --  Simple string
                         Format_String
@@ -291,26 +296,37 @@ package body Docgen is
                      Entity_Line);
 
                when Identifier_Text =>
-                  Format_Identifier
-                    (B,
-                     List_Ref_In_File,
-                     Sloc_Start.Index,
-                     Sloc_Start.Line,
-                     Sloc_Start.Column,
-                     Sloc_End.Index,
-                     Sloc_End.Line,
-                     Kernel,
-                     File,
-                     LI_Unit,
-                     Text,
-                     File_Name,
-                     Entity_Line,
-                     Line_In_Body,
-                     Source_File_List,
-                     Link_All,
-                     Is_Body,
-                     Process_Body);
-
+--                    Trace (Me, "Id :: "
+--                      & Text (Sloc_Start.Index .. Sloc_End.Index));
+                  if Text (Sloc_Start.Index .. Sloc_End.Index) /= ";" then
+                     --  ???  This test is necessary because Parse_Entity
+                     --  consider the last ";" of the text as an identifier.
+                     --  What is surprising is it occurs only for the text of
+                     --  spec file and not for the text of body file. Perhaps,
+                     --  the reason is that in the body the ";" ended the
+                     --  file.
+                     Format_Identifier
+                       (B,
+                        List_Ref_In_File,
+                        Sloc_Start.Index,
+                        Sloc_Start.Line,
+                        Sloc_Start.Column,
+                        Sloc_End.Index,
+                        Sloc_End.Line,
+                        Kernel,
+                        File,
+                        LI_Unit,
+                        Text,
+                        File_Name,
+                        Entity_Line,
+                        Line_In_Body,
+                        Source_File_List,
+                        Link_All,
+                        Is_Body,
+                        Process_Body,
+                        Level,
+                        Indent);
+                  end if;
                when others =>
                   null;
             end case;
@@ -354,7 +370,9 @@ package body Docgen is
       Source_File_List    : Type_Source_File_List.List;
       Link_All            : Boolean;
       Is_Body             : Boolean;
-      Process_Body        : Boolean)
+      Process_Body        : Boolean;
+      Level               : Natural;
+      Indent              : Natural)
    is
       use type Basic_Types.String_Access;
       use List_Reference_In_File;
@@ -367,6 +385,9 @@ package body Docgen is
       Ref_List_Info_Prec : List_Reference_In_File.List_Node;
       Result             : Boolean;
       Entity_Abstract    : Boolean;
+      Indentation        : Natural;
+      --  This last parameter is used to add levels of indentation
+      --  for spec files
 
       procedure Get_Declaration
         (Text             : String;
@@ -387,15 +408,12 @@ package body Docgen is
          E_L_I            : in List_Reference_In_File.List_Node;
          Result           : in out Boolean;
          Entity_Abstract  : in out Boolean) is
-         pragma Unreferenced (Column);
       begin
          if List_Reference_In_File.Data (E_L_I).Line = Line
            and then
              To_Lower (Text) = List_Reference_In_File.Data (E_L_I).Name.all
-         --  and then
-         --  List_Reference_In_File.Data (E_L_I).Column = Column
-         --  ??? perhaps problems with Parse_Entites about columns
-         --  or ali file which are not up to date. Need to be tested.
+           and then
+             List_Reference_In_File.Data (E_L_I).Column = Column
          then
             Result := True;
             E_I := List_Reference_In_File.Data (E_L_I).Entity.all;
@@ -406,6 +424,17 @@ package body Docgen is
       end Get_Declaration;
 
    begin
+      if Is_Body then
+         Indentation := 0;
+      else
+         Indentation := Level * Indent;
+         --  For spec files, we must add levels of indentation otherwise
+         --  a text and its associated reference in list won't match.
+         --  In fact, the string which is given to Format_File is obtained by
+         --  Get_Whole_Header + Remove_Indent. Get_Whole_Header remove the
+         --  indentation of the first line and Remove_Indent remove the
+         --  indentation of the other lines
+      end if;
       Loc_Start := Start_Index;
 
       --  Take apart parsed entites with any "."'s in the middle
@@ -414,7 +443,6 @@ package body Docgen is
       loop
          Point_In_Column :=
            Index (Text (Loc_Start .. End_Index), ".");
-
          if Point_In_Column > 0 then
             Loc_End := Point_In_Column - 1;
          else
@@ -440,7 +468,7 @@ package body Docgen is
                  (Text (Loc_Start .. Loc_End),
                   Entity_Info,
                   Start_Line + Entity_Line - 1,
-                  Start_Column + Loc_Start - Start_Index,
+                  Start_Column + Loc_Start - Start_Index + Indentation,
                   Ref_List_Info,
                   Result,
                   Entity_Abstract);
@@ -450,6 +478,10 @@ package body Docgen is
                      Ref_List_Info);
                end if;
 
+               exit when Is_Body;
+               --  for body files, no loop because references in the list
+               --  are sorted. So the first element met in list is the good
+               --  one (for this elements are removed after being met).
                exit when Result;
                Ref_List_Info_Prec := Ref_List_Info;
                Ref_List_Info
@@ -518,9 +550,9 @@ package body Docgen is
       else
          --  this case normaly never happens
          if X = null then
-            return false;
+            return False;
          else
-            return true;
+            return True;
          end if;
       end if;
    end Compare_Name;
@@ -670,7 +702,7 @@ package body Docgen is
             end if;
             Found := True;
          end if;
-
+         --  Work on the other element of the list
          if not Found then
             Follow_Node := Node;
             Node := Type_List_Tagged_Element.Next (Node);
@@ -733,7 +765,7 @@ package body Docgen is
             end if;
             Found := True;
          end if;
-
+         --  Work on the other element of the list
          if not Found then
             Follow_Node := Node;
             Node := Type_List_Tagged_Element.Next (Node);
@@ -793,7 +825,7 @@ package body Docgen is
             end if;
             Found := True;
          end if;
-
+         --  Work on the other element of the list
          if not Found then
             Follow_Node := Node;
             Node := Type_List_Tagged_Element.Next (Node);
