@@ -195,7 +195,7 @@ package Language is
    type Thread_Information
      (Num_Fields : Thread_Fields := Thread_Fields'First) is
    record
-      Information : Chars_Ptr_Array (1 .. Num_Fields);
+      Information : chars_ptr_array (1 .. Num_Fields);
    end record;
    --  Represent the information of one thread.
 

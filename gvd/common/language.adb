@@ -23,6 +23,28 @@ with Gtkada.Types; use Gtkada.Types;
 
 package body Language is
 
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   function Dereference
+     (Lang     : access Language_Root;
+      Variable : String) return String;
+   --  Spec needed ???
+
+   -----------------
+   -- Dereference --
+   -----------------
+
+   function Dereference
+     (Lang     : access Language_Root;
+      Variable : String) return String
+   is
+      pragma Warnings (Off, Lang);
+   begin
+      return Variable;
+   end Dereference;
+
    ---------------------
    -- Break_Exception --
    ---------------------
@@ -72,19 +94,6 @@ package body Language is
       Next_Char := Buffer'First + 1;
       Entity := Normal_Text;
    end Looking_At;
-
-   -----------------
-   -- Dereference --
-   -----------------
-
-   function Dereference
-     (Lang     : access Language_Root;
-      Variable : String) return String
-   is
-      pragma Warnings (Off, Lang);
-   begin
-      return Variable;
-   end Dereference;
 
    ----------------------
    -- Explorer_Regexps --

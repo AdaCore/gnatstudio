@@ -40,8 +40,9 @@ package body Language.Debugger.C is
    --  "threadsafe" "transient" "native" "volatile"
 
    function Make_Entry_Subprogram
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String;
+     (Str : String; Matched : Match_Array;
+      Category : access Category_Index) return String;
+   --  Spec needed ???
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
@@ -56,9 +57,8 @@ package body Language.Debugger.C is
      (1 => (Name           => new String'("Functions"),
             Regexp         => Subprogram_RE'Access,
             Position_Index => 4,
-            Icon           => Subprogram_Xpm'Unrestricted_Access,
-            Make_Entry     => Make_Entry_Subprogram'Access)
-      );
+            Icon           => subprogram_xpm'Access,
+            Make_Entry     => Make_Entry_Subprogram'Access));
 
    --------------------
    -- Is_Simple_Type --
