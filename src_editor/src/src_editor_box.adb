@@ -551,24 +551,8 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Object, Params);
 
-      Success : Boolean;
    begin
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
-
-      if Box.Modified then
-         if Message_Dialog
-             (Msg            => (-"File ") & Get_Filename (Box) &
-                                (-" modified.") & ASCII.LF &
-                                (-"Do you want to save it ?"),
-              Dialog_Type    => Confirmation,
-              Buttons        => Button_Yes or Button_No,
-              Default_Button => Button_Yes,
-              Parent         => Get_Main_Window (Box.Kernel)) =
-           Button_Yes
-         then
-            Save_To_File (Box, Success => Success);
-         end if;
-      end if;
 
    exception
       when E : others =>
@@ -592,6 +576,7 @@ package body Src_Editor_Box is
 
    begin
       Glib.Object.Initialize (Box);
+
       Box.Kernel := Kernel;
 
       Gtk_New_Vbox (Box.Root_Container, Homogeneous => False);
@@ -1126,6 +1111,27 @@ package body Src_Editor_Box is
       Ref (Box.Root_Container);
       Remove (Parent, Box.Root_Container);
    end Detach;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Box : access Source_Editor_Box_Record)
+     return Glide_Kernel.Kernel_Handle is
+   begin
+      return Box.Kernel;
+   end Get_Kernel;
+
+   --------------
+   -- Modified --
+   --------------
+
+   function Modified
+     (Editor   : access Source_Editor_Box_Record) return Boolean is
+   begin
+      return Editor.Modified;
+   end Modified;
 
    ------------------
    -- Set_Filename --
