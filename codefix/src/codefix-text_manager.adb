@@ -374,9 +374,12 @@ package body Codefix.Text_Manager is
             end if;
 
             Put (Current.Category'Img);
-            Put (", " & Current.Sloc_End.Line'Img & ", ");
+            Put (", [" & Current.Sloc_Start.Line'Img & ", ");
+            Put (Current.Sloc_Start.Column'Img);
+            Put ("]-[");
+            Put (Current.Sloc_End.Line'Img & ", ");
             Put (Current.Sloc_End.Column'Img);
-            Put (" (");
+            Put ("] (");
 
             if Current.Is_Declaration then
                Put ("spec");
@@ -598,13 +601,18 @@ package body Codefix.Text_Manager is
       Cursor       : File_Cursor'Class)
      return File_Cursor'Class is
 
-      Result : File_Cursor;
+      Result      : File_Cursor;
+      Line_Cursor : File_Cursor := File_Cursor (Cursor);
 
    begin
+      Line_Cursor.Col := 1;
+
       Result :=
         (Text_Cursor (Get_Right_Paren
-           (Get_File (Current_Text, Cursor.File_Name.all).all, Cursor))
-         with File_Name => Result.File_Name);
+                        (Get_File (Current_Text, Cursor.File_Name.all).all,
+                         Cursor,
+                         Get_Line (Current_Text, Line_Cursor)))
+         with File_Name => Clone (Cursor.File_Name));
 
       return Result;
    end Get_Right_Paren;
@@ -1203,25 +1211,41 @@ package body Codefix.Text_Manager is
    ---------------------
 
    function Get_Right_Paren
-     (This   : Text_Interface'Class;
-      Cursor : Text_Cursor'Class)
-     return Text_Cursor'Class
+     (This         : Text_Interface'Class;
+      Cursor       : Text_Cursor'Class;
+      Current_Line : String) return Text_Cursor'Class
    is
-      Current_Str : Dynamic_String;
-      Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
+      Local_Cursor : Text_Cursor := Text_Cursor (Cursor);
+      Local_Line   : Dynamic_String := new String'(Current_Line);
    begin
-      Assign (Current_Str, Get_Line (This, Line_Cursor));
 
       loop
-         for J in Line_Cursor.Col .. Current_Str'Last loop
-            null;
-         end loop;
+         if Local_Cursor.Col > Current_Line'Last then
+            Local_Cursor.Col := 1;
+            Local_Cursor.Line := Local_Cursor.Line + 1;
+            Assign (Local_Line, Get_Line (This, Local_Cursor));
+         end if;
 
-         Line_Cursor.Col := 1;
-         Line_Cursor.Line := Line_Cursor.Line + 1;
+         case Local_Line (Local_Cursor.Col) is
+            when '(' =>
+               Local_Cursor.Col := Local_Cursor.Col + 1;
+
+               declare
+                  Stack_Str : constant String := Local_Line.all;
+               begin
+                  Free (Local_Line);
+                  return Get_Right_Paren
+                    (This, Local_Cursor, Stack_Str);
+               end;
+            when ')' =>
+               Free (Local_Line);
+               return Local_Cursor;
+            when others =>
+               Local_Cursor.Col := Local_Cursor.Col + 1;
+         end case;
       end loop;
 
-      return Text_Cursor'((0, 0));
+      raise Codefix_Panic;
    end Get_Right_Paren;
 
    ----------------------------------------------------------------------------
@@ -2102,6 +2126,7 @@ package body Codefix.Text_Manager is
       Cursor_Source    : File_Cursor := File_Cursor (Source_Start);
       Source_Line      : Dynamic_String;
       Head, Bottom     : Dynamic_String;
+      Last_Line        : Dynamic_String;
 
       function Get_Next_Source_Line return Dynamic_String is
          Line : Dynamic_String :=
@@ -2139,6 +2164,8 @@ package body Codefix.Text_Manager is
                1,
                Source_Line.all);
 
+            Assign (Last_Line, Get_String (Destination_Line.all));
+
             if Cursor_Dest.Line < Dest_Stop.Line then
                Cursor_Dest.Line := Cursor_Dest.Line + 1;
                Destination_Line := Get_Line (Destination_Line, Cursor_Dest);
@@ -2147,11 +2174,19 @@ package body Codefix.Text_Manager is
                Destination_Line := null;
             end if;
          else
-            Add_Indented_Line
-              (This,
-               Cursor_Dest,
-               Source_Line.all,
-               Current_Text);
+            if Last_Line /= null then
+               Add_Indented_Line
+                 (This,
+                  Cursor_Dest,
+                  Source_Line.all,
+                  Last_Line.all);
+            else
+               Add_Indented_Line
+                 (This,
+                  Cursor_Dest,
+                  Source_Line.all,
+                  Current_Text);
+            end if;
          end if;
 
       end loop;
@@ -2170,6 +2205,7 @@ package body Codefix.Text_Manager is
       Free (Source_Line);
       Free (Head);
       Free (Bottom);
+      Free (Last_Line);
 
    end Replace;
 
@@ -2512,8 +2548,29 @@ package body Codefix.Text_Manager is
       Text         : String;
       Current_Text : Text_Navigator_Abstr'Class)
    is
+      Line_Cursor : File_Cursor := File_Cursor (Cursor);
+   begin
+      Line_Cursor.Col := 1;
+
+      Add_Indented_Line
+        (This,
+         Cursor,
+         Text,
+         Get_Line (Current_Text, Line_Cursor));
+   end Add_Indented_Line;
+
+
+   -----------------------
+   -- Add_Indented_Line --
+   -----------------------
+
+   procedure Add_Indented_Line
+     (This          : in out Extract;
+      Cursor        : File_Cursor'Class;
+      Text          : String;
+      Previous_Line : String)
+   is
       Line_Cursor         : File_Cursor := File_Cursor (Clone (Cursor));
-      Previous_Line       : Dynamic_String;
       Indent, Next_Indent : Natural;
       First_Char          : Natural := Text'First;
    begin
@@ -2522,8 +2579,9 @@ package body Codefix.Text_Manager is
       end loop;
 
       Line_Cursor.Col := 1;
-      Previous_Line := new String'(Get_Line (Current_Text, Line_Cursor));
-      Next_Indentation (Unknown_Lang, Previous_Line.all, Indent, Next_Indent);
+
+      Next_Indentation (Unknown_Lang, Previous_Line, Indent, Next_Indent);
+
       Add_Element
         (This, new Extract_Line'
           (Context         => Unit_Created,
@@ -2534,7 +2592,6 @@ package body Codefix.Text_Manager is
                                    Text (First_Char .. Text'Last)),
            Next            => null,
            Coloration      => True));
-      Free (Previous_Line);
    end Add_Indented_Line;
 
    -----------------
@@ -3093,6 +3150,9 @@ package body Codefix.Text_Manager is
                Get_Word_Length
                  (New_Extract, Word, Word.String_Match.all));
       end case;
+
+      Get_First_Line (New_Extract).Context := Unit_Modified;
+      Delete_Empty_Lines (New_Extract);
 
       Free (Word);
    end Execute;
