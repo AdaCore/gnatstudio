@@ -375,7 +375,7 @@ package Glide_Kernel.Modules is
    --
    --  If Filename contains a relative path, the editor will open it as is. It
    --  thus depends on the current directory, and should only be used for files
-   --  opened from the command line. As a result, Filenamemight be found even
+   --  opened from the command line. As a result, Filename might be found even
    --  if it doesn't directly belong to a project.
    --
    --  If not found and New_File is True, a new file is edited.
