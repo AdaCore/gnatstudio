@@ -1975,6 +1975,9 @@ package body Debugger.Gdb is
       First       : Positive := Output'First;
       Second      : Positive := Output'First;
 
+      function Is_Delimitor (C : Character) return Boolean;
+      --  Return True if C is a delimiter
+
       function Is_Delimitor (C : Character) return Boolean is
       begin
          return C = ' ' or else C = ASCII.HT or else C = '*';
@@ -1998,10 +2001,10 @@ package body Debugger.Gdb is
          --  Find the end of the first token in the line...
          First := Start;
          while First < EOL and then Is_Delimitor (Output (First)) loop
-           First := First + 1;
+            First := First + 1;
          end loop;
          while First < EOL and then not Is_Delimitor (Output (First)) loop
-           First := First + 1;
+            First := First + 1;
          end loop;
 
          --  Find the start of the second token...
