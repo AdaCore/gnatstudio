@@ -2979,8 +2979,8 @@ package body Src_Editor_Module is
          Usage        =>
            Parameter_Names_To_Usage (Edit_Cmd_Parameters, "None", 3),
          Description  => -"Open a file editor for file_name." & ASCII.LF
-         & (-"Length is the number of characters to select after the"
-            & " cursor."),
+           & (-"Length is the number of characters to select after the"
+              & " cursor."),
          Minimum_Args => 1,
          Maximum_Args => 4,
          Handler      => Edit_Command_Handler'Access);
