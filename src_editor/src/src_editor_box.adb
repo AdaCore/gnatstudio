@@ -46,7 +46,6 @@ with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Widget;                 use Gtk.Widget;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
