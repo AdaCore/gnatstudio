@@ -427,9 +427,10 @@ package body Language is
    --------------
 
    function Get_Name
-     (Lang  : access Language_Root;
-      Token    : Generic_Token_Type;
-      Category : access Language_Category) return String is
+     (Lang           : access Language_Root;
+      Token          : Generic_Token_Type;
+      Is_Declaration : Boolean;
+      Category       : access Language_Category) return String is
    begin
       Category.all := Cat_Unknown;
       return Image (Integer (Token));

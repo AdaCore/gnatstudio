@@ -350,9 +350,10 @@ package Language is
    --  Generic token type.
 
    function Get_Name
-     (Lang     : access Language_Root;
-      Token    : Generic_Token_Type;
-      Category : access Language_Category) return String;
+     (Lang           : access Language_Root;
+      Token          : Generic_Token_Type;
+      Is_Declaration : Boolean;
+      Category       : access Language_Category) return String;
    --  Return a printable string for a given token and language.
    --  Category is set to the appropriate language category.
 
