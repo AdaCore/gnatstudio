@@ -38,14 +38,12 @@ with Projects;                 use Projects;
 with Glib;                     use Glib;
 with Glib.Generic_Properties;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Menu;                 use Gtk.Menu;
-with String_Utils;             use String_Utils;
 with Docgen;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Docgen_Backend_HTML;       use Docgen_Backend_HTML;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body Docgen_Module is
 
@@ -137,34 +135,6 @@ package body Docgen_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
-   -----------------------------
-   -- For the contextual menu --
-   -----------------------------
-
-   procedure Docgen_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries to the contextual menu
-
-   procedure Add_Doc_Menu_Project
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class);
-   --  Submenu for a project
-
-   procedure On_Generate_Project
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Contextual menu : Generate Doc -> Only this project
-
-   procedure On_Generate_Project_Recursive
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Contextual menu : Generate Doc -> this project & imported projects
-
-   procedure On_Generate_File
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Contextual menu : Generate Doc (for a file)
-
    ------------------
    -- For the menu --
    ------------------
@@ -188,6 +158,7 @@ package body Docgen_Module is
 
    procedure Generate_Project
      (Kernel    : Kernel_Handle;
+      Project   : Project_Type := No_Project;
       Recursive : Boolean);
    --  Generate the doc for the project
    --  If Recursive is true, it generates the direct sources of
@@ -200,7 +171,7 @@ package body Docgen_Module is
 
    procedure Generate_File
      (Kernel : Kernel_Handle;
-      File   : Virtual_File_Access);
+      File   : Virtual_File);
    --  In order to generate the documentation of one file
 
    ------------------------------------------
@@ -215,6 +186,24 @@ package body Docgen_Module is
       List   : in out Type_Source_File_Table.HTable;
       Backend : access Docgen.Docgen_Backend.Backend'Class);
    --  With the list of source files, it generates the documentation
+
+   --------------
+   -- Commands --
+   --------------
+
+   type Generate_Project_Command
+     is new Interactive_Command with record
+      Recursive : Boolean := False;
+     end record;
+   function Execute
+     (Command : access Generate_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Generate_File_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Generate_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    -----------------
    -- Get_Options --
@@ -342,132 +331,37 @@ package body Docgen_Module is
            (Kernel, Docgen_Module (Docgen_Module_ID).Process_Tagged_Types));
    end On_Preferences_Changed;
 
-   -----------------------
-   -- Docgen_Contextual --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Docgen_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+   function Execute
+     (Command : access Generate_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Object);
-      Item         : Gtk_Menu_Item;
-      File_Context : File_Selection_Context_Access;
-      Submenu      : Gtk_Menu;
-      File         : Virtual_File;
-
    begin
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
+      Generate_Project
+        (Get_Kernel (Context.Context),
+         Project_Information (File_Selection_Context_Access (Context.Context)),
+         Command.Recursive);
+      return Commands.Success;
+   end Execute;
 
-         if Has_Project_Information (File_Context)
-           and then not Has_Directory_Information (File_Context)
-           and then not Has_File_Information (File_Context)
-         then
-            Add_Doc_Menu_Project
-              (Menu         => Submenu,
-               Project      => Project_Information (File_Context),
-               Kernel       => Get_Kernel (Context));
+   -------------
+   -- Execute --
+   -------------
 
-            if Submenu /= null then
-               Gtk_New (Item, -"Documentation");
-               Set_Submenu (Item, Submenu);
-               Append (Menu, Item);
-            end if;
-
-         elsif Has_Directory_Information (File_Context)
-           and then not Has_File_Information (File_Context)
-         then
-            null;
-
-         elsif Has_File_Information (File_Context) then
-            File := File_Information (File_Context);
-            Gtk_New (Item, -"Generate doc for " & Krunch (Base_Name (File)));
-            File_Project_Cb.Object_Connect
-               (Item, "activate",
-                File_Project_Cb.To_Marshaller (On_Generate_File'Access),
-                Slot_Object => Get_Kernel (Context),
-                User_Data => File_Project_Record'
-                  (Project => No_Project,
-                   File    => File));
-            Append (Menu, Item);
-         end if;
-      end if;
-   end Docgen_Contextual;
-
-   --------------------------
-   -- Add_Doc_Menu_Project --
-   --------------------------
-
-   procedure Add_Doc_Menu_Project
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class)
+   function Execute
+     (Command : access Generate_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Project);
-      Mitem     : Gtk_Menu_Item;
-      Mitem_Bis : Gtk_Menu_Item;
-
+      pragma Unreferenced (Command);
    begin
-      if Menu = null then
-         Gtk_New (Menu);
-      end if;
-
-      Gtk_New (Mitem, -"Generate project");
-      Append (Menu, Mitem);
-      Gtk_New (Mitem_Bis, -"Generate project & subprojects");
-      Append (Menu, Mitem_Bis);
-
-      File_Project_Cb.Object_Connect
-        (Mitem, "activate",
-         File_Project_Cb.To_Marshaller (On_Generate_Project'Access),
-         Slot_Object => Kernel,
-         User_Data => File_Project_Record'
-           (Project => Get_Project (Kernel),
-            File    => VFS.No_File));
-      File_Project_Cb.Object_Connect
-        (Mitem_Bis, "activate",
-         File_Project_Cb.To_Marshaller (On_Generate_Project_Recursive'Access),
-         Slot_Object => Kernel,
-         User_Data => File_Project_Record'
-           (Project => Get_Project (Kernel),
-            File    => VFS.No_File));
-   end Add_Doc_Menu_Project;
-
-   -------------------------
-   -- On_Generate_Project --
-   -------------------------
-
-   procedure On_Generate_Project
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
-   is
-      pragma Unreferenced (Data);
-   begin
-      Generate_Project (Kernel_Handle (Kernel), False);
-   end On_Generate_Project;
-
-   -----------------------------------
-   -- On_Generate_Project_Recursive --
-   -----------------------------------
-
-   procedure On_Generate_Project_Recursive
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
-   is
-   pragma Unreferenced (Data);
-   begin
-      Generate_Project (Kernel_Handle (Kernel), True);
-   end On_Generate_Project_Recursive;
-
-   ----------------------
-   -- On_Generate_File --
-   ----------------------
-
-   procedure On_Generate_File
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
-   begin
-      Generate_File (Kernel_Handle (Kernel), Data.File'Unchecked_Access);
-   end On_Generate_File;
+      Generate_File
+        (Get_Kernel (Context.Context),
+         File_Information (File_Selection_Context_Access (Context.Context)));
+      return Commands.Success;
+   end Execute;
 
    ------------------------------
    -- Choose_Menu_Current_File --
@@ -487,10 +381,8 @@ package body Docgen_Module is
       then
          File := File_Information (File_Selection_Context_Access (Context));
 
-         if File = VFS.No_File then
-            return;
-         else
-            Generate_File (Kernel, File'Unchecked_Access);
+         if File /= VFS.No_File then
+            Generate_File (Kernel, File);
          end if;
       end if;
    end Choose_Menu_Current_File;
@@ -504,7 +396,7 @@ package body Docgen_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Generate_Project (Kernel, False);
+      Generate_Project (Kernel, No_Project, False);
    end Choose_Menu_Project;
 
    -----------------------------------
@@ -516,7 +408,7 @@ package body Docgen_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Generate_Project (Kernel, True);
+      Generate_Project (Kernel, No_Project, True);
    end Choose_Menu_Project_Recursive;
 
    ----------------------
@@ -525,38 +417,37 @@ package body Docgen_Module is
 
    procedure Generate_Project
      (Kernel    : Kernel_Handle;
+      Project   : Project_Type := No_Project;
       Recursive : Boolean)
    is
       Sources : VFS.File_Array_Access;
-      Project : Project_Type;
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
       Source_File_List : Type_Source_File_Table.HTable;
       B       : constant Docgen.Docgen_Backend.Backend_Handle := Get_Backend;
+      P       : Project_Type := Project;
+      Context : Selection_Context_Access;
 
    begin
-      if Context = null then
-         return;
-      end if;
-
-      if Context.all in File_Selection_Context'Class
-        and then Has_Project_Information
-          (File_Selection_Context_Access (Context))
-      then
-         Project := Project_Information
-           (File_Selection_Context_Access (Context));
-      else
-         Project := Get_Root_Project (Get_Registry (Kernel).all);
+      if P = No_Project then
+         Context := Get_Current_Context (Kernel);
+         if Context.all in File_Selection_Context'Class
+           and then Has_Project_Information
+             (File_Selection_Context_Access (Context))
+         then
+            P := Project_Information
+              (File_Selection_Context_Access (Context));
+         else
+            P := Get_Project (Kernel);
+         end if;
       end if;
 
       --  To save time, parse everything that we'll need in advance
       --  ??? Doesn't work, since the call graph for instance will require that
       --  more files be parsed (try generating doc for traces.ads)
       Trace (Me, "Parsing files");
-      Parse_All_LI_Information (Kernel, Project, Recursive => Recursive);
+      Parse_All_LI_Information (Kernel, P, Recursive => Recursive);
       Trace (Me, "Generating HTML files");
 
-      Sources := Get_Source_Files (Project, Recursive);
+      Sources := Get_Source_Files (P, Recursive);
       Array2List (Kernel, Sources, Source_File_List,
                   Docgen.Docgen_Backend.Get_Extension (B));
       Generate (Kernel, Source_File_List, B);
@@ -588,10 +479,8 @@ package body Docgen_Module is
            History           => Get_History (Kernel));
 
    begin
-      if File = VFS.No_File then
-         return;
-      else
-         Generate_File (Kernel, File'Unchecked_Access);
+      if File /= VFS.No_File then
+         Generate_File (Kernel, File);
       end if;
    end Choose_Menu_File;
 
@@ -601,7 +490,7 @@ package body Docgen_Module is
 
    procedure Generate_File
      (Kernel     : Kernel_Handle;
-      File       : Virtual_File_Access)
+      File       : Virtual_File)
    is
       Source_File_List : Type_Source_File_Table.HTable;
       Body_File        : Virtual_File;
@@ -620,7 +509,7 @@ package body Docgen_Module is
 
       Source := Get_Or_Create
         (Db           => Get_Database (Kernel),
-         File         => File.all,
+         File         => File,
          Allow_Create => True);
       Update_Xref (Source);
 
@@ -629,16 +518,16 @@ package body Docgen_Module is
          Source,
          (Package_Name  => new String'(Get_Unit_Name (Source)),
           Doc_File_Name => new String'
-            (Get_Doc_File_Name (File.all, Doc_Suffix)),
-          Is_Spec       => Is_Spec_File (Kernel, File.all)));
+            (Get_Doc_File_Name (File, Doc_Suffix)),
+          Is_Spec       => Is_Spec_File (Kernel, File)));
 
       if Is_Spec and then Process_Body then
          Body_File := Create
            (Other_File_Base_Name
               (Get_Project_From_File
                  (Project_Registry (Get_Registry (Kernel).all),
-                  File.all),
-               File.all),
+                  File),
+               File),
             Kernel,
             Use_Object_Path => False);
          Source := Get_Or_Create
@@ -741,6 +630,7 @@ package body Docgen_Module is
    is
       Tools    : constant String := '/' & (-"Tools");
       Generate : constant String := '/' & (-"_Documentation");
+      Command  : Interactive_Command_Access;
    begin
       Docgen_Module_ID := new Docgen_Module_Record;
       Docgen_Module (Docgen_Module_ID).HTML_Backend := new Backend_HTML;
@@ -749,8 +639,29 @@ package body Docgen_Module is
         (Module                  => Docgen_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => "Docgen",
-         Contextual_Menu_Handler => Docgen_Contextual'Access,
          Priority                => Default_Priority);
+
+      Command := new Generate_Project_Command;
+      Register_Contextual_Menu
+        (Kernel, "Generate project documentation",
+         Label  => "Documentation/Generate for %p",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Project only"));
+
+      Command := new Generate_Project_Command;
+      Generate_Project_Command (Command.all).Recursive := True;
+      Register_Contextual_Menu
+        (Kernel, "Generate project documentation recursive",
+         Label  => "Documentation/Generate for %p and subprojects",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Project only"));
+
+      Command := new Generate_File_Command;
+      Register_Contextual_Menu
+        (Kernel, "Generate file documentation",
+         Label  => "Documentation/Generate for %f",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "File"));
 
       Docgen_Module (Docgen_Module_ID).Type_Generated_File
         := Param_Spec_Enum

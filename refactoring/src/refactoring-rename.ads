@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,14 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;
-with Glide_Kernel;
+with Commands.Interactive; use Commands, Commands.Interactive;
 
 package Refactoring.Rename is
 
-   procedure On_Rename_Entity
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
+   type Rename_Entity_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Rename_Entity_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Rename Entity" menu
 
 end Refactoring.Rename;

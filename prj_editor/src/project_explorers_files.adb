@@ -58,7 +58,6 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Intl;               use Glide_Intl;
-with Project_Explorers;        use Project_Explorers;
 with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
 with String_List_Utils;        use String_List_Utils;
@@ -899,17 +898,9 @@ package body Project_Explorers_Files is
    procedure File_Selection_Changed
      (Explorer : access Gtk_Widget_Record'Class)
    is
-      T        : constant Project_Explorer_Files :=
-        Project_Explorer_Files (Explorer);
-      Context  : Selection_Context_Access;
+      T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
    begin
-      Context := Explorer_Context_Factory (T.Kernel, T, T, null, null);
-
-      if Context /= null then
-         Set_Context_Information (Context, T.Kernel, Explorer_Module_ID);
-         Context_Changed (T.Kernel, Context);
-      end if;
-
+      Context_Changed (T.Kernel);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1248,7 +1239,6 @@ package body Project_Explorers_Files is
          Kernel                  => Kernel,
          Module_Name             => "Files_View",
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => null,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);

@@ -735,11 +735,4 @@ package body Docgen is
         Unit_Spec;
    end Is_Spec_File;
 
-   function Is_Spec_File
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File_Access) return Boolean is
-   begin
-      return Is_Spec_File (Kernel, File.all);
-   end Is_Spec_File;
-
 end Docgen;

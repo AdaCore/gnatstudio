@@ -26,7 +26,6 @@ with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
@@ -38,8 +37,6 @@ with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Gtk.Main;                 use Gtk.Main;
-with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Traces;                   use Traces;
 with Unchecked_Deallocation;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
@@ -48,6 +45,7 @@ with Projects;                 use Projects;
 with String_Utils;             use String_Utils;
 with VFS;                      use VFS;
 with System;
+with Commands.Interactive;     use Commands, Commands.Interactive;
 
 package body External_Editor_Module is
 
@@ -77,6 +75,15 @@ package body External_Editor_Module is
    Always_Use_External_Editor : Param_Spec_Boolean;
 
    type Constant_String_Access is access constant String;
+
+   --------------
+   -- Commands --
+   --------------
+
+   type Edit_With_External_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Edit_With_External_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    -----------
    -- Types --
@@ -258,17 +265,6 @@ package body External_Editor_Module is
    procedure Substitute
      (Args : Argument_List_Access; F, C, L, E, P  : String := "");
    --  Does all the substitutions in Args for %f, %c, %l, %e and %%.
-
-   procedure External_Editor_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries to the conextual menu if necessary
-
-   procedure On_Edit_File
-     (Widget : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Edit the file described in the context
 
    function Open_File_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -727,78 +723,46 @@ package body External_Editor_Module is
       Unchecked_Free (Args);
    end Client_Command;
 
-   ------------------
-   -- On_Edit_File --
-   ------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Edit_File
-     (Widget : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Edit_With_External_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
       File           : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+        File_Selection_Context_Access (Context.Context);
       Line           : Integer := 1;
       Column         : Integer := 1;
-
    begin
       Push_State (Get_Kernel (File), Busy);
       Trace (Me, "Edit file with external editor "
              & Full_Name (File_Information (File)).all);
 
-      if Context.all in Entity_Selection_Context'Class then
-         Line := Line_Information (Entity_Selection_Context_Access (Context));
+      if Context.Context.all in Entity_Selection_Context'Class then
+         Line := Line_Information
+           (Entity_Selection_Context_Access (Context.Context));
          Column := Entity_Column_Information
-           (Entity_Selection_Context_Access (Context));
+           (Entity_Selection_Context_Access (Context.Context));
       end if;
 
       Client_Command
-        (Kernel => Get_Kernel (Context),
+        (Kernel => Get_Kernel (File),
          File   => Full_Name (File_Information (File)).all,
          Line   => Line,
          Column => Column);
       Pop_State (Get_Kernel (File));
+      return Commands.Success;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
          Pop_State (Get_Kernel (File));
-   end On_Edit_File;
-
-   --------------------------------
-   -- External_Editor_Contextual --
-   --------------------------------
-
-   procedure External_Editor_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-
-      File  : File_Selection_Context_Access;
-      Mitem : Gtk_Menu_Item;
-
-   begin
-      if External_Editor_Module_Id.Client /= Auto
-        and then Context.all in File_Selection_Context'Class
-      then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_Directory_Information (File)
-           and then Has_File_Information (File)
-         then
-            Gtk_New (Mitem, -"Edit with external editor");
-            Append (Menu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller (On_Edit_File'Access),
-               Selection_Context_Access (Context));
-         end if;
-      end if;
-   end External_Editor_Contextual;
+         return Commands.Failure;
+   end Execute;
 
    --------------------
    -- Open_File_Hook --
@@ -847,6 +811,7 @@ package body External_Editor_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+      Command : Interactive_Command_Access;
    begin
       External_Editor_Module_Id := new External_Editor_Module_Record;
 
@@ -881,12 +846,17 @@ package body External_Editor_Module is
       Register_Property
         (Kernel, Param_Spec (Always_Use_External_Editor), -"Editor");
 
+      Command := new Edit_With_External_Command;
+      Register_Contextual_Menu
+        (Kernel, "Edit with external editor",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "File"));
+
       Register_Module
         (Module                  => Module_ID (External_Editor_Module_Id),
          Kernel                  => Kernel,
          Module_Name             => External_Editor_Module_Name,
-         Priority                => Default_Priority + 1,
-         Contextual_Menu_Handler => External_Editor_Contextual'Access);
+         Priority                => Default_Priority + 1);
       Add_Hook (Kernel, Open_File_Action_Hook, Open_File_Hook'Access);
 
       Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);

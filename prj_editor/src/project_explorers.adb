@@ -83,6 +83,7 @@ with String_List_Utils;
 with Histories;                 use Histories;
 with VFS;                       use VFS;
 with Scenario_Views;            use Scenario_Views;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
 with Entities;
 with String_Hash;
@@ -351,26 +352,6 @@ package body Project_Explorers is
       Target_Node : Gtk_Tree_Iter);
    --  Select Target_Node, and make sure it is visible on the screen
 
-   procedure Locate_File
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
-   --  Callback suitable for a contextual menu item. If the file name is not
-   --  the empty string, then it is looked up in the project view explorer, as
-   --  a file.
-
-   procedure Locate_Project
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
-   --  Callback suitable for a contextual menu item. If the file name is not
-   --  the empty string, then it is looked up in the project view explorer, as
-   --  a project.
-
-   procedure Explorer_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries to the contextual menu
-
    function Explorer_Context_Factory
      (Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -423,6 +404,22 @@ package body Project_Explorers is
    --  Return the list of imported projects as an array.
    --  If Include_Project is False, then Project itself will not be included in
    --  the returned array
+
+   --------------
+   -- Commands --
+   --------------
+
+   type Locate_File_In_Explorer_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Locate_File_In_Explorer_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Locate_Project_In_Explorer_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Locate_Project_In_Explorer_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    -------------
    -- Filters --
@@ -594,33 +591,11 @@ package body Project_Explorers is
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
    is
       pragma Unreferenced (Args);
-
       T       : constant Project_Explorer := Project_Explorer (Explorer);
-      Node    : Gtk_Tree_Iter;
-      Model   : Gtk_Tree_Model;
-      Context : File_Selection_Context_Access;
-
    begin
-      Get_Selected (Get_Selection (T.Tree), Model, Node);
-
-      if Node = Null_Iter then
-         return;
-      end if;
-
-      Context := new File_Selection_Context;
-      Set_Context_Information (Context, T.Kernel, Explorer_Module_ID);
-
-      Set_File_Information
-        (Context,
-         File    => Get_File_From_Node (T.Tree.Model, Node),
-         Project => Get_Project_From_Node
-           (T.Tree.Model, T.Kernel, Node, False));
-      Context_Changed (T.Kernel, Selection_Context_Access (Context));
-      Unref (Selection_Context_Access (Context));
-
+      Context_Changed (T.Kernel);
    exception
       when E : others =>
-         Unref (Selection_Context_Access (Context));
          Trace (Me, "Unexpected exception: " & Exception_Message (E));
    end Tree_Select_Row_Cb;
 
@@ -828,9 +803,13 @@ package body Project_Explorers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Event_Widget);
+      pragma Unreferenced (Event_Widget, Object);
       Context   : Selection_Context_Access;
-      T         : constant Project_Explorer := Project_Explorer (Object);
+
+      --  "Object" is also the explorer, but this way we make sure the current
+      --  context is that of the explorer (since it will have the MDI focus)
+      T         : constant Project_Explorer :=
+        Get_Or_Create_Project_View (Kernel);
       Item      : Gtk_Menu_Item;
       Check     : Gtk_Check_Menu_Item;
 
@@ -841,7 +820,9 @@ package body Project_Explorers is
    begin
       if Iter /= Null_Iter then
          Path := Get_Path (T.Tree.Model, Iter);
-         Set_Cursor (T.Tree, Path, null, False);
+         if not Path_Is_Selected (Get_Selection (T.Tree), Path) then
+            Set_Cursor (T.Tree, Path, null, False);
+         end if;
          Path_Free (Path);
          Node_Type := Get_Node_Type (T.Tree.Model, Iter);
       else
@@ -2646,139 +2627,79 @@ package body Project_Explorers is
       Path_Free (Path);
    end Jump_To_Node;
 
-   -------------------
-   --  Locate_File  --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Locate_File
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access)
+   function Execute
+     (Command : access Locate_File_In_Explorer_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      File_C   : File_Selection_Context_Access;
+      pragma Unreferenced (Command);
+      File_C   : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (File_C);
       C        : Search_Context_Access;
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File_C := File_Selection_Context_Access (Context);
+      C := Explorer_Search_Factory
+        (Kernel,
+         Include_Projects => False,
+         Include_Files    => True);
+      --  ??? Should we work directly with a Virtual_File, so that we
+      --  are sure to match the right file, not necessarily a file with
+      --  the same base name in an extending project...
+      Set_Context
+        (Context  => C,
+         Look_For => "^" & Base_Name (File_Information (File_C)) & "$",
+         Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
+                      Whole_Word     => True,
+                      Regexp         => True));
 
-         if Has_File_Information (File_C) then
-            C := Explorer_Search_Factory
-              (Kernel,
-               Include_Projects => False,
-               Include_Files    => True);
-            --  ??? Should we work directly with a Virtual_File, so that we
-            --  are sure to match the right file, not necessarily a file with
-            --  the same base name in an extending project...
-            Set_Context
-              (Context  => C,
-               Look_For => "^" & Base_Name (File_Information (File_C)) & "$",
-               Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
-                            Whole_Word     => True,
-                            Regexp         => True));
-
-            if not Search (C, Kernel, Search_Backward => False) then
-               Insert (Kernel,
-                       -"File not found in the explorer: "
-                       & Base_Name (File_Information (File_C)),
-                       Mode => Glide_Kernel.Console.Error);
-            end if;
-
-            Free (C);
-         end if;
+      if not Search (C, Kernel, Search_Backward => False) then
+         Insert (Kernel,
+                 -"File not found in the explorer: "
+                 & Base_Name (File_Information (File_C)),
+                 Mode => Glide_Kernel.Console.Error);
       end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Locate_File;
 
-   --------------------
-   -- Locate_Project --
-   --------------------
+      Free (C);
+      return Commands.Success;
+   end Execute;
 
-   procedure Locate_Project
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access)
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Locate_Project_In_Explorer_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      File_C : File_Selection_Context_Access;
+      pragma Unreferenced (Command);
+      File_C : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (File_C);
       C      : Search_Context_Access;
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File_C := File_Selection_Context_Access (Context);
+      C := Explorer_Search_Factory
+        (Kernel,
+         Include_Projects => True,
+         Include_Files    => False);
+      Set_Context
+        (Context  => C,
+         Look_For => Project_Name (Project_Information (File_C)),
+         Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
+                      Whole_Word     => True,
+                      Regexp         => False));
 
-         if Has_Project_Information (File_C) then
-            C := Explorer_Search_Factory
-              (Kernel,
-               Include_Projects => True,
-               Include_Files    => False);
-            Set_Context
-              (Context  => C,
-               Look_For => Project_Name (Project_Information (File_C)),
-               Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
-                            Whole_Word     => True,
-                            Regexp         => False));
-
-            if not Search (C, Kernel, Search_Backward => False) then
-               Insert (Kernel,
-                       -"Project not found in the explorer: "
-                       & Project_Name (Project_Information (File_C)));
-            end if;
-
-            Free (C);
-         end if;
+      if not Search (C, Kernel, Search_Backward => False) then
+         Insert (Kernel,
+                 -"Project not found in the explorer: "
+                 & Project_Name (Project_Information (File_C)));
       end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Locate_Project;
 
-   -------------------------
-   -- Explorer_Contextual --
-   -------------------------
-
-   procedure Explorer_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      File : File_Selection_Context_Access;
-      Item : Gtk_Menu_Item;
-   begin
-      if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            Gtk_New (Item, Label => -"Locate in explorer: "
-                     & Krunch (Base_Name (File_Information (File))));
-            Append (Menu, Item);
-
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (Locate_File'Access),
-               Selection_Context_Access (Context));
-
-         elsif Has_Project_Information (File) then
-            Gtk_New (Item, Label => -"Locate in explorer: "
-                     & Krunch (Project_Name (Project_Information (File))));
-            Append (Menu, Item);
-
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (Locate_Project'Access),
-               Selection_Context_Access (Context));
-         end if;
-
-      end if;
-   end Explorer_Contextual;
+      Free (C);
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -2800,6 +2721,7 @@ package body Project_Explorers is
         new File_Node_Filter_Record;
       Entity_Node_Filter : constant Action_Filter :=
         new Entity_Node_Filter_Record;
+      Command : Interactive_Command_Access;
 
    begin
       Register_Module
@@ -2807,10 +2729,24 @@ package body Project_Explorers is
          Kernel                  => Kernel,
          Module_Name             => Explorer_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => Explorer_Contextual'Access,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Command := new Locate_File_In_Explorer_Command;
+      Register_Contextual_Menu
+        (Kernel, "Locate file in explorer",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "File"),
+         Label  => "Locate in explorer: %f");
+
+      Command := new Locate_Project_In_Explorer_Command;
+      Register_Contextual_Menu
+        (Kernel, "Locate project in explorer",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Project only"),
+         Label  => "Locate in explorer: %p");
+
 
       --  Add a project explorer to the default desktop.
       N := new Node;

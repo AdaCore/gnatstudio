@@ -18,25 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Widget;                use Gtk.Widget;
 with Traces;                    use Traces;
+with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with VFS;                       use VFS;
 with OS_Utils;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body VFS_Module is
 
@@ -57,21 +52,16 @@ package body VFS_Module is
    -- Subprograms --
    -----------------
 
-   procedure VFS_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries to the conextual menu if necessary
-
    procedure VFS_Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Interactive command handler for the vfs module.
 
-   procedure On_Delete
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Delete recursively the file or directory described in the context
+   type Delete_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Delete_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See doc from inherited subprogram
 
    --------------------------
    -- VFS_Command_Handler --
@@ -224,20 +214,18 @@ package body VFS_Module is
       end if;
    end VFS_Command_Handler;
 
-   ---------------
-   -- On_Delete --
-   ---------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Delete
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Delete_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
       File    : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+        File_Selection_Context_Access (Context.Context);
       Dir     : constant String := Directory_Information (File);
-
    begin
       Push_State (Get_Kernel (File), Busy);
       Trace (Me, "deleting " & Full_Name (File_Information (File)).all);
@@ -250,7 +238,7 @@ package body VFS_Module is
          exception
             when Directory_Error =>
                Console.Insert
-                 (Get_Kernel (Context),
+                 (Get_Kernel (File),
                   (-"Cannot remove directory: ") & Dir,
                   Mode => Error);
          end;
@@ -258,68 +246,17 @@ package body VFS_Module is
 
       --  ??? Need also to update project/file views
       Pop_State (Get_Kernel (File));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Get_Kernel (File));
-   end On_Delete;
-
-   --------------------
-   -- VFS_Contextual --
-   --------------------
-
-   procedure VFS_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-
-      File    : File_Selection_Context_Access;
-      Submenu : Gtk_Menu;
-      Mitem   : Gtk_Menu_Item;
-
-   begin
-      return;
-
-      pragma Warnings (Off);
-
-      --  ??? Disabled for now, incomplete. In particular, delete should
-      --  not be the first entry. Also, the graphical views are not
-      --  resynchronized when a file is deleted.
-
-      if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_Directory_Information (File) then
-            Gtk_New (Mitem, Label => -"File System");
-            Gtk_New (Submenu);
-            Set_Submenu (Mitem, Gtk_Widget (Submenu));
-            Append (Menu, Mitem);
-
-            if Has_File_Information (File) then
-               Gtk_New (Mitem, -"Delete file");
-            else
-               Gtk_New (Mitem, -"Delete directory recursively");
-            end if;
-
-            Append (Submenu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller (On_Delete'Access),
-               Selection_Context_Access (Context));
-         end if;
-      end if;
-   end VFS_Contextual;
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Command : Interactive_Command_Access;
    begin
       VFS_Module_Id := new Module_ID_Record;
 
@@ -327,8 +264,17 @@ package body VFS_Module is
         (Module                  => VFS_Module_Id,
          Kernel                  => Kernel,
          Module_Name             => VFS_Module_Name,
-         Priority                => Default_Priority,
-         Contextual_Menu_Handler => VFS_Contextual'Access);
+         Priority                => Default_Priority);
+
+      Command := new Delete_Command;
+      Register_Contextual_Menu
+        (Kernel, "Delete file",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Explorer_File_Node"));
+      Register_Contextual_Menu
+        (Kernel, "Delete directory recursively",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Explorer_Directory_Node"));
 
       Register_Command
         (Kernel, "pwd",

@@ -19,77 +19,11 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
-with Glide_Intl;            use Glide_Intl;
 with Refactoring.Rename;    use Refactoring.Rename;
-with Entities;              use Entities;
-with String_Utils;          use String_Utils;
-with Glib.Object;           use Glib.Object;
-with Gtk.Menu;              use Gtk.Menu;
-with Gtk.Menu_Item;         use Gtk.Menu_Item;
-with Traces;                use Traces;
-with Ada.Exceptions;        use Ada.Exceptions;
+with Commands.Interactive;  use Commands.Interactive;
 
 package body Refactoring_Module is
-
-   procedure Refactoring_Contextual
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Handles requests for contextual menus
-
-   ----------------------------
-   -- Refactoring_Contextual --
-   ----------------------------
-
-   procedure Refactoring_Contextual
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      Selection : Entity_Selection_Context_Access;
-      Entity    : Entity_Information;
-      Submenu   : Gtk_Menu;
-      Item      : Gtk_Menu_Item;
-
-   begin
-      if Context.all not in Entity_Selection_Context'Class then
-         return;
-      end if;
-
-      Selection := Entity_Selection_Context_Access (Context);
-
-      if not Has_Entity_Name_Information (Selection) then
-         return;
-      end if;
-
-      Entity := Get_Entity (Selection);
-
-      if Entity = null then
-         return;
-      end if;
-
-      Gtk_New (Item, -"Refactoring");
-      Append (Menu, Item);
-
-      Gtk_New (Submenu);
-      Set_Submenu (Item, Submenu);
-
-      Gtk_New
-        (Item, -"Rename " & Krunch (Entity_Name_Information (Selection)));
-      Append (Submenu, Item);
-      Context_Callback.Connect
-        (Item, "activate",
-         Context_Callback.To_Marshaller (On_Rename_Entity'Access),
-         Selection_Context_Access (Context));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Refactoring_Contextual;
 
    ---------------------
    -- Register_Module --
@@ -99,12 +33,18 @@ package body Refactoring_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Refactoring_Module_Id : Module_ID;
+      C : constant Interactive_Command_Access := new Rename_Entity_Command;
    begin
       Register_Module
         (Refactoring_Module_Id,
          Kernel,
-         "refactoring",
-        Contextual_Menu_Handler => Refactoring_Contextual'Access);
+         "refactoring");
+      Register_Contextual_Menu
+        (Kernel,
+         Name  => "Rename entity",
+         Label => "Refactoring/Rename %e",
+         Filter => Lookup_Filter (Kernel, "Entity"),
+         Action => C);
    end Register_Module;
 
 end Refactoring_Module;

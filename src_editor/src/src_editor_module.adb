@@ -55,7 +55,6 @@ with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.GEntry;                  use Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Label;                   use Gtk.Label;
-with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Main;                    use Gtk.Main;
 with Gtk.Rc;                      use Gtk.Rc;
@@ -364,17 +363,12 @@ package body Src_Editor_Module is
    --  Comment or uncomment the current selection, if any.
    --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
 
-   procedure On_Edit_File
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+   type Edit_File_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Edit_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See doc for inherited subprogram
    --  Edit a file (from a contextual menu)
-
-   procedure Source_Editor_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Generate the contextual menu entries for contextual menus in other
-   --  modules than the source editor.
 
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
@@ -3533,20 +3527,19 @@ package body Src_Editor_Module is
       Autocase_Last_Word (Buffer);
    end Word_Added_Hook;
 
-   ------------------
-   -- On_Edit_File --
-   ------------------
 
-   procedure On_Edit_File
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Edit_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
       File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+        File_Selection_Context_Access (Context.Context);
       Line : Natural;
-
    begin
       Trace (Me, "On_Edit_File: " & Full_Name (File_Information (File)).all);
 
@@ -3557,47 +3550,12 @@ package body Src_Editor_Module is
       end if;
 
       Open_File_Editor
-        (Get_Kernel (Context),
+        (Get_Kernel (Context.Context),
          Filename  => File_Information (File),
          Line      => Line,
          Column    => Column_Information (File));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Edit_File;
-
-   ------------------------------
-   -- Source_Editor_Contextual --
-   ------------------------------
-
-   procedure Source_Editor_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      File  : File_Selection_Context_Access;
-      Mitem : Gtk_Menu_Item;
-
-   begin
-      if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_Directory_Information (File)
-           and then Has_File_Information (File)
-         then
-            Gtk_New (Mitem, -"Edit " &
-                     Base_Name (File_Information (File)));
-            Append (Menu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller (On_Edit_File'Access),
-               Selection_Context_Access (Context));
-         end if;
-      end if;
-   end Source_Editor_Contextual;
+      return Success;
+   end Execute;
 
    ---------------------
    -- Default_Factory --
@@ -3845,13 +3803,20 @@ package body Src_Editor_Module is
            -"Delete the word preceding the current cursor position",
          Src_Action_Context);
 
+      Command := new Edit_File_Command;
+      Register_Contextual_Menu
+        (Kernel,
+         Name   => "Edit file",
+         Label  => "Edit %f",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "File"));
+
       Register_Module
         (Module                  => Src_Editor_Module_Id,
          Kernel                  => Kernel,
          Module_Name             => Src_Editor_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => Source_Editor_Contextual'Access,
-         Default_Context_Factory => Default_Factory'Access,
+               Default_Context_Factory => Default_Factory'Access,
          Save_Function           => Save_Function'Access,
          Customization_Handler   => Casing_Customize'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions

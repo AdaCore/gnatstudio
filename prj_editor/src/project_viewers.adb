@@ -89,6 +89,7 @@ with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
 with VFS;                      use VFS;
+with Commands.Interactive;     use Commands, Commands.Interactive;
 
 with Types;         use Types;
 
@@ -272,13 +273,6 @@ package body Project_Viewers is
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Return the current context for the contextual menu
 
-   procedure Project_Editor_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add new entries, when needed, to the contextual menus from other
-   --  modules.
-
    procedure On_New_Project
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -299,37 +293,11 @@ package body Project_Viewers is
       Kernel : Kernel_Handle);
    --  Callback for the Project->Recompute Project menu
 
-   procedure On_Add_Dependency_From_Wizard
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Add a dependency to the project described in Context. The dependency is
-   --  created from the wizard.
-
-   procedure On_Add_Dependency_From_Existing
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Add a dependency to a default empty project.
-
-   procedure Remove_Project_Dependency
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Remove the project dependency between the two projects in Context.
-
    procedure Save_All_Projects
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Save the project associated with the kernel, and all its imported
    --  projects.
-
-   procedure Save_Specific_Project
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Save the project described in the context.
-
-   procedure Edit_Project_File
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
-   --  Callback for a menu item. Edits the project source file.
 
    procedure Read_Project_Name
      (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type);
@@ -474,6 +442,40 @@ package body Project_Viewers is
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project      : Project_Type := No_Project;
       Languages    : GNAT.OS_Lib.Argument_List);
+
+   ----------------------
+   -- Contextual menus --
+   ----------------------
+
+   type Save_Project_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Save_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Edit_Project_Source_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Edit_Project_Source_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Add_Dep_From_Wizard_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Add_Dep_From_Wizard_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Add_Dep_From_File_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Add_Dep_From_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Remove_Dep_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Remove_Dep_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    ------------------------
    -- Main files editors --
@@ -1170,128 +1172,6 @@ package body Project_Viewers is
                 "Unexpected exception " & Exception_Information (E));
    end Save_All_Projects;
 
-   ---------------------------
-   -- Save_Specific_Project --
-   ---------------------------
-
-   procedure Save_Specific_Project
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      File    : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
-      Project : constant Project_Type := Project_Information (File);
-   begin
-      if Status (Project) /= From_File then
-         Read_Project_Name (Kernel, Project);
-      end if;
-
-      Save_Project (Kernel, Project);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end Save_Specific_Project;
-
-   -----------------------
-   -- Edit_Project_File --
-   -----------------------
-
-   procedure Edit_Project_File
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      File_C   : File_Selection_Context_Access;
-   begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File_C := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File_C) then
-            Open_File_Editor
-              (Kernel,
-               Create
-                 (Full_Filename =>
-                    Project_Path (Project_Information (File_C))));
-         end if;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end Edit_Project_File;
-
-   -----------------------------------
-   -- On_Add_Dependency_From_Wizard --
-   -----------------------------------
-
-   procedure On_Add_Dependency_From_Wizard
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-
-      File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
-      Wiz  : Creation_Wizard.Prj_Wizard;
-
-   begin
-      if Has_Project_Information (File) then
-         Gtk_New (Wiz, Get_Kernel (Context));
-
-         declare
-            Name : constant String := Run (Wiz);
-         begin
-            if Name /= "" then
-               Add_Dependency_Internal
-                 (Get_Kernel (File),
-                  Project_Information (File),
-                  Name);
-            end if;
-         end;
-
-         Destroy (Wiz);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Add_Dependency_From_Wizard;
-
-   -------------------------------
-   -- Remove_Project_Dependency --
-   -------------------------------
-
-   procedure Remove_Project_Dependency
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
-      Prj : constant Project_Type :=
-        Importing_Project_Information (File);
-   begin
-      Trace (Me, "Removing project dependency "
-             & Project_Name (Prj) & " -> "
-             & Project_Name (Project_Information (File)));
-      Remove_Imported_Project (Prj, Project_Information (File));
-      Recompute_View (Get_Kernel (Context));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end Remove_Project_Dependency;
-
    -----------------------------
    -- Add_Dependency_Internal --
    -----------------------------
@@ -1370,174 +1250,127 @@ package body Project_Viewers is
       end if;
    end Add_Dependency_Internal;
 
-   -------------------------------------
-   -- On_Add_Dependency_From_Existing --
-   -------------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Add_Dependency_From_Existing
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Save_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      File    : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (File);
+      Project : constant Project_Type := Project_Information (File);
+   begin
+      if Status (Project) /= From_File then
+         Read_Project_Name (Kernel, Project);
+      end if;
 
+      Save_Project (Kernel, Project);
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Edit_Project_Source_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File_C   : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+   begin
+      Open_File_Editor
+        (Kernel,
+         Create
+           (Full_Filename => Project_Path (Project_Information (File_C))));
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Add_Dep_From_Wizard_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
       File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+        File_Selection_Context_Access (Context.Context);
+      Wiz  : Creation_Wizard.Prj_Wizard;
+   begin
+      Gtk_New (Wiz, Get_Kernel (File));
+
+      declare
+         Name : constant String := Run (Wiz);
+      begin
+         if Name /= "" then
+            Add_Dependency_Internal
+              (Get_Kernel (File), Project_Information (File), Name);
+         end if;
+      end;
+
+      Destroy (Wiz);
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Add_Dep_From_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      File : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
       Prj : constant Project_Type := Project_Information (File);
       Dir : constant String := Project_Directory (Prj);
-
+      Name : constant Virtual_File := Select_File
+        (-"Select Project",
+         Dir,
+         File_Pattern      => "*.gpr",
+         Pattern_Name      => "Project files",
+         Parent            => Get_Current_Window (Get_Kernel (File)),
+         Use_Native_Dialog => Get_Pref (Get_Kernel (File), Use_Native_Dialogs),
+         Kind              => Unspecified,
+         History           => Get_History (Get_Kernel (File)));
    begin
-      if Has_Project_Information (File) then
-         declare
-            Name : constant Virtual_File :=
-              Select_File
-                (-"Select Project",
-                 Dir,
-                 File_Pattern      => "*.gpr",
-                 Pattern_Name      => "Project files",
-                 Parent            => Get_Current_Window (Get_Kernel (File)),
-                 Use_Native_Dialog =>
-                   Get_Pref (Get_Kernel (File), Use_Native_Dialogs),
-                 Kind              => Unspecified,
-                 History           => Get_History (Get_Kernel (File)));
-
-         begin
-            if Name /= VFS.No_File then
-               Add_Dependency_Internal
-                 (Get_Kernel (File), Prj, Full_Name (Name).all);
-            end if;
-         end;
+      if Name /= VFS.No_File then
+         Add_Dependency_Internal
+           (Get_Kernel (File), Prj, Full_Name (Name).all);
+         return Success;
       end if;
+      return Failure;
+   end Execute;
 
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Add_Dependency_From_Existing;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------------------
-   -- Project_Editor_Contextual --
-   -------------------------------
-
-   procedure Project_Editor_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+   function Execute
+     (Command : access Remove_Dep_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Object);
-
-      Item         : Gtk_Menu_Item;
-      Submenu      : Gtk_Menu;
-      File_Context : File_Selection_Context_Access;
-
+      pragma Unreferenced (Command);
+      File : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+      Prj : constant Project_Type := Importing_Project_Information (File);
    begin
-      --  Very important: all callbacks that actually modify the project must
-      --  set the project modified property (see Project_Hash), so that the
-      --  user gets asked whether to save on exit.
-
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File_Context)
-           and then not Has_Directory_Information (File_Context)
-           and then not Has_File_Information (File_Context)
-         then
-            Gtk_New (Item, Label => -"Edit project properties");
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Project_Properties'Access),
-               Selection_Context_Access (Context));
-
-            Gtk_New (Item, Label => -"Save the project "
-                     & Project_Name (Project_Information (File_Context)));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (Save_Specific_Project'Access),
-               Selection_Context_Access (Context));
-
-            Gtk_New (Item, Label => -"Edit project source file");
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (Edit_Project_File'Access),
-               Selection_Context_Access (Context));
-
-            Gtk_New (Item, -"Add dependency");
-            Add (Menu, Item);
-
-            Gtk_New (Submenu);
-            Set_Submenu (Item, Submenu);
-
-            Gtk_New (Item, -"From wizard...");
-            Add (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (On_Add_Dependency_From_Wizard'Access),
-               Selection_Context_Access (Context));
-
-            Gtk_New (Item, -"From project file...");
-            Add (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (On_Add_Dependency_From_Existing'Access),
-               Selection_Context_Access (Context));
-
-            if Has_Importing_Project_Information (File_Context)
-              and then Project_Information (File_Context) /=
-                Importing_Project_Information (File_Context)
-            then
-               Gtk_New
-                 (Item, Label => -"Remove dependency "
-                  & Project_Name (Importing_Project_Information (File_Context))
-                  & " -> "
-                  & Project_Name (Project_Information (File_Context)));
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Remove_Project_Dependency'Access),
-                  Selection_Context_Access (Context));
-            end if;
-         end if;
-
-         if Module_Name (Get_Creator (Context)) = Explorer_Module_Name then
-            Gtk_New (Item, Label => "");
-            Append (Menu, Item);
-
-            Gtk_New (Item, Label => -"Add configuration variable");
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (On_Add_Variable'Access),
-               Selection_Context_Access (Context));
-         end if;
-
-         if Has_Project_Information (File_Context)
-           and then Has_File_Information (File_Context)
-         then
-            Gtk_New (Item, Label => "");
-            Append (Menu, Item);
-
-            Gtk_New (Item, Label => -"Edit switches for "
-                     & Base_Name (File_Information (File_Context)));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (Edit_Switches'Access),
-               Selection_Context_Access (Context));
-         end if;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end Project_Editor_Contextual;
+      Trace (Me, "Removing project dependency "
+             & Project_Name (Prj) & " -> "
+             & Project_Name (Project_Information (File)));
+      Remove_Imported_Project (Prj, Project_Information (File));
+      Recompute_View (Get_Kernel (File));
+      return Success;
+   end Execute;
 
    ------------------------------------
    -- Project_Editor_Context_Factory --
@@ -3102,6 +2935,8 @@ package body Project_Viewers is
    is
       Project : constant String := '/' & (-"Project");
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
+      Filter : Action_Filter;
+      Command : Interactive_Command_Access;
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
       Register_Module
@@ -3109,16 +2944,12 @@ package body Project_Viewers is
          Kernel                  => Kernel,
          Module_Name             => Project_Editor_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => Project_Editor_Contextual'Access,
          Customization_Handler   => Customize'Access);
 
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);
-
       Register_Menu (Kernel, Project, -"_New...", "", On_New_Project'Access,
                      Ref_Item => -"Open...", Add_Before => True);
-
-
       Reopen_Menu := Register_Menu
         (Kernel, Project, -"_Recent", "",
          null, Ref_Item => -"Open...", Add_Before => False);
@@ -3127,17 +2958,6 @@ package body Project_Viewers is
                  Reopen_Menu,
                  new On_Reopen'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
-
-      Add_Hook (Kernel, Project_Changed_Hook, On_Project_Changed'Access);
-
-      --  ??? Disabled for now, pending resolution of related problems
-      --  encountered during testing
-
-      --  Kernel_Callback.Connect
-      --    (Kernel, File_Edited_Signal,
-      --     On_File_Edited'Access,
-      --     Kernel_Handle (Kernel));
-
       Register_Menu
         (Kernel, Project, -"Edit File _Switches", "",
          On_Edit_Switches'Access, Ref_Item => -"Recent", Add_Before => False);
@@ -3154,6 +2974,16 @@ package body Project_Viewers is
          On_Project_Recompute'Access, Ref_Item => -"Edit File Switches",
          Add_Before => False);
 
+      Add_Hook (Kernel, Project_Changed_Hook, On_Project_Changed'Access);
+
+      --  ??? Disabled for now, pending resolution of related problems
+      --  encountered during testing
+
+      --  Kernel_Callback.Connect
+      --    (Kernel, File_Edited_Signal,
+      --     On_File_Edited'Access,
+      --     Kernel_Handle (Kernel));
+
       Register_Project_Editor_Page
         (Kernel,
          Page  => new Naming_Editor_Record,
@@ -3166,6 +2996,66 @@ package body Project_Viewers is
          Label => -"Switches",
          Toc   => -"Switches",
          Title => -"Please select the switches to build the project");
+
+      Filter  := Lookup_Filter (Kernel, "Project only");
+      Command := new Project_Properties_Editor_Command;
+      Register_Contextual_Menu
+        (Kernel, "Edit project properties",
+         Action => Command,
+         Filter => Filter);
+
+      Command := new Save_Project_Command;
+      Register_Contextual_Menu
+        (Kernel, "Save project",
+         Action => Command,
+         Filter => Filter,
+         Label  => "Save the project %p");
+
+      Command := new Edit_Project_Source_Command;
+      Register_Contextual_Menu
+        (Kernel, "Edit project source file",
+         Action => Command,
+         Filter => Filter);
+
+      Command := new Add_Dep_From_Wizard_Command;
+      Register_Contextual_Menu
+        (Kernel, "Add dependency from wizard",
+         Action => Command,
+         Filter => Filter,
+         Label  => "Add dependency/From wizard...");
+
+      Command := new Add_Dep_From_File_Command;
+      Register_Contextual_Menu
+        (Kernel, "Add dependency from file",
+         Action => Command,
+         Filter => Filter,
+         Label  => "Add dependency/From project file...");
+
+      Command := new Remove_Dep_Command;
+      Register_Contextual_Menu
+        (Kernel, "Remove dependency",
+         Action => Command,
+         Label  => "Remove dependency %i -> %p",
+         Filter => Lookup_Filter (Kernel, "Project only"));
+
+      Filter := Action_Filter (Create (Module => "Explorer"));
+      Register_Contextual_Menu (Kernel, "", Filter => Filter);
+
+      Command := new Add_Variable_Command;
+      Register_Contextual_Menu
+        (Kernel, "Add configuration variable",
+         Action => Command,
+         Filter => Filter);
+
+      Filter := Lookup_Filter (Kernel, "Project and file");
+      Register_Contextual_Menu (Kernel, "", Filter => Filter);
+
+      Command := new Edit_Switches_Command;
+      Register_Contextual_Menu
+        (Kernel, "Edit file switches",
+         Action => Command,
+         Filter => Filter,
+         Label  => "Edit switches for %f");
 
       Register_Command
         (Kernel, "add_main_unit",

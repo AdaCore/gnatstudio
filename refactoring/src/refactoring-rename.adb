@@ -31,9 +31,9 @@ with Traces;                 use Traces;
 with VFS;                    use VFS;
 with Refactoring.Performers; use Refactoring.Performers;
 with Histories;              use Histories;
+with Commands.Interactive;   use Commands.Interactive;
 
 with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Check_Button;       use Gtk.Check_Button;
 with Gtk.Dialog;             use Gtk.Dialog;
@@ -187,24 +187,24 @@ package body Refactoring.Rename is
       end loop;
    end Execute;
 
-   ----------------------
-   -- On_Rename_Entity --
-   ----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Rename_Entity
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access)
+   function Execute
+     (Command : access Rename_Entity_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
       Ent     : Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
+        Entity_Selection_Context_Access (Context.Context);
       Dialog  : Entity_Renaming_Dialog;
       Entity  : constant Entity_Information := Get_Entity (Ent);
    begin
       Ref (Selection_Context_Access (Ent));
 
       if Entity /= null then
-         Gtk_New (Dialog, Get_Kernel (Context), Entity);
+         Gtk_New (Dialog, Get_Kernel (Context.Context), Entity);
          Show_All (Dialog);
 
          if Run (Dialog) = Gtk_Response_OK
@@ -220,7 +220,7 @@ package body Refactoring.Rename is
                     Auto_Save       => Get_Active (Dialog.Auto_Save));
             begin
                Get_All_Locations
-                 (Get_Kernel (Context),
+                 (Get_Kernel (Context.Context),
                   Entity,
                   Refactor,
                   Auto_Compile => Get_Active (Dialog.Auto_Compile));
@@ -231,6 +231,7 @@ package body Refactoring.Rename is
       end if;
 
       Unref (Selection_Context_Access (Ent));
+      return Success;
 
    exception
       when E : others =>
@@ -238,6 +239,7 @@ package body Refactoring.Rename is
                 "Unexpected exception: " & Exception_Information (E));
          Unref (Selection_Context_Access (Ent));
          Destroy (Dialog);
-   end On_Rename_Entity;
+         return Failure;
+   end Execute;
 
 end Refactoring.Rename;

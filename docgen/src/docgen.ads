@@ -733,9 +733,6 @@ package Docgen is
    function Is_Spec_File
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Boolean;
-   function Is_Spec_File
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File_Access) return Boolean;
    --  Return whether the File is a Spec file
 
 end Docgen;

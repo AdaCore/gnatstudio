@@ -18,22 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with Glib.Object;             use Glib.Object;
 with Glide_Intl;              use Glide_Intl;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Contexts;   use Glide_Kernel.Contexts;
 with Glide_Kernel.Scripts;    use Glide_Kernel.Scripts;
-with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Widget;              use Gtk.Widget;
-with Traces;                  use Traces;
 with String_Utils;            use String_Utils;
 with Case_Handling;           use Case_Handling;
 with VFS;                     use VFS;
+with Commands.Interactive;    use Commands, Commands.Interactive;
 
 package body Casing_Exceptions is
 
@@ -47,59 +42,53 @@ package body Casing_Exceptions is
 
    Casing_Module_Id : Casing_Module;
 
+   ----------------------
+   -- Contextual menus --
+   ----------------------
+
+   type Casing_Type is (Lower, Upper, Mixed, Smart_Mixed);
+
+   type Contextual_Label_Record is new Contextual_Menu_Label_Creator_Record
+   with record
+      Casing : Casing_Type;
+   end record;
+   type Contextual_Label is access all Contextual_Label_Record'Class;
+   function Get_Label
+     (Creator   : access Contextual_Label_Record;
+      Context   : access Selection_Context'Class) return String;
+
+   type Change_Case_Command is new Interactive_Command with record
+      Casing : Casing_Type;
+   end record;
+   function Execute
+     (Command : access Change_Case_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Add_Exception_Command is new Interactive_Command with record
+      Remove    : Boolean := False;
+      Substring : Boolean;
+   end record;
+   function Execute
+     (Command : access Add_Exception_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Substring_Filter_Record is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Substring_Filter_Record;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+
+   -----------------
+   -- Subprograms --
+   -----------------
+
    procedure Destroy (Id : in out Casing_Module_Record);
    --  Terminate the module and save the casing exceptions on file.
-
-   procedure Casing_Contextual
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Build the casing contextual memu
-
-   procedure On_Add_Case_Exception
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Add exception for" contextual menu
-
-   procedure On_Add_Case_Substring_Exception
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Add substring exception for" contextual menu
-
-   procedure On_Remove_Case_Exception
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Remove exception for" contextual menu
-
-   procedure On_Remove_Case_Substring_Exception
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Remove substring exception for" contextual menu
 
    procedure Set_Casing
      (Context  : Entity_Selection_Context_Access;
       New_Name : String);
    --  Function used by the following callbacks to set the casing
-
-   procedure On_Set_Lower
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Lower" contextual menu
-
-   procedure On_Set_Upper
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Upper" contextual menu
-
-   procedure On_Set_Mixed
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Mixed" contextual menu
-
-   procedure On_Set_Smart_Mixed
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Smart_Mixed" contextual menu
 
    -------------------
    -- Add_Exception --
@@ -150,86 +139,6 @@ package body Casing_Exceptions is
       return Casing_Module_Id.Casing_Exceptions_Table;
    end Get_Case_Exceptions;
 
-   ---------------------------
-   -- On_Add_Case_Exception --
-   ---------------------------
-
-   procedure On_Add_Case_Exception
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Name   : constant String := Entity_Name_Information (C);
-   begin
-      Add_Exception (Name);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Add_Case_Exception;
-
-   -------------------------------------
-   -- On_Add_Case_Substring_Exception --
-   -------------------------------------
-
-   procedure On_Add_Case_Substring_Exception
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Name   : constant String := Entity_Name_Information (C);
-   begin
-      Add_Substring_Exception (Name);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Add_Case_Substring_Exception;
-
-   ------------------------------
-   -- On_Remove_Case_Exception --
-   ------------------------------
-
-   procedure On_Remove_Case_Exception
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Name   : constant String := Entity_Name_Information (C);
-   begin
-      Remove_Exception (Name);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Remove_Case_Exception;
-
-   ----------------------------------------
-   -- On_Remove_Case_Substring_Exception --
-   ----------------------------------------
-
-   procedure On_Remove_Case_Substring_Exception
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Name   : constant String := Entity_Name_Information (C);
-   begin
-      Remove_Substring_Exception (Name);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Remove_Case_Substring_Exception;
-
    ----------------
    -- Set_Casing --
    ----------------
@@ -254,90 +163,6 @@ package body Casing_Exceptions is
         (Get_Kernel (Context), "Editor.replace_text", Args.all);
       Free (Args);
    end Set_Casing;
-
-   ------------------
-   -- On_Set_Lower --
-   ------------------
-
-   procedure On_Set_Lower
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Name   : constant String       := Entity_Name_Information (C);
-   begin
-      Set_Casing (C, To_Lower (Name));
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Set_Lower;
-
-   ------------------
-   -- On_Set_Upper --
-   ------------------
-
-   procedure On_Set_Upper
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Name   : constant String       := Entity_Name_Information (C);
-   begin
-      Set_Casing (C, To_Upper (Name));
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Set_Upper;
-
-   ------------------
-   -- On_Set_Mixed --
-   ------------------
-
-   procedure On_Set_Mixed
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      C        : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Name     : constant String       := Entity_Name_Information (C);
-      New_Name : String (Name'Range)   := Name;
-   begin
-      Mixed_Case (New_Name);
-      Set_Casing (C, New_Name);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Set_Mixed;
-
-   ------------------------
-   -- On_Set_Smart_Mixed --
-   ------------------------
-
-   procedure On_Set_Smart_Mixed
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      C        : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Name     : constant String       := Entity_Name_Information (C);
-      New_Name : String (Name'Range)   := Name;
-   begin
-      Smart_Mixed_Case (New_Name);
-      Set_Casing (C, New_Name);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Set_Smart_Mixed;
 
    ----------------------
    -- Casing_Customize --
@@ -378,164 +203,137 @@ package body Casing_Exceptions is
       end if;
    end Casing_Customize;
 
-   -----------------------
-   -- Casing_Contextual --
-   -----------------------
+   ---------------
+   -- Get_Label --
+   ---------------
 
-   procedure Casing_Contextual
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   function Get_Label
+     (Creator   : access Contextual_Label_Record;
+      Context   : access Selection_Context'Class) return String
    is
-      pragma Unreferenced (Object);
-
-      Kernel       : Kernel_Handle;
-      File         : Virtual_File;
-      File_Context : File_Selection_Context_Access;
-      Selection    : Entity_Selection_Context_Access;
-      Menu_Item    : Gtk_Menu_Item;
-      Submenu      : Gtk_Menu;
-      Substring    : Boolean;  --  True if substring selected
+      C : Entity_Selection_Context_Access;
    begin
-      Kernel := Get_Kernel (Context);
-
-      if Context.all not in Entity_Selection_Context'Class then
-         return;
+      if Context.all in Entity_Selection_Context'Class
+        and then Has_Entity_Name_Information
+          (Entity_Selection_Context_Access (Context))
+      then
+         C := Entity_Selection_Context_Access (Context);
+         declare
+            Name : String := Krunch (Entity_Name_Information (C));
+         begin
+            case Creator.Casing is
+               when Lower =>
+                  return "Casing/Lower " & To_Lower (Name);
+               when Upper =>
+                  return "Casing/Upper " & To_Upper (Name);
+               when Mixed =>
+                  Mixed_Case (Name);
+                  return "Casing/Mixed " & Name;
+               when Smart_Mixed =>
+                  Smart_Mixed_Case (Name);
+                  return "Casing/Smart Mixed " & Name;
+            end case;
+         end;
       end if;
+      return "";
+   end Get_Label;
 
-      File_Context := File_Selection_Context_Access (Context);
-      File         := File_Information (File_Context);
-      Selection    := Entity_Selection_Context_Access (Context);
+   -------------
+   -- Execute --
+   -------------
 
-      if not Has_Entity_Name_Information (Selection) then
-         return;
+   function Execute
+     (Command : access Change_Case_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      C      : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context.Context);
+      Name   : String       := Entity_Name_Information (C);
+   begin
+      case Command.Casing is
+         when Upper       => Set_Casing (C, To_Upper (Name));
+         when Lower       => Set_Casing (C, To_Lower (Name));
+         when Mixed       => Mixed_Case (Name); Set_Casing (C, Name);
+         when Smart_Mixed => Smart_Mixed_Case (Name); Set_Casing (C, Name);
+      end case;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Add_Exception_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      C      : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context.Context);
+      Name   : constant String := Entity_Name_Information (C);
+   begin
+      if Command.Substring then
+         if Command.Remove then
+            Remove_Substring_Exception (Name);
+         else
+            Add_Substring_Exception (Name);
+         end if;
+      else
+         if Command.Remove then
+            Remove_Exception (Name);
+         else
+            Add_Exception (Name);
+         end if;
       end if;
+      return Commands.Success;
+   end Execute;
 
-      --  ??? Should this menu entry created only for Ada editor
-      --  It seems interesting to create a case exception from a C entity
-      --  that is going to be imported on an Ada program.
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
 
-      Gtk_New (Menu_Item, Label => -"Casing");
-      Gtk_New (Submenu);
-      Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
-      Append (Menu, Menu_Item);
-
-      declare
-         E_Name   : constant String := Entity_Name_Information (Selection);
-         Name     : constant String := Krunch (E_Name);
-         New_Name : String (Name'Range);
-      begin
-         Gtk_New (Menu_Item, -"Lower " & To_Lower (Name));
-         Add (Submenu, Menu_Item);
-         Context_Callback.Connect
-           (Menu_Item, "activate",
-            Context_Callback.To_Marshaller (On_Set_Lower'Access),
-            User_Data   => Selection_Context_Access (Context));
-
-         Gtk_New (Menu_Item, -"Upper " & To_Upper (Name));
-         Add (Submenu, Menu_Item);
-         Context_Callback.Connect
-           (Menu_Item, "activate",
-            Context_Callback.To_Marshaller (On_Set_Upper'Access),
-            User_Data   => Selection_Context_Access (Context));
-
-         New_Name := Name;
-         Mixed_Case (New_Name);
-         Gtk_New (Menu_Item, -"Mixed " & New_Name);
-         Add (Submenu, Menu_Item);
-         Context_Callback.Connect
-           (Menu_Item, "activate",
-            Context_Callback.To_Marshaller (On_Set_Mixed'Access),
-            User_Data   => Selection_Context_Access (Context));
-
-         New_Name := Name;
-         Smart_Mixed_Case (New_Name);
-         Gtk_New (Menu_Item, -"Smart Mixed " & New_Name);
-         Add (Submenu, Menu_Item);
-         Context_Callback.Connect
-           (Menu_Item, "activate",
-            Context_Callback.To_Marshaller (On_Set_Smart_Mixed'Access),
-            User_Data   => Selection_Context_Access (Context));
-
-         --  Check wether we have an entity or substring selected
-
-         if Has_Entity_Column_Information (Selection)
-           and then Has_Line_Information (Selection)
-         then
-            declare
-               W_Seps : constant Character_Set :=
-                          To_Set (" ;.:=(),/'#*+-""><&"
-                                  & ASCII.HT & ASCII.CR & ASCII.LF);
-               --  Word separators
-               Before : aliased String := "1";
-               After  : aliased String
-                 := Integer'Image (E_Name'Length + 1);
-               Line   : aliased String :=
-                          Integer'Image (Line_Information (Selection));
-               Col    : aliased String :=
-                          Integer'Image
-                            (Entity_Column_Information (Selection));
-               Text   : constant String :=
-                          Execute_GPS_Shell_Command
-                            (Kernel, "Editor.get_chars",
-                             (1 => Full_Name (File).all'Unrestricted_Access,
-                              2 => Line'Unchecked_Access,
-                              3 => Col'Unchecked_Access,
-                              4 => Before'Unchecked_Access,
-                              5 => After'Unchecked_Access));
-            begin
-               if Text'Length > 1
-                 and then Is_In (Text (Text'First), W_Seps)
-                 and then Is_In (Text (Text'Last), W_Seps)
-               then
-                  --  Here we have a word not a substring
-                  Substring := False;
-               else
-                  Substring := True;
-               end if;
-            end;
-         end if;
-
-         Gtk_New (Menu_Item);
-         Append (Submenu, Menu_Item);
-
-         if Substring then
-            Gtk_New (Menu_Item, -"Add substring exception for " & Name);
-            Context_Callback.Connect
-              (Menu_Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Add_Case_Substring_Exception'Access),
-               User_Data   => Selection_Context_Access (Context));
-         else
-            Gtk_New (Menu_Item, -"Add exception for " & Name);
-            Context_Callback.Connect
-              (Menu_Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Add_Case_Exception'Access),
-               User_Data   => Selection_Context_Access (Context));
-         end if;
-
-         Add (Submenu, Menu_Item);
-
-         if Substring then
-            Gtk_New (Menu_Item, -"Remove substring xception for " & Name);
-            Context_Callback.Connect
-              (Menu_Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Remove_Case_Substring_Exception'Access),
-               User_Data   => Selection_Context_Access (Context));
-         else
-            Gtk_New (Menu_Item, -"Remove exception for " & Name);
-            Context_Callback.Connect
-              (Menu_Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Remove_Case_Exception'Access),
-               User_Data   => Selection_Context_Access (Context));
-         end if;
-
-         Add (Submenu, Menu_Item);
-      end;
-   end Casing_Contextual;
+   function Filter_Matches_Primitive
+     (Filter  : access Substring_Filter_Record;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Selection    : Entity_Selection_Context_Access;
+   begin
+      if Context.all in Entity_Selection_Context'Class
+        and then Has_Entity_Name_Information
+          (Entity_Selection_Context_Access (Context))
+        and then Has_Entity_Column_Information
+          (Entity_Selection_Context_Access (Context))
+        and then Has_Line_Information
+          (Entity_Selection_Context_Access (Context))
+      then
+         Selection := Entity_Selection_Context_Access (Context);
+         declare
+            File     : constant Virtual_File := File_Information (Selection);
+            E_Name   : constant String := Entity_Name_Information (Selection);
+            W_Seps   : constant Character_Set :=
+              To_Set (" ;.:=(),/'#*+-""><&" & ASCII.HT & ASCII.CR & ASCII.LF);
+            Before   : aliased String := "1";
+            After    : aliased String := Integer'Image (E_Name'Length + 1);
+            Line     : aliased String :=
+              Integer'Image (Line_Information (Selection));
+            Col      : aliased String :=
+              Integer'Image (Entity_Column_Information (Selection));
+            Text     : constant String := Execute_GPS_Shell_Command
+              (Kernel, "Editor.get_chars",
+               (1 => Full_Name (File).all'Unrestricted_Access,
+                2 => Line'Unchecked_Access,
+                3 => Col'Unchecked_Access,
+                4 => Before'Unchecked_Access,
+                5 => After'Unchecked_Access));
+         begin
+            return Text'Length <= 1
+              or else not Is_In (Text (Text'First), W_Seps)
+              or else not Is_In (Text (Text'Last), W_Seps);
+         end;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
 
    ---------------------
    -- Register_Module --
@@ -546,6 +344,9 @@ package body Casing_Exceptions is
    is
       Filename : constant String :=
         Get_Home_Dir (Kernel) & Case_Exceptions_Filename;
+      Command : Interactive_Command_Access;
+      Label   : Contextual_Label;
+      Substring_Filter, Full_String_Filter : Action_Filter;
    begin
       Casing_Module_Id := new Casing_Module_Record;
       Casing_Module_Id.Kernel := Kernel_Handle (Kernel);
@@ -553,12 +354,89 @@ package body Casing_Exceptions is
         (Module                  => Module_ID (Casing_Module_Id),
          Kernel                  => Kernel,
          Module_Name             => "Casing",
-         Contextual_Menu_Handler => Casing_Contextual'Access,
          Priority                => Default_Priority - 1);
       Load_Exceptions
         (Casing_Module_Id.Casing_Exceptions_Table,
          Filename,
          Read_Only => False);
+
+      Command := new Change_Case_Command;
+      Label   := new Contextual_Label_Record;
+      Label.Casing := Lower;
+      Change_Case_Command (Command.all).Casing := Lower;
+      Register_Contextual_Menu
+        (Kernel, "Lower case entity",
+         Label  => Label,
+         Action => Command);
+
+      Command := new Change_Case_Command;
+      Change_Case_Command (Command.all).Casing := Upper;
+      Label   := new Contextual_Label_Record;
+      Label.Casing := Upper;
+      Register_Contextual_Menu
+        (Kernel, "Upper case entity",
+         Label  => Label,
+         Action => Command);
+
+      Command := new Change_Case_Command;
+      Change_Case_Command (Command.all).Casing := Mixed;
+      Label   := new Contextual_Label_Record;
+      Label.Casing := Mixed;
+      Register_Contextual_Menu
+        (Kernel, "Mixed case entity",
+         Label  => Label,
+         Action => Command);
+
+      Command := new Change_Case_Command;
+      Change_Case_Command (Command.all).Casing := Smart_Mixed;
+      Label   := new Contextual_Label_Record;
+      Label.Casing := Smart_Mixed;
+      Register_Contextual_Menu
+        (Kernel, "Smart mixed case entity",
+         Label  => Label,
+         Action => Command);
+
+      Register_Contextual_Menu
+        (Kernel, "",
+         Label => "Casing/",
+         Filter => Lookup_Filter (Kernel, "Entity"));
+
+      Substring_Filter   := new Substring_Filter_Record;
+      Full_String_Filter := Action_Filter (not Substring_Filter);
+
+      Command := new Add_Exception_Command;
+      Add_Exception_Command (Command.all).Substring := True;
+      Register_Contextual_Menu
+        (Kernel, "Add substring casing exception",
+         Label  => -"Casing/Add substring exception for %e",
+         Action => Command,
+         Filter => Substring_Filter);
+
+      Command := new Add_Exception_Command;
+      Add_Exception_Command (Command.all).Substring := True;
+      Add_Exception_Command (Command.all).Remove    := True;
+      Register_Contextual_Menu
+        (Kernel, "Remove substring casing exception",
+         Label  => -"Casing/Remove substring exception for %e",
+         Action => Command,
+         Filter => Substring_Filter);
+
+      Command := new Add_Exception_Command;
+      Add_Exception_Command (Command.all).Substring := False;
+      Register_Contextual_Menu
+        (Kernel, "Add casing exception",
+         Label  => -"Casing/Add exception for %e",
+         Action => Command,
+         Filter => Full_String_Filter);
+
+      Command := new Add_Exception_Command;
+      Add_Exception_Command (Command.all).Substring := False;
+      Add_Exception_Command (Command.all).Remove := True;
+      Register_Contextual_Menu
+        (Kernel, "Remove casing exception",
+         Label  => -"Casing/Remove exception for %e",
+         Action => Command,
+         Filter => Full_String_Filter);
    end Register_Module;
 
    -------------
