@@ -283,8 +283,7 @@ package Ada_Analyzer is
    type Construct_List_Access is access all Construct_List;
 
    procedure Analyze_Ada_Source
-     (Buffer           : Basic_Types.Unchecked_String_Access;
-      Buffer_Length    : Natural;
+     (Buffer           : String;
       New_Buffer       : in out Extended_Line_Buffer;
       Indent_Params    : Indent_Parameters;
       Reserved_Casing  : Casing_Type           := Lower;
