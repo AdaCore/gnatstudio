@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -228,6 +228,7 @@ package Glide_Kernel.Preferences is
    Hide_Up_To_Date     : Param_Spec_Boolean;
    Hide_Not_Registered : Param_Spec_Boolean;
    CVS_Command         : Param_Spec_String;
+   ClearCase_Command   : Param_Spec_String;
 
    --  Debugger preferences are registered in GVD.Preferences
 

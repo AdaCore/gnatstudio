@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -826,6 +826,18 @@ package body Glide_Kernel.Preferences is
          Nick    => -"CVS command"));
       Register_Property
         (Kernel.Preferences, Param_Spec (CVS_Command), -"VCS:CVS");
+
+      -- ClearCase --
+
+      ClearCase_Command := Param_Spec_String (Gnew_String
+        (Name    => "ClearCase-Command",
+         Default => "cleartool",
+         Blurb   => -"General ClearCase command",
+         Flags   => Param_Readable,
+         Nick    => -"ClearCase command"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (ClearCase_Command), -"VCS:ClearCase");
+
    end Register_Global_Preferences;
 
    ----------------------
