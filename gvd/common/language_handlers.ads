@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -34,13 +34,13 @@ package Language_Handlers is
    type Language_Handler is access all Language_Handler_Record'Class;
 
    function Get_Language_From_File
-     (Handler : access Language_Handler_Record;
+     (Handler         : access Language_Handler_Record;
       Source_Filename : String) return Language.Language_Access is abstract;
    --  Return the name of the language used for Source_Filename.
    --  null is returned if the language wasn't recognized.
 
    function Get_Language_From_File
-     (Handler : access Language_Handler_Record;
+     (Handler         : access Language_Handler_Record;
       Source_Filename : String) return String is abstract;
    --  Same as above, but return the language name in a canonical form.
    --  The empty string is returned if the language wasn't recognized.
