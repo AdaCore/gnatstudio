@@ -1344,10 +1344,15 @@ You can also jump to a corresponding delimiter by using the @key{Ctrl-'} key,
 that can be configured in the preferences. Typing twice on this key will move
 the cursor back to its original position.
 
-@item Current line highlighting.
+@item Current line highlighting
 @cindex current
 You can configure the editor to highlight the current line with a certain
 color. @xref{The Preferences Dialog}.
+ 
+@item Auto save
+@cindex auto save
+You can configure the editor to periodically save modified files.
+See @ref{autosave delay} for a full description of this capability.
 
 @end table
 
@@ -4426,6 +4431,7 @@ include: @code{@{@}[]()}
 
 @item Autosave delay
 @cindex autosave delay
+@anchor{autosave delay}
 The period (in seconds) after which a source editor is automatically saved.
 0 if none.
 
