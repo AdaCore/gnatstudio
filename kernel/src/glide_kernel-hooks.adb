@@ -1088,15 +1088,13 @@ package body Glide_Kernel.Hooks is
      (Wrapper : Shell_Wrapper_No_Args_Record;
       Kernel  : access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Kernel);
-      Error : Boolean;
+      D : Callback_Data'Class := Create (Wrapper.Script, 1);
+      Tmp : Boolean;
+      pragma Unreferenced (Kernel, Tmp);
    begin
-      --  ??? Python specific
-      Execute_Command
-        (Wrapper.Script,
-         Wrapper.Func.all & "(""" & Wrapper.Hook.all & """)",
-         Show_Command => False,
-         Errors => Error);
+      Set_Nth_Arg (D, 1, Wrapper.Hook.all);
+      Tmp := Execute_Command (Wrapper.Script, Wrapper.Func.all, D);
+      Free (D);
    end Execute;
 
    -----------------------------
@@ -1255,10 +1253,10 @@ package body Glide_Kernel.Hooks is
             Wrapper3 : Shell_Wrapper_Return;
             Wrapper4 : Shell_Wrapper_Shell;
          begin
-            --  If we expect a hook with no arguments:
-            if Info = null
-              or else Info.Command_Handler = Default_Command_Handler'Access
-            then
+            if Info = null then
+               Set_Error_Msg (Data, "Unknown hook: " & Name);
+
+            elsif Info.Command_Handler = Default_Command_Handler'Access then
                Wrapper2        := new Shell_Wrapper_No_Args_Record;
                Wrapper2.Func   := new String'(Func);
                Wrapper2.Hook   := new String'(Name);
@@ -1286,6 +1284,8 @@ package body Glide_Kernel.Hooks is
                Add_Hook (Get_Kernel (Data), Name, Wrapper4);
 
             else
+               Set_Error_Msg
+                 (Data, "Cannot connect to unknown hook " & Name);
                Trace (Me, "Cannot connect to hook " & Name
                       & " since profile=" & Info.Profile'Img);
             end if;
