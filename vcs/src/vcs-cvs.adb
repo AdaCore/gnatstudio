@@ -23,7 +23,6 @@ with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with String_Utils;              use String_Utils;
 
@@ -35,25 +34,21 @@ package body VCS.CVS is
    CVS_Command : constant String := "cvs";
    --  <preferences>
 
+   The_CVS_Access : VCS_Access := new CVS_Record;
+
    -----------------------
    -- Local Subprograms --
    -----------------------
 
-   procedure Set_Message
-     (Rep : access CVS_Record;
-      M   : String);
-   --  Sets the internal message to M.
+   function Idendify_VCS (S : String) return VCS_Access;
+   --  Return an access to VCS_Record if S describes a CVS system.
 
-   procedure Clear_Message
-     (Rep : access CVS_Record);
-   --  Clears the internal message.
-
-   procedure Append_To_Message
+   procedure Handle_Error
      (Rep : access CVS_Record;
       S   : String);
    --  Appends S at the end of current message.
 
-   procedure Append_To_Message
+   procedure Handle_Error
      (Rep : access CVS_Record;
       L   : String_List.List);
    --  Concats L at the end of current message.
@@ -105,6 +100,15 @@ package body VCS.CVS is
       Output_To_Message : Boolean := False);
    --  Just like Simple_Action, but assuming that Filenames is not
    --  empty and that all files in Filenames are from the same directory.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ref : access CVS_Record) is
+   begin
+      null;
+   end Free;
 
    --------------
    -- Get_Path --
@@ -165,7 +169,7 @@ package body VCS.CVS is
       Non_Blocking_Spawn (Fd, Command, Arguments, Err_To_Out => True);
 
       begin
-         if Rep.Local_Idle_Function = null then
+         if The_Idle_Function = null then
             while Match = 1 loop
                Expect (Fd, Match, "\n");
                declare
@@ -180,11 +184,11 @@ package body VCS.CVS is
             end loop;
          else
             while Match = 1 loop
-               Expect (Fd, Match, "\n",  Rep.Timeout);
+               Expect (Fd, Match, "\n",  Timeout);
 
                case Match is
                   when Expect_Timeout =>
-                     Rep.Local_Idle_Function.all;
+                     The_Idle_Function.all;
                      Match := 1;
                   when others =>
                      declare
@@ -274,22 +278,17 @@ package body VCS.CVS is
             end loop;
          end;
       end if;
-         --  Spawn the command.
 
-         --  If there is any output, set the error flag to true and
-         --  fill the error message accordingly.
+      --  Treat any output as an error, since all actions are
+      --  supposed to be quiet.
 
-      if not Is_Empty (Output) then
-         Rep.Success := False;
-         Append_To_Message (Rep, Output);
-      end if;
+      Handle_Error (Rep, Output);
 
       Change_Dir (Old_Dir);
 
    exception
       when Directory_Error =>
-         Append_To_Message (Rep, "Could not open directory");
-         Rep.Success := False;
+         Handle_Error (Rep, "Could not open directory");
 
    end Real_Simple_Action;
 
@@ -530,8 +529,7 @@ package body VCS.CVS is
 
    exception
       when Directory_Error =>
-         Append_To_Message (Rep, "Could not open directory");
-         Rep.Success := False;
+         Handle_Error (Rep, "Could not open directory");
          return Result;
    end Real_Get_Status;
 
@@ -567,9 +565,11 @@ package body VCS.CVS is
 
       Open (File, In_File, New_Dir & "CVS" & Directory_Separator & "Entries");
 
-      Get_Line (File, Buffer, Last);
 
-      while Last >= 0 loop
+      while Last >= 0
+        and then not End_Of_File (File)
+      loop
+         Get_Line (File, Buffer, Last);
          Index := 2;
          Skip_To_Char (Buffer (1 .. Last), Index, '/');
          Next_Index := Index + 1;
@@ -585,9 +585,8 @@ package body VCS.CVS is
             Free (Current_Status.File_Name);
             Free (Current_Status.Working_Revision);
          end if;
-         Current_Status := Blank_Status;
 
-         Get_Line (File, Buffer, Last);
+         Current_Status := Blank_Status;
       end loop;
 
       Close (File);
@@ -716,9 +715,6 @@ package body VCS.CVS is
    is
       Arguments : String_List.List;
    begin
-      Clear_Message (Rep);
-      Rep.Success := True;
-
       String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "edit");
 
@@ -744,9 +740,6 @@ package body VCS.CVS is
       use String_List;
 
    begin
-      Clear_Message (Rep);
-      Rep.Success := True;
-
       while not Is_Empty (Filenames_Temp) loop
          Append (Arguments, "-Q");
          Append (Arguments, "commit");
@@ -766,8 +759,7 @@ package body VCS.CVS is
 
    exception
       when List_Empty =>
-         Rep.Success := False;
-         Append_To_Message (Rep, "Log list incomplete !");
+         Handle_Error (Rep, "Log list incomplete !");
    end Commit;
 
    ------------
@@ -780,13 +772,9 @@ package body VCS.CVS is
    is
       Arguments : String_List.List;
    begin
-      Clear_Message (Rep);
-      Rep.Success := True;
-
       String_List.Append (Arguments, "update");
 
       Simple_Action (Rep, Filenames, Arguments, True);
-
       String_List.Free (Arguments);
    end Update;
 
@@ -800,13 +788,8 @@ package body VCS.CVS is
    is
       Arguments : String_List.List;
    begin
-      Clear_Message (Rep);
-      Rep.Success := True;
-
       String_List.Append (Arguments, "update");
-
       Simple_Action (Rep, Filenames, Arguments, True);
-
       String_List.Free (Arguments);
    end Merge;
 
@@ -826,10 +809,6 @@ package body VCS.CVS is
       Simple_Action (Rep, Filenames, Arguments);
 
       String_List.Free (Arguments);
-
-      Clear_Message (Rep);
-      Rep.Success := True;
-
       String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "commit");
       String_List.Append (Arguments, "-m");
@@ -838,7 +817,6 @@ package body VCS.CVS is
       --  ??? This should be customizable.
 
       Simple_Action (Rep, Filenames, Arguments);
-
       String_List.Free (Arguments);
    end Add;
 
@@ -852,15 +830,11 @@ package body VCS.CVS is
    is
       Arguments : String_List.List;
    begin
-      Clear_Message (Rep);
-      Rep.Success := True;
-
       String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "remove");
       String_List.Append (Arguments, "-f");
 
       Simple_Action (Rep, Filenames, Arguments);
-
       String_List.Free (Arguments);
    end Remove;
 
@@ -973,36 +947,18 @@ package body VCS.CVS is
       return Result;
    end Annotate;
 
-   -------------
-   -- Success --
-   -------------
+   ------------------
+   -- Handle_Error --
+   ------------------
 
-   function Success (Rep : access CVS_Record) return Boolean is
-   begin
-      return Rep.Success;
-   end Success;
-
-   -------------------
-   -- Clear_Message --
-   -------------------
-
-   procedure Clear_Message (Rep : access CVS_Record) is
-   begin
-      String_List.Free (Rep.Message);
-   end Clear_Message;
-
-   -----------------------
-   -- Append_To_Message --
-   -----------------------
-
-   procedure Append_To_Message
+   procedure Handle_Error
      (Rep : access CVS_Record;
       S   : String) is
    begin
       Set_Error (Rep, S);
-   end Append_To_Message;
+   end Handle_Error;
 
-   procedure Append_To_Message
+   procedure Handle_Error
      (Rep : access CVS_Record;
       L   : String_List.List)
    is
@@ -1014,51 +970,30 @@ package body VCS.CVS is
          Temp_L := String_List.Next (Temp_L);
       end loop;
 
-   end Append_To_Message;
+   end Handle_Error;
 
-   -----------------
-   -- Set_Message --
-   -----------------
+   ------------------
+   -- Idendify_VCS --
+   ------------------
 
-   procedure Set_Message
-     (Rep : access CVS_Record;
-      M   : String)
-   is
-      use String_List;
+   function Idendify_VCS (S : String) return VCS_Access is
+      Id : String := S;
    begin
-      Set_Error (Rep, M);
-   end Set_Message;
+      Lower_Case (Id);
+      if Strip_Quotes (Id) = "cvs" then
+         return The_CVS_Access;
+      end if;
 
-   -----------------
-   -- Get_Message --
-   -----------------
+      return null;
+   end Idendify_VCS;
 
-   function Get_Message (Rep : access CVS_Record) return String is
-      S : Unbounded_String := Null_Unbounded_String;
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-      use String_List;
-      Message_Temp : List := Rep.Message;
-
+   procedure Register_Module is
    begin
-      while not Is_Empty (Message_Temp) loop
-         Append (S, Head (Message_Temp) & ASCII.CR & ASCII.LF);
-         Message_Temp := Next (Message_Temp);
-      end loop;
-
-      return To_String (S);
-   end Get_Message;
-
-   ----------------------------
-   -- Register_Idle_Function --
-   ----------------------------
-
-   procedure Register_Idle_Function
-     (Rep  : access CVS_Record;
-      Func : Idle_Function;
-      Timeout : Integer := 200) is
-   begin
-      Rep.Local_Idle_Function := Func;
-      Rep.Timeout := Timeout;
-   end Register_Idle_Function;
+      Register_VCS_Identifier (Idendify_VCS'Access);
+   end Register_Module;
 
 end VCS.CVS;
