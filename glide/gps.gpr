@@ -1,5 +1,5 @@
 with "../gtkada/gtkada";
-with "../gvd/gvd_glide";
+with "../gvd/gvd";
 with "../kernel/kernel";
 with "../vsearch/vsearch";
 with "../prj_editor/prj_editor";
