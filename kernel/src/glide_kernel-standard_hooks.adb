@@ -550,20 +550,20 @@ package body Glide_Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : Source_File_Hooks_Args) return Boolean
    is
-      Error : aliased Boolean;
-      Tmp   : constant Boolean := Execute_Command
-        (Script,
-         Command & "(""" & Hook_Name
-         & """, GPS.File (""" & Full_Name (Data.File).all & """),"
-         & Natural'Image (Data.Line) & ", "
-         & Natural'Image (Data.Column) & ", "
-         & Natural'Image (Data.Column_End) & ", "
-         & Natural'Image (Boolean'Pos (Data.Enable_Navigation)) & ", "
-         & Natural'Image (Boolean'Pos (Data.New_File)) & ", "
-         & Natural'Image (Boolean'Pos (Data.Force_Reload)) & ")",
-         Errors => Error'Unrestricted_Access);
+      D : Callback_Data'Class := Create (Script, 8);
+      Tmp  : Boolean;
    begin
-      Trace (Me, "Shell command returned " & Tmp'Img & "--");
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 3, Data.Line);
+      Set_Nth_Arg (D, 4, Data.Column);
+      Set_Nth_Arg (D, 5, Data.Column_End);
+      Set_Nth_Arg (D, 6, Data.Enable_Navigation);
+      Set_Nth_Arg (D, 7, Data.New_File);
+      Set_Nth_Arg (D, 8, Data.Force_Reload);
+
+      Tmp := Execute_Command (Script, Command, D);
+      Free (D);
       return Tmp;
    end Execute_Shell;
 
@@ -587,18 +587,19 @@ package body Glide_Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : File_Line_Hooks_Args) return Boolean
    is
-      Error : aliased Boolean;
+      D   : Callback_Data'Class := Create (Script, 6);
+      Tmp : Boolean;
    begin
-      --  ??? Python specific
-      return Execute_Command
-        (Script,
-         Command & "(""" & Hook_Name & """, """ & Data.Identifier
-         & """, GPS.File (""" & Full_Name (Data.File).all & """),"
-         & Integer'Image (Boolean'Pos (Data.Stick_To_Data)) & ","
-         & Integer'Image (Boolean'Pos (Data.Every_Line)) & ","
-         & Integer'Image (Boolean'Pos (Data.Normalize)) & ")",
-         Show_Command => False,
-         Errors => Error'Access) = "1";
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Data.Identifier);
+      Set_Nth_Arg (D, 3, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 4, Data.Stick_To_Data);
+      Set_Nth_Arg (D, 5, Data.Every_Line);
+      Set_Nth_Arg (D, 6, Data.Normalize);
+
+      Tmp := Execute_Command (Script, Command, D);
+      Free (D);
+      return Tmp;
    end Execute_Shell;
 
    --------------
@@ -621,20 +622,20 @@ package body Glide_Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : Location_Hooks_Args) return Boolean
    is
-      Error : aliased Boolean;
+      D : Callback_Data'Class := Create (Script, 7);
+      Tmp : Boolean;
    begin
-      --  ??? Python specific
-      return Execute_Command
-        (Script,
-         Command & "(""" & Hook_Name & ""","
-         & """" & Data.Identifier & ""","
-         & """" & Data.Category & ""","
-         & "GPS.File (""" & Full_Name (Data.File).all & """),"
-         & Integer'Image (Data.Line) & ","
-         & Integer'Image (Data.Column) & ","
-         & """" & Data.Message & """)",
-         Show_Command => False,
-         Errors => Error'Unrestricted_Access) = "1";
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Data.Identifier);
+      Set_Nth_Arg (D, 3, Data.Category);
+      Set_Nth_Arg (D, 4, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 5, Data.Line);
+      Set_Nth_Arg (D, 6, Data.Column);
+      Set_Nth_Arg (D, 7, Data.Message);
+
+      Tmp := Execute_Command (Script, Command, D);
+      Free (D);
+      return Tmp;
    end Execute_Shell;
 
    --------------
@@ -657,17 +658,17 @@ package body Glide_Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : Html_Hooks_Args) return Boolean
    is
-      Error : aliased Boolean;
+      D : Callback_Data'Class := Create (Script, 4);
+      Tmp : Boolean;
    begin
-      --  ??? Python specific
-      return Execute_Command
-        (Script,
-         Command & "(""" & Hook_Name & ""","
-         & "GPS.File (""" & Full_Name (Data.File).all & """),"
-         & Integer'Image (Boolean'Pos (Data.Enable_Navigation)) & ","
-         & Data.Anchor & ")",
-         Show_Command => False,
-         Errors => Error'Unrestricted_Access) = "1";
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 3, Data.Enable_Navigation);
+      Set_Nth_Arg (D, 4, Data.Anchor);
+
+      Tmp := Execute_Command (Script, Command, D);
+      Free (D);
+      return Tmp;
    end Execute_Shell;
 
    --------------
@@ -690,17 +691,17 @@ package body Glide_Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : Diff_Hooks_Args) return Boolean
    is
-      Error : aliased Boolean;
+      D : Callback_Data'Class := Create (Script, 4);
+      Tmp : Boolean;
    begin
-      --  ??? Python specific
-      return Execute_Command
-        (Script,
-         Command & "(""" & Hook_Name
-           & """, GPS.File (""" & Full_Name (Data.Orig_File).all & """),"
-           & """, GPS.File (""" & Full_Name (Data.New_File).all & """),"
-           & """, GPS.File (""" & Full_Name (Data.Diff_File).all & """))",
-         Show_Command => False,
-         Errors => Error'Unrestricted_Access) = "1";
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Create_File (Script, Data.Orig_File));
+      Set_Nth_Arg (D, 3, Create_File (Script, Data.New_File));
+      Set_Nth_Arg (D, 4, Create_File (Script, Data.Diff_File));
+
+      Tmp := Execute_Command (Script, Command, D);
+      Free (D);
+      return Tmp;
    end Execute_Shell;
 
    ---------------------------
