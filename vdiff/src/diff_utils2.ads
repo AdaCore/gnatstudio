@@ -122,8 +122,8 @@ package Diff_Utils2 is
       return Diff_List;
    --  Just for Testing
 
-   function Simplify (Diff : Diff_List; Ref_File : T_Loc := 2)
-                      return Diff_List;
+   function Simplify (Diff : Diff_List;
+      Ref_File : T_Loc) return Diff_List;
    --  calculate the displayable version of Diff with reference file Ref_File
 
 private
@@ -132,6 +132,7 @@ private
                    My_Change, Old_File, Your_Change : String)
                    return Diff_List;
    --  Execute diff3 on File1, File2, File3 and return list of Chunk
+
    function Diff
      (Diff_Command  : String;
       Ref_File, New_File : String) return Diff_List;

@@ -513,7 +513,7 @@ package body Diff_Utils2 is
 
    function Simplify
      (Diff : Diff_List;
-      Ref_File : T_Loc := 2) return Diff_List
+      Ref_File : T_Loc) return Diff_List
    is
       Ref        : constant T_Loc := Ref_File;
       Curr_Node  : Diff_List_Node;
