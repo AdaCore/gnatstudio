@@ -5969,6 +5969,17 @@ level or not based on the first @code{when} construct: if the first
 @code{when} is indented by an extra level, the whole case statement will
 be indented following the RM style.
 
+@ignore
+@item Casing policy
+The way the editor will handle the case settings below.
+@code{Disabled} no auto-casing will be done;
+@code{End_Of_Line} auto-casing will be done when hitting @key{Enter} key;
+@code{On_The_Fly} auto-casing will be done word-by-word while typing.
+For the @code{End_Of_Line} and @code{On_The_Fly} policies it is always
+possible to fore the casing of the current line forcing the indentation.
+The indentation key is @key{Ctrl-Tab} by default.
+@end ignore
+
 @item Reserved word casing
 How the editor should handle reserved words casing.
 @code{Unchanged} will keep the casing as-is;
@@ -5976,7 +5987,7 @@ How the editor should handle reserved words casing.
 @code{Lower} will change the casing to lower case;
 @code{Mixed} will change the casing to mixed case (all characters to
 lower case except first character and characters after an underscore
-which are set to upper case).
+which are set to upper case);
 @code{Smart_Mixed} As above but do not force upper case characters to
 lower case.
 
@@ -7201,7 +7212,6 @@ possible with @code{id}), they must all match for the action to be executed.
 </ada_editor>
 @end smallexample
 
-
 @c ----------------------------------------------------------------------
 @node Adding new menus
 @subsection Adding new menus
@@ -7400,7 +7410,6 @@ displayed in source editors.
 </print>
 @end smallexample
 
-
 @c ----------------------------------------------------------------------
 @node Adding tool bar buttons
 @subsection Adding tool bar buttons
@@ -7489,7 +7498,6 @@ A more convenient interface exists for Python, the GPS.Toolbar class, which
 gives you the same flexibility as above, but also gives you dynamic control
 over the entry. See the python documentation.
 @end ifset
-
 
 @c ---------------------------------------------------------------------
 @node Binding actions to keys
@@ -8743,8 +8751,6 @@ instance, by calling
 GPS.Project.root().get_attribute_as_list ("main")
 @end smallexample
 
-
-
 @c --------------------------------------------------------------------------
 @node Adding casing exceptions
 @subsection Adding casing exceptions
@@ -8863,8 +8869,6 @@ menu, that will display @file{file.html}. The latter is searched in the
    </documentation_file>
 </index>
 @end smallexample
-
-
 
 @c --------------------------------------------------------------------------
 @node Adding stock icons
@@ -9370,6 +9374,7 @@ Both cases are described in an XML customization file, as described previously,
 and both are setup to execute what GPS calls an action, i.e. a set of commands
 defined by the @code{<action>} tag.
 
+
 @c --------------------------------------------------------------------------
 @node Chaining commands
 @subsubsection Chaining commands
@@ -9416,7 +9421,6 @@ way when calling external commands.
 If one of the commands in the action raises an error, the execution of the
 action is stopped immediately, and no further command is performed.
 
-
 @c --------------------------------------------------------------------------
 @node Saving open windows
 @subsubsection Saving open windows
@@ -9441,7 +9445,6 @@ simply put it in its own @code{<shell>} command, as in:
   </action>
 </save_children>
 @end smallexample
-
 
 @c --------------------------------------------------------------------------
 @node Querying project switches
@@ -9503,7 +9506,6 @@ window. The
 </query_switches>
 @end smallexample
 @end ifset
-
 
 @c --------------------------------------------------------------------------
 @node Querying switches interactively
@@ -9604,6 +9606,7 @@ will always be the empty string, i.e. output is sent to the GPS console.
   </action>
 </ls>
 @end smallexample
+
 
 @c --------------------------------------------------------------------------
 @node Processing the tool output
@@ -10011,7 +10014,6 @@ the contents of the string you are quoting.
 Locations.parse """%1 """ category_name
 @end smallexample
 
-
 @c ------------------------------------------------------------------------
 @ifclear python
 In future versions of GPS, it will be possible to use more advanced scripting
@@ -10390,7 +10392,6 @@ MyClass()
 
 @end itemize
 
-
 @c ------------------------------------------------------------------------
 @ifset python
 @node Python FAQ
@@ -10460,7 +10461,6 @@ rest of your script. But you cannot filter or modify the output as in the
 first solution.
 
 @end itemize
-
 
 @c ----------------------------------------------
 @node Contextual menus on object directories only
@@ -10656,7 +10656,6 @@ to convert the text file into a postscript document.
 
 @end ifset
 
-
 @c --------------------------------------------------------------------
 @node Hooks
 @subsection Hooks
@@ -10711,7 +10710,6 @@ The list of all known hook types can be found through the @b{Hook.list_types}
 command. This takes no argument and returns a list of all known types of hooks.
 As before, you can more information for each of these type through a call to
 @b{Hook.describe_type}.
-
 
 @c ----------------------------------
 @subsubsection Adding commands to hooks
@@ -10983,7 +10981,6 @@ GPS> Hook "my_custom_hook"
 GPS> Hook.run %1 1 2
 GPS> Hook.run %2 "arg1" "arg2" "arg3"
 @end ifclear
-
 
 @c --------------------------------------------------------------------
 @node Adding support for new Version Control Systems
@@ -11334,7 +11331,6 @@ parameters:
   the file.
 
 @end table
-
 
 @c --------------------------------------------------------------------
 @node Environment
@@ -11750,5 +11746,3 @@ copy of the code on your local machine).
 @end ifinfo
 
 @bye
-
-
