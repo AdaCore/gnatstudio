@@ -1735,9 +1735,10 @@ package body Project_Trees is
    is
       use type Node_List.Glist;
 
-      File : constant String_Id := Get_File_From_Node (Tree, Node);
-      N    : Gtk_Ctree_Node := Node;
-      User : constant User_Data := Node_Get_Row_Data (Tree, N);
+      File    : constant String_Id := Get_File_From_Node (Tree, Node);
+      N       : Gtk_Ctree_Node := Node;
+      User    : constant User_Data := Node_Get_Row_Data (Tree, N);
+      Ignored : Boolean;
 
    begin
       case User.Node_Type is
@@ -1751,7 +1752,8 @@ package body Project_Trees is
             begin
                Go_To (Tree.Kernel,
                       Dir_S & File_S,
-                      User.Sloc_Start.Line, User.Sloc_Start.Column);
+                      User.Sloc_Start.Line, User.Sloc_Start.Column,
+                      Success => Ignored);
             end;
 
          when File_Node =>
@@ -1761,7 +1763,8 @@ package body Project_Trees is
                Dir_S  : constant String :=
                  Get_Directory_From_Node (Tree, N);
             begin
-               Open_File (Tree.Kernel, Dir_S & File_S);
+               Open_File (Tree.Kernel, Dir_S & File_S, Ignored);
+               --  ??? Can the result be ignored here?
             end;
 
          when others =>
