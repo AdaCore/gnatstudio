@@ -32,6 +32,7 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
 with Process_Proxies; use Process_Proxies;
 with Odd.Types; use Odd.Types;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Process_Tab_Pkg.Callbacks is
 
@@ -217,15 +218,16 @@ package body Process_Tab_Pkg.Callbacks is
       Num : in Natural;
       D   : in Direction)
    is
-      Data    : History_Data;
+      Data    : GNAT.OS_Lib.String_Access;
       Current : History_Data;
    begin
       begin
-         Data := Get_Current (H);
+         Data := Get_Current (H).Command;
       exception
          when No_Such_Item =>
-            Data.Command := new String' ("");
+            Data := null;
       end;
+
       loop
          if D = Backward then
             Move_To_Previous (H);
@@ -235,7 +237,8 @@ package body Process_Tab_Pkg.Callbacks is
          Current := Get_Current (H);
          exit when Current.Debugger_Num = Num
            and then Current.Mode /= Hidden
-           and then Current.Command.all /= Data.Command.all;
+           and then (Data = null
+                     or else Current.Command.all /= Data.all);
       end loop;
    end Find_Match;
 
