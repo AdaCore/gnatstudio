@@ -25,6 +25,7 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Intl;                use Glide_Intl;
 
 with Traces;                    use Traces;
@@ -214,7 +215,7 @@ package body VCS_Module is
       Explorer := Get_Explorer (Kernel);
 
       Clear (Explorer);
-      Get_Status (Ref, Get_Files_In_Project (Kernel));
+      Get_Status (Ref, Get_Files_In_Project (Get_Project (Kernel)));
 
    exception
       when E : others =>
@@ -365,6 +366,7 @@ package body VCS_Module is
 
          if Has_File_Information (File_Context)
            or else Has_Directory_Information (File_Context)
+           or else Has_Project_Information (File_Context)
          then
             Gtk_New (Menu_Item, Label => -"VCS");
             Gtk_New (Submenu);
