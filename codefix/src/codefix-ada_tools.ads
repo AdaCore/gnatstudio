@@ -18,7 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  Purpose of this package ???
+--  This package provides some tools that can be used in ada formal
+--  errors and commands.
 
 with Generic_List;
 
@@ -37,6 +38,16 @@ package Codefix.Ada_Tools is
    --  Return all the use clauses that are related to a with or an
    --  instantiation name. If Exclusive is true, then only use clauses
    --  that are not linked to any other will be returned.
+
+   type Ada_Escape_Str is new Escape_Str_Manager with private;
+
+   function Is_In_Escape_Part
+     (This     : Ada_Escape_Str;
+      Text     : String;
+      Position : Natural) return Boolean;
+   --  Return True if Position is in comments or between two quotes.
+
+   Std_Ada_Escape : constant Ada_Escape_Str;
 
 private
 
@@ -94,5 +105,12 @@ private
      (List_Of_With : in out With_Lists.List;
       List_Of_Use  : in out Use_Lists.List);
    --  ???
+
+   type Ada_Escape_Str is new Escape_Str_Manager with record
+      null;
+   end record;
+
+   Std_Ada_Escape : constant Ada_Escape_Str :=
+     (Escape_Str_Manager with null record);
 
 end Codefix.Ada_Tools;

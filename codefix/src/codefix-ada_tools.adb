@@ -252,4 +252,53 @@ package body Codefix.Ada_Tools is
       end loop;
    end Link_All_Clauses;
 
+   -----------------------
+   -- Is_In_Escape_Part --
+   -----------------------
+
+   function Is_In_Escape_Part
+     (This     : Ada_Escape_Str;
+      Text     : String;
+      Position : Natural) return Boolean
+   is
+      pragma Unreferenced (This);
+
+      Is_In_String : Boolean := False;
+      J            : Natural;
+   begin
+      J := Text'First;
+
+      while J <= Position loop
+         case Text (J) is
+            when '"' =>
+               if Is_In_String
+                 and then J < Position
+                 and then Text (J + 1) /= '"'
+               then
+                  Is_In_String := False;
+               else
+                  Is_In_String := True;
+               end if;
+            when '-' =>
+               if not Is_In_String
+                 and then J < Position
+                 and then Text (J + 1) = '-'
+               then
+                  return True;
+               end if;
+            when others =>
+               null;
+         end case;
+
+         J := J + 1;
+      end loop;
+
+      if Is_In_String then
+         return True;
+      else
+         return False;
+      end if;
+
+   end Is_In_Escape_Part;
+
 end Codefix.Ada_Tools;
