@@ -166,32 +166,21 @@ package body Glide_Kernel.Project is
       procedure Add_Directory (S : String) is
          Tmp : GNAT.OS_Lib.String_Access;
       begin
-         if S = "" then
+         if S = ""
+           or else S = "<Current_Directory>"
+         then
             return;
-
-         elsif S = "<Current_Directory>" then
-            if Source_Path then
-               Tmp := Handle.Predefined_Source_Path;
-               Handle.Predefined_Source_Path :=
-                 new String'(Handle.Predefined_Source_Path.all & ":.");
-
-            else
-               Tmp := Handle.Predefined_Object_Path;
-               Handle.Predefined_Object_Path :=
-                 new String'(Handle.Predefined_Object_Path.all & ":.");
-            end if;
 
          elsif Source_Path then
             Tmp := Handle.Predefined_Source_Path;
-            Handle.Predefined_Source_Path :=
-              new String'(Handle.Predefined_Source_Path.all & ":" & S);
+            Handle.Predefined_Source_Path := new String'
+              (Handle.Predefined_Source_Path.all & Path_Separator & S);
 
          else
             Tmp := Handle.Predefined_Object_Path;
-            Handle.Predefined_Object_Path :=
-              new String'(Handle.Predefined_Object_Path.all & ":" & S);
+            Handle.Predefined_Object_Path := new String'
+              (Handle.Predefined_Object_Path.all & Path_Separator & S);
          end if;
-
          Free (Tmp);
       end Add_Directory;
 
@@ -217,11 +206,13 @@ package body Glide_Kernel.Project is
 
       Free (Handle.Gnatls_Cache);
       Handle.Gnatls_Cache := new String'(Gnatls);
-
       Free (Handle.Predefined_Source_Path);
       Free (Handle.Predefined_Object_Path);
+      Basic_Types.Free (Handle.Predefined_Source_Files);
       Handle.Predefined_Source_Path := new String'("");
       Handle.Predefined_Object_Path := new String'("");
+
+      --  ??? Should remove, when possible, the previous predefined project
 
       Path := Locate_Exec_On_Path (Gnatls_Args (1).all);
 
@@ -230,6 +221,7 @@ package body Glide_Kernel.Project is
            (Fd, Path.all,
             Gnatls_Args (2 .. Gnatls_Args'Last) & Verbose'Unchecked_Access,
             Buffer_Size => 0, Err_To_Out => True);
+
          Free (Path);
          Free (Gnatls_Args);
          Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
