@@ -32,7 +32,6 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Toolbar;              use Gtk.Toolbar;
 with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.Window;               use Gtk.Window;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
@@ -61,6 +60,7 @@ with VCS.CVS;
 with VCS_View_Pixmaps; use VCS_View_Pixmaps;
 
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
+with Glide_Kernel.Editor;     use Glide_Kernel.Editor;
 with Glide_Intl;      use Glide_Intl;
 
 package body VCS_View_Pkg is
@@ -97,8 +97,6 @@ package body VCS_View_Pkg is
    package Explorer_Selection_Foreach is
       new Selection_Foreach (VCS_View_Access);
    use Explorer_Selection_Foreach;
-
-   use VCS.String_List;
 
    ---------------------
    -- Local constants --
@@ -168,6 +166,18 @@ package body VCS_View_Pkg is
    --  Status_Record.
    --  Success tells whether the information has been filled or not.
 
+   procedure Push_Message
+     (Explorer : access VCS_View_Record'Class;
+      M_Type   : Message_Type;
+      Message  : String);
+   --  Display a message.
+
+   procedure Display_String_List
+     (Explorer : VCS_View_Access;
+      List     : VCS.String_List.List;
+      M_Type   : Message_Type);
+   --  Display a list of strings.
+
    procedure Launch_Viewer
      (Explorer : access VCS_View_Record'Class;
       Strings  : in out List;
@@ -180,23 +190,10 @@ package body VCS_View_Pkg is
       Filename : String);
    --  Launch an editor for the given file.
 
-   procedure Push_Message
-     (Explorer : access VCS_View_Record'Class;
-      M_Type   : Message_Type;
-      Message  : String);
-   --  Display a message in the Message_Text.
-
    procedure Handle_VCS_Error
      (Message  : String;
       Explorer : Gtk_Widget);
    --  Handle the error message output by VCS operations.
-
-   procedure
-     Display_String_List
-     (Explorer : access VCS_View_Record'Class;
-      List     : VCS.String_List.List;
-      M_Type   : Message_Type);
-   --  Convenience procedure to display a String_List.List.
 
    procedure Refresh_Files (Explorer : access VCS_View_Record'Class;
                             Connect  : Boolean := False);
@@ -210,6 +207,11 @@ package body VCS_View_Pkg is
    --  the explorer will be set to the current directory.
    --  This procedure will also look for an acceptable VCS system for this
    --  directory.
+
+   procedure Get_Status
+     (Explorer : VCS_View_Access;
+      Files    : List);
+   --  Updates the status for Files.
 
    function Get_Selected_Files
      (Explorer : access VCS_View_Record'Class)
@@ -329,9 +331,15 @@ package body VCS_View_Pkg is
 
    procedure Launch_Editor
      (Explorer : access VCS_View_Record'Class;
-      Filename : String) is
+      Filename : String)
+   is
+      Success : Boolean;
    begin
-      Put_Line ("glide " & Filename);
+      if Explorer.Kernel = null then
+         Put_Line ("glide " & Filename);
+      else
+         Open_File (Explorer.Kernel, Filename, Success);
+      end if;
    end Launch_Editor;
 
    -------------------------
@@ -339,16 +347,33 @@ package body VCS_View_Pkg is
    -------------------------
 
    procedure Display_String_List
-     (Explorer : access VCS_View_Record'Class;
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
       List     : VCS.String_List.List;
       M_Type   : Message_Type)
    is
       Temp_List : VCS.String_List.List := List;
    begin
       while not Is_Empty (Temp_List) loop
-         Push_Message (Explorer, M_Type, "   "  & Head (List));
+         Push_Message (Explorer,
+                       Kernel,
+                       M_Type, "   "  & Head (Temp_List));
          Temp_List := Next (Temp_List);
       end loop;
+   end Display_String_List;
+
+   -------------------------
+   -- Display_String_List --
+   -------------------------
+
+   procedure Display_String_List
+     (Explorer : VCS_View_Access;
+      List     : VCS.String_List.List;
+      M_Type   : Message_Type)
+   is
+   begin
+      pragma Assert (Explorer /= null);
+      Display_String_List (Explorer, Explorer.Kernel, List, M_Type);
    end Display_String_List;
 
    ---------------
@@ -534,6 +559,8 @@ package body VCS_View_Pkg is
          L := Local_Get_Status (Explorer.VCS_Ref, Directory_List);
       end if;
 
+      Free (Directory_List);
+
       while not Is_Empty (L) loop
          Append (Explorer.Model, Iter, Null_Iter);
          Fill_Info (Explorer, Iter, Head (L), False, Success);
@@ -553,11 +580,14 @@ package body VCS_View_Pkg is
    ------------------
 
    procedure Push_Message
-     (Explorer : access VCS_View_Record'Class;
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
       M_Type   : Message_Type;
       Message  : String) is
    begin
-      if Explorer.Kernel = null then
+      pragma Assert (Explorer /= null and then Kernel /= null);
+
+      if Kernel = null then
          if M_Type = Error then
             Insert (Explorer.Message_Text,
                     Chars => -"    Error : ");
@@ -566,11 +596,26 @@ package body VCS_View_Pkg is
          Insert (Explorer.Message_Text,
                  Chars => Message & ASCII.LF);
       else
-         Insert (Explorer.Kernel,
+         Insert (Kernel,
                  Message,
                  Highlight_Sloc => False,
                  Mode           => M_Type);
       end if;
+   end Push_Message;
+
+   ------------------
+   -- Push_Message --
+   ------------------
+
+   procedure Push_Message
+     (Explorer : access VCS_View_Record'Class;
+      M_Type   : Message_Type;
+      Message  : String) is
+   begin
+      Push_Message (VCS_View_Access (Explorer),
+                    Explorer.Kernel,
+                    M_Type,
+                    Message);
    end Push_Message;
 
    ---------------------------
@@ -725,7 +770,8 @@ package body VCS_View_Pkg is
         (Explorer, Create_And_Launch_Log_Editor'Unrestricted_Access);
 
       if No_Files_Selected then
-         Push_Message (Explorer, Error, -"No files are selected.");
+         Push_Message (Explorer,
+                       Error, -"No files are selected.");
          return;
       end if;
    end On_Edit_Log_Button_Clicked;
@@ -797,7 +843,9 @@ package body VCS_View_Pkg is
         (Explorer, Clear_Launch_Log_Editor'Unrestricted_Access);
 
       if No_Files_Selected then
-         Push_Message (Explorer, Error, -"No files are selected.");
+         Push_Message (Explorer,
+                       Error,
+                       -"No files are selected.");
          return;
       end if;
 
@@ -853,7 +901,9 @@ package body VCS_View_Pkg is
 
    begin
       if Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
+         Push_Message (Explorer,
+                       Error,
+                       -"No files are selected.");
          return;
       end if;
 
@@ -971,41 +1021,76 @@ package body VCS_View_Pkg is
          Set_Busy_Cursor (Get_Window (Explorer), False);
          Push_Message (Explorer, Info, -"... done." & ASCII.LF);
       else
-         Push_Message (Explorer,
-                       Verbose,
-                       -"Querying status for files:");
-
-         Display_String_List (Explorer, L, Verbose);
-
-         declare
-            Iter   : Gtk_Tree_Iter;
-            Result : File_Status_List.List := Get_Status (Explorer.VCS_Ref, L);
-            Dummy  : Boolean;
-
-         begin
-            while not File_Status_List.Is_Empty (Result) loop
-               Iter := Get_Iter_From_Name
-                 (Explorer,
-                  Base_Name
-                    (Head (File_Status_List.Head (Result).File_Name)));
-
-               if Iter /= Null_Iter then
-                  Fill_Info (Explorer,
-                             Iter,
-                             File_Status_List.Head (Result),
-                             True,
-                             Dummy);
-               end if;
-
-               File_Status_List.Tail (Result);
-            end loop;
-
-            Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-         end;
+         Get_Status (Explorer, L);
       end if;
 
       Free (L);
    end On_Get_Status_Button_Clicked;
+
+   ----------------
+   -- Get_Status --
+   ----------------
+
+   procedure Get_Status
+     (Explorer : VCS_View_Access;
+      Files    : List)
+   is
+   begin
+      Push_Message (Explorer,
+                    Verbose,
+                    -"Querying status for files:");
+
+      Display_String_List (Explorer, Files, Verbose);
+
+      declare
+         Iter   : Gtk_Tree_Iter;
+         Result : File_Status_List.List
+           := Get_Status (Explorer.VCS_Ref, Files);
+         Dummy  : Boolean;
+
+      begin
+         while not File_Status_List.Is_Empty (Result) loop
+            Iter := Get_Iter_From_Name
+              (Explorer,
+               Base_Name
+               (Head (File_Status_List.Head (Result).File_Name)));
+
+            if Iter /= Null_Iter then
+               Fill_Info (Explorer,
+                          Iter,
+                          File_Status_List.Head (Result),
+                          True,
+                          Dummy);
+            end if;
+
+            File_Status_List.Tail (Result);
+         end loop;
+
+         Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
+      end;
+   end Get_Status;
+
+   ----------------------
+   -- Update_File_List --
+   ----------------------
+
+   procedure Update_File_List
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : List;
+      Ref      : VCS_Access)
+   is
+   begin
+      Push_Message (Explorer, Kernel, Verbose, -"Updating files:");
+      Display_String_List (Explorer, Kernel, Files, Verbose);
+      Update (Ref, Files);
+      Push_Message (Explorer, Kernel, Verbose, -"... done." & ASCII.LF);
+
+      --  If the dialog exists, then update the status for the files.
+      if Explorer /= null then
+         Get_Status (Explorer, Files);
+      end if;
+   end Update_File_List;
 
    ------------------------------
    -- On_Update_Button_Clicked --
@@ -1024,12 +1109,11 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Push_Message (Explorer, Verbose, -"Updating files:");
-      Display_String_List (Explorer, L, Verbose);
-      Update (Explorer.VCS_Ref, L);
-      Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
+      Update_File_List (Explorer,
+                        Explorer.Kernel,
+                        L,
+                        Explorer.VCS_Ref);
       Free (L);
-      On_Get_Status_Button_Clicked (Object, Params);
    end On_Update_Button_Clicked;
 
    ----------------------------
@@ -1224,6 +1308,20 @@ package body VCS_View_Pkg is
       Push_Message (VCS_View_Access (Explorer), Error, Message);
    end Handle_VCS_Error;
 
+   ----------------------------
+   -- Get_Ref_From_Directory --
+   ----------------------------
+
+   function Get_Ref_From_Directory (Dir : in String) return VCS_Access
+   is
+   begin
+      --  ??? right now, we assume only CVS is implemented.
+      --  ??? we need functions in VCS.XXX to validate that a
+      --  given entry is acceptable for a given directory.
+
+      return new VCS.CVS.CVS_Record;
+   end Get_Ref_From_Directory;
+
    -------------------
    -- Set_Directory --
    -------------------
@@ -1246,11 +1344,7 @@ package body VCS_View_Pkg is
       end if;
 
       --  Find an acceptable VCS for this directory.
-      --  ??? right now, we assume only CVS is implemented.
-      --  ??? we need functions in VCS.XXX to validate that a
-      --  given entry is acceptable for a given directory.
-
-      Explorer.VCS_Ref := new VCS.CVS.CVS_Record;
+      Explorer.VCS_Ref := Get_Ref_From_Directory (Directory);
 
       Register_Idle_Function (Explorer.VCS_Ref, Idle'Access, 200);
 
@@ -1266,6 +1360,12 @@ package body VCS_View_Pkg is
      (Explorer  : VCS_View_Access;
       Directory : String) is
    begin
+      if Explorer.Current_Directory /= null
+        and then Explorer.Current_Directory.all = Directory
+      then
+         return;
+      end if;
+
       Set_Directory (Explorer, Directory);
       Refresh_Files (Explorer, False);
    end Show_Files;
@@ -1402,13 +1502,14 @@ package body VCS_View_Pkg is
       Selection       : Gtk_Tree_Selection;
 
    begin
-      Gtk.Window.Initialize (VCS_View, Window_Toplevel);
-      Set_Default_Size (VCS_View, 600, 600);
+      Initialize_Hbox (VCS_View);
+      --       Gtk.Window.Initialize (VCS_View, Window_Toplevel);
+      --       Set_Default_Size (VCS_View, 600, 600);
 
-      Set_Policy (VCS_View, False, True, False);
+      --  Set_Policy (VCS_View, False, True, False);
 
       Gtk_New_Vbox (Vbox1, False, 0);
-      Add (VCS_View, Vbox1);
+      Pack_Start (VCS_View, Vbox1);
 
       Gtk_New_Hbox (Hbox1, False, 0);
       Pack_Start (Vbox1, Hbox1, True, True, 3);

@@ -18,25 +18,28 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Text;   use Gtk.Text;
+with Gtk.Box;    use Gtk.Box;
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 
-with Glide_Kernel;    use Glide_Kernel;
+with Glide_Kernel;            use Glide_Kernel;
+with Glide_Kernel.Console;    use Glide_Kernel.Console;
 
 with VCS; use VCS;
 
 package VCS_View_Pkg is
 
+   use VCS.String_List;
+
    type VCS_View_Record;
    type VCS_View_Access is access all VCS_View_Record'Class;
 
-   type VCS_View_Record is new Gtk_Window_Record with record
+   type VCS_View_Record is new Gtk_Hbox_Record with record
       Current_Directory : String_Access;
       --  The directory that is currently being viewed.
       --  It must be an absolute directory name ending
@@ -80,6 +83,31 @@ package VCS_View_Pkg is
 
    procedure Show_Files (Explorer  : VCS_View_Access;
                          Directory : String);
-   --
 
+   function Get_Ref_From_Directory (Dir : in String) return VCS_Access;
+   --  Return the VCS reference corresponding to Dir.
+   --  User must free it afterwards.
+
+   procedure Update_File_List
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : List;
+      Ref      : VCS_Access);
+   --  Updates a list of files.
+   --  User must free L afterwards.
+
+   procedure Push_Message
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      M_Type   : Message_Type;
+      Message  : String);
+   --  Display a message.
+
+   procedure Display_String_List
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      List     : VCS.String_List.List;
+      M_Type   : Message_Type);
+   --  Convenience procedure to output a String_List.List.
+   --  One of Explorer or Kernel can be Null.
 end VCS_View_Pkg;
