@@ -74,9 +74,12 @@ with GNAT.OS_Lib;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Project;        use Glide_Kernel.Project;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Traces;                    use Traces;
@@ -198,8 +201,7 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Generic procedure used for most debugger callbacks.
 
-   procedure On_View_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
    --  menus.
 
@@ -217,8 +219,7 @@ package body GVD_Module is
    --  in the editors for file.
    --  If File is empty, remove them for all files.
 
-   procedure Preferences_Changed
-     (Kernel : access GObject_Record'Class; User : GObject);
+   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences are changed in the GPS kernel
 
    function Delete_Asm
@@ -440,7 +441,7 @@ package body GVD_Module is
 
       Load_Custom_Project (Project_Registry (Get_Registry (Kernel)), Project);
       Set_Status (Get_Project (Kernel), From_Executable);
-      Project_Changed (Kernel);
+      Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);
    end Load_Project_From_Executable;
 
@@ -2253,12 +2254,8 @@ package body GVD_Module is
    -- On_View_Changed --
    ---------------------
 
-   procedure On_View_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
+   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
       use GNAT.OS_Lib;
-
-      pragma Unreferenced (K);
       Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu renames GVD_Module (GVD_Module_ID).Initialize_Menu;
       Iter  : Imported_Project_Iterator := Start (Get_Project (Kernel));
@@ -2327,9 +2324,8 @@ package body GVD_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access GObject_Record'Class; User : GObject)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (User);
       Window : constant Gtk_Window := Get_Main_Window (Kernel_Handle (Kernel));
       Top    : constant Glide_Window := Glide_Window (Window);
       Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
@@ -2387,10 +2383,8 @@ package body GVD_Module is
       Gtk_New (Menu);
       Set_Submenu (Mitem, Menu);
       GVD_Module (GVD_Module_ID).Initialize_Menu := Menu;
-      Kernel_Callback.Connect
-        (Kernel, "project_view_changed",
-         Kernel_Callback.To_Marshaller (On_View_Changed'Access),
-         User_Data => Kernel_Handle (Kernel));
+
+      Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
 
       --  Add debugger menus
 
@@ -2556,11 +2550,8 @@ package body GVD_Module is
 
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
-      Object_User_Callback.Connect
-        (Kernel,
-         Preferences_Changed_Signal,
-         Object_User_Callback.To_Marshaller (Preferences_Changed'Access),
-         GObject (Kernel));
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Preferences_Changed'Access);
 
       Init_Graphics;
    end Register_Module;
