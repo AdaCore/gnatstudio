@@ -242,6 +242,7 @@ package body Task_Manager is
 
                   if Manager.Queues'Length = 1 then
                      Unchecked_Free (Manager.Queues);
+                     Manager.Referenced_Command := -1;
                      return False;
 
                   else
@@ -262,6 +263,14 @@ package body Task_Manager is
                         if Active then
                            Manager.Passive_Index
                              := Manager.Passive_Index - 1;
+                        end if;
+
+                        if Manager.Referenced_Command = Current then
+                           Manager.Referenced_Command := -1;
+
+                        elsif Manager.Referenced_Command > Current then
+                           Manager.Referenced_Command :=
+                             Manager.Referenced_Command - 1;
                         end if;
 
                         Unchecked_Free (Manager.Queues);
