@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -101,6 +101,7 @@ with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
 
 with Src_Printing;
 with Pango.Font;
+with Pango.Layout; use Pango.Layout;
 with Pango.Enums;
 
 package body Src_Editor_Module is
@@ -1805,31 +1806,8 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : Hooks_Data'Class)
    is
-      D     : constant File_Hooks_Args := File_Hooks_Args (Data);
-      Id    : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-      Infos : Line_Information_Data;
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
    begin
-      if Id.Display_Line_Numbers then
-         Create_Line_Information_Column
-           (Kernel,
-            D.File,
-            Src_Editor_Module_Name,
-            Stick_To_Data => False,
-            Every_Line    => True);
-
-         Infos := new Line_Information_Array (1 .. 1);
-         Infos (1).Text := new String'("   1");
-
-         Add_Line_Information
-           (Kernel,
-            D.File,
-            Src_Editor_Module_Name,
-            Infos);
-
-         Unchecked_Free (Infos);
-      end if;
-
       Fill_Marks (Kernel_Handle (Kernel), D.File);
    exception
       when E : others =>
@@ -3478,7 +3456,6 @@ package body Src_Editor_Module is
             Create_Line_Information_Column
               (Source_Box (Get_Widget (Child)).Editor,
                D.Identifier,
-               D.Stick_To_Data,
                D.Every_Line);
 
          elsif D.Info'Length = 0 then
@@ -3527,7 +3504,6 @@ package body Src_Editor_Module is
         (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
       Autocase_Last_Word (Buffer);
    end Word_Added_Hook;
-
 
    -------------
    -- Execute --
@@ -4503,6 +4479,8 @@ package body Src_Editor_Module is
 
       Color   : Gdk_Color;
       Success : Boolean;
+      Iter    : Child_Iterator;
+      Child   : MDI_Child;
    begin
       Color := Get_Pref (Kernel, Search_Results_Color);
       Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
@@ -4549,32 +4527,39 @@ package body Src_Editor_Module is
       if Pref_Display_Line_Numbers /= Id.Display_Line_Numbers then
          Id.Display_Line_Numbers := Pref_Display_Line_Numbers;
 
-         --  Connect necessary signal to display line numbers.
          if Pref_Display_Line_Numbers then
-            if Id.Lines_Hook = null then
-               Id.Lines_Hook := new Lines_Revealed_Hook_Record;
-               Add_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
+            declare
+               Layout : constant Pango_Layout := Create_Pango_Layout
+                 (Get_Main_Window (Kernel));
+               Height : Gint;
+               Width  : Gint;
+            begin
+               Set_Font_Description
+                 (Layout, Get_Pref_Font (Kernel, Default_Style));
+               Set_Markup (Layout, "0000");
+               Get_Pixel_Size (Layout, Width, Height);
+               Id.Character_Width := Width / 4;
+               Unref (Layout);
+            end;
+         else
+            Id.Character_Width := 0;
+         end if;
 
-               declare
-                  Files : constant VFS.File_Array := Open_Files (Kernel);
-               begin
-                  for Node in Files'Range loop
-                     Create_Line_Information_Column
-                       (Kernel,
-                        Files (Node),
-                        Src_Editor_Module_Name,
-                        Stick_To_Data => False,
-                        Every_Line    => True);
-                  end loop;
-               end;
+         --  Tell the editors to refresh their side columns.
+         Iter  := First_Child (Get_MDI (Kernel));
+
+         loop
+            Child := Get (Iter);
+
+            exit when Child = null;
+
+            if Get_Widget (Child).all in Source_Box_Record'Class then
+               Refresh_Side_Column
+                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor));
             end if;
 
-         elsif Id.Lines_Hook /= null then
-            Remove_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
-            Id.Lines_Hook := null;
-            Remove_Line_Information_Column
-              (Kernel, VFS.No_File, Src_Editor_Module_Name);
-         end if;
+            Next (Iter);
+         end loop;
       end if;
    end Preferences_Changed;
 
@@ -4800,5 +4785,27 @@ package body Src_Editor_Module is
         and then Base (Base'First .. Base'First + 1) = ".#"
         and then Base (Base'Last) = '#';
    end Is_Auto_Save;
+
+   ---------------------------------
+   -- Line_Number_Character_Width --
+   ---------------------------------
+
+   function Line_Number_Character_Width return Gint is
+      Id : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      return Id.Character_Width;
+   end Line_Number_Character_Width;
+
+   ---------------------
+   -- Post_It_Note_GC --
+   ---------------------
+
+   function Post_It_Note_GC return Gdk.GC.Gdk_GC is
+      Id : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      return Id.Post_It_Note_GC;
+   end Post_It_Note_GC;
 
 end Src_Editor_Module;
