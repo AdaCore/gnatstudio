@@ -20,7 +20,7 @@
 
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Glib.Object;              use Glib.Object;
@@ -31,7 +31,6 @@ with Docgen.Html_Output;       use Docgen.Html_Output;
 with Src_Info;                 use Src_Info;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
-with File_Utils;               use File_Utils;
 with Gtkada.File_Selector;     use Gtkada.File_Selector;
 with Projects;                 use Projects;
 with Glib;                     use Glib;
@@ -39,6 +38,8 @@ with Glib.Generic_Properties;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu;                 use Gtk.Menu;
+with File_Utils;               use File_Utils;
+with Projects.Registry;        use Projects.Registry;
 
 package body Docgen_Module is
 
@@ -328,7 +329,6 @@ package body Docgen_Module is
             File    => VFS.No_File));
    end Add_Doc_Menu_Project;
 
-
    ---------------------------
    --  On_Generate_Project  --
    ---------------------------
@@ -340,7 +340,6 @@ package body Docgen_Module is
    begin
       Generate_Project (Kernel_Handle (Kernel), False);
    end On_Generate_Project;
-
 
    -------------------------------------
    --  On_Generate_Project_Recursive  --
@@ -368,7 +367,6 @@ package body Docgen_Module is
       Generate_File (Kernel_Handle (Kernel), File);
    end On_Generate_File;
 
-
    ------------------------------
    -- Choose_Menu_Current_File --
    ------------------------------
@@ -393,7 +391,6 @@ package body Docgen_Module is
       end if;
    end Choose_Menu_Current_File;
 
-
    -------------------------
    -- Choose_Menu_Project --
    -------------------------
@@ -417,7 +414,6 @@ package body Docgen_Module is
    begin
       Generate_Project (Kernel, True);
    end Choose_Menu_Project_Recursive;
-
 
    -----------------------
    --  Generate_Project --
@@ -444,8 +440,6 @@ package body Docgen_Module is
       end if;
    end Generate_Project;
 
-
-
    ----------------------
    -- Choose_Menu_File --
    ---------------------
@@ -469,7 +463,6 @@ package body Docgen_Module is
       end if;
    end Choose_Menu_File;
 
-
    --------------------
    --  Generate_File --
    --------------------
@@ -491,7 +484,6 @@ package body Docgen_Module is
       Generate (Kernel, Source_File_List);
    end Generate_File;
 
-
    ----------------
    --  Generate  --
    ----------------
@@ -510,17 +502,21 @@ package body Docgen_Module is
            (List,
             Kernel,
             Options,
-            Doc_Directory => Name_As_Directory ("/tmp/"),
             Doc_Suffix    => ".htm",
             Converter     => Doc_HTML_Create'Access);
       Free (List);
 
          --  ??? Should open the appropriate file, this one is only valid
          --  for html
-         --  ??? <frameset> not support by internal html viewer, so we can't
-         --  open /tmp/index.html
-      Open_Html (Kernel, Filename =>
-                   Create (Full_Filename => "/tmp/index.htm"));
+         --  ??? <frameset> not support by internal html viewer,
+      declare
+         Doc_Directory_Root : constant String := File_Utils.Name_As_Directory
+              (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
+                            False)) & "index.htm";
+      begin
+         Open_Html (Kernel, Filename =>
+                      Create (Full_Filename => Doc_Directory_Root));
+      end;
       Pop_State (Kernel);
 
    exception
