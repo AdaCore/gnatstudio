@@ -37,6 +37,7 @@ with Gtkada.Types;              use Gtkada.Types;
 
 with Basic_Types;               use Basic_Types;
 with Language;                  use Language;
+with Language.Unknown;          use Language.Unknown;
 with Language_Handlers;         use Language_Handlers;
 with Src_Highlighting;          use Src_Highlighting;
 
@@ -152,7 +153,7 @@ package body Src_Editor_Buffer is
    --  This procedure is just a proxy between the "insert_text" signal
    --  and the Insert_Text_Cb callback. It extracts the parameters from
    --  Params and then call Insert_Text_Cb. For efficiency reasons, the
-   --  signal is processed only when Lang is not null.
+   --  signal is processed only when Lang is not null and not unknown.
    --
    --  Note that this handler is designed to be connected "after", in which
    --  case the Insert_Iter iterator is located at the end of the inserted
@@ -184,7 +185,7 @@ package body Src_Editor_Buffer is
    --  This procedure is just a proxy between the "delete_range" signal
    --  and the Delete_Range_Cb callback. It extracts the parameters from
    --  Params and then call Delete_Range_Cb. For efficiency reasons, the
-   --  signal is processed only when Lang is not null.
+   --  signal is processed only when Lang is not null and not unknown.
    --
    --  Note that this handler is designed to be connected "after", in which
    --  case the Start and End iterators are equal, since the text between
@@ -566,34 +567,29 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Pos    : Gtk_Text_Iter;
       Length : constant Gint := Get_Int (Nth (Params, 3));
       Dummy  : Boolean;
       Start  : Integer;
       Iter   : Gtk_Text_Iter;
 
    begin
-      if Buffer.Lang /= null then
-         declare
-            Pos    : Gtk_Text_Iter;
-            Length : constant Gint := Get_Int (Nth (Params, 3));
-            Text   : constant String :=
-              Get_String (Nth (Params, 2), Length => Length);
+      Get_Text_Iter (Nth (Params, 1), Iter);
 
+      if Buffer.Lang /= null and then Buffer.Lang /= Unknown_Lang then
+         declare
+            Text : constant String :=
+              Get_String (Nth (Params, 2), Length => Length);
          begin
-            Get_Text_Iter (Nth (Params, 1), Pos);
-            Insert_Text_Cb (Buffer, Pos, Text);
+            Insert_Text_Cb (Buffer, Iter, Text);
          end;
       end if;
 
       --  Call Add_Lines, to compute added lines for the side column.
       --  ??? We could create a hook for added lines.
 
-      Get_Text_Iter (Nth (Params, 1), Pos);
-      Copy (Pos, Iter);
-      Start := Integer (Get_Line (Pos));
-      Backward_Chars (Pos, Length, Dummy);
-      Add_Lines (Buffer, Start, Start - Integer (Get_Line (Pos)));
+      Start := Integer (Get_Line (Iter));
+      Backward_Chars (Iter, Length, Dummy);
+      Add_Lines (Buffer, Start, Start - Integer (Get_Line (Iter)));
 
    exception
       when E : others =>
@@ -726,13 +722,10 @@ package body Src_Editor_Buffer is
       Start_Line : Integer;
       End_Line   : Integer;
    begin
-      if Buffer.Lang /= null then
-         declare
-            Start_Iter : Gtk_Text_Iter;
-         begin
-            Get_Text_Iter (Nth (Params, 1), Start_Iter);
-            Delete_Range_Cb (Buffer, Start_Iter);
-         end;
+      Get_Text_Iter (Nth (Params, 1), Start_Iter);
+
+      if Buffer.Lang /= null and then Buffer.Lang /= Unknown_Lang then
+         Delete_Range_Cb (Buffer, Start_Iter);
       end if;
 
       --  Remove the lines in the side information column.
@@ -1897,7 +1890,7 @@ package body Src_Editor_Buffer is
 
          --  Do not try to highlight an empty buffer
          if not Is_End (Buffer_Start_Iter) then
-            if Buffer.Lang /= null then
+            if Buffer.Lang /= null and then Buffer.Lang /= Unknown_Lang then
                Highlight_Slice (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
             else
                Kill_Highlighting (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
