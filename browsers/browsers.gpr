@@ -1,5 +1,4 @@
-with "../gtkada/gtkada";
-with "../prj_editor/prj_editor";
+with "../kernel/kernel";
 with "../shared";
 
 project Browsers is
