@@ -2170,4 +2170,18 @@ package body Glide_Kernel.Scripts is
       null;
    end Ref;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Subprogram : in out Subprogram_Type) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Subprogram_Record'Class, Subprogram_Type);
+   begin
+      if Subprogram /= null then
+         Free (Subprogram.all);
+         Unchecked_Free (Subprogram);
+      end if;
+   end Free;
+
 end Glide_Kernel.Scripts;

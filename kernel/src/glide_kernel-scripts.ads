@@ -40,6 +40,34 @@ package Glide_Kernel.Scripts is
    type Cst_String_Access is access constant String;
    type Cst_Argument_List is array (Natural range <>) of Cst_String_Access;
 
+   type Callback_Data is abstract tagged private;
+   --  Data used to communicate with the scripting language engine, to marshall
+   --  the parameters and return values.
+
+   ----------------------
+   -- Subprogram types --
+   ----------------------
+
+   type Subprogram_Record is abstract tagged private;
+   type Subprogram_Type is access all Subprogram_Record'Class;
+   --  This type represents a subprogram for the language. In the GPS shell,
+   --  this is in fact a GPS action, represented as a string. In Python, this
+   --  is a python object which is a function or method.
+   --  Do not confuse this with a shell command, it has a more general meaning.
+   --  In particular, the user cannot define new shell commands in the GPS
+   --  shell, and thus Subprogram_Record has a broader meaning.
+
+   procedure Free (Subprogram : in out Subprogram_Type);
+   --  Free the subprogram
+
+   procedure Free (Subprogram : in out Subprogram_Record) is abstract;
+   --  Free the memory occupied by the subprogram instance
+
+   procedure Execute
+     (Subprogram : access Subprogram_Record;
+      Args       : Callback_Data'Class) is abstract;
+   --  Execute the subprogram with the given arguments
+
    -----------------
    -- Class types --
    -----------------
@@ -77,10 +105,6 @@ package Glide_Kernel.Scripts is
 
    Invalid_Parameter : exception;
    No_Such_Parameter : exception;
-
-   type Callback_Data is abstract tagged private;
-   --  Data used to communicate with the scripting language engine, to marshall
-   --  the parameters and return values.
 
    function Create
      (Script          : access Scripting_Language_Record;
@@ -154,6 +178,10 @@ package Glide_Kernel.Scripts is
    --  If there is not enough parameters, No_Such_Parameter is raised
    --  If the parameters doesn't have the right type, Invalid_Parameter is
    --  raised.
+
+   function Nth_Arg
+     (Data : Callback_Data; N : Positive) return Subprogram_Type is abstract;
+   --  Same as above, for a subprogram. The returned value must be freed.
 
    function Nth_Arg
      (Data       : Callback_Data;
@@ -769,6 +797,7 @@ private
    No_Class : constant Class_Type := (Name => null);
    No_File_Location : constant File_Location_Info := (null, 0, 0);
 
+   type Subprogram_Record is abstract tagged null record;
    type Class_Instance_Record is abstract tagged null record;
    type Callback_Data is abstract tagged null record;
    type Scripting_Language_Record is abstract tagged null record;
