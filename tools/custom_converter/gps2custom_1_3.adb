@@ -18,25 +18,110 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Xml_Int;   use Glib.Xml_Int;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;    use GNAT.OS_Lib;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Text_IO;    use Ada.Text_IO;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Text_IO;               use Ada.Text_IO;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 procedure GPS2Custom_1_3 is
 
-   Home : constant String := Getenv ("HOME").all;
-   Custom_Dir : constant String := Home & "/.gps/customize/";
-   Dir : Dir_Type;
-   File : String (1 .. 1024);
-   Last : Integer;
-   File_Node, Child : Node_Ptr;
+   function Executable_Location return String;
+   --  Return the name of the parent directory where the executable is stored.
+   --  The executable must be located in a directory called "bin". Thus, if
+   --  the executable is stored in directory "/foo/bar/bin", this routine
+   --  returns "/foo/bar/". If the executable is not stored in a directory
+   --  "bin" (casing is unimportant) then a null string is returned.
 
-   Actions : Node_Ptr;
+   File_Node, Child  : Node_Ptr;
+   Actions           : Node_Ptr;
+
+   function Is_Directory_Separator (C : Character) return Boolean;
+   --  Returns True if C is a directory separator
+
+   procedure Parse_Dir (Directory : String);
+   --  Convert all writable custom files found in Directory
 
    procedure Process_Child (Node : Node_Ptr);
    --  Process a given XML node
+
+   ----------------------------
+   -- Is_Directory_Separator --
+   ----------------------------
+
+   function Is_Directory_Separator (C : Character) return Boolean is
+   begin
+      return C = Directory_Separator or else C = '/';
+   end Is_Directory_Separator;
+
+   -------------------------
+   -- Executable_Location --
+   -------------------------
+
+   type chars_ptr_ptr is access all chars_ptr;
+
+   Argv : chars_ptr_ptr;
+   pragma Import (C, Argv, "gnat_argv");
+
+   function Executable_Location return String is
+      Exec_Name : constant String := Value (Argv.all);
+
+      function Get_Install_Dir (S : String) return String;
+      --  S is the executable name preceeded by the absolute or relative
+      --  path, e.g. "c:\usr\bin\gcc.exe" or "..\bin\gcc". Returns the absolute
+      --  or relative directory where "bin" lies (in the example "C:\usr"
+      --  or ".."). If the executable is not a "bin" directory, return "".
+
+      ---------------------
+      -- Get_Install_Dir --
+      ---------------------
+
+      function Get_Install_Dir (S : String) return String is
+         Exec      : String  := S;
+         Path_Last : Integer := 0;
+
+      begin
+         for J in reverse Exec'Range loop
+            if Is_Directory_Separator (Exec (J)) then
+               Path_Last := J - 1;
+               exit;
+            end if;
+         end loop;
+
+         if Path_Last >= Exec'First + 2 then
+            To_Lower (Exec (Path_Last - 2 .. Path_Last));
+         end if;
+
+         if Path_Last < Exec'First + 2
+           or else Exec (Path_Last - 2 .. Path_Last) /= "bin"
+           or else (Path_Last - 3 >= Exec'First
+                    and then not Is_Directory_Separator (Exec (Path_Last - 3)))
+         then
+            return "";
+         end if;
+
+         return Exec (Exec'First .. Path_Last - 4);
+      end Get_Install_Dir;
+
+   --  Beginning of Executable_Location
+
+   begin
+      --  First determine if a path prefix was placed in front of the
+      --  executable name.
+
+      for J in reverse Exec_Name'Range loop
+         if Is_Directory_Separator (Exec_Name (J)) then
+            return Get_Install_Dir (Exec_Name);
+         end if;
+      end loop;
+
+      --  If you are here, the user has typed the executable name with no
+      --  directory prefix.
+
+      return Get_Install_Dir (GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name).all);
+   end Executable_Location;
 
    -------------------
    -- Process_Child --
@@ -123,47 +208,74 @@ procedure GPS2Custom_1_3 is
       end if;
    end Process_Child;
 
-begin
-   Open (Dir, Custom_Dir);
+   ---------------
+   -- Parse_Dir --
+   ---------------
 
-   loop
-      Read (Dir, File, Last);
-      exit when Last = 0;
+   procedure Parse_Dir (Directory : String) is
+      Dir               : Dir_Type;
+      File              : String (1 .. 1024);
+      Last              : Integer;
+      A                 : Node_Ptr;
 
-      if Is_Regular_File (Custom_Dir & File (1 .. Last)) then
-         Put_Line ("Parsing " & Custom_Dir & File (1 .. Last));
-         File_Node := Parse (Custom_Dir & File (1 .. Last));
-         Actions := null;
+   begin
+      Open (Dir, Directory);
 
-         if File_Node = null then
-            Put_Line ("Error while parsing file " & File (1 .. Last));
-            Put_Line ("No conversion done for that file");
-         else
-            Child := File_Node.Child;
+      loop
+         Read (Dir, File, Last);
+         exit when Last = 0;
 
-            while Child /= null loop
-               Process_Child (Child);
-               Child := Child.Next;
-            end loop;
+         declare
+            F : constant String := Directory & File (1 .. Last);
+         begin
+            if Is_Regular_File (F) and then Is_Writable_File (F) then
+               Put_Line ("Parsing " & F);
+               File_Node := Parse (F);
+               Actions := null;
 
-            if Actions /= null then
-               declare
-                  A : Node_Ptr := Actions;
-               begin
-                  while A.Next /= null loop
-                     A := A.Next;
+               if File_Node = null then
+                  Put_Line ("Error while parsing file " & F);
+                  Put_Line ("No conversion done for that file");
+               else
+                  Child := File_Node.Child;
+
+                  while Child /= null loop
+                     Process_Child (Child);
+                     Child := Child.Next;
                   end loop;
 
-                  A.Next := File_Node.Child;
-                  File_Node.Child := Actions;
-               end;
+                  if Actions /= null then
+                     A := Actions;
+
+                     while A.Next /= null loop
+                        A := A.Next;
+                     end loop;
+
+                     A.Next := File_Node.Child;
+                     File_Node.Child := Actions;
+                  end if;
+
+                  Print (File_Node, F);
+                  Free (File_Node);
+               end if;
             end if;
+         end;
+      end loop;
 
-            Print (File_Node, Custom_Dir & File (1 .. Last));
-            Free (File_Node);
-         end if;
-      end if;
-   end loop;
+      Close (Dir);
 
-   Close (Dir);
+   exception
+      when Directory_Error =>
+         Put_Line ("Error while opening directory " & Directory);
+         Put_Line ("No conversion done for that directory");
+   end Parse_Dir;
+
+   Home              : constant String := Getenv ("HOME").all;
+   Custom_Dir        : constant String := Home & "/.gps/customize/";
+   Global_Custom_Dir : constant String :=
+     Executable_Location & "/share/gps/customize/";
+
+begin
+   Parse_Dir (Custom_Dir);
+   Parse_Dir (Global_Custom_Dir);
 end GPS2Custom_1_3;
