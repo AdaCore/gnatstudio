@@ -1368,6 +1368,16 @@ package body Glide_Kernel.Modules is
       return Page.Title.all;
    end Get_Title;
 
+   ---------------
+   -- Get_Flags --
+   ---------------
+
+   function Get_Flags (Page : access Project_Editor_Page_Record'Class)
+      return Selector_Flags is
+   begin
+      return Page.Flags;
+   end Get_Flags;
+
    ----------------------------------
    -- Register_Project_Editor_Page --
    ----------------------------------
@@ -1377,10 +1387,14 @@ package body Glide_Kernel.Modules is
       Page   : Project_Editor_Page;
       Label  : String;
       Toc    : String;
-      Title  : String)
+      Title  : String;
+      Flags     : Selector_Flags := Multiple_Projects or Multiple_Scenarios;
+      Ref_Page  : String := "";
+      Add_After : Boolean := True)
    is
       Tmp : Project_Editor_Page_Array_Access :=
         Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages;
+      Pos : Natural;
    begin
       if Tmp = null then
          Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages :=
@@ -1394,13 +1408,32 @@ package body Glide_Kernel.Modules is
 
       Unchecked_Free (Tmp);
 
+      Page.Flags := Flags;
       Page.Label := new String' (Label);
       Page.Toc   := new String' (Toc);
       Page.Title := new String' (Title);
 
-      Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages
-        (Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages'Last)
-        := Page;
+      Tmp := Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages;
+
+      Pos := Tmp'Last;
+
+      if Ref_Page /= "" then
+         for J in Tmp'First .. Tmp'Last - 1 loop
+            if Tmp (J).Label.all = Ref_Page then
+               if Add_After then
+                  Pos := J + 1;
+               elsif J > Tmp'First then
+                  Pos := J - 1;
+               else
+                  Pos := J;
+               end if;
+               exit;
+            end if;
+         end loop;
+      end if;
+
+      Tmp (Pos + 1 .. Tmp'Last) := Tmp (Pos .. Tmp'Last - 1);
+      Tmp (Pos) := Page;
    end Register_Project_Editor_Page;
 
    --------------------------------

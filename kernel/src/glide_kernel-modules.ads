@@ -336,11 +336,13 @@ package Glide_Kernel.Modules is
    --  force a Show_All on the widget.
 
    function Project_Editor
-     (Page         : access Project_Editor_Page_Record;
-      Project      : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Page          : access Project_Editor_Page_Record;
+      Project       : Prj.Tree.Project_Node_Id;
+      Project_View  : Prj.Project_Id;
+      Kernel        : access Kernel_Handle_Record'Class;
+      Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project   : Prj.Tree.Project_Node_Id)
       return Boolean is abstract;
    --  Modifies Project given the data in Widget. Widget is the same that was
    --  created through a Project_Editor_Page_Factor.
@@ -348,8 +350,19 @@ package Glide_Kernel.Modules is
    --  otherwise. This subprogram should not recompute the project view itself,
    --  since this is already done once after all the modifications have been
    --  done.
-   --  This function should expect Project_View to be No_Project in some cases,
-   --  when called from the project wizard.
+   --  This function should expect Project_View to be No_Project in some cases.
+   --
+   --  Ref_Project is the project whose properties the user decided to edit
+   --  initially (through the contextual menu). In some cases, an editor might
+   --  decide that is cannot modify projects other than this one (for instance,
+   --  the object directory editor only modifies ref_project). This function
+   --  will not be called with Project /= Ref_Project if the flags do not
+   --  include Multiple_Projects in Register_Project_Editor_Page.
+   --
+   --  This function might be called several times with the same project, but a
+   --  different scenario if the user has decided to modify several
+   --  scenarios. Project_View, if different from No_Project, will always be
+   --  the processed version of Project for the current scenario.
 
    procedure Refresh
      (Page         : access Project_Editor_Page_Record;
@@ -377,14 +390,34 @@ package Glide_Kernel.Modules is
    --  Return the title that should be used for this page in the project
    --  creation wizard.
 
+   type Selector_Flags is mod 4;
+   Multiple_Projects  : constant Selector_Flags := 2 ** 0;
+   Multiple_Scenarios : constant Selector_Flags := 2 ** 1;
+   --  The projects or scenarios the project editor applies to.
+   --  Multiple_Project should be set if multiple projects can be modified by
+   --  the editor.
+   --  Multiple_Scenarios should be set if multiple scenarios can be modified
+   --  at the same time by the editor.
+   --  This flags is used to desactivate the selector widgets in the project
+   --  properties dialog.
+
+   function Get_Flags (Page : access Project_Editor_Page_Record'Class)
+      return Selector_Flags;
+   --  Return the list of selectors recognized by this editor
+
    procedure Register_Project_Editor_Page
-     (Kernel : access Kernel_Handle_Record'Class;
-      Page   : Project_Editor_Page;
-      Label  : String;
-      Toc    : String;
-      Title  : String);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Page      : Project_Editor_Page;
+      Label     : String;
+      Toc       : String;
+      Title     : String;
+      Flags     : Selector_Flags := Multiple_Projects or Multiple_Scenarios;
+      Ref_Page  : String := "";
+      Add_After : Boolean := True);
    --  Register a page that should be displayed both in the project wizard and
    --  the project properties editor.
+   --  The new page will be put after or before the page whose label is
+   --  Ref_Page, or after all the pages if Ref_Page is the empty string.
 
    function Project_Editor_Pages_Count
       (Kernel : access Kernel_Handle_Record'Class) return Natural;
@@ -709,6 +742,7 @@ private
 
    type Project_Editor_Page_Record is abstract tagged record
       Label, Toc, Title : GNAT.OS_Lib.String_Access;
+      Flags : Selector_Flags;
    end record;
 
    type Project_Editor_Page_Array is array (Natural range <>)
