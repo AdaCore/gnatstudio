@@ -340,6 +340,7 @@ package body Odd.Dialogs is
       Set_Spacing (Dialog.Hbuttonbox1, 10);
       Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
       Set_Child_Ipadding (Dialog.Hbuttonbox1, 7, 0);
+      Set_Layout (Dialog.Hbuttonbox1, Buttonbox_Spread);
 
       Gtk_New (Dialog.Close_Button, -"Close");
       Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
