@@ -211,14 +211,19 @@ package GVD.Dialogs is
    --  of values entered in this dialog by the user.
    --  Position indicates where the dialog should be positionned.
 
+   type Boolean_Access is access all Boolean;
+
    function Display_Entry_Dialog
-     (Parent       : access Gtk.Window.Gtk_Window_Record'Class;
-      Title        : String;
-      Message      : String;
-      Position     : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Center;
-      Check_Msg    : String;
-      Key          : String := "";
-      Button_Active : access Boolean) return String;
+     (Parent         : access Gtk.Window.Gtk_Window_Record'Class;
+      Title          : String;
+      Message        : String;
+      Position       : Gtk.Enums.Gtk_Window_Position :=
+        Gtk.Enums.Win_Pos_Center;
+      Check_Msg      : String;
+      Key            : String := "";
+      Button_Active  : access Boolean;
+      Check_Msg2     : String := "";
+      Button2_Active : Boolean_Access := null) return String;
    --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
    --  expressions to display.
 
