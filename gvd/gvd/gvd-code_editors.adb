@@ -21,12 +21,8 @@
 with Glib;                use Glib;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Ctree;           use Gtk.Ctree;
-with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Paned;           use Gtk.Paned;
-with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.MDI;          use Gtkada.MDI;
@@ -38,7 +34,6 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Process;         use GVD.Process;
 with GVD.Types;           use GVD.Types;
-with Odd_Intl;            use Odd_Intl;
 with Basic_Types;         use Basic_Types;
 with VFS;                 use VFS;
 
@@ -59,33 +54,8 @@ package body GVD.Code_Editors is
    -- Local packages --
    --------------------
 
-   type Editor_Mode_Data is record
-      Editor : Code_Editor;
-      Mode   : View_Mode;
-   end record;
-
-   procedure Setup (Data : Editor_Mode_Data; Id : Handler_Id);
-   --  Make sure that when Data is destroyed, Id is properly removed
-
-   package Editor_Mode_Cb is new Gtk.Handlers.User_Callback_With_Setup
-     (Gtk_Radio_Menu_Item_Record, Editor_Mode_Data, Setup);
-
-   procedure Change_Mode
-     (Item : access Gtk_Radio_Menu_Item_Record'Class;
-      Data : Editor_Mode_Data);
-   --  Change the display mode for the editor
-
    procedure On_Destroy (Editor : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
-
-   -----------
-   -- Setup --
-   -----------
-
-   procedure Setup (Data : Editor_Mode_Data; Id : Handler_Id) is
-   begin
-      Add_Watch (Id, Data.Editor);
-   end Setup;
 
    ------------------
    -- Gtk_New_Hbox --
@@ -411,60 +381,6 @@ package body GVD.Code_Editors is
       Set_Current_Language (Editor.Source, Lang);
    end Set_Current_Language;
 
-   -------------------------------
-   -- Append_To_Contextual_Menu --
-   -------------------------------
-
-   procedure Append_To_Contextual_Menu
-     (Editor : access Code_Editor_Record;
-      Menu   : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      Mitem : Gtk_Menu_Item;
-      Show_Submenu : Gtk_Menu;
-      Radio : Gtk_Radio_Menu_Item;
-   begin
-      --  Create the submenu
-
-      Gtk_New (Show_Submenu);
-
-      Gtk_New (Radio, Widget_SList.Null_List, -"Source Code");
-      Set_Active (Radio, Editor.Mode = Source);
-      Editor_Mode_Cb.Connect
-        (Radio, "activate",
-         Editor_Mode_Cb.To_Marshaller (Change_Mode'Access),
-         Editor_Mode_Data'(Editor => Code_Editor (Editor),
-                           Mode   => Source));
-      Append (Show_Submenu, Radio);
-
-      Gtk_New (Radio, Group (Radio), -"Asm Code");
-      Set_Active (Radio, Editor.Mode = Asm);
-      Editor_Mode_Cb.Connect
-        (Radio, "activate",
-         Editor_Mode_Cb.To_Marshaller (Change_Mode'Access),
-         Editor_Mode_Data'(Editor => Code_Editor (Editor),
-                           Mode   => Asm));
-      Append (Show_Submenu, Radio);
-
-      Gtk_New (Radio, Group (Radio), -"Asm and Source");
-      Set_Active (Radio, Editor.Mode = Source_Asm);
-      Editor_Mode_Cb.Connect
-        (Radio, "activate",
-         Editor_Mode_Cb.To_Marshaller (Change_Mode'Access),
-         Editor_Mode_Data'(Editor => Code_Editor (Editor),
-                           Mode   => Source_Asm));
-      Append (Show_Submenu, Radio);
-
-      --  Insert a separator followed by the submenu at the end
-      --  of the contextual menu
-
-      Gtk_New (Mitem);
-      Append (Menu, Mitem);
-
-      Gtk_New (Mitem, Label => -"Show...");
-      Append (Menu, Mitem);
-      Set_Submenu (Mitem, Show_Submenu);
-   end Append_To_Contextual_Menu;
-
    ----------------
    -- Apply_Mode --
    ----------------
@@ -538,19 +454,6 @@ package body GVD.Code_Editors is
             end if;
       end case;
    end Apply_Mode;
-
-   -----------------
-   -- Change_Mode --
-   -----------------
-
-   procedure Change_Mode
-     (Item : access Gtk_Radio_Menu_Item_Record'Class;
-      Data : Editor_Mode_Data) is
-   begin
-      if Get_Active (Item) and then Data.Editor.Mode /= Data.Mode then
-         Apply_Mode (Data.Editor, Data.Mode);
-      end if;
-   end Change_Mode;
 
    -----------------
    -- Set_Address --

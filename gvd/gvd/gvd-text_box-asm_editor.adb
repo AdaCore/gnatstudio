@@ -441,9 +441,6 @@ package body GVD.Text_Box.Asm_Editor is
          Editor_Cb.To_Marshaller (Meta_Scroll_Down'Access),
          Editor);
 
-      Append_To_Contextual_Menu
-        (Visual_Debugger (Editor.Process).Editor_Text, Menu);
-
       Show_All (Menu);
       return Menu;
    end Child_Contextual_Menu;
