@@ -99,7 +99,7 @@ package body Src_Editor_Module is
    package Mark_Identifier_List is new Generic_List (Mark_Identifier_Record);
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
-      Reopen_Menu_Item         : Gtk_Menu_Item;
+      Recent_Menu_Item         : Gtk_Menu_Item;
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
       File_Closed_Id           : Handler_Id := No_Handler;
@@ -175,8 +175,8 @@ package body Src_Editor_Module is
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
 
-   procedure Refresh_Reopen_Menu (Kernel : access Kernel_Handle_Record'Class);
-   --  Fill the reopen menu.
+   procedure Refresh_Recent_Menu (Kernel : access Kernel_Handle_Record'Class);
+   --  Fill the Recent menu.
 
    function Save_Function
      (Kernel : access Kernel_Handle_Record'Class;
@@ -225,10 +225,10 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->New menu
 
-   procedure On_Reopen
+   procedure On_Recent
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  File->Reopen menu
+   --  File->Recent menu
 
    procedure On_Save
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -367,10 +367,10 @@ package body Src_Editor_Module is
       Args    : String_List_Utils.String_List.List) return String;
    --  Interactive command handler for the source editor module.
 
-   procedure Add_To_Reopen_Menu
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String);
-   --  Add an entry for File to the Reopen menu, if needed.
+   procedure Add_To_Recent_Menu
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : String);
+   --  Add an entry for File to the Recent menu, if needed.
 
    function Find_Mark (Identifier : String) return Mark_Identifier_Record;
    --  Find the mark corresponding to Identifier, or return an empty
@@ -437,11 +437,9 @@ package body Src_Editor_Module is
       use String_List_Utils.String_List;
       Id       : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-
-      Node : List_Node;
+      Node          : List_Node;
       Filename      : Basic_Types.String_Access;
       Error_Message : Basic_Types.String_Access;
-
       Line     : Natural := 1;
       Length   : Natural := 0;
       Column   : Natural := 1;
@@ -482,13 +480,10 @@ package body Src_Editor_Module is
          while Node /= Null_Node loop
             if Data (Node) = "-c" then
                Column := Parse_Argument ("-c");
-
             elsif Data (Node) = "-l" then
                Line := Parse_Argument ("-l");
-
             elsif Data (Node) = "-L" then
                Length := Parse_Argument ("-L");
-
             elsif Filename = null then
                Filename := new String'(Data (Node));
             else
@@ -516,12 +511,21 @@ package body Src_Editor_Module is
                   Filename.all,
                   Line,
                   Column);
+
             elsif Command = "create_mark" then
                declare
-                  Box        : Source_Box;
-                  Child      : MDI_Child;
+                  Box         : Source_Box;
+                  Child       : MDI_Child;
                   Mark_Record : Mark_Identifier_Record;
+                  File        : constant String :=
+                    Find_Source_File (Kernel, Filename.all, True);
+
                begin
+                  if File /= "" then
+                     Free (Filename);
+                     Filename := new String'(File);
+                  end if;
+
                   Child := Find_Editor (Kernel, Filename.all);
 
                   --  Create a new mark record and insert it in the list.
@@ -569,7 +573,7 @@ package body Src_Editor_Module is
                Filename := new String'(Data (Node));
             else
                Free (Filename);
-               return -"close: too many parameters";
+               return Command & ": " & (-"too many parameters");
             end if;
 
             Node := Next (Node);
@@ -604,7 +608,7 @@ package body Src_Editor_Module is
 
             return "";
          else
-            return -"close: missing parameter file_name";
+            return Command & ": " & (-"missing parameter file_name");
          end if;
 
       elsif Command = "goto_mark" then
@@ -615,7 +619,7 @@ package body Src_Editor_Module is
                Filename := new String'(Data (Node));
             else
                Free (Filename);
-               return -"goto_mark: too many parameters";
+               return Command & ": " & (-"too many parameters");
             end if;
 
             Node := Next (Node);
@@ -772,12 +776,12 @@ package body Src_Editor_Module is
                      end if;
 
                      Free (Text);
-                     return "Mark not found.";
+                     return "mark not found";
                   end if;
                end;
 
             else
-               return "Invalid position.";
+               return "invalid position";
             end if;
          end;
       elsif Command = "get_line"
@@ -805,7 +809,7 @@ package body Src_Editor_Module is
                Free (Filename);
 
                if Mark_Record.File = null then
-                  return -"Mark not found.";
+                  return -"mark not found";
                else
                   if Command = "get_line" then
                      if Mark_Record.Child /= null then
@@ -837,7 +841,7 @@ package body Src_Editor_Module is
                end if;
             end;
          else
-            return -"Missing parameter mark.";
+            return -"missing parameter mark";
          end if;
 
       elsif Command = "get_last_line" then
@@ -882,11 +886,9 @@ package body Src_Editor_Module is
 
                         return Image (N);
                      else
-                        return -"File not found or not open.";
-
+                        return -"file not found or not opened";
                      end if;
                   end;
-
                else
                   Free (Filename);
 
@@ -896,7 +898,7 @@ package body Src_Editor_Module is
                end if;
             end;
          else
-            return -"Missing parameter file.";
+            return -"missing parameter file";
          end if;
 
       elsif Command = "get_buffer" then
@@ -941,19 +943,17 @@ package body Src_Editor_Module is
                         end;
 
                      else
-                        return -"File not found.";
+                        return -"file not found";
                      end if;
                   end;
                end if;
             end;
          else
-
-            return -"Missing parameter file.";
+            return -"missing parameter file";
          end if;
 
-
       else
-         return -"Command not recognized: " & Command;
+         return -"command not recognized: " & Command;
       end if;
    end Edit_Command_Handler;
 
@@ -1136,13 +1136,13 @@ package body Src_Editor_Module is
       File  : constant String := Get_String (Nth (Args, 1));
       Base  : constant String := Base_Name (File);
    begin
-      --  Insert the saved file in the reopen menu.
+      --  Insert the saved file in the Recent menu.
 
       if File /= ""
         and then not (Base'Length > 2
                       and then Base (Base'First .. Base'First + 1) = ".#")
       then
-         Add_To_Reopen_Menu (Kernel, File);
+         Add_To_Recent_Menu (Kernel, File);
       end if;
    exception
       when E : others =>
@@ -1196,6 +1196,7 @@ package body Src_Editor_Module is
       Data : Location_Idle_Data;
       Id   : Idle_Handler_Id;
       pragma Unreferenced (Id);
+
    begin
       if Node.Tag.all = "Source_Editor" then
          File := Get_Field (Node, "File");
@@ -1468,15 +1469,15 @@ package body Src_Editor_Module is
    end Create_File_Editor;
 
    ------------------------
-   -- Add_To_Reopen_Menu --
+   -- Add_To_Recent_Menu --
    ------------------------
 
-   procedure Add_To_Reopen_Menu
+   procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : String) is
    begin
       Add_To_History (Kernel, Hist_Key, File);
-      Refresh_Reopen_Menu (Kernel);
-   end Add_To_Reopen_Menu;
+      Refresh_Recent_Menu (Kernel);
+   end Add_To_Recent_Menu;
 
    ---------------
    -- Open_File --
@@ -1578,7 +1579,7 @@ package body Src_Editor_Module is
                end;
             end if;
 
-            --  We have created a new file editor : emit the
+            --  We have created a new file editor: emit the
             --  corresponding signal.
             --  ??? what do we do when opening an editor with no name ?
 
@@ -1593,7 +1594,7 @@ package body Src_Editor_Module is
             After => False);
 
          if File /= "" then
-            Add_To_Reopen_Menu (Kernel, File);
+            Add_To_Recent_Menu (Kernel, File);
          end if;
 
       else
@@ -1719,6 +1720,7 @@ package body Src_Editor_Module is
       Label  : Gtk_Label;
       Button : Gtk_Widget;
       pragma Unreferenced (Widget, Button);
+
       Id     : Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
 
@@ -1780,10 +1782,10 @@ package body Src_Editor_Module is
    end On_Open_From_Path;
 
    ---------------
-   -- On_Reopen --
+   -- On_Recent --
    ---------------
 
-   procedure On_Reopen
+   procedure On_Recent
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
@@ -1795,7 +1797,7 @@ package body Src_Editor_Module is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Reopen;
+   end On_Recent;
 
    -----------------
    -- On_New_File --
@@ -1841,7 +1843,7 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
 
       Success : Boolean;
-      Source : constant Source_Editor_Box :=
+      Source  : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
    begin
@@ -2205,12 +2207,13 @@ package body Src_Editor_Module is
 
          declare
             Lang       : Language_Access;
-            File       : constant String
-              := Directory_Information (File_Context)
-            & File_Information (File_Context);
+            File       : constant String :=
+              Directory_Information (File_Context)
+              & File_Information (File_Context);
 
             Lines      : List;
             Length     : Integer := 0;
+
          begin
             if Context.all in File_Area_Context'Class then
                Area := File_Area_Context_Access (Context);
@@ -2238,9 +2241,11 @@ package body Src_Editor_Module is
                declare
                   Line : constant String :=
                     Interpret_Command
-                      (Kernel, "get_chars " & File & " -l " & J'Img);
+                      (Kernel, "get_chars " & File & " -l " & Image (J));
+
                begin
                   Length := Length + Line'Length;
+
                   if Line = "" then
                      Append (Lines, "");
                   else
@@ -2288,10 +2293,7 @@ package body Src_Editor_Module is
                   Append (Args, Image (Length));
                   Append (Args, """" & S & """");
 
-                  Interpret_Command
-                    (Kernel,
-                     "replace_text",
-                     Args);
+                  Interpret_Command (Kernel, "replace_text", Args);
 
                   Free (Args);
                end;
@@ -2728,12 +2730,12 @@ package body Src_Editor_Module is
                      On_Open_From_Path'Access, null,
                      GDK_F3, Shift_Mask, Ref_Item => -"Save...");
 
-      Source_Editor_Module (Src_Editor_Module_Id).Reopen_Menu_Item :=
-        Register_Menu (Kernel, File, -"_Reopen", "", null,
+      Source_Editor_Module (Src_Editor_Module_Id).Recent_Menu_Item :=
+        Register_Menu (Kernel, File, -"_Recent", "", null,
                        Ref_Item   => -"Open From Project...",
                        Add_Before => False);
 
-      Refresh_Reopen_Menu (Kernel);
+      Refresh_Recent_Menu (Kernel);
 
       Register_Menu (Kernel, File, -"_New", Stock_New, On_New_File'Access,
                      Ref_Item => -"Open...");
@@ -3106,41 +3108,41 @@ package body Src_Editor_Module is
    end Preferences_Changed;
 
    -------------------------
-   -- Refresh_Reopen_Menu --
+   -- Refresh_Recent_Menu --
    -------------------------
 
-   procedure Refresh_Reopen_Menu
+   procedure Refresh_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class)
    is
       The_Data    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Value       : constant String_List_Access := Get_History
         (Get_History (Kernel).all, Hist_Key);
-      Reopen_Menu : Gtk_Menu;
+      Recent_Menu : Gtk_Menu;
       Mitem       : Gtk_Menu_Item;
    begin
-      if Get_Submenu (The_Data.Reopen_Menu_Item) /= null then
-         Remove_Submenu (The_Data.Reopen_Menu_Item);
+      if Get_Submenu (The_Data.Recent_Menu_Item) /= null then
+         Remove_Submenu (The_Data.Recent_Menu_Item);
       end if;
 
-      Gtk_New (Reopen_Menu);
-      Set_Submenu (The_Data.Reopen_Menu_Item, Gtk_Widget (Reopen_Menu));
+      Gtk_New (Recent_Menu);
+      Set_Submenu (The_Data.Recent_Menu_Item, Gtk_Widget (Recent_Menu));
 
       if Value /= null then
          for V in Value'Range loop
             Gtk_New (Mitem, Value (V).all);
-            Append (Reopen_Menu, Mitem);
+            Append (Recent_Menu, Mitem);
 
             Kernel_Callback.Connect
               (Mitem,
                "activate",
-               Kernel_Callback.To_Marshaller (On_Reopen'Access),
+               Kernel_Callback.To_Marshaller (On_Recent'Access),
                Kernel_Handle (Kernel));
          end loop;
 
-         Show_All (Reopen_Menu);
+         Show_All (Recent_Menu);
       end if;
-   end Refresh_Reopen_Menu;
+   end Refresh_Recent_Menu;
 
    -------------
    -- Destroy --
