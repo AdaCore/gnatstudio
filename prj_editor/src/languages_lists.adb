@@ -40,7 +40,6 @@ with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with Language_Handlers;        use Language_Handlers;
 with Projects;                 use Projects;
 with String_Utils;             use String_Utils;
-with Case_Handling;            use Case_Handling;
 
 package body Languages_Lists is
 
@@ -68,7 +67,7 @@ package body Languages_Lists is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 => (1 => GType_None));
       Languages : Argument_List := Known_Languages
-        (Get_Language_Handler (Kernel));
+        (Get_Language_Handler (Kernel), Sorted => False);
       View : Gtk_Tree_View;
       Col  : Gtk_Tree_View_Column;
       Toggle : Gtk_Cell_Renderer_Toggle;
@@ -118,15 +117,10 @@ package body Languages_Lists is
       List.Kernel    := Kernel_Handle (Kernel);
 
       for L in Languages'Range loop
-         declare
-            S : String := Languages (L).all;
-         begin
-            Mixed_Case (S);
-
-            Append (List.Languages, Iter, Null_Iter);
-            Set (List.Languages, Iter, Language_Column, S);
-            Set (List.Languages, Iter, Selected_Column, S = "Ada");
-         end;
+         Append (List.Languages, Iter, Null_Iter);
+         Set (List.Languages, Iter, Language_Column, Languages (L).all);
+         Set (List.Languages, Iter,
+              Selected_Column, Languages (L).all = "Ada");
       end loop;
 
       if Project /= No_Project then
