@@ -1063,6 +1063,12 @@ private
 
       Blocks_Request_Timestamp : Ada.Calendar.Time;
       --  The last time the blocks refresh was requested.
+
+      Blank_Lines : Natural := 0;
+      --  The number of blank lines in the buffer.
+
+      Hidden_Lines : Natural := 0;
+      --  The number of hidden lines in the buffer.
    end record;
 
 end Src_Editor_Buffer;
