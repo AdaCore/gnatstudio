@@ -31,7 +31,7 @@ begin
    Glide_Page.Gtk_New (Page, Glide);
 
    for J in 1 .. Argument_Count loop
-      if File_Extension (Argument (J)) = "gpr" then
+      if String_Utils.File_Extension (Argument (J)) = "gpr" then
          Load_Project (Glide.Kernel, Argument (J));
          Project_Loaded := True;
       else
@@ -50,7 +50,7 @@ begin
 
          exit when Last = 0;
 
-         if File_Extension (Str (1 .. Last)) = "gpr" then
+         if String_Utils.File_Extension (Str (1 .. Last)) = "gpr" then
             Load_Project (Glide.Kernel, Str (1 .. Last));
             exit;
          end if;
