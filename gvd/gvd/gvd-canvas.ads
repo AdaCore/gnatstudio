@@ -20,6 +20,12 @@
 
 with Gtkada.Canvas;
 with Gtk.Window;
+with Gdk.GC;
+with Gdk.Font;
+with Gdk.Pixmap;
+with Gdk.Bitmap;
+with Gtk.Widget;
+with Items;
 
 package GVD.Canvas is
 
@@ -33,6 +39,10 @@ package GVD.Canvas is
 
    procedure Gtk_New (Canvas : out GVD_Canvas);
    --  Create a new canvas.
+
+   procedure Init_Graphics (Canvas : access GVD_Canvas_Record'Class);
+   --  Initializes all the internal graphic contexts needed for the canvas.
+   --  The canvas should have been realized before calling this procedure.
 
    function Get_Detect_Aliases
      (Canvas : access GVD_Canvas_Record'Class) return Boolean;
@@ -58,6 +68,41 @@ package GVD.Canvas is
      return Gtk.Window.Gtk_Window;
    --  Return the process tab that contains the canvas.
 
+   procedure Preferences_Changed
+     (Canvas : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when the preferences have changed, and the canvas should be
+   --  redisplayed with the new setup.
+
+   type Box_Drawing_Context is record
+      Grey_GC           : Gdk.GC.Gdk_GC;
+      Black_GC          : Gdk.GC.Gdk_GC;
+      Refresh_Button_GC : Gdk.GC.Gdk_GC;
+      Thaw_Bg_GC        : Gdk.GC.Gdk_GC;
+      Freeze_Bg_Gc      : Gdk.GC.Gdk_GC;
+
+      Title_Font        : Gdk.Font.Gdk_Font;
+
+      Close_Pixmap        : Gdk.Pixmap.Gdk_Pixmap;
+      Close_Mask          : Gdk.Bitmap.Gdk_Bitmap;
+      Locked_Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
+      Locked_Mask         : Gdk.Bitmap.Gdk_Bitmap;
+      Auto_Display_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Auto_Display_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+   end record;
+   --  Structure that holds all the required information to draw the boxes
+   --  around each item in the canvas, including the title. Note that this
+   --  doesn't include the necessary information to draw the contents of the
+   --  item (see Items.Drawing_Context instead)
+
+   function Get_Item_Context
+     (Canvas : access GVD_Canvas_Record'Class) return Items.Drawing_Context;
+   --  Return the drawing context associated with the items on the canvas.
+
+   function Get_Box_Context
+     (Canvas : access GVD_Canvas_Record'Class) return Box_Drawing_Context;
+   --  Return the drawing context associated with the box around each
+   --  item on the canvas.
+
 private
 
    type GVD_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
@@ -66,5 +111,10 @@ private
       Item_Num       : Integer := 0;
       Process        : Gtk.Window.Gtk_Window;
       --  The process tab that contains the canvas
+
+      --  The graphic contexts used to draw the canvas and its items
+      Item_Context  : Items.Drawing_Context;
+      Box_Context   : Box_Drawing_Context;
+
    end record;
 end GVD.Canvas;
