@@ -2807,7 +2807,7 @@ parse_one_token (HTMLEngine *p, HTMLObject *clue, const gchar *str)
 GtkType
 html_engine_get_type (void)
 {
-	static gulong html_engine_type = 0;
+	static GtkType html_engine_type = 0;
 
 	if (!html_engine_type) {
 		static const GtkTypeInfo html_engine_info = {
