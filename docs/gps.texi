@@ -3438,7 +3438,7 @@ files. Each item in the browser represents one source file.
 
 @iftex
 @cindex screen shot
-@image{dependency-browser, 10.1cm}
+@image{dependency-browser, 12.7cm}
 @end iftex
 
 @ifhtml
@@ -3555,7 +3555,7 @@ The list of all the entities declared in that package is displayed
 
 @iftex
 @cindex screen shot
-@image{entity-browser, 10.1cm}
+@image{entity-browser, 12.7cm}
 @end iftex
 
 @ifhtml
