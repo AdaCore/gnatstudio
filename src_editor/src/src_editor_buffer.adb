@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -1736,13 +1736,24 @@ package body Src_Editor_Buffer is
 
          while Current <= Length loop
             case Contents (Current) is
+               when ASCII.CR =>
+                  null;
+
                when ASCII.LF =>
                   if Blanks /= 0 then
                      Bytes_Written := Write
                        (FD, Contents (First)'Address, Blanks - First);
+
                   else
-                     Bytes_Written := Write
-                       (FD, Contents (First)'Address, Current - First);
+                     if Current > 1
+                       and then Contents (Current - 1) = ASCII.CR
+                     then
+                        Bytes_Written := Write
+                          (FD, Contents (First)'Address, Current - First - 1);
+                     else
+                        Bytes_Written := Write
+                          (FD, Contents (First)'Address, Current - First);
+                     end if;
                   end if;
 
                   New_Line (FD);
