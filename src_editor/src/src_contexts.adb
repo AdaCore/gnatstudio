@@ -1075,11 +1075,6 @@ package body Src_Contexts is
    is
       Child   : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor  : Source_Editor_Box;
-      Success      : Boolean;
-      Begin_Line   : Natural;
-      Begin_Column : Natural;
-      End_Line     : Natural;
-      End_Column   : Natural;
 
    begin
       if Child = null then
@@ -1090,30 +1085,18 @@ package body Src_Contexts is
       Raise_Child (Child);
       Minimize_Child (Child, False);
 
-      --  Test whether there is currently a valid selection candidate
-      --  for replacement.
+      --  Test whether the current context text contains the search string.
+      --  Warning: we cannot use selection here, since apparently there can
+      --  be only only one selection in the whole GPS window, and the
+      --  selection in the source buffer will be erased when the focus is
+      --  given to the search dialog.
 
-      Get_Selection_Bounds (Editor, Begin_Line, Begin_Column,
-                            End_Line, End_Column, Success);
-
-      if Success
-        and then Begin_Line   = Context.Begin_Line
-        and then Begin_Column = Context.Begin_Column
-        and then End_Line     = Context.End_Line
-        and then End_Column   = Context.End_Column
-      then
-         Replace_Slice
-           (Editor,
-            Begin_Line,
-            Begin_Column,
-            End_Line,
-            End_Column,
-            Replace_String);
-
-      --  If there is no selection, it might be because the match had a length
-      --  of 0 (try matching the regexp "^")
-      elsif not Success
-        and then Context.Begin_Column = Context.End_Column
+      if Context.Begin_Line > 0
+        and then Context.Begin_Column > 0
+        and then Get_Slice
+          (Editor,
+           Context.Begin_Line, Context.Begin_Column,
+           Context.End_Line, Context.End_Column) = Context_As_String (Context)
       then
          Replace_Slice
            (Editor,
