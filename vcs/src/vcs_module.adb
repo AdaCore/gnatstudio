@@ -609,7 +609,6 @@ package body VCS_Module is
       Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
 
       --  Register VCS commands.
-      --  ??? We should create a Class for VCS.
 
       Register_Command
         (Kernel       => Kernel,
