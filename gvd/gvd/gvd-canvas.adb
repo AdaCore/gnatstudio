@@ -22,17 +22,19 @@ with Glib;             use Glib;
 with Gdk;              use Gdk;
 with Gdk.Window;       use Gdk.Window;
 with Gdk.Color;        use Gdk.Color;
+with Gdk.Event;        use Gdk.Event;
 with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.GC;           use Gdk.GC;
 with Gdk.Bitmap;       use Gdk.Bitmap;
---  with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Handlers;     use Gtk.Handlers;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
+with Gtk.Window;       use Gtk.Window;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 
@@ -174,6 +176,15 @@ package body GVD.Canvas is
    --  Recompute the size and redisplay the item. This function is meant to
    --  be used in a For_Each_Item loop
 
+   function Key_Press
+     (Canvas : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
+   --  Handle key release events
+
+   function Contextual_Background_Menu_Destroy
+     (Widget : access Gtk_Widget_Record'Class) return Boolean;
+   --  Called when the contexual menu is destroyed.
+
    --------------------------
    -- Change_Align_On_Grid --
    --------------------------
@@ -239,15 +250,27 @@ package body GVD.Canvas is
       Canvas.Detect_Aliases := Activate;
    end Set_Detect_Aliases;
 
+   ---------------
+   -- Key_Press --
+   ---------------
+
+   function Key_Press
+     (Canvas : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean is
+   begin
+      case Get_Key_Val (Event) is
+         when GDK_equal => Zoom_In (Canvas);
+         when GDK_minus => Zoom_Out (Canvas);
+         when others    => null;
+      end case;
+      return False;
+   end Key_Press;
+
    -------------
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (Canvas      : out GVD_Canvas;
-      Accel_Group : Gtk_Accel_Group)
-   is
-      Menu : Gtk_Menu;
+   procedure Gtk_New (Canvas : out GVD_Canvas) is
    begin
       Canvas := new GVD_Canvas_Record;
       Canvas.Detect_Aliases := Get_Pref
@@ -255,9 +278,10 @@ package body GVD.Canvas is
       Initialize (Canvas);
       Align_On_Grid (Canvas, True);
 
-      --  Create the background contextual menu now, so that the key shortcuts
-      --  are activated
-      Menu := Contextual_Background_Menu (Canvas, Accel_Group);
+      Add_Events (Canvas, Key_Press_Mask);
+      Gtkada.Handlers.Return_Callback.Connect
+        (Canvas, "key_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access));
    end Gtk_New;
 
    -------------------
@@ -541,6 +565,18 @@ package body GVD.Canvas is
       end if;
    end Clone_Component;
 
+   ----------------------------------------
+   -- Contextual_Background_Menu_Destroy --
+   ----------------------------------------
+
+   function Contextual_Background_Menu_Destroy
+     (Widget : access Gtk_Widget_Record'Class) return Boolean is
+   begin
+      Destroy (GVD_Canvas (Widget).Contextual_Background_Menu);
+      GVD_Canvas (Widget).Contextual_Background_Menu := null;
+      return False;
+   end Contextual_Background_Menu_Destroy;
+
    --------------------------------
    -- Contextual_Background_Menu --
    --------------------------------
@@ -562,11 +598,17 @@ package body GVD.Canvas is
 
       Gtk_New (Canvas.Contextual_Background_Menu);
 
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Canvas.Contextual_Background_Menu, "unmap_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+         (Contextual_Background_Menu_Destroy'Access),
+         GVD_Canvas (Canvas));
+
       Gtk_New (Mitem, Label => -"Display Expression...");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
         (Mitem, "activate",
-         Widget_Callback.To_Marshaller (Display_Expression'Access), Canvas);
+        Widget_Callback.To_Marshaller (Display_Expression'Access), Canvas);
 
       Gtk_New (Mitem);
       Append (Canvas.Contextual_Background_Menu, Mitem);
@@ -595,18 +637,18 @@ package body GVD.Canvas is
       Widget_Callback.Object_Connect
         (Mitem, "activate",
          Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
-      --  Add_Accelerator
-      --    (Mitem, "activate",
-      --     Accel_Group, GDK_equal, 0, Accel_Visible);
+      Add_Accelerator
+        (Mitem, "activate",
+         Accel_Group, GDK_equal, 0, Accel_Visible);
 
       Gtk_New (Mitem, Label => -"Zoom out");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
         (Mitem, "activate",
          Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
-      --  Add_Accelerator
-      --    (Mitem, "activate",
-      --     Accel_Group, GDK_minus, 0, Accel_Visible);
+      Add_Accelerator
+        (Mitem, "activate",
+         Accel_Group, GDK_minus, 0, Accel_Visible);
 
       Gtk_New (Zooms_Menu);
 

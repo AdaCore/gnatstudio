@@ -40,9 +40,7 @@ package GVD.Canvas is
      with private;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
-   procedure Gtk_New
-     (Canvas      : out GVD_Canvas;
-      Accel_Group : Gtk.Accel_Group.Gtk_Accel_Group);
+   procedure Gtk_New (Canvas : out GVD_Canvas);
    --  Create a new canvas.
 
    procedure Init_Graphics (Canvas : access GVD_Canvas_Record'Class);
