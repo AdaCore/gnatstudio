@@ -413,8 +413,9 @@ package body Vdiff2_Module.Callback is
 
       Free (Diff);
 
-      VDiff2_Module (Vdiff_Module_ID).Is_Active :=
-        (VDiff2_Module (Vdiff_Module_ID).List_Diff.all /= Null_List);
+      if VDiff2_Module (Vdiff_Module_ID).List_Diff.all /= Null_List then
+         Remove_VDiff_Toolbar (Kernel);
+      end if;
 
    exception
       when E : others =>
