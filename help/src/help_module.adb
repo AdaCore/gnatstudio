@@ -42,7 +42,6 @@ with Glide_Intl;                   use Glide_Intl;
 with Traces;                       use Traces;
 with OS_Utils;                     use OS_Utils;
 with Ada.Exceptions;               use Ada.Exceptions;
-with Find_Utils;                   use Find_Utils;
 with File_Utils;                   use File_Utils;
 with String_Utils;                 use String_Utils;
 with Generic_List;
@@ -884,42 +883,6 @@ package body Help_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Open_HTML;
 
-   ------------
-   -- Search --
-   ------------
-
-   function Search
-     (Context         : access Help_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean
-   is
-      pragma Unreferenced (Context, Kernel, Search_Backward, Give_Focus);
-   begin
-      --  ??? To be implemented, probably as a simple search in all the help
-      --  files.
-
-      return False;
-   end Search;
-
-   ------------------
-   -- Help_Factory --
-   ------------------
-
-   function Help_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
-   is
-      pragma Unreferenced (Kernel, Extra_Information, All_Occurences);
-
-      Context : Help_Context_Access;
-   begin
-      Context := new Help_Context;
-      Context.First_Search := True;
-      return Search_Context_Access (Context);
-   end Help_Factory;
-
    -------------------------
    -- Set_URL_Information --
    -------------------------
@@ -1090,7 +1053,7 @@ package body Help_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Help  : constant String := "/_" & (-"Help") & '/';
-      Name  : constant String := -"Help";
+--        Name  : constant String := -"Help";
       Recent_Menu_Item : Gtk_Menu_Item;
       Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
 
@@ -1117,17 +1080,17 @@ package body Help_Module is
       end if;
 
       Free (Path_From_Env);
-
-      Register_Search_Function
-        (Kernel => Kernel,
-         Data   => (Length            => Name'Length,
-                    Label             => Name,
-                    Factory           => Help_Factory'Access,
-                    Extra_Information => null,
-                    Id                => Module_ID (Help_Module_ID),
-                    Mask              => All_Options and not Supports_Replace
-                      and not Search_Backward
-                      and not Whole_Word and not All_Occurrences));
+--
+--        Register_Search_Function
+--          (Kernel => Kernel,
+--           Data   => (Length            => Name'Length,
+--                      Label             => Name,
+--                      Factory           => Help_Factory'Access,
+--                      Extra_Information => null,
+--                      Id                => Module_ID (Help_Module_ID),
+--                 Mask              => All_Options and not Supports_Replace
+--                        and not Search_Backward
+--                        and not Whole_Word and not All_Occurrences));
 
       --  Add help menus
 
