@@ -319,14 +319,14 @@ package body Entities.Debug is
 
    procedure Dump (LIs : in out LI_HTable.HTable) is
       Iter : LI_HTable.Iterator;
-      LI   : LI_File;
+      LI   : LI_File_Item;
    begin
       Put_Line ("====== LI files =====");
       Get_First (LIs, Iter);
       loop
          LI := Get_Element (Iter);
          exit when LI = null;
-         Dump (LI);
+         Dump (LI.File);
          Get_Next (LIs, Iter);
       end loop;
    end Dump;
@@ -417,7 +417,7 @@ package body Entities.Debug is
    is
       Iter  : Files_HTable.Iterator;
       Count : Natural := 0;
-      File  : Source_File;
+      File  : Source_File_Item;
    begin
       Get_First (Files.all, Iter);
       loop
@@ -456,7 +456,7 @@ package body Entities.Debug is
       begin
          Get_First (Files.all, Iter);
          for F in Sorted'Range loop
-            Sorted (F) := Get_Element (Iter);
+            Sorted (F) := Get_Element (Iter).File;
             Get_Next (Files.all, Iter);
          end loop;
 
