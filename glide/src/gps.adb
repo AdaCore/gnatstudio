@@ -241,7 +241,7 @@ procedure GPS is
          Put_Line ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
                    (-", the GNAT Programming System."));
          Put_Line (-"Usage:");
-         Put_Line (-"   gps [-p project-file] [source1] [source2] ...");
+         Put_Line (-"   gps [-Pproject-file] [source1] [source2] ...");
          Put_Line (-"Options:");
          Put_Line (-"   --help              Show this help message and exit.");
          Put_Line (-"   --version           Show the GPS version and exit.");
@@ -254,7 +254,7 @@ procedure GPS is
            ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
             (-", the GNAT Programming System.") & LF &
             (-"Usage:") & LF &
-            (-"   gps [-p project-file] [source1] [source2] ...") & LF &
+            (-"   gps [-Pproject-file] [source1] [source2] ...") & LF &
             (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
             (-"   --version           Show the GPS version and exit.") & LF &
@@ -304,7 +304,7 @@ procedure GPS is
       --  ??? Should have a cleaner way of initializing Log_File
 
       GPS.Debug_Mode := True;
-      GPS.Log_Level  := GVD.Types.Internal;
+      GPS.Log_Level  := GVD.Types.Hidden;
       GPS.Log_File   := Create_File (Log, Fmode => Text);
 
       Glide_Page.Gtk_New (Page, GPS);
