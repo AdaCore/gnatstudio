@@ -1,5 +1,6 @@
 with "../shared";
-with "../kernel/kernel.gpr";
+with "../kernel/kernel";
+with "../templates_parser/templates_parser";
 
 project Docgen is
 
@@ -15,4 +16,3 @@ project Docgen is
    package Ide renames Shared.Ide;
 
 end Docgen;
-
