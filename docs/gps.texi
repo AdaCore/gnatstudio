@@ -4696,13 +4696,13 @@ command line switch @code{--batch}. Specifying the following command
 line
 
 @smallexample
- gps --batch=python:mytest.py
+ gps --batch=shell:mytest.gps
 @end smallexample
 
-will force the python script @file{mytest.py} to be executed
+will force the gps script @file{mytest.gps} to be executed
 immediately, before GPS starts reacting to user's requests. This is
 useful if you want to do some special initializations of the
-environment. It can also be used has a command line interface to GPS,
+environment. It can also be used as a command line interface to GPS,
 if you script's last command is to exit GPS.
 
 @c --------------------------------------------------------------------
@@ -4733,7 +4733,7 @@ result, not many commands are currently exported by GPS, although
 their number is increasing daily. These commands are similar to what
 is available to people who extend GPS directly in Ada, but with a
 strong advantage: they do not require any recompilation of the GPS
-core, and can be tested and executed interact
+core, and can be tested and executed interactively.
 
 The goal of such scripts is to be able to help automate processes such
 as builds, automatic generation of graphs,@dots{}
@@ -4758,7 +4758,7 @@ Type @code{help} at the prompt to get the list of available commands,
 or @code{help} followed by the name of a command to get more
 information on that specific command.
 
-The following example shows how to get some informatino on a source
+The following example shows how to get some information on a source
 entity, and find all references to this entity in the application. It
 searches for the entity "entity_name", which has at least one
 reference anywhere in the file "file_name.adb". After the first
@@ -4768,7 +4768,7 @@ for the second command. When run, the second command will
 automatically display all matching references in the location window.
 
 @smallexample
-GPS> Entity entity_name file_name.adb
+GPS> Entity my_entity file_name.adb
 <Entity_0x09055790>
 GPS> Entity.find_all_refs <Entity_0x09055790>
 @end smallexample
