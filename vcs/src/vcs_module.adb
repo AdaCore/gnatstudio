@@ -33,7 +33,6 @@ with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
 
@@ -103,10 +102,12 @@ package body VCS_Module is
       return Gtk_Widget;
    function Project_Editor
      (Page         : access VCS_Editor_Record;
-      Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project      : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Prj.Tree.Project_Node_Id)
       return Boolean;
 
    -----------------------
@@ -205,7 +206,6 @@ package body VCS_Module is
       pragma Unreferenced (Page);
       Systems : Argument_List := Get_VCS_List (VCS_Module_ID);
       Radio : Gtk_Radio_Button;
-      Current : constant String := Get_Vcs_Kind (Project_View);
       Main : VCS_Selector;
       Frame : Gtk_Frame;
       Box   : Gtk_Box;
@@ -231,9 +231,15 @@ package body VCS_Module is
          else
             Gtk_New (Radio, Group => Radio, Label => Systems (S).all);
          end if;
-         if To_Lower (Systems (S).all) = To_Lower (Current) then
+
+         if Project_View /= No_Project
+           and then To_Lower (Systems (S).all) =
+           To_Lower (Get_Vcs_Kind (Project_View))
+         then
             Set_Active (Radio, True);
             Main.Selected := Radio;
+         else
+            Set_Active (Radio, S = Systems'First);
          end if;
          Pack_Start (Box, Radio);
 
@@ -280,6 +286,15 @@ package body VCS_Module is
       Gtk_New (Main.File_Checker);
       Attach (Table, Main.File_Checker, 1, 2, 1, 2);
 
+      if Project_View /= No_Project then
+         Set_Text
+           (Main.Log_Checker,
+            Get_Attribute_Value (Project_View, Vcs_Log_Check, Ide_Package));
+         Set_Text
+           (Main.File_Checker,
+            Get_Attribute_Value (Project_View, Vcs_File_Check, Ide_Package));
+      end if;
+
       Show_All (Main);
       return Gtk_Widget (Main);
    end Widget_Factory;
@@ -290,112 +305,78 @@ package body VCS_Module is
 
    function Project_Editor
      (Page         : access VCS_Editor_Record;
-      Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project      : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Prj.Tree.Project_Node_Id)
       return Boolean
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Kernel, Ref_Project);
       Selector : VCS_Selector := VCS_Selector (Widget);
       Changed : Boolean := False;
    begin
-      if Selector.Selected /= null then
-         if Project_View = No_Project then
-            if Get_Label (Selector.Selected) /= -Auto_Detect then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => Ide_Package,
-                  Scenario_Variables => (1 .. 0 => Empty_Node),
-                  Attribute_Name     => Vcs_Kind_Attribute,
-                  Value              => Get_Label (Selector.Selected));
-            end if;
-
-            if Get_Text (Selector.Log_Checker) /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => Ide_Package,
-                  Scenario_Variables => (1 .. 0 => Empty_Node),
-                  Attribute_Name     => Vcs_Log_Check,
-                  Value              => Get_Text (Selector.Log_Checker));
-            end if;
-
-            if Get_Text (Selector.File_Checker) /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => Ide_Package,
-                  Scenario_Variables => (1 .. 0 => Empty_Node),
-                  Attribute_Name     => Vcs_File_Check,
-                  Value              => Get_Text (Selector.File_Checker));
-            end if;
-
-            Changed := True;
-
+      if Project_View = No_Project
+        or else Get_Label (Selector.Selected) /= Get_Vcs_Kind (Project_View)
+      then
+         if Get_Label (Selector.Selected) /= -Auto_Detect then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Pkg_Name           => Ide_Package,
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Vcs_Kind_Attribute,
+               Value              => Get_Label (Selector.Selected));
          else
-            if Get_Label (Selector.Selected) /=
-              Get_Vcs_Kind (Project_View)
-            then
-               if Get_Label (Selector.Selected) /= -Auto_Detect then
-                  Update_Attribute_Value_In_Scenario
-                    (Project           => Project,
-                     Pkg_Name          => Ide_Package,
-                     Scenario_Variables =>
-                       Scenario_Variables (Kernel),
-                     Attribute_Name    => Vcs_Kind_Attribute,
-                     Value             => Get_Label (Selector.Selected));
-
-               else
-                  Delete_Attribute
-                    (Project            => Project,
-                     Pkg_Name           => Ide_Package,
-                     Scenario_Variables => Scenario_Variables (Kernel),
-                     Attribute_Name     => Vcs_Kind_Attribute);
-               end if;
-               Changed := True;
-            end if;
-
-            if Get_Text (Selector.Log_Checker) /=
-              Get_Attribute_Value (Project_View, Vcs_Log_Check, Ide_Package)
-            then
-               if Get_Text (Selector.Log_Checker) /= "" then
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Project,
-                     Pkg_Name           => Ide_Package,
-                     Scenario_Variables => Scenario_Variables (Kernel),
-                     Attribute_Name     => Vcs_Log_Check,
-                     Value              => Get_Text (Selector.Log_Checker));
-
-               else
-                  Delete_Attribute
-                    (Project            => Project,
-                     Pkg_Name           => Ide_Package,
-                     Scenario_Variables => Scenario_Variables (Kernel),
-                     Attribute_Name     => Vcs_Log_Check);
-               end if;
-               Changed := True;
-            end if;
-
-            if Get_Text (Selector.File_Checker) /=
-              Get_Attribute_Value (Project_View, Vcs_File_Check, Ide_Package)
-            then
-               if Get_Text (Selector.File_Checker) /= "" then
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Project,
-                     Pkg_Name           => Ide_Package,
-                     Scenario_Variables => Scenario_Variables (Kernel),
-                     Attribute_Name     => Vcs_File_Check,
-                     Value              => Get_Text (Selector.File_Checker));
-
-               else
-                  Delete_Attribute
-                    (Project            => Project,
-                     Pkg_Name           => Ide_Package,
-                     Scenario_Variables => Scenario_Variables (Kernel),
-                     Attribute_Name     => Vcs_File_Check);
-               end if;
-               Changed := True;
-            end if;
+            Delete_Attribute
+              (Project            => Project,
+               Pkg_Name           => Ide_Package,
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Vcs_Kind_Attribute);
          end if;
+         Changed := True;
+      end if;
+
+      if Project_View = No_Project
+        or else Get_Text (Selector.Log_Checker) /=
+        Get_Attribute_Value (Project_View, Vcs_Log_Check, Ide_Package)
+      then
+         if Get_Text (Selector.Log_Checker) /= "" then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Pkg_Name           => Ide_Package,
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Vcs_Log_Check,
+               Value              => Get_Text (Selector.Log_Checker));
+         else
+            Delete_Attribute
+              (Project            => Project,
+               Pkg_Name           => Ide_Package,
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Vcs_Log_Check);
+         end if;
+         Changed := True;
+      end if;
+
+      if Project_View = No_Project
+        or else Get_Text (Selector.File_Checker) /= Get_Attribute_Value
+        (Project_View, Vcs_File_Check, Ide_Package)
+      then
+         if Get_Text (Selector.File_Checker) /= "" then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Pkg_Name           => Ide_Package,
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Vcs_File_Check,
+               Value              => Get_Text (Selector.File_Checker));
+         else
+            Delete_Attribute
+              (Project            => Project,
+               Pkg_Name           => Ide_Package,
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Vcs_File_Check);
+         end if;
+         Changed := True;
       end if;
       return Changed;
    end Project_Editor;
@@ -461,10 +442,12 @@ package body VCS_Module is
 
       Register_Project_Editor_Page
         (Kernel,
-         Page  => new VCS_Editor_Record,
-         Label => -"VCS",
-         Toc   => -"Select VCS",
-         Title => -"Version Control System Configuration");
+         Page      => new VCS_Editor_Record,
+         Label     => -"VCS",
+         Toc       => -"Select VCS",
+         Title     => -"Version Control System Configuration",
+         Ref_Page  => -"Sources",
+         Add_After => False);
    end Register_Module;
 
 end VCS_Module;
