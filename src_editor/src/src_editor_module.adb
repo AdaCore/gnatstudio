@@ -1042,7 +1042,7 @@ package body Src_Editor_Module is
                     (Kernel,
                      Create
                        (Get_Full_Path_From_File
-                          (Get_Registry (Kernel),
+                          (Get_Registry (Kernel).all,
                            Full_Name (Filename).all,
                            True, False)));
                end if;
@@ -2737,7 +2737,7 @@ package body Src_Editor_Module is
            (Project   => Get_Project (Kernel),
             Recursive => True);
          List2 : File_Array_Access :=
-           Get_Predefined_Source_Files (Get_Registry (Kernel));
+           Get_Predefined_Source_Files (Get_Registry (Kernel).all);
          Completions : constant String_Array_Access :=
            new String_Array (List1'First .. List1'Last + List2'Length);
       begin
@@ -3629,14 +3629,14 @@ package body Src_Editor_Module is
             when 'p' =>
                return Expansion & Project_Name
                  (Get_Project_From_File
-                  (Get_Registry (Kernel),
+                  (Get_Registry (Kernel).all,
                    Get_Filename (Box),
                    Root_If_Not_Found => True));
 
             when 'P' =>
                return Expansion & Project_Path
                  (Get_Project_From_File
-                  (Get_Registry (Kernel),
+                  (Get_Registry (Kernel).all,
                    Get_Filename (Box),
                    Root_If_Not_Found => True));
 
@@ -4655,7 +4655,7 @@ package body Src_Editor_Module is
       else
          Full := Create
            (Get_Full_Path_From_File
-              (Get_Registry (Kernel), Full_Name (File).all, True, False));
+              (Get_Registry (Kernel).all, Full_Name (File).all, True, False));
       end if;
 
       Iter  := First_Child (Get_MDI (Kernel));
