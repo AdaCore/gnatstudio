@@ -731,8 +731,10 @@ package body Debugger.Gdb is
       --  processing a command.
       --  Try to handle case were gdb is waiting on a user question.
 
-      Send (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
-      Interrupt (Debugger);
+      if Command_In_Process (Debugger.Process) then
+         Send (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
+         Interrupt (Debugger);
+      end if;
 
       --  Make sure gdb will not complain if the file is being run
       Send (Debugger, "set confirm off");
@@ -785,6 +787,7 @@ package body Debugger.Gdb is
       Mode       : Command_Type := Hidden)
    is
       pragma Unreferenced (Mode);
+
       Num                 : Breakpoint_Identifier;
       No_Such_File_Regexp : Pattern_Matcher :=
         Compile ("No such file or directory.");
@@ -1215,6 +1218,7 @@ package body Debugger.Gdb is
       Command  : String) return Boolean
    is
       pragma Unreferenced (Debugger);
+
       Index : Natural := Command'First;
    begin
       --  Note: some of commands below can have a numeric parameter, that needs
@@ -1753,6 +1757,7 @@ package body Debugger.Gdb is
       Addr_Last   : out Natural)
    is
       pragma Unreferenced (Debugger);
+
       Start    : Natural := Str'First;
       Matched  : Match_Array (0 .. 3);
       Matched2 : Match_Array (0 .. 3);
@@ -1818,6 +1823,7 @@ package body Debugger.Gdb is
       Message     : out Frame_Info_Type)
    is
       pragma Unreferenced (Debugger);
+
       Matched : Match_Array (0 .. 1);
    begin
       Match (Frame_Pattern, Str, Matched);
