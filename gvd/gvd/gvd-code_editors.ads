@@ -37,6 +37,7 @@ with Gtk.Layout;
 with Gtk.Pixmap;
 with Gtk.Scrolled_Window;
 with Gtk.Text;
+with Gtk.Style;
 with Gtkada.Types;
 with Language;
 
@@ -149,6 +150,7 @@ private
       Default_Pixmap  : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
       Default_Mask    : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
       Colors          : Color_Array := (others => Gdk.Color.Null_Color);
+      File_Name_Style : Gtk.Style.Gtk_Style;
 
       Current_Line_Button  : Gtk.Pixmap.Gtk_Pixmap;
       Current_Line         : Natural := 0;

@@ -38,6 +38,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Text;            use Gtk.Text;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Menu;            use Gtk.Menu;
+with Gtk.Style;           use Gtk.Style;
 with Gtkada.Types;        use Gtkada.Types;
 with Language;            use Language;
 with Debugger;            use Debugger;
@@ -75,6 +76,9 @@ package body Odd.Code_Editors is
 
    Line_Numbers_Width : constant Positive := 5;
    --  Number of characters reserved on the left for line numbers.
+
+   File_Name_Bg_Color : constant String := "darkgrey";
+   --  Color used for the background of the file name in the editor.
 
    subtype Line_Number is String (1 .. Line_Numbers_Width);
    --  Type of strings used to display line numbers.
@@ -302,6 +306,7 @@ package body Odd.Code_Editors is
    is
       Current_Line_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Current_Line_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+      Color               : Gdk.Color.Gdk_Color;
    begin
       Editor.Font := Get_Gdkfont (Ps_Font_Name, Font_Size);
 
@@ -330,6 +335,14 @@ package body Odd.Code_Editors is
       Alloc (Get_System, Editor.Colors (String_Text));
       Editor.Colors (Keyword_Text) := Parse (Keywords_Color);
       Alloc (Get_System, Editor.Colors (Keyword_Text));
+
+      Color := Parse (File_Name_Bg_Color);
+      Alloc (Get_System, Color);
+      Editor.File_Name_Style := Copy (Get_Style (Editor.Text));
+      Set_Base (Editor.File_Name_Style, State_Normal, Color);
+      Set_Base (Editor.File_Name_Style, State_Selected, Color);
+      Set_Background (Editor.File_Name_Style, State_Normal, Color);
+      Set_Background (Editor.File_Name_Style, State_Selected, Color);
 
       --  ???Unfortunately, it is not possible currently to specify the
       --  step_increment for the adjustments, since this is overriden in
@@ -747,6 +760,9 @@ package body Odd.Code_Editors is
          Editor.Explorer :=
            Explore (Editor, Editor.Buffer.all, Editor.Lang,
                     Base_File_Name (Editor.Current_File.all), Jump_To'Access);
+
+         Set_Cell_Style (Editor.Explorer, 0, 0, Editor.File_Name_Style);
+
          Show_All (Editor.Explorer);
          Add (Editor.Explorer_Scroll, Editor.Explorer);
       end if;
