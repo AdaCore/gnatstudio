@@ -362,7 +362,7 @@ search (HTMLObject *obj, HTMLSearch *info)
 	HTMLClue *clue = HTML_CLUE (obj);
 	gboolean next = FALSE;
 
-	printf ("search clue\n");
+	/* printf ("search clue\n"); */
 
 	/* search_next? */
 	if (html_search_child_on_stack (info, obj)) {

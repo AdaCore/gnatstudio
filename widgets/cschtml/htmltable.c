@@ -1330,13 +1330,13 @@ search (HTMLObject *obj, HTMLSearch *info)
 	guint r, c, i, j;
 	gboolean next = FALSE;
 
-	printf ("search table\n");
+	/* printf ("search table\n"); */
 
 	/* search_next? */
 	if (html_search_child_on_stack (info, obj)) {
 		cur  = html_search_pop (info);
 		next = TRUE;
-		printf ("search table next\n");
+		/* printf ("search table next\n"); */
 	}
 
 	if (info->forward) {
@@ -1359,7 +1359,7 @@ search (HTMLObject *obj, HTMLSearch *info)
 					continue;
 				}
 
-				printf ("search table cell %d,%d %p\n", r, c, cell);
+				/* printf ("search table cell %d,%d %p\n", r, c, cell); */
 
 				html_search_push (info, HTML_OBJECT (cell));
 				if (html_object_search (HTML_OBJECT (cell), info)) {
@@ -1388,7 +1388,7 @@ search (HTMLObject *obj, HTMLSearch *info)
 					continue;
 				}
 
-				printf ("search backward table cell %d,%d %p\n", r, c, cell);
+				/* printf ("search backward table cell %d,%d %p\n", r, c, cell); */
 
 				html_search_push (info, HTML_OBJECT (cell));
 				if (html_object_search (HTML_OBJECT (cell), info)) {
