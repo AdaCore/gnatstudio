@@ -197,6 +197,7 @@ Customizing through XML files
 * Defining text aliases::
 * Defining project attributes::
 * Adding casing exceptions::
+* Adding documentation::
 * Adding stock icons::
 
 Adding support for new Version Control Systems
@@ -1018,55 +1019,9 @@ add_doc_path "/home/foo"
 
 The specific list of files shown in the menus is set by reading the
 index files in each of the directories in @code{GPS_DOC_PATH}. These
-index files must be called @file{gps_index.xml}, and their format
-can be see in the following example:
+index files must be called @file{gps_index.xml}.
 
-@smallexample
-<?xml version="1.0"?>
-<index>
-   <file>
-      <name>file.html</name>
-      <descr>Tooltip text</descr>
-      <category>name</category>
-      <menu>/Help/item</menu>
-   </file>
-</index>
-@end smallexample
-
-There should be one @code{<file>} tag per help file. This tag contains
-four children tags:
-
-@table @b
-@item name
-This is the name of the file. It can be either an absolute file name,
-or a file name relative to one of the directories in
-@code{GPS_DOC_PATH}.
-
-This name can contain a reference to a specific anchor in the html
-file, using the standard HTML syntax.
-
-@smallexample
-  <name>file#anchor</name>
-@end smallexample
-
-@item descr
-This is the description for this help file. It appears in a tool tip
-for the menu item.
-
-@item category
-This is used in the @code{Help->Contents} menu to organize all the
-documentation files.
-
-@item menu
-This is the full path to the menu. It behaves like a UNIX path, except
-it reference the various menus, starting from the menu bar itself. The
-first character of this path must be @code{"/"}. The last part of the
-path is the name of the new menu item. If not set, no menu is
-displayed for this file, although it will still appear in the
-@code{Help->Contents} menu
-
-@end table
-
+The format of these index files is specified in @pxref{Adding documentation}.
 
 @c --------------------------------------------------------------------
 @node Multiple Document Interface
@@ -4872,28 +4827,18 @@ through the integration of version control systems (VCS). Each project can be
 associated to a VCS, through the @code{VCS} tab in the Project property
 editor. @xref{The Project Properties Editor}.
 
-GPS does not come with any version control system: it will use an underlying
-command-line system such as CVS or ClearCase to perform the low level
-operations, and provides a high level user iterface on top of them.
-Be sure to have a properly installed version control system before enabling it
-under GPS.
-
-The systems that are supported out of the box in GPS are CVS and ClearCase.
-There are two interfaces to ClearCase: the standard ClearCase interface, which
-is built-in and uses a generic GPS terminology for VCS operations, and the
-Native ClearCase interface, which is fully customizable and uses by default the
+The systems that are currently supported in GPS are CVS and ClearCase. There
+are two interfaces to ClearCase: the standard ClearCase interface, which is
+built-in and uses a generic GPS terminology for VCS operations, and the Native
+ClearCase interface, which is fully customizable and uses by default the
 terminology specific to ClearCase.
 
 Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
 
-It is also possible to add your own support for other version control systems,
-or modify the existing CVS and ClearCase interfaces,
-see @ref{Adding support for new Version Control Systems} for more information.
-
-When using CVS, GPS will also need a corresponding @command{patch} command
-that usually comes with it. If you are under Windows, be sure to install
-a set of CVS and patch executables that are compatible.
+See @ref{Adding support for new Version Control Systems} for more information
+on how to customize and modify the existing ClearCase and CVS interfaces, as
+well as adding support for new ones.
 
 It is recommended that you first get familiar with the version control
 system that you intend to use in GPS first, since many concepts used in GPS
@@ -5679,16 +5624,6 @@ calling external tools (e.g. before a build).
 Whether the desktop (size and positions of all windows) should be saved when
 exiting.
 
-@item Multi language build
-Whether GPS should build (using gprmake) more than just Ada 
-sources for projects containing Ada and other (e.g. C) languages.
-
-By default, GPS will call gnatmake to build projects containing Ada sources,
-meaning that non Ada sources won't be built. By enabling this preference,
-a multi-language build tool, called @command{gprmake} will be called.
-Note that this tool is still under development, so this option should
-only be activated with caution.
-
 @item Jump to first location
 @cindex location
 Whether the first entry of the location window should be selected
@@ -6228,15 +6163,6 @@ Otherwise, all dependencies, even implicit, are displayed.
 @item @b{Visual diff}
 @cindex visual diff
 @cindex file comparison
-
-Note that in order to perform visual comparison between files, GPS
-needs to call external tool (not distributed with GPS) such as @command{diff}
-or @command{patch}. These tools are usually found on most unix systems, and
-may not be available by default on other OSes. In particular under Windows,
-it is recommanded that you install these tools if needed from one of the
-unix toolsets available, such as msys (@url{http://www.mingw.org/msys.shtml}) or
-cygwin (@url{http://www.cygwin.com}).
-
 @table @i
 @item Context length
 @cindex context length
@@ -6271,12 +6197,6 @@ Ignore white space when comparing lines.
 @item Patch command
 @cindex patch
 Command used to apply a patch. Arguments can also be specified.
-This command is used internally by GPS to perform the visual comparison on
-versioned files (e.g. when performing a comparison with a version control
-system).
-
-This command should be compatible with the @command{GNU patch} utility.
-
 @end table
 
 @item @b{Messages}
@@ -6454,6 +6374,7 @@ items yet.
 * Defining text aliases::
 * Defining project attributes::
 * Adding casing exceptions::
+* Adding documentation::
 * Adding stock icons::
 @end menu
 
@@ -6560,6 +6481,8 @@ described in later sections. It includes:
   (@pxref{Adding contextual menus})
 @item <case_exceptions>
   (@pxref{Adding casing exceptions})
+@item <documentation_file>
+  (@pxref{Adding documentation})
 @item <stock>
   (@pxref{Adding stock icons})
 @item <project_attribute>
@@ -8517,6 +8440,89 @@ Unchanged). @pxref{The Preferences Dialog}.
   </case_exceptions>
 </exceptions>
 @end smallexample
+
+@c --------------------------------------------------------------------------
+@node Adding documentation
+@subsection Adding documentation
+@cindex <documentation_file>
+@c --------------------------------------------------------------------------
+
+@noindent
+New documentation can be added in GPS in various ways. This is useful if you
+want to point to your own project documentation for instance.
+
+The first possibility is to create a new menu, through a @code{<menu>} tag
+in an XML file, associated with an action that either spawn an external
+web browser or calls the internal @code{GPS.Help.browse()} shell command.
+
+However, this will not show the documentation in the @code{Help->Contents}
+menu, which you also might want to do.
+
+To have both results, you should use the @code{<documentation_file>} tag
+in an XML file. These tags are generally found in the @file{gps_index.xml}
+files, as documented in @pxref{Adding New Help Files}, but you can in fact
+add them in any of your customization files.
+
+The @code{<documentation_file>} tag accepts no attribute. It accepts a
+number of child nodes:
+
+@table @b
+@item name
+This is the name of the file. It can be either an absolute file name,
+or a file name relative to one of the directories in @code{GPS_DOC_PATH}.
+If this child is omitted, you must specify a @code{<shell>} child.
+
+This name can contain a reference to a specific anchor in the html
+file, using the standard HTML syntax.
+
+@smallexample
+  <name>file#anchor</name>
+@end smallexample
+
+
+@item shell
+This child specifies the name of a shell command to execute to get the
+name of the HTML file. This command can for instance create the HTML file
+dynamically, or download it locally using some special mechanism.
+This child accepts one attribute, @code{"lang"}, which is the name of the
+language in which the command is written
+
+@item descr
+This is the description for this help file. It appears in a tool tip
+for the menu item.
+
+@item category
+This is used in the @code{Help->Contents} menu to organize all the
+documentation files.
+
+@item menu
+This is the full path to the menu. It behaves like a UNIX path, except
+it reference the various menus, starting from the menu bar itself. The
+first character of this path must be @code{"/"}. The last part of the
+path is the name of the new menu item. If not set, no menu is
+displayed for this file, although it will still appear in the
+@code{Help->Contents} menu
+
+@end table
+
+
+The following example shows how to create a new entry "item" in the Help
+menu, that will display @file{file.html}. The latter is searched in the
+@code{GPS_DOC_PATH} list of directories.
+
+@smallexample
+<?xml version="1.0"?>
+<index>
+   <documentation_file>
+      <name>file.html</name>
+      <descr>Tooltip text</descr>
+      <category>name</category>
+      <menu>/Help/item</menu>
+   </documentation_file>
+</index>
+@end smallexample
+
+
 
 @c --------------------------------------------------------------------------
 @node Adding stock icons
