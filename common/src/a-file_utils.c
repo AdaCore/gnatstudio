@@ -1,10 +1,30 @@
+/*********************************************************************
+ *                               G P S                               *
+ *                                                                   *
+ *                        Copyright (C) 2002                         *
+ *                            ACT-Europe                             *
+ *                                                                   *
+ * GPS is free  software;  you can redistribute it and/or modify  it *
+ * under the terms of the GNU General Public License as published by *
+ * the Free Software Foundation; either version 2 of the License, or *
+ * (at your option) any later version.                               *
+ *                                                                   *
+ * This program is  distributed in the hope that it will be  useful, *
+ * but  WITHOUT ANY WARRANTY;  without even the  implied warranty of *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU *
+ * General Public License for more details. You should have received *
+ * a copy of the GNU General Public License along with this program; *
+ * if not,  write to the  Free Software Foundation, Inc.,  59 Temple *
+ * Place - Suite 330, Boston, MA 02111-1307, USA.                    *
+ *********************************************************************/
+
 #include <sys/stat.h>
 
 int
 __gnat_subdirectories_count (name)
 {
 #ifdef _WIN32
-  /* On windows, stat(2) alwways return 1 for the number of links, and thus can
+  /* On windows, stat(2) always return 1 for the number of links, and thus can
      not be used reliably.
      However, for GPS we only want to know if there is at least one
      subdirectory, so we just pretend this is always true.
@@ -17,7 +37,7 @@ __gnat_subdirectories_count (name)
   
   ret = __gnat_stat (name, &statbuf);
   
-  if (ret)
+  if (ret || !S_ISDIR (statbuf.st_mode))
     return -1;
   else
     /* Do not count the subdirectories . and .. */
