@@ -145,6 +145,7 @@ begin
    Pack_Start (Advanced_Breakpoint.Vbox34, Advanced_Breakpoint.Hbuttonbox12, False, False, 0);
 
    Gtk_New (Advanced_Breakpoint.Record_Button, -"Record");
+   Set_Relief (Advanced_Breakpoint.Record_Button, Relief_Normal);
    Set_Flags (Advanced_Breakpoint.Record_Button, Can_Default);
    Button_Callback.Connect
      (Advanced_Breakpoint.Record_Button, "clicked",
@@ -152,6 +153,7 @@ begin
    Add (Advanced_Breakpoint.Hbuttonbox12, Advanced_Breakpoint.Record_Button);
 
    Gtk_New (Advanced_Breakpoint.End_Button, -"Stop recording");
+   Set_Relief (Advanced_Breakpoint.End_Button, Relief_Normal);
    Set_Flags (Advanced_Breakpoint.End_Button, Can_Default);
    Button_Callback.Connect
      (Advanced_Breakpoint.End_Button, "clicked",
