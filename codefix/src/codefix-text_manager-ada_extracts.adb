@@ -271,12 +271,15 @@ package body Codefix.Text_Manager.Ada_Extracts is
          if Buffer (Stop) =  ';'
            or else Buffer (Stop) = ','
            or else Buffer (Stop) = ':'
-           or else Is_Blank (Buffer (Stop))
          then
             if Stop /= Start then
                Stop := Stop - 1;
+            elsif Stop < Buffer'Last and then Is_Blank (Buffer (Stop + 1)) then
+               Stop := Stop + 1;
             end if;
 
+            exit;
+         elsif Is_Blank (Buffer (Stop)) then
             exit;
          end if;
 
@@ -290,9 +293,9 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Token.First_Col := Start;
       Token.Last_Col := Stop;
       Token.Is_Separator :=
-        Token.Content.all = ","
-        or else Token.Content.all = ":"
-        or else Token.Content.all = ";";
+        Token.Content (1) = ','
+        or else Token.Content (1) = ':'
+        or else Token.Content (1) = ';';
       Token.Line := Line;
       Col := Token.Last_Col + 1;
 
@@ -370,12 +373,12 @@ package body Codefix.Text_Manager.Ada_Extracts is
               (Current_Line, Current_Col, Current_Token);
          end loop;
 
-         exit when Current_Token.Content.all = ":"
-           or else Current_Token.Content.all = ";";
+         exit when Current_Token.Content (1) = ':'
+           or else Current_Token.Content (1) = ';';
 
          --  ??? Make the same tests without case problems
-         if Current_Token.Content.all /= "with"
-           and then Current_Token.Content.all /= "use"
+         if Without_Last_Blanks (Current_Token.Content.all) /= "with"
+           and then Without_Last_Blanks (Current_Token.Content.all) /= "use"
          then
             Append (Destination.Elements_List, Current_Token);
          else
@@ -506,9 +509,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Last_Used       : Natural;
       First_Used      : Natural;
 
-      Offset_Char     : Integer := 0;
-      Previous_Line   : Ptr_Extract_Line;
-
    begin
 
       if Last = 0 then
@@ -536,35 +536,30 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Current_Element := Get_Element (This, First_Used);
 
       for J in First_Used .. Last_Used loop
-         if Data (Current_Element).Line /= Previous_Line then
-            Offset_Char := 0;
-            Previous_Line := Data (Current_Element).Line;
-         end if;
 
-         if Is_Alone (Data (Current_Element), -Offset_Char) then
+         Put_Line ("BEFORE : " & Data (Current_Element).Line.Content.all);
+         if Is_Alone (Data (Current_Element)) then
             Data (Current_Element).Line.Context := Line_Deleted;
+            Put_Line ("IS ALONE");
          else
             Set_String
               (Data (Current_Element).Line.all,
                "",
-               Data (Current_Element).First_Col - Offset_Char,
-               Data (Current_Element).Last_Col - Offset_Char);
-
-            if Data (Current_Element).First_Col /= 1 then
-               Offset_Char := Offset_Char + Data (Current_Element).Last_Col -
-                 Data (Current_Element).First_Col + 1;
-               --  If First_Col = 1, then the columns in the string are not
-               --  corrupted.
-            end if;
+               Data (Current_Element).First_Col,
+               Data (Current_Element).Last_Col);
          end if;
+         Put_Line ("AFTER : " & Data (Current_Element).Line.Content.all);
 
          Garbage_Node := Current_Element;
          Current_Element := Next (Current_Element);
+
+         Update_Deletion (This, Data (Garbage_Node));
 
          Remove_Nodes
            (This.Elements_List,
             Prev (This.Elements_List, Garbage_Node),
             Garbage_Node);
+
       end loop;
 
    end Remove_Elements;
@@ -621,15 +616,43 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -- Is_Alone --
    --------------
 
-   function Is_Alone (This : Token_Record; Offset_Col : Integer)
+   function Is_Alone (This : Token_Record)
      return Boolean is
    begin
       return Is_Blank
         (This.Line.Content (This.Line.Content'First ..
-                              This.First_Col - 1 + Offset_Col))
+                              This.First_Col - 1))
         and then Is_Blank
-          (This.Line.Content (This.Last_Col + 1 + Offset_Col ..
+          (This.Line.Content (This.Line.Content'First + This.Last_Col ..
                                 This.Line.Content'Last));
    end Is_Alone;
+
+   ---------------------
+   -- Update_Deletion --
+   ---------------------
+
+   procedure Update_Deletion
+     (This : in out Ada_List; Token_Deleted : Token_Record)
+   is
+      Current_Node  : Tokens_List.List_Node;
+      Current_Token : Token_Record;
+      Length        : Natural :=
+        Token_Deleted.Last_Col - Token_Deleted.First_Col + 1;
+   begin
+      Current_Node := First (This.Elements_List);
+
+      while Current_Node /= Tokens_List.Null_Node loop
+         Current_Token := Clone (Data (Current_Node));
+
+         if Current_Token.Line = Token_Deleted.Line
+           and then Current_Token.First_Col > Token_Deleted.First_Col then
+            Current_Token.First_Col := Current_Token.First_Col - Length;
+            Current_Token.Last_Col := Current_Token.Last_Col - Length;
+            Set_Data (Current_Node, Current_Token);
+         end if;
+
+         Current_Node := Next (Current_Node);
+      end loop;
+   end Update_Deletion;
 
 end Codefix.Text_Manager.Ada_Extracts;
