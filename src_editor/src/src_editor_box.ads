@@ -94,9 +94,10 @@ package Src_Editor_Box is
    -- Source_Buffer related services --
    ------------------------------------
 
-   function Modified
-     (Editor   : access Source_Editor_Box_Record) return Boolean;
-   --  Tell if the file has been modified.
+   function Needs_To_Be_Saved
+     (Editor : access Source_Editor_Box_Record)
+      return Boolean;
+   --  Tell if the Editor's buffer is in a non-saved state.
 
    procedure Set_Filename
      (Editor   : access Source_Editor_Box_Record;

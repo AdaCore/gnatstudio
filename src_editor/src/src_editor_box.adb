@@ -1717,22 +1717,16 @@ package body Src_Editor_Box is
       return Box.Kernel;
    end Get_Kernel;
 
-   --------------
-   -- Modified --
-   --------------
+   -----------------------
+   -- Needs_To_Be_Saved --
+   -----------------------
 
-   function Modified
-     (Editor   : access Source_Editor_Box_Record) return Boolean is
+   function Needs_To_Be_Saved
+     (Editor : access Source_Editor_Box_Record)
+      return Boolean is
    begin
-      case Get_Status (Editor.Source_Buffer) is
-         when Modified =>
-            return True;
-
-         when Unmodified | Saved =>
-            return False;
-
-      end case;
-   end Modified;
+      return Needs_To_Be_Saved (Editor.Source_Buffer);
+   end Needs_To_Be_Saved;
 
    ------------------
    -- Set_Filename --
