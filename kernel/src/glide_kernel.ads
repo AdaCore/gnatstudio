@@ -31,6 +31,7 @@
 with Prj;
 with Prj.Tree;
 with Glib.Object;
+with Gtk.Window;
 
 package Glide_Kernel is
 
@@ -39,7 +40,9 @@ package Glide_Kernel is
    --  A kernel handle used to share information throughout Glide.
    --  ??? Consider whether using a tagged type would be useful.
 
-   procedure Gtk_New (Handle : out Kernel_Handle);
+   procedure Gtk_New
+     (Handle      : out Kernel_Handle;
+      Main_Window : access Gtk.Window.Gtk_Window_Record'Class);
    --  Create a new Glide kernel.
    --  By default, it isn't associated with any project, nor any source editor.
 
@@ -86,6 +89,9 @@ private
       Project_View : Prj.Project_Id := Prj.No_Project;
       --  The current project view. This is the same Project, after it has been
       --  evaluated based on the current value of the environment variables.
+
+      Main_Window : Gtk.Window.Gtk_Window;
+      --  The main glide window
    end record;
 
 end Glide_Kernel;

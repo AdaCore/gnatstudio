@@ -52,11 +52,16 @@ package body Glide_Kernel is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Handle : out Kernel_Handle) is
+   procedure Gtk_New
+     (Handle      : out Kernel_Handle;
+      Main_Window : access Gtk.Window.Gtk_Window_Record'Class)
+   is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 => (1 => GType_None), 2 => (1 => GType_None));
+
    begin
       Handle := new Kernel_Handle_Record;
+      Handle.Main_Window := Gtk.Window.Gtk_Window (Main_Window);
       Glib.Object.Initialize (Handle);
       Initialize_Class_Record
         (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
