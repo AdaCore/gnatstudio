@@ -32,6 +32,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect; use GNAT.Expect;
 with Ada.Command_Line; use Ada.Command_Line;
+with GNAT.Command_Line; use GNAT.Command_Line;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
 with Language.Debugger.Ada; use Language.Debugger.Ada;
@@ -49,8 +50,8 @@ procedure Odd_Main is
    Root              : String_Access;
    Home              : String_Access;
    Dir               : String_Access;
-   Remote_Host       : String_Access;
-   Skip_Argument     : Boolean := False;
+   Remote_Host       : String_Access := new String' ("");
+   Debuggee_Name     : String_Access;
 
    procedure Init;
    --  Set up environment for Odd.
@@ -152,6 +153,13 @@ procedure Odd_Main is
 
    procedure Bug_Dialog (E : Exception_Occurrence) is
    begin
+      Put_Line (Standard_Error, -"Bug detected in GVD");
+      Put_Line (Standard_Error,
+        "Please report with the contents of the file " &
+        Dir.all & Directory_Separator & "log");
+      Put_Line (Standard_Error, "and the following information:");
+      Put_Line (Standard_Error, "Version: " & Odd.Version);
+      Put_Line (Standard_Error, Exception_Information (E));
       Button := Message_Dialog
         ("Please report with the contents of the file " &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
@@ -161,13 +169,6 @@ procedure Odd_Main is
          Error, Button_OK,
          Title => -"Bug detected in GVD",
          Justification => Justify_Left);
-      Put_Line (Standard_Error, -"Bug detected in GVD");
-      Put_Line (Standard_Error,
-        "Please report with the contents of the file " &
-        Dir.all & Directory_Separator & "log");
-      Put_Line (Standard_Error, "and the following information:");
-      Put_Line (Standard_Error, "Version: " & Odd.Version);
-      Put_Line (Standard_Error, Exception_Information (E));
    end Bug_Dialog;
 
    procedure Help is
@@ -184,6 +185,8 @@ procedure Odd_Main is
       Put_Line ("   --tty         Use controlling tty as additional debugger" &
                 " console.");
       Put_Line ("   --version     Show the GVD version and exit.");
+      New_Line;
+      Put_Line ("Other arguments are passed as is to gdb.");
    end Help;
 
 begin
@@ -202,76 +205,70 @@ begin
       Main_Debug_Window.Log_File := Create_File (Log'Address, Fmode => Text);
    end;
 
-   for J in 1 .. Argument_Count loop
-      if Skip_Argument then
-         Skip_Argument := False;
-      else
-         if Argument (J) = "--tty" then
-            --  Install input handler to receive commands from an external
-            --  IDE while handling GtkAda events.
+   loop
+      case Getopt ("-tty -disable-log -jdb -version -help -host:") is
+         -- long option names --
+         when '-' =>
 
-            Main_Debug_Window.TTY_Mode := True;
-            Id := Standard_Input_Package.Add
-              (0, Input_Read, Input_Available'Access,
-               Main_Debug_Window.all'Access);
+            case Full_Switch (Full_Switch'First + 1) is
+               -- --tty mode --
+               when 't' =>
+                  --  Install input handler to receive commands from an
+                  --  external IDE while handling GtkAda events.
 
-         elsif Argument (J) = "--disable-log" then
-            Main_Debug_Window.Debug_Mode := False;
+                  Main_Debug_Window.TTY_Mode := True;
+                  Id := Standard_Input_Package.Add
+                    (0, Input_Read, Input_Available'Access,
+                     Main_Debug_Window.all'Access);
 
-         elsif Argument (J) = "--jdb" then
-            Debug_Type := Debugger.Jdb_Type;
+               -- --disable-log --
+               when 'd' => Main_Debug_Window.Debug_Mode := False;
 
-         elsif Argument (J) = "--version" then
-            Put_Line ("GVD Version " & Odd.Version);
-            OS_Exit (0);
+               -- --jdb --
+               when 'j' => Debug_Type := Debugger.Jdb_Type;
 
-         elsif Argument (J) = "--help" then
-            Help;
-            OS_Exit (0);
+               -- --version --
+               when 'v' =>
+                  Put_Line ("GVD Version " & Odd.Version);
+                  OS_Exit (0);
 
-         elsif Argument (J) = "--host" then
-            Remote_Host := new String' (Argument (J + 1));
-            Skip_Argument := True;
+               when 'h' =>
+                  -- --help --
+                  if Full_Switch = "-help" then
+                     Help;
+                     OS_Exit (0);
 
-         else
-            Index := Index + 1;
-            List (Index) := new String' (Argument (J));
-         end if;
-      end if;
+                  -- --host --
+                  elsif Full_Switch = "-host" then
+                     Free (Remote_Host);
+                     Remote_Host := new String' (Parameter);
+                  end if;
+
+               when others =>
+                  null;
+            end case;
+
+         when ASCII.Nul =>
+            exit;
+
+         when others =>
+            null;
+      end case;
    end loop;
+
+   --  Do we have an executable on the command line (this is the first
+   --  non-switch argument found on the command line)
+   Debuggee_Name := new String' (GNAT.Command_Line.Get_Argument);
 
    --  ??? Should set the executable here, so that we can use Set_Executable
    --  and get initialization for free.
 
-   if Remote_Host = null then
-
-      --  ??? The following lines imply that program file is necessarily
-      --  the last argument on the command line.
-
-      if Argument_Count /= 0 then
-         Process_Tab := Create_Debugger
-           (Main_Debug_Window,
-            Debug_Type,
-            (Get_Current_Dir & List (Argument_Count).all),
-            List (1 .. Index));
-      else
-         Process_Tab := Create_Debugger
-           (Main_Debug_Window, Debug_Type, "", List (1 .. Index));
-      end if;
-   else
-      if Argument_Count /= 0 then
-         Process_Tab := Create_Debugger
-           (Main_Debug_Window,
-            Debug_Type,
-            List (Argument_Count).all,
-            List (1 .. Index),
-            Remote_Host => Remote_Host.all);
-      else
-         Process_Tab := Create_Debugger
-           (Main_Debug_Window, Debug_Type, "", List (1 .. Index),
-            Remote_Host => Remote_Host.all);
-      end if;
-   end if;
+   Process_Tab := Create_Debugger
+     (Main_Debug_Window,
+      Debug_Type,
+      Debuggee_Name.all,
+      List (1 .. Index),
+      Remote_Host => Remote_Host.all);
 
    Show_All (Main_Debug_Window);
 
@@ -290,6 +287,10 @@ begin
 exception
    when Process_Died =>
       Put_Line ("The underlying debugger died prematurely. Exiting...");
+
+   when Invalid_Switch =>
+      Put_Line ("Invalid command line");
+      Help;
 
    when E : others =>
       Bug_Dialog (E);
