@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget; use Gtk.Widget;
+with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
+with GVD.Preferences;        use GVD.Preferences;
 
 package body General_Preferences_Pkg.Callbacks is
 
@@ -43,10 +45,14 @@ package body General_Preferences_Pkg.Callbacks is
    --------------------------
 
    procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Pref : General_Preferences_Access :=
+        General_Preferences_Access (Object);
    begin
+      Set_From_Dialog (Pref);
       Hide (Get_Toplevel (Object));
+      Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
    end On_Ok_Button_Clicked;
 
    -----------------------------
