@@ -516,21 +516,24 @@ package body Glide_Kernel.Project is
    ---------------------------------
 
    function Scenario_Variables_Cmd_Line
-     (Handle : access Kernel_Handle_Record'Class)
-      return String
+     (Handle : access Kernel_Handle_Record'Class;
+      Syntax : Command_Syntax) return String
    is
       Scenario_Vars : constant Project_Node_Array :=
         Scenario_Variables (Handle);
 
-      function Concat (Current : String; Index : Natural) return String;
+      function Concat
+        (Current : String; Index : Natural; Set_Var : String) return String;
       --  Concat the command line line for the Index-nth variable and the
-      --  following ones to Current, and return the return
+      --  following ones to Current, and return the result.
 
       ------------
       -- Concat --
       ------------
 
-      function Concat (Current : String; Index : Natural) return String is
+      function Concat
+        (Current : String; Index : Natural; Set_Var : String) return String
+      is
          Ext_Ref : String_Id;
       begin
          if Index > Scenario_Vars'Last then
@@ -550,9 +553,10 @@ package body Glide_Kernel.Project is
 
             return Concat
               (Current
-               & "-X" & Name
+               & Set_Var & Name
                & "=" & Name_Buffer (Name_Buffer'First .. Name_Len) & " ",
-               Index + 1);
+               Index + 1,
+               Set_Var);
          end;
       end Concat;
 
@@ -560,7 +564,13 @@ package body Glide_Kernel.Project is
       --  A recursive function is probably not the most efficient way, but this
       --  prevents limits on the command line lengths. This also avoids the use
       --  of unbounded strings.
-      return Concat ("", Scenario_Vars'First);
+
+      case Syntax is
+         when GNAT_Syntax =>
+            return Concat ("", Scenario_Vars'First, "-X");
+         when Make_Syntax =>
+            return Concat ("", Scenario_Vars'First, "");
+      end case;
    end Scenario_Variables_Cmd_Line;
 
    ------------------------
