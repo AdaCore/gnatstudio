@@ -143,6 +143,10 @@ package body Debugger.Jdb is
 
       if Debugger.Main_Class /= null then
          Set_Executable (Debugger, Debugger.Main_Class.all);
+      else
+         --  Indicate that a new executable is present (even if there is none,
+         --  we still need to reset some data).
+         Executable_Changed (Convert (Debugger.Window, Debugger));
       end if;
 
       Language := new Jdb_Java_Language;
@@ -184,6 +188,7 @@ package body Debugger.Jdb is
       Executable : String) is
    begin
       Send (Debugger, "load " & Executable);
+      Executable_Changed (Convert (Debugger.Window, Debugger));
    end Set_Executable;
 
    -----------------
