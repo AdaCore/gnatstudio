@@ -102,6 +102,7 @@ package Odd.Code_Editors is
    function Get_Current_File (Editor : access Code_Editor_Record)
                              return String;
    --  Return the name of the currently edited file.
+   --  "" is returned if there is no current file.
 
    procedure Set_Current_Language
      (Editor : access Code_Editor_Record;

@@ -944,7 +944,11 @@ package body Odd.Code_Editors is
                              return String
    is
    begin
-      return Editor.Current_File.all;
+      if Editor.Current_File = null then
+         return "";
+      else
+         return Editor.Current_File.all;
+      end if;
    end Get_Current_File;
 
    ------------------------------
