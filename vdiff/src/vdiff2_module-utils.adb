@@ -265,8 +265,7 @@ package body Vdiff2_Module.Utils is
 
       Curr_Node := Diff_Chunk_List.First (Hor_List);
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node
-      loop
+      while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Diff := Data (Curr_Node).all;
          First := Diff.Range1.First;
          Last := Diff.Range1.Last;
@@ -286,7 +285,6 @@ package body Vdiff2_Module.Utils is
 
          Curr_Node := Next (Curr_Node);
       end loop;
-
    end Fine_Highlight_Line;
 
    -----------------------
@@ -617,6 +615,7 @@ package body Vdiff2_Module.Utils is
       --  Keep the current window configuration, except we split the current
       --  editor. This doesn't lose the user's current setup, and will be
       --  superceded by the use of MDI_Child groups
+
       Edit (Kernel, Item.File1);
       Edit (Kernel, Item.File2);
       Split (Get_MDI (Kernel), Orientation_Horizontal);
@@ -746,6 +745,7 @@ package body Vdiff2_Module.Utils is
       --  Keep the current window configuration, except we split the current
       --  editor. This doesn't lose the user's current setup, and will be
       --  superceded by the use of MDI_Child groups
+
       Edit (Kernel, Item.File2);
       Edit (Kernel, Item.File1);
       Split (Get_MDI (Kernel), Orientation_Horizontal);

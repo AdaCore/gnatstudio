@@ -278,6 +278,7 @@ package body Src_Info.LI_Utils is
 
          D_Ptr := D_Ptr.Next;
       end loop;
+
       return null;
    end Find_Declaration_Internal;
 
@@ -293,15 +294,15 @@ package body Src_Info.LI_Utils is
       Handler     : LI_Handler) is
    begin
       File := new LI_File_Constrained'
-        (LI =>  (Parsed          => False,
-                 Handler         => Handler,
-                 LI_Filename_Key => new String'(Base_Name (LI_Filename)),
-                 LI_Filename     => LI_Filename,
-                 Project         => Project,
-                 Body_Info       => null,
-                 Spec_Info       => null,
-                 Separate_Info   => null,
-                 LI_Timestamp    => No_Time));
+        (LI => (Parsed          => False,
+                Handler         => Handler,
+                LI_Filename_Key => new String'(Base_Name (LI_Filename)),
+                LI_Filename     => LI_Filename,
+                Project         => Project,
+                Body_Info       => null,
+                Spec_Info       => null,
+                Separate_Info   => null,
+                LI_Timestamp    => No_Time));
       Add (List.Table.all, File);
    end Create_LI_File;
 
