@@ -8,7 +8,7 @@ DEBUG.LOCATION=no
 DEBUG.ENCLOSING_ENTITY=no
 
 --  List of all the handles defined in the application
-KERNEL.BROWSER=yes
+BROWSERS.MODULE=yes
 GLIDE_KERNEL=yes
 GLIDE_KERNEL.PROJECT=yes
 GLIDE_KERNEL.MODULES=yes
