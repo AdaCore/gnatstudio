@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -29,7 +29,6 @@ package Src_Info.ALI is
      (Handler                : access ALI_Handler_Record;
       File                   : in out LI_File_Ptr;
       Source_Filename        : VFS.Virtual_File;
-      List                   : LI_File_List;
       Project                : Projects.Project_Type;
       Check_Timestamp        : Boolean := True);
 
@@ -39,7 +38,6 @@ package Src_Info.ALI is
 
    procedure Parse_All_LI_Information
      (Handler                : access ALI_Handler_Record;
-      List                   : LI_File_List;
       In_Directory           : String;
       Project                : Projects.Project_Type);
 
