@@ -113,7 +113,7 @@ package body Prj_API is
 
       --  Parse all the subpackages, since we need to keep the information
       --  for all of them.
-      Parse (Project, Project_File_Name => Name, Package_Name => "");
+      Parse (Project, Project_File_Name => Name);
       return Project;
    end Parse_Project;
 
@@ -141,9 +141,9 @@ package body Prj_API is
             Name_Len := File_Name'Length;
             Name_Buffer (1 .. Name_Len) := File_Name;
             return Prj.Util.Value_Of
-              (Name                   => Name_Find,
-               Variable_Or_Array_Name => Name_Switches,
-               In_Package             => Compiler_Pkg);
+              (Name                    => Name_Find,
+               Attribute_Or_Array_Name => Name_Switches,
+               In_Package              => Compiler_Pkg);
          end if;
       end if;
       return Nil_Variable_Value;
@@ -175,7 +175,8 @@ package body Prj_API is
                In_Variables  => Packages.Table (Compiler_Pkg).Decl.Variables);
          end if;
       end if;
-      return Variable_Value' (Kind => Undefined, Location => No_Location);
+      return Variable_Value'
+        (Kind => Undefined, Location => No_Location, Default => False);
    end Get_Default_Switches;
 
    ---------------------------
@@ -209,6 +210,7 @@ package body Prj_API is
             when Undefined =>  --  Nil_Variable_Value
                Add_To := (Kind     => Single,
                           Location => No_Location,
+                          Default  => False,
                           Value    => End_String);
 
             when Single =>
@@ -224,6 +226,7 @@ package body Prj_API is
                  String_Elements.Last;
                Add_To := (Kind     => Prj.List,
                           Location => No_Location,
+                          Default  => False,
                           Values   => String_Elements.Last - 1);
 
             when Prj.List =>
@@ -263,6 +266,7 @@ package body Prj_API is
             when Undefined =>  --  Nil_Variable_Value
                Add_To := (Kind     => Prj.List,
                           Location => No_Location,
+                          Default  => False,
                           Values   => Values);
 
             when Single =>
@@ -272,6 +276,7 @@ package body Prj_API is
                    Next     => Values));
                Add_To := (Kind     => Prj.List,
                           Location => No_Location,
+                          Default  => False,
                           Values   => String_Elements.Last);
 
             when Prj.List =>
