@@ -115,8 +115,6 @@ GNAT_SOURCES= \
   s-wchcnv.adb \
   scans.ads \
   scans.adb \
-  scn.ads \
-  scn.adb \
   scng.ads \
   scng.adb \
   sdefault.ads \
