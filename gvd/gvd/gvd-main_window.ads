@@ -73,7 +73,9 @@ package GVD.Main_Window is
       Cont_Button,
       Step_Button,
       Next_Button,
-      Finish_Button       : Gtk.Widget.Gtk_Widget;
+      Finish_Button,
+      Up_Button,
+      Down_Button         : Gtk.Widget.Gtk_Widget;
       Log_File            : File_Descriptor := Standerr;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
@@ -85,7 +87,7 @@ package GVD.Main_Window is
       --  List of data cached for each of the file of the application
       --  This field is handled in GVD.Files
 
-      Command_History : String_History.History_List;
+      Command_History     : String_History.History_List;
       --  The history of commands for the current session.
 
       Sessions_Dir        : String_Access;
