@@ -128,6 +128,8 @@ package body Src_Editor_Module is
    All_Cst       : aliased constant String := "all";
    Interactive_Cst : aliased constant String := "interactive";
    Current_Line_Only_Cst : aliased constant String := "current_line_only";
+   Before_Cst    : aliased constant String := "before";
+   After_Cst    : aliased constant String := "after";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -152,6 +154,12 @@ package body Src_Editor_Module is
      (1 => Current_Line_Only_Cst'Access);
    Project_Search_Parameters : constant Cst_Argument_List :=
      File_Search_Parameters & (5 => Recursive_Cst'Access);
+   Get_Chars_Args : constant Cst_Argument_List :=
+     (1 => Filename_Cst'Access,
+      2 => Line_Cst'Access,
+      3 => Col_Cst'Access,
+      4 => Before_Cst'Access,
+      5 => After_Cst'Access);
 
    type Editor_Child_Record is new GPS_MDI_Child_Record
       with null record;
@@ -886,10 +894,12 @@ package body Src_Editor_Module is
          end;
 
       elsif Command = "get_chars" then
+         Name_Parameters (Data, Get_Chars_Args);
+
          declare
             File   : constant String  := Nth_Arg (Data, 1);
-            Line   : constant Integer := Nth_Arg (Data, 2);
-            Column : constant Integer := Nth_Arg (Data, 3);
+            Line   : constant Integer := Nth_Arg (Data, 2, 0);
+            Column : constant Integer := Nth_Arg (Data, 3, 1);
             Before : constant Integer := Nth_Arg (Data, 4, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 5, Default => -1);
             Child  : constant MDI_Child :=
@@ -3615,15 +3625,18 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "get_chars",
-         Params       => "(file, line, column, [before=-1], [after=-1])",
+         Params       => Parameter_Names_To_Usage (Get_Chars_Args, 4),
          Return_Value => "string",
          Description  =>
            -("Get the characters around a certain position."
              & " Returns string between <before> characters before the mark"
              & " and <after> characters after the position. If <before> or"
              & " <after> is omitted, the bounds will be at the beginning and"
-             & "/or the end of the line."),
-         Minimum_Args => 3,
+             & "/or the end of the line." & ASCII.LF
+             & "If the line and column are not specified, then the current"
+             & " selection is returned, or the empty string if there is no"
+             & " selection."),
+         Minimum_Args => 1,
          Maximum_Args => 5,
          Handler      => Edit_Command_Handler'Access);
 
