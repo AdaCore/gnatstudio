@@ -208,7 +208,7 @@ package body Prj_Normalize is
       Construct, Str, S, Item : Project_Node_Id;
       Ref : String_Id;
    begin
-      --  Makee sure there is a definition for this variable (and its type) at
+      --  Make sure there is a definition for this variable (and its type) at
       --  the top-level of the project (not in a package nor in another
       --  project).
       --  This is required so that normalized projects might be standalone.
