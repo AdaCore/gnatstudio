@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package provides a facility to create a bi-associative table
+--  of strings.
+
 with String_Hash;
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
 
@@ -26,22 +29,27 @@ package Basic_Mapper is
    type File_Mapper is limited private;
    type File_Mapper_Access is access File_Mapper;
 
-   function Get_Other_File
+   function Get_Other_Text
      (Mapper    : File_Mapper_Access;
-      File_Name : String) return String;
+      Text : String) return String;
+   --  Return the file that has been entered as corresponding to
+   --  Text in Mapper, or "" if no such entry was found.
 
    procedure Add_Entry
      (Mapper      : in out File_Mapper_Access;
-      File_Name_1 : String;
-      File_Name_2 : String);
+      Text_1      : String;
+      Text_2      : String);
+   --  Add a couple of corresponding strings in Mapper.
 
    procedure Save_Mapper
      (Mapper      : File_Mapper_Access;
       File_Name   : String);
+   --  Save Mapper to file File_Name.
 
    procedure Load_Mapper
      (Mapper      : out File_Mapper_Access;
       File_Name   : String);
+   --  Load Mapper from file File_Name.
 
 private
 
