@@ -23,6 +23,7 @@ with Gdk.Color;
 with Gdk.Event;
 with Gdk.GC;
 with Gdk.Pixbuf;
+with Gdk.Rectangle;
 with Gdk.Window;
 with Gtkada.Canvas;
 with Glide_Kernel;
@@ -32,8 +33,13 @@ with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Widget;
 with Pango.Layout;
+with GNAT.OS_Lib;
 
 package Browsers.Canvas is
+
+   Margin : constant := 2;
+   --  Margin used when drawing the items, to leave space around the arrows and
+   --  the actual contents of the item
 
    type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with private;
    type General_Browser is access all General_Browser_Record'Class;
@@ -103,6 +109,12 @@ package Browsers.Canvas is
       Browser : access General_Browser_Record'Class);
    --  Associate the item with a browser.
 
+   procedure Set_Title
+     (Item : access Browser_Item_Record'Class;  Title : String := "");
+   --  Set a title for the item. This is displayed in a special title bar, with
+   --  a different background color.
+   --  If Title is the empty string, no title bar is shown
+
    function Contextual_Factory
      (Item  : access Browser_Item_Record;
       Browser : access General_Browser_Record'Class;
@@ -120,38 +132,40 @@ package Browsers.Canvas is
    --  a null menu, which is the case when creating a current context for
    --  Glide_Kernel.Get_Current_Context.
 
-   procedure Refresh
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Browser_Item_Record;
-      Xoffset, Yoffset : Glib.Gint := 0);
-   --  This procedure should redraw the item to its double buffer, and
-   --  recompute its size if necessary. The drawing should be offset by
-   --  *xoffset, yoffset", so that tagged types extending the current one can
-   --  add drawings or text around the item.
-   --  This is used when changing for instance the background color of items.
-   --  By default, it only redraws the background color.
-   --  This is called automatically when the status of the item has changed
-   --  (for instance, when the item was selected).
-   --
-   --  This subprogram needn't call Item_Updated itself. However, if you are
-   --  calling Refresh from your own subprograms, you need to refresh the
-   --  screen either through a call to Item_Updated or a call to
+   procedure Refresh (Item : access Browser_Item_Record'Class);
+   --  Non dispatching variant of the Resize_And_Draw.
+   --  You need to refresh the screen by calling either Item_Updated or
    --  Refresh_Canvas.
-   --
-   --  The default behavior is the following:
-   --  Draw the background of the item in the appropriate color, depending on
-   --  the selection status.
-   --  This will resize the item if it has never been resized before. However,
-   --  it won't recompute its size every time, for efficiency reasons, so if
-   --  you ever need to change the size, you should do call Set_Screen_Size
-   --  directly.
 
-   procedure Size_Request
-     (Item   : access Browser_Item_Record;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint);
-   --  This procedure should compute the preferred size for the item.
-   --  It should not actually resize the item itself.
+   procedure Resize_And_Draw
+     (Item                        : access Browser_Item_Record;
+      Width, Height               : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset            : in out Glib.Gint);
+   --  Resize the item, and then redraw it.
+   --  The chain of events should be the following:
+   --   - Compute the desired size for the item
+   --   - Merge it with Width, Height, Width_Offset and Height_Offset.
+   --
+   --            xoffset
+   --     |------|------------------------|------|
+   --     |      |    child               |      |
+   --     |      |------------------------|      |
+   --     |          item                        |
+   --     |------|------------------------|------|
+   --
+   --     Width is the size of the part where the child will be drawn. It
+   --     should be computed by taking the maximum of the item's desired size
+   --     and the Width parameter
+   --     Width_Offset is the total width on each size of the child. It should
+   --     be computed by adding the new desired offset to Width_Offset. The
+   --     addition to Width_Offset will generally be the same as Xoffset
+   --
+   --   - Call the parent's Size_Request_And_Draw procedure. This will
+   --     ultimately resize the item.
+   --   - Draw the item at coordinates Xoffset, Yoffset in the double-buffer.
+   --   - Modify Xoffset, Yoffset to the position that a child of item should
+   --     be drawn at.
 
    procedure Reset (Browser : access General_Browser_Record'Class;
                     Item : access Browser_Item_Record);
@@ -163,6 +177,60 @@ package Browsers.Canvas is
    function Get_Browser (Item : access Browser_Item_Record'Class)
       return General_Browser;
    --  Return the browser associated with this item
+
+   procedure On_Button_Click
+     (Item  : access Browser_Item_Record;
+      Event : Gdk.Event.Gdk_Event_Button);
+   --  See doc for inherited subprogram
+
+   ------------------
+   -- Active areas --
+   ------------------
+   --  The items have a general mechanism to define active areas and nested
+   --  active areas. When the user clicks in the item, the appropriate callback
+   --  is called. The one chosen is the inner most one.
+   --  The callback chosen is undefined if two areas only partially overlap.
+
+   type Active_Area_Callback is abstract tagged null record;
+   type Active_Area_Cb is access all Active_Area_Callback'Class;
+   procedure Call (Callback : Active_Area_Callback;
+                   Event    : Gdk.Event.Gdk_Event) is abstract;
+   --  A callback for the active areas. Event is the mouse event that started
+   --  the chain that lead to callback.
+   --  This type provides an easy encapsulation for any user data you might
+   --  need.
+
+   procedure Destroy (Callback : in out Active_Area_Callback);
+   --  Destroy the callback
+
+   type Widget_Active_Callback is access
+     procedure (Event : Gdk.Event.Gdk_Event; User : Gtk.Widget.Gtk_Widget);
+   type Widget_Active_Area_Callback is new Active_Area_Callback with private;
+   --  A special instanciation of the callback for cases where the user data is
+   --  a widget.
+
+   function Build (Cb : Widget_Active_Callback;
+                   User : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Widget_Active_Area_Callback'Class;
+   --  Build a new callback
+
+   procedure Add_Active_Area
+     (Item      : access Browser_Item_Record;
+      Rectangle : Gdk.Rectangle.Gdk_Rectangle;
+      Callback  : Active_Area_Callback'Class);
+   --  Define a new clickable active area in the item. Callback will be called
+   --  whenever the user clicks in Rectangle, provided there is no smaller area
+   --  that also contains the click location.
+
+   procedure Activate
+     (Item  : access Browser_Item_Record;
+      Event : Gdk.Event.Gdk_Event);
+   --  Calls the callback that is activated when the user clicks in the
+   --  item. The coordinates returned by Get_X and Get_Y in Event should be
+   --  relative to the top-left corner of the Item.
+
+   procedure Reset_Active_Areas (Item : access Browser_Item_Record);
+   --  Remove all active areas in Item
 
    ---------------
    -- Text_Item --
@@ -274,6 +342,7 @@ private
       Parent_Linked_Item_GC : Gdk.GC.Gdk_GC;
       Child_Linked_Item_GC  : Gdk.GC.Gdk_GC;
       Text_GC               : Gdk.GC.Gdk_GC;
+      Title_GC              : Gdk.GC.Gdk_GC;
 
       Selected_Item : Gtkada.Canvas.Canvas_Item;
 
@@ -283,10 +352,27 @@ private
    type Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
      with null record;
 
+   type Active_Area_Tree_Record;
+   type Active_Area_Tree is access Active_Area_Tree_Record;
+   type Active_Area_Tree_Array is array (Natural range <>) of Active_Area_Tree;
+   type Active_Area_Tree_Array_Access is access Active_Area_Tree_Array;
+   type Active_Area_Tree_Record is record
+      Rectangle : Gdk.Rectangle.Gdk_Rectangle;
+      Callback  : Active_Area_Cb;
+      Children  : Active_Area_Tree_Array_Access;
+   end record;
+
    type Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
    with record
       Hide_Links : Boolean := False;
-      Browser     : General_Browser;
+      Browser    : General_Browser;
+
+      Title        : GNAT.OS_Lib.String_Access;
+      Title_Layout : Pango.Layout.Pango_Layout;
+      --  Handling of the title bar. No title bar is shown if the title is
+      --  null. In this case, the Title_Layout is not created either.
+
+      Active_Areas : Active_Area_Tree;
    end record;
 
    type Text_Item_Record is new Browser_Item_Record  with
@@ -294,15 +380,12 @@ private
       Layout : Pango.Layout.Pango_Layout;
    end record;
 
-   procedure Size_Request
-     (Item   : access Text_Item_Record;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint);
+   procedure Resize_And_Draw
+     (Item             : access Text_Item_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint);
    procedure Destroy (Item : in out Text_Item_Record);
-   procedure Refresh
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Text_Item_Record;
-      Xoffset, Yoffset : Glib.Gint := 0);
    --  See doc for inherited subprograms
 
    type Text_Item_With_Arrows_Record is abstract new
@@ -311,22 +394,25 @@ private
       Left_Arrow, Right_Arrow : Boolean := True;
    end record;
 
-   procedure Size_Request
-     (Item   : access Text_Item_With_Arrows_Record;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint);
+   procedure Resize_And_Draw
+     (Item             : access Text_Item_With_Arrows_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint);
    procedure On_Button_Click
      (Item  : access Text_Item_With_Arrows_Record;
       Event : Gdk.Event.Gdk_Event_Button);
-   --  Handles button clicks on the item
-
    procedure Reset (Browser : access General_Browser_Record'Class;
                     Item : access Text_Item_With_Arrows_Record);
-   procedure Refresh
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Text_Item_With_Arrows_Record;
-      Xoffset, Yoffset : Glib.Gint := 0);
    --  See doc for inherited Reset
+
+   type Widget_Active_Area_Callback is new Active_Area_Callback with record
+      User_Data : Gtk.Widget.Gtk_Widget;
+      Cb        : Widget_Active_Callback;
+   end record;
+   procedure Call (Callback : Widget_Active_Area_Callback;
+                   Event    : Gdk.Event.Gdk_Event);
+   --  See doc for inherited Call
 
    pragma Inline (Get_Canvas);
 end Browsers.Canvas;

@@ -48,9 +48,12 @@ with Gtk.Widget;          use Gtk.Widget;
 with Pango.Layout;        use Pango.Layout;
 
 with Ada.Exceptions;      use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with GVD.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Layouts;                   use Layouts;
 with Traces;                    use Traces;
@@ -58,7 +61,7 @@ with Traces;                    use Traces;
 package body Browsers.Canvas is
 
    Zoom_Levels : constant array (Positive range <>) of Guint :=
-     (10, 25, 50, 75, 100, 150, 200, 300, 400);
+     (25, 50, 75, 100, 150, 200, 300, 400);
    --  All the possible zoom levels. We have to use such an array, instead
    --  of doing the computation directly, so as to avoid rounding errors that
    --  would appear in the computation and make zoom_in not the reverse of
@@ -67,11 +70,10 @@ package body Browsers.Canvas is
    Zoom_Steps : constant := 3;
    --  Number of steps while zooming in or out.
 
-   Margin : constant := 2;
-   --  Margin used when drawing the items, to leave space around the arrows and
-   --  the actual contents of the item
-
    Me : constant Debug_Handle := Create ("Browsers.Canvas");
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Active_Area_Tree_Array, Active_Area_Tree_Array_Access);
 
    type Cb_Data is record
       Browser : General_Browser;
@@ -299,6 +301,10 @@ package body Browsers.Canvas is
 
          Gdk_New (B.Text_GC, Get_Window (B.Canvas));
          Set_Foreground (B.Text_GC, Get_Pref (B.Kernel, Browsers_Link_Color));
+
+         Gdk_New (B.Title_GC, Get_Window (B.Canvas));
+         Set_Foreground (B.Title_GC,
+                         Get_Pref (B.Kernel, GVD.Preferences.Title_Color));
       end if;
    end Realized;
 
@@ -475,7 +481,7 @@ package body Browsers.Canvas is
       end loop;
 
       Reset (Data.Browser, Browser_Item (Data.Item));
-      Refresh (Data.Browser, Browser_Item (Data.Item));
+      Refresh (Browser_Item (Data.Item));
 
       Set_Auto_Layout (Get_Canvas (Data.Browser), True);
       Layout
@@ -628,19 +634,19 @@ package body Browsers.Canvas is
          --  that are linked to both Old and item. On the whole, we save some
          --  time
          if Old /= null then
-            Refresh (Browser, Browser_Item (Old));
+            Refresh (Browser_Item (Old));
 
             Iter := Start (Browser.Canvas, Old);
             loop
                It := Get (Iter);
                exit when It = null;
-               Refresh (Browser, Browser_Item (It));
+               Refresh (Browser_Item (It));
                Next (Iter);
             end loop;
          end if;
 
          if Item /= null then
-            Refresh (Browser, Browser_Item (Item));
+            Refresh (Browser_Item (Item));
 
             Iter := Start (Browser.Canvas, Item);
             loop
@@ -652,7 +658,7 @@ package body Browsers.Canvas is
                  or else (not Has_Link (Browser.Canvas, It, Old)
                           and then not Has_Link (Browser.Canvas, Old, It))
                then
-                  Refresh (Browser, Browser_Item (It));
+                  Refresh (Browser_Item (It));
                end if;
 
                Next (Iter);
@@ -732,131 +738,6 @@ package body Browsers.Canvas is
       end if;
    end Draw_Link;
 
-   -------------
-   -- Refresh --
-   -------------
-
-   procedure Refresh
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Browser_Item_Record;
-      Xoffset, Yoffset : Glib.Gint := 0)
-   is
-      pragma Unreferenced (Xoffset, Yoffset);
-      --  Ignore Xoffset, Yoffset, since we want to draw the whole background
-      Bg_GC : Gdk_GC;
-      Coord : Gdk_Rectangle := Get_Coord (Item);
-   begin
-      if Coord.Width = 1 and then Coord.Height = 1 then
-         Size_Request (Browser_Item (Item), Coord.Width, Coord.Height);
-         Set_Screen_Size (Browser_Item (Item), Coord.Width, Coord.Height);
-      end if;
-
-      if Canvas_Item (Item) = Selected_Item (Browser) then
-         Bg_GC := Browser.Selected_Item_GC;
-
-      elsif Selected_Item (Browser) /= null
-        and then Has_Link (Browser.Canvas,
-                           From => Item, To => Selected_Item (Browser))
-      then
-         Bg_GC := Browser.Parent_Linked_Item_GC;
-
-      elsif Selected_Item (Browser) /= null
-        and then Has_Link (Browser.Canvas,
-                           From => Selected_Item (Browser), To => Item)
-      then
-         Bg_GC := Browser.Child_Linked_Item_GC;
-
-      else
-         Bg_GC := Browser.Default_Item_GC;
-      end if;
-
-      Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Bg_GC,
-         Filled => True,
-         X      => 0,
-         Y      => 0,
-         Width  => Coord.Width,
-         Height => Coord.Height);
-
-      Draw_Shadow
-        (Style       => Get_Style (Browser.Canvas),
-         Window      => Pixmap (Item),
-         State_Type  => State_Normal,
-         Shadow_Type => Shadow_Out,
-         X           => 0,
-         Y           => 0,
-         Width       => Coord.Width,
-         Height      => Coord.Height);
-   end Refresh;
-
-   -------------
-   -- Refresh --
-   -------------
-
-   procedure Refresh
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Text_Item_Record;
-      Xoffset, Yoffset : Glib.Gint := 0) is
-   begin
-      Refresh
-        (Browser, Browser_Item_Record (Item.all)'Access, Xoffset, Yoffset);
-      Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Get_Text_GC (Browser),
-         X        => Margin + Xoffset,
-         Y        => Margin + Yoffset,
-         Layout   => Item.Layout);
-   end Refresh;
-
-   -------------
-   -- Refresh --
-   -------------
-
-   procedure Refresh (Browser : access General_Browser_Record'Class;
-                      Item    : access Text_Item_With_Arrows_Record;
-                      Xoffset, Yoffset : Glib.Gint := 0)
-   is
-      Y : Gint;
-   begin
-      --  Call parent
-      Refresh (Browser, Text_Item_Record (Item.all)'Access,
-               Xoffset => Xoffset + Get_Width (Browser.Left_Arrow),
-               Yoffset => Yoffset);
-
-      --  Only compute this after calling the parent, since otherwise the item
-      --  might not have been resized yet.
-      Y := (Get_Coord (Item).Height - Get_Height (Browser.Left_Arrow)) / 2;
-      if Item.Left_Arrow then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => Browser.Left_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Xoffset,
-            Dest_Y          => Y,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-
-      if Item.Right_Arrow then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => Browser.Right_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Xoffset + Gint (Get_Coord (Item).Width)
-            - Get_Width (Browser.Right_Arrow),
-            Dest_Y          => Y,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-   end Refresh;
-
    ----------------
    -- Get_Kernel --
    ----------------
@@ -932,47 +813,205 @@ package body Browsers.Canvas is
       Item.Right_Arrow := Display;
    end Set_Right_Arrow;
 
-   ------------------
-   -- Size_Request --
-   ------------------
+   ---------------
+   -- Set_Title --
+   ---------------
 
-   procedure Size_Request
-     (Item   : access Browser_Item_Record;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint)
+   procedure Set_Title
+     (Item : access Browser_Item_Record'Class;  Title : String := "") is
+   begin
+      Free (Item.Title);
+
+      if Title = "" then
+         if Item.Title_Layout /= null then
+            Unref (Item.Title_Layout);
+            Item.Title_Layout := null;
+         end if;
+      else
+         Item.Title := new String'(Title);
+
+         if Item.Title_Layout = null then
+            Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
+            Set_Font_Description
+              (Item.Title_Layout,
+               Get_Pref (Get_Kernel (Get_Browser (Item)), Browsers_Link_Font));
+         else
+            Set_Text (Item.Title_Layout, Title);
+         end if;
+      end if;
+   end Set_Title;
+
+   ---------------------
+   -- Resize_And_Draw --
+   ---------------------
+
+   procedure Resize_And_Draw
+     (Item             : access Browser_Item_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint)
    is
-      pragma Unreferenced (Item);
+      W, H  : Gint;
+      Layout_H : Gint := 0;
+      Bg_GC : Gdk_GC;
    begin
-      Width  := 0;
-      Height := 0;
-   end Size_Request;
+      if Item.Title /= null then
+         Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
+         W := Gint'Max (W + 2 * Margin, Width);
+         H := Layout_H + Height;
+      else
+         W := Width;
+         H := Height;
+      end if;
 
-   ------------------
-   -- Size_Request --
-   ------------------
+      W := W + Width_Offset;
+      H := H + Height_Offset;
 
-   procedure Size_Request
-     (Item   : access Text_Item_Record;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint) is
+      Set_Screen_Size (Browser_Item (Item), W, H);
+
+      if Canvas_Item (Item) = Selected_Item (Item.Browser) then
+         Bg_GC := Item.Browser.Selected_Item_GC;
+      elsif Selected_Item (Item.Browser) /= null
+        and then Has_Link
+          (Item.Browser.Canvas,
+           From => Item, To => Selected_Item (Item.Browser))
+      then
+         Bg_GC := Item.Browser.Parent_Linked_Item_GC;
+      elsif Selected_Item (Item.Browser) /= null
+        and then Has_Link (Item.Browser.Canvas,
+                           From => Selected_Item (Item.Browser), To => Item)
+      then
+         Bg_GC := Item.Browser.Child_Linked_Item_GC;
+      else
+         Bg_GC := Item.Browser.Default_Item_GC;
+      end if;
+
+      Draw_Rectangle
+        (Pixmap (Item),
+         GC     => Bg_GC,
+         Filled => True,
+         X      => 0,
+         Y      => 0,
+         Width  => W,
+         Height => H);
+
+      if Item.Title /= null then
+         Draw_Rectangle
+           (Pixmap (Item),
+            GC     => Item.Browser.Title_GC,
+            Filled => True,
+            X      => 0,
+            Y      => 0,
+            Width  => W,
+            Height => Layout_H);
+         Draw_Layout
+           (Drawable => Pixmap (Item),
+            GC       => Get_Black_GC (Get_Style (Item.Browser)),
+            X        => Xoffset + Margin,
+            Y        => Yoffset,
+            Layout   => Item.Title_Layout);
+         Draw_Line
+           (Pixmap (Item),
+            Gc     => Get_Black_GC (Get_Style (Item.Browser)),
+            X1     => 0,
+            Y1     => Layout_H,
+            X2     => W,
+            Y2     => Layout_H);
+         Yoffset := Yoffset + Layout_H;
+      end if;
+
+      Draw_Shadow
+        (Style       => Get_Style (Item.Browser.Canvas),
+         Window      => Pixmap (Item),
+         State_Type  => State_Normal,
+         Shadow_Type => Shadow_Out,
+         X           => 0,
+         Y           => 0,
+         Width       => W,
+         Height      => H);
+   end Resize_And_Draw;
+
+   ---------------------
+   -- Resize_And_Draw --
+   ---------------------
+
+   procedure Resize_And_Draw
+     (Item             : access Text_Item_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint)
+   is
+      W, H : Gint;
    begin
-      Get_Pixel_Size (Item.Layout, Width, Height);
-      Width  := Width + 2 * Margin;
-      Height := Height + 2 * Margin;
-   end Size_Request;
+      Get_Pixel_Size (Item.Layout, W, H);
+      W := Gint'Max (W + 2 * Margin, Width);
+      H := Gint'Max (H + 2 * Margin, Height);
+      Resize_And_Draw
+        (Browser_Item_Record (Item.all)'Access, W, H,
+         Width_Offset, Height_Offset, Xoffset, Yoffset);
 
-   ------------------
-   -- Size_Request --
-   ------------------
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Get_Text_GC (Item.Browser),
+         X        => Xoffset + Margin,
+         Y        => Yoffset + Margin,
+         Layout   => Item.Layout);
+   end Resize_And_Draw;
 
-   procedure Size_Request
-     (Item   : access Text_Item_With_Arrows_Record;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint) is
+   ---------------------
+   -- Resize_And_Draw --
+   ---------------------
+
+   procedure Resize_And_Draw
+     (Item             : access Text_Item_With_Arrows_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint)
+   is
+      X, Y, H : Gint;
    begin
-      Size_Request (Text_Item_Record (Item.all)'Access, Width, Height);
-      Width := Width + 2 * Get_Width (Get_Browser (Item).Left_Arrow);
-   end Size_Request;
+      H := Gint'Max (Get_Height (Item.Browser.Left_Arrow), Height);
+      X := Xoffset + Get_Width (Item.Browser.Left_Arrow);
+      Resize_And_Draw
+        (Text_Item_Record (Item.all)'Access,
+         Width, H, Width_Offset + 2 * Get_Width (Item.Browser.Left_Arrow),
+         Height_Offset, X, Yoffset);
+
+      --  Only compute this after calling the parent, since otherwise the item
+      --  might not have been resized yet.
+
+      Y := (Get_Coord (Item).Height - Yoffset
+            - Get_Height (Item.Browser.Left_Arrow)) / 2;
+
+      if Item.Left_Arrow then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => Item.Browser.Left_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Xoffset,
+            Dest_Y          => Y,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
+
+      if Item.Right_Arrow then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => Item.Browser.Right_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Xoffset + Gint (Get_Coord (Item).Width)
+            - Get_Width (Item.Browser.Right_Arrow),
+            Dest_Y          => Y,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
+   end Resize_And_Draw;
 
    ----------------
    -- Initialize --
@@ -1002,7 +1041,7 @@ package body Browsers.Canvas is
 
       --  Force a recomputation of the size next time the item is displayed
       Set_Screen_Size (Item, 1, 1);
-      Refresh (Get_Browser (Item), Browser_Item (Item));
+      Refresh (Browser_Item (Item));
    end Set_Text;
 
    -------------
@@ -1043,6 +1082,18 @@ package body Browsers.Canvas is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Button_Click;
 
+   ---------------------
+   -- On_Button_Click --
+   ---------------------
+
+   procedure On_Button_Click
+     (Item  : access Browser_Item_Record;
+      Event : Gdk.Event.Gdk_Event_Button) is
+   begin
+      Raise_Item (Get_Canvas (Get_Browser (Item)), Item);
+      Activate (Browser_Item (Item), Event);
+   end On_Button_Click;
+
    -----------------
    -- Get_Browser --
    -----------------
@@ -1063,5 +1114,245 @@ package body Browsers.Canvas is
    begin
       Item.Browser := General_Browser (Browser);
    end Initialize;
+
+   ----------
+   -- Call --
+   ----------
+
+   procedure Call (Callback : Widget_Active_Area_Callback;
+                   Event    : Gdk.Event.Gdk_Event)
+   is
+   begin
+      Callback.Cb (Event, Callback.User_Data);
+   end Call;
+
+   ---------------------
+   -- Add_Active_Area --
+   ---------------------
+
+   procedure Add_Active_Area
+     (Item      : access Browser_Item_Record;
+      Rectangle : Gdk.Rectangle.Gdk_Rectangle;
+      Callback  : Active_Area_Callback'Class)
+   is
+      Tmp   : Active_Area_Tree;
+
+      function Rectangle_In (Out_Rect, In_Rect : Gdk_Rectangle) return Boolean;
+      --  Return true if In_Rect is fully contained in Out_Rect
+
+      procedure Join_Areas (Area : in out Active_Area_Tree);
+      --  Create a new area that englobs both Area and Tmp as its children
+
+      procedure Process_Area
+        (Area : in out Active_Area_Tree;
+         Inserted : out Boolean);
+      --  Insert the new Tmp item below area, or possibly to replace area (the
+      --  latter becoming one of the children of Tmp.
+      --  Inserted is set to True if the item was inserted, to False if it
+      --  didn't belong to the hierarchy of Area.
+
+      ------------------
+      -- Rectangle_In --
+      ------------------
+
+      function Rectangle_In (Out_Rect, In_Rect : Gdk_Rectangle)
+         return Boolean is
+      begin
+         return In_Rect.X >= Out_Rect.X
+           and then In_Rect.X + In_Rect.Width <= Out_Rect.X + Out_Rect.Width
+           and then In_Rect.Y >= Out_Rect.Y
+           and then In_Rect.Y + In_Rect.Height <= Out_Rect.Y + Out_Rect.Height;
+      end Rectangle_In;
+
+      ----------------
+      -- Join_Areas --
+      ----------------
+
+      procedure Join_Areas (Area : in out Active_Area_Tree) is
+         Tmp_R : Gdk_Rectangle;
+      begin
+         Tmp_R.X := Gint'Min (Rectangle.X, Area.Rectangle.X);
+         Tmp_R.Y := Gint'Min (Rectangle.Y, Area.Rectangle.Y);
+         Tmp_R.Width :=
+           Gint'Max (Rectangle.X + Rectangle.Width,
+                     Area.Rectangle.X + Area.Rectangle.Width) - Tmp_R.X;
+         Tmp_R.Height :=
+           Gint'Max (Rectangle.Y + Rectangle.Height,
+                     Area.Rectangle.Y + Area.Rectangle.Height) - Tmp_R.Y;
+
+         Area := new Active_Area_Tree_Record'
+           (Rectangle => Tmp_R,
+            Callback  => null,
+            Children  => new Active_Area_Tree_Array'(1 => Area, 2 => Tmp));
+      end Join_Areas;
+
+      ------------------
+      -- Process_Area --
+      ------------------
+
+      procedure Process_Area
+        (Area : in out Active_Area_Tree; Inserted : out Boolean)
+      is
+         Tmp_Children : Active_Area_Tree_Array_Access;
+      begin
+         Inserted := False;
+
+         --  If Area is a child of the new Tmp area.
+         if Rectangle_In (Rectangle, Area.Rectangle) then
+            Tmp.Children := new Active_Area_Tree_Array'(1 => Area);
+            Area := Tmp;
+            Inserted := True;
+
+         --  The new item is a child of item.Active_Areas, or one of its
+         --  grand-children...
+         elsif Rectangle_In (Area.Rectangle, Rectangle) then
+            if Area.Children /= null then
+               for C in Area.Children'Range loop
+                  Process_Area (Area.Children (C), Inserted);
+                  exit when Inserted;
+               end loop;
+            end if;
+
+            if not Inserted then
+               Tmp_Children := Area.Children;
+               Area.Children := new Active_Area_Tree_Array'
+                 (Tmp_Children.all & Tmp);
+               Unchecked_Free (Tmp_Children);
+               Join_Areas (Area);
+               Inserted := True;
+            end if;
+         end if;
+      end Process_Area;
+
+      Inserted : Boolean;
+   begin
+      Tmp := new Active_Area_Tree_Record'
+        (Rectangle => Rectangle,
+         Callback  => new Active_Area_Callback'Class'(Callback),
+         Children  => null);
+
+      if Item.Active_Areas = null then
+         Item.Active_Areas := Tmp;
+      else
+         Process_Area (Item.Active_Areas, Inserted);
+         if not Inserted then
+            Join_Areas (Item.Active_Areas);
+         end if;
+      end if;
+   end Add_Active_Area;
+
+   --------------
+   -- Activate --
+   --------------
+
+   procedure Activate
+     (Item  : access Browser_Item_Record;
+      Event : Gdk.Event.Gdk_Event)
+   is
+      X : constant Glib.Gint := Gint (Get_X (Event));
+      Y : constant Glib.Gint := Gint (Get_Y (Event));
+
+      function Check_Area (Area : Active_Area_Tree) return Boolean;
+      --  Return True if Area or one of its children was activated
+
+      ----------------
+      -- Check_Area --
+      ----------------
+
+      function Check_Area (Area : Active_Area_Tree) return Boolean is
+      begin
+         if Area /= null
+           and then X >= Area.Rectangle.X
+           and then X <= Area.Rectangle.X + Area.Rectangle.Width
+           and then Y >= Area.Rectangle.Y
+           and then Y <= Area.Rectangle.Y + Area.Rectangle.Height
+         then
+            if Area.Children /= null then
+               for C in Area.Children'Range loop
+                  if Check_Area (Area.Children (C)) then
+                     return True;
+                  end if;
+               end loop;
+            end if;
+
+            if Area.Callback /= null then
+               Call (Area.Callback.all, Event);
+               return True;
+            end if;
+         end if;
+         return False;
+      end Check_Area;
+
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Tmp := Check_Area (Item.Active_Areas);
+   end Activate;
+
+   ------------------------
+   -- Reset_Active_Areas --
+   ------------------------
+
+   procedure Reset_Active_Areas (Item : access Browser_Item_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Active_Area_Tree_Record, Active_Area_Tree);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Active_Area_Callback'Class, Active_Area_Cb);
+
+      procedure Free (Area : in out Active_Area_Tree);
+      --  Free Area and its children
+
+      procedure Free (Area : in out Active_Area_Tree) is
+      begin
+         if Area.Children /= null then
+            for C in Area.Children'Range loop
+               Free (Area.Children (C));
+            end loop;
+            Unchecked_Free (Area.Children);
+         end if;
+
+         Destroy (Area.Callback.all);
+         Unchecked_Free (Area.Callback);
+         Unchecked_Free (Area);
+      end Free;
+
+   begin
+      Free (Item.Active_Areas);
+   end Reset_Active_Areas;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Callback : in out Active_Area_Callback) is
+      pragma Unreferenced (Callback);
+   begin
+      null;
+   end Destroy;
+
+   -----------
+   -- Build --
+   -----------
+
+   function Build (Cb : Widget_Active_Callback;
+                   User : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Widget_Active_Area_Callback'Class
+   is
+   begin
+      return Widget_Active_Area_Callback'
+        (Active_Area_Callback with
+         User_Data => Gtk_Widget (User),
+         Cb        => Cb);
+   end Build;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh (Item    : access Browser_Item_Record'Class) is
+      Xoffset, Yoffset : Gint := 0;
+   begin
+      Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset);
+   end Refresh;
 
 end Browsers.Canvas;
