@@ -54,6 +54,12 @@ package body Switches_Editors is
    --  values for the switches that were set manually by the user, and that
    --  don't have GUI equivalents
 
+   function Get_Switches_From_GUI
+     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
+      return Argument_List;
+   --  Return the list of switches that are set in the GUI (as opposed to the
+   --  one in the command lines).
+
    -------------
    -- Gtk_New --
    -------------
@@ -113,6 +119,36 @@ package body Switches_Editors is
    ------------------
 
    function Get_Switches
+     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
+      return Argument_List
+   is
+      Cmd_Line : Gtk_Entry;
+      Null_Argument_List : Argument_List (1 .. 0);
+   begin
+      case Tool is
+         when Gnatmake => Cmd_Line := Editor.Make_Switches_Entry;
+         when Compiler => Cmd_Line := Editor.Compiler_Switches_Entry;
+         when Binder   => Cmd_Line := Editor.Binder_Switches_Entry;
+         when Linker   => Cmd_Line := Editor.Linker_Switches_Entry;
+      end case;
+
+      --  ??? Do we have a memory leak here ? We can't free the
+      --  ??? list contained, but should free the array access.
+      declare
+         Str : constant String := Get_Chars (Cmd_Line);
+      begin
+         if Str /= "" then
+            return Argument_String_To_List (Str).all;
+         end if;
+      end;
+      return Null_Argument_List;
+   end Get_Switches;
+
+   ---------------------------
+   -- Get_Switches_From_GUI --
+   ---------------------------
+
+   function Get_Switches_From_GUI
      (Editor : access Switches_Edit_Record; Tool : Tool_Names)
       return Argument_List
    is
@@ -261,7 +297,7 @@ package body Switches_Editors is
 
          return Arr (Arr'First .. Index - 1);
       end;
-   end Get_Switches;
+   end Get_Switches_From_GUI;
 
    ------------------
    -- Set_Switches --
@@ -339,6 +375,8 @@ package body Switches_Editors is
          end loop;
       end Set_Combo;
 
+      Cmd_Line : Gtk_Entry;
+
    begin
       pragma Assert
         (Tool /= Gnatmake or else (Editor.Pages and Gnatmake_Page) /= 0);
@@ -367,12 +405,14 @@ package body Switches_Editors is
                   if Switches (J)'Length > 2 then
                      Set_Value
                        (Editor.Num_Processes, Grange_Float'Value (Switches (J)
-                         (Switches (J)'First + 2 .. Switches  (J)'Last)));
+                          (Switches (J)'First + 2 .. Switches  (J)'Last)));
                   else
                      Set_Value (Editor.Num_Processes, 0.0);
                   end if;
                end if;
             end loop;
+
+            Cmd_Line := Editor.Make_Switches_Entry;
 
          when Compiler =>
             Set_Combo (Editor.Optimization_Level, "-O");
@@ -393,19 +433,36 @@ package body Switches_Editors is
               (Editor.Compile_Stack_Checking, Is_Set ("-fstack-check"));
             Set_Active (Editor.Compile_Dynamic_Elaboration, Is_Set ("-gnatE"));
             Set_Active (Editor.Compile_Assertions, Is_Set ("-gnata"));
-            Set_Active
-              (Editor.Compile_Debug_Expanded_Code, Is_Set ("-gnatD"));
+            Set_Active (Editor.Compile_Debug_Expanded_Code, Is_Set ("-gnatD"));
             Set_Active (Editor.Compile_Language_Extensions, Is_Set ("-gnatX"));
             Set_Active (Editor.Compile_Ada83_Mode, Is_Set ("-gnat83"));
+
+            Cmd_Line := Editor.Compiler_Switches_Entry;
 
          when Binder =>
             Set_Active (Editor.Binder_Tracebacks, Is_Set ("-E"));
             Set_Active (Editor.Binder_Static_Gnat, Is_Set ("-static"));
             Set_Active (Editor.Binder_Shared_Gnat, Is_Set ("-shared"));
 
+            Cmd_Line := Editor.Binder_Switches_Entry;
+
          when Linker =>
             Set_Active (Editor.Linker_Strip, Is_Set ("-s"));
+
+            Cmd_Line := Editor.Linker_Switches_Entry;
       end case;
+
+      Editor.Block_Refresh := True;
+
+      Set_Text (Cmd_Line, "");
+
+      for K in Switches'Range loop
+         if Switches (K) /= null then
+            Append_Text (Cmd_Line, Switches (K).all & " ");
+         end if;
+      end loop;
+
+      Editor.Block_Refresh := False;
    end Set_Switches;
 
    ---------------------
@@ -417,76 +474,89 @@ package body Switches_Editors is
       Tool     : Tool_Names;
       Switches : in out GNAT.OS_Lib.Argument_List) is
    begin
+      --  Note: We do not filter if the page is not displayed, so that the
+      --  switches do not actually disappear when the switches editor is
+      --  closed.
+
       case Tool is
          when Gnatmake =>
-            for J in Switches'Range loop
-               if Switches (J) /= null
-                 and then
-                 (Switches (J).all = "-a"
-                  or else Switches (J).all = "-s"
-                  or else Switches (J).all = "-m"
-                  or else Switches (J).all = "-k"
-                  or else Switches (J).all = "-g"
-                  or else
-                  (Switches (J)'Length >= 2
-                   and then Switches (J)
-                   (Switches (J)'First .. Switches (J)'First + 1) = "-j"))
-               then
-                  Free (Switches (J));
-               end if;
-            end loop;
+            if (Editor.Pages and Gnatmake_Page) /= 0 then
+               for J in Switches'Range loop
+                  if Switches (J) /= null
+                    and then
+                    (Switches (J).all = "-a"
+                     or else Switches (J).all = "-s"
+                     or else Switches (J).all = "-m"
+                     or else Switches (J).all = "-k"
+                     or else Switches (J).all = "-g"
+                     or else
+                     (Switches (J)'Length >= 2
+                      and then Switches (J)
+                      (Switches (J)'First .. Switches (J)'First + 1) = "-j"))
+                  then
+                     Free (Switches (J));
+                  end if;
+               end loop;
+            end if;
 
          when Compiler =>
-            for J in Switches'Range loop
-               if Switches (J) /= null
-                 and then
-                 ((Switches (J)'Length >= 2
-                   and then Switches (J)
-                   (Switches (J)'First .. Switches (J)'First + 1) = "-O")
-                  or else
-                  (Switches (J)'Length >= 6
-                   and then Switches (J)
-                   (Switches (J)'First .. Switches (J)'First + 5) = "-gnatR")
-                  or else Switches (J).all = "-fno-inline"
-                  or else Switches (J).all = "-gnatN"
-                  or else Switches (J).all = "-funroll-loops"
-                  or else Switches (J).all = "-gnatf"
-                  or else Switches (J).all = "-gnatws"
-                  or else Switches (J).all = "-gnatwe"
-                  or else Switches (J).all = "-gnatwl"
-                  or else Switches (J).all = "-gnatwu"
-                  or else Switches (J).all = "-gnaty"
-                  or else Switches (J).all = "-gnato"
-                  or else Switches (J).all = "-gnatp"
-                  or else Switches (J).all = "-fstack-check"
-                  or else Switches (J).all = "-gnatE"
-                  or else Switches (J).all = "-gnata"
-                  or else Switches (J).all = "-gnatD"
-                  or else Switches (J).all = "-gnatX"
-                  or else Switches (J).all = "-gnat83")
-               then
-                  Free (Switches (J));
-               end if;
-            end loop;
+            if (Editor.Pages and Compiler_Page) /= 0 then
+               for J in Switches'Range loop
+                  if Switches (J) /= null
+                    and then
+                    ((Switches (J)'Length >= 2
+                      and then Switches (J)
+                      (Switches (J)'First .. Switches (J)'First + 1) = "-O")
+                     or else
+                     (Switches (J)'Length >= 6
+                      and then Switches (J)
+                      (Switches (J)'First .. Switches (J)'First + 5) =
+                      "-gnatR")
+                     or else Switches (J).all = "-fno-inline"
+                     or else Switches (J).all = "-gnatN"
+                     or else Switches (J).all = "-funroll-loops"
+                     or else Switches (J).all = "-gnatf"
+                     or else Switches (J).all = "-gnatws"
+                     or else Switches (J).all = "-gnatwe"
+                     or else Switches (J).all = "-gnatwl"
+                     or else Switches (J).all = "-gnatwu"
+                     or else Switches (J).all = "-gnaty"
+                     or else Switches (J).all = "-gnato"
+                     or else Switches (J).all = "-gnatp"
+                     or else Switches (J).all = "-fstack-check"
+                     or else Switches (J).all = "-gnatE"
+                     or else Switches (J).all = "-gnata"
+                     or else Switches (J).all = "-gnatD"
+                     or else Switches (J).all = "-gnatX"
+                     or else Switches (J).all = "-gnat83")
+                  then
+                     Free (Switches (J));
+                  end if;
+               end loop;
+            end if;
 
          when Binder =>
-            for J in Switches'Range loop
-               if Switches (J) /= null
-                 and then
-                 (Switches (J).all = "-E"
-                  or else Switches (J).all = "-static"
-                  or else Switches (J).all = "-shared")
-               then
-                  Free (Switches (J));
-               end if;
-            end loop;
+            if (Editor.Pages and Binder_Page) /= 0 then
+               for J in Switches'Range loop
+                  if Switches (J) /= null
+                    and then
+                    (Switches (J).all = "-E"
+                     or else Switches (J).all = "-static"
+                     or else Switches (J).all = "-shared")
+                  then
+                     Free (Switches (J));
+                  end if;
+               end loop;
+            end if;
 
          when Linker =>
-            for J in Switches'Range loop
-               if Switches (J) /= null and then Switches (J).all = "-s" then
-                  Free (Switches (J));
-               end if;
-            end loop;
+            if (Editor.Pages and Linker_Page) /= 0 then
+               for J in Switches'Range loop
+                  if Switches (J) /= null and then Switches (J).all = "-s" then
+                     Free (Switches (J));
+                  end if;
+               end loop;
+            end if;
 
       end case;
    end Filter_Switches;
@@ -516,16 +586,17 @@ package body Switches_Editors is
 
       declare
          Str     : constant String := Get_Text (Cmd_Line);
-         Arr     : Argument_List := Get_Switches (Editor, Tool);
+         Arr     : Argument_List := Get_Switches_From_GUI (Editor, Tool);
          Current : Argument_List_Access;
 
       begin
          if Str'Length = 0 then
             Current := new Argument_List (1 .. 0);
          else
-            Current := Argument_String_To_List (Get_Text (Cmd_Line));
+            Current := Argument_String_To_List (Str);
          end if;
 
+         Editor.Block_Refresh := True;
          Set_Text (Cmd_Line, "");
 
          for J in Arr'Range loop
@@ -542,6 +613,8 @@ package body Switches_Editors is
             end if;
          end loop;
 
+         Editor.Block_Refresh := False;
+
          Free (Arr);
          Free (Current);
       end;
@@ -556,6 +629,10 @@ package body Switches_Editors is
    is
       Cmd_Line : Gtk_Entry;
    begin
+      if Editor.Block_Refresh then
+         return;
+      end if;
+
       case Tool is
          when Gnatmake => Cmd_Line := Editor.Make_Switches_Entry;
          when Compiler => Cmd_Line := Editor.Compiler_Switches_Entry;
