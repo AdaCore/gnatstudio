@@ -681,10 +681,12 @@ package body Src_Editor_View is
                Last          : Gint :=
                  Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
 
+               Offset        : constant Integer :=
+                 Get_Screen_Offset (Buffer, B);
             begin
                --  Do not draw blocks that are on the first column.
 
-               if B.Offset <= 1 then
+               if Offset <= 1 then
                   return;
                end if;
 
@@ -704,7 +706,7 @@ package body Src_Editor_View is
                  (View,
                   Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
-               X := Gint (Get_Screen_Offset (Buffer, B) - 1) * View.Char_Width
+               X := Gint (Offset - 1) * View.Char_Width
                  - Bracket_Offset - Rect.X + Margin;
 
                Draw_Line (Window, View.Current_Block_GC, X, Y, X, Y + Height);
