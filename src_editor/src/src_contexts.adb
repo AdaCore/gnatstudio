@@ -613,6 +613,10 @@ package body Src_Contexts is
       function To_Positive (N : Natural) return Positive;
       --  If N > 0 then return N else return 1.
 
+      -----------------
+      -- To_Positive --
+      -----------------
+
       function To_Positive (N : Natural) return Positive is
       begin
          if N = 0 then
@@ -672,11 +676,19 @@ package body Src_Contexts is
       function Backward_Callback (Match : Match_Result) return Boolean;
       --  Return the last match just before Current_Line and Current_Column
 
+      ----------------------------
+      -- Stop_At_First_Callback --
+      ----------------------------
+
       function Stop_At_First_Callback (Match : Match_Result) return Boolean is
       begin
          Result := new Match_Result'(Match);
          return False;
       end Stop_At_First_Callback;
+
+      -----------------------
+      -- Backward_Callback --
+      -----------------------
 
       function Backward_Callback (Match : Match_Result) return Boolean is
       begin
@@ -701,6 +713,10 @@ package body Src_Contexts is
          Result := new Match_Result'(Match);
          return True;
       end Backward_Callback;
+
+      ---------------------
+      -- Continue_Dialog --
+      ---------------------
 
       function Continue_Dialog (Message : String) return Boolean is
          Buttons : Message_Dialog_Buttons;
@@ -793,6 +809,10 @@ package body Src_Contexts is
       function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
 
+      --------------
+      -- Callback --
+      --------------
+
       function Callback (Match : Match_Result) return Boolean is
          Tmp  : Match_Result_Array_Access;
       begin
@@ -850,6 +870,10 @@ package body Src_Contexts is
    is
       function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
+
+      --------------
+      -- Callback --
+      --------------
 
       function Callback (Match : Match_Result) return Boolean is
       begin
@@ -1402,13 +1426,13 @@ package body Src_Contexts is
    ------------
 
    function Search
-     (Context         : access Abstract_Files_Context;
-      Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Kernel          : Kernel_Handle;
-      Callback        : Scan_Callback) return Boolean
+     (Context  : access Abstract_Files_Context;
+      Handler  : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel   : Kernel_Handle;
+      Callback : Scan_Callback) return Boolean
    is
-      Match       : Match_Result_Access;
-      C           : constant Abstract_Files_Context_Access :=
+      Match  : Match_Result_Access;
+      C      : constant Abstract_Files_Context_Access :=
         Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
 
@@ -1488,7 +1512,6 @@ package body Src_Contexts is
             end if;
          end loop;
 
-
       --  Non interactive mode
       else
          Move_To_Next_File (C);
@@ -1497,7 +1520,7 @@ package body Src_Contexts is
 
          else
             declare
-               State : Recognized_Lexical_States := Statements;
+               State       : Recognized_Lexical_States := Statements;
                Was_Partial : Boolean;
             begin
                Scan_File
@@ -1530,6 +1553,10 @@ package body Src_Contexts is
 
       function Interactive_Callback (Match : Match_Result) return Boolean;
       --  Callbacks for the general search function
+
+      --------------------------
+      -- Interactive_Callback --
+      --------------------------
 
       function Interactive_Callback (Match : Match_Result) return Boolean is
       begin
