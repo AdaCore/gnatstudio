@@ -837,7 +837,7 @@ package body Find_Utils is
       Context := new Files_Project_Context;
       Set_File_List
         (Context,
-         Get_Source_Files (Get_Project (Kernel), True));
+         Get_Source_Files (Get_Project_View (Kernel), True));
       return Search_Context_Access (Context);
    end Files_From_Project_Factory;
 
