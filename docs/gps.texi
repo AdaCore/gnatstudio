@@ -3305,8 +3305,8 @@ This menu item should be used to add new configuration variables, as
 described in @ref{Scenarios and Configuration Variables}.
 
 @item Build
-This menu offers the submenu "Clean" which is equivalent to the Clean
-Current Project action in the Build menu.
+This menu offers the submenu "Clean" which remove all object files and other
+compilation artifacts associated to the current project.
 
 @end table
 
@@ -4127,9 +4127,9 @@ Tree.
 
 @item Clean
    @table @i
-   @item Current Project
+   @item Root Project
    Remove all object files and other compilation artifacts associated to the
-   current project. It does not clean objects from other related projects.
+   root project. It does not clean objects from other related projects.
 
    @item all
    Remove all object files and other compilation artifacts associated to all
