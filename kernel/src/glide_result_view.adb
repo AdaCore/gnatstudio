@@ -46,6 +46,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
+with String_Utils;             use String_Utils;
 with String_List_Utils;        use String_List_Utils;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
@@ -498,8 +499,9 @@ package body Glide_Result_View is
               (View.Kernel, File, Line, Column, Length);
          begin
             Fill_Iter
-              (View, Iter, Line'Img & ":" & Column'Img, File, Message, Output,
-               Line'Img, Column'Img, Length'Img);
+              (View, Iter, Image (Line) & ":" & Image (Column),
+               File, Message, Output,
+               Image (Line), Image (Column), Image (Length));
          end;
       else
          if not Is_In_List (View.Unopened_Files, File) then
@@ -507,8 +509,8 @@ package body Glide_Result_View is
          end if;
 
          Fill_Iter
-           (View, Iter, Line'Img & ":" & Column'Img, File, Message, "",
-            Line'Img, Column'Img, Length'Img);
+           (View, Iter, Image (Line) & ":" & Image (Column), File, Message, "",
+            Image (Line), Image (Column), Image (Length));
       end if;
 
       if Category_Created then
