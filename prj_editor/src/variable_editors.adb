@@ -43,9 +43,11 @@ with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Text;            use Gtk.Text;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Dialogs;      use Gtkada.Dialogs;
 
 with Prj.Tree;   use Prj.Tree;
 with Prj;        use Prj;
+with Prj.Ext;    use Prj.Ext;
 
 with Namet;      use Namet;
 with Stringt;    use Stringt;
@@ -104,6 +106,14 @@ package body Variable_Editors is
    package Var_Handler is new User_Callback
      (Gtk_Widget_Record, Var_Handler_Data);
 
+   type Editor_Row_Data is record
+      Editor : Variable_Edit;
+      Row    : Guint;
+   end record;
+
+   package Editor_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Editor_Row_Data);
+
    procedure Edit_Variable
      (Button : access Gtk_Widget_Record'Class; Data : Var_Handler_Data);
    --  Called when editing a variable.
@@ -115,6 +125,11 @@ package body Variable_Editors is
    --  Refresh the contents of a specific row in the table. If Row is greated
    --  than the number of rows in the table, a new one is created.
    --  The description of Var is displayed in that row.
+
+   procedure Typed_Value_Changed
+     (GEntry : access Gtk_Widget_Record'Class; User : Editor_Row_Data);
+   --  Called when the entry giving the current value of a typed variable
+   --  has changed.
 
    -------------
    -- Gtk_New --
@@ -137,7 +152,8 @@ package body Variable_Editors is
    procedure Gtk_New
      (Editor : out New_Var_Edit;
       Var_Edit : access Variable_Edit_Record'Class;
-      Var : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node)
+      Var : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node;
+      Scenario_Variable_Only : Boolean)
    is
       use Widget_List;
       Item : Gtk_List_Item;
@@ -181,6 +197,17 @@ package body Variable_Editors is
          end;
       end loop;
 
+      --  If we are editing scenario variables, some of the fields can not
+      --  be modified (or the variable would no longer be valid for a scenario.
+
+      if Scenario_Variable_Only then
+         Set_Sensitive (Editor.Untyped_List_Variable, False);
+         Set_Sensitive (Editor.List_Scrolled, False);
+         Set_Sensitive (Editor.Untyped_Single_Variable, False);
+         Set_Sensitive (Editor.Single_Value, False);
+         Set_Sensitive (Editor.Get_Environment, False);
+      end if;
+
       --  Fill the information for the variable
 
       if Var /= Empty_Node then
@@ -205,15 +232,15 @@ package body Variable_Editors is
          if Kind_Of (Var) = N_Variable_Declaration then
             if Expression_Kind_Of (Var) = Single then
                Set_Active (Editor.Untyped_Single_Variable, True);
-               --??? Display_Expr (Editor.Single_Value, Value_Of (Var));
+               Display_Expr (Editor.Single_Value, Value_Of (Var));
             else
                Set_Active (Editor.Untyped_List_Variable, True);
-               --??? Display_Expr (Editor.List_Value, Value_Of (Var));
+               Display_Expr (Editor.List_Value, Value_Of (Var));
             end if;
 
          else  --  Typed variable
             Set_Active (Editor.Typed_Variable, True);
-            --??? Display_Expr (Editor.Enumeration_Value, Type_Values (Var));
+            Display_Expr (Editor.Enumeration_Value, Type_Values (Var));
          end if;
 
          Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Update");
@@ -375,6 +402,38 @@ package body Variable_Editors is
       Set_Visible_Lines (Text, Num_Lines);
    end Resize_Text_Area;
 
+   -------------------------
+   -- Typed_Value_Changed --
+   -------------------------
+
+   procedure Typed_Value_Changed
+     (GEntry : access Gtk_Widget_Record'Class;
+      User   : Editor_Row_Data)
+   is
+      Editor : Variable_Edit renames User.Editor;
+      Var : Project_Node_Id renames Editor.Data (User.Row).Var;
+      Expr : Project_Node_Id;
+   begin
+      --  ??? Should be implemented as a higher level in Prj_API
+
+      --  Get the name of the external variable we are referencing. We need to
+      --  change its value (or pretent it has changed in the environment)
+
+      Expr := Expression_Of (Var);
+      Expr := First_Term (Expr);
+      Expr := Current_Term (Expr);
+
+      pragma Assert (Kind_Of (Expr) = N_External_Value);
+
+      Expr := External_Reference_Of (Expr);
+      pragma Assert (Kind_Of (Expr) = N_Literal_String);
+
+      String_To_Name_Buffer (String_Value_Of (Expr));
+      Prj.Ext.Add
+        (Name_Buffer (Name_Buffer'First .. Name_Len),
+         Get_Chars (Get_Entry (Editor.Data (User.Row).Type_Combo)));
+   end Typed_Value_Changed;
+
    -----------------
    -- Refresh_Row --
    -----------------
@@ -390,6 +449,7 @@ package body Variable_Editors is
       Data     : Var_Handler_Data;
       Row_Data : Row_Data_Array_Access;
       Expr     : Project_Node_Id;
+      Str      : String_Id;
 
    begin
       if Row > Editor.Num_Rows then
@@ -469,9 +529,25 @@ package body Variable_Editors is
            (Get_List (Editor.Data (Row).Type_Combo),
             String_Type_Of (Var));
          Set_Text (Get_Entry (Editor.Data (Row).Type_Combo), "");
-         Display_Expr
-           (Get_Entry (Editor.Data (Row).Type_Combo), Value_Of (Var));
+
+         Str := External_Reference_Of (Var);
+         if Str /= No_String then
+            String_To_Name_Buffer (Str);
+            Str := Prj.Ext.Value_Of (Name_Find);
+            if Str /= No_String then
+               String_To_Name_Buffer (Str);
+               Set_Text
+                 (Get_Entry (Editor.Data (Row).Type_Combo),
+                  Name_Buffer (Name_Buffer'First .. Name_Len));
+            end if;
+         end if;
+
          Show_All (Editor.Data (Row).Type_Combo);
+         Editor_Callback.Connect
+           (Get_Entry (Editor.Data (Row).Type_Combo),
+            "changed",
+            Editor_Callback.To_Marshaller (Typed_Value_Changed'Access),
+            (Variable_Edit (Editor), Row));
 
       elsif Expression_Kind_Of (Var) = Prj.List then
          Gtk_New (Editor.Data (Row).Scrolled);
@@ -496,15 +572,9 @@ package body Variable_Editors is
       end if;
 
       --  The environment variable
-      --  ??? Should have a higher-level function in Prj_API to manipulate
-      --  ??? external variables.
-      Expr := Expression_Of (Var);
-      Expr := First_Term (Expr);
-      Expr := Current_Term (Expr);
-
-      if Kind_Of (Expr) = N_External_Value then
-         String_To_Name_Buffer
-           (String_Value_Of (External_Reference_Of (Expr)));
+      Str := External_Reference_Of (Var);
+      if Str /= No_String then
+         String_To_Name_Buffer (Str);
          Set_Text (Editor.Data (Row).Env_Label,
                    Name_Buffer (Name_Buffer'First .. Name_Len));
       end if;
@@ -542,7 +612,7 @@ package body Variable_Editors is
    is
       Edit : New_Var_Edit;
    begin
-      Gtk_New (Edit, Data.Editor, Data.Var);
+      Gtk_New (Edit, Data.Editor, Data.Var, Scenario_Variable_Only => True);
       Show_All (Edit);
    end Edit_Variable;
 
@@ -555,6 +625,7 @@ package body Variable_Editors is
       Value : Value_Editor;
       Parent : Project_Node_Id;
       Expr : Project_Node_Id;
+      Button : Message_Dialog_Buttons;
    begin
       if Get_Active (Editor.Typed_Variable) then
          Value := Editor.Enumeration_Value;
@@ -567,7 +638,13 @@ package body Variable_Editors is
       --  The name of the variable mustn't be empty
 
       if Get_Text (Editor.Variable_Name) = "" then
-         Put_Line ("!!!Must provide valid name for the variable");
+         Button := Message_Dialog
+           ("The name of the variable must be specified",
+            Dialog_Type => Gtkada.Dialogs.Error,
+            Buttons     => Button_OK,
+            Help_Msg    =>
+              "Fill the first field at the top of the variable editor",
+            Title       => "Invalid variable description");
          return;
       end if;
 
@@ -578,7 +655,13 @@ package body Variable_Editors is
       if Get_Active (Editor.Get_Environment)
         and then Get_Chars (Get_Entry (Editor.List_Env_Variables)) = ""
       then
-         Put_Line ("!!!Variable name mustn't be empty");
+         Button := Message_Dialog
+           ("The environment variable name must be specified",
+            Dialog_Type => Gtkada.Dialogs.Error,
+            Buttons     => Button_OK,
+            Help_Msg    =>
+              "Fill the Name field in the ""importing"" section",
+            Title       => "Invalid variable description");
          return;
       end if;
 
@@ -671,6 +754,9 @@ package body Variable_Editors is
       then
          Editor.Name_Was_Changed := True;
          Get_Name_String (Name_Of (Editor.Var));
+
+         --  ??? With GtkAda 2.0, the label of the frame simply disappears when
+         --  it is changed dynamically like this.
          Set_Label (Editor.Name_Frame,
                     "Name (old name was "
                     & Name_Buffer (Name_Buffer'First .. Name_Len) & ")");

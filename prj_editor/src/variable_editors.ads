@@ -55,9 +55,12 @@ package Variable_Editors is
    procedure Gtk_New
      (Editor : out New_Var_Edit;
       Var_Edit : access Variable_Edit_Record'Class;
-      Var : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node);
+      Var : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node;
+      Scenario_Variable_Only : Boolean);
    --  Create an editor for the variable Var (or for a new variable if
    --  Var is Empty_Node.
+   --  If Scenario_Variable_Only is True, then only the options related to
+   --  scenario variables can be modified interactively by the user.
 
    procedure Refresh
      (Editor : access Variable_Edit_Record;
