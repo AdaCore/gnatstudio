@@ -1237,7 +1237,7 @@ package body Src_Editor_Box is
    begin
       Editor.Timestamp_Mode := Check_At_Modify;
 
-      if Get_Status (Editor.Source_Buffer) = Unmodified then
+      if Get_Status (Editor.Source_Buffer) /= Modified then
          B := Check_Timestamp
            (Editor.Source_Buffer, Ask_User => False, Force => True);
       else
