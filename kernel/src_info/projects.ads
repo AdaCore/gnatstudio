@@ -174,33 +174,23 @@ package Projects is
    ------------------
 
    function Get_Source_Files
-     (Project            : Project_Type;
-      Recursive          : Boolean;
-      Full_Path          : Boolean := True;
-      Matching_Languages : Name_Id_Array := All_Languages)
+     (Project   : Project_Type;
+      Recursive : Boolean)
       return VFS.File_Array_Access;
    --  Return the list of source files belonging to the project.
    --  If Recursive is False, only the direct sources of the project are
    --  returned. Otherwise, the sources from imported projects are returned as
    --  well.
-   --  It is the caller's responsability to free the list.
-   --  If Full_Path is true, then the file names will also include the
-   --  directory. The directory names are the ones found in the project,
-   --  although they are absolute directories.
+   --
+   --  The returned value must be freed by the user
    --
    --  The sources that are returned are not necessarily the ones that are used
    --  when compiling the root project, since some of them might be overriden
    --  by extending projects. Instead, they are the sources that would be used
    --  when compiling from Project ("gnatmake -PProject"). The basenames of the
-   --  returned files are always unique.
-   --
-   --  If Matching_Language is not No_Name, then only the source files matching
-   --  the specific language are returned.
-
-   function Get_Source_Files
-     (Project : Project_Type; Recursive : Boolean) return Name_Id_Array;
-   --  Same as above, but return the string ids (which is more efficient)
-   --  Only the short file names are returned.
+   --  returned files are always unique, since if the project has two or
+   --  more duplicate files, only the first one found in the source path
+   --  is returned.
 
    function Direct_Sources_Count (Project : Project_Type) return Natural;
    --  Return the number of direct source files for Project

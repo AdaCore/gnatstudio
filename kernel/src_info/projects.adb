@@ -100,6 +100,9 @@ package body Projects is
       View_Is_Complete : Boolean := False;
       --  True if the view for the project was correctly computed
 
+      Files : VFS.File_Array_Access;
+      --  The list of source files for this project
+
       Status : Project_Status := From_File;
    end record;
 
@@ -108,10 +111,8 @@ package body Projects is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Registry'Class, Project_Registry_Access);
 
-   function Source_Files_Count
-     (Project : Project_Type; Recursive : Boolean) return Natural;
-   --  Return the number of source files in the projects returned by Iter.
-   --  On exit, Iter is reset to the beginning.
+   procedure Ensure_Source_Files (Project : Project_Type);
+   --  Make sure Project.Data.Files has been initialized
 
    function Get_View (Name : Name_Id) return Prj.Project_Id;
    --  Return the project view for the project Name
@@ -444,27 +445,6 @@ package body Projects is
       end if;
    end Object_Path;
 
-   ------------------------
-   -- Source_Files_Count --
-   ------------------------
-
-   function Source_Files_Count
-     (Project : Project_Type; Recursive : Boolean) return Natural
-   is
-      Iter : Imported_Project_Iterator := Start (Project, Recursive);
-      Count : Natural := 0;
-      P    : Project_Type;
-   begin
-      loop
-         P := Current (Iter);
-         exit when P = No_Project;
-
-         Count := Count + Direct_Sources_Count (P);
-         Next (Iter);
-      end loop;
-      return Count;
-   end Source_Files_Count;
-
    --------------------------
    -- Direct_Sources_Count --
    --------------------------
@@ -496,120 +476,94 @@ package body Projects is
       end if;
    end Create;
 
-   ----------------------
-   -- Get_Source_Files --
-   ----------------------
+   -------------------------
+   -- Ensure_Source_Files --
+   -------------------------
 
-   function Get_Source_Files
-     (Project            : Project_Type;
-      Recursive          : Boolean;
-      Full_Path          : Boolean := True;
-      Matching_Languages : Name_Id_Array := All_Languages)
-      return VFS.File_Array_Access
-   is
-      Src     : String_List_Id;
-      Count   : constant Natural := Source_Files_Count (Project, Recursive);
-      Sources : File_Array_Access;
-      Index   : Natural := 1;
-      View    : Project_Id;
-      Iter    : Imported_Project_Iterator;
-      P       : Project_Type;
-      Seen    : Boolean_Htable.String_Hash_Table.HTable;
-      use Boolean_Htable.String_Hash_Table;
-
+   procedure Ensure_Source_Files (Project : Project_Type) is
+      Count : Natural;
+      Src   : String_List_Id;
+      Index : Natural := 1;
    begin
-      Reset (Seen);
+      if Project.Data.Files = null then
+         Count := Direct_Sources_Count (Project);
+         Project.Data.Files := new File_Array (1 .. Count);
 
-      Iter := Start (Project, Recursive);
-      Sources := new File_Array (1 .. Count);
-
-      loop
-         P := Current (Iter);
-         exit when P = No_Project;
-
-         View := Get_View (P);
-         Src  := Prj.Projects.Table (View).Sources;
+         Src  := Prj.Projects.Table (Get_View (Project)).Sources;
 
          while Src /= Nil_String loop
             Get_Name_String (String_Elements.Table (Src).Value);
 
             declare
                File : constant String := Name_Buffer (1 .. Name_Len);
-               F    : constant Virtual_File := Create_From_Base (File);
             begin
-               if Language_Matches
-                 (Project.Data.Registry.all, F, Matching_Languages)
-               then
-                  if not Get (Seen, Name_Buffer (1 .. Name_Len))  then
-                     if Full_Path then
-                        Set (Seen, File, True);
-                        Sources (Index) := Create
-                          (File, Project, Use_Object_Path => False);
-
-                        --  Sometimes the file cannot be found in the project
-                        --  registry, and Get_Full_Path_From_File above sets an
-                        --  empty name in Name_Buffer.
-                        --  For example, this happens when there are broken
-                        --  links in the sources directory. In this case, we
-                        --  set the file name with the base name, so that other
-                        --  operations (such as search in project files for
-                        --  examples) can go on.
-
-                        if Sources (Index) = VFS.No_File then
-                           Sources (Index) := F;
-                        end if;
-
-                     else
-                        Set (Seen, File, True);
-                        Sources (Index) := F;
-                     end if;
-
-                     Index := Index + 1;
-                  end if;
-               end if;
+               Project.Data.Files (Index) := Create
+                 (File, Project, Use_Object_Path => False);
+               Index := Index + 1;
             end;
 
             Src := String_Elements.Table (Src).Next;
          end loop;
-
-         Next (Iter);
-      end loop;
-
-      Reset (Seen);
-      return Sources;
-   end Get_Source_Files;
+      end if;
+   end Ensure_Source_Files;
 
    ----------------------
    -- Get_Source_Files --
    ----------------------
 
    function Get_Source_Files
-     (Project : Project_Type; Recursive : Boolean) return Name_Id_Array
+     (Project            : Project_Type;
+      Recursive          : Boolean)
+      return VFS.File_Array_Access
    is
-      Src     : String_List_Id;
-      Count   : constant Natural := Source_Files_Count (Project, Recursive);
-      Iter    : Imported_Project_Iterator := Start (Project, Recursive);
+      Count   : Natural;
       Index   : Natural := 1;
       P       : Project_Type;
-      Sources : Name_Id_Array (1 .. Count);
+      use Boolean_Htable.String_Hash_Table;
+      Sources : File_Array_Access;
 
    begin
-      loop
-         P := Current (Iter);
-         exit when P = No_Project;
+      if not Recursive then
+         Ensure_Source_Files (Project);
+         return new File_Array'(Project.Data.Files.all);
+      end if;
 
-         Src := Prj.Projects.Table (Get_View (P)).Sources;
+      declare
+         Seen    : Boolean_Htable.String_Hash_Table.HTable;
+         Iter    : Imported_Project_Iterator := Start (Project, Recursive);
+      begin
+         Reset (Seen);
+         Count := 0;
 
-         while Src /= Nil_String loop
-            Sources (Index) := String_Elements.Table (Src).Value;
-            Index := Index + 1;
-            Src := String_Elements.Table (Src).Next;
+         loop
+            P := Current (Iter);
+            exit when P = No_Project;
+            Ensure_Source_Files (P);
+            Count := Count + P.Data.Files'Length;
+            Next (Iter);
          end loop;
 
-         Next (Iter);
-      end loop;
+         Sources := new File_Array (1 .. Count);
+         Iter    := Start (Project, Recursive);
 
-      return Sources;
+         loop
+            P := Current (Iter);
+            exit when P = No_Project;
+
+            for S in P.Data.Files'Range loop
+               if not Get (Seen, Base_Name (P.Data.Files (S))) then
+                  Set (Seen, Base_Name (P.Data.Files (S)), True);
+                  Sources (Index) := P.Data.Files (S);
+                  Index := Index + 1;
+               end if;
+            end loop;
+
+            Next (Iter);
+         end loop;
+
+         Reset (Seen);
+         return new File_Array'(Sources (Sources'First .. Index - 1));
+      end;
    end Get_Source_Files;
 
    -----------------------
@@ -1922,6 +1876,7 @@ package body Projects is
       Free (Project.Data.Non_Recursive_Include_Path);
 
       Reset (Project.Data.Directories);
+      Unchecked_Free (Project.Data.Files);
    end Reset;
 
    --------------
