@@ -665,8 +665,21 @@ package body VCS_View_API is
         Get_Pref (Kernel, VCS_Commit_Log_Check);
 
       Ref                : VCS_Access := Get_Current_Ref (Kernel);
+
+      Child              : MDI_Child;
+      Success            : Boolean;
    begin
       while Files_Temp /= Null_Node loop
+         --  Save any open log editors, and then get the corresponding logs.
+
+         Child := Get_File_Editor
+           (Kernel,
+            Get_Log_From_File (Kernel, Head (Files)));
+
+         if Child /= null then
+            Success := Save_Child (Kernel, Child, True);
+         end if;
+
          Append (Logs, Get_Log (Kernel, Head (Files)));
          Files_Temp := Next (Files_Temp);
       end loop;
@@ -982,7 +995,6 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
       use String_List;
-
 
       Files        : String_List.List;
       Files_Temp   : String_List.List_Node;
