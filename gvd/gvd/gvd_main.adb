@@ -117,6 +117,10 @@ begin
                Error, Button_OK,
                Title => "Bug detected in odd",
                Justification => Justify_Left);
+            Put_Line (Standard_Error, "Bug detected in odd.");
+            Put_Line (Standard_Error,
+              "Please report with the following information:");
+            Put_Line (Standard_Error, Exception_Information (E));
       end;
    end loop;
 
@@ -128,4 +132,8 @@ exception
          Error, Button_OK,
          Title => "Bug detected in odd",
          Justification => Justify_Left);
+      Put_Line (Standard_Error, "Bug detected in odd");
+      Put_Line (Standard_Error,
+        "Please report with the following information:");
+      Put_Line (Standard_Error, Exception_Information (E));
 end Odd_Main;
