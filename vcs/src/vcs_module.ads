@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,8 @@
 with Glide_Kernel; use Glide_Kernel;
 with GNAT.OS_Lib;
 
+with VCS_View_Pkg; use VCS_View_Pkg;
+
 package VCS_Module is
 
    VCS_Module_ID   : Module_ID;
@@ -41,4 +43,13 @@ package VCS_Module is
    --  ??? This is temporary, until the VCS module can directly add a page in
    --  the wizard or the project properties editor.
 
+   function Get_Explorer
+     (Kernel      : Kernel_Handle;
+      Raise_Child : Boolean := True;
+      Show        : Boolean := False) return VCS_View_Access;
+   --  Return the VCS Explorer. If Show is True, place it in the MDI and show
+   --  it.
+
+   procedure Hide_VCS_Explorer;
+   --  Call this subprogram when the VCS Explorer is about to be removed
 end VCS_Module;
