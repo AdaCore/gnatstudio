@@ -182,7 +182,9 @@ package body Vdiff2_Module.Utils is
                VRange (J).Mark := new String'
                  (Mark_Diff_Block (Kernel, VFile (J),
                                    VRange (J).First));
-               Delete_Mark (Kernel_Handle (Kernel), Tmp.all);
+               if Tmp /= null then
+                  Delete_Mark (Kernel_Handle (Kernel), Tmp.all);
+               end if;
             end if;
          else
             if (VRange (Other).Action = Append and then J /= Other) or
@@ -195,12 +197,18 @@ package body Vdiff2_Module.Utils is
                VRange (J).Mark := new String'
                  (Mark_Diff_Block (Kernel, VFile (J),
                                    VRange (J).First));
-               Delete_Mark (Kernel_Handle (Kernel), Tmp.all);
+               if Tmp /= null then
+                  Delete_Mark (Kernel_Handle (Kernel), Tmp.all);
+               end if;
             end if;
          end if;
 
          Free (Tmp);
       end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Append;
 
    -------------------------
@@ -222,6 +230,9 @@ package body Vdiff2_Module.Utils is
       Last      : Natural := 0;
       Nb_Hghlt_Chr : Natural := 0;
    begin
+      if Current_Line_Dest'Length = 0 or Current_Line_Source'Length = 0 then
+         return;
+      end if;
 
       while Curr_Node /= Diff_Chunk_List.Null_Node
       loop
@@ -245,17 +256,36 @@ package body Vdiff2_Module.Utils is
             Nb_Hghlt_Chr := Nb_Hghlt_Chr + (First - Last);
          end if;
 
+         if Nb_Hghlt_Chr > Natural (Current_Line_Dest'Length * 0.40) then
+            return;
+         end if;
+
+         Curr_Node := Next (Curr_Node);
+      end loop;
+
+      Curr_Node := Diff_Chunk_List.First (Hor_List);
+
+      while Curr_Node /= Diff_Chunk_List.Null_Node
+      loop
+         Diff := Data (Curr_Node).all;
+         First := Diff.Range1.First;
+         Last := Diff.Range1.Last;
+
+         if First = 0 then
+            First := 1;
+            Last := Last + 1;
+         end if;
+
+         if Last = 0 then
+            Last := 2;
+            First := 1;
+         end if;
+
          Highlight_Range
            (Kernel, File, Fine_Change_Style, Line, First, Last);
 
          Curr_Node := Next (Curr_Node);
       end loop;
-
-      if Current_Line_Dest'Length > 10 and then
-        Nb_Hghlt_Chr > Natural (Current_Line_Dest'Length * 0.40)
-      then
-         Highlight_Range (Kernel, File, Fine_Change_Style, Line);
-      end if;
 
    end Fine_Highlight_Line;
 
