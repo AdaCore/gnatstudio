@@ -3000,6 +3000,16 @@ of your projects. It is accessible through the menu
 @code{Edit project properties} on any project item, e.g. from the Project
 View or the Project Browser.
 
+@iftex
+@cindex screen shot
+@image{project-properties, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{project-properties}
+@end ifhtml
+
 If there was an error loading the project (invalid syntax,
 non-existing directories, @dots{}), a warning dialog is displayed when you
 select the menu. This reminds you that the project might be only
@@ -3010,16 +3020,6 @@ which is doable directly from the popup dialog.
 Fix the project file as you would for any text file, and then reload
 it manually (through the @code{Project->Open...} or
 @code{Project->Recent} menus.
-
-@iftex
-@cindex screen shot
-@image{project-properties, 12.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{project-properties}
-@end ifhtml
 
 This editor is divided into three parts:
 
