@@ -169,15 +169,20 @@ package Gtkada.File_Selector is
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
-      Directory            : String;
+      Root                 : String;
+      Initial_Directory    : String;
       Dialog_Title         : String);
-   --  Create a new file selector. Directory is the directory that should
-   --  be opened when the file selector is first shown.
-   --  Directory must be an absolute path, and end with a directory separator.
+   --  Create a new file selector.
+   --  Root is the directory shown in the root node of the tree. The user will
+   --  not be able to select directories higher up in the hierarchy.
+   --  Initial_Directory is the name of the directory that is selected
+   --  initially, or the empty string for the current directory.
+   --  Root must be an absolute path, and end with a directory separator.
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Directory            : String;
+      Root                 : String;
+      Initial_Directory    : String;
       Dialog_Title         : String);
    --  Internal initialization function.
 

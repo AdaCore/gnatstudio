@@ -190,7 +190,7 @@ package body Gtkada.File_Selector is
    function Select_File (Base_Directory : String := "") return String is
       File_Selector_Window : File_Selector_Window_Access;
    begin
-      Gtk_New (File_Selector_Window, Base_Directory, "Select a file");
+      Gtk_New (File_Selector_Window, "/", Base_Directory, "Select a file");
       return Select_File (File_Selector_Window);
    end Select_File;
 
@@ -889,17 +889,21 @@ package body Gtkada.File_Selector is
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
-      Directory            : String;
+      Root                 : String;
+      Initial_Directory    : String;
       Dialog_Title         : String) is
    begin
       File_Selector_Window := new File_Selector_Window_Record;
 
-      if Is_Absolute_Path (Directory)
-        and then Directory (Directory'Last) = Directory_Separator
+      if Is_Absolute_Path (Root)
+        and then Root (Root'Last) = Directory_Separator
       then
-         Initialize (File_Selector_Window, Directory, Dialog_Title);
+         Initialize
+           (File_Selector_Window, Root, Initial_Directory, Dialog_Title);
       else
-         Initialize (File_Selector_Window, Get_Current_Dir, Dialog_Title);
+         Initialize
+           (File_Selector_Window, Get_Current_Dir,
+            Initial_Directory, Dialog_Title);
       end if;
    end Gtk_New;
 
@@ -909,7 +913,8 @@ package body Gtkada.File_Selector is
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Directory            : String;
+      Root                 : String;
+      Initial_Directory    : String;
       Dialog_Title         : String)
    is
       Toolbar1    : Gtk_Toolbar;
@@ -939,7 +944,7 @@ package body Gtkada.File_Selector is
                       Gdk_Color'(Get_Foreground
                                  (Style, State_Insensitive)));
 
-      File_Selector_Window.Home_Directory := new String' (Directory);
+      File_Selector_Window.Home_Directory := new String' (Root);
 
       Gtk_New
         (File_Selector_Window.Explorer_Tree,
@@ -1185,14 +1190,22 @@ package body Gtkada.File_Selector is
       Set_Flags (File_Selector_Window.Cancel_Button, Can_Default);
       Add (Hbuttonbox1, File_Selector_Window.Cancel_Button);
 
-      Realize (File_Selector_Window);
-      Show_Directory
-        (File_Selector_Window.Explorer_Tree,
-         File_Selector_Window.Home_Directory.all,
-         Get_Window (File_Selector_Window));
-
       Widget_Callback.Connect
         (File_Selector_Window, "realize", Realize'Access);
+
+      Realize (File_Selector_Window);
+
+      if Initial_Directory /= "" then
+         Show_Directory
+           (File_Selector_Window.Explorer_Tree,
+            Initial_Directory,
+            Get_Window (File_Selector_Window));
+      else
+         Show_Directory
+           (File_Selector_Window.Explorer_Tree,
+            Get_Current_Dir,
+            Get_Window (File_Selector_Window));
+      end if;
 
       --  ??? temporarily commented out: If this is left, then Select_File
       --  ??? won't work, since on exit it destroys the dialog, and thus exists
