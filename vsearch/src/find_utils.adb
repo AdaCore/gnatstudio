@@ -121,6 +121,8 @@ package body Find_Utils is
      (Search   : in out Code_Search;
       Callback : Poll_Search_Handler)
    is
+      use Basic_Types;
+
       function Explore_Directory (Directory : String) return Boolean;
       --  Explore the directory to scan files.
       --  Sub-directories are recursively explored iff Search.Recurse.
@@ -630,11 +632,13 @@ package body Find_Utils is
    procedure Init_Search
      (Search     : out Code_Search;
       Look_For   : String;
-      Files      : Project_Files_Access;
+      Files      : Basic_Types.String_Array_Access;
       Match_Case : Boolean := False;
       Whole_Word : Boolean := False;
       Regexp     : Boolean := False;
-      Scope      : Search_Scope := Whole) is
+      Scope      : Search_Scope := Whole)
+   is
+      use type Basic_Types.String_Array_Access;
    begin
       if Files = null then
          raise Search_Error;

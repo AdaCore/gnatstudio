@@ -59,17 +59,12 @@ with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Regexp; use GNAT.Regexp;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Boyer_Moore; use Boyer_Moore;
+with Basic_Types;
 
 package Find_Utils is
 
    type Code_Search is private;
    --  Type representing a search in source code files
-
-   type Project_Files is array (Positive range <>) of String_Access;
-   --  Type used to store the project file list
-
-   type Project_Files_Access is access Project_Files;
-   --  Type to get the list of project files.
 
    type Search_Scope is (Whole, Comm_Only, Comm_Str, Str_Only, All_But_Comm);
    --  Scope wanted for the search. Comm is comments, str is strings.
@@ -82,7 +77,7 @@ package Find_Utils is
    procedure Init_Search
      (Search     : out Code_Search;
       Look_For   : String;
-      Files      : Project_Files_Access;
+      Files      : Basic_Types.String_Array_Access;
       Match_Case : Boolean := False;
       Whole_Word : Boolean := False;
       Regexp     : Boolean := False;
@@ -194,7 +189,7 @@ private
       BM_Pat        : BM_Pattern;
       Use_BM        : Boolean := False;
 
-      Files         : Project_Files_Access := null;
+      Files         : Basic_Types.String_Array_Access := null;
       Files_Pattern : Regexp;
       Directory     : String_Access := null;
       Recurse       : Boolean := False;
