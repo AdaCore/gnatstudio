@@ -114,6 +114,10 @@ private
       Refresh_Timeout : Ada.Calendar.Time;
       --  Time since we last checked the list of gtk+ events. This avoids
       --  checking too often, which slow things done too much
+
+      In_Process : Boolean := False;
+      --  True while we are processing a command. This is used to control the
+      --  behavior of control-c: either interrupt, or copy
    end record;
 
 end Python.GUI;

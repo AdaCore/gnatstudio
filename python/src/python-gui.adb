@@ -469,6 +469,7 @@ package body Python.GUI is
       end if;
 
       Trace (Me, "Running command: " & Command);
+      Interpreter.In_Process := True;
 
       Code := Py_CompileString (Cmd, "<stdin>", Py_Single_Input);
 
@@ -565,10 +566,13 @@ package body Python.GUI is
          Display_Prompt (Interpreter);
       end if;
 
+      Interpreter.In_Process := False;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception "
                 & Exception_Information (E));
+         Interpreter.In_Process := False;
    end Run_Command;
 
    --------------------
@@ -709,7 +713,9 @@ package body Python.GUI is
             return True;
 
          when GDK_LC_c =>
-            if Get_State (Event) = Control_Mask then
+            if Interpreter.In_Process
+              and then Get_State (Event) = Control_Mask
+            then
                PyErr_SetInterrupt;
                return True;
             end if;
