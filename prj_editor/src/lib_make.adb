@@ -2,6 +2,8 @@
 pragma Warnings (Off);
 with Prj_API;
 with Wizards;
+with Creation_Wizard;
+with Directory_Tree;
 
 pragma Warnings (On);
 
