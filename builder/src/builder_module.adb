@@ -959,7 +959,7 @@ package body Builder_Module is
             if not Is_Regular_File (Temp_File) then
                --  Write the temporary buffer file
                Execute_GPS_Shell_Command
-                 (Kernel, "save_buffer " & Full_Name (File).all & " " &
+                 (Kernel, "Editor.save_buffer " & Full_Name (File).all & " " &
                   Full_Name (Temp_File).all);
             end if;
 
