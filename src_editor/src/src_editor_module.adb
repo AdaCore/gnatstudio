@@ -372,24 +372,27 @@ package body Src_Editor_Module is
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
    is
-      Src : Source_Box := null;
+      Src  : Source_Box := null;
       File : Glib.String_Ptr;
       Data : Location_Idle_Data;
       Id   : Idle_Handler_Id;
    begin
       if Node.Tag.all = "Source_Editor" then
          File := Get_Field (Node, "File");
+
          if File /= null then
             Src := Open_File (User, File.all, False, False);
-            Data.Edit := Src.Editor;
 
-            Id := Location_Idle.Add
-              (File_Edit_Callback'Access,
-               (Src.Editor, 1, 1));
+            if Src /= null then
+               Data.Edit := Src.Editor;
+               Id := Location_Idle.Add
+                 (File_Edit_Callback'Access, (Src.Editor, 1, 1));
+
+               return Gtk_Widget (Src);
+            end if;
          end if;
-
-         return Gtk_Widget (Src);
       end if;
+
       return null;
    end Load_Desktop;
 
