@@ -29,8 +29,9 @@
 
 /* C presentation of Ada type DB_File */
 typedef struct DB_File_struct {
-    DB *db;			/* database handler */
-    char *fname;                /* file name (a copy) */
+    int dbc;                    /* number of database files */
+    DB *db[MAX_DB_NUM];         /* database handlers */
+    char *fname[MAX_DB_NUM];    /* file names (copies) */
     int last_errno;		/* 0 or last error number */
     char *key_p;		/* key pattern */
     int exact_match;		/* 1/0, if exact key match needed/not needed */
@@ -154,27 +155,34 @@ int ada_db_is_null(const DB_File * file)
 }
 
 
-DB_File *ada_db_open(const char *file_name)
+DB_File *ada_db_open(const int num_of_files, const char **file_names)
 {
     DB_File *file;
+    int i;
+    
     file = (DB_File *) malloc(sizeof(DB_File));
     if (file == 0) {
 	return 0;
     }
-    file->db = dbopen(file_name, O_RDONLY, 0644, DB_BTREE, 0);
-    file->last_errno = 0;
-    file->key_p = 0;
-    file->fname = strdup(file_name);
-    if (file->db == 0) {
-	file->last_errno = errno;
+
+    file->dbc = num_of_files;
+    for (i = 0; i < num_of_files; i++) {
+	file->db[i] = dbopen(file_names[i], O_RDONLY, 0644, DB_BTREE, 0);
+	file->last_errno = 0;
+	file->key_p = 0;
+	file->fname[i] = strdup(file_names[i]);
+	if (file->db == 0) {
+	    file->last_errno = errno;
+	}
     }
+
     return file;
 }
 
 DB_File *ada_db_dup(const DB_File * file)
 {
     DB_File *new_file;
-    new_file = ada_db_open (file->fname);
+    new_file = ada_db_open (file->dbc, (const char **) file->fname);
     return new_file;
 }
 
@@ -190,17 +198,23 @@ char *ada_get_errstr(const DB_File * file)
 
 void ada_db_close(DB_File * file)
 {
+    int i;
+    
     file->last_errno = 0;
     if (file->key_p) {
 	free(file->key_p);
     }
-    if (file->fname) {
-        free(file->fname);
+
+    for (i = 0; i < file->dbc; i++) {
+        if (file->fname[i]) {
+            free(file->fname[i]);
+        }
+        if (file->db[i]) {
+            if (file->db[i]->close(file->db[i]) != 0)
+                file->last_errno = errno;
+        }
     }
-    if (file->db) {
-	if (file->db->close(file->db) != 0)
-	    file->last_errno = errno;
-    }
+
 }
 
 void ada_db_set_cursor(DB_File * file, int pos, char *key_p,
@@ -275,7 +289,7 @@ DB_Pair *ada_db_get_pair(DB_File * file, int move)
     }
 
     file->pos = move;
-    result = file->db->seq(file->db, &key, &data, flag);
+    result = file->db[0]->seq(file->db[0], &key, &data, flag);
     if (result == 1) {		/* no more key/data pairs */
 	return 0;
     } else if (result == -1) {	/* error, errno is set    */

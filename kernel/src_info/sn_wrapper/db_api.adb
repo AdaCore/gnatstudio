@@ -87,19 +87,41 @@ package body DB_API is
    -- Open --
    ----------
 
-   procedure Open (DB : out DB_File; File_Name : String) is
-      function Internal_Open (File_Name : String) return DB_File;
+   procedure Open (DB : out DB_File; File_Names : String_List_Access) is
+      function Internal_Open
+        (Num_Of_Files : Integer;
+         File_Names   : System.Address) return DB_File;
       pragma Import (C, Internal_Open, "ada_db_open");
+
+      procedure Free (List : in out String_List);
+
+      procedure Free (List : in out String_List) is
+      begin
+         for I in List'Range loop
+            Free (List (I));
+         end loop;
+      end Free;
+
+      C_File_Names : String_List (File_Names'Range);
    begin
-      DB := Internal_Open (File_Name & ASCII.NUL);
+      for I in File_Names'Range loop
+         C_File_Names (I) := new String' (File_Names (I).all & ASCII.NUL);
+      end loop;
+
+      DB := Internal_Open (C_File_Names'Length, C_File_Names'Address);
+
+      Free (C_File_Names);
+
       if Is_Null (DB) then
          Raise_Exception (DB_Open_Error'Identity,
            E_Mem_Failed);
       end if;
+
       if Last_ErrNo (DB) /= 0 then
          Raise_Exception (DB_Open_Error'Identity,
            Error_Message (DB));
       end if;
+
       Set_Cursor (DB, First);
    end Open;
 

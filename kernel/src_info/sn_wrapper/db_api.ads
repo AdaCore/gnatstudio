@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 package DB_API is
 
    type DB_File is private;
@@ -47,7 +49,7 @@ package DB_API is
    --  operation.
    type Pair_Ptr is access all Pair;
 
-   procedure Open  (DB : out DB_File; File_Name : String);
+   procedure Open  (DB : out DB_File; File_Names : String_List_Access);
    --  Opens specified file as database file. Upon successful
    --  completion DB is initialized. Otherwise DB_Open_Error
    --  exception is thrown.

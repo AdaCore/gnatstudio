@@ -747,15 +747,18 @@ package body Src_Info.CPP is
          declare
             Ext  : constant String := Table_Extension (Table);
             File : constant String := DB_Prefix & Ext;
+            Files : String_List_Access := new String_List (1 .. 1);
          begin
+            Files (1) := new String' (File);
             if Ext /= "" and then Is_Regular_File (File) then
-               Open (SN_Table (Table), File);
+               Open (SN_Table (Table), Files);
             end if;
+            GNAT.OS_Lib.Free (Files);
 
          exception
             when DB_Open_Error =>
                --  Could not open table, ignore this error
-               null;
+               Free (Files);
          end;
       end loop;
    end Open_DB_Files;
