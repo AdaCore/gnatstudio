@@ -19,10 +19,10 @@
 -----------------------------------------------------------------------
 
 with Unicode.CES;
-with XML_Gtk.Readers;
+with XML_Readers;
 
 package body XML_Parsers is
-   package Gtk_Readers is new XML_Gtk.Readers (Glib.Gint, 0, Glib.Xml_Int);
+   package Gtk_Readers is new XML_Readers (Glib.Gint, 0, Glib.Xml_Int);
    use Gtk_Readers;
 
    -----------

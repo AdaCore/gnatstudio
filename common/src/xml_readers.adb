@@ -39,7 +39,7 @@ with Input_Sources;         use Input_Sources;
 with Input_Sources.File;    use Input_Sources.File;
 with Input_Sources.Strings; use Input_Sources.Strings;
 
-package body XML_Gtk.Readers is
+package body XML_Readers is
 
    use Glib_XML;
 
@@ -298,4 +298,4 @@ package body XML_Gtk.Readers is
       Parse (Start_Line, Input, Tree, Error);
    end Parse_Buffer;
 
-end XML_Gtk.Readers;
+end XML_Readers;

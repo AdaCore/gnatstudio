@@ -38,7 +38,7 @@ generic
    type XML_Specific_Data is private;
    No_Specific_Data : XML_Specific_Data;
    with package Glib_XML is new Glib.XML (XML_Specific_Data);
-package XML_Gtk.Readers is
+package XML_Readers is
 
    type Gtk_Reader is new Reader with private;
    type Gtk_Reader_Access is access all Gtk_Reader'Class;
@@ -116,4 +116,4 @@ private
    procedure Warning
      (Handler : in out Gtk_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class);
-end XML_Gtk.Readers;
+end XML_Readers;
