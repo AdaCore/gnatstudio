@@ -1017,10 +1017,10 @@ package body Project_Viewers is
       declare
          Name : constant String := Run (Wiz);
       begin
-
          --  If we have a child project, report limitations.
+         --  Ignore trailing ".gpr" file extension in this check
 
-         for J in reverse Name'Range loop
+         for J in reverse Name'First .. Name'Last - 4 loop
             if Name (J) = '.' then
                Insert
                  (Kernel,
