@@ -915,7 +915,7 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Emit the hook
-      Cursor_Stopped (Buffer);
+      Location_Changed (Buffer);
 
       --  Highlight the cursor delimiters
       if Buffer.Highlight_Delimiters then
