@@ -214,7 +214,7 @@ package body Builder_Module is
 
                   declare
                      Ada_Compiler : constant String := Get_Attribute_Value
-                       (Project_View, Compiler_Command_Attribute,
+                       (Get_Project_View (Kernel), Compiler_Command_Attribute,
                         Ide_Package, Default => "gnatmake", Index => "ada");
 
                   begin
@@ -227,7 +227,7 @@ package body Builder_Module is
                         Result := new Argument_List'
                           (List &
                            new String' ("ADA_SOURCES=" & Base_Name (File)) &
-                           new String' ("ADAFLAGS=-d"),
+                           new String' ("ADAFLAGS=-d") &
                            new String' ("GNATMAKE=" & Ada_Compiler));
                      end if;
                   end;
