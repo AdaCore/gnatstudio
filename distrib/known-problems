@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.1
 
+- C428-027 Interactive Replace does not work.
+  Problem:    When using the Search dialog to perform Replace operations on the
+              current file, clicking the Replace button does not replace the
+              text, but only skips to the next issue.
+  Workaround: Use the "Replace all occurrences" mode.
+
 - C422-016 Under Windows, the Directory Selection dialog raises error windows.
   Problem:    Under Windows, using the Directory Selection dialog might bring
               up error dialogs saying
