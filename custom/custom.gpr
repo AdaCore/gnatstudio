@@ -1,0 +1,18 @@
+with "../gtkada/gtkada";
+with "../gvd/gvd_common";
+with "../kernel/kernel";
+with "../widgets/widgets";
+with "../shared";
+
+project Custom is
+
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-g", "-gnata", "-O2", "-gnaty", "-gnatwue");
+   end Compiler;
+
+   package IDE renames Shared.IDE;
+
+end Custom;
