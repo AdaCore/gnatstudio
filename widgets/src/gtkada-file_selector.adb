@@ -49,6 +49,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Gtkada.Types;              use Gtkada.Types;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Intl;               use Gtkada.Intl;
+with Interfaces.C.Strings;
 
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
@@ -327,10 +328,44 @@ package body Gtkada.File_Selector is
       Use_Native_Dialog : Boolean := False;
       History           : Histories.History := null) return String
    is
-      pragma Unreferenced (Use_Native_Dialog);
+      function NativeFileSelection
+        (Title       : String;
+         Basedir     : String;
+         Filepattern : String;
+         Patternname : String;
+         Defaultname : String;
+         Style       : Integer) return Chars_Ptr;
+      pragma Import (C, NativeFileSelection, "NativeFileSelection");
 
+      function NativeFileSelectionSupported return Integer;
+      pragma Import
+        (C, NativeFileSelectionSupported, "NativeFileSelectionSupported");
+
+      Pos_Mouse     : constant := 2;
       File_Selector : File_Selector_Window_Access;
+      S             : Chars_Ptr;
+
+      procedure c_free (S : Chars_Ptr);
+      pragma Import (C, c_free, "free");
+
    begin
+      if Use_Native_Dialog and then NativeFileSelectionSupported /= 0 then
+         S := NativeFileSelection
+           (Title & ASCII.NUL,
+            Base_Directory & ASCII.NUL,
+            File_Pattern & ASCII.NUL,
+            Pattern_Name & ASCII.NUL,
+            Default_Name & ASCII.NUL,
+            Pos_Mouse);
+
+         declare
+            Val : constant String := Interfaces.C.Strings.Value (S);
+         begin
+            c_free (S);
+            return Val;
+         end;
+      end if;
+
       Gtk_New
         (File_Selector, (1 => Directory_Separator), Base_Directory, Title,
          History => History);
