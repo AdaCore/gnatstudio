@@ -993,6 +993,7 @@ package body GVD.Process is
          Process.Debugger_Text_Font,
          History_List => History,
          Key          => "gvd_console",
+         Wrap_Mode    => Wrap_Char,
          Empty_Equals_Repeat => True);
 
       if History /= null then
