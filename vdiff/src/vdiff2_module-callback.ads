@@ -17,7 +17,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---
+-- Provide all callback for menu
+
 with Glib;         use Glib;
 with Glib.Object;  use Glib.Object;
 with Glib.Values;  use Glib.Values;
@@ -62,17 +63,22 @@ package Vdiff2_Module.Callback is
    procedure On_Ref_Change
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  Change the Ref File for the current diff and reload hightlighting
 
    procedure On_Hide_Differences
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  Hide the highlighting and free the difference list
 
    procedure On_Recalculate
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  Hide difference ,recalculate the difference
+   --  and show the new difference list
 
    procedure On_Close_Difference
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  Close all file for current diff
 
 end Vdiff2_Module.Callback;
