@@ -16,6 +16,7 @@ TEXI2HTML_FLAGS=-split_chapter -menu
 TEXI=gps.texi ../gvd/docs/gvd_contents.texi
 
 all: cp_gvd stamp-eps doc tutorial gps_pg clean-temp-files
+distrib: cp_gvd stamp-eps doc tutorial clean-temp-files
 non-ps: common clean-temp-files
 static:
 
