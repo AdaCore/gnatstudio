@@ -130,8 +130,11 @@ package body Glide_Result_View is
    Line_Cst          : aliased constant String := "line";
    Column_Cst        : aliased constant String := "column";
    Message_Cst       : aliased constant String := "message";
-   Highlight_Cat_Cst : aliased constant String := "highlight";
+   Highlight_Cst     : aliased constant String := "highlight";
    Length_Cst        : aliased constant String := "length";
+   Highlight_Cat_Cst : aliased constant String := "highlight_category";
+   Style_Cat_Cst     : aliased constant String := "style_category";
+   Warning_Cat_Cst   : aliased constant String := "warning_category";
 
    Parse_Location_Parameters : constant Cst_Argument_List :=
      (1 => Output_Cst'Access,
@@ -142,7 +145,10 @@ package body Glide_Result_View is
       6 => Col_Index_Cst'Access,
       7 => Msg_Index_Cst'Access,
       8 => Style_Index_Cst'Access,
-      9 => Warning_Index_Cst'Access);
+      9 => Warning_Index_Cst'Access,
+      10 => Highlight_Cat_Cst'Access,
+      11 => Style_Cat_Cst'Access,
+      12 => Warning_Cat_Cst'Access);
    Remove_Category_Parameters : constant Cst_Argument_List :=
      (1 => Category_Cst'Access);
    Locations_Add_Parameters : constant Cst_Argument_List :=
@@ -151,7 +157,7 @@ package body Glide_Result_View is
       3 => Line_Cst'Access,
       4 => Column_Cst'Access,
       5 => Message_Cst'Access,
-      6 => Highlight_Cat_Cst'Access,
+      6 => Highlight_Cst'Access,
       7 => Length_Cst'Access);
 
    -----------------------
@@ -209,7 +215,8 @@ package body Glide_Result_View is
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean);
-   --  Add a file locaton in Category.
+   --  Add a file locaton in Category (the name of the node in the location
+   --  window).
    --  File is an absolute file name. If File is not currently open, do not
    --  create marks for File, but add it to the list of unresolved files
    --  instead.
@@ -219,6 +226,8 @@ package body Glide_Result_View is
    --  duplicate.
    --  If Model is set, append the items to Model, otherwise append them
    --  to View.Tree.Model.
+   --  If Highlight is true, then the matching line in the source editor will
+   --  be highlighted in the color specified by Highlight_Category
 
    function Button_Press
      (View     : access Gtk_Widget_Record'Class;
@@ -1858,7 +1867,7 @@ package body Glide_Result_View is
       Register_Command
         (Kernel, "parse",
          Minimum_Args => 2,
-         Maximum_Args => 9,
+         Maximum_Args => 12,
          Class         => Locations_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
@@ -1887,16 +1896,29 @@ package body Glide_Result_View is
    begin
       if Command = "parse" then
          Name_Parameters (Data, Parse_Location_Parameters);
-         Parse_File_Locations
-           (Get_Kernel (Data),
-            Text                    => Nth_Arg (Data, 1),
-            Category                => Nth_Arg (Data, 2),
-            File_Location_Regexp    => Nth_Arg (Data, 3, ""),
-            File_Index_In_Regexp    => Nth_Arg (Data, 4, -1),
-            Line_Index_In_Regexp    => Nth_Arg (Data, 5, -1),
-            Col_Index_In_Regexp     => Nth_Arg (Data, 6, -1),
-            Style_Index_In_Regexp   => Nth_Arg (Data, 7, -1),
-            Warning_Index_In_Regexp => Nth_Arg (Data, 8, -1));
+         declare
+            Highlight_Category : constant String := Nth_Arg (Data, 10, "");
+            Style_Category     : constant String := Nth_Arg (Data, 11, "");
+            Warning_Category   : constant String := Nth_Arg (Data, 12, "");
+         begin
+            Parse_File_Locations
+              (Get_Kernel (Data),
+               Highlight               => Highlight_Category /= ""
+                  or else Style_Category /= ""
+                  or else Warning_Category /= "",
+               Text                    => Nth_Arg (Data, 1),
+               Category                => Nth_Arg (Data, 2),
+               Highlight_Category      => Highlight_Category,
+               Style_Category          => Style_Category,
+               Warning_Category        => Warning_Category,
+               File_Location_Regexp    => Nth_Arg (Data, 3, ""),
+               File_Index_In_Regexp    => Nth_Arg (Data, 4, -1),
+               Line_Index_In_Regexp    => Nth_Arg (Data, 5, -1),
+               Col_Index_In_Regexp     => Nth_Arg (Data, 6, -1),
+               Msg_Index_In_Regexp     => Nth_Arg (Data, 7, -1),
+               Style_Index_In_Regexp   => Nth_Arg (Data, 8, -1),
+               Warning_Index_In_Regexp => Nth_Arg (Data, 9, -1));
+         end;
 
       elsif Command = "remove_category" then
          Name_Parameters (Data, Remove_Category_Parameters);
@@ -1934,6 +1956,7 @@ package body Glide_Result_View is
       Text                    : String;
       Category                : String;
       Highlight               : Boolean := False;
+      Highlight_Category      : String := "";
       Style_Category          : String := "";
       Warning_Category        : String := "";
       File_Location_Regexp    : String := "";
@@ -2077,25 +2100,26 @@ package body Glide_Result_View is
             elsif  Matched (Style_Index) /= No_Match then
                C := Style_Category'Unrestricted_Access;
             else
-               C := Category'Unrestricted_Access;
+               C := Highlight_Category'Unrestricted_Access;
             end if;
 
             Add_Location
-              (View,
-               Model,
-               Category,
-               Create
+              (View               => View,
+               Model              => Model,
+               Category           => Category,
+               File               => Create
                  (Text (Matched
                           (File_Index).First .. Matched (File_Index).Last),
                   Kernel),
-               Positive (Line), Positive (Column),
-               Length,
-               Highlight,
-               Get_Message (Last),
-               C.all,
-               Quiet             => Expand,
-               Remove_Duplicates => False,
-               Enable_Counter    => False);
+               Line               => Positive (Line),
+               Column             => Positive (Column),
+               Length             => Length,
+               Highlight          => Highlight,
+               Message            => Get_Message (Last),
+               Highlight_Category => C.all,
+               Quiet              => Expand,
+               Remove_Duplicates  => False,
+               Enable_Counter     => False);
 
             Expand := False;
          end if;
