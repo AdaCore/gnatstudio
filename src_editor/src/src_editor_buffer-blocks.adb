@@ -18,26 +18,41 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language; use Language;
+with Language;    use Language;
+with Basic_Types; use Basic_Types;
+with Interfaces.C;
 
 package body Src_Editor_Buffer.Blocks is
+
+   function Strlen
+     (Str : Gtkada.Types.Chars_Ptr) return Interfaces.C.size_t;
+   pragma Import (C, Strlen);
 
    --------------------
    -- Compute_Blocks --
    --------------------
 
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
-      Constructs : Construct_List;
-      Current    : Construct_Access;
-      Line_Start : Integer;
-      Line_End   : Integer;
-      Column     : Integer;
+      Constructs    : Construct_List;
+      Current       : Construct_Access;
+      Line_Start    : Integer;
+      Line_End      : Integer;
+      Column        : Integer;
+      C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
+      Slice_Length  : Natural;
+      Slice         : Unchecked_String_Access;
+      pragma Suppress (Access_Check, Slice);
+
    begin
       if Buffer.Lang = null or else not Buffer.Parse_Blocks then
          return;
       end if;
 
-      Parse_Constructs (Buffer.Lang, Get_Slice (Buffer, 0, 0), Constructs);
+      C_Str        := Get_Slice (Buffer, 0, 0);
+      Slice        := To_Unchecked_String (C_Str);
+      Slice_Length := Natural (Strlen (C_Str));
+
+      Parse_Constructs (Buffer.Lang, Slice (1 .. Slice_Length), Constructs);
 
       for Line in Buffer.Line_Data'Range loop
          Buffer.Line_Data (Line).Block := New_Block;
