@@ -350,11 +350,11 @@ Color used for auto-refreshed items.
 @item Frozen
 Color used for frozen items.
 
-@item 3D Look
-Should the items have a 3d look ?
-
 @item Separate Window
 Whether the Data window should be a separate window.
+
+@item 3D Look
+Should the items have a 3d look ?
 
 @item Item Name
 Font used for the name of the item.
@@ -366,6 +366,7 @@ Font used to display the value of the item.
 Font used to display the type of the item.
 
 @item Hide Big Items
+@anchor{hiding big items}
 Whether items higher than a given limit will start in a hidden state.
 
 @item Big Item Height
@@ -429,9 +430,8 @@ actions.
 @table @i
 @item Edit Sources
 Program used by the @i{Edit Current Source} menu. Special arguments are
-@code{%f} that is replaced by the full path name to the current file, using
-forward slashes as the directory separator, and @code{%l} that is replaced by
-the current line number.
+@code{%f} that is replaced by the full path name to the current file,
+and @code{%l} that is replaced by the current line number.
 This value is superceded by the environment variable
 @code{GVD_EDITOR} if it exists (see also @ref{GVD_EDITOR}).
 Try e.g using "xterm -e /bin/vi %f +%l" if you prefer vi.
@@ -705,11 +705,11 @@ of breakpoints is recommended instead to stop programs.
        the state. When updated, the value of the box will be recomputed each
        time an execution command is sent to the debugger (e.g step, next).
 
-     @item An icon representing an 'X'
+     @item An icon representing an 'X'.
        You can click on this icon to close/delete any box.
      @end itemize
 
-   @item A main area
+   @item A main area.
      The main area will display in a hierarchical way the information
      in a language sensitive way. The canvas knows about data structures
      of various languages (e.g @code{C}, @code{Ada}, @code{C++}) and will
@@ -855,19 +855,20 @@ convey special meanings.
 @table @b
 
 @item garbage bin icon
-This icons indicates that the debugger could not get the value of the
+This icon indicates that the debugger could not get the value of the
 variable or expression. There might be several reasons, for instance the
 variable is currently not in scope (and thus has no existence), or it might
 have been optimized away by the compiler. In all cases, GVD will update the
-display as soon as the variable becomes visible again
+display as soon as the variable becomes visible again.
 
-@item gift icon
+@item package icon
 This icon indicates that part of a complex structure is currently hidden.
 Manipulating huge items in the data window (for instance if the variable
 is an array of hundreds of complex elements) might not be very helpful. As a
 result, GVD gives you the opportunity to shrink part of the value so as to
 save some screen-estate and make it easier to visualize the interesting parts
-of these variables.
+of these variables. See @ref{hiding big items} to enable or disable this
+facility, and to set the threshold used to hide items automatically.
 
 Double-clicking on this icon will expand the hidden part, and clicking on
 any sub-rectangle in the display of the variable will hide that part and
