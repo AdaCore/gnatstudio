@@ -195,6 +195,9 @@ Customizing through XML files
 * Defining new search patterns::
 * Adding support for new languages::
 * Defining text aliases::
+* Defining project attributes::
+* Adding casing exceptions::
+* Adding stock icons::
 
 Adding support for new Version Control Systems
 
@@ -6402,6 +6405,7 @@ items yet.
 * Defining new search patterns::
 * Adding support for new languages::
 * Defining text aliases::
+* Defining project attributes::
 * Adding casing exceptions::
 * Adding stock icons::
 @end menu
@@ -6511,6 +6515,8 @@ described in later sections. It includes:
   (@pxref{Adding casing exceptions})
 @item <stock>
   (@pxref{Adding stock icons})
+@item <project_attribute>
+  (@pxref{Defining project attributes})
 @end table
 
 @c -----------------------------------------------------------------------
@@ -7990,6 +7996,446 @@ end %(p);</text>
   </alias>
 </Aliases>
 @end smallexample
+
+@c --------------------------------------------------------------------------
+@node Defining project attributes
+@subsection Defining project attributes
+@cindex project attributes
+@cindex <project_attribute>
+@c --------------------------------------------------------------------------
+
+@noindent
+The project files are required by GPS, and are used to store various
+pieces of information related to the current set of source files. This
+includes how to find the source files, how the files should be compiled,
+or manipulated through various tools,@dots{}.
+
+However, the default set of attributes that are usable in a project file
+is limited to the attributes needed by the tool packaged with GPS or GNAT.
+
+If you are delivering your own tools, you might want to store similar
+information in the project files themselves, since these are a very
+convenient place to associate some specific settings with a given set of
+source files.
+
+GPS lets manipulate the contents of projects through XML customization
+files and script commands. You can therefore add you own typed attributes
+into the projects, so that they are saved automatically when the user
+saves the project, and reloaded automatically the next time GPS is started.
+
+@subsubsection Declaring the new attributes
+
+The customization files support the @code{<project_attribute>} tag,
+which is used to declare all the new attributes that GPS should expect
+in a project.  Attributes that have not been declared explictly will
+not be accessible through the GPS scripting languagues, and will
+generate warnings in the Messages window.
+
+Project attributes are typed: they can either have a single value, or
+have a set of such values (a list). The values can in turn be a
+free-form string, a file name, a directory name, or a value extracted
+from a list of preset values.
+
+Attributes that have been declared in these customization files will
+also be graphically editable through the project properties dialog, or
+the project wizard. Therefore, you should specify when an attribute is
+defined how it should be presented to the GPS user.
+
+The @code{<project_attribute>} tag accepts the following attributes:
+
+@itemize @bullet
+@item @code{package} (a string, default value: "")
+
+This is the package in the project file in which the attribute is
+stored. Common practice suggests that one such package should be used
+for each tool. These packages provide namespaces, so that attributes
+with the same name, but for different tools, do not conflict with each
+other.
+
+@item @code{name} (a string, mandatory)
+
+This is the name of the attribute. This should be a string with no
+space, and that represents a valid Ada identifier (typically, it
+should start with a letter and be followed by a set of letters, digits
+or underscore characters). This is an internal name that is used when
+saving the attribute in a project file.
+
+@item @code{editor_page} (a string, default value: "General")
+
+This is the name of the page in the Project Properties editor dialog
+in which the attribute is presented. If no such page already exists, a
+new one will be created as needed. If the page already exists, the
+attribute will be appended at its bottom.
+
+@item @code{editor_section} (a string, default value: "")
+
+This is the name of the section, inside editor page, in which the
+attribute is displayed. These sections are surrounded by frames, the
+title of which is given by the @code{editor_section} attribute.
+If this attribute is not specified, the attribute is put in an
+untitled section.
+
+@item @code{label} (a string, default value: the name of the attribute)
+
+If this attribute is set to a value other than the empty string
+@code{""}, a textual label is displayed to the left of the attribute
+in the graphical editor. This should be used to identify the
+attribute. However, it can be left to the empty string if the
+attribute is in a named section of its own, since the title of the
+section might be a good enough indication.
+
+@item @code{description} (a string, default value: "")
+
+This is the help message that describes the role of the attribute. It
+is displayed in a tooltip if the user leaves the mouse on top of the
+attribute for a while.
+
+@item @code{list} (a boolean, default value: "false")
+
+If this is set to @code{"true"}, the project attribute will in fact
+contains a list of values, as opposed to a single value. This is used
+for instance for the list of source directories in standard projects.
+
+@item @code{ordered} (a boolean, default value: "false")
+
+This is only relevant if the project attribute contains a list of
+values. This indicates whether the order of the values is relevant.
+In most cases, it will not matter. However, for instance, the order of
+source directories matters, since this also indicates where the source
+files will be searched, stopping at the first match.
+
+@item @code{omit_if_default} (a boolean, default value: "true")
+
+This indicates whether the project attribute should be set explicitly
+in the project if the user has left it to its default value. This can
+be used to keep the project files a simple as possible, if all the
+tools that will use this project attribute know about the default
+value. If this isn't the case, set @code{omit_if_default} to "false"
+to force the generation of the project attribute.
+
+@item @code{base_name_only} (a boolean, default value: "false")
+
+If the attribute contains a file name or a directory name, this
+indicates whether the full path should be stored, or only the base
+name. In most cases, the full path should be used. However, since GPS
+automatically looks for source files in the list of directories, for
+instance, the list of source files should only contain base
+names. This also increases the portability of project files.
+
+@end itemize
+
+
+@subsubsection Declaring the type of the new attributes
+
+The type of the project attribute is specified through one or several
+child tags of @code{<project_attribute>}. The following tags are
+recognized.
+
+@itemize @bullet
+@cindex <string>
+@item @code{<string>}
+
+This tag indicates that the attribute is made of one (or more if it is
+a list) strings. This
+tag accepts the following XML attributes:
+
+@itemize -
+@item @code{default} (a string, default value: "")
+
+This gives the default value to be used for the string (and therefore
+the project attribute), in case the user hasn't overridden it.
+
+@item @code{type} (one of "", "file", "directory", default "")
+
+This indicates what the string represents. In the first case, any
+value can be used. In the second case, it should represent a file
+name, although no check is done to make sure the file actually exists
+on the disk. But GPS will be able to do some special marshalling with
+the file name. The third case indicates that GPS should expect a
+directory.
+@end itemize
+
+@cindex <choice>
+@item @code{<choice>}
+
+This tag can be repeated several times. It indicates one of the valid
+values for the attribute, and can be used to provide a static list of
+such values. If it is combined with a @code{<string>} tag, this
+indicates that the attribute can be any string, although a set of
+possible values is provided to the user for ease of use.
+This tag accepts one optional attribute, @code{"default"}, which is a
+boolean. It indicates whether this value is the default to use for the
+project attribute.
+
+If several @code{<choice>} tags are used, it is possible that several
+of them are part of the default value if the project attribute is a
+list, as opposed to a single value.
+
+@cindex <shell>
+@item @code{<shell>}
+
+This tag is a GPS scripting command to execute to get a list of valid
+values for the attribute. The command should return a list. As for the
+@code{<choice>} tag, the @code{<shell>} tag can be combined with a
+@code{<string>} tag to indicate that the list of values returned by
+the scripting command is only a set of possible values, but that the
+project attribute can in fact take any value.
+
+The @code{<shell>} tag accepts two attributes:
+
+@itemize -
+@item @code{lang} (a string, default value: "shell")
+
+The scripting language in which the command is written. Currently, the
+only other possible value is "python".
+
+@item @code{default} (a string, default value: "")
+
+The default value that the project attribute takes if the user hasn't
+overridden it.
+@end itemize
+
+@end itemize
+
+@cindex indexed project attributes
+@cindex project attributes, indexed
+@cindex <index>
+@cindex <specialized_index>
+
+In some cases, the type of the project attribute, or at least its
+default value, depends on what the attribute applies to. The project
+file support this in the form of indexed project attribute. This is
+for instance used to specify what should be the name of the executable
+generated when compiling each of the main files in the project (ie the
+executable name for @code{gps.adb} should be @code{gps.exe}, the one
+for @code{main.c} should be @code{myapp.exe}, and so on).
+
+Such attributes can also be declared through XML files. In such cases,
+the @code{<project_attribute>} tag should have one @code{<index>}
+child, and zero or more @code{<specialized_index>} children.
+Each of these two tags in turn take one of the already mentioned
+@code{<string>}, @code{<choice>} or @code{<shell>} tag.
+
+The @code{<index>} tag indicates what other project attribute is used
+to index the current one. In the example given above for the
+executable names, the index is the attribute that contains the list of
+main files for the project.
+
+It accepts the following XML attributes:
+
+@itemize @bullet
+@item @code{attribute} (a string, mandatory)
+
+The name of the other attribute. This other attribute must be declared
+elsewhere in the customization files, and must be a list of values,
+not a single value.
+
+@item @code{package} (a string, default value: "")
+
+The package in which the index project attribute is defined. This is
+used to uniquely identify homonym attributes.
+@end itemize
+
+The @code{<specialized_index>} is used to override the default type of
+the attribute for specific values of the index. For instance, the
+project files contains an attribute that specify what the name of the
+compiler is for each language. It is indexed on the project attribute
+that list the languages used for the source files of the project. Its
+default value depends on the language ("gnatmake" for Ada, "gcc" for
+C, and so on). This attribute accepts requires one XML attribute:
+
+@itemize @bullet
+@item @code{value} (a string, mandatory)
+
+This is the value of the attribute for which the type is overriden.
+@end itemize
+
+
+Note that almost all the standard project attributes are defined
+through an XML file, @file{projects.xml}, which is part of the GPS
+installation. Check this file to get advanced examples on how to
+declare project attributes.
+
+@subsubsection Examples
+
+The following example declares three attributes, with a single string
+as their value. This string represents a file or a directory in the
+last two cases. You can simply copy this into a @file{.xml} file in
+your @file{$HOME/.gps/customize} directory, as usual.
+
+@smallexample
+<?xml version="1.0"?>
+<custom>
+  <project_attribute
+      name="Single1"
+      package="Test"
+      editor_page="Tests single"
+      editor_section="Single"
+      description="Any string">
+      
+     <string default="Default value" />
+  </project_attribute>
+
+  <project_attribute
+      name="File1"
+      package="Test"
+      editor_page="Tests single"
+      editor_section="Single"
+      description="Any file" >
+      
+      <string type="file" default="/my/file" />
+  </project_attribute>
+
+  <project_attribute
+      name="Directory1"
+      package="Test"
+      editor_page="Tests single"
+      editor_section="Single"
+      description="Any directory" >
+      
+      <string type="directory" default="/my/directory/" />
+  </project_attribute>
+</custom>
+@end smallexample
+
+The following example declares an attribute whose value is a
+string. However, a list of predefined possible values is also
+provided, as an help for interactive edition for the user. If the
+@code{<string>} tag wasn't given, the attribute's value would have two
+be one of the three possible choices.
+
+@smallexample
+<?xml version="1.0" ?>
+<custom>
+  <project_attribute
+      name="Static2"
+      package="Test"
+      editor_page="Tests single"
+      editor_section="Single"
+      description="Choice from static list (or any string)" >
+      
+      <choice>Choice1</choice>
+      <choice default="true" >Choice2</choice>
+      <choice>Choice3</choice>
+      <string />
+  </project_attribute>
+</custom>
+@end smallexample
+
+The following example declares an attribute whose value is one of the
+languages currently supported by GPS. Since this list of languages is
+only know when GPS is executed, a script command is used to query this
+list.
+
+@smallexample
+<?xml version="1.0" ?>
+<custom>
+ <project_attribute
+      name="Dynamic1"
+      package="Test"
+      editor_page="Tests single"
+      editor_section="Single"
+      description="Choice from dynamic list" >
+      
+      <shell default="C" >supported_languages</shell>
+  </project_attribute>
+</custom>
+@end smallexample
+
+The following example declares an attribute whose value is a set of
+file names. The order of files in this list matters to the tools that
+are using this project attribute.
+
+@smallexample
+<?xml version="1.0" ?>
+<custom>
+ <project_attribute
+      name="File_List1"
+      package="Test"
+      editor_page="Tests list"
+      editor_section="Lists"
+      list="true"
+      ordered="true"
+      description="List of any file" >
+      
+      <string type="file" default="Default file" />
+  </project_attribute> 
+</custom>
+@end smallexample
+
+The following example declares an attribute whose value is a set of
+predefined possible values. By default, two such values are selected,
+unless the user overrides this default setting.
+
+@smallexample
+<?xml version="1.0" ?>
+<custom>
+  <project_attribute
+      name="Static_List1"
+      package="Test"
+      editor_page="Tests list"
+      editor_section="Lists"
+      list="true"
+      description="Any set of values from a static list" >
+      
+      <choice>Choice1</choice>
+      <choice default="true">Choice2</choice>
+      <choice default="true">Choice3</choice>
+  </project_attribute> 
+</custom>
+@end smallexample
+
+The following example declares an attribute whose value is a
+string. However, the value is specific to each language (this could
+for instance be used for the name of the compiler to use for a given
+language). This is an indexed project attribute. It has two default
+values, one for Ada, one for C. All other languages have no default
+value.
+
+
+@smallexample
+<?xml version="1.0" ?>
+<custom>
+  <project_attribute
+      name="Compiler_Name"
+      package="Test"
+      editor_page="Tests indexed"
+      editor_section="Single"
+      <index attribute="languages" package="">
+         <string default="" />
+      </index>
+      <specialized_index value="Ada" >
+         <string default="gnatmake" />
+      </specialized_index>
+      <specialized_index value="C" >
+         <string default="gcc" />
+      </specialized_index>
+  </project_attribute>
+</custom>
+@end smallexample
+
+
+@subsubsection Accessing the project attributes
+
+The new attributes that were defined are accessible from the GPS
+scripting languages, like all the standard attributes, @pxref{Querying
+project switches}.
+
+You can for instance access the Compiler_Name attribute we created
+above with a python command similar to:
+
+@smallexample
+GPS.Project.root().get_attribute_as_string ("Compiler_Name", "Test", "Ada")
+@end smallexample
+
+You can also access the list of main files for the project, for
+instance, by calling
+
+@smallexample
+GPS.Project.root().get_attribute_as_list ("main")
+@end smallexample
+
+
 
 @c --------------------------------------------------------------------------
 @node Adding casing exceptions
