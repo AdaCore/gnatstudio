@@ -298,11 +298,10 @@ package body VCS_View_Pkg is
          Temp   : String_List.List := S;
       begin
          while not Is_Empty (Temp) loop
-            Prepend (Result, Head (Temp));
+            Append (Result, Head (Temp));
             Temp := Next (Temp);
          end loop;
 
-         Rev (Result);
          return Result;
       end Copy_String_List;
 
