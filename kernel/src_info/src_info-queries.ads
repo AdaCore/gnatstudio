@@ -71,7 +71,7 @@ package Src_Info.Queries is
    --  Free the memory associated with the entity;
 
    function Get_Name (Entity : Entity_Information) return String;
-   --  Return the name of the entity associateped with Node.
+   --  Return the name of the entity associated with Node.
 
    function Get_Declaration_Line_Of
      (Entity : Entity_Information) return Positive;
