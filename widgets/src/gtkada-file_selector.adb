@@ -46,6 +46,7 @@ with GUI_Utils;       use GUI_Utils;
 
 with Gtkada.Types;    use Gtkada.Types;
 with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.Intl;     use Gtkada.Intl;
 
 with GUI_Utils; use GUI_Utils;
 with Traces;    use Traces;
@@ -227,7 +228,7 @@ package body Gtkada.File_Selector is
    -----------------
 
    function Select_File
-     (Title          : String := -"Select a file";
+     (Title          : String := "Select a file";
       Base_Directory : String := "") return String
    is
       File_Selector_Window : File_Selector_Window_Access;
@@ -243,7 +244,7 @@ package body Gtkada.File_Selector is
    ----------------------
 
    function Select_Directory
-     (Title          : String := -"Select a directory";
+     (Title          : String := "Select a directory";
       Base_Directory : String := "") return String
    is
       File_Selector_Window : File_Selector_Window_Access;
