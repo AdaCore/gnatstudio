@@ -66,6 +66,7 @@ begin
    String_List.Append (Header_File_Extension_Items, -".h");
    String_List.Append (Header_File_Extension_Items, -".hh");
    String_List.Append (Header_File_Extension_Items, -".H");
+   String_List.Append (Header_File_Extension_Items, -".hpp");
    Combo.Set_Popdown_Strings (Foreign_Naming_Scheme_Editor.Header_File_Extension, Header_File_Extension_Items);
    Free_String_List (Header_File_Extension_Items);
    Attach (Foreign_Naming_Scheme_Editor.Table6, Foreign_Naming_Scheme_Editor.Header_File_Extension, 1, 2, 0, 1,
@@ -85,6 +86,7 @@ begin
    String_List.Append (Implementation_Extension_Items, -".c");
    String_List.Append (Implementation_Extension_Items, -".cc");
    String_List.Append (Implementation_Extension_Items, -".C");
+   String_List.Append (Implementation_Extension_Items, -".cpp");
    Combo.Set_Popdown_Strings (Foreign_Naming_Scheme_Editor.Implementation_Extension, Implementation_Extension_Items);
    Free_String_List (Implementation_Extension_Items);
    Attach (Foreign_Naming_Scheme_Editor.Table6, Foreign_Naming_Scheme_Editor.Implementation_Extension, 1, 2, 1, 2,
