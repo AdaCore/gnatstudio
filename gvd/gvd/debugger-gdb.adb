@@ -2530,8 +2530,7 @@ package body Debugger.Gdb is
                Match (File_Name_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
                   Br (Num).File := new String'
-                    (Base_File_Name
-                     (S (Matched (1).First .. Matched (1).Last)));
+                    (S (Matched (1).First .. Matched (1).Last));
                   Br (Num).Line := Integer'Value
                     (S (Matched (2).First .. Matched (2).Last));
                   M := True;
