@@ -202,6 +202,12 @@ package Ada_Analyzer is
       Type_Declaration : Boolean := False;
       --  Is it a type declaration ?
 
+      Package_Declaration : Boolean := False;
+      --  Is it a package declaration ?
+
+      --  ??? It would be nice to merge the fields Declaration,
+      --  Type_Declaration and PAckage_Declaration at some point.
+
       Record_Type   : Boolean := False;
       --  Is it a record type definition ?
 
