@@ -20,13 +20,15 @@
 
 with Gtk; use Gtk;
 with Gdk.Types;       use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Accel_Group; use Gtk.Accel_Group;
+with Gtk.Pixmap;      use Gtk.Pixmap;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Pixmaps; use Odd.Pixmaps;
 
 package body Main_Debug_Window_Pkg is
