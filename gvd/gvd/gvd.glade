@@ -5434,6 +5434,12 @@
 	  <after>True</after>
 	  <last_modification_time>Tue, 30 May 2000 04:54:53 GMT</last_modification_time>
 	</signal>
+	<signal>
+	  <name>key_press_event</name>
+	  <handler>on_debugger_text_key_press_event</handler>
+	  <object>process_tab</object>
+	  <last_modification_time>Tue, 30 May 2000 15:32:58 GMT</last_modification_time>
+	</signal>
 	<editable>True</editable>
 	<text></text>
       </widget>
