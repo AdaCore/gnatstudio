@@ -109,7 +109,7 @@ package body Codefix.Graphics is
       Free (Graphic_Codefix.Vdiff_List);
       --  Unref (Graphic_Codefix);
       Destroy (Graphic_Codefix);
-      Free_Parsers;
+      --  Free_Parsers;  ??? Do I need to free parsers a then of the program ?
    end Free;
 
    ----------
