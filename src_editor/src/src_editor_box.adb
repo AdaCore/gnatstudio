@@ -1859,6 +1859,34 @@ package body Src_Editor_Box is
    end Is_Valid_Location;
 
    -------------------------
+   -- Set_Screen_Location --
+   -------------------------
+
+   procedure Set_Screen_Location
+     (Editor      : access Source_Editor_Box_Record;
+      Line        : Positive;
+      Column      : Positive := 1;
+      Force_Focus : Boolean  := True)
+   is
+      Buffer_Line : constant Gint := To_Buffer_Line (Line);
+      Buffer_Col  : constant Gint := To_Buffer_Column (Column);
+   begin
+      if Is_Valid_Position (Editor.Source_Buffer, Buffer_Line, 0) then
+         if Force_Focus then
+            Grab_Focus (Editor.Source_View);
+         end if;
+
+         Set_Screen_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
+         Scroll_To_Cursor_Location (Editor.Source_View, True);
+
+      else
+         Console.Insert
+           (Editor.Kernel, -"Invalid source location: " & Image (Line) &
+              ':' & Image (Column), Mode => Error);
+      end if;
+   end Set_Screen_Location;
+
+   -------------------------
    -- Set_Cursor_Location --
    -------------------------
 

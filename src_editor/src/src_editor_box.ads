@@ -171,6 +171,15 @@ package Src_Editor_Box is
    --  to 1, then this function just verifies the given line number (Column 1
    --  of a given line always exists).
 
+   procedure Set_Screen_Location
+     (Editor      : access Source_Editor_Box_Record;
+      Line        : Positive;
+      Column      : Positive := 1;
+      Force_Focus : Boolean  := True);
+   --  Move the insert cursor to the given location, after expanding Tabs.
+   --  If Force_Focus is False, then the editor will not grab the focus
+   --  before setting the cursor position.
+
    procedure Set_Cursor_Location
      (Editor      : access Source_Editor_Box_Record;
       Line        : Positive;
