@@ -6478,6 +6478,8 @@ described in later sections. It includes:
   (@pxref{Adding support for new languages})
 @item <button>
   (@pxref{Adding tool bar buttons})
+@item <entry>
+  (@pxref{Adding tool bar buttons})
 @item <vsearch-pattern>
   (@pxref{Defining new search patterns})
 @item <tool>
@@ -7295,6 +7297,7 @@ displayed in source editors.
 @subsection Adding tool bar buttons
 @cindex tool bar
 @cindex <button>
+@cindex <entry>
 @c ----------------------------------------------------------------------
 
 @noindent
@@ -7327,6 +7330,57 @@ The following example defines a new button:
   </button>
 </stats>
 @end smallexample
+
+The @code{<button>} tag allows you to create a simple button that the user
+can press to start an action. GPS also supports another type of button,
+a combo box, from which the user can choose among a list of choices. Such
+a combo box can be created with the @code{<entry>} tag.
+
+This tag accepts the following arguments:
+
+@table @code
+@item id (mandatory)
+
+This should be a unique id for this combo box, and will be used later on
+to refer it, in particular from the scripting languages. It can be any
+string
+
+@item label (default is "")
+
+The text of a label to display on the left of the combo box. If this isn't
+specified, no text will be displayed
+
+@item on-changed (default is "")
+
+The name of a GPS action to execute whenever the user selects a new value
+in the combo box. This action is called with two parameters, the unique id
+of the combo box and the newly selected text respectively.
+@end table
+
+It also accepts any number of @code{<choice>} tags, each of which defines
+one of the values the user can choose from. These tags accepts one optional
+attribute, "on-selected", which is the name of a GPS action to call when
+that particular value is selected.
+
+@smallexample
+   <action name="animal_changed">
+      <shell>echo A new animal was selected in combo $1: animal is $2"</shell>
+   </action>
+   <action name="gnu-selected">
+      <shell>echo Congratulations on choosing a Gnu</shell>
+   </action>
+   <entry id="foo" label="Animal" on-changed="animal_changed">
+      <choice>Elephant</choice>
+      <choice on-selected="gnu-selected">Gnu</choice>
+   </entry>
+@end smallexample
+
+@ifset python
+A more convenient interface exists for Python, the GPS.Toolbar class, which
+gives you the same flexibility as above, but also gives you dynamic control
+over the entry. See the python documentation.
+@end ifset
+
 
 @c ---------------------------------------------------------------------
 @node Binding actions to keys
