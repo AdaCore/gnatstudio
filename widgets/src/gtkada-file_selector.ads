@@ -69,6 +69,7 @@ with Gtk.Button;          use Gtk.Button;
 with Gtk.Image;           use Gtk.Image;
 with Gtk.Style;           use Gtk.Style;
 with Gtk.Main;            use Gtk.Main;
+with Gtk.Widget;
 
 with Gdk.Pixmap;
 with Gdk.Bitmap;
@@ -133,6 +134,11 @@ package Gtkada.File_Selector is
    --  gives the opportunity to register filters before displaying the dialog.
    --
    --  ??? The filters do not have any effect on directories yet.
+
+   procedure Browse_Location (Ent : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  This subprogram should be used as a callback for a "browse" button.
+   --  It will get its initial directory from the text in the Gtk_Entry, and
+   --  put the result there.
 
    function Get_Selection (Dialog : access File_Selector_Window_Record)
       return String;
