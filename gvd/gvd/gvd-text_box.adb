@@ -26,8 +26,9 @@ with Gdk.Types;           use Gdk.Types;
 pragma Warnings (On);
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Box;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Container;       use Gtk.Container;
 with Gtk.Pixmap;          use Gtk.Pixmap;
-with Gtk.Scrollbar;       use Gtk.Scrollbar;
 with Gtk.Handlers;        use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Layout;          use Gtk.Layout;
@@ -38,6 +39,7 @@ with Gdk.Bitmap;          use Gdk.Bitmap;
 with Gdk.Font;            use Gdk.Font;
 with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 with Gtk.Adjustment;      use Gtk.Adjustment;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Basic_Types;         use Basic_Types;
 with GVD.Preferences;     use GVD.Preferences;
@@ -87,7 +89,7 @@ package body GVD.Text_Box is
    ----------------
 
    procedure Initialize (Box : access GVD_Text_Box_Record'Class) is
-      Scrollbar : Gtk_Vscrollbar;
+      Scrolling_Area : Gtk_Scrolled_Window;
    begin
       Gtk.Box.Initialize_Hbox (Box, Homogeneous => False);
 
@@ -95,7 +97,12 @@ package body GVD.Text_Box is
       Set_Editable (Box.Child, False);
       Set_Line_Wrap (Box.Child, False);
 
-      Gtk_New_Vscrollbar (Scrollbar, Get_Vadj (Box.Child));
+      Gtk_New (Scrolling_Area);
+      Set_Policy
+        (Scrolling_Area,
+         H_Scrollbar_Policy => Gtk.Enums.Policy_Never,
+         V_Scrollbar_Policy => Gtk.Enums.Policy_Always);
+      Add (Container => Scrolling_Area, Widget => Box.Child);
 
       --  Set a minimal size for the layout, so that the buttons are visible.
       --  Note that this widget is resized vertically dynamically if needed,
@@ -128,8 +135,7 @@ package body GVD.Text_Box is
          Slot_Object => Box);
 
       Pack_Start (Box, Box.Buttons, Expand => False, Fill => False);
-      Pack_Start (Box, Box.Child, Expand => True, Fill => True);
-      Pack_Start (Box, Scrollbar, Expand => False, Fill => False);
+      Pack_Start (Box, Scrolling_Area, Expand => True, Fill => True);
    end Initialize;
 
    ---------------
