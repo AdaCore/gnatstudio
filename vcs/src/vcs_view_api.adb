@@ -1854,7 +1854,7 @@ package body VCS_View_API is
             end if;
 
             if Get_Status then
-               VCS.Get_Status (Ref, Files);
+               VCS.Get_Status_Dirs (Ref, Files);
             end if;
 
             String_List.Free (Files);
