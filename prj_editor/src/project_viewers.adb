@@ -504,8 +504,8 @@ package body Project_Viewers is
    -------------------------
 
    procedure Project_Viewers_Set
-     (Viewer            : access Project_Viewer_Record'Class;
-      Iter              : Gtk_Tree_Iter)
+     (Viewer : access Project_Viewer_Record'Class;
+      Iter   : Gtk_Tree_Iter)
    is
       procedure Internal
         (Tree, Iter : System.Address;
@@ -569,7 +569,7 @@ package body Project_Viewers is
 
    function Select_Row
      (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
-     return Boolean
+      return Boolean
    is
       V     : constant Project_Viewer := Project_Viewer (Viewer);
       Iter  : Gtk_Tree_Iter;
@@ -601,14 +601,19 @@ package body Project_Viewers is
    -- Project_View_Changed --
    --------------------------
 
-   procedure Project_View_Changed (Viewer  : access Gtk_Widget_Record'Class) is
+   procedure Project_View_Changed (Viewer : access Gtk_Widget_Record'Class) is
       V : Project_Viewer := Project_Viewer (Viewer);
    begin
       Clear (V.Model);  --  ??? Should delete selectively
+
       if V.Current_Project /= No_Project then
          V.Current_Project := Get_Project (V.Kernel);
          Show_Project (V, V.Current_Project);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Project_View_Changed;
 
    ---------------------
@@ -686,6 +691,10 @@ package body Project_Viewers is
                           Directory_Information (File),
                           File_Information (File));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Explorer_Selection_Changed;
 
    --------------------------------
@@ -1049,8 +1058,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Read_Project_Name;
 
    -----------------------
@@ -1068,6 +1076,10 @@ package body Project_Viewers is
       end if;
 
       Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Save_All_Projects;
 
    ---------------------------
@@ -1089,6 +1101,10 @@ package body Project_Viewers is
       end if;
 
       Save_Project (Kernel, Project);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Save_Specific_Project;
 
    -----------------------
@@ -1115,6 +1131,10 @@ package body Project_Viewers is
                From_Path => False);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Edit_Project_File;
 
    -----------------------------------
@@ -1211,6 +1231,7 @@ package body Project_Viewers is
       Result : Message_Dialog_Buttons;
       Must_Recompute : Boolean := False;
       Imported_Project : Project_Type;
+
    begin
       loop
          Changed := Add_Imported_Project
@@ -1414,6 +1435,10 @@ package body Project_Viewers is
                Selection_Context_Access (Context));
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Project_Editor_Contextual;
 
    ------------------------------------
@@ -1475,6 +1500,11 @@ package body Project_Viewers is
       end if;
 
       return Selection_Context_Access (Context);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return Selection_Context_Access (Context);
    end Project_Editor_Context_Factory;
 
    ----------------------------
@@ -1484,15 +1514,17 @@ package body Project_Viewers is
    procedure Edit_Multiple_Switches
      (Viewer : access Gtk_Widget_Record'Class)
    is
-      V : constant Project_Viewer := Project_Viewer (Viewer);
+      V         : constant Project_Viewer := Project_Viewer (Viewer);
       Selection : constant Gtk_Tree_Selection := Get_Selection (V.Tree);
-      Length : Natural := 0;
-      Iter : Gtk_Tree_Iter := Get_Iter_First (V.Model);
+      Length    : Natural := 0;
+      Iter      : Gtk_Tree_Iter := Get_Iter_First (V.Model);
+
    begin
       while Iter /= Null_Iter loop
          if Iter_Is_Selected (Selection, Iter) then
             Length := Length + 1;
          end if;
+
          Next (V.Model, Iter);
       end loop;
 
@@ -1501,12 +1533,14 @@ package body Project_Viewers is
          N     : Natural := Names'First;
       begin
          Iter := Get_Iter_First (V.Model);
+
          while Iter /= Null_Iter loop
             if Iter_Is_Selected (Selection, Iter) then
                Names (N) := new String'
                  (Get_String (V.Model, Iter, File_Name_Column));
                N := N + 1;
             end if;
+
             Next (V.Model, Iter);
          end loop;
 
@@ -1518,6 +1552,7 @@ package body Project_Viewers is
             Gtk.Handlers.Handler_Unblock (V.Kernel, V.View_Changed_Id);
 
             Iter := Get_Iter_First (V.Model);
+
             while Iter /= Null_Iter loop
                if Iter_Is_Selected (Selection, Iter) then
                   Project_Viewers_Set (V, Iter);
@@ -1616,6 +1651,10 @@ package body Project_Viewers is
       else
          Add_File;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Add_Main_Unit;
 
    ----------------------
@@ -1638,6 +1677,10 @@ package body Project_Viewers is
             Remove (Ed.Executables, Tmp);
          end if;
       end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Remove_Main_Unit;
 
    --------------------
@@ -1749,6 +1792,11 @@ package body Project_Viewers is
 
       Show_All (Box);
       return Gtk_Widget (Box);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return null;
    end Widget_Factory;
 
    --------------------
@@ -1856,6 +1904,11 @@ package body Project_Viewers is
       Free (New_Mains);
 
       return Changed;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return False;
    end Project_Editor;
 
    --------------------
@@ -1908,6 +1961,11 @@ package body Project_Viewers is
 
       Show_All (Src_Dir_Selection);
       return Gtk_Widget (Src_Dir_Selection);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return null;
    end Widget_Factory;
 
    --------------------
@@ -1981,6 +2039,11 @@ package body Project_Viewers is
       Free (Dirs);
 
       return not Equal;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return False;
    end Project_Editor;
 
    ----------------------
@@ -2000,17 +2063,18 @@ package body Project_Viewers is
    --------------------
 
    function Widget_Factory
-     (Page : access Object_Editor_Record;
-      Project : Project_Type;
+     (Page         : access Object_Editor_Record;
+      Project      : Project_Type;
       Full_Project : String;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+      Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Page);
       Obj_Dir : Object_Editor_Widget;
-      Label : Gtk_Label;
-      Box : Gtk_Box;
-      Event : Gtk_Event_Box;
-      Button : Gtk_Button;
+      Label   : Gtk_Label;
+      Box     : Gtk_Box;
+      Event   : Gtk_Event_Box;
+      Button  : Gtk_Button;
+
    begin
       Obj_Dir := new Object_Editor_Widget_Record;
       Initialize_Vbox (Obj_Dir, Homogeneous => False);
@@ -2102,6 +2166,11 @@ package body Project_Viewers is
 
       Show_All (Obj_Dir);
       return Gtk_Widget (Obj_Dir);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return null;
    end Widget_Factory;
 
    --------------------
@@ -2234,6 +2303,11 @@ package body Project_Viewers is
       Free (Exec_Dir);
 
       return Changed;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return False;
    end Project_Editor;
 
    --------------------
@@ -2255,6 +2329,11 @@ package body Project_Viewers is
       Set_Switches (Switches, Project);
 
       return Gtk_Widget (Switches);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return null;
    end Widget_Factory;
 
    --------------------
@@ -2277,6 +2356,11 @@ package body Project_Viewers is
          Project            => Project,
          Scenario_Variables => Scenario_Variables,
          Files              => (1 .. 0 => null));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return False;
    end Project_Editor;
 
    -------------
@@ -2319,6 +2403,11 @@ package body Project_Viewers is
 
       Page.Kernel := Kernel_Handle (Kernel);
       return Gtk_Widget (Editor);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return null;
    end Widget_Factory;
 
    --------------------
@@ -2340,6 +2429,11 @@ package body Project_Viewers is
         (Naming_Editor (Widget),
          Project            => Project,
          Scenario_Variables => Scenario_Variables);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return False;
    end Project_Editor;
 
    -------------
@@ -2383,6 +2477,10 @@ package body Project_Viewers is
       Recompute_View (Kernel);
 
       Free (Args);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Project_Command_Handler;
 
    ------------------------
@@ -2399,6 +2497,10 @@ package body Project_Viewers is
       if Filename /= "" then
          Add_To_History (Kernel, Project_History_Key, Filename);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Project_Changed;
 
    -------------
@@ -2451,8 +2553,8 @@ package body Project_Viewers is
    -- Get_Title --
    ---------------
 
-   function Get_Title (Page : access Project_Editor_Page_Record'Class)
-      return String is
+   function Get_Title
+     (Page : access Project_Editor_Page_Record'Class) return String is
    begin
       return Page.Title.all;
    end Get_Title;
@@ -2461,8 +2563,8 @@ package body Project_Viewers is
    -- Get_Flags --
    ---------------
 
-   function Get_Flags (Page : access Project_Editor_Page_Record'Class)
-      return Selector_Flags is
+   function Get_Flags
+     (Page : access Project_Editor_Page_Record'Class) return Selector_Flags is
    begin
       return Page.Flags;
    end Get_Flags;
