@@ -179,6 +179,4 @@ package Odd_Preferences_Pkg is
    procedure Initialize
      (Odd_Preferences : access Odd_Preferences_Record'Class);
 
-   Odd_Preferences : Odd_Preferences_Access;
-
 end Odd_Preferences_Pkg;
