@@ -562,14 +562,16 @@ package body Browsers.Canvas is
       Success    : Boolean;
 
    begin
-      --  Click on an item: this is a file selection
-      --  ??? Should we convert to world coordinates here ?
+      if Get_Event_Type (Event) in Button_Press .. Button_Release then
+         --  Click on an item: this is a file selection
+         --  ??? Should we convert to world coordinates here ?
 
-      Get_Origin (Get_Window (B.Canvas), Xr, Yr, Success);
-      Set_X (Event, Get_X_Root (Event) - Gdouble (Xr));
-      Set_Y (Event, Get_Y_Root (Event) - Gdouble (Yr));
+         Get_Origin (Get_Window (B.Canvas), Xr, Yr, Success);
+         Set_X (Event, Get_X_Root (Event) - Gdouble (Xr));
+         Set_Y (Event, Get_Y_Root (Event) - Gdouble (Yr));
 
-      Item := Item_At_Coordinates (B.Canvas, Event);
+         Item := Item_At_Coordinates (B.Canvas, Event);
+      end if;
 
       if Item /= null then
          if Browser_Item (Item).Hide_Links then
