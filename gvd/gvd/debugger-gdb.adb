@@ -2189,6 +2189,8 @@ package body Debugger.Gdb is
       Size     : in Integer;
       Address  : in String) return String
    is
+      Error_String : constant String := "Cannot access memory at";
+
       Result       : String (1 .. Size * 2);
       Image        : constant String := Integer'Image (Size);
       S            : constant String := Send
@@ -2200,8 +2202,8 @@ package body Debugger.Gdb is
       Result_Index : Integer := 1;
    begin
       --  Detect "Cannot access memory at ..."
-      Skip_To_String (S, S_Index, "Cannot access memory at");
-      if S_Index < S'Last - 24 then
+      Skip_To_String (S, S_Index, Error_String);
+      if S_Index <= S'Last - Error_String'Length then
          while Result_Index <= Result'Last loop
             Result (Result_Index) := '-';
             Result_Index := Result_Index + 1;
