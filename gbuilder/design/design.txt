@@ -1,5 +1,14 @@
 Design of a Gtk GUI builder written in Ada.
 
+Name
+====
+
+The name of the project is currently not chosen.
+Several propositions:
+ - quicky : reference to rapid by Martin Carlisle
+ - radical: RApid Development of Interfaces, Components, Applications and
+            Libraries
+
 Key points and general goals
 ============================
 
