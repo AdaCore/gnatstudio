@@ -39,12 +39,12 @@
 						\
     sigblock(sigmask(SIGCLD));			\
     if (grantpt(fd) == -1)			\
-      fatal("could not grant slave pty");	\
+      fatal("could not grant slave pty", errno);	\
     sigunblock(sigmask(SIGCLD));		\
     if (unlockpt(fd) == -1)			\
-      fatal("could not unlock slave pty");	\
+      fatal("could not unlock slave pty", errno);	\
     if (!(ptyname = ptsname(fd)))		\
-      fatal ("could not enable slave pty");	\
+      fatal ("could not enable slave pty", errno);	\
     strncpy(pty_name, ptyname, sizeof(pty_name)); \
     pty_name[sizeof(pty_name) - 1] = 0;		\
   }
