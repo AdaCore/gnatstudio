@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -727,7 +727,7 @@ package body VCS_Module is
       Open_Explorer (Kernel, null);
 
       Status := Parse_Status (Ref, S);
-      Display_File_Status (Kernel, Status, Ref, True, True, False);
+      Display_File_Status (Kernel, Status, Ref, True, True, True);
 
       --  ??? Should we free Status ?
    end Status_Parse_Handler;
