@@ -54,6 +54,7 @@ with Projects.Registry;         use Projects.Registry;
 with Fname;                     use Fname;
 with Namet;                     use Namet;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Histories;                 use Histories;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -64,6 +65,9 @@ package body Browsers.Dependency_Items is
    Me : constant Debug_Handle := Create ("Browsers.Dependency");
 
    Dependency_Browser_Module_ID : Module_ID;
+
+   Show_System_Files_Key : constant History_Key := "browser_show_system_files";
+   Show_Implicit_Key     : constant History_Key := "browser_show_implicit";
 
    ------------------------
    -- Dependency browser --
@@ -290,6 +294,96 @@ package body Browsers.Dependency_Items is
    procedure Examine_From_Dependencies (Item : access Arrow_Item_Record'Class);
    --  Callbacks for the title bar buttons
 
+   procedure Refresh_Browser (Browser : access Gtk_Widget_Record'Class);
+   --  Refresh the browser after the settings have changed
+
+   procedure Check_Dependencies
+     (Browser  : access Dependency_Browser_Record'Class;
+      Item     : File_Item);
+   --  Check that the dependencies from Item are still valid.
+
+   ------------------------
+   -- Check_Dependencies --
+   ------------------------
+
+   procedure Check_Dependencies
+     (Browser  : access Dependency_Browser_Record'Class;
+      Item     : File_Item)
+   is
+      function Check_Dep
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
+      --  Check that Link is still valid
+
+      List      : Dependency_List := null;
+
+      function Check_Dep
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean
+      is
+         Dep : Dependency_List := List;
+         Target : constant File_Item := File_Item (Get_Dest (Link));
+         Target_File : constant String :=
+           Get_Source_Filename (Get_Source (Target));
+      begin
+         while Dep /= null loop
+            if Filter (Get_Kernel (Browser), Dep.Value)
+              and then Get_Source_Filename (File_Information (Dep.Value)) =
+                Target_File
+            then
+               return True;
+            end if;
+
+            Dep := Dep.Next;
+         end loop;
+
+         Remove_Link (Canvas, Link);
+         return True;
+      end Check_Dep;
+
+      Status    : Dependencies_Query_Status;
+      File      : constant String := Get_Source_Filename (Get_Source (Item));
+      Lib_Info  : constant LI_File_Ptr := Locate_From_Source_And_Complete
+        (Get_Kernel (Browser), File);
+
+   begin
+      if Lib_Info /= No_LI_File then
+         Find_Dependencies (Lib_Info, File, List, Status);
+      end if;
+
+      For_Each_Link
+        (Get_Canvas (Browser), Check_Dep'Unrestricted_Access,
+         From => Canvas_Item (Item));
+      Destroy (List);
+   end Check_Dependencies;
+
+   ---------------------
+   -- Refresh_Browser --
+   ---------------------
+
+   procedure Refresh_Browser (Browser : access Gtk_Widget_Record'Class) is
+      B         : constant Dependency_Browser := Dependency_Browser (Browser);
+      Iter      : Item_Iterator := Start (Get_Canvas (B));
+      File      : File_Item;
+   begin
+      --  All we do for now is check the currently displayed links, and reset
+      --  the title bar buttons. It would be too costly to recompute all the
+      --  displayed dependencies
+
+      loop
+         File := File_Item (Get (Iter));
+         exit when File = null;
+
+         Check_Dependencies (B, File);
+
+         Set_Children_Shown (File, False);
+         Set_Parents_Shown (File, False);
+         Redraw_Title_Bar (File);
+
+         Next (Iter);
+      end loop;
+   end Refresh_Browser;
+
    -----------------------------
    -- Browser_Context_Factory --
    -----------------------------
@@ -321,15 +415,28 @@ package body Browsers.Dependency_Items is
             Slot_Object => General_Browser (Object),
             User_Data   => Context);
 
-         Gtk_New (Check, Label => -"Hide system files");
-         Set_Active (Check, True);
-         Set_Sensitive (Check, False);
-         Append (Menu, Check);
+         Gtk_New (Mitem, Label => -"Refresh");
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Widget_Callback.To_Marshaller (Refresh_Browser'Access),
+            Event_Widget);
 
-         Gtk_New (Check, Label => -"Hide implicit dependencies");
-         Set_Active (Check, True);
-         Set_Sensitive (Check, False);
+         Gtk_New (Check, Label => -"Show system files");
+         Associate (Get_History (Kernel).all, Show_System_Files_Key, Check);
          Append (Menu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled",
+            Widget_Callback.To_Marshaller (Refresh_Browser'Access),
+            Event_Widget);
+
+         Gtk_New (Check, Label => -"Show implicit dependencies");
+         Associate (Get_History (Kernel).all, Show_Implicit_Key, Check);
+         Append (Menu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled",
+            Widget_Callback.To_Marshaller (Refresh_Browser'Access),
+            Event_Widget);
       end if;
 
       return Context;
@@ -706,12 +813,14 @@ package body Browsers.Dependency_Items is
 
    begin
       --  Only show explicit dependencies, not implicit ones
-      Explicit_Dependency := Get_Pref (Kernel, Dep_Browser_Show_Implicit_Dep)
+      Explicit_Dependency :=
+        Get_History (Get_History (Kernel).all, Show_Implicit_Key)
         or else Get_Depends_From_Spec (Info)
         or else Get_Depends_From_Body (Info);
 
       --  Do not display dependencies on runtime files
-      System_File := Get_Pref (Kernel, Dep_Browser_Show_System_Files)
+      System_File :=
+        Get_History (Get_History (Kernel).all, Show_System_Files_Key)
         or else not Is_System_File (File_Information (Dep));
 
       return Explicit_Dependency and then System_File;
