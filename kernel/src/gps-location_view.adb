@@ -339,6 +339,10 @@ package body GPS.Location_View is
       Category : Gtk_Tree_Iter) return String;
    --  Return the name of the category associated with that iterator
 
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed.
+
    -----------
    -- Hooks --
    -----------
@@ -1852,6 +1856,51 @@ package body GPS.Location_View is
       return True;
    end Location_Hook;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      View  : Location_View;
+      Child : MDI_Child;
+      Node  : List_Node;
+      Loc   : Location_Record;
+   begin
+      Child := Get_Or_Create_Location_View_MDI
+        (Kernel, Allow_Creation => False);
+
+      if Child = null then
+         return;
+      end if;
+
+      View := Location_View (Get_Widget (Child));
+
+      Node := First (View.Stored_Locations);
+
+      while Node /= Null_Node loop
+         Loc := Data (Node);
+         Add_Location
+           (View     => View,
+            Model    => View.Tree.Model,
+            Category => Loc.Category.all,
+            File     => Loc.File,
+            Line     => Loc.Line,
+            Column   => Loc.Column,
+            Length   => Loc.Length,
+            Highlight => Loc.Highlight,
+            Message  => Loc.Message.all,
+            Highlight_Category => Loc.Highlight_Category.all,
+            Quiet              => True,
+            Remove_Duplicates  => False,
+            Enable_Counter     => True);
+         Node := Next (Node);
+      end loop;
+
+      Free (View.Stored_Locations);
+   end Preferences_Changed;
+
    ------------------
    -- Load_Desktop --
    ------------------
@@ -1876,6 +1925,8 @@ package body GPS.Location_View is
                Category_Name : constant String :=
                  Get_Attribute (Category, "name");
                File_Name     : Virtual_File;
+               Loc           : Location_Record;
+
             begin
                File := Category.Child;
                while File /= null loop
@@ -1884,26 +1935,24 @@ package body GPS.Location_View is
 
                   Location := File.Child;
                   while Location /= null loop
-                     Add_Location
-                       (View     => View,
-                        Model    => View.Tree.Model,
-                        Category => Category_Name,
-                        File     => File_Name,
-                        Line     => Integer'Value
-                          (Get_Attribute (Location, "line", "0")),
-                        Column   => Integer'Value
-                          (Get_Attribute (Location, "column", "0")),
-                        Length   => Integer'Value
-                          (Get_Attribute (Location, "length", "0")),
-                        Highlight => True or else Boolean'Value
-                          (Get_Attribute (Location, "highlight", "False")),
-                        Message  => Get_Attribute (Location, "message", ""),
-                        Highlight_Category =>
-                          Get_Attribute (Location, "category", ""),
-                        Quiet              => True,
-                        Remove_Duplicates  => False,
-                        Enable_Counter     => True);
+                     Loc :=
+                        (Category => new String'(Category_Name),
+                         File     => File_Name,
+                         Line     => Integer'Value
+                           (Get_Attribute (Location, "line", "0")),
+                         Column   => Integer'Value
+                           (Get_Attribute (Location, "column", "0")),
+                         Length   => Integer'Value
+                           (Get_Attribute (Location, "length", "0")),
+                         Highlight => True or else Boolean'Value
+                           (Get_Attribute (Location, "highlight", "False")),
+                         Message  => new String'
+                           (Get_Attribute (Location, "message", "")),
+                         Highlight_Category => new String'
+                           (Get_Attribute (Location, "category", "")));
                      Location := Location.Next;
+
+                     Append (View.Stored_Locations, Loc);
                   end loop;
 
                   File := File.Next;
@@ -2030,6 +2079,8 @@ package body GPS.Location_View is
       Add_Hook (Kernel, Location_Action_Hook, Location_Hook'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
    end Register_Module;
 
    -----------------------
@@ -2330,5 +2381,16 @@ package body GPS.Location_View is
          end if;
       end if;
    end Parse_File_Locations;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Location_Record) is
+   begin
+      Free (X.Category);
+      Free (X.Message);
+      Free (X.Highlight_Category);
+   end Free;
 
 end GPS.Location_View;
