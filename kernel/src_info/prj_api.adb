@@ -2303,13 +2303,14 @@ package body Prj_API is
    end Add_Node_To_List;
 
    ------------------------------
-   -- Delete_Scenario_Variable --
+   -- Delete_External_Variable --
    ------------------------------
 
-   procedure Delete_Scenario_Variable
+   procedure Delete_External_Variable
      (Root_Project      : Project_Node_Id;
       Ext_Variable_Name : String;
-      Keep_Choice       : String_Id)
+      Keep_Choice       : String_Id;
+      Delete_Direct_References : Boolean := True)
    is
       Variable_Nodes : Project_Node_Array_Access :=
         new Project_Node_Array (1 .. 100);
@@ -2381,11 +2382,18 @@ package body Prj_API is
                        (First_Expression_In_List (Current_Term (Term)));
 
                   --  Handles "-g" & external ("A")
-                  --  and     "-g" & Var
-                  --  Where Var is a reference to the external variable
-                  --
                   --  Replace A by the constant string representing its value
-                  when N_External_Value | N_Variable_Reference =>
+                  when N_External_Value =>
+                     if Delete_Direct_References
+                       and then Is_Reference_To_Ext (Current_Term (Term))
+                     then
+                        Set_Current_Term
+                          (Term, Create_Literal_String (Keep_Choice));
+                     end if;
+
+                  --  Handles "-g" & Var
+                  --  Where Var is a reference to the external variable
+                  when N_Variable_Reference =>
                      if Is_Reference_To_Ext (Current_Term (Term)) then
                         Set_Current_Term
                           (Term, Create_Literal_String (Keep_Choice));
@@ -2535,16 +2543,20 @@ package body Prj_API is
       if Kind_Of (Root_Project) = N_Project then
          With_Clause := First_With_Clause_Of (Root_Project);
          while With_Clause /= Empty_Node loop
-            Delete_Scenario_Variable
+            Delete_External_Variable
               (Project_Node_Of (With_Clause),
                Ext_Variable_Name,
-               Keep_Choice);
+               Keep_Choice,
+               Delete_Direct_References);
             With_Clause := Next_With_Clause_Of (With_Clause);
          end loop;
       end if;
 
       Free (Variable_Nodes);
-   end Delete_Scenario_Variable;
+
+      --  ??? Should update the cached value of scenario variables in the
+      --  ??? kernel.
+   end Delete_External_Variable;
 
 begin
    Namet.Initialize;

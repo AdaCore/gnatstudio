@@ -489,13 +489,17 @@ package Prj_API is
    --  Old_Name is given as a string so that we don't need to allocate a new
    --  string_id.
 
-   procedure Delete_Scenario_Variable
+   procedure Delete_External_Variable
      (Root_Project      : Project_Node_Id;
       Ext_Variable_Name : String;
-      Keep_Choice       : Types.String_Id);
+      Keep_Choice       : Types.String_Id;
+      Delete_Direct_References : Boolean := True);
    --  Remove all scenario variables that reference External_Variable_Name.
    --  All the case constructions where this variable occur are replaced by
    --  the case item corresponding to Keep_Choice.
+   --  If Delete_Direct_References is True, then all direct references (ie
+   --  external() statements in the project file) to Ext_Variable_Name are also
+   --  removed, in addition to the scenario variables that reference it.
 
    Invalid_Value : exception;
 
