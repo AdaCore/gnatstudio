@@ -235,9 +235,8 @@ package Projects.Editor is
 
    procedure Delete_Attribute
      (Project            : Project_Type;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String;
+      Attribute          : Attribute_Pkg;
       Attribute_Index    : String := "");
    --  Remove all declarations for the attribute Attribute_Name in the current
    --  scenario. This effectively reverses to the default behavior for the
@@ -247,9 +246,8 @@ package Projects.Editor is
 
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Type;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String := "";
+      Attribute          : Attribute_Pkg;
       Values             : GNAT.OS_Lib.Argument_List;
       Attribute_Index    : String := "";
       Prepend            : Boolean := False);
@@ -270,17 +268,15 @@ package Projects.Editor is
 
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Type;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String := "";
+      Attribute          : Attribute_Pkg;
       Value              : String;
       Attribute_Index    : String := "");
    --  Same as above, but for an attribute that contains a single value.
 
    function Get_Attribute_Value
      (Project        : Project_Type;
-      Attribute_Name : String;
-      Package_Name   : String := "";
+      Attribute      : Attribute_Pkg;
       Index          : String := "") return Variable_Value;
    --  Internal version of Get_Attribute_Value
 

@@ -146,17 +146,15 @@ package body Projects.Editor is
 
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Node_Id;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String := "";
+      Attribute          : Attribute_Pkg;
       Values             : GNAT.OS_Lib.Argument_List;
       Attribute_Index    : String := "";
       Prepend            : Boolean := False);
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Node_Id;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String := "";
+      Attribute          : Attribute_Pkg;
       Value              : String;
       Attribute_Index    : String := "");
    --  Internal version of Update_Attribute_Value_In_Scenario
@@ -659,10 +657,14 @@ package body Projects.Editor is
 
    function Get_Attribute_Value
      (Project        : Project_Type;
-      Attribute_Name : String;
-      Package_Name   : String := "";
+      Attribute      : Attribute_Pkg;
       Index          : String := "") return Variable_Value
    is
+      Sep : constant Natural := Split_Package (Attribute);
+      Attribute_Name : constant String :=
+        String (Attribute (Sep + 1 .. Attribute'Last));
+      Pkg_Name       : constant String :=
+        String (Attribute (Attribute'First .. Sep - 1));
       Pkg : Package_Id := No_Package;
       Value : Variable_Value := Nil_Variable_Value;
       Var : Variable_Id;
@@ -675,9 +677,9 @@ package body Projects.Editor is
          return Nil_Variable_Value;
       end if;
 
-      if Package_Name /= "" then
+      if Pkg_Name /= "" then
          Pkg := Value_Of
-           (Get_String (Package_Name),
+           (Get_String (Pkg_Name),
             In_Packages => Prj.Projects.Table (Project_View).Decl.Packages);
          if Pkg = No_Package then
             return Nil_Variable_Value;
@@ -709,19 +711,21 @@ package body Projects.Editor is
 
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Type;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String := "";
+      Attribute          : Attribute_Pkg;
       Values             : GNAT.OS_Lib.Argument_List;
       Attribute_Index    : String := "";
       Prepend            : Boolean := False)
    is
+      Sep : constant Natural := Split_Package (Attribute);
+      Pkg_Name       : constant String :=
+        String (Attribute (Attribute'First .. Sep - 1));
       Pkg_Prj : constant Project_Type :=
         Find_Project_Of_Package (Project, Pkg_Name);
    begin
       Projects.Editor.Normalize.Normalize (Pkg_Prj);
       Update_Attribute_Value_In_Scenario
-        (Pkg_Prj.Node, Pkg_Name, Scenario_Variables, Attribute_Name,
+        (Pkg_Prj.Node, Scenario_Variables, Attribute,
          Values, Attribute_Index, Prepend);
       Set_Project_Modified (Pkg_Prj, True);
    end Update_Attribute_Value_In_Scenario;
@@ -732,9 +736,8 @@ package body Projects.Editor is
 
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Node_Id;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String := "";
+      Attribute          : Attribute_Pkg;
       Values             : GNAT.OS_Lib.Argument_List;
       Attribute_Index    : String := "";
       Prepend            : Boolean := False)
@@ -743,6 +746,11 @@ package body Projects.Editor is
       List            : Project_Node_Id := Empty_Node;
       Pkg, Term, Expr : Project_Node_Id;
       Rename_Prj      : Project_Node_Id := Project;
+      Sep             : constant Natural := Split_Package (Attribute);
+      Pkg_Name        : constant String :=
+        String (Attribute (Attribute'First .. Sep - 1));
+      Attribute_Name  : constant String :=
+        String (Attribute (Sep + 1 .. Attribute'Last));
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -822,8 +830,8 @@ package body Projects.Editor is
       end if;
 
       Move_From_Common_To_Case_Construct
-        (Rename_Prj, Pkg_Name, Scenario_Variables,
-         Attribute_N, Attribute_Index);
+        (Rename_Prj, Pkg_Name, Scenario_Variables, Attribute_N,
+         Attribute_Index);
 
       --  Create the string list for the new values.
       --  This can be prepended later on to the existing list of values.
@@ -850,18 +858,22 @@ package body Projects.Editor is
 
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Type;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String := "";
+      Attribute          : Attribute_Pkg;
       Value              : String;
       Attribute_Index    : String := "")
    is
-      Pkg_Prj : constant Project_Type :=
-        Find_Project_Of_Package (Project, Pkg_Name);
+      Sep : constant Natural := Split_Package (Attribute);
+      Pkg_Prj : Project_Type := Project;
    begin
+      if Sep > Attribute'First then
+         Pkg_Prj := Find_Project_Of_Package
+           (Project, String (Attribute (Attribute'First .. Sep - 1)));
+      end if;
+
       Projects.Editor.Normalize.Normalize (Pkg_Prj);
       Update_Attribute_Value_In_Scenario
-        (Pkg_Prj.Node, Pkg_Name, Scenario_Variables, Attribute_Name,
+        (Pkg_Prj.Node, Scenario_Variables, Attribute,
          Value, Attribute_Index);
       Set_Project_Modified (Pkg_Prj, True);
    end Update_Attribute_Value_In_Scenario;
@@ -872,16 +884,20 @@ package body Projects.Editor is
 
    procedure Update_Attribute_Value_In_Scenario
      (Project            : Project_Node_Id;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String := "";
+      Attribute          : Attribute_Pkg;
       Value              : String;
       Attribute_Index    : String := "")
    is
+      Sep         : constant Natural := Split_Package (Attribute);
       Attribute_N : Name_Id;
       Val         : Project_Node_Id := Empty_Node;
       Pkg         : Project_Node_Id;
       Rename_Prj  : Project_Node_Id := Project;
+      Attribute_Name : constant String :=
+        String (Attribute (Sep + 1 .. Attribute'Last));
+      Pkg_Name       : constant String :=
+        String (Attribute (Attribute'First .. Sep - 1));
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -1127,11 +1143,15 @@ package body Projects.Editor is
 
    procedure Delete_Attribute
      (Project            : Project_Type;
-      Pkg_Name           : String := "";
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : String;
+      Attribute          : Attribute_Pkg;
       Attribute_Index    : String := "")
    is
+      Sep : constant Natural := Split_Package (Attribute);
+      Pkg_Name : constant String :=
+        String (Attribute (Attribute'First .. Sep - 1));
+      Attribute_Name : constant String :=
+        String (Attribute (Sep + 1 .. Attribute'Last));
       Attribute_N : Name_Id;
       Pkg : Project_Node_Id;
       Pkg_Prj : constant Project_Type :=
@@ -2944,39 +2964,36 @@ package body Projects.Editor is
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
-         Attribute_Name     => "source_dirs",
+         Attribute          => Source_Dirs_Attribute,
          Values             => Values (1 .. 1));
       Free (Values (1));
 
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
-         Attribute_Name     => "object_dir",
+         Attribute          => Obj_Dir_Attribute,
          Value              => ".");
 
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
-         Attribute_Name     => "default_switches",
+         Attribute          => Builder_Default_Switches_Attribute,
          Values             => Default_Builder_Switches,
-         Attribute_Index    => Ada_String,
-         Pkg_Name           => "builder");
+         Attribute_Index    => Ada_String);
 
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
-         Attribute_Name     => "default_switches",
+         Attribute          => Compiler_Default_Switches_Attribute,
          Values             => Default_Compiler_Switches,
-         Attribute_Index    => Ada_String,
-         Pkg_Name           => "compiler");
+         Attribute_Index    => Ada_String);
 
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
-         Attribute_Name     => "default_switches",
+         Attribute          => Linker_Default_Switches_Attribute,
          Values             => Default_Linker_Switches,
-         Attribute_Index    => Ada_String,
-         Pkg_Name           => "linker");
+         Attribute_Index    => Ada_String);
 
       return Project;
    end Create_Default_Project;
