@@ -33,6 +33,7 @@ with Gtk.Container;
 with Gtk.Handlers;
 with Gtk.Handlers;
 with Gtk.List;
+with Gtk.List_Item;
 with Gtk.Menu;
 with Gtk.Tree_Store;
 with Gtk.Widget;
@@ -46,10 +47,20 @@ package GUI_Utils is
    --  is already visible in the list
 
    procedure Add_Unique_Combo_Entry
-     (Combo : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text  : String);
+     (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Text        : String;
+      Item_String : String := "");
    --  Add Text to the popdown list of Combo, if it is not already there.
    --  If the Text is already in the combo box, nothing is done.
+   --  If Item_String is not the empty_string, then it will be inserted in the
+   --  combo box instead of text.
+
+   function Add_Unique_Combo_Entry
+     (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Text        : String;
+      Item_String : String := "") return Gtk.List_Item.Gtk_List_Item;
+   --  Same as above, but return the inserted item (or the previously existing
+   --  one).
 
    function Get_Index_In_List
      (Combo : access Gtk.Combo.Gtk_Combo_Record'Class) return Integer;

@@ -32,6 +32,7 @@ with Gtk.Container;            use Gtk.Container;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Item;                 use Gtk.Item;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
@@ -73,13 +74,19 @@ package body GUI_Utils is
       Data   : Glib.Gint);
    --  Callback for the editable renderer
 
+   function Add_Unique_List_Entry
+     (List : access Gtk.List.Gtk_List_Record'Class;
+      Text : String) return Gtk_List_Item;
+   --  Internal version of Add_Unique_List_Entry, that also returns the added
+   --  item.
+
    ---------------------------
    -- Add_Unique_List_Entry --
    ---------------------------
 
-   procedure Add_Unique_List_Entry
+   function Add_Unique_List_Entry
      (List : access Gtk.List.Gtk_List_Record'Class;
-      Text : String)
+      Text : String) return Gtk_List_Item
    is
       use Widget_List;
 
@@ -93,7 +100,7 @@ package body GUI_Utils is
          Item := Gtk_List_Item (Get_Data (Children));
 
          if Get (Gtk_Label (Get_Child (Item))) = Text then
-            return;
+            return Item;
          end if;
 
          Children := Next (Children);
@@ -104,6 +111,20 @@ package body GUI_Utils is
       Gtk_New (Item, Text);
       Show (Item);
       Add (List, Item);
+      return Item;
+   end Add_Unique_List_Entry;
+
+   ---------------------------
+   -- Add_Unique_List_Entry --
+   ---------------------------
+
+   procedure Add_Unique_List_Entry
+     (List : access Gtk.List.Gtk_List_Record'Class;
+      Text : String)
+   is
+      Item : Gtk_List_Item;
+   begin
+      Item := Add_Unique_List_Entry (List, Text);
    end Add_Unique_List_Entry;
 
    ----------------------------
@@ -112,9 +133,31 @@ package body GUI_Utils is
 
    procedure Add_Unique_Combo_Entry
      (Combo : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text  : String) is
+      Text  : String;
+      Item_String : String := "")
+   is
+      Item : Gtk_List_Item;
    begin
-      Add_Unique_List_Entry (Get_List (Combo), Text);
+      Item := Add_Unique_Combo_Entry (Combo, Text, Item_String);
+   end Add_Unique_Combo_Entry;
+
+   ----------------------------
+   -- Add_Unique_Combo_Entry --
+   ----------------------------
+
+   function Add_Unique_Combo_Entry
+     (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Text        : String;
+      Item_String : String := "") return Gtk.List_Item.Gtk_List_Item
+   is
+      Item : Gtk_List_Item;
+   begin
+      Item := Add_Unique_List_Entry (Get_List (Combo), Text);
+
+      if Item_String /= "" then
+         Set_Item_String (Combo, Gtk_Item (Item), Item_String);
+      end if;
+      return Item;
    end Add_Unique_Combo_Entry;
 
    -----------------------
