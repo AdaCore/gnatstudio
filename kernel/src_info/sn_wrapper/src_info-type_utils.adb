@@ -37,6 +37,19 @@ package body Src_Info.Type_Utils is
    --  Regexp to find plain class name in the templatized
    --  name.
 
+   Private_Kind_Entity : constant E_Kind :=
+     (Private_Type, False, False, False);
+   Enumeration_Kind_Entity : constant E_Kind :=
+     (Enumeration_Kind, True, False, False);
+   Array_Kind_Entity : constant E_Kind :=
+     (Array_Kind, True, False, False);
+   Access_Kind_Entity : constant E_Kind :=
+     (Access_Kind, True, False, False);
+   Modular_Integer_Entity : constant E_Kind :=
+     (Modular_Integer, True, False, False);
+   Signed_Integer_Entity : constant E_Kind :=
+     (Signed_Integer, True, False, False);
+
    ----------
    -- Free --
    ----------
@@ -69,9 +82,9 @@ package body Src_Info.Type_Utils is
          or Type_Name = "int"        or Type_Name = "signed int"
          or Type_Name = "long"       or Type_Name = "signed long"
          or Type_Name = "long long"  or Type_Name = "signed long long"
-         or Type_Name = "short"      or Type_Name = "signed short"
+        or Type_Name = "short"      or Type_Name = "signed short"
       then
-         Desc.Kind := (Signed_Integer, Is_Type => True, Is_Generic => False);
+         Desc.Kind := Signed_Integer_Entity;
          Desc.Builtin_Name := new String'(Type_Name);
          Success := True;
       elsif Type_Name = "unsigned char"
@@ -80,7 +93,7 @@ package body Src_Info.Type_Utils is
          or Type_Name = "unsigned long long"
          or Type_Name = "unsigned short"
       then
-         Desc.Kind := (Modular_Integer, Is_Type => True, Is_Generic => False);
+         Desc.Kind := Modular_Integer_Entity;
          Desc.Builtin_Name := new String'(Type_Name);
          Success           := True;
       else
@@ -154,7 +167,7 @@ package body Src_Info.Type_Utils is
       if Type_Name (Type_Name'Last) = '*'
          or Type_Name (Type_Name'Last) = '&' then
          Success      := True;
-         Desc.Kind    := (Access_Kind, Is_Type => True, Is_Generic => False);
+         Desc.Kind    := Access_Kind_Entity;
          return;
       end if;
 
@@ -177,7 +190,7 @@ package body Src_Info.Type_Utils is
       if Type_Name (Type_Name'Last) = ']' then
          --  array
          Success      := True;
-         Desc.Kind    := (Array_Kind, Is_Type => True, Is_Generic => False);
+         Desc.Kind    := Array_Kind_Entity;
          return;
       end if;
 
@@ -435,7 +448,8 @@ package body Src_Info.Type_Utils is
       end if;
 
       Desc.Kind :=
-        (Class, Is_Type => True, Is_Generic => Desc.Is_Template);
+        (Class, Is_Type => True, Is_Generic => Desc.Is_Template,
+         Is_Abstract => False);
       Success := True;
 
    exception
@@ -487,7 +501,8 @@ package body Src_Info.Type_Utils is
       end if;
 
       Desc.Kind :=
-        (Class, Is_Type => True, Is_Generic => Desc.Is_Template);
+        (Class, Is_Type => True, Is_Generic => Desc.Is_Template,
+         Is_Abstract => False);
 
       Success := True;
    exception
@@ -537,7 +552,7 @@ package body Src_Info.Type_Utils is
              (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
       end if;
 
-      Desc.Kind := (Enumeration_Kind, Is_Type => True, Is_Generic => False);
+      Desc.Kind := Enumeration_Kind_Entity;
       Success := True;
    exception
       when DB_Error |   -- non-existent table
@@ -593,7 +608,7 @@ package body Src_Info.Type_Utils is
             Desc.Is_Template     := Arg.Attributes = SN_TA_TEMPLATE;
             Desc.Parent_Point    := Arg.Start_Position;
             Desc.Parent_Filename := new String'(File_Name);
-            Desc.Kind            := (Private_Type, False, False);
+            Desc.Kind            := Private_Kind_Entity;
 
             if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
                Desc.Ancestor_Point    := Arg.Start_Position;
