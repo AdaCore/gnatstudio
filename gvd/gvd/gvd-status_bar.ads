@@ -18,17 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package implements a status bar to display error and help
---  messages.
---  It encapsulates the behavior of the Gtk_Status_Bar, but is easier to use.
+--  This package implements a status bar to display error, help messages and
+--  progress status.
+--
+--  It encapsulates the behavior of both a Gtk_Status_Bar and a
+--  Gtk_Progress_Bar, but is easier to use.
 --  It provides a separate window to display the list of messages displayed.
 --
 --  The messages are hidden after a delay.
 
+with Glib;
 with Gtk.Arrow;
 with Gtk.Box;
 with Gtk.Button;
 with Gtk.Main;
+with Gtk.Progress_Bar;
 with Gtk.Status_Bar;
 with Gtk.Window;
 
@@ -55,6 +59,17 @@ package GVD.Status_Bar is
    procedure Hide_History (Status : access GVD_Status_Bar_Record);
    --  Hide the history window
 
+   procedure Set_Fraction
+     (Status   : access GVD_Status_Bar_Record;
+      Fraction : Glib.Gdouble);
+   --  Cause the progress bar to "fill in" the given fraction of the bar.
+   --  The fraction should be between 0.0 and 1.0, inclusive.
+
+   procedure Set_Progress_Text
+     (Status : access GVD_Status_Bar_Record;
+      Text   : String);
+   --  Set the text to superimpose in the progress bar.
+
 private
    type Id_Array is array (Category'Range) of Gtk.Status_Bar.Context_Id;
 
@@ -62,8 +77,8 @@ private
       Arrow_Button : Gtk.Button.Gtk_Button;
       History_Win  : Gtk.Window.Gtk_Window;
       Status       : Gtk.Status_Bar.Gtk_Status_Bar;
-
       Arrow        : Gtk.Arrow.Gtk_Arrow;
+      Progress     : Gtk.Progress_Bar.Gtk_Progress_Bar;
 
       Timeout_Id   : Gtk.Main.Timeout_Handler_Id;
       Ids          : Id_Array;

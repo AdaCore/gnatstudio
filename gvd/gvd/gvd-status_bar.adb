@@ -18,29 +18,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;            use Glib;
+with Glib;             use Glib;
 pragma Warnings (Off);
-with Gdk.Event;       use Gdk.Event;
-with Gdk.Types;       use Gdk.Types;
+with Gdk.Event;        use Gdk.Event;
+with Gdk.Types;        use Gdk.Types;
 pragma Warnings (On);
-with Gdk.Main;        use Gdk.Main;
-with Gdk.Window;      use Gdk.Window;
-with Gtk.Arrow;       use Gtk.Arrow;
-with Gtk.Box;         use Gtk.Box;
-with Gtk.Button;      use Gtk.Button;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Event_Box;   use Gtk.Event_Box;
-with Gtk.Frame;       use Gtk.Frame;
-with Gtk.Main;        use Gtk.Main;
+with Gdk.Main;         use Gdk.Main;
+with Gdk.Window;       use Gdk.Window;
+with Gtk.Arrow;        use Gtk.Arrow;
+with Gtk.Box;          use Gtk.Box;
+with Gtk.Button;       use Gtk.Button;
+with Gtk.Enums;        use Gtk.Enums;
+with Gtk.Event_Box;    use Gtk.Event_Box;
+with Gtk.Frame;        use Gtk.Frame;
+with Gtk.Main;         use Gtk.Main;
 pragma Elaborate_All (Gtk.Main);
-with Gtk.Status_Bar;  use Gtk.Status_Bar;
-with Gtk.Style;       use Gtk.Style;
-with Gtk.Text;        use Gtk.Text;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Window;      use Gtk.Window;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Odd_Intl;        use Odd_Intl;
-with GVD.Preferences; use GVD.Preferences;
+with Gtk.Progress_Bar; use Gtk.Progress_Bar;
+with Gtk.Status_Bar;   use Gtk.Status_Bar;
+with Gtk.Style;        use Gtk.Style;
+with Gtk.Text;         use Gtk.Text;
+with Gtk.Widget;       use Gtk.Widget;
+with Gtk.Window;       use Gtk.Window;
+with Gtkada.Handlers;  use Gtkada.Handlers;
+with Odd_Intl;         use Odd_Intl;
+with GVD.Preferences;  use GVD.Preferences;
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
@@ -88,6 +89,9 @@ package body GVD.Status_Bar is
 
       Gtk_New (Status.Status);
       Pack_Start (Status, Status.Status, True, True, 0);
+
+      Gtk_New (Status.Progress);
+      Pack_End (Status, Status.Progress, False, False);
 
       Status.Ids (Help)  := Get_Context_Id (Status.Status, "Help");
       Status.Ids (Error) := Get_Context_Id (Status.Status, "Error");
@@ -297,5 +301,27 @@ package body GVD.Status_Bar is
       Hide_History (GVD_Status_Bar (Widget));
       return False;
    end Button_Press;
+
+   ------------------
+   -- Set_Fraction --
+   ------------------
+
+   procedure Set_Fraction
+     (Status   : access GVD_Status_Bar_Record;
+      Fraction : Gdouble) is
+   begin
+      Set_Fraction (Status.Progress, Fraction);
+   end Set_Fraction;
+
+   -----------------------
+   -- Set_Progress_Text --
+   -----------------------
+
+   procedure Set_Progress_Text
+     (Status : access GVD_Status_Bar_Record;
+      Text   : String) is
+   begin
+      Set_Text (Status.Progress, Text);
+   end Set_Progress_Text;
 
 end GVD.Status_Bar;
