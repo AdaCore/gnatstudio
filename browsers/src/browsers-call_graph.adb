@@ -69,9 +69,7 @@ package body Browsers.Call_Graph is
    procedure Examine_Entity_Call_Graph
      (Kernel        : access Kernel_Handle_Record'Class;
       Lib_Info      : LI_File_Ptr;
-      Entity_Name   : String;
-      Entity_Line   : Positive;
-      Entity_Column : Natural);
+      Entity        : Entity_Information);
    --  Display the call graph for the node.
 
    procedure Edit_Entity_Call_Graph_From_Contextual
@@ -249,7 +247,7 @@ package body Browsers.Call_Graph is
          if Item.all in Entity_Item_Record'Class then
             Info := Entity_Item (Item).Entity;
             --  ??? Should we check the file name as well
-            if Get_Name (Info) = Get_Name (Entity)
+            if Get_Name (Info)  = Get_Name (Entity)
               and then Get_Declaration_Line_Of (Info) =
                 Get_Declaration_Line_Of (Entity)
               and then Get_Declaration_Column_Of (Info) =
@@ -273,18 +271,16 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    procedure Examine_Entity_Call_Graph
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Lib_Info      : LI_File_Ptr;
-      Entity_Name   : String;
-      Entity_Line   : Positive;
-      Entity_Column : Natural)
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information)
    is
       Iter : Scope_Tree_Node_Iterator;
       Item, Child : Entity_Item;
       Child_Browser : MDI_Child;
       Browser : Call_Graph_Browser;
       Link : Glide_Browser_Link;
-      Entity : Entity_Information;
+      Node_Entity : Entity_Information;
       Tree : Scope_Tree;
       Node : Scope_Tree_Node;
 
@@ -299,17 +295,17 @@ package body Browsers.Call_Graph is
          return;
       end if;
 
-      Node := Find_Entity_Declaration
-        (Tree, Entity_Name, Entity_Line, Entity_Column);
+      Node := Find_Entity_Scope (Tree, Entity);
 
       if Node = Null_Scope_Tree_Node then
          Insert (Kernel,
-                 -"Couldn't find the call graph for " & Entity_Name);
+                 -"Couldn't find the call graph for "
+                 & Get_Name (Entity));
          Trace (Me, "Couldn't find entity "
-                & Entity_Name & " in "
+                & Get_Name (Entity) & " in "
                 & Get_LI_Filename (Lib_Info)
-                & " at line" & Entity_Line'Img
-                & " column" & Entity_Column'Img);
+                & " at line" & Get_Declaration_Line_Of (Entity)'Img
+                & " column" & Get_Declaration_Column_Of (Entity)'Img);
          Free (Tree);
          Pop_State (Kernel_Handle (Kernel));
          return;
@@ -321,25 +317,25 @@ package body Browsers.Call_Graph is
       --  For efficiency, do not recompute the layout for each item
       Set_Auto_Layout (Get_Canvas (Browser), False);
 
-      Entity := Get_Entity (Node);
-      Item := Entity_Item (Find_Entity (Browser, Entity));
+      Node_Entity := Get_Entity (Node);
+      Item := Entity_Item (Find_Entity (Browser, Node_Entity));
       if Item = null then
-         Gtk_New (Item, Browser,  Entity => Entity);
+         Gtk_New (Item, Browser,  Entity => Node_Entity);
          Put (Get_Canvas (Browser), Item);
       else
-         Destroy (Entity);
+         Destroy (Node_Entity);
       end if;
 
       Iter := Start (Node);
       while Get (Iter) /= Null_Scope_Tree_Node loop
          if Is_Subprogram (Get (Iter)) then
-            Entity := Get_Entity (Get (Iter));
-            Child := Entity_Item (Find_Entity (Browser, Entity));
+            Node_Entity := Get_Entity (Get (Iter));
+            Child := Entity_Item (Find_Entity (Browser, Node_Entity));
             if Child = null then
-               Gtk_New (Child, Browser, Entity => Entity);
+               Gtk_New (Child, Browser, Entity => Node_Entity);
                Put (Get_Canvas (Browser), Child);
             else
-               Destroy (Entity);
+               Destroy (Node_Entity);
             end if;
 
             if not Has_Link (Get_Canvas (Browser), Item, Child) then
@@ -409,6 +405,7 @@ package body Browsers.Call_Graph is
       Decl     : E_Declaration_Info;
       Status   : Find_Decl_Or_Body_Query_Status;
       Location : File_Location;
+      Node_Entity   : Entity_Information;
 
    begin
       Push_State (Get_Kernel (Entity), Busy);
@@ -439,12 +436,11 @@ package body Browsers.Call_Graph is
          Lib_Info := Locate_From_Source_And_Complete
            (Get_Kernel (Entity), Get_File (Get_Location (Decl)));
 
+         Node_Entity := Get_Entity (Decl);
          Examine_Entity_Call_Graph
-           (Get_Kernel (Entity),
-            Lib_Info,
-            Entity_Name_Information (Entity),
-            Get_Line (Get_Location (Decl)),
-            Get_Column (Get_Location (Decl)));
+           (Get_Kernel (Entity), Lib_Info, Node_Entity);
+         Destroy (Node_Entity);
+
       else
          Insert (Get_Kernel (Entity),
                  -"No call graph available for "
@@ -479,9 +475,7 @@ package body Browsers.Call_Graph is
             Locate_From_Source_And_Complete
               (Get_Kernel (Item.Browser),
                Get_Declaration_File_Of (Item.Entity)),
-            Get_Name (Item.Entity),
-            Get_Declaration_Line_Of (Item.Entity),
-            Get_Declaration_Column_Of (Item.Entity));
+            Item.Entity);
 
          --  Make sure that the item we clicked on is still visible
          Show_Item (Get_Canvas (Item.Browser), Item);
