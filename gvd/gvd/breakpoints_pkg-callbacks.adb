@@ -553,6 +553,10 @@ package body Breakpoints_Pkg.Callbacks is
    begin
       Temporary := Get_Active (Editor.Temporary_Exception);
 
+      --  Some of the strings below deal with the GUI, and thus should be
+      --  translated for internationalization. Others come from gdb, and should
+      --  not be translated. This explains why some are preceded by '-'.
+
       if Name = -"All exceptions" then
          if Current = -1
            or else Br.Except = null
