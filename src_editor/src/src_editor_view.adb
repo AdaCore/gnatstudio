@@ -22,6 +22,7 @@ with Glib;                        use Glib;
 with Glib.Values;                 use Glib.Values;
 with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
+with Gdk.Color;                   use Gdk.Color;
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.Font;                    use Gdk.Font;
 with Gdk.GC;                      use Gdk.GC;
@@ -537,12 +538,27 @@ package body Src_Editor_View is
    ------------
 
    procedure Map_Cb (View : access Gtk_Widget_Record'Class) is
+      Color   : Gdk_Color;
+      Success : Boolean;
    begin
       --  Now that the Source_View is mapped, we can create the Graphic
       --  Context used for writting line numbers.
       Gdk_New
         (Source_View (View).Side_Column_GC,
          Get_Window (Source_View (View), Text_Window_Left));
+      Gdk_New
+        (Source_View (View).Side_Background_GC,
+         Get_Window (Source_View (View), Text_Window_Left));
+      Color := Parse ("#eeeeee");
+      Alloc_Color (Get_System, Color, False, True, Success);
+
+      if Success then
+         Set_Foreground
+           (Source_View (View).Side_Background_GC, Color);
+      else
+         Set_Foreground
+           (Source_View (View).Side_Background_GC, White (Get_System));
+      end if;
 
    exception
       when E : others =>
@@ -1126,6 +1142,8 @@ package body Src_Editor_View is
       Data                       : Line_Info_Width;
    begin
       Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
+      Draw_Rectangle
+        (Left_Window, View.Side_Background_GC, True, X, Y, Width, Height);
 
       Window_To_Buffer_Coords
         (View, Text_Window_Left,
@@ -1158,7 +1176,7 @@ package body Src_Editor_View is
          Y_Pix_In_Window := Y_In_Window;
 
          Y_In_Window :=
-           Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 2;
+           Y_In_Window + Get_Ascent (View.Font);
 
          for J in View.Line_Info'Range loop
             Data := Get_Side_Info (View, Current_Line, J);
