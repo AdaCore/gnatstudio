@@ -678,7 +678,7 @@ package body Src_Editor_Buffer is
       Success         : out Boolean)
    is
       FD : File_Descriptor := Invalid_FD;
-      File_Buffer_Length : constant := 1_024;
+      File_Buffer_Length : constant := 128 * 1_024;
       File_Buffer : String (1 .. File_Buffer_Length);
       Characters_Read : Natural;
    begin
