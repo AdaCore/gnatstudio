@@ -29,8 +29,9 @@
 with Glib;
 with Gdk.GC;
 pragma Warnings (Off);
-with Gdk.Cursor; use Gdk.Cursor;
-with Gdk.Types; use Gdk.Types;
+--  Need to use a use_clause for compatibility with gtk+1.2 and gtk+2.0
+with Gdk.Cursor;  use Gdk.Cursor;
+with Gdk.Types;   use Gdk.Types;
 pragma Warnings (On);
 with Gdk.Window;
 with Gtk.Button;

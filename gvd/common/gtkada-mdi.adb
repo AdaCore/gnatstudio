@@ -27,8 +27,7 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
-with Glib.Object;      use Glib.Object;
-with Glib.Values;      use Glib.Values;
+--  with Glib.Values;      use Glib.Values;
 with Gdk;              use Gdk;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Cursor;       use Gdk.Cursor;
@@ -42,6 +41,7 @@ with Gdk.Rectangle;    use Gdk.Rectangle;
 with Gdk.Types;        use Gdk.Types;
 with Gdk.Window;       use Gdk.Window;
 with Gdk.Window_Attr;  use Gdk.Window_Attr;
+with Gtk;              use Gtk;
 with Gtk.Accel_Label;  use Gtk.Accel_Label;
 with Gtk.Arguments;    use Gtk.Arguments;
 with Gtk.Box;          use Gtk.Box;
@@ -271,7 +271,7 @@ package body Gtkada.MDI is
 
    procedure Docked_Switch_Page
      (Docked_Child : access Gtk_Widget_Record'Class;
-      Args : GValues);
+      Args : Gtk_Args);
    --  Called when the current page in Docked_Child has changed.
    --  This is used to refresh the notebook so that is reflects the selected
    --  widget.
@@ -295,7 +295,7 @@ package body Gtkada.MDI is
    --  Called when the child is realized.
 
    function Expose_MDI
-     (MDI : access Gtk_Widget_Record'Class; Args : GValues) return Boolean;
+     (MDI : access Gtk_Widget_Record'Class; Args : Gtk_Args) return Boolean;
    --  Called when the child needs to be redrawn.
 
    procedure Activate_Child (Child : access MDI_Child_Record'Class);
@@ -409,7 +409,7 @@ package body Gtkada.MDI is
    -----------------
 
    procedure Realize_MDI (MDI : access Gtk_Widget_Record'Class) is
-      Window_Attr : Gdk.Gdk_Window_Attr;
+      Window_Attr : Gdk_Window_Attr;
       M         : MDI_Window := MDI_Window (MDI);
       Color     : Gdk_Color;
       Cursor    : Gdk_Cursor;
@@ -506,7 +506,7 @@ package body Gtkada.MDI is
    ----------------
 
    function Expose_MDI
-     (MDI : access Gtk_Widget_Record'Class; Args : GValues)
+     (MDI : access Gtk_Widget_Record'Class; Args : Gtk_Args)
      return Boolean
    is
       M : MDI_Window := MDI_Window (MDI);
@@ -676,11 +676,13 @@ package body Gtkada.MDI is
       if M.Docks_Size (Left) /= 0 then
          Alloc := (M.Docks_Size (Left),
                    M.Docks_Size (Top),
-                   Handle_Size,
-                   MDI_Height - M.Docks_Size (Top) - M.Docks_Size (Bottom));
+                   Allocation_Int (Handle_Size),
+                   Allocation_Int
+                   (MDI_Height - M.Docks_Size (Top) - M.Docks_Size (Bottom)));
          Show (M.Handles (Left));
          Gdk.Window.Move_Resize
-           (M.Handles (Left), Alloc.X, Alloc.Y, Alloc.Width, Alloc.Height);
+           (M.Handles (Left), Alloc.X, Alloc.Y,
+            Gint (Alloc.Width), Gint (Alloc.Height));
       else
          Hide (M.Handles (Left));
       end if;
@@ -688,11 +690,13 @@ package body Gtkada.MDI is
       if M.Docks_Size (Right) /= 0 then
          Alloc := (MDI_Width - M.Docks_Size (Right) - Handle_Size,
                    M.Docks_Size (Top),
-                   Handle_Size,
-                   MDI_Height - M.Docks_Size (Top) - M.Docks_Size (Bottom));
+                   Allocation_Int (Handle_Size),
+                   Allocation_Int
+                   (MDI_Height - M.Docks_Size (Top) - M.Docks_Size (Bottom)));
          Show (M.Handles (Right));
          Gdk.Window.Move_Resize
-           (M.Handles (Right), Alloc.X, Alloc.Y, Alloc.Width, Alloc.Height);
+           (M.Handles (Right), Alloc.X, Alloc.Y,
+            Gint (Alloc.Width), Gint (Alloc.Height));
       else
          Hide (M.Handles (Right));
       end if;
@@ -700,11 +704,13 @@ package body Gtkada.MDI is
       if M.Docks_Size (Top) /= 0 then
          Alloc := (M.Docks_Size (Left),
                    M.Docks_Size (Top),
-                   MDI_Width - M.Docks_Size (Left) - M.Docks_Size (Right),
-                   Handle_Size);
+                   Allocation_Int
+                   (MDI_Width - M.Docks_Size (Left) - M.Docks_Size (Right)),
+                   Allocation_Int (Handle_Size));
          Show (M.Handles (Top));
          Gdk.Window.Move_Resize
-           (M.Handles (Top), Alloc.X, Alloc.Y, Alloc.Width, Alloc.Height);
+           (M.Handles (Top), Alloc.X, Alloc.Y,
+            Gint (Alloc.Width), Gint (Alloc.Height));
       else
          Hide (M.Handles (Top));
       end if;
@@ -712,11 +718,13 @@ package body Gtkada.MDI is
       if M.Docks_Size (Bottom) /= 0 then
          Alloc := (M.Docks_Size (Left),
                    MDI_Height - M.Docks_Size (Bottom) - Handle_Size,
-                   MDI_Width - M.Docks_Size (Left) - M.Docks_Size (Right),
-                   Handle_Size);
+                   Allocation_Int
+                   (MDI_Width - M.Docks_Size (Left) - M.Docks_Size (Right)),
+                   Allocation_Int (Handle_Size));
          Show (M.Handles (Bottom));
          Gdk.Window.Move_Resize
-           (M.Handles (Bottom), Alloc.X, Alloc.Y, Alloc.Width, Alloc.Height);
+           (M.Handles (Bottom), Alloc.X, Alloc.Y,
+            Gint (Alloc.Width), Gint (Alloc.Height));
       else
          Hide (M.Handles (Bottom));
       end if;
@@ -736,7 +744,8 @@ package body Gtkada.MDI is
       Set_Allocation (L, Alloc);
       if Realized_Is_Set (L) then
          Move_Resize
-           (Get_Window (L), Alloc.X, Alloc.Y, Alloc.Width, Alloc.Height);
+           (Get_Window (L), Alloc.X, Alloc.Y,
+            Gint (Alloc.Width), Gint (Alloc.Height));
       end if;
    end Size_Allocate_MDI_Layout;
 
@@ -761,7 +770,8 @@ package body Gtkada.MDI is
       if Realized_Is_Set (M) then
          Move_Resize
            (Get_Window (M),
-            MDI_Alloc.X, MDI_Alloc.Y, MDI_Alloc.Width, MDI_Alloc.Height);
+            MDI_Alloc.X, MDI_Alloc.Y,
+            Gint (MDI_Alloc.Width), Gint (MDI_Alloc.Height));
       end if;
 
       --  Resize the children that haven't been initialized yet.
@@ -773,7 +783,8 @@ package body Gtkada.MDI is
             Size_Request (C, Req);
             C.Uniconified_Width := Req.Width;
             C.Uniconified_Height := Req.Height;
-            Alloc := (C.X, C.Y, C.Uniconified_Width, C.Uniconified_Height);
+            Alloc := (C.X, C.Y, Allocation_Int (C.Uniconified_Width),
+                      Allocation_Int (C.Uniconified_Height));
             Size_Allocate (C, Alloc);
          end if;
 
@@ -802,7 +813,7 @@ package body Gtkada.MDI is
 
       if M.Docks (Left) /= null then
          Alloc.X := 0;
-         Alloc.Width := M.Docks_Size (Left);
+         Alloc.Width := Allocation_Int (M.Docks_Size (Left));
 
          if M.Priorities (Top) < M.Priorities (Left) then
             Alloc.Y := M.Docks_Size (Top);
@@ -810,9 +821,10 @@ package body Gtkada.MDI is
             Alloc.Y := 0;
          end if;
 
-         Alloc.Height := MDI_Alloc.Height - Alloc.Y;
+         Alloc.Height := Mdi_Alloc.Height - Allocation_Int (Alloc.Y);
          if M.Priorities (Bottom) < M.Priorities (Left) then
-            Alloc.Height := Alloc.Height - M.Docks_Size (Bottom);
+            Alloc.Height := Alloc.Height
+              - Allocation_Int (M.Docks_Size (Bottom));
          end if;
 
          Size_Allocate (M.Docks (Left), Alloc);
@@ -821,8 +833,8 @@ package body Gtkada.MDI is
       --  Right dock
 
       if M.Docks (Right) /= null then
-         Alloc.Width := M.Docks_Size (Right);
-         Alloc.X := MDI_Alloc.Width - Alloc.Width;
+         Alloc.Width := Allocation_Int (M.Docks_Size (Right));
+         Alloc.X := Gint (MDI_Alloc.Width - Alloc.Width);
 
          if M.Priorities (Top) < M.Priorities (Right) then
             Alloc.Y := M.Docks_Size (Top);
@@ -830,9 +842,10 @@ package body Gtkada.MDI is
             Alloc.Y := 0;
          end if;
 
-         Alloc.Height := MDI_Alloc.Height - Alloc.Y;
+         Alloc.Height := MDI_Alloc.Height - Allocation_Int (Alloc.Y);
          if M.Priorities (Bottom) < M.Priorities (Right) then
-            Alloc.Height := Alloc.Height - M.Docks_Size (Bottom);
+            Alloc.Height := Alloc.Height
+              - Allocation_Int (M.Docks_Size (Bottom));
          end if;
 
          Size_Allocate (M.Docks (Right), Alloc);
@@ -842,7 +855,7 @@ package body Gtkada.MDI is
 
       if M.Docks (Top) /= null then
          Alloc.Y := 0;
-         Alloc.Height := M.Docks_Size (Top);
+         Alloc.Height := Allocation_Int (M.Docks_Size (Top));
 
          if M.Priorities (Left) < M.Priorities (Top) then
             Alloc.X := M.Docks_Size (Left);
@@ -850,9 +863,9 @@ package body Gtkada.MDI is
             Alloc.X := 0;
          end if;
 
-         Alloc.Width := MDI_Alloc.Width - Alloc.X;
+         Alloc.Width := MDI_Alloc.Width - Allocation_Int (Alloc.X);
          if M.Priorities (Right) < M.Priorities (Top) then
-            Alloc.Width := Alloc.Width - M.Docks_Size (Right);
+            Alloc.Width := Alloc.Width - Allocation_Int (M.Docks_Size (Right));
          end if;
 
          Size_Allocate (M.Docks (Top), Alloc);
@@ -861,8 +874,8 @@ package body Gtkada.MDI is
       --  Bottom dock
 
       if M.Docks (Bottom) /= null then
-         Alloc.Height := M.Docks_Size (Bottom);
-         Alloc.Y := MDI_Alloc.Height - Alloc.Height;
+         Alloc.Height := Allocation_Int (M.Docks_Size (Bottom));
+         Alloc.Y := Gint (MDI_Alloc.Height - Alloc.Height);
 
          if M.Priorities (Left) < M.Priorities (Bottom) then
             Alloc.X := M.Docks_Size (Left);
@@ -870,9 +883,9 @@ package body Gtkada.MDI is
             Alloc.X := 0;
          end if;
 
-         Alloc.Width := MDI_Alloc.Width - Alloc.X;
+         Alloc.Width := MDI_Alloc.Width - Allocation_Int (Alloc.X);
          if M.Priorities (Right) < M.Priorities (Bottom) then
-            Alloc.Width := Alloc.Width - M.Docks_Size (Right);
+            Alloc.Width := Alloc.Width - Allocation_Int (M.Docks_Size (Right));
          end if;
 
          Size_Allocate (M.Docks (Bottom), Alloc);
@@ -891,14 +904,16 @@ package body Gtkada.MDI is
          Alloc.Y := 0;
       end if;
 
-      Alloc.Width := MDI_Alloc.Width - Alloc.X;
+      Alloc.Width := MDI_Alloc.Width - Allocation_Int (Alloc.X);
       if M.Docks (Right) /= null then
-         Alloc.Width := Alloc.Width - Handle_Size - M.Docks_Size (Right);
+         Alloc.Width := Alloc.Width -
+           Allocation_Int (Handle_Size + M.Docks_Size (Right));
       end if;
 
-      Alloc.Height := MDI_Alloc.Height - Alloc.Y;
+      Alloc.Height := MDI_Alloc.Height - Allocation_Int (Alloc.Y);
       if M.Docks (Bottom) /= null then
-         Alloc.Height := Alloc.Height - Handle_Size - M.Docks_Size (Bottom);
+         Alloc.Height := Alloc.Height -
+           Allocation_Int (Handle_Size + M.Docks_Size (Bottom));
       end if;
 
       if M.Docks (None) /= null then
@@ -1367,7 +1382,8 @@ package body Gtkada.MDI is
 
       Pointer_Ungrab (Time => 0);
 
-      Alloc := (MDI.Current_X, MDI.Current_Y, MDI.Current_W, MDI.Current_H);
+      Alloc := (MDI.Current_X, MDI.Current_Y,
+                Allocation_Int (MDI.Current_W), Allocation_Int (MDI.Current_H));
 
       if (not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr)
         or else (not Opaque_Move and then MDI.Current_Cursor = Left_Ptr)
@@ -1378,8 +1394,8 @@ package body Gtkada.MDI is
             Filled => False,
             X => Alloc.X,
             Y => Alloc.Y,
-            Width => Alloc.Width,
-            Height => Alloc.Height);
+            Width => Gint (Alloc.Width),
+            Height => Gint (Alloc.Height));
          Size_Allocate (Child, Alloc);
 
          --  Move (MDI.Layout, Child, Gint16 (Alloc.X), Gint16 (Alloc.Y));
@@ -1390,8 +1406,8 @@ package body Gtkada.MDI is
       MDI_Child (Child).Y := Alloc.Y;
 
       if MDI.Current_Cursor /= Left_Ptr then
-         MDI_Child (Child).Uniconified_Width  := Alloc.Width;
-         MDI_Child (Child).Uniconified_Height := Alloc.Height;
+         MDI_Child (Child).Uniconified_Width  := Gint (Alloc.Width);
+         MDI_Child (Child).Uniconified_Height := Gint (Alloc.Height);
       end if;
       return True;
    end Button_Release;
@@ -1489,8 +1505,9 @@ package body Gtkada.MDI is
 
          if MDI.Current_Cursor = Left_Ptr and then Opaque_Move then
             Alloc :=
-              (MDI.Current_X, MDI.Current_Y, MDI.Current_W, MDI.Current_H);
---            Move (MDI.Layout, Child, Gint16 (Alloc.X), Gint16 (Alloc.Y));
+              (MDI.Current_X, MDI.Current_Y,
+               Allocation_Int (MDI.Current_W),
+               Allocation_Int (MDI.Current_H));
             Size_Allocate (Child, Alloc);
 
          elsif MDI.Current_Cursor /= Left_Ptr
@@ -1498,7 +1515,7 @@ package body Gtkada.MDI is
            and then (W /= Gint (Get_Allocation_Width (C))
                      or else H /= Gint (Get_Allocation_Height (C)))
          then
-            Alloc := (C.X, C.Y, W, H);
+            Alloc := (C.X, C.Y, Allocation_Int (W), Allocation_Int (H));
             Size_Allocate (Child, Alloc);
          end if;
 
@@ -2049,10 +2066,10 @@ package body Gtkada.MDI is
             C.Y := Level;
             C.Uniconified_Width := W;
             C.Uniconified_Height := H;
-            Alloc := (C.X, C.Y, C.Uniconified_Width, H);
+            Alloc := (C.X, C.Y,
+                      Allocation_Int (C.Uniconified_Width),
+                      Allocation_Int (H));
             Size_Allocate (C, Alloc);
-            --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
-            --  Set_USize (C, C.Uniconified_Width, H);
             Raise_Child (C);
             Level := Level + Title_Bar_Height;
          end if;
@@ -2067,10 +2084,8 @@ package body Gtkada.MDI is
          MDI.Focus_Child.Y := Level;
          MDI.Focus_Child.Uniconified_Width := W;
          MDI.Focus_Child.Uniconified_Height := H;
-         Alloc := (Level, Level, W, H);
+         Alloc := (Level, Level, Allocation_Int (W), Allocation_Int (H));
          Size_Allocate (MDI.Focus_Child, Alloc);
-         --  Move (MDI.Layout, MDI.Focus_Child, Gint16 (Level), Gint16 (Level));
-         --  Set_USize (MDI.Focus_Child, W, H);
          Raise_Child (MDI.Focus_Child);
       end if;
    end Cascade_Children;
@@ -2111,7 +2126,9 @@ package body Gtkada.MDI is
             C.Y := 0;
             C.Uniconified_Width := W;
             C.Uniconified_Height := H;
-            Alloc := (C.X, C.Y, C.Uniconified_Width, C.Uniconified_Height);
+            Alloc := (C.X, C.Y,
+                      Allocation_Int (C.Uniconified_Width),
+                      Allocation_Int (C.Uniconified_Height));
             Size_Allocate (C, Alloc);
             --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
             --  Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
@@ -2156,7 +2173,9 @@ package body Gtkada.MDI is
             C.Y := Level;
             C.Uniconified_Width := W;
             C.Uniconified_Height := H;
-            Alloc := (C.X, C.Y, C.Uniconified_Width, C.Uniconified_Height);
+            Alloc := (C.X, C.Y,
+                      Allocation_Int (C.Uniconified_Width),
+                      Allocation_Int (C.Uniconified_Height));
             Size_Allocate (C, Alloc);
             --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
             --  Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
@@ -2239,8 +2258,9 @@ package body Gtkada.MDI is
          if Child.MDI.Docks (None) /= null then
             Put_In_Notebook (Child.MDI, None, Child);
          else
-            Alloc := (Child.X, Child.Y, Child.Uniconified_Width,
-                      Child.Uniconified_Height);
+            Alloc := (Child.X, Child.Y,
+                      Allocation_Int (Child.Uniconified_Width),
+                      Allocation_Int (Child.Uniconified_Height));
             Put (Child.MDI.Layout, Child, 0, 0);
             Size_Allocate (Child, Alloc);
          end if;
@@ -2265,7 +2285,7 @@ package body Gtkada.MDI is
    ------------------------
 
    procedure Docked_Switch_Page
-     (Docked_Child : access Gtk_Widget_Record'Class; Args : GValues)
+     (Docked_Child : access Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
       Page_Num : Guint := To_Guint (Args, 2);
    begin
@@ -2418,8 +2438,9 @@ package body Gtkada.MDI is
          else
             Ref (Child);
             Remove_From_Notebook (Child, Child.Dock);
-            Alloc := (Child.X, Child.Y, Child.Uniconified_Width,
-                      Child.Uniconified_Height);
+            Alloc := (Child.X, Child.Y,
+                      Allocation_Int (Child.Uniconified_Width),
+                      Allocation_Int (Child.Uniconified_Height));
             Put (MDI.Layout, Child, 0, 0);
             Size_Allocate (Child, Alloc);
             Unref (Child);
@@ -2501,7 +2522,9 @@ package body Gtkada.MDI is
             List := Next (List);
          end loop;
 
-         Alloc := (Child.X, Child.Y, Icons_Width, Icon_Height);
+         Alloc := (Child.X, Child.Y,
+                   Allocation_Int (Icons_Width),
+                   Allocation_Int (Icon_Height));
          Size_Allocate (Child, Alloc);
          Set_Sensitive (Child.Maximize_Button, False);
 
@@ -2509,7 +2532,8 @@ package body Gtkada.MDI is
          Child.X := Child.Uniconified_X;
          Child.Y := Child.Uniconified_Y;
          Alloc := (Child.Uniconified_X, Child.Uniconified_Y,
-                   Child.Uniconified_Width, Child.Uniconified_Height);
+                   Allocation_Int (Child.Uniconified_Width),
+                   Allocation_Int (Child.Uniconified_Height));
          Size_Allocate (Child, Alloc);
          Child.State := Normal;
          Set_Sensitive (Child.Maximize_Button, True);
@@ -2557,8 +2581,9 @@ package body Gtkada.MDI is
                Ref (C);
                Remove_From_Notebook (C, None);
                Put (MDI.Layout, C, 0, 0);
-               Alloc := (C.X, C.Y, C.Uniconified_Width,
-                         C.Uniconified_Height);
+               Alloc := (C.X, C.Y,
+                         Allocation_Int (C.Uniconified_Width),
+                         Allocation_Int (C.Uniconified_Height));
                Size_Allocate (C, Alloc);
                Unref (C);
             end if;
