@@ -122,7 +122,7 @@ package body Docgen is
          --  Used to store entities of the callgraph for subprograms
          --  contained in inner packages
 
-         function Is_Operator (op : String) return Boolean;
+         function Is_Operator (Op : String) return Boolean;
          --  Indicates if op is a subprogram which overloads an operator
 
          function Callback
@@ -144,19 +144,17 @@ package body Docgen is
          --  Is_Operator  --
          -------------------
 
-         function Is_Operator (op : String) return Boolean
-         is
+         function Is_Operator (Op : String) return Boolean is
             use List_Reference_In_File;
-            Ref_List_Info      : List_Reference_In_File.List_Node;
+            Ref_List_Info : List_Reference_In_File.List_Node;
          begin
-            Ref_List_Info
-              := List_Reference_In_File.First (List_Ref_In_File);
+            --  Can this function be simplified ???
+
+            Ref_List_Info := List_Reference_In_File.First (List_Ref_In_File);
 
             while Ref_List_Info /= List_Reference_In_File.Null_Node loop
-               if List_Reference_In_File.Data (Ref_List_Info).Name
-               /= null then
-                  if  op
-                    = List_Reference_In_File.Data (Ref_List_Info).Name.all
+               if List_Reference_In_File.Data (Ref_List_Info).Name /= null then
+                  if Op = List_Reference_In_File.Data (Ref_List_Info).Name.all
                      --  op is a reference
                     and then
                       (Get_Kind (List_Reference_In_File.Data
@@ -170,10 +168,11 @@ package body Docgen is
                   then
                      return True;
                   end if;
-                  Ref_List_Info
-                    := List_Reference_In_File.Next (Ref_List_Info);
+
+                  Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
                end if;
             end loop;
+
             return False;
          end Is_Operator;
 
@@ -513,7 +512,7 @@ package body Docgen is
                        (Data (Entity_Node).Line_In_Body);
 
                      if Data (Entity_Node).Kind = Subprogram_Entity
-                     and then Info.Doc_Info_Options.References
+                       and then Info.Doc_Info_Options.References
                      then
                         Type_Entity_List.Append
                           (Call_Graph_Entities,
@@ -731,15 +730,17 @@ package body Docgen is
    --  Add_Child  --
    -----------------
 
-   procedure Add_Child (List   : in out Type_List_Tagged_Element.List;
-                        Target : in Entity_Handle;
-                        Patch  : in Entity_Handle)
+   procedure Add_Child
+     (List   : in out Type_List_Tagged_Element.List;
+      Target : in Entity_Handle;
+      Patch  : in Entity_Handle)
    is
       use Type_List_Tagged_Element;
       Node        : Type_List_Tagged_Element.List_Node;
       Follow_Node : Type_List_Tagged_Element.List_Node;
       Found       : Boolean;
       Tag_Elem    : Tagged_Element_Handle;
+
    begin
       Found       := False;
       Node        := Type_List_Tagged_Element.First (List);
@@ -786,15 +787,17 @@ package body Docgen is
    --  Add_Parent  --
    ------------------
 
-   procedure Add_Parent (List   : in out Type_List_Tagged_Element.List;
-                         Target : in Entity_Handle;
-                         Patch  : in Entity_Handle)
+   procedure Add_Parent
+     (List   : in out Type_List_Tagged_Element.List;
+      Target : in Entity_Handle;
+      Patch  : in Entity_Handle)
    is
       use Type_List_Tagged_Element;
       Node        : Type_List_Tagged_Element.List_Node;
       Follow_Node : Type_List_Tagged_Element.List_Node;
       Found       : Boolean;
       Tag_Elem    : Tagged_Element_Handle;
+
    begin
       Found       := False;
       Node        := Type_List_Tagged_Element.First (List);

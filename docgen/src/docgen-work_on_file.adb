@@ -32,7 +32,7 @@ with VFS;                       use VFS;
 with Projects.Registry;         use Projects.Registry;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Intl;                use Glide_Intl;
-with VFS;                     use VFS;
+with VFS;                       use VFS;
 
 package body Docgen.Work_On_File is
 
@@ -43,27 +43,28 @@ package body Docgen.Work_On_File is
    package TRL  renames Type_Reference_List;
 
    procedure Process_One_File
-     (B                     : Backend_Handle;
-      Doc_File              : File_Type;
-      Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Source_Filename       : Virtual_File;
-      Package_Name          : String;
-      Next_Package          : GNAT.OS_Lib.String_Access;
-      Prev_Package          : GNAT.OS_Lib.String_Access;
-      Source_File_List      : in out Type_Source_File_List.List;
-      Options               : All_Options;
-      Process_Body_File     : Boolean;
-      Subprogram_Index_List : in out Type_Entity_List.List;
-      Type_Index_List       : in out Type_Entity_List.List;
-      Tagged_Types_List     : in out Type_List_Tagged_Element.List;
+     (B                             : Backend_Handle;
+      Doc_File                      : File_Type;
+      Kernel                        : access
+        Glide_Kernel.Kernel_Handle_Record'Class;
+      Source_Filename               : Virtual_File;
+      Package_Name                  : String;
+      Next_Package                  : GNAT.OS_Lib.String_Access;
+      Prev_Package                  : GNAT.OS_Lib.String_Access;
+      Source_File_List              : in out Type_Source_File_List.List;
+      Options                       : All_Options;
+      Process_Body_File             : Boolean;
+      Subprogram_Index_List         : in out Type_Entity_List.List;
+      Type_Index_List               : in out Type_Entity_List.List;
+      Tagged_Types_List             : in out Type_List_Tagged_Element.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
       Private_Type_Index_List       : in out Type_Entity_List.List;
       Private_Tagged_Types_List     : in out Type_List_Tagged_Element.List;
-      All_Tagged_Types_List : in out List_Entity_Handle.List;
-      Converter             : Docgen.Doc_Subprogram_Type;
-      Doc_Directory         : String;
-      Doc_Suffix            : String;
-      Still_Warned          : in out Boolean);
+      All_Tagged_Types_List         : in out List_Entity_Handle.List;
+      Converter                     : Docgen.Doc_Subprogram_Type;
+      Doc_Directory                 : String;
+      Doc_Suffix                    : String;
+      Still_Warned                  : in out Boolean);
    --  Called by Process_Files for each file from the given list
    --  will examine that file and call the function Work_On_Source
    --  from Docgen.Work_On_File.
@@ -97,23 +98,24 @@ package body Docgen.Work_On_File is
       use Type_List_Tagged_Element;
       use List_Entity_Handle;
       use TSFL;
-      J                     : Natural;
-      Source_File_Node      : Type_Source_File_List.List_Node;
-      Doc_File              : File_Type;
-      Next_Package          : GNAT.OS_Lib.String_Access;
-      Prev_Package          : GNAT.OS_Lib.String_Access;
-      Subprogram_Index_List : Type_Entity_List.List;
-      Type_Index_List       : Type_Entity_List.List;
-      Tagged_Types_List     : Type_List_Tagged_Element.List;
+
+      J                             : Natural;
+      Source_File_Node              : Type_Source_File_List.List_Node;
+      Doc_File                      : File_Type;
+      Next_Package                  : GNAT.OS_Lib.String_Access;
+      Prev_Package                  : GNAT.OS_Lib.String_Access;
+      Subprogram_Index_List         : Type_Entity_List.List;
+      Type_Index_List               : Type_Entity_List.List;
+      Tagged_Types_List             : Type_List_Tagged_Element.List;
       Private_Subprogram_Index_List : Type_Entity_List.List;
       Private_Type_Index_List       : Type_Entity_List.List;
       Private_Tagged_Types_List     : Type_List_Tagged_Element.List;
-      All_Tagged_Types_List : List_Entity_Handle.List;
-      Unused                : List_Reference_In_File.List;
-      Unused_Bis            : Type_Entity_List.List;
-      Doc_Directory_Root    : constant String :=
+      All_Tagged_Types_List         : List_Entity_Handle.List;
+      Unused                        : List_Reference_In_File.List;
+      Unused_Bis                    : Type_Entity_List.List;
+      Doc_Directory_Root            : constant String :=
         Get_Doc_Directory (B, Kernel_Handle (Kernel));
-      Still_Warned          : Boolean;
+      Still_Warned                  : Boolean;
 
       function Find_Next_Package
         (Package_Nr : Natural) return String;
@@ -967,9 +969,11 @@ package body Docgen.Work_On_File is
                                  Next (Parent);
                               end loop;
 
-                              --  Search of chilren
+                              --  Search for children
+
                               Child :=
                                 Get_Children_Types (LI_Unit, Me_Info.all);
+
                               loop
                                  Son := Get (Child);
                                  exit when Son = No_Entity_Information;
@@ -977,6 +981,7 @@ package body Docgen.Work_On_File is
                                  --  New child
                                  Son_Info := Find_In_List
                                    (All_Tagged_Types_List, Son);
+
                                  if Son_Info = null then
                                     --  Child seen for the first time
                                     Son_Info := new Entity_Information'(Son);

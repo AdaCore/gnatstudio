@@ -80,43 +80,45 @@ package Docgen.Work_On_Source is
    --  Create the index file for the packages
 
    procedure Process_Subprogram_Index
-     (B                     : Backend_Handle;
-      Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Subprogram_Index_List : Docgen.Type_Entity_List.List;
+     (B                             : Backend_Handle;
+      Kernel                        : access
+        Glide_Kernel.Kernel_Handle_Record'Class;
+      Subprogram_Index_List         : Docgen.Type_Entity_List.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
-      Entity_List           : in out Type_Entity_List.List;
-      List_Ref_In_File      : in out List_Reference_In_File.List;
-      Options               : Docgen.All_Options;
-      Converter             : Docgen.Doc_Subprogram_Type;
-      Doc_Directory         : String;
-      Doc_Suffix            : String);
+      Entity_List                   : in out Type_Entity_List.List;
+      List_Ref_In_File              : in out List_Reference_In_File.List;
+      Options                       : Docgen.All_Options;
+      Converter                     : Docgen.Doc_Subprogram_Type;
+      Doc_Directory                 : String;
+      Doc_Suffix                    : String);
    --  Create the index file for the subprograms
 
    procedure Process_Type_Index
-     (B                : Backend_Handle;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Type_Index_List  : Docgen.Type_Entity_List.List;
+     (B                       : Backend_Handle;
+      Kernel                  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Type_Index_List         : Docgen.Type_Entity_List.List;
       Private_Type_Index_List : in out Type_Entity_List.List;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Options          : All_Options;
-      Converter        : Doc_Subprogram_Type;
-      Doc_Directory    : String;
-      Doc_Suffix       : String);
+      Entity_List             : in out Type_Entity_List.List;
+      List_Ref_In_File        : in out List_Reference_In_File.List;
+      Options                 : All_Options;
+      Converter               : Doc_Subprogram_Type;
+      Doc_Directory           : String;
+      Doc_Suffix              : String);
    --  Create the index file for the types
 
    procedure Process_Tagged_Type_Index
-     (B                      : Backend_Handle;
-      Kernel                 : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Tagged_Type_Index_List : Docgen.Type_List_Tagged_Element.List;
+     (B                         : Backend_Handle;
+      Kernel                    : access
+        Glide_Kernel.Kernel_Handle_Record'Class;
+      Tagged_Type_Index_List    : Docgen.Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      Entity_List            : in out Type_Entity_List.List;
-      List_Ref_In_File       : in out List_Reference_In_File.List;
-      Source_File_List       : in out Type_Source_File_List.List;
-      Options                : All_Options;
-      Converter              : Doc_Subprogram_Type;
-      Doc_Directory          : String;
-      Doc_Suffix             : String);
+      Entity_List               : in out Type_Entity_List.List;
+      List_Ref_In_File          : in out List_Reference_In_File.List;
+      Source_File_List          : in out Type_Source_File_List.List;
+      Options                   : All_Options;
+      Converter                 : Doc_Subprogram_Type;
+      Doc_Directory             : String;
+      Doc_Suffix                : String);
    --  Create the index file for the tagged types
 
 end Docgen.Work_On_Source;
