@@ -312,6 +312,29 @@ package body Breakpoints_Editor is
          if Br.Commands /= null then
             Insert_Text (Advanced.Command_Descr, Br.Commands.all, Position);
          end if;
+
+         --  Set the scope and action, if appropriate
+         if Br.Scope /= No_Scope then
+            if Br.Scope = Current_Task then
+               Set_Active (Advanced.Scope_Task, True);
+            elsif Br.Scope = Tasks_In_PD then
+               Set_Active (Advanced.Scope_Pd, True);
+            elsif Br.Scope = Any_Task then
+               Set_Active (Advanced.Scope_Any, True);
+            end if;
+         end if;
+
+         if Br.Action /= No_Action then
+            if Br.Action = Current_Task then
+               Set_Active (Advanced.Action_Task, True);
+            elsif Br.Action = Tasks_In_PD then
+               Set_Active (Advanced.Action_Pd, True);
+            elsif Br.Action = All_Tasks then
+               Set_Active (Advanced.Action_All, True);
+            end if;
+         end if;
+
+         Set_Active (Advanced.Set_Default, False);
       end if;
    end Fill_Advanced_Dialog;
 
@@ -327,7 +350,7 @@ package body Breakpoints_Editor is
       Modified : Boolean := False;
    begin
       if Adv /= null
-        and then Visible_Is_Set (Adv.Main_Box)
+        and then Visible_Is_Set (Adv.Condition_Box)
       then
          declare
             S : constant String :=
@@ -579,17 +602,19 @@ package body Breakpoints_Editor is
    ----------------------------
 
    procedure Toggle_Advanced_Dialog
-     (Editor : access Breakpoint_Editor_Record'Class) is
+     (Editor : access Breakpoint_Editor_Record'Class)
+   is
+      WTX_Version : Natural;
    begin
       --  Create all three dialogs
       if Editor.Advanced_Breakpoints_Location = null then
          --  Location
          Gtk_New (Editor.Advanced_Breakpoints_Location);
-         Ref (Editor.Advanced_Breakpoints_Location.Main_Box);
-         Unparent (Editor.Advanced_Breakpoints_Location.Main_Box);
+         Ref (Editor.Advanced_Breakpoints_Location.Main_Notebook);
+         Unparent (Editor.Advanced_Breakpoints_Location.Main_Notebook);
          Pack_Start
-           (Editor.Hbox2, Editor.Advanced_Breakpoints_Location.Main_Box);
-         Unref (Editor.Advanced_Breakpoints_Location.Main_Box);
+           (Editor.Hbox2, Editor.Advanced_Breakpoints_Location.Main_Notebook);
+         Unref (Editor.Advanced_Breakpoints_Location.Main_Notebook);
          Set_Sensitive
            (Editor.Advanced_Breakpoints_Location.Record_Button, False);
          Set_Sensitive
@@ -597,11 +622,11 @@ package body Breakpoints_Editor is
 
          --  Watchpoints
          Gtk_New (Editor.Advanced_Breakpoints_Watchpoints);
-         Ref (Editor.Advanced_Breakpoints_Watchpoints.Main_Box);
-         Unparent (Editor.Advanced_Breakpoints_Watchpoints.Main_Box);
-         Pack_Start
-           (Editor.Hbox3, Editor.Advanced_Breakpoints_Watchpoints.Main_Box);
-         Unref (Editor.Advanced_Breakpoints_Watchpoints.Main_Box);
+         Ref (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
+         Unparent (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
+         Pack_Start (Editor.Hbox3,
+                     Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
+         Unref (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
          Set_Sensitive
            (Editor.Advanced_Breakpoints_Watchpoints.Record_Button, False);
          Set_Sensitive
@@ -609,25 +634,46 @@ package body Breakpoints_Editor is
 
          --  Exceptions
          Gtk_New (Editor.Advanced_Breakpoints_Exceptions);
-         Ref (Editor.Advanced_Breakpoints_Exceptions.Main_Box);
-         Unparent (Editor.Advanced_Breakpoints_Exceptions.Main_Box);
-         Pack_Start
-           (Editor.Hbox4, Editor.Advanced_Breakpoints_Exceptions.Main_Box);
-         Unref (Editor.Advanced_Breakpoints_Exceptions.Main_Box);
+         Ref (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
+         Unparent (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
+         Pack_Start (Editor.Hbox4,
+                     Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
+         Unref (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
          Set_Sensitive
            (Editor.Advanced_Breakpoints_Exceptions.Record_Button, False);
          Set_Sensitive
            (Editor.Advanced_Breakpoints_Exceptions.End_Button, False);
       end if;
 
-      if Visible_Is_Set (Editor.Advanced_Breakpoints_Location.Main_Box) then
-         Hide_All (Editor.Advanced_Breakpoints_Location.Main_Box);
-         Hide_All (Editor.Advanced_Breakpoints_Watchpoints.Main_Box);
-         Hide_All (Editor.Advanced_Breakpoints_Exceptions.Main_Box);
+      if Visible_Is_Set
+        (Editor.Advanced_Breakpoints_Location.Main_Notebook)
+      then
+         Hide_All (Editor.Advanced_Breakpoints_Location.Main_Notebook);
+         Hide_All (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
+         Hide_All (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
+         Set_Label (Editor.Advanced_Location, "Advanced >>");
+         Set_Label (Editor.Advanced_Watchpoint, "Advanced >>");
+         Set_Label (Editor.Advanced_Exception, "Advanced >>");
       else
-         Show_All (Editor.Advanced_Breakpoints_Location.Main_Box);
-         Show_All (Editor.Advanced_Breakpoints_Watchpoints.Main_Box);
-         Show_All (Editor.Advanced_Breakpoints_Exceptions.Main_Box);
+         Show_All (Editor.Advanced_Breakpoints_Location.Main_Notebook);
+         Show_All (Editor.Advanced_Breakpoints_Watchpoints.Main_Notebook);
+         Show_All (Editor.Advanced_Breakpoints_Exceptions.Main_Notebook);
+
+         Info_WTX (Editor.Process.Debugger, WTX_Version);
+
+         if WTX_Version /= 3 then
+            Hide (Editor.Advanced_Breakpoints_Location.Scope_Box);
+            Hide (Editor.Advanced_Breakpoints_Watchpoints.Scope_Box);
+            Hide (Editor.Advanced_Breakpoints_Exceptions.Scope_Box);
+         else
+            Show (Editor.Advanced_Breakpoints_Location.Scope_Box);
+            Show (Editor.Advanced_Breakpoints_Watchpoints.Scope_Box);
+            Show (Editor.Advanced_Breakpoints_Exceptions.Scope_Box);
+         end if;
+
+         Set_Label (Editor.Advanced_Location, "Advanced <<");
+         Set_Label (Editor.Advanced_Watchpoint, "Advanced <<");
+         Set_Label (Editor.Advanced_Exception, "Advanced <<");
       end if;
    end Toggle_Advanced_Dialog;
 
