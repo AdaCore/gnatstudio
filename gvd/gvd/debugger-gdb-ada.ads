@@ -46,6 +46,12 @@ package Debugger.Gdb.Ada is
       Result     : in out Generic_Values.Generic_Type_Access;
       Repeat_Num : out Positive);
 
+   function Thread_List (Lang : access Gdb_Ada_Language) return String;
+
+   function Parse_Thread_List
+     (Lang   : access Gdb_Ada_Language;
+      Output : String) return Language.Thread_Information_Array;
+
 private
 
    type Gdb_Ada_Language is new
