@@ -1192,7 +1192,6 @@ package body Project_Explorers is
       else
          Update_Node (Explorer, Node, null, Force_Expanded => True);
       end if;
-
    end Compute_Children;
 
    --------------------
@@ -1299,11 +1298,13 @@ package body Project_Explorers is
       end loop;
 
       declare
-         Imported : Project_Type_Array (1 .. Count);
+         Imported : Project_Type_Array (1 .. Count - 1);
       begin
          Iter := Start (Project, Recursive => True, Direct_Only => True);
          for Index in Imported'Range loop
-            Imported (Index) := Current (Iter);
+            if Current (Iter) /= Project then
+               Imported (Index) := Current (Iter);
+            end if;
             Next (Iter);
          end loop;
 
