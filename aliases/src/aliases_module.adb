@@ -77,7 +77,6 @@ with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with System.Assertions;
 with Glib.Object;              use Glib.Object;
---  with Default_Preferences;      use Default_Preferences;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Intl;               use Glide_Intl;
 with GUI_Utils;                use GUI_Utils;
