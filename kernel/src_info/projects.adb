@@ -28,6 +28,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Namet;                     use Namet;
 with Osint;                     use Osint;
+with OS_Utils;                  use OS_Utils;
 with Prj.Env;                   use Prj, Prj.Env;
 with Prj.Ext;
 with Prj.PP;                    use Prj.PP;
@@ -166,20 +167,18 @@ package body Projects is
          begin
             Trace (Me, "Save_Project: Creating new file " & Filename);
 
-            if not Is_Directory (Dirname) then
-               begin
-                  Make_Dir (Dirname);
-               exception
-                  when Directory_Error =>
-                     Trace (Me, "Couldn't create directory " & Dirname);
+            begin
+               Make_Dir_Recursive (Dirname);
+            exception
+               when Directory_Error =>
+                  Trace (Me, "Couldn't create directory " & Dirname);
 
-                     if Report_Error /= null then
-                        Report_Error ("Couldn't create directory " & Dirname);
-                     end if;
+                  if Report_Error /= null then
+                     Report_Error ("Couldn't create directory " & Dirname);
+                  end if;
 
-                     return;
-               end;
-            end if;
+                  return;
+            end;
 
             Create (File, Mode => Out_File, Name => Filename);
             Pretty_Print
