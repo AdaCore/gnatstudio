@@ -20,6 +20,7 @@
 
 with Glib.Values;
 with Glib.Error;                use Glib.Error;
+with Glib.Object;               use Glib.Object;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtk.Box;                   use Gtk.Box;
@@ -40,6 +41,11 @@ package body Glide_Main_Window is
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the delete event.
+
+   procedure Preferences_Changed
+     (Main_Window : access GObject_Record'Class;
+      Kernel      : Kernel_Handle);
+   --  Called when the preferences have changed.
 
    -------------
    -- Anim_Cb --
@@ -122,6 +128,23 @@ package body Glide_Main_Window is
       end if;
    end Quit;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Main_Window : access GObject_Record'Class;
+      Kernel      : Kernel_Handle)
+   is
+      Main : constant Glide_Window := Glide_Window (Main_Window);
+   begin
+      if Get_Pref (Kernel, Toolbar_Show_Text) then
+         Set_Style (Main.Toolbar, Toolbar_Both);
+      else
+         Set_Style (Main.Toolbar, Toolbar_Icons);
+      end if;
+   end Preferences_Changed;
+
    ----------------
    -- Initialize --
    ----------------
@@ -168,6 +191,13 @@ package body Glide_Main_Window is
             Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
          end if;
       end;
+
+      Kernel_Callback.Connect
+        (Main_Window, Preferences_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
+         Kernel_Handle (Main_Window.Kernel));
+
+      Preferences_Changed (Main_Window, Main_Window.Kernel);
 
       Return_Callback.Object_Connect
         (Main_Window, "delete_event",
