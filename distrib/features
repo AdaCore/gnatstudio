@@ -7,3 +7,4 @@ New features in GPS 1.4.0
 
 - Auto casing of Ada reserved words and identifiers
 
+- Ability to search in the files currently open in the editor
