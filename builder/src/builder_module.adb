@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gdk.Color;                 use Gdk.Color;
@@ -70,6 +71,7 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Commands;                  use Commands;
@@ -138,15 +140,17 @@ package body Builder_Module is
    --  Free the memory associate with Ar.
 
    function Compute_Arguments
-     (Kernel  : Kernel_Handle;
-      Syntax  : Command_Syntax;
-      Project : String;
-      File    : Virtual_File) return Argument_List_Access;
+     (Kernel       : Kernel_Handle;
+      Syntax       : Command_Syntax;
+      Project      : String;
+      File         : Virtual_File;
+      Compile_Only : Boolean := False) return Argument_List_Access;
    --  Compute the make arguments following the right Syntax
    --  (gnatmake / make), given a Project and File name.
    --  It is the responsibility of the caller to free the returned object.
    --
    --  If File is No_File, then all files of the project will be recompiled.
+   --  If Compile_Only is True, then use compile rather than build syntax.
 
    procedure Add_Build_Menu
      (Menu         : in out Gtk_Menu;
@@ -286,10 +290,11 @@ package body Builder_Module is
    -----------------------
 
    function Compute_Arguments
-     (Kernel  : Kernel_Handle;
-      Syntax  : Command_Syntax;
-      Project : String;
-      File    : Virtual_File) return Argument_List_Access
+     (Kernel       : Kernel_Handle;
+      Syntax       : Command_Syntax;
+      Project      : String;
+      File         : Virtual_File;
+      Compile_Only : Boolean := False) return Argument_List_Access
    is
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access :=
@@ -328,42 +333,60 @@ package body Builder_Module is
             --  make -s -C dir -f Makefile.project build VAR1=value1 ...
 
             declare
-               Lang         : String := Get_Language_From_File
+               Lang : String := Get_Language_From_File
                  (Get_Language_Handler (Kernel), File);
-               List         : constant Argument_List :=
+               List : constant Argument_List :=
                  ((new String'("-s"),
                    new String'("-C"),
                    new String'(Dir_Name (Project)),
                    new String'("-f"),
-                   new String'("Makefile." & Base_Name (Project, ".gpr")),
-                   new String'("build")) & Vars.all);
+                   new String'("Makefile." & Base_Name (Project, ".gpr"))) &
+                  Vars.all);
+               Base : constant String := Locale_From_UTF8 (Base_Name (File));
 
             begin
-               To_Lower (Lang);
+               if Compile_Only then
+                  --  Compute the name of the object file to build and pass it
+                  --  to make
 
-               if Lang = "ada" then
-                  --  ??? Should set these values also if Ada is part of the
-                  --  supported languages.
-
-                  if File = VFS.No_File then
-                     File_Arg := new String'("");
-                  else
-                     File_Arg :=
-                       new String'("ADA_SOURCES=" & Base_Name (File));
-                  end if;
-
-                  if Build_Progress then
-                     Result := new Argument_List'
-                       (List &
-                        File_Arg &
-                        new String'("ADAFLAGS=-d"));
-
-                  else
-                     Result := new Argument_List'(List & File_Arg);
-                  end if;
+                  Result := new Argument_List'
+                    (List &
+                     new String'
+                       (Base
+                          (Base'First ..
+                             Index (Base, ".",
+                                    Going => Ada.Strings.Backward)) &
+                        "o"));
 
                else
-                  Result := new Argument_List'(List);
+                  To_Lower (Lang);
+
+                  if Lang = "ada" then
+                     --  ??? Should set these values also if Ada is part of the
+                     --  supported languages.
+
+                     if File = VFS.No_File then
+                        File_Arg := new String'("");
+                     else
+                        File_Arg :=
+                          new String'("ADA_SOURCES=" & Base);
+                     end if;
+
+                     if Build_Progress then
+                        Result := new Argument_List'
+                          (List &
+                           new String'("build") &
+                           File_Arg &
+                           new String'("ADAFLAGS=-d"));
+
+                     else
+                        Result := new Argument_List'
+                          (List & new String'("build") & File_Arg);
+                     end if;
+
+                  else
+                     Result := new Argument_List'(List & new String'("build"));
+                  end if;
                end if;
             end;
       end case;
@@ -724,6 +747,7 @@ package body Builder_Module is
       Common_Args  : Argument_List_Access;
       Args         : Argument_List_Access;
       Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
+      Syntax       : Command_Syntax;
 
    begin
       if File = VFS.No_File then
@@ -733,13 +757,6 @@ package body Builder_Module is
       end if;
 
       To_Lower (Lang);
-
-      if Lang /= "ada" then
-         Console.Insert
-           (Kernel, -"Compilation of non Ada file not supported yet",
-            Mode => Error);
-         return;
-      end if;
 
       if not Save_MDI_Children
         (Kernel, Force => Get_Pref (Kernel, Auto_Save))
@@ -754,11 +771,31 @@ package body Builder_Module is
             Mode => Error);
          return;
 
-      else
-         Cmd := new String'
+      elsif Lang = "ada" then
+         Syntax := GNAT_Syntax;
+         Cmd    := new String'
            (Get_Attribute_Value
               (Prj, Compiler_Command_Attribute,
                Default => "gnatmake", Index => "ada"));
+
+         if Syntax_Only then
+            Common_Args := new Argument_List'
+              (Unique_Compile'Access, Quiet_Opt'Access, Syntax_Check'Access);
+         else
+            Common_Args := new Argument_List'(1 => Unique_Compile'Access);
+         end if;
+
+      else
+         if Status (Prj) /= From_File then
+            Console.Insert
+              (Kernel, -"You must save the project before compiling",
+               Mode => Error);
+            return;
+         end if;
+
+         Syntax      := Make_Syntax;
+         Cmd         := new String'("make");
+         Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
 
       Change_Dir (Dir_Name (Project_Path (Prj)));
@@ -766,13 +803,6 @@ package body Builder_Module is
       Set_Sensitive_Menus (Kernel, False);
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
-
-      if Syntax_Only then
-         Common_Args := new Argument_List'
-           (Unique_Compile'Access, Quiet_Opt'Access, Syntax_Check'Access);
-      else
-         Common_Args := new Argument_List'(1 => Unique_Compile'Access);
-      end if;
 
       if Status (Prj) /= From_File then
          Insert_And_Launch
@@ -786,7 +816,7 @@ package body Builder_Module is
 
       else
          Args := Compute_Arguments
-           (Kernel, GNAT_Syntax, Project_Path (Prj), File);
+           (Kernel, Syntax, Project_Path (Prj), File, Compile_Only => True);
          Insert_And_Launch
            (Kernel,
             Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
