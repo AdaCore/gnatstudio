@@ -10,9 +10,7 @@ with Glib;       use Glib;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.List;   use Gtk.List;
 with Gtk.List_Item;  use Gtk.List_Item;
-with Glib.Values; use Glib.Values;
 with Variable_Editors; use Variable_Editors;
-with Text_IO; use Text_IO;
 
 package body New_Variable_Editor_Pkg.Callbacks is
 

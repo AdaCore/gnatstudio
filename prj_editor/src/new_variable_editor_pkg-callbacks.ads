@@ -1,6 +1,5 @@
 --  with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
-with Glib.Values;
 
 package New_Variable_Editor_Pkg.Callbacks is
    procedure On_Variable_Name_Changed
