@@ -608,7 +608,7 @@ package body Vdiff2_Module.Utils is
                           Data (Item_Local.Current_Node));
       else
          Button := Message_Dialog
-           (Msg     => -"One of this file is already used in VDiff.",
+           (Msg     => -"One of this files is already used in VDiff.",
             Buttons => Button_OK,
             Parent  => Get_Main_Window (Kernel));
          return;
