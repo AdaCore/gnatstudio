@@ -9,6 +9,9 @@ package body Entities.Debug is
    use Entities_Tries;
    use Files_HTable;
    use LI_HTable;
+   use Source_File_Arrays;
+   use File_Location_Arrays;
+   use Entity_Information_Arrays;
 
    procedure Dump (LIs       : in out LI_HTable.HTable);
    procedure Dump (Files     : in out Files_HTable.HTable);
@@ -54,15 +57,13 @@ package body Entities.Debug is
       Full      : Boolean;
       Name      : String) is
    begin
-      if Entities.List /= null
-        and then Entities.List'First < Entities.Past_Last
-      then
+      if Length (Entities) /= 0 then
          if not Full and then Name /= "" then
             Put ("   " & Name & "= ");
          end if;
 
-         for E in Entities.List'First .. Entities.Past_Last - 1 loop
-            Dump (Entities.List (E), Full => Full, Name => "");
+         for E in Entity_Information_Arrays.First .. Last (Entities) loop
+            Dump (Entities.Table (E), Full => Full, Name => "");
 
             if not Full then
                Put (' ');
@@ -94,12 +95,10 @@ package body Entities.Debug is
 
    procedure Dump (Locs : File_Location_List; Name : String) is
    begin
-      if Locs.List /= null
-        and then Locs.List'First < Locs.Past_Last
-      then
+      if Length (Locs) /= 0 then
          Put ("   " & Name & "= ");
-         for L in Locs.List'First .. Locs.Past_Last - 1 loop
-            Dump (Locs.List (L)); Put (' ');
+         for L in File_Location_Arrays.First .. Last (Locs) loop
+            Dump (Locs.Table (L)); Put (' ');
          end loop;
          New_Line;
       end if;
@@ -155,10 +154,10 @@ package body Entities.Debug is
 
    procedure Dump (Files : Source_File_List; Name : String) is
    begin
-      if Files.List /= null and then Files.Past_Last > Files.List'First then
+      if Length (Files) /= 0 then
          Put ("   " & Name & "= ");
-         for L in Files.List'First .. Files.Past_Last - 1 loop
-            Put (Full_Name (Get_Filename (Files.List (L))).all & ' ');
+         for L in Source_File_Arrays.First .. Last (Files) loop
+            Put (Full_Name (Get_Filename (Files.Table (L))).all & ' ');
          end loop;
          New_Line;
       end if;
@@ -206,7 +205,10 @@ package body Entities.Debug is
       Put_Line (" ref_count=" & Image (File.Ref_Count)
                 & " is_valid=" & Boolean'Image (File.Is_Valid)
                 & " has_scope_tree=" & Boolean'Image (File.Scope /= null));
-      Put_Line ("   li=" & Full_Name (Get_LI_Filename (File.LI)).all);
+
+      if File.LI /= null then
+         Put_Line ("   li=" & Full_Name (Get_LI_Filename (File.LI)).all);
+      end if;
 
       Dump (File.Depends_On,  "depends_on");
       Dump (File.Depended_On, "depended_on");
