@@ -357,9 +357,10 @@ package Src_Editor_Box is
    --  pointing at the declaration, then return the location of the body
    --  associated to the entity. If no reference to the entity could be found,
    --  then Filename_Found returned is null, and the values of Start_Line,
-   --  Start_Column, End_Line, End_Column are undefined..
+   --  Start_Column, End_Line, End_Column are undefined.. The file name
+   --  returned contains the path to the source file.
    --
-   --  The memory allocated for Filename_Found must be deallocated after use.
+   --  The memory allocated for Filename must be deallocated after use.
    --
    --  Note that this routine assumes that the given Lib_Info is up-to-date.
    --  It also assumes that the given cursor position is valid; otherwise, the
