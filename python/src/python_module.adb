@@ -789,7 +789,7 @@ package body Python_Module is
                if not Found then
                   Set_Error_Msg
                     (Data, -"Invalid keyword parameter: " & S);
-                  return;
+                  raise Invalid_Parameter;
                end if;
             end;
          end loop;
@@ -817,20 +817,33 @@ package body Python_Module is
    ---------------
 
    function Get_Param (Data : Python_Callback_Data'Class; N : Positive)
-      return PyObject is
+      return PyObject
+   is
+      Obj : PyObject := null;
    begin
-      if Data.Kw_Params = null and then Data.Kw /= null then
+      --  Check keywords parameters. As a special case, we do not check when
+      --  getting the first parameter of a method, which is always the
+      --  instance, since the callback will generally want to do this in the
+      --  common part, before the command-specific parts.
+      if (N /= 1 or else not Data.Is_Method)
+        and then Data.Kw_Params = null
+        and then Data.Kw /= null
+      then
+         Trace (Me, "Keyword parameters not supported");
          PyErr_SetString
            (Data.Script.GPS_Exception,
             -"Keyword parameters not supported");
          raise Invalid_Parameter;
       elsif Data.Args /= null and then N <= PyTuple_Size (Data.Args) then
-         return PyTuple_GetItem (Data.Args, N - 1);
+         Obj := PyTuple_GetItem (Data.Args, N - 1);
       elsif Data.Kw_Params /= null and then N <= Data.Kw_Params'Last then
-         return Data.Kw_Params (N);
+         Obj := Data.Kw_Params (N);
       end if;
 
-      return null;
+      if Obj = null then
+         raise No_Such_Parameter;
+      end if;
+      return Obj;
    end Get_Param;
 
    -------------
@@ -841,7 +854,7 @@ package body Python_Module is
    is
       Item : constant PyObject := Get_Param (Data, N);
    begin
-      if Item = null or else not PyString_Check (Item) then
+      if not PyString_Check (Item) then
          raise Invalid_Parameter;
       end if;
       return PyString_AsString (Item);
@@ -856,7 +869,7 @@ package body Python_Module is
    is
       Item : constant PyObject := Get_Param (Data, N);
    begin
-      if Item = null or else not PyInt_Check (Item) then
+      if not PyInt_Check (Item) then
          raise Invalid_Parameter;
       end if;
 
@@ -876,11 +889,11 @@ package body Python_Module is
       --  "true" or "false", or add support for booleans for newer versions of
       --  python (>= 2.3)
 
-      if Item = null then
-         raise Invalid_Parameter;
-      elsif PyInt_Check (Item) then
+      if PyInt_Check (Item) then
          return PyInt_AsLong (Item) = 1;
       else
+         Trace (Me, "Nth_Arg: Invalid parameter type, expected boolean "
+                & N'Img);
          raise Invalid_Parameter;
       end if;
    end Nth_Arg;
@@ -894,7 +907,7 @@ package body Python_Module is
    is
       Item : constant PyObject := Get_Param (Data, N);
    begin
-      if Item = null or else not PyCObject_Check (Item) then
+      if not PyCObject_Check (Item) then
          raise Invalid_Parameter;
       end if;
       return PyCObject_AsVoidPtr (Item);
@@ -913,7 +926,7 @@ package body Python_Module is
         (Data.Script.GPS_Module, Get_Name (Class));
       Item_Class : PyObject;
    begin
-      if Item = null or else not PyInstance_Check (Item) then
+      if not PyInstance_Check (Item) then
          Trace (Me, "Nth_Arg: Item is null or not an instance");
          raise Invalid_Parameter;
       end if;
