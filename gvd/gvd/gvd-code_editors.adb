@@ -28,7 +28,6 @@ with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 
-with GVD;                 use GVD;
 with GVD.Asm_Editors;     use GVD.Asm_Editors;
 with GVD.Explorer;        use GVD.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
@@ -50,6 +49,9 @@ package body GVD.Code_Editors is
 
    Explorer_Width : constant := 200;
    --  Width of the area reserved for the explorer.
+
+   Layout_Width : constant := 20;
+   --  Width for the area reserved for the buttons in the source/asm editor.
 
    --------------------
    -- Local packages --
