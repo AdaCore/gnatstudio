@@ -219,6 +219,9 @@ package body Gtkada.File_Selector is
      (Win : in out File_Selector_Window_Access);
    --  Callback used to destroy the read idle loop.
 
+   procedure Name_Selected (File : access Gtk_Widget_Record'Class);
+   --  Called when a new file has been selected.
+
    -------------------
    -- Columns_Types --
    -------------------
@@ -1072,6 +1075,25 @@ package body Gtkada.File_Selector is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Explorer_Tree_Select_Row;
 
+   -------------------
+   -- Name_Selected --
+   -------------------
+
+   procedure Name_Selected (File : access Gtk_Widget_Record'Class) is
+      Win : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (File);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+   begin
+      Get_Selected (Get_Selection (Win.File_Tree), Model, Iter);
+
+      if Iter /= Null_Iter then
+         Set_Text
+           (Win.Selection_Entry,
+            Get_String (Win.File_Model, Iter, Base_Name_Column));
+      end if;
+   end Name_Selected;
+
    --------------------------------
    -- On_File_List_End_Selection --
    --------------------------------
@@ -1083,21 +1105,13 @@ package body Gtkada.File_Selector is
       pragma Unreferenced (Args);
       Win   : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
-
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
    begin
-      Get_Selected (Get_Selection (Win.File_Tree), Model, Iter);
-
-      if Iter /= Null_Iter then
-         Set_Text
-           (Win.Selection_Entry,
-            Get_String (Win.File_Model, Iter, Base_Name_Column));
-
-         if Win.Own_Main_Loop then
-            Main_Quit;
-            Win.Own_Main_Loop := False;
-         end if;
+      Name_Selected (Win);
+      if Get_Text (Win.Selection_Entry) /= ""
+        and then Win.Own_Main_Loop
+      then
+         Main_Quit;
+         Win.Own_Main_Loop := False;
       end if;
 
    exception
@@ -1780,6 +1794,11 @@ package body Gtkada.File_Selector is
          Return_Callback.Connect
            (File_Selector_Window.File_Tree, "key_press_event",
             On_File_List_Key_Press_Event'Access);
+
+         Widget_Callback.Object_Connect
+           (Get_Selection (File_Selector_Window.File_Tree), "changed",
+            Widget_Callback.To_Marshaller (Name_Selected'Access),
+            File_Selector_Window);
 
          Widget_Callback.Connect
            (File_Selector_Window.File_Tree, "row_activated",
