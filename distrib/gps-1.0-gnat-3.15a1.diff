@@ -1,14 +1,35 @@
 Index: common/src/stubs.c
 *** gps-1.0.1/common/src/stubs.c	Sat Mar 24 05:37:44 2001
---- common/src/stubs.c	Fri May 31 20:02:56 2002
+--- common/src/stubs.c	Sun Sep 22 11:59:25 2002
 ***************
 *** 0 ****
---- 1,5 ----
+--- 1,26 ----
++ #include <sys/stat.h>
++ #ifdef _WIN32
++ #include <windows.h>
++ #endif
++ 
++ extern int __gnat_stat (char *, struct stat *);
++ 
 + int __gnat_copy_attribs (from, to, mode) {}
 + 
 + const int __gnat_vmsp = 0;
 + 
 + int get_gcc_version () { return 2; }
++ 
++ int
++ __gnat_is_symbolic_link (char *name)
++ {
++ #if defined (_WIN32) || defined (VMS)
++   return 0;
++ #else
++   int ret;
++   struct stat statbuf;
++ 
++   ret = lstat (name, &statbuf);
++   return (!ret && S_ISLNK (statbuf.st_mode));
++ #endif
++ }
 *** gps-1.0.1/gvd/gvd_common.gpr	Tue Apr 16 12:10:06 2002
 --- gvd/gvd_common.gpr	Fri May 31 18:02:42 2002
 ***************
