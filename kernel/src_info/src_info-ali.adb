@@ -310,8 +310,8 @@ package body Src_Info.ALI is
       end loop;
 
       --  If we reach this point, the character is illegal.
-      Trace (Me, "Char_To_E_Kind: Invalid character");
-      raise ALI_Internal_Error;
+      Trace (Me, "Char_To_E_Kind: Invalid character '" & C & ''');
+      return Unresolved_Entity;
    end Char_To_E_Kind;
 
    --------------------
@@ -327,8 +327,8 @@ package body Src_Info.ALI is
       end loop;
 
       --  If we reach this point, the character is illegal.
-      Trace (Me, "Char_To_R_Kind: Invalid character");
-      raise ALI_Internal_Error;
+      Trace (Me, "Char_To_R_Kind: Invalid character '" & C & ''');
+      return Reference;
    end Char_To_R_Kind;
 
    ----------------------
