@@ -459,7 +459,7 @@ package body Shell_Script is
      (Script : access Shell_Scripting_Record'Class;
       Add    : System.Address) return Shell_Class_Instance
    is
-      L   : List_Node := First (Script.Instances);
+      L : List_Node := First (Script.Instances);
    begin
       while L /= Null_Node loop
          if Instances_List.Data (L).all'Address = Add then
@@ -1142,11 +1142,11 @@ package body Shell_Script is
       Args    : GNAT.OS_Lib.Argument_List;
       Errors  : access Boolean) return String
    is
-      Data         : Command_Information_Access;
-      Callback     : Shell_Callback_Data;
-      Instance     : Class_Instance;
-      Start        : Natural;
-      Shell        : Shell_Scripting;
+      Data     : Command_Information_Access;
+      Callback : Shell_Callback_Data;
+      Instance : Class_Instance;
+      Start    : Natural;
+      Shell    : Shell_Scripting;
 
    begin
       Errors.all := False;
