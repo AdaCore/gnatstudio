@@ -468,7 +468,6 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Search_String (Current_Text, Garbage_Cursor, ";", Std_Ada_Escape));
       Free (Garbage_Cursor);
 
-
       This.Body_Begin := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Body_Begin));
       This.Body_End := new Mark_Abstr'Class'
