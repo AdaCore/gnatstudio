@@ -6,9 +6,11 @@ package Generic_Stack is
    type Stack_Record;
    type Simple_Stack is access Stack_Record;
    type Stack_Record is record
-      Val  : Generic_Type;
+      Val  : aliased Generic_Type;
       Next : Simple_Stack;
    end record;
+
+   type Generic_Type_Access is access all Generic_Type;
 
    Stack_Empty : exception;
    --  Raised by the functions below when stack is empty.
@@ -27,8 +29,10 @@ package Generic_Stack is
    --  Remove the value on top of Stack.
    --  Raise Stack_Empty if Stack is empty.
 
-   function Top (Stack : Simple_Stack) return Generic_Type;
-   --  Return the top of the stack without modifying it.
+   function Top (Stack : Simple_Stack) return Generic_Type_Access;
+   --  Return a pointer to the top of the stack.
+   --  Note that modifying the contents of the returned pointer will
+   --  modify the contents of the stack.
    --  Raise Stack_Empty if Stack is empty.
 
 private

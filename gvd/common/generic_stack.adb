@@ -14,8 +14,7 @@ package body Generic_Stack is
    ---------
 
    procedure Pop (Stack : in out Simple_Stack; Value : out Generic_Type) is
-      P   : Simple_Stack;
-
+      P : Simple_Stack;
    begin
       if Stack = null then
          raise Stack_Empty;
@@ -37,14 +36,13 @@ package body Generic_Stack is
    -- Top --
    ---------
 
-   function Top (Stack : Simple_Stack) return Generic_Type is
+   function Top (Stack : Simple_Stack) return Generic_Type_Access is
    begin
       if Stack = null then
          raise Stack_Empty;
       else
-         return Stack.Val;
+         return Stack.Val'Access;
       end if;
    end Top;
 
 end Generic_Stack;
-
