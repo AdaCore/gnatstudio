@@ -614,6 +614,9 @@ package body Codefix.Formal_Errors is
 
          Merge (New_Extract, Extract_With, Extract_Use, Current_Text, Success);
 
+         Free (Extract_With);
+         Free (Extract_Use);
+
          return New_Extract;
 
       end Delete_With;

@@ -337,7 +337,10 @@ package body Codefix.Graphics is
             Success_Update,
             Already_Fixed);
 
-         exit when Already_Fixed or else not Success_Update;
+         if Already_Fixed or else not Success_Update then
+            Free (Extended_Extract);
+            exit;
+         end if;
 
          Reduce
            (Extended_Extract,

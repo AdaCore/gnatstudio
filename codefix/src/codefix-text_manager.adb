@@ -2436,6 +2436,7 @@ package body Codefix.Text_Manager is
          Navigator,
          Success,
          False);
+      Free (Navigator);
    end Merge;
 
    -----------
