@@ -104,6 +104,22 @@ package Codefix.Text_Manager is
    --  Free the memory associated to a Ptr_Mark.
 
    ----------------------------------------------------------------------------
+   --  type Escape_Str_Manager
+   ----------------------------------------------------------------------------
+
+   type Escape_Str_Manager is abstract tagged private;
+   --  This object is used by string seeking functions, in order to know if the
+   --  string found is in a compilable part, or in parts that should be ignored
+   --  (comments and quotes for example). As faar as it depends of the language
+   --  each language should have his own Escape_Str_Manager.
+
+   function Is_In_Escape_Part
+     (This     : Escape_Str_Manager;
+      Text     : String;
+      Position : Natural) return Boolean is abstract;
+   --  Returns true if the position given from the string is in an escape part.
+
+   ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
 
@@ -179,12 +195,11 @@ package Codefix.Text_Manager is
    --  Update the changes previously made in the real text.
 
    function Search_String
-     (This          : Text_Interface'Class;
-      Cursor        : Text_Cursor'Class;
-      Searched      : String;
-      Step          : Step_Way := Normal_Step;
-      Skip_Strings  : Boolean := True;
-      Skip_Comments : Boolean := True) return File_Cursor'Class;
+     (This           : Text_Interface'Class;
+      Cursor         : Text_Cursor'Class;
+      Searched       : String;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -330,12 +345,11 @@ package Codefix.Text_Manager is
    --  Update the changes previously made in the real text.
 
    function Search_String
-     (This          : Text_Navigator_Abstr'Class;
-      Cursor        : File_Cursor'Class;
-      Searched      : String;
-      Step          : Step_Way := Normal_Step;
-      Skip_Strings  : Boolean := True;
-      Skip_Comments : Boolean := True) return File_Cursor'Class;
+     (This           : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class;
+      Searched       : String;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -450,12 +464,11 @@ package Codefix.Text_Manager is
    --  Same one as the previous but Recursive is consider as True.
 
    function Search_String
-     (This          : Extract_Line;
-      Cursor        : File_Cursor'Class;
-      Searched      : String;
-      Step          : Step_Way := Normal_Step;
-      Skip_Strings  : Boolean := True;
-      Skip_Comments : Boolean := True) return File_Cursor'Class;
+     (This           : Extract_Line;
+      Cursor         : File_Cursor'Class;
+      Searched       : String;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor. If Cursor.Col = 0, then
    --  the scan in initialized from the end of the content.
@@ -715,11 +728,11 @@ package Codefix.Text_Manager is
    --  specified by the cursor (if it is a spec, the body is also got).
 
    function Search_String
-     (This         : Extract;
-      Searched     : String;
-      Cursor       : File_Cursor'Class := Null_File_Cursor;
-      Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True) return File_Cursor'Class;
+     (This           : Extract;
+      Searched       : String;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Cursor         : File_Cursor'Class := Null_File_Cursor;
+      Step           : Step_Way := Normal_Step) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor. If Cursor is
    --  Null_File_Cursor,then the research will begin at the begenning of the
@@ -995,6 +1008,14 @@ private
    function Compare_Last (Str_1, Str_2 : String) return Boolean;
    --  Return true when one of the two strings is equal to the last characters
    --  of the other one.
+
+   ----------------------------------------------------------------------------
+   --  type Escape_Str_Manager
+   ----------------------------------------------------------------------------
+
+   type Escape_Str_Manager is abstract tagged record
+      null;
+   end record;
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
