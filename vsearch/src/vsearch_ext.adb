@@ -26,6 +26,7 @@ with Glib.Xml_Int;          use Glib.Xml_Int;
 with Gtk.Alignment;         use Gtk.Alignment;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
+with Gtk.Hbutton_Box;       use Gtk.Hbutton_Box;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Combo;             use Gtk.Combo;
 with Gtk.Enums;             use Gtk.Enums;
@@ -51,7 +52,6 @@ with Glide_Kernel;          use Glide_Kernel;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 
 with Find_Utils;            use Find_Utils;
-with Find_Utils.Help;       use Find_Utils.Help;
 with GUI_Utils;             use GUI_Utils;
 with Generic_List;
 
@@ -777,6 +777,7 @@ package body Vsearch_Ext is
       Handle  : Glide_Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
+      Bbox : Gtk_Hbutton_Box;
    begin
       Vsearch_Pkg.Initialize (Vsearch, Handle);
       Vsearch.Kernel := Handle;
@@ -848,8 +849,12 @@ package body Vsearch_Ext is
         (Vsearch.Options_Toggle, "toggled",
          Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
 
+      Gtk_New (Bbox);
+      Set_Layout (Bbox, Buttonbox_Spread);
+      Pack_End (Vsearch.Vbox_Search, Bbox, Expand => False, Padding => 5);
+
       Gtk_New_From_Stock (Vsearch.Close_Button, Stock_Close);
-      Pack_End (Vsearch.Vbox_Search, Vsearch.Close_Button, Expand => False);
+      Pack_Start (Bbox, Vsearch.Close_Button, Expand => False);
       Widget_Callback.Object_Connect
         (Vsearch.Close_Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Vsearch'Access), Vsearch);
@@ -947,6 +952,8 @@ package body Vsearch_Ext is
            (Child, "unfloat_child",
             Widget_Callback.To_Marshaller (Unfloat_Vsearch'Access));
 
+         Ref (Vsearch);
+
       else
          Vsearch := Vsearch_Extended (Get_Initial_Window (Child));
       end if;
@@ -966,9 +973,25 @@ package body Vsearch_Ext is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Vsearch : constant Vsearch_Extended := Get_Or_Create_Vsearch
-        (Kernel, Raise_Widget => True);
+      Vsearch : Vsearch_Extended;
+      Module  : constant Module_ID := Get_Current_Module (Kernel);
    begin
+      --  We must create the search dialog only after we have found the current
+      --  context, otherwise it would return the context of the search widget
+      --  itself
+      Vsearch := Get_Or_Create_Vsearch (Kernel, Raise_Widget => True);
+
+      if Module /= null then
+         declare
+            Search : constant Search_Module_Data :=
+              Search_Context_From_Module (Module);
+         begin
+            if Search /= No_Search then
+               Set_Text (Get_Entry (Vsearch.Context_Combo), Search.Label);
+            end if;
+         end;
+      end if;
+
       Grab_Focus (Vsearch.Pattern_Entry);
 
    exception
@@ -1073,25 +1096,35 @@ package body Vsearch_Ext is
       return No_Search;
    end Find_Module;
 
+   --------------------------------
+   -- Search_Context_From_Module --
+   --------------------------------
+
+   function Search_Context_From_Module
+     (Id : access Glide_Kernel.Module_ID_Record'Class)
+      return Find_Utils.Search_Module_Data
+   is
+      use Search_Modules_List;
+      List : List_Node := First (Vsearch_Module_Id.Search_Modules);
+   begin
+      while List /= Null_Node loop
+         if Data (List).Id = Module_ID (Id) then
+            return Data (List);
+         end if;
+
+         List := Next (List);
+      end loop;
+
+      return No_Search;
+   end Search_Context_From_Module;
+
    -----------------------------
    -- Register_Default_Search --
    -----------------------------
 
    procedure Register_Default_Search
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Name : constant String := -"Help";
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      Register_Search_Function
-        (Kernel => Kernel,
-         Data   => (Length            => Name'Length,
-                    Label             => Name,
-                    Factory           => Help_Factory'Access,
-                    Extra_Information => null,
-                    Mask              => All_Options and not Supports_Replace
-                      and not Search_Backward
-                      and not Whole_Word and not All_Occurences));
-
       Register_Search_Pattern
         (Kernel,
          Name           => -"Simple string",

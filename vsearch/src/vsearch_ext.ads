@@ -54,6 +54,11 @@ package Vsearch_Ext is
       Data   : Find_Utils.Search_Module_Data);
    --  See Find_Utils.Register_Search_Function;
 
+   function Search_Context_From_Module
+     (Id : access Glide_Kernel.Module_ID_Record'Class)
+      return Find_Utils.Search_Module_Data;
+   --  See Find_Utils.Context_From_Module;
+
 private
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record
       Kernel                 : Glide_Kernel.Kernel_Handle;
