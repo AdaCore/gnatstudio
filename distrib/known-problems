@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.0
 
+- D914-015 MDI docks size incorrectly restored when loading desktop
+  Problem:    When a desktop file is read, the size of the docks (on each
+              side of the main GPS window) is incorrectly restored
+  Workaround: Resize them manually by drag-and-dropping the separator
+
 - D817-008 Closing the Run window does not always terminate execution.
   Problem:    In particular under Windows, and with multi-threaded programs,
               closing the Run window does not terminate the execution.
