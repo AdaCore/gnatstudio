@@ -153,6 +153,7 @@ package body Src_Info.Debug is
      (LIFL : LI_File_List;
       Unit_Name : String)
    is
+      pragma Unreferenced (LIFL, Unit_Name);
    begin
       null;
       --  ??? Will be implemented later...
@@ -163,6 +164,7 @@ package body Src_Info.Debug is
    ----------
 
    procedure Dump (LIFL : LI_File_List) is
+      pragma Unreferenced (LIFL);
    begin
       null;
       --  ??? Will be implemented later...
