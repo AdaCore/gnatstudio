@@ -1,11 +1,10 @@
 with "../gtkada/gtkada";
 with "gvd_common";
-with "../kernel/kernel";
 
 project GVD is
 
-  for Source_Dirs use ("gvd");
-  for Object_Dir use "obj";
+   for Source_Dirs use ("gvd");
+   for Object_Dir use "obj";
 
    package Compiler is
       for Default_Switches ("Ada") use
