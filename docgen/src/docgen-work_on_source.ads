@@ -55,28 +55,34 @@ package Docgen.Work_On_Source is
       Package_Name      : String;
       Entity_List       : in out Type_Entity_List.List;
       List_Ref_In_File  : in out List_Reference_In_File.List;
+      Tagged_Types_List : in out Type_List_Tagged_Element.List;
+      Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
       Process_Body_File : Boolean;
       LI_Unit           : LI_File_Ptr;
       Options           : All_Options;
       Converter         : Docgen.Doc_Subprogram_Type;
       Doc_Directory     : String;
-      Doc_Suffix        : String);
+      Doc_Suffix        : String;
+      Level             : in out Natural);
    --  With the data from the lists, the source file and the config file,
    --  create the Strings for the output.
    --  The order of the procedure calls can't be changed here
    --  without changing the order in texi_output!
    --  Change also: Doc_TEXI_Subtitle !!!
+   --  Level is the level of the current package. By default, the level of the
+   --  package file is 1, then this level is increased by 1 at each inner
+   --  package
 
    procedure Process_Unit_Index
      (B                : Backend_Handle;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_List.List;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Options          : Docgen.All_Options;
       Converter        : Docgen.Doc_Subprogram_Type;
       Doc_Directory    : String;
-      Doc_Suffix       : String);
+      Doc_Suffix       : String;
+      Level            : in out Natural);
    --  Create the index file for the packages
 
    procedure Process_Subprogram_Index
@@ -85,12 +91,12 @@ package Docgen.Work_On_Source is
         Glide_Kernel.Kernel_Handle_Record'Class;
       Subprogram_Index_List         : Docgen.Type_Entity_List.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
-      Entity_List                   : in out Type_Entity_List.List;
       List_Ref_In_File              : in out List_Reference_In_File.List;
       Options                       : Docgen.All_Options;
       Converter                     : Docgen.Doc_Subprogram_Type;
       Doc_Directory                 : String;
-      Doc_Suffix                    : String);
+      Doc_Suffix                    : String;
+      Level                         : in out Natural);
    --  Create the index file for the subprograms
 
    procedure Process_Type_Index
@@ -98,12 +104,12 @@ package Docgen.Work_On_Source is
       Kernel                  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Type_Index_List         : Docgen.Type_Entity_List.List;
       Private_Type_Index_List : in out Type_Entity_List.List;
-      Entity_List             : in out Type_Entity_List.List;
       List_Ref_In_File        : in out List_Reference_In_File.List;
       Options                 : All_Options;
       Converter               : Doc_Subprogram_Type;
       Doc_Directory           : String;
-      Doc_Suffix              : String);
+      Doc_Suffix              : String;
+      Level                   : in out Natural);
    --  Create the index file for the types
 
    procedure Process_Tagged_Type_Index
@@ -112,13 +118,13 @@ package Docgen.Work_On_Source is
         Glide_Kernel.Kernel_Handle_Record'Class;
       Tagged_Type_Index_List    : Docgen.Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Source_File_List          : in out Type_Source_File_List.List;
       Options                   : All_Options;
       Converter                 : Doc_Subprogram_Type;
       Doc_Directory             : String;
-      Doc_Suffix                : String);
+      Doc_Suffix                : String;
+      Level                     : in out Natural);
    --  Create the index file for the tagged types
 
 end Docgen.Work_On_Source;
