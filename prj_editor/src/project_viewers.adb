@@ -1101,7 +1101,7 @@ package body Project_Viewers is
    begin
       if Has_Project_Information (File) then
          Gtk_New (Selector,
-                  Root => "/",
+                  Root => (1 => Directory_Separator),
                   Initial_Directory => Dir_Name (Dir),
                   Dialog_Title => -"Select project");
          Register_Filter (Selector, Prj_File_Filter);
