@@ -112,14 +112,16 @@ package Odd.Dialogs is
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
-      Questions                  : Question_Array);
+      Questions                  : Question_Array;
+      Question_Description       : String := "");
 
    procedure Initialize
      (Question_Dialog            : access Question_Dialog_Record'Class;
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
-      Questions                  : Question_Array);
+      Questions                  : Question_Array;
+      Question_Description       : String := "");
 
    procedure Gtk_New
      (History_Dialog : out History_Dialog_Access;

@@ -142,12 +142,14 @@ package body Odd.Dialogs is
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
-      Questions                  : Question_Array) is
+      Questions                  : Question_Array;
+      Question_Description       : String := "") is
    begin
       Question_Dialog := new Question_Dialog_Record;
       Initialize
         (Question_Dialog, Main_Window, Debugger,
-         Multiple_Selection_Allowed, Questions);
+         Multiple_Selection_Allowed, Questions,
+         Question_Description);
    end Gtk_New;
 
    ------------
@@ -428,12 +430,14 @@ package body Odd.Dialogs is
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
-      Questions                  : Question_Array)
+      Questions                  : Question_Array;
+      Question_Description       : String := "")
    is
       Temp      : Chars_Ptr_Array (0 .. 1);
       Row       : Gint;
       Width     : Gint;
       OK_Button : Gtk_Button;
+      Label     : Gtk_Label;
 
    begin
       Initialize (Question_Dialog, "Question", Main_Window);
@@ -442,6 +446,11 @@ package body Odd.Dialogs is
          Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
 
       Question_Dialog.Debugger := Debugger;
+
+      if Question_Description /= "" then
+         Gtk_New (Label, Question_Description);
+         Pack_Start (Question_Dialog.Vbox1, Label, False, False, 5);
+      end if;
 
       Gtk_New (Question_Dialog.Scrolledwindow1);
       Pack_Start
