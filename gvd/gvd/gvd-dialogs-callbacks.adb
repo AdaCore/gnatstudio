@@ -26,10 +26,24 @@ package body Odd.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Frame : Gint := To_Gint (Params, 1) + 1;
+      Frame       : Gint         := To_Gint (Params, 1) + 1;
+
+      --  Get the process notebook from the main window which is associated
+      --  with the task dialog (toplevel (object)).
+
+      Main_Window : Gtk_Window   :=
+        Backtrace_Dialog_Access (Get_Toplevel (Object)).Main_Window;
+      Notebook    : Gtk_Notebook :=
+        Main_Debug_Window_Access (Main_Window).Process_Notebook;
+
+      --  Get the current page in the process notebook.
+
+      Process     : Debugger_Process_Tab :=
+        Process_User_Data.Get (Get_Nth_Page
+          (Notebook, Get_Current_Page (Notebook)));
 
    begin
-      null;
+      Stack_Frame (Process.Debugger, Positive (Frame), Main_Window);
    end On_Backtrace_List_Select_Row;
 
    -----------------------------
