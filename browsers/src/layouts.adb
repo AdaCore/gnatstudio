@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -79,7 +79,7 @@ package body Layouts is
      (G               : Graph;
       Lines           : Node_Matrix;
       Max_Width       : Natural;
-      X               : out Integer_Array;
+      X               : in out Integer_Array;
       Num_Per_Line    : Natural_Array;
       Vertical_Layout : Boolean);
    --  Positions the nodes within each layer.
@@ -758,7 +758,7 @@ package body Layouts is
      (G               : Graph;
       Lines           : Node_Matrix;
       Max_Width       : Natural;
-      X               : out Integer_Array;
+      X               : in out Integer_Array;
       Num_Per_Line    : Natural_Array;
       Vertical_Layout : Boolean)
    is
