@@ -265,13 +265,10 @@ package body Commands.Custom is
                Command.Command.all,
                New_Args.all,
                null,
+               null,
                "",
                Success);
          end if;
-
-         for J in New_Args'Range loop
-            Free (New_Args (J));
-         end loop;
 
          Free (New_Args);
 
@@ -284,6 +281,7 @@ package body Commands.Custom is
            (Command.Kernel,
             Command.Command.all,
             No_Args,
+            null,
             null,
             "",
             Success);
