@@ -51,6 +51,7 @@ package Odd.Canvas is
       Activate : Boolean);
    --  Change the status of aliases detection in the canvas
 
+
 private
 
    type Odd_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
