@@ -44,6 +44,7 @@ with Odd.Strings;     use Odd.Strings;
 with Odd.Types;       use Odd.Types;
 with Odd.Process;     use Odd.Process;
 with Odd.Preferences; use Odd.Preferences;
+with Process_Proxies; use Process_Proxies;
 
 package body Odd.Memory_View is
 
@@ -53,6 +54,9 @@ package body Odd.Memory_View is
 
    package Long_Int_IO is new Ada.Text_IO.Integer_IO (Long_Long_Integer);
    use Long_Int_IO;
+
+   package Memory_View_Register is new Register_Generic
+     (Long_Long_Integer, Odd_Memory_View_Record);
 
    ---------------------
    -- Local constants --
@@ -78,7 +82,7 @@ package body Odd.Memory_View is
    -----------------------
 
    function Is_Highlighted
-     (View     : Odd_Memory_View;
+     (View     : access Odd_Memory_View_Record'Class;
       Position : Gint) return Boolean;
    --  Tells whether a given position in the view should be highlighted or not.
 
@@ -97,7 +101,7 @@ package body Odd.Memory_View is
    --  Conversion from a Long_Long_Integer to a based representation.
    --  Output is truncated to Trunc_At characters if Trunc_At /= -1.
 
-   procedure Clear_View (View : Odd_Memory_View);
+   procedure Clear_View (View : access Odd_Memory_View_Record'Class);
    --  Removes everything from the view.
 
    --------------------
@@ -105,7 +109,7 @@ package body Odd.Memory_View is
    --------------------
 
    function Is_Highlighted
-     (View     : Odd_Memory_View;
+     (View     : access Odd_Memory_View_Record'Class;
       Position : Gint) return Boolean
    is
       Row_Length : Integer;
@@ -136,7 +140,7 @@ package body Odd.Memory_View is
    -----------------------
 
    function Position_To_Index
-     (View     : in Odd_Memory_View;
+     (View     : access Odd_Memory_View_Record'Class;
       Position : in Gint) return Integer
    is
       Row_Length : Integer;
@@ -224,7 +228,7 @@ package body Odd.Memory_View is
    -- Clear_View --
    ----------------
 
-   procedure Clear_View (View : Odd_Memory_View) is
+   procedure Clear_View (View : access Odd_Memory_View_Record'Class) is
    begin
       Delete_Text (View.View);
    end Clear_View;
@@ -286,7 +290,7 @@ package body Odd.Memory_View is
    --  Update_Display --
    ---------------------
 
-   procedure Update_Display (View : Odd_Memory_View) is
+   procedure Update_Display (View : access Odd_Memory_View_Record'Class) is
       Index      : Integer;
       Width      : Gint;
       Height     : Gint;
@@ -428,11 +432,22 @@ package body Odd.Memory_View is
    --------------------
 
    procedure Display_Memory
-     (View    : Odd_Memory_View;
+     (View    : access Odd_Memory_View_Record'Class;
       Address : Long_Long_Integer)
    is
       Values : String (1 .. 2 * View.Number_Of_Bytes);
+      Process : constant Debugger_Process_Tab :=
+        Get_Current_Process (View.Window);
    begin
+      if Memory_View_Register.Register_Post_Cmd_If_Needed
+        (Get_Process (Process.Debugger),
+         View,
+         Display_Memory'Access,
+         Address)
+      then
+         return;
+      end if;
+
       Free (View.Values);
       Free (View.Flags);
       View.Starting_Address := Address;
@@ -440,10 +455,9 @@ package body Odd.Memory_View is
       for J in 1 .. View.Number_Of_Bytes loop
          Values (2 * J - 1 .. 2 * J) :=
            (Get_Memory_Byte
-             (Get_Current_Process
-              (View.Window).Debugger,
-              "0x" & To_Standard_Base (Long_Long_Integer (J - 1)
-                                       + View.Starting_Address, 16)));
+            (Process.Debugger,
+             "0x" & To_Standard_Base (Long_Long_Integer (J - 1)
+                                      + View.Starting_Address, 16)));
       end loop;
 
       View.Values := new String' (Values);
@@ -455,7 +469,9 @@ package body Odd.Memory_View is
    -- Display_Memory --
    --------------------
 
-   procedure Display_Memory (View : Odd_Memory_View; Address : String) is
+   procedure Display_Memory
+     (View : access Odd_Memory_View_Record'Class;
+      Address : String) is
    begin
       if Address'Length > 2
         and then Address (1 .. 2) = "0x"
@@ -471,7 +487,7 @@ package body Odd.Memory_View is
    -- Apply_Changes --
    -------------------
 
-   procedure Apply_Changes (View : Odd_Memory_View) is
+   procedure Apply_Changes (View : access Odd_Memory_View_Record'Class) is
    begin
       for J in 1 .. View.Number_Of_Bytes loop
          Put_Memory_Byte
@@ -508,7 +524,7 @@ package body Odd.Memory_View is
    -- Page_Up --
    -------------
 
-   procedure Page_Up (View : Odd_Memory_View) is
+   procedure Page_Up (View : access Odd_Memory_View_Record'Class) is
    begin
       Display_Memory
         (View, View.Starting_Address -
@@ -519,7 +535,7 @@ package body Odd.Memory_View is
    -- Page_Down --
    ---------------
 
-   procedure Page_Down (View : Odd_Memory_View) is
+   procedure Page_Down (View : access Odd_Memory_View_Record'Class) is
    begin
       Display_Memory
         (View, View.Starting_Address +
@@ -530,7 +546,10 @@ package body Odd.Memory_View is
    -- Update --
    ------------
 
-   procedure Update (View : Odd_Memory_View; Process : Gtk_Widget) is
+   procedure Update
+     (View : access Odd_Memory_View_Record'Class;
+      Process : Gtk_Widget)
+   is
       Tab : Debugger_Process_Tab := Debugger_Process_Tab (Process);
       use type GNAT.OS_Lib.String_Access;
 
@@ -550,7 +569,8 @@ package body Odd.Memory_View is
    -----------------
 
    procedure Move_Cursor
-     (View : Odd_Memory_View; Where : in Dir)
+     (View : access Odd_Memory_View_Record'Class;
+      Where : in Dir)
    is
       Move     : Gint := 0;
       Position : Gint := Get_Position (View.View);
@@ -601,7 +621,10 @@ package body Odd.Memory_View is
    -- Insert --
    ------------
 
-   procedure Insert (View : Odd_Memory_View; Char : String) is
+   procedure Insert
+     (View : access Odd_Memory_View_Record'Class;
+      Char : String)
+   is
       Prefix      : String (1 .. 3);
       Success     : Boolean;
       Background  : Gdk_Color := Null_Color;

@@ -84,43 +84,51 @@ package Odd.Memory_View is
    --  Create a new memory view.
 
    procedure Display_Memory
-     (View : Odd_Memory_View; Address : Long_Long_Integer);
+     (View    : access Odd_Memory_View_Record'Class;
+      Address : Long_Long_Integer);
    --  Display the contents of the memory into the text area.
 
-   procedure Display_Memory (View : Odd_Memory_View; Address : String);
+   procedure Display_Memory
+     (View    : access Odd_Memory_View_Record'Class;
+      Address : String);
    --  Display the contents of the memory into the text area.
    --  Address is a string that represents an address in hexadecimal,
    --  it should be made of the "0x" prefix followed by hexadecimal.
 
-   procedure Apply_Changes (View : Odd_Memory_View);
+   procedure Apply_Changes (View : access Odd_Memory_View_Record'Class);
    --  Write the changes into memory.
 
-   procedure Page_Down (View : Odd_Memory_View);
-   procedure Page_Up (View : Odd_Memory_View);
+   procedure Page_Down (View : access Odd_Memory_View_Record'Class);
+   procedure Page_Up (View : access Odd_Memory_View_Record'Class);
    --  Move up or down one page in the view.
 
    procedure Init_Graphics (Window : Gdk.Window.Gdk_Window);
    --  Initialize fonts and graphics used for this widget.
 
-   procedure Update (View : Odd_Memory_View; Process : Gtk_Widget);
+   procedure Update
+     (View    : access Odd_Memory_View_Record'Class;
+      Process : Gtk_Widget);
    --  Updates the dialog.
    --  Process is the new Debugger_Process_Tab.
 
-   procedure Update_Display (View : Odd_Memory_View);
+   procedure Update_Display (View : access Odd_Memory_View_Record'Class);
    --  Refreshes the view.
 
    function Position_To_Index
-     (View     : in Odd_Memory_View;
+     (View     : access Odd_Memory_View_Record'Class;
       Position : in Gint) return Integer;
    --  Returns the position of a value in View.Values from a position in
    --  View.View.
 
    type Dir is (Up, Down, Left, Right);
    procedure Move_Cursor
-     (View : Odd_Memory_View; Where : in Dir);
+     (View  : access Odd_Memory_View_Record'Class;
+      Where : in Dir);
    --  Moves the cursor.
 
-   procedure Insert (View : Odd_Memory_View; Char : String);
+   procedure Insert
+     (View : access Odd_Memory_View_Record'Class;
+      Char : String);
    --  Inserts string at the current location.
 
 end Odd.Memory_View;
