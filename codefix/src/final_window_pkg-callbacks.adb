@@ -40,6 +40,7 @@ package body Final_Window_Pkg.Callbacks is
          Success,
          Final_Window.Graphic_Codefix.Current_Text,
          null);
+      Destroy (Final_Window);
       Quit (Final_Window.Graphic_Codefix);
    end On_Final_Validation_Clicked;
 
@@ -53,6 +54,7 @@ package body Final_Window_Pkg.Callbacks is
       Final_Window : constant Final_Window_Access :=
         Final_Window_Access (Object);
    begin
+      Unref (Final_Window);
       Quit (Final_Window.Graphic_Codefix);
    end On_Final_Cancel_Clicked;
 
