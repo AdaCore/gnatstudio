@@ -1,7 +1,7 @@
 with Glib;             use Glib;
 with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.GC;           use Gdk.GC;
-with Qwz_Canvas;       use Qwz_Canvas;
+with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Font;         use Gdk.Font;
@@ -21,12 +21,14 @@ package body Display_Items is
    -------------
 
    procedure Gtk_New
-     (Item : out Display_Item;
-      Win  : in Gdk.Window.Gdk_Window)
+     (Item     : out Display_Item;
+      Win      : Gdk.Window.Gdk_Window;
+      Title    : String := "<No Title>";
+      Contents : String := "")
    is
    begin
       Item := new Display_Item_Record;
-      Display_Items.Initialize (Item, Win);
+      Display_Items.Initialize (Item, Win, Title, Contents);
    end Gtk_New;
 
    ----------------
@@ -34,15 +36,16 @@ package body Display_Items is
    ----------------
 
    procedure Initialize
-     (Item : access Display_Item_Record'Class;
-      Win  : in Gdk.Window.Gdk_Window)
+     (Item     : access Display_Item_Record'Class;
+      Win      : Gdk.Window.Gdk_Window;
+      Title    : String := "<No Title>";
+      Contents : String := "")
    is
       use type Gdk.GC.Gdk_GC;
       Alloc_Width  : Gint;
       Alloc_Height : Gint;
       Height : Gint;
       Grey  : Gdk_Color;
-      Text : constant String := "1: My_Variable";
 
    begin
       if White_GC = null then
@@ -65,11 +68,13 @@ package body Display_Items is
 
       end if;
 
-      Alloc_Width := String_Width (Font, Text) + 8;
-      Height := String_Height (Font, Text) + 4;
-      Alloc_Height := Height + Height * 3;
+      Alloc_Width :=
+        Gint'Max (String_Width (Font, Title),
+                  String_Width (Font, Contents)) + 8;
+      Height := String_Height (Font, Title) + 4;
+      Alloc_Height := Height * 2 + String_Height (Font, Contents);
 
-      Qwz_Canvas.Initialize (Item, Win, Alloc_Width, Alloc_Height);
+      Gtkada.Canvas.Initialize (Item, Win, Alloc_Width, Alloc_Height);
 
       Draw_Rectangle (Pixmap (Item),
                       GC     => White_GC,
@@ -107,7 +112,17 @@ package body Display_Items is
                  GC     => Black_GC,
                  X      => 4,
                  Y      => Height - 4,
-                 Text   => Text);
+                 Text   => Title);
+
+      if Contents /= "" then
+         Draw_Text
+           (Pixmap (Item),
+            Font   => Font,
+            GC     => Black_GC,
+            X      => 4,
+            Y      => Height + 8,
+            Text   => Contents);
+      end if;
    end Initialize;
 
    ---------------------
