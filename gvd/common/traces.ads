@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -97,6 +97,11 @@ package Traces is
    --
    --  Two calls to this subprogram with the same name (case insensitive) will
    --  always return the same handle.
+   --
+   --  If Default is not From_Config, this forces an explicit activatation
+   --  status for that handle. To change it, the user must explicitely have
+   --  a line for this handle in the config file, and this handle is not
+   --  impacted by the user of "+" in this config file.
 
    function Unit_Name (Handle : Debug_Handle) return String;
    --  Return the unit name (upper-cased) for this handle. This can be used for
