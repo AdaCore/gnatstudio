@@ -24,6 +24,7 @@ with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
 with Glide_Kernel;      use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Projects.Registry; use Projects.Registry;
 with Glide_Intl;        use Glide_Intl;
 with Traces;            use Traces;
@@ -114,7 +115,20 @@ package body Src_Editor_Module.Line_Highlighting is
 
          Gdk_New (GC, Get_Window (Get_Main_Window (Module_Id.Kernel)));
 
-         Color := Parse (Color_Id.all);
+         declare
+         begin
+            Color := Parse (Color_Id.all);
+
+         exception
+            when Wrong_Color =>
+               Insert
+                 (Kernel,
+                    -"Could not parse color: " & Color_Id.all,
+                  Mode => Error);
+            when others =>
+               raise;
+         end;
+
          Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
          Set_Foreground (GC, Color);
@@ -139,7 +153,19 @@ package body Src_Editor_Module.Line_Highlighting is
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       A : Highlighting_Category_Array_Access;
+      N : Natural;
    begin
+      --  If this category is already registered, change its parameters.
+
+      N := Lookup_Category (Id);
+
+      if N /= 0 then
+         Module_Id.Categories (N).GC := GC;
+         return;
+      end if;
+
+      --  If we reach this point, the category wasn't previously found.
+
       if Module_Id.Categories = null then
          Module_Id.Categories := new Highlighting_Category_Array (1 .. 1);
          Module_Id.Categories (1) :=
