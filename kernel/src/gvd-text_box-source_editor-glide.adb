@@ -133,7 +133,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    begin
       Free (Editor.Current_File);
       Editor.Current_File := new String' (File_Name);
-      Open_File_Editor (Kernel, Editor.Current_File.all);
+      Open_File_Editor (Kernel, Editor.Current_File.all, New_File => False);
    end Load_File;
 
    -------------------------
@@ -184,12 +184,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
       end if;
 
       Editor.Line := Line;
-
-      if Editor.Current_File = null then
-         return;
-      end if;
-
-      Open_File_Editor (Kernel, Editor.Current_File.all, Editor.Line, 1);
+      Open_File_Editor
+        (Kernel, Editor.Current_File.all, Editor.Line, 1, New_File => False);
 
       if Set_Current then
          Add_Line_Information
