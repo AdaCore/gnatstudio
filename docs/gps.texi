@@ -220,6 +220,7 @@ Scripting GPS
 * The Python Interpreter::
 * Python FAQ::
 @end ifset
+* Subprogram parameters::
 * Hooks::
 
 @ifset python
@@ -9466,6 +9467,7 @@ user interactively for the name of the file to search.
 * The Python Interpreter::
 * Python FAQ::
 @end ifset
+* Subprogram parameters::
 * Hooks::
 @end menu
 
@@ -10116,8 +10118,58 @@ This text file includes bold characters by default. Such bold characters
 are correctly interpreted by tools such as @file{a2ps} which can be used
 to convert the text file into a postscript document.
 
+@end ifset
+
+@c --------------------------------------------------------------------
+@node Subprogram parameters
+@subsection Subprogram parameters
+@cindex subprogram parameters
+@c --------------------------------------------------------------------
+
+@noindent
+A few of the functions exported by GPS in the GPS shell or in python expect
+a subprogram as a parameter.
+
+This is handled in different ways depending on what language your are using:
+
+@itemize @bullet
+@item GPS shell
+
+It isn't possible to define new functions in the GPS shell. However, this
+concept is similar to the GPS actions (@pxref{Defining Actions}), which
+allow you to execute a set of commands and launch external processes.
+
+Therefore, a subprogram parameter in the GPS shell is a string, which is the
+name of the action to execute.
+
+For instance, the following code defines the action "on_edition", which is
+called every time a new file is edited. The action is defined in the shell itself, although this could be more conveniently done in a separate customization
+file.
+
+@smallexample
+parse_xml """<action name="on_edition"><shell>echo "File edited"</shell></action>"""
+Hook "file_edited"
+Hook.add %1 "on_edition"
+@end smallexample
+
+@ifset python
+
+Python of course has its own notion of subprogram, and GPS is fully compatible
+with it. As a result, the syntax is much more natural than in the GPS shell.
+The following example has the same result as above:
+
+@smallexample
+import GPS
+def on_edition(self, *arg):
+  print "File edited"
+GPS.Hook ("file_edited").add (on_edition)
+@end smallexample
 
 @end ifset
+
+@end itemize
+
+
 @c --------------------------------------------------------------------
 @node Hooks
 @subsection Hooks
