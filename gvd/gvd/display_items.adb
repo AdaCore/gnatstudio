@@ -524,7 +524,8 @@ package body Display_Items is
 
    function Update_On_Auto_Refresh
      (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean is
+      Item   : access Canvas_Item_Record'Class) return Boolean
+   is
    begin
       if Display_Item (Item).Auto_Refresh then
          Update (Canvas, Display_Item (Item));
@@ -542,6 +543,7 @@ package body Display_Items is
       Item   : access Display_Item_Record'Class)
    is
       Value_Found : Boolean;
+      Was_Visible : Boolean := Get_Visibility (Item.Entity.all);
    begin
       --  Parse the value
 
@@ -561,6 +563,16 @@ package body Display_Items is
 
       Size_Request
         (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
+
+      --  Make sure we don't hide the item, unless it was already hidden.
+      --  It could have been hidden automatically if it is now too high.
+
+      if not Get_Visibility (Item.Entity.all)
+        and then Was_Visible
+      then
+         Set_Visibility (Item.Entity.all, True);
+         Size_Request (Item.Entity.all, Font);
+      end if;
 
       Update_Display (Item);
       Item_Resized (Canvas, Item);
