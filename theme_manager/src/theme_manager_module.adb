@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -468,6 +468,10 @@ package body Theme_Manager_Module is
       pragma Unreferenced (Action, Num, Iter);
 
    begin
+      if Themes = null then
+         return null;
+      end if;
+
       Pane := new Theme_Editor_Widget_Record;
       Pane.Kernel := Pref.Kernel;
       Initialize_Vpaned (Pane);
@@ -554,6 +558,7 @@ package body Theme_Manager_Module is
       Gtk_New (Pane.Description);
       Gtk_New (Text, Pane.Description);
       Set_Wrap_Mode (Text, Wrap_Word);
+      Set_Editable (Text, False);
       Add (Scrolled, Text);
 
       return Gtk_Widget (Pane);
