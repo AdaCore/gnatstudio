@@ -70,10 +70,10 @@ package body Gtkada.File_Selector is
    procedure Refresh_Files
      (Win : File_Selector_Window_Access);
 
-   function Read_File (Win : in File_Selector_Window_Access) return Boolean;
+   function Read_File (Win : File_Selector_Window_Access) return Boolean;
    --  Read one file from the current directory and insert it in Files.
 
-   function Display_File (Win : in File_Selector_Window_Access) return Boolean;
+   function Display_File (Win : File_Selector_Window_Access) return Boolean;
 
    --  This function gets one entry from Win.Remaining_Files, applies
    --  a filter to it, and displays the corresponding information in the
@@ -234,10 +234,7 @@ package body Gtkada.File_Selector is
    -- Display_File --
    ------------------
 
-   function Display_File
-     (Win : in File_Selector_Window_Access)
-     return Boolean
-   is
+   function Display_File (Win : File_Selector_Window_Access) return Boolean is
       Text         : String_Access;
       State        : File_State;
       Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
@@ -245,83 +242,75 @@ package body Gtkada.File_Selector is
       Current_Row  : Gint;
       Style        : Gtk_Style;
    begin
-      if Is_Empty (Win.Remaining_Files) then
-         return False;
-      end if;
-
-      Use_File_Filter
-        (Win.Current_Filter,
-         Win,
-         Win.Current_Directory.all,
-         Head (Win.Remaining_Files),
-         State,
-         Pixmap,
-         Mask,
-         Text);
+      begin
+         Use_File_Filter
+           (Win.Current_Filter,
+            Win,
+            Win.Current_Directory.all,
+            Head (Win.Remaining_Files),
+            State,
+            Pixmap,
+            Mask,
+            Text);
+      exception
+         when String_List.List_Empty =>
+            return False;
+      end;
 
       case State is
          when Invisible =>
             Style := null;
+
          when Normal =>
-            Current_Row := Append (Win.File_List,
-                                   "" + "" + "");
+            Current_Row := Append (Win.File_List, "" + "" + "");
             Style := Win.Normal_Style;
+
          when Highlighted =>
-            Current_Row := Append (Win.File_List,
-                                   "" + "" + "");
+            Current_Row := Append (Win.File_List, "" + "" + "");
             Style := Win.Highlighted_Style;
+
          when Insensitive =>
-            Current_Row := Append (Win.File_List,
-                                   "" + "" + "");
+            Current_Row := Append (Win.File_List, "" + "" + "");
             Style := Win.Insensitive_Style;
-            Set_Selectable (Win.File_List,
-                            Current_Row,
-                            False);
+            Set_Selectable (Win.File_List, Current_Row, False);
       end case;
 
       if Style /= null then
-         Set_Row_Style (Win.File_List,
-                        Current_Row,
-                        Style);
+         Set_Row_Style (Win.File_List, Current_Row, Style);
 
-         Set_Text (Win.File_List,
-                   Current_Row, 1,
-                   Head (Win.Remaining_Files));
+         Set_Text (Win.File_List, Current_Row, 1, Head (Win.Remaining_Files));
 
          if Text /= null then
-            Set_Text (Win.File_List,
-                      Current_Row, 2,
-                      Text.all);
+            Set_Text (Win.File_List, Current_Row, 2, Text.all);
          end if;
 
          if Pixmap /= Null_Pixmap then
-            Set_Pixmap (Win.File_List,
-                        Current_Row, 0,
-                        Pixmap, Mask);
+            Set_Pixmap (Win.File_List, Current_Row, 0, Pixmap, Mask);
          end if;
       end if;
 
       Free (Text);
-
       Win.Remaining_Files := Tail (Win.Remaining_Files);
 
-      if Is_Empty (Win.Remaining_Files) then
-         return False;
-      else
-         return True;
-      end if;
+      return not Is_Empty (Win.Remaining_Files);
    end Display_File;
 
    ---------------
    -- Read_File --
    ---------------
 
-   function Read_File
-     (Win : in File_Selector_Window_Access)
-     return Boolean
-   is
-      Buffer       : String (1 .. 256);
-      Last         : Natural;
+   function Read_File (Win : File_Selector_Window_Access) return Boolean is
+      Buffer : String (1 .. 1024);
+      Last   : Natural;
+      Id     : Idle_Handler_Id;
+
+      function Compare (Arg1, Arg2 : String) return Boolean;
+      --  Simple string comparison used for sorting the files list.
+
+      function Compare (Arg1, Arg2 : String) return Boolean is
+      begin
+         return Arg1 < Arg2;
+      end Comparison;
 
    begin
       if not Win.Current_Directory_Is_Open then
@@ -336,33 +325,15 @@ package body Gtkada.File_Selector is
          Clear (Win.File_List);
 
          --  Register the function that will fill the list in the background.
-         declare
-            Id : Idle_Handler_Id;
-            function Comparison (Arg1, Arg2 : String) return Boolean;
-            --  Simple string comparison used for sorting the files list.
 
-            function Comparison (Arg1, Arg2 : String) return Boolean
-            is
-            begin
-               if Arg1 < Arg2 then
-                  return True;
-               else
-                  return False;
-               end if;
-            end Comparison;
-         begin
-            Id := Add (Display_File'Access, Win);
-            Sort (Win.Files, Comparison'Unrestricted_Access);
-         end;
-
+         Sort (Win.Files, Compare'Unrestricted_Access);
          Win.Remaining_Files := Win.Files;
+         Id := Add (Display_File'Access, Win);
 
          return False;
       end if;
 
-      if Is_Directory
-        (Win.Current_Directory.all & Buffer (1 .. Last))
-      then
+      if Is_Directory (Win.Current_Directory.all & Buffer (1 .. Last)) then
          null;
          --  ??? or should we display directories in the File_List ?
       else
@@ -378,8 +349,7 @@ package body Gtkada.File_Selector is
 
    procedure Register_Filter
      (Win    : File_Selector_Window_Access;
-      Filter : access File_Filter_Record'Class)
-   is
+      Filter : access File_Filter_Record'Class) is
    begin
       Append (Win.Filters, File_Filter (Filter));
       Add_Unique_Combo_Entry (Win.Filter_Combo, Filter.Label.all);
@@ -391,9 +361,9 @@ package body Gtkada.File_Selector is
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_All;
-      Win       : in File_Selector_Window_Access;
-      Dir       : in String;
-      File      : in String;
+      Win       : File_Selector_Window_Access;
+      Dir       : String;
+      File      : String;
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
@@ -409,12 +379,11 @@ package body Gtkada.File_Selector is
    -- Refresh_Files --
    -------------------
 
-   procedure Refresh_Files
-     (Win : File_Selector_Window_Access)
-   is
-      Dir        : String := Win.Current_Directory.all;
-      Filter     : File_Filter := null;
-      Id         : Idle_Handler_Id;
+   procedure Refresh_Files (Win : File_Selector_Window_Access) is
+      Dir    : String := Win.Current_Directory.all;
+      Filter : File_Filter := null;
+      Id     : Idle_Handler_Id;
+
    begin
       if Get_Window (Win) = null then
          return;
@@ -429,6 +398,7 @@ package body Gtkada.File_Selector is
       declare
          S : String := Get_Text (Win.Filter_Combo_Entry);
          C : Filter_List.List := Win.Filters;
+
       begin
          while not Is_Empty (C) loop
             if Head (C).Label.all = S then
@@ -449,6 +419,7 @@ package body Gtkada.File_Selector is
       Win.Current_Filter := Filter;
 
       --  Fill the File_List.
+
       begin
          if Win.Current_Directory_Is_Open then
             Close (Win.Current_Directory_Id.all);
@@ -458,6 +429,7 @@ package body Gtkada.File_Selector is
          GNAT.Directory_Operations.Open (Win.Current_Directory_Id.all, Dir);
          Win.Current_Directory_Is_Open := True;
          Id := Add (Read_File'Access, Win);
+
       exception
          when Directory_Error =>
             Clear (Win.File_List);
@@ -473,8 +445,7 @@ package body Gtkada.File_Selector is
 
    procedure Change_Directory
      (Win : File_Selector_Window_Access;
-      Dir : String)
-   is
+      Dir : String) is
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
@@ -529,6 +500,7 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
       S   : String_Access;
+
    begin
       Pop (Win.Past_History, S);
 
@@ -634,7 +606,6 @@ package body Gtkada.File_Selector is
    exception
       when Stack_Empty =>
          null;
-
    end On_Forward_Button_Clicked;
 
    ------------------------
@@ -706,10 +677,11 @@ package body Gtkada.File_Selector is
 
    begin
       if Gtk.Enums.Gint_List.Length (Row_List) /= 0 then
-         Set_Text (Win.Selection_Entry,
-                   Get_Text (Win.File_List,
-                             Gtk.Enums.Gint_List.Get_Data (Row_List),
-                             1));
+         Set_Text
+           (Win.Selection_Entry,
+            Get_Text
+              (Win.File_List,
+               Gtk.Enums.Gint_List.Get_Data (Row_List), 1));
       end if;
    end On_File_List_End_Selection;
 
@@ -718,8 +690,7 @@ package body Gtkada.File_Selector is
    --------------------------------
 
    procedure On_Selection_Entry_Changed
-     (Object : access Gtk_Widget_Record'Class)
-   is
+     (Object : access Gtk_Widget_Record'Class) is
    begin
       null;
    end On_Selection_Entry_Changed;
@@ -729,8 +700,7 @@ package body Gtkada.File_Selector is
    --------------------------
 
    procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+     (Object : access Gtk_Widget_Record'Class) is
    begin
       Main_Quit;
    end On_Ok_Button_Clicked;
@@ -742,8 +712,9 @@ package body Gtkada.File_Selector is
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Win      : constant File_Selector_Window_Access :=
+      Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
+
    begin
       if Win /= null
         and then Win.Selection_Entry /= null
@@ -762,11 +733,12 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Win      : constant File_Selector_Window_Access :=
+      Win   : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
 
       Event : Gdk_Event := To_Event (Params, 1);
       S     : String := Get_String (Event);
+
    begin
       if S'Length /= 0
         and then (Is_Alphanumeric (S (S'First))
@@ -777,6 +749,7 @@ package body Gtkada.File_Selector is
          begin
             for J in 0 .. Get_Rows (Win.File_List) - 1 loop
                exit when Found;
+
                declare
                   T : String := Get_Text (Win.File_List, J, 1);
                begin
@@ -790,6 +763,7 @@ package body Gtkada.File_Selector is
                end;
             end loop;
          end;
+
          return True;
       else
          return False;
@@ -809,14 +783,15 @@ package body Gtkada.File_Selector is
 
       Found    : Boolean := False;
       Event    : Gdk_Event := To_Event (Params, 1);
-      G : String := Get_String (Event);
+      G        : String := Get_String (Event);
+
    begin
       if G'Length /= 0
         and then G (G'First) = ASCII.HT
       then
          --  Handle "Tab completion".
          --  The current implementation will fail if there are file names
-         --  longer than 512 characters.
+         --  longer than 1024 characters.
 
          --  Find out what is the biggest common prefix matching the
          --  text in the selection entry.
@@ -830,7 +805,7 @@ package body Gtkada.File_Selector is
             Suffix_Length : Integer := -1;
             --  The length of the biggest common matching prefix.
 
-            Best_Match : String (1 .. 512);
+            Best_Match : String (1 .. 1024);
          begin
             for J in 0 .. Get_Rows (Win.File_List) - 1 loop
                declare
@@ -882,7 +857,7 @@ package body Gtkada.File_Selector is
          begin
             if T'Length >= S'Length
               and then T (T'First .. T'First + S'Length - 1)
-              = S (S'First .. S'First + S'Length - 1)
+                = S (S'First .. S'First + S'Length - 1)
             then
                Found := True;
                Moveto (Win.File_List, J, 1, 0.0, 0.0);
@@ -899,8 +874,7 @@ package body Gtkada.File_Selector is
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
-      Directory            : in String)
-   is
+      Directory            : String) is
    begin
       File_Selector_Window := new File_Selector_Window_Record;
 
@@ -919,7 +893,7 @@ package body Gtkada.File_Selector is
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Directory            : in String)
+      Directory            : String)
    is
       Toolbar1    : Gtk_Toolbar;
 
