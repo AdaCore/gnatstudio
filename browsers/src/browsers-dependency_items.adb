@@ -987,16 +987,14 @@ package body Browsers.Dependency_Items is
       pragma Unreferenced (Event, Menu);
       Context : Selection_Context_Access := new File_Selection_Context;
       Src     : Src_Info.Internal_File := Get_Source (Item);
-      Filename : constant String := Get_Full_Source_Filename
-        (Src,
-         Get_Source_Info_List (Get_Kernel (Browser)),
-         Get_Project_View (Get_Kernel (Browser)),
-         Get_Predefined_Source_Path (Get_Kernel (Browser)));
+      Filename : constant String := Get_Source_Filename (Src);
+      Full_Name : constant String := Find_Source_File
+        (Get_Kernel (Browser), Filename, True);
    begin
       Set_File_Name_Information
         (File_Name_Selection_Context_Access (Context),
-         Directory    => Dir_Name (Filename),
-         File_Name    => Base_Name (Filename));
+         Directory    => Dir_Name (Full_Name),
+         File_Name    => Base_Name (Full_Name));
       Set_File_Information
         (File_Selection_Context_Access (Context),
          Project_View => Project_Of (Get_Kernel (Browser), Item));
