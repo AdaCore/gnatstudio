@@ -376,7 +376,7 @@ package body Find_Utils is
                Mono_Comments  => Search.Scan_Comments,
                Multi_Comments => Search.Scan_Comments);
 
-         EOL : constant Positive := Line'Last;  -- End Of Line
+         EOL : constant Natural := Line'Last;  -- End Of Line
 
          Reached : Positive;
          Pos     : Positive;
@@ -386,11 +386,16 @@ package body Find_Utils is
          Next_Lexical_State : Recognized_Lexical_States;
          --  ~ Line (Next) is from where Next_Lexical_State applies
 
-         Str_Delim     : constant Character := Context.String_Delimiter;
-         Quote_Char    : constant Character := Context.Quote_Character;
-         NL_Comm_Start : constant String    := Context.New_Line_Comment_Start;
-         M_Comm_Start  : constant String    := Context.Comment_Start;
-         M_Comm_End    : constant String    := Context.Comment_End;
+         Str_Delim     : Character renames Context.String_Delimiter;
+         Quote_Char    : Character renames Context.Quote_Character;
+         NL_Comm_Start : String    renames Context.New_Line_Comment_Start;
+         M_Comm_Start  : String    renames Context.Comment_Start;
+         M_Comm_End    : String    renames Context.Comment_End;
+
+         NL_Comm_Start_Length : Natural renames
+                                  Context.New_Line_Comment_Start_Length;
+         M_Comm_Start_Length  : Natural renames Context.Comment_Start_Length;
+         M_Comm_End_Length    : Natural renames Context.Comment_End_Length;
 
          Called : Boolean := False; -- Callback was called on this line ?
 
@@ -409,21 +414,21 @@ package body Find_Utils is
             case Search.Lexical_State is
                when Statements =>
                   while Pos <= EOL loop
-                     if M_Comm_Start'Length /= 0
-                       and then Pos + M_Comm_Start'Length - 1 <= EOL
-                       and then Line (Pos .. Pos + M_Comm_Start'Length - 1)
+                     if M_Comm_Start_Length /= 0
+                       and then Pos + M_Comm_Start_Length - 1 <= EOL
+                       and then Line (Pos .. Pos + M_Comm_Start_Length - 1)
                                 = M_Comm_Start
                      then
                         Next_Lexical_State := Multi_Comments;
-                        Next := Pos + M_Comm_Start'Length;
+                        Next := Pos + M_Comm_Start_Length;
                         exit;
-                     elsif NL_Comm_Start'Length /= 0
-                       and then Pos + NL_Comm_Start'Length - 1 <= EOL
-                       and then Line (Pos .. Pos + NL_Comm_Start'Length - 1)
+                     elsif NL_Comm_Start_Length /= 0
+                       and then Pos + NL_Comm_Start_Length - 1 <= EOL
+                       and then Line (Pos .. Pos + NL_Comm_Start_Length - 1)
                                 = NL_Comm_Start
                      then
                         Next_Lexical_State := Mono_Comments;
-                        Next := Pos + NL_Comm_Start'Length;
+                        Next := Pos + NL_Comm_Start_Length;
                         exit;
                      elsif Line (Pos) = Str_Delim then
                         Next_Lexical_State := Strings;
@@ -438,7 +443,8 @@ package body Find_Utils is
                   while Pos <= EOL loop
                      if Line (Pos) = Str_Delim
                        and then (Quote_Char = ASCII.NUL or else
-                                 Line (Pos - 1) = Quote_Char)
+                                 (Pos > Line'First and then
+                                  Line (Pos - 1) /= Quote_Char))
                      then
                         Next_Lexical_State := Statements;
                         Next := Pos + 1;
@@ -450,16 +456,17 @@ package body Find_Utils is
 
                when Mono_Comments =>
                   Pos := EOL + 1;
+                  Next_Lexical_State := Statements;
 
                when Multi_Comments =>
                   while Pos <= EOL loop
-                     if M_Comm_End'Length /= 0
-                       and then Pos + M_Comm_End'Length - 1 <= EOL
-                       and then Line (Pos .. Pos + M_Comm_End'Length - 1)
+                     if M_Comm_End_Length /= 0
+                       and then Pos + M_Comm_End_Length - 1 <= EOL
+                       and then Line (Pos .. Pos + M_Comm_End_Length - 1)
                                 = M_Comm_End
                      then
                         Next_Lexical_State := Statements;
-                        Next := Pos + M_Comm_End'Length;
+                        Next := Pos + M_Comm_End_Length;
                         exit;
                      end if;
 
