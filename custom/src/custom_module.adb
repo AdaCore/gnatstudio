@@ -402,7 +402,9 @@ package body Custom_Module is
 
          Create (Command, Kernel_Handle (Kernel), Node.Child,
                  Default_Output => Get_Attribute
-                   (Node, "output", Console_Output));
+                   (Node, "output", Console_Output),
+                 Show_Command => To_Lower
+                   (Get_Attribute (Node, "show-command", "true")) = "true");
 
          Implicit_Filter := Create_Filter (Node.Child);
 
