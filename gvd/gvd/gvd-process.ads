@@ -25,14 +25,13 @@ with GNAT.Expect; use GNAT.Expect;
 
 with Gtk.Window; use Gtk.Window;
 
-with Debugger.Gdb; use Debugger.Gdb;
-with Debugger.Gdb.Ada; use Debugger.Gdb.Ada;
+with Debugger; use Debugger;
+with Language; use Language;
 
 package Odd.Process is
 
    type Debugger_Descriptor is record
-      Debugger : aliased Gdb_Debugger;
-      Language : aliased Gdb_Ada_Language;
+      Debugger : Debugger_Access;
       Window   : Gtk_Window;
    end record;
    --  This type holds all the informations related to a given debugger.
