@@ -21,6 +21,7 @@
 with Gtk.Widget; use Gtk.Widget;
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
 with GVD.Preferences;        use GVD.Preferences;
+with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 package body General_Preferences_Pkg.Callbacks is
@@ -48,8 +49,7 @@ package body General_Preferences_Pkg.Callbacks is
    procedure On_Ok_Button_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Pref : General_Preferences_Access :=
-        General_Preferences_Access (Object);
+      Pref : GVD_Preferences_Access := GVD_Preferences_Access (Object);
    begin
       Set_Preferences (Pref);
       Hide (Get_Toplevel (Object));
@@ -66,8 +66,7 @@ package body General_Preferences_Pkg.Callbacks is
    procedure On_Test_Button_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Pref : General_Preferences_Access :=
-        General_Preferences_Access (Object);
+      Pref : GVD_Preferences_Access := GVD_Preferences_Access (Object);
    begin
       Apply_Preferences (Pref);
       Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
@@ -80,8 +79,7 @@ package body General_Preferences_Pkg.Callbacks is
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Pref : General_Preferences_Access :=
-        General_Preferences_Access (Object);
+      Pref : GVD_Preferences_Access := GVD_Preferences_Access (Object);
    begin
       Cancel_Preferences (Pref);
       Hide (Get_Toplevel (Object));
