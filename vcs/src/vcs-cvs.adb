@@ -33,6 +33,9 @@ with String_Utils;              use String_Utils;
 
 with VCS_View_Pkg;              use VCS_View_Pkg;
 
+with Commands;                  use Commands;
+with Commands.External;         use Commands.External;
+
 package body VCS.CVS is
 
    --  ??? Should we make commands customizable ?
@@ -63,14 +66,6 @@ package body VCS.CVS is
      (Rep : access CVS_Record;
       S   : String);
    --  Appends S at the end of current message.
-
-   function Atomic_Command (D : String_List_And_Handler_Access) return Boolean;
-
-   procedure Command
-     (Rep         : CVS_Access;
-      New_Command : in out Command_Record);
-   --  Executes command Command with arguments Arguments and returns the result
-   --  as a string list with one element per line of output.
 
    function Get_Path (Filename : String) return String;
    --  Returns the path to Filename.
@@ -127,132 +122,19 @@ package body VCS.CVS is
       return "";
    end Get_Path;
 
-   --------------------
-   -- Atomic_Command --
-   --------------------
-
-   function Atomic_Command
-     (D : String_List_And_Handler_Access) return Boolean
-   is
-      Match  : Expect_Match := 1;
-   begin
-      loop
-         Expect (D.Rep.Fd, Match, "\n", 1);
-
-         case Match is
-            when Expect_Timeout =>
-               return True;
-            when others =>
-               String_List.Append (D.List, Expect_Out (D.Rep.Fd));
-         end case;
-      end loop;
-
-   exception
-      when Process_Died =>
-         declare
-            S : String := Expect_Out (D.Rep.Fd);
-         begin
-            if S /= "" then
-               String_List.Append (D.List, S);
-            end if;
-         end;
-
-         Close (D.Rep.Fd);
-         D.Handler (D.Rep.Kernel, D.Head, D.List);
-
-         D.Rep.Command_In_Progress := False;
-
-         if not Command_List.Is_Empty (D.Rep.Command_Queue) then
-            declare
-               New_Command : Command_Record
-                 := Command_List.Head (D.Rep.Command_Queue);
-            begin
-               Command (D.Rep, New_Command);
-            end;
-
-            Command_List.Tail (D.Rep.Command_Queue);
-         end if;
-
-         Pop_State (D.Rep.Kernel);
-         Destroy (D);
-
-         return False;
-   end Atomic_Command;
-
-   -------------
-   -- Command --
-   -------------
-
-   procedure Command
-     (Rep         : CVS_Access;
-      New_Command : in out Command_Record)
-   is
-      R  : String_List_And_Handler_Access := new String_List_And_Handler;
-      Id : Timeout_Handler_Id;
-   begin
-      if Rep.Command_In_Progress then
-         Command_List.Append (Rep.Command_Queue, New_Command);
-         return;
-      end if;
-
-      Push_State (Rep.Kernel, Processing);
-
-      Rep.Command_In_Progress := True;
-
-      R.Rep := CVS_Access (Rep);
-      R.Head := New_Command.Head;
-      R.Handler := New_Command.Handler;
-
-      declare
-         Args : Argument_List (1 .. String_List.Length (New_Command.Args));
-         Temp_Args : String_List.List := New_Command.Args;
-
-         Old_Dir : Dir_Name_Str := Get_Current_Dir;
-         New_Dir : Dir_Name_Str := String_List.Head (New_Command.Dir);
-      begin
-         Change_Dir (New_Dir);
-
-         for J in Args'Range loop
-            Args (J) := new String' (String_List.Head (Temp_Args));
-            Temp_Args := String_List.Next (Temp_Args);
-         end loop;
-
-         Non_Blocking_Spawn (Rep.Fd,
-                             String_List.Head (New_Command.Command),
-                             Args,
-                             Err_To_Out => True,
-                             Buffer_Size => 0);
-
-         for J in Args'Range loop
-            Free (Args (J));
-         end loop;
-
-         Temp_Args := New_Command.Args;
-         String_List.Free (Temp_Args);
-
-         Change_Dir (Old_Dir);
-
-      exception
-         when Directory_Error =>
-            Set_Error (Rep, "Directory error : cannot access " & New_Dir);
-      end;
-
-      Id := String_List_Idle.Add (50, Atomic_Command'Access, R);
-   end Command;
-
    --------------------------
    -- Error_Output_Handler --
    --------------------------
 
-   procedure Error_Output_Handler
+   function Error_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List);
+      List   : String_List.List) return Boolean;
 
-   procedure Error_Output_Handler
+   function Error_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List)
+      List   : String_List.List) return Boolean
    is
       L_Temp  : String_List.List := List;
       H_Temp  : String_List.List := Head;
@@ -281,6 +163,8 @@ package body VCS.CVS is
             L_Temp := String_List.Next (L_Temp);
          end loop;
       end if;
+
+      return True;
    end Error_Output_Handler;
 
    ------------------------
@@ -292,37 +176,53 @@ package body VCS.CVS is
       Filenames         : String_List.List;
       Arguments         : String_List.List)
    is
-      C : Command_Record;
+      use String_List;
+      C               : External_Command_Access;
+      Command         : List;
+      Command_Head    : List;
+      Args            : List;
+      Dir             : List;
    begin
-      String_List.Append (C.Dir, Get_Path (String_List.Head (Filenames)));
+      Append (Dir, Get_Path (Head (Filenames)));
 
       declare
-         Args_Temp : String_List.List := Arguments;
+         Args_Temp : List := Arguments;
       begin
-         while not String_List.Is_Empty (Args_Temp) loop
-            String_List.Append (C.Args, String_List.Head (Args_Temp));
-            Args_Temp := String_List.Next (Args_Temp);
+         while not Is_Empty (Args_Temp) loop
+            Append (Args, Head (Args_Temp));
+            Args_Temp := Next (Args_Temp);
          end loop;
       end;
 
-      String_List.Append (C.Command, CVS_Command);
+      Append (Command, CVS_Command);
 
-      if String_List.Head (Filenames)
-        /=  Get_Path (String_List.Head (Filenames))
+      if Head (Filenames)
+        /=  Get_Path (Head (Filenames))
       then
          declare
-            Files_Temp : String_List.List := Filenames;
+            Files_Temp : List := Filenames;
          begin
-            while not String_List.Is_Empty (Files_Temp) loop
-               String_List.Append (C.Args,
-                                   Base_Name (String_List.Head (Files_Temp)));
-               Files_Temp := String_List.Next (Files_Temp);
+            while not Is_Empty (Files_Temp) loop
+               Append (Args, Base_Name (Head (Files_Temp)));
+               Files_Temp := Next (Files_Temp);
             end loop;
          end;
       end if;
 
-      C.Handler := Error_Output_Handler'Access;
-      Command (CVS_Access (Rep), C);
+      Create (C,
+              Rep.Kernel,
+              Command,
+              Dir,
+              Args,
+              Null_List,
+              Error_Output_Handler'Access);
+
+      Enqueue (Rep.Queue, C);
+
+      Free (Command);
+      Free (Command_Head);
+      Free (Args);
+      Free (Dir);
    end Real_Simple_Action;
 
    -------------------
@@ -336,7 +236,7 @@ package body VCS.CVS is
    is
       use String_List;
 
-      Current_Filename : String_List.List := Filenames;
+      Current_Filename : List := Filenames;
    begin
       if Is_Empty (Current_Filename) then
          --  ??? Set an error here.
@@ -348,7 +248,7 @@ package body VCS.CVS is
          --  Extract a list of files that belong to the same directory.
          declare
             Current_Directory : String := Get_Path (Head (Current_Filename));
-            Current_List      : String_List.List;
+            Current_List      : List;
          begin
             while not Is_Empty (Current_Filename)
               and then Get_Path (Head (Current_Filename)) = Current_Directory
@@ -369,15 +269,15 @@ package body VCS.CVS is
    -- Status_Output_Handler --
    --------------------------
 
-   procedure Status_Output_Handler
+   function Status_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List);
+      List   : String_List.List) return Boolean;
 
-   procedure Status_Output_Handler
+   function Status_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List)
+      List   : String_List.List) return Boolean
    is
       Result         : File_Status_List.List := File_Status_List.Null_List;
       Output         : String_List.List := List;
@@ -521,6 +421,8 @@ package body VCS.CVS is
 
       Display_File_Status (Kernel, Result, True);
       File_Status_List.Free (Result);
+
+      return True;
    end Status_Output_Handler;
 
    ---------------------
@@ -531,37 +433,48 @@ package body VCS.CVS is
      (Rep         : access CVS_Record;
       Filenames   : String_List.List)
    is
-      Files   : String_List.List := Filenames;
-
-      C : Command_Record;
+      use String_List;
+      Files           : List := Filenames;
+      C               : External_Command_Access;
+      Command         : List;
+      Command_Head    : List;
+      Args            : List;
+      Dir             : List;
    begin
-      --  ??? Need to take parameters into account and fill the
-      --  corresponding information accordingly.
-
-      String_List.Append (C.Dir, Get_Path (String_List.Head (Filenames)));
-      String_List.Append (C.Command, CVS_Command);
-      String_List.Append (C.Head, Get_Path (String_List.Head (Filenames)));
+      Append (Dir, Get_Path (Head (Filenames)));
+      Append (Command, CVS_Command);
+      Append (Command_Head, Get_Path (Head (Filenames)));
 
       --  Generate arguments list.
       --  If the first argument is a directory, do a simple query for
       --  all files in that directory.
 
-      if String_List.Head (Filenames)
-        = Get_Path (String_List.Head (Filenames))
-      then
-         String_List.Append (C.Args, "status");
-         String_List.Append (C.Args, "-l");
+      if Head (Filenames) = Get_Path (Head (Filenames)) then
+         Append (Args, "status");
+         Append (Args, "-l");
       else
-         String_List.Append (C.Args, "status");
+         Append (Args, "status");
 
-         while not String_List.Is_Empty (Files) loop
-            String_List.Append (C.Args, Base_Name (String_List.Head (Files)));
-            Files := String_List.Next (Files);
+         while not Is_Empty (Files) loop
+            Append (Args, Base_Name (Head (Files)));
+            Files := Next (Files);
          end loop;
       end if;
 
-      C.Handler := Status_Output_Handler'Access;
-      Command (CVS_Access (Rep), C);
+      Create (C,
+              Rep.Kernel,
+              Command,
+              Dir,
+              Args,
+              Command_Head,
+              Status_Output_Handler'Access);
+
+      Enqueue (Rep.Queue, C);
+
+      Free (Command);
+      Free (Command_Head);
+      Free (Args);
+      Free (Dir);
    end Real_Get_Status;
 
    ---------------------------
@@ -936,15 +849,15 @@ package body VCS.CVS is
    -- Diff_Handler --
    ------------------
 
-   procedure Diff_Handler
+   function Diff_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List);
+      List   : String_List.List) return Boolean;
 
-   procedure Diff_Handler
+   function Diff_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List)
+      List   : String_List.List) return Boolean
    is
       L_Temp  : String_List.List := List;
 
@@ -974,6 +887,8 @@ package body VCS.CVS is
       Display_Differences
         (Kernel, New_File => Current_File, Diff_File => Patch_File);
       Delete_File (Patch_File, Success);
+
+      return True;
    end Diff_Handler;
 
    ----------
@@ -986,54 +901,71 @@ package body VCS.CVS is
       Version_1 : String := "";
       Version_2 : String := "")
    is
-      C       : Command_Record;
+      use String_List;
+      C               : External_Command_Access;
+      Command         : List;
+      Command_Head    : List;
+      Args            : List;
+      Dir             : List;
    begin
-      String_List.Append (C.Dir, Get_Path (File));
-      String_List.Append (C.Command, CVS_Command);
-      String_List.Append (C.Args, "diff");
+      Append (Dir, Get_Path (File));
+      Append (Command, CVS_Command);
+      Append (Args, "diff");
 
       if Version_1 = ""
         and then Version_2 = ""
       then
-         String_List.Append (C.Args, "-r");
-         String_List.Append (C.Args, "HEAD");
+         Append (Args, "-r");
+         Append (Args, "HEAD");
       end if;
 
       if Version_1 /= "" then
-         String_List.Append (C.Args, "-r");
-         String_List.Append (C.Args, Version_1);
+         Append (Args, "-r");
+         Append (Args, Version_1);
       end if;
 
       if Version_2 /= "" then
-         String_List.Append (C.Args, "-r");
-         String_List.Append (C.Args, Version_2);
+         Append (Args, "-r");
+         Append (Args, Version_2);
       end if;
 
-      String_List.Append (C.Args, Base_Name (File));
-      String_List.Append (C.Head, File);
-      C.Handler := Diff_Handler'Access;
+      Append (Args, Base_Name (File));
+      Append (Command_Head, File);
 
       Insert (Rep.Kernel,
               -"CVS: Getting differences for file " & File & "...",
               Highlight_Sloc => False,
               Mode => Verbose);
 
-      Command (CVS_Access (Rep), C);
+      Create (C,
+              Rep.Kernel,
+              Command,
+              Dir,
+              Args,
+              Command_Head,
+              Diff_Handler'Access);
+
+      Enqueue (Rep.Queue, C);
+
+      Free (Command);
+      Free (Command_Head);
+      Free (Args);
+      Free (Dir);
    end Diff;
 
    -------------------------
    -- Text_Output_Handler --
    -------------------------
 
-   procedure Text_Output_Handler
+   function Text_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List);
+      List   : String_List.List) return Boolean;
 
-   procedure Text_Output_Handler
+   function Text_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List)
+      List   : String_List.List) return Boolean
    is
       L_Temp  : String_List.List := List;
 
@@ -1051,12 +983,11 @@ package body VCS.CVS is
       end loop;
 
       String_List.Free (L_Temp);
-
       Close (File);
-
       Open_File_Editor (Kernel, Text_File);
-
       Delete_File (Text_File, Success);
+
+      return True;
    end Text_Output_Handler;
 
    ---------
@@ -1067,15 +998,33 @@ package body VCS.CVS is
      (Rep  : access CVS_Record;
       File : String)
    is
-      C       : Command_Record;
+      use String_List;
+      C               : External_Command_Access;
+      Command         : List;
+      Command_Head    : List;
+      Args            : List;
+      Dir             : List;
    begin
-      String_List.Append (C.Dir, Get_Path (File));
-      String_List.Append (C.Command, CVS_Command);
-      String_List.Append (C.Args, "log");
-      String_List.Append (C.Args, Base_Name (File));
-      String_List.Append (C.Head, Base_Name (File) & "_changelog");
-      C.Handler := Text_Output_Handler'Access;
-      Command (CVS_Access (Rep), C);
+      Append (Dir, Get_Path (File));
+      Append (Command, CVS_Command);
+      Append (Args, "log");
+      Append (Args, Base_Name (File));
+      Append (Command_Head, Base_Name (File) & "_changelog");
+
+      Create (C,
+              Rep.Kernel,
+              Command,
+              Dir,
+              Args,
+              Command_Head,
+              Status_Output_Handler'Access);
+
+      Enqueue (Rep.Queue, C);
+
+      Free (Command);
+      Free (Command_Head);
+      Free (Args);
+      Free (Dir);
    end Log;
 
    --------------
@@ -1086,15 +1035,33 @@ package body VCS.CVS is
      (Rep  : access CVS_Record;
       File : String)
    is
-      C       : Command_Record;
+      use String_List;
+      C               : External_Command_Access;
+      Command         : List;
+      Command_Head    : List;
+      Args            : List;
+      Dir             : List;
    begin
-      String_List.Append (C.Dir, Get_Path (File));
-      String_List.Append (C.Command, CVS_Command);
-      String_List.Append (C.Args, "annotate");
-      String_List.Append (C.Args, Base_Name (File));
-      String_List.Append (C.Head, Base_Name (File) & "_annotations");
-      C.Handler := Text_Output_Handler'Access;
-      Command (CVS_Access (Rep), C);
+      Append (Dir, Get_Path (File));
+      Append (Command, CVS_Command);
+      Append (Args, "annotate");
+      Append (Args, Base_Name (File));
+      Append (Command_Head, Base_Name (File) & "_annotations");
+
+      Create (C,
+              Rep.Kernel,
+              Command,
+              Dir,
+              Args,
+              Command_Head,
+              Status_Output_Handler'Access);
+
+      Enqueue (Rep.Queue, C);
+
+      Free (Command);
+      Free (Command_Head);
+      Free (Args);
+      Free (Dir);
    end Annotate;
 
    ------------------
@@ -1134,6 +1101,7 @@ package body VCS.CVS is
    begin
       CVS_Reference := new CVS_Record;
       CVS_Reference.Kernel := Kernel_Handle (Kernel);
+      CVS_Reference.Queue  := Commands.New_Queue;
    end Initialize_Module;
 
    ---------------------
