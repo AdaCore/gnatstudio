@@ -97,11 +97,7 @@ __gnat_expect_poll (fd, num_fd, timeout, is_set)
   for (i = 0; i < num_fd; i++)
     handles[i] = (HANDLE) _get_osfhandle (fd [i]);
 
-  if (timeout < 0) {
-     num = -1;
-  } else {
-     num = timeout / 10;
-  }
+  num = timeout / 10;
 
   while (1)
     {
@@ -117,7 +113,7 @@ __gnat_expect_poll (fd, num_fd, timeout, is_set)
 	    }
 	}
 
-      if (num == 0)
+      if (timeout >= 0 && num == 0)
 	return 0;
 
       Sleep (10);
