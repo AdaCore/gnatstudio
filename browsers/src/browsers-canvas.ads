@@ -53,6 +53,10 @@ package Browsers.Canvas is
       return Gtkada.Canvas.Interactive_Canvas;
    --  Return the canvas embedded in Browser
 
+   function Get_Kernel (Browser : access Glide_Browser_Record)
+      return Glide_Kernel.Kernel_Handle;
+   --  Return the kernel associated with the browser
+
    function To_Brower
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
       return Glide_Browser;

@@ -560,4 +560,14 @@ package body Browsers.Canvas is
       Draw_Item_Background (Browser, Item);
    end Refresh;
 
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (Browser : access Glide_Browser_Record)
+      return Glide_Kernel.Kernel_Handle is
+   begin
+      return Browser.Kernel;
+   end Get_Kernel;
+
 end Browsers.Canvas;
