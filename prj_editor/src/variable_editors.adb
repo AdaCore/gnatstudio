@@ -423,6 +423,9 @@ package body Variable_Editors is
            (Get_Project (Editor.Kernel), New_Name, Var,
             Add_Before_First_Case_Or_Pkg => True);
          Set_Value_As_External (Var, New_Name);
+
+         Set_Project_Modified
+           (Editor.Kernel, Get_Project (Editor.Kernel), True);
       end if;
 
       --  Rename the value appropriately (this has to be done separately, so
