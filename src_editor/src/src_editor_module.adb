@@ -34,6 +34,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Language_Handlers;         use Language_Handlers;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Basic_Types;               use Basic_Types;
 with GVD.Status_Bar;            use GVD.Status_Bar;
@@ -1306,7 +1307,8 @@ package body Src_Editor_Module is
       if Context = null
         or else not (Context.all in File_Selection_Context'Class)
       then
-         Trace (Me, "On_Pretty_Print: context doesn't contain file name");
+         Console.Insert
+           (Kernel, -"No file selected, cannot pretty print.", Mode => Error);
          return;
       end if;
 
@@ -1319,25 +1321,42 @@ package body Src_Editor_Module is
          Project      : constant String :=
            Get_Subproject_Name (Kernel, Filename);
          Success      : Boolean;
-         Args         : Argument_List_Access;
+         Args, Vars   : Argument_List_Access;
+         Lang         : String := Get_Language_From_File
+           (Get_Language_Handler (Kernel), File);
 
       begin
          if File = "" then
+            Console.Insert
+              (Kernel, -"No file name, cannot pretty print.", Mode => Error);
             return;
          end if;
 
-         --  ??? Should check language first
+         Lower_Case (Lang);
+
+         if Lang /= "ada" then
+            Console.Insert
+              (Kernel, -"Pretty printing of non Ada file not yet supported.",
+               Mode => Error);
+            return;
+         end if;
 
          if Save_All_MDI_Children (Kernel, Force => False) = False then
             return;
          end if;
 
          if Project = "" then
-            Args := Argument_String_To_List ("gnat pretty " & File);
+            Args := new Argument_List'
+              (new String' ("pretty"), new String' (File));
+
          else
-            Args := Argument_String_To_List
-              ("pretty " & "-P" & Project & " " &
-               Scenario_Variables_Cmd_Line (Kernel) & " " & File);
+            Vars := Argument_String_To_List
+              (Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
+            Args := new Argument_List'
+              ((1 => new String' ("pretty"),
+                2 => new String' ("-P" & Project),
+                3 => new String' (File)) & Vars.all);
+            Unchecked_Free (Vars);
          end if;
 
          Launch_Process
