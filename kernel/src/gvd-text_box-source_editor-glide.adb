@@ -89,12 +89,16 @@ package body GVD.Text_Box.Source_Editor.Glide is
    ----------------------------
 
    procedure Highlight_Current_Line (Editor : access GEdit_Record) is
-      Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
    begin
-      pragma Assert (Editor.Current_File /= null);
-      Open_File_Editor (Kernel, Editor.Current_File.all,
-                        Editor.Line, 1,
-                        Enable_Navigation => False);
+      if Editor.Debugger_Current_File = null then
+         return;
+      end if;
+
+      Open_File_Editor
+        (Kernel, Editor.Debugger_Current_File.all,
+         Editor.Line, 1,
+         Enable_Navigation => False);
    end Highlight_Current_Line;
 
    --------------------
@@ -134,8 +138,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Set_Current : Boolean := True;
       Force       : Boolean := False)
    is
-      pragma Unreferenced (Set_Current, Force);
-      Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      pragma Unreferenced (Force);
+      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
 
    begin
       if Editor.Current_File = null
@@ -143,6 +147,12 @@ package body GVD.Text_Box.Source_Editor.Glide is
       then
          Free (Editor.Current_File);
          Editor.Current_File := new String' (File_Name);
+
+         if Set_Current then
+            Free (Editor.Debugger_Current_File);
+            Editor.Debugger_Current_File := new String' (File_Name);
+         end if;
+
          Open_File_Editor (Kernel, Editor.Current_File.all, New_File => False,
                            Enable_Navigation => False);
       end if;
@@ -289,7 +299,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
          end if;
 
          if A = null then
-            A := new Breakpoint_Array (1 .. 10);
+            A := new Breakpoint_Array (1 .. 16);
          end if;
 
          for J in A'Range loop
@@ -315,12 +325,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
             declare
                B : Breakpoint_Array_Ptr := new Breakpoint_Array
-                 (A'First .. A'Last + 10);
+                 (A'First .. A'Last + 16);
             begin
                B (A'First .. A'Last) := A.all;
                B (A'Last + 1) := Copy_Bp (N);
-               --  B (A'Last + 2 .. A'Last + 10);
-
                Unchecked_Free (A);
                A := B;
             end;
@@ -410,7 +418,6 @@ package body GVD.Text_Box.Source_Editor.Glide is
                      Editor.Current_Breakpoints (J).File.all,
                      Breakpoints_Column_Id,
                      new Line_Information_Array' (A));
-
                end;
 
                Free (Editor.Current_Breakpoints (J));
