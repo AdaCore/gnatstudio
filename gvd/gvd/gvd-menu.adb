@@ -31,15 +31,12 @@ with GPS.Main_Window;      use GPS.Main_Window;
 
 package body GVD.Menu is
 
-   use GVD;
-
    ------------------------
    -- Display_Expression --
    ------------------------
 
    procedure Display_Expression (Debugger : Visual_Debugger) is
    begin
-      --  ??? Should be able to remove this test at some point
       if Debugger = null
         or else Debugger.Debugger = null
         or else Command_In_Process (Get_Process (Debugger.Debugger))
@@ -58,6 +55,7 @@ package body GVD.Menu is
             History   => Get_History (GPS_Window (Debugger.Window).Kernel),
             Key_Check => "expression_subprogram_debugger",
             Button_Active => Is_Func'Access);
+
       begin
          if Expression /= ""
            and then Expression (Expression'First) /= ASCII.NUL
