@@ -27,6 +27,7 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
+with Gint_Xml;         use Gint_Xml;
 with Gdk;              use Gdk;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Cursor;       use Gdk.Cursor;
@@ -485,6 +486,7 @@ package body Gtkada.MDI is
             Gdk.Window.Show (M.Handles (J));
          end if;
       end loop;
+
 
       --  Destroy the window attribute and the cursor
       Destroy (Cursor);
@@ -1860,7 +1862,7 @@ package body Gtkada.MDI is
       Pack_Start (Box, Box2, Expand => False, Fill => False);
 
       Set_Border_Width (Box, Border_Thickness);
-      Set_USize (Box2, -2, Title_Bar_Height);
+      Set_Size_Request (Box2, -1, Title_Bar_Height);
 
       Gdk.Pixmap.Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, Close_Xpm);
@@ -1967,8 +1969,6 @@ package body Gtkada.MDI is
       if MDI.Docks (None) /= null then
          Put_In_Notebook (MDI, None, C);
       else
-         Put (MDI.Layout, C, 0, 0);
-
          --  Compute the initial size right away, since we cannot rely on
          --  Queue_Resize, which is called too late. This results some widgets
          --  being incorrectly scrolled.
@@ -1976,6 +1976,8 @@ package body Gtkada.MDI is
          Alloc := (C.X, C.Y, Allocation_Int (Req.Width),
                    Allocation_Int (Req.Height));
          Size_Allocate (C, Alloc);
+
+         Put (MDI.Layout, C, 0, 0);
 
          if Realized_Is_Set (MDI) then
             Queue_Resize (MDI);
@@ -1995,19 +1997,6 @@ package body Gtkada.MDI is
       end if;
 
       return C;
-   end Put;
-
-   ---------
-   -- Put --
-   ---------
-
-   procedure Put
-     (MDI : access MDI_Window_Record;
-      Child : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      C : MDI_Child;
-   begin
-      C := Put (MDI, Child);
    end Put;
 
    ---------------
@@ -2056,27 +2045,6 @@ package body Gtkada.MDI is
          Show (Label);
       end if;
    end Set_Title;
-
-   --------------------
-   -- Find_MDI_Child --
-   --------------------
-
-   function Find_MDI_Child
-     (MDI  : access MDI_Window_Record;
-      Name : String) return MDI_Child
-   is
-      use Widget_List;
-      Tmp : Widget_List.Glist := First (MDI.Items);
-   begin
-      while Tmp /= Null_List loop
-         if MDI_Child (Get_Data (Tmp)).Title.all = Name then
-            return MDI_Child (Get_Data (Tmp));
-         end if;
-
-         Tmp := Next (Tmp);
-      end loop;
-      return null;
-   end Find_MDI_Child;
 
    --------------------
    -- Find_MDI_Child --
@@ -2203,6 +2171,14 @@ package body Gtkada.MDI is
       then
          Set_Active (C.Menu_Item, True);
       end if;
+
+      --  It would be nice to find the first child of C.Initial_Child that
+      --  accepts the keyboard focus. However, in the meanwhile, we at least
+      --  want to make sure that no other widget has the focus. As a result,
+      --  focus_in events will always be sent the next time the user selects a
+      --  widget.
+      Set_Flags (C.Initial_Child, Can_Focus);
+      Grab_Focus (C.Initial_Child);
    end Set_Focus_Child;
 
    ----------------------
@@ -2374,7 +2350,7 @@ package body Gtkada.MDI is
                       Allocation_Int (C.Uniconified_Height));
             Size_Allocate (C, Alloc);
             --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
-            --  Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
+            --  Set_Size_Request (C, C.Uniconified_Width, C.Uniconified_Height);
             Level := Level + H;
          end if;
          List := Widget_List.Next (List);
@@ -2613,6 +2589,7 @@ package body Gtkada.MDI is
 
       Child.State := Normal;
       Set_Sensitive (Child.Minimize_Button, True);
+
    end Remove_From_Notebook;
 
    ----------------
@@ -2756,6 +2733,7 @@ package body Gtkada.MDI is
       C    : MDI_Child;
       Alloc : Gtk_Allocation;
       Old_Focus : MDI_Child;
+      Created : Boolean := False;
 
    begin
       if Maximize and then MDI.Docks (None) = null then
@@ -2765,11 +2743,14 @@ package body Gtkada.MDI is
             List := Next (List);
 
             if C.State = Normal or else C.State = Iconified then
+               Created := True;
                Put_In_Notebook (MDI, None, C);
             end if;
          end loop;
 
-         Hide (MDI.Layout);
+         if Created then
+            Hide (MDI.Layout);
+         end if;
 
          if Old_Focus /= null then
             Set_Focus_Child (Old_Focus);
@@ -3218,5 +3199,255 @@ package body Gtkada.MDI is
          Set_Focus_Child (MDI_Child (Parent));
       end if;
    end Set_Focus_Child;
+
+   --------------
+   -- Sessions --
+   --------------
+
+   package body Sessions is
+
+      --------------------------------
+      -- Register_Session_Functions --
+      --------------------------------
+
+      procedure Register_Session_Functions
+        (Save : Save_Session_Function;
+         Load : Load_Session_Function) is
+      begin
+         Registers := new Register_Node_Record'
+           (Save => Save,
+            Load => Load,
+            Next => Registers);
+      end Register_Session_Functions;
+
+      ---------------------
+      -- Restore_Session --
+      ---------------------
+
+      procedure Restore_Session
+        (MDI       : access MDI_Window_Record'Class;
+         From_Tree : Gint_Xml.Node_Ptr;
+         User      : User_Data)
+      is
+         Widget     : Gtk_Widget;
+         Child      : MDI_Child;
+         Child_Node : Node_Ptr := From_Tree.Child;
+         N          : Node_Ptr;
+         Register   : Register_Node;
+         Width, Height : Guint;
+         Alloc      : Gtk_Allocation;
+         State      : State_Type;
+      begin
+         pragma Assert (From_Tree.Tag.all = "MDI");
+
+         while Child_Node /= null loop
+
+            if Child_Node.Tag.all = "Left" then
+               MDI.Docks_Size (Left) := Gint'Value (Child_Node.Value.all);
+
+            elsif Child_Node.Tag.all = "Right" then
+               MDI.Docks_Size (Right) := Gint'Value (Child_Node.Value.all);
+
+            elsif Child_Node.Tag.all = "Top" then
+               MDI.Docks_Size (Top) := Gint'Value (Child_Node.Value.all);
+
+            elsif Child_Node.Tag.all = "Bottom" then
+               MDI.Docks_Size (Bottom) := Gint'Value (Child_Node.Value.all);
+
+            elsif Child_Node.Tag.all = "Child" then
+
+               --  Create the widget
+               Register := Registers;
+               Widget   :=  null;
+               while Widget = null and then Register /= null loop
+                  Widget := Register.Load (Child_Node.Child, User);
+                  Register := Register.Next;
+               end loop;
+
+               if Widget /= null then
+                  Gtk_New (Child, Widget);
+                  Child := Put (MDI, Child);
+
+                  N := Child_Node.Child.Next;
+
+                  while N /= null loop
+                     if N.Tag.all = "X" then
+                        Child.X := Gint'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Y" then
+                        Child.Y := Gint'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Width" then
+                        Width := Guint'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Height" then
+                        Height := Guint'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Title" then
+                        Set_Title (Child, N.Value.all);
+
+                     elsif N.Tag.all = "State" then
+                        State := State_Type'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Dock" then
+                        Child.Dock := Dock_Side'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Uniconified_X" then
+                        Child.Uniconified_X := Gint'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Uniconified_Y" then
+                        Child.Uniconified_Y := Gint'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Uniconified_Width" then
+                        Child.Uniconified_Width := Gint'Value (N.Value.all);
+
+                     elsif N.Tag.all = "Uniconified_Height" then
+                        Child.Uniconified_Height := Gint'Value (N.Value.all);
+
+                     else
+                        --  ??? Unknown node, just ignore for now
+                        null;
+                     end if;
+
+                     N := N.Next;
+                  end loop;
+
+                  case State is
+                     when Docked    => Dock_Child (Child, True);
+                     when Iconified => Minimize_Child (Child, True);
+                     when Floating  => Float_Child (Child, True);
+                     when Normal    => null;
+                  end case;
+
+                  Alloc := (Child.X, Child.Y, Gint (Width), Gint (Height));
+                  Size_Allocate (Child, Alloc);
+               end if;
+            end if;
+
+            Child_Node := Child_Node.Next;
+         end loop;
+      end Restore_Session;
+
+      ------------------
+      -- Save_Session --
+      ------------------
+
+      function Save_Session (MDI : access MDI_Window_Record'Class)
+         return Gint_XML.Node_Ptr
+      is
+         use type Widget_List.Glist;
+
+         Item       : Widget_List.Glist := MDI.Items;
+         Child      : MDI_Child;
+         Root, Widget_Node, Child_Node : Node_Ptr;
+         Register   : Register_Node;
+
+         procedure Add (Name, Value : String);
+         --  Add a new child to Child_Node
+
+         ---------
+         -- Add --
+         ---------
+
+         procedure Add (Name, Value : String) is
+            N : Node_Ptr;
+         begin
+            N := new Node;
+            N.Tag := new String' (Name);
+            N.Value := new String' (Value);
+            Add_Child (Child_Node, N);
+         end Add;
+
+      begin
+         Root := new Node;
+         Root.Tag := new String' ("MDI");
+         Child_Node := Root;
+
+         Add ("Left",   Gint'Image (MDI.Docks_Size (Left)));
+         Add ("Right",  Gint'Image (MDI.Docks_Size (Right)));
+         Add ("Top",    Gint'Image (MDI.Docks_Size (Top)));
+         Add ("Bottom", Gint'Image (MDI.Docks_Size (Bottom)));
+
+         while Item /= Widget_List.Null_List loop
+            Child := MDI_Child (Widget_List.Get_Data (Item));
+
+            --  Save the widget
+            Register := Registers;
+            Widget_Node := null;
+            while Widget_Node = null and then Register /= null loop
+               Widget_Node := Register.Save (Get_Widget (Child));
+               Register := Register.Next;
+            end loop;
+
+            if Widget_Node /= null then
+
+               --  Note: We need to insert the children in the opposite order
+               --  from Restore_Session, since the children are added at the
+               --  beginning of the list.
+
+
+               Child_Node := new Node;
+               Child_Node.Tag := new String' ("Child");
+
+               if Child.State = Iconified then
+                  Add ("Uniconified_Height", Gint'Image (Child.Uniconified_Height));
+                  Add ("Uniconified_Width", Gint'Image (Child.Uniconified_Width));
+                  Add ("Uniconified_Y", Gint'Image (Child.Uniconified_Y));
+                  Add ("Uniconified_X", Gint'Image (Child.Uniconified_X));
+               end if;
+
+               Add ("Dock", Dock_Side'Image (Child.Dock));
+               Add ("State", State_Type'Image (Child.State));
+               Add ("Title", Child.Title.all);
+               Add ("Height", Guint'Image (Get_Allocation_Height (Child)));
+               Add ("Width", Guint'Image (Get_Allocation_Width (Child)));
+               Add ("Y", Gint'Image (Child.Y));
+               Add ("X", Gint'Image (Child.X));
+               Add_Child (Child_Node, Widget_Node);
+
+               Add_Child (Root, Child_Node);
+            end if;
+
+            Item := Widget_List.Next (Item);
+         end loop;
+
+         return Root;
+      end Save_Session;
+
+   end Sessions;
+
+   -----------------
+   -- First_Child --
+   -----------------
+
+   function First_Child
+     (MDI : access MDI_Window_Record) return Child_Iterator is
+   begin
+      return (Iter => Mdi.Items);
+   end First_Child;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iterator : in out Child_Iterator) is
+   begin
+      Iterator.Iter := Widget_List.Next (Iterator.Iter);
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Child_Iterator) return MDI_Child is
+      use type Widget_List.Glist;
+   begin
+      if Iterator.Iter /= Widget_List.Null_List then
+         return MDI_Child (Widget_List.Get_Data (Iterator.Iter));
+      else
+         return null;
+      end if;
+   end Get;
+
 
 end Gtkada.MDI;

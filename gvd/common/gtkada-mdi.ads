@@ -27,6 +27,7 @@
 -----------------------------------------------------------------------
 
 with Glib;
+with Gint_Xml;
 with Gdk.GC;
 pragma Warnings (Off);
 --  Need to use a use_clause for compatibility with gtk+1.2 and gtk+2.0
@@ -48,7 +49,6 @@ with GNAT.OS_Lib;
 
 --  TODO:
 --  - handles multiple views of the MDI (through several top-level windows)
---  - Saving and restoring sessions (window location,...)
 --  - Icons should be put at the bottom, and automatically moved when the
 --    MDI window is resized.
 --  - Icons should be placed correctly when there are also docked items
@@ -102,9 +102,6 @@ package Gtkada.MDI is
    --  Internal initialization function.
    --  See the section "Creating your own widgets" in the documentation.
 
-   procedure Put
-     (MDI : access MDI_Window_Record;
-      Child : access Gtk.Widget.Gtk_Widget_Record'Class);
    function Put
      (MDI   : access MDI_Window_Record;
       Child : access Gtk.Widget.Gtk_Widget_Record'Class) return MDI_Child;
@@ -213,10 +210,17 @@ package Gtkada.MDI is
    --  Return the MDI_Child that encapsulates Widget.
    --  Widget must be the exact same one you gave in argument to Put.
 
-   function Find_MDI_Child
-     (MDI  : access MDI_Window_Record;
-      Name : String) return MDI_Child;
-   --  Similar to the above, but do the search based on the name of the child.
+   type Child_Iterator is private;
+
+   function First_Child (MDI : access MDI_Window_Record) return Child_Iterator;
+   --  Return an access to the first child of the MDI
+
+   procedure Next (Iterator : in out Child_Iterator);
+   --  Move to the next child in the MDI
+
+   function Get (Iterator : Child_Iterator) return MDI_Child;
+   --  Return the child pointed to by Iterator.
+   --  If Iterator is no longer valid, null is returned.
 
    -----------------------------------
    -- Floating and docking children --
@@ -262,6 +266,94 @@ package Gtkada.MDI is
    --  Tile_Horizontally with put children next to each other, Tile_Vertically
    --  will put children one below another. This is the same behavior as for
    --  Gtk_Vbox and Gtk_Hbox
+
+   --------------
+   -- Sessions --
+   --------------
+   --  The MDI provides a way to save session, i.e the list of children
+   --  currently open in the MDI and their location. It can then restore the
+   --  session at some later point.
+   --
+   --  Sessions require support from the widgets that are put in the MDI. They
+   --  need to register a function to save them and a function to recreate
+   --  them. Using Ada streams for this didn't prove workable since some
+   --  children might need extra parameters not available to them through
+   --  streams. This is why the following subprograms are in a generic package,
+   --  so that you can pass whatever parameter(s) is needed in your application.
+   --
+   --  Sessions are saved and restored in XML trees.
+   --
+   --  Note that you can instantiate several of these packages, but you need to
+   --  call Save_Session and Restore_Session from each of them if you want to
+   --  save the whole contents of the MDI. The resulting XML nodes can then be
+   --  merged into a single XML tree if needed.
+
+
+   generic
+      type User_Data (<>) is private;
+      --  Generic type of parameter that is passed to all the children's save
+      --  and restore functions.
+
+      --  This package needs to be instantiated at library level
+
+   package Sessions is
+
+      type Save_Session_Function is access function
+        (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+        return Gint_Xml.Node_Ptr;
+      --  A general function that dumps the parameters of a widget into an XML
+      --  tree.
+      --
+      --  Note: you should register one such function for all the widget types
+      --  you will put in the MDI and that need to be saved when a session is
+      --  saved. The MDI will call all the registered functions one after the
+      --  other. Therefore, your function should return null if Widget is not
+      --  of a type that is it can handle.
+
+      type Load_Session_Function is access function
+        (Node : Gint_Xml.Node_Ptr; User : User_Data)
+        return Gtk.Widget.Gtk_Widget;
+      --  A general function that loads a widget from an XML tree.
+      --
+      --  As for Save_Session_Function, this function should return null if it
+      --  doesn't know how to handle Node or if Node doesn't describe a widget
+      --  type that it can handle.
+
+      procedure Register_Session_Functions
+        (Save : Save_Session_Function;
+         Load : Load_Session_Function);
+      --  Register a set of functions to save and load sessions for some
+      --  specific widget types.
+      --  Neither Save nor Load can be null.
+
+      procedure Restore_Session
+        (MDI       : access MDI_Window_Record'Class;
+         From_Tree : Gint_Xml.Node_Ptr;
+         User      : User_Data);
+      --  Restore the contents of the MDI from its saved XML tree.
+      --  User is passed as a parameter to all of the Load_Session_Function
+      --  registered by the widgets.
+
+      function Save_Session (MDI : access MDI_Window_Record'Class)
+         return Gint_Xml.Node_Ptr;
+      --  Return an XML tree that describes the current contents of the MDI.
+      --  This function calls each of the registered function for the children
+      --  of the MDI.
+
+   private
+      type Register_Node_Record;
+      type Register_Node is access Register_Node_Record;
+      type Register_Node_Record is record
+         Save : Save_Session_Function;
+         Load : Load_Session_Function;
+         Next : Register_Node;
+      end record;
+
+      Registers : Register_Node;
+      --  Global variable that contains the list of functions that have been
+      --  registered.
+   end Sessions;
+
 
    -------------
    -- Signals --
@@ -351,6 +443,10 @@ private
    --  Internal initialization function.
    --  See the section "Creating your own widgets" in the documentation.
 
+   type Child_Iterator is record
+      Iter : Gtk.Widget.Widget_List.Glist;
+   end record;
+
    type Notebook_Array is array (Dock_Side) of Gtk.Notebook.Gtk_Notebook;
    type Int_Array is array (Left .. Bottom) of Glib.Gint;
    type Window_Array is array (Left .. Bottom) of Gdk.Window.Gdk_Window;
@@ -431,4 +527,7 @@ private
    pragma Inline (Get_Window);
    pragma Inline (Get_Widget);
    pragma Inline (Get_Focus_Child);
+   pragma Inline (Get);
+   pragma Inline (Next);
+   pragma Inline (First_Child);
 end Gtkada.MDI;
