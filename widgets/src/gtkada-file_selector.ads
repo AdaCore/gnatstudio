@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                   Copyright (C) 2001 ACT-Europe                   --
+--                Copyright (C) 2001-2002 ACT-Europe                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -275,7 +275,7 @@ private
       Files : String_List.List;
       --  The list of files in the current directory.
 
-      Remaining_Files : String_List.List;
+      Remaining_Files : String_List.List_Node;
       --  The list of files that are in the current directory but not yet
       --  filtered nor shown in the file list.
       --  This list should never be allocated any memory explicitly, but
