@@ -32,15 +32,17 @@ with Gtk.Text_Buffer;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
+with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Types;
 
 with Language;
 with Src_Highlighting;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-
+with Ada.Unchecked_Deallocation;
 with Commands;    use Commands;
 with Glide_Kernel;
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Src_Info;
 
 with String_List_Utils;
@@ -396,6 +398,115 @@ package Src_Editor_Buffer is
    --  commands. This MUST be called every time that the Buffer.Queue
    --  pointer is modified and the controls actually refer to Queue.
 
+   ----------------------
+   -- Line Information --
+   ----------------------
+
+   --  The following is related to information to be put in the side column.
+
+   type Line_Information_Access is access Line_Information_Record;
+
+   type Line_Info_Width is record
+      Info  : Line_Information_Access;
+      Width : Integer := 0;
+   end record;
+
+   type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
+   type Line_Info_Width_Array_Access is access Line_Info_Width_Array;
+
+   type Line_Info_Display_Record is record
+      Identifier    : String_Access;
+      --  This identifies the column.
+
+      Starting_X    : Integer;
+      --  The pixel distance between the left border of the column and
+      --  the left border of the left window.
+
+      Width         : Integer;
+      --  The pixel width of the column.
+
+      Column_Info   : Line_Info_Width_Array_Access;
+      --  The information that should be displayed in the column.
+
+      Stick_To_Data : Boolean;
+      --  If Stick_To_Data is True, then the column contains information
+      --  that are relative to the file as it was opened in the first
+      --  place: when you insert or remove lines, the information should
+      --  stick to the lines they are associated with.
+      --  If Stick_To_Data is False, then the information "sticks" to
+      --  the line numbers.
+
+      Every_Line : Boolean;
+      --  If Every_Line is True, then there must be data at every line in
+      --  this column.
+   end record;
+   type Line_Info_Display_Access is access Line_Info_Display_Record;
+
+   type Line_Info_Display_Array is array (Natural range <>)
+     of Line_Info_Display_Access;
+
+   type Line_Info_Display_Array_Access is access Line_Info_Display_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Line_Info_Display_Array, Line_Info_Display_Array_Access);
+
+   type Natural_Array is array (Natural range <>) of Natural;
+   type Natural_Array_Access is access Natural_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Natural_Array, Natural_Array_Access);
+
+   function Get_Line_Info
+     (Buffer : access Source_Buffer_Record)
+      return Line_Info_Display_Array_Access;
+   --  Return Buffer.Line_Info.
+
+   procedure Set_Line_Info
+     (Buffer    : access Source_Buffer_Record;
+      Line_Info : Line_Info_Display_Array_Access);
+   --  Set Buffer.Line_Info.
+
+   function Get_Real_Lines
+     (Buffer : access Source_Buffer_Record)
+      return Natural_Array_Access;
+   --  Return Buffer.Real_Lines;
+
+   procedure Set_Real_Lines
+     (Buffer     : access Source_Buffer_Record;
+      Real_Lines : Natural_Array_Access);
+   --  Set Buffer.Real_Lines.
+
+   procedure Create_Line_Information_Column
+     (Buffer        : access Source_Buffer_Record;
+      Identifier    : String;
+      Stick_To_Data : Boolean;
+      Every_Line    : Boolean);
+   --  Add a column corresponding to Identifier in Buffer.
+
+   procedure Remove_Line_Information_Column
+     (Buffer     : access Source_Buffer_Record;
+      Identifier : String);
+   --  Remove a column from the side information in Buffer.
+
+   procedure Add_File_Information
+     (Buffer     : access Source_Buffer_Record;
+      Identifier : String;
+      Box        : Gtk_Widget;
+      Info       : Glide_Kernel.Modules.Line_Information_Data);
+   --  Add the line information to the Buffer.
+   --  User must not free Info.
+
+   --------------
+   --  Signals --
+   --------------
+
+   --  <signals>
+   --  The following new signals are defined for this widget:
+   --
+   --  - "side_column_changed"
+   --    procedure Handler (Buffer : Gtk_Object_Record'Class);
+   --    Emitted when the information in the side column has been
+   --    changed.
+   --
+   --  </signals>
 private
    type Completion_Data is record
       Prefix : GNAT.OS_Lib.String_Access;
@@ -495,6 +606,25 @@ private
       Controls_Set : Boolean := False;
       --  Whether the Queue is currently connected to the
       --  Undo/Redo buttons.
+
+      --  The following is related to information regarding
+      --  the side column information.
+
+      Line_Info           : Line_Info_Display_Array_Access;
+      --  The information that should be displayed in the left window.
+
+      Real_Lines          : Natural_Array_Access;
+      --  This array associates original line numbers (ie lines that were
+      --  in the view the last time it was saved) with lines in the current
+      --  view.
+
+      Original_Lines_Number : Natural := 1;
+      --  The number of lines in the file on disk.
+
+      Total_Column_Width  : Natural := 0;
+      --  Width of the Left Window, in pixels.
+
+      Original_Text_Inserted : Boolean := False;
    end record;
 
 end Src_Editor_Buffer;

@@ -59,7 +59,14 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
+with Pango.Font;                  use Pango.Font;
+with Pango.Layout;                use Pango.Layout;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
+
+--  with Gdk.Event; use Gdk.Event;
+
 with String_List_Utils;         use String_List_Utils;
+with Unchecked_Deallocation;
 
 package body Src_Editor_Buffer is
 
@@ -89,11 +96,13 @@ package body Src_Editor_Buffer is
    --  A pointer to the 'class record'.
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-     (1 => New_String ("cursor_position_changed"));
+     (1 => New_String ("cursor_position_changed"),
+      2 => New_String ("side_column_changed"));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-     (1 => (GType_Int, GType_Int));
+     (1 => (GType_Int, GType_Int),
+      2 => (GType_None, GType_None));
    --  The parameters associated to each new signal
 
    package Buffer_Callback is new Gtk.Handlers.Callback
@@ -108,6 +117,10 @@ package body Src_Editor_Buffer is
    --  This procedure is used to signal to the clients that the insert
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
+
+   procedure Side_Column_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "side_column_changed" signal.
 
    procedure Mark_Set_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -246,6 +259,42 @@ package body Src_Editor_Buffer is
    procedure Clear (Buffer : access Source_Buffer_Record);
    --  Delete all characters from the given buffer, leaving an empty buffer.
 
+   procedure Get_Column_For_Identifier
+     (Buffer     : access Source_Buffer_Record;
+      Identifier : String;
+      Width      : Integer;
+      Column     : out Integer);
+   --  Return the index of the column corresponding to the identifier.
+   --  Create such a column if necessary.
+
+   procedure Add_Lines
+     (Buffer   : access Source_Buffer_Record'Class;
+      Start  : Integer;
+      Number : Integer);
+   --  Add Number blank lines to the column info, after Start.
+
+   procedure Remove_Lines
+     (Buffer       : access Source_Buffer_Record'Class;
+      Start_Line : Integer;
+      End_Line   : Integer);
+   --  Remove lines from the column info.
+
+   procedure Insert_At_Position
+     (Buffer   : access Source_Buffer_Record;
+      Info   : Line_Information_Record;
+      Column : Integer;
+      Line   : Integer;
+      Width  : Integer);
+   --  Insert Info at the correct line position in L.
+
+   procedure Remove_Line_Information_Column
+     (Buffer : access Source_Buffer_Record'Class;
+      Column : Integer);
+   --  Remove the column from the side window information in Buffer.
+
+   procedure Free (X : in out Line_Info_Width);
+   --  Free memory associated to X.
+
    --------------------
    -- Automatic_Save --
    --------------------
@@ -298,6 +347,8 @@ package body Src_Editor_Buffer is
 
       String_List_Utils.String_List.Free (Buffer.Completion.List);
       GNAT.OS_Lib.Free (Buffer.Completion.Prefix);
+
+      --  ??? Must remove the line information column
    end Destroy_Hook;
 
    --------------------
@@ -486,7 +537,14 @@ package body Src_Editor_Buffer is
 
    procedure Insert_Text_Handler
      (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues) is
+      Params : Glib.Values.GValues)
+   is
+      Pos    : Gtk_Text_Iter;
+      Length : constant Gint := Get_Int (Nth (Params, 3));
+      Dummy  : Boolean;
+      Start  : Integer;
+      Iter   : Gtk_Text_Iter;
+
    begin
       if Buffer.Lang /= null then
          declare
@@ -500,6 +558,15 @@ package body Src_Editor_Buffer is
             Insert_Text_Cb (Buffer, Pos, Text);
          end;
       end if;
+
+      --  Call Add_Lines, to compute added lines for the side column.
+      --  ??? We could create a hook for added lines.
+
+      Get_Text_Iter (Nth (Params, 1), Pos);
+      Copy (Pos, Iter);
+      Start := Integer (Get_Line (Pos));
+      Backward_Chars (Pos, Length, Dummy);
+      Add_Lines (Buffer, Start, Start - Integer (Get_Line (Pos)));
 
    exception
       when E : others =>
@@ -624,7 +691,13 @@ package body Src_Editor_Buffer is
 
    procedure Delete_Range_Handler
      (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues) is
+      Params : Glib.Values.GValues)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+
+      Start_Line : Integer;
+      End_Line   : Integer;
    begin
       if Buffer.Lang /= null then
          declare
@@ -633,6 +706,18 @@ package body Src_Editor_Buffer is
             Get_Text_Iter (Nth (Params, 1), Start_Iter);
             Delete_Range_Cb (Buffer, Start_Iter);
          end;
+      end if;
+
+      --  Remove the lines in the side information column.
+      --  ??? We could add a hook for removed lines.
+
+      Get_Text_Iter (Nth (Params, 1), Start_Iter);
+      Get_Text_Iter (Nth (Params, 2), End_Iter);
+      Start_Line := Integer (Get_Line (Start_Iter));
+      End_Line   := Integer (Get_Line (End_Iter));
+
+      if Start_Line /= End_Line then
+         Remove_Lines (Buffer, Start_Line + 1, End_Line + 1);
       end if;
 
    exception
@@ -747,6 +832,21 @@ package body Src_Editor_Buffer is
          Place_Cursor (Buffer, First_Highlight_Iter);
       end if;
    end Jump_To_Delimiter;
+
+   -------------------------
+   -- Side_Column_Changed --
+   -------------------------
+
+   procedure Side_Column_Changed
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      procedure Emit_By_Name
+        (Object : System.Address;
+         Name   : String);
+      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+   begin
+      Emit_By_Name (Get_Object (Buffer), "side_column_changed" & ASCII.NUL);
+   end Side_Column_Changed;
 
    ------------------------------
    -- Emit_New_Cursor_Position --
@@ -1219,6 +1319,12 @@ package body Src_Editor_Buffer is
       Buffer.Completion.Next_Mark := Create_Mark (Buffer, "", Iter);
 
       Buffer.Completion.Buffer := Gtk.Text_Buffer.Gtk_Text_Buffer (Buffer);
+
+      --  Initialize the line info.
+
+      Buffer.Line_Info := new Line_Info_Display_Array (1 .. 0);
+      Buffer.Real_Lines := new Natural_Array (1 .. 1);
+      Buffer.Real_Lines (1) := 0;
    end Initialize_Hook;
 
    ----------------
@@ -2825,5 +2931,420 @@ package body Src_Editor_Buffer is
       Unset_Controls (Buffer.Queue);
       Buffer.Controls_Set := False;
    end Remove_Controls;
+
+   -------------------
+   -- Get_Line_Info --
+   -------------------
+
+   function Get_Line_Info
+     (Buffer : access Source_Buffer_Record)
+      return Line_Info_Display_Array_Access is
+   begin
+      return Buffer.Line_Info;
+   end Get_Line_Info;
+
+   -------------------
+   -- Set_Line_Info --
+   -------------------
+
+   procedure Set_Line_Info
+     (Buffer    : access Source_Buffer_Record;
+      Line_Info : Line_Info_Display_Array_Access) is
+   begin
+      Buffer.Line_Info := Line_Info;
+   end Set_Line_Info;
+
+   --------------------
+   -- Get_Real_Lines --
+   --------------------
+
+   function Get_Real_Lines
+     (Buffer : access Source_Buffer_Record)
+      return Natural_Array_Access is
+   begin
+      return Buffer.Real_Lines;
+   end Get_Real_Lines;
+
+   --------------------
+   -- Set_Real_Lines --
+   --------------------
+
+   procedure Set_Real_Lines
+     (Buffer     : access Source_Buffer_Record;
+      Real_Lines : Natural_Array_Access) is
+   begin
+      Buffer.Real_Lines := Real_Lines;
+   end Set_Real_Lines;
+
+   ------------------------
+   -- Insert_At_Position --
+   ------------------------
+
+   procedure Insert_At_Position
+     (Buffer   : access Source_Buffer_Record;
+      Info   : Line_Information_Record;
+      Column : Integer;
+      Line   : Integer;
+      Width  : Integer)
+   is
+      Line_Info  : Line_Info_Display_Array_Access renames Buffer.Line_Info;
+      Real_Lines : Natural_Array_Access renames Buffer.Real_Lines;
+   begin
+      if Line not in Real_Lines'Range then
+         declare
+            A : constant Natural_Array := Real_Lines.all;
+         begin
+            Unchecked_Free (Real_Lines);
+            Real_Lines := new Natural_Array
+              (1 .. Line * 2);
+
+            Real_Lines (A'Range) := A;
+            Real_Lines (A'Last + 1 .. Real_Lines'Last) :=
+              (others => 0);
+         end;
+      end if;
+
+      --  If needed, increase the size of the target array
+
+      if (not Line_Info (Column).Stick_To_Data)
+        and then Line > Line_Info (Column).Column_Info'Last
+      then
+         declare
+            A : Line_Info_Width_Array (1 .. Line * 2);
+         begin
+            A (1 .. Line_Info (Column).Column_Info'Last) :=
+              Line_Info (Column).Column_Info.all;
+            Line_Info (Column).Column_Info :=
+              new Line_Info_Width_Array'(A);
+         end;
+      end if;
+
+      --  Insert the data in the array
+
+      if not (Line_Info (Column).Stick_To_Data
+              and then Line > Buffer.Original_Lines_Number)
+      then
+         if Line_Info (Column).Column_Info (Line).Info /= null then
+            Free (Line_Info (Column).Column_Info (Line));
+         end if;
+
+         Line_Info (Column).Column_Info (Line) :=
+           Line_Info_Width'(new Line_Information_Record'(Info), Width);
+      end if;
+   end Insert_At_Position;
+
+   -------------------------------
+   -- Get_Column_For_Identifier --
+   -------------------------------
+
+   procedure Get_Column_For_Identifier
+     (Buffer     : access Source_Buffer_Record;
+      Identifier : String;
+      Width      : Integer;
+      Column     : out Integer)
+   is
+      Line_Info  : Line_Info_Display_Array_Access renames Buffer.Line_Info;
+   begin
+      --  Browse through existing columns and try to match Identifier
+
+      for J in Line_Info'Range loop
+         if Line_Info (J).Identifier.all = Identifier then
+            Column := J;
+
+            --  Set the new width of the column
+
+            if Line_Info (J).Width < Width then
+               for K in (J + 1) .. Line_Info.all'Last loop
+                  Line_Info (K).Starting_X :=
+                    Line_Info (K).Starting_X + Width
+                    - Line_Info (J).Width;
+               end loop;
+
+               Buffer.Total_Column_Width :=
+                 Buffer.Total_Column_Width + Width
+                   - Line_Info (J).Width;
+
+               Line_Info (J).Width := Width;
+            end if;
+
+            return;
+         end if;
+      end loop;
+
+      --  If we reach this point, that means no column was found that
+      --  corresponds to Identifier. Therefore we create one.
+
+      declare
+         A : Line_Info_Display_Array
+           (Line_Info.all'First .. Line_Info.all'Last + 1);
+         New_Column : Line_Info_Width_Array
+           (1 .. Buffer.Original_Lines_Number);
+      begin
+         A (Line_Info'First .. Line_Info'Last) := Line_Info.all;
+
+         A (A'Last) := new Line_Info_Display_Record'
+           (Identifier  => new String'(Identifier),
+            Starting_X  => Buffer.Total_Column_Width + 2,
+            Width       => Width,
+            Column_Info => new Line_Info_Width_Array'(New_Column),
+            Stick_To_Data => False,
+            Every_Line    => False);
+         Unchecked_Free (Line_Info);
+         Line_Info := new Line_Info_Display_Array'(A);
+
+         Column := Line_Info.all'Last;
+
+         Buffer.Total_Column_Width := Buffer.Total_Column_Width + Width + 2;
+      end;
+   end Get_Column_For_Identifier;
+
+   --------------------------
+   -- Add_File_Information --
+   --------------------------
+
+   procedure Add_File_Information
+     (Buffer     : access Source_Buffer_Record;
+      Identifier : String;
+      Box        : Gtk_Widget;
+      Info       : Glide_Kernel.Modules.Line_Information_Data)
+   is
+      Column : Integer;
+      Num    : Gint := 1;
+      Height : Gint;
+      Width  : Gint := -1;
+      Widths : array (Info'Range) of Gint;
+      Layout : Pango_Layout;
+
+   begin
+      Layout := Create_Pango_Layout (Box);
+      Set_Font_Description
+        (Layout,
+         Get_Pref (Buffer.Kernel, Source_Editor_Font));
+
+      --  Compute the maximum width of the items to add.
+      --  We compute this width once and for all and in advance,
+      --  because is is quite expensive, and we don't want to do it
+      --  in Src_Editor_View.Redraw_Columns, since that function is
+      --  called a great number of times.
+
+      for J in Info'Range loop
+         Widths (J) := -1;
+         if Info (J).Text /= null then
+            Set_Text (Layout, String'(Info (J).Text.all));
+            Get_Pixel_Size (Layout, Num, Height);
+
+            if Num = 0 then
+               Num := 1;
+            end if;
+
+            Widths (J) := Num;
+
+            if Num > Width then
+               Width := Num;
+            end if;
+         end if;
+
+         if Info (J).Image /= Null_Pixbuf then
+            Num := Get_Width (Info (J).Image);
+
+            if Num > Width then
+               Widths (J) := Num;
+               Width := Num;
+            end if;
+         end if;
+      end loop;
+
+      --  Get the column that corresponds to Identifier,
+      --  create it if necessary.
+      Get_Column_For_Identifier
+        (Buffer,
+         Identifier,
+         Integer (Width),
+         Column);
+
+      --  Update the stored data.
+      for J in Info'Range loop
+         Insert_At_Position
+           (Buffer, Info (J), Column, J, Integer (Widths (J)));
+      end loop;
+
+      Unref (Layout);
+
+      Side_Column_Changed (Buffer);
+   end Add_File_Information;
+
+   ------------------------------------
+   -- Create_Line_Information_Column --
+   ------------------------------------
+
+   procedure Create_Line_Information_Column
+     (Buffer          : access Source_Buffer_Record;
+      Identifier    : String;
+      Stick_To_Data : Boolean;
+      Every_Line    : Boolean)
+   is
+      Col : Integer;
+
+   begin
+      Get_Column_For_Identifier
+        (Buffer, Identifier, -1, Col);
+
+      Buffer.Line_Info (Col).Stick_To_Data := Stick_To_Data;
+      Buffer.Line_Info (Col).Every_Line    := Every_Line;
+   end Create_Line_Information_Column;
+
+   ------------------------------------
+   -- Remove_Line_Information_Column --
+   ------------------------------------
+
+   procedure Remove_Line_Information_Column
+     (Buffer : access Source_Buffer_Record'Class;
+      Column : Integer)
+   is
+      Width : Integer;
+
+      procedure Free is new Unchecked_Deallocation
+        (Line_Info_Width_Array, Line_Info_Width_Array_Access);
+      procedure Free is new Unchecked_Deallocation
+        (Line_Info_Display_Record, Line_Info_Display_Access);
+
+      Line_Info  : Line_Info_Display_Array_Access
+        renames Buffer.Line_Info;
+   begin
+      Width := Line_Info (Column).Width;
+
+      for J in Line_Info (Column).Column_Info'Range loop
+         Free (Line_Info (Column).Column_Info (J));
+      end loop;
+
+      GNAT.OS_Lib.Free (Line_Info (Column).Identifier);
+      Free (Line_Info (Column).Column_Info);
+      Free (Line_Info (Column));
+
+      declare
+         A : Line_Info_Display_Array
+           (Line_Info.all'First .. Line_Info.all'Last - 1);
+      begin
+         A (Line_Info.all'First .. Column - 1) :=
+           Line_Info (Line_Info.all'First .. Column - 1);
+         A (Column .. Line_Info.all'Last - 1) :=
+           Line_Info (Column + 1 .. Line_Info.all'Last);
+         Unchecked_Free (Line_Info);
+         Line_Info := new Line_Info_Display_Array'(A);
+      end;
+
+      for J in Column .. Line_Info.all'Last loop
+         Line_Info (J).Starting_X :=
+           Line_Info (J).Starting_X - Width - 2;
+      end loop;
+
+      Buffer.Total_Column_Width := Buffer.Total_Column_Width - Width - 2;
+   end Remove_Line_Information_Column;
+
+   ------------------------------------
+   -- Remove_Line_Information_Column --
+   ------------------------------------
+
+   procedure Remove_Line_Information_Column
+     (Buffer     : access Source_Buffer_Record;
+      Identifier : String)
+   is
+      Col : Integer;
+   begin
+      Get_Column_For_Identifier (Buffer, Identifier, -1, Col);
+      Remove_Line_Information_Column (Buffer, Col);
+
+      Side_Column_Changed (Buffer);
+   end Remove_Line_Information_Column;
+
+   ---------------
+   -- Add_Lines --
+   ---------------
+
+   procedure Add_Lines
+     (Buffer : access Source_Buffer_Record'Class;
+      Start  : Integer;
+      Number : Integer)
+   is
+      Real_Lines : Natural_Array_Access renames Buffer.Real_Lines;
+   begin
+      if Number <= 0 then
+         return;
+      end if;
+
+      if not Buffer.Original_Text_Inserted then
+         Buffer.Original_Lines_Number := Number;
+
+         if Buffer.Original_Lines_Number > Real_Lines'Last then
+            declare
+               A : constant Natural_Array := Real_Lines.all;
+            begin
+               Real_Lines := new Natural_Array
+                 (1 .. Number * 2);
+               Real_Lines (A'Range) := A;
+               Real_Lines (A'Last + 1 .. Real_Lines'Last)
+                 := (others => 0);
+            end;
+         end if;
+
+         for J in 1 .. Number loop
+            Real_Lines (J) := J;
+         end loop;
+
+         Buffer.Original_Text_Inserted := True;
+
+      else
+         --  Shift down the existing lines.
+
+         for J in reverse Start + 1 .. Real_Lines'Last loop
+            Real_Lines (J) := Real_Lines (J - Number);
+         end loop;
+
+         --  Reset the newly inserted lines.
+
+         Real_Lines
+           (Integer'Max (Start - Number + 1, Real_Lines'First) .. Start)
+           := (others => 0);
+      end if;
+   end Add_Lines;
+
+   ------------------
+   -- Remove_Lines --
+   ------------------
+
+   procedure Remove_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Integer;
+      End_Line   : Integer)
+   is
+      Real_Lines : Natural_Array_Access renames Buffer.Real_Lines;
+   begin
+      if End_Line <= Start_Line then
+         return;
+      end if;
+
+      Real_Lines
+        (Start_Line + 1 .. Real_Lines'Last + Start_Line - End_Line) :=
+        Real_Lines (End_Line + 1 .. Real_Lines'Last);
+
+      Real_Lines
+        (Real_Lines'Last + Start_Line - End_Line + 1
+           .. Real_Lines'Last) := (others => 0);
+   end Remove_Lines;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Line_Info_Width) is
+      procedure Free is new Unchecked_Deallocation
+        (Line_Information_Record, Line_Information_Access);
+   begin
+      if X.Info /= null then
+         Free (X.Info.all);
+      end if;
+
+      Free (X.Info);
+   end Free;
 
 end Src_Editor_Buffer;
