@@ -115,9 +115,11 @@ private
 
       Children : Cell_Child_Array_Access;
       --  The various children of the cell
+
+      Num_Children : Natural := 0;
    end record;
 
-   type Cell_Child_Array is array (Natural range <>) of Cell_Child;
+   type Cell_Child_Array is array (Positive) of Cell_Child;
 
    type Trie_Tree is record
       Child : Cell_Child;
@@ -125,11 +127,13 @@ private
 
    Empty_Trie_Tree : constant Trie_Tree :=
      (Child => (Index_Length => 0, First_Char_Of_Key => 'a',
-                Data => No_Data, Children => null));
+                Data => No_Data, Children => null, Num_Children => 0));
 
    type Iterator is record
       Cells : Cell_Child_Array_Access;
       --  All the cells that must be returned
+
+      Num_Cells : Natural := 0;
 
       Last  : Integer := 0;
       --  The last relevant cell in Cells
