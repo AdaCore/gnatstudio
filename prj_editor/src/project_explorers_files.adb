@@ -914,11 +914,15 @@ package body Project_Explorers_Files is
       File_Remove_Idle_Calls (E);
 
       for P in E.Open_Pixbufs'Range loop
-         Unref (E.Open_Pixbufs (P));
+         if E.Open_Pixbufs (P) /= null then
+            Unref (E.Open_Pixbufs (P));
+         end if;
       end loop;
 
       for P in E.Close_Pixbufs'Range loop
-         Unref (E.Close_Pixbufs (P));
+         if E.Close_Pixbufs (P) /= null then
+            Unref (E.Close_Pixbufs (P));
+         end if;
       end loop;
    end On_File_Destroy;
 
