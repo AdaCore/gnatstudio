@@ -1,5 +1,12 @@
-Here is the complete procedure to build Gtk+ 2.0.2 from scratch
+Here is the complete procedures to build Gtk+ 2.0.2 from scratch
 (systems tested are Redhat 7.1, Solaris 2.8).
+
+Note that these instructions are provided as is, and do not represent a
+100% guaranteed method. This is merely an empirical list of steps that
+are required for a given version and for a given set of OS.
+
+If you have trouble building Gtk+ from sources, the proper place to ask help
+is on the various Gtk+ lists.
 
 On linux systems, you can skip the steps from libiconv to libjpeg, and
 ignore the special comments.
@@ -27,6 +34,8 @@ export PATH LDFLAGS LD_LIBRARY_PATH
 ############
 # libiconv #
 ############
+# This step should no longer be required under Solaris, to be checked
+
 tar xzvf libiconv-1.7.tar.gz
 cd libiconv-1.7
 ./configure --prefix=$prefix
@@ -79,6 +88,10 @@ cd ..
 ###########
 # gettext #
 ###########
+
+# This step is only needed under HP-UX
+# Solaris & Linux provide a suitable implementation of gettext
+
 tar xzvf gettext-0.11.1.tar.gz
 cd gettext-0.11.1
 ./configure --prefix=$prefix
