@@ -29,6 +29,7 @@
 with Glib;                use Glib;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gdk.Event;           use Gdk.Event;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
@@ -39,8 +40,9 @@ with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 
-with Glide_Kernel;        use Glide_Kernel;
-with GUI_Utils;           use GUI_Utils;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Browsers;     use Glide_Kernel.Browsers;
+with GUI_Utils;                 use GUI_Utils;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 
 package body Browsers.Canvas is
@@ -76,10 +78,14 @@ package body Browsers.Canvas is
    procedure Zoomed (Browser : access Gtk_Widget_Record'Class);
    --  Called when the Canvas has been zoomed. This redraws all the items
 
+   procedure Open_File (Browser : access Gtk_Widget_Record'Class);
+   --  Open a new file for analyzis in the browser
+
    function Contextual_Background_Menu
      (Browser : access Gtk_Widget_Record'Class;
       Event   : Gdk.Event.Gdk_Event) return Gtk_Menu;
    --  Return the contextual menu to use in the browser
+
 
    -------------
    -- Gtk_New --
@@ -162,6 +168,12 @@ package body Browsers.Canvas is
       Unlock (Gtk.Accel_Group.Get_Default);
 
       Gtk_New (B.Contextual_Background_Menu);
+
+      Gtk_New (Mitem, Label => "Open file...");
+      Append (B.Contextual_Background_Menu, Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, "activate",
+         Widget_Callback.To_Marshaller (Open_File'Access), B);
 
       Gtk_New (Mitem, Label => "Zoom in");
       Append (B.Contextual_Background_Menu, Mitem);
@@ -256,5 +268,20 @@ package body Browsers.Canvas is
    begin
       For_Each_Item (B.Canvas, Refresh_File_Item'Access);
    end Zoomed;
+
+   ---------------
+   -- Open_File --
+   ---------------
+
+   procedure Open_File (Browser : access Gtk_Widget_Record'Class) is
+      B : Glide_Browser := Glide_Browser (Browser);
+
+      File : constant String := Select_File (Base_Directory => "");
+      --  ??? Should set up filters to only open file from the current project.
+   begin
+      if File /= "" then
+         Examine_Dependencies (B.Kernel, B, File);
+      end if;
+   end Open_File;
 
 end Browsers.Canvas;
