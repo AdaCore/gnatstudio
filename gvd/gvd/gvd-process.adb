@@ -117,7 +117,7 @@ package body GVD.Process is
    Class_Record : GObject_Class := Uninitialized_Class;
 
    --  Array of the signals created for this widget
-   Signals : Chars_Ptr_Array :=
+   Signals : constant Chars_Ptr_Array :=
      "process_stopped" + "context_changed";
 
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
@@ -268,7 +268,7 @@ package body GVD.Process is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Frame     : Gint := To_Gint (Params, 1) + 1;
+      Frame     : constant Gint := To_Gint (Params, 1) + 1;
       Process   : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Object);
 
@@ -284,7 +284,7 @@ package body GVD.Process is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Arg1    : Gdk_Event := To_Event (Params, 1);
+      Arg1    : constant Gdk_Event := To_Event (Params, 1);
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Object);
 
@@ -332,9 +332,9 @@ package body GVD.Process is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Arg1 : String := To_String (Params, 1);
-      Arg2 : Gint := To_Gint (Params, 2);
-      Position : Address := To_Address (Params, 3);
+      Arg1 : constant String := To_String (Params, 1);
+      Arg2 : constant Gint := To_Gint (Params, 2);
+      Position : constant Address := To_Address (Params, 3);
 
       Top  : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
 
@@ -421,8 +421,8 @@ package body GVD.Process is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Arg1 : Gint := To_Gint (Params, 1);
-      Arg2 : Gint := To_Gint (Params, 2);
+      Arg1 : constant Gint := To_Gint (Params, 1);
+      Arg2 : constant Gint := To_Gint (Params, 2);
       Top  : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
 
    begin
@@ -441,7 +441,7 @@ package body GVD.Process is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Arg1  : Gdk_Event := To_Event (Params, 1);
+      Arg1  : constant Gdk_Event := To_Event (Params, 1);
       Top   : Debugger_Process_Tab := Debugger_Process_Tab (Object);
       use type Gdk.Types.Gdk_Key_Type;
 
@@ -1735,7 +1735,8 @@ package body GVD.Process is
                Expr : constant String := Cmd
                  (Matched (Graph_Cmd_Expression_Paren).First ..
                   Matched (Graph_Cmd_Expression_Paren).Last);
-               Entity : Items.Generic_Type_Access := New_Debugger_Type (Expr);
+               Entity : constant Items.Generic_Type_Access :=
+                 New_Debugger_Type (Expr);
 
             begin
                Set_Value
