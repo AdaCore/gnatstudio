@@ -34,6 +34,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 
+with Prj;                       use Prj;
 with String_List_Utils;         use String_List_Utils;
 
 with VCS_Module;                use VCS_Module;
@@ -98,6 +99,10 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_List_Project_Files
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Get_Status_Project
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -105,6 +110,18 @@ package body VCS_View_API is
    procedure On_Menu_Update_Project
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+
+   procedure Query_Project_Files
+     (Explorer   : VCS_View_Access;
+      Kernel     : Kernel_Handle;
+      Project    : Project_Id;
+      Real_Query : Boolean;
+      Recursive  : Boolean);
+   --  Query/List the status of files belonging to Project.
+   --  If Recursive is True, files from sub-projects will also be queried.
+   --  If Real_Query is True, a real VCS query will be made, otherwise
+   --  the files will simply be listed.
+   --  Calling this does NOT open the VCS Explorer.
 
    procedure Change_Context
      (Explorer : VCS_View_Access;
@@ -547,6 +564,14 @@ package body VCS_View_API is
       if File_Name /= null
         and then Has_Project_Information (File_Name)
       then
+         Gtk_New (Item, Label => -"List all files in project recursively");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate",
+            Context_Callback.To_Marshaller
+            (On_Menu_List_Project_Files'Access),
+            Selection_Context_Access (File_Name));
+
          Gtk_New (Item, Label => -"Query status for project");
          Append (Menu, Item);
          Context_Callback.Connect
@@ -576,10 +601,7 @@ package body VCS_View_API is
       File         : File_Selection_Context_Access;
       Status       : File_Status_List.List;
       Dirs         : String_List.List;
-      Files_Temp   : String_List.List_Node;
       Ref          : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
-      Blank_Status : File_Status_Record;
-      Current_Status : File_Status_Record;
 
       use String_List;
    begin
@@ -606,22 +628,10 @@ package body VCS_View_API is
          elsif Has_Project_Information (File)
            and then not Has_Directory_Information (File)
          then
-            Dirs := Get_Files_In_Project (Project_Information (File), False);
-
-            Files_Temp := String_List.First (Dirs);
-
-            while Files_Temp /= String_List.Null_Node loop
-               Current_Status := Blank_Status;
-               Append (Current_Status.File_Name,
-                       String_List.Data (Files_Temp));
-               Files_Temp := String_List.Next (Files_Temp);
-               File_Status_List.Append (Status, Current_Status);
-            end loop;
-
-            Clear (Explorer);
-            Display_File_Status (Get_Kernel (Context), Status, False, True);
-            File_Status_List.Free (Status);
-            String_List.Free (Dirs);
+            Query_Project_Files (Explorer,
+                                 Get_Kernel (Context),
+                                 Project_Information (File),
+                                 False, False);
          end if;
       end if;
    end Change_Context;
@@ -785,7 +795,7 @@ package body VCS_View_API is
          declare
             Log_File  : constant String
               := Get_Log_From_File (Kernel, Data (Files_Temp));
-            Head_List : List;
+            Head_List : String_List.List;
          begin
             Free (Command);
             Append (Command, Log_Check_Script);
@@ -1144,24 +1154,55 @@ package body VCS_View_API is
       end if;
    end On_Menu_Update_Project;
 
+   -------------------------
+   -- Query_Project_Files --
+   -------------------------
+
+   procedure Query_Project_Files
+     (Explorer   : VCS_View_Access;
+      Kernel     : Kernel_Handle;
+      Project    : Project_Id;
+      Real_Query : Boolean;
+      Recursive  : Boolean)
+   is
+      Blank_Status   : File_Status_Record;
+      Current_Status : File_Status_Record;
+      Status         : File_Status_List.List;
+      Files          : String_List.List;
+      Files_Temp     : String_List.List_Node;
+
+      use String_List;
+   begin
+      Files := Get_Files_In_Project (Project, Recursive);
+      Files_Temp := String_List.First (Files);
+
+      while Files_Temp /= String_List.Null_Node loop
+         Current_Status := Blank_Status;
+         Append (Current_Status.File_Name,
+                 String_List.Data (Files_Temp));
+         Files_Temp := String_List.Next (Files_Temp);
+         File_Status_List.Append (Status, Current_Status);
+      end loop;
+
+      Clear (Explorer);
+      Display_File_Status (Kernel, Status, False, True);
+      File_Status_List.Free (Status);
+
+      if Real_Query then
+         Get_Status (Get_Current_Ref (Kernel), Files);
+      end if;
+   end Query_Project_Files;
+
    --------------------------------
-   -- On_Menu_Get_Status_Project --
+   -- On_Menu_List_Project_Files --
    --------------------------------
 
-   procedure On_Menu_Get_Status_Project
+   procedure On_Menu_List_Project_Files
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      use String_List;
-
-      Files        : String_List.List;
-      Files_Temp   : String_List.List_Node;
       File_Context : File_Selection_Context_Access;
-      Blank_Status : File_Status_Record;
-      Current_Status : File_Status_Record;
-
-      Status       : File_Status_List.List;
       Kernel       : Kernel_Handle := Get_Kernel (Context);
    begin
       Open_Explorer (Get_Kernel (Context));
@@ -1171,22 +1212,39 @@ package body VCS_View_API is
          File_Context := File_Selection_Context_Access (Context);
 
          if Has_Project_Information (File_Context) then
-            Files := Get_Files_In_Project (Project_Information (File_Context));
+            Query_Project_Files
+              (Get_Explorer (Kernel),
+               Kernel,
+               Project_Information (File_Context),
+               False, True);
+         end if;
+      end if;
+   end On_Menu_List_Project_Files;
 
-            Files_Temp := String_List.First (Files);
+   --------------------------------
+   -- On_Menu_Get_Status_Project --
+   --------------------------------
 
-            while Files_Temp /= String_List.Null_Node loop
-               Current_Status := Blank_Status;
-               Append (Current_Status.File_Name,
-                       String_List.Data (Files_Temp));
-               Files_Temp := String_List.Next (Files_Temp);
-               File_Status_List.Append (Status, Current_Status);
-            end loop;
+   procedure On_Menu_Get_Status_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      File_Context : File_Selection_Context_Access;
+      Kernel       : Kernel_Handle := Get_Kernel (Context);
+   begin
+      Open_Explorer (Get_Kernel (Context));
+      Clear (Get_Explorer (Get_Kernel (Context)));
 
-            Display_File_Status (Kernel, Status, False, True);
-            File_Status_List.Free (Status);
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
 
-            Get_Status (Get_Current_Ref (Kernel), Files);
+         if Has_Project_Information (File_Context) then
+            Query_Project_Files
+              (Get_Explorer (Kernel),
+               Kernel,
+               Project_Information (File_Context),
+               True, True);
          end if;
       end if;
    end On_Menu_Get_Status_Project;
