@@ -52,8 +52,9 @@ package body Debugger is
 
    use String_History;
 
-   Debug_Timeout : constant Guint32 := 150;
-   --  Timeout in millisecond to check input from the underlying debugger.
+   Debug_Timeout : constant Guint32 := 100;
+   --  Timeout in millisecond to check input from the underlying debugger
+   --  when handling asynchronous commands.
 
    package Debugger_Timeout is new Gtk.Main.Timeout (Debugger_Process_Tab);
 
@@ -498,7 +499,6 @@ package body Debugger is
       end if;
 
       --  Append the command to the history if necessary
-      --  ??? Will only work if Debugger is the current page in the notebook
 
       if Index_Non_Blank (Cmd) /= 0
         and then Debugger.Window /= null
@@ -639,6 +639,12 @@ package body Debugger is
 
                   else
                      if Mode >= Visible then
+                        --  Clear the current output received from the debugger
+                        --  to avoid confusing the prompt detection, since
+                        --  we're sending input in the middle of a command,
+                        --  which is delicate.
+
+                        Process_Proxies.Empty_Buffer (Get_Process (Debugger));
                         Process := Convert (Debugger.Window, Debugger);
                         Set_Busy (Process, False);
                      end if;
