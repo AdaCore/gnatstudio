@@ -101,6 +101,10 @@ package Glide_Kernel is
       LI_File     : in out Src_Info.LI_File_Ptr);
    --  Parse the ALI file, but only if needed and it hasn't been done yet.
 
+   function Get_Source_Info_List
+     (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
+   --  Return the Source Information List for the given Kernel Handle
+
    function Locate_From_Source
      (Handle            : access Kernel_Handle_Record;
       Source_Filename   : String)
@@ -275,10 +279,6 @@ private
    --  The list of all the modules that have been loaded in Glide. This has to
    --  be a global variable for elaboration reasons: when the modules are
    --  registered, the kernel hasn't necessarily been created yet.
-
-   function Get_Source_Info_List
-     (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
-   --  Return the Source Information List for the given Kernel Handle
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Project : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
