@@ -241,7 +241,7 @@ package body Debugger.Gdb is
                   --  ??? This is an arbitrary hard-coded limit, that should
                   --  be enough. Might be nice to remove it though.
 
-                  Num     : Natural := 1;
+                  Num     : Natural := 0;
                   First   : Positive;
                   Last    : Positive := Question_Start;
 
@@ -250,17 +250,16 @@ package body Debugger.Gdb is
                      --  Skips the choice number ("[n] ")
                      Last := Last + 4;
                      First := Last;
-                     while Last < Index
-                       and then Str (Last) /= ASCII.LF
-                     loop
+
+                     while Last < Index and then Str (Last) /= ASCII.LF loop
                         Last := Last + 1;
                      end loop;
 
+                     Num := Num + 1;
                      Choices (Num).Choice :=
-                       new String'(Natural'Image (Num - 1));
+                       new String' (Natural'Image (Num - 1));
                      Choices (Num).Description :=
                        new String'(Str (First .. Last - 1));
-                     Num := Num + 1;
 
                      Last := Last + 1;
                   end loop;
@@ -268,13 +267,12 @@ package body Debugger.Gdb is
                   Gtk_New
                     (Dialog,
                      To_Window (Window),
-                     Convert (To_Main_Debug_Window (Window),
-                       Descriptor).Debugger,
+                     Debugger,
                      True,
-                     Choices (1 .. Num - 1));
+                     Choices (1 .. Num));
                   Show_All (Dialog);
 
-                  for J in 1 .. Num - 1 loop
+                  for J in 1 .. Num loop
                      Free (Choices (Num).Choice);
                      Free (Choices (Num).Description);
                   end loop;
@@ -293,17 +291,16 @@ package body Debugger.Gdb is
          declare
             Choices : Question_Array (1 .. 2);
          begin
-            Choices (1).Choice := new String'("n");
-            Choices (1).Description := new String'("No");
+            Choices (1).Choice := new String' ("n");
+            Choices (1).Description := new String' ("No");
 
-            Choices (2).Choice := new String'("y");
-            Choices (2).Description := new String'("Yes");
+            Choices (2).Choice := new String' ("y");
+            Choices (2).Description := new String' ("Yes");
 
             Gtk_New
               (Dialog,
                To_Window (Window),
-               Convert (To_Main_Debug_Window (Window),
-                        Descriptor).Debugger,
+               Debugger,
                False,
                Choices (1 .. 2),
                Str (Question_Start .. Str'Last));
