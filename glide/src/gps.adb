@@ -412,7 +412,7 @@ procedure GPS is
       if not Executed then
          if As_File then
             Insert (GPS.Kernel,
-                    -"Language unknown for --batch command line switch",
+                    -"Language unknown for --load command line switch",
                     Mode => Error);
          else
             Insert (GPS.Kernel,
