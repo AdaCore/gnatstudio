@@ -23,8 +23,8 @@
 package Glide_Kernel.Help is
 
    procedure Display_Help
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Help_File      : String);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Help_File : String);
    --  Display HTML Help file
 
    function Search

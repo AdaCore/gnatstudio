@@ -907,13 +907,14 @@ package body Src_Editor_Module is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      File  : constant String := '/' & (-"File") & '/';
-      Edit  : constant String := '/' & (-"Edit") & '/';
-      Gotom : constant String := '/' & (-"Navigate") & '/';
-      Tools : constant String := '/' & (-"Tools") & '/';
-      Mitem : Gtk_Menu_Item;
-      Button : Gtk_Button;
+      File    : constant String := '/' & (-"File") & '/';
+      Edit    : constant String := '/' & (-"Edit") & '/';
+      Gotom   : constant String := '/' & (-"Navigate") & '/';
+      Tools   : constant String := '/' & (-"Tools") & '/';
+      Mitem   : Gtk_Menu_Item;
+      Button  : Gtk_Button;
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+
    begin
       --  Menus
 
