@@ -1412,7 +1412,6 @@ procedure GPS is
         and then not Has_User_Desktop (GPS.Kernel)
       then
          Open_Html (GPS.Kernel, VFS.Create_From_Base ("gps-welcome.html"));
-         Maximize_Children (Get_MDI (GPS.Kernel));
       end if;
 
       if Splash /= null then
