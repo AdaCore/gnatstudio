@@ -136,7 +136,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
             return;
          end if;
 
-         if Tab.Descriptor.Remote_Host /= null
+         if Tab.Descriptor.Remote_Host'Length /= 0
            or else Is_Regular_File (S)
          then
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
@@ -146,6 +146,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Error,
                (-" Could not find file: ") & S);
          end if;
+
+      exception
+         when Executable_Not_Found =>
+            Print_Message
+              (Main_Debug_Window_Access (Get_Toplevel (Object)).Statusbar1,
+               Error,
+               (-" Could not find file: ") & S);
       end;
    end On_Open_Program1_Activate;
 
