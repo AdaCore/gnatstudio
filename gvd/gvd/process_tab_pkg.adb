@@ -30,7 +30,7 @@ with Gtk.Object; use Gtk.Object;
 
 package body Process_Tab_Pkg is
 
-   Signals      : constant Chars_Ptr_Array :=
+   Signals : constant Chars_Ptr_Array :=
      (1 => New_String ("executable_changed"));
    Class_Record : System.Address := System.Null_Address;
 
@@ -108,6 +108,8 @@ begin
      (Process_Tab.Debugger_Text, "delete_text", On_Debugger_Text_Delete_Text'Access, Process_Tab);
    Return_Callback.Object_Connect
      (Process_Tab.Debugger_Text, "key_press_event", On_Debugger_Text_Key_Press_Event'Access, Process_Tab);
+   Widget_Callback.Object_Connect
+     (Process_Tab.Debugger_Text, "grab_focus", On_Debugger_Get_Focus'Access, Process_Tab);
    Add (Process_Tab.Scrolledwindow7, Process_Tab.Debugger_Text);
    Set_Editable (Process_Tab.Debugger_Text, True);
 
