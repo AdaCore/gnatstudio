@@ -1054,6 +1054,9 @@ package body Browsers.Call_Graph is
 
       if Info /= No_Entity_Information then
          begin
+            Remove_Result_Category
+              (Get_Kernel (Entity), -"References for: " & Get_Name (Info));
+
             Print_Ref (Get_Kernel (Entity),
                        Get_Declaration_File_Of (Info),
                        Get_Declaration_Line_Of (Info),
@@ -1110,6 +1113,9 @@ package body Browsers.Call_Graph is
       if Info /= No_Entity_Information then
          --  Print the declaration of the entity, but only if it is in the
          --  current file. Otherwise, this is too surprising for the use
+
+         Remove_Result_Category
+           (Get_Kernel (Entity), -"References for: " & Get_Name (Info));
 
          if Get_Declaration_File_Of (Info) = File_Information (Entity) then
             Print_Ref (Get_Kernel (Entity),
