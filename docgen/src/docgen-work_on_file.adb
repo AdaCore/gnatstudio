@@ -651,6 +651,9 @@ package body Docgen.Work_On_File is
                      Info, Entity_Node.Line_In_Body, Status);
 
                   if Status /= Success then
+                     --  Should we really reset Line_In_Body when
+                     --  Status = Fuzzy_Match ???
+
                      Entity_Node.Line_In_Body := Null_File_Location;
 
                      --  ??? Should only generate this message once
