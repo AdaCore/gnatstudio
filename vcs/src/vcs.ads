@@ -27,6 +27,8 @@ with VFS;
 with Basic_Types;  use Basic_Types;
 with Glide_Kernel; use Glide_Kernel;
 
+with Ada.Unchecked_Deallocation;
+
 package VCS is
 
    --  This package provides utilities for communicating with a VCS
@@ -48,22 +50,22 @@ package VCS is
    type VCS_Access is access all VCS_Record'Class;
 
    type VCS_Action is
-     (None,             --  Do nothing
-      Status,           --  Queries the status of one or more files
-      Status_Dir,       --  Queries the status for one directory
-      Local_Status,     --  Queries the local status for one or more files
-      Local_Status_Dir, --  Queries the local status for one directory
-      Open,             --  Open one or more file for writing
-      Update,           --  Update one or more files
-      Commit,           --  Commits one or more files
-      History,          --  Get the entire revision history for one file
-      Annotate,         --  Get the annotations for one file
-      Diff_Head,        --  Diff current against head revision
-      Diff,             --  Diff current against specified revision
-      Diff2,            --  Diff between two specified revisions
-      Add,              --  Add one file or dir to the repository
-      Remove,           --  Remove one file or dir from repository
-      Revert);          --  Revert files or dirs to repository revision
+     (None,               --  Do nothing
+      Status_Files,       --  Queries the status of one or more files
+      Status_Dir,         --  Queries the status for one directory
+      Local_Status_Files, --  Queries the local status for one or more files
+      Local_Status_Dir,   --  Queries the local status for one directory
+      Open,               --  Open one or more file for writing
+      Update,             --  Update one or more files
+      Commit,             --  Commits one or more files
+      History,            --  Get the entire revision history for one file
+      Annotate,           --  Get the annotations for one file
+      Diff_Head,          --  Diff current against head revision
+      Diff,               --  Diff current against specified revision
+      Diff2,              --  Diff between two specified revisions
+      Add,                --  Add one file or dir to the repository
+      Remove,             --  Remove one file or dir from repository
+      Revert);            --  Revert files or dirs to repository revision
 
    type Action_Array is array (VCS_Action) of String_Access;
 
@@ -93,38 +95,36 @@ package VCS is
    procedure Free (Ref : in out VCS_Access);
    --  Free the VCS pointed to by Ref, and Ref itself
 
-   type File_Status is
-     (Unknown,
-      --  The status is not yet determined or the VCS repository is not able to
-      --  tell (disconnected, locked, broken, etc)
+   type File_Status is record
+      Label       : String_Access;
+      --  The label corresponding to the status
 
-      Not_Registered,
-      --  The file is unknown of the VCS repository.
+      Stock_Id    : String_Access;
+      --  Associated stock icon
+   end record;
 
-      Up_To_Date,
-      --  The file corresponds to the latest version in the corresponding
-      --  branch on the repository.
+   procedure Free (X : in out File_Status);
+   --  Free memory associated to X.
+   --  Note that file status are intended to be static objects, they should not
+   --  be freed until the end of the program.
 
-      Added,
-      --  The file has been locally added to the VCS repository but the change
-      --  has not been committed.
+   ---------------------
+   -- Standard status --
+   ---------------------
 
-      Removed,
-      --  The file still exists locally but is known to have been removed from
-      --  the VCS repository.
+   Unknown_Label : aliased String := "Unknown";
+   Unknown_Stock : aliased String := "gps-vcs-unknown";
 
-      Modified,
-      --  The file has been modified by the user or has been explicitly opened
-      --  for editing.
+   Unknown : constant File_Status :=
+     (Unknown_Label'Access, Unknown_Stock'Access);
+   --  The status is not yet determined or the VCS repository is not able to
+   --  tell (disconnected, locked, broken, etc)
 
-      Needs_Merge,
-      --  The file has been modified locally and on the repository.
+   type Status_Array is array (Natural range <>) of File_Status;
+   type Status_Array_Access is access Status_Array;
 
-      Needs_Update
-      --  The file has been modified in the repository but not locally.
-     );
-
-   type Status_Array is array (File_Status) of String_Access;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Status_Array, Status_Array_Access);
 
    type File_Status_Record is record
       --  Contains all the repository information concerning one file.
@@ -318,7 +318,66 @@ package VCS is
      (Rep : access VCS_Record) return Action_Array;
    --  Return the labels of the defined actions. User must not free the result.
 
+   function Get_Registered_Status
+     (Rep : access VCS_Record) return Status_Array;
+   --  Return the registered status for Rep.
+   --  The result should always have in first position the Unknown status,
+   --  which is common to all VCS, and then the status considered as
+   --  "up-to-date".
+
 private
+
+   --------------------------
+   -- Standard file status --
+   --------------------------
+
+   Up_To_Date_Label : aliased String := "Up to date";
+   Up_To_Date_Stock : aliased String := "gps-vcs-up-to-date";
+   Up_To_Date : File_Status :=
+     (Up_To_Date_Label'Access, Up_To_Date_Stock'Access);
+   --  The file corresponds to the latest version in the corresponding
+   --  branch on the repository.
+
+
+   Added_Label : aliased String := "Added";
+   Added_Stock : aliased String := "gps-vcs-added";
+   Added : File_Status :=
+     (Added_Label'Access, Added_Stock'Access);
+   --  The file has been locally added to the VCS repository but the change
+   --  has not been committed.
+
+   Removed_Label : aliased String := "Removed";
+   Removed_Stock : aliased String := "gps-vcs-removed";
+   Removed : File_Status :=
+     (Removed_Label'Access, Removed_Stock'Access);
+   --  The file still exists locally but is known to have been removed from
+   --  the VCS repository.
+
+   Modified_Label : aliased String := "Modified";
+   Modified_Stock : aliased String := "gps-vcs-modified";
+   Modified : File_Status :=
+     (Modified_Label'Access, Modified_Stock'Access);
+   --  The file has been modified by the user or has been explicitly opened
+   --  for editing.
+
+   Needs_Merge_Label : aliased String := "Needs merge";
+   Needs_Merge_Stock : aliased String := "gps-vcs-needs-merge";
+   Needs_Merge : File_Status :=
+     (Needs_Merge_Label'Access, Needs_Merge_Stock'Access);
+   --  The file has been modified locally and on the repository.
+
+   Needs_Update_Label : aliased String := "Needs update";
+   Needs_Update_Stock : aliased String := "gps-vcs-needs-update";
+   Needs_Update : File_Status :=
+     (Needs_Update_Label'Access, Needs_Update_Stock'Access);
+   --  The file has been modified in the repository but not locally.
+
+   Not_Registered_Label : aliased String := "Not registered";
+   Not_Registered_Stock : aliased String := "gps-vcs-not-registered";
+   Not_Registered : File_Status :=
+     (Not_Registered_Label'Access, Not_Registered_Stock'Access);
+   --  The file is unknown of the VCS repository.
+
    type VCS_Record is abstract tagged limited record
       Kernel : Glide_Kernel.Kernel_Handle;
       Queue  : Commands.Command_Queue;
