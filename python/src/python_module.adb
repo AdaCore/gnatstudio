@@ -790,7 +790,7 @@ package body Python_Module is
    procedure Python_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Entity   : constant Entity_Information := Get_Data (Data, 1);
+      Entity : constant Entity_Information := Get_Data (Data, 1);
    begin
       if Command = "__str__"
         or else Command = "__repr__"
