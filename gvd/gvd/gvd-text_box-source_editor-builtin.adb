@@ -161,8 +161,8 @@ package body Odd.Source_Editors is
    --  Idle function called to compute the lines with code in the editor
 
    function Check_Single_Line
-     (Editor     : access Source_Editor_Record'Class;
-      Line       : Natural) return Boolean;
+     (Editor : access Source_Editor_Record'Class;
+      Line   : Natural) return Boolean;
    --  Check whether Line contains executable code, and put an icon for it
    --  in the button toolbar if needed.
    --  Returns False if no line after Line contains code.
@@ -217,6 +217,7 @@ package body Odd.Source_Editors is
       Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
       Breakpoints_Array : Odd.Types.Breakpoint_Array_Ptr :=
         Process.Breakpoints;
+
    begin
       if Breakpoints_Array /= null then
          for Index in Breakpoints_Array'Range loop
@@ -283,9 +284,11 @@ package body Odd.Source_Editors is
       Button : Natural;
       Line   : Natural) return Boolean
    is
-      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
       Result  : Boolean;
       Num     : Integer;
+
    begin
       if Editor.Current_File /= null
         and then Button = 1
@@ -296,10 +299,12 @@ package body Odd.Source_Editors is
             Remove_Breakpoint
               (Process.Debugger, Num, Mode => Odd.Types.Visible);
          else
-            Break_Source (Process.Debugger, Editor.Current_File.all,
-                          Line, Mode => Odd.Types.Visible);
+            Break_Source
+              (Process.Debugger, Editor.Current_File.all,
+               Line, Mode => Odd.Types.Visible);
          end if;
       end if;
+
       return True;
    end On_Pixmap_Clicked;
 
@@ -339,6 +344,7 @@ package body Odd.Source_Editors is
           File         => Get_Current_File (Source),
           Line         => Line,
           Process      => Debugger_Process_Tab (Source.Process));
+
    begin
       --  Destroy the previous menu (which we couldn't do earlier because
       --  of the call to popup. It will change every item anyway.
@@ -360,6 +366,7 @@ package body Odd.Source_Editors is
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Print_Variable'Access),
          Data);
+
       if Entity'Length = 0 then
          Set_State (Mitem, State_Insensitive);
       end if;
@@ -371,6 +378,7 @@ package body Odd.Source_Editors is
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Print_Variable'Access),
          Data);
+
       if Entity'Length = 0 then
          Set_State (Mitem, State_Insensitive);
       end if;
@@ -512,12 +520,15 @@ package body Odd.Source_Editors is
             when others =>
                if Do_Color_Highlighting then
                   if Editor.Lang /= null then
-                     Looking_At (Editor.Lang,
-                                 Buffer (Index .. Buffer'Last),
-                                 Entity, Next_Char);
+                     Looking_At
+                       (Editor.Lang,
+                        Buffer (Index .. Buffer'Last),
+                        Entity, Next_Char);
+
                      if Next_Char > Buffer'Last then
                         Next_Char := Buffer'Last + 1;
                      end if;
+
                   else
                      Next_Char := Index + 1;
                      Entity := Normal_Text;
@@ -533,14 +544,15 @@ package body Odd.Source_Editors is
                   begin
                      while J < Next_Char loop
                         if Buffer (J) = ASCII.LF then
-                           Insert (Editor,
-                                   Editor.Colors (Entity),
-                                   Chars => Buffer (Line_Start .. J));
+                           Insert
+                             (Editor,
+                              Editor.Colors (Entity),
+                              Chars => Buffer (Line_Start .. J));
                            Line := Line + 1;
 
                            if Editor.Show_Line_Nums then
-                              Insert (Editor,
-                                      Chars => Line_Number_String (Line));
+                              Insert
+                                (Editor, Chars => Line_Number_String (Line));
                            end if;
 
                            Line_Start := J + 1;
@@ -549,10 +561,11 @@ package body Odd.Source_Editors is
                         J := J + 1;
                      end loop;
 
-                     Insert (Editor,
-                             Editor.Colors (Entity),
-                             Null_Color,
-                             Buffer (Line_Start .. Next_Char - 1));
+                     Insert
+                       (Editor,
+                        Editor.Colors (Entity),
+                        Null_Color,
+                        Buffer (Line_Start .. Next_Char - 1));
                   end;
 
                   Index := Next_Char;
@@ -660,7 +673,8 @@ package body Odd.Source_Editors is
       end if;
 
       declare
-         Base_File : String := Base_File_Name (Editor.Current_File.all);
+         Base_File : constant String :=
+           Base_File_Name (Editor.Current_File.all);
       begin
          Freeze (Get_Buttons (Editor));
          Hide_All (Get_Buttons (Editor));
@@ -781,6 +795,7 @@ package body Odd.Source_Editors is
       F      : File_Descriptor;
       Length : Positive;
       Name   : aliased constant String := File_Name & ASCII.NUL;
+
    begin
       --  Avoid reloading a file twice.
       --  This also solve the problem of recursive loops ("info line" in gdb,
@@ -1028,10 +1043,10 @@ package body Odd.Source_Editors is
       if Name /= "" then
          Lang := Get_Language_From_File (Name);
          Set_Current_Language (Editor, Lang);
-         Load_File (Editor,
-                    Find_File
-                    (Debugger_Process_Tab (Editor.Process).Debugger, Name),
-                    Set_Current => False);
+         Load_File
+           (Editor,
+            Find_File (Debugger_Process_Tab (Editor.Process).Debugger, Name),
+            Set_Current => False);
          Set_Line (Editor, Get_Line (Editor), Set_Current => True);
       end if;
    end Show_Current_Line_Menu;
@@ -1040,9 +1055,9 @@ package body Odd.Source_Editors is
    -- Idle_Compute_Lines --
    ------------------------
 
-   function Idle_Compute_Lines (Editor : Source_Editor) return Boolean
-   is
-      Process  : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
+   function Idle_Compute_Lines (Editor : Source_Editor) return Boolean is
+      Process  : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
       Debug    : Debugger_Access := Process.Debugger;
       Line     : Integer;
       Line_Max : Integer;
@@ -1070,12 +1085,14 @@ package body Odd.Source_Editors is
       Line := Line_From_Pixels
         (Editor,
          Gint (Get_Value (Get_Vadj (Get_Child (Editor)))));
+
       if Line <= Editor.Current_File_Cache.Line_Parsed'First then
          Line := Editor.Current_File_Cache.Line_Parsed'First;
       end if;
 
       Line_Max := Line + Line_From_Pixels
         (Editor, Gint (Get_Allocation_Height (Editor)));
+
       while Line <= Line_Max loop
          if Line > Editor.Current_File_Cache.Line_Parsed'Last then
             exit;
@@ -1094,6 +1111,7 @@ package body Odd.Source_Editors is
          loop
             Editor.Current_File_Cache.Current_Line :=
               Editor.Current_File_Cache.Current_Line + 1;
+
             if Editor.Current_File_Cache.Current_Line >
               Editor.Current_File_Cache.Line_Has_Code'Last
             then
@@ -1197,18 +1215,18 @@ package body Odd.Source_Editors is
       Debugger : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Data.Box.Process);
 
-      Context : Items.Drawing_Context;
+      Context        : Items.Drawing_Context;
       Chars_Per_Line : Gint;
-      Index : Natural;
-      Line : Gint;
-      Max : Natural;
-      W : Gint;
+      Index          : Natural;
+      Line           : Gint;
+      Max            : Natural;
+      W              : Gint;
 
-      Mask2 : Gdk.Types.Gdk_Modifier_Type;
-      Win : Gdk_Window;
-      X, Y : Gint;
+      Mask2          : Gdk.Types.Gdk_Modifier_Type;
+      Win            : Gdk_Window;
+      X, Y           : Gint;
+
    begin
-
       Width := 0;
       Height := 0;
 
@@ -1223,12 +1241,12 @@ package body Odd.Source_Editors is
       --  get them relative to the actual window where the text is displayed
       --  (ie ignoring the borders around the Gtk_Text), or there will be a
       --  small offset.
+
       Get_Pointer (Get_Text_Area (Get_Child (Data.Box)), X, Y, Mask2, Win);
 
       declare
          Variable_Name : Odd.Types.String_Access;
       begin
-
          Get_Entity_Area (Data.Box, X, Y, Area, Variable_Name);
 
          if Variable_Name = null then
@@ -1237,6 +1255,7 @@ package body Odd.Source_Editors is
 
          if Tooltips_In_Source = Full then
             Entity := Parse_Type (Debugger.Debugger, Variable_Name.all);
+
             if Entity = null then
                return;
             else
@@ -1262,6 +1281,7 @@ package body Odd.Source_Editors is
             then
                Value :=
                  new String'(Value_Of (Debugger.Debugger, Variable_Name.all));
+
                if Value.all = "" then
                   Free (Value);
                   return;
@@ -1275,6 +1295,7 @@ package body Odd.Source_Editors is
               Max_Tooltip_Width / Char_Width (Context.Font, Character'('m'));
 
             Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+
             if Value'Length > Chars_Per_Line then
                Width := Gint'Min
                  (Max_Tooltip_Width,
@@ -1293,7 +1314,6 @@ package body Odd.Source_Editors is
       end;
 
       if Width /= 0 and then Height /= 0 then
-
          Gdk.Pixmap.Gdk_New
            (Pixmap, Get_Window (Debugger.Window), Width, Height);
          Context := Create_Drawing_Context (Pixmap);
@@ -1316,6 +1336,7 @@ package body Odd.Source_Editors is
 
             while Index <= Value'Last loop
                Max := Index + Natural (Chars_Per_Line) - 1;
+
                if Max > Value'Last then
                   Max := Value'Last;
                end if;
@@ -1350,4 +1371,5 @@ package body Odd.Source_Editors is
    exception
       when Language.Unexpected_Type | Constraint_Error => null;
    end Draw_Tooltip;
+
 end Odd.Source_Editors;

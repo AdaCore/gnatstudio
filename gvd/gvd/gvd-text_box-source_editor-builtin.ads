@@ -104,8 +104,8 @@ package Odd.Source_Editors is
    --  be displayed).
 
    procedure Update_Breakpoints
-     (Editor    : access Source_Editor_Record;
-      Br        : Odd.Types.Breakpoint_Array);
+     (Editor : access Source_Editor_Record;
+      Br     : Odd.Types.Breakpoint_Array);
    --  Change the list of breakpoints to highlight in the editor.
    --  All the breakpoints that previously existed are removed from the screen,
    --  and replaced by the new ones.
@@ -160,7 +160,8 @@ private
      (Widget : access Gtk.Text.Gtk_Text_Record'Class;
       Data   : in out Editor_Tooltip_Data;
       Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width, Height : out Glib.Gint;
+      Width,
+      Height : out Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle);
 
    package Editor_Tooltips is new Odd.Tooltips
@@ -171,7 +172,7 @@ private
 
    type Source_Editor_Record is new Odd.Text_Boxes.Odd_Text_Box_Record with
    record
-      Process        : Gtk.Widget.Gtk_Widget;
+      Process : Gtk.Widget.Gtk_Widget;
 
       Show_Line_Nums       : Boolean := Odd.Preferences.Editor_Show_Line_Nums;
       Show_Lines_With_Code : Boolean :=

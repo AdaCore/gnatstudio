@@ -702,22 +702,22 @@ package body Odd.Text_Boxes is
       Area   : out Gdk.Rectangle.Gdk_Rectangle;
       Entity : in out Odd.Types.String_Access)
    is
-      Line    : Natural := 0;
-      Index   : Integer;
-      Line_Index : Integer;
+      Line         : Natural := 0;
+      Index        : Integer;
+      Line_Index   : Integer;
       Current_Line : Natural := 1;
-      Start_Index : Integer;
-      X2 : Gint;
+      Start_Index  : Integer;
+      X2           : Gint;
 
    begin
       Entity := null;
+
       if Box.Buffer /= null then
          Index := Box.Buffer'First;
-
          Line := Line_From_Pixels
            (Box, Y - 1 + Gint (Get_Value (Get_Vadj (Box.Child))));
-         X2 := X / Char_Width (Box.Font, Character' ('m'))
-           - Invisible_Column_Width (Box) + 1;
+         X2 := X / Char_Width (Box.Font, Character' ('m')) -
+           Invisible_Column_Width (Box) + 1;
 
          if X2 <= 0 then
             Index := -1;
@@ -739,12 +739,13 @@ package body Odd.Text_Boxes is
             --  column number (after processing horizontal tabs).
 
             Index := Index - Box.Buffer'First;
+
             declare
                J : Integer := 1;
             begin
                while J <= Integer (X2) loop
-
                   Index := Index + 1;
+
                   exit when Box.Buffer'Last < Index
                     or else Box.Buffer (Index) = ASCII.LF;
 
@@ -767,43 +768,42 @@ package body Odd.Text_Boxes is
             Entity := null;
          else
             Start_Index := Index;
+
             while Start_Index >= Box.Buffer'First
-              and then (Is_Letter (Box.Buffer (Start_Index))
-                        or else
-                        Is_Digit (Box.Buffer (Start_Index))
-                        or else
-                        Box.Buffer (Start_Index) = '_')
+              and then
+                (Is_Letter (Box.Buffer (Start_Index))
+                  or else Is_Digit (Box.Buffer (Start_Index))
+                  or else Box.Buffer (Start_Index) = '_')
             loop
                Start_Index := Start_Index - 1;
             end loop;
-               while Index <= Box.Buffer'Last
-                 and then (Is_Letter (Box.Buffer (Index))
-                           or else
-                           Is_Digit (Box.Buffer (Index))
-                           or else
-                           Box.Buffer (Index) = '_')
-               loop
-                  Index := Index + 1;
-               end loop;
 
-               Area.X :=
-                 Gint16 (Integer (-X)
-                         + (Start_Index - Line_Index
-                            + Integer (Invisible_Column_Width (Box)))
-                         * Integer (Char_Width (Box.Font, Character' ('m'))));
-               Area.Width :=
-                 Guint16 (Gint ((Index - Start_Index - 1))
-                          * (Char_Width (Box.Font, Character' ('m'))));
+            while Index <= Box.Buffer'Last
+              and then
+                (Is_Letter (Box.Buffer (Index))
+                  or else Is_Digit (Box.Buffer (Index))
+                  or else Box.Buffer (Index) = '_')
+            loop
+               Index := Index + 1;
+            end loop;
 
-               Area.Y :=
-                 -Gint16 ((Y mod (Get_Ascent (Box.Font)
-                                   + Get_Descent (Box.Font))));
+            Area.X := Gint16
+              (Integer (-X) +
+                (Start_Index - Line_Index +
+                  Integer (Invisible_Column_Width (Box))) *
+                Integer (Char_Width (Box.Font, Character' ('m'))));
+            Area.Width := Guint16
+              (Gint ((Index - Start_Index - 1)) *
+                (Char_Width (Box.Font, Character' ('m'))));
 
-               Area.Height :=
-                 Guint16 (Get_Ascent (Box.Font) + Get_Descent (Box.Font));
+            Area.Y := -Gint16
+              ((Y mod (Get_Ascent (Box.Font) + Get_Descent (Box.Font))));
 
-               Entity := new String'
-                 (Box.Buffer (Start_Index + 1 .. Index - 1));
+            Area.Height :=
+              Guint16 (Get_Ascent (Box.Font) + Get_Descent (Box.Font));
+
+            Entity := new String'
+              (Box.Buffer (Start_Index + 1 .. Index - 1));
          end if;
       end if;
    end Get_Entity_Area;
