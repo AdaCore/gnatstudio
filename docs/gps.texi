@@ -4690,6 +4690,21 @@ to the current debug session, use the menu
 @code{Debug->Debug->Add Symbols...} to load the symbol tables in the current
 debugger.
 
+@cindex --batch
+Scripts can be executed immediately upon startup of GPS by using the
+command line switch @code{--batch}. Specifying the following command
+line
+
+@smallexample
+ gps --batch=python:mytest.py
+@end smallexample
+
+will force the python script @file{mytest.py} to be executed
+immediately, before GPS starts reacting to user's requests. This is
+useful if you want to do some special initializations of the
+environment. It can also be used has a command line interface to GPS,
+if you script's last command is to exit GPS.
+
 @c --------------------------------------------------------------------
 @node Scripting GPS
 @chapter Scripting GPS
@@ -4718,7 +4733,7 @@ result, not many commands are currently exported by GPS, although
 their number is increasing daily. These commands are similar to what
 is available to people who extend GPS directly in Ada, but with a
 strong advantage: they do not require any recompilation of the GPS
-core, and can be tested and executed interactively.
+core, and can be tested and executed interact
 
 The goal of such scripts is to be able to help automate processes such
 as builds, automatic generation of graphs,@dots{}
@@ -6658,6 +6673,7 @@ Options:
                        program with the given arguments
    --debugger debugger Specify the debugger's command line
    --target=TARG:PRO   Load program on machine TARG using protocol PRO
+   --batch=lang:file   Execute a script written in the language lang
 
 Source files are searched everywhere on the project's source path
 @end smallexample
