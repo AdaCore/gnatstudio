@@ -1360,14 +1360,10 @@ package body GUI_Utils is
                Gtk_New (M);
                Set_Submenu (Menu_Item, M);
                Set_Accel_Group (M, Accelerators);
-               Find_Menu_Item_By_Name
-                 (Menu_Bar, Parent, Ref_Item, Pred, Index);
-
-            else
-               Find_Menu_Item_By_Name
-                 (Menu_Bar, Parent, Ref_Item, Pred, Index);
             end if;
 
+            Find_Menu_Item_By_Name
+              (Menu_Bar, Parent, Ref_Item, Pred, Index);
             Add_Menu (Parent, Menu_Bar, Menu_Item, Index, Add_Before);
             Show_All (Menu_Item);
             Parent := M;
