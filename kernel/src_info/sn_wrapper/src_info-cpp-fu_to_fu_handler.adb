@@ -98,7 +98,7 @@ begin
                Get_LI_Filename (List.Value.Location.File.LI),
                (List.Value.Location.Line, List.Value.Location.Column));
          end if;
-         --  TODO free list of a single element
+         Destroy (List);
       exception
          when Declaration_Not_Found =>
             pragma Assert (False, "How did we get here?");
