@@ -66,6 +66,7 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table);
    procedure Sym_E_Handler       (Sym : FIL_Table);
    procedure Sym_EC_Handler      (Sym : FIL_Table);
+   procedure Sym_CON_Handler     (Sym : FIL_Table);
 
    ---------------------
    -- Symbol_Handlers --
@@ -76,6 +77,7 @@ package body Src_Info.CPP is
       FU     => Sym_FU_Handler'Access,
       E      => Sym_E_Handler'Access,
       EC     => Sym_EC_Handler'Access,
+      CON    => Sym_CON_Handler'Access,
       others => Sym_Default_Handler'Access);
 
    function Ext (S : String) return String;
@@ -103,10 +105,33 @@ package body Src_Info.CPP is
       FU     => Ext ("fu"),
       T      => Ext ("t"),
       CL     => Ext ("cl"),
+      CON    => Ext ("con"),
       GV     => Ext ("gv"),
       E      => Ext ("e"),
       EC     => Ext ("ec"),
       others => Ext (""));
+
+   type Type_To_Object_Array is array (E_Kind) of E_Kind;
+   --  type for array that maps E_Kind type entities into
+   --  object entities
+
+   Type_To_Object : Type_To_Object_Array :=
+     (Access_Type               => Access_Object,
+      Array_Type                => Array_Object,
+      Boolean_Type              => Boolean_Object,
+      Class_Wide_Type           => Class_Wide_Object,
+      Decimal_Fixed_Point_Type  => Decimal_Fixed_Point_Object,
+      Enumeration_Type          => Enumeration_Object,
+      Modular_Integer_Type      => Modular_Integer_Object,
+      Protected_Type            => Protected_Object,
+      Record_Type               => Record_Object,
+      Ordinary_Fixed_Point_Type => Ordinary_Fixed_Point_Object,
+      Signed_Integer_Type       => Signed_Integer_Object,
+      String_Type               => String_Object,
+      Task_Type                 => Task_Object,
+      others                    => Overloaded_Entity);
+   --  This array establishes relation between E_Kind type entities
+   --  and object entities
 
    procedure Open_DB_Files
      (DB_Prefix : in String);
@@ -506,6 +531,7 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_EC_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_CON_Handler     (Sym : FIL_Table) is separate;
 
 end Src_Info.CPP;
 
