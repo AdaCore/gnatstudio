@@ -20,7 +20,6 @@
 
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
-with Gtk.Paned; use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Label; use Gtk.Label;
@@ -30,6 +29,7 @@ with Gtk.Text; use Gtk.Text;
 with Gtk.Handlers;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with GVD.Code_Editors; use GVD.Code_Editors;
+with Dock_Paned; use Dock_Paned;
 
 package Process_Tab_Pkg is
 
@@ -37,9 +37,9 @@ package Process_Tab_Pkg is
       Delete_Text_Handler_Id : Gtk.Handlers.Handler_Id;
       Stack_List_Select_Id : Gtk.Handlers.Handler_Id;
       Process_Hbox : Gtk_Hbox;
-      Process_Paned : Gtk_Vpaned;
-      Data_Editor_Paned : Gtk_Vpaned;
-      Data_Paned : Gtk_Hpaned;
+      Process_Paned : Dock_Vpaned;
+      Data_Editor_Paned : Dock_Vpaned;
+      Data_Paned : Dock_Hpaned;
       Stack_Scrolledwindow : Gtk_Scrolled_Window;
       Stack_List : Gtk_Clist;
       Label101 : Gtk_Label;

@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gdk.Window;          use Gdk.Window;
-with Gtk.Container;       use Gtk.Container;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -53,9 +52,9 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Window_Settings; use GVD.Window_Settings;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Ada.Unchecked_Deallocation;
-with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with List_Select_Pkg;     use List_Select_Pkg;
+with Dock_Paned;          use Dock_Paned;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -838,7 +837,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=
         Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
-      Parent    : Gtk_Container;
 
    begin
       --  ??? Is there a memory leak here ? Data_Paned might be ref'd, but
@@ -852,20 +850,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Process := Process_User_Data.Get (Page);
 
             if Get_Active (Top.Call_Stack) then
-               --  Put back the canvas into the data/editor paned.
-               Parent :=
-                 Gtk_Container (Get_Parent (Process.Data_Scrolledwindow));
-               Reparent (Process.Data_Scrolledwindow, Process.Data_Paned);
-               Add (Parent, Process.Data_Paned);
-               Unref (Process.Data_Paned);
-               Show_All (Parent);
+               Add1 (Process.Data_Paned, Process.Stack_Scrolledwindow);
+               Unref (Process.Stack_Scrolledwindow);
                Update_Call_Stack (Process);
             else
-               --  Ref the widget so that it is not destroyed.
-               Ref (Process.Data_Paned);
-               Parent := Gtk_Container (Get_Parent (Process.Data_Paned));
-               Remove (Parent, Process.Data_Paned);
-               Reparent (Process.Data_Scrolledwindow, Parent);
+               Ref (Process.Stack_Scrolledwindow);
+               Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
             end if;
          end if;
       end loop;

@@ -43,7 +43,6 @@ with Gtk.Object;          use Gtk.Object;
 with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Adjustment;      use Gtk.Adjustment;
-with Gtk.Container;       use Gtk.Container;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
 with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
@@ -74,12 +73,12 @@ with GVD.Pixmaps;                use GVD.Pixmaps;
 with GVD.Strings;                use GVD.Strings;
 with GVD.Types;                  use GVD.Types;
 with GVD.Code_Editors;           use GVD.Code_Editors;
-with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Window_Settings;        use GVD.Window_Settings;
 with GVD.Status_Bar;             use GVD.Status_Bar;
 with GVD.Utils;                  use GVD.Utils;
 with GVD.Trace;                  use GVD.Trace;
+with Dock_Paned;                 use Dock_Paned;
 
 with System;
 with Ada.Unchecked_Conversion;
@@ -722,7 +721,6 @@ package body GVD.Process is
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
       Length        : Guint;
-      Parent        : Gtk_Container;
       Geometry_Info : Process_Tab_Geometry;
 
    begin
@@ -730,15 +728,11 @@ package body GVD.Process is
       Initialize (Process);
       Initialize_Class_Record (Process, Signals, Class_Record);
 
-      --  Insert the stack window if needed.
+      --  Remove the stack window if needed.
 
-      if Get_Active (Window.Call_Stack) then
-         Parent :=
-           Gtk_Container (Get_Parent (Process.Data_Scrolledwindow));
-         Reparent (Process.Data_Scrolledwindow, Process.Data_Paned);
-         Add (Parent, Process.Data_Paned);
-         Unref (Process.Data_Paned);
-         Show_All (Parent);
+      if not Get_Active (Window.Call_Stack) then
+         Ref (Process.Stack_Scrolledwindow);
+         Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
       end if;
 
       Process.Descriptor.Debugger := Kind;
@@ -835,14 +829,8 @@ package body GVD.Process is
       Gtk_New (Label);
 
       if Window.TTY_Mode then
-         Ref (Process.Process_Paned);
-         Remove (Process.Process_Hbox, Process.Process_Paned);
-
-         if Process.Separate_Data then
-            Reparent (Process.Editor_Vbox, Process.Process_Hbox);
-         else
-            Reparent (Process.Data_Editor_Paned, Process.Process_Hbox);
-         end if;
+         Ref (Process.Command_Scrolledwindow);
+         Dock_Remove (Process.Process_Paned, Process.Command_Scrolledwindow);
       end if;
 
       Append_Page (Window.Process_Notebook, Process.Process_Hbox, Label);
@@ -864,6 +852,12 @@ package body GVD.Process is
          end if;
 
          if Get_Pref (Separate_Data) then
+            Ref (Process.Data_Paned);
+            Dock_Remove (Process.Data_Editor_Paned, Process.Data_Paned);
+            Add (Process, Process.Data_Paned);
+            Unref (Process.Data_Paned);
+            Show_All (Process);
+
             if Get_Active (Window.Call_Stack) then
                Set_Default_Size
                  (Process,
@@ -1652,14 +1646,10 @@ package body GVD.Process is
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Editor);
-      Main    : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Process.Window);
       Str     : constant String := Get_Chars (Process.Debugger_Text);
       F       : constant Gdk_Font :=
         Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
       C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
-      Widget  : Gtk_Widget;
-      Parent  : Gtk_Container;
 
    begin
       if F /= Process.Debugger_Text_Font
@@ -1686,57 +1676,19 @@ package body GVD.Process is
 
       if Process.Separate_Data /= Get_Pref (Separate_Data) then
          Process.Separate_Data := not Process.Separate_Data;
-         Parent := Gtk_Container
-           (Get_Parent (Get_Widget (Get_Source (Process.Editor_Text))));
-         Detach (Get_Source (Process.Editor_Text));
-
-         if Get_Active (Main.Call_Stack) then
-            Widget := Gtk_Widget (Process.Data_Paned);
-         else
-            Widget := Gtk_Widget (Process.Data_Scrolledwindow);
-
-            --  We need to unrealize the window here, otherwise the
-            --  scrollbars are being destroyed when the widget is reparented
-            --  and we get gtk+ warnings
-            Unrealize (Widget);
-         end if;
-
          if Process.Separate_Data then
-            --  Reuse the Process window since nobody else needs it.
-            Reparent (Widget, Process);
-
-            --  Ref the widget so that it is not destroyed.
-            Ref (Process.Data_Editor_Paned);
-
-            if Process.Window.TTY_Mode then
-               Remove (Process.Process_Hbox, Process.Data_Editor_Paned);
-               Reparent (Process.Editor_Vbox, Process.Process_Hbox);
-            else
-               Remove (Process.Process_Paned, Process.Data_Editor_Paned);
-               Reparent (Process.Editor_Vbox, Process.Process_Paned);
-            end if;
-
+            Ref (Process.Data_Paned);
+            Dock_Remove (Process.Data_Editor_Paned, Process.Data_Paned);
+            Add (Process, Process.Data_Paned);
+            Unref (Process.Data_Paned);
             Show_All (Process);
-
          else
             Hide (Process);
-
-            --  Put back the Data into the paned
-
-            Reparent (Widget, Process.Data_Editor_Paned);
-            Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
-
-            if Process.Window.TTY_Mode then
-               Add (Process.Process_Hbox, Process.Data_Editor_Paned);
-            else
-               Add (Process.Process_Paned, Process.Data_Editor_Paned);
-            end if;
-
-            Unref (Process.Data_Editor_Paned);
-            Show_All (Process.Process_Hbox);
+            Ref (Process.Data_Paned);
+            Remove (Process, Process.Data_Paned);
+            Add1 (Process.Data_Editor_Paned, Process.Data_Paned);
+            Unref (Process.Data_Paned);
          end if;
-
-         Attach (Get_Source (Process.Editor_Text), Parent);
       end if;
    end Preferences_Changed;
 

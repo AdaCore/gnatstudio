@@ -30,7 +30,6 @@ with System;
 with Gtk.Object; use Gtk.Object;
 with Gtkada.Intl;     use Gtkada.Intl;
 with GVD.Canvas;      use GVD.Canvas;
-with GVD.Preferences; use GVD.Preferences;
 
 package body Process_Tab_Pkg is
 
@@ -46,7 +45,6 @@ end Gtk_New;
 
 procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
    pragma Suppress (All_Checks);
-   Separate_Data_Window : constant Boolean := Get_Pref (Separate_Data);
 begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
    Initialize_Class_Record (Process_Tab, Signals, Class_Record);
@@ -71,14 +69,14 @@ begin
    Set_Handle_Size (Process_Tab.Data_Editor_Paned, 10);
    Set_Gutter_Size (Process_Tab.Data_Editor_Paned, 6);
    Set_Position (Process_Tab.Data_Editor_Paned, 200);
-   --  Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
+   Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
 
    Gtk_New_Hpaned (Process_Tab.Data_Paned);
    Set_Handle_Size (Process_Tab.Data_Paned, 10);
    Set_Gutter_Size (Process_Tab.Data_Paned, 6);
    Set_Position (Process_Tab.Data_Paned, 200);
-   --  Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Paned);
-   Ref (Process_Tab.Data_Paned);
+   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Paned);
+   --  Ref (Process_Tab.Data_Paned);
 
    Gtk_New (Process_Tab.Stack_Scrolledwindow);
    Set_Policy (Process_Tab.Stack_Scrolledwindow, Policy_Automatic, Policy_Automatic);
@@ -139,19 +137,10 @@ begin
 
    Gtk_New (Process_Tab.Data_Scrolledwindow);
    Set_Policy (Process_Tab.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
-   --  Add (Process_Tab.Data_Paned, Process_Tab.Data_Scrolledwindow);
+   Add (Process_Tab.Data_Paned, Process_Tab.Data_Scrolledwindow);
 
    Gtk_New_Vbox (Process_Tab.Editor_Vbox, False, 0);
-
-   if Separate_Data_Window then
-      Add (Process_Tab, Process_Tab.Data_Scrolledwindow);
-      Ref (Process_Tab.Data_Editor_Paned);
-      Add (Process_Tab.Process_Paned, Process_Tab.Editor_Vbox);
-   else
-      Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
-      Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Scrolledwindow);
-      Add (Process_Tab.Data_Editor_Paned, Process_Tab.Editor_Vbox);
-   end if;
+   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Editor_Vbox);
 
    Gtk_New (GVD_Canvas (Process_Tab.Data_Canvas));
 --   Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
@@ -193,10 +182,6 @@ begin
      (Process_Tab.Debugger_Text, "grab_focus",
       Widget_Callback.To_Marshaller (On_Debugger_Text_Grab_Focus'Access), Process_Tab);
    Add (Process_Tab.Command_Scrolledwindow, Process_Tab.Debugger_Text);
-
-   if Separate_Data_Window then
-      Show_All (Process_Tab);
-   end if;
 end Initialize;
 
 end Process_Tab_Pkg;
