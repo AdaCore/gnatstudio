@@ -289,7 +289,7 @@ package body Project_Explorers is
       Dir           : String;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
-      Append_To_Dir : String := "";
+      Append_To_Dir : String  := "";
       Idle          : Boolean := False);
    --  Add to the file view the directory Dir, at node given by Iter.
    --  If Append_To_Dir is not "", and is a sub-directory of Dir, then
@@ -746,12 +746,13 @@ package body Project_Explorers is
    ----------------------
 
    procedure File_Append_File
-     (Explorer  : access Project_Explorer_Record'Class;
-      Base      : Gtk_Tree_Iter;
-      File      : String)
+     (Explorer : access Project_Explorer_Record'Class;
+      Base     : Gtk_Tree_Iter;
+      File     : String)
    is
-      Iter      : Gtk_Tree_Iter;
-      Lang      : Language_Access;
+      Iter : Gtk_Tree_Iter;
+      Lang : Language_Access;
+
    begin
       Append (Explorer.File_Model, Iter, Base);
 
@@ -794,6 +795,10 @@ package body Project_Explorers is
 
       if D.Base = Null_Iter then
          Append (D.Explorer.File_Model, Iter, D.Base);
+
+         --   ??? if D.Norm_Dir.all = Directory_Separator then
+         --      check for drive letters.
+
          Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
               D.Norm_Dir.all);
          Set (D.Explorer.File_Model, Iter, Base_Name_Column,
@@ -946,6 +951,14 @@ package body Project_Explorers is
       Free (New_D);
 
       return False;
+
+   exception
+      when Directory_Error =>
+         --  The directory couldn't be open, probably because of permissions.
+
+         New_D := D;
+         Free (New_D);
+         return False;
    end Read_Directory;
 
    ---------------------------
@@ -987,13 +1000,6 @@ package body Project_Explorers is
             exit when not Read_Directory (D);
          end loop;
       end if;
-
-   exception
-      when Directory_Error =>
-         --  The directory couldn't be open, probably because of permissions.
-
-         Free (D);
-         return;
    end File_Append_Directory;
 
    ----------------------
@@ -3229,7 +3235,7 @@ package body Project_Explorers is
       N := First (L);
 
       declare
-         Greatest_Prefix        : String := Data (N);
+         Greatest_Prefix        : String  := Data (N);
          Greatest_Prefix_First  : Natural := Greatest_Prefix'First;
          Greatest_Prefix_Length : Natural := Greatest_Prefix'Length;
       begin
@@ -3259,6 +3265,10 @@ package body Project_Explorers is
 
             N := Next (N);
          end loop;
+
+         if Greatest_Prefix_Length = 0 then
+            return (1 => Directory_Separator);
+         end if;
 
          while Greatest_Prefix (Greatest_Prefix'First
                                 + Greatest_Prefix_Length - 1)
