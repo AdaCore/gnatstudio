@@ -1295,7 +1295,12 @@ package body Projects.Registry is
       Prj.Reset;
       Prj.Ext.Reset;
       Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
+
+      --  The following call appears as double-deallocation in gnatmem, but
+      --  this is just because that package uses realloc() internally, which
+      --  is not handled by gnatmem
       Prj.Tree.Tree_Private_Part.Project_Nodes.Free;
+
       Namet.Finalize;
       Stringt.Initialize;
 
