@@ -2558,18 +2558,20 @@ package body Src_Info.Queries is
    ------------------------------------
 
    function Find_All_Possible_Declarations
-     (Lib_Info               : LI_File_Ptr;
-      Entity_Name            : String) return Entity_Declaration_Iterator
+     (Lib_Info    : LI_File_Ptr;
+      Entity_Name : String := "") return Entity_Declaration_Iterator
    is
       Iter : Entity_Declaration_Iterator;
    begin
       Assert (Me, Lib_Info /= null and then Lib_Info.LI.Parsed,
               "Unparsed LI_File_Ptr in Find_All_Possible_Declarations");
 
-      if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
-         Iter.Entity_Name := new String'(To_Lower (Entity_Name));
-      else
-         Iter.Entity_Name := new String'(Entity_Name);
+      if Entity_Name /= "" then
+         if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
+            Iter.Entity_Name := new String'(To_Lower (Entity_Name));
+         else
+            Iter.Entity_Name := new String'(Entity_Name);
+         end if;
       end if;
 
       Iter.Lib_Info    := Lib_Info;
@@ -2623,9 +2625,11 @@ package body Src_Info.Queries is
          while Iterator.Current /= null loop
             if Iterator.Current.Value.Declaration.Kind /=
               Overloaded_Entity
-              and then Iterator.Current.Value.Declaration.Name /= null
-              and then Iterator.Current.Value.Declaration.Name.all =
-              Iterator.Entity_Name.all
+              and then
+              (Iterator.Entity_Name = null
+               or else (Iterator.Current.Value.Declaration.Name /= null
+                        and then Iterator.Current.Value.Declaration.Name.all =
+                        Iterator.Entity_Name.all))
             then
                --  We have found a matching entity
                return;

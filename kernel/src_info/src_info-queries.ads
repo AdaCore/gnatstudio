@@ -202,13 +202,15 @@ package Src_Info.Queries is
    type Entity_Declaration_Iterator is private;
 
    function Find_All_Possible_Declarations
-     (Lib_Info               : LI_File_Ptr;
-      Entity_Name            : String) return Entity_Declaration_Iterator;
+     (Lib_Info    : LI_File_Ptr;
+      Entity_Name : String := "") return Entity_Declaration_Iterator;
    --  Return the first entity declaration in Lib_Info or its imported units
    --  whose name is Entity_Name. Note that the fake declarations for
    --  unresolved overloaded entities (with E_Kind = Overloaded_Entity) are not
    --  returned.  The entity is search in all source files associated with
    --  Lib_Info and its dependencies
+   --  If Entity_Name is the empty string, all entities declared in Lib_Info
+   --  will be returned.
 
    function Get (Iterator : Entity_Declaration_Iterator)
       return Entity_Information;
