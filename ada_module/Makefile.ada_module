@@ -13,8 +13,6 @@ BASE_DIR=$(ADA_MODULE_BASE_DIR)/../gtkada
 include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(ADA_MODULE_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
-BASE_DIR=$(ADA_MODULE_BASE_DIR)/../vsearch
-include $(BASE_DIR)/Makefile.vsearch
 BASE_DIR=$(ADA_MODULE_BASE_DIR)/../prj_editor
 include $(BASE_DIR)/Makefile.prj_editor
 

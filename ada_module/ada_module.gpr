@@ -1,5 +1,4 @@
 with "../kernel/kernel";
-with "../vsearch/vsearch";
 with "../shared";
 with "../prj_editor/prj_editor";
 with "../gtkada/gtkada";
