@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -29,6 +29,7 @@ with Pango.Layout; use Pango.Layout;
 with Language;        use Language;
 with Basic_Types;     use Basic_Types;
 with GVD.Preferences; use GVD.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body Items.Records is
 
