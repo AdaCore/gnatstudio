@@ -79,6 +79,16 @@ package Entities.Queries is
    procedure Destroy (Iter : in out Entity_Reference_Iterator);
    --  Free the memory used by Iter
 
+   --------------
+   -- Renaming --
+   --------------
+
+   function Renaming_Of
+     (Entity : Entity_Information) return Entity_Information;
+   --  If Entity is a renaming of another entity (or a typedef for another
+   --  type), return the entity that is renamed. Return null if there is no
+   --  renaming.
+
    ----------------------------
    -- Subprograms parameters --
    ----------------------------
@@ -178,6 +188,63 @@ package Entities.Queries is
 
    procedure Destroy (Iter : in out Dependency_Iterator);
    --  Free the memory occupied by Iter
+
+   -------------
+   -- Parents --
+   -------------
+
+--     type Parent_Iterator is private;
+
+--     function Get_Parent_Types
+--       (Entity    : Entity_Information;
+--        Recursive : Boolean := False) return Parent_Iterator;
+   --  Return the first parent of the entity. In object-oriented languages,
+   --  this would be the classes Entities derives from. In Ada, this includes
+   --  the parent type of a type or subtype.
+--
+--     procedure Next (Iter : in out Parent_Iterator);
+--     --  Move to the next parent of the entity
+--
+--     function At_End (Iter : Parent_Iterator) return Boolean;
+--     --  Return True if there are no more remaining parent for this entity
+--
+--     function Get (Iter : Parent_Iterator) return Entity_Information;
+   --  Return the current parent of the entity. null might be returned if GPS
+   --  hasn't finished parsing all the files.
+--
+--     procedure Destroy (Iter : in out Parent_Iterator);
+   --  Free the memory occupied by the iterator
+
+   -----------------
+   -- Scope trees --
+   -----------------
+
+   type Scope_Tree_Iterator is private;
+
+--     function Get_Scope_References
+--       (File   : Source_File;
+--        Entity : Entity_Information) return Scope_Tree_Iterator;
+--     --  Return all the occurrences of the entity in File.
+--
+--     procedure Next (Iter : in out Scope_Tree_Iterator);
+--     --  Move to the next reference
+--
+--     function Get (Iter : Scope_Tree_Iterator) return Scope_Tree;
+--     --  Return the current occurrence, or null if there are no more caller
+--
+--
+--     function Get_Parent (Node : Scope_Tree) return Scope_Tree;
+--     --  Return the node that calls or contains a reference to Node.
+--
+--     function Get_Entity (Node : Scope_Tree) return Entity_Information;
+--     --  Return the entity associated with that node
+--
+--     function Get_Location (Node : Scope_Tree) return File_Location;
+--     --  Return the location associated with this node
+--
+--     function Get_Children (Node : Scope_Tree) return Scope_Tree_Iterator;
+   --  Return the first entity that Node calls
+
 
 private
    type Scope_Tree_Iterator is record
