@@ -28,7 +28,7 @@ with Traces;       use Traces;
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
 
-   Manage_Global_Entities_Table : constant Boolean := True;
+   Manage_Global_Entities_Table : constant Boolean := False;
    --  True if we should try and create a global table for all entities
    --  defined in the project. The same information can be computed by
    --  traversing all files and their .Entities tables, and this saves some
@@ -129,7 +129,15 @@ package body Entities is
       then
          return null;
       else
-         return Get_Name (D.Table (Entity_Information_Arrays.First));
+         if Active (Assert_Me) then
+            Assert
+              (Assert_Me,
+               D.Table (Entity_Information_Arrays.First).Ref_Count /= 0,
+               "Entity has been freed: " &
+               D.Table (Entity_Information_Arrays.First).Name.all);
+         end if;
+
+         return D.Table (Entity_Information_Arrays.First).Name;
       end if;
    end Get_Name;
 
@@ -161,6 +169,8 @@ package body Entities is
             --  called internally when the file is removed from the htable,
             --  and the user is not supposed to call Unref more often than Ref
             Reset (F);
+            Trace (Assert_Me, "Freeing " & Base_Name (Get_Filename (F)));
+
             Unchecked_Free (F);
          end if;
       end if;
@@ -171,26 +181,42 @@ package body Entities is
    --------------------------------
 
    procedure Cleanup_All_Entities_Field (File : Source_File) is
-      Iter : Entities_Tries.Iterator;
-      EL   : Entity_Information_List_Access;
-   begin
-      for F in Source_File_Arrays.First .. Last (File.Depended_On) loop
-         Iter := Start (File.Depended_On.Table (F).All_Entities, "");
+      procedure Clean_All_Entities_In_File (Dep : Source_File);
+      --  Clean the All_Entities list in Dep
 
+      procedure Clean_All_Entities_In_File (Dep : Source_File) is
+         Iter : Entities_Tries.Iterator := Start (Dep.All_Entities, "");
+         EL   : Entity_Information_List_Access;
+      begin
          loop
             EL := Get (Iter);
             exit when EL = null;
 
             Next (Iter);
 
-            for E in Entity_Information_Arrays.First .. Last (EL.all) loop
+            for E in
+               reverse Entity_Information_Arrays.First .. Last (EL.all)
+            loop
                if EL.Table (E).Declaration.File = File then
-                  Remove
-                    (File.Depended_On.Table (F).All_Entities, EL.Table (E));
+                  if Length (EL.all) = 1 then
+                     Remove (Dep.All_Entities, Get_Name (EL.Table (E)).all);
+                  else
+                     Remove (EL.all, E);
+                  end if;
                end if;
             end loop;
          end loop;
+
          Free (Iter);
+      end Clean_All_Entities_In_File;
+
+   begin
+      for F in Source_File_Arrays.First .. Last (File.Depended_On) loop
+         Clean_All_Entities_In_File (File.Depended_On.Table (F));
+      end loop;
+
+      for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
+         Clean_All_Entities_In_File (File.Depends_On.Table (F).File);
       end loop;
    end Cleanup_All_Entities_Field;
 
@@ -202,6 +228,10 @@ package body Entities is
      (File : Source_File; Entity : Entity_Information) is
    begin
       if Entity.Declaration.File /= File then
+         --  ??? This might be costly, but we need to ensure there is a proper
+         --  reference between the two files, for proper clean up
+         Add_Depends_On (File, Entity.Declaration.File);
+
          Add (File.All_Entities, Entity, Check_Duplicates => True);
       end if;
    end Add_All_Entities;
@@ -218,7 +248,7 @@ package body Entities is
          EL := Get (Iter);
          exit when EL = null;
 
-         for E in Entity_Information_Arrays.First .. Last (EL.all) loop
+         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Reset (EL.Table (E), File);
          end loop;
 
@@ -234,21 +264,30 @@ package body Entities is
    procedure Free_All_Entities (File : Source_File) is
       Iter : Entities_Tries.Iterator := Start (File.Entities, "");
       EL   : Entity_Information_List_Access;
+      Entity : Entity_Information;
    begin
       loop
          EL := Get (Iter);
          exit when EL = null;
 
-         for E in Entity_Information_Arrays.First .. Last (EL.all) loop
+         for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
+            Entity := EL.Table (E);
+
             if Manage_Global_Entities_Table then
-               Remove (File.Db.Entities, EL.Table (E));
+               Remove (File.Db.Entities, Entity);
             end if;
 
-            if EL.Table (E).Ref_Count > 1 then
-               Isolate (EL.Table (E));
+            --  No need to remove from the list itself, since it will be
+            --  freed anyway when it is removed from the trie
+            if E = Entity_Information_Arrays.First then
+               Remove (File.Entities, Get_Name (Entity).all);
             end if;
 
-            Remove (File.Entities, EL.Table (E));
+            if Entity.Ref_Count > 1 then
+               Isolate (Entity);
+            end if;
+
+            Unref (Entity);
          end loop;
 
          Next (Iter);
@@ -302,6 +341,11 @@ package body Entities is
    procedure Reset (File : Source_File) is
    begin
       Cleanup_All_Entities_Field (File);
+      Reset_All_Entities (File);
+
+      Clear (File.All_Entities);
+
+      Free_All_Entities (File);
 
       for F in Source_File_Arrays.First .. Last (File.Depended_On) loop
          Remove (File.Depended_On.Table (F).Depends_On, File);
@@ -310,11 +354,6 @@ package body Entities is
       for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
          Remove (File.Depends_On.Table (F).File.Depended_On, File);
       end loop;
-
-      Reset_All_Entities (File);
-      Clear (File.All_Entities);
-
-      Free_All_Entities (File);
 
       Clear (File.Entities);
       Free (File.Depends_On);
@@ -484,17 +523,32 @@ package body Entities is
    procedure Unref (Entity : in out Entity_Information) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Entity_Information_Record'Class, Entity_Information);
+      Tmp : String_Access;
    begin
       if Entity /= null then
          Assert (Assert_Me, Entity.Ref_Count > 0, "too many calls to unref");
          Entity.Ref_Count := Entity.Ref_Count - 1;
          if Entity.Ref_Count = 0 then
-            Free (Entity.Name);
             Free (Entity.Parent_Types);
             Free (Entity.Primitive_Subprograms);
             Free (Entity.Child_Types);
             Free (Entity.References);
-            Unchecked_Free (Entity);
+
+            --  If we are debugging, we do not free the memory, to keep a
+            --  debuggable structure.
+            if Active (Assert_Me) then
+               Tmp := Entity.Name;
+               Entity.Name := new String'
+                 (Entity.Name.all
+                  & ':' & Base_Name (Get_Filename (Entity.Declaration.File)));
+               Free (Tmp);
+
+               --  For debugging only
+               --  Trace (Assert_Me, "Entity not freed: " & Entity.Name.all);
+            else
+               Free (Entity.Name);
+               Unchecked_Free (Entity);
+            end if;
          end if;
       end if;
    end Unref;
@@ -565,9 +619,19 @@ package body Entities is
    procedure Destroy (Db : in out Entities_Database) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Entities_Database_Record, Entities_Database);
+      Iter : Files_HTable.Iterator;
+      File : Source_File;
    begin
-      Reset (Db.LIs);
+      Get_First (Db.Files, Iter);
+      loop
+         File := Get_Element (Iter);
+         exit when File = null;
+         Reset (File);
+         Get_Next (Db.Files, Iter);
+      end loop;
+
       Reset (Db.Files);
+      Reset (Db.LIs);
 
       if Manage_Global_Entities_Table then
          Clear (Db.Entities);
@@ -840,7 +904,7 @@ package body Entities is
       Assert (Assert_Me, Primitive /= null, "Invalid primitive subprogram");
       Append (Entity.Primitive_Subprograms, Primitive);
       Primitive.Primitive_Op_Of := Entity;
-      Add_All_Entities (Primitive.Declaration.File, Entity);
+      Add_All_Entities (Entity.Declaration.File, Primitive);
    end Add_Primitive_Subprogram;
 
    ----------------------
@@ -892,6 +956,7 @@ package body Entities is
       end if;
 
       if E = null then
+
          E := new Entity_Information_Record'
            (Name                  => new String'(Name),
             Kind                  => Unresolved_Entity_Kind,
