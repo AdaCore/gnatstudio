@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -23,6 +23,10 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.Widget; use Gtk.Widget;
 
 package Process_Tab_Pkg.Callbacks is
+   procedure On_Stack_List_Select_Row
+     (Object : access Gtk_Clist_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+
    procedure On_Debugger_Text_Insert_Text
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -19,15 +19,18 @@
 -----------------------------------------------------------------------
 
 with System; use System;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Unchecked_Conversion;
+
 with Glib; use Glib;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Handlers; use Gtk.Handlers;
 with Gtk.Editable; use Gtk.Editable;
-with Unchecked_Conversion;
-with Odd.Process; use Odd.Process;
+with Gtk.Notebook; use Gtk.Notebook;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
 with Gdk.Event;   use Gdk.Event;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+
+with Odd.Process; use Odd.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
 with Process_Proxies; use Process_Proxies;
@@ -46,6 +49,33 @@ package body Process_Tab_Pkg.Callbacks is
       Found : out Boolean);
    --  Scan the history to find an entry which begins like S.
    --  Index indicates the number of characters found beyond that pattern.
+
+   ------------------------------
+   -- On_Stack_List_Select_Row --
+   ------------------------------
+
+   procedure On_Stack_List_Select_Row
+     (Object : access Gtk_Clist_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Frame : Gint := To_Gint (Params, 1) + 1;
+
+      --  Get the process notebook from the main window which is associated
+      --  with the stack list (toplevel (object)).
+
+      Main_Window : constant Gtk_Window := Gtk_Window (Get_Toplevel (Object));
+      Notebook    : constant Gtk_Notebook :=
+        Main_Debug_Window_Access (Main_Window).Process_Notebook;
+
+      --  Get the current page in the process notebook.
+
+      Process     : constant Debugger_Process_Tab :=
+        Process_User_Data.Get (Get_Nth_Page
+          (Notebook, Get_Current_Page (Notebook)));
+
+   begin
+      Stack_Frame (Process.Debugger, Positive (Frame), Odd.Types.Visible);
+   end On_Stack_List_Select_Row;
 
    ----------------------------------
    -- On_Debugger_Text_Insert_Text --
