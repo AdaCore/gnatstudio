@@ -355,7 +355,6 @@ package body Project_Trees is
         (Obj_Directory_Node, mini_ofolder_xpm, mini_folder_object_xpm);
       Create_Pixmaps (File_Node, var_xpm, var_xpm);
       Create_Pixmaps (Category_Node, subprogram_xpm, subprogram_xpm);
---      Create_Pixmaps (Entity_Node, mini_ofolder_xpm, mini_folder_xpm);
 
       Set_Line_Style (Tree, Ctree_Lines_Solid);
 
@@ -1494,7 +1493,7 @@ package body Project_Trees is
          --  Loop until we get to a directory or project
          while N /= null loop
             declare
-               User : constant User_Data   := Node_Get_Row_Data (Tree, N);
+               User : constant User_Data := Node_Get_Row_Data (Tree, N);
             begin
                case User.Node_Type is
                   when Project_Node =>
