@@ -886,10 +886,11 @@ package body GNAT.Expect is
       Add_LF     : Boolean := True;
       Empty_Buffer : Boolean := False)
    is
-      N       : Natural;
-      Current : Filter_List := Descriptor.In_Filters;
-      LF      : aliased Character := ASCII.LF;
-      Result  : Expect_Match;
+      N        : Natural;
+      Current  : Filter_List := Descriptor.In_Filters;
+      Full_Str : constant String := Str & ASCII.LF;
+      Last     : Natural;
+      Result   : Expect_Match;
       Descriptors : Array_Of_Pd := (1 => Descriptor'Unrestricted_Access);
 
    begin
@@ -903,21 +904,20 @@ package body GNAT.Expect is
          Reinitialize_Buffer (Descriptor);
       end if;
 
+      if Add_LF then
+         Last := Full_Str'Last;
+      else
+         Last := Full_Str'Last - 1;
+      end if;
+
       while Current /= null loop
-         Current.Filter (Descriptor, Str, Current.User_Data);
-
-         if Add_LF then
-            Current.Filter (Descriptor, "" & LF, Current.User_Data);
-         end if;
-
+         Current.Filter
+           (Descriptor, Full_Str (Full_Str'First .. Last), Current.User_Data);
          Current := Current.Next;
       end loop;
 
-      N := Write (Descriptor.Input_Fd, Str'Address, Str'Length);
-
-      if Add_LF then
-         N := Write (Descriptor.Input_Fd, LF'Address, 1);
-      end if;
+      N := Write
+        (Descriptor.Input_Fd, Full_Str'Address, Last - Full_Str'First + 1);
    end Send;
 
    ------------------
