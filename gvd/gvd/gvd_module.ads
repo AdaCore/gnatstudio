@@ -70,11 +70,6 @@ package GVD_Module is
       Current : Glib.Object.GObject);
    --  Set the current active visual debugger
 
-   function Get_Or_Create_Memory_View
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Window.Gtk_Window;
-   --  Return (create if necessary) the memory view associated with Kernel
-
    function Get_Breakpoints_Editor
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtk.Window.Gtk_Window;

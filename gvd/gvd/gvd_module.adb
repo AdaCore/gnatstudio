@@ -205,7 +205,6 @@ package body GVD_Module is
       Current_Debugger               : Glib.Object.GObject;
       --  The current visual debugger
 
-      Memory_View                    : GVD_Memory_View;
       Breakpoints_Editor             : Breakpoint_Editor_Access;
       Thread_Dialog                  : Thread_Dialog_Access;
       Task_Dialog                    : Task_Dialog_Access;
@@ -785,22 +784,6 @@ package body GVD_Module is
          Pop_State (GPS_Window (Debugger.Window).Kernel);
       end if;
    end Set_Busy;
-
-   -------------------------------
-   -- Get_Or_Create_Memory_View --
-   -------------------------------
-
-   function Get_Or_Create_Memory_View
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Window.Gtk_Window is
-   begin
-      if GVD_Module_ID.Memory_View = null then
-         Gtk_New
-           (GVD_Module_ID.Memory_View, Gtk_Widget (Get_Main_Window (Kernel)));
-      end if;
-
-      return Gtk_Window (GVD_Module_ID.Memory_View);
-   end Get_Or_Create_Memory_View;
 
    ----------------------------
    -- Get_Breakpoints_Editor --
@@ -1700,16 +1683,15 @@ package body GVD_Module is
       Top         : constant GPS_Window :=
         GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger := Get_Current_Process (Top);
-      Memory_View : Gtk_Window;
+      Memory_View : GVD_Memory_View;
 
    begin
       if Process = null or else Process.Debugger = null then
          return;
       end if;
 
-      Memory_View := Get_Or_Create_Memory_View (Kernel);
+      Gtk_New (Memory_View, Gtk_Widget (Top));
       Show_All (Memory_View);
-      Gdk_Raise (Get_Window (Memory_View));
 
    exception
       when E : others =>
@@ -2343,14 +2325,13 @@ package body GVD_Module is
       pragma Unreferenced (Command);
       Entity      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context.Context);
-      Memory_View : constant Gtk_Window :=
-        Get_Or_Create_Memory_View (Get_Kernel (Entity));
+      Memory_View : GVD_Memory_View;
 
    begin
+      Gtk_New
+        (Memory_View, Gtk_Widget (Get_Main_Window (Get_Kernel (Entity))));
       Show_All (Memory_View);
-      Display_Memory
-        (GVD_Memory_View (Memory_View), Entity_Name_Information (Entity));
-      Gdk_Raise (Get_Window (Memory_View));
+      Display_Memory (Memory_View, Entity_Name_Information (Entity));
       return Commands.Success;
    end Execute;
 
@@ -2873,10 +2854,6 @@ package body GVD_Module is
 
          if GVD_Module_ID.Breakpoints_Editor /= null then
             Hide (GVD_Module_ID.Breakpoints_Editor);
-         end if;
-
-         if GVD_Module_ID.Memory_View /= null then
-            Hide (GVD_Module_ID.Memory_View);
          end if;
 
          Set_Sensitive (Kernel, Debug_None);
@@ -3611,10 +3588,6 @@ package body GVD_Module is
 
       if Id.PD_Dialog /= null then
          Destroy (Id.PD_Dialog);
-      end if;
-
-      if Id.Memory_View /= null then
-         Destroy (Id.Memory_View);
       end if;
    end Destroy;
 
