@@ -48,11 +48,7 @@ unmodified in any copy.
 * Description of the main windows::
 * Integrating GVD::
 * Debugging a program remotely::
-* Command Line Options::
 * Environment::
-* Files::
-* Limitations::
-* Reporting bugs::
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -84,12 +80,13 @@ Debugging a program remotely
 * Using GVD with a Remote Debugger::
 * Using GVD with a Remote Program::
 
-Limitations
+Environment
 
-* General Limitations::
-* Limitations using GDB::
-
-Reporting bugs
+* Command Line Options::
+* Environment Variables::
+* Files::
+* Limitations::
+* Reporting bugs::
 
 @end detailmenu
 @end menu
@@ -161,7 +158,7 @@ or the @ref{open source menu}.
    @item New Debugger...
 @anchor{new debugger menu}
 Open a dialog to create a new debugger window. The new debugger window will be
-added as a new page in the main window.
+added in the main window.
 This dialog allows you to specify the name of the executable to debug by
 entering its name in the @i{Program File entry}, or by clicking on the
 @dots{} button to open a file selection dialog. You can also select
@@ -178,15 +175,15 @@ See also the @ref{close menu}, to close a debugger window.
    @item Open Core Dump...
 @anchor{core files}
 This will open a file selection dialog that allows you to debug a core file
-instead of debugging a running process. Note that you must specify an
-executable to debug before, by either using the @ref{open program menu}, or
+instead of debugging a running process. Note that you must first specify an
+executable to debug, by either using the @ref{open program menu}, or
 by specifying the name of the executable on the command line (@pxref{Command
 Line Options}).
 
    @item Edit Source
-Launch an external editor that will open the file currently displayed in
-@ref{The Source Window}. You can specify the name of the external editor by
-using the @ref{preferences menu}.
+Launch an external editor that will open the file currently displayed
+in se source window (see @ref{The Source Window}). You can specify the name of
+the external editor by using the @ref{preferences menu}.
 
    @item Open Source...
 @anchor{open source menu}
@@ -201,7 +198,7 @@ Open a dialog giving you the list of sessions that are saved under the
 lists all
 such sessions. The @i{Session} field shows the current selection (that can
 be filled either by entering the name on the keyboard, or by clicking in the
-@i{Session List} window). The right area gives you a list of sub session,
+@i{Session List} window). The right area gives you a list of sub-sessions,
 or debuggers launched during a selected session. You can select any of the
 debuggers of a specific session in order to replay one, some or all of them.
 To select the debuggers, either click on the check box on the left of each
@@ -218,8 +215,10 @@ By default, this will save all the sub sessions ran in GVD since start up.
    @item Attach To Process...
 Instead of starting a program to debug, you can instead attach GVD to an
 already running process. To do so, you need to specify the process id
-of the process you want to debug. Note that as for @ref{core files}, you need
-to specify an executable before attaching to a process.
+of the process you want to debug. The process might be busy in an
+infinite loop, or waiting for event processing. Note that as for
+@ref{core files}, you need to specify an executable before attaching to a
+process.
 
    @item Detach Process
 Detach the currently debugged process from the underlying debugger.
@@ -253,10 +252,10 @@ To enable the new preferences, you simply need to confirm by pressing the
 @file{$HOME/.gvd/preferences} under Unix systems, and
 @file{%HOME%\.gvd\preferences} under Windows systems.
 
-To simply test you changes, you can use the @i{Test} button. Pressing
+To simply test your changes, you can use the @i{Test} button. Pressing
 the @i{Cancel} button will undo all your changes.
 
-The preferences dialog is composed of five pages, accessible through the
+The preferences dialog is composed of five areas, accessible through the
 tabs at the top of the dialog, labelled @i{General}, @i{Source}, @i{Data},
 @i{Command}, @i{Memory}, @i{Helpers}. Each page corresponds to a section of
 preferences.
@@ -278,7 +277,7 @@ of the main window.
 Filename extensions recognized for each of the following supported languages:
 Ada, C, C++.
 Each text entry is a semicolon separated list of filename extensions, e.g
-@code{.ads;.adb}.
+@code{.ads;.adb} for Ada files.
 @end table
 
 @item Source
@@ -307,7 +306,7 @@ contain code.
 
 @item Automatic Display of Variables
 Whether tooltips should appear automatically to display the value of the
-variable pointed by the cursor.
+variable under the cursor.
 
 @item Syntax Highlighting
 Indicate whether the editor should provide color highlighting.
@@ -315,13 +314,13 @@ Indicate whether the editor should provide color highlighting.
 @item Strip Carriage Return
 Whether Carriage Return characters will be stripped when reading a file.
 GVD tries to detect this automatically but in some rare cases, it can be useful
-to enable to option by hand.
+to enable this option by hand.
 
 @item Comments
 Color used for comments.
 
 @item Strings
-Color used for strings.
+Color used for string literals.
 
 @item Keywords
 Color used for keywords.
@@ -331,7 +330,7 @@ The color to use to highlight the current line in the editor
 @end table
 
 @item Data
-Enable you to change the preferences of the @i{Data Window}, in particular
+Let you change the preferences of the @i{Data Window}, in particular
 the fonts and colors used to display the data graphically.
 
 @table @i
@@ -354,7 +353,7 @@ Color used for frozen items.
 Whether the Data window should be a separate window.
 
 @item 3D Look
-Should the items have a 3d look ?
+Whether the items should have a 3d look.
 
 @item Item Name
 Font used for the name of the item.
@@ -367,7 +366,7 @@ Font used to display the type of the item.
 
 @item Hide Big Items
 @anchor{hiding big items}
-Whether items higher than a given limit will start in a hidden state.
+Whether items larger than a given size will start in a hidden state.
 
 @item Big Item Height
 Items taller than this value will start hidden.
@@ -380,7 +379,7 @@ already present in the canvas.
 Whether the grid should be displayed in the canvas.
 
 @item Auto-Align Displays on Nearest Grid Point
-Should items be aligned on the grid.
+Whether items should be aligned on the grid.
 
 @item Show Call Stack
 @anchor{Show Call Stack}
@@ -396,19 +395,20 @@ known as the @i{Command Window}.
 Set the color used to highlight debugger commands and prompts.
 @item Font
 Set the font name and size for the @i{Debugger Console}. Note that it
-is recommended to use a fixed size font such as Courier to get a proportional
-display.
+is recommended to use a fixed size font such as Courier to get a better
+looking display.
 @end table
 
 @item Memory
 Gives access to the preferences related to the memory view window.
-The values following have currently no effect.
+The values are currently not taken into account.
 
 @table @i
 @item Font
 Set the font name and size to display the contents of the memory. It
-is recommended to use a fixed size font such as Courier to get a proportional
-display.
+is recommended to use a fixed size font such as Courier to get a better
+looking display.
+
 @item Default Color
 Color used by default in the memory view window.
 
@@ -430,9 +430,9 @@ actions.
 @table @i
 @item Edit Sources
 Program used by the @i{Edit Current Source} menu. Special arguments are
-@code{%f} that is replaced by the full path name to the current file,
-and @code{%l} that is replaced by the current line number.
-This value is superceded by the environment variable
+@i{%f} that is replaced by the full path name to the current file,
+and @i{%l} that is replaced by the current line number.
+This value is superseded by the environment variable
 @code{GVD_EDITOR} if it exists (see also @ref{GVD_EDITOR}).
 Try e.g using "xterm -e /bin/vi %f +%l" if you prefer vi.
 
@@ -484,7 +484,7 @@ Continue the program being debugged.
 
    @item Interrupt
 Interrupt asynchronously the program being debugged. Note that depending on
-the state of the program, you may stop it in a low level system code that do
+the state of the program, you may stop it in low level system code that does
 not have debug information, or even in some cases, a coherent state. Use
 of breakpoints is recommended instead to stop programs.
 
@@ -498,8 +498,8 @@ You can select any number of items in this list and replay the selection
 automatically.
 
    @item Clear Window
-Clear the debugger console window. This removes all the input and output
-exchanged between GVD and the underlying debugger, and reset the scrollbar
+Clear the debugger console window. This removes the recording of interchanges
+between GVD and the underlying debugger, and resets the scrollbar
 accordingly.
 
 @end table
@@ -515,19 +515,19 @@ accordingly.
    @item Threads...
       Open a new window containing the list of threads currently present in
       the executable as reported by the underlying debugger. For each thread,
-      it will give information such as internal identifier, name, status. This
-      information is language and debugger dependent. You should refer to the
-      underlying debugger's documentation for more details.
+      it will give information such as internal identifier, name and status.
+      This information is language and debugger dependent. You should refer to
+      the underlying debugger's documentation for more details.
 
       When supported by the underlying debugger, clicking on a thread will
       change the context (variables, call stack, source file) displayed by GVD,
-      allowing you to inspect other thread's stacks.
+      allowing you to inspect the new thread's stack.
 
    @item Tasks...
       For GDB only, this will open a new window containing the list of Ada
       tasks currently present in the executable. Similarly to the thread
-      window, you can switch to the task context by clicking on it, assuming
-      that GDB supports it. See the GDB documentation for the list of
+      window, you can switch to the task context by clicking on it, if
+      supported by GDB. See the GDB documentation for the list of
       items displayed for each task.
 
 @iftex
@@ -565,8 +565,8 @@ accordingly.
       See the documentation of e.g gdb for more details on the syntax.
       The check button @i{Expression is a subprogram call} should be enabled
       if the expression is actually not an expression but rather a debugger
-      command (e.g @code{p/x var}) or a procedure call in the debuggee
-      (e.g @code{call my_proc}).
+      command (e.g @code{p/x var}) or a procedure call in the program being
+      debugged (e.g @code{call my_proc}).
 
    @item Refresh
       Refresh all the items displayed in the Data Window.
@@ -590,13 +590,13 @@ Open a simple information box about GVD.
 @noindent
    The tool bar can be detached from the main window, using the left area:
    click on this left gray area, and move your mouse outside the window. The
-   tool bar will be detached and its form will also change from an horizontal
+   tool bar will be detached and its form will also change from a horizontal
    bar to a vertical bar with two columns.
    To move it back to the main window, double click on the left area.
 
 @table @b
   @item Run
-Run the program using the arguments set previousely (e.g on the command
+Run the program using the arguments set previously (e.g on the command
 line).
   @item Start
 Same as @i{Run}, but stops at the beginning of the main subprogram.
@@ -628,7 +628,7 @@ Go down one frame in the call stack.
 
   @item Interrupt
 Interrupt asynchronously the program being debugged. Note that depending on
-the state of the program, you may stop it in a low level system code that do
+the state of the program, you may stop it in low level system code that does
 not have debug information, or even in some cases, a coherent state. Use
 of breakpoints is recommended instead to stop programs.
 
@@ -642,18 +642,19 @@ of breakpoints is recommended instead to stop programs.
 @noindent
    The call stack window gives a list of frames corresponding to the current
    stack of execution for the current thread/task.
-   The top frame corresponds to the lowest level frame where the thread is
-   currently stopped. The lowest frame corresponds to the first function
+   The top frame corresponds to the outermost frame where the thread is
+   currently stopped. This frame corresponds to the first function
    executed by the current thread (e.g main for the main thread in C).
    You can click on any frame to switch to the caller's context, this will
-   update the source file in the source window. See also the up and down
+   update the display in the source window. See also the up and down
    buttons in the tool bar to go up and down one frame in the call stack.
 
    The contextual menu (right mouse button) allows you to choose which
    information you want to display in the call stack window (via check buttons):
    @itemize @bullet
       @item Frame number: the debugger frame number (usually starts at 0 or 1)
-      @item Program Counter: the low level address corresponding to the function
+      @item Program Counter: the low level address corresponding to the
+            function's entry point.
       @item Subprogram Name: name of the subprogram in a given frame
       @item Parameters: parameters of the subprogram
       @item File Location: filename and line number information.
@@ -710,8 +711,8 @@ of breakpoints is recommended instead to stop programs.
      @end itemize
 
    @item A main area.
-     The main area will display in a hierarchical way the information
-     in a language sensitive way. The canvas knows about data structures
+     The main area will display the data value hierarchically
+     in a language sensitive manner. The canvas knows about data structures
      of various languages (e.g @code{C}, @code{Ada}, @code{C++}) and will
      organize them accordingly.
      For example, each field of a record/struct/class, or each item of an
@@ -719,7 +720,7 @@ of breakpoints is recommended instead to stop programs.
      is displayed to separate it from the other components.
    @end itemize
 
-   A contextual menu, taking into account the current component pointed
+   A contextual menu, taking into account the current component pointed to
    by the mouse, gives access to the following capabilities:
    @table @b
      @item Close @i{component}
@@ -742,7 +743,8 @@ component.
 
      @item Set value of @i{component}
 Set the value of a selected component. This will open an entry box
-where you can enter the new value of a variable/component.
+where you can enter the new value of a variable/component. Note that
+GDB does not perform any type or range checking on the value entered.
 
      @item Update Value
 Refresh the value displayed in the selected item.
@@ -769,12 +771,13 @@ Enable or disable the automatic refreshing of the item upon program execution
      @item Display Expression...
       Open a small dialog letting you specify an arbitrary expression
       in the Data Window. This expression can be a variable name, or a
-      more complex expression, following the syntax of the underlying debugger.
+      more complex expression, following the syntax of the current language and
+      underlying debugger.
       See the documentation of e.g gdb for more details on the syntax.
       The check button @i{Expression is a subprogram call} should be enabled
       if the expression is actually not an expression but rather a debugger
-      command (e.g @code{p/x var}) or a procedure call in the debuggee
-      (e.g @code{call my_proc}).
+      command (e.g @code{p/x var}) or a procedure call in the program being
+      debugged (e.g @code{call my_proc}).
 
      @item Align On Grid
 Enable or disable alignment of items on the grid.
@@ -782,7 +785,7 @@ Enable or disable alignment of items on the grid.
      @item Detect Aliases
 Enable or disable the automatic detection of shared data structures.
 Each time you display an item or dereference a pointer, GVD look at all
-the items already displayed on the canvas and compare their addresses with
+the items already displayed on the canvas and compares their addresses with
 the address of the new item to display. If they match, GVD will not
 create a new item, but it will create a link (if you tried to dereference
 a pointer).
@@ -811,10 +814,10 @@ easy way to move an item a long distance from its initial position.
 
 @subsubsection Colors
 
-Most of the items are displayed using several colors, each of these
-conveys a special meaning. Here is the description for all the colors
+Most of the items are displayed using several colors, each
+conveying a special meaning. Here is the description for all the colors
 (note that the exact color can be changed through the preferences
-dialog, these are the default colors):
+dialog; these are the default colors):
 
 @iftex
 @image{colors, 10cm}
@@ -827,7 +830,7 @@ This is the default color used to print the value of variables or
 expressions.
 
 @item blue
-This color is used for C pointers (or Ada access types), ie all the variables
+This color is used for C pointers (or Ada access values), ie all the variables
 and fields that are memory addresses pointing to some other value in
 memory.
 
@@ -854,10 +857,10 @@ convey special meanings.
 
 @table @b
 
-@item garbage bin icon
+@item trash bin icon
 This icon indicates that the debugger could not get the value of the
 variable or expression. There might be several reasons, for instance the
-variable is currently not in scope (and thus has no existence), or it might
+variable is currently not in scope (and thus does not exist), or it might
 have been optimized away by the compiler. In all cases, GVD will update the
 display as soon as the variable becomes visible again.
 
@@ -865,8 +868,8 @@ display as soon as the variable becomes visible again.
 This icon indicates that part of a complex structure is currently hidden.
 Manipulating huge items in the data window (for instance if the variable
 is an array of hundreds of complex elements) might not be very helpful. As a
-result, GVD gives you the opportunity to shrink part of the value so as to
-save some screen-estate and make it easier to visualize the interesting parts
+result, GVD gives you the opportunity to shrink part of the value to
+save some screen space and make it easier to visualize the interesting parts
 of these variables. See @ref{hiding big items} to enable or disable this
 facility, and to set the threshold used to hide items automatically.
 
@@ -892,10 +895,11 @@ again).
 @end iftex
 
 @noindent
-The memory window allows you to dump contents of the memory given
+The memory window allows you to display the contents of the memory given
 either an address, or a variable name.
 
-To dump the memory, enter the address with the C hexadecimal form: 0xabcd,
+To display memory contents, enter the address with the C hexadecimal form:
+0xabcd,
 or the name of a variable, e.g foo in the @i{Location} text entry. In the
 latter case, GVD will compute its address automatically. Then either press
 @i{Enter} or click on the @i{View} button. This will display the memory with
@@ -915,8 +919,8 @@ account (i.e written to the target) when you click on the @i{Submit changes}
 button. Clicking on the @i{Undo changes} or going up/down in the memory
 will undo your editing.
 
-Clicking on @i{Close} will close the memory window, cancelling your last non
-submitted changes, if any.
+Clicking on @i{Close} will close the memory window, cancelling your last
+nonsubmitted changes, if any.
 
 @c --------------------------------------------------------------------
 @node The Explorer Window
@@ -972,25 +976,25 @@ Highlight the file containing the current execution point.
 @c --------------------------------------------------------------------
 
 @noindent
-   The source window is composed of two main areas: a small column on the left
-   containing the following information:
+   The source window is composed of two main areas. The first is a small
+   column on the left containing the following information:
    @table @b
      @item Lines with code
 In this area, blue dots are shown that represent lines for which the debugger
 has debug information, in other words, lines that have been compiled with
 debug information and for which the compiler has generated some code.
 Currently, GVD does not check whether you try to set a breakpoint on a dotted
-line or not, and will blindly send to the underlying debugger the breakpoint
-command. This will usually (e.g in the case of gdb) result in setting a
+line or not, and it will simply send the breakpoint command to the underlying
+debugger. This will usually (e.g in the case of gdb) result in setting a
 breakpoint in the closest location that matches the file and line that you
 specified.
      @item Current line executed
-This is a green arrow showing the line where the program stopped.
+This is a green arrow showing the line about to be executed.
 
      @item Lines with breakpoints
 For lines where breakpoints have been set, a red mark is displayed on top
 of the blue dots showing the lines with code. You can add and delete
-breakpoints by clicking on this area (the first click with set a brekapoint,
+breakpoints by clicking on this area (the first click will set a breakpoint,
 the second click will remove it).
    @end table
 
@@ -998,19 +1002,20 @@ the second click will remove it).
 @image{tooltips, 12.7cm}
 @end iftex
 
-   and a text window on the right that displays with syntax highlighting the
-   source files. If you leave the cursor over a variable, a tooltip will
+   the second area in the source window is a text window on the right that
+   displays the source files with syntax highlighting.
+   If you leave the cursor over a variable, a tooltip will
    appear showing the value of this variable. Automatic tooltips can be
    disabled in the @ref{preferences menu}.
 
    Contextual menu:
    @table @b
      @item Print @i{selection}
-Print the selection (or by default the name pointed by the cursor) in the
+Print the selection (or by default the name under the cursor) in the
 debugger console.
 
      @item Display @i{selection}
-Display the selection (or by default the name pointed by the cursor) in the
+Display the selection (or by default the name under the cursor) in the
 data window. The value will be automatically refreshed each time the process
 state changes (e.g after a step or a next command). To freeze the display
 in the canvas, you can either click on the corresponding icon in the data
@@ -1018,7 +1023,7 @@ window, or use the contextual menu for the specific item (see
 @ref{The Data Window} for more information).
 
      @item Print @i{selection}.all
-Dereference the selection (or by default the name pointed by the cursor) and
+Dereference the selection (or by default the name under the cursor) and
 print the value in the debugger console.
 
      @item View memory at &@i{selection}
@@ -1026,10 +1031,10 @@ Bring up the memory view dialog and explore memory at the address of the
 selection.
 
      @item Set Breakpoint on Line @i{xx}
-Set a breakpoint on the line pointed by the cursor, in the current file.
+Set a breakpoint on the line under the cursor, in the current file.
 
      @item Continue Until Line @i{xx}
-Contine execution (the program must have been started previousely) until a
+Contine execution (the program must have been started previously) until a
 specified line.
 
      @item Show Current Location
@@ -1099,7 +1104,7 @@ window.
 
 One feature which is related to debugging at the assembly level is
 the display of the value of registers. When the debugger supports it
-(as gvd does), you can select the @code{Data->Display Registers} menu
+(as gdb does), you can select the @code{Data->Display Registers} menu
 to get an item in the canvas that will show the current value of the
 registers, and will be updated every time one of them changes.
 
@@ -1160,7 +1165,7 @@ accessed using the arrow located at the left of the status line.
      To have GVD run as an inferior in other front-ends, you can either set up
      your debugger front-end such that @i{gvd --tty} is invoked instead of
      the inferior debugger, or use GVD as a library.
-     When GVD is invoked using the @i{--tty} option, it enable its TTY
+     When GVD is invoked using the @i{--tty} option, it enables its TTY
      interface, taking additional debugger commands from standard input and
      forwarding debugger output to standard output, just as if the inferior
      debugger had been invoked directly. All remaining GVD functionalities stay
@@ -1201,7 +1206,7 @@ accessed using the arrow located at the left of the status line.
 
 @node Using GVD as a Library
 @section Using GVD as a Library
-     GVD can also be used as a library. Beware that this is still work in
+     GVD can also be used as a library. This is still work in
      progress however. The interface provided by GVD to other programs can
      be found in the file gvd-api.ads, and gvd-api.h.
      Note that to integrate GVD code in Ada applications, using the various
@@ -1236,7 +1241,7 @@ Furthermore, the inferior debugger may support debugging a program on a remote
 host. This is useful when the inferior debugger is not available on the remote
 host - for instance, because the remote system does not have a general purpose
 operating system powerful enough to run a full featured debugger. When
-developing in a cross environment (e.g vxWorks, Lynx OS), you will be in such
+developing in a cross environment (e.g VxWorks, Lynx OS), you will be in such
 situation.
 
 @node Using GVD with a Remote Debugger
@@ -1294,7 +1299,7 @@ HPUX, the remote shell capability is called remsh. For those systems, and
 also in order to use other remote utilities such as ssh/scp, you can change
 the default remote shell and copy by using the @ref{helpers menu}.
 
-After ensuring that you have the proper set up in place, to run the debugger on
+After ensuring that you have the proper setup in place, to run the debugger on
 a remote host @i{remote}, either invoke GVD as
 
 @smallexample
@@ -1307,19 +1312,19 @@ There are a few caveats in remote mode:
 
   The remote debugger is started in your remote home directory. Hence, you must
   specify an absolute path name for @i{remote-program} (or a path name relative
-  to your remote home directory). Same applies to remote core files. Also, be
-  sure to specify a remote process id when debugging a running program.
+  to your remote home directory). The same applies to remote core files.
+  Also, be sure to specify a remote process id when debugging a running program.
 
-  To access to files remotely, gvd will first try to read the files locally,
+  To access files remotely, gvd will first try to read the files locally,
   assuming that you have the remote files mounted locally at the same
   location (using e.g nfs+symbolic links, or samba), and if it cannot find the
   files locally, it will then try to copy the file from the remote machine,
   using rcp. As for rsh, you need to make sure that rcp can be called without
   having to enter a password, and you can also replace rcp by similar remote
   copy utilities such as scp. Note that the file
-  selection dialogs (change directory, open file,~@dots{}) will scan the local
-  directory, so you will need to enter the paths blindly if your remote files
-  are not mounted on your local host.
+  selection dialogs (change directory, open file, @dots{}) will scan the local
+  directory, so you will need to know in advance the complete path if your
+  remote files are not mounted on your local host.
 
 @node Using GVD with a Remote Program
 @section Using GVD with a Remote Program
@@ -1352,13 +1357,24 @@ gvd --debugger powerpc-wrs-vxworks-gdb --target my_target:wtx
 @image{process, 12.7cm}
 @end iftex
 
-Of course, you can also combine GVD remote mode and GDB remote mode, running
+You can also combine GVD remote mode and GDB remote mode, running
 GVD, GDB and the debugged program each on a different machine.
 
 @c --------------------------------------------------------------------
-@node Command Line Options
-@chapter Command Line Options
+@node Environment
+@chapter Environment
 @c --------------------------------------------------------------------
+
+@menu
+* Command Line Options::
+* Environment Variables::
+* Files::
+* Limitations::
+* Reporting bugs::
+@end menu
+
+@node Command Line Options
+@section Command Line Options
 
 @smallexample
 Usage:
@@ -1369,38 +1385,45 @@ Usage:
 @noindent
 The options recognized by GVD are:
 
-@itemize @bullet
-@item --debugger DEBUG    use DEBUG as the underlying debugger.
+@table @b
+@item --debugger DEBUG
+use DEBUG as the underlying debugger.
 
-@item --jdb               assume a Java debugger. This option is currently
-not fully supported.
+@item --jdb
+assume a Java debugger. This option is currently not fully supported.
 
-@item --host HOST         Run inferior debugger on HOST. See
+@item --host HOST
+Run inferior debugger on HOST. See
 @ref{Using GVD with a Remote Debugger} for more information.
 
-@item --target TARG:PRO   Load program on machine TARG using protocol PRO.
+@item --target TARG:PRO
+Load program on machine TARG using protocol PRO.
 See @ref{Using GVD with a Remote Program} for more information.
 
-@item --log-level [0-4]   Set level of logging (Default is 3).
+@item --log-level [0-4]
+Set level of logging (Default is 3).
 This option can be useful when reporting bugs in GVD, in which case the
 maximum level of logs (4) gives more details, but will also generate
 more disk activity, which can slow down GVD significantly if the
 log file is located through a network disk.
 
-@item --editor-window=xid Use xid as the editor X window id.
+@item --editor-window=xid
+Use xid as the editor X window id.
 GVD takes advantage of this option by integrating the specified window
 as the source editor.
 This option is not currently supported under Windows.
 
-@item --tty               Use controlling tty as the debugger console.
+@item --tty
+Use controlling tty as the debugger console.
 This option is very useful for integrating GVD in other debugger front-ends
 (e.g Emacs), since in this mode, GVD appears as the underlying debugger to
 the caller. See @ref{Integrating GVD} for more details.
 This option is not currently supported under Windows.
 
-@item --version           Show the GVD version and exit.
+@item --version
+Show the GVD version and exit.
 
-@end itemize
+@end table
 
 @noindent
 The @code{--dargs} section let you specify an arbitrary number of options
@@ -1413,15 +1436,15 @@ debugged program.
 @noindent
 For example, if you want to pass the @code{--nx} option to gdb, and the
 options @code{--file foo --version} to the debugged program @code{my_code}
-you will launch GVD as follows:
+you would launch GVD as follows:
 
 @smallexample
 gvd my_code --dargs --nx --pargs --file foo --version
 @end smallexample
 
 @c --------------------------------------------------------------------
-@node Environment
-@chapter Environment
+@node Environment Variables
+@section Environment Variables
 @c --------------------------------------------------------------------
 
 @noindent
@@ -1438,8 +1461,8 @@ of the translation files.
    @item GVD_HOME.
 Override the variable HOME if present. All the configuration files and
 directories used by GVD are either relative to $HOME/.gvd (%HOME%\.gvd under
-Windows) if GVD_HOME is not set, or to $GVD_HOME/.gvd (resp. %GVD_HOME%\.gvd)
-if set.
+Windows) if GVD_HOME is not set, or to $GVD_HOME/.gvd (respectively
+%GVD_HOME%\.gvd) if set.
 
    @item GVD_EDITOR.
 @anchor{GVD_EDITOR}
@@ -1449,7 +1472,7 @@ Override the default editor as found in the @ref{helpers menu}.
 
 @c --------------------------------------------------------------------
 @node Files
-@chapter Files
+@section Files
 @c --------------------------------------------------------------------
 
 @noindent
@@ -1488,7 +1511,7 @@ saved by the user.
 
 @c --------------------------------------------------------------------
 @node Limitations
-@chapter Limitations
+@section Limitations
 @c --------------------------------------------------------------------
 
 @menu
@@ -1498,7 +1521,7 @@ saved by the user.
 
 @noindent
 @node General Limitations
-@section General Limitations
+@subsection General Limitations
 @noindent
      If command output is sent to the debugger console, it is impossible for GVD
      to distinguish between the output of the debugged program and the output
@@ -1522,7 +1545,7 @@ saved by the user.
      default TTY settings.
 
 @node Limitations using GDB
-@section Limitations using GDB
+@subsection Limitations using GDB
 @noindent
      Some GDB settings are essential for GVD to work correctly. These settings
      with their correct values are:
@@ -1540,7 +1563,7 @@ saved by the user.
 
 @c --------------------------------------------------------------------
 @node Reporting bugs
-@chapter Reporting bugs
+@section Reporting bugs
 @c --------------------------------------------------------------------
 
 @noindent
@@ -1549,7 +1572,7 @@ If you encounter a bug in GVD, you can report it to
 supported user, contact @uref{mailto:sales@@gnat.com}), or to the
 public gvd development list (@uref{mailto:gvd-devel@@lists.act-europe.fr}).
 
-Please try to include a detailled description of the problem, including
+Please try to include a detailed description of the problem, including
 sources to reproduce it if possible, and/or a scenario describing the
 actions performed to reproduce the problem. Saving your session and
 the log file (see @ref{log file}) can help automate this process.
