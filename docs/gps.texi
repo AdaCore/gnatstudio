@@ -174,6 +174,7 @@ Customizing and Extending GPS
 * Customizing the Menu and Tool Bar::
 * Adding Support for New Languages::
 * Defining Text Aliases::
+* Adding support for new tools::
 * Defining New Styles and Key Bindings::
 * Scripting GPS::
 
@@ -186,6 +187,10 @@ Customizing the Menu and Tool Bar
 * Binding actions to keys::
 * Defining new search patterns::
 * Full example::
+
+Adding support for new tools
+* Defining tool switches::
+* Full tool example::
 
 Environment
 * Command Line Options::
@@ -5370,6 +5375,7 @@ machine, you can specify the name of this machine by setting the
 * Customizing the Menu and Tool Bar::
 * Adding Support for New Languages::
 * Defining Text Aliases::
+* Adding support for new tools::
 * Defining New Styles and Key Bindings::
 * Scripting GPS::
 @end menu
@@ -6206,6 +6212,8 @@ described in later sections. This includes:
   (@pxref{Adding tool bar buttons})
 @item <vsearch-pattern>
   (@pxref{Defining new search patterns})
+@item <tool>
+  (@pxref{Adding support for new tools})
 @end table
 
 @c -----------------------------------------------------------------------
@@ -6562,7 +6570,7 @@ case letters. Its default value is "false".
 
 @item <string>
 
-This tag provides a constant string that should be searched. 
+This tag provides a constant string that should be searched.
 Only one of @code{<regexp>} and @code{<string>} should be provided. If
 both exists, the first @code{<regep>} child found is used. If there is
 none, the first @code{<string>} child is used.
@@ -6580,7 +6588,6 @@ defined.
   <regexp case-sensitive="false">\b(\w+)\s*:=</regexp>
 </vsearch-pattern>
 @end smallexample
-
 
 @c ----------------------------------------------------------------
 @node Full example
@@ -7011,6 +7018,321 @@ These tags contain text, which is the default value for the parameter.
 This is a child of the @code{alias} node, whose value is the
 replacement text for the alias.
 @end table
+
+@c --------------------------------------------------------------------------
+@node Adding support for new tools
+@section Adding support for new tools
+@cindex external tool
+@cindex <tool>
+@c --------------------------------------------------------------------------
+
+@noindent
+Support for external tools can be provided through GPS. Typically, this
+would be done to specify different compilers, but it can also apply to a wide
+variety of tools.
+
+GPS's support for external tools is enhancing with each release. Typically,
+the following things need to be achieved to successfully use a tool:
+
+@itemize @bullet
+@item Specify its command line switches
+@item Pass it the appropriate arguments depending on the current context, or
+      on user input
+@item Spawn the tool
+@item Optionaly parse its result and act accordingly
+@end itemize
+
+Each of these points is discussed in further sections. In all these cases, most
+of the work can be done statically through XML customization files.
+These files have the same format as other customization files
+(@pxref{Customization files}), and the tool descriptions are found in
+@code{<tool>} tags.
+
+This tag acceps the following attributes:
+
+@table @code
+@item name (mandatory)
+This is the name of the tool. This is purely descriptive, and will appear
+throughout the GPS interface whenever this tool is referenced. This includes
+for instances the tabs of the switches editor.
+
+@item langage (Default value is empty)
+This is the language to which the tool applies. This can be left to its default
+empty value, in which case the tool is independent of any specific language.
+If this language is specified, this acts as a filter so that for instance the
+switches editor doesn't show the tool unless the project has specified it is
+working with this language.
+
+@item package (Default value is ide)
+This optional attribute specifies which package should be used in the project
+to store information about this tool, in particular its switches. You cannot
+create new packages as you wish, and must use only existing packages. Most of
+the time the default value should be used, unless you are working with one of
+the predefined packages
+
+@item index (Default value is the tool name)
+This optional attribute specifies what index is used in the project. This is
+mostly for internal use by GPS, and describes what index of the
+@code{Default_Switches} attribute is used to store the switches for that tool.
+
+@end table
+
+This tag accepts the following children, described in separate sections:
+
+@table @code
+@item <switches>
+   (@pxref{Defining tool switches})
+@end table
+
+
+@menu
+* Defining tool switches::
+* Full tool example::
+@end menu
+
+@c --------------------------------------------------------------------------
+@node Defining tool switches
+@subsection Defining tool switches
+@cindex <switches>
+@cindex <title>
+@cindex <check>
+@cindex <spin>
+@cindex <radio>
+@cindex <combo>
+@cindex <popup>
+@cindex <dependency>
+@cindex <expansion>
+@cindex <combo-entry>
+@cindex <radio-entry>
+@cindex <entry>
+@c --------------------------------------------------------------------------
+
+@noindent
+The user has to be able to specify which tools should be used when working
+with the tool. If the tool is simply called through custom menus, you might
+want to hard code some or all of the switches. However, in the general case
+it is better to use the project properties editor, so that project-specific
+switches can be specified.
+
+This is what GPS does by default for Ada, C and C++. You can find in the GPS
+installation how the switches for these languages are defined in an XML file.
+These provide extended examples of the use of customization files.
+
+This switches editor provides a powerful interface to the command line, where
+the user can edit the command line both as text and through GUI widgets.
+
+The switches are declared through the @code{<switches>} tag in the
+customization file, which must be a child of a @code{<tool>} tag as described
+above.
+
+This @code{<switches>} tag accepts the following attributes:
+
+@table @code
+@item lines (default value is 1)
+The switches in the project properties editor are organized into boxes,
+each surrounded by a frame, optionally with a title. This attribute specifies
+the number of rows of such frames.
+
+@item columns (default value is 1)
+This attribute specifies the number of columns of frames in the project
+properties page.
+@end table
+
+This @code{<switches>} tag can have any number of child tag, among the
+following. They can be repeated multiple times if you need several check boxes.
+For consistency, most of these child tags accept attributes among the
+following:
+
+@table @code
+@item line (default value is 1)
+This indicates the row of the frame that should contain the switch. See the
+description of @code{lines} above.
+
+@item line-span (default value is 1)
+This indicates how many rows the frame should span. If this is set to 0, then
+the frame is hidden from the user. See for instance the Ada or C switches
+editor.
+
+@item column (default value is 1)
+This indicates the column of the frame that should contain the switch. See the
+description of @code{columns} above.
+
+@item column-span (default value is 1)
+This indicates how many columns the frame should span. If this is set to 0,
+then the frame is hidden from the user. See for instance the Ada or C
+switches editor.
+
+@item label
+This is the label which is displayed in the graphical interface
+
+@item switch
+This is the text that should be put on the command line if that switch is
+selected. Depending on its type, a variant of the text might be put instead,
+see the description of @code{combo} and @code{spin} below.
+This switch shouldn't contain any space.
+
+@item tip (default value is empty)
+This is the tooltip which describes that switch more extensively. It is
+displayed in a small popup window if the user leaves the mouse on top of
+the widget.
+
+@item min (default value is 1)
+This attribute is used for @code{<spin>} tags, and indicates the minimum
+value authorized for that switch.
+
+@item max (default value is 1)
+This attribute is used for @code{<spin>} tags, and indicates the maximum
+value authorized for that switch.
+
+@item default (default value is 1)
+This attribute is used for @code{<spin>} tags. See the description below.
+
+@item noswitch (default is empty)
+This attribute is only valid for @code{<combo>} tags, and described below.
+
+@item nodigit (default is empty)
+This attribute is only valid for @code{<combo>} tags, and described below.
+
+@item value (mandatory)
+This attribute is only valid for @code{<combo-entry>} tags.
+
+@end table
+
+Here are the valid children for @code{<switches>}:
+
+@table @code
+@item <title>
+This tag, which accepts the @code{line}, @code{column}, @code{line-span} and
+@code{column-span} attributes, is used to give a name to a specific frame.
+The value of the attribute is the title itself. You do not have to specify
+a name, and this can be left to an empty value.
+
+@item <check>
+This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch}
+and @code{tip} attributes. It creates a toggle button. When the latter is
+active, the text defined in the switch attribute is added as is
+to the command line. This tag doesn't have any value or child tags.
+
+@item <spin>
+This tag acceps the @code{line}, @code{column}, @code{label}, @code{switch},
+@code{tip}, @code{min}, @code{max} and @code{default} attributes.
+This switch will add the contents of the @code{switch} attribute followed by
+the current numeric value of the widget to the command line. This is typically
+used to indicate indentation length for instance.
+If the current value of the widget is equal to the @code{default} attribute,
+then nothing is added to the command line.
+
+@item <radio>
+This tag accepts the @code{line} and @code{column} attributes. It groups any
+number of children, each of which is associated with its own switch. However,
+only one of the children can be selected at any given time.
+
+The children must have the tag @code{radio-entry}. This tag accepts the
+attributes @code{label}, @code{switch} and @code{tip}.
+
+@item <combo>
+This tags accepts the @code{line}, @code{column}, @code{label}, @code{switch},
+@code{tip}, @code{noswitch} and @code{nodigit} attributes.
+
+The text inserted in the command line is the text from the @code{switch}
+attribute, concatenated with the text of the @code{value} attribute for the
+currently selected entry. If the value of the current entry is the same
+as that of the @code{nodigit} attribute, then only the text of the
+@code{switch} attribute is put on the command line. This is in fact necessary
+to interpret the gcc switch "-O" as "-O1".
+
+If the value of the current entry is that of the @code{noswitch} attribute,
+then nothing is put in the command line.
+
+The tag @code{<combo>} accepts any number of @code{combo-entry} children tags,
+each of which accepts the @code{label} and @code{value} attribute.
+
+@item <popup>
+This tag accepts the @code{line}, @code{column}, @code{label}, @code{lines}
+and @code{columns} attributes. This displays a simply button that, when
+clicked, displays a dialog with some extra switches. This dialog, just as the
+switches editor itself, is organizes into lines and columns of frames, the
+number of which is provided by the @code{lines} and @code{columns} attributes.
+
+This tag accepts any number of children, which are the same as the
+@code{<switches>} attribute itself.
+
+@item <dependency>
+This tag is used to describe a relationship between two switches. It is used
+for instance when the "Debug Information" switch is selected for "Make", which
+forces it for the Ada compiler as well.
+
+It has its own set of attributes:
+
+   @table @code
+   @item master-page master-switch
+   These two attributes define the switch that possibly forces a specific
+   setting on the slave switch. In our example, they would have the values
+   "Make" and "-g".
+
+   @item slave-page slave-switch
+   These two attributes define the switch which is acted upon by the master
+   switch. In our example, they would have the values "Ada" and "-g".
+
+   @item master-status slave-status
+   These two switches indicate which state of the master switch forces which
+   state of the slave-status. In our example, they would have the values
+   "on" and "on", so that when the make debug information is activated, the
+   compiler debug information is also activated. However, if the make debug
+   information is not activated, no specific setup is forced for the compiler
+   debug information.
+   @end table
+
+@item <expansion>
+This tag is used to describe how switches can be grouped together on the
+command line to keep it shorter. It is also used to define aliases between
+switches.
+
+It is easier to explain it through an example. Specifying the GNAT switch
+"-gnaty" is equivalent to specifying "-gnatyabcefhiklmnprst". This is in
+fact a style check switch, with a number of default values. But it is also
+equivalent to decomposing it into several switches, as in "-gnatya",
+"-gnaty3", "-gnatyb",@dots{} With this information, GPS will try to keep the
+command line length as short as possible, to keep it readable.
+
+Both these aspects are defined in a unique @code{<expansion>} tag, which
+accepts two attributes: @code{switch} is mandatory, and @code{alias} is
+optional. Alias contains the text "gnatyabcefhiklmnprst" in our example.
+
+It also accepts any number of @code{<entry>} children, each has a mandatory
+@code{switch} access. The set of all these children define the expanded
+equivalent of the switch. In our example, we need one @code{<entry>} child
+for "'gnaty3", one for "-gnatya",@dots{}.
+
+@end table
+
+@c --------------------------------------------------------------------------
+@node Full tool example
+@subsection Full tool example
+@c --------------------------------------------------------------------------
+
+@noindent
+This section provides an example that defines a new tool. This is only a short
+example, since Ada, C and C++ support themselves are provided through such
+a file, available in the GPS installation.
+
+This example adds support for the "find" Unix utility, with a few switches.
+
+@smallexample
+<tool name="Find" >
+  <switches columns="2" >
+    <title column="1" >Filters</title>
+    <title column="2" >Actions</title>
+
+    <spin label="Modified less than n days ago" switch="-mtime-"
+          min="0" max="365" default="0" />
+    <check label="Follow symbolic links" switch="-follow" />
+
+    <check label="Print matching files" switch="-print" column="2" />
+  </switches>
+</tool>
+@end smallexample
+
 
 @c --------------------------------------------------------------------------
 @node Defining New Styles and Key Bindings
