@@ -1,6 +1,4 @@
-with "../gtkada/gtkada";
-with "../common/common";
-with "../widgets/widgets";
+with "../kernel/kernel";
 with "../shared";
 with "../vsearch/vsearch";
 
