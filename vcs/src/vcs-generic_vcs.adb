@@ -1275,10 +1275,10 @@ package body VCS.Generic_VCS is
 
                   A (Line).Associated_Command := Command_Access (Command);
                end;
-
-               Line  := Line + 1;
-               Start := Matches (0).Last + 1;
             end if;
+
+            Line  := Line + 1;
+            Start := Matches (0).Last + 1;
          end loop;
 
          Add_Line_Information
