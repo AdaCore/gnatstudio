@@ -30,7 +30,9 @@ with Gtk.Widget; use Gtk.Widget;
 
 with Find_Utils;            use Find_Utils;
 with Hyper_Grep;            use Hyper_Grep;
-with Glide_Pkg;             use Glide_Pkg;
+with Glide_Main_Window;     use Glide_Main_Window;
+with Glide_Page;            use Glide_Page;
+with GVD.Process;           use GVD.Process;
 with Search_Callback;
 
 with GNAT.Regpat;           use GNAT.Regpat;
@@ -209,6 +211,10 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
          Line_Text   : String      := "";
          Sub_Matches : Match_Array := (0 => No_Match)) return Boolean
       is
+         Glide       : constant Glide_Window :=
+           Glide_Window (Hyper_Grep_Window.Glide);
+         Page        : constant Glide_Page.Glide_Page :=
+           Glide_Page.Glide_Page (Get_Current_Process (Glide));
          Dummy       : Boolean;
          Parentheses : String (Line_Text'Range);
 
@@ -219,16 +225,12 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
 
       begin
          if Match_Found then
-            Insert (Glide_Access (Hyper_Grep_Window.Glide).Console,
-                    Fore => Highlight,
-                    Chars => Location);
-            Insert (Glide_Access (Hyper_Grep_Window.Glide).Console,
-                    Chars => ':' & Line_Text & ASCII.LF);
+            Insert (Page.Console, Fore => Highlight, Chars => Location);
+            Insert (Page.Console, Chars => ':' & Line_Text & ASCII.LF);
 
             if Sub_Matches (0) /= No_Match then
                for K in Sub_Matches'Range loop
-                  Insert (Glide_Access (Hyper_Grep_Window.Glide).Console,
-                          Chars => Natural'Image (K));
+                  Insert (Page.Console, Chars => Natural'Image (K));
                   --  Natural_IO.Put (K, Width => Location'Length);
 
                   Parentheses := (others => ' ');
@@ -239,8 +241,7 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
                          (others => '#');
                   end if;
 
-                  Insert (Glide_Access (Hyper_Grep_Window.Glide).Console,
-                          Chars => '>' & Parentheses & '<');
+                  Insert (Page.Console, Chars => '>' & Parentheses & '<');
                end loop;
             end if;
          end if;
