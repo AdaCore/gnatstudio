@@ -2288,8 +2288,10 @@ package body VCS_View_API is
       end if;
 
       while not String_List.Is_Empty (Files) loop
-         Log (Get_Current_Ref (Context),
-              Create (Full_Filename => String_List.Head (Files)));
+         Log
+           (Get_Current_Ref (Context),
+            Create (Full_Filename => String_List.Head (Files)),
+            "");
          String_List.Next (Files);
       end loop;
 
@@ -2763,6 +2765,13 @@ package body VCS_View_API is
       elsif Command = "vcs.diff_head" then
          if Save_Files (Kernel, Files) then
             Diff (Ref, Full);
+         end if;
+
+      elsif Command = "vcs.log" then
+         if Number_Of_Arguments (Data) = 2 then
+            Log (Ref, Full, Nth_Arg (Data, 2));
+         else
+            Log (Ref, Full, "");
          end if;
 
       elsif Command = "vcs.diff_working" then
