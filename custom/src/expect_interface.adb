@@ -124,6 +124,8 @@ package body Expect_Interface is
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
       Inst : constant Class_Instance := Convert (Data.Callback_Data);
       D    : constant Custom_Action_Access := Convert (Get_Data (Inst));
+      Tmp  : Boolean;
+      pragma Unreferenced (Tmp);
    begin
       if D.On_Exit /= null then
          declare
@@ -134,7 +136,7 @@ package body Expect_Interface is
             Set_Nth_Arg (C, 2, Status);
             Set_Nth_Arg (C, 3, To_String (D.Processed_Output)
                          & To_String (D.Unmatched_Output));
-            Execute (D.On_Exit, C);
+            Tmp := Execute (D.On_Exit, C);
             Free (C);
          end;
       end if;
@@ -248,6 +250,8 @@ package body Expect_Interface is
             declare
                C : Callback_Data'Class := Create
                  (Get_Script (Inst), Arguments_Count => 3);
+               Tmp  : Boolean;
+               pragma Unreferenced (Tmp);
             begin
                Set_Nth_Arg (C, 1, Inst);
                Set_Nth_Arg
@@ -256,7 +260,7 @@ package body Expect_Interface is
                Set_Nth_Arg
                  (C, 3,
                   D.Unmatched_Output (Beg_Index .. Matches (0).First - 1));
-               Execute (Action_To_Execute, C);
+               Tmp := Execute (Action_To_Execute, C);
                Free (C);
             end;
 
