@@ -289,6 +289,7 @@ package body Debugger.Gdb.C is
       Context : constant Language_Debugger_Context :=
         Get_Language_Debugger_Context (Lang);
       Tmp     : Natural := Index;
+      Start   : constant Natural := Index;
 
    begin
       if Looking_At (Type_Str, Index, "const ") then
@@ -333,6 +334,23 @@ package body Debugger.Gdb.C is
             end if;
 
             --  Else falls through
+
+         when 'r' =>
+            --  Range types
+
+            if Looking_At (Type_Str, Index, "range ") then
+               declare
+                  Min, Max : Long_Integer;
+               begin
+                  Index := Index + 6;
+                  Parse_Num (Type_Str, Index, Min);
+                  Index := Index + 4; --  skips ' .. '
+                  Parse_Num (Type_Str, Index, Max);
+                  Result := New_Range_Type (Min, Max);
+                  Set_Type_Name (Result, Type_Str (Start .. Index - 1));
+                  return;
+               end;
+            end if;
 
          when 's' =>
             --  Structures.
