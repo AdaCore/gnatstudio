@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GNAT.Regpat;       use GNAT.Regpat;
 with Glide_Main_Window; use Glide_Main_Window;
 with Glide_Page;        use Glide_Page;
@@ -47,13 +48,21 @@ package body Glide_Kernel.Console is
    procedure Insert
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
-      Highlight_Sloc : Boolean := True)
+      Highlight_Sloc : Boolean := True;
+      Add_LF         : Boolean := True)
    is
       Top       : constant Glide_Window := Glide_Window (Kernel.Main_Window);
       Console   : constant Gtk_Text :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
+      New_Text  : String_Access;
 
    begin
+      if Add_LF then
+         New_Text := new String' (Text & ASCII.LF);
+      else
+         New_Text := new String' (Text);
+      end if;
+
       if Highlight_Sloc then
          declare
             Matched   : Match_Array (0 .. 3);
@@ -63,7 +72,7 @@ package body Glide_Kernel.Console is
             Last      : Natural;
 
          begin
-            Match (File, Text, Matched);
+            Match (File, New_Text.all, Matched);
 
             if Matched (0) /= No_Match then
                Highlight := Parse (Highlight_File);
@@ -71,7 +80,7 @@ package body Glide_Kernel.Console is
 
                Insert
                  (Console,
-                  Chars => Text (Text'First .. Matched (1).First - 1));
+                  Chars => New_Text (New_Text'First .. Matched (1).First - 1));
 
                if Matched (3) = No_Match then
                   Last := Matched (2).Last;
@@ -82,15 +91,17 @@ package body Glide_Kernel.Console is
                Insert
                  (Console,
                   Fore => Highlight,
-                  Chars => Text (Matched (1).First .. Last));
-               Insert (Console, Chars => Text (Last + 1 .. Text'Last));
+                  Chars => New_Text (Matched (1).First .. Last));
+               Insert (Console, Chars => New_Text (Last + 1 .. New_Text'Last));
 
+               Free (New_Text);
                return;
             end if;
          end;
       end if;
 
-      Insert (Console, Chars => Text);
+      Insert (Console, Chars => New_Text.all);
+      Free (New_Text);
    end Insert;
 
 end Glide_Kernel.Console;

@@ -31,9 +31,11 @@ package Glide_Kernel.Console is
    procedure Insert
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
-      Highlight_Sloc : Boolean := True);
+      Highlight_Sloc : Boolean := True;
+      Add_LF         : Boolean := True);
    --  Insert Text in the Glide's console.
    --  Highlight parts of Text that match a source location (the color is set
    --  using the preferences) if Highlight_Sloc is True.
+   --  If Add_LF is True, automatically add a line separator.
 
 end Glide_Kernel.Console;
