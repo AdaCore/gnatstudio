@@ -51,7 +51,7 @@ with Display_Items;             use Display_Items;
 with Items;                     use Items;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Call_Stack;            use GVD.Call_Stack;
-with Dialogs;                   use Dialogs;
+with Std_Dialogs;               use Std_Dialogs;
 with GVD.Main_Window;           use GVD.Main_Window;
 with GVD.Memory_View;           use GVD.Memory_View;
 with GVD.Menu;                  use GVD.Menu;
