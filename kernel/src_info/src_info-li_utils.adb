@@ -685,9 +685,8 @@ package body Src_Info.LI_Utils is
       Kind                    : in E_Kind := No_Kind;
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
-      D_Ptr : E_Declaration_Info_List;
+      D_Ptr : E_Declaration_Info_List := Declaration_Info_Ptr;
    begin
-      D_Ptr := Declaration_Info_Ptr;
       loop
          exit when D_Ptr = null;
          if ((Symbol_Name'Length > 0

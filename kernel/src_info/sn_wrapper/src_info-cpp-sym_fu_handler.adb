@@ -216,7 +216,6 @@ begin
    end if;
 
    if Decl_Info = null then
-      Info ("*** Decl_Info = null ***");
       Insert_Declaration
         (Handler               => LI_Handler (Global_CPP_Handler),
          File                  => Global_LI_File,

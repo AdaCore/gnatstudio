@@ -133,7 +133,7 @@ begin
       Ref.Position,
       Reference);
 exception
-   when Not_Found  | DB_Error => -- ignore
+   when Not_Found  | DB_Error =>
       Fail ("Method " &
             Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                                     Ref.Referred_Symbol_Name.Last) &
