@@ -26,17 +26,21 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Gtk.Button;    use Gtk.Button;
-with Gtk.Combo;     use Gtk.Combo;
-with Gtk.Label;     use Gtk.Label;
-with Gtk.Table;     use Gtk.Table;
-with Gtk.List;      use Gtk.List;
-with Gtk.List_Item; use Gtk.List_Item;
-with Gtk.GEntry;    use Gtk.GEntry;
-with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Radio_Button; use Gtk.Radio_Button;
-with Gtk.Handlers;  use Gtk.Handlers;
-with Gtk.Widget;    use Gtk.Widget;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Combo;           use Gtk.Combo;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Table;           use Gtk.Table;
+with Gtk.List;            use Gtk.List;
+with Gtk.List_Item;       use Gtk.List_Item;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Frame;           use Gtk.Frame;
+with Gtk.Editable;        use Gtk.Editable;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Check_Button;    use Gtk.Check_Button;
+with Gtk.Radio_Button;    use Gtk.Radio_Button;
+with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Widget;          use Gtk.Widget;
 
 with Prj.Tree;   use Prj.Tree;
 with Prj;        use Prj;
@@ -48,10 +52,13 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;     use System;
 
 with Prj_API;    use Prj_API;
+with Value_Editors; use Value_Editors;
 
 package body Variable_Editors is
 
-   procedure Display_Expr (GEntry : Gtk_GEntry; Expr : Project_Node_Id);
+   procedure Display_Expr
+     (Editable : access Gtk_Editable_Record'Class;
+      Expr : String_List_Iterator);
    --  Display Expr in GEntry, with variable references replaced with
    --  '$<name>'.
    --  It also displays the other expressions in the list.
@@ -65,6 +72,14 @@ package body Variable_Editors is
    --  Set in Name_Buffer the name of the external variable referenced by Ext.
    --  Note that this doesn't support complex expressions for the variable
    --  name.
+
+   procedure Resize_Text_Area
+     (Text : access Value_Editor_Record'Class;
+      Var : Project_Node_Id;
+      Max_Lines : Natural);
+   --  Resize a text area depending on the number of lines that need to be
+   --  displayed in it. At most Max_Lines at displayed, a scrolled window is
+   --  provided otherwise.
 
    function Get_Nth_Environment (Index : Natural) return chars_ptr;
    pragma Import (C, Get_Nth_Environment, "get_nth_environment");
@@ -111,11 +126,17 @@ package body Variable_Editors is
       Str : String_Id;
       Index : Natural := 0;
       S : chars_ptr;
-      List : Widget_List.Glist;
    begin
       Editor := new New_Var_Edit_Record;
       Editor.Var := Var;
       Initialize (Editor);
+      Set_Visible_Lines (Editor.Single_Value, 1);
+
+      --  Force toggle of the button, so that widgets are set sensitive
+      --  appropriately.
+
+      Set_Active (Editor.Get_Environment, False);
+      Set_Active (Editor.Get_Environment, True);
 
       --  Fill the list of existing environment variables before we put the
       --  currently referenced variable (in case it doesn't represent an
@@ -139,8 +160,14 @@ package body Variable_Editors is
          end;
       end loop;
 
+      --  Fill the information for the variable
+
       if Var /= Empty_Node then
          Get_Name_String (Project_Nodes.Table (Var).Name);
+
+         Set_Label (Editor.Name_Frame,
+                    "Name (old name was "
+                    & Name_Buffer (Name_Buffer'First .. Name_Len) & ")");
          Set_Text (Editor.Variable_Name,
                    Name_Buffer (Name_Buffer'First .. Name_Len));
 
@@ -155,11 +182,23 @@ package body Variable_Editors is
          end if;
 
          if Project_Nodes.Table (Var).Kind = N_Variable_Declaration then
-            Set_Active (Editor.Untyped_Variable, True); --  force toggle
+            if Project_Nodes.Table (Var).Expr_Kind = Single then
+               Set_Active (Editor.Untyped_Single_Variable, True);
+               Display_Expr (Editor.Single_Value, Value_Of (Var));
+            else
+               Set_Active (Editor.Untyped_List_Variable, True);
+               Display_Expr (Editor.List_Value, Value_Of (Var));
+            end if;
+
+         else  --  Typed variable
             Set_Active (Editor.Typed_Variable, True);
-         else
-            Set_Active (Editor.Untyped_Variable, True);
+            Display_Expr (Editor.Enumeration_Value, Type_Values (Var));
          end if;
+
+         Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Update");
+      else
+         Set_Label (Editor.Name_Frame, "Name");
+         Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Add");
       end if;
    end Gtk_New;
 
@@ -167,41 +206,55 @@ package body Variable_Editors is
    -- Display_Expr --
    ------------------
 
-   procedure Display_Expr (GEntry : Gtk_GEntry; Expr : Project_Node_Id) is
+   procedure Display_Expr
+     (Editable : access Gtk_Editable_Record'Class;
+      Expr : String_List_Iterator)
+   is
       Term, N : Project_Node_Id;
-      E : Project_Node_Id := Expr;
+      E : String_List_Iterator := Expr;
+      Pos : Gint := Get_Position (Editable);
    begin
-      while E /= Empty_Node loop
-         Term := Project_Nodes.Table (E).Field1;
-         while Term /= Empty_Node loop
-            N := Project_Nodes.Table (Term).Field1;
+      Realize (Editable); --  Make sure that the Value_Editors are realized
+      while not Done (E) loop
+         if Project_Nodes.Table (Data (E)).Kind = N_Literal_String then
+            String_To_Name_Buffer (Project_Nodes.Table (Data (E)).Value);
+            Insert_Text
+              (Editable, Name_Buffer (Name_Buffer'First .. Name_Len), Pos);
 
-            case Project_Nodes.Table (N).Kind is
-               when N_Variable_Reference =>
-                  Get_Name_String (Project_Nodes.Table (N).Name);
-                  Append_Text
-                    (GEntry,
-                     "$" & Name_Buffer (Name_Buffer'First .. Name_Len));
+         else
+            Term := Project_Nodes.Table (Data (E)).Field1;
+            while Term /= Empty_Node loop
+               N := Project_Nodes.Table (Term).Field1;
 
-               when N_Literal_String =>
-                  String_To_Name_Buffer (Project_Nodes.Table (N).Value);
-                  Append_Text
-                    (GEntry, """"
-                     & Name_Buffer (Name_Buffer'First .. Name_Len) & """");
+               case Project_Nodes.Table (N).Kind is
+                  when N_Variable_Reference =>
+                     Get_Name_String (Project_Nodes.Table (N).Name);
+                     Insert_Text
+                       (Editable,
+                        "$" & Name_Buffer (Name_Buffer'First .. Name_Len),
+                        Pos);
 
-               when others =>
-                  raise Program_Error;
-            end case;
+                  when N_Literal_String =>
+                     String_To_Name_Buffer (Project_Nodes.Table (N).Value);
+                     Insert_Text
+                       (Editable,
+                        Name_Buffer (Name_Buffer'First .. Name_Len),
+                        Pos);
 
-            Term := Project_Nodes.Table (Term).Field2;
-            if Term /= Empty_Node then
-               Append_Text (GEntry, " & ");
-            end if;
-         end loop;
+                  when others =>
+                     raise Program_Error;
+               end case;
 
-         E := Project_Nodes.Table (E).Field2;
-         if E /= Empty_Node then
-            Append_Text (GEntry, ", ");
+               Term := Project_Nodes.Table (Term).Field2;
+               if Term /= Empty_Node then
+                  Insert_Text (Editable, " & ", Pos);
+               end if;
+            end loop;
+         end if;
+
+         E := Next (E);
+         if not Done (E) then
+            Insert_Text (Editable, "" & ASCII.LF, Pos);
          end if;
       end loop;
    end Display_Expr;
@@ -234,23 +287,39 @@ package body Variable_Editors is
    procedure Add_Possible_Values
      (List : access Gtk_List_Record'Class; Typ : Project_Node_Id)
    is
-      Str  : Project_Node_Id;
+      Iter : String_List_Iterator := Type_Values (Typ);
       Item : Gtk_List_Item;
    begin
-      pragma Assert
-        (Project_Nodes.Table (Typ).Kind = N_String_Type_Declaration);
-
-      Str := Project_Nodes.Table (Typ).Field1;
-      while Str /= Empty_Node loop
-         String_To_Name_Buffer (Project_Nodes.Table (Str).Value);
-         Gtk_New
-           (Item, '"' & Name_Buffer (Name_Buffer'First .. Name_Len) & '"');
-         Show (Item);
+      while not Done (Iter) loop
+         --  We know this is a list of static strings
+         String_To_Name_Buffer (Data (Iter));
+         Gtk_New (Item, Name_Buffer (Name_Buffer'First .. Name_Len));
          Add (List, Item);
-
-         Str := Project_Nodes.Table (Str).Field1;
+         Iter := Next (Iter);
       end loop;
+      Show_All (List);
    end Add_Possible_Values;
+
+   -----------------
+   -- Resize_Text --
+   -----------------
+
+   procedure Resize_Text_Area
+     (Text : access Value_Editor_Record'Class;
+      Var : Project_Node_Id;
+      Max_Lines : Natural)
+   is
+      Iter : String_List_Iterator := Value_Of (Var);
+      Num_Lines : Natural := 0;
+   begin
+      while not Done (Iter) loop
+         Num_Lines := Num_Lines + 1;
+         Iter := Next (Iter);
+      end loop;
+
+      Num_Lines := Natural'Min (Num_Lines, Max_Lines);
+      Set_Visible_Lines (Text, Num_Lines);
+   end Resize_Text_Area;
 
    ------------------
    -- Add_Variable --
@@ -262,9 +331,10 @@ package body Variable_Editors is
    is
       Button  : Gtk_Button;
       Label   : Gtk_Label;
-      Value   : Gtk_Entry;
       Combo   : Gtk_Combo;
+      Text    : Value_Editor;
       Data    : Var_Handler_Data;
+      Scrolled : Gtk_Scrolled_Window;
    begin
       pragma Assert
         (Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration
@@ -296,33 +366,35 @@ package body Variable_Editors is
 
       if Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration then
          Gtk_New (Combo);
-         Value := Get_Entry (Combo);
-         Set_Editable (Value, False);
+         Set_Editable (Get_Entry (Combo), False);
          Attach (Editor.List_Variables, Combo, 3, 4,
                  Editor.Num_Rows - 1, Editor.Num_Rows,
                  Yoptions => 0);
          Add_Possible_Values
            (Get_List (Combo), Project_Nodes.Table (Var).Field2);
+         Delete_Text (Get_Entry (Combo));
+         Display_Expr (Get_Entry (Combo), Value_Of (Var));
 
-      else
-         Gtk_New (Value, 1024);
-         Attach (Editor.List_Variables, Value, 3, 4,
+      elsif Project_Nodes.Table (Var).Expr_Kind = Prj.List then
+         Gtk_New (Scrolled);
+         Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
+         Gtk_New (Text);
+         Add (Scrolled, Text);
+         Attach (Editor.List_Variables, Scrolled, 3, 4,
                  Editor.Num_Rows - 1, Editor.Num_Rows,
                  Yoptions => 0);
-      end if;
+         Resize_Text_Area (Text, Var, 5);
+         Display_Expr (Text, Value_Of (Var));
+         Set_Position (Text, 0);
 
-      --  Set the value
-      Delete_Text (Value);
-      case Project_Nodes.Table (Var).Expr_Kind is
-         when Single =>
-            Display_Expr (Value, Get_Expression (Var));
-         when List =>
-            Display_Expr
-              (Value,
-               Project_Nodes.Table (Project_Nodes.Table (Var).Field1).Field1);
-         when Undefined =>
-            null;
-      end case;
+      else
+         Gtk_New (Text);
+         Attach (Editor.List_Variables, Text, 3, 4,
+                 Editor.Num_Rows - 1, Editor.Num_Rows,
+                 Yoptions => 0);
+         Set_Visible_Lines (Text, 1);
+         Display_Expr (Text, Value_Of (Var));
+      end if;
 
       --  The environment variable
       if Project_Nodes.Table (Var).Field1 /= Empty_Node
