@@ -596,7 +596,7 @@ package body Switches_Editors is
 
                --  3 is the default value of this switch
                if Value /= 3 then
-                  Arr (Index) := new String' ("-" & Image (Value));
+                  Arr (Index) := new String' ("-i" & Image (Value));
                   Index := Index + 1;
                end if;
 
@@ -850,13 +850,14 @@ package body Switches_Editors is
                if Switches (J) /= null then
                   Second := Switches (J)'First + 1;
 
-                  if Switches (J)'Length = 2
-                    and then Switches (J) (Second) in '0' .. '9'
+                  if Switches (J)'Length = 3
+                    and then Switches (J) (Second) = 'i'
+                    and then Switches (J) (Second + 1) in '0' .. '9'
                   then
                      Set_Value
                        (Editor.Indent_Level,
                         Grange_Float'Value
-                          (Switches (J) (Second .. Second)));
+                          (Switches (J) (Second + 1 .. Second + 1)));
 
                   elsif Switches (J)'Length > 2
                     and then Switches (J) (Second) = 'M'
@@ -1040,9 +1041,9 @@ package body Switches_Editors is
             if (Editor.Pages and Pretty_Printer_Page) /= 0 then
                for J in Switches'Range loop
                   if Switches (J) /= null and then
-                    ((Switches (J)'Length = 2
-                      and then Switches (J) (Switches (J)'First + 1)
-                        in '0' .. '9')
+                    ((Switches (J)'Length = 3
+                      and then Switches (J) (Switches (J)'First ..
+                                             Switches (J)'First + 1) = "-i")
                      or else (Switches (J)'Length > 2
                       and then Switches (J) (Switches (J)'First ..
                                              Switches (J)'First + 1) = "-M")
