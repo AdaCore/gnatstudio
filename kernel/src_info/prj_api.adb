@@ -3804,51 +3804,6 @@ package body Prj_API is
       return Get_String (Value.Value);
    end Get_Attribute_Value;
 
-   -------------------------------------
-   -- Register_Default_Naming_Schemes --
-   -------------------------------------
-
-   procedure Register_Default_Naming_Schemes is
-      Spec, Impl : Name_Id;
-   begin
-      --  ??? Each known language should have its own separately registered
-      --  ??? subprogram.
-      Name_Len := 4;
-      Name_Buffer (1 .. Name_Len) := ".ads";
-      Spec := Name_Find;
-      Name_Buffer (1 .. Name_Len) := ".adb";
-      Impl := Name_Find;
-
-      Register_Default_Naming_Scheme
-        (Language => Name_Ada,
-         Default_Spec_Suffix => Spec,
-         Default_Impl_Suffix => Impl);
-
-      Name_Len := 2;
-      Name_Buffer (1 .. Name_Len) := ".h";
-      Spec := Name_Find;
-      Name_Buffer (1 .. Name_Len) := ".c";
-      Impl := Name_Find;
-
-      Register_Default_Naming_Scheme
-        (Language => Name_C,
-         Default_Spec_Suffix => Spec,
-         Default_Impl_Suffix => Impl);
-
-      Name_Len := 2;
-      Name_Buffer (1 .. Name_Len) := ".h";
-      Spec := Name_Find;
-      Name_Len := 3;
-      Name_Buffer (1 .. Name_Len) := ".cc";
-      Impl := Name_Find;
-
-      Register_Default_Naming_Scheme
-        (Language => Name_CPP,
-         Default_Spec_Suffix => Spec,
-         Default_Impl_Suffix => Impl);
-
-   end Register_Default_Naming_Schemes;
-
 begin
    Namet.Initialize;
    Csets.Initialize;
