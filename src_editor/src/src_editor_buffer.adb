@@ -420,23 +420,22 @@ package body Src_Editor_Buffer is
             Start, The_End : Gtk_Text_Iter;
             UTF8           : Gtkada.Types.Chars_Ptr;
             Length         : Natural;
-            Result         : GNAT.OS_Lib.String_Access;
          begin
             Get_Bounds (Buffer, Start, The_End);
             UTF8 := Get_Text (Buffer, Start, The_End, True);
             Length := Integer (Strlen (UTF8));
 
-            --  ??? Will return a string potentially too long, containing
-            --  garbage
+            declare
+               Output : String (1 .. Length);
+            begin
+               Glib.Convert.Convert
+                 (UTF8, Length,
+                  Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
+                  Ignore, Length, Result => Output);
+               g_free (UTF8);
 
-            Result := new String (1 .. Length);
-            Glib.Convert.Convert
-              (UTF8, Length,
-               Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
-               Ignore, Length, Result => Result.all);
-            g_free (UTF8);
-
-            return Result;
+               return new String'(Output (1 .. Length));
+            end;
          end;
       else
          return Get_First_Lines (Buffer, Buffer.Last_Editable_Line);
@@ -4238,5 +4237,15 @@ package body Src_Editor_Buffer is
 
       return Get_Text (Buffer, Start_Iter, End_Iter, True);
    end Get_Text;
+
+   ------------------
+   -- Blocks_Valid --
+   ------------------
+
+   function Blocks_Valid
+     (Buffer : access Source_Buffer_Record) return Boolean is
+   begin
+      return not Buffer.Blocks_Timeout_Registered;
+   end Blocks_Valid;
 
 end Src_Editor_Buffer;
