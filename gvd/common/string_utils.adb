@@ -453,6 +453,21 @@ package body String_Utils is
       return Result (Result'First .. Len - 1);
    end Reduce;
 
+   ------------
+   -- Krunch --
+   ------------
+
+   function Krunch (S : String) return String is
+      Half : constant := (Max_String_Length - 4) / 2;
+   begin
+      if S'Length <= Max_String_Length then
+         return S;
+      else
+         return S (S'First .. S'First + Half - 1)
+         & "[...]" & S (S'Last - Half + 1 .. S'Last);
+      end if;
+   end Krunch;
+
    --------------
    -- Strip_CR --
    --------------

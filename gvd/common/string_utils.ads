@@ -123,6 +123,12 @@ package String_Utils is
    --  and replace multiple spaces with a single one.
    --  Return the resulting string.
 
+   Max_String_Length : constant := 25;
+
+   function Krunch (S : String) return String;
+   --  If String is less than Max_String_Length characters long, return it,
+   --  otherwise return a krunched string no longer than Max_String_Length.
+
    function Strip_CR (Text : String) return String;
    --  Return a version of Text after stripping all the CR from the string.
    --  This function is used on Windows or when the Strip_CR preference is
