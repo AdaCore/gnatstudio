@@ -51,7 +51,7 @@ package Main_Debug_Window_Pkg is
       Task_Dialog         : Task_Dialog_Access;
       Backtrace_Dialog    : Backtrace_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
-      Log_File            : File_Descriptor;
+      Log_File            : File_Descriptor := Standerr;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
 
