@@ -1888,7 +1888,7 @@ package body Project_Viewers is
          declare
             Name : constant String := Nth_Arg (Data, 2);
             Path : constant String :=
-              Nth_Arg (Data, 3, Project_Path (Project));
+              Nth_Arg (Data, 3, Project_Directory (Project));
          begin
             Rename_And_Move
               (Root_Project  => Get_Project (Kernel),
