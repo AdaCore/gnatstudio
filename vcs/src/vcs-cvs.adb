@@ -1293,7 +1293,7 @@ package body VCS.CVS is
             Skip_To_Char (S, Rev_Index, '(');
             Create
               (Command, -"query log", Kernel,
-               "vcs_log "
+               "VCS.log "
                & String_List.Head (Head)
                & " "
                & Strip_Quotes (S (S'First .. Rev_Index - 1)),
