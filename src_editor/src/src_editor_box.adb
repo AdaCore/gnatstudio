@@ -71,7 +71,7 @@ with Src_Info;                   use Src_Info;
 with Src_Info.Queries;           use Src_Info.Queries;
 with Traces;                     use Traces;
 with GVD.Dialogs;                use GVD.Dialogs;
---  ??? Use for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
+--  ??? Used for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
 
 with Commands;                   use Commands;
 with Commands.Editor;            use Commands.Editor;
@@ -235,13 +235,12 @@ package body Src_Editor_Box is
       Editor  : access Source_Editor_Box_Record'Class;
       Context : access Entity_Selection_Context'Class)
    is
-      Source         : Source_Editor_Box;
-      Source_Info    : LI_File_Ptr;
-      Status         : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
-      Entity         : Entity_Information;
-      Location       : File_Location;
-      L, C           : Natural;
-      Length         : Natural;
+      Source_Info : LI_File_Ptr;
+      Status      : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Entity      : Entity_Information;
+      Location    : File_Location;
+      L, C        : Natural;
+      Length      : Natural;
 
    begin
       if Get_Filename (Editor) = "" then
@@ -336,6 +335,8 @@ package body Src_Editor_Box is
             null; --  No error message to print
       end case;
 
+      Length := Entity_Name_Information (Context)'Length;
+
       if To_Body then
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
@@ -350,7 +351,7 @@ package body Src_Editor_Box is
             Find_Source_File
               (Kernel, Get_File (Location),
                Use_Predefined_Source_Path => True),
-            L, C, False);
+            L, C, C + Length, False);
 
       else
          --  Open the file, and reset Source to the new editor in order to
@@ -364,44 +365,8 @@ package body Src_Editor_Box is
             Find_Source_File
               (Kernel, Get_Declaration_File_Of (Entity),
                Use_Predefined_Source_Path => True),
-            L, C, False);
+            L, C, C + Length, False);
          Destroy (Entity);
-      end if;
-
-      Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-
-      --  Abort if we failed to go to the xref location. An error message
-      --  has already been printed, so just bail-out.
-
-      if Source /= null then
-         --  Get the source box that was just opened/raised, and highlight
-         --  the target entity.
-
-         Length := Entity_Name_Information (Context)'Length;
-
-         if not Is_Valid_Location (Source, L, C + Length) then
-            --  This should never happen. If it does, Source probably does
-            --  not correspond to the right editor.
-
-            Console.Insert
-              (Kernel,
-               -"Invalid location: " & Get_Filename (Source) & ':' &
-                 Image (L) & ':' & Image (C + Length),
-               Highlight_Sloc => False,
-               Mode => Error);
-            Pop_State (Kernel_Handle (Kernel));
-            return;
-         end if;
-
-         Set_Cursor_Position
-           (Source.Source_Buffer, To_Buffer_Line (L), To_Buffer_Column (C));
-
-         --  ??? The following call will actually not have the desired effect,
-         --  since Set_Cursor_Position uses an idle callback. The proper thing
-         --  to do is to add additional parameters to Set_Cursor_Position, or
-         --  have a Set_Cursor_And_Selection_Region procedure.
-
-         Select_Region (Source, L, C, L, C + Length);
       end if;
 
       Pop_State (Kernel_Handle (Kernel));
@@ -909,7 +874,7 @@ package body Src_Editor_Box is
         (Kernel, File_Saved_Signal,
          File_Saved'Access,
          Slot_Object => Box,
-         User_Data   => Kernel_Handle (Kernel));
+         User_Data   => Kernel);
 
       --  Create the queue change hook that will be called every
       --  time the state of the queue associated to the buffer changes.
