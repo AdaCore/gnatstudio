@@ -1351,7 +1351,6 @@ package body Glide_Kernel.Modules is
       Unchecked_Free (A_Access);
    end Create_Line_Information_Column;
 
-
    ------------------------------------
    -- Remove_Line_Information_Column --
    ------------------------------------
