@@ -641,7 +641,7 @@ html_image_factory_write_pixbuf (CscHTMLStream *stream,
 				 gpointer user_data)
 {
 	HTMLImagePointer *p = user_data;
-	GError *error;
+	GError *error = NULL;
 
 	/* FIXME ! Check return value */
 	gdk_pixbuf_loader_write (p->loader, buffer, size, &error);
