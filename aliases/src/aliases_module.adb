@@ -896,8 +896,7 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Key_Handler: Unexception exception "
-                & Exception_Information (E));
+         Trace (Me, "Unexception exception: " & Exception_Information (E));
          return False;
    end Key_Handler;
 
@@ -1006,6 +1005,10 @@ package body Aliases_Module is
 
       Get_Bounds (Get_Buffer (Ed.Expansion), Start, Last);
       Highlight_Expansion_Range (Ed, Start, Last);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Alias_Selection_Changed;
 
    -------------------
@@ -1057,6 +1060,10 @@ package body Aliases_Module is
             end;
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Alias_Renamed;
 
    -------------------
@@ -1080,6 +1087,10 @@ package body Aliases_Module is
          Get_Selected (Get_Selection (Ed.Aliases), Model, Iter);
          Remove (Ed.Aliases_Model, Iter);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Alias_Deleted;
 
    -------------------
@@ -1089,6 +1100,10 @@ package body Aliases_Module is
    procedure Alias_Created (Editor : access Gtk_Widget_Record'Class) is
    begin
       Add_New_Alias (Alias_Editor (Editor), "_new_", Selected => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Alias_Created;
 
    ----------------------------
@@ -1103,6 +1118,10 @@ package body Aliases_Module is
       Get_Pref (K, Alias_Key,
                 Aliases_Module_Id.Modifier,
                 Aliases_Module_Id.Key);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Preferences_Changed;
 
    -----------------------
@@ -1123,6 +1142,10 @@ package body Aliases_Module is
            Get_Boolean (Ed.Variables_Model, Iter, 3));
       Set (Ed.Variables_Model, Iter, 3,
            not Get_Boolean (Ed.Variables_Model, Iter, 3));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Param_Env_Changed;
 
    -------------------------
@@ -1268,6 +1291,10 @@ package body Aliases_Module is
 
       Highlight_Expansion_Range (Alias_Editor (Editor), Pos, Eol);
       Update_Vars (Alias_Editor (Editor));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Expansion_Inserted;
 
    -----------------------
@@ -1289,6 +1316,10 @@ package body Aliases_Module is
 
       Highlight_Expansion_Range (Alias_Editor (Editor), Start, Last);
       Update_Vars (Alias_Editor (Editor));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Expansion_Deleted;
 
    -------------------------------
@@ -1340,6 +1371,10 @@ package body Aliases_Module is
    begin
       Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
       Insert (Buffer, Iter, It.Special);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Insert_Special;
 
    ------------------------
@@ -1383,6 +1418,11 @@ package body Aliases_Module is
       end loop;
 
       return Menu;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return Menu;
    end Contextual_Factory;
 
    ------------------------
@@ -1395,6 +1435,10 @@ package body Aliases_Module is
       pragma Unreferenced (Widget);
    begin
       Destroy (Menu);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Contextual_Destroy;
 
    -------------
@@ -1709,6 +1753,10 @@ package body Aliases_Module is
       Unref (Editor.Highlight_Tag);
 
       Destroy (Editor);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Edit_Aliases;
 
    -----------------------------------
@@ -1747,6 +1795,11 @@ package body Aliases_Module is
          when 'H'    => return Image (Ada.Calendar.Clock, "%T");
          when others => return Invalid_Expansion;
       end case;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexception exception: " & Exception_Information (E));
+         return Invalid_Expansion;
    end Special_Entities;
 
    ---------------------
