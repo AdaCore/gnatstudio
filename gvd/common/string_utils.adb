@@ -150,21 +150,34 @@ package body Odd.Strings is
                                Index    : in out Natural;
                                Str      : out String)
    is
-      S_Index : Natural := Str'First;
-      Int : Natural;
-   begin
-      Index := Index + 1;
-      while S_Index <= Str'Last loop
+      procedure Parse_Next_Char (Index : in out Natural;
+                                 Char  : out Character);
+      --  Parse the character pointed to by Index, including special characters
+
+      ---------------------
+      -- Parse_Next_Char --
+      ---------------------
+
+      procedure Parse_Next_Char (Index : in out Natural;
+                                 Char  : out Character)
+      is
+         Int     : Natural;
+      begin
 
          --  Special characters are represented as ["00"] or ["""]
+         --  Note that we can have '[" ' that represents the character [ followed by
+         --  the end of the string
 
          if Index + 4 <= Type_Str'Last
            and then Type_Str (Index) = '['
            and then Type_Str (Index + 1) = '"'
+           and then (Type_Str (Index + 2) = '"'
+                     or else Type_Str (Index + 2) in '0' .. '9'
+                     or else Type_Str (Index + 2) in 'a' .. 'f')
          then
             if Type_Str (Index + 2) = '"' then
                Index := Index + 5;
-               Str (S_Index) := '"';
+               Char := '"';
 
             else
 
@@ -184,17 +197,71 @@ package body Odd.Strings is
                     - Character'Pos ('0');
                end if;
 
-               Str (S_Index) := Character'Val (Int);
+               Char  := Character'Val (Int);
                Index := Index + 6;
             end if;
 
          --  Else, a standard character.
 
          else
-            Str (S_Index) := Type_Str (Index);
+            Char := Type_Str (Index);
             Index := Index + 1;
          end if;
-         S_Index := S_Index + 1;
+      end Parse_Next_Char;
+
+
+      S_Index : Natural := Str'First;
+      Char    : Character;
+      Num     : Long_Integer;
+      In_String : Boolean := True;
+   begin
+      Index := Index + 1;
+
+      --  Note: this is a slightly complex loop, since a string might not appear
+      --  as a single string in gdb, but can be made of multiple elements, including
+      --  characters repeated a number of times, as in:
+      --     "["af"]["c7"]", '["00"]' <repeats 12 times>, "BA"
+
+      while S_Index <= Str'Last loop
+
+         case Type_Str (Index) is
+
+            when '"' =>
+               In_String := not In_String;
+               Index := Index + 1;
+
+            when ''' =>
+               if In_String then
+                  Str (S_Index) := ''';
+                  S_Index := S_Index + 1;
+                  Index := Index + 1;
+               else
+                  Index := Index + 1;  --  skips initial '''
+                  Parse_Next_Char (Index, Char);
+                  Str (S_Index) := Char;
+                  Index := Index + 2;     --  skips "' " at the end
+                  if Looking_At (Type_Str, Index, "<repeats ") then
+                     Index := Index + 9;
+                     Parse_Num (Type_Str, Index, Num);
+                     Str (S_Index .. S_Index + Integer (Num) - 1) := (others => Char);
+                     S_Index := S_Index + Integer (Num);
+                     Index := Index + 7; --  skips " times>"
+                  else
+                     S_Index := S_Index + 1;
+                  end if;
+               end if;
+
+            when ' ' | ',' =>
+               if In_String then
+                  Str (S_Index) := ' ';
+                  S_Index := S_Index + 1;
+               end if;
+               Index := Index + 1;
+
+            when others =>
+               Parse_Next_Char (Index, Str (S_Index));
+               S_Index := S_Index + 1;
+         end case;
       end loop;
       Index := Index + 1;
    end Parse_Cst_String;
