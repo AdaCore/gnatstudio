@@ -300,6 +300,7 @@ package body Project_Viewers is
    function Widget_Factory
      (Page         : access Main_Editor_Record;
       Project_View : Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
@@ -317,6 +318,7 @@ package body Project_Viewers is
    function Widget_Factory
      (Page         : access Source_Editor_Record;
       Project_View : Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
@@ -341,6 +343,7 @@ package body Project_Viewers is
    function Widget_Factory
      (Page         : access Object_Editor_Record;
       Project_View : Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
@@ -358,6 +361,7 @@ package body Project_Viewers is
    function Widget_Factory
      (Page         : access Switches_Editor_Record;
       Project_View : Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
@@ -380,6 +384,7 @@ package body Project_Viewers is
    function Widget_Factory
      (Page         : access Naming_Editor_Record;
       Project_View : Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
@@ -1528,10 +1533,12 @@ package body Project_Viewers is
 
    function Widget_Factory
      (Page         : access Main_Editor_Record;
-      Project_View : Project_Id; Kernel : access Kernel_Handle_Record'Class)
+      Project_View : Project_Id;
+      Full_Project : String;
+      Kernel : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
-      pragma Unreferenced (Page, Kernel);
+      pragma Unreferenced (Page, Kernel, Full_Project);
       Box      : Executables_Editor;
       Hbox     : Gtk_Box;
       Label    : Gtk_Label;
@@ -1686,7 +1693,9 @@ package body Project_Viewers is
 
    function Widget_Factory
      (Page : access Source_Editor_Record;
-      Project_View : Project_Id; Kernel : access Kernel_Handle_Record'Class)
+      Project_View : Project_Id;
+      Full_Project : String;
+      Kernel : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
       pragma Unreferenced (Page);
@@ -1715,7 +1724,7 @@ package body Project_Viewers is
          declare
             Initial_Dirs : Argument_List (1 .. 1);
          begin
-            Initial_Dirs (1) := new String' (Get_Current_Dir);
+            Initial_Dirs (1) := new String' (Dir_Name (Full_Project));
             Gtk_New
               (Src_Dir_Selection,
                Initial_Directory    => Get_Current_Dir,
@@ -1847,7 +1856,9 @@ package body Project_Viewers is
 
    function Widget_Factory
      (Page : access Object_Editor_Record;
-      Project_View : Project_Id; Kernel : access Kernel_Handle_Record'Class)
+      Project_View : Project_Id;
+      Full_Project : String;
+      Kernel : access Kernel_Handle_Record'Class)
      return Gtk_Widget
    is
       pragma Unreferenced (Page);
@@ -1882,7 +1893,7 @@ package body Project_Viewers is
                     (Get_Name_String
                      (Prj.Projects.Table (Project_View).Object_Directory))));
       else
-         Set_Text (Obj_Dir.Obj_Dir, Get_Current_Dir);
+         Set_Text (Obj_Dir.Obj_Dir, Dir_Name (Full_Project));
       end if;
 
       Gtk_New (Button, -"Browse");
@@ -1920,7 +1931,7 @@ package body Project_Viewers is
                Attribute_Name => Exec_Dir_Attribute,
                Default => Get_Current_Dir))));
       else
-         Set_Text (Obj_Dir.Exec_Dir, Get_Current_Dir);
+         Set_Text (Obj_Dir.Exec_Dir, Dir_Name (Full_Project));
       end if;
 
       Gtk_New (Button, -"Browse");
@@ -2050,10 +2061,12 @@ package body Project_Viewers is
 
    function Widget_Factory
      (Page : access Switches_Editor_Record;
-      Project_View : Project_Id; Kernel : access Kernel_Handle_Record'Class)
+      Project_View : Project_Id;
+      Full_Project : String;
+      Kernel : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
-      pragma Unreferenced (Page, Kernel);
+      pragma Unreferenced (Page, Kernel, Full_Project);
       Switches : Switches_Editors.Switches_Edit;
    begin
       Gtk_New (Switches);
@@ -2112,9 +2125,10 @@ package body Project_Viewers is
    function Widget_Factory
      (Page         : access Naming_Editor_Record;
       Project_View : Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Full_Project);
       Editor : Naming_Editor;
    begin
       if Project_View /= No_Project then
