@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.0.0
 
+- E224-007 Incorrect cross-references after the object_directory is changed
+  Problem:    If you change the object directory of your project, possibly
+              by selecting a scenario with a different value for it, the cross-
+              references will still use the contents of the old project.
+  Workaround: None found, except relaunch GPS
+
 - E310-002 Project View is slow to show the contents of C files
   Problem:    Every time you expand the contents of a C file in the Project
               View, GPS recomputes the cross-references information, even if
