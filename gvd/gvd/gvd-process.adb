@@ -299,13 +299,7 @@ package body GVD.Process is
    begin
       --  ??? Remember last command ?
 
-      if not Command_In_Process (Get_Process (Top.Debugger)) then
-         Process_User_Command
-           (Top,
-            Input,
-            Mode => User);
-      end if;
-
+      Process_User_Command (Top, Input, Mode => User);
       return "";
    end Interpret_Command_Handler;
 
