@@ -1349,6 +1349,8 @@ package body Project_Viewers is
       Base : constant String := Project_Directory (Importing_Project);
       Use_Relative_Path : constant Boolean :=
         Get_Paths_Type (Importing_Project) = Projects.Relative;
+        or else (Get_Paths_Type (Importing_Project) = From_Pref
+                 and then Get_Pref (Kernel, Generate_Relative_Paths));
       Changed : Import_Project_Error;
       Result : Message_Dialog_Buttons;
       Must_Recompute : Boolean := False;
