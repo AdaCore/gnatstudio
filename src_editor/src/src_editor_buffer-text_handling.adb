@@ -344,8 +344,10 @@ package body Src_Editor_Buffer.Text_Handling is
       Copy (W_End, W_Start);
 
       --  Look for the start of the word, note that we do not want to stop at
-      --  quote otherwise it is not possible to handle properly attributes
-      --  which are also reserved words like access and range for example.
+      --  quote as it can be part of a specific construct in some languages and
+      --  needs proper parsing. This is the case for example in Ada for
+      --  attributes. So we either handle the word on the left or two words
+      --  separated by a single quote.
 
       First := Column;
       Char  := ' ';
@@ -355,9 +357,15 @@ package body Src_Editor_Buffer.Text_Handling is
          Prev := Char;
          Char := Get_Char (W_Start);
 
+         if not Is_In (Char, Word_Character_Set (Lang))
+           and then Prev = ' '
+         then
+            --  Nothing to do in this case as we do not have a word
+            return;
+         end if;
+
          if Char = ''' and Prev = ''' then
-            --  We don't want to parse past the second quote as this is not an
-            --  attribute.
+            --  We don't want to parse past the second quote
             Forward_Char (W_Start, Result);
             First := First + 1;
             exit;
