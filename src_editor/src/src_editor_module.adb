@@ -67,6 +67,7 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with File_Utils;                use File_Utils;
+with Shell;                     use Shell;
 with Traces;                    use Traces;
 with Projects.Registry;         use Projects, Projects.Registry;
 with Src_Contexts;              use Src_Contexts;
@@ -504,7 +505,28 @@ package body Src_Editor_Module is
             elsif Args (Node).all = "-L" then
                Length := Parse_Argument ("-L");
             elsif Filename = null then
-               Filename := new String'(Args (Node).all);
+               declare
+                  File : constant String := Args (Node).all;
+               begin
+                  if Is_Absolute_Path (File) then
+                     Filename := new String'(Normalize_Pathname (File));
+                  else
+                     declare
+                        F : constant String := Get_Full_Path_From_File
+                          (Registry        => Get_Registry (Kernel),
+                           Filename        => File,
+                           Use_Source_Path => True,
+                           Use_Object_Path => False);
+                     begin
+                        if Is_Absolute_Path (F) then
+                           Filename := new String'(F);
+                        else
+                           Filename := new String'(File);
+                        end if;
+                     end;
+                  end if;
+               end;
+
             else
                Free (Filename);
                return Command & ": " & (-"too many parameters");
