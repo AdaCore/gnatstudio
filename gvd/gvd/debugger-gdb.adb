@@ -753,11 +753,11 @@ package body Debugger.Gdb is
    begin
       --  If the debugger process is dead, do not attempt to communicate
       --  with the underlying process.
+
       if Get_Descriptor (Get_Process (Debugger)) = null
         or else Get_Pid
           (Get_Descriptor
-               (Get_Process (Debugger)).all)
-         in GNAT.Expect.Invalid_Pid .. Null_Pid
+             (Get_Process (Debugger)).all) = GNAT.Expect.Invalid_Pid
       then
          Free (Debugger.Process);
          Free (Debugger.Remote_Host);
