@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D526-007 GPS hangs or crashes under Windows NT4 when loading some Ada file
+  Problem:    Under Windows NT4, a memory corruption occurs when parsing
+              some Ada constructs which hangs or crashes GPS.
+  Workaround: This issue is speicfic to version 2.0.0. Using an more recent or
+              old release is the only known safe work around
+
 - File View only show files in the current directory on Windows
   Problem:    On Windows, the File View only show the files and subdirectories
               of the current directory.
