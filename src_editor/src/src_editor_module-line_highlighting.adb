@@ -132,19 +132,23 @@ package body Src_Editor_Module.Line_Highlighting is
             End_Col   : constant Integer := Nth_Arg (Data, 5, Default => -1);
             Box       : Source_Box;
             Child     : MDI_Child;
+            Category_Index : Integer;
          begin
             Child := Find_Editor (Kernel, File);
 
             if Child /= null then
                Box := Source_Box (Get_Widget (Child));
+               Category_Index := Lookup_Category (Category);
+
                if Command = "highlight_range" then
                   Highlight_Range
                     (Get_Buffer (Box.Editor), Category,
                      Editable_Line_Type (Line),
                      Start_Col, End_Col);
 
-                  if Module_Id.Categories
-                    (Lookup_Category (Category)).Mark_In_Speedbar
+                  if Category_Index /= 0
+                    and then
+                      Module_Id.Categories (Category_Index).Mark_In_Speedbar
                   then
                      Add_Line_Highlighting
                        (Box.Editor, Editable_Line_Type (Line), Category,
@@ -156,8 +160,10 @@ package body Src_Editor_Module.Line_Highlighting is
                     (Get_Buffer (Box.Editor), Category,
                      Editable_Line_Type (Line),
                      Start_Col, End_Col, Remove => True);
-                  if Module_Id.Categories
-                    (Lookup_Category (Category)).Mark_In_Speedbar
+
+                  if Category_Index /= 0
+                    and then
+                      Module_Id.Categories (Category_Index).Mark_In_Speedbar
                   then
                      Remove_Line_Highlighting
                        (Box.Editor, Editable_Line_Type (Line), Category);
