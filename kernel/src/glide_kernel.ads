@@ -65,6 +65,9 @@ package Glide_Kernel is
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
 
+   procedure Load_Preferences (Handle : access Kernel_Handle_Record);
+   --  Load the preferences from the user's file ~/.gps/preferences.
+
    procedure Destroy (Handle : access Kernel_Handle_Record);
    --  Free the memory occupied by the kernel.
 

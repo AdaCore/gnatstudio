@@ -235,10 +235,15 @@ package body Glide_Kernel is
       Ref (Handle.Tooltips);
       Sink (Handle.Tooltips);
 
+      --  Initialize the preferences. We load the file now, even though it
+      --  will also be reloaded after the customization files, so that themes
+      --  do not override user's preferences.
+      --  We need to load now so that for instance the splash screen is
+      --  correctly taken into account.
       Handle.Preferences := new GPS_Preferences_Record;
       GVD.Preferences.GVD_Prefs := GVD_Preferences (Handle.Preferences);
       Register_Global_Preferences (Handle);
-      Load_Preferences (Handle.Preferences, Dir & "preferences");
+      Load_Preferences (Handle);
 
       Handle.History := new History_Record;
       Load (Handle.History.all, Dir & "history");
@@ -246,6 +251,16 @@ package body Glide_Kernel is
 
       Glide_Kernel.Scripts.Initialize (Handle);
    end Gtk_New;
+
+   ----------------------
+   -- Load_Preferences --
+   ----------------------
+
+   procedure Load_Preferences (Handle : access Kernel_Handle_Record) is
+   begin
+      Load_Preferences
+        (Handle.Preferences, Handle.Home_Dir.all & "preferences");
+   end Load_Preferences;
 
    ------------------------------
    -- Get_Default_Accelerators --
