@@ -140,7 +140,6 @@ package body GVD.Canvas is
    procedure Preferences_Changed
      (Canvas : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-
       function Refresh_Item
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean;
@@ -160,12 +159,13 @@ package body GVD.Canvas is
          return True;
       end Refresh_Item;
 
-      C             : Gvd_Canvas := Gvd_Canvas (Canvas);
-      Win           : Gdk.Window.Gdk_Window := Get_Window (C);
-   begin
+      C   : GVD_Canvas := GVD_Canvas (Canvas);
+      Win : Gdk.Window.Gdk_Window := Get_Window (C);
 
+   begin
       Set_Detect_Aliases (C, Get_Pref (Default_Detect_Aliases));
       Align_On_Grid (C, Get_Pref (Align_Items_On_Grid));
+
       if Get_Pref (Display_Grid) then
          Configure (C, Grid_Size => Default_Grid_Size);
       else
@@ -177,36 +177,42 @@ package body GVD.Canvas is
       if C.Item_Context.GC /= null then
          Destroy (C.Item_Context.GC);
       end if;
+
       Gdk_New (C.Item_Context.GC, Win);
       Set_Foreground (C.Item_Context.GC, Black (Get_Default_Colormap));
 
       if C.Item_Context.Xref_GC /= null then
          Destroy (C.Item_Context.Xref_GC);
       end if;
+
       Gdk_New (C.Item_Context.Xref_GC, Win);
       Set_Foreground (C.Item_Context.Xref_GC, Get_Pref (Xref_Color));
 
       if C.Item_Context.Modified_GC /= null then
          Destroy (C.Item_Context.Modified_GC);
       end if;
+
       Gdk_New (C.Item_Context.Modified_GC, Win);
       Set_Foreground (C.Item_Context.Modified_GC, Get_Pref (Change_Color));
 
       if C.Item_Context.Font /= null then
          Unref (C.Item_Context.Font);
       end if;
+
       C.Item_Context.Font :=
         Get_Gdkfont (Get_Pref (Value_Font), Get_Pref (Value_Font_Size));
 
       if C.Item_Context.Type_Font /= null then
          Unref (C.Item_Context.Type_Font);
       end if;
+
       C.Item_Context.Type_Font :=
         Get_Gdkfont (Get_Pref (Type_Font), Get_Pref (Type_Font_Size));
 
       if C.Item_Context.Command_Font /= null then
          Unref (C.Item_Context.Command_Font);
       end if;
+
       C.Item_Context.Command_Font := Get_Gdkfont
         (Get_Pref (Command_Font), Get_Pref (Value_Font_Size));
 
@@ -215,40 +221,44 @@ package body GVD.Canvas is
       if C.Box_Context.Grey_GC /= null then
          Destroy (C.Box_Context.Grey_GC);
       end if;
+
       Gdk_New (C.Box_Context.Grey_GC, Win);
       Set_Foreground (C.Box_Context.Grey_GC, Get_Pref (Title_Color));
 
       if C.Box_Context.Black_GC /= null then
          Destroy (C.Box_Context.Black_GC);
       end if;
+
       Gdk_New (C.Box_Context.Black_GC, Win);
       Set_Foreground (C.Box_Context.Black_GC, Black (Get_Default_Colormap));
 
       if C.Box_Context.Refresh_Button_GC /= null then
          Destroy (C.Box_Context.Refresh_Button_GC);
       end if;
+
       Gdk_New (C.Box_Context.Refresh_Button_GC, Win);
 
       if C.Box_Context.Thaw_Bg_GC /= null then
          Destroy (C.Box_Context.Thaw_Bg_GC);
       end if;
+
       Gdk_New (C.Box_Context.Thaw_Bg_GC, Win);
       Set_Foreground (C.Box_Context.Thaw_Bg_GC, Get_Pref (Thaw_Bg_Color));
 
       if C.Box_Context.Freeze_Bg_GC /= null then
          Destroy (C.Box_Context.Freeze_Bg_GC);
       end if;
+
       Gdk_New (C.Box_Context.Freeze_Bg_GC, Win);
       Set_Foreground (C.Box_Context.Freeze_Bg_GC, Get_Pref (Freeze_Bg_Color));
 
       if C.Box_Context.Title_Font /= null then
          Unref (C.Box_Context.Title_Font);
       end if;
+
       C.Box_Context.Title_Font := Get_Gdkfont
         (Get_Pref (Title_Font), Get_Pref (Title_Font_Size));
-
       For_Each_Item (C, Refresh_Item'Unrestricted_Access);
-
       Refresh_Canvas (C);
    end Preferences_Changed;
 

@@ -105,7 +105,7 @@ package body Debugger.Jdb is
    -----------------
    -- Print_Value --
    -----------------
-   
+
    procedure Print_Value
      (Debugger : access Jdb_Debugger;
       Entity   : String) is

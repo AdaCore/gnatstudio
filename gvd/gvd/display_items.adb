@@ -490,7 +490,7 @@ package body Display_Items is
       if Item.Auto_Refresh then
          Draw_Rectangle
            (Pixmap (Item),
-            GC     => Context.Thaw_Bg_Gc,
+            GC     => Context.Thaw_Bg_GC,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -500,7 +500,7 @@ package body Display_Items is
       else
          Draw_Rectangle
            (Pixmap (Item),
-            GC     => Context.Freeze_Bg_Gc,
+            GC     => Context.Freeze_Bg_GC,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -612,7 +612,7 @@ package body Display_Items is
          if Item.Auto_Refresh then
             Draw_Rectangle
               (Pixmap (Item),
-               GC     => Context.Thaw_Bg_Gc,
+               GC     => Context.Thaw_Bg_GC,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -622,7 +622,7 @@ package body Display_Items is
          else
             Draw_Rectangle
               (Pixmap (Item),
-               GC     => Context.Freeze_Bg_Gc,
+               GC     => Context.Freeze_Bg_GC,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
