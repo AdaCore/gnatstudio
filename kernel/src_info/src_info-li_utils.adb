@@ -10,6 +10,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
+      Xref_Filename           : in String;
       List                    : in LI_File_List;
       Symbol_Name             : in String;
       Source_Filename         : in String;
@@ -130,7 +131,7 @@ package body Src_Info.LI_Utils is
          end loop;
       end if;
       Insert_Declaration_Internal
-        (D_Ptr, File, List, Symbol_Name,
+        (D_Ptr, File, Xref_Filename, List, Symbol_Name,
          Source_Filename,
          Location, Parent_Filename, Parent_Location, Kind, Scope,
          End_Of_Scope_Location, Rename_Filename, Rename_Location);
@@ -420,10 +421,10 @@ package body Src_Info.LI_Utils is
             D_Ptr := D_Ptr.Next;
          end loop;
       end if;
-      Insert_Declaration_Internal (D_Ptr, File, List, Symbol_Name,
-            Referred_Filename,
-            Location, Parent_Filename, Parent_Location, Kind, Scope,
-            End_Of_Scope_Location, Rename_Filename, Rename_Location);
+      Insert_Declaration_Internal (D_Ptr, File, Xref_Filename, List,
+         Symbol_Name, Referred_Filename, Location,
+         Parent_Filename, Parent_Location, Kind, Scope,
+         End_Of_Scope_Location, Rename_Filename, Rename_Location);
       Declaration_Info := D_Ptr;
    end Insert_Dependency_Declaration;
 
@@ -452,7 +453,7 @@ package body Src_Info.LI_Utils is
          loop
             if FL_Ptr.Value.Line = Parent_Location.Line
               and then FL_Ptr.Value.Column = Parent_Location.Column
-              and then FL_Ptr.Value.File.Source_Filename.all = Parent_Filename
+              and then Get_LI_Filename (FL_Ptr.Value.File.LI) = Parent_Filename
             then
                return;
             end if;
@@ -464,11 +465,10 @@ package body Src_Info.LI_Utils is
             FL_Ptr := FL_Ptr.Next;
          end loop;
       end if;
-      --  TODO we should search by Xref_filename of the parent filename
       Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
-         if Parent_Filename = Get_Source_Filename
-           (Declaration_Info.Value.Declaration.Location.File)
+         if Parent_Filename = Get_LI_Filename
+            (Declaration_Info.Value.Declaration.Location.File.LI)
          then
             Tmp_LI_File_Ptr :=
               Declaration_Info.Value.Declaration.Location.File.LI;
@@ -630,6 +630,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
+      Xref_Filename           : in String;
       List                    : in LI_File_List;
       Symbol_Name             : in String;
       Source_Filename         : in String;
@@ -643,6 +644,7 @@ package body Src_Info.LI_Utils is
       Rename_Location         : in Point := Invalid_Point)
    is
       pragma Unreferenced (Rename_Filename);
+      pragma Unreferenced (Source_Filename);
       --  ??? Parameter could be removed.
 
       Tmp_LI_File_Ptr : LI_File_Ptr;
@@ -671,10 +673,9 @@ package body Src_Info.LI_Utils is
 
       else
          --  Processing parent information
-         if Source_Filename = Parent_Filename then
+         if Xref_Filename = Parent_Filename then
             Tmp_LI_File_Ptr := File;
          else
-            --  TODO we should check for Xref_Filename of the parent!
             Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
             if (Tmp_LI_File_Ptr = No_LI_File) then
                --  ??? What should we do if LI_File for parent does not exist?

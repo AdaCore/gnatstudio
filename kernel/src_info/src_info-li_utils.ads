@@ -18,6 +18,7 @@ private package Src_Info.LI_Utils is
       Location                : in Point;
       --  Line & Column pair where declaration is occured
       Parent_Filename         : in String := "";
+      --  this filename is the Xref filename of the parent entity
       --  (if parent available - for classes, subtypes and etc)
       --  Name of file where the parent is declared
       Parent_Location         : in Point := Invalid_Point;
@@ -64,6 +65,7 @@ private package Src_Info.LI_Utils is
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
+      --  this filename is the Xref filename of the parent entity
       Parent_Location         : in Point := Invalid_Point;
       Kind                    : in E_Kind;
       Scope                   : in E_Scope;
@@ -81,6 +83,7 @@ private package Src_Info.LI_Utils is
       List                    : in LI_File_List;
       Parent_Filename         : in String;
       Parent_Location         : in Point);
+      --  this filename is the Xref filename of the parent entity
    --  Adds a new parent to the list of parent locations for given declaration
 
    procedure Set_End_Of_Scope

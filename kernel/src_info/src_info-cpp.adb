@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 with GNAT.Regpat;          use GNAT.Regpat;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;       use Ada.Exceptions;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
@@ -1005,7 +1004,10 @@ package body Src_Info.CPP is
                      Referred_Filename =>
                         Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
                      Parent_Location   => Desc.Parent_Point,
-                     Parent_Filename   => Desc.Parent_Filename.all,
+                     Parent_Filename   => Xref_Filename_For
+                       (Desc.Parent_Filename.all,
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
                      Declaration_Info  => Decl_Info);
                end if;
                Free (Desc);
@@ -1603,7 +1605,10 @@ package body Src_Info.CPP is
                      Referred_Filename =>
                         Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
                      Parent_Location   => Desc.Parent_Point,
-                     Parent_Filename   => Desc.Parent_Filename.all,
+                     Parent_Filename   => Xref_Filename_For
+                       (Desc.Parent_Filename.all,
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
                      Declaration_Info  => Decl_Info);
                end if;
                Free (Desc);
@@ -2139,7 +2144,10 @@ package body Src_Info.CPP is
                        (Ref.File_Name.First .. Ref.File_Name.Last),
                      Location          => Typedef.Start_Position,
                      Parent_Location   => Desc.Ancestor_Point,
-                     Parent_Filename   => Desc.Ancestor_Filename.all,
+                     Parent_Filename   => Xref_Filename_For
+                       (Desc.Ancestor_Filename.all,
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
                      Kind              => Desc.Kind,
                      Scope             => Global_Scope,
                      Declaration_Info  => Decl_Info);
@@ -2229,7 +2237,10 @@ package body Src_Info.CPP is
                        (Ref.File_Name.First .. Ref.File_Name.Last),
                      Location          => Typedef.Start_Position,
                      Parent_Location   => Desc.Ancestor_Point,
-                     Parent_Filename   => Desc.Ancestor_Filename.all,
+                     Parent_Filename   => Xref_Filename_For
+                       (Desc.Ancestor_Filename.all,
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
                      Kind              => Desc.Kind,
                      Scope             => Global_Scope,
                      Referred_Filename => Typedef.Buffer
@@ -2445,14 +2456,14 @@ package body Src_Info.CPP is
             Super_Def,
             Success);
          if Success then -- if found, add it to parent list
-            --  ??? MANU we are currently taking the base_name for the parent,
-            --  but we should really keep the directory part that was
-            --  mentionned in the source file, such as #include "dir/file.h"
             Add_Parent
               (Decl_Info,
                Env.List_Of_Files,
-               Base_Name (Super_Def.Buffer
-                 (Super_Def.File_Name.First .. Super_Def.File_Name.Last)),
+               Xref_Filename_For
+                  (Super_Def.Buffer
+                     (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
+                      Env.DB_Dir.all,
+                      Env.Xrefs).all,
                Super_Def.Start_Position);
             Free (Super_Desc);
             Free (Super_Def);
@@ -2549,7 +2560,8 @@ package body Src_Info.CPP is
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename.all,
+            Parent_Filename   => Xref_Filename_For
+               (Desc.Parent_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
             Declaration_Info  => Decl_Info);
 
          --  add reference to the type of this variable
@@ -2686,7 +2698,8 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename.all,
+            Parent_Filename   => Xref_Filename_For
+               (Desc.Parent_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
       else
@@ -3153,7 +3166,8 @@ package body Src_Info.CPP is
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename.all,
+            Parent_Filename   => Xref_Filename_For
+               (Desc.Parent_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
             Declaration_Info  => Decl_Info);
 
          --  add reference to the type of this variable
@@ -3298,7 +3312,8 @@ package body Src_Info.CPP is
             Kind              => Desc.Kind,
             Scope             => Local_Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename.all,
+            Parent_Filename   => Xref_Filename_For
+               (Desc.Parent_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
             Declaration_Info  => Decl_Info);
 
          --  add reference to the type of this field
@@ -3567,7 +3582,8 @@ package body Src_Info.CPP is
                Source_Filename   =>
                  Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Location          => Sym.Start_Position,
-               Parent_Filename   => Desc.Ancestor_Filename.all,
+               Parent_Filename   => Xref_Filename_For
+                  (Desc.Ancestor_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
                Parent_Location   => Desc.Ancestor_Point,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
