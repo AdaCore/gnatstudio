@@ -557,6 +557,8 @@ package body Src_Editor_Box is
          if Status /= Success and then Status /= Fuzzy_Match then
             Destroy (Entity);
          end if;
+      else
+         Entity := No_Entity_Information;
       end if;
 
       Pop_State (Editor.Kernel);
