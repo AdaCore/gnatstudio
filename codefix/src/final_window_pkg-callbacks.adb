@@ -60,7 +60,8 @@ package body Final_Window_Pkg.Callbacks is
    procedure On_Final_Cancel_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Final_Window : Final_Window_Access := Final_Window_Access (Object);
+      Final_Window : constant Final_Window_Access
+        := Final_Window_Access (Object);
    begin
       Quit (Final_Window.Graphic_Codefix);
    end On_Final_Cancel_Clicked;
