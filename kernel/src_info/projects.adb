@@ -815,15 +815,31 @@ package body Projects is
    ----------------------------
 
    function Get_Filename_From_Unit
-     (Project         : Project_Type;
-      Unit_Name       : String;
-      Part            : Unit_Part;
-      Check_Predefined_Library : Boolean := False) return String
+     (Project                  : Project_Type;
+      Unit_Name                : String;
+      Part                     : Unit_Part;
+      Check_Predefined_Library : Boolean := False;
+      File_Must_Exist          : Boolean := True) return String
    is
-      Arr  : Array_Element_Id := No_Array_Element;
-      Unit : Name_Id;
-      View : Project_Id;
+      Arr   : Array_Element_Id := No_Array_Element;
+      Unit  : Name_Id;
+      View  : Project_Id;
       Value : Variable_Value;
+
+      function Has_Predefined_Prefix (S : String) return Boolean;
+      --  Return True is S has a name that starts like a predefined unit
+      --  (e.g. a.b, which should be replaced by a~b)
+
+      ---------------------------
+      -- Has_Predefined_Prefix --
+      ---------------------------
+
+      function Has_Predefined_Prefix (S : String) return Boolean is
+         C : constant Character := S (S'First);
+      begin
+         return S (S'First + 1) = '.'
+           and then (C = 'a' or else C = 'g' or else C = 'i' or else C = 's');
+      end Has_Predefined_Prefix;
 
    begin
       --  Standard GNAT naming scheme
@@ -877,8 +893,9 @@ package body Projects is
                   N : constant String := Unit_Name & Get_String
                     (Prj.Projects.Table (View).Naming.Separate_Suffix);
                begin
-                  if Get_Project_From_File
-                    (Project.Data.Registry.all, N, False) = Project
+                  if not File_Must_Exist
+                    or else Get_Project_From_File
+                      (Project.Data.Registry.all, N, False) = Project
                   then
                      return N;
                   end if;
@@ -893,17 +910,27 @@ package body Projects is
          declare
             Dot_Replacement : constant String := Get_String
               (Prj.Projects.Table (Get_View (Project)).Naming.Dot_Replacement);
-            Uname : constant String := Substitute_Dot
+            Uname           : String := Substitute_Dot
               (Unit_Name, Dot_Replacement);
+
          begin
+            --  Handle properly special naming such as a.b -> a~b
+
+            if Unit_Name'Length > 2
+              and then Has_Predefined_Prefix (Unit_Name)
+            then
+               Uname (Uname'First + 1) := '~';
+            end if;
+
             while Arr /= No_Array_Element loop
                if Array_Elements.Table (Arr).Index = Name_Ada then
                   declare
                      N : constant String := Uname
                        & Get_String (Array_Elements.Table (Arr).Value.Value);
                   begin
-                     if Get_Project_From_File
-                       (Project.Data.Registry.all, N, False) = Project
+                     if not File_Must_Exist
+                       or else Get_Project_From_File
+                         (Project.Data.Registry.all, N, False) = Project
                      then
                         return N;
                      end if;
