@@ -130,7 +130,11 @@ package body Glide_Kernel.Project is
       Prj.Com.Units.Set_Last (No_Unit);
       Prj.Com.Units_Htable.Reset;
 
-      Prj.Proc.Process (Handle.Project_View, Handle.Project);
+      Prj.Proc.Process (Handle.Project_View, Handle.Project, null);
+      --  ??? The last argument should be an access to a procedure that would
+      --  ??? relay the error message to the user and interact with him
+      --  ??? accordingingly. This will be done later, for the moment, all
+      --  ??? error messages are redirected to stdout.
 
       Errout.Finalize;
       pragma Assert (Handle.Project_View /= No_Project);
