@@ -20,6 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Glib;                      use Glib;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
@@ -53,6 +54,7 @@ with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
 
 with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Module;         use Src_Editor_Module;
 
 package body Src_Contexts is
@@ -610,6 +612,16 @@ package body Src_Contexts is
            (Get_Slice (Editor, 1, 1), 1, Context,
             Backward_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang, Was_Partial => Was_Partial);
+
+         --  ??? May want to display a dialog instead of wrapping automatically
+
+         if Continue_Till_End then
+            Raise_Console (Kernel);
+            Insert
+              (Kernel, -"No more matches, starting from the end",
+               Mode => Error);
+         end if;
+
       else
          Scan_Buffer
            (Get_Slice (Editor, Current_Line, 1), Current_Column, Context,
@@ -936,6 +948,25 @@ package body Src_Contexts is
         (Get_Language_Handler (Kernel), Get_Filename (Editor));
       Get_Cursor_Location (Editor, Line, Column);
 
+      --  If we had a previous selection, and it had a null length, move the
+      --  cursor forward, otherwise we would keep hitting the same match. Of
+      --  course, if the cursor was moved by the user since then, we do not
+      --  have anything to do.
+
+      if Context.Begin_Column /= 0
+        and then Context.End_Column = Column
+        and then Context.Begin_Column = Context.End_Column
+      then
+         if Is_Valid_Position
+           (Get_Buffer (Editor), Gint (Context.End_Line - 1), Gint (Column))
+         then
+            Column := Column + 1;
+         else
+            Line   := Line + 1;
+            Column := 1;
+         end if;
+      end if;
+
       Scan_Next
         (Context, Kernel,
          Editor         => Editor,
@@ -952,6 +983,7 @@ package body Src_Contexts is
          Context.Begin_Column := Match.Column;
          Context.End_Line     := Match.Line;
          Context.End_Column   := Match.End_Column;
+
          Unchecked_Free (Match);
 
          Set_Cursor_Location
@@ -1048,6 +1080,19 @@ package body Src_Contexts is
             Begin_Column,
             End_Line,
             End_Column,
+            Replace_String);
+
+      --  If there is no selection, it might be because the match had a length
+      --  of 0 (try matching the regexp "^")
+      elsif not Success
+        and then Context.Begin_Column = Context.End_Column
+      then
+         Replace_Slice
+           (Editor,
+            Context.Begin_Line,
+            Context.Begin_Column,
+            Context.End_Line,
+            Context.End_Column,
             Replace_String);
       end if;
 
