@@ -667,6 +667,9 @@ msgstr "Regular expression"
 msgid  "Reload Files"
 msgstr "Reload Files"
 
+msgid  "Reload Sources"
+msgstr "Reload Sources"
+
 msgid  "remote"
 msgstr "remote"
 
@@ -909,6 +912,9 @@ msgstr "Unknown Language"
 
 msgid  "Unselect All"
 msgstr "Unselect All"
+
+msgid  "Update"
+msgstr "Update"
 
 msgid  "Update Value"
 msgstr "Update Value"

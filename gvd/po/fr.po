@@ -667,6 +667,9 @@ msgstr "Expression régulière"
 msgid  "Reload Files"
 msgstr "Recalculer la liste de fichiers"
 
+msgid  "Reload Sources"
+msgstr "Recharger les sources"
+
 msgid  "remote"
 msgstr "distant"
 
@@ -909,6 +912,9 @@ msgstr "Langage inconnu"
 
 msgid  "Unselect All"
 msgstr "Tout désélectionner"
+
+msgid  "Update"
+msgstr "Mettre à jour"
 
 msgid  "Update Value"
 msgstr "Mettre à jour la valeur"
