@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -52,6 +52,8 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
+
+with Project_Viewers;           use Project_Viewers;
 
 with String_List_Utils;
 with Log_Utils;
