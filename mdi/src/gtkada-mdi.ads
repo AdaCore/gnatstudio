@@ -6,6 +6,7 @@ with Gtk.Handlers;
 with Gtk.Layout;
 with Gtk.Menu;
 with Gtk.Check_Menu_Item;
+with Gtk.Radio_Menu_Item;
 with Gtk.Widget;
 with Gtk.Window;
 with GNAT.OS_Lib;
@@ -286,7 +287,7 @@ private
       --  directly from Get_Parent since some children are actually embedded
       --  in docks (aka Gtk_Notebooks), and do not belong to the MDI anymore.
 
-      Menu_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Menu_Item : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       --  The item in the dynamic menu that represents this child.
    end record;
 
@@ -347,6 +348,9 @@ private
       --  size_allocate
 
       Priorities : Priorities_Array := (0, 1, 2, 3);
+
+      Menu_Item_Group : Gtk.Widget.Widget_SList.GSlist;
+      --  The group to which the menu items of the children should belong
 
       Menu : Gtk.Menu.Gtk_Menu;
       Dock_Menu_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;

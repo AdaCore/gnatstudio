@@ -29,6 +29,7 @@ with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtk.Notebook;     use Gtk.Notebook;
 with Gtk.Object;       use Gtk.Object;
 with Gtk.Pixmap;       use Gtk.Pixmap;
+with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Style;        use Gtk.Style;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Window;       use Gtk.Window;
@@ -36,7 +37,7 @@ with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.Types;     use Gtkada.Types;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Text_IO; use Text_IO;
+--  with Text_IO; use Text_IO;
 
 package body Gtkada.MDI is
 
@@ -493,8 +494,6 @@ package body Gtkada.MDI is
            (C.MDI, Get_Child (Get_Cur_Page (Gtk_Notebook (C.Initial))));
       end if;
 
-      Put_Line ("Close_Child: " & C.State'Img & C.Title.all);
-
       Allocate (Event, Delete, Get_Window (C.MDI));
 
       --  For a top-level window, we must rebuild the initial widget
@@ -512,8 +511,6 @@ package body Gtkada.MDI is
          Result := Return_Callback.Emit_By_Name
            (C.Initial, "delete_event", Event);
       end if;
-
-      Put_Line ("Result=" & Result'Img);
 
       if not Result then
          Destroy (C);
@@ -1389,9 +1386,9 @@ package body Gtkada.MDI is
                Gdk_Raise (Get_Window (Child.MDI.Docks (J)));
             end if;
          end loop;
-         if Child.MDI.Docks (None) /= null then
-            Lower (Get_Window (Child.MDI.Docks (None)));
-         end if;
+      end if;
+      if Child.MDI.Docks (None) /= null then
+         Lower (Get_Window (Child.MDI.Docks (None)));
       end if;
    end Raise_Child;
 
@@ -1459,10 +1456,6 @@ package body Gtkada.MDI is
 
          if Realized_Is_Set (Old) then
             Draw_Child (Old, Full_Area);
-         end if;
-
-         if Old.Menu_Item /= null then
-            Set_Active (Old.Menu_Item, False);
          end if;
       end if;
 
@@ -2325,8 +2318,6 @@ package body Gtkada.MDI is
    begin
       if Get_Active (C.Menu_Item) then
          Activate_Child (C);
-      elsif C.MDI.Focus_Child = C then
-         Set_Active (C.Menu_Item, True);
       end if;
    end Focus_Cb;
 
@@ -2344,20 +2335,24 @@ package body Gtkada.MDI is
    -----------------------
 
    procedure Create_Menu_Entry (Child : access MDI_Child_Record'Class) is
+      G : Widget_SList.GSlist;
    begin
       if Child.Menu_Item = null and then Child.State /= Docked then
-         Gtk_New (Child.Menu_Item, Child.Title.all);
+         G := Child.MDI.Menu_Item_Group;
+         Gtk_New (Child.Menu_Item, G, Child.Title.all);
          Append (Child.MDI.Menu, Child.Menu_Item);
          Set_Active
            (Child.Menu_Item, MDI_Child (Child) = Child.MDI.Focus_Child);
          Show_All (Child.Menu_Item);
          Widget_Callback.Object_Connect
            (Child.Menu_Item, "activate",
-            Widget_Callback.To_Marshaller (Focus_Cb'Access), Child);
+            Widget_Callback.To_Marshaller (Focus_Cb'Access), Child,
+            After => True);
          Widget_Callback.Object_Connect
            (Child.Menu_Item, "destroy",
             Widget_Callback.To_Marshaller (Menu_Entry_Destroyed'Access),
             Child);
+         Child.MDI.Menu_Item_Group := Group (Child.Menu_Item);
       end if;
    end Create_Menu_Entry;
 
@@ -2370,6 +2365,7 @@ package body Gtkada.MDI is
       MDI_Window (MDI).Menu := null;
       MDI_Window (MDI).Dock_Menu_Item := null;
       MDI_Window (MDI).Float_Menu_Item := null;
+      MDI_Window (MDI).Menu_Item_Group := Widget_SList.Null_List;
    end Menu_Destroyed;
 
    -----------------
