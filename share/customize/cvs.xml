@@ -54,6 +54,8 @@
       <shell>dump "$1" TRUE</shell>
       <external>cvs commit -F "%1" "$2-"</external>
       <shell>delete "%2"</shell>
+      <shell>Hook "file_changed_on_disk"</shell>
+      <shell>Hook.run %1 null</shell>
    </action>
 
    <!------------->
@@ -163,7 +165,10 @@
    <!-------------->
 
    <action name="generic_cvs_open" show-command="true" output="">
-      <shell>echo "not implemented"</shell>
+      <shell>echo "Opening CVS files $2-"</shell>
+      <external>cvs edit "$2-"</external>
+      <shell>Hook "file_changed_on_disk"</shell>
+      <shell>Hook.run %1 null</shell>
    </action>
 
    <!---------------->
