@@ -3511,10 +3511,13 @@ package body Project_Explorers is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+      Enable_Entity_Search : constant Boolean := False;
       Project : constant String := '/' & (-"Project");
       N       : Node_Ptr;
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
+      Widget  : Gtk_Widget;
+
    begin
       Register_Module
         (Module                  => Explorer_Module_ID,
@@ -3543,25 +3546,28 @@ package body Project_Explorers is
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
       Vsearch_Ext.Register_Default_Search (Kernel);
 
-      Extra := new Explorer_Search_Extra_Record;
-      Gtk.Frame.Initialize (Extra);
+      if Enable_Entity_Search then
+         Extra := new Explorer_Search_Extra_Record;
+         Gtk.Frame.Initialize (Extra);
 
-      Gtk_New_Vbox (Box, Homogeneous => False);
-      Add (Extra, Box);
+         Gtk_New_Vbox (Box, Homogeneous => False);
+         Add (Extra, Box);
 
-      Gtk_New (Extra.Include_Entities, -"search entities (might be slow)");
-      Pack_Start (Box, Extra.Include_Entities);
-      Set_Active (Extra.Include_Entities, False);
-      Kernel_Callback.Connect
-        (Extra.Include_Entities, "toggled",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access),
-         Kernel_Handle (Kernel));
+         Gtk_New (Extra.Include_Entities, -"search entities (might be slow)");
+         Pack_Start (Box, Extra.Include_Entities);
+         Set_Active (Extra.Include_Entities, False);
+         Kernel_Callback.Connect
+           (Extra.Include_Entities, "toggled",
+            Kernel_Callback.To_Marshaller (Reset_Search'Access),
+            Kernel_Handle (Kernel));
+         Widget := Gtk_Widget (Extra);
+      end if;
 
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Project explorer",
          Factory           => Explorer_Search_Factory'Access,
-         Extra_Information => Gtk_Widget (Extra),
+         Extra_Information => Widget,
          Mask              => All_Options and not Supports_Replace
            and not Search_Backward and not Scope_Mask
            and not All_Occurences);
