@@ -2,6 +2,13 @@
 
 #include <windows.h>
 
+/* ??/ Provide a no-op for now */
+
+void
+kill ()
+{
+}
+
 void
 __gnat_pipe (int *fd)
 {
