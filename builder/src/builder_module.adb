@@ -403,6 +403,7 @@ package body Builder_Module is
       Fd              : Process_Descriptor_Access)
    is
       New_Args     : Argument_List_Access;
+      Last_Arg     : String_Access;
    begin
       Console.Raise_Console (Kernel);
 
@@ -410,8 +411,8 @@ package body Builder_Module is
         and then Remote_Protocol /= ""
       then
          New_Args := Argument_String_To_List
-           (Remote_Protocol & " " & Remote_Host & " command");
-         New_Args (New_Args'Last) := new String'(Command);
+           (Remote_Protocol & " " & Remote_Host);
+         Last_Arg := new String'(Command);
 
          Console.Insert
            (Kernel, Remote_Protocol & " " & Remote_Host & " " & Command);
@@ -419,9 +420,10 @@ package body Builder_Module is
          Non_Blocking_Spawn
            (Fd.all,
             New_Args (New_Args'First).all,
-            New_Args (New_Args'First + 1 .. New_Args'Last),
+            New_Args (New_Args'First + 1 .. New_Args'Last) & Last_Arg,
             Buffer_Size => 0, Err_To_Out => True);
 
+         Free (Last_Arg);
          Free (New_Args);
       else
          Console.Insert (Kernel, Command);
@@ -431,6 +433,7 @@ package body Builder_Module is
             New_Args (New_Args'First).all,
             New_Args (New_Args'First + 1 .. New_Args'Last),
             Buffer_Size => 0, Err_To_Out => True);
+         Free (New_Args);
       end if;
    end Insert_And_Launch;
 
@@ -693,10 +696,8 @@ package body Builder_Module is
         Glide_Window (Get_Main_Window (Kernel));
       Project      : constant String := Get_Subproject_Name (Kernel, File);
       Project_View : constant Project_Id := Get_Project_View (Kernel);
-      Cmd          : constant String :=
-        Get_Attribute_Value
-          (Project_View, Compiler_Command_Attribute,
-           Ide_Package, Default => "gnatmake", Index => "Ada") & " -q -u ";
+      Prj          : Project_Id;
+      Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
       Command      : String_Access;
       Id           : Timeout_Handler_Id;
@@ -725,6 +726,22 @@ package body Builder_Module is
          return;
       end if;
 
+      Prj := Get_Project_From_File (Project_View, File);
+
+      if Prj = No_Project then
+         Console.Insert
+           (Kernel, -"Could not determine the project for file: " & File,
+            Mode => Error);
+         return;
+
+      else
+         Cmd := new String'
+           (Get_Attribute_Value
+              (Prj, Compiler_Command_Attribute,
+               Ide_Package,
+               Default => "gnatmake", Index => "Ada") & " -q -u ");
+      end if;
+
       Push_State (Kernel, Processing);
 
       Clear_Compilation_Output (Kernel);
@@ -733,11 +750,12 @@ package body Builder_Module is
 
       if Project = "" then
          Command := new String'
-           (Cmd & Argument_List_To_String (Default_Builder_Switches) & File);
+           (Cmd.all
+            & Argument_List_To_String (Default_Builder_Switches) & File);
 
       else
          Command := new String'
-           (Cmd & "-P" & Project & " "
+           (Cmd.all & "-P" & Project & " "
             & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax)
             & " " & File);
       end if;
@@ -755,6 +773,7 @@ package body Builder_Module is
          Command => Command.all,
          Fd => Fd);
 
+      Free (Cmd);
       Free (Command);
       Id := Process_Timeout.Add
         (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
@@ -1167,7 +1186,6 @@ package body Builder_Module is
          Title     : String);
       --  Launch Command (with Args) locally, or remotely if necessary.
 
-
       procedure Launch
         (Command   : String;
          Arguments : GNAT.OS_Lib.Argument_List;
@@ -1200,15 +1218,15 @@ package body Builder_Module is
                Full_Command : constant String :=
                  Command & " " & Argument_List_To_String (Arguments);
                New_Args     : Argument_List_Access
-                 := Argument_String_To_List
-                   (Remote_Cmd & " " & Remote_Host & " command");
+                 := Argument_String_To_List (Remote_Cmd & " " & Remote_Host);
+               Last_Arg     : String_Access := new String'(Full_Command);
             begin
-               New_Args (New_Args'Last) := new String'(Full_Command);
                Launch_Process
                  (K, New_Args (New_Args'First).all,
-                  New_Args (New_Args'First + 1 .. New_Args'Last),
+                  New_Args (New_Args'First + 1 .. New_Args'Last) & Last_Arg,
                   Title, null, null, "", Success, True);
 
+               Free (Last_Arg);
                Free (New_Args);
             end;
          end if;
