@@ -584,9 +584,6 @@ procedure GPS.Main is
          Title_Changed'Unrestricted_Access, GPS_Main.Kernel);
 
       DDE.Register_DDE_Server (GPS_Main.Kernel);
-
-      GPS_Main.Debug_Mode := True;
-
       Parse_Switches;
       Display_Splash_Screen;
 
