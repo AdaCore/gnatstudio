@@ -32,6 +32,7 @@ Known Problems fixed in GPS 2.1.1
               the window to hide the assembly view, and use the menu
               Debug->Data->Assembly to show it.
 
+- DB29-017 Freeze when resizing the memory view
   Problem:    When the display format is not "Byte", resizing the memory
               view causes GPS to freeze.
   Workaround: Switch to "Byte" format before resizing the memory view.
