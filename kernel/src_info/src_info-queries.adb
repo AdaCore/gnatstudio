@@ -2016,20 +2016,26 @@ package body Src_Info.Queries is
                   --  Memorize the list of files that have been examined, to
                   --  avoid parsing again the same LI file
                   if LI.LI.Spec_Info /= null then
-                     Set (Iterator.Examined,
-                          LI.LI.Spec_Info.Source_Filename, True);
+                     Set
+                       (Iterator.Examined,
+                        new String'(LI.LI.Spec_Info.Source_Filename.all),
+                        True);
                   end if;
 
                   if LI.LI.Body_Info /= null then
-                     Set (Iterator.Examined,
-                          LI.LI.Body_Info.Source_Filename, True);
+                     Set
+                       (Iterator.Examined,
+                        new String'(LI.LI.Body_Info.Source_Filename.all),
+                        True);
                   end if;
 
                   Sep_List := LI.LI.Separate_Info;
                   while Sep_List /= null loop
                      if Sep_List.Value /= null then
-                        Set (Iterator.Examined,
-                             Sep_List.Value.Source_Filename, True);
+                        Set
+                          (Iterator.Examined,
+                           new String'(Sep_List.Value.Source_Filename.all),
+                           True);
                      end if;
                      Sep_List := Sep_List.Next;
                   end loop;
