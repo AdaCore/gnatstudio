@@ -208,10 +208,13 @@ package body Glide_Kernel is
       Module : Module_List.List := Global_Modules_List;
    begin
       while not Module_List.Is_Empty (Module) loop
-         Trace (Me, "Initializing module "
-                & Module_List.Head (Module).Name);
-         if Module_List.Head (Module).Initializer /= null then
-            Module_List.Head (Module).Initializer (Handle);
+         if not Module_List.Head (Module).Was_Initialized then
+            Trace (Me, "Initializing module "
+                   & Module_List.Head (Module).Name);
+            if Module_List.Head (Module).Initializer /= null then
+               Module_List.Head (Module).Initializer (Handle);
+            end if;
+            Module_List.Head (Module).Was_Initialized := True;
          end if;
          Module := Module_List.Next (Module);
       end loop;
