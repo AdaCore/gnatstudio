@@ -278,4 +278,14 @@ package body Debugger.Jdb is
       return False;
    end Line_Contains_Code;
 
+   --------------------
+   -- Display_Prompt --
+   --------------------
+
+   procedure Display_Prompt (Debugger : access Jdb_Debugger) is
+   begin
+      Send (Get_Process (Debugger), "  ");
+      Wait_Prompt (Debugger);
+   end Display_Prompt;
+
 end Debugger.Jdb;
