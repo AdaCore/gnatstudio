@@ -28,10 +28,10 @@ project Glide is
       case Build is
          when "Debug" => 
             for Default_Switches ("Ada") use
-              ("-g", "-O2", "-gnaty", "-gnatwue");
+              ("-g", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
          when others =>
             for Default_Switches ("Ada") use
-              ("-O2", "-gnaty", "-gnatwue");
+              ("-O2", "-gnaty", "-gnatwu", "-gnatwe");
       end case;
    end Compiler;
 
