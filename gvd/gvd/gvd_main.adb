@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,9 +19,8 @@
 -----------------------------------------------------------------------
 
 with Glib;                  use Glib;
-with Gdk.Input;
 with Gdk.Types;             use Gdk.Types;
-with Gtk.Main;
+with Gtk.Main;              use Gtk.Main;
 with Gtk;                   use Gtk;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.List;              use Gtk.List;
@@ -583,9 +582,9 @@ begin
                   if Page /= null then
                      Process := Process_User_Data.Get (Page);
 
-                     if Process.Input_Id /= 0 then
-                        Gdk.Input.Remove (Process.Input_Id);
-                        Process.Input_Id := 0;
+                     if Process.Timeout_Id /= 0 then
+                        Timeout_Remove (Process.Timeout_Id);
+                        Process.Timeout_Id := 0;
                      end if;
 
                      Process_Proxies.Set_Command_In_Process
