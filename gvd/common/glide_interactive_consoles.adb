@@ -41,18 +41,13 @@ with Gtkada.Handlers;     use Gtkada.Handlers;
 with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
 
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Traces;                   use Traces;
-
 with System;               use System;
 
 with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Text_IO;          use Ada.Text_IO;
 
 package body Glide_Interactive_Consoles is
 
-   Me : constant Debug_Handle := Create ("Interactive_Console");
 
    package Buffer_Console_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Gtk_Text_Buffer_Record,
@@ -63,10 +58,6 @@ package body Glide_Interactive_Consoles is
    -----------------------
    -- Local subprograms --
    -----------------------
-
-   procedure Display_Prompt
-     (Console : access Glide_Interactive_Console_Record'Class);
-   --  Displays the prompt at the end of the current text
 
    procedure First_Insert_Text
      (Buffer  : access Gtk_Text_Buffer_Record'Class;
@@ -94,6 +85,11 @@ package body Glide_Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Handler for the "key_press_event" signal.
+
+   function Delete_Event_Handler
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Handler for the "delete_event" signal.
 
    procedure Replace_Cursor (Console : Glide_Interactive_Console);
    --  If the cursor is in a forbidden zone, place it at the prompt.
@@ -134,9 +130,10 @@ package body Glide_Interactive_Consoles is
    ------------
 
    procedure Insert
-     (Console : access Glide_Interactive_Console_Record;
-      Text    : String;
-      Add_LF  : Boolean := True)
+     (Console   : access Glide_Interactive_Console_Record;
+      Text      : String;
+      Add_LF    : Boolean := True;
+      Highlight : Boolean := False)
    is
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
@@ -180,6 +177,13 @@ package body Glide_Interactive_Consoles is
          Console.External_Messages_Tag,
          Prompt_Iter, Last_Iter);
 
+      if Highlight then
+         Apply_Tag
+           (Console.Buffer,
+            Console.Highlight_Tag,
+            Prompt_Iter, Last_Iter);
+      end if;
+
       Display_Prompt (Console);
 
       Console.Message_Was_Displayed := True;
@@ -204,7 +208,7 @@ package body Glide_Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Put_Line ("Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press_Handler;
 
@@ -228,9 +232,29 @@ package body Glide_Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Put_Line ("Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Release_Handler;
+
+   --------------------------
+   -- Delete_Event_Handler --
+   --------------------------
+
+   function Delete_Event_Handler
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
+
+      Console : constant Glide_Interactive_Console :=
+        Glide_Interactive_Console (Object);
+   begin
+      if Console.Idle_Id /= 0 then
+         Idle_Remove (Console.Idle_Id);
+      end if;
+
+      return False;
+   end Delete_Event_Handler;
 
    -----------------------
    -- Key_Press_Handler --
@@ -317,13 +341,136 @@ package body Glide_Interactive_Consoles is
 
             return True;
 
+         when GDK_Tab =>
+            if Console.Completion = null then
+               return False;
+            end if;
+
+            Get_Iter_At_Mark
+              (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+            Get_End_Iter (Console.Buffer, Last_Iter);
+
+            declare
+               Text        : constant String :=
+                 Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
+               Completions : List :=
+                 Console.Completion (Text, Console.User_Data);
+               Node        : List_Node := First (Completions);
+               First_S     : String := Data (Node);
+               Length      : Integer := Text'Length;
+               Line        : Gint;
+               Offset      : Gint;
+               Number      : Integer := 0;
+               Success     : Boolean;
+               Prompt_Iter : Gtk_Text_Iter;
+               Prev_Begin  : Gtk_Text_Iter;
+               Prev_Last   : Gtk_Text_Iter;
+               Pos         : Gtk_Text_Iter;
+            begin
+               --  Determine the biggest suffix length.
+
+               Node := First (Completions);
+               Console.Internal_Insert := True;
+
+               if Text'Length > 0 then
+                  while Node /= Null_Node loop
+                     Number := Number + 1;
+
+                     if Number = 1 then
+                        Length := Data (Node)'Length;
+                     else
+                        declare
+                           Data_S  : String := Data (Node);
+                           Current : Integer := Text'Length;
+                        begin
+                           while Current <= Length
+                             and then Current <= Data_S'Length
+                             and then Data_S (Data_S'First - 1 + Current)
+                             = First_S (First_S'First - 1 + Current)
+                           loop
+                              Current := Current + 1;
+                           end loop;
+
+                           Length := Current - 1;
+                        end;
+                     end if;
+
+                     Node := Next (Node);
+                  end loop;
+               end if;
+
+               --  Insert the list of completions, if any.
+
+               if Number > 1 then
+                  Node := First (Completions);
+
+                  --  Get the range copy the current line.
+
+                  Get_End_Iter (Console.Buffer, Pos);
+                  Line := Get_Line (Pos);
+
+                  --  Get the offset of the prompt.
+
+                  Get_Iter_At_Mark
+                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+                  Offset := Get_Line_Offset (Prompt_Iter);
+
+                  Get_End_Iter (Console.Buffer, Pos);
+                  Insert (Console.Buffer, Pos, "" & ASCII.LF);
+
+
+                  while Node /= Null_Node loop
+                     Get_End_Iter (Console.Buffer, Pos);
+                     Set_Line_Offset (Pos, 0);
+                     Insert (Console.Buffer, Pos, Data (Node) & ASCII.LF);
+                     Node := Next (Node);
+                  end loop;
+
+                  Get_Iter_At_Line_Offset
+                    (Console.Buffer, Prev_Begin, Line, 0);
+                  Copy (Prev_Begin, Prev_Last);
+                  Forward_To_Line_End (Prev_Last, Success);
+
+                  Get_End_Iter (Console.Buffer, Pos);
+                  Insert_Range (Console.Buffer, Pos, Prev_Begin, Prev_Last);
+
+                  Get_End_Iter (Console.Buffer, Pos);
+                  Set_Line_Offset (Pos, 0);
+
+                  Get_Iter_At_Line_Offset
+                    (Console.Buffer, Prev_Begin, Line, 0);
+                  Apply_Tag
+                    (Console.Buffer, Console.Uneditable_Tag, Prev_Begin, Pos);
+
+                  --  Restore the prompt
+
+                  Get_End_Iter (Console.Buffer, Prompt_Iter);
+                  Set_Line_Offset (Prompt_Iter, Offset);
+
+                  Move_Mark (Console.Buffer, Console.Prompt_Mark, Prompt_Iter);
+               end if;
+
+               --  Insert the completion, if needed.
+               Get_End_Iter (Console.Buffer, Pos);
+               Insert
+                 (Console.Buffer,
+                  Pos,
+                  First_S (First_S'First + Text'Length
+                             .. First_S'First - 1 + Length));
+
+               Console.Internal_Insert := False;
+               Free (Completions);
+            end;
+
+            return True;
+
          when others =>
             return False;
       end case;
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Put_Line ("Unexpected exception: " & Exception_Information (E));
          return False;
    end Key_Press_Handler;
 
@@ -337,8 +484,6 @@ package body Glide_Interactive_Consoles is
       First_Iter  : Gtk_Text_Iter;
       Prompt_Iter : Gtk_Text_Iter;
 
-      Prompt : constant String := "[GPS In The Shell]$ ";
-
       Offset : Gint;
    begin
       if Console.Input_Blocked then
@@ -348,7 +493,7 @@ package body Glide_Interactive_Consoles is
       Get_End_Iter (Console.Buffer, First_Iter);
       Offset := Get_Offset (First_Iter);
 
-      Insert (Console.Buffer, First_Iter, Prompt);
+      Insert (Console.Buffer, First_Iter, Console.Prompt.all);
       --  ??? Must add flexibility to the prompt.
 
       Get_End_Iter (Console.Buffer, Prompt_Iter);
@@ -373,6 +518,7 @@ package body Glide_Interactive_Consoles is
       Console : Glide_Interactive_Console)
    is
       pragma Unreferenced (Buffer);
+      use String_List_Utils.String_List;
 
       Prompt      : Gtk_Text_Iter;
       Pos         : Gtk_Text_Iter;
@@ -390,6 +536,7 @@ package body Glide_Interactive_Consoles is
 
       if Text'Length >= 1
         and then Text (Text'First) = ASCII.LF
+        and then Console.Handler /= null
       then
          Get_Iter_At_Mark (Console.Buffer, Prompt, Console.Prompt_Mark);
 
@@ -398,10 +545,13 @@ package body Glide_Interactive_Consoles is
               Get_Slice (Console.Buffer, Prompt, Pos);
             Command : constant String := Text (Text'First .. Text'Last - 1);
             Output  : constant String :=
-              Interpret_Command (Console.Kernel, Command);
+              Console.Handler (Command, Console.User_Data);
          begin
             Get_End_Iter (Console.Buffer, Pos);
-            Insert (Console.Buffer, Pos, Output);
+
+            if Output /= "" then
+               Insert (Console.Buffer, Pos, Output & ASCII.LF);
+            end if;
 
             if Command /= "" then
                Prepend (Console.History, Command);
@@ -421,7 +571,7 @@ package body Glide_Interactive_Consoles is
       Console.Internal_Insert := False;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Put_Line ("Unexpected exception: " & Exception_Information (E));
    end First_Insert_Text;
 
    ----------------------------
@@ -436,6 +586,7 @@ package body Glide_Interactive_Consoles is
 
    begin
       if Selection_Exists (Console.Buffer) then
+         Console.Idle_Id := 0;
          return False;
       end if;
 
@@ -447,6 +598,7 @@ package body Glide_Interactive_Consoles is
          Console.Insert_Mark := Get_Insert (Console.Buffer);
       end if;
 
+      Console.Idle_Id := 0;
       return False;
    end Place_Cursor_At_Prompt;
 
@@ -455,9 +607,9 @@ package body Glide_Interactive_Consoles is
    --------------------
 
    procedure Replace_Cursor (Console : Glide_Interactive_Console) is
-      Id            : Idle_Handler_Id;
    begin
-      Id := Console_Idle.Add (Place_Cursor_At_Prompt'Access, Console);
+      Console.Idle_Id :=
+        Console_Idle.Add (Place_Cursor_At_Prompt'Access, Console);
    end Replace_Cursor;
 
    ----------------------
@@ -504,7 +656,7 @@ package body Glide_Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Put_Line ("Unexpected exception: " & Exception_Information (E));
    end Mark_Set_Handler;
 
    -------------
@@ -512,12 +664,15 @@ package body Glide_Interactive_Consoles is
    -------------
 
    procedure Gtk_New
-     (Console : out Glide_Interactive_Console;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Console   : out Glide_Interactive_Console;
+      Prompt    : String;
+      Handler   : Command_Handler;
+      User_Data : GObject;
+      Font      : Pango.Font.Pango_Font_Description)
    is
    begin
       Console := new Glide_Interactive_Console_Record;
-      Initialize (Console, Kernel);
+      Initialize (Console, Prompt, Handler, User_Data, Font);
    end Gtk_New;
 
    ----------------
@@ -525,12 +680,19 @@ package body Glide_Interactive_Consoles is
    ----------------
 
    procedure Initialize
-     (Console : access Glide_Interactive_Console_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Console   : access Glide_Interactive_Console_Record'Class;
+      Prompt    : String;
+      Handler   : Command_Handler;
+      User_Data : GObject;
+      Font      : Pango.Font.Pango_Font_Description)
    is
+      --  ???
       Iter : Gtk_Text_Iter;
    begin
       --  Initialize the text buffer and the text view.
+      Console.Prompt := new String'(Prompt);
+      Console.Handler := Handler;
+      Console.User_Data := User_Data;
 
       Gtk.Scrolled_Window.Initialize (Console);
       Set_Policy
@@ -548,15 +710,18 @@ package body Glide_Interactive_Consoles is
       Gtk_New (Console.External_Messages_Tag);
       Set_Property
         (Console.External_Messages_Tag,
-         Gtk.Text_Tag.Style_Property,
-         Pango_Style_Oblique);
+         Gtk.Text_Tag.Weight_Property,
+         Pango_Weight_Bold);
       Add (Get_Tag_Table (Console.Buffer), Console.External_Messages_Tag);
+
+      Gtk_New (Console.Highlight_Tag);
+      Add (Get_Tag_Table (Console.Buffer), Console.Highlight_Tag);
 
       Gtk_New (Console.Prompt_Tag);
       Set_Property
         (Console.Prompt_Tag,
          Gtk.Text_Tag.Font_Desc_Property,
-         Get_Pref (Kernel, Keyword_Font));
+         Font);
 
       Add (Get_Tag_Table (Console.Buffer), Console.Prompt_Tag);
 
@@ -564,11 +729,9 @@ package body Glide_Interactive_Consoles is
 
       Console.Internal_Insert := True;
 
-      Console.Kernel := Kernel_Handle (Kernel);
-
       Set_Size_Request (Console, -1, 100);
 
-      Modify_Font (Console.View, Get_Pref (Kernel, Source_Editor_Font));
+      Modify_Font (Console.View, Font);
 
       Buffer_Console_Callback.Connect
         (Console.Buffer, "insert_text",
@@ -601,6 +764,13 @@ package body Glide_Interactive_Consoles is
          Gtk_Widget (Console),
          After => False);
 
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Console, "delete_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Delete_Event_Handler'Access),
+         Gtk_Widget (Console),
+         After => False);
+
       Get_End_Iter (Console.Buffer, Iter);
 
       Console.Prompt_Mark := Create_Mark (Console.Buffer, "", Iter);
@@ -620,4 +790,28 @@ package body Glide_Interactive_Consoles is
    begin
       null;
    end Clear;
+
+   ----------------------------
+   -- Set_Completion_Handler --
+   ----------------------------
+
+   procedure Set_Completion_Handler
+     (Console : access Glide_Interactive_Console_Record'Class;
+      Handler : Completion_Handler)
+   is
+   begin
+      Console.Completion := Handler;
+   end Set_Completion_Handler;
+
+   -------------------------
+   -- Set_Highlight_Color --
+   -------------------------
+
+   procedure Set_Highlight_Color
+     (Console : access Glide_Interactive_Console_Record'Class;
+      Color   : Gdk_Color) is
+   begin
+      Set_Property (Console.Highlight_Tag, Foreground_Gdk_Property, Color);
+   end Set_Highlight_Color;
+
 end Glide_Interactive_Consoles;
