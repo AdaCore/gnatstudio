@@ -59,8 +59,11 @@ package Commands.Editor is
       End_Line     : Integer;
       End_Column   : Integer;
       Text         : String;
-      Direction    : Direction_Type := Backward);
+      Force_End    : Boolean := False);
    --  Create a new Editor_Replace_Slice command.
+   --  If Force_End then the cursor will always be placed at the end of the
+   --  newly inserted text, otherwise it is placed at the end when executing
+   --  the command, and at the beginning when undoing it.
 
    function Execute
      (Command : access Editor_Replace_Slice_Type) return Boolean;
@@ -146,7 +149,8 @@ private
 
       Text_Before       : String_Access;
       Text_After        : String_Access;
-      Direction         : Direction_Type;
+
+      Force_End         : Boolean;
    end record;
 
 end Commands.Editor;
