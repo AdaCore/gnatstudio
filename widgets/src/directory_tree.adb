@@ -62,7 +62,7 @@ package body Directory_Tree is
    procedure Expand_Tree_Cb
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Args   : Gtk_Args);
-   --  called every time a node is expended. It is responsible for
+   --  called every time a node is expanded. It is responsible for
    --  automatically adding the children of the current node if they are not
    --  there already.
 
