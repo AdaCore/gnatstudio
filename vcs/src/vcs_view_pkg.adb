@@ -143,7 +143,7 @@ package body VCS_View_Pkg is
      (Explorer : access VCS_Page_Record'Class;
       Name     : String) return Gtk_Tree_Iter;
    --  Return the Iter associated with the given name.
-   --  Name is a base file name.
+   --  Name is an absolute file name.
    --  Return Null_Iter if no such iter was found.
 
    function Get_Page_For_Identifier
@@ -292,6 +292,81 @@ package body VCS_View_Pkg is
       Columns_Autosize (Page.Tree);
    end Refresh;
 
+   -----------------
+   -- Refresh_Log --
+   -----------------
+
+   procedure Refresh_Log
+     (Explorer : access VCS_View_Record;
+      File     : String)
+   is
+      Page          : VCS_Page_Access;
+      List_Temp     : List_Node;
+      Log           : Boolean;
+      Found         : Boolean;
+      Iter          : Gtk_Tree_Iter;
+   begin
+      if Get_Log_From_File (Explorer.Kernel, File, False) = "" then
+         Log := False;
+      else
+         Log := True;
+      end if;
+
+      for J in 1 .. Explorer.Number_Of_Pages loop
+         Page := VCS_Page_Access
+           (Get_Nth_Page (Explorer.Notebook, Gint (J - 1)));
+
+         --  Refresh the information in the cache.
+
+         List_Temp := First (Page.Cached_Status);
+         Found := False;
+
+         while List_Temp /= Null_Node and then not Found loop
+            if File = String_List.Head
+              (Data (List_Temp).Status.File_Name)
+            then
+               --  The data was found in the list, override it.
+
+               Set_Data
+                 (List_Temp,
+                    (Copy_File_Status
+                       (Data (List_Temp).Status), Log));
+
+               Found := True;
+            end if;
+
+            List_Temp := Next (List_Temp);
+         end loop;
+
+         if Found then
+            List_Temp := First (Page.Stored_Status);
+
+            while List_Temp /= Null_Node loop
+               if File = String_List.Head
+                 (Data (List_Temp).Status.File_Name)
+               then
+                  --  The data was found in the list, override it.
+                  --  and refresh the model if needed.
+
+                  Set_Data
+                    (List_Temp,
+                       (Copy_File_Status
+                          (Data (List_Temp).Status), Log));
+
+                  Iter := Get_Iter_From_Name (Page, File);
+
+                  if Iter /= Null_Iter then
+                     Fill_Info (Page, Iter, Data (List_Temp), Found);
+                  end if;
+               end if;
+
+               List_Temp := Next (List_Temp);
+            end loop;
+         end if;
+
+      end loop;
+   end Refresh_Log;
+
    -------------------------
    -- Display_File_Status --
    -------------------------
@@ -328,7 +403,7 @@ package body VCS_View_Pkg is
                if S.Status = Up_To_Date then
                   declare
                      Log   : constant String
-                       := Get_Log_From_File (Kernel, File);
+                       := Get_Log_From_File (Kernel, File, False);
                      Dummy : Boolean;
                   begin
                      if Log /= ""
@@ -341,7 +416,6 @@ package body VCS_View_Pkg is
                      Remove_File_From_Mapping (Kernel, File);
                   end;
                end if;
-
 
             exception
                when E : others =>
@@ -908,7 +982,6 @@ package body VCS_View_Pkg is
    --------------------
    -- File_Edited_Cb --
    --------------------
-
 
    procedure File_Edited_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
