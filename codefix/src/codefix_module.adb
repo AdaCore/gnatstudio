@@ -76,6 +76,8 @@ package body Codefix_Module is
    File_Index_Cst    : aliased constant String := "file_index";
    Line_Index_Cst    : aliased constant String := "line_index";
    Col_Index_Cst     : aliased constant String := "column_index";
+   Style_Index_Cst   : aliased constant String := "style_index";
+   Warning_Index_Cst : aliased constant String := "warning_index";
    Msg_Index_Cst     : aliased constant String := "msg_index";
    File_Cst          : aliased constant String := "file_location";
    Message_Cst       : aliased constant String := "message";
@@ -88,7 +90,9 @@ package body Codefix_Module is
       4 => File_Index_Cst'Access,
       5 => Line_Index_Cst'Access,
       6 => Col_Index_Cst'Access,
-      7 => Msg_Index_Cst'Access);
+      7 => Msg_Index_Cst'Access,
+      8 => Style_Index_Cst'Access,
+      9 => Warning_Index_Cst'Access);
    Codefix_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Category_Cst'Access);
    Error_Cmd_Parameters : constant Cst_Argument_List :=
@@ -186,7 +190,9 @@ package body Codefix_Module is
       File_Index           : Integer := -1;
       Line_Index           : Integer := -1;
       Col_Index            : Integer := -1;
-      Msg_Index            : Integer := -1);
+      Msg_Index            : Integer := -1;
+      Style_Index          : Integer := -1;
+      Warning_Index        : Integer := -1);
    --  Activate postfix for a given compilation output.
    --  The regular expression and the indexes are used to extract relevant
    --  information from the error messages. The default is to use the GPS's
@@ -308,12 +314,14 @@ package body Codefix_Module is
       File_Index           : Integer := -1;
       Line_Index           : Integer := -1;
       Col_Index            : Integer := -1;
-      Msg_Index            : Integer := -1)
+      Msg_Index            : Integer := -1;
+      Style_Index          : Integer := -1;
+      Warning_Index        : Integer := -1)
    is
       Current_Error : Error_Id;
       Errors_Found : Compilation_Output;
       Session      : Codefix_Session;
-      Fi, Li, Ci, Mi : Integer;
+      Fi, Li, Ci, Mi, Si, Wi : Integer;
    begin
       if Codefix_Module_ID.Sessions /= null then
          for S in Codefix_Module_ID.Sessions'Range loop
@@ -373,22 +381,38 @@ package body Codefix_Module is
          Mi := Msg_Index;
       end if;
 
+      if Style_Index = -1 then
+         Si := Integer (Get_Pref (Kernel, Style_Pattern_Index));
+      else
+         Si := Style_Index;
+      end if;
+
+      if Warning_Index = -1 then
+         Wi := Integer (Get_Pref (Kernel, Warning_Pattern_Index));
+      else
+         Wi := Warning_Index;
+      end if;
+
       if File_Location_Regexp = "" then
          Set_Regexp
            (Errors_Found,
             File_Location_Regexp => Compile (Get_Pref (Kernel, File_Pattern)),
-            File_Index_In_Regexp => Fi,
-            Line_Index_In_Regexp => Li,
-            Col_Index_In_Regexp  => Ci,
-            Msg_Index_In_Regexp  => Mi);
+            File_Index_In_Regexp    => Fi,
+            Line_Index_In_Regexp    => Li,
+            Col_Index_In_Regexp     => Ci,
+            Msg_Index_In_Regexp     => Mi,
+            Style_Index_In_Regexp   => Si,
+            Warning_Index_In_Regexp => Wi);
       else
          Set_Regexp
            (Errors_Found,
             File_Location_Regexp => Compile (File_Location_Regexp),
-            File_Index_In_Regexp => Fi,
-            Line_Index_In_Regexp => Li,
-            Col_Index_In_Regexp  => Ci,
-            Msg_Index_In_Regexp  => Mi);
+            File_Index_In_Regexp    => Fi,
+            Line_Index_In_Regexp    => Li,
+            Col_Index_In_Regexp     => Ci,
+            Msg_Index_In_Regexp     => Mi,
+            Style_Index_In_Regexp   => Si,
+            Warning_Index_In_Regexp => Wi);
       end if;
 
       Set_Kernel      (Session.Current_Text.all, Kernel);
@@ -660,7 +684,7 @@ package body Codefix_Module is
       Register_Command
         (Kernel,
          Command       => "parse",
-         Params        => Parameter_Names_To_Usage (Parse_Cmd_Parameters, 5),
+         Params        => Parameter_Names_To_Usage (Parse_Cmd_Parameters, 7),
          Description   =>
            -("Parse the output of a tool, and suggests auto-fix possibilities"
              & " whenever possible. This adds small icons in the location"
@@ -889,7 +913,9 @@ package body Codefix_Module is
             File_Index           => Nth_Arg (Data, 4, -1),
             Line_Index           => Nth_Arg (Data, 5, -1),
             Col_Index            => Nth_Arg (Data, 6, -1),
-            Msg_Index            => Nth_Arg (Data, 7, -1));
+            Msg_Index            => Nth_Arg (Data, 7, -1),
+            Style_Index          => Nth_Arg (Data, 8, -1),
+            Warning_Index        => Nth_Arg (Data, 9, -1));
 
       elsif Command = Constructor_Method then
          Name_Parameters (Data, Codefix_Cmd_Parameters);
