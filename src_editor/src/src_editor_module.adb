@@ -106,13 +106,11 @@ package body Src_Editor_Module is
    Col_Cst      : aliased constant String := "column";
    Length_Cst   : aliased constant String := "length";
 
-
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
       3 => Col_Cst'Access,
       4 => Length_Cst'Access);
-
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
