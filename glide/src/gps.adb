@@ -55,6 +55,9 @@ with Prj_API;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 
+with Gps_Gtkada_Support;
+pragma Unreferenced (Gps_Gtkada_Support);
+
 --  Modules registered by GPS.
 with Ada_Module;
 with Aunit_Module;
@@ -315,7 +318,11 @@ procedure GPS is
       GPS.Log_File   := Create_File (Log, Fmode => Text);
 
       Glide_Page.Gtk_New (Page, GPS);
-      Initialize_Console (GPS.Kernel);
+
+      --  Register this module first, in case someone needs to print a message
+      --  in the console right away
+
+      Glide_Kernel.Console.Register_Module (GPS.Kernel);
 
       --  Register all modules
 
@@ -339,7 +346,6 @@ procedure GPS is
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
-      Glide_Kernel.Console.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
