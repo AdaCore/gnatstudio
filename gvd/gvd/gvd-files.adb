@@ -111,7 +111,7 @@ package body GVD.Files is
 
          GNAT.Expect.Non_Blocking_Spawn
            (Descriptor,
-            Command     => Remote_Copy,
+            Command     => Current_Preferences.Remote_Copy.all,
             Args        => Args,
             Buffer_Size => 0,
             Err_To_Out  => True);
@@ -121,7 +121,7 @@ package body GVD.Files is
 
             if Result /= Expect_Timeout then
                --  File was not found
-               Error_Msg := new String'(Expect_Out (Descriptor));
+               Error_Msg := new String' (Expect_Out (Descriptor));
                Delete_File (Tmp_File'Address, Should_Delete);
                return;
             end if;
