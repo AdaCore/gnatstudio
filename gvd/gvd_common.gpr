@@ -11,8 +11,10 @@ project GVD_Common is
 
    package Compiler is
       for Default_Switches ("Ada") use
-        ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
+        ("-gnata", "-g", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
       for Switches ("g-exptty.adb") use ("-gnatpg", "-g", "-O2");
+      for Switches ("ada_analyzer.adb") use
+        ("-gnatp", "-gnaty", "-gnatwu", "-gnatwe", "-g", "-O2");
    end Compiler;
 
 end GVD_Common;
