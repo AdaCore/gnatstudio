@@ -151,7 +151,14 @@ package body GUI_Utils is
      (Widget : access Gtk_Widget_Record'Class;
       Menu_Create : Contextual_Menu_Create) is
    begin
-      Add_Events (Widget, Button_Press_Mask or Button_Release_Mask);
+      --  If the widget doesn't have a window, it might not work. But then, if
+      --  the children have windows and do not handle the event, this might get
+      --  propagated, and the contextual menu will be properly displayed.
+      --  So we just avoid a gtk warning
+      if not No_Window_Is_Set (Widget) then
+         Add_Events (Widget, Button_Press_Mask or Button_Release_Mask);
+      end if;
+
       Contextual_Callback.Connect
         (Widget, "button_press_event",
          Contextual_Callback.To_Marshaller
