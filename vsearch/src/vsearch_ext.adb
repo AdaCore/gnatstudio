@@ -602,6 +602,10 @@ package body Vsearch_Ext is
          Vsearch.Search_Idle_Handler := 0;
       end if;
 
+      if not Vsearch.Find_Next then
+         Create_Context (Vsearch);
+      end if;
+
       if Vsearch.Last_Search_Context /= null then
          Vsearch.Continue := True;
 
@@ -616,6 +620,8 @@ package body Vsearch_Ext is
                Vsearch.Kernel,
                Search_Backward => True);
             Pop_State (Vsearch.Kernel);
+
+            Set_First_Next_Mode (Vsearch, Find_Next => True);
          end if;
       end if;
 
