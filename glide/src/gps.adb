@@ -48,14 +48,12 @@ with GVD.Types;
 with OS_Utils;                  use OS_Utils;
 with GNAT.Command_Line;         use GNAT.Command_Line;
 with Ada.Text_IO;               use Ada.Text_IO;
-with Language_Handlers.Glide;   use Language_Handlers.Glide;
-with Language.Ada;              use Language.Ada;
 with Prj;                       use Prj;
 with Prj_API;
-with Src_Info;                  use Src_Info;
 with Traces;                    use Traces;
 
 --  Modules registered by GPS.
+with Ada_Module;
 with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
@@ -78,9 +76,6 @@ with Glide_Kernel.Console;
 with Navigation_Module;
 with Custom_Module;
 
---  The LI parsers
-with Src_Info.ALI;
-
 procedure GPS is
    use Glide_Main_Window;
 
@@ -99,7 +94,6 @@ procedure GPS is
    Prefix         : String_Access;
    Dir            : String_Access;
    File_Opened    : Boolean := False;
-   Handler        : Language_Handlers.Glide.Glide_Language_Handler;
    Splash         : Gtk_Window;
    Timeout_Id     : Timeout_Handler_Id;
 
@@ -319,8 +313,8 @@ procedure GPS is
       Browsers.Dependency_Items.Register_Module (GPS.Kernel);
       Browsers.Projects.Register_Module (GPS.Kernel);
       Project_Viewers.Register_Module (GPS.Kernel);
-      Project_Explorers.Register_Module (GPS.Kernel);
       Src_Editor_Module.Register_Module (GPS.Kernel);
+      Project_Explorers.Register_Module (GPS.Kernel);
       External_Editor_Module.Register_Module (GPS.Kernel);
       GVD_Module.Register_Module (GPS.Kernel);
       Builder_Module.Register_Module (GPS.Kernel);
@@ -335,18 +329,7 @@ procedure GPS is
 
       --  Register the supported languages and their associated LI handlers.
 
-      Handler := Glide_Language_Handler (Get_Language_Handler (GPS.Kernel));
-
-      Register_LI_Handler
-        (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
-
-      Register_Language (Handler, "Ada", Ada_Lang);
-      Add_Language_Info
-        (Handler, "Ada",
-         LI                  => Get_LI_Handler_By_Name (Handler, "Ada"),
-         Default_Spec_Suffix => ".ads",
-         Default_Body_Suffix => ".adb");
-
+      Ada_Module.Register_Module (GPS.Kernel);
       Cpp_Module.Register_Module (GPS.Kernel);
 
       --  Temporarily disable unimplemented menu items
