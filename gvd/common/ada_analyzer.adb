@@ -147,7 +147,9 @@ package body Source_Analyzer is
       Ident_Casing     : Casing_Type           := Mixed;
       Format_Operators : Boolean               := True;
       Indent           : Boolean               := True;
-      Constructs       : Construct_List_Access := null);
+      Constructs       : Construct_List_Access := null;
+      Current_Indent   : out Natural;
+      Prev_Indent      : out Natural);
    --  Analyze a given Ada source in Buffer, and store the result in New_Buffer
    --  if New_Buffer.First isn't null.
 
@@ -535,13 +537,17 @@ package body Source_Analyzer is
       Ident_Casing     : Casing_Type           := Mixed;
       Format_Operators : Boolean               := True;
       Indent           : Boolean               := True;
-      Constructs       : Construct_List_Access := null)
+      Constructs       : Construct_List_Access := null;
+      Current_Indent   : out Natural;
+      Prev_Indent      : out Natural)
    is
       Line_Count          : Integer           := 1;
       Str                 : String (1 .. 1024);
       Str_Len             : Natural           := 0;
       Current             : Natural;
       Prec                : Natural           := 1;
+      Prev_Prev_Spaces    : Integer           := 0;
+      Prev_Spaces         : Integer           := 0;
       Num_Spaces          : Integer           := 0;
       Indent_Done         : Boolean           := not Indent;
       Num_Parens          : Integer           := 0;
@@ -599,6 +605,8 @@ package body Source_Analyzer is
 
       procedure New_Line (Count : in out Natural) is
       begin
+         Prev_Prev_Spaces := Prev_Spaces;
+         Prev_Spaces := Num_Spaces;
          Count := Count + 1;
       end New_Line;
 
@@ -611,43 +619,44 @@ package body Source_Analyzer is
          Value : out Extended_Token)
       is
          Column : Natural;
+         Info   : Construct_Access;
+
       begin
          Token_Stack.Pop (Stack, Value);
 
          if Constructs /= null then
             Column := Prec - Line_Start (Buffer, Prec) + 1;
 
-            if Value.Ident_Len > 0 then
-               Put_Line (Value.Token'Img & ", Start => "
-                 & Image (Value.Sloc.Line) & ':' & Image (Value.Sloc.Column)
-                 & ", End => " & Image (Line_Count) & ':' & Image (Column));
+            Info := Constructs.Current;
+
+            Constructs.Current := new Construct_Information;
+
+            if Constructs.First = null then
+               Constructs.First := Constructs.Current;
             else
-               Put_Line (Value.Token'Img & ", Start => "
-                 & Image (Value.Sloc.Line) & ':' & Image (Value.Sloc.Column)
-                 & ", End => " & Image (Line_Count) & ':' & Image (Column));
+               Constructs.Current.Prev := Info;
+               Constructs.Current.Next := Info.Next;
+               Info.Next               := Constructs.Current;
             end if;
+
+            Constructs.Last          := Constructs.Current;
+            Constructs.Current.Token := Value.Token;
+
+            if Value.Ident_Len > 0 then
+               Constructs.Current.Name :=
+                 new String' (Value.Identifier (1 .. Value.Ident_Len));
+            end if;
+
+            Constructs.Current.Sloc_Start      := Value.Sloc;
+            Constructs.Current.Sloc_End        := (Line_Count, Column);
+            Constructs.Current.Subprogram_Spec := Subprogram_Decl;
          end if;
       end Pop;
 
       procedure Pop (Stack : in out Token_Stack.Simple_Stack) is
          Value  : Extended_Token;
-         Column : Natural;
       begin
-         Token_Stack.Pop (Stack, Value);
-
-         if Constructs /= null then
-            Column := Prec - Line_Start (Buffer, Prec) + 1;
-
-            if Value.Ident_Len > 0 then
-               Put_Line (Value.Token'Img & ", Start => "
-                 & Image (Value.Sloc.Line) & ':' & Image (Value.Sloc.Column)
-                 & ", End => " & Image (Line_Count) & ':' & Image (Column));
-            else
-               Put_Line (Value.Token'Img & ", Start => "
-                 & Image (Value.Sloc.Line) & ':' & Image (Value.Sloc.Column)
-                 & ", End => " & Image (Line_Count) & ':' & Image (Column));
-            end if;
-         end if;
+         Pop (Stack, Value);
       end Pop;
 
       ----------
@@ -1258,18 +1267,14 @@ package body Source_Analyzer is
                      Prev_Token := Tok_Semicolon;
 
                      if Subprogram_Decl and then Num_Parens = 0 then
-                        Subprogram_Decl := False;
-
                         if not In_Generic then
                            --  subprogram spec, e.g:
                            --  procedure xxx (...);
 
-                           if Constructs /= null then
-                              Put ("Spec of ");
-                           end if;
-
-                           Token_Stack.Pop (Tokens);
+                           Pop (Tokens);
                         end if;
+
+                        Subprogram_Decl := False;
                      end if;
 
                   else
@@ -1402,17 +1407,17 @@ package body Source_Analyzer is
          Prev_Token      := Token;
          Next_Word (Prec);
 
-         Syntax_Error :=
-           Syntax_Error or else (Prec = Buffer'Last and then Num_Spaces > 0);
-
          if Syntax_Error then
-            Put_Line
-              (">>> Syntax Error at line" & Line_Count'Img &
-               ", around character" & Current'Img);
+            Put_Line (">>> Syntax Error at line" & Line_Count'Img);
          end if;
 
          Current := End_Of_Word (Buffer, Prec);
       end loop;
+
+      Clear (Tokens);
+      Clear (Indents);
+      Current_Indent := Num_Spaces;
+      Prev_Indent := Prev_Prev_Spaces;
    end Analyze_Ada_Source;
 
    --------------------
@@ -1559,11 +1564,14 @@ package body Source_Analyzer is
       Format_Operators : Boolean     := True)
    is
       New_Buffer : Extended_Line_Buffer;
+      Ignore     : Natural;
    begin
       New_Buffer := To_Line_Buffer (Buffer);
       Analyze_Ada_Source
         (Buffer, New_Buffer, Indent_Level, Indent_Continue,
-         Reserved_Casing, Ident_Casing, Format_Operators);
+         Reserved_Casing, Ident_Casing, Format_Operators,
+         Current_Indent => Ignore,
+         Prev_Indent   => Ignore);
       Print (New_Buffer);
       Free (New_Buffer);
    end Format_Ada;
@@ -1573,8 +1581,12 @@ package body Source_Analyzer is
    --------------------------
 
    procedure Parse_Ada_Constructs
-     (Buffer : String;
-      Result : out Construct_List)
+     (Buffer          : String;
+      Result          : out Construct_List;
+      Indent          : out Natural;
+      Next_Indent     : out Natural;
+      Indent_Level    : Natural := 3;
+      Indent_Continue : Natural := 2)
    is
       New_Buffer : Extended_Line_Buffer;
       Constructs : aliased Construct_List;
@@ -1586,7 +1598,9 @@ package body Source_Analyzer is
          Ident_Casing     => Unchanged,
          Format_Operators => False,
          Indent           => False,
-         Constructs       => Constructs'Unchecked_Access);
+         Constructs       => Constructs'Unchecked_Access,
+         Current_Indent   => Next_Indent,
+         Prev_Indent      => Indent);
       Result := Constructs;
    end Parse_Ada_Constructs;
 
@@ -1595,14 +1609,49 @@ package body Source_Analyzer is
    --------------------------
 
    procedure Next_Ada_Indentation
-     (Buffer           : String;
-      Indent_Level     : Natural := 3;
-      Indent_Continue  : Natural := 2;
-      Indent           : out Natural;
-      Indent_Next_Line : out Natural) is
+     (Buffer          : String;
+      Indent          : out Natural;
+      Next_Indent     : out Natural;
+      Indent_Level    : Natural := 3;
+      Indent_Continue : Natural := 2)
+   is
+      New_Buffer : Extended_Line_Buffer;
    begin
-      Indent := 0;
-      Indent_Next_Line := 0;
+      Analyze_Ada_Source
+        (Buffer, New_Buffer,
+         Reserved_Casing  => Unchanged,
+         Ident_Casing     => Unchanged,
+         Format_Operators => False,
+         Indent           => False,
+         Current_Indent   => Next_Indent,
+         Prev_Indent      => Indent);
    end Next_Ada_Indentation;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Construct_List) is
+      Info, Tmp : Construct_Access;
+
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Construct_Information, Construct_Access);
+
+   begin
+      Info := List.First;
+
+      loop
+         exit when Info = null;
+
+         Free (Info.Name);
+         Tmp := Info;
+         Info := Info.Next;
+         Free (Tmp);
+      end loop;
+
+      List.First   := null;
+      List.Current := null;
+      List.Last    := null;
+   end Free;
 
 end Source_Analyzer;
