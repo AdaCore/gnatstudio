@@ -722,6 +722,7 @@ package body Src_Editor_View is
       View   : constant Source_View := Source_View (Widget);
    begin
       if not Selection_Exists (Get_Buffer (View)) then
+         Set_Disable_Scroll_On_Focus (View, True);
          Restore_Cursor_Position (View);
       end if;
 
