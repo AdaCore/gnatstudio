@@ -33,7 +33,7 @@ package body Builtin is
    type DWORD is new Interfaces.C.Unsigned_Long;
    type BOOL is new Integer;
 
-   Null_Handle : constant HANDLE  := HANDLE (System.Null_Address);
+   Null_Handle : constant HANDLE := HANDLE (System.Null_Address);
 
    type Handle_Set is array (Positive range <>) of aliased DWORD;
 
@@ -55,10 +55,10 @@ package body Builtin is
    pragma Import (Stdcall, EnumProcesses, "EnumProcesses");
 
    function EnumProcessModules
-     (hProcess  : HANDLE;
-      lphModule : access DWORD;
-      len       : DWORD;
-      cb        : access DWORD);
+     (hProcess   : HANDLE;
+      lphModule  : access DWORD;
+      cb         : DWORD;
+      lpcbNeeded : access DWORD);
    pragma Import (Stdcall, EnumProcessModules, "EnumProcessModules");
 
    function OpenProcess
@@ -118,19 +118,21 @@ package body Builtin is
            OpenProcess
              (PROCESS_QUERY_INFORMATION + PROCESS_VM_READ, 0, PID);
 
-         if hProcess /= Null_Handle then
-            if EnumProcessModules
-              (hProcess,
-               hMod (1)'Unchecked_Access,
-               hMod'Length,
-               cbNeeded'Unchecked_Access) /= 0
+         if hProcess = Null_Handle then
+            return "";
+         end if;
+
+         if EnumProcessModules
+           (hProcess,
+            hMod (1)'Unchecked_Access,
+            hMod'Length,
+            cbNeeded'Unchecked_Access) /= 0
+         then
+            if GetModuleBaseName
+              (hProcess, hMod (1), szProcessName'Address, 1024) = 0
             then
-               if GetModuleBaseName
-                 (hProcess, hMod (1), szProcessName'Address, 1024) = 0
-               then
-                  CloseHandle (hProcess);
-                  return "";
-               end if;
+               CloseHandle (hProcess);
+               return "";
             end if;
          end if;
 
@@ -144,14 +146,15 @@ package body Builtin is
       else
          declare
             Pid  : DWORD renames Handle.Processes (Handle.Index);
-            Id   : constant String := DWORD'Image (Pid);
+            Id1  : constant String := "     " & DWORD'Image (Pid);
+            Id2  : constant String := Id1 (Id1'Last - 5 .. Id1'Last);
             Info : constant String := Process_Info (Pid);
 
          begin
             Info :=
-              (Id_Len   => Id'Length,
+              (Id_Len   => Id2'Length,
                Info_Len => Info'Length,
-               Id       => Id,
+               Id       => Id2,
                Info     => Info);
             Handle.Index := Handle.Index + 1;
             Success := True;
