@@ -56,25 +56,26 @@ procedure GVD_Main is
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
-   Process           : Debugger_Process_Tab;
-   Debugger_List     : Argument_List (1 .. Argument_Count);
-   Program_Args      : String_Access := new String' ("");
-   Debugger_Index    : Natural := 0;
-   Main_Debug_Window : GVD_Main_Window;
-   Id                : Glib.Gint;
-   Level             : Integer;
-   Debug_Type        : Debugger_Type := Gdb_Type;
-   Button            : Message_Dialog_Buttons;
-   Editor            : String_Access;
-   Prefix            : String_Access;
-   Home              : String_Access;
-   Dir               : String_Access;
-   Remote_Host       : String_Access := new String' ("");
-   Debugger_Name     : String_Access := new String' ("");
-   Target            : String_Access := new String' ("");
-   Protocol          : String_Access := new String' ("");
-   Tmp_String        : String_Access;
-   Debuggee_Name     : String_Access;
+   Directory_Separator : constant Character := GNAT.OS_Lib.Directory_Separator;
+   Process             : Debugger_Process_Tab;
+   Debugger_List       : Argument_List (1 .. Argument_Count);
+   Program_Args        : String_Access := new String' ("");
+   Debugger_Index      : Natural := 0;
+   Main_Debug_Window   : GVD_Main_Window;
+   Id                  : Glib.Gint;
+   Level               : Integer;
+   Debug_Type          : Debugger_Type := Gdb_Type;
+   Button              : Message_Dialog_Buttons;
+   Editor              : String_Access;
+   Prefix              : String_Access;
+   Home                : String_Access;
+   Dir                 : String_Access;
+   Remote_Host         : String_Access := new String' ("");
+   Debugger_Name       : String_Access := new String' ("");
+   Target              : String_Access := new String' ("");
+   Protocol            : String_Access := new String' ("");
+   Tmp_String          : String_Access;
+   Debuggee_Name       : String_Access;
 
    procedure Init;
    --  Set up environment for GVD.
