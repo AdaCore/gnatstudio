@@ -34,6 +34,8 @@ BASE_DIR=$(GLIDE_BASE_DIR)/../metrics
 include $(BASE_DIR)/Makefile.metrics
 BASE_DIR=$(GLIDE_BASE_DIR)/../builder
 include $(BASE_DIR)/Makefile.builder
+BASE_DIR=$(GLIDE_BASE_DIR)/../navigation
+include $(BASE_DIR)/Makefile.navigation
 
 GLIDE_SRC_DIRS = $(GLIDE_BASE_DIR)/src $(GLIDE_BASE_DIR)/pixmaps
 SRC_DIRS += $(GLIDE_SRC_DIRS)
