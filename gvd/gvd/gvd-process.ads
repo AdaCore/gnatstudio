@@ -40,7 +40,6 @@ with Main_Debug_Window_Pkg;
 with Process_Tab_Pkg;
 with Items;
 with Odd.Code_Editors;
-with Odd.Histories;
 with Odd.Types;
 with Open_Program_Pkg; use Open_Program_Pkg;
 
@@ -69,9 +68,6 @@ package Odd.Process is
 
    Command_History_Collapse_Entries : constant Boolean := True;
    --  Whether we should collapse entries in the history list.
-
-   package String_History is new Odd.Histories (String);
-   use String_History;
 
    ---------------------------
    -- Debugger_Process_Tab --
@@ -130,9 +126,6 @@ package Odd.Process is
       Selected_Component : Items.Generic_Type_Access := null;
       --  The currently selected item, and its specific component.
 
-      Command_History : String_History.History_List;
-      --  The history of commands for this process.
-
       Registered_Dialog : Gtk.Dialog.Gtk_Dialog := null;
       --  Currently displayed dialog that should be deleted on next user input.
       --  This is mostly used for question dialogs, since the user can also
@@ -189,6 +182,9 @@ package Odd.Process is
    Debugger_Not_Found : exception;
    --  ??? This needs documentation.
 
+   function Get_Num (Tab : Debugger_Process_Tab) return Gint;
+   --  Return the number of the notebook page which contains the process tab.
+
    function Convert
      (Main_Debug_Window : access
         Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
@@ -234,6 +230,11 @@ package Odd.Process is
      (Debugger : access Debugger_Process_Tab_Record'Class);
    --  Emit the "executable_changed" signal.
 
+   procedure Close_Debugger
+     (Debugger : Debugger_Process_Tab);
+   --  Close the debugger, remove the notebook page and modify the commmands
+   --  history accordingly.
+
    procedure Process_User_Command
      (Debugger       : Debugger_Process_Tab;
       Command        : String;
@@ -244,6 +245,7 @@ package Odd.Process is
    --  are not transmitted to the debugger.
    --  If Output_Command is True, then the command is first output to the
    --  command window. An ASCII.LF is appended at the end before printing
+   --  If Echo is True, then the command is displayed in the debugger window.
 
    procedure Text_Output_Handler
      (Process    : Debugger_Process_Tab;

@@ -30,7 +30,6 @@ with Gdk.Window;   use Gdk.Window;
 with Gdk.Event;    use Gdk.Event;
 
 with Gtk.Text;     use Gtk.Text;
-with Gtk.Main;     use Gtk.Main;
 with Gtk.Menu;     use Gtk.Menu;
 with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -527,8 +526,16 @@ package body Odd.Process is
       Process : Debugger_Process_Tab;
       --  Id      : Gint;
       Label   : Gtk_Label;
-
+      Program : Program_Descriptor;
    begin
+
+      Program.Debugger := Kind;
+      Program.Remote_Host := new String' (Remote_Host);
+      Program.Remote_Target := new String' (Remote_Target);
+      Program.Protocol := new String' (Remote_Protocol);
+      Program.Program := new String' (Executable);
+      Program.Debugger_Name := new String' (Debugger_Name);
+
       Process := new Debugger_Process_Tab_Record;
       Initialize (Process);
       Initialize_Class_Record (Process, Signals, Class_Record);
@@ -600,7 +607,8 @@ package body Odd.Process is
          begin
             if Executable'Length > 0 then
                Gtk_New
-                 (Label, Debug (1 .. Debug'Last - 5) & " - " & Executable);
+                 (Label, Debug (1 .. Debug'Last - 5) & " - "
+                  & Base_File_Name (Executable));
             else
                Gtk_New
                  (Label, Debug (1 .. Debug'Last - 5) & " -" &
@@ -616,6 +624,9 @@ package body Odd.Process is
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
 
+      if Page_List.Length (Get_Children (Window.Process_Notebook)) > 0 then
+         Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
+      end if;
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
       --  debugger outputs a file name that should be displayed in the editor.
@@ -664,6 +675,8 @@ package body Odd.Process is
       --  Initialize the debugger, and possibly get the name of the initial
       --  file.
       Initialize (Process.Debugger);
+
+      Process.Descriptor := Program;
 
       return Process;
    end Create_Debugger;
@@ -778,7 +791,7 @@ package body Odd.Process is
                  (Debugger_Output_Type (Entity.all),
                   Send (Process.Debugger,
                         Refresh_Command (Debugger_Output_Type (Entity.all)),
-                        Is_Internal => True));
+                        Mode => Internal));
 
                --  No link ?
 
@@ -931,6 +944,51 @@ package body Odd.Process is
       end if;
    end Process_Graph_Cmd;
 
+   --------------------
+   -- Close_Debugger --
+   --------------------
+
+   procedure Close_Debugger
+     (Debugger : Debugger_Process_Tab)
+   is
+      Page_Num : Gint := Get_Num (Debugger);
+      Top      : Main_Debug_Window_Access := Debugger.Window;
+      Notebook : constant Gtk_Notebook := Debugger.Window.Process_Notebook;
+      Data     : History_Data;
+      Current  : Gint;
+      use String_History;
+   begin
+
+      --  Remove entries in command history.
+
+      Wind (Debugger.Window.Command_History, Backward);
+      for J in 1 .. Length (Top.Command_History) loop
+         Current := Gint (Get_Current (Top.Command_History).Debugger_Num);
+         if Current = Page_Num then
+            Remove_Current (Debugger.Window.Command_History);
+         elsif Current > Page_Num then
+            Data := Get_Current
+              (Top.Command_History);
+            Data.Debugger_Num := Natural (Current) - 1;
+            Set_Current (Top.Command_History, Data);
+         end if;
+         Move_To_Next (Top.Command_History);
+      end loop;
+
+      --  Close the debugger and remove the notebook page.
+
+      Close (Debugger.Debugger);
+      Remove_Page (Notebook, Page_Num);
+
+      --  If the last notebook page was destroyed, disable "Open Program"
+      --  in the menu.
+
+      if Page_List.Length (Get_Children (Top.Process_Notebook)) = 0 then
+         Set_Sensitive (Gtk_Widget (Top.Open_Program1), False);
+      end if;
+
+   end Close_Debugger;
+
    --------------------------
    -- Process_User_Command --
    --------------------------
@@ -942,9 +1000,9 @@ package body Odd.Process is
    is
       Command2 : constant String := To_Lower (Command);
       First    : Natural := Command2'First;
-
+      Data     : History_Data;
+      use String_History;
    begin
-      Append (Debugger.Command_History, Command);
 
       if Output_Command then
          Text_Output_Handler
@@ -967,23 +1025,30 @@ package body Odd.Process is
       Skip_Blanks (Command2, First);
 
       if Looking_At (Command2, First, "graph") then
+
+         Data.Mode := User;
+         Data.Debugger_Num := Integer (Get_Num (Debugger));
+         Skip_Blanks (Command, First);
+         Data.Command := new String'(Command);
+         Append (Debugger.Window.Command_History, Data);
          Process_Graph_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
 
       elsif Command2 = "quit" then
-         Main_Quit;
-
+         Close_Debugger (Debugger);
       else
          --  Regular debugger command, send it.
          Send (Debugger.Debugger, Command,
                Wait_For_Prompt =>
-                 not Command_In_Process (Get_Process (Debugger.Debugger)));
+                 not Command_In_Process (Get_Process (Debugger.Debugger)),
+               Mode => User);
       end if;
 
       --  Put back the standard cursor
       Set_Busy_Cursor (Debugger, False);
 
       Unregister_Dialog (Debugger);
+
    end Process_User_Command;
 
    ---------------------
@@ -1138,5 +1203,14 @@ package body Odd.Process is
       Set_Cursor (Get_Window (Debugger.Window), Cursor);
       Destroy (Cursor);
    end Set_Busy_Cursor;
+
+   -------------
+   -- Get_Num --
+   -------------
+
+   function Get_Num (Tab : Debugger_Process_Tab) return Gint is
+   begin
+      return Page_Num (Tab.Window.Process_Notebook, Tab.Process_Paned);
+   end Get_Num;
 
 end Odd.Process;
