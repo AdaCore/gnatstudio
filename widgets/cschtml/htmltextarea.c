@@ -19,6 +19,7 @@
     Boston, MA 02111-1307, USA.
 */
 
+#define GTK_ENABLE_BROKEN
 #include "htmltextarea.h"
 #include <string.h>
 
@@ -161,8 +162,8 @@ html_textarea_init (HTMLTextArea *ta,
 #define FONT_HEIGHT(f)              ((f)->ascent + (f)->descent)
 
 	gtk_widget_set_usize ( GTK_WIDGET (widget), 
-			       gdk_char_width(widget->style->font, '0') * col + 8,
-			       FONT_HEIGHT(ta->text->style->font) * row + 4);
+			       gdk_char_width(gtk_style_get_font (widget->style), '0') * col + 8,
+			       FONT_HEIGHT(gtk_style_get_font (ta->text->style)) * row + 4);
 
 #undef FONT_HEIGHT
 	ta->default_text = NULL;

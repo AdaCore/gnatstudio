@@ -26,7 +26,7 @@
 
 /* Convenience macro to extract the HTMLPainterClass from a GTK+ object.  */
 #define HP_CLASS(obj)					\
-	HTML_PAINTER_CLASS (GTK_OBJECT (obj)->klass)
+	HTML_PAINTER_CLASS (GTK_WIDGET_GET_CLASS (obj))
 
 /* Our parent class.  */
 static GtkObjectClass *parent_class = NULL;
@@ -43,7 +43,7 @@ finalize (GtkObject *object)
 
 	/* FIXME ownership of the color set?  */
 
-	(* GTK_OBJECT_CLASS (parent_class)->finalize) (object);
+	(* G_OBJECT_CLASS (parent_class)->finalize) (object);
 }
 
 
@@ -114,7 +114,7 @@ class_init (GtkObjectClass *object_class)
 
 	class = HTML_PAINTER_CLASS (object_class);
 
-	object_class->finalize = finalize;
+	G_OBJECT_CLASS (object_class)->finalize = finalize;
 
 	class->begin = (gpointer) begin_unimplemented;
 	class->end = (gpointer) end_unimplemented;

@@ -154,7 +154,7 @@ html_text_input_init (HTMLTextInput *ti,
 
 	gtk_entry_set_visibility (GTK_ENTRY(element->widget), !password);
 	
-	min_width = gdk_char_width (element->widget->style->font, '0') * size + 8;
+	min_width = gdk_char_width (gtk_style_get_font (element->widget->style), '0') * size + 8;
 	gtk_widget_set_usize (element->widget, min_width, -1);
 
 	ti->size = size;

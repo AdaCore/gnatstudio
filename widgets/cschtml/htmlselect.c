@@ -336,7 +336,7 @@ void html_select_set_text (HTMLSelect *select,
 
 		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), g_list_nth(select->strings, select->default_selected)->data);
 
-		HTML_OBJECT(select)->width = gdk_string_width(w->style->font, 
+		HTML_OBJECT(select)->width = gdk_string_width(gtk_style_get_font (w->style),
 							      longest_string(select)) + 30;
 
 		gtk_widget_set_usize ( GTK_WIDGET (w), 
