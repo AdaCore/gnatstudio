@@ -128,7 +128,6 @@ package body GUI_Utils is
       if Prepend then
          Append (Children, Gtk_Widget (Item));
          Prepend_Items (List, Children);
---         Free (Children);
       else
          Add (List, Item);
       end if;
