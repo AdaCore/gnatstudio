@@ -1,6 +1,6 @@
 Here are the complete procedures to build Gtk+ 2.2.1 from scratch
 (Systems tested are Redhat 7.1, Solaris 2.5.1, Solaris 2.8, Tru64 5.1a,
- HP-UX 11.00, IRIX 6.5 and AiX 5.1).
+ HP-UX 11.00).
 
 Note that these instructions are provided as is, and do not represent a
 100% guaranteed method. This is merely an empirical list of steps that
@@ -241,6 +241,36 @@ patch -p0 < .../GtkAda/contrib/gtk+-2.2.1.diff
 
 # For debugging Gtk+ and enable Gtk+ traces, use --enable-debug=full
 
+make
+make install
+cd ..
+
+#####################
+# optional: glade 2 #
+#####################
+
+###########
+# libxml2 #
+###########
+
+# libxml2 is only needed by glade
+
+tar xzvf libxml2-2.5.7.tar.gz
+cd libxml2-2.5.7
+./configure --prefix=$prefix
+make
+make install
+cd ..
+
+#########
+# glade #
+#########
+
+tar xzvf glade-2.0.0.tar.gz
+cd glade-2.0.0
+patch -p0 < .../GtkAda/contrib/glade-2.0.0.diff
+autoconf
+./configure --prefix=$prefix --disable-gnome
 make
 make install
 cd ..
