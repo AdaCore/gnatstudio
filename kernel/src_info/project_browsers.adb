@@ -55,6 +55,23 @@ package body Project_Browsers is
    procedure Destroy (E : in out Name_Edge);
    --  Dummy function, so that Name_Vertex is no longer abstract
 
+   function Dependency_Graph
+     (Root_Project : Prj.Tree.Project_Node_Id;
+      Factory      : Vertex_Factory := null;
+      E_Factory    : Edge_Factory := null) return Glib.Graphs.Graph;
+   --  Return a graph that represent the dependencies between the projects: the
+   --  vertices are the projects themselves, and the links represent a with
+   --  clause.
+   --  If recursive is True, then the whole graph starting from Root_Project is
+   --  expanded. Otherwise, only the projects that are withed by Root_Project
+   --  are inserted, not their own dependencies.
+   --
+   --  It is the responsability of the caller to destroy the graph.
+   --
+   --  If Factory is null, then a default vertex is created.
+   --  The graph can be used directly in GtkAda.Canvas provided you set up the
+   --  vertices correctly in your factory.
+
    ----------------
    -- False_Free --
    ----------------

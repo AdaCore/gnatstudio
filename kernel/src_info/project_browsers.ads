@@ -47,20 +47,6 @@ package Project_Browsers is
    --  Return True if there is a circular dependency for the with clauses in
    --  Root_Project.
 
-   function Dependency_Graph
-     (Root_Project : Prj.Tree.Project_Node_Id;
-      Factory      : Vertex_Factory := null;
-      E_Factory    : Edge_Factory := null) return Glib.Graphs.Graph;
-   --  Return a graph that represent the dependencies between the projects: the
-   --  vertices are the projects themselves, and the links represent a with
-   --  clause.
-   --
-   --  It is the responsability of the caller to destroy the graph.
-   --
-   --  If Factory is null, then a default vertex is created.
-   --  The graph can be used directly in GtkAda.Canvas provided you set up the
-   --  vertices correctly in your factory.
-
    function Topological_Sort (Root_Project : Prj.Tree.Project_Node_Id)
       return Name_Id_Array;
    --  Return the projects sorted topologically (first the root project, down
