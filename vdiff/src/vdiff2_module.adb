@@ -128,7 +128,7 @@ package body Vdiff2_Module is
            (Name     =>  "Diff-Default-Color",
             Nick     => -"Default Color",
             Blurb    => -"Color used for highlighting in Visual Diff2",
-            Default  => "#AAAAFF"));
+            Default  => "#C1C1C1"));
       Register_Property
         (Kernel, Param_Spec (Diff_Default_Color), -"Visual diff");
 
