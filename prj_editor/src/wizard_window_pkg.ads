@@ -1,8 +1,8 @@
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Event_Box; use Gtk.Event_Box;
-with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label; use Gtk.Label;
+with Gtk.Frame; use Gtk.Frame;
 with Gtk.Separator; use Gtk.Separator;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
@@ -14,8 +14,10 @@ package Wizard_Window_Pkg is
       Page_Box : Gtk_Hbox;
       Eventbox1 : Gtk_Event_Box;
       Toc_Box : Gtk_Vbox;
-      Notebook : Gtk_Notebook;
-      Label1 : Gtk_Label;
+      Vbox2 : Gtk_Vbox;
+      Title_Box : Gtk_Event_Box;
+      Title : Gtk_Label;
+      Page_Frame : Gtk_Frame;
       Hseparator1 : Gtk_Hseparator;
       Hbuttonbox1 : Gtk_Hbutton_Box;
       Previous : Gtk_Button;

@@ -19,15 +19,15 @@ procedure Initialize (Wizard_Window : access Wizard_Window_Record'Class) is
 begin
    Gtk.Window.Initialize (Wizard_Window, Window_Toplevel);
    Set_Title (Wizard_Window, -"");
-   Set_Policy (Wizard_Window, True, True, True);
+   Set_Policy (Wizard_Window, True, True, False);
    Set_Position (Wizard_Window, Win_Pos_None);
    Set_Modal (Wizard_Window, False);
+   Set_Default_Size (Wizard_Window, 640, 480);
 
    Gtk_New_Vbox (Wizard_Window.Vbox1, False, 0);
    Add (Wizard_Window, Wizard_Window.Vbox1);
 
    Gtk_New_Hbox (Wizard_Window.Page_Box, False, 0);
-   Set_Border_Width (Wizard_Window.Page_Box, 4);
    Pack_Start (Wizard_Window.Vbox1, Wizard_Window.Page_Box, True, True, 0);
 
    Gtk_New (Wizard_Window.Eventbox1);
@@ -37,21 +37,22 @@ begin
    Set_Border_Width (Wizard_Window.Toc_Box, 7);
    Add (Wizard_Window.Eventbox1, Wizard_Window.Toc_Box);
 
-   Gtk_New (Wizard_Window.Notebook);
-   Set_Scrollable (Wizard_Window.Notebook, False);
-   Set_Show_Border (Wizard_Window.Notebook, False);
-   Set_Show_Tabs (Wizard_Window.Notebook, False);
-   Set_Tab_Hborder (Wizard_Window.Notebook, 2);
-   Set_Tab_Vborder (Wizard_Window.Notebook, 2);
-   Set_Tab_Pos (Wizard_Window.Notebook, Pos_Top);
-   Pack_Start (Wizard_Window.Page_Box, Wizard_Window.Notebook, True, True, 0);
+   Gtk_New_Vbox (Wizard_Window.Vbox2, False, 0);
+   Pack_Start (Wizard_Window.Page_Box, Wizard_Window.Vbox2, True, True, 0);
 
-   Gtk_New (Wizard_Window.Label1, -("label1"));
-   Set_Alignment (Wizard_Window.Label1, 0.5, 0.5);
-   Set_Padding (Wizard_Window.Label1, 0, 0);
-   Set_Justify (Wizard_Window.Label1, Justify_Center);
-   Set_Line_Wrap (Wizard_Window.Label1, False);
-   Set_Tab (Wizard_Window.Notebook, 0, Wizard_Window.Label1);
+   Gtk_New (Wizard_Window.Title_Box);
+   Pack_Start (Wizard_Window.Vbox2, Wizard_Window.Title_Box, False, False, 0);
+
+   Gtk_New (Wizard_Window.Title, -("<title>"));
+   Set_Alignment (Wizard_Window.Title, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Title, 0, 0);
+   Set_Justify (Wizard_Window.Title, Justify_Center);
+   Set_Line_Wrap (Wizard_Window.Title, False);
+   Add (Wizard_Window.Title_Box, Wizard_Window.Title);
+
+   Gtk_New (Wizard_Window.Page_Frame);
+   Set_Shadow_Type (Wizard_Window.Page_Frame, Shadow_In);
+   Pack_Start (Wizard_Window.Vbox2, Wizard_Window.Page_Frame, True, True, 0);
 
    Gtk_New_Hseparator (Wizard_Window.Hseparator1);
    Pack_Start (Wizard_Window.Vbox1, Wizard_Window.Hseparator1, False, False, 0);
