@@ -26,7 +26,6 @@ with Gdk.Pixmap;              use Gdk.Pixmap;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Window;              use Gdk.Window;
-with Gtk.Bin;                 use Gtk.Bin;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Container;           use Gtk.Container;
 with Gtk.Dialog;              use Gtk.Dialog;
@@ -258,6 +257,13 @@ package body GVD_Module is
    procedure Debug_Terminate (Kernel : Kernel_Handle);
    --  Terminate the debugging session
 
+   function Get_Variable_Name
+     (Context     : Selection_Context_Access;
+      Dereference : Boolean) return String;
+   --  If Context contains an entity, get the entity name.
+   --  Dereference the entity if Dereference is True.
+   --  Return "" if entity name could not be found in Context.
+
    -------------
    -- Gtk_New --
    -------------
@@ -470,6 +476,16 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Callback for the "display" contextual menu items.
+
+   procedure Print_Dereference_Variable
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "print" dereferenced entity contextual menu items.
+
+   procedure Graph_Display_Dereference_Variable
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "display" dereferenced entity contextual menu items.
 
    procedure View_Into_Memory
      (Widget  : access GObject_Record'Class;
@@ -910,7 +926,6 @@ package body GVD_Module is
       Submenu  : Gtk_Menu;
       Line     : Integer;
       Debugger : Debugger_Access;
-      Lang     : Language_Access;
 
    begin
       if Process = null
@@ -929,51 +944,50 @@ package body GVD_Module is
       Append (Menu, Mitem);
 
       if not Command_In_Process (Get_Process (Debugger)) then
-         if Has_Entity_Name_Information (Entity) then
-            declare
-               Ent : constant String := Entity_Name_Information (Entity);
-            begin
-               Gtk_New (Mitem, -"Print " & Krunch (Ent));
+         declare
+            Ent       : constant String :=
+              Krunch (Get_Variable_Name
+                        (Selection_Context_Access (Context), False));
+            Ent_Deref : constant String :=
+              Krunch (Get_Variable_Name
+                        (Selection_Context_Access (Context), True));
+         begin
+            if Ent /= "" then
+               Gtk_New (Mitem, -"Print " & Ent);
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
                   Context_Callback.To_Marshaller (Print_Variable'Access),
                   Selection_Context_Access (Context));
-               Gtk_New (Mitem, -"Display " & Krunch (Ent));
+               Gtk_New (Mitem, -"Display " & Ent);
                Append (Submenu, Mitem);
                   Context_Callback.Connect
                  (Mitem, "activate",
                   Context_Callback.To_Marshaller
                     (Graph_Display_Variable'Access),
                   Selection_Context_Access (Context));
+            end if;
 
-               Lang := Get_Language_From_File
-                 (Get_Language_Handler (Get_Kernel (Context)),
-                  File_Information (Entity));
+            if Ent_Deref /= "" then
+               Gtk_New (Mitem, -"Print " & Ent_Deref);
+               Append (Submenu, Mitem);
+               Context_Callback.Connect
+                 (Mitem, "activate",
+                  Context_Callback.To_Marshaller
+                    (Print_Dereference_Variable'Access),
+                  Selection_Context_Access (Context));
+               Gtk_New (Mitem, -"Display " & Ent_Deref);
+               Append (Submenu, Mitem);
+               Context_Callback.Connect
+                 (Mitem, "activate",
+                  Context_Callback.To_Marshaller
+                    (Graph_Display_Dereference_Variable'Access),
+                  Selection_Context_Access (Context));
+            end if;
 
-               if Lang /= null then
-                  declare
-                     Ent_Deref : constant String :=
-                       Krunch (Dereference_Name (Lang, Ent));
-                  begin
-                     Gtk_New (Mitem, -"Print " & Ent_Deref);
-                     Append (Submenu, Mitem);
-                     Context_Callback.Connect
-                       (Mitem, "activate",
-                        Context_Callback.To_Marshaller
-                          (Print_Variable'Access),
-                        Selection_Context_Access (Context));
-                     Gtk_New (Mitem, -"Display " & Ent_Deref);
-                     Append (Submenu, Mitem);
-                     Context_Callback.Connect
-                       (Mitem, "activate",
-                        Context_Callback.To_Marshaller
-                          (Graph_Display_Variable'Access),
-                        Selection_Context_Access (Context));
-                  end;
-               end if;
 
-               Gtk_New (Mitem, -"Set value of " & Krunch (Ent));
+            if Ent /= "" then
+               Gtk_New (Mitem, -"Set value of " & Ent);
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
@@ -981,7 +995,7 @@ package body GVD_Module is
                     (Set_Value'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Mitem, -"View memory at address of " & Krunch (Ent));
+               Gtk_New (Mitem, -"View memory at address of " & Ent);
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
@@ -990,15 +1004,15 @@ package body GVD_Module is
                   Selection_Context_Access (Context));
                Gtk_New (Mitem);
                Append (Submenu, Mitem);
-               Gtk_New (Mitem, -"Set breakpoint on " & Krunch (Ent));
+               Gtk_New (Mitem, -"Set breakpoint on " & Ent);
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
                   Context_Callback.To_Marshaller
                     (Set_Subprogram_Breakpoint'Access),
                   Selection_Context_Access (Context));
-            end;
-         end if;
+            end if;
+         end;
 
          if Has_Line_Information (Entity) then
             Line := Line_Information (Entity);
@@ -1499,6 +1513,45 @@ package body GVD_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Till_Breakpoint;
 
+   -----------------------
+   -- Get_Variable_Name --
+   -----------------------
+
+   function Get_Variable_Name
+     (Context     : Selection_Context_Access;
+      Dereference : Boolean) return String
+   is
+      Entity : Entity_Selection_Context_Access;
+      Lang   : Language_Access;
+   begin
+      if Context = null
+        or else not (Context.all in Entity_Selection_Context'Class)
+      then
+         return "";
+      end if;
+
+      Entity := Entity_Selection_Context_Access (Context);
+
+      if Has_Entity_Name_Information (Entity) then
+         if Dereference then
+            if Has_File_Information (Entity) then
+               Lang := Get_Language_From_File
+                 (Get_Language_Handler (Get_Kernel (Context)),
+                  File_Information (Entity));
+
+               if Lang /= null then
+                  return Dereference_Name
+                    (Lang, Entity_Name_Information (Entity));
+               end if;
+            end if;
+         else
+            return Entity_Name_Information (Entity);
+         end if;
+      end if;
+
+      return "";
+   end Get_Variable_Name;
+
    --------------------
    -- Print_Variable --
    --------------------
@@ -1507,19 +1560,69 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
+
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      Name     : constant String :=
-        Get_Text (Gtk_Label (Get_Child (Gtk_Bin (Widget))));
-      Print    : constant String := -"Print ";
-
+      Name     : constant String := Get_Variable_Name (Context, False);
    begin
-      Print_Value (Debugger, Name (Name'First + Print'Length .. Name'Last));
+      if Name /= "" then
+         Print_Value (Debugger, Name);
+      end if;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Print_Variable;
+
+   --------------------------------
+   -- Print_Dereference_Variable --
+   --------------------------------
+
+   procedure Print_Dereference_Variable
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      Debugger : constant Debugger_Access :=
+        Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
+      Name     : constant String := Get_Variable_Name (Context, True);
+   begin
+      if Name /= "" then
+         Print_Value (Debugger, Name);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Print_Dereference_Variable;
+
+   ----------------------------------------
+   -- Graph_Display_Dereference_Variable --
+   ----------------------------------------
+
+   procedure Graph_Display_Dereference_Variable
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Process : constant Visual_Debugger :=
+        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
+      Name    : constant String := Get_Variable_Name (Context, True);
+
+   begin
+      if Name /= "" then
+         Process_User_Command
+           (Process,
+            "graph display " & Name,
+            Output_Command => True);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Graph_Display_Dereference_Variable;
 
    ----------------------------
    -- Graph_Display_Variable --
@@ -1529,17 +1632,18 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       Process : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
-      Name    : constant String :=
-        Get_Text (Gtk_Label (Get_Child (Gtk_Bin (Widget))));
-      Display : constant String := -"Display ";
+      Name    : constant String := Get_Variable_Name (Context, False);
 
    begin
-      Process_User_Command
-        (Process,
-         "graph display " & Name (Name'First + Display'Length .. Name'Last),
-         Output_Command => True);
+      if Name /= "" then
+         Process_User_Command
+           (Process,
+            "graph display " & Name,
+            Output_Command => True);
+      end if;
 
    exception
       when E : others =>
@@ -1554,18 +1658,26 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       Top  : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Get_Kernel (Context)));
-      Name : constant String :=
-        Get_Text (Gtk_Label (Get_Child (Gtk_Bin (Widget))));
-      View : constant String := -"View memory at address of ";
-
+      Entity  : Entity_Selection_Context_Access;
    begin
-      Show_All (Top.Memory_View);
-      Display_Memory
-        (Top.Memory_View,
-         Name (Name'First + View'Length .. Name'Last));
-      Gdk_Raise (Get_Window (Top.Memory_View));
+      if Context = null
+        or else not (Context.all in Entity_Selection_Context'Class)
+      then
+         return;
+      end if;
+
+      Entity := Entity_Selection_Context_Access (Context);
+
+      if Has_Entity_Name_Information (Entity) then
+         Show_All (Top.Memory_View);
+         Display_Memory
+           (Top.Memory_View,
+            Entity_Name_Information (Entity));
+         Gdk_Raise (Get_Window (Top.Memory_View));
+      end if;
 
    exception
       when E : others =>
@@ -1580,29 +1692,37 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       Process  : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
-      Name     : constant String :=
-        Get_Text (Gtk_Label (Get_Child (Gtk_Bin (Widget))));
-      Val      : constant String := -"Set value of ";
-      Variable : constant String :=
-        Name (Name'First + Val'Length .. Name'Last);
+      Entity  : Entity_Selection_Context_Access;
 
    begin
-      declare
-         S : constant String :=
-           Simple_Entry_Dialog
-             (Parent   => Process.Window,
-              Title    => -"Setting value of " & Variable,
-              Message  => -"Setting value of " & Variable & ':',
-              Position => Win_Pos_Mouse,
-              Key      => "gvd_set_value_dialog");
+      if Context = null
+        or else not (Context.all in Entity_Selection_Context'Class)
+      then
+         return;
+      end if;
 
-      begin
-         if S /= "" and then S (S'First) /= ASCII.NUL then
-            Set_Variable (Process.Debugger, Variable, S);
-         end if;
-      end;
+      Entity := Entity_Selection_Context_Access (Context);
+
+      if Has_Entity_Name_Information (Entity) then
+         declare
+            Variable : constant String := Entity_Name_Information (Entity);
+            S        : constant String :=
+              Simple_Entry_Dialog
+                (Parent   => Process.Window,
+                 Title    => -"Setting value of " & Variable,
+                 Message  => -"Setting value of " & Variable & ':',
+                 Position => Win_Pos_Mouse,
+                 Key      => "gvd_set_value_dialog");
+
+         begin
+            if S /= "" and then S (S'First) /= ASCII.NUL then
+               Set_Variable (Process.Debugger, Variable, S);
+            end if;
+         end;
+      end if;
 
    exception
       when E : others =>
