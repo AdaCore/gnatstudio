@@ -264,7 +264,7 @@ package body Src_Editor_Box is
    begin
       Get_Cursor_Position (Source.Source_Buffer, Line, Column);
 
-      Args (1) := new String'("edit");
+      Args (1) := new String'("Editor.edit");
       Args (2) := new String'
         (Full_Name (Get_Filename (Source.Source_Buffer)).all);
       Args (3) := new String'(Editable_Line_Type'Image (Line));
