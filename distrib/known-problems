@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.0
 
+- D511-008 Bad handling of caps lock key under Windows
+  Problem:    Under Windows only, the caps lock key is equivalent to having
+              the shift key pressed. In particular this means that numeric
+              keys are not handled correctly.
+  Workaround: Press the shift key when needed to get the correct key.
+
 - D415-005 Execution window is read-only after the first execution
   Problem:    If you run an external program using the menu Build->Run,
               after the process exits, the execution window becomes read-only
