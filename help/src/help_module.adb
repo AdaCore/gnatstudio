@@ -42,6 +42,10 @@ with Glide_Intl;                   use Glide_Intl;
 with Traces;                       use Traces;
 with OS_Utils;                     use OS_Utils;
 with Ada.Exceptions;               use Ada.Exceptions;
+with GNAT.Expect;                  use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;              use GNAT.Expect.TTY;
+pragma Warnings (On);
 with Find_Utils;                   use Find_Utils;
 with File_Utils;                   use File_Utils;
 with String_Utils;                 use String_Utils;
@@ -52,7 +56,6 @@ with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Histories;                    use Histories;
 with Glide_Kernel.Scripts;         use Glide_Kernel.Scripts;
-with Glide_Kernel.Timeout;         use Glide_Kernel.Timeout;
 with VFS;                          use VFS;
 with System;                       use System;
 with Welcome_Page;                 use Welcome_Page;
@@ -679,9 +682,9 @@ package body Help_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Help_File : VFS.Virtual_File)
    is
-      Result   : Boolean;
-      Args     : Argument_List_Access;
-      File     : GNAT.OS_Lib.String_Access;
+      Args    : Argument_List_Access;
+      File    : GNAT.OS_Lib.String_Access;
+      Process : TTY_Process_Descriptor;
 
    begin
       if not Is_Regular_File (Help_File) then
@@ -694,11 +697,10 @@ package body Help_Module is
         (Get_Pref (Kernel, GVD.Preferences.Html_Browser));
       File := new String'(Full_Name (Help_File, True).all);
 
-      Launch_Process
-        (Kernel_Handle (Kernel),
-         Command   => Args (Args'First).all,
-         Arguments => Args (Args'First + 1 .. Args'Last) & (1 => File),
-         Success   => Result);
+      Non_Blocking_Spawn
+        (Process,
+         Command => Args (Args'First).all,
+         Args    => Args (Args'First + 1 .. Args'Last) & (1 => File));
 
       Free (Args);
       Free (File);
