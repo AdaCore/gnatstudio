@@ -61,9 +61,11 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Factory_Data;            use Factory_Data;
 
 with Ada.Exceptions;          use Ada.Exceptions;
-with GNAT.IO;                 use GNAT.IO;
+with Traces;                  use Traces;
 
 package body Glide_Menu is
+
+   Me : Debug_Handle := Create ("Menu");
 
    --------------------
    -- Menu Callbacks --
@@ -262,19 +264,6 @@ package body Glide_Menu is
    procedure Refresh;
    --  Handle pending graphical events.
 
-   procedure Log_Exception (E : Exception_Occurrence);
-   --  Log unexpected exception.
-
-   -------------------
-   -- Log_Exception --
-   -------------------
-
-   procedure Log_Exception (E : Exception_Occurrence) is
-   begin
-      Put_Line ("unexpected exception in Glide II:");
-      Put (Exception_Information (E));
-   end Log_Exception;
-
    -------------
    -- Refresh --
    -------------
@@ -294,19 +283,21 @@ package body Glide_Menu is
    procedure On_Open_File
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Filename : constant String := Select_File (Title => -"Open File");
+      Widget : Limited_Widget) is
    begin
-      if Filename = "" then
-         return;
-      end if;
+      declare
+         Filename : constant String := Select_File (Title => -"Open File");
+      begin
+         if Filename = "" then
+            return;
+         end if;
 
-      Open_Or_Create (Glide_Window (Object).Kernel, Filename);
+         Open_Or_Create (Glide_Window (Object).Kernel, Filename);
+      end;
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_File;
 
    ---------------------
@@ -318,7 +309,7 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      File_Selector   : File_Selector_Window_Access;
+      File_Selector : File_Selector_Window_Access;
    begin
       Gtk_New (File_Selector, "/", Get_Current_Dir, -"Open Project");
       Register_Filter (File_Selector, Prj_File_Filter);
@@ -333,7 +324,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_Project;
 
    -----------------
@@ -349,7 +340,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_New_File;
 
    -------------
@@ -367,7 +358,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save;
 
    ----------------
@@ -389,7 +380,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save_As;
 
    --------------
@@ -405,7 +396,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Close;
 
    -------------
@@ -431,7 +422,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Exit;
 
    ---------------------
@@ -449,7 +440,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save_Desktop;
 
    -------------
@@ -465,7 +456,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Undo;
 
    -------------
@@ -481,7 +472,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Redo;
 
    ------------
@@ -497,7 +488,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Cut;
 
    -------------
@@ -513,7 +504,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Copy;
 
    --------------
@@ -529,7 +520,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Paste;
 
    -------------------
@@ -545,7 +536,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Select_All;
 
    -----------------
@@ -563,7 +554,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_New_View;
 
    --------------------
@@ -579,7 +570,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Preferences;
 
    ---------------------------------
@@ -602,7 +593,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Declaration_Or_Body;
 
    --------------
@@ -695,7 +686,7 @@ package body Glide_Menu is
 
       when E : others =>
          Close (Fd);
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Build;
 
    ------------
@@ -722,7 +713,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Run;
 
    -------------------
@@ -762,7 +753,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Executable;
 
    -------------
@@ -788,7 +779,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Step;
 
    -------------------------
@@ -814,7 +805,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Step_Instruction;
 
    -------------
@@ -840,7 +831,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Next;
 
    -------------------------
@@ -866,7 +857,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Next_Instruction;
 
    ---------------
@@ -892,7 +883,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Finish;
 
    -----------------
@@ -918,7 +909,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Continue;
 
    ----------------------
@@ -972,7 +963,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Generate_Body;
 
    --------------------------
@@ -1017,7 +1008,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Compare_Two_Files;
 
    ---------------
@@ -1037,7 +1028,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Manual;
 
    --------------------
@@ -1060,7 +1051,7 @@ package body Glide_Menu is
 
    exception
       when E : others =>
-         Log_Exception (E);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_About_Glide;
 
    ----------------------
