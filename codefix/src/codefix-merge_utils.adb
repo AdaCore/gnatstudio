@@ -460,6 +460,7 @@ package body Codefix.Merge_Utils is
 
       function Real_Position
         (This : Mergable_String; Pos : Natural) return Natural;
+      --  ???
 
       function Real_Position
         (This : Mergable_String; Pos : Natural) return Natural
