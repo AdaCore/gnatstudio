@@ -683,12 +683,13 @@ package body Breakpoints_Editor is
    procedure Update_Breakpoint_List
      (Editor : access Breakpoint_Editor_Record'Class)
    is
-      Selection : constant Integer := Get_Selection_Index (Editor);
-      Selected : Breakpoint_Identifier := 0;
+      Selection    : constant Integer := Get_Selection_Index (Editor);
+      Selected     : Breakpoint_Identifier := 0;
       Selected_Row : Gint := -1;
-      Row  : Gint;
-      Br   : Breakpoint_Data;
-      Size : Gint;
+      Row          : Gint;
+      Br           : Breakpoint_Data;
+      Size         : Gint;
+      pragma Unreferenced (Size);
 
    begin
       Clear (Editor.Breakpoint_List);
@@ -702,7 +703,8 @@ package body Breakpoints_Editor is
       then
          --  Put at least one empty line, so that the columns are resized
          --  correctly.
-         Set_Text (Editor.Breakpoint_List, 0, 0, Natural'Image (1));
+
+         Set_Text (Editor.Breakpoint_List, 0, 0, " 1");
          return;
       end if;
 
