@@ -60,7 +60,6 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Intl;           use Glide_Intl;
-with GUI_Utils;            use GUI_Utils;
 with Switches_Editors;     use Switches_Editors;
 with Directory_Tree;       use Directory_Tree;
 with String_Utils;         use String_Utils;
@@ -249,10 +248,13 @@ package body Project_Viewers is
       Args    : Gtk_Args);
    --  Called every time the selection has changed in the tree
 
-   function Viewer_Contextual_Menu
-     (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
-      return Gtk_Menu;
-   --  Return the contextual menu to use for the project viewer
+   function Project_Editor_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+   --  Return the current context for the contextual menu
 
    procedure Project_Editor_Contextual
      (Object    : access GObject_Record'Class;
@@ -726,7 +728,12 @@ package body Project_Viewers is
 
    begin
       Gtk.Notebook.Initialize (Viewer);
-      Register_Contextual_Menu (Viewer, Viewer_Contextual_Menu'Access);
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Viewer,
+         Object          => Viewer,
+         ID              => Prj_Editor_Module_ID,
+         Context_Func    => Project_Editor_Context_Factory'Access);
 
       Viewer.Kernel := Kernel_Handle (Kernel);
 
@@ -768,12 +775,16 @@ package body Project_Viewers is
    -- Viewer_Contextual_Menu --
    ----------------------------
 
-   function Viewer_Contextual_Menu
-     (Viewer : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Gtk_Menu
+   function Project_Editor_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Warnings (Off, Event);
-      V : Project_Viewer := Project_Viewer (Viewer);
+      Context : File_Selection_Context_Access :=
+        new File_Selection_Context;
+      V : Project_Viewer := Project_Viewer (Object);
       Current_View : constant View_Type := Current_Page (V);
       Item : Gtk_Menu_Item;
       Row, Column : Gint;
@@ -781,53 +792,54 @@ package body Project_Viewers is
       User : User_Data;
 
    begin
-      if V.Contextual_Menu /= null then
-         Destroy (V.Contextual_Menu);
-         V.Contextual_Menu := null;
-      end if;
-
       Get_Selection_Info
         (V.Pages (Current_View), Gint (Get_X (Event)), Gint (Get_Y (Event)),
          Row, Column, Is_Valid);
 
-      if Is_Valid or else V.Project_Filter /= No_Project then
-         Gtk_New (V.Contextual_Menu);
+      if not Is_Valid then
+         return null;
+      end if;
+
+      User := Project_User_Data.Get (V.Pages (Current_View), Row);
+      if User.File_Name /= No_String then
+         Set_File_Information
+           (Context,
+            Project_View => V.Project_Filter,
+            Directory    => Get_String (User.Directory),
+            File_Name    => Get_String (User.File_Name));
+      else
+         Set_File_Information
+           (Context,
+            Project_View => V.Project_Filter,
+            Directory    => "",
+            File_Name    => "");
       end if;
 
       if V.Project_Filter /= No_Project then
          Gtk_New (Item, -"Edit default switches");
-         Add (V.Contextual_Menu, Item);
-         Contextual_Callback.Connect
-           (Item, "activate",
-            Contextual_Callback.To_Marshaller
-            (Edit_Switches_From_Contextual'Access),
-            (Kernel    => V.Kernel,
-             Project   => V.Project_Filter,
-             File_Name => No_String,
-             Directory => No_String));
+         Add (Menu, Item);
+         --  Context_Callback.Object_Connect
+         --    (Mitem, "activate",
+         --     Context_Callback.To_Marshaller
+         --     (Edit_Switches_From_Contextual'Access),
+         --     Slot_Object => V,
+         --     User_Data   => Context);
       end if;
 
-      if Is_Valid then
-         User := Project_User_Data.Get (V.Pages (Current_View), Row);
-
-         if User.File_Name /= No_String then
-            String_To_Name_Buffer (User.File_Name);
-            Gtk_New (Item, -"Edit switches for "
-                     & Name_Buffer (Name_Buffer'First .. Name_Len));
-            Add (V.Contextual_Menu, Item);
-            Contextual_Callback.Connect
-              (Item, "activate",
-               Contextual_Callback.To_Marshaller
-               (Edit_Switches_From_Contextual'Access),
-               (Kernel    => V.Kernel,
-                Project   => V.Project_Filter,
-                File_Name => User.File_Name,
-                Directory => User.Directory));
-         end if;
+      if Has_File_Information (Context) then
+         Gtk_New (Item, -"Edit switches for "
+                  & File_Information (Context));
+         Add (Menu, Item);
+         --  Context_Callback.Object_Connect
+         --    (Mitem, "activate",
+         --     Context_Callback.To_Marshaller
+         --     (Edit_Switches_From_Contextual'Access),
+         --     Slot_Object => V,
+         --     User_Data   => Context);
       end if;
 
-      return V.Contextual_Menu;
-   end Viewer_Contextual_Menu;
+      return Selection_Context_Access (Context);
+   end Project_Editor_Context_Factory;
 
    ------------------
    -- Current_Page --
@@ -1002,15 +1014,17 @@ package body Project_Viewers is
             Append (Menu, Item);
          end if;
 
-         Gtk_New (Item, Label => "");
-         Append (Menu, Item);
-         Gtk_New (Item, Label => -"Add Variable");
-         Append (Menu, Item);
-         --  Context_Callback.Connect
-         --    (Item, "activate",
-         --     Context_Callback.To_Marshaller
-         --     (Add_Variable_Contextual'Access),
-         --     Selection_Context_Access (Context));
+         if Module_Name (Get_Creator (Context)) = Explorer_Module_Name then
+            Gtk_New (Item, Label => "");
+            Append (Menu, Item);
+            Gtk_New (Item, Label => -"Add Variable");
+            Append (Menu, Item);
+            --  Context_Callback.Connect
+            --    (Item, "activate",
+            --     Context_Callback.To_Marshaller
+            --     (Add_Variable_Contextual'Access),
+            --     Selection_Context_Access (Context));
+         end if;
 
          if Has_File_Information (File_Context) then
             Gtk_New (Item, Label => "");
