@@ -97,6 +97,30 @@ package body VCS.CVS is
    --  Just like Simple_Action, but assuming that Filenames is not
    --  empty and that all files in Filenames are from the same directory.
 
+   --------------
+   -- Handlers --
+   --------------
+
+   function Text_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Creates a file with the information from List, and display it in an
+   --  editor.
+
+   function Error_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Treat the output as an error.
+
+   function Status_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Parse the status information from List and display it in the VCS
+   --  explorer.
+
    ----------
    -- Free --
    ----------
@@ -125,11 +149,6 @@ package body VCS.CVS is
    --------------------------
    -- Error_Output_Handler --
    --------------------------
-
-   function Error_Output_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean;
 
    function Error_Output_Handler
      (Kernel : Kernel_Handle;
@@ -265,14 +284,9 @@ package body VCS.CVS is
       end loop;
    end Simple_Action;
 
-   --------------------------
+   ---------------------------
    -- Status_Output_Handler --
-   --------------------------
-
-   function Status_Output_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean;
+   ---------------------------
 
    function Status_Output_Handler
      (Kernel : Kernel_Handle;
@@ -960,11 +974,6 @@ package body VCS.CVS is
    function Text_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List) return Boolean;
-
-   function Text_Output_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
       L_Temp  : String_List.List := List;
@@ -1017,7 +1026,7 @@ package body VCS.CVS is
               Dir,
               Args,
               Command_Head,
-              Status_Output_Handler'Access);
+              Text_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
@@ -1054,7 +1063,7 @@ package body VCS.CVS is
               Dir,
               Args,
               Command_Head,
-              Status_Output_Handler'Access);
+              Text_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
