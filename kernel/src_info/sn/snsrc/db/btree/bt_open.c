@@ -413,13 +413,13 @@ tmp()
 	(void)snprintf(path,
 	    sizeof(path), "%s\\bt.XXXXXX", envtmp ? envtmp : "c:\\tmp");
 
-#ifndef __MSVC__
+#ifdef CYGWIN32
 	if ((fd = mkstemp(path)) != -1)
 		(void)unlink(path);
-#else /* __MSVC__ */
+#else /* CYGWIN32 */
 	if ((fd = _open(_mktemp(path),_O_RDWR|_O_BINARY)) != -1)
 		(void)unlink(path);
-#endif /* __MSVC__ */
+#endif /* CYGWIN32 */
 	return(fd);
 }
 
