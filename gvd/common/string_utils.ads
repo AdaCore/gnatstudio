@@ -289,12 +289,11 @@ package String_Utils is
    --  Convert all occurences of Directory_Separator to '/'.
 
    function To_Host_Pathname (Path : String) return String;
-   --  Convert all occurrences of '/' to Directory_Separator.
+   --  By default, return Path.
    --  If Directory_Separator is different than '/', the following
-   --  additional substitutions are operated:
+   --  substitution is operated:
    --  /cydrive/x/ -> x:\
-   --  //x/        -> x:\
-   --  where x is an single letter ('a'..'z' | 'A'..'Z')
+   --  where x is an single character.
 
    function To_File_Name (Name : in String) return String;
    --  Returns a file name from an ada subprogram/package name (ie converts '.'

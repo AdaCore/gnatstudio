@@ -522,8 +522,7 @@ package body String_Utils is
    ----------------------
 
    function To_Host_Pathname (Path : String) return String is
-      Result : String (Path'Range);
-      Cygdrv : constant String := "/cygdrive/";
+      Cygdrv : constant String := "cygdrive";
    begin
       if GNAT.OS_Lib.Directory_Separator = '/' then
          return Path;
@@ -531,36 +530,18 @@ package body String_Utils is
 
       --  Replace /cygdrive/x/ by x:\
 
-      if Path'Length > Cygdrv'Length + 1
-        and then Path (Path'First .. Path'First + Cygdrv'Length - 1) = Cygdrv
-        and then Path (Path'First + Cygdrv'Length + 1) = '/'
+      if Path'Length > Cygdrv'Length + 3
+        and then Is_Directory_Separator (Path (Path'First))
+        and then Path (Path'First + 1 .. Path'First + Cygdrv'Length) = Cygdrv
+        and then Is_Directory_Separator (Path (Path'First + Cygdrv'Length + 1))
+        and then Is_Directory_Separator (Path (Path'First + Cygdrv'Length + 3))
       then
          return
-           To_Host_Pathname
-             (Path (Path'First + Cygdrv'Length) & ":\" &
-              Path (Path'First + Cygdrv'Length + 2 .. Path'Last));
-
-      --  Replace //x/ by x:\
-      elsif Path'Length >= 4
-        and then Path (Path'First) = '/'
-        and then Path (Path'First + 1) = '/'
-        and then Path (Path'First + 3) = '/'
-      then
-         return
-           To_Host_Pathname
-             (Path (Path'First + 2) & ":\" &
-              Path (Path'First + 4 .. Path'Last));
+            Path (Path'First + Cygdrv'Length + 2) & ":\" &
+            Path (Path'First + Cygdrv'Length + 4 .. Path'Last);
+      else
+         return Path;
       end if;
-
-      for J in Result'Range loop
-         if Path (J) = '/' then
-            Result (J) := GNAT.OS_Lib.Directory_Separator;
-         else
-            Result (J) := Path (J);
-         end if;
-      end loop;
-
-      return Result;
    end To_Host_Pathname;
 
    ----------------------
