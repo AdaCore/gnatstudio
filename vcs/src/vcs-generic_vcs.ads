@@ -122,7 +122,7 @@ package VCS.Generic_VCS is
       Text  : String);
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.Generic_VCS module
 
    function Get_Identified_Actions

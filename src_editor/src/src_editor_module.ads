@@ -33,8 +33,8 @@ with Gtkada.MDI;         use Gtkada.MDI;
 
 with Src_Editor_Box;
 
-with Glide_Kernel;       use Glide_Kernel;
-with Glide_Kernel.Hooks; use Glide_Kernel.Hooks;
+with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 with String_List_Utils;  use String_List_Utils;
 with VFS;                use VFS;
 with Src_Contexts;
@@ -46,7 +46,7 @@ with HTables;
 
 package Src_Editor_Module is
 
-   Src_Editor_Module_Id : Glide_Kernel.Module_ID;
+   Src_Editor_Module_Id : GPS.Kernel.Module_ID;
    Src_Editor_Module_Name : constant String := "Source_Editor";
 
    Search_Result_Highlighting : constant String := "Search Results";
@@ -76,25 +76,25 @@ package Src_Editor_Module is
    -----------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
    function Find_Current_Editor
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Return the source editor that has currently the focus in the MDI.
    --  If the focus in the MDI is not set on a source editor, then the top most
    --  editor is returned.
 
    function Find_Editor
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
    --  Return the first child that contains an editor that edits file.
    --  null is returned if there are no such editor
    --  File can either be a file name or a buffer identifier.
 
    function Find_Other_Editor
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       View   : Gtk_Text_View;
       Buffer : Gtk_Text_Buffer) return Src_Editor_Box.Source_Editor_Box;
    --  Find an editor other than View that edits Buffer.
@@ -106,7 +106,7 @@ package Src_Editor_Module is
    --  Child doesn't contain an editor. null is returned Child is null.
 
    function Find_Child
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Editor : access Src_Editor_Box.Source_Editor_Box_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Return the MDI child containing Editor
@@ -214,13 +214,13 @@ private
    -- Source_Editor_Module --
    --------------------------
 
-   type Lines_Revealed_Hook_Record is new Glide_Kernel.Hooks.Hook_Args_Record
+   type Lines_Revealed_Hook_Record is new GPS.Kernel.Hooks.Hook_Args_Record
       with null record;
    type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
    procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data   : access Glide_Kernel.Hooks.Hooks_Data'Class);
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Hook called when the "source_lines_revealed" hook is run.
 
    type Source_Editor_Module_Record is new Module_ID_Record with record

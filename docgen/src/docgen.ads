@@ -26,7 +26,7 @@
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with List_Utils;                use List_Utils;
 with Entities;                  use Entities;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel;              use GPS.Kernel;
 with VFS;
 with Generic_List;
 with HTables;
@@ -246,7 +246,7 @@ package Docgen is
    --  Return true if the file is found in the source file list
 
    function Is_Spec_File
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Boolean;
    --  Return whether the File is a Spec file
 

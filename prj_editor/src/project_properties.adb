@@ -24,16 +24,16 @@ with Glib.Values;               use Glib.Values;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
 with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
@@ -207,7 +207,7 @@ package body Project_Properties is
 
    procedure Generate_Project
      (Page               : access XML_Project_Wizard_Page;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean);
@@ -556,7 +556,7 @@ package body Project_Properties is
    --  This implies Ignore_Editor
 
    procedure Customize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
@@ -977,7 +977,7 @@ package body Project_Properties is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
    begin
       Properties_Module_ID := new Properties_Module_ID_Record;
@@ -1445,7 +1445,7 @@ package body Project_Properties is
    ---------------
 
    procedure Customize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
@@ -3447,7 +3447,7 @@ package body Project_Properties is
 
    procedure Generate_Project
      (Page               : access XML_Project_Wizard_Page;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean)
@@ -3488,7 +3488,7 @@ package body Project_Properties is
    --------------------------------
 
    function Attribute_Editors_Page_Box
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project           : Projects.Project_Type;
       General_Page_Box : Gtk.Box.Gtk_Box := null;
       Path_Widget       : access Gtk.GEntry.Gtk_Entry_Record'Class;
@@ -3690,7 +3690,7 @@ package body Project_Properties is
 
    procedure Edit_Properties
      (Project : Project_Type;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel), Sorted => False);

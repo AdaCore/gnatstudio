@@ -31,14 +31,14 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
 with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -146,7 +146,7 @@ package body Shell_Script is
    ---------------------
 
    type Shell_Scripting_Record is new Scripting_Language_Record with record
-      Kernel    : Glide_Kernel.Kernel_Handle;
+      Kernel    : GPS.Kernel.Kernel_Handle;
       Blocked   : Boolean := False;
       Console   : Shell_Console;
       Instances : Instances_List.List;
@@ -379,7 +379,7 @@ package body Shell_Script is
    --  Return an instance from its address
 
    function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Errors  : access Boolean) return String;
    --  n a command in the GPS shell and returns its result.
@@ -387,7 +387,7 @@ package body Shell_Script is
    --  newlines. The return value is the result of the last command.
 
    function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List;
       Errors  : access Boolean) return String;
@@ -734,7 +734,7 @@ package body Shell_Script is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Script : Shell_Scripting;
    begin
@@ -743,8 +743,8 @@ package body Shell_Script is
         (Module      => Module_ID (Shell_Module_Id),
          Kernel      => Kernel,
          Module_Name => "Shell script",
-         Priority    => Glide_Kernel.Default_Priority);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+         Priority    => GPS.Kernel.Default_Priority);
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Script := new Shell_Scripting_Record;
@@ -1159,7 +1159,7 @@ package body Shell_Script is
    -------------------------------
 
    function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List;
       Errors  : access Boolean) return String
@@ -1305,7 +1305,7 @@ package body Shell_Script is
    -------------------------------
 
    function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Errors  : access Boolean) return String
    is

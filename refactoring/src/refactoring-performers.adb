@@ -22,8 +22,8 @@ with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Commands;              use Commands;
-with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Glide_Intl;            use Glide_Intl;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;

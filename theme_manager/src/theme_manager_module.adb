@@ -18,11 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Custom;      use Glide_Kernel.Custom;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Custom;      use GPS.Kernel.Custom;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Default_Preferences;      use Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
 with Glib.Xml_Int;             use Glib.Xml_Int;
@@ -583,7 +583,7 @@ package body Theme_Manager_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Theme     : constant Theme_Editor := new Theme_Editor_Record;
    begin
@@ -603,7 +603,7 @@ package body Theme_Manager_Module is
       Register_Property (Kernel, Param_Spec (Active_Themes), -"General");
 
       Theme.Kernel := Kernel_Handle (Kernel);
-      Glide_Kernel.Preferences.Register_Page (Kernel, Theme);
+      GPS.Kernel.Preferences.Register_Page (Kernel, Theme);
    end Register_Module;
 
 end Theme_Manager_Module;

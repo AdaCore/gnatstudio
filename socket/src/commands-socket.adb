@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package body Commands.Socket is
 
@@ -30,7 +30,7 @@ package body Commands.Socket is
      (Item    : out Socket_Command_Access;
       Kernel  : Kernel_Handle;
       Command : String;
-      Shell   : String := Glide_Kernel.Scripts.GPS_Shell_Name;
+      Shell   : String := GPS.Kernel.Scripts.GPS_Shell_Name;
       Stream  : Stream_Access) is
    begin
       Item         := new Socket_Command;

@@ -20,7 +20,7 @@
 
 --  This package is used to define custom combo entries in the GPS toolbar
 
-with Glide_Kernel;         use Glide_Kernel;
+with GPS.Kernel;         use GPS.Kernel;
 
 package Custom_Combos is
 

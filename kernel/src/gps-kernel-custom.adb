@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,12 +27,12 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with System.Assertions;         use System.Assertions;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with Glide_Intl;                use Glide_Intl;
 with File_Utils;                use File_Utils;
 with VFS;                       use VFS;
 
-package body Glide_Kernel.Custom is
+package body GPS.Kernel.Custom is
 
    Me                       : constant Debug_Handle :=
      Create ("Kernel.Custom");
@@ -129,7 +129,7 @@ package body Glide_Kernel.Custom is
                   if File_Node = null then
                      Trace (Me, "Could not parse XML file: " & F);
                      Insert (Kernel, Error.all,
-                             Mode => Glide_Kernel.Console.Error);
+                             Mode => GPS.Kernel.Console.Error);
                      Free (Error);
                   else
                      Execute_Customization_String
@@ -142,7 +142,7 @@ package body Glide_Kernel.Custom is
                when Assert_Failure =>
                   Console.Insert
                     (Kernel, -"Could not parse custom file " & F,
-                     Mode => Glide_Kernel.Console.Error);
+                     Mode => GPS.Kernel.Console.Error);
             end;
          end loop;
 
@@ -159,7 +159,7 @@ package body Glide_Kernel.Custom is
    ---------------------------
 
    procedure Load_All_Custom_Files
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       System_Directory : constant String :=
         Get_System_Dir (Kernel) & "share/gps/customize/";
@@ -238,7 +238,7 @@ package body Glide_Kernel.Custom is
    ------------------------------
 
    function Add_Customization_String
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Customization : UTF8_String;
       From_File     : String;
       Start_Line    : Positive := 1) return String
@@ -329,5 +329,5 @@ package body Glide_Kernel.Custom is
          return "Internal error";
    end Add_Customization_String;
 
-end Glide_Kernel.Custom;
+end GPS.Kernel.Custom;
 

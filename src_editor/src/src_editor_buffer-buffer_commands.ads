@@ -28,7 +28,7 @@ package Src_Editor_Buffer.Buffer_Commands is
 
    type Jump_To_Delimiter_Command is new Interactive_Command
       with record
-         Kernel : Glide_Kernel.Kernel_Handle;
+         Kernel : GPS.Kernel.Kernel_Handle;
       end record;
    function Execute
      (Command : access Jump_To_Delimiter_Command;
@@ -36,7 +36,7 @@ package Src_Editor_Buffer.Buffer_Commands is
    --  Jump to the next delimiter for the one currently under the cursor.
 
    type Completion_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
    end record;
    function Execute
      (Command : access Completion_Command;

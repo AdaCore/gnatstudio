@@ -23,14 +23,14 @@ with Glib;            use Glib;
 with Gtk.Enums;       use Gtk.Enums;
 with Glide_Intl; use Glide_Intl;
 with Gtk.Tooltips; use Gtk.Tooltips;
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with Gtk.Frame;    use Gtk.Frame;
 
 package body Vsearch_Pkg is
 
    procedure Gtk_New
      (Vsearch : out Vsearch_Access;
-      Handle  : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      Handle  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Vsearch := new Vsearch_Record;
       Vsearch_Pkg.Initialize (Vsearch, Handle);
@@ -38,7 +38,7 @@ package body Vsearch_Pkg is
 
    procedure Initialize
      (Vsearch : access Vsearch_Record'Class;
-      Handle  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Handle  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       pragma Suppress (All_Checks);
       Tooltips : Gtk_Tooltips;

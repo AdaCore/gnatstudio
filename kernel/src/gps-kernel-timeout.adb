@@ -39,9 +39,9 @@ with Ada.Unchecked_Conversion;
 with String_Utils;         use String_Utils;
 with Traces;               use Traces;
 
-with Glide_Kernel;               use Glide_Kernel;
-with Glide_Kernel.Console;       use Glide_Kernel.Console;
-with Glide_Kernel.MDI;           use Glide_Kernel.MDI;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with Interactive_Consoles;       use Interactive_Consoles;
 with System;                     use System;
 
@@ -53,7 +53,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Unchecked_Deallocation;
 
-package body Glide_Kernel.Timeout is
+package body GPS.Kernel.Timeout is
 
    type Console_Process_Data is new GObject_Record with record
       Console   : Interactive_Console;
@@ -270,7 +270,7 @@ package body Glide_Kernel.Timeout is
       begin
          if Exec = null then
             Success := False;
-            Glide_Kernel.Console.Insert
+            GPS.Kernel.Console.Insert
               (Kernel, -"Executable not found on PATH: " & Command,
                Mode => Error);
             return;
@@ -330,7 +330,7 @@ package body Glide_Kernel.Timeout is
       exception
          when Invalid_Process =>
             Success := False;
-            Glide_Kernel.Console.Insert
+            GPS.Kernel.Console.Insert
               (Kernel, -"Invalid command", Mode => Error);
       end Spawn;
 
@@ -451,4 +451,4 @@ package body Glide_Kernel.Timeout is
          return False;
    end Delete_Handler;
 
-end Glide_Kernel.Timeout;
+end GPS.Kernel.Timeout;

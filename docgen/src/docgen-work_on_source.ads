@@ -37,7 +37,7 @@
 --  and body files. The private functions used will call backend subprograms.
 
 with VFS;
-with Glide_Kernel;
+with GPS.Kernel;
 with Docgen.Backend;
 
 package Docgen.Work_On_Source is
@@ -45,7 +45,7 @@ package Docgen.Work_On_Source is
    procedure Process_Source
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access
-        Glide_Kernel.Kernel_Handle_Record'Class;
+        GPS.Kernel.Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
@@ -79,7 +79,7 @@ package Docgen.Work_On_Source is
 
    procedure Process_Unit_Index
      (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options;
       Level            : in out Natural);
@@ -88,7 +88,7 @@ package Docgen.Work_On_Source is
    procedure Process_Subprogram_Index
      (B                             : access Docgen.Backend.Backend'Class;
       Kernel                        : access
-        Glide_Kernel.Kernel_Handle_Record'Class;
+        GPS.Kernel.Kernel_Handle_Record'Class;
       Subprogram_Index_List         : Docgen.Type_Entity_List.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
       Source_File_List              : Type_Source_File_Table.HTable;
@@ -99,7 +99,7 @@ package Docgen.Work_On_Source is
 
    procedure Process_Type_Index
      (B                       : access Docgen.Backend.Backend'Class;
-      Kernel                  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel                  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Index_List         : Docgen.Type_Entity_List.List;
       Private_Type_Index_List : in out Type_Entity_List.List;
       Source_File_List        : Type_Source_File_Table.HTable;
@@ -111,7 +111,7 @@ package Docgen.Work_On_Source is
    procedure Process_Tagged_Type_Index
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access
-        Glide_Kernel.Kernel_Handle_Record'Class;
+        GPS.Kernel.Kernel_Handle_Record'Class;
       Tagged_Type_Index_List    : List_Entity_Information.List;
       Private_Tagged_Types_List : in out List_Entity_Information.List;
       Source_File_List          : in out Type_Source_File_Table.HTable;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,7 @@ with GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with Interactive_Consoles;
 
-package Glide_Kernel.Timeout is
+package GPS.Kernel.Timeout is
 
    type Process_Data;
 
@@ -71,8 +71,8 @@ package Glide_Kernel.Timeout is
    --  Exit_Callback will be called when the underlying process dies.
    --
    --  Output is sent to Console, if not null, or discarded otherwise.
-   --  Check Glide_Kernel.Console.Create_Interactive_Console and
-   --  Glide_Kernel.Console.Get_Console.
+   --  Check GPS.Kernel.Console.Create_Interactive_Console and
+   --  GPS.Kernel.Console.Get_Console.
    --  If Show_Command is True and the output is displayed, the command
    --  itself is displayed in the console.
    --
@@ -98,4 +98,4 @@ package Glide_Kernel.Timeout is
       Fd            : out GNAT.Expect.Process_Descriptor_Access);
    --  Same as above, and returns the created Process_Descriptor
 
-end Glide_Kernel.Timeout;
+end GPS.Kernel.Timeout;

@@ -35,23 +35,23 @@ with Gtk.Window;                  use Gtk.Window;
 with Gtk.Rc;
 
 with Glide_Menu;
-with Glide_Main_Window;
+with GPS.Main_Window;
 with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with File_Utils;
 with String_Utils;
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.Custom;         use Glide_Kernel.Custom;
-with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Kernel.Timeout;        use Glide_Kernel.Timeout;
-with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Gtkada.Intl;                 use Gtkada.Intl;
 with Gtkada.Dialogs;              use Gtkada.Dialogs;
 with Gtkada.MDI;                  use Gtkada.MDI;
@@ -71,8 +71,8 @@ with GUI_Utils;                   use GUI_Utils;
 with Remote_Connections;
 with System;
 
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -98,7 +98,7 @@ with VFS_Module;
 with Vdiff_Module;
 with Vdiff2_Module;
 with Builder_Module;
-with Glide_Kernel.Console;
+with GPS.Kernel.Console;
 with GPS.Location_View;
 with Navigation_Module;
 with Custom_Module;
@@ -117,7 +117,7 @@ with Outline_View;
 with Socket_Module;
 
 procedure GPS.Main is
-   use Glide_Main_Window;
+   use GPS.Main_Window;
 
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
@@ -165,7 +165,7 @@ procedure GPS.Main is
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
-   GPS_Window             : Glide_Window;
+   GPS_Main               : GPS_Window;
    Directory              : Dir_Type;
    Str                    : String (1 .. 1024);
    Last                   : Natural;
@@ -277,14 +277,14 @@ procedure GPS.Main is
 
    procedure Display_Splash_Screen is
       File   : constant String := Format_Pathname
-        (GPS_Window.Prefix_Directory.all & "/share/gps/gps-splash.png");
+        (GPS_Main.Prefix_Directory.all & "/share/gps/gps-splash.png");
       Image  : Gtk_Image;
       Pixbuf : Gdk_Pixbuf;
       Error  : GError;
       FD     : File_Descriptor;
 
    begin
-      if Get_Pref (GPS_Window.Kernel, Splash_Screen)
+      if Get_Pref (GPS_Main.Kernel, Splash_Screen)
         and then Is_Regular_File (File)
       then
          FD := Open_Read (File, Binary);
@@ -555,11 +555,11 @@ procedure GPS.Main is
              ") hosted on " & Config.Target);
 
       Gtk_New
-        (GPS_Window, "<gps>", Glide_Menu.Glide_Menu_Items.all,
+        (GPS_Main, "<gps>", Glide_Menu.Glide_Menu_Items.all,
          Dir.all, Prefix.all);
 
       About_Contents := Read_File
-        (Format_Pathname (GPS_Window.Prefix_Directory.all &
+        (Format_Pathname (GPS_Main.Prefix_Directory.all &
                           "/share/gps/about.txt"));
 
       if About_Contents = null then
@@ -568,25 +568,25 @@ procedure GPS.Main is
 
       if Is_Regular_File
         (Format_Pathname
-           (GPS_Window.Prefix_Directory.all & "/share/gps/gps-pro.txt"))
+           (GPS_Main.Prefix_Directory.all & "/share/gps/gps-pro.txt"))
       then
-         GPS_Window.Public_Version := False;
+         GPS_Main.Public_Version := False;
       end if;
 
-      Reset_Title (GPS_Window);
+      Reset_Title (GPS_Main);
 
-      Glide_Menu.Register_Common_Menus (GPS_Window.Kernel);
+      Glide_Menu.Register_Common_Menus (GPS_Main.Kernel);
 
       Kernel_Callback.Connect
-        (Get_MDI (GPS_Window.Kernel), "child_selected",
-         Child_Selected'Unrestricted_Access, GPS_Window.Kernel);
+        (Get_MDI (GPS_Main.Kernel), "child_selected",
+         Child_Selected'Unrestricted_Access, GPS_Main.Kernel);
       Kernel_Callback.Connect
-        (Get_MDI (GPS_Window.Kernel), "child_title_changed",
-         Title_Changed'Unrestricted_Access, GPS_Window.Kernel);
+        (Get_MDI (GPS_Main.Kernel), "child_title_changed",
+         Title_Changed'Unrestricted_Access, GPS_Main.Kernel);
 
-      DDE.Register_DDE_Server (GPS_Window.Kernel);
+      DDE.Register_DDE_Server (GPS_Main.Kernel);
 
-      GPS_Window.Debug_Mode := True;
+      GPS_Main.Debug_Mode := True;
 
       Parse_Switches;
       Display_Splash_Screen;
@@ -594,11 +594,11 @@ procedure GPS.Main is
       if Splash = null then
          Timeout_Id := Process_Timeout.Add
            (1, Finish_Setup'Unrestricted_Access,
-            (GPS_Window.Kernel, null, null, null, System.Null_Address));
+            (GPS_Main.Kernel, null, null, null, System.Null_Address));
       else
          Timeout_Id := Process_Timeout.Add
            (Splash_Timeout, Finish_Setup'Unrestricted_Access,
-            (GPS_Window.Kernel, null, null, null, System.Null_Address));
+            (GPS_Main.Kernel, null, null, null, System.Null_Address));
       end if;
    end Init_Settings;
 
@@ -620,13 +620,13 @@ procedure GPS.Main is
                   --  --version
                   when 'v' =>
                      if Config.Can_Output then
-                        Put_Line (GPS_Name (GPS_Window) & " version " &
+                        Put_Line (GPS_Name (GPS_Main) & " version " &
                                   Config.Version & " (" &
                                   Config.Source_Date & ") hosted on " &
                                   Config.Target);
                      else
                         Button := Message_Dialog
-                          (GPS_Name (GPS_Window) & " version " &
+                          (GPS_Name (GPS_Main) & " version " &
                            Config.Version & " (" &
                            Config.Source_Date & ") hosted on " & Config.Target,
                            Information, Button_OK,
@@ -662,8 +662,8 @@ procedure GPS.Main is
                   when 'd' =>
                      --  --debug
                      if Full_Switch = "-debug" then
-                        Free (GPS_Window.Program_Args);
-                        GPS_Window.Program_Args :=
+                        Free (GPS_Main.Program_Args);
+                        GPS_Main.Program_Args :=
                           new String'(Clean_Parameter);
 
                      else
@@ -671,9 +671,9 @@ procedure GPS.Main is
                         Free (Debugger_Name);
                         Debugger_Name := new String'(Parameter);
 
-                        if GPS_Window.Program_Args = null then
+                        if GPS_Main.Program_Args = null then
                            --  --debugger implies --debug
-                           GPS_Window.Program_Args := new String'("");
+                           GPS_Main.Program_Args := new String'("");
                         end if;
                      end if;
 
@@ -777,7 +777,7 @@ procedure GPS.Main is
    procedure Help is
       use ASCII;
       Help_String : constant String :=
-        GPS_Name (GPS_Window) & " " & Config.Version & " (" &
+        GPS_Name (GPS_Main) & " " & Config.Version & " (" &
         Config.Source_Date & ")" &
         (-", the GNAT Programming System.") & LF
         & (-"Usage:") & LF
@@ -843,7 +843,7 @@ procedure GPS.Main is
       for J in Batch'Range loop
          if Batch (J) = ':' then
             Script := Lookup_Scripting_Language
-              (GPS_Window.Kernel, Batch (Batch'First .. J - 1));
+              (GPS_Main.Kernel, Batch (Batch'First .. J - 1));
 
             if Script = null then
                exit;
@@ -870,12 +870,12 @@ procedure GPS.Main is
       if not Executed then
          if As_File then
             Insert
-              (GPS_Window.Kernel,
+              (GPS_Main.Kernel,
                -"Language unknown for --load command line switch",
                Mode => Error);
          else
             Insert
-              (GPS_Window.Kernel,
+              (GPS_Main.Kernel,
                -"Language unknown for --script command line switch",
                Mode => Error);
          end if;
@@ -884,11 +884,11 @@ procedure GPS.Main is
    exception
       when E : others =>
          if As_File then
-            Insert (GPS_Window.Kernel,
+            Insert (GPS_Main.Kernel,
                     -"Error when executing the script for -batch switch",
                     Mode => Error);
          else
-            Insert (GPS_Window.Kernel,
+            Insert (GPS_Main.Kernel,
                     -"Error when executing the script for --script switch",
                     Mode => Error);
          end if;
@@ -902,7 +902,7 @@ procedure GPS.Main is
 
    function Finish_Setup (Data : Process_Data) return Boolean is
       Key               : constant String :=
-        Get_Home_Dir (GPS_Window.Kernel) & "custom_key";
+        Get_Home_Dir (GPS_Main.Kernel) & "custom_key";
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
       Project           : Projects.Project_Type;
@@ -934,13 +934,13 @@ procedure GPS.Main is
          if Project_Name /= null
            and then Is_Regular_File (Project_Name.all)
          then
-            Load_Project (GPS_Window.Kernel, Project_Name.all);
-            Project := Get_Project (GPS_Window.Kernel);
+            Load_Project (GPS_Main.Kernel, Project_Name.all);
+            Project := Get_Project (GPS_Main.Kernel);
          else
             Load_Default_Project
-              (GPS_Window.Kernel, Get_Current_Dir,
+              (GPS_Main.Kernel, Get_Current_Dir,
                Load_Default_Desktop => True);
-            Project := Get_Project (GPS_Window.Kernel);
+            Project := Get_Project (GPS_Main.Kernel);
             Set_Status (Project, From_Executable);
          end if;
 
@@ -987,7 +987,7 @@ procedure GPS.Main is
               (new String'("ada"), new String'("c"), new String'("c++")));
 
          Set_Project_Modified (Project, False);
-         Recompute_View (GPS_Window.Kernel);
+         Recompute_View (GPS_Main.Kernel);
       end Setup_Debug;
 
       -------------------
@@ -1028,7 +1028,7 @@ procedure GPS.Main is
          end if;
 
          if Batch_File /= null then
-            Load_Default_Project (GPS_Window.Kernel, Get_Current_Dir);
+            Load_Default_Project (GPS_Main.Kernel, Get_Current_Dir);
             return True;
          end if;
 
@@ -1041,9 +1041,9 @@ procedure GPS.Main is
          --  Load the project selected by the user
 
          if Project_Name = null then
-            Gtk_New (Screen, GPS_Window.Kernel);
+            Gtk_New (Screen, GPS_Main.Kernel);
          else
-            Gtk_New (Screen, GPS_Window.Kernel, Project_Name.all);
+            Gtk_New (Screen, GPS_Main.Kernel, Project_Name.all);
          end if;
 
          --  Remove the splash screen, since it conflicts with the
@@ -1095,22 +1095,22 @@ procedure GPS.Main is
 
                if not Auto_Load_Project and then not File_Opened then
                   Load_Default_Project
-                    (GPS_Window.Kernel, Get_Current_Dir,
+                    (GPS_Main.Kernel, Get_Current_Dir,
                      Load_Default_Desktop => True);
                end if;
 
                if S (S'First) = '=' then
                   Open_File_Editor
-                    (GPS_Window.Kernel,
+                    (GPS_Main.Kernel,
                      Create (S (S'First + 1 .. S'Last),
-                             GPS_Window.Kernel,
+                             GPS_Main.Kernel,
                              Use_Source_Path => True,
                              Use_Object_Path => False));
                else
                   Open_File_Editor
-                    (GPS_Window.Kernel,
+                    (GPS_Main.Kernel,
                      Create (S,
-                             GPS_Window.Kernel,
+                             GPS_Main.Kernel,
                              Use_Source_Path => False,
                              Use_Object_Path => False));
                end if;
@@ -1128,7 +1128,7 @@ procedure GPS.Main is
 
          if not Auto_Load_Project and then not File_Opened then
             Load_Default_Project
-              (GPS_Window.Kernel, Get_Current_Dir,
+              (GPS_Main.Kernel, Get_Current_Dir,
                Load_Default_Desktop => False);
          end if;
       end Load_Sources;
@@ -1146,12 +1146,12 @@ procedure GPS.Main is
       --  Register the default filters, so that other modules can create
       --  contextual menus
 
-      Glide_Kernel.Contexts.Register_Default_Filters (GPS_Window.Kernel);
+      GPS.Kernel.Contexts.Register_Default_Filters (GPS_Main.Kernel);
 
       --  Register this module first, in case someone needs to print a message
       --  in the console right away
 
-      Glide_Kernel.Console.Register_Module (GPS_Window.Kernel);
+      GPS.Kernel.Console.Register_Module (GPS_Main.Kernel);
 
       --  Register the remote protocols early so that other modules can access
       --  remote files.
@@ -1166,13 +1166,13 @@ procedure GPS.Main is
 
       --  Register all modules (scripting languages must be registered first)
 
-      Shell_Script.Register_Module (GPS_Window.Kernel);
+      Shell_Script.Register_Module (GPS_Main.Kernel);
 
       if Active (Python_Trace) then
-         Python_Module.Register_Module (GPS_Window.Kernel);
+         Python_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      Register_Default_Script_Commands (GPS_Window.Kernel);
+      Register_Default_Script_Commands (GPS_Main.Kernel);
 
       --  Needs to be called after the default commands have been registered,
       --  in particular GPS.Console
@@ -1180,167 +1180,167 @@ procedure GPS.Main is
          Python_Module.Initialize_IO;
       end if;
 
-      GPS.Location_View.Register_Commands (GPS_Window.Kernel);
+      GPS.Location_View.Register_Commands (GPS_Main.Kernel);
 
       --  We then must register the keymanager, so that other modules can
       --  register their keys
 
-      KeyManager_Module.Register_Module (GPS_Window.Kernel);
-      Register_Keys (GPS_Window);
+      KeyManager_Module.Register_Module (GPS_Main.Kernel);
+      Register_Keys (GPS_Main);
 
       --  Register the standard hooks. Other modules were able to connect to
       --  these earlier anyway, but these add shell commands, and therefore
       --  must be loaded after the script modules
 
-      Register_Action_Hooks (GPS_Window.Kernel);
-      Register_Standard_Hooks (GPS_Window.Kernel);
+      Register_Action_Hooks (GPS_Main.Kernel);
+      Register_Standard_Hooks (GPS_Main.Kernel);
 
       --  Load the theme manager module immediately, so that any customization
       --  file or module can provide its own themes.
 
-      Theme_Manager_Module.Register_Module (GPS_Window.Kernel);
+      Theme_Manager_Module.Register_Module (GPS_Main.Kernel);
 
-      Vsearch_Ext.Register_Module (GPS_Window.Kernel);
+      Vsearch_Ext.Register_Module (GPS_Main.Kernel);
 
       if Active (Help_Trace) then
-         Help_Module.Register_Module (GPS_Window.Kernel);
+         Help_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      Navigation_Module.Register_Module (GPS_Window.Kernel);
+      Navigation_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (Metrics_Trace) then
-         Metrics_Module.Register_Module (GPS_Window.Kernel);
+         Metrics_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Call_Graph_Trace) then
-         Browsers.Call_Graph.Register_Module (GPS_Window.Kernel);
+         Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Dependency_Trace) then
-         Browsers.Dependency_Items.Register_Module (GPS_Window.Kernel);
+         Browsers.Dependency_Items.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Project_Browser_Trace) then
-         Browsers.Projects.Register_Module (GPS_Window.Kernel);
+         Browsers.Projects.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Entities_Browser_Trace) then
-         Browsers.Entities.Register_Module (GPS_Window.Kernel);
+         Browsers.Entities.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Project_Viewer_Trace) then
-         Project_Viewers.Register_Module (GPS_Window.Kernel);
+         Project_Viewers.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Project_Properties_Trace) then
-         Project_Properties.Register_Module (GPS_Window.Kernel);
+         Project_Properties.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Aliases_Trace) then
-         Aliases_Module.Register_Module (GPS_Window.Kernel);
+         Aliases_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      Src_Editor_Module.Register_Module (GPS_Window.Kernel);
+      Src_Editor_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (Project_Explorer_Trace) then
-         Project_Explorers.Register_Module (GPS_Window.Kernel);
+         Project_Explorers.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Files_Explorer_Trace) then
-         Project_Explorers_Files.Register_Module (GPS_Window.Kernel);
+         Project_Explorers_Files.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Outline_View_Trace) then
-         Outline_View.Register_Module (GPS_Window.Kernel);
+         Outline_View.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (External_Editor_Trace) then
-         External_Editor_Module.Register_Module (GPS_Window.Kernel);
+         External_Editor_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (GVD_Trace) then
-         GVD_Module.Register_Module (GPS_Window.Kernel);
+         GVD_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      Builder_Module.Register_Module (GPS_Window.Kernel);
+      Builder_Module.Register_Module (GPS_Main.Kernel);
 
-      if Get_Pref (GPS_Window.Kernel, Old_Vdiff) then
-         Vdiff_Module.Register_Module (GPS_Window.Kernel);
+      if Get_Pref (GPS_Main.Kernel, Old_Vdiff) then
+         Vdiff_Module.Register_Module (GPS_Main.Kernel);
       else
-         Vdiff2_Module.Register_Module (GPS_Window.Kernel);
+         Vdiff2_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (VCS_Trace) then
-         VCS_Module.Register_Module (GPS_Window.Kernel);
-         VCS.ClearCase.Register_Module (GPS_Window.Kernel);
+         VCS_Module.Register_Module (GPS_Main.Kernel);
+         VCS.ClearCase.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Aunit_Trace) then
-         Aunit_Module.Register_Module (GPS_Window.Kernel);
+         Aunit_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (VFS_Trace) then
-         VFS_Module.Register_Module (GPS_Window.Kernel);
+         VFS_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Codefix_Trace) then
-         Codefix_Module.Register_Module (GPS_Window.Kernel);
+         Codefix_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      Glide_Kernel.Task_Manager.Register_Module (GPS_Window.Kernel);
-      Glide_Kernel.Preferences.Register_Module (GPS_Window.Kernel);
+      GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
+      GPS.Kernel.Preferences.Register_Module (GPS_Main.Kernel);
 
       if Active (Custom_Trace) then
-         Custom_Module.Register_Module (GPS_Window.Kernel);
+         Custom_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      GPS.Location_View.Register_Module (GPS_Window.Kernel);
+      GPS.Location_View.Register_Module (GPS_Main.Kernel);
 
       if Active (Refactor_Trace) then
-         Refactoring_Module.Register_Module (GPS_Window.Kernel);
+         Refactoring_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Docgen_Trace) then
-         Docgen_Module.Register_Module (GPS_Window.Kernel);
+         Docgen_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       --  Register the supported languages and their associated LI handlers.
 
-      Ada_Module.Register_Module (GPS_Window.Kernel);
+      Ada_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (CPP_Trace) then
-         Cpp_Module.Register_Module (GPS_Window.Kernel);
+         Cpp_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       --  Load system files
 
       if Active (Custom_Trace) then
-         Load_All_Custom_Files (GPS_Window.Kernel);
+         Load_All_Custom_Files (GPS_Main.Kernel);
       end if;
 
       --  Do this after the custom files, since this will override other
       --  The comment above is unfinished ???
 
       if Active (Action_Editor_Trace) then
-         Action_Editor.Register_Module (GPS_Window.Kernel);
+         Action_Editor.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Server_Mode then
-         Socket_Module.Register_Module (GPS_Window.Kernel, Port_Number);
+         Socket_Module.Register_Module (GPS_Main.Kernel, Port_Number);
       end if;
 
       --  Load preferences, but only after loading custom files, to make sure
       --  the themes loaded at startup are still overriden by the user's
       --  local choices.
 
-      Load_Preferences (GPS_Window.Kernel);
+      Load_Preferences (GPS_Main.Kernel);
 
       --  Load the customization files before loading the actual projects,
       --  so that the usual hooks are taken into account right from the
       --  beginning
 
       if Active (Python_Trace) then
-         Python_Module.Load_Python_Startup_Files (GPS_Window.Kernel);
+         Python_Module.Load_Python_Startup_Files (GPS_Main.Kernel);
       end if;
 
       --  Temporarily disable unimplemented menu items
@@ -1350,19 +1350,19 @@ procedure GPS.Main is
          Tools    : constant String := '/' & (-"Tools") & '/';
       begin
          Set_Sensitive (Find_Menu_Item
-           (GPS_Window.Kernel, Navigate & (-"Goto Parent Unit")), False);
+           (GPS_Main.Kernel, Navigate & (-"Goto Parent Unit")), False);
          Set_Sensitive (Find_Menu_Item
-           (GPS_Window.Kernel, Tools & (-"Profile")), False);
+           (GPS_Main.Kernel, Tools & (-"Profile")), False);
          Set_Sensitive (Find_Menu_Item
-           (GPS_Window.Kernel, Tools & (-"Memory Analyzer")), False);
+           (GPS_Main.Kernel, Tools & (-"Memory Analyzer")), False);
       end;
 
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
 
       Console.Insert
-        (GPS_Window.Kernel,
-         -"Welcome to " & GPS_Name (GPS_Window) & " " & Config.Version &
+        (GPS_Main.Kernel,
+         -"Welcome to " & GPS_Name (GPS_Main) & " " & Config.Version &
          " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & ASCII.LF &
          (-"the GNAT Programming System") & ASCII.LF & About_Contents.all &
@@ -1375,7 +1375,7 @@ procedure GPS.Main is
       --  If no project has been specified on the command line, try to open
       --  the first one in the current directory (if any).
 
-      if GPS_Window.Program_Args /= null then
+      if GPS_Main.Program_Args /= null then
          --  --debug has been specified
          --  Load project, and set debugger-related project properties
 
@@ -1384,7 +1384,7 @@ procedure GPS.Main is
       elsif Project_Name = null then
          if Server_Mode then
             Auto_Load_Project := True;
-            Load_Default_Project (GPS_Window.Kernel, Get_Current_Dir);
+            Load_Default_Project (GPS_Main.Kernel, Get_Current_Dir);
             Load_Sources;
 
          else
@@ -1395,14 +1395,14 @@ procedure GPS.Main is
       end if;
 
       if Auto_Load_Project and then Project_Name /= null then
-         Load_Project (GPS_Window.Kernel, Project_Name.all);
+         Load_Project (GPS_Main.Kernel, Project_Name.all);
          Load_Sources;
       end if;
 
       if not File_Opened
-        and then not Has_User_Desktop (GPS_Window.Kernel)
+        and then not Has_User_Desktop (GPS_Main.Kernel)
       then
-         Display_Welcome_Page (GPS_Window.Kernel);
+         Display_Welcome_Page (GPS_Main.Kernel);
       end if;
 
       if Splash /= null then
@@ -1417,11 +1417,11 @@ procedure GPS.Main is
          Execute_Batch (Batch_File.all, As_File => True);
       end if;
 
-      if GPS_Window.Program_Args /= null then
+      if GPS_Main.Program_Args /= null then
          --  Initialize the debugger after having executed scripts if any,
          --  so that it is possible to set up the environment before starting
          --  a debug session.
-         GVD_Module.Initialize_Debugger (GPS_Window.Kernel);
+         GVD_Module.Initialize_Debugger (GPS_Main.Kernel);
       end if;
 
       --  Load the preferences set when creating the kernel.
@@ -1429,17 +1429,17 @@ procedure GPS.Main is
       --  created, to be sure they are realized and will take the preferences
       --  into account.
 
-      Run_Hook (GPS_Window.Kernel, Preferences_Changed_Hook);
+      Run_Hook (GPS_Main.Kernel, Preferences_Changed_Hook);
 
       if not Hide_GPS then
-         Show (GPS_Window);
+         Show (GPS_Main);
       end if;
 
       Started := True;
 
       --  Set the title of the GPS window.
       Set_Main_Title
-        (GPS_Window.Kernel, Get_Focus_Child (Get_MDI (GPS_Window.Kernel)));
+        (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
       return False;
    end Finish_Setup;
@@ -1469,10 +1469,10 @@ procedure GPS.Main is
    begin
       if Started then
          if Child = null then
-            Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
+            Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
          else
             Reset_Title
-              (Glide_Window (Get_Main_Window (Kernel)),
+              (GPS_Window (Get_Main_Window (Kernel)),
                Get_Short_Title (Child));
          end if;
       end if;
@@ -1502,7 +1502,7 @@ procedure GPS.Main is
    ---------------------
 
    procedure Main_Processing is
-      Log_File : aliased String := Get_Home_Dir (GPS_Window.Kernel) & "log";
+      Log_File : aliased String := Get_Home_Dir (GPS_Main.Kernel) & "log";
       Pid_File : aliased String := Log_File & "." & Pid_Image;
       Str      : String_Access;
 
@@ -1528,7 +1528,7 @@ procedure GPS.Main is
             Error, Button_OK,
             Title         => -"Fatal Error",
             Justification => Justify_Left);
-         Result := Save_MDI_Children (GPS_Window.Kernel, Force => False);
+         Result := Save_MDI_Children (GPS_Main.Kernel, Force => False);
    end Main_Processing;
 
    -----------------
@@ -1536,7 +1536,7 @@ procedure GPS.Main is
    -----------------
 
    procedure Do_Cleanups is
-      Kernel   : constant Kernel_Handle := GPS_Window.Kernel;
+      Kernel   : constant Kernel_Handle := GPS_Main.Kernel;
       Log_File : constant String := Get_Home_Dir (Kernel) & "log";
       Success  : Boolean;
 
@@ -1565,8 +1565,8 @@ procedure GPS.Main is
       --  Since the call to destroy below will free the animation at some
       --  point, we no longer want to access/update it past this point.
 
-      GPS_Window.Animation_Image := null;
-      Destroy (GPS_Window);
+      GPS_Main.Animation_Image := null;
+      Destroy (GPS_Main);
       Destroy (Kernel);
 
       Projects.Registry.Finalize;

@@ -23,13 +23,13 @@ with Gdk.Color;                use Gdk.Color;
 with Gtk.Container;            use Gtk.Container;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Basic_Types;              use Basic_Types;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Main_Window;        use Glide_Main_Window;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Main_Window;        use GPS.Main_Window;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with GVD.Process;          use GVD.Process;
 with GVD.Code_Editors;     use GVD.Code_Editors;
@@ -60,9 +60,9 @@ package body GVD.Text_Box.Source_Editor.Glide is
    ----------------
 
    procedure Apply_Mode (Editor : access GEdit_Record; Mode : View_Mode) is
-      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
-      Top      : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Top      : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Process  : constant Visual_Debugger := Get_Current_Process (Top);
       Edit     : constant Code_Editor  := Process.Editor_Text;
       Assembly : constant Asm_Editor.Asm_Editor := Get_Asm (Edit);
@@ -132,7 +132,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    ----------------------------
 
    procedure Highlight_Current_Line (Editor : access GEdit_Record) is
-      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
    begin
       if Editor.Debugger_Current_File = VFS.No_File then
          return;
@@ -203,7 +203,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
      (Editor  : access GEdit_Record;
       Process : Glib.Object.GObject)
    is
-      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
       Line   : constant Integer :=
                  Get_Current_Source_Line (Visual_Debugger (Process));
 
@@ -264,7 +264,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Force       : Boolean := False)
    is
       pragma Unreferenced (Force);
-      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
 
    begin
       if Editor.Current_File /= File_Name then
@@ -289,7 +289,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    -------------------------
 
    procedure Preferences_Changed (Editor : access GEdit_Record) is
-      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
       Args   : GNAT.OS_Lib.Argument_List :=
         (1 => new String'(Highlight_Category),
          2 => new String'
@@ -312,7 +312,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Set_Current : Boolean := True;
       Process     : Glib.Object.GObject)
    is
-      Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
       Tab     : constant Visual_Debugger := Visual_Debugger (Process);
 
       Prev_Current_Line : constant Integer := Get_Current_Source_Line (Tab);
@@ -374,7 +374,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
      (Editor  : access GEdit_Record;
       Message : String)
    is
-      Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
    begin
       Editor.Current_File := VFS.No_File;
       Console.Insert (Kernel, Message);
@@ -392,7 +392,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Br      : GVD.Types.Breakpoint_Array;
       Process : Glib.Object.GObject)
    is
-      Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
       Tab     : constant Visual_Debugger := Visual_Debugger (Process);
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -617,7 +617,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    ---------------------
 
    procedure Free_Debug_Info (Editor : access GEdit_Record) is
-      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
    begin
       Free (Editor.Current_Breakpoints);
 

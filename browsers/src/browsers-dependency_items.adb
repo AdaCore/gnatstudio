@@ -39,13 +39,13 @@ with Pango.Layout;         use Pango.Layout;
 
 with Browsers.Canvas;           use Browsers.Canvas;
 with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel;              use GPS.Kernel;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
 with Traces;                    use Traces;
@@ -54,7 +54,7 @@ with Projects.Registry;         use Projects.Registry;
 with Fname;                     use Fname;
 with Namet;                     use Namet;
 with Histories;                 use Histories;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with VFS;                       use VFS;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
@@ -127,7 +127,7 @@ package body Browsers.Dependency_Items is
    procedure Gtk_New
      (Item            : out File_Item;
       Browser         : access Browsers.Canvas.General_Browser_Record'Class;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_Filename : Virtual_File);
    --  Create a new dependency item directly from a source filename
 
@@ -149,7 +149,7 @@ package body Browsers.Dependency_Items is
      (Item  : access File_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
    procedure Resize_And_Draw
@@ -190,7 +190,7 @@ package body Browsers.Dependency_Items is
      (Examine_Dependencies_Idle_Data);
 
    procedure Examine_Dependencies
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : Virtual_File;
       Recompute_Layout : Boolean := True);
    --  Examine the dependencies for File in In_Browser.
@@ -198,7 +198,7 @@ package body Browsers.Dependency_Items is
    --  Layout is recomputed on exit if Recompute_Layout is true
 
    procedure Examine_From_Dependencies
-     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       File        : Virtual_File;
       Interactive : Boolean := True;
       Recompute_Layout : Boolean := True);
@@ -209,7 +209,7 @@ package body Browsers.Dependency_Items is
 
    procedure Open_File
      (Browser : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
+      Context : GPS.Kernel.Selection_Context_Access);
    --  Open the file described in Context for analysis in the browser.
 
    function Find_File
@@ -247,12 +247,12 @@ package body Browsers.Dependency_Items is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
-      return Glide_Kernel.Selection_Context_Access;
+      return GPS.Kernel.Selection_Context_Access;
    --  Return the context to use when a contextual menu is displayed in the
    --  browser.
 
    function Open_Dependency_Browser
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Open a new browser that supports all the types described in
    --  Browser_Type.
@@ -394,7 +394,7 @@ package body Browsers.Dependency_Items is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
-      return Glide_Kernel.Selection_Context_Access
+      return GPS.Kernel.Selection_Context_Access
    is
       Context : Selection_Context_Access;
       Mitem   : Gtk_Menu_Item;
@@ -527,7 +527,7 @@ package body Browsers.Dependency_Items is
            (Hook_No_Args_Record with
             Browser         => Browser);
          Add_Hook
-           (Kernel, Glide_Kernel.Project_Changed_Hook,
+           (Kernel, GPS.Kernel.Project_Changed_Hook,
             Hook, Watch => GObject (Browser));
       end if;
 
@@ -719,7 +719,7 @@ package body Browsers.Dependency_Items is
    -------------------------------
 
    procedure Examine_From_Dependencies
-     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       File        : Virtual_File;
       Interactive : Boolean := True;
       Recompute_Layout : Boolean := True)
@@ -991,7 +991,7 @@ package body Browsers.Dependency_Items is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools : constant String := '/' & (-"Tools");
       Command : Interactive_Command_Access;
@@ -1004,7 +1004,7 @@ package body Browsers.Dependency_Items is
          Module_Name             => Dependency_Browser_Module_Name,
          Priority                => Default_Priority,
          Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       --  ??? Sensitivity will be handled in the hook "contextual_menu"

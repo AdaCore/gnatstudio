@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Entities;
 
 package Refactoring.Performers is
@@ -28,7 +28,7 @@ package Refactoring.Performers is
 
    procedure Execute
      (Factory       : access Refactor_Performer_Record;
-      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Entity        : Entities.Entity_Information;
       Refs          : Location_Arrays.Instance;
       No_LI_List    : File_Arrays.Instance;
@@ -47,7 +47,7 @@ package Refactoring.Performers is
    --  Free the memory occupied by Factor.
 
    procedure Get_All_Locations
-     (Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel                : access GPS.Kernel.Kernel_Handle_Record'Class;
       Entity                : Entities.Entity_Information;
       On_Completion         : access Refactor_Performer_Record'Class;
       Auto_Compile          : Boolean := False);

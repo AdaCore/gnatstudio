@@ -35,16 +35,16 @@ with Glide_Intl;                use Glide_Intl;
 
 with GVD.Preferences;           use GVD.Preferences;
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Location_View;         use GPS.Location_View;
 with VFS;                       use VFS;
 with Projects;                  use Projects;
@@ -54,7 +54,7 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Projects.Registry;         use Projects.Registry;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 
 with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;
@@ -1849,7 +1849,7 @@ package body Builder_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Build : constant String := '/' & (-"Build") & '/';
       Mitem : Gtk_Menu_Item;

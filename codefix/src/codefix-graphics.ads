@@ -20,7 +20,7 @@
 
 with Glib;                   use Glib;
 
-with Glide_Kernel;           use Glide_Kernel;
+with GPS.Kernel;           use GPS.Kernel;
 with Vdiff_Pkg;              use Vdiff_Pkg;
 with Generic_List;
 
@@ -52,7 +52,7 @@ package Codefix.Graphics is
    use Error_Id_Lists;
 
    type Status_Changed_Action is access procedure
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Session      : access Codefix_Module.Codefix_Session_Record;
       Error        : Error_Id);
    --  Called when the status of an error has changed (was fixed or its fix
@@ -76,7 +76,7 @@ package Codefix.Graphics is
 
    procedure Gtk_New
      (Graphic_Codefix : out Graphic_Codefix_Access;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Session         : Codefix_Module.Codefix_Session;
       Fixed_Cb        : Status_Changed_Action := null;
       Unfixed_Cb      : Status_Changed_Action := null);
@@ -85,7 +85,7 @@ package Codefix.Graphics is
 
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Session         : Codefix_Module.Codefix_Session;
       Fixed_Cb        : Status_Changed_Action := null;
       Unfixed_Cb      : Status_Changed_Action := null);

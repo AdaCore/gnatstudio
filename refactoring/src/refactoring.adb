@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;           use Glide_Kernel;
+with GPS.Kernel;           use GPS.Kernel;
 with Glide_Intl;             use Glide_Intl;
 with VFS;                    use VFS;
 with Entities;               use Entities;
@@ -38,7 +38,7 @@ with Gtk.Tree_View;         use Gtk.Tree_View;
 with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
 with Gtk.Widget;            use Gtk.Widget;
 
-with Glide_Kernel.MDI;      use Glide_Kernel.MDI;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 
 package body Refactoring is
 

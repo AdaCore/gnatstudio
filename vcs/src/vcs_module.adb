@@ -26,16 +26,16 @@ with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.MDI;                  use Gtkada.MDI;
 
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Kernel.Actions;        use Glide_Kernel.Actions;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with Glide_Intl;                  use Glide_Intl;
 
 with Traces;                      use Traces;
@@ -115,12 +115,12 @@ package body VCS_Module is
    --  Save the status of the project explorer to an XML tree
 
    procedure Status_Parse_Handler
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
    --  Handler for the command "vcs_status_parse".
 
    procedure Annotations_Parse_Handler
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
    --  Handler for the command "VCS.annotations_parse".
 
@@ -131,7 +131,7 @@ package body VCS_Module is
    --  Handle the dynamic global menu.
 
    procedure VCS_Command_Handler_No_Param
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
    --  Handler for VCS commands that take no parameter
 
@@ -257,7 +257,7 @@ package body VCS_Module is
    ----------------------------------
 
    procedure VCS_Command_Handler_No_Param
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String) is
    begin
       if Command = "supported_systems" then
@@ -335,7 +335,7 @@ package body VCS_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       VCS_Class : constant Class_Type := New_Class (Kernel, "VCS");
 
@@ -354,7 +354,7 @@ package body VCS_Module is
          Priority                => Default_Priority,
          Default_Context_Factory => VCS_View_API.Context_Factory'Access);
 
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Filter := new Has_VCS_Filter;
@@ -659,7 +659,7 @@ package body VCS_Module is
    --------------------------
 
    procedure Status_Parse_Handler
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
       pragma Unreferenced (Command);
@@ -693,7 +693,7 @@ package body VCS_Module is
    -------------------------------
 
    procedure Annotations_Parse_Handler
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
       pragma Unreferenced (Command);

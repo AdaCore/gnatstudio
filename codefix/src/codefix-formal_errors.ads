@@ -25,7 +25,7 @@ with VFS;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 with GNAT.Regpat;
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Codefix.Formal_Errors is
 
@@ -42,7 +42,7 @@ package Codefix.Formal_Errors is
 
    procedure Initialize
      (This       : in out Error_Message;
-      Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Error_Line : String;
       Regexp     : GNAT.Regpat.Pattern_Matcher;
       File_Index, Line_Index, Col_Index, Msg_Index : Integer;

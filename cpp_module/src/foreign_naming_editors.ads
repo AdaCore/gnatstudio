@@ -20,7 +20,7 @@
 
 with Gtk.Widget;
 with Projects;
-with Glide_Kernel;
+with GPS.Kernel;
 with Naming_Editors;
 with Naming_Exceptions;
 with GNAT.OS_Lib;
@@ -49,7 +49,7 @@ package Foreign_Naming_Editors is
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True);
    --  See doc for inherited subprogram

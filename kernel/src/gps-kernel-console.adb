@@ -27,10 +27,10 @@ with Glib.Xml_Int;             use Glib.Xml_Int;
 
 with Interactive_Consoles;     use Interactive_Consoles;
 with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GNAT.IO;                  use GNAT.IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Gtk.Enums;                use Gtk.Enums;
@@ -46,7 +46,7 @@ with Gtk.Widget;               use Gtk.Widget;
 with VFS;                      use VFS;
 with Basic_Types;
 
-package body Glide_Kernel.Console is
+package body GPS.Kernel.Console is
 
    type GPS_Message_Record is new Interactive_Console_Record with null record;
    type GPS_Message is access GPS_Message_Record'Class;
@@ -64,7 +64,7 @@ package body Glide_Kernel.Console is
    --  Called when the module is destroyed.
 
    Console_Module_Id   : Console_Module_Id_Access;
-   Console_Module_Name : constant String := "Glide_Kernel.Console";
+   Console_Module_Name : constant String := "GPS.Kernel.Console";
 
    Me : constant Debug_Handle := Create (Console_Module_Name);
 
@@ -370,7 +370,7 @@ package body Glide_Kernel.Console is
       Title       : String := "";
       History     : History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
-      Module      : Glide_Kernel.Module_ID := null;
+      Module      : GPS.Kernel.Module_ID := null;
       Force_Create : Boolean := False) return Interactive_Console
    is
       Console : Interactive_Console;
@@ -476,7 +476,7 @@ package body Glide_Kernel.Console is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       File     : constant String := '/' & (-"File");
       Console  : constant String := File & '/' & (-"_Messages");
@@ -488,7 +488,7 @@ package body Glide_Kernel.Console is
          Kernel       => Kernel,
          Module_Name  => Console_Module_Name,
          Priority     => Default_Priority);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Add_Default_Desktop_Item
         (Kernel, "Message_Window", Position_Bottom,
@@ -507,4 +507,4 @@ package body Glide_Kernel.Console is
       Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
    end Register_Module;
 
-end Glide_Kernel.Console;
+end GPS.Kernel.Console;

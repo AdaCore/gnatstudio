@@ -50,14 +50,14 @@ with Gtkada.MDI;            use Gtkada.MDI;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.Types;          use Gtkada.Types;
 with Glide_Intl;            use Glide_Intl;
-with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Console;  use Glide_Kernel.Console;
-with Glide_Kernel.Hooks;    use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;      use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;
-use Glide_Kernel.Preferences;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Console;  use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;
+use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with Find_Utils;            use Find_Utils;
@@ -181,17 +181,17 @@ package body Vsearch_Ext is
    --  Called when a key is pressed in the replacement field.
 
    procedure Register_Default_Search
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the default search function
 
    function Get_Nth_Search_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Num    : Positive) return Search_Module_Data;
    --  Return the Num-th registered module, or No_Search if there is no such
    --  module.
 
    function Find_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Label  : String) return Search_Module_Data;
    --  Search the list of registered search functions for a matching module.
    --  No_Search is returned if no such module was found.
@@ -1111,7 +1111,7 @@ package body Vsearch_Ext is
 
    procedure Gtk_New
      (Vsearch : out Vsearch_Extended;
-      Handle  : Glide_Kernel.Kernel_Handle) is
+      Handle  : GPS.Kernel.Kernel_Handle) is
    begin
       Vsearch := new Vsearch_Extended_Record;
       Vsearch_Ext.Initialize (Vsearch, Handle);
@@ -1123,7 +1123,7 @@ package body Vsearch_Ext is
 
    procedure Initialize
      (Vsearch : access Vsearch_Extended_Record'Class;
-      Handle  : Glide_Kernel.Kernel_Handle)
+      Handle  : GPS.Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
       Bbox : Gtk_Hbutton_Box;
@@ -1453,7 +1453,7 @@ package body Vsearch_Ext is
    ------------------------------
 
    procedure Register_Search_Function
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : Search_Module_Data) is
    begin
       Prepend (Vsearch_Module_Id.Search_Modules, Data);
@@ -1471,7 +1471,7 @@ package body Vsearch_Ext is
    ---------------------------
 
    function Get_Nth_Search_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Num    : Positive) return Search_Module_Data
    is
       pragma Unreferenced (Kernel);
@@ -1518,7 +1518,7 @@ package body Vsearch_Ext is
    --------------------------------
 
    function Search_Context_From_Module
-     (Id : access Glide_Kernel.Module_ID_Record'Class)
+     (Id : access GPS.Kernel.Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data
    is
       use Search_Modules_List;
@@ -1540,7 +1540,7 @@ package body Vsearch_Ext is
    -----------------------------
 
    procedure Register_Default_Search
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Search_Pattern
         (Kernel,
@@ -1679,7 +1679,7 @@ package body Vsearch_Ext is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Navigate : constant String := "/_" & (-"Navigate");
       Find_All : constant String := -"Find _All References";
@@ -1692,7 +1692,7 @@ package body Vsearch_Ext is
          Module_Name => Search_Module_Name,
          Priority    => Default_Priority,
          Customization_Handler => Customize'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Vsearch_Module_Id.Tab_Width :=

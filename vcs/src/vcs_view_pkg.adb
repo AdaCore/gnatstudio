@@ -63,14 +63,14 @@ with VCS_Module;                use VCS_Module;
 
 with Log_Utils;                 use Log_Utils;
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
 with VFS;                       use VFS;
 
@@ -1650,7 +1650,7 @@ package body VCS_View_Pkg is
    ----------------
 
    function Get_Kernel
-     (VCS_View : access VCS_View_Record) return Glide_Kernel.Kernel_Handle is
+     (VCS_View : access VCS_View_Record) return GPS.Kernel.Kernel_Handle is
    begin
       return VCS_View.Kernel;
    end Get_Kernel;

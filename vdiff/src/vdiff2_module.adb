@@ -20,13 +20,13 @@
 
 with Glib;                      use Glib;
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
@@ -54,7 +54,7 @@ package body Vdiff2_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools  : constant String := '/' & (-"Tools") & '/'
         & (-"Visual Diff") & '/';

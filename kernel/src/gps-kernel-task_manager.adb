@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
---                            AdaCore                                --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,13 +26,13 @@ with Gtk.Stock;                use Gtk.Stock;
 
 with GVD.Status_Bar;           use GVD.Status_Bar;
 
-with Glide_Main_Window;        use Glide_Main_Window;
+with GPS.Main_Window;        use GPS.Main_Window;
 
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Task_Manager;             use Task_Manager;
 with Task_Manager.GUI;         use Task_Manager.GUI;
 
@@ -44,7 +44,7 @@ with Ada.Exceptions;           use Ada.Exceptions;
 with Glide_Intl;               use Glide_Intl;
 with Commands.Custom;          use Commands.Custom;
 
-package body Glide_Kernel.Task_Manager is
+package body GPS.Kernel.Task_Manager is
 
    type Task_Manager_Module_Id_Record is new Module_ID_Record with record
       Kernel : Kernel_Handle;
@@ -54,7 +54,7 @@ package body Glide_Kernel.Task_Manager is
      Task_Manager_Module_Id_Record'Class;
 
    Task_Manager_Module_Id   : Task_Manager_Module_Id_Access;
-   Task_Manager_Module_Name : constant String := "Glide_Kernel.Task_Manager";
+   Task_Manager_Module_Name : constant String := "GPS.Kernel.Task_Manager";
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -365,7 +365,7 @@ package body Glide_Kernel.Task_Manager is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools : constant String := "/" & (-"Tools");
       Shell : constant String := Tools &  "/" & (-"Shell Console");
@@ -383,13 +383,13 @@ package body Glide_Kernel.Task_Manager is
          Kernel       => Kernel,
          Module_Name  => Task_Manager_Module_Name,
          Priority     => Default_Priority);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Set_Progress_Area
         (Get_Task_Manager (Kernel),
          Get_Progress_Area
-           (Glide_Window (Get_Main_Window (Kernel)).Statusbar));
+           (GPS_Window (Get_Main_Window (Kernel)).Statusbar));
 
       Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
       Create
@@ -425,4 +425,4 @@ package body Glide_Kernel.Task_Manager is
       Destroy (Get_Task_Manager (Module.Kernel));
    end Destroy;
 
-end Glide_Kernel.Task_Manager;
+end GPS.Kernel.Task_Manager;

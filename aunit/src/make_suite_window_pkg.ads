@@ -24,13 +24,13 @@ with Gtk.Clist;            use Gtk.Clist;
 with Gtk.Button;           use Gtk.Button;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
-with Glide_Kernel;
+with GPS.Kernel;
 with GtkAda.File_Selector; use GtkAda.File_Selector;
 
 package Make_Suite_Window_Pkg is
 
    type Make_Suite_Window_Record is new Gtk_Window_Record with record
-      Kernel           : Glide_Kernel.Kernel_Handle;
+      Kernel           : GPS.Kernel.Kernel_Handle;
       Explorer         : File_Selector_Window_Access;
       Name             : String_Access;
       Directory_Entry  : Gtk_Entry;
@@ -46,10 +46,10 @@ package Make_Suite_Window_Pkg is
 
    procedure Gtk_New
      (Make_Suite_Window : out Make_Suite_Window_Access;
-      Handle            : Glide_Kernel.Kernel_Handle);
+      Handle            : GPS.Kernel.Kernel_Handle);
 
    procedure Initialize
      (Make_Suite_Window : access Make_Suite_Window_Record'Class;
-      Handle            : Glide_Kernel.Kernel_Handle);
+      Handle            : GPS.Kernel.Kernel_Handle);
 
 end Make_Suite_Window_Pkg;

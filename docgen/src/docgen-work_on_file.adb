@@ -24,7 +24,7 @@ with Entities.Queries;          use Entities.Queries;
 with Docgen.Backend;
 with Docgen.Work_On_Source;     use Docgen.Work_On_Source;
 with Traces;                    use Traces;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel;              use GPS.Kernel;
 with VFS;                       use VFS;
 with VFS;                       use VFS;
 
@@ -109,7 +109,7 @@ package body Docgen.Work_On_File is
      (B                             : access Docgen.Backend.Backend'Class;
       Doc_File                      : File_Descriptor;
       Kernel                        : access
-        Glide_Kernel.Kernel_Handle_Record'Class;
+        GPS.Kernel.Kernel_Handle_Record'Class;
       Source_Filename               : Source_File;
       Package_Name                  : String;
       Source_File_List              : in out Type_Source_File_Table.HTable;
@@ -555,7 +555,7 @@ package body Docgen.Work_On_File is
    procedure Process_Files
      (B                : access Docgen.Backend.Backend'Class;
       Source_File_List : in out Docgen.Type_Source_File_Table.HTable;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options)
    is
       use List_Entity_Information;
@@ -686,7 +686,7 @@ package body Docgen.Work_On_File is
      (B                             : access Docgen.Backend.Backend'Class;
       Doc_File                      : File_Descriptor;
       Kernel                        : access
-        Glide_Kernel.Kernel_Handle_Record'Class;
+        GPS.Kernel.Kernel_Handle_Record'Class;
       Source_Filename               : Source_File;
       Package_Name                  : String;
       Source_File_List              : in out Type_Source_File_Table.HTable;

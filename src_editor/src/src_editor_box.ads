@@ -45,10 +45,10 @@ with Gtk.Text_Mark;
 with GVD.Tooltips;
 with Language;
 with Language_Handlers;
-with Glide_Kernel;
-with Glide_Kernel.Contexts;
-with Glide_Kernel.Modules;
-with Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;
+with GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;
+with GPS.Kernel.Standard_Hooks;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_View;
 with VFS;
@@ -64,20 +64,20 @@ package Src_Editor_Box is
 
    procedure Gtk_New
      (Box    : out Source_Editor_Box;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null);
    --  Create a new Source_Editor_Box. It must be destroyed after use
    --  (see procedure Destroy below).
 
    procedure Initialize
      (Box    : access Source_Editor_Box_Record;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access);
    --  Initialize the newly created Source_Editor_Box.
 
    procedure Create_New_View
      (Box    : out Source_Editor_Box;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source : access Source_Editor_Box_Record);
    --  Create a new view of the given box.
    --  ??? Do we want to copy the font attributes as well, or do we want
@@ -96,7 +96,7 @@ package Src_Editor_Box is
    --  Detach Box of its Parent, if possible.
 
    function Get_Kernel
-     (Box : access Source_Editor_Box_Record) return Glide_Kernel.Kernel_Handle;
+     (Box : access Source_Editor_Box_Record) return GPS.Kernel.Kernel_Handle;
    --  Accessor to the Kernel field.
 
    function Get_View (Editor : access Source_Editor_Box_Record)
@@ -218,10 +218,10 @@ package Src_Editor_Box is
    --  ??? This function is commented out since it was removed in gtk-1.3.7.
 
    procedure Goto_Declaration_Or_Body
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       To_Body : Boolean;
       Editor  : access Source_Editor_Box_Record'Class;
-      Context : access Glide_Kernel.Contexts.Entity_Selection_Context'Class);
+      Context : access GPS.Kernel.Contexts.Entity_Selection_Context'Class);
    --  Perform a Declaration-or-Body cross-reference for the entity
    --  located at (Line, Column) in Editor, or in the current editor if
    --  Editor is null. If To_Body is True, then display the next body of the
@@ -303,30 +303,30 @@ package Src_Editor_Box is
    -- Contextual menu --
    ---------------------
 
-   type In_Line_Numbers_Area_Filter is new Glide_Kernel.Action_Filter_Record
+   type In_Line_Numbers_Area_Filter is new GPS.Kernel.Action_Filter_Record
       with null record;
    function Filter_Matches_Primitive
      (Filter  : access In_Line_Numbers_Area_Filter;
-      Context : access Glide_Kernel.Selection_Context'Class) return Boolean;
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
    --  True if the event currently processed was in an editor's line numbers
    --  area
 
-   type Has_Body_Filter is new Glide_Kernel.Action_Filter_Record
+   type Has_Body_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
    function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
-      Context : access Glide_Kernel.Selection_Context'Class) return Boolean;
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
    --  True if the current entity has a body
 
-   type Has_Type_Filter is new Glide_Kernel.Action_Filter_Record
+   type Has_Type_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
    function Filter_Matches_Primitive
      (Filter  : access Has_Type_Filter;
-      Context : access Glide_Kernel.Selection_Context'Class) return Boolean;
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
    --  True if the current entity has a type
 
    type Goto_Line_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
    end record;
    function Execute
      (Command : access Goto_Line_Command;
@@ -352,11 +352,11 @@ package Src_Editor_Box is
    --  Go to the body of the entity in the context
 
    type Goto_Body_Menu_Label is new
-     Glide_Kernel.Modules.Contextual_Menu_Label_Creator_Record
+     GPS.Kernel.Modules.Contextual_Menu_Label_Creator_Record
      with null record;
    function Get_Label
      (Creator   : access Goto_Body_Menu_Label;
-      Context   : access Glide_Kernel.Selection_Context'Class) return String;
+      Context   : access GPS.Kernel.Selection_Context'Class) return String;
    --  Return the label to use for the contextual menu "Goto body"
 
    type Goto_Type_Command is new Interactive_Command with null record;
@@ -366,14 +366,14 @@ package Src_Editor_Box is
    --  Go to the type declaration of the entity in the context
 
    function Get_Contextual_Menu
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Object : access Glib.Object.GObject_Record'Class;
       Event  : Gdk.Event.Gdk_Event;
       Menu   : Gtk.Menu.Gtk_Menu)
-      return Glide_Kernel.Selection_Context_Access;
+      return GPS.Kernel.Selection_Context_Access;
    --  Return the contextual menu to use for the source box.
    --  This function is also used to create the context for
-   --  Glide_Kernel.Get_Current_Context, and might be called with Event and
+   --  GPS.Kernel.Get_Current_Context, and might be called with Event and
    --  Menu set to null.
 
    ----------------------
@@ -383,19 +383,19 @@ package Src_Editor_Box is
    procedure Add_File_Information
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String;
-      Info       : Glide_Kernel.Standard_Hooks.Line_Information_Data);
-   --  See Glide_Kernel.Modules for more information.
+      Info       : GPS.Kernel.Standard_Hooks.Line_Information_Data);
+   --  See GPS.Kernel.Modules for more information.
 
    procedure Create_Line_Information_Column
      (Editor        : access Source_Editor_Box_Record;
       Identifier    : String;
       Every_Line    : Boolean);
-   --  See Glide_Kernel.Modules for more information.
+   --  See GPS.Kernel.Modules for more information.
 
    procedure Remove_Line_Information_Column
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String);
-   --  See Glide_Kernel.Modules for more information.
+   --  See GPS.Kernel.Modules for more information.
 
    procedure Undo (Editor : access Source_Editor_Box_Record);
    procedure Redo (Editor : access Source_Editor_Box_Record);
@@ -445,7 +445,7 @@ private
      (Frames_Array, Frames_Array_Access);
 
    type Source_Editor_Box_Record is new Glib.Object.GObject_Record with record
-      Kernel               : Glide_Kernel.Kernel_Handle;
+      Kernel               : GPS.Kernel.Kernel_Handle;
 
       Timestamp_Mode       : Timestamp_Check_Mode := Check_At_Focus;
 

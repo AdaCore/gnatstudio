@@ -34,18 +34,18 @@ with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glide_Intl;                  use Glide_Intl;
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Actions;        use Glide_Kernel.Actions;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Timeout;        use Glide_Kernel.Timeout;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Language;                    use Language;
 with Language_Handlers;           use Language_Handlers;
 with Basic_Types;                 use Basic_Types;
@@ -234,7 +234,7 @@ package body Src_Editor_Module is
    --  Reacts to the word_added Hook
 
    procedure Save_To_File
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name    : VFS.Virtual_File := VFS.No_File;
       Success : out Boolean);
    --  Save the current editor to Name, or its associated filename if Name is
@@ -384,7 +384,7 @@ package body Src_Editor_Module is
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create the current context for Glide_Kernel.Get_Current_Context
+   --  Create the current context for GPS.Kernel.Get_Current_Context
 
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
@@ -400,7 +400,7 @@ package body Src_Editor_Module is
    --  If Add is True, the Box is added to the MDI.
 
    procedure New_View
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new view for the current editor and add it in the MDI.
    --  The current editor is the focus child in the MDI. If the focus child
    --  is not an editor, nothing happens.
@@ -2263,8 +2263,8 @@ package body Src_Editor_Module is
 
    procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data   : access Glide_Kernel.Hooks.Hooks_Data'Class)
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
    is
       pragma Unreferenced (Hook);
       D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
@@ -3759,7 +3759,7 @@ package body Src_Editor_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       File               : constant String := '/' & (-"File") & '/';
       Save               : constant String := File & (-"Save More") & '/';
@@ -4008,7 +4008,7 @@ package body Src_Editor_Module is
                Default_Context_Factory => Default_Factory'Access,
          Save_Function           => Save_Function'Access,
          Customization_Handler   => Casing_Customize'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Add_Hook (Kernel, Open_File_Action_Hook, Source_File_Hook'Access);
@@ -4806,7 +4806,7 @@ package body Src_Editor_Module is
    -----------------
 
    function Find_Editor
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
       Iter  : Child_Iterator;
@@ -4879,7 +4879,7 @@ package body Src_Editor_Module is
    -----------------------
 
    function Find_Other_Editor
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       View   : Gtk_Text_View;
       Buffer : Gtk_Text_Buffer) return Src_Editor_Box.Source_Editor_Box
    is
@@ -4916,7 +4916,7 @@ package body Src_Editor_Module is
    ----------------
 
    function Find_Child
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Editor : access Src_Editor_Box.Source_Editor_Box_Record'Class)
       return Gtkada.MDI.MDI_Child
    is

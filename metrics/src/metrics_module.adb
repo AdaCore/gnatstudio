@@ -20,8 +20,8 @@
 
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with Glide_Intl;              use Glide_Intl;
 
 package body Metrics_Module is
@@ -34,7 +34,7 @@ package body Metrics_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item : Gtk_Menu_Item;
       Metrics   : constant String := '/' & (-"Tools") & '/' & (-"Metrics");

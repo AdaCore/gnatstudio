@@ -25,7 +25,7 @@ with Gdk.GC;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
 with Gtkada.Canvas;
-with Glide_Kernel;
+with GPS.Kernel;
 with Glib.Object;
 with Gtk.Box;
 with Gtk.Handlers;
@@ -54,7 +54,7 @@ package Browsers.Canvas is
 
    procedure Initialize
      (Browser : access General_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Create_Toolbar  : Boolean;
       Parents_Pixmap  : String := Gtk.Stock.Stock_Go_Back;
       Children_Pixmap : String := Gtk.Stock.Stock_Go_Forward);
@@ -79,7 +79,7 @@ package Browsers.Canvas is
    --  Return the canvas embedded in Browser
 
    function Get_Kernel (Browser : access General_Browser_Record)
-      return Glide_Kernel.Kernel_Handle;
+      return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated with the browser
 
    function To_Brower
@@ -153,7 +153,7 @@ package Browsers.Canvas is
      (Item  : access Browser_Item_Record;
       Browser : access General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
    --  Return the selection context to use when an item is clicked on.
    --  The coordinates in Event are relative to the upper-left corner of the
    --  item.
@@ -164,7 +164,7 @@ package Browsers.Canvas is
    --
    --  You shoud make sure that this function can be used with a null event and
    --  a null menu, which is the case when creating a current context for
-   --  Glide_Kernel.Get_Current_Context.
+   --  GPS.Kernel.Get_Current_Context.
 
    procedure Refresh
      (Item           : access Browser_Item_Record'Class);
@@ -488,12 +488,12 @@ package Browsers.Canvas is
    ----------------------
 
    function Default_Browser_Context_Factory
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
-      return Glide_Kernel.Selection_Context_Access;
+      return GPS.Kernel.Selection_Context_Access;
    --  Return the context to use for a contextual menu in the canvas.
    --  This version takes care of checking whether the user clicked on an item,
    --  and adds the standard menu entries
@@ -511,7 +511,7 @@ private
 
    type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with record
       Canvas    : Gtkada.Canvas.Interactive_Canvas;
-      Kernel    : Glide_Kernel.Kernel_Handle;
+      Kernel    : GPS.Kernel.Kernel_Handle;
       Toolbar   : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
       Selected_Link_Color   : Gdk.Color.Gdk_Color;

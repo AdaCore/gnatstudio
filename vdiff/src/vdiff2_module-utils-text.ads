@@ -23,21 +23,21 @@
 package Vdiff2_Module.Utils.Text is
 
    procedure New_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural);
    --  Add a blank line at line Line of a given file editor,.
    pragma Inline (New_Line);
 
    function Line_Length
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural) return Natural;
    --  Returns le length of a line from the position of the cursor.
    pragma Inline (Line_Length);
 
    procedure Delete
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -45,13 +45,13 @@ package Vdiff2_Module.Utils.Text is
    pragma Inline (Delete);
 
    procedure Delete_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural);
    pragma Inline (Delete_Line);
 
    procedure Insert
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -59,14 +59,14 @@ package Vdiff2_Module.Utils.Text is
    pragma Inline (Insert);
 
    procedure Insert_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Text   : String);
    pragma Inline (Insert_Line);
 
    function Get
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -74,7 +74,7 @@ package Vdiff2_Module.Utils.Text is
    pragma Inline (Get);
 
    function Get_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural) return String;
    pragma Inline (Get_Line);
@@ -94,7 +94,7 @@ package Vdiff2_Module.Utils.Text is
       Dest_Range   : in out Diff_Range);
 
    procedure Replace
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -103,7 +103,7 @@ package Vdiff2_Module.Utils.Text is
    pragma Inline (Replace);
 
    procedure Replace_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Text   : String);

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Commands;          use Commands;
-with Glide_Kernel;      use Glide_Kernel;
+with GPS.Kernel;      use GPS.Kernel;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 with Src_Editor_View;   use Src_Editor_View;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;

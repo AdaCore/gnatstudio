@@ -20,10 +20,10 @@
 
 with Glib.Generic_Properties;  use Glib;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with ALI_Parser;               use ALI_Parser;
 with Entities;                 use Entities;
 with Language.Ada;             use Language.Ada;
@@ -128,7 +128,7 @@ package body Ada_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));

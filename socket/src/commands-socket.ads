@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with GNAT.Sockets; use GNAT.Sockets;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package Commands.Socket is
 

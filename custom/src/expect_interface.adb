@@ -28,9 +28,9 @@ with Ada.Unchecked_Deallocation;
 with Gtk.Main;                  use Gtk.Main;
 with Glide_Intl;                use Glide_Intl;
 with Custom_Module;             use Custom_Module;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
 with Traces;                    use Traces;
 
 package body Expect_Interface is
@@ -58,8 +58,8 @@ package body Expect_Interface is
    type Custom_Action_Record is record
       Pattern    : Pattern_Matcher_Access;
       Command    : Argument_List_Access;
-      On_Match   : Glide_Kernel.Scripts.Subprogram_Type;
-      On_Exit    : Glide_Kernel.Scripts.Subprogram_Type;
+      On_Match   : GPS.Kernel.Scripts.Subprogram_Type;
+      On_Exit    : GPS.Kernel.Scripts.Subprogram_Type;
       Fd         : GNAT.Expect.Process_Descriptor_Access;
 
       Processed_Output : String_Access;

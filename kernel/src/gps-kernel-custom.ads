@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,7 +38,7 @@
 --  If a module adds a hard coded customization string, all modules will be
 --  signaled.
 --
---  See Glide_Kernel.Modules.Module_Customization_Handler.
+--  See GPS.Kernel.Modules.Module_Customization_Handler.
 
 --  Future plans:
 --    - Handling of dynamic modules: they need to be aware, when loaded, of
@@ -52,14 +52,14 @@
 with Glib;
 with Glib.Xml_Int;
 
-package Glide_Kernel.Custom is
+package GPS.Kernel.Custom is
 
    -----------------------------------------
    -- Loading and defining customizations --
    -----------------------------------------
 
    procedure Load_All_Custom_Files
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Find and parse all the customization files (system, project or user).
    --  This also parses any XML string that has been registered previously
    --  through Add_Customization_String.
@@ -67,7 +67,7 @@ package Glide_Kernel.Custom is
    --  registered by the modules.
 
    function Add_Customization_String
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Customization : UTF8_String;
       From_File     : String;
       Start_Line    : Positive := 1) return String;
@@ -83,11 +83,11 @@ package Glide_Kernel.Custom is
    --  the string couldn't be parsed
 
    procedure Execute_Customization_String
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
-      Level  : Glide_Kernel.Customization_Level);
+      Level  : GPS.Kernel.Customization_Level);
    --  Send a signal to all registered modules to indicate a new customization
    --  string.
 
-end Glide_Kernel.Custom;
+end GPS.Kernel.Custom;

@@ -18,13 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;     use Glide_Kernel.MDI;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
+with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Glide_Intl;           use Glide_Intl;
 
 with Glib;                 use Glib;
@@ -665,7 +665,7 @@ package body Commands.Custom is
       Name         : String;
       Kernel       : Kernel_Handle;
       Command      : String;
-      Script       : Glide_Kernel.Scripts.Scripting_Language) is
+      Script       : GPS.Kernel.Scripts.Scripting_Language) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;

@@ -21,7 +21,7 @@
 --  This package defines the module for code fixing.
 
 with Gtk.Menu;               use Gtk.Menu;
-with Glide_Kernel;           use Glide_Kernel;
+with GPS.Kernel;           use GPS.Kernel;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with Codefix;                use Codefix;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
@@ -30,7 +30,7 @@ with Codefix.Text_Manager;
 package Codefix_Module is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    type Codefix_Session_Record is record
@@ -54,7 +54,7 @@ package Codefix_Module is
    --  Add to the location box a pixmap that will fixes the error.
 
    procedure Remove_Pixmap
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Session      : access Codefix_Session_Record;
       Error        : Error_Id);
    --  Remove from the location box the pixmap of the error.

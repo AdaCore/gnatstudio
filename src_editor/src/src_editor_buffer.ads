@@ -39,8 +39,8 @@ with Src_Highlighting;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with Ada.Calendar;
-with Glide_Kernel;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Generic_List;
 with VFS;
 
@@ -57,7 +57,7 @@ package Src_Editor_Buffer is
 
    procedure Gtk_New
      (Buffer : out Source_Buffer;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null);
    --  Create a new Source_Buffer with the given Language.
 
@@ -82,7 +82,7 @@ package Src_Editor_Buffer is
 
    procedure Initialize
      (Buffer : access Source_Buffer_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
@@ -340,7 +340,7 @@ package Src_Editor_Buffer is
    --  Enqueue an action in the Buffer queue
 
    function Get_Kernel
-     (Buffer : access Source_Buffer_Record) return Glide_Kernel.Kernel_Handle;
+     (Buffer : access Source_Buffer_Record) return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated to Buffer
 
    function Get_Filename
@@ -589,11 +589,11 @@ package Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information.
 
-   type Src_Editor_Action_Context is new Glide_Kernel.Action_Filter_Record
+   type Src_Editor_Action_Context is new GPS.Kernel.Action_Filter_Record
       with null record;
    function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean;
    --  A key context that matches if the current widget is a source editor
 
@@ -903,7 +903,7 @@ private
    type Source_Buffer_Record is
      new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
-      Kernel          : Glide_Kernel.Kernel_Handle;
+      Kernel          : GPS.Kernel.Kernel_Handle;
       Filename        : VFS.Virtual_File;
       File_Identifier : VFS.Virtual_File;
       --  This identifier is used to identify buffers for untitled files.

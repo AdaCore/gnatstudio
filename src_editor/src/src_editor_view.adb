@@ -61,11 +61,11 @@ with Pango.Layout;                use Pango.Layout;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Config;                      use Config;
 with Traces;                      use Traces;
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;                         use VFS;
 with Language;                    use Language;
 with Config;
@@ -1159,7 +1159,7 @@ package body Src_Editor_View is
       Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       View := new Source_View_Record;
       Initialize (View, Scroll, Area, Buffer, Kernel);
@@ -1174,7 +1174,7 @@ package body Src_Editor_View is
       Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
       Hook : Preferences_Hook;

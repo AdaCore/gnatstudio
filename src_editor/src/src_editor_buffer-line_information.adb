@@ -36,14 +36,14 @@ with Src_Editor_Module;           use Src_Editor_Module;
 with Pango.Layout;                use Pango.Layout;
 
 with Traces;                      use Traces;
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with System;
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 
 with Pango.Layout;              use Pango.Layout;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;

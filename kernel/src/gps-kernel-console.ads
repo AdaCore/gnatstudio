@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 
 with Interactive_Consoles; use Interactive_Consoles;
 
-package Glide_Kernel.Console is
+package GPS.Kernel.Console is
 
    type Message_Type is (Info, Error, Verbose);
    --  We are dealing with 3 types of messages :
@@ -29,7 +29,7 @@ package Glide_Kernel.Console is
    --   - Verbose for detailed information
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the console module into the list
 
    procedure Initialize_Console
@@ -58,7 +58,7 @@ package Glide_Kernel.Console is
       Title   : String := "";
       History : Histories.History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
-      Module       : Glide_Kernel.Module_ID := null;
+      Module       : GPS.Kernel.Module_ID := null;
       Force_Create : Boolean := False) return Interactive_Console;
    --  Return a new interactive console (or an existing one if there is already
    --  one with the given Title). Any existing console is not cleared.
@@ -72,4 +72,4 @@ package Glide_Kernel.Console is
       return Interactive_Console;
    --  Return the interactive console associated with the kernel.
 
-end Glide_Kernel.Console;
+end GPS.Kernel.Console;

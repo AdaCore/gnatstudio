@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Cpp_Module is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the C/C++ parsers in GPS.
    --  If the external source navigator executables are not found on the path,
    --  an error is displayed in the console and the C/C++ browsing will not be

@@ -36,11 +36,11 @@ with Gtk.Text_View;
 with Gtk.Scrolled_Window;
 with Gtk.Main;
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Src_Editor_Buffer;
 with Gtk.Text_Mark; use Gtk.Text_Mark;
 
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package Src_Editor_View is
 
@@ -53,7 +53,7 @@ package Src_Editor_View is
       Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new Source_View from the given parameters.
    --  If no Buffer is given, then a new one will be created. For tasks such
    --  as source code edition, it is recommended to specify a fixed-width font,
@@ -70,7 +70,7 @@ package Src_Editor_View is
       Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
 
@@ -137,7 +137,7 @@ private
       Area                : Gtk.Drawing_Area.Gtk_Drawing_Area;
       --  The drawing area used for the speed column.
 
-      Kernel              : Glide_Kernel.Kernel_Handle;
+      Kernel              : GPS.Kernel.Kernel_Handle;
 
       Saved_Cursor_Mark   : Gtk_Text_Mark;
 

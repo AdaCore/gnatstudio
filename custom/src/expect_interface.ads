@@ -20,7 +20,7 @@
 
 --  This package implements the GPS interface to Expect.
 
-with Glide_Kernel;        use Glide_Kernel;
+with GPS.Kernel;        use GPS.Kernel;
 
 package Expect_Interface is
 

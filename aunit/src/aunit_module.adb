@@ -25,9 +25,9 @@ with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with Ada.Exceptions;              use Ada.Exceptions;
 
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Glide_Intl;                  use Glide_Intl;
 
 with Make_Harness_Window_Pkg;     use Make_Harness_Window_Pkg;
@@ -157,7 +157,7 @@ package body Aunit_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item    : Gtk_Menu_Item;
       Edit         : constant String := '/' & (-"Edit") & '/';

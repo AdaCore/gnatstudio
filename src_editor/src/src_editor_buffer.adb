@@ -58,14 +58,14 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Commands.Editor;           use Commands.Editor;
 with Commands.Controls;         use Commands.Controls;
 with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Casing_Exceptions;         use Casing_Exceptions;
@@ -2089,7 +2089,7 @@ package body Src_Editor_Buffer is
 
    procedure Gtk_New
      (Buffer : out Source_Buffer;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null) is
    begin
       Buffer := new Source_Buffer_Record;
@@ -2147,7 +2147,7 @@ package body Src_Editor_Buffer is
 
    procedure Initialize
      (Buffer : access Source_Buffer_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null)
    is
       Tags    : Gtk_Text_Tag_Table;
@@ -3799,7 +3799,7 @@ package body Src_Editor_Buffer is
 
    function Get_Kernel
      (Buffer : access Source_Buffer_Record)
-     return Glide_Kernel.Kernel_Handle is
+     return GPS.Kernel.Kernel_Handle is
    begin
       return Buffer.Kernel;
    end Get_Kernel;
@@ -3890,7 +3890,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Set_Area_Information (Context, Integer (First), Integer (Last));
-      Glide_Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
+      GPS.Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
       Unref (Selection_Context_Access (Context));
    end Source_Lines_Revealed;
 

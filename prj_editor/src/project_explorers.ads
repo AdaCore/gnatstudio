@@ -24,7 +24,7 @@
 --  This widget also knows how to save its state to an Ada stream, and re-read
 --  a previously saved configuration.
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Scenario_Views;
 with Gtk.Handlers;
 with Gtk.Box;
@@ -41,21 +41,21 @@ package Project_Explorers is
 
    procedure Gtk_New
      (Explorer : out Project_Explorer;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new explorer.
    --  On each update, and since the list of withed projects can not changed,
    --  the open/close status of all the project nodes is kept.
 
    procedure Initialize
      (Explorer : access Project_Explorer_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
 
-   Explorer_Module_ID : Glide_Kernel.Module_ID := null;
+   Explorer_Module_ID : GPS.Kernel.Module_ID := null;
    --  Id for the explorer module
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    -------------
@@ -88,7 +88,7 @@ private
       Scenario  : Scenario_Views.Scenario_View;
       Tree      : Gtkada.Tree_View.Tree_View;
 
-      Kernel    : Glide_Kernel.Kernel_Handle;
+      Kernel    : GPS.Kernel.Kernel_Handle;
       Expand_Id : Gtk.Handlers.Handler_Id;
       --  The signal for the expansion of nodes in the project view
 

@@ -21,7 +21,7 @@
 with Gtk.GEntry;
 with Gtk.Check_Button;
 with Wizards;
-with Glide_Kernel;
+with GPS.Kernel;
 with Projects;
 with Gtk.Widget;
 with Gtk.Handlers;
@@ -34,7 +34,7 @@ package Creation_Wizard is
 
    procedure Generate_Project
      (Page    : access Project_Wizard_Page_Record;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean) is abstract;
@@ -55,7 +55,7 @@ package Creation_Wizard is
 
    procedure Gtk_New
      (Wiz                 : out Project_Wizard;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
       Show_Toc            : Boolean := True;
       Auto_Save_On_Exit   : Boolean := True;
       Project             : Projects.Project_Type := Projects.No_Project);
@@ -67,7 +67,7 @@ package Creation_Wizard is
 
    procedure Initialize
      (Wiz                 : access Project_Wizard_Record'Class;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
       Show_Toc            : Boolean := True;
       Auto_Save_On_Exit   : Boolean := True;
       Project             : Projects.Project_Type := Projects.No_Project);
@@ -129,7 +129,7 @@ private
       Wiz  : access Wizards.Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Generate_Project
      (Page    : access Name_And_Location_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean);
@@ -139,7 +139,7 @@ private
       Project_Name        : Gtk.GEntry.Gtk_Entry;
       Project_Location    : Gtk.GEntry.Gtk_Entry;
       Relative_Paths      : Gtk.Check_Button.Gtk_Check_Button;
-      Kernel              : Glide_Kernel.Kernel_Handle;
+      Kernel              : GPS.Kernel.Kernel_Handle;
       Force_Relative_Dirs : Boolean;
    end record;
 

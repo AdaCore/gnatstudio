@@ -31,7 +31,7 @@ with Glib.Convert;      use Glib.Convert;
 with Glib.Module;       use Glib.Module;
 with Glib.Object;       use Glib.Object;
 with Glib.Values;       use Glib.Values;
-with Glide_Main_Window; use Glide_Main_Window;
+with GPS.Main_Window; use GPS.Main_Window;
 with Gtk.Image_Menu_Item; use Gtk.Image_Menu_Item;
 with Gtk.Accel_Map;     use Gtk.Accel_Map;
 with Gtk.Button;        use Gtk.Button;
@@ -52,11 +52,11 @@ with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with Entities;          use Entities;
 with Glide_Intl;        use Glide_Intl;
-with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -66,9 +66,9 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with System;            use System;
 with Commands.Interactive; use Commands.Interactive;
 
-package body Glide_Kernel.Modules is
+package body GPS.Kernel.Modules is
 
-   Me : constant Debug_Handle := Create ("Glide_Kernel.Modules");
+   Me : constant Debug_Handle := Create ("GPS.Kernel.Modules");
 
    type Contextual_Menu_User_Data is record
       Object       : GObject;
@@ -96,7 +96,7 @@ package body Glide_Kernel.Modules is
       Action   : Action_Record_Access;
 
       Command  : Commands.Interactive.Interactive_Command_Access;
-      Filter   : Glide_Kernel.Action_Filter;
+      Filter   : GPS.Kernel.Action_Filter;
 
       Submenu  : Module_Menu_Handler;
       Is_Submenu : Boolean := False;
@@ -425,7 +425,7 @@ package body Glide_Kernel.Modules is
       Success     : out Boolean)
    is
       type Register_Module_Access is access procedure
-        (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
       type Init_Proc is access procedure;
 
@@ -920,7 +920,7 @@ package body Glide_Kernel.Modules is
       Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item is
    begin
       return Find_Or_Create_Menu_Tree
-        (Menu_Bar     => Glide_Window (Kernel.Main_Window).Menu_Bar,
+        (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
          Menu         => null,
          Path         => Path,
          Accelerators => Get_Default_Accelerators (Kernel),
@@ -944,7 +944,7 @@ package body Glide_Kernel.Modules is
 
    begin
       Parent := Find_Or_Create_Menu_Tree
-        (Menu_Bar     => Glide_Window (Kernel.Main_Window).Menu_Bar,
+        (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
          Menu         => null,
          Path         => Name_As_Directory (Parent_Path, UNIX),
          Accelerators => Get_Default_Accelerators (Kernel),
@@ -965,10 +965,10 @@ package body Glide_Kernel.Modules is
 
       if Item /= null then
          Find_Menu_Item_By_Name
-           (Glide_Window (Kernel.Main_Window).Menu_Bar,
+           (GPS_Window (Kernel.Main_Window).Menu_Bar,
             Parent_Menu, Ref_Item, Pred, Index);
          Add_Menu (Parent     => Parent_Menu,
-                   Menu_Bar   => Glide_Window (Kernel.Main_Window).Menu_Bar,
+                   Menu_Bar   => GPS_Window (Kernel.Main_Window).Menu_Bar,
                    Item       => Item,
                    Index      => Index,
                    Add_Before => Add_Before);
@@ -1243,7 +1243,7 @@ package body Glide_Kernel.Modules is
       end if;
 
       Item := Find_Or_Create_Menu_Tree
-        (Menu_Bar     => Glide_Window (Kernel.Main_Window).Menu_Bar,
+        (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
          Menu         => null,
          Path         => Name_As_Directory (Parent_Path, UNIX),
          Accelerators => Get_Default_Accelerators (Kernel),
@@ -1330,7 +1330,7 @@ package body Glide_Kernel.Modules is
    ---------------------
 
    function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
-      return Glide_Kernel.Module_List.List is
+      return GPS.Kernel.Module_List.List is
    begin
       return Kernel.Modules_List;
    end List_Of_Modules;
@@ -1342,7 +1342,7 @@ package body Glide_Kernel.Modules is
    procedure Drag_Data_Received
      (Object : access Glib.Object.GObject_Record'Class;
       Args   : Glib.Values.GValues;
-      Kernel : Glide_Kernel.Kernel_Handle)
+      Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Object);
 
@@ -1581,7 +1581,7 @@ package body Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Action        : Commands.Interactive.Interactive_Command_Access;
-      Filter        : Glide_Kernel.Action_Filter := null;
+      Filter        : GPS.Kernel.Action_Filter := null;
       Label         : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image   : String := "";
       Ref_Item      : String := "";
@@ -1620,7 +1620,7 @@ package body Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Action        : Commands.Interactive.Interactive_Command_Access := null;
-      Filter        : Glide_Kernel.Action_Filter := null;
+      Filter        : GPS.Kernel.Action_Filter := null;
       Label         : String := "";
       Custom        : Custom_Expansion := null;
       Stock_Image   : String := "";
@@ -1723,7 +1723,7 @@ package body Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Label         : String := "";
-      Filter        : Glide_Kernel.Action_Filter := null;
+      Filter        : GPS.Kernel.Action_Filter := null;
       Submenu       : Module_Menu_Handler := null;
       Ref_Item      : String := "";
       Add_Before    : Boolean := True)
@@ -1755,4 +1755,4 @@ package body Glide_Kernel.Modules is
          Add_Before);
    end Register_Contextual_Submenu;
 
-end Glide_Kernel.Modules;
+end GPS.Kernel.Modules;

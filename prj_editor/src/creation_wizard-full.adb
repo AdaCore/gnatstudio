@@ -22,7 +22,7 @@ with Gtk.GEntry;            use Gtk.GEntry;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Basic_Types;           use Basic_Types;
 with Wizards;               use Wizards;
-with Glide_Kernel;          use Glide_Kernel;
+with GPS.Kernel;          use GPS.Kernel;
 with File_Utils;            use File_Utils;
 with Project_Viewers;       use Project_Viewers;
 with Project_Properties;    use Project_Properties;
@@ -42,7 +42,7 @@ package body Creation_Wizard.Full is
    procedure Update_Page (Page : access Project_Editor_Page_Wrapper);
    procedure Generate_Project
      (Page    : access Project_Editor_Page_Wrapper;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean);
@@ -90,7 +90,7 @@ package body Creation_Wizard.Full is
 
    procedure Generate_Project
      (Page    : access Project_Editor_Page_Wrapper;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean)

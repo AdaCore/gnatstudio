@@ -40,13 +40,13 @@ with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
 
 with Glide_Intl;                  use Glide_Intl;
-with Glide_Main_Window;           use Glide_Main_Window;
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with VFS;                         use VFS;
 with Projects;                    use Projects;
 
-package body Glide_Kernel.MDI is
+package body GPS.Kernel.MDI is
 
    -----------------------
    -- Local subprograms --
@@ -89,7 +89,7 @@ package body Glide_Kernel.MDI is
    function Get_MDI
      (Handle : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Window
    is
-      Top : constant Glide_Window := Glide_Window (Handle.Main_Window);
+      Top : constant GPS_Window := GPS_Window (Handle.Main_Window);
    begin
       return Top.Process_Mdi;
    end Get_MDI;
@@ -523,4 +523,4 @@ package body Glide_Kernel.MDI is
       Set (Model, Iter, 0, not Get_Boolean (Model, Iter, 0));
    end Select_Child_When_Saving;
 
-end Glide_Kernel.MDI;
+end GPS.Kernel.MDI;

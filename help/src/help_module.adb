@@ -26,14 +26,14 @@ with XML_Parsers;
 with Config;
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
-with Glide_Kernel;                 use Glide_Kernel;
-with Glide_Kernel.Console;         use Glide_Kernel.Console;
-with Glide_Kernel.Hooks;           use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;             use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
-with Glide_Kernel.Standard_Hooks;  use Glide_Kernel.Standard_Hooks;
-with Glide_Main_Window;            use Glide_Main_Window;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Main_Window;            use GPS.Main_Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.MDI;                   use Gtkada.MDI;
@@ -51,14 +51,14 @@ with Ada.Unchecked_Conversion;
 with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Histories;                    use Histories;
-with Glide_Kernel.Scripts;         use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with VFS;                          use VFS;
 with System;                       use System;
 with Welcome_Page;                 use Welcome_Page;
 
 package body Help_Module is
 
-   Me : constant Debug_Handle := Create ("Glide_Kernel.Help");
+   Me : constant Debug_Handle := Create ("GPS.Kernel.Help");
 
    Template_Index : constant String := "help_index.html";
    Index_File     : constant String := "gps_index.xml";
@@ -98,7 +98,7 @@ package body Help_Module is
    package Help_Category_List is new Generic_List (Help_Category_Access, Free);
    use Help_Category_List;
 
-   type Help_Module_ID_Record is new Glide_Kernel.Module_ID_Record with record
+   type Help_Module_ID_Record is new GPS.Kernel.Module_ID_Record with record
       Categories : Help_Category_List.List;
       --  The registered help files
 
@@ -395,7 +395,7 @@ package body Help_Module is
          Tree  => Tmp,
          Error => Error);
       if Error /= null then
-         Insert (Kernel, Error.all, Mode => Glide_Kernel.Console.Error);
+         Insert (Kernel, Error.all, Mode => GPS.Kernel.Console.Error);
          Free (Error);
       end if;
       return Tmp;
@@ -766,7 +766,7 @@ package body Help_Module is
       Button     : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
-      Top        : constant Glide_Window := Glide_Window
+      Top        : constant GPS_Window := GPS_Window
         (Get_Main_Window (Kernel));
       About_File : constant String :=
         Format_Pathname (Top.Prefix_Directory.all & "/share/gps/about.txt");
@@ -1006,7 +1006,7 @@ package body Help_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Help  : constant String := "/_" & (-"Help") & '/';
       Recent_Menu_Item : Gtk_Menu_Item;
@@ -1018,10 +1018,10 @@ package body Help_Module is
         (Module                  => Module_ID (Help_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
-         Priority                => Glide_Kernel.Default_Priority - 20,
+         Priority                => GPS.Kernel.Default_Priority - 20,
          Customization_Handler   => Customize'Access,
          Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Add_Hook (Kernel, Html_Action_Hook, Open_Help_Hook'Access);
 

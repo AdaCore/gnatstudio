@@ -35,18 +35,18 @@ with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
 
 with Glib.Object;              use Glib.Object;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with Traces;                 use Traces;
 with Basic_Types;            use Basic_Types;
@@ -113,7 +113,7 @@ package body Codefix_Module is
    type Codefix_Sessions_Array is array (Natural range <>) of Codefix_Session;
    type Codefix_Sessions is access Codefix_Sessions_Array;
 
-   type Codefix_Module_ID_Record is new Glide_Kernel.Module_ID_Record with
+   type Codefix_Module_ID_Record is new GPS.Kernel.Module_ID_Record with
       record
          Sessions      : Codefix_Sessions;
          Codefix_Class : Class_Type;
@@ -147,7 +147,7 @@ package body Codefix_Module is
    --  Create a new codefix menu item
 
    procedure Execute_Corrupted_Cb
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Error_Message : String);
    --  Handles error messages when an error can no longer be corrected.
 
@@ -555,7 +555,7 @@ package body Codefix_Module is
    -------------------
 
    procedure Remove_Pixmap
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Session      : access Codefix_Session_Record;
       Error        : Error_Id)
    is
@@ -669,7 +669,7 @@ package body Codefix_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Codefix_Module_ID := new Codefix_Module_ID_Record;
       Register_Module
@@ -1163,7 +1163,7 @@ package body Codefix_Module is
    --------------------------
 
    procedure Execute_Corrupted_Cb
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Error_Message : String) is
    begin
       Trace (Me, "Fix of current error is no longer pertinent");

@@ -21,7 +21,7 @@
 --  This package describes the Welcome page which is the starting point
 --  when beginning with GPS.
 
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with Gtk.Box;      use Gtk.Box;
 with Gtkada.MDI;   use Gtkada.MDI;
 

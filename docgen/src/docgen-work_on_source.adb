@@ -26,7 +26,7 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Entities.Queries;          use Entities.Queries;
 with VFS;                       use VFS;
-with Glide_Kernel.Project;      use Glide_Kernel, Glide_Kernel.Project;
+with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
 with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
 with Ada.Strings.Unbounded;
@@ -409,7 +409,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Source
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access
-        Glide_Kernel.Kernel_Handle_Record'Class;
+        GPS.Kernel.Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
@@ -796,7 +796,7 @@ package body Docgen.Work_On_Source is
 
    procedure Process_Unit_Index
      (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options;
       Level            : in out Natural)

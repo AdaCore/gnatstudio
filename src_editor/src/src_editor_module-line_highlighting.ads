@@ -22,12 +22,12 @@
 --  line highlighting in the source editors.
 
 with Gdk.GC; use Gdk.GC;
-with Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;
 
 package Src_Editor_Module.Line_Highlighting is
 
    procedure Edit_Command_Handler
-     (Data : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
    --  Interactive command handler for the source editor module.
 

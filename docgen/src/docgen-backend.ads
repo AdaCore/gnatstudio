@@ -29,20 +29,20 @@ package Docgen.Backend is
 
    procedure Doc_Open
      (B          : access Backend;
-      Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : File_Descriptor;
       Open_Title : String) is abstract;
    --  Called each time a new file is created
 
    procedure Doc_Close
      (B      : access Backend;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor) is abstract;
    --  Called each time a file is closed
 
    procedure Doc_Header
      (B              : access Backend;
-      Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       File           : File_Descriptor;
       Header_File    : VFS.Virtual_File;
       Header_Package : String;
@@ -51,20 +51,20 @@ package Docgen.Backend is
 
    procedure Doc_Header_Private
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Header_Title     : String;
       Level            : Natural) is abstract;
 
    procedure Doc_Footer
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor) is abstract;
    --  Called when we finished processing an entity.
 
    procedure Doc_Subtitle
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Level            : Natural;
       Subtitle_Name    : String) is abstract;
@@ -72,7 +72,7 @@ package Docgen.Backend is
 
    procedure Doc_With
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -85,7 +85,7 @@ package Docgen.Backend is
 
    procedure Doc_Package
      (B                   : access Backend;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
       File                : in File_Descriptor;
       List_Ref_In_File    : in out List_Reference_In_File.List;
       Source_File_List    : Type_Source_File_Table.HTable;
@@ -97,7 +97,7 @@ package Docgen.Backend is
 
    procedure Doc_Package_Open_Close
      (B                 : access Backend;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       File              : in File_Descriptor;
       List_Ref_In_File  : in out List_Reference_In_File.List;
       Source_File_List  : Type_Source_File_Table.HTable;
@@ -109,7 +109,7 @@ package Docgen.Backend is
 
    procedure Doc_Package_Desc
      (B           : access Backend;
-      Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       File        : File_Descriptor;
       Level       : Natural;
       Description : String) is abstract;
@@ -117,7 +117,7 @@ package Docgen.Backend is
 
    procedure Doc_Var
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : in File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -129,7 +129,7 @@ package Docgen.Backend is
 
    procedure Doc_Exception
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -141,7 +141,7 @@ package Docgen.Backend is
 
    procedure Doc_Type
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -153,7 +153,7 @@ package Docgen.Backend is
 
    procedure Doc_Entry
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -164,7 +164,7 @@ package Docgen.Backend is
 
    procedure Doc_Subprogram
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -196,7 +196,7 @@ package Docgen.Backend is
 
    procedure Doc_Tagged_Type
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Source_File_List : Type_Source_File_Table.HTable;
       Level            : Natural;
@@ -205,7 +205,7 @@ package Docgen.Backend is
 
    procedure Doc_Unit_Index
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -215,47 +215,47 @@ package Docgen.Backend is
 
    procedure Doc_Subprogram_Index
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Options          : All_Options) is abstract;
    --  Start the output of the subprogram index file
 
    procedure Doc_Type_Index
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Options          : All_Options) is abstract;
    --  Start the output of the type index file
 
    procedure Doc_Tagged_Type_Index
      (B      : access Backend;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor) is abstract;
    --  Start the output of the index for tagged types
 
    procedure Doc_Private_Index
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Title            : String) is abstract;
    --  Start a new section in the current index for private entities
 
    procedure Doc_Public_Index
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Title            : String) is abstract;
    --  Start a new section in the current index for public entities
 
    procedure Doc_End_Of_Index
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor) is abstract;
    --  Terminate the current index file
 
    procedure Doc_Index_Tagged_Type
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Source_File_List : Type_Source_File_Table.HTable;
       Entity           : Entity_Information;
@@ -264,7 +264,7 @@ package Docgen.Backend is
 
    procedure Doc_Index_Item
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Name             : String;
       Item_File        : Entities.Source_File;
@@ -274,7 +274,7 @@ package Docgen.Backend is
 
    procedure Doc_Body_Line
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -286,7 +286,7 @@ package Docgen.Backend is
 
    procedure Doc_Description
      (B                : access Backend;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Level            : Natural;
       Description      : String) is abstract;

@@ -385,7 +385,7 @@ package Projects is
    --  use for all files in the project. In that case, this procedure returns
    --  the switches to use for Language.
    --
-   --  Use Glide_Kernel.Project.Get_Switches instead, which provides support
+   --  Use GPS.Kernel.Project.Get_Switches instead, which provides support
    --  for initial switches as specified by the user.
 
    -----------------------

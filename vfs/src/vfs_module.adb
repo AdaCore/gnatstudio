@@ -22,13 +22,13 @@ with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with Traces;                    use Traces;
 with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with VFS;                       use VFS;
 with OS_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -254,7 +254,7 @@ package body VFS_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
    begin

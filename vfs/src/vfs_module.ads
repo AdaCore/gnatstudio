@@ -20,12 +20,12 @@
 
 --  The Virtual File System module
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package VFS_Module is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the VFS module in the list
 
 end VFS_Module;

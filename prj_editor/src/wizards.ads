@@ -41,7 +41,7 @@ with Gtk.Button;
 with Gtk.Widget;
 with Gtk.Style;
 with Gtk.Label;
-with Glide_Kernel;
+with GPS.Kernel;
 with GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 
@@ -138,7 +138,7 @@ package Wizards is
 
    procedure Initialize
      (Wiz       : access Wizard_Record'Class;
-      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Title     : String;
       Show_Toc  : Boolean := True);
    --  Initialize a new wizard.
@@ -204,7 +204,7 @@ package Wizards is
    --  The returned array must not be modified.
 
    function Get_Kernel
-     (Wiz : access Wizard_Record) return Glide_Kernel.Kernel_Handle;
+     (Wiz : access Wizard_Record) return GPS.Kernel.Kernel_Handle;
    --  Return the kernel instance stored in Wiz
 
 private
@@ -225,6 +225,6 @@ private
       Pages           : Wizard_Pages_Array_Access;
       Highlight_Style : Gtk.Style.Gtk_Style;
       Normal_Style    : Gtk.Style.Gtk_Style;
-      Kernel          : Glide_Kernel.Kernel_Handle;
+      Kernel          : GPS.Kernel.Kernel_Handle;
    end record;
 end Wizards;

@@ -56,18 +56,18 @@ with Namet;                       use Namet;
 
 with File_Utils;                  use File_Utils;
 with Glide_Intl;                  use Glide_Intl;
-with Glide_Main_Window;           use Glide_Main_Window;
+with GPS.Main_Window;           use GPS.Main_Window;
 with Default_Preferences;         use Default_Preferences;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Custom;         use Glide_Kernel.Custom;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GVD.Preferences;             use GVD.Preferences;
 with GVD.Main_Window;             use GVD.Main_Window;
 with GUI_Utils;                   use GUI_Utils;
@@ -80,7 +80,7 @@ with VFS;                         use VFS;
 
 with Projects.Registry;           use Projects, Projects.Registry;
 
-with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
 with Generic_List;
 
 with Language_Handlers;         use Language_Handlers;
@@ -96,7 +96,7 @@ with System; use System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
-package body Glide_Kernel is
+package body GPS.Kernel is
 
    Me : constant Debug_Handle := Create ("glide_kernel");
 
@@ -193,7 +193,7 @@ package body Glide_Kernel is
 
       Gtk_New (Handler);
       Handle.Lang_Handler := Language_Handler (Handler);
-      Glide_Window (Handle.Main_Window).Lang_Handler :=
+      GPS_Window (Handle.Main_Window).Lang_Handler :=
         Handle.Lang_Handler;
 
       Handle.Registry := new Project_Registry;
@@ -235,7 +235,7 @@ package body Glide_Kernel is
       Load (Handle.History.all, Dir & "history");
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
-      Glide_Kernel.Scripts.Initialize (Handle);
+      GPS.Kernel.Scripts.Initialize (Handle);
 
       Add_Hook
         (Handle, Preferences_Changed_Hook, On_Preferences_Changed'Access);
@@ -633,7 +633,7 @@ package body Glide_Kernel is
 
       --  Add the current content, indexed on the current project
 
-      M := Glide_Kernel.Kernel_Desktop.Save_Desktop
+      M := GPS.Kernel.Kernel_Desktop.Save_Desktop
         (MDI, Kernel_Handle (Handle));
       Set_Attribute (M, "project", Project_Name);
       Add_Child (N, M);
@@ -712,8 +712,8 @@ package body Glide_Kernel is
       Height               : Gint := 480;
       X, Y                 : Gint := -1;
       State                : Gdk_Window_State := 0;
-      Main_Window          : constant Glide_Window :=
-        Glide_Window (Handle.Main_Window);
+      Main_Window          : constant GPS_Window :=
+        GPS_Window (Handle.Main_Window);
       Desktop_Loaded       : constant Boolean :=
         Main_Window.Desktop_Loaded;
       Success_Loading_Desktop : Boolean;
@@ -950,7 +950,7 @@ package body Glide_Kernel is
    function Get_Toolbar
      (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar is
    begin
-      return Glide_Window (Handle.Main_Window).Toolbar;
+      return GPS_Window (Handle.Main_Window).Toolbar;
    end Get_Toolbar;
 
    ------------------
@@ -958,7 +958,7 @@ package body Glide_Kernel is
    ------------------
 
    function Process_Anim (Data : Process_Data) return Boolean is
-      Window : constant Glide_Window := Glide_Window (Data.Kernel.Main_Window);
+      Window : constant GPS_Window := GPS_Window (Data.Kernel.Main_Window);
    begin
       if Anim_Cb (Data.Kernel) then
          Window.Timeout_Id := Process_Timeout.Add
@@ -977,13 +977,13 @@ package body Glide_Kernel is
      (Handle : Kernel_Handle;
       State  : Action_Kernel_State)
    is
-      Window : Glide_Window;
+      Window : GPS_Window;
    begin
       if Handle = null then
          return;
       end if;
 
-      Window := Glide_Window (Handle.Main_Window);
+      Window := GPS_Window (Handle.Main_Window);
 
       if Gtk.Object.In_Destruction_Is_Set (Window) then
          return;
@@ -1012,13 +1012,13 @@ package body Glide_Kernel is
    ---------------
 
    procedure Pop_State (Handle : Kernel_Handle) is
-      Window : Glide_Window;
+      Window : GPS_Window;
    begin
       if Handle = null then
          return;
       end if;
 
-      Window := Glide_Window (Handle.Main_Window);
+      Window := GPS_Window (Handle.Main_Window);
 
       if Gtk.Object.In_Destruction_Is_Set (Window) then
          return;
@@ -1064,7 +1064,7 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record) return String is
    begin
       return Name_As_Directory
-        (Glide_Window (Handle.Main_Window).Prefix_Directory.all);
+        (GPS_Window (Handle.Main_Window).Prefix_Directory.all);
    end Get_System_Dir;
 
    ---------------------
@@ -1350,7 +1350,7 @@ package body Glide_Kernel is
 
       Reset (Handle.Actions);
       Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
-      Glide_Kernel.Scripts.Finalize (Handle);
+      GPS.Kernel.Scripts.Finalize (Handle);
 
       Destroy (Glide_Language_Handler (Handle.Lang_Handler));
       Destroy (Handle.Database);
@@ -1816,7 +1816,7 @@ package body Glide_Kernel is
                      declare
                         Errors : aliased Boolean;
                         R      : constant Boolean :=
-                         Glide_Kernel.Scripts.Execute_Command
+                         GPS.Kernel.Scripts.Execute_Command
                             (Lang, Filter.Shell.all,
                              Hide_Output => True,
                              Errors => Errors'Unchecked_Access);
@@ -1901,4 +1901,4 @@ package body Glide_Kernel is
       return -"<internal>";
    end Get_Name;
 
-end Glide_Kernel;
+end GPS.Kernel;

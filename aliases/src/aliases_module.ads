@@ -18,23 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Aliases_Module is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    Invalid_Expansion : constant String := "!@#$%";
 
    type Alias_Expansion_Function is access
-     function (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     function (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
                Expansion : String;
                Special   : Character) return String;
    --  Function called to test alias expansion.
    --  The context in which the expansion takes place can be found by calling
-   --  Glide_Kernel.Get_Current_Focus_Widget.
+   --  GPS.Kernel.Get_Current_Focus_Widget.
    --  Special is the special entity seen in the alias expansion, without the
    --  leading '%'.
    --  The expansion of the alias, as computed up to the encounter with the
@@ -48,7 +48,7 @@ package Aliases_Module is
    --  simply be ignored.
 
    procedure Register_Special_Alias_Entity
-     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Description : String;
       Entity      : Character;
       Func        : Alias_Expansion_Function);

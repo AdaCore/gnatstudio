@@ -20,15 +20,15 @@
 
 --  This package defines the module for Unit testing.
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Aunit_Module is
 
-   Aunit_Module_ID   : Glide_Kernel.Module_ID;
+   Aunit_Module_ID   : GPS.Kernel.Module_ID;
    Aunit_Module_Name : constant String := "Unit_Testing";
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 end Aunit_Module;

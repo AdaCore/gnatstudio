@@ -26,7 +26,7 @@
 
 with Gtk.Box;
 with Gtk.GEntry;
-with Glide_Kernel;
+with GPS.Kernel;
 with Gtk.Box;
 with Projects;
 with GNAT.OS_Lib;
@@ -37,7 +37,7 @@ package Project_Properties is
 
    procedure Edit_Properties
      (Project : Projects.Project_Type;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Edit the properties for Project_View.
 
    type Project_Properties_Editor_Command
@@ -51,7 +51,7 @@ package Project_Properties is
    --  Context.Context must be of type File_Selection_Context
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the project properties module
 
    -----------------------
@@ -69,7 +69,7 @@ package Project_Properties is
    --  Return the name of the Nth page for editing attributes
 
    function Attribute_Editors_Page_Box
-     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project          : Projects.Project_Type;
       General_Page_Box : Gtk.Box.Gtk_Box := null;
       Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
@@ -90,7 +90,7 @@ package Project_Properties is
    --  over which attributes will be displayed.
 
    function Get_Current_Value
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Pkg     : String;
       Name    : String;
       Index   : String := "")

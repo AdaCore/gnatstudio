@@ -20,7 +20,7 @@
 
 with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
 with Gtk.Main;             use Gtk.Main;
-with Glide_Kernel;         use Glide_Kernel;
+with GPS.Kernel;         use GPS.Kernel;
 with String_List_Utils;    use String_List_Utils;
 with Basic_Types;          use Basic_Types;
 

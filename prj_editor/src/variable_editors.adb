@@ -47,9 +47,9 @@ with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with System;                   use System;
 
 with Projects.Editor;          use Projects, Projects.Editor;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with Glide_Intl;               use Glide_Intl;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -124,7 +124,7 @@ package body Variable_Editors is
 
    procedure Gtk_New
      (Editor : out New_Var_Edit;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Var    : Scenario_Variable :=  No_Variable;
       Title  : String)
    is

@@ -20,12 +20,12 @@
 
 --  This package defines the GLIDE module for communication with Metrics.
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Metrics_Module is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 end Metrics_Module;

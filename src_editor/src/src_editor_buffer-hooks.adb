@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with Glide_Intl;                  use Glide_Intl;
 with Entities;                    use Entities;
 with Src_Editor_Box;              use Src_Editor_Box;
@@ -145,7 +145,7 @@ package body Src_Editor_Buffer.Hooks is
    ---------------------------
 
    procedure Register_Editor_Hooks
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Hook : Src_File_Location_Hooks_Args;
       pragma Warnings (Off, Hook);

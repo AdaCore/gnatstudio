@@ -21,10 +21,10 @@
 with Ada.Exceptions;         use Ada.Exceptions;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
-with Glide_Kernel;           use Glide_Kernel;
-with Glide_Kernel.Contexts;  use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;       use Glide_Kernel.MDI;
-with Glide_Kernel.Scripts;   use Glide_Kernel.Scripts;
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Contexts;  use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with Glide_Intl;             use Glide_Intl;
 with Entities;               use Entities;
 with Entities.Queries;       use Entities.Queries;

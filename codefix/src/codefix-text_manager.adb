@@ -3842,9 +3842,9 @@ package body Codefix.Text_Manager is
 
    procedure Set_Kernel
      (Text : in out Text_Navigator_Abstr;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Text.Kernel := Glide_Kernel.Kernel_Handle (Kernel);
+      Text.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
    end Set_Kernel;
 
    ----------------
@@ -3852,7 +3852,7 @@ package body Codefix.Text_Manager is
    ----------------
 
    function Get_Kernel
-     (Text : Text_Navigator_Abstr) return Glide_Kernel.Kernel_Handle is
+     (Text : Text_Navigator_Abstr) return GPS.Kernel.Kernel_Handle is
    begin
       return Text.Kernel;
    end Get_Kernel;

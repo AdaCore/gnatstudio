@@ -23,44 +23,44 @@
 
 with Diff_Utils2; use Diff_Utils2;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Glide_Kernel;
+with GPS.Kernel;
 with VFS;         use VFS;
 with Traces;      use Traces;
 
 package Vdiff2_Module.Utils is
 
    procedure Show_Merge
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Merge  : String;
       Item   : Diff_Head);
    --  Show a result of a Merge
 
    procedure Process_Differences
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item      : Diff_Head;
       Diff_List : Diff_Head_List_Access);
    --  Verify if Item is  not in Diff_List
    --  then show differences and append Item to diff_List
 
    procedure Modify_Differences
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item      : in out Diff_Head;
       Diff_List : Diff_Head_List_Access);
    --  Verify if Item is  not in Diff_List
    --  then show differences and modify Item to diff_List
 
    procedure Show_Differences3
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head);
    --  Show a result of diff Item
 
    procedure Hide_Differences
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_Head);
    --  Remove the hightlighting of all file of Diff
 
    procedure Unhighlight_Block
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Range1 : in out Diff_Range;
       Style  : String := "");

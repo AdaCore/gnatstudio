@@ -32,12 +32,12 @@
 --    - Reload preferences, so that user specific settings override standard
 --      settings coming from the preferences.
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Theme_Manager_Module is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 end Theme_Manager_Module;

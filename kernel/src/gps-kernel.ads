@@ -49,7 +49,7 @@ with Task_Manager;
 with Generic_List;
 with VFS;
 
-package Glide_Kernel is
+package GPS.Kernel is
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with private;
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
@@ -329,7 +329,7 @@ package Glide_Kernel is
    -------------
    -- Modules --
    -------------
-   --  See documentation in Glide_Kernel.Modules
+   --  See documentation in GPS.Kernel.Modules
 
    type Module_Priority is new Natural;
    Low_Priority     : constant Module_Priority := Module_Priority'First;
@@ -355,7 +355,7 @@ package Glide_Kernel is
    --  Context contains all the information about the current selection.
    --
    --  The callback should add the relevant items to Menu. It is recommended to
-   --  use Glide_Kernel.Modules.Context_Callback below to connect signals to
+   --  use GPS.Kernel.Modules.Context_Callback below to connect signals to
    --  the items.
 
    type Module_Default_Context_Factory is access function
@@ -404,7 +404,7 @@ package Glide_Kernel is
 
    type Customization_Level is
      (Hard_Coded, System_Wide, Project_Wide, User_Specific, Themes);
-   --  The various level of customization (See Glide_Kernel.Custom).
+   --  The various level of customization (See GPS.Kernel.Custom).
    --  Hard_Coded is used for customization that are hard-coded in the GPS code
    --  System_Wide is used if customization comes from a custom file found in
    --  the installation directory of GPS.
@@ -749,7 +749,7 @@ private
 
    type Kernel_Scripting_Data_Record is abstract tagged null record;
    type Kernel_Scripting_Data is access all Kernel_Scripting_Data_Record'Class;
-   --  Derived in Glide_Kernel.Scripts to store internal data
+   --  Derived in GPS.Kernel.Scripts to store internal data
 
    No_Tool : constant Tool_Properties_Record := (null, null, null, null);
 
@@ -873,8 +873,8 @@ private
 
       Contextual : System.Address := System.Null_Address;
       --  The contextual menus registered by the user. This is only used in
-      --  Glide_Kernel.Modules, and cast to the appropriate type in that
+      --  GPS.Kernel.Modules, and cast to the appropriate type in that
       --  package.
    end record;
 
-end Glide_Kernel;
+end GPS.Kernel;

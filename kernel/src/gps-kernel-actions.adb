@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,15 +20,15 @@
 
 with Commands;                  use Commands;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
 with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Traces;                    use Traces;
 
-package body Glide_Kernel.Actions is
+package body GPS.Kernel.Actions is
 
    Me : constant Debug_Handle := Create ("Actions");
 
@@ -219,4 +219,4 @@ package body Glide_Kernel.Actions is
       Reset (X.Table);
    end Reset;
 
-end Glide_Kernel.Actions;
+end GPS.Kernel.Actions;

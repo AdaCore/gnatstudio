@@ -22,12 +22,12 @@ with Browsers.Canvas;          use Browsers.Canvas;
 with Gdk.Event;                use Gdk.Event;
 with Glib;                     use Glib;
 with Glib.Xml_Int;             use Glib.Xml_Int;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Glide_Intl;               use Glide_Intl;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Stock;                use Gtk.Stock;
@@ -87,7 +87,7 @@ package body Browsers.Projects is
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu)
-      return Glide_Kernel.Selection_Context_Access;
+      return GPS.Kernel.Selection_Context_Access;
    procedure Resize_And_Draw
      (Item             : access Browser_Project_Vertex;
       Width, Height    : Glib.Gint;
@@ -120,7 +120,7 @@ package body Browsers.Projects is
    --  Create a new project browser
 
    function Open_Project_Browser
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Find, or create, a project browser
 
@@ -143,7 +143,7 @@ package body Browsers.Projects is
    --  Create a current kernel context, based on the currently selected item
 
    function Browser_Search_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
@@ -151,7 +151,7 @@ package body Browsers.Projects is
 
    function Search
      (Context         : access Browser_Search_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Search the next occurrence in the explorer
@@ -641,7 +641,7 @@ package body Browsers.Projects is
    ----------------------------
 
    function Browser_Search_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
@@ -659,7 +659,7 @@ package body Browsers.Projects is
 
    function Search
      (Context         : access Browser_Search_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
@@ -750,7 +750,7 @@ package body Browsers.Projects is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Name : constant String := "Project Browser";
       Command : Interactive_Command_Access;
@@ -761,7 +761,7 @@ package body Browsers.Projects is
          Module_Name             => Project_Browser_Module_Name,
          Priority                => Default_Priority,
          Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       --  ??? will be done in hook

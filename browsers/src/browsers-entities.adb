@@ -23,16 +23,16 @@ with GNAT.Heap_Sort_G;
 with GNAT.Strings;         use GNAT.Strings;
 
 with Entities.Queries;     use Entities, Entities.Queries;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;     use Glide_Kernel.MDI;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Browsers.Canvas;      use Browsers.Canvas;
 with Traces;               use Traces;
 with Glide_Intl;           use Glide_Intl;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 with Glib;          use Glib;
 with Glib.Object;   use Glib.Object;
@@ -125,7 +125,7 @@ package body Browsers.Entities is
      (Item  : access Type_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
    function Get_Last_Button_Number (Item : access Type_Item_Record)
       return Glib.Gint;
    procedure Redraw_Title_Bar (Item : access Type_Item_Record);
@@ -192,7 +192,7 @@ package body Browsers.Entities is
    --  Tools->Entity browser menu
 
    function Open_Type_Browser_Child
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Create (or return an existing) type browser, and insert it directly into
    --  the MDI.
@@ -200,7 +200,7 @@ package body Browsers.Entities is
    --  If the browser already existed, it is raised.
 
    function Open_Type_Browser
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Type_Browser;
    --  Create (or return an existing) type browser. The newly created browser
    --  is not inserted into the MDI.
@@ -433,7 +433,7 @@ package body Browsers.Entities is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
    begin
@@ -442,7 +442,7 @@ package body Browsers.Entities is
          Kernel                  => Kernel,
          Module_Name             => "Entity_Browser",
          Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Command := new Examine_Entity_Command;
       Register_Contextual_Menu
@@ -621,7 +621,7 @@ package body Browsers.Entities is
    -----------------------------
 
    function Open_Type_Browser_Child
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child
    is
       Child : MDI_Child;

@@ -26,7 +26,7 @@ package body DDE is
    -- Register_DDE_Server --
    -------------------------
 
-   procedure Register_DDE_Server (Kernel : Glide_Kernel.Kernel_Handle) is
+   procedure Register_DDE_Server (Kernel : GPS.Kernel.Kernel_Handle) is
       pragma Unreferenced (Kernel);
    begin
       null;

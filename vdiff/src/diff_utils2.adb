@@ -29,8 +29,8 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Basic_Types;
 with Generic_List;
 with String_Utils;             use String_Utils;
@@ -238,7 +238,7 @@ package body Diff_Utils2 is
    ----------
 
    function Diff
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_File, New_File : VFS.Virtual_File)
       return Diff_List
    is
@@ -307,7 +307,7 @@ package body Diff_Utils2 is
    ----------
 
    function Diff
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
@@ -407,7 +407,7 @@ package body Diff_Utils2 is
    -----------
 
    procedure Diff3
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head) is
    begin
       Free_List (Item.List);
@@ -426,7 +426,7 @@ package body Diff_Utils2 is
    -----------
 
    function Diff3
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List
    is

@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Scripts;  use Glide_Kernel.Scripts;
-with Glide_Kernel.Console;  use Glide_Kernel.Console;
+with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
+with GPS.Kernel.Console;  use GPS.Kernel.Console;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with String_Utils;          use String_Utils;
 with Basic_Types;           use Basic_Types;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,10 +30,10 @@ with Gtk.Handlers;
 with Gtk.Widget;
 with Entities;
 with Projects;
-with Glide_Kernel.Contexts;
+with GPS.Kernel.Contexts;
 with Interactive_Consoles;
 
-package Glide_Kernel.Scripts is
+package GPS.Kernel.Scripts is
 
    type Scripting_Language_Record is abstract tagged private;
    type Scripting_Language is access all Scripting_Language_Record'Class;
@@ -100,7 +100,7 @@ package Glide_Kernel.Scripts is
    --  The instance of a class, which embeds some Ada data.
 
    function New_Class
-     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name        : String;
       Base        : Class_Type := No_Class) return Class_Type;
    --  For some languages, this notion is not supported, and the class will not
@@ -181,7 +181,7 @@ package Glide_Kernel.Scripts is
    --  Return the scripting language that created Data.
 
    function Get_Kernel (Data : Callback_Data)
-      return Glide_Kernel.Kernel_Handle;
+      return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated with Data
 
    function Nth_Arg
@@ -531,15 +531,15 @@ package Glide_Kernel.Scripts is
    Constructor_Method : constant String;
 
    procedure Initialize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Initialize this module
 
    procedure Finalize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Finalize this module, and free associated memory
 
    procedure Register_Default_Script_Commands
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Add the standard script commands.
    --  This subprogram should be called only after all scripting languages
    --  have been registered.
@@ -553,7 +553,7 @@ package Glide_Kernel.Scripts is
    --  optional. These have to be the last entries in Parameters.
 
    procedure Register_Command
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command       : String;
       Minimum_Args  : Natural    := 0;
       Maximum_Args  : Natural    := 0;
@@ -594,42 +594,42 @@ package Glide_Kernel.Scripts is
    --  a separate main loop (Gtk.Main.Gtk_Main or modal dialogs).
 
    procedure Block_Commands
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Block  : Boolean);
    --  Block all execution of shell commands if Block is true
 
    procedure Register_Scripting_Language
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Script : access Scripting_Language_Record'Class);
    --  Register a new scripting language in the kernel.
    --  Scripting languages are freed when the kernel is destroyed
 
    function Lookup_Scripting_Language
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String) return Scripting_Language;
    --  Lookup one of the registered languages by name.
 
    type Scripting_Language_Array is
      array (Natural range <>) of Scripting_Language;
    function Get_Scripting_Languages
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Scripting_Language_Array;
    --  Return the list of all registered languages.
 
    No_Args : constant GNAT.OS_Lib.Argument_List := (1 .. 0 => null);
 
    function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String) return String;
    procedure Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String);
    procedure Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List);
    function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Execute the command in the GPS shell.
@@ -646,7 +646,7 @@ package Glide_Kernel.Scripts is
    --  modules.
 
    function Get_Entity_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return the class to use for entities. This encapsulates an
    --  Entity_Information.
@@ -670,7 +670,7 @@ package Glide_Kernel.Scripts is
    ----------------
 
    function Get_File_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return the class to use for file types. This encapsulates a File_Info
 
@@ -721,7 +721,7 @@ package Glide_Kernel.Scripts is
    -------------------------
 
    function Get_File_Location_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return the class used to represent locations in files. This encapsulates
    --  a File_Location_Info
@@ -751,7 +751,7 @@ package Glide_Kernel.Scripts is
    ----------------
 
    function Get_Hook_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return the class used to provide an interface to hooks.
 
@@ -760,7 +760,7 @@ package Glide_Kernel.Scripts is
    -------------------
 
    function Get_Project_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return the class to use for projects. This encapsulates a Project_Type
 
@@ -778,62 +778,62 @@ package Glide_Kernel.Scripts is
    -------------------
 
    function Get_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return the base class for all context-related classes.
 
    function Create_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access) return Class_Instance;
+      Context : GPS.Kernel.Selection_Context_Access) return Class_Instance;
    --  Return an instance of one of the classes derived from
    --  Context_Class, depending on the type of Context
 
    function Get_Data (Data : Callback_Data; N : Positive)
-      return Glide_Kernel.Selection_Context_Access;
+      return GPS.Kernel.Selection_Context_Access;
    --  Retrieve some context information from instance
 
    function Get_Area_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return the base class for contexts containing file areas
 
    function Create_Area_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Contexts.File_Area_Context_Access)
+      Context : GPS.Kernel.Contexts.File_Area_Context_Access)
       return Class_Instance;
    --  Return an instance of an area context
 
    function Get_Data (Data : Callback_Data; N : Positive)
-      return Glide_Kernel.Contexts.File_Area_Context_Access;
+      return GPS.Kernel.Contexts.File_Area_Context_Access;
    --  Retrieve some context information from instance
 
    function Get_File_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return a class for a File_Selection_Context
 
    function Get_Data (Data : Callback_Data; N : Positive)
-      return Glide_Kernel.Contexts.File_Selection_Context_Access;
+      return GPS.Kernel.Contexts.File_Selection_Context_Access;
    --  Retrieve some context information from instance
 
    function Create_File_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Contexts.File_Selection_Context_Access)
+      Context : GPS.Kernel.Contexts.File_Selection_Context_Access)
       return Class_Instance;
    --  Create a new context
 
    function Get_Entity_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return a class for an Entity_Selection_Context
 
    function Get_Data (Data : Callback_Data; N : Positive)
-     return Glide_Kernel.Contexts.Entity_Selection_Context_Access;
+     return GPS.Kernel.Contexts.Entity_Selection_Context_Access;
    --  Retrieve some context information from instance
 
    function Create_Entity_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Contexts.Entity_Selection_Context_Access)
+      Context : GPS.Kernel.Contexts.Entity_Selection_Context_Access)
       return Class_Instance;
    --  Create a new context
 
@@ -862,4 +862,4 @@ private
    type Callback_Data is abstract tagged null record;
    type Scripting_Language_Record is abstract tagged null record;
 
-end Glide_Kernel.Scripts;
+end GPS.Kernel.Scripts;

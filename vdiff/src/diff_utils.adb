@@ -28,13 +28,13 @@ pragma Warnings (On);
 
 with GNAT.Regpat;              use GNAT.Regpat;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with Generic_List;
 with VFS;                      use VFS;
 with Basic_Types;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with Glide_Intl;                use Glide_Intl;
 
 package body Diff_Utils is
@@ -119,7 +119,7 @@ package body Diff_Utils is
    ----------
 
    function Diff
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File1, File2 : VFS.Virtual_File) return Diff_Occurrence_Link
    is
       Descriptor   : TTY_Process_Descriptor;
@@ -186,7 +186,7 @@ package body Diff_Utils is
    ----------
 
    function Diff
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
@@ -324,7 +324,7 @@ package body Diff_Utils is
    -----------
 
    function Diff3
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File1, File2, File3 : VFS.Virtual_File) return Diff_Pair
    is
       Result : Diff_Pair;

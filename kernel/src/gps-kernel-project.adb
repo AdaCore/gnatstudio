@@ -30,12 +30,12 @@ with Types;                    use Types;
 with Entities;
 
 with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Location_View;        use GPS.Location_View;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 
-package body Glide_Kernel.Project is
+package body GPS.Kernel.Project is
 
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class);
@@ -89,7 +89,7 @@ package body Glide_Kernel.Project is
          else
             Insert (Handle,
                     -"Command not found in path: " & Gnatls_Args (1).all,
-                    Mode => Glide_Kernel.Console.Error);
+                    Mode => GPS.Kernel.Console.Error);
 
             Set_Predefined_Source_Path (Handle.Registry.all, "");
             Set_Predefined_Object_Path (Handle.Registry.all, "");
@@ -388,7 +388,7 @@ package body Glide_Kernel.Project is
 
       procedure Report_Error (Msg : String) is
       begin
-         Insert (Kernel, Msg, Mode => Glide_Kernel.Console.Error);
+         Insert (Kernel, Msg, Mode => GPS.Kernel.Console.Error);
          Parse_File_Locations (Kernel, Msg, "Project save");
          Result := False;
       end Report_Error;
@@ -480,4 +480,4 @@ package body Glide_Kernel.Project is
       return To_Argument_List (Value);
    end Get_Switches;
 
-end Glide_Kernel.Project;
+end GPS.Kernel.Project;

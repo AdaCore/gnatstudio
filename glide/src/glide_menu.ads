@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Item_Factory; use Gtk.Item_Factory;
-with Glide_Kernel;     use Glide_Kernel;
+with GPS.Kernel;     use GPS.Kernel;
 
 package Glide_Menu is
 
@@ -30,7 +30,7 @@ package Glide_Menu is
    --  Glide menu items.
 
    procedure Register_Common_Menus
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register some of the common menus that couldn't be created through
    --  Glide_Menu_Items.
 

@@ -28,15 +28,15 @@ with Commands.Interactive;        use Commands.Interactive;
 with Commands.Custom;             use Commands.Custom;
 
 with Glide_Intl;                  use Glide_Intl;
-with Glide_Kernel.Actions;        use Glide_Kernel.Actions;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 
-with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with VCS_Module;                  use VCS_Module;
 with VCS_View_Pkg;                use VCS_View_Pkg;
 with Traces;                      use Traces;
@@ -1172,7 +1172,7 @@ package body VCS.Generic_VCS is
                if Command.Dir = null
                  or else Command.Dir.all = ""
                then
-                  St.File := Glide_Kernel.Create
+                  St.File := GPS.Kernel.Create
                     (S (Matches (Command.Parser.File_Index).First
                         .. Matches (Command.Parser.File_Index).Last),
                      Command.Rep.Kernel,
@@ -1185,7 +1185,7 @@ package body VCS.Generic_VCS is
                end if;
 
             elsif not Is_Empty (Command.Rep.Current_Query_Files) then
-               St.File := Glide_Kernel.Create
+               St.File := GPS.Kernel.Create
                  (String_List.Head (Command.Rep.Current_Query_Files),
                   Command.Rep.Kernel,
                   True, False);
@@ -1441,7 +1441,7 @@ package body VCS.Generic_VCS is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       VCS_Generic_Module_ID := new VCS_Generic_Module_ID_Record;
       VCS_Generic_Module_ID.Kernel := Kernel_Handle (Kernel);

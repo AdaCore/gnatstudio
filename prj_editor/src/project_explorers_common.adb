@@ -27,9 +27,9 @@ with Language.Unknown;            use Language.Unknown;
 with Language;                    use Language;
 with Language_Handlers.Glide;     use Language_Handlers.Glide;
 with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with String_Utils;                use String_Utils;
 with Entities;                    use Entities;
 with GUI_Utils;                   use GUI_Utils;
@@ -621,7 +621,7 @@ package body Project_Explorers_Common is
 
    function Get_Project_From_Node
      (Model     : Gtk_Tree_Store;
-      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Node      : Gtk_Tree_Iter;
       Importing : Boolean) return Project_Type
    is

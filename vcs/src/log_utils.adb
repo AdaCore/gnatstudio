@@ -33,8 +33,8 @@ with String_Utils;              use String_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with VFS;                       use VFS;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 
 package body Log_Utils is
 

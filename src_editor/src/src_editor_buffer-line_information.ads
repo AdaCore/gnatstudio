@@ -29,7 +29,7 @@ with Gdk.Pixmap;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Text_View; use Gtk.Text_View;
-with Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Standard_Hooks;
 
 package Src_Editor_Buffer.Line_Information is
 
@@ -48,7 +48,7 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
       Box        : Gtk_Widget;
-      Info       : Glide_Kernel.Standard_Hooks.Line_Information_Data);
+      Info       : GPS.Kernel.Standard_Hooks.Line_Information_Data);
    --  Add the line information to the Buffer.
    --  User must not free Info.
 

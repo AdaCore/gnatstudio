@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPR_Creation;              use GPR_Creation;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel;              use GPS.Kernel;
 with Projects;                  use Projects;
 with Directory_Tree;            use Directory_Tree;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -38,7 +38,7 @@ package body Creation_Wizard.Simple is
    type Dirs_Selection_Page_Access is access all Dirs_Selection_Page'Class;
    procedure Generate_Project
      (Page               : access Dirs_Selection_Page;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean);
@@ -56,7 +56,7 @@ package body Creation_Wizard.Simple is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Generate_Project
      (Page               : access Obj_Dirs_Page;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean);
@@ -141,7 +141,7 @@ package body Creation_Wizard.Simple is
 
    procedure Generate_Project
      (Page               : access Dirs_Selection_Page;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean)
@@ -157,7 +157,7 @@ package body Creation_Wizard.Simple is
 
    procedure Generate_Project
      (Page               : access Obj_Dirs_Page;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean)

@@ -41,7 +41,7 @@ package body Commands.Interactive is
       with null record;
 
    function Component_Editor
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Component : access Internal_Component_Record)
       return Gtk.Widget.Gtk_Widget;
    procedure Update_From_Editor
@@ -98,7 +98,7 @@ package body Commands.Interactive is
    ----------------------
 
    function Component_Editor
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Component : access Internal_Component_Record)
       return Gtk.Widget.Gtk_Widget
    is
@@ -245,7 +245,7 @@ package body Commands.Interactive is
 
    procedure Free (X : in out Interactive_Command_Context) is
    begin
-      Glide_Kernel.Unref (X.Context);
+      GPS.Kernel.Unref (X.Context);
 
       if X.Args /= null then
          for J in X.Args'Range loop

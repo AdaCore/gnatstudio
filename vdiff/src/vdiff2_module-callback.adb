@@ -25,11 +25,11 @@ with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtk.Window;                        use Gtk.Window;
 
-with Glide_Kernel;                      use Glide_Kernel;
-with Glide_Kernel.Contexts;             use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;                  use Glide_Kernel.MDI;
-with Glide_Kernel.Preferences;          use Glide_Kernel.Preferences;
-with Glide_Kernel.Standard_Hooks;       use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;                      use GPS.Kernel;
+with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks;       use GPS.Kernel.Standard_Hooks;
 with Glide_Intl;                        use Glide_Intl;
 
 with Traces;                            use Traces;

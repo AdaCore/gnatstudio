@@ -21,8 +21,8 @@
 with Gdk.Color;         use Gdk.Color;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
-with Glide_Kernel;      use Glide_Kernel;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel;      use GPS.Kernel;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Glide_Intl;        use Glide_Intl;
 with VFS;               use VFS;
 
@@ -61,7 +61,7 @@ package body Src_Editor_Module.Line_Highlighting is
    --------------------------
 
    procedure Edit_Command_Handler
-     (Data : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);

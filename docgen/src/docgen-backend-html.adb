@@ -22,8 +22,8 @@ with OS_Utils;             use OS_Utils;
 with String_Utils;         use String_Utils;
 with Projects.Registry;    use Projects.Registry;
 with Projects;             use Projects;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with File_Utils;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -91,7 +91,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Open
      (B          : access Backend_HTML;
-      Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : File_Descriptor;
       Open_Title : String)
    is
@@ -114,7 +114,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Close
      (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor)
    is
       pragma Unreferenced (B, Kernel);
@@ -128,7 +128,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Subtitle
      (B             : access Backend_HTML;
-      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       File          : File_Descriptor;
       Level         : Natural;
       Subtitle_Name : String)
@@ -154,7 +154,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Package_Desc
      (B           : access Backend_HTML;
-      Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       File        : File_Descriptor;
       Level       : Natural;
       Description : String)
@@ -170,7 +170,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Package
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -215,7 +215,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Package_Open_Close
      (B                 : access Backend_HTML;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       File              : in File_Descriptor;
       List_Ref_In_File  : in out List_Reference_In_File.List;
       Source_File_List  : Type_Source_File_Table.HTable;
@@ -259,7 +259,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_With
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -298,7 +298,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Var
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -342,7 +342,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Exception
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -383,7 +383,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Type
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -424,7 +424,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Tagged_Type
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Source_File_List : Type_Source_File_Table.HTable;
       Level            : Natural;
@@ -516,7 +516,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Entry
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -684,7 +684,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Subprogram
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -726,7 +726,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Header
      (B              : access Backend_HTML;
-      Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       File           : File_Descriptor;
       Header_File    : Virtual_File;
       Header_Package : String;
@@ -771,7 +771,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Header_Private
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Header_Title     : String;
       Level            : Natural)
@@ -796,7 +796,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Footer
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor)
    is
       pragma Unreferenced (B, Kernel);
@@ -810,7 +810,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Unit_Index
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -887,7 +887,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Subprogram_Index
      (B       : access Backend_HTML;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : File_Descriptor;
       Options : All_Options)
    is
@@ -929,7 +929,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Type_Index
      (B       : access Backend_HTML;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : File_Descriptor;
       Options : All_Options)
    is
@@ -971,7 +971,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Tagged_Type_Index
      (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor)
    is
       pragma Unreferenced (B, Kernel);
@@ -1005,7 +1005,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Index_Tagged_Type
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Source_File_List : Type_Source_File_Table.HTable;
       Entity           : Entity_Information;
@@ -1085,7 +1085,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Index_Item
      (B         : access Backend_HTML;
-      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       File      : File_Descriptor;
       Name      : String;
       Item_File : Entities.Source_File;
@@ -1111,7 +1111,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Private_Index
      (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor;
       Title  : String)
    is
@@ -1128,7 +1128,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Public_Index
      (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor;
       Title  : String)
    is
@@ -1145,7 +1145,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_End_Of_Index
      (B      : access Backend_HTML;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor)
    is
       pragma Unreferenced (B, Kernel);
@@ -1159,7 +1159,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Body_Line
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -1187,7 +1187,7 @@ package body Docgen.Backend.HTML is
 
    procedure Doc_Description
      (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : File_Descriptor;
       Level            : Natural;
       Description      : String)

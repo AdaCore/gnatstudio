@@ -25,13 +25,13 @@ with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Clist;    use Gtk.Clist;
 with Diff_Utils;   use Diff_Utils;
 with Basic_Types;  use Basic_Types;
-with Glide_Kernel;
+with GPS.Kernel;
 with VFS;          use VFS;
 
 package Vdiff_Utils is
 
    procedure Fill_Diff_Lists
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       List1  : access Gtk_Clist_Record'Class;
       List2  : access Gtk_Clist_Record'Class;
       File1  : VFS.Virtual_File;
@@ -61,7 +61,7 @@ package Vdiff_Utils is
    --  objects linked to this one.
 
    procedure Fill_Diff_Lists
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       List1      : access Gtk_Clist_Record'Class;
       List2      : access Gtk_Clist_Record'Class;
       First_Line : Text_Iterator_Access);

@@ -22,10 +22,10 @@
 --  files.
 
 with Generic_List;
-with Glide_Kernel;
+with GPS.Kernel;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-use Glide_Kernel;
+use GPS.Kernel;
 with VFS;                        use VFS;
 
 package Diff_Utils2 is
@@ -93,7 +93,7 @@ package Diff_Utils2 is
    --  Free all content of Head of the list.
 
    procedure Diff3
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head);
    --  Execute diff on Item
 
@@ -112,12 +112,12 @@ package Diff_Utils2 is
    --  Free all content of node of the list. overide the standard Free
 
    function Diff
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List;
    --  Execute diff on File1 and File2 and return a list of differences.
 
    function Diff
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
@@ -127,7 +127,7 @@ package Diff_Utils2 is
    --  If Revert is True, create Orig_File from New_File and Diff_File.
 
    function Diff3
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List;
    --  Execute diff on File1,File2 and File3 and return a list of differences.

@@ -30,14 +30,14 @@ with Gtk.Menu_Item;                use Gtk.Menu_Item;
 
 with Glide_Intl;                   use Glide_Intl;
 
-with Glide_Kernel;                 use Glide_Kernel;
-with Glide_Kernel.Actions;         use Glide_Kernel.Actions;
-with Glide_Kernel.MDI;             use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
-with Glide_Kernel.Hooks;           use Glide_Kernel.Hooks;
-with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;         use Glide_Kernel.Project;
-with Glide_Main_Window;            use Glide_Main_Window;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Main_Window;            use GPS.Main_Window;
 with Histories;                    use Histories;
 with Projects;                     use Projects;
 
@@ -178,7 +178,7 @@ package body Glide_Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
+      Kernel : constant Kernel_Handle := GPS_Window (Object).Kernel;
    begin
       declare
          Filename : constant Virtual_File :=
@@ -213,7 +213,7 @@ package body Glide_Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
+      Kernel : constant Kernel_Handle := GPS_Window (Object).Kernel;
       Dir    : constant String := Select_Directory
         (-"Select a directory",
          History => Get_History (Kernel),
@@ -263,7 +263,7 @@ package body Glide_Menu is
    is
       pragma Unreferenced (Action, Widget);
    begin
-      Quit (Glide_Window (Object));
+      Quit (GPS_Window (Object));
 
    exception
       when E : others =>
@@ -282,7 +282,7 @@ package body Glide_Menu is
    is
       pragma Unreferenced (Action, Widget);
    begin
-      Save_Desktop (Glide_Window (Object).Kernel, As_Default_Desktop => False);
+      Save_Desktop (GPS_Window (Object).Kernel, As_Default_Desktop => False);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -300,7 +300,7 @@ package body Glide_Menu is
    is
       pragma Unreferenced (Action, Widget);
    begin
-      Save_Desktop (Glide_Window (Object).Kernel, As_Default_Desktop => True);
+      Save_Desktop (GPS_Window (Object).Kernel, As_Default_Desktop => True);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -317,7 +317,7 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       pragma Unreferenced (Action, Widget);
-      Top : constant Glide_Window := Glide_Window (Object);
+      Top : constant GPS_Window := GPS_Window (Object);
    begin
       Edit_Preferences (Top.Kernel);
 
@@ -332,7 +332,7 @@ package body Glide_Menu is
    ---------------------------
 
    procedure Register_Common_Menus
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       File        : constant String := "/_" & (-"File")     & '/';
       Project     : constant String := "/_" & (-"Project")  & '/';

@@ -20,7 +20,7 @@
 
 --  This package contains the files view for the explorer,
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Gtk.Main;
 with Gtk.Handlers;
 with Gtk.Scrolled_Window;
@@ -39,16 +39,16 @@ package Project_Explorers_Files is
 
    procedure Gtk_New
      (Explorer : out Project_Explorer_Files;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new explorer.
 
    procedure Initialize
      (Explorer : access Project_Explorer_Files_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    -------------
@@ -76,7 +76,7 @@ private
    type Project_Explorer_Files_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
    record
-      Kernel     : Glide_Kernel.Kernel_Handle;
+      Kernel     : GPS.Kernel.Kernel_Handle;
       File_Tree  : Gtk.Tree_View.Gtk_Tree_View;
       File_Model : Gtk.Tree_Store.Gtk_Tree_Store;
       Expanding  : Boolean := False;

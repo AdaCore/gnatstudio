@@ -21,7 +21,7 @@
 with Glide_Intl; use Glide_Intl;
 with VFS;        use VFS;
 with Traces;     use Traces;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
 with Basic_Types; use Basic_Types;
 
 package body Commands.VCS is

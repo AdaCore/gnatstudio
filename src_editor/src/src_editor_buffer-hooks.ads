@@ -31,7 +31,7 @@ package Src_Editor_Buffer.Hooks is
    --  Emit the hook Word_Added_Hook
 
    procedure Register_Editor_Hooks
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the hooks related to the source editors
 
 end Src_Editor_Buffer.Hooks;

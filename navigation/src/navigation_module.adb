@@ -30,11 +30,11 @@ with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Widget;                  use Gtk.Widget;
 
 with Projects;                    use Projects;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;           use GPS.Location_View;
 with Glide_Intl;                  use Glide_Intl;
 
@@ -707,7 +707,7 @@ package body Navigation_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Toolbar   : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       Button    : Gtk_Button;

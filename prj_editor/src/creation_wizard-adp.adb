@@ -19,9 +19,9 @@
 -----------------------------------------------------------------------
 
 with Adp_Converter;             use Adp_Converter;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with Projects;                  use Projects;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Box;                   use Gtk.Box;
@@ -44,7 +44,7 @@ package body Creation_Wizard.Adp is
    type Adp_Selection_Page_Access is access all Adp_Selection_Page'Class;
    procedure Generate_Project
      (Page               : access Adp_Selection_Page;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean);
@@ -100,7 +100,7 @@ package body Creation_Wizard.Adp is
 
    procedure Generate_Project
      (Page               : access Adp_Selection_Page;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean)

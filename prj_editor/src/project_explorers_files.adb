@@ -53,11 +53,11 @@ with Unchecked_Deallocation;
 with VFS;                      use VFS;
 with Basic_Types;              use Basic_Types;
 with Generic_List;
-with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel;             use Glide_Kernel;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
 with Glide_Intl;               use Glide_Intl;
 with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
@@ -74,7 +74,7 @@ with Project_Explorers_Common; use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
 
-   Explorer_Files_Module_Id   : Glide_Kernel.Module_ID := null;
+   Explorer_Files_Module_Id   : GPS.Kernel.Module_ID := null;
 
    File_View_Shows_Only_Project : constant History_Key :=
      "explorers-file-show-project-only";
@@ -169,7 +169,7 @@ package body Project_Explorers_Files is
    --  ??? Unused for now while the files explorer is not a separate module.
    --  Return the context to use for the contextual menu.
    --  It is also used to return the context for
-   --  Glide_Kernel.Get_Current_Context, and thus can be called with a null
+   --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
    --  event or a null menu.
 
    function Greatest_Common_Path
@@ -574,7 +574,7 @@ package body Project_Explorers_Files is
 
    procedure Gtk_New
      (Explorer : out Project_Explorer_Files;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Explorer := new Project_Explorer_Files_Record;
       Initialize (Explorer, Kernel);
@@ -586,7 +586,7 @@ package body Project_Explorers_Files is
 
    procedure Initialize
      (Explorer : access Project_Explorer_Files_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Gtk.Scrolled_Window.Initialize (Explorer);
       Set_Policy (Explorer, Policy_Automatic, Policy_Automatic);
@@ -1230,7 +1230,7 @@ package body Project_Explorers_Files is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools : constant String := '/' & (-"Tools");
    begin
@@ -1240,7 +1240,7 @@ package body Project_Explorers_Files is
          Module_Name             => "Files_View",
          Priority                => Default_Priority,
          Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
         (Kernel, Tools, -"File View", "", On_Open_Explorer'Access);

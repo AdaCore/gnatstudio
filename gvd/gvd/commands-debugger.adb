@@ -20,7 +20,7 @@
 
 with Debugger;             use Debugger;
 with GVD.Types;            use GVD.Types;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
 with Glide_Intl;           use Glide_Intl;
 with Process_Proxies;      use Process_Proxies;
 with VFS;                  use VFS;

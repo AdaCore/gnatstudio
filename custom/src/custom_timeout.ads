@@ -20,7 +20,7 @@
 
 --  This package is used to register timeout actions in GPS shell
 
-with Glide_Kernel;         use Glide_Kernel;
+with GPS.Kernel;         use GPS.Kernel;
 
 package Custom_Timeout is
 

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GVD.Main_Window;
-with Glide_Kernel;
+with GPS.Kernel;
 with Gdk.Pixbuf;       use Gdk.Pixbuf;
 with Gtk.Frame;        use Gtk.Frame;
 with Gtk.Image;        use Gtk.Image;
@@ -27,11 +27,11 @@ with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Toolbar;      use Gtk.Toolbar;
 with Gtk.Main;
 
-package Glide_Main_Window is
+package GPS.Main_Window is
 
-   type Glide_Window_Record is new GVD.Main_Window.GVD_Main_Window_Record with
+   type GPS_Window_Record is new GVD.Main_Window.GVD_Main_Window_Record with
    record
-      Kernel          : Glide_Kernel.Kernel_Handle;
+      Kernel          : GPS.Kernel.Kernel_Handle;
       Toolbar         : Gtk_Toolbar;
       Animation_Frame : Gtk_Frame;
       Static_Image    : Gdk_Pixbuf;
@@ -44,10 +44,10 @@ package Glide_Main_Window is
       Desktop_Loaded  : Boolean := False;
       Public_Version  : Boolean := True;
    end record;
-   type Glide_Window is access all Glide_Window_Record'Class;
+   type GPS_Window is access all GPS_Window_Record'Class;
 
    procedure Gtk_New
-     (Main_Window      : out Glide_Window;
+     (Main_Window      : out GPS_Window;
       Key              : String;
       Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
@@ -60,40 +60,40 @@ package Glide_Main_Window is
    --  Prefix_Directory is the prefix where Glide is installed (e.g /opt/gnu).
 
    procedure Initialize
-     (Main_Window      : access Glide_Window_Record'Class;
+     (Main_Window      : access GPS_Window_Record'Class;
       Key              : String;
       Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
       Prefix_Directory : String);
    --  Internal initialization function
 
-   procedure Register_Keys (Main_Window : access Glide_Window_Record'Class);
+   procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);
    --  Register the key bindings associated with the window
 
-   function Anim_Cb (Kernel : Glide_Kernel.Kernel_Handle) return Boolean;
+   function Anim_Cb (Kernel : GPS.Kernel.Kernel_Handle) return Boolean;
    --  Function called when the GPS animation needs to be updated
 
-   procedure Display_Default_Image (Kernel : Glide_Kernel.Kernel_Handle);
+   procedure Display_Default_Image (Kernel : GPS.Kernel.Kernel_Handle);
    --  Display the default image in the top right corner of the main window
 
-   function GPS_Name (Window : access Glide_Window_Record) return String;
+   function GPS_Name (Window : access GPS_Window_Record) return String;
    --  Return the name of this GPS release
 
    procedure Quit
-     (Main_Window : access Glide_Window_Record'Class;
+     (Main_Window : access GPS_Window_Record'Class;
       Force       : Boolean := False);
    --  Exit GPS. Ask for confirmation if there are unsaved files and Force is
    --  False. If Force is True, nothing is saved, and GPS exists immediately.
    --  Save the desktop if needed.
 
-   procedure Load_Desktop (Window : access Glide_Window_Record'Class);
+   procedure Load_Desktop (Window : access GPS_Window_Record'Class);
    --  Load a saved desktop, if any, and create the console if needed
 
    procedure Reset_Title
-     (Window : access Glide_Window_Record;
+     (Window : access GPS_Window_Record;
       Info   : String := "");
    --  Reset the title of the main window.
    --  Info is an extra information to be displayed, in addition of the name
    --  of the root project which is always displayed.
 
-end Glide_Main_Window;
+end GPS.Main_Window;

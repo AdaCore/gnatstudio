@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Location_View;        use GPS.Location_View;
 with Projects;                 use Projects;
 with Projects.Editor;          use Projects.Editor;
@@ -66,7 +66,7 @@ package body Creation_Wizard.Dependencies is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Generate_Project
      (Page    : access Dependency_Project_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean);
@@ -81,7 +81,7 @@ package body Creation_Wizard.Dependencies is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Generate_Project
      (Page    : access Predefined_Dependency_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean);
@@ -101,7 +101,7 @@ package body Creation_Wizard.Dependencies is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Generate_Project
      (Page    : access New_File_Dependency_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean);
@@ -567,7 +567,7 @@ package body Creation_Wizard.Dependencies is
 
    procedure Generate_Project
      (Page    : access New_File_Dependency_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean)
@@ -594,7 +594,7 @@ package body Creation_Wizard.Dependencies is
 
    procedure Generate_Project
      (Page    : access Predefined_Dependency_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean)
@@ -632,7 +632,7 @@ package body Creation_Wizard.Dependencies is
 
    procedure Generate_Project
      (Page    : access Dependency_Project_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean)

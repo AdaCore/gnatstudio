@@ -28,8 +28,8 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;
 
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
 
 with GVD.Tooltips;
 
@@ -57,7 +57,7 @@ package VCS_View_Pkg is
    --  Internal initialization function.
 
    function Get_Kernel
-     (VCS_View : access VCS_View_Record) return Glide_Kernel.Kernel_Handle;
+     (VCS_View : access VCS_View_Record) return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated with VCS_View
 
    procedure Clear (Explorer : VCS_View_Access);

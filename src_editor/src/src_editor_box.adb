@@ -24,15 +24,15 @@ with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Gdk;                         use Gdk;
 with Gdk.Color;                   use Gdk.Color;
 with Gdk.Event;                   use Gdk.Event;
@@ -125,12 +125,12 @@ package body Src_Editor_Box is
    --  not found. It must be destroyed by the caller.
 
    function Get_Contextual_Menu
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
-      return Glide_Kernel.Selection_Context_Access;
+      return GPS.Kernel.Selection_Context_Access;
    --  Same as the public Get_Contextual_Menu, Event_Widget is ignored.
 
    function To_Box_Line
@@ -195,7 +195,7 @@ package body Src_Editor_Box is
 
    procedure Initialize_Box
      (Box    : access Source_Editor_Box_Record;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Source : Source_Buffer := null;
       Lang   : Language.Language_Access);
    --  Perform the initialization of the given editor box. If Source_Buffer
@@ -417,9 +417,9 @@ package body Src_Editor_Box is
               (File   => Get_Or_Create
                  (Db   => Get_Database (Get_Kernel (Context)),
                   File => File_Information (Context)),
-               Line   => Glide_Kernel.Contexts.Line_Information (Context),
+               Line   => GPS.Kernel.Contexts.Line_Information (Context),
                Column => Column_Type
-                 (Glide_Kernel.Contexts.Entity_Column_Information (Context))),
+                 (GPS.Kernel.Contexts.Entity_Column_Information (Context))),
             Location         => Location);
 
          if Location = Entities.No_File_Location then
@@ -703,7 +703,7 @@ package body Src_Editor_Box is
            (Context       => Context'Unchecked_Access,
             Entity_Name   => Entity_Name,
             Entity_Column => To_Box_Column (Col));
-         Glide_Kernel.Modules.Compute_Tooltip
+         GPS.Kernel.Modules.Compute_Tooltip
            (Data.Box.Kernel, Context'Unchecked_Access, Pixmap, Width, Height);
 
          if Pixmap /= null then
@@ -1042,7 +1042,7 @@ package body Src_Editor_Box is
 
    procedure Initialize_Box
      (Box    : access Source_Editor_Box_Record;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Source : Source_Buffer := null;
       Lang   : Language.Language_Access)
    is
@@ -1403,10 +1403,10 @@ package body Src_Editor_Box is
    -------------------------
 
    function Get_Contextual_Menu
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Object : access Glib.Object.GObject_Record'Class;
       Event  : Gdk.Event.Gdk_Event;
-      Menu   : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
+      Menu   : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access
    is
       Editor        : constant Source_Editor_Box := Source_Editor_Box (Object);
       V             : constant Source_View := Editor.Source_View;
@@ -1589,7 +1589,7 @@ package body Src_Editor_Box is
 
    function Filter_Matches_Primitive
      (Filter  : access Has_Type_Filter;
-      Context : access Glide_Kernel.Selection_Context'Class) return Boolean
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Filter);
       C      : Entity_Selection_Context_Access;
@@ -1609,7 +1609,7 @@ package body Src_Editor_Box is
 
    function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
-      Context : access Glide_Kernel.Selection_Context'Class) return Boolean
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Filter);
       C      : Entity_Selection_Context_Access;
@@ -1823,7 +1823,7 @@ package body Src_Editor_Box is
 
    procedure Gtk_New
      (Box    : out Source_Editor_Box;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null) is
    begin
       Box := new Source_Editor_Box_Record;
@@ -1836,7 +1836,7 @@ package body Src_Editor_Box is
 
    procedure Initialize
      (Box    : access Source_Editor_Box_Record;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access) is
    begin
       Initialize_Box (Box, Kernel, Lang => Lang);
@@ -1933,7 +1933,7 @@ package body Src_Editor_Box is
 
    function Get_Kernel
      (Box : access Source_Editor_Box_Record)
-     return Glide_Kernel.Kernel_Handle is
+     return GPS.Kernel.Kernel_Handle is
    begin
       return Box.Kernel;
    end Get_Kernel;

@@ -29,7 +29,7 @@ with Ada.Exceptions;             use Ada.Exceptions;
 
 with Traces;                     use Traces;
 with Glide_Intl;                 use Glide_Intl;
-with Glide_Kernel.Console;       use Glide_Kernel.Console;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with String_Utils;               use String_Utils;
 
 package body Commands.External is

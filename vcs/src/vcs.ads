@@ -24,7 +24,7 @@ with String_List_Utils; use String_List_Utils;
 with VFS;
 
 with Basic_Types;  use Basic_Types;
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 with Ada.Unchecked_Deallocation;
 
@@ -268,7 +268,7 @@ package VCS is
    --  If Version_1 is empty, then the local file is taken.
    --  If Version_2 is empty, then the HEAD revision is taken.
    --
-   --  This procedure should call Glide_Kernel.Modules.Display_Differences
+   --  This procedure should call GPS.Kernel.Modules.Display_Differences
    --  in order to display a GPS visual diff.
 
    procedure Diff_Working
@@ -296,7 +296,7 @@ package VCS is
    --  Return annotations for the corresponding file.
    --  The result String_List.List with one element for each line.
    --
-   --  This procedure should call Glide_Kernel.Modules.Add_Line_Information
+   --  This procedure should call GPS.Kernel.Modules.Add_Line_Information
    --  in order to display the annotations in the GPS editors.
    --  The Line_Information ID that must be used is Annotation_Id.
 
@@ -404,7 +404,7 @@ private
    --  The file is unknown of the VCS repository.
 
    type VCS_Record is abstract tagged limited record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
    end record;
 
 end VCS;

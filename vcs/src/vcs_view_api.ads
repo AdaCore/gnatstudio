@@ -20,8 +20,8 @@
 
 with Gtk.Widget;
 with Glib.Object;          use Glib.Object;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Gtk.Menu;             use Gtk.Menu;
 with VCS;                  use VCS;
 with Projects;             use Projects;
@@ -210,7 +210,7 @@ package VCS_View_API is
    --  do nothing.
 
    procedure VCS_Command_Handler
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
    --  Handler for VCS commands, that take a file name as their first parameter
 

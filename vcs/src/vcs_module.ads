@@ -20,7 +20,7 @@
 
 --  This package defines the GPS module for communication with VCS.
 
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with GNAT.OS_Lib;
 
 with VCS_View_Pkg; use VCS_View_Pkg;
@@ -31,7 +31,7 @@ package VCS_Module is
    VCS_Module_Name : constant String := "VCS_Interface";
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    function Get_VCS_List (Module : Module_ID) return GNAT.OS_Lib.Argument_List;

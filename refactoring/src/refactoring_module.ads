@@ -20,12 +20,12 @@
 
 --  This package provides support for refactoring the code
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Refactoring_Module is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 end Refactoring_Module;

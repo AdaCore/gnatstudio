@@ -24,7 +24,7 @@ with GNAT.Regpat;                       use GNAT.Regpat;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with String_Utils;                      use String_Utils;
 with Language;                          use Language;
-with Glide_Kernel;                      use Glide_Kernel;
+with GPS.Kernel;                      use GPS.Kernel;
 
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;

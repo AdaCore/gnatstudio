@@ -30,8 +30,8 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Widget;                use Gtk.Widget;
 
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
 
 with Custom_Module;             use Custom_Module;
@@ -78,7 +78,7 @@ package body Custom_Combos is
 
    type Item_Callback is record
       Combo       : Custom_Combo;
-      On_Selected : Glide_Kernel.Scripts.Subprogram_Type;
+      On_Selected : GPS.Kernel.Scripts.Subprogram_Type;
    end record;
 
    package Item_Handlers is new Gtk.Handlers.User_Return_Callback
@@ -97,7 +97,7 @@ package body Custom_Combos is
    procedure Add_Combo_Entry
      (Combo       : access Custom_Combo_Record'Class;
       Label       : String;
-      On_Selected : Glide_Kernel.Scripts.Subprogram_Type);
+      On_Selected : GPS.Kernel.Scripts.Subprogram_Type);
    --  Add a combo entry and a command that should be
    --  executed whenever this entry is selected.
    --  On_Selected is also executed when the entry is selected
@@ -335,7 +335,7 @@ package body Custom_Combos is
    procedure Add_Combo_Entry
      (Combo       : access Custom_Combo_Record'Class;
       Label       : String;
-      On_Selected : Glide_Kernel.Scripts.Subprogram_Type)
+      On_Selected : GPS.Kernel.Scripts.Subprogram_Type)
    is
       Item  : constant Gtk_List_Item :=
         Add_Unique_Combo_Entry (Combo.Combo, Label);

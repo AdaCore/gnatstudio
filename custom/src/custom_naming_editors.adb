@@ -21,7 +21,7 @@
 with Basic_Types;                      use Basic_Types;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 with Glide_Intl;                       use Glide_Intl;
-with Glide_Kernel.Project;             use Glide_Kernel.Project;
+with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Frame;                        use Gtk.Frame;
 with Gtk.GEntry;                       use Gtk.GEntry;
@@ -40,7 +40,7 @@ package body Custom_Naming_Editors is
 
    procedure Gtk_New
      (Editor   : out Custom_Naming_Editor;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String)
    is
       Extensions : Argument_List := Get_Registered_Extensions
@@ -164,7 +164,7 @@ package body Custom_Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor             : access Custom_Naming_Editor_Record;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is

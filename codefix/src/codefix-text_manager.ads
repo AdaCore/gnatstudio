@@ -24,7 +24,7 @@ with GNAT.OS_Lib;
 with Language;     use Language;
 with Basic_Types;  use Basic_Types;
 with VFS;
-with Glide_Kernel;
+with GPS.Kernel;
 
 with Generic_List;
 
@@ -281,9 +281,9 @@ package Codefix.Text_Manager is
 
    procedure Set_Kernel
      (Text : in out Text_Navigator_Abstr;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    function Get_Kernel
-     (Text : Text_Navigator_Abstr) return Glide_Kernel.Kernel_Handle;
+     (Text : Text_Navigator_Abstr) return GPS.Kernel.Kernel_Handle;
    --  Set or retrieve the kernel
 
    function Get_Body_Or_Spec
@@ -953,7 +953,7 @@ package Codefix.Text_Manager is
    --  procedure raises a Codefix_Panic is the correction is no longer avaible.
 
    type Execute_Corrupted is access procedure
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Error_Message : String);
 
    procedure Secured_Execute
@@ -1139,7 +1139,7 @@ private
 
    type Text_Navigator_Abstr is abstract tagged record
       Files : Ptr_List_Text := new Text_List.List;
-      Kernel               : Glide_Kernel.Kernel_Handle;
+      Kernel               : GPS.Kernel.Kernel_Handle;
    end record;
 
    function Get_File

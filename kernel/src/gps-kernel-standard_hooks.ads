@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Hooks;   use Glide_Kernel.Hooks;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with VFS;                use VFS;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -29,7 +29,7 @@ with Gdk.Pixbuf;
 with Commands;
 with Entities;
 
-package Glide_Kernel.Standard_Hooks is
+package GPS.Kernel.Standard_Hooks is
 
    -----------
    -- Hooks --
@@ -42,8 +42,8 @@ package Glide_Kernel.Standard_Hooks is
 
    function Get_Name (Data : File_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access File_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -55,18 +55,18 @@ package Glide_Kernel.Standard_Hooks is
    end record;
    function Get_Name (Data : String_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access String_Hooks_Args) return Boolean;
    --  Hooks that take a single string as a parameter.
-   --  To create such hooks, use Glide_Kernel.Hooks.Register_Hook with a
+   --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
    --  Type_Name parameter of String_Hook_Type
    --  See inherited doc
 
 
    type Context_Hooks_Args is new Hooks_Data with record
-      Context : Glide_Kernel.Selection_Context_Access;
+      Context : GPS.Kernel.Selection_Context_Access;
    end record;
    --  Base type for hooks that take a single context in parameter
 
@@ -113,7 +113,7 @@ package Glide_Kernel.Standard_Hooks is
    --  to ease calls.
 
    procedure Register_Action_Hooks
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register all hooks defined in this package
 
    -----------------
@@ -125,7 +125,7 @@ package Glide_Kernel.Standard_Hooks is
    Before_Exit_Action_Hook : constant String := "before_exit_action_hook";
 
    procedure Exit_GPS
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Run the hook Exit_Before_Action_Hook, and exit GPS if the hook
    --  terminates.
 
@@ -178,14 +178,14 @@ package Glide_Kernel.Standard_Hooks is
    --  Calls Open_File_Action_Hook.
 
    procedure Clear_Highlighting
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : VFS.Virtual_File);
    --  If Filename is currently open, clear all highlighting currently
    --  associated to it.
    --  See Open_File_Action_Hook
 
    procedure Close_File_Editors
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : VFS.Virtual_File);
    --  Close all file editors that edit Filename.
    --  Filename must be an absolute file name.
@@ -228,7 +228,7 @@ package Glide_Kernel.Standard_Hooks is
    --  Requests dealing with the column on the side of the editors
 
    procedure Create_Line_Information_Column
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       File          : VFS.Virtual_File;
       Identifier    : String;
       Every_Line    : Boolean := True;
@@ -237,7 +237,7 @@ package Glide_Kernel.Standard_Hooks is
    --  See File_Line_Action_Hook
 
    procedure Remove_Line_Information_Column
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : VFS.Virtual_File;
       Identifier : String);
    --  Remove the column identified by Identifier for the editors of File.
@@ -245,7 +245,7 @@ package Glide_Kernel.Standard_Hooks is
    --  See File_Line_Action_Hook
 
    procedure Add_Line_Information
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : VFS.Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
@@ -259,7 +259,7 @@ package Glide_Kernel.Standard_Hooks is
    --  will be freed by the editor.
 
    procedure Add_Editor_Label
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : VFS.Virtual_File;
       Identifier : String;
       Label      : String);
@@ -306,7 +306,7 @@ package Glide_Kernel.Standard_Hooks is
    Location_Action_Hook : constant String := "location_action_hook";
 
    procedure Add_Location_Action
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Identifier : String;
       Category   : String;
       File       : VFS.Virtual_File;
@@ -319,7 +319,7 @@ package Glide_Kernel.Standard_Hooks is
    --  See Location_Action_Hook
 
    procedure Remove_Location_Action
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Identifier : String;
       Category   : String;
       File       : VFS.Virtual_File;
@@ -342,7 +342,7 @@ package Glide_Kernel.Standard_Hooks is
    Html_Action_Hook : constant String := "html_action_hook";
 
    procedure Open_Html
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename          : VFS.Virtual_File;
       Enable_Navigation : Boolean := True);
    --  Open, or create, an html viewer for Filename (Mime_Html_File type)
@@ -365,7 +365,7 @@ package Glide_Kernel.Standard_Hooks is
    Diff_Action_Hook : constant String := "diff_action_hook";
 
    procedure Display_Differences
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Orig_File : VFS.Virtual_File := VFS.No_File;
       New_File  : VFS.Virtual_File := VFS.No_File;
       Diff_File : VFS.Virtual_File);
@@ -377,75 +377,75 @@ package Glide_Kernel.Standard_Hooks is
 private
    function Get_Name (Data : Context_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Context_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : File_Line_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access File_Line_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Source_File_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Source_File_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Compilation_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Compilation_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Location_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Location_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Diff_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Diff_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Html_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Html_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Exit_Before_Action_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Exit_Before_Action_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : File_Location_Hooks_Args) return String;
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access File_Location_Hooks_Args) return Boolean;
    --  See inherited doc
 
 
-end Glide_Kernel.Standard_Hooks;
+end GPS.Kernel.Standard_Hooks;

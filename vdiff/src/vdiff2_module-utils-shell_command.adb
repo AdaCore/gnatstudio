@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;                      use Glide_Kernel;
-with Glide_Kernel.Scripts;              use Glide_Kernel.Scripts;
-with Glide_Kernel.Preferences;          use Glide_Kernel.Preferences;
+with GPS.Kernel;                      use GPS.Kernel;
+with GPS.Kernel.Scripts;              use GPS.Kernel.Scripts;
+with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
 
 with String_Utils;                      use String_Utils;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
@@ -35,7 +35,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    --------------
 
    function Add_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Pos    : Natural;
       Style  : String := "";
@@ -71,7 +71,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ----------
 
    procedure Edit
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       File     : Virtual_File;
       Writable : Boolean := True)
    is
@@ -98,7 +98,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ---------------------------
 
    procedure Synchronize_Scrolling
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File1  : Virtual_File;
       File2  : Virtual_File;
       File3  : Virtual_File := VFS.No_File)
@@ -127,7 +127,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ---------------
 
    function Get_Chars
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -153,7 +153,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    --------------------------
 
    function Get_File_Last_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File : Virtual_File) return Natural
    is
       Args_Line : Argument_List :=
@@ -171,7 +171,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ----------------------
 
    function Get_Line_Number
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Mark   : String) return Natural
    is
       Args_Line : Argument_List :=
@@ -189,7 +189,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    --------------------
 
    procedure Highlight_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural;
       Style : String := "";
@@ -217,7 +217,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ---------------------
 
    procedure Highlight_Range
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Style   : String;
       Line    : Natural := 0;
@@ -254,7 +254,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ---------------------------
 
    procedure Register_Highlighting
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Default_Color : constant String  :=
         To_String (Get_Pref (Kernel, Diff_Default_Color));
@@ -307,7 +307,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    --------------------------
 
    procedure Remove_Blank_Lines
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Mark   : Natural)
    is
       Args : Argument_List (1 .. 1);
@@ -323,7 +323,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ------------------
 
    procedure Replace_Text
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -350,7 +350,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    -----------------
 
    procedure Unhighlight
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural;
       Style : String := "")
@@ -370,7 +370,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ----------------------
 
    procedure Unhighlight_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural;
       Style : String := "")
@@ -386,7 +386,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    -----------------------
 
    procedure Unhighlight_Range
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Style   : String;
       Line    : Natural := 0;

@@ -21,12 +21,12 @@
 --  This package contains the implementation for a specific scripting language,
 --  the simple GPS shell.
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Shell_Script is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 end Shell_Script;

@@ -27,15 +27,15 @@ pragma Warnings (On);
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib;                     use Glib;
 with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Timeout;     use GPS.Kernel.Timeout;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Gtk.Main;                 use Gtk.Main;
 with Traces;                   use Traces;
 with Unchecked_Deallocation;
@@ -809,7 +809,7 @@ package body External_Editor_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
    begin

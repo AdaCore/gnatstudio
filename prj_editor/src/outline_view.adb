@@ -22,14 +22,14 @@ with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Properties.Creation;    use Glib.Properties.Creation;
 with Glib.Xml_Int;                use Glib.Xml_Int;
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GUI_Utils;                   use GUI_Utils;
 with Basic_Types;                 use Basic_Types;
 with VFS;                         use VFS;
@@ -699,7 +699,7 @@ package body Outline_View is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Outline_View_Module_Name : constant String := "Outline_View";
       Tools : constant String := '/' & (-"Tools");
@@ -721,7 +721,7 @@ package body Outline_View is
          Filter => Action_Filter (Create (Module => Outline_View_Module_Name)),
          Label  => -"Refresh");
 
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Add_Default_Desktop_Item (Kernel, "Outline_View", Position_Left);
 

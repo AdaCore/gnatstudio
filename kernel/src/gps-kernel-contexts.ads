@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +25,7 @@ with VFS;
 with Entities;
 with Projects;
 
-package Glide_Kernel.Contexts is
+package GPS.Kernel.Contexts is
 
    procedure Register_Default_Filters
      (Kernel : access Kernel_Handle_Record'Class);
@@ -255,4 +255,4 @@ private
    pragma Inline (Has_Entity_Column_Information);
    pragma Inline (Entity_Column_Information);
 
-end Glide_Kernel.Contexts;
+end GPS.Kernel.Contexts;

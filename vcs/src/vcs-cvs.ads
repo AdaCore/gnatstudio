@@ -97,7 +97,7 @@ package VCS.CVS is
       File : VFS.Virtual_File);
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.CVS module
 
    function Get_Identified_Actions

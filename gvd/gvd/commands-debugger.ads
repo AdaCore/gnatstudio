@@ -20,7 +20,7 @@
 
 --  This package contains commands related to the debugger.
 
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with GVD.Process;  use GVD.Process;
 with VFS;          use VFS;
 

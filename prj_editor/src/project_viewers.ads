@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;
-with Glide_Kernel;
+with GPS.Kernel;
 with Gtk.Widget;
 with Projects;
 with Switches_Editors;
@@ -28,7 +28,7 @@ with Naming_Editors;
 package Project_Viewers is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    --------------------------
@@ -48,7 +48,7 @@ package Project_Viewers is
      (Page         : access Project_Editor_Page_Record;
       Project      : Projects.Project_Type;
       Full_Project : String;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return a new widget to display in the project properties editor or the
    --  project creation wizard. This can be used to store extra information
@@ -68,7 +68,7 @@ package Project_Viewers is
    function Project_Editor
      (Page          : access Project_Editor_Page_Record;
       Project       : Projects.Project_Type;
-      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
       Languages     : GNAT.OS_Lib.Argument_List;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -140,7 +140,7 @@ package Project_Viewers is
    -----------------------------------------------
 
    procedure Register_Project_Editor_Page
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Page      : Project_Editor_Page;
       Label     : String;
       Toc       : String;
@@ -154,11 +154,11 @@ package Project_Viewers is
    --  Ref_Page, or after all the pages if Ref_Page is the empty string.
 
    function Project_Editor_Pages_Count
-      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Natural;
+      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Natural;
    --  Return the number of registered project editor pages
 
    function Get_Nth_Project_Editor_Page
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class; Num : Natural)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Num : Natural)
       return Project_Editor_Page;
    --  Return the Num-th registered project editor page.
    --  First page is number 1.
@@ -173,7 +173,7 @@ package Project_Viewers is
 
    function Create
      (Creator : access Switches_Page_Creator_Record;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Switches_Editors.Switches_Editor_Page is abstract;
    --  Create a new switches editor page.
 
@@ -184,7 +184,7 @@ package Project_Viewers is
    --  since the page is then cached.
 
    procedure Register_Switches_Page
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Creator : access Switches_Page_Creator_Record'Class);
    --  Register a new switches page creator. This will be called to create
    --  the page initially when the project properties or project wizard are
@@ -195,7 +195,7 @@ package Project_Viewers is
    --  startup time, and create widgets lazily.
 
    function Get_Nth_Switches_Page
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Num    : Positive)
       return Switches_Editors.Switches_Editor_Page;
    --  Return the Num-th switches editor page, or null if there are no more
@@ -204,7 +204,7 @@ package Project_Viewers is
    --  The returned widget must be Unref-ed by the caller.
 
    function Switches_Page_Count
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Natural;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Natural;
    --  Return the number of switches pages registered
 
    --------------------------------------------
@@ -213,12 +213,12 @@ package Project_Viewers is
    --  See naming_editors.ads
 
    type Naming_Scheme_Editor_Creator is access function
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String)
      return Naming_Editors.Language_Naming_Editor;
 
    procedure Register_Naming_Scheme_Editor
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String;
       Creator  : Naming_Scheme_Editor_Creator);
    --  Register a new page used to edit the naming scheme for a specific
@@ -227,7 +227,7 @@ package Project_Viewers is
    --  is actually needed
 
    function Get_Naming_Scheme_Page
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String) return Naming_Editors.Language_Naming_Editor;
    --  Return the naming scheme editor page for the specific language.
    --  null is returned if there are no such page.

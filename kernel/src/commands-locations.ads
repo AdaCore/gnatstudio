@@ -22,7 +22,7 @@
 --  location viewable by the user: source locations, documentation, etc.
 
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
-with Glide_Kernel;  use Glide_Kernel;
+with GPS.Kernel;  use GPS.Kernel;
 with VFS;
 
 package Commands.Locations is

@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;           use Glide_Kernel;
+with GPS.Kernel;           use GPS.Kernel;
 
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix_Module;

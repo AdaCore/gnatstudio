@@ -22,7 +22,7 @@
 --  processing of the program structure information for the source file
 --  list passed by the procedure Docgen.
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Docgen.Backend;
 
 package Docgen.Work_On_File is
@@ -30,7 +30,7 @@ package Docgen.Work_On_File is
    procedure Process_Files
      (B                : access Docgen.Backend.Backend'Class;
       Source_File_List : in out Type_Source_File_Table.HTable;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options);
    --  Process all files from Source_File_List, and generate their
    --  documentation.

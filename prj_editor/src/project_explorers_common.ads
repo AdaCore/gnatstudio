@@ -23,7 +23,7 @@ with Gdk.Pixbuf;
 with Gdk.Event;      use Gdk.Event;
 with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
-with Glide_Kernel;   use Glide_Kernel;
+with GPS.Kernel;   use GPS.Kernel;
 with Language;       use Language;
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Menu;       use Gtk.Menu;
@@ -186,7 +186,7 @@ package Project_Explorers_Common is
 
    function Get_Project_From_Node
      (Model     : Gtk_Tree_Store;
-      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Node      : Gtk_Tree_Iter;
       Importing : Boolean) return Projects.Project_Type;
    --  Return the name of the project that Node belongs to. If Importing is

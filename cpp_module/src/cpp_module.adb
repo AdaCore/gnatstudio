@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Language.C;               use Language.C;
 with Language.Cpp;             use Language.Cpp;
@@ -35,8 +35,8 @@ with Projects.Registry;        use Projects.Registry;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Glib.Properties.Creation; use Glib, Glib.Properties.Creation;
 with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
@@ -152,7 +152,7 @@ package body Cpp_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));

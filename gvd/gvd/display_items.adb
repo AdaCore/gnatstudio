@@ -46,8 +46,8 @@ with GVD.Trace;         use GVD.Trace;
 with Process_Proxies;   use Process_Proxies;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Traces;            use Traces;
-with Glide_Kernel;      use Glide_Kernel;
-with Glide_Main_Window; use Glide_Main_Window;
+with GPS.Kernel;      use GPS.Kernel;
+with GPS.Main_Window; use GPS.Main_Window;
 
 package body Display_Items is
 
@@ -258,7 +258,7 @@ package body Display_Items is
       Id          : String_Access;
       Is_Parsable_Entity : Boolean := True;
       Kernel      : constant Kernel_Handle :=
-        Glide_Window (Debugger.Window).Kernel;
+        GPS_Window (Debugger.Window).Kernel;
 
    begin
       --  We need the information on the type, so that we detect aliases only

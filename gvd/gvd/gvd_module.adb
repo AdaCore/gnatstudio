@@ -71,16 +71,16 @@ with Projects;                  use Projects;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
-with Glide_Main_Window;         use Glide_Main_Window;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Main_Window;         use GPS.Main_Window;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Traces;                    use Traces;
@@ -104,7 +104,7 @@ with GVD.Text_Box.Source_Editor.Glide;
 use  GVD.Text_Box.Source_Editor.Glide;
 
 with Interactive_Consoles;      use Interactive_Consoles;
-with Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;
 
 package body GVD_Module is
 
@@ -123,7 +123,7 @@ package body GVD_Module is
 
    procedure Gtk_New
      (Debugger : out GPS_Debugger;
-      Window   : access Glide_Window_Record'Class);
+      Window   : access GPS_Window_Record'Class);
 
    procedure Set_Busy
      (Debugger      : access GPS_Debugger_Record;
@@ -131,7 +131,7 @@ package body GVD_Module is
       Force_Refresh : Boolean := False);
 
    type File_Edited_Hook_Record is new Hook_Args_Record with record
-      Top : Glide_Window;
+      Top : GPS_Window;
    end record;
    type File_Edited_Hook is access File_Edited_Hook_Record'Class;
    procedure Execute
@@ -251,7 +251,7 @@ package body GVD_Module is
    --  Called when the preferences are changed in the GPS kernel
 
    procedure Debugger_Command_Handler
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
    --  Interactive command handler for the debugger module.
 
@@ -580,7 +580,7 @@ package body GVD_Module is
 
    procedure Gtk_New
      (Debugger : out GPS_Debugger;
-      Window   : access Glide_Window_Record'Class)
+      Window   : access GPS_Window_Record'Class)
    is
       Edit : Glide.GEdit;
    begin
@@ -602,9 +602,9 @@ package body GVD_Module is
       pragma Unreferenced (Force_Refresh);
    begin
       if Busy then
-         Push_State (Glide_Window (Debugger.Window).Kernel, Processing);
+         Push_State (GPS_Window (Debugger.Window).Kernel, Processing);
       else
-         Pop_State (Glide_Window (Debugger.Window).Kernel);
+         Pop_State (GPS_Window (Debugger.Window).Kernel);
       end if;
    end Set_Busy;
 
@@ -617,8 +617,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top     : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger :=
         Get_Current_Process (Top);
       use Debugger;
@@ -881,7 +881,7 @@ package body GVD_Module is
    -------------------------
 
    procedure Initialize_Debugger
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       On_Debug_Init
         (Kernel, File_Project_Record'(Get_Project (Kernel), VFS.No_File));
@@ -950,8 +950,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top     : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger :=
         Get_Current_Process (Top);
       use Debugger;
@@ -1022,8 +1022,8 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Data_Sub : constant String := '/' & (-"Debug") & '/' & (-"Data") & '/';
-      Top      : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Top      : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Process  : constant Visual_Debugger := Get_Current_Process (Top);
       Editor   : constant Code_Editor  := Process.Editor_Text;
       Address  : constant String       := Get_Asm_Address (Editor);
@@ -1075,8 +1075,8 @@ package body GVD_Module is
    procedure On_Connect_To_Board
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Top          : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Top          : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Process      : constant Visual_Debugger :=
         Get_Current_Process (Top);
       Dialog       : Gtk_Dialog;
@@ -1155,8 +1155,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top         : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Top         : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger :=
         Get_Current_Process (Top);
       Exec        : GNAT.OS_Lib.String_Access;
@@ -1231,8 +1231,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top     : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Top     : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger :=
         Get_Current_Process (Top);
       use Debugger;
@@ -1291,8 +1291,8 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Top  : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Get_Kernel (Context.Context)));
+      Top  : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Get_Kernel (Context.Context)));
       Edit : constant GEdit := GEdit (Get_Source
         (Visual_Debugger (Get_Current_Process (Top)).Editor_Text));
       Name : constant Virtual_File := Get_Current_File (Edit);
@@ -1368,8 +1368,8 @@ package body GVD_Module is
       pragma Unreferenced (Command);
       Entity  : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context.Context);
-      Top  : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Get_Kernel (Entity)));
+      Top  : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Get_Kernel (Entity)));
       Memory_View : GVD_Memory_View;
    begin
       if Top.Memory_View = null then
@@ -1559,7 +1559,7 @@ package body GVD_Module is
             Create_Pixmap_From_Text
               (Text       => Value.all,
                Font       =>
-                 Get_Pref (Kernel, Glide_Kernel.Preferences.Default_Font),
+                 Get_Pref (Kernel, GPS.Kernel.Preferences.Default_Font),
                Bg_Color   => White (Get_Default_Colormap),
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,
@@ -1632,8 +1632,8 @@ package body GVD_Module is
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
       K              : constant Kernel_Handle := Kernel_Handle (Kernel);
-      Top            : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (K));
+      Top            : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (K));
       Page           : GPS_Debugger;
       Module         : String_Access;
       Program_Args   : String_Access;
@@ -1746,7 +1746,7 @@ package body GVD_Module is
          Id.File_Hook := new File_Edited_Hook_Record;
          Id.File_Hook.Top := Top;
          Add_Hook
-           (K, Glide_Kernel.File_Edited_Hook, Id.File_Hook,
+           (K, GPS.Kernel.File_Edited_Hook, Id.File_Hook,
             Watch => GObject (Top));
 
          --  Add columns for debugging information to all the files that
@@ -1785,8 +1785,8 @@ package body GVD_Module is
      (Kernel   : Kernel_Handle;
       Debugger : access Visual_Debugger_Record'Class)
    is
-      Top              : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Top              : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Debugger_List    : Debugger_List_Link;
       Prev             : Debugger_List_Link;
       Id               : constant GVD_Module := GVD_Module (GVD_Module_ID);
@@ -1875,7 +1875,7 @@ package body GVD_Module is
          end if;
 
          if Id.File_Hook /= null then
-            Remove_Hook (Kernel, Glide_Kernel.File_Edited_Hook, Id.File_Hook);
+            Remove_Hook (Kernel, GPS.Kernel.File_Edited_Hook, Id.File_Hook);
             Id.File_Hook := null;
          end if;
 
@@ -1913,8 +1913,8 @@ package body GVD_Module is
    ---------------------
 
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
-      Top              : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Top              : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
       Debugger_List    : Debugger_List_Link;
       Current_Debugger : GPS_Debugger;
 
@@ -2045,7 +2045,7 @@ package body GVD_Module is
    ---------------------------
 
    procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class) is
-      Top : constant Glide_Window := Glide_Window (Object);
+      Top : constant GPS_Window := GPS_Window (Object);
       Process  : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Top.Kernel));
    begin
@@ -2265,7 +2265,7 @@ package body GVD_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Window : constant Gtk_Window := Get_Main_Window (Kernel);
-      Top    : constant Glide_Window := Glide_Window (Window);
+      Top    : constant GPS_Window := GPS_Window (Window);
       Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       Prev   : Boolean;
 
@@ -2289,11 +2289,11 @@ package body GVD_Module is
    ------------------------------
 
    procedure Debugger_Command_Handler
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
       Kernel : constant Kernel_Handle :=
-        Glide_Kernel.Scripts.Get_Kernel (Data);
+        GPS.Kernel.Scripts.Get_Kernel (Data);
       Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
 
    begin
@@ -2305,11 +2305,11 @@ package body GVD_Module is
             begin
                Process_User_Command
                  (Process,
-                  Glide_Kernel.Scripts.Nth_Arg (Data, 2),
+                  GPS.Kernel.Scripts.Nth_Arg (Data, 2),
                   Output_Command => True);
             end;
 
-         elsif Command = Glide_Kernel.Scripts.Constructor_Method then
+         elsif Command = GPS.Kernel.Scripts.Constructor_Method then
             --  Nothing to do for now. The plan, ultimately, is to be able to
             --  control which debugger the commands will apply to by selecting
             --  a debugger from the constructor, for instance by passing a name
@@ -2324,15 +2324,15 @@ package body GVD_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Debug          : constant String := '/' & (-"Debug") & '/';
       Debug_Sub      : constant String := Debug & (-"_Debug") & '/';
       Data_Sub       : constant String := Debug & (-"Data") & '/';
       Mitem          : Gtk_Menu_Item;
       Menu           : Gtk_Menu;
-      Debugger_Class : constant Glide_Kernel.Scripts.Class_Type :=
-        Glide_Kernel.Scripts.New_Class (Kernel, "Debugger");
+      Debugger_Class : constant GPS.Kernel.Scripts.Class_Type :=
+        GPS.Kernel.Scripts.New_Class (Kernel, "Debugger");
       Command        : Interactive_Command_Access;
       Filter         : Action_Filter;
       Debugger_Filter   : Action_Filter;
@@ -2547,12 +2547,12 @@ package body GVD_Module is
 
       --  Commands
 
-      Glide_Kernel.Scripts.Register_Command
-        (Kernel, Glide_Kernel.Scripts.Constructor_Method,
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, GPS.Kernel.Scripts.Constructor_Method,
          Class         => Debugger_Class,
          Handler       => Debugger_Command_Handler'Access);
 
-      Glide_Kernel.Scripts.Register_Command
+      GPS.Kernel.Scripts.Register_Command
         (Kernel, "send",
          Class         => Debugger_Class,
          Minimum_Args  => 1,

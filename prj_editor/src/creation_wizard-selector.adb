@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;             use Glide_Kernel;
+with GPS.Kernel;             use GPS.Kernel;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -40,8 +40,8 @@ with Glide_Intl;               use Glide_Intl;
 with Creation_Wizard.Full;     use Creation_Wizard.Full;
 with Creation_Wizard.Adp;      use Creation_Wizard.Adp;
 with Creation_Wizard.Simple;   use Creation_Wizard.Simple;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with Traces;                   use Traces;
 with Wizards;                  use Wizards;
 with Creation_Wizard;          use Creation_Wizard;
@@ -64,7 +64,7 @@ package body Creation_Wizard.Selector is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Generate_Project
      (Page    : access Wizard_Selector_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean);
@@ -125,7 +125,7 @@ package body Creation_Wizard.Selector is
 
    procedure Generate_Project
      (Page    : access Wizard_Selector_Page;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean)
@@ -161,7 +161,7 @@ package body Creation_Wizard.Selector is
    ------------------------
 
    function Create_New_Project
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Boolean
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean
    is
       Wiz  : Project_Wizard;
       P    : Wizard_Selector_Page_Access;
@@ -271,7 +271,7 @@ package body Creation_Wizard.Selector is
 
    procedure On_New_Project
      (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle)
+      Kernel : GPS.Kernel.Kernel_Handle)
    is
       Tmp : Boolean;
       pragma Unreferenced (Widget, Tmp);

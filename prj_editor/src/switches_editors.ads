@@ -35,7 +35,7 @@ with Gtk.Size_Group;
 with Gtk.Tooltips;
 with Gtk.Widget;
 with GNAT.OS_Lib;
-with Glide_Kernel;
+with GPS.Kernel;
 with Projects;
 with VFS;
 with Commands.Interactive;
@@ -54,7 +54,7 @@ package Switches_Editors is
 
    procedure Gtk_New
      (Page             : out Switches_Editor_Page;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Title            : String;
       Project_Package  : String;
       Attribute_Index  : String := "";
@@ -247,7 +247,7 @@ package Switches_Editors is
 
    procedure Gtk_New
      (Editor : out Switches_Edit;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new switches editor.
 
    procedure Set_Visible_Pages
@@ -285,7 +285,7 @@ package Switches_Editors is
    --  otherwise the switches for the specific file are edited.
 
    function Edit_Switches_For_Files
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project      : Projects.Project_Type;
       Files        : VFS.File_Array) return Boolean;
    --  Edit the switches for a list of files. All the files will be assigned
@@ -346,7 +346,7 @@ private
    --  created.
 
    type Switches_Editor_Page_Record is new Gtk_Table_Record with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Lang_Filter : GNAT.OS_Lib.Argument_List_Access;
       --  List of languages for which this page applies
 
@@ -379,7 +379,7 @@ private
    type Page_Array_Access is access Pages_Array;
 
    type Switches_Edit_Record is new Gtk_Notebook_Record with record
-      Kernel       : Glide_Kernel.Kernel_Handle;
+      Kernel       : GPS.Kernel.Kernel_Handle;
       Files        : VFS.File_Array_Access;
       Project      : Projects.Project_Type;
       Pages        : Page_Array_Access;

@@ -23,13 +23,13 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Glib.Unicode;              use Glib.Unicode;
 with Boyer_Moore;               use Boyer_Moore;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel;              use GPS.Kernel;
 with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Vsearch_Ext;               use Vsearch_Ext;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 
 package body Find_Utils is
 
@@ -50,12 +50,12 @@ package body Find_Utils is
    --  Return the index for the end of the line containing Pos
 
    procedure Register_Search_Function
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : Search_Module_Data)
       renames Vsearch_Ext.Register_Search_Function;
 
    function Search_Context_From_Module
-     (Id : access Glide_Kernel.Module_ID_Record'Class)
+     (Id : access GPS.Kernel.Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data
       renames Vsearch_Ext.Search_Context_From_Module;
 
@@ -448,7 +448,7 @@ package body Find_Utils is
 
    function Replace
      (Context         : access Search_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
@@ -465,7 +465,7 @@ package body Find_Utils is
 
    procedure Reset_Search
      (Object : access Glib.Object.GObject_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle)
+      Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Object);
    begin

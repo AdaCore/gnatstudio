@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -137,9 +137,9 @@ with Gtkada.MDI;
 with Commands; use Commands;
 with Commands.Interactive;
 with Interfaces.C.Strings;
-with Glide_Kernel.Actions; use Glide_Kernel.Actions;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 
-package Glide_Kernel.Modules is
+package GPS.Kernel.Modules is
 
    Explorer_Module_Name           : constant String := "Explorer";
    Project_Editor_Module_Name     : constant String := "Project_Editor";
@@ -180,7 +180,7 @@ package Glide_Kernel.Modules is
    --  the given module.
    --
    --  Tooltip_Handler is an optional callback used to display tooltips.
-   --  See description of Module_Tooltip_Handler in Glide_Kernel and procedure
+   --  See description of Module_Tooltip_Handler in GPS.Kernel and procedure
    --  Compute_Tooltip below for more details.
    --
    --  Customization_Handler is called every time some customization has
@@ -205,12 +205,12 @@ package Glide_Kernel.Modules is
    --  type Module_Init is access procedure;
    --
    --  type Register_Module is access procedure
-   --    (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --    (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --
    --  Success is set to True if the module could be successfully registered.
 
    function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
-      return Glide_Kernel.Module_List.List;
+      return GPS.Kernel.Module_List.List;
    --  Return the list of currently loaded modules.
 
    function Module_Name (ID : access Module_ID_Record'Class) return String;
@@ -343,7 +343,7 @@ package Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Action        : Commands.Interactive.Interactive_Command_Access;
-      Filter        : Glide_Kernel.Action_Filter := null;
+      Filter        : GPS.Kernel.Action_Filter := null;
       Label         : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image   : String := "";
       Ref_Item      : String := "";
@@ -360,7 +360,7 @@ package Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Action        : Commands.Interactive.Interactive_Command_Access := null;
-      Filter        : Glide_Kernel.Action_Filter := null;
+      Filter        : GPS.Kernel.Action_Filter := null;
       Label         : String := "";
       Custom        : Custom_Expansion := null;
       Stock_Image   : String := "";
@@ -374,7 +374,7 @@ package Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Name          : String;
       Label         : String := "";
-      Filter        : Glide_Kernel.Action_Filter := null;
+      Filter        : GPS.Kernel.Action_Filter := null;
       Submenu       : Module_Menu_Handler := null;
       Ref_Item      : String := "";
       Add_Before    : Boolean := True);
@@ -536,9 +536,9 @@ package Glide_Kernel.Modules is
    procedure Drag_Data_Received
      (Object : access Glib.Object.GObject_Record'Class;
       Args   : Glib.Values.GValues;
-      Kernel : Glide_Kernel.Kernel_Handle);
+      Kernel : GPS.Kernel.Kernel_Handle);
    --  Handle text/uri-list drop events by loading the corresponding projects
    --  or files. Assume the selection data contains a string representing a LF
    --  or CR/LF separated list of files.
 
-end Glide_Kernel.Modules;
+end GPS.Kernel.Modules;

@@ -25,7 +25,7 @@ with System;
 with Interfaces.C.Strings;
 with Glib.Xml_Int;
 with Language_Handlers.Glide;
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Language.Custom is
 
@@ -36,7 +36,7 @@ package Language.Custom is
      (Lang     : access Custom_Language'Class;
       Handler  : access
         Language_Handlers.Glide.Glide_Language_Handler_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Top      : Glib.Xml_Int.Node_Ptr);
    --  Initialize Lang based on the contents of an XML node.
    --  The language and its extensions are automatically registered in the

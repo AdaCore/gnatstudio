@@ -21,13 +21,13 @@
 --  This package provides a dialog to help the user choose among the
 --  several project wizards provided by GPS
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Glib.Object;
 
 package Creation_Wizard.Selector is
 
    function Create_New_Project
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean;
    --  Open a new dialog that lists all the possible wizards provided by
    --  GPS. The user can then immediately start creating a project.
@@ -36,7 +36,7 @@ package Creation_Wizard.Selector is
 
    procedure On_New_Project
      (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle);
+      Kernel : GPS.Kernel.Kernel_Handle);
    --  Same as above, but suitable for use from a callback.
 
 end Creation_Wizard.Selector;

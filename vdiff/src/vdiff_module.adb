@@ -27,14 +27,14 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
 with Diff_Utils;                use Diff_Utils;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
@@ -338,7 +338,7 @@ package body Vdiff_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools : constant String := '/' & (-"Tools") & '/' & (-"Compare") & '/';
    begin
@@ -351,7 +351,7 @@ package body Vdiff_Module is
       Add_Hook (Kernel, Diff_Action_Hook, Diff_Hook'Access);
       Register_Menu
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 

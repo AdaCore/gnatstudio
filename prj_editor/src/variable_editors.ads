@@ -22,7 +22,7 @@ with Gtk.Cell_Renderer_Text;
 with Gtk.Tree_Store;
 with New_Variable_Editor_Pkg; use New_Variable_Editor_Pkg;
 with Projects;
-with Glide_Kernel;
+with GPS.Kernel;
 with Commands.Interactive;
 
 package Variable_Editors is
@@ -32,7 +32,7 @@ package Variable_Editors is
 
    procedure Gtk_New
      (Editor : out New_Var_Edit;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Var    : Projects.Scenario_Variable := Projects.No_Variable;
       Title  : String);
    --  Create an editor for the variable Var (or for a new variable if
@@ -60,7 +60,7 @@ package Variable_Editors is
 
 private
    type New_Var_Edit_Record is new New_Variable_Editor_Record with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Var    : Projects.Scenario_Variable;
       --  Variable being edited (or Empty_Node for a new variable)
 

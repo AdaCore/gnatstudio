@@ -25,12 +25,12 @@ with Gtk.Status_Bar;       use Gtk.Status_Bar;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Make_Harness_Window_Pkg is
 
    type Make_Harness_Window_Record is new Gtk_Window_Record with record
-      Kernel           : Glide_Kernel.Kernel_Handle;
+      Kernel           : GPS.Kernel.Kernel_Handle;
       Suite_Name       : String_Access;
       Procedure_Name   : String_Access;
       Explorer         : File_Selector_Window_Access;
@@ -48,10 +48,10 @@ package Make_Harness_Window_Pkg is
 
    procedure Gtk_New
      (Make_Harness_Window : out Make_Harness_Window_Access;
-      Handle              : Glide_Kernel.Kernel_Handle);
+      Handle              : GPS.Kernel.Kernel_Handle);
 
    procedure Initialize
      (Make_Harness_Window : access Make_Harness_Window_Record'Class;
-      Handle              : Glide_Kernel.Kernel_Handle);
+      Handle              : GPS.Kernel.Kernel_Handle);
 
 end Make_Harness_Window_Pkg;

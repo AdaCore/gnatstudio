@@ -33,8 +33,8 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with System;
 with Glide_Intl;               use Glide_Intl;
 with Namet;                    use Namet;
@@ -124,7 +124,7 @@ package body Scenario_Selectors is
 
    procedure Gtk_New
      (Selector : out Project_Selector;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_Project : Project_Type) is
    begin
       Selector := new Project_Selector_Record;
@@ -137,7 +137,7 @@ package body Scenario_Selectors is
 
    procedure Initialize
      (Selector : access Project_Selector_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_Project : Project_Type)
    is
       View          : Gtk_Tree_View;
@@ -416,7 +416,7 @@ package body Scenario_Selectors is
 
    procedure Gtk_New
      (Selector : out Scenario_Selector;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Selector := new Scenario_Selector_Record;
       Initialize (Selector, Kernel);
@@ -428,7 +428,7 @@ package body Scenario_Selectors is
 
    procedure Initialize
      (Selector : access Scenario_Selector_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       View          : Gtk_Tree_View;
       Col           : Gtk_Tree_View_Column;

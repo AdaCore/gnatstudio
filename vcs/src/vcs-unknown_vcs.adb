@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with VCS_Module;                use VCS_Module;
 with VFS;                       use VFS;
 
@@ -312,7 +312,7 @@ package body VCS.Unknown_VCS is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       --  ??? Where should this be unregistered. Memory leak otherwise.
       Register_VCS_Identifier (Identify_VCS'Access);

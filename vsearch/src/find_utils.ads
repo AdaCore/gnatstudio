@@ -50,7 +50,7 @@
 with Boyer_Moore;
 with GNAT.OS_Lib;
 with GNAT.Regpat;
-with Glide_Kernel;
+with GPS.Kernel;
 with Glib.Object;
 with Gtk.Widget;
 
@@ -221,7 +221,7 @@ package Find_Utils is
 
    function Search
      (Context         : access Search_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean is abstract;
    --  This subprogram should search for the next occurrence of Context.
@@ -235,7 +235,7 @@ package Find_Utils is
 
    function Replace
      (Context         : access Search_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
@@ -256,7 +256,7 @@ package Find_Utils is
    ---------------
 
    type Module_Search_Context_Factory is access function
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
       Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
@@ -280,7 +280,7 @@ package Find_Utils is
       Mask              : Search_Options_Mask;
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget;
-      Id                : Glide_Kernel.Module_ID;
+      Id                : GPS.Kernel.Module_ID;
    end record;
    --  If Extra_Information is not null, then it will be displayed every time
    --  this label is selected. It can be used for instance to ask for more
@@ -304,7 +304,7 @@ package Find_Utils is
    No_Search : constant Search_Module_Data;
 
    procedure Register_Search_Function
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data              : Search_Module_Data);
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
@@ -312,12 +312,12 @@ package Find_Utils is
 
    procedure Reset_Search
      (Object : access Glib.Object.GObject_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle);
+      Kernel : GPS.Kernel.Kernel_Handle);
    --  Raises the kernel signal Search_Reset_Signal. This is just a convenience
    --  callback function. Object is ignored, and can be anything.
 
    function Search_Context_From_Module
-     (Id : access Glide_Kernel.Module_ID_Record'Class)
+     (Id : access GPS.Kernel.Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data;
    --  Return the first search context that matches Id, or No_Search if there
    --  is none.

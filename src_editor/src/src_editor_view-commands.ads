@@ -21,13 +21,13 @@
 --  This package handles commands related to the editor view
 
 with Commands.Interactive; use Commands.Interactive;
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Src_Editor_View.Commands is
 
    type Movement_Type is (Word, Paragraph, Line, Char);
    type Move_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Kind   : Movement_Type;
       Step   : Integer;
    end record;
@@ -38,7 +38,7 @@ package Src_Editor_View.Commands is
    --  This command moves the cursor to a new position
 
    type Scroll_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
    end record;
    function Execute
      (Command : access Scroll_Command;
@@ -48,7 +48,7 @@ package Src_Editor_View.Commands is
    --  Currently, it can only be used to center the cursor.
 
    type Delete_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Kind   : Movement_Type := Word;
       Count  : Integer := 1;  --  Delete backward if negative
    end record;
@@ -59,7 +59,7 @@ package Src_Editor_View.Commands is
    --  This command deletes some text
 
    type Indentation_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
    end record;
    function Execute
      (Command : access Indentation_Command;
@@ -71,7 +71,7 @@ package Src_Editor_View.Commands is
    --  As_Is: The next key will be interpreted as-is (no casing/indentation)
 
    type Control_Command is new Interactive_Command with record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       Mode   : Control_Type;
    end record;
    function Execute

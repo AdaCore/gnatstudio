@@ -26,11 +26,11 @@
 --  It is only supported on Windows platforms, and provides no op on other
 --  platforms.
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package DDE is
 
-   procedure Register_DDE_Server (Kernel : Glide_Kernel.Kernel_Handle);
+   procedure Register_DDE_Server (Kernel : GPS.Kernel.Kernel_Handle);
    --  Register the application as a DDE server, if supported on the
    --  platform. Do nothing otherwise.
 

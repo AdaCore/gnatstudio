@@ -58,10 +58,10 @@
 --
 --      %l, %c -> the current line and column in the current file.
 
-with Glide_Kernel;         use Glide_Kernel;
+with GPS.Kernel;         use GPS.Kernel;
 with GNAT.Expect;          use GNAT.Expect;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Commands.Interactive; use Commands.Interactive;
 with Glib.Xml_Int;
 with Gtk.Widget;
@@ -85,7 +85,7 @@ package Commands.Custom is
       Name         : String;
       Kernel       : Kernel_Handle;
       Command      : String;
-      Script       : Glide_Kernel.Scripts.Scripting_Language);
+      Script       : GPS.Kernel.Scripts.Scripting_Language);
    --  Create a new custom command.
    --  If Script is null, the command is launched as a system
    --  command (Unix or Windows). Otherwise, it is interpreted as a GPS
@@ -207,7 +207,7 @@ private
    --  Free the memory occupied by Component
 
    type Shell_Component_Record is new Custom_Component_Record with record
-      Script       : Glide_Kernel.Scripts.Scripting_Language;
+      Script       : GPS.Kernel.Scripts.Scripting_Language;
    end record;
    --  A component that executes a shell command
 

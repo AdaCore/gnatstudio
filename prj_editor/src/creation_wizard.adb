@@ -43,9 +43,9 @@ with Projects.Registry; use Projects.Registry;
 with Traces;            use Traces;
 
 with Wizards;          use Wizards;
-with Glide_Kernel;     use Glide_Kernel;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with GPS.Kernel;     use GPS.Kernel;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with Glide_Intl;       use Glide_Intl;
 with File_Utils;       use File_Utils;
 
@@ -62,7 +62,7 @@ package body Creation_Wizard is
 
    procedure Gtk_New
      (Wiz                 : out Project_Wizard;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
       Show_Toc            : Boolean := True;
       Auto_Save_On_Exit   : Boolean := True;
       Project             : Projects.Project_Type := Projects.No_Project) is
@@ -99,7 +99,7 @@ package body Creation_Wizard is
 
    procedure Initialize
      (Wiz                 : access Project_Wizard_Record'Class;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
       Show_Toc            : Boolean := True;
       Auto_Save_On_Exit   : Boolean := True;
       Project             : Projects.Project_Type := Projects.No_Project) is

@@ -18,15 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Docgen;
 
 package Docgen_Module is
 
-   Docgen_Module_Id   : Glide_Kernel.Module_ID;
+   Docgen_Module_Id   : GPS.Kernel.Module_ID;
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the Ada parsers in GPS.
 
    procedure Get_Options (My_Options : in out Docgen.All_Options);

@@ -25,7 +25,7 @@
 with Gdk.Event;
 with Glib.Xml_Int;
 with GNAT.OS_Lib;
-with Glide_Kernel;
+with GPS.Kernel;
 with Gtk.Widget;
 
 package Commands.Interactive is
@@ -39,7 +39,7 @@ package Commands.Interactive is
 
    type Interactive_Command_Context is record
       Event   : Gdk.Event.Gdk_Event := null;
-      Context : Glide_Kernel.Selection_Context_Access;
+      Context : GPS.Kernel.Selection_Context_Access;
 
       Dir     : GNAT.OS_Lib.String_Access;
       --  The directory in which the execution should take place
@@ -72,7 +72,7 @@ package Commands.Interactive is
    --  applications.
 
    function Component_Editor
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Component : access Command_Component_Record)
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return a graphical widget that can be used to edit Component.

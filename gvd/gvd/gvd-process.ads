@@ -134,7 +134,7 @@ package GVD.Process is
       Cleanup_TTY             : Boolean := False;
 
       History                 : Histories.History;
-      --  See Glide_Kernel.Get_History. This points to the same one as the GPS
+      --  See GPS.Kernel.Get_History. This points to the same one as the GPS
       --  kernel if we are not in standalone mode
 
       Edit_Pos                : Glib.Guint;

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Find_Utils;
-with Glide_Kernel;
+with GPS.Kernel;
 with Gtk.Button;
 with Gtk.Main;
 with Gtk.Toggle_Button;
@@ -38,25 +38,25 @@ package Vsearch_Ext is
 
    procedure Gtk_New
      (Vsearch : out Vsearch_Extended;
-      Handle  : Glide_Kernel.Kernel_Handle);
+      Handle  : GPS.Kernel.Kernel_Handle);
    --  Create a new extended search dialog.
 
    procedure Initialize
      (Vsearch : access Vsearch_Extended_Record'Class;
-      Handle  : Glide_Kernel.Kernel_Handle);
+      Handle  : GPS.Kernel.Kernel_Handle);
    --  Internal initialization procedure.
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    procedure Register_Search_Function
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : Find_Utils.Search_Module_Data);
    --  See Find_Utils.Register_Search_Function;
 
    function Search_Context_From_Module
-     (Id : access Glide_Kernel.Module_ID_Record'Class)
+     (Id : access GPS.Kernel.Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data;
    --  See Find_Utils.Context_From_Module;
 
@@ -75,11 +75,11 @@ package Vsearch_Ext is
    --  given, the first regexp found will be used, and if there is none the
    --  first string.
    --
-   --  You should use the interface in Glide_Kernel.Custom instead of directly
+   --  You should use the interface in GPS.Kernel.Custom instead of directly
    --  calling the subprograms below to limit the dependencies on this package
 
    procedure Register_Search_Pattern
-     (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name           : String;
       Regexp         : String;
       Case_Sensitive : Boolean := False;
@@ -90,24 +90,24 @@ package Vsearch_Ext is
    --  This emits the "search_regexps_changed" signal on Kernel.
 
    function Search_Regexps_Count
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Natural;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Natural;
    --  Return the number of registered predefined patterns
 
    procedure Get_Nth_Search_Regexp_Options
-     (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Num            : Natural;
       Case_Sensitive : out Boolean;
       Is_Regexp      : out Boolean);
    --  Return the options for the Num-th predefined search regexp
 
    function Get_Nth_Search_Regexp_Name
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class; Num : Natural)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Num : Natural)
       return String;
    --  Return the name, as it appears in the combo box, for the Num-th regexp.
    --  The first regexp is number 1.
 
    function Get_Nth_Search_Regexp
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class; Num : Natural)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Num : Natural)
       return String;
    --  Return the Num-th regular expression
 
@@ -117,7 +117,7 @@ package Vsearch_Ext is
 private
 
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record
-      Kernel                 : Glide_Kernel.Kernel_Handle;
+      Kernel                 : GPS.Kernel.Kernel_Handle;
       Search_Next_Button     : Gtk.Button.Gtk_Button;
       Search_Replace_Button  : Gtk.Button.Gtk_Button;
       Search_Previous_Button : Gtk.Button.Gtk_Button;

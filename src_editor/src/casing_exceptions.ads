@@ -23,7 +23,7 @@
 --  GPS feature (create menu, read/write casing XML files).
 
 with Glib.Xml_Int;  use Glib.Xml_Int;
-with Glide_Kernel;  use Glide_Kernel;
+with GPS.Kernel;  use GPS.Kernel;
 with Case_Handling; use Case_Handling;
 with VFS;
 
@@ -45,7 +45,7 @@ package Casing_Exceptions is
    --  Return the current case exception table
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Initialize the casing support, must be called before other calls, it
    --  reads the user's casing_exceptions.xml files.
 

@@ -38,12 +38,12 @@ with Dummy_Parser;              use Dummy_Parser;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel;              use GPS.Kernel;
 with Glide_Intl;                use Glide_Intl;
 with Project_Viewers;           use Project_Viewers;
 with Naming_Editors;            use Naming_Editors;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
 
 package body Language.Custom is
 
@@ -73,7 +73,7 @@ package body Language.Custom is
    --  dynamic inheritance between custom languages.
 
    function Custom_Naming_Scheme_Editor
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class; Lang : String)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Lang : String)
       return Naming_Editors.Language_Naming_Editor;
    --  Create the naming scheme editor page
 
@@ -163,7 +163,7 @@ package body Language.Custom is
    procedure Initialize
      (Lang     : access Custom_Language'Class;
       Handler  : access Glide_Language_Handler_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Top      : Glib.Xml_Int.Node_Ptr)
    is
       N, Node                       : Node_Ptr;

@@ -20,7 +20,7 @@
 
 with Entities;
 with Dynamic_Arrays;
-with Glide_Kernel;
+with GPS.Kernel;
 with Gtk.Scrolled_Window;
 
 package Refactoring is
@@ -47,7 +47,7 @@ package Refactoring is
    --  Handling of dynamic arrays
 
    function Confirm_Files
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       No_LI_List    : File_Arrays.Instance;
       Stale_LI_List : File_Arrays.Instance) return Boolean;
    --  Whether the user wants to perform the refactoring even though there are

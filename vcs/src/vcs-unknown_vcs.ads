@@ -108,7 +108,7 @@ package VCS.Unknown_VCS is
       File : VFS.Virtual_File);
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.Unknown_VCS module
 
 private

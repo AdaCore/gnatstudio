@@ -21,7 +21,7 @@
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Generic_List;
 with VFS;                       use VFS;
-with Glide_Kernel.Project;      use Glide_Kernel, Glide_Kernel.Project;
+with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
 with Projects.Registry;         use Projects, Projects.Registry;
 
 package body Docgen is
@@ -272,7 +272,7 @@ package body Docgen is
    ------------------
 
    function Is_Spec_File
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Boolean is
    begin
       return Get_Unit_Part_From_Filename

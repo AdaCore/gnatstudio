@@ -52,13 +52,13 @@ with GNAT.Regpat;              use GNAT.Regpat;
 
 with String_Utils;             use String_Utils;
 with String_List_Utils;        use String_List_Utils;
-with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
 with VFS;                      use VFS;
@@ -266,7 +266,7 @@ package body GPS.Location_View is
    --  Default context factory.
 
    function Create_Mark
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : VFS.Virtual_File;
       Line     : Natural := 1;
       Column   : Natural := 1;
@@ -276,7 +276,7 @@ package body GPS.Location_View is
    --  Return the identifier corresponding to the mark that has been created.
 
    procedure Highlight_Line
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename           : VFS.Virtual_File;
       Line               : Natural;
       Column             : Natural;
@@ -492,7 +492,7 @@ package body GPS.Location_View is
    -----------------
 
    function Create_Mark
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : VFS.Virtual_File;
       Line     : Natural := 1;
       Column   : Natural := 1;
@@ -515,7 +515,7 @@ package body GPS.Location_View is
    --------------------
 
    procedure Highlight_Line
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename           : VFS.Virtual_File;
       Line               : Natural;
       Column             : Natural;
@@ -1407,7 +1407,7 @@ package body GPS.Location_View is
       File_Hook.View := Location_View (View);
       Add_Hook
         (View.Kernel,
-         Glide_Kernel.File_Edited_Hook,
+         GPS.Kernel.File_Edited_Hook,
          File_Hook,
          Watch => GObject (View));
    end Initialize;
@@ -1975,7 +1975,7 @@ package body GPS.Location_View is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Module
         (Module      => Location_View_Module_Id,
@@ -1994,7 +1994,7 @@ package body GPS.Location_View is
       Register_Property
         (Kernel, Param_Spec (Auto_Jump_To_First), -"General");
       Add_Hook (Kernel, Location_Action_Hook, Location_Hook'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 

@@ -28,10 +28,10 @@ with Glib.Values;
 with Gdk.Color;                 use Gdk.Color;
 with Pango.Font;                use Pango.Font;
 with Gtk.Adjustment;            use Gtk.Adjustment;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Style;                 use Gtk.Style;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
@@ -230,7 +230,7 @@ package body Vdiff_Utils is
       Color           : Gdk_Color;
       Context_Changed : Boolean;
       Desc            : constant Pango_Font_Description :=
-        Get_Pref_Font (Kernel, Glide_Kernel.Preferences.Default_Style);
+        Get_Pref_Font (Kernel, GPS.Kernel.Preferences.Default_Style);
 
       Info_1          : Vdiff_Info_Access;
       Info_2          : Vdiff_Info_Access;
@@ -528,7 +528,7 @@ package body Vdiff_Utils is
       Offset_Line      : Integer := 0;
       Last_Line_Number : Natural;
       Desc             : constant Pango_Font_Description :=
-        Get_Pref_Font (Kernel, Glide_Kernel.Preferences.Default_Style);
+        Get_Pref_Font (Kernel, GPS.Kernel.Preferences.Default_Style);
 
       procedure Add_Line
         (List   : access Gtk_Clist_Record'Class;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2004                      --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,13 +26,13 @@ with Ada.Tags;     use Ada.Tags;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Glide_Intl; use Glide_Intl;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with System;
 with System.Address_Image;
 
-package body Glide_Kernel.Hooks is
+package body GPS.Kernel.Hooks is
 
    Me : constant Debug_Handle := Create ("Hooks", Default => Off);
 
@@ -69,7 +69,7 @@ package body Glide_Kernel.Hooks is
    --  See inherited doc
 
    type Shell_Wrapper_Record is new Hook_Args_Record with record
-      Func   : Glide_Kernel.Scripts.Subprogram_Type;
+      Func   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook   : GNAT.OS_Lib.String_Access;
       Script : Scripting_Language;
    end record;
@@ -84,7 +84,7 @@ package body Glide_Kernel.Hooks is
    --  This wrapper is used to give access to hooks from shell languages.
 
    type Shell_Wrapper_Return_Record is new Hook_Args_Return_Record with record
-      Func   : Glide_Kernel.Scripts.Subprogram_Type;
+      Func   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook   : GNAT.OS_Lib.String_Access;
       Script : Scripting_Language;
    end record;
@@ -99,7 +99,7 @@ package body Glide_Kernel.Hooks is
    --  This wrapper is used to give access to hooks from shell languages.
 
    type Shell_Wrapper_Shell_Record is new Hook_Shell_Args_Record with record
-      Func   : Glide_Kernel.Scripts.Subprogram_Type;
+      Func   : GPS.Kernel.Scripts.Subprogram_Type;
       Script : Scripting_Language;
    end record;
    type Shell_Wrapper_Shell is access all Shell_Wrapper_Shell_Record'Class;
@@ -114,7 +114,7 @@ package body Glide_Kernel.Hooks is
    --  languages.
 
    type Shell_Wrapper_No_Args_Record is new Hook_No_Args_Record with record
-      Func   : Glide_Kernel.Scripts.Subprogram_Type;
+      Func   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook   : GNAT.OS_Lib.String_Access;
       Script : Scripting_Language;
    end record;
@@ -127,7 +127,7 @@ package body Glide_Kernel.Hooks is
    --  See inherited doc
    --  This wrapper is used to give access to hooks from shell languages.
 
-   use Glide_Kernel.Hooks_Hash.String_Hash_Table;
+   use GPS.Kernel.Hooks_Hash.String_Hash_Table;
 
    type Hook_User_Data is record
       Kernel : Kernel_Handle;
@@ -163,7 +163,7 @@ package body Glide_Kernel.Hooks is
    --  Called when Object is destroyed, to remove the hook in User_Data
 
    procedure Add_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : Hook_Function;
       Profile : Hook_Type;
@@ -171,7 +171,7 @@ package body Glide_Kernel.Hooks is
    --  Internal version of Add_Hook
 
    function Get_Or_Create_Hook
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name            : String;
       Description     : String := "";
       Type_Name       : String := "";
@@ -184,12 +184,12 @@ package body Glide_Kernel.Hooks is
    --  a hook itself
 
    function Get_Command_Handler
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Name : String) return Module_Command_Function;
    --  Return the default command handler for specific hook types
 
    function Get_Type_Profile
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Name : String) return Hook_Type;
    --  Return the profile to use for hooks of this type
 
@@ -406,7 +406,7 @@ package body Glide_Kernel.Hooks is
    ------------------------
 
    function Get_Or_Create_Hook
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name            : String;
       Description     : String := "";
       Type_Name       : String := "";
@@ -491,7 +491,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Hook     : Hook_Function;
       Profile  : Hook_Type;
@@ -517,11 +517,11 @@ package body Glide_Kernel.Hooks is
    ----------------------
 
    procedure Create_Hook_Type
-     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Name        : String;
       Description      : String;
       Profile          : Hook_Type;
-      Run_Hook_Handler : Glide_Kernel.Scripts.Module_Command_Function)
+      Run_Hook_Handler : GPS.Kernel.Scripts.Module_Command_Function)
    is
       Info : Hook_Description_Access;
       pragma Unreferenced (Info);
@@ -546,7 +546,7 @@ package body Glide_Kernel.Hooks is
    -------------------------
 
    function Get_Command_Handler
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Name : String) return Module_Command_Function
    is
       Info : constant Hook_Description_Access := Hook_Description_Access
@@ -564,7 +564,7 @@ package body Glide_Kernel.Hooks is
    ----------------------
 
    function Get_Type_Profile
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Name : String) return Hook_Type
    is
       Info : constant Hook_Description_Access := Hook_Description_Access
@@ -583,7 +583,7 @@ package body Glide_Kernel.Hooks is
    -------------------
 
    procedure Register_Hook
-     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name        : String;
       Description : String;
       Type_Name   : String := "")
@@ -650,7 +650,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Hook     : access Hook_No_Args_Record'Class;
       Watch    : Glib.Object.GObject := null) is
@@ -663,7 +663,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name      : String;
       Hook      : No_Args_Execute;
       Watch     : Glib.Object.GObject := null;
@@ -684,7 +684,7 @@ package body Glide_Kernel.Hooks is
    -----------------
 
    procedure Remove_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_No_Args_Record'Class) is
    begin
@@ -696,7 +696,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Run_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Set_Busy : Boolean := True)
    is
@@ -745,7 +745,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Hook     : access Hook_Args_Record'Class;
       Watch    : Glib.Object.GObject := null) is
@@ -758,7 +758,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name      : String;
       Hook      : Args_Execute;
       Watch     : Glib.Object.GObject := null;
@@ -779,7 +779,7 @@ package body Glide_Kernel.Hooks is
    -----------------
 
    procedure Remove_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Args_Record'Class) is
    begin
@@ -791,7 +791,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Run_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True)
@@ -828,7 +828,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Shell_Args_Record'Class;
       Watch  : Glib.Object.GObject := null) is
@@ -842,7 +842,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name      : String;
       Hook      : Shell_Args_Execute;
       Watch     : Glib.Object.GObject := null;
@@ -864,7 +864,7 @@ package body Glide_Kernel.Hooks is
    -----------------
 
    procedure Remove_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Shell_Args_Record'Class) is
    begin
@@ -876,9 +876,9 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Run_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : access Glide_Kernel.Scripts.Callback_Data'Class;
+      Data     : access GPS.Kernel.Scripts.Callback_Data'Class;
       Set_Busy : Boolean := True)
    is
       Info : constant Hook_Description_Access :=
@@ -939,7 +939,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Args_Return_Record'Class;
       Watch  : Glib.Object.GObject := null) is
@@ -953,7 +953,7 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name      : String;
       Hook      : Args_Return_Execute;
       Watch     : Glib.Object.GObject := null;
@@ -975,7 +975,7 @@ package body Glide_Kernel.Hooks is
    -----------------
 
    procedure Remove_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Args_Return_Record'Class) is
    begin
@@ -987,7 +987,7 @@ package body Glide_Kernel.Hooks is
    ----------------------------
 
    function Run_Hook_Until_Success
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean
@@ -1032,7 +1032,7 @@ package body Glide_Kernel.Hooks is
    ----------------------------
 
    function Run_Hook_Until_Failure
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean
@@ -1384,7 +1384,7 @@ package body Glide_Kernel.Hooks is
               (Data, Command => "__run_hook__" & Info.Name.all);
 
          exception
-            when Glide_Kernel.Scripts.No_Such_Parameter =>
+            when GPS.Kernel.Scripts.No_Such_Parameter =>
                Trace (Me, "Invalid number of parameters for hook "
                       & Info.Name.all);
                Set_Error_Msg
@@ -1587,4 +1587,4 @@ package body Glide_Kernel.Hooks is
       Free (Hook.Description);
    end Free;
 
-end Glide_Kernel.Hooks;
+end GPS.Kernel.Hooks;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,7 @@
 with Commands.Interactive;
 with GNAT.OS_Lib;
 
-package Glide_Kernel.Actions is
+package GPS.Kernel.Actions is
 
    type Action_Record is record
       Command     : Commands.Interactive.Interactive_Command_Access;
@@ -100,4 +100,4 @@ private
       Iterator : Actions_Htable.String_Hash_Table.Iterator;
    end record;
 
-end Glide_Kernel.Actions;
+end GPS.Kernel.Actions;

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Notebook;
-with Glide_Kernel;
+with GPS.Kernel;
 with GNAT.OS_Lib;
 with Projects;
 with Gtk.Widget;
@@ -37,7 +37,7 @@ package Naming_Editors is
 
    procedure Gtk_New
      (Editor    : out Naming_Editor;
-      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Languages : GNAT.OS_Lib.Argument_List);
    --  Create a new naming scheme editor, that supports the edition of all the
    --  languages in Languages.
@@ -45,7 +45,7 @@ package Naming_Editors is
 
    procedure Gtk_New
      (Editor       : out Naming_Editor;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project      : Projects.Project_Type);
    --  Create a new naming scheme editor, that edits the languages supported by
    --  Project_View.
@@ -65,7 +65,7 @@ package Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor             : access Naming_Editor_Record;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True);
    --  Show the settings used for Project_View.
@@ -77,7 +77,7 @@ package Naming_Editors is
 
    procedure Set_Visible_Pages
      (Editor       : access Naming_Editor_Record;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Languages    : GNAT.OS_Lib.Argument_List;
       Project      : Projects.Project_Type);
    --  Change the visible pages in editor, based on languages
@@ -114,7 +114,7 @@ package Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor             : access Language_Naming_Editor_Record;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True) is abstract;
    --  Show the settings used for Project for the specific language.

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Expect;  use GNAT.Expect;
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with GVD.Process;  use GVD.Process;
 with GVD.Types;    use GVD.Types;
 with System;
@@ -34,12 +34,12 @@ package GVD.Trace is
    procedure Output_Error
      (Kernel : access Kernel_Handle_Record'Class;
       Str    : String);
-   --  Output an error through Glide_Kernel.Console
+   --  Output an error through GPS.Kernel.Console
 
    procedure Output_Info
      (Kernel : access Kernel_Handle_Record'Class;
       Str    : String);
-   --  Output some information through Glide_Kernel.Console
+   --  Output some information through GPS.Kernel.Console
 
    procedure Output_Line (Str : String);
    --  Write on the log file associated with Window.

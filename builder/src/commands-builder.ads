@@ -20,7 +20,7 @@
 
 --  This package handles build commands.
 
-with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
+with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
 with VFS;                  use VFS;
 with GNAT.OS_Lib;
 

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,7 @@ with Gtk.Radio_Button;
 with Gtk.Combo;
 with Gtk.GEntry;
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Logo_Boxes;
 
 package Welcome is
@@ -33,9 +33,9 @@ package Welcome is
    type Welcome_Screen is access all Welcome_Screen_Record'Class;
 
    procedure Gtk_New
-     (Screen              : out Welcome_Screen;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_Name        : String := "");
+     (Screen       : out Welcome_Screen;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project_Name : String := "");
    --  Create a new welcome dialog. Project_Name is the project that should be
    --  suggested by default (empty string for the default project).
    --  If Default_Is_Tutorial is true, then the choice initially activated is
@@ -66,7 +66,7 @@ private
       Open_Project_Button : Gtk.Radio_Button.Gtk_Radio_Button;
       Open_Browse         : Gtk.Button.Gtk_Button;
       Always_Show         : Gtk.Check_Button.Gtk_Check_Button;
-      Kernel              : Glide_Kernel.Kernel_Handle;
+      Kernel              : GPS.Kernel.Kernel_Handle;
    end record;
 
 end Welcome;

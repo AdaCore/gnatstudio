@@ -18,19 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Python_Module is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    procedure Initialize_IO;
    --  Initialize the redirection of stdin, stdout and stderr.
 
    procedure Load_Python_Startup_Files
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Load all the user's startup file of the user.
    --  This procedure should be called only after all standard modules
    --  have been registered, so that if the user's startup files depend

@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with Refactoring.Rename;    use Refactoring.Rename;
 with Commands.Interactive;  use Commands.Interactive;
 
@@ -30,7 +30,7 @@ package body Refactoring_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Refactoring_Module_Id : Module_ID;
       C : constant Interactive_Command_Access := new Rename_Entity_Command;

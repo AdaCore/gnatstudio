@@ -25,7 +25,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Notebook;            use Gtk.Notebook;
 with Gtk.Widget;              use Gtk.Widget;
-with Glide_Kernel;            use Glide_Kernel;
+with GPS.Kernel;            use GPS.Kernel;
 with Language_Handlers;       use Language_Handlers;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Projects;                use Projects;
@@ -65,7 +65,7 @@ package body Naming_Editors is
 
    procedure Gtk_New
      (Editor    : out Naming_Editor;
-      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Languages : Argument_List)
    is
       Supported : Argument_List := Known_Languages
@@ -129,7 +129,7 @@ package body Naming_Editors is
 
    procedure Gtk_New
      (Editor       : out Naming_Editor;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project      : Project_Type)
    is
       Languages : Argument_List := Get_Languages (Project);
@@ -145,7 +145,7 @@ package body Naming_Editors is
 
    procedure Set_Visible_Pages
      (Editor       : access Naming_Editor_Record;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Languages    : GNAT.OS_Lib.Argument_List;
       Project      : Projects.Project_Type)
    is
@@ -224,7 +224,7 @@ package body Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor       : access Naming_Editor_Record;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project      : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is

@@ -51,12 +51,12 @@ with Ada.Unchecked_Deallocation;
 
 with Prj;
 with Projects.Editor;      use Projects, Projects.Editor;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.MDI;     use Glide_Kernel.MDI;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with Glide_Intl;           use Glide_Intl;
 with Language_Handlers;    use Language_Handlers;
 with String_Utils;         use String_Utils;
@@ -810,7 +810,7 @@ package body Switches_Editors is
          if P.Switches = null then
             Insert (P.Kernel,
                     "No switches defined for " & P.Title.all,
-                    Mode => Glide_Kernel.Console.Error);
+                    Mode => GPS.Kernel.Console.Error);
          else
             --  Find out all selected switches through the widgets
 
@@ -1551,7 +1551,7 @@ package body Switches_Editors is
                   "Can only add dependencies between check button switches "
                   & Master_Page.Title.all & ' ' & Dep.Master_Switch.all
                   & ' ' & Slave_Page.Title.all & ' ' & Dep.Slave_Switch.all,
-                  Mode => Glide_Kernel.Console.Error);
+                  Mode => GPS.Kernel.Console.Error);
             else
                if S1.all in Switch_Check_Widget'Class then
                   Dependency_Callback.Connect
@@ -1626,7 +1626,7 @@ package body Switches_Editors is
 
    procedure Gtk_New
      (Page            : out Switches_Editor_Page;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Title           : String;
       Project_Package : String;
       Attribute_Index : String := "";
@@ -1697,7 +1697,7 @@ package body Switches_Editors is
 
    procedure Gtk_New
      (Editor : out Switches_Edit;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tab    : Gtk_Label;
 
@@ -2202,7 +2202,7 @@ package body Switches_Editors is
    -----------------------------
 
    function Edit_Switches_For_Files
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project      : Projects.Project_Type;
       Files        : File_Array) return Boolean
    is

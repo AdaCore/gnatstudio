@@ -46,19 +46,19 @@ with Gtkada.MDI;           use Gtkada.MDI;
 with Entities;                      use Entities;
 with Entities.Debug;                use Entities.Debug;
 with Entities.Queries;              use Entities.Queries;
-with Glide_Kernel;                  use Glide_Kernel;
-with Glide_Kernel.MDI;              use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;          use Glide_Kernel.Modules;
-with Glide_Kernel.Console;          use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;         use Glide_Kernel.Contexts;
-with Glide_Kernel.Preferences;      use Glide_Kernel.Preferences;
-with Glide_Kernel.Task_Manager;     use Glide_Kernel.Task_Manager;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
+with GPS.Kernel.Console;          use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager;     use GPS.Kernel.Task_Manager;
 with GPS.Location_View;             use GPS.Location_View;
-with Glide_Kernel.Standard_Hooks;   use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with Commands.Generic_Asynchronous; use Commands;
 with String_Utils;                  use String_Utils;
 with Browsers.Canvas;               use Browsers.Canvas;
-with Glide_Kernel.Scripts;          use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
 with VFS;                           use VFS;
 with Commands.Interactive;          use Commands, Commands.Interactive;
 
@@ -194,7 +194,7 @@ package body Browsers.Call_Graph is
      (Item  : access Entity_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
    procedure Resize_And_Draw
@@ -1368,7 +1368,7 @@ package body Browsers.Call_Graph is
      (Item    : access Entity_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
+      Menu    : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access
    is
       pragma Unreferenced (Event, Browser, Menu);
       Context : constant Selection_Context_Access :=
@@ -2020,7 +2020,7 @@ package body Browsers.Call_Graph is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools    : constant String := '/' & (-"Tools");
       Navigate : constant String := "/_" & (-"Navigate");
@@ -2033,9 +2033,9 @@ package body Browsers.Call_Graph is
         (Module                  => Call_Graph_Module_Id,
          Kernel                  => Kernel,
          Module_Name             => Call_Graph_Module_Name,
-         Priority                => Glide_Kernel.Default_Priority,
+         Priority                => GPS.Kernel.Default_Priority,
          Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Filter  := new Container_Entity_Filter;

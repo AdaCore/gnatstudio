@@ -23,7 +23,7 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib.Values;              use Glib.Values;
 with Glib;                     use Glib;
 with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel;             use Glide_Kernel;
+with GPS.Kernel;             use GPS.Kernel;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                use Gtk.Enums;
@@ -61,7 +61,7 @@ package body Languages_Lists is
 
    procedure Gtk_New
      (List : out Languages_List;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project : Projects.Project_Type)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=

@@ -23,12 +23,12 @@ with Ada.Unchecked_Deallocation;
 with System;               use System;
 with GNAT.OS_Lib;
 
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Actions; use Glide_Kernel.Actions;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
-with Glide_Kernel.MDI;     use Glide_Kernel.MDI;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Custom;  use GPS.Kernel.Custom;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with Glib.Object;          use Glib.Object;
 with Glide_Intl;           use Glide_Intl;
 with Traces;               use Traces;
@@ -856,7 +856,7 @@ package body Action_Editor is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Filename : constant String :=
         Get_Home_Dir (Kernel) & "actions.xml";
@@ -880,12 +880,12 @@ package body Action_Editor is
          Trace (Me, "Loading " & Filename);
          XML_Parsers.Parse (Filename, Tree, Err);
          if Tree /= null then
-            Glide_Kernel.Custom.Execute_Customization_String
+            GPS.Kernel.Custom.Execute_Customization_String
               (Kernel, Create (Full_Filename => Filename), Tree.Child,
                User_Specific);
             Free (Tree);
          else
-            Insert (Kernel, Err.all, Mode => Glide_Kernel.Console.Error);
+            Insert (Kernel, Err.all, Mode => GPS.Kernel.Console.Error);
             Free (Err);
          end if;
       end if;

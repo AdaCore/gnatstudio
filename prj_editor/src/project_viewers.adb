@@ -64,17 +64,17 @@ with Projects.Editor;          use Projects, Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
 with Creation_Wizard.Selector; use Creation_Wizard.Selector;
 with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Location_View;        use GPS.Location_View;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Glide_Intl;               use Glide_Intl;
 with Switches_Editors;         use Switches_Editors;
 with Naming_Editors;           use Naming_Editors;
@@ -115,7 +115,7 @@ package body Project_Viewers is
 
    function Create
      (Creator : access XML_Switches_Record;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Switches_Editors.Switches_Editor_Page;
    procedure Destroy (Creator : in out XML_Switches_Record);
    --  See inherited subprograms
@@ -159,22 +159,22 @@ package body Project_Viewers is
    Obj_Path_Cst  : aliased constant String := "objects";
    Name_Cst      : aliased constant String := "name";
    Path_Cst      : aliased constant String := "path";
-   Sources_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
+   Sources_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
      (1 => Recursive_Cst'Access);
-   Source_Dirs_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
+   Source_Dirs_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
      := (1 => Recursive_Cst'Access);
-   Languages_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
+   Languages_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
      := (1 => Recursive_Cst'Access);
    Add_Source_Dir_Cmd_Parameters :
-     constant Glide_Kernel.Scripts.Cst_Argument_List :=
+     constant GPS.Kernel.Scripts.Cst_Argument_List :=
      (1 => Directory_Cst'Access);
-   Remove_Dep_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
+   Remove_Dep_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
      := (1 => Imported_Cst'Access);
-   Add_Predefined_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
+   Add_Predefined_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
      := (1 => Src_Path_Cst'Access, 2 => Obj_Path_Cst'Access);
-   Rename_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
+   Rename_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Path_Cst'Access);
-   Add_Dep_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
+   Add_Dep_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
      (1 => Path_Cst'Access);
 
    Base_File_Name_Column     : constant := 0;
@@ -191,7 +191,7 @@ package body Project_Viewers is
       --  Color to use when displaying switches that are set at the project
       --  level, rather than file specific
 
-      Kernel  : Glide_Kernel.Kernel_Handle;
+      Kernel  : GPS.Kernel.Kernel_Handle;
 
       View_Changed_Blocked : Boolean := False;
       --  True if the hook for "project_view_changed" should be ignored
@@ -205,14 +205,14 @@ package body Project_Viewers is
 
    procedure Gtk_New
      (Viewer  : out Project_Viewer;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new project viewer.
    --  Every time the selection in Explorer changes, the info displayed in
    --  the viewer is changed.
 
    procedure Initialize
      (Viewer : access Project_Viewer_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal subprogram for creating widgets
 
    procedure Show_Project
@@ -1722,7 +1722,7 @@ package body Project_Viewers is
    ----------------------------
 
    procedure Register_Switches_Page
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Creator : access Switches_Page_Creator_Record'Class)
    is
       pragma Unreferenced (Kernel);
@@ -1749,7 +1749,7 @@ package body Project_Viewers is
    ---------------------------
 
    function Get_Nth_Switches_Page
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Num    : Positive)
       return Switches_Editors.Switches_Editor_Page
    is
@@ -1777,7 +1777,7 @@ package body Project_Viewers is
    -------------------------
 
    function Switches_Page_Count
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Natural
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Natural
    is
       pragma Unreferenced (Kernel);
    begin
@@ -1817,7 +1817,7 @@ package body Project_Viewers is
    -----------------------------------
 
    procedure Register_Naming_Scheme_Editor
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String;
       Creator  : Naming_Scheme_Editor_Creator)
    is
@@ -1845,7 +1845,7 @@ package body Project_Viewers is
    ----------------------------
 
    function Get_Naming_Scheme_Page
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String) return Naming_Editors.Language_Naming_Editor
    is
       Lang : constant Name_Id := Get_String (To_Lower (Language));
@@ -1972,7 +1972,7 @@ package body Project_Viewers is
                   -("Attribute switch cannot contain spaces. Use the separator"
                     & " attribute if you need to separate the switch and its"
                     & " argument"),
-                  Mode => Glide_Kernel.Console.Error);
+                  Mode => GPS.Kernel.Console.Error);
                return True;
             end if;
          end loop;
@@ -2046,7 +2046,7 @@ package body Project_Viewers is
               (Kernel,
                  -("Invalid <dependency> node in custom file,"
                    & " all attributes must be specified"),
-               Mode => Glide_Kernel.Console.Error);
+               Mode => GPS.Kernel.Console.Error);
             return;
          end if;
 
@@ -2096,7 +2096,7 @@ package body Project_Viewers is
                        (Kernel,
                           -("Invalid <radio-entry> node in custom file,"
                             & " requires a label and a switch attributes"),
-                        Mode => Glide_Kernel.Console.Error);
+                        Mode => GPS.Kernel.Console.Error);
                      return Buttons (1 .. 0);
                   end if;
 
@@ -2152,7 +2152,7 @@ package body Project_Viewers is
                        (Kernel,
                           -("Invalid <combo-entry> node in custom file,"
                             & " requires a label and a switch attributes"),
-                        Mode => Glide_Kernel.Console.Error);
+                        Mode => GPS.Kernel.Console.Error);
                      return Buttons (1 .. 0);
                   end if;
 
@@ -2199,7 +2199,7 @@ package body Project_Viewers is
               (Kernel,
                  -("Invalid <popup> node in custom file,"
                    & " requires a label attributes"),
-               Mode => Glide_Kernel.Console.Error);
+               Mode => GPS.Kernel.Console.Error);
             return;
          end if;
 
@@ -2231,7 +2231,7 @@ package body Project_Viewers is
             Insert (Kernel,
                       -("Invalid <combo> node in custom file, requires"
                         & " a switch attributes"),
-                    Mode => Glide_Kernel.Console.Error);
+                    Mode => GPS.Kernel.Console.Error);
             return;
          end if;
 
@@ -2274,7 +2274,7 @@ package body Project_Viewers is
             Insert (Kernel,
                       -("Invalid <field> node in custom file, requires"
                         & " a label and a switch attributes"),
-                    Mode => Glide_Kernel.Console.Error);
+                    Mode => GPS.Kernel.Console.Error);
             return;
          end if;
 
@@ -2314,7 +2314,7 @@ package body Project_Viewers is
             Insert (Kernel,
                       -("Invalid <spin> node in custom file, requires"
                         & " a label and a switch attributes"),
-                    Mode => Glide_Kernel.Console.Error);
+                    Mode => GPS.Kernel.Console.Error);
             return;
          end if;
 
@@ -2343,7 +2343,7 @@ package body Project_Viewers is
             Insert (Kernel,
                       -("Invalid <check> node in custom file, requires"
                         & " a label and a switch attributes"),
-                    Mode => Glide_Kernel.Console.Error);
+                    Mode => GPS.Kernel.Console.Error);
             return;
          end if;
 
@@ -2368,7 +2368,7 @@ package body Project_Viewers is
             Insert (Kernel,
                       -("Invalid <expansion> node in custom file, requires"
                         & " a switch attributes"),
-                    Mode => Glide_Kernel.Console.Error);
+                    Mode => GPS.Kernel.Console.Error);
             return;
          end if;
 
@@ -2469,7 +2469,7 @@ package body Project_Viewers is
 
    function Create
      (Creator : access XML_Switches_Record;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Switches_Editors.Switches_Editor_Page
    is
       Lines : constant Integer :=
@@ -2550,7 +2550,7 @@ package body Project_Viewers is
             Tool_Name : constant String := Get_Attribute (Node, "name");
          begin
             if Tool_Name = "" then
-               Glide_Kernel.Console.Insert
+               GPS.Kernel.Console.Insert
                  (Kernel, -"Invalid <tool> node, no name specified");
             else
                N2 := Node.Child;
@@ -2574,7 +2574,7 @@ package body Project_Viewers is
                                    -("Invalid child tag for <switches>"
                                      & " in customization files: <")
                                    & Child.Tag.all & '>',
-                                   Mode => Glide_Kernel.Console.Error);
+                                   Mode => GPS.Kernel.Console.Error);
                            Valid := False;
                         end if;
 
@@ -2603,7 +2603,7 @@ package body Project_Viewers is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
 --        Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;

@@ -21,7 +21,7 @@
 --  This package provides facilities for customizing menus,
 --  keyboard shortcuts, and so on, in GPS.
 
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package Custom_Module is
 
@@ -34,7 +34,7 @@ package Custom_Module is
 
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 end Custom_Module;

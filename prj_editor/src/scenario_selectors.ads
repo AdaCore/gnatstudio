@@ -23,7 +23,7 @@ with Gtk.Check_Button;
 with Gtk.Scrolled_Window;
 with Gtk.Tree_Model;
 with Gtk.Tree_Store;
-with Glide_Kernel;
+with GPS.Kernel;
 with Projects;
 with GNAT.OS_Lib;
 
@@ -38,7 +38,7 @@ package Scenario_Selectors is
 
    procedure Gtk_New
      (Selector : out Project_Selector;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_Project : Projects.Project_Type);
    --  Create a new project selector.
    --  Ref_Project is the project whose settings are shown in the project
@@ -46,7 +46,7 @@ package Scenario_Selectors is
 
    procedure Initialize
      (Selector : access Project_Selector_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_Project : Projects.Project_Type);
    --  Internal version of Gtk_New
 
@@ -78,14 +78,14 @@ package Scenario_Selectors is
 
    procedure Gtk_New
      (Selector : out Scenario_Selector;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new project selector.
    --  Ref_Project is the project whose settings are shown in the project
    --  properties editor. As a result, it can never be unselected.
 
    procedure Initialize
      (Selector : access Scenario_Selector_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal version of Gtk_New
 
    type Scenario_Iterator (<>) is private;
@@ -107,7 +107,7 @@ package Scenario_Selectors is
    function Current (Iter : Scenario_Iterator)
       return GNAT.OS_Lib.Argument_List;
    --  Return the current scenario. The order of the variables is the same as
-   --  in Glide_Kernel.Scenario_Variables.
+   --  in GPS.Kernel.Scenario_Variables.
    --  The returned value must be freed by the caller.
 
    function Get_Current_Scenario (Variables : Projects.Scenario_Variable_Array)
@@ -128,7 +128,7 @@ private
    type Project_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
       Model       : Gtk.Tree_Store.Gtk_Tree_Store;
       Ref_Project : Projects.Project_Type;
-      Kernel      : Glide_Kernel.Kernel_Handle;
+      Kernel      : GPS.Kernel.Kernel_Handle;
       Select_All  : Boolean := True;
       Show_As_Hierarchy : Gtk.Check_Button.Gtk_Check_Button;
    end record;
@@ -137,7 +137,7 @@ private
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
    record
       Model      : Gtk.Tree_Store.Gtk_Tree_Store;
-      Kernel     : Glide_Kernel.Kernel_Handle;
+      Kernel     : GPS.Kernel.Kernel_Handle;
       Select_All : Boolean := True;
    end record;
 

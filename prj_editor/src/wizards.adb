@@ -33,8 +33,8 @@ with Pango.Font;         use Pango.Font;
 with Ada.Unchecked_Deallocation;
 
 with Logo_Boxes;               use Logo_Boxes;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -477,7 +477,7 @@ package body Wizards is
    ----------------
 
    function Get_Kernel
-     (Wiz : access Wizard_Record) return Glide_Kernel.Kernel_Handle is
+     (Wiz : access Wizard_Record) return GPS.Kernel.Kernel_Handle is
    begin
       return Wiz.Kernel;
    end Get_Kernel;

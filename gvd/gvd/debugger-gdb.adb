@@ -56,7 +56,7 @@ with Items.Records;     use Items.Records;
 with Items.Classes;     use Items.Classes;
 with VFS;               use VFS;
 with Config;            use Config;
-with Glide_Main_Window; use Glide_Main_Window;
+with GPS.Main_Window; use GPS.Main_Window;
 
 with Ada.Unchecked_Deallocation;
 
@@ -261,7 +261,7 @@ package body Debugger.Gdb is
             return;
          else
             Output_Error
-              (Glide_Window (Process.Window).Kernel,
+              (GPS_Window (Process.Window).Kernel,
                (-"Language unknown, defaulting to C: ") & Lang);
             Language := new Gdb_C_Language;
          end if;

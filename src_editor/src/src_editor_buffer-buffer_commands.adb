@@ -26,7 +26,7 @@ with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Commands.Editor;           use Commands.Editor;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel;              use GPS.Kernel;
 with String_Utils;              use String_Utils;
 with Src_Editor_View;           use Src_Editor_View;
 

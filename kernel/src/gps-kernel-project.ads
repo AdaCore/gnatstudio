@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,7 +47,7 @@
 with GNAT.OS_Lib;
 with Projects.Registry;
 
-package Glide_Kernel.Project is
+package GPS.Kernel.Project is
 
    -------------------
    -- Project files --
@@ -147,4 +147,4 @@ package Glide_Kernel.Project is
    --  registered for that package/language combination are returned. These
    --  default switches are defined in XML files.
 
-end Glide_Kernel.Project;
+end GPS.Kernel.Project;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2004                      --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,10 +29,10 @@
 --  If a user adds a new callback to an existing hook through a call to
 --     GPS.add_hook ("hook_name", "python function")
 --  then we create internally a tagged object that wraps "python function"
---  through the interface expected for Glide_Kernel.Hooks.Add_Hook.
+--  through the interface expected for GPS.Kernel.Hooks.Add_Hook.
 --  This wrapper will basically execute this function in the same scripting
 --  language that the call to GPS.add_hook was done from, and will specify the
---  arguments from the arguments given to Glide_Kernel.Hooks.Run_Hook by the
+--  arguments from the arguments given to GPS.Kernel.Hooks.Run_Hook by the
 --  user.
 --
 --  Creating new hook types and new hooks
@@ -79,17 +79,17 @@
 --  function, exported by Ada.
 
 
-with Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;
 with Glib.Object;
 
-package Glide_Kernel.Hooks is
+package GPS.Kernel.Hooks is
 
    procedure Register_Standard_Hooks
      (Kernel : access Kernel_Handle_Record'Class);
    --  Register all predefined hooks.
 
    function Get_Hook_Name
-     (Data : Glide_Kernel.Scripts.Callback_Data'Class; Nth : Natural)
+     (Data : GPS.Kernel.Scripts.Callback_Data'Class; Nth : Natural)
       return String;
    --  Return the name of the hook instance stored in Data
 
@@ -98,7 +98,7 @@ package Glide_Kernel.Hooks is
    -----------------------------
 
    type Hook_No_Args_Record
-      is abstract new Glide_Kernel.Hook_Function_Record with null record;
+      is abstract new GPS.Kernel.Hook_Function_Record with null record;
    type Hook_No_Args is access all Hook_No_Args_Record'Class;
 
    procedure Execute
@@ -111,12 +111,12 @@ package Glide_Kernel.Hooks is
 
 
    procedure Add_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_No_Args_Record'Class;
       Watch  : Glib.Object.GObject := null);
    procedure Add_Hook
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name      : String;
       Hook      : No_Args_Execute;
       Watch     : Glib.Object.GObject := null;
@@ -131,14 +131,14 @@ package Glide_Kernel.Hooks is
    --  Func_Name is used when listing the functions associated with the hook
 
    procedure Remove_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_No_Args_Record'Class);
    --  Remove Hook from the list of functions to be called when the hook Name
    --  is executed.
 
    procedure Run_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Set_Busy : Boolean := True);
    --  Call all functions that were added to the hook.
@@ -156,7 +156,7 @@ package Glide_Kernel.Hooks is
    --  packages from the various scripting languages
 
    type Hooks_Data is abstract tagged record
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
    end record;
    --  If you need to destroy memory stored in Hooks_Data, you should do that
    --  after calling Run_Hook
@@ -166,8 +166,8 @@ package Glide_Kernel.Hooks is
    --  and will be used to identify this type of hooks from the shell
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Hooks_Data) return Boolean is abstract;
    --  Execute the shell command Command, passing it the arguments contained
@@ -183,11 +183,11 @@ package Glide_Kernel.Hooks is
                       Hook_With_Shell_Args, Hook_With_Args_And_Return);
 
    procedure Create_Hook_Type
-     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Name        : String;
       Description      : String;
       Profile          : Hook_Type;
-      Run_Hook_Handler : Glide_Kernel.Scripts.Module_Command_Function);
+      Run_Hook_Handler : GPS.Kernel.Scripts.Module_Command_Function);
    --  Create a new type of hooks with a specific kind of parameters. This
    --  type of parameters is described by Type_Name, which should be the same
    --  value as returned by Get_Name (Hooks_Data).
@@ -200,7 +200,7 @@ package Glide_Kernel.Hooks is
    --  run is the first argument of the Callback_Data.
 
    procedure Register_Hook
-     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name        : String;
       Description : String;
       Type_Name   : String := "");
@@ -216,27 +216,27 @@ package Glide_Kernel.Hooks is
    --  language directly
 
    type Hook_Shell_Args_Record
-      is abstract new Glide_Kernel.Hook_Function_Record with null record;
+      is abstract new GPS.Kernel.Hook_Function_Record with null record;
    type Hook_Shell_Args is access all Hook_Shell_Args_Record;
 
    procedure Execute
      (Hook   : Hook_Shell_Args_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Glide_Kernel.Scripts.Callback_Data'Class) is abstract;
+      Data   : access GPS.Kernel.Scripts.Callback_Data'Class) is abstract;
    --  First argument in Data is the name of the hook
 
    type Shell_Args_Execute is access procedure
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Glide_Kernel.Scripts.Callback_Data'Class);
+      Data   : access GPS.Kernel.Scripts.Callback_Data'Class);
    --  First argument in Data is the name of the hook
 
    procedure Add_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Shell_Args_Record'Class;
       Watch  : Glib.Object.GObject := null);
    procedure Add_Hook
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name      : String;
       Hook      : Shell_Args_Execute;
       Watch     : Glib.Object.GObject := null;
@@ -244,15 +244,15 @@ package Glide_Kernel.Hooks is
    --  See doc for Add_Hook above
 
    procedure Remove_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Shell_Args_Record'Class);
    --  See doc for Remove_Hook above
 
    procedure Run_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : access Glide_Kernel.Scripts.Callback_Data'Class;
+      Data     : access GPS.Kernel.Scripts.Callback_Data'Class;
       Set_Busy : Boolean := True);
    --  See doc for Run_Hook above.
    --  It is your responsability to destroy data on exit
@@ -262,7 +262,7 @@ package Glide_Kernel.Hooks is
    --------------------------
 
    type Hook_Args_Record
-      is abstract new Glide_Kernel.Hook_Function_Record with null record;
+      is abstract new GPS.Kernel.Hook_Function_Record with null record;
    type Hook_Args is access all Hook_Args_Record;
 
    procedure Execute
@@ -275,12 +275,12 @@ package Glide_Kernel.Hooks is
       Data   : access Hooks_Data'Class);
 
    procedure Add_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Args_Record'Class;
       Watch  : Glib.Object.GObject := null);
    procedure Add_Hook
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name      : String;
       Hook      : Args_Execute;
       Watch     : Glib.Object.GObject := null;
@@ -288,13 +288,13 @@ package Glide_Kernel.Hooks is
    --  See doc for Add_Hook above
 
    procedure Remove_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Args_Record'Class);
    --  See doc for Remove_Hook above
 
    procedure Run_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True);
@@ -305,7 +305,7 @@ package Glide_Kernel.Hooks is
    -------------------------------------------
 
    type Hook_Args_Return_Record
-      is abstract new Glide_Kernel.Hook_Function_Record with null record;
+      is abstract new GPS.Kernel.Hook_Function_Record with null record;
    type Hook_Args_Return is access all Hook_Args_Return_Record;
 
    function Execute
@@ -319,12 +319,12 @@ package Glide_Kernel.Hooks is
       return Boolean;
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Hook     : access Hook_Args_Return_Record'Class;
       Watch    : Glib.Object.GObject := null);
    procedure Add_Hook
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name      : String;
       Hook      : Args_Return_Execute;
       Watch     : Glib.Object.GObject := null;
@@ -332,13 +332,13 @@ package Glide_Kernel.Hooks is
    --  See doc for Add_Hook above
 
    procedure Remove_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;
       Hook   : access Hook_Args_Return_Record'Class);
    --  See doc for Remove_Hook above
 
    function Run_Hook_Until_Success
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
@@ -347,10 +347,10 @@ package Glide_Kernel.Hooks is
    --  Return the value returned by the last function executed
 
    function Run_Hook_Until_Failure
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
    --  Same as above except stops as soon as a function returns False.
 
-end Glide_Kernel.Hooks;
+end GPS.Kernel.Hooks;

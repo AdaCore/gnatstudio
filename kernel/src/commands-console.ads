@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
 with Basic_Types;          use Basic_Types;
 
 package Commands.Console is

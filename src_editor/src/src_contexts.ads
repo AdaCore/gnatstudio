@@ -23,7 +23,7 @@ with GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Regexp;
 with GNAT.Regpat;
-with Glide_Kernel;
+with GPS.Kernel;
 with Gtk.Widget;
 with Gtk.Combo;
 with Gtk.Frame;
@@ -43,7 +43,7 @@ package Src_Contexts is
 
    procedure Gtk_New
      (Selector : out Scope_Selector;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new scope selector
 
    type Files_Extra_Scope_Record is new
@@ -54,7 +54,7 @@ package Src_Contexts is
 
    procedure Gtk_New
      (Extra  : out Files_Extra_Scope;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new widget
 
    type Search_Scope is
@@ -81,7 +81,7 @@ package Src_Contexts is
    --  It doesn't support All_Occurrences.
 
    function Current_File_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
@@ -102,7 +102,7 @@ package Src_Contexts is
    function Search
      (Context  : access Abstract_Files_Context;
       Handler  : access Language_Handlers.Language_Handler_Record'Class;
-      Kernel   : Glide_Kernel.Kernel_Handle;
+      Kernel   : GPS.Kernel.Kernel_Handle;
       Callback : Scan_Callback) return Boolean;
    --  Search either the next match or all the occurrences, depending on the
    --  parameter All_Occurrences. For each one of them, Callback is called.
@@ -151,7 +151,7 @@ package Src_Contexts is
    --  Set the list of files to search
 
    function Files_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
       Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
@@ -185,7 +185,7 @@ package Src_Contexts is
    --  No copy of Files is made, the memory will be freed automatically.
 
    function Files_From_Project_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
@@ -220,7 +220,7 @@ package Src_Contexts is
    --  No copy of Files is made, the memory will be freed automatically.
 
    function Open_Files_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access;
    --  Factory for "Open Files".
@@ -230,14 +230,14 @@ private
 
    function Search
      (Context         : access Current_File_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Search function for "Current File"
 
    function Replace
      (Context         : access Current_File_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
@@ -298,14 +298,14 @@ private
 
    function Search
      (Context         : access Abstract_Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Search function for "Files From Project" and "Open_Files"
 
    function Replace
      (Context         : access Abstract_Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;

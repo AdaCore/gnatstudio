@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,9 +37,9 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 
 with Config;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Glide_Intl;                use Glide_Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
@@ -88,9 +88,9 @@ package body Welcome is
    -------------
 
    procedure Gtk_New
-     (Screen              : out Welcome_Screen;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_Name        : String := "")
+     (Screen       : out Welcome_Screen;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project_Name : String := "")
    is
       Box, Hbox    : Gtk_Box;
       Sep          : Gtk_Separator;
@@ -293,7 +293,7 @@ package body Welcome is
    function On_New_Project
      (Screen : access Gtk_Widget_Record'Class) return Boolean
    is
-      S      : constant Welcome_Screen := Welcome_Screen (Screen);
+      S : constant Welcome_Screen := Welcome_Screen (Screen);
    begin
       return Create_New_Project (S.Kernel);
 

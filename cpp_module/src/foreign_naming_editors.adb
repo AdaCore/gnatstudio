@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glide_Intl;                       use Glide_Intl;
-with Glide_Kernel.Project;             use Glide_Kernel.Project;
+with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Combo;                        use Gtk.Combo;
 with Gtk.Enums;                        use Gtk.Enums;
@@ -181,7 +181,7 @@ package body Foreign_Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is

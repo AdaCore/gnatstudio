@@ -33,16 +33,16 @@ with Gdk.Color;                use Gdk.Color;
 with Pango.Font;               use Pango.Font;
 with Glide_Intl;               use Glide_Intl;
 with Language;                 use Language;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with Default_Preferences;      use Default_Preferences;
 with Case_Handling;            use Case_Handling;
 with Traces;                   use Traces;
 with Config;
 
-package body Glide_Kernel.Preferences is
+package body GPS.Kernel.Preferences is
 
    package Line_Terminators_Properties is new Generic_Enumeration_Property
      ("Line_Terminators", Line_Terminators);
@@ -1220,12 +1220,12 @@ package body Glide_Kernel.Preferences is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Pref_Class : constant Class_Type := New_Class (Kernel, "Preference");
       Module     : Module_ID;
    begin
-      Glide_Kernel.Modules.Register_Module
+      GPS.Kernel.Modules.Register_Module
         (Module                => Module,
          Kernel                => Kernel,
          Module_Name           => "Preferences",
@@ -1414,7 +1414,7 @@ package body Glide_Kernel.Preferences is
    -----------------------
 
    procedure Register_Property
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Param  : Glib.Param_Spec;
       Page   : String) is
    begin
@@ -1465,4 +1465,4 @@ package body Glide_Kernel.Preferences is
       Unchecked_Free (Tmp);
    end Register_Page;
 
-end Glide_Kernel.Preferences;
+end GPS.Kernel.Preferences;

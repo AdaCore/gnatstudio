@@ -27,8 +27,8 @@ with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Main;                 use Gtk.Main;
 
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Standard_Hooks;  use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with VFS;
 
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
@@ -36,7 +36,7 @@ with Gtkada.Tree_View;         use Gtkada.Tree_View;
 package GPS.Location_View is
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register this module in GPS.
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);

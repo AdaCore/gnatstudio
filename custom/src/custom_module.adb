@@ -31,11 +31,11 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with System.Assertions;         use System.Assertions;
 
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel;              use Glide_Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
 with Glide_Intl;                use Glide_Intl;
 with Projects;                  use Projects;
 
@@ -994,7 +994,7 @@ package body Custom_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Class : constant Class_Type := New_Class
         (Kernel, "Menu", Base => Get_GUI_Class (Kernel));

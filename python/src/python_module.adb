@@ -19,14 +19,14 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;              use Glib.Object;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Glib.Xml_Int;             use Glib.Xml_Int;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with Histories;                use Histories;
 with Python.GUI;               use Python, Python.GUI;
 with Python.Ada;               use Python.Ada;
@@ -37,7 +37,7 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;           use Ada.Exceptions;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with System;                   use System;
 with Traces;                   use Traces;
 with String_Utils;             use String_Utils;
@@ -67,7 +67,7 @@ package body Python_Module is
    ----------------------
 
    type Python_Scripting_Record is new Scripting_Language_Record with record
-      Kernel                   : Glide_Kernel.Kernel_Handle;
+      Kernel                   : GPS.Kernel.Kernel_Handle;
       Blocked                  : Boolean := False;
       Interpreter              : Python_Interpreter;
       GPS_Exception            : PyObject;
@@ -676,7 +676,7 @@ package body Python_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Ignored : Integer;
       Result  : PyObject;
@@ -690,7 +690,7 @@ package body Python_Module is
         (Module      => Module_ID (Python_Module_Id),
          Kernel      => Kernel,
          Module_Name => "Python");
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Python_Module_Id.Script := new Python_Scripting_Record;
@@ -852,7 +852,7 @@ package body Python_Module is
    -------------------------------
 
    procedure Load_Python_Startup_Files
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Sys    : constant String :=
         Format_Pathname (Get_System_Dir (Kernel), UNIX)

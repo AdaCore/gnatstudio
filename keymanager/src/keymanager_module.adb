@@ -18,13 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with XML_Parsers;
 with Glib.Convert;              use Glib.Convert;
@@ -72,7 +72,7 @@ with Gtk.Separator;             use Gtk.Separator;
 with Gtkada.Macro;              use Gtkada.Macro;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Traces;                    use Traces;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with VFS;                       use VFS;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
@@ -210,7 +210,7 @@ package body KeyManager_Module is
      (Handler     : access Key_Manager_Record;
       Action      : String;
       Default_Key : String);
-   --  Bind Default_Key to Action, see doc in Glide_Kernel.Bind_Default_Key
+   --  Bind Default_Key to Action, see doc in GPS.Kernel.Bind_Default_Key
 
    function Process_Event
      (Handler : access Key_Manager_Record;
@@ -2031,7 +2031,7 @@ package body KeyManager_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Manager    : constant Key_Manager_Access := new Key_Manager_Record;
       Macro_Menu : constant String := "/" & (-"Tools/Macro");

@@ -22,15 +22,15 @@ with Glib.Values;
 with Pango.Font;                use Pango.Font;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Glib.Error;                use Glib.Error;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel.Standard_Hooks;
-use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;
+use GPS.Kernel.Standard_Hooks;
 with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -53,15 +53,15 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Traces;                    use Traces;
 with Projects;                  use Projects;
 with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Glib.Values;               use Glib.Values;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
 
-package body Glide_Main_Window is
+package body GPS.Main_Window is
 
-   Me : constant Debug_Handle := Create ("Glide_Main_Window");
+   Me : constant Debug_Handle := Create ("GPS.Main_Window");
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
@@ -155,7 +155,7 @@ package body Glide_Main_Window is
       return Command_Return_Type;
    --  Act on the layout of windows
 
-   procedure Put_Animation (Main_Window : access Glide_Window_Record'Class);
+   procedure Put_Animation (Main_Window : access GPS_Window_Record'Class);
    --  Add the animated icon in the main window.
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
@@ -208,8 +208,8 @@ package body Glide_Main_Window is
    -------------
 
    function Anim_Cb (Kernel : Kernel_Handle) return Boolean is
-      Window : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+      Window : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
    begin
       if Window.Animation_Iter = null then
          return False;
@@ -225,9 +225,9 @@ package body Glide_Main_Window is
    -- Display_Default_Image --
    ---------------------------
 
-   procedure Display_Default_Image (Kernel : Glide_Kernel.Kernel_Handle) is
-      Window : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
+   procedure Display_Default_Image (Kernel : GPS.Kernel.Kernel_Handle) is
+      Window : constant GPS_Window :=
+        GPS_Window (Get_Main_Window (Kernel));
    begin
       if Window.Static_Image /= null then
          Set (Window.Animation_Image, Window.Static_Image);
@@ -239,14 +239,14 @@ package body Glide_Main_Window is
    -------------
 
    procedure Gtk_New
-     (Main_Window      : out Glide_Window;
+     (Main_Window      : out GPS_Window;
       Key              : String;
       Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
       Prefix_Directory : String) is
    begin
-      Main_Window := new Glide_Window_Record;
-      Glide_Main_Window.Initialize
+      Main_Window := new GPS_Window_Record;
+      GPS.Main_Window.Initialize
         (Main_Window, Key, Menu_Items, Home_Dir, Prefix_Directory);
    end Gtk_New;
 
@@ -255,7 +255,7 @@ package body Glide_Main_Window is
    ----------------------
 
    procedure Quit
-     (Main_Window : access Glide_Window_Record'Class;
+     (Main_Window : access GPS_Window_Record'Class;
       Force       : Boolean := False) is
    begin
       if Force or else Save_MDI_Children (Main_Window.Kernel) then
@@ -273,7 +273,7 @@ package body Glide_Main_Window is
    is
       pragma Unreferenced (Params);
    begin
-      Quit (Glide_Window (Widget));
+      Quit (GPS_Window (Widget));
 
       return True;
    end Delete_Callback;
@@ -285,14 +285,14 @@ package body Glide_Main_Window is
    procedure On_Project_Changed
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
+      Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
    end On_Project_Changed;
 
    -------------------
    -- Put_Animation --
    -------------------
 
-   procedure Put_Animation (Main_Window : access Glide_Window_Record'Class) is
+   procedure Put_Animation (Main_Window : access GPS_Window_Record'Class) is
       Throbber : constant String := Normalize_Pathname
         ("gps-animation.gif",
          Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
@@ -334,7 +334,7 @@ package body Glide_Main_Window is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       use Glib;
-      Win : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Win : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Pos : Gtk_Position_Type;
       Policy : Show_Tabs_Policy_Enum;
    begin
@@ -408,7 +408,7 @@ package body Glide_Main_Window is
    ----------------
 
    procedure Initialize
-     (Main_Window      : access Glide_Window_Record'Class;
+     (Main_Window      : access GPS_Window_Record'Class;
       Key              : String;
       Menu_Items       : Gtk_Item_Factory_Entry_Array;
       Home_Dir         : String;
@@ -510,7 +510,7 @@ package body Glide_Main_Window is
    -- Register_Keys --
    -------------------
 
-   procedure Register_Keys (Main_Window : access Glide_Window_Record'Class) is
+   procedure Register_Keys (Main_Window : access GPS_Window_Record'Class) is
       Command : MDI_Child_Selection_Command_Access;
       Command2 : MDI_Window_Actions_Command_Access;
       MDI_Class : constant Class_Type := New_Class
@@ -791,7 +791,7 @@ package body Glide_Main_Window is
    begin
       if Command = "exit" then
          Name_Parameters (Data, Exit_Cmd_Parameters);
-         Quit (Glide_Window (Get_Main_Window (Kernel)),
+         Quit (GPS_Window (Get_Main_Window (Kernel)),
                Force => Nth_Arg (Data, 1, False));
       elsif Command = "save_all" then
          Name_Parameters (Data, Save_Windows_Parameters);
@@ -964,7 +964,7 @@ package body Glide_Main_Window is
    -- GPS_Name --
    --------------
 
-   function GPS_Name (Window : access Glide_Window_Record) return String is
+   function GPS_Name (Window : access GPS_Window_Record) return String is
    begin
       if Window.Public_Version then
          return "GPS";
@@ -978,7 +978,7 @@ package body Glide_Main_Window is
    ----------------
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
-      Win : constant Glide_Window := Glide_Window (Main_Window);
+      Win : constant GPS_Window := GPS_Window (Main_Window);
 
       use Glib;
    begin
@@ -1006,7 +1006,7 @@ package body Glide_Main_Window is
    -- Load_Desktop --
    ------------------
 
-   procedure Load_Desktop (Window : access Glide_Window_Record'Class) is
+   procedure Load_Desktop (Window : access GPS_Window_Record'Class) is
       Was_Loaded : Boolean;
       pragma Unreferenced (Was_Loaded);
    begin
@@ -1018,7 +1018,7 @@ package body Glide_Main_Window is
    -----------------
 
    procedure Reset_Title
-     (Window : access Glide_Window_Record;
+     (Window : access GPS_Window_Record;
       Info   : String := "") is
    begin
       if Info = "" then
@@ -1033,4 +1033,4 @@ package body Glide_Main_Window is
       end if;
    end Reset_Title;
 
-end Glide_Main_Window;
+end GPS.Main_Window;

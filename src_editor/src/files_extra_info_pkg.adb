@@ -24,13 +24,13 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Tooltips; use Gtk.Tooltips;
 with Glide_Intl; use Glide_Intl;
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
-with Glide_Kernel; use Glide_Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package body Files_Extra_Info_Pkg is
 
 procedure Gtk_New
   (Files_Extra_Info : out Files_Extra_Info_Access;
-   Handle : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   Handle : access GPS.Kernel.Kernel_Handle_Record'Class) is
 begin
    Files_Extra_Info := new Files_Extra_Info_Record;
    Files_Extra_Info_Pkg.Initialize (Files_Extra_Info, Handle);
@@ -38,7 +38,7 @@ end Gtk_New;
 
 procedure Initialize
   (Files_Extra_Info : access Files_Extra_Info_Record'Class;
-   Handle : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   Handle : access GPS.Kernel.Kernel_Handle_Record'Class) is
    pragma Suppress (All_Checks);
    Files_Combo_Items : String_List.Glist;
    Tooltips : Gtk_Tooltips;

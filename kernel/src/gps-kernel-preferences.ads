@@ -27,7 +27,7 @@ with GVD.Preferences;
 with Language;
 with Glib.Generic_Properties;
 
-package Glide_Kernel.Preferences is
+package GPS.Kernel.Preferences is
 
    type GPS_Preferences_Record is new GVD.Preferences.GVD_Preferences_Manager
      with private;
@@ -44,7 +44,7 @@ package Glide_Kernel.Preferences is
    --  the modules themselves.
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the preference module
 
    procedure Save_Preferences
@@ -52,7 +52,7 @@ package Glide_Kernel.Preferences is
    --  See Default_Preferences.Save_Preferences.
 
    procedure Register_Property
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Param  : Glib.Param_Spec;
       Page   : String);
    pragma Inline (Register_Property);
@@ -264,4 +264,4 @@ package Glide_Kernel.Preferences is
 private
    type GPS_Preferences_Record is new GVD.Preferences.GVD_Preferences_Manager
      with null record;
-end Glide_Kernel.Preferences;
+end GPS.Kernel.Preferences;

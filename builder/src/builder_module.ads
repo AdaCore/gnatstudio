@@ -20,7 +20,7 @@
 
 --  Builder module.
 
-with Glide_Kernel;
+with GPS.Kernel;
 with Gtk.Menu;
 with Gtk.Menu_Item;
 with String_List_Utils;
@@ -29,9 +29,9 @@ with Commands;
 
 package Builder_Module is
 
-   Builder_Module_ID : Glide_Kernel.Module_ID;
+   Builder_Module_ID : GPS.Kernel.Module_ID;
 
-   type Builder_Module_ID_Record is new Glide_Kernel.Module_ID_Record
+   type Builder_Module_ID_Record is new GPS.Kernel.Module_ID_Record
    with record
       Make_Menu  : Gtk.Menu.Gtk_Menu;
       Run_Menu   : Gtk.Menu.Gtk_Menu;
@@ -58,7 +58,7 @@ package Builder_Module is
    Builder_Module_Name : constant String := "Builder";
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
 end Builder_Module;

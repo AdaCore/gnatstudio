@@ -25,14 +25,14 @@ with Glib.Object;          use Glib.Object;
 with Gtkada.Types;         use Gtkada.Types;
 with Gtk.Widget;           use Gtk.Widget;
 with Glide_Intl;           use Glide_Intl;
-with Glide_Kernel.Actions; use Glide_Kernel.Actions;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
-with Glide_Kernel.Hooks;   use Glide_Kernel.Hooks;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Custom;  use GPS.Kernel.Custom;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Histories;            use Histories;
 with Interactive_Consoles; use Interactive_Consoles;
 with Entities.Queries;     use Entities, Entities.Queries;
@@ -51,9 +51,9 @@ with Basic_Types;          use Basic_Types;
 with Language_Handlers;    use Language_Handlers;
 with Prj.Ext;              use Prj.Ext;
 
-package body Glide_Kernel.Scripts is
+package body GPS.Kernel.Scripts is
 
-   Me : constant Debug_Handle := Create ("Glide_Kernel.Scripts");
+   Me : constant Debug_Handle := Create ("GPS.Kernel.Scripts");
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Class_Instance_Record'Class, Class_Instance);
@@ -214,7 +214,7 @@ package body Glide_Kernel.Scripts is
    function Get_Or_Create_Context
      (Script : access Scripting_Language_Record'Class;
       Class  : Class_Type;
-      Context : access Glide_Kernel.Selection_Context'Class)
+      Context : access GPS.Kernel.Selection_Context'Class)
       return Class_Instance;
    --  Create a new instance representing the context. If such an instance
    --  already exists for that context, return the same one so that the user
@@ -354,7 +354,7 @@ package body Glide_Kernel.Scripts is
    ---------------------------------
 
    procedure Register_Scripting_Language
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Script : access Scripting_Language_Record'Class)
    is
       Tmp : constant Scripting_Language_Array :=
@@ -371,7 +371,7 @@ package body Glide_Kernel.Scripts is
    -------------------------------
 
    function Lookup_Scripting_Language
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String) return Scripting_Language
    is
       Tmp : constant Scripting_Language_List :=
@@ -391,7 +391,7 @@ package body Glide_Kernel.Scripts is
    -----------------------------
 
    function Get_Scripting_Languages
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Scripting_Language_Array is
    begin
       return Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
@@ -402,7 +402,7 @@ package body Glide_Kernel.Scripts is
    --------------------
 
    procedure Block_Commands
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Block  : Boolean)
    is
       Tmp : constant Scripting_Language_List :=
@@ -418,7 +418,7 @@ package body Glide_Kernel.Scripts is
    ----------------------
 
    procedure Register_Command
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command       : String;
       Minimum_Args  : Natural := 0;
       Maximum_Args  : Natural := 0;
@@ -447,7 +447,7 @@ package body Glide_Kernel.Scripts is
    ---------------
 
    function New_Class
-     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name        : String;
       Base        : Class_Type := No_Class) return Class_Type
    is
@@ -797,7 +797,7 @@ package body Glide_Kernel.Scripts is
          Name_Parameters (Data, Xml_Custom_Parameters);
          declare
             Err : constant String :=
-              Glide_Kernel.Custom.Add_Customization_String
+              GPS.Kernel.Custom.Add_Customization_String
                 (Kernel, Nth_Arg (Data, 1),
                  From_File  => "<inline>",
                  Start_Line => 1);
@@ -1409,7 +1409,7 @@ package body Glide_Kernel.Scripts is
    ----------------
 
    procedure Initialize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Kernel.Scripts := new Scripting_Data_Record;
    end Initialize;
@@ -1419,7 +1419,7 @@ package body Glide_Kernel.Scripts is
    --------------
 
    procedure Finalize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       List : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
@@ -1585,7 +1585,7 @@ package body Glide_Kernel.Scripts is
    --------------------------------------
 
    procedure Register_Default_Script_Commands
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Console_Class : constant Class_Type :=
         New_Class (Kernel, "Console", Base => Get_GUI_Class (Kernel));
@@ -1873,7 +1873,7 @@ package body Glide_Kernel.Scripts is
    ----------------------
 
    function Get_Entity_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).Entity_Class = No_Class then
@@ -1889,7 +1889,7 @@ package body Glide_Kernel.Scripts is
    --------------------
 
    function Get_File_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).File_Class = No_Class then
@@ -1905,7 +1905,7 @@ package body Glide_Kernel.Scripts is
    -----------------------
 
    function Get_Project_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).Project_Class = No_Class then
@@ -1921,7 +1921,7 @@ package body Glide_Kernel.Scripts is
    -----------------------------
 
    function Get_File_Location_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).File_Location_Class = No_Class then
@@ -1952,7 +1952,7 @@ package body Glide_Kernel.Scripts is
    -------------------------------
 
    function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String) return String
    is
       Errors : aliased Boolean;
@@ -1967,7 +1967,7 @@ package body Glide_Kernel.Scripts is
    -------------------------------
 
    procedure Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List)
    is
@@ -1984,7 +1984,7 @@ package body Glide_Kernel.Scripts is
    -------------------------------
 
    function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List) return String is
    begin
@@ -1998,7 +1998,7 @@ package body Glide_Kernel.Scripts is
    -------------------------------
 
    procedure Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : String)
    is
       Errors : aliased Boolean;
@@ -2219,7 +2219,7 @@ package body Glide_Kernel.Scripts is
    ----------------
 
    function Get_Kernel (Data : Callback_Data)
-      return Glide_Kernel.Kernel_Handle is
+      return GPS.Kernel.Kernel_Handle is
    begin
       return Get_Kernel (Get_Script (Callback_Data'Class (Data)));
    end Get_Kernel;
@@ -2326,7 +2326,7 @@ package body Glide_Kernel.Scripts is
    -----------------------
 
    function Get_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).Context_Class = No_Class then
@@ -2342,7 +2342,7 @@ package body Glide_Kernel.Scripts is
    --------------------
 
    function Get_Hook_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).Hook_Class = No_Class then
@@ -2358,7 +2358,7 @@ package body Glide_Kernel.Scripts is
    ----------------------------
 
    function Get_Area_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).Area_Context_Class = No_Class then
@@ -2377,7 +2377,7 @@ package body Glide_Kernel.Scripts is
 
    function Create_Area_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Contexts.File_Area_Context_Access)
+      Context : GPS.Kernel.Contexts.File_Area_Context_Access)
       return Class_Instance is
    begin
       return Get_Or_Create_Context
@@ -2391,7 +2391,7 @@ package body Glide_Kernel.Scripts is
    --------------
 
    function Get_Data (Data : Callback_Data; N : Positive)
-      return Glide_Kernel.Contexts.File_Area_Context_Access
+      return GPS.Kernel.Contexts.File_Area_Context_Access
    is
       Value : constant System.Address :=
         Nth_Arg_Data (Data, N, Get_Area_Context_Class (Get_Kernel (Data)));
@@ -2406,7 +2406,7 @@ package body Glide_Kernel.Scripts is
 
    function Create_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access) return Class_Instance
+      Context : GPS.Kernel.Selection_Context_Access) return Class_Instance
    is
       Inst : Class_Instance;
    begin
@@ -2430,7 +2430,7 @@ package body Glide_Kernel.Scripts is
    --------------
 
    function Get_Data (Data : Callback_Data; N : Positive)
-      return Glide_Kernel.Selection_Context_Access
+      return GPS.Kernel.Selection_Context_Access
    is
       Value : constant System.Address := Nth_Arg_Data
         (Data, N, Get_Context_Class (Get_Kernel (Data)));
@@ -2443,7 +2443,7 @@ package body Glide_Kernel.Scripts is
    ----------------------------
 
    function Get_File_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).File_Context_Class = No_Class then
@@ -2461,7 +2461,7 @@ package body Glide_Kernel.Scripts is
    ------------------------------
 
    function Get_Entity_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
       if Scripting_Data (Kernel.Scripts).Entity_Context_Class = No_Class then
@@ -2513,7 +2513,7 @@ package body Glide_Kernel.Scripts is
    --------------
 
    function Get_Data (Data : Callback_Data; N : Positive)
-      return Glide_Kernel.Contexts.File_Selection_Context_Access
+      return GPS.Kernel.Contexts.File_Selection_Context_Access
    is
       Value : constant System.Address := Nth_Arg_Data
         (Data, N, Get_File_Context_Class (Get_Kernel (Data)));
@@ -2527,7 +2527,7 @@ package body Glide_Kernel.Scripts is
    --------------
 
    function Get_Data (Data : Callback_Data; N : Positive)
-     return Glide_Kernel.Contexts.Entity_Selection_Context_Access
+     return GPS.Kernel.Contexts.Entity_Selection_Context_Access
    is
       Value : constant System.Address := Nth_Arg_Data
         (Data, N, Get_Entity_Context_Class (Get_Kernel (Data)));
@@ -2543,7 +2543,7 @@ package body Glide_Kernel.Scripts is
    function Get_Or_Create_Context
      (Script : access Scripting_Language_Record'Class;
       Class  : Class_Type;
-      Context : access Glide_Kernel.Selection_Context'Class)
+      Context : access GPS.Kernel.Selection_Context'Class)
       return Class_Instance
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Script);
@@ -2583,7 +2583,7 @@ package body Glide_Kernel.Scripts is
 
    function Create_File_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Contexts.File_Selection_Context_Access)
+      Context : GPS.Kernel.Contexts.File_Selection_Context_Access)
       return Class_Instance is
    begin
       return Get_Or_Create_Context
@@ -2598,7 +2598,7 @@ package body Glide_Kernel.Scripts is
 
    function Create_Entity_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Contexts.Entity_Selection_Context_Access)
+      Context : GPS.Kernel.Contexts.Entity_Selection_Context_Access)
       return Class_Instance is
    begin
       return Get_Or_Create_Context
@@ -2763,4 +2763,4 @@ package body Glide_Kernel.Scripts is
       Free (Inst);
    end GUI_Command_Handler;
 
-end Glide_Kernel.Scripts;
+end GPS.Kernel.Scripts;

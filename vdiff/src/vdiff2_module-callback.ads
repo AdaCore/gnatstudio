@@ -22,9 +22,9 @@
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
-with Glide_Kernel.Hooks;   use Glide_Kernel.Hooks;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with Commands.Interactive; use Commands, Commands.Interactive;
 
 package Vdiff2_Module.Callback is
@@ -52,8 +52,8 @@ package Vdiff2_Module.Callback is
    --  Callback for Tools->VDiff->Merge Tree Files...
 
    procedure File_Closed_Cb
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data    : access Glide_Kernel.Hooks.Hooks_Data'Class);
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data    : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Callback for the "file_closed" signal.
 
    procedure Diff_Command_Handler
@@ -61,7 +61,7 @@ package Vdiff2_Module.Callback is
    --  Interactive command handler for the Visual_Diff module.
 
    procedure On_Preferences_Changed
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
    type Change_Ref_File_Command is new Interactive_Command with null record;

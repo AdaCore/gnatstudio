@@ -479,7 +479,7 @@ package body Ada_Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor             : access Ada_Naming_Editor_Record;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is

@@ -23,7 +23,7 @@
 package Vdiff2_Module.Utils.Shell_Command is
 
    function Add_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Pos    : Natural;
       Style  : String := "";
@@ -34,7 +34,7 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Add_Line);
 
    procedure Edit
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       File     : Virtual_File;
       Writable : Boolean := True);
    --  Open editor for File
@@ -42,14 +42,14 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Edit);
 
    procedure Synchronize_Scrolling
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File1  : Virtual_File;
       File2  : Virtual_File;
       File3  : Virtual_File := No_File);
    --  Synchronize the scrolling between files.
 
    function Get_Chars
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -63,13 +63,13 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Get_Chars);
 
    function Get_File_Last_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File : Virtual_File) return Natural;
    --  Return the number of line in file File
    pragma Inline (Get_File_Last_Line);
 
    function Get_Line_Number
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Mark   : String) return Natural;
    --  Returns the current line of Mark
    pragma Inline (Get_Line_Number);
@@ -80,7 +80,7 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Delete_Mark);
 
    procedure Highlight_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Pos    : Natural;
       Style  : String := "";
@@ -89,7 +89,7 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Highlight_Line);
 
    procedure Highlight_Range
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Style   : String;
       Line    : Natural := 0;
@@ -99,17 +99,17 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Highlight_Range);
 
    procedure Register_Highlighting
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register color preferences
 
    procedure Remove_Blank_Lines
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Mark   : Natural);
    --  Remove blank lines located at mark
    pragma Inline (Remove_Blank_Lines);
 
    procedure Replace_Text
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -123,7 +123,7 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Replace_Text);
 
    procedure Unhighlight
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural;
       Style : String := "");
@@ -131,7 +131,7 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  Remove highlighting of line number Pos in file File
 
    procedure Unhighlight_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural;
       Style : String := "");
@@ -139,7 +139,7 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Unhighlight_Line);
 
    procedure Unhighlight_Range
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Style   : String;
       Line    : Natural := 0;

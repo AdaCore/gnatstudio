@@ -66,14 +66,14 @@ with Basic_Types;
 with Projects;                  use Projects;
 with Language;                  use Language;
 with String_Utils;              use String_Utils;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Traces;                    use Traces;
@@ -160,14 +160,14 @@ package body Project_Explorers is
    type Explorer_Search_Extra is access all Explorer_Search_Extra_Record'Class;
 
    function Explorer_Search_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Create a new search context for the explorer
 
    function Explorer_Search_Factory
-     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Include_Projects : Boolean;
       Include_Files    : Boolean)
       return Search_Context_Access;
@@ -176,7 +176,7 @@ package body Project_Explorers is
 
    function Search
      (Context         : access Explorer_Search_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Search the next occurrence in the explorer
@@ -362,13 +362,13 @@ package body Project_Explorers is
       Menu         : Gtk_Menu) return Selection_Context_Access;
    --  Return the context to use for the contextual menu.
    --  It is also used to return the context for
-   --  Glide_Kernel.Get_Current_Context, and thus can be called with a null
+   --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
    --  event or a null menu.
 
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create the Glide_Kernel.Get_Current_Context.
+   --  Create the GPS.Kernel.Get_Current_Context.
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -438,16 +438,16 @@ package body Project_Explorers is
       with null record;
    function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean;
+      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean;
    function Filter_Matches_Primitive
      (Context : access Directory_Node_Filter_Record;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean;
+      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean;
    function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean;
+      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean;
    function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean;
+      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -455,7 +455,7 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
+      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Context);
    begin
@@ -472,7 +472,7 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Directory_Node_Filter_Record;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
+      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Context);
    begin
@@ -490,7 +490,7 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
+      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Context);
    begin
@@ -507,7 +507,7 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class) return Boolean
+      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Context);
    begin
@@ -546,7 +546,7 @@ package body Project_Explorers is
 
    procedure Gtk_New
      (Explorer : out Project_Explorer;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Explorer := new Project_Explorer_Record;
       Initialize (Explorer, Kernel);
@@ -593,7 +593,7 @@ package body Project_Explorers is
 
    procedure Initialize
      (Explorer : access Project_Explorer_Record'Class;
-      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       use Project_Explorer_Tooltips;
 
@@ -2071,7 +2071,7 @@ package body Project_Explorers is
    -----------------------------
 
    function Explorer_Search_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
@@ -2113,7 +2113,7 @@ package body Project_Explorers is
    -----------------------------
 
    function Explorer_Search_Factory
-     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Include_Projects : Boolean;
       Include_Files    : Boolean)
       return Search_Context_Access
@@ -2139,7 +2139,7 @@ package body Project_Explorers is
 
    function Search
      (Context         : access Explorer_Search_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
@@ -2647,7 +2647,7 @@ package body Project_Explorers is
          Insert (Kernel,
                  -"File not found in the explorer: "
                  & Base_Name (File_Information (File_C)),
-                 Mode => Glide_Kernel.Console.Error);
+                 Mode => GPS.Kernel.Console.Error);
       end if;
 
       Free (C);
@@ -2696,7 +2696,7 @@ package body Project_Explorers is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
       Extra   : Explorer_Search_Extra;
@@ -2719,7 +2719,7 @@ package body Project_Explorers is
          Module_Name             => Explorer_Module_Name,
          Priority                => Default_Priority,
          Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Locate_File_In_Explorer_Command;

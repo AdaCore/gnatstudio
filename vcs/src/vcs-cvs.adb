@@ -25,13 +25,13 @@ with Gtk.Enums;
 with Gtkada.MDI;                  use Gtkada.MDI;
 
 with Glide_Intl;                  use Glide_Intl;
-with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with GNAT.OS_Lib;
 with GNAT.Case_Util;              use GNAT.Case_Util;
@@ -1513,7 +1513,7 @@ package body VCS.CVS is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       VCS_CVS_Module_ID := new VCS_CVS_Module_ID_Record;
       Register_VCS_Identifier (Identify_VCS'Access);

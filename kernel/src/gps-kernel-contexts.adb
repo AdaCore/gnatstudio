@@ -20,39 +20,39 @@
 
 with Projects;             use Projects;
 with Projects.Registry;    use Projects.Registry;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with VFS;                  use VFS;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Entities;             use Entities;
 with Entities.Queries;     use Entities.Queries;
 
-package body Glide_Kernel.Contexts is
+package body GPS.Kernel.Contexts is
 
    type Filter_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Entity is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_Only is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_Only;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_File;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean;
    --  See inherited documentation
 
@@ -62,7 +62,7 @@ package body Glide_Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_Only;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean
    is
       pragma Unreferenced (Filter);
@@ -81,7 +81,7 @@ package body Glide_Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_File;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean
    is
       pragma Unreferenced (Filter);
@@ -99,7 +99,7 @@ package body Glide_Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean
    is
       pragma Unreferenced (Filter);
@@ -115,7 +115,7 @@ package body Glide_Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
-      Ctxt    : access Glide_Kernel.Selection_Context'Class)
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean
    is
       pragma Unreferenced (Filter);
@@ -399,7 +399,7 @@ package body Glide_Kernel.Contexts is
 
    procedure Destroy (Context : in out File_Selection_Context) is
    begin
-      Glide_Kernel.Destroy (Selection_Context (Context));
+      GPS.Kernel.Destroy (Selection_Context (Context));
    end Destroy;
 
    --------------------------
@@ -490,4 +490,4 @@ package body Glide_Kernel.Contexts is
       Register_Filter (Kernel, Project_File_Filter, "Project and file");
    end Register_Default_Filters;
 
-end Glide_Kernel.Contexts;
+end GPS.Kernel.Contexts;

@@ -23,7 +23,7 @@
 
 with Gtkada.MDI; use Gtkada.MDI;
 
-package Glide_Kernel.MDI is
+package GPS.Kernel.MDI is
 
    ---------------------
    -- Child positions --
@@ -104,4 +104,4 @@ private
    end record;
    type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
 
-end Glide_Kernel.MDI;
+end GPS.Kernel.MDI;

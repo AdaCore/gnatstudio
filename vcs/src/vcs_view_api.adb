@@ -31,15 +31,15 @@ with VCS.Unknown_VCS;             use VCS.Unknown_VCS;
 with VCS_View_Pkg;                use VCS_View_Pkg;
 
 with Glide_Intl;                  use Glide_Intl;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
-with Glide_Kernel.Console;        use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
-with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;        use Glide_Kernel.Project;
-with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Location_View;           use GPS.Location_View;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with String_List_Utils;           use String_List_Utils;
 
@@ -2863,7 +2863,7 @@ package body VCS_View_API is
    -------------------------
 
    procedure VCS_Command_Handler
-     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);

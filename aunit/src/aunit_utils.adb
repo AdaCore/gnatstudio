@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 
 package body Aunit_Utils is
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
+--                     Copyright (C) 2003-2005                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;               use Glide_Kernel;
-with Glide_Kernel.Scripts;       use Glide_Kernel.Scripts;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with VFS;                        use VFS;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -34,7 +34,7 @@ with Basic_Types;
 with String_Utils;               use String_Utils;
 with Glide_Intl;                 use Glide_Intl;
 
-package body Glide_Kernel.Standard_Hooks is
+package body GPS.Kernel.Standard_Hooks is
 
    Me : constant Debug_Handle := Create ("Standard_Hooks");
 
@@ -498,7 +498,7 @@ package body Glide_Kernel.Standard_Hooks is
    --------------
 
    procedure Exit_GPS
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Data : aliased Exit_Before_Action_Hooks_Args :=
          (Kernel => Kernel_Handle (Kernel));
@@ -701,8 +701,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Context_Hooks_Args) return Boolean
    is
@@ -733,8 +733,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access String_Hooks_Args) return Boolean
    is
@@ -763,8 +763,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access File_Hooks_Args) return Boolean
    is
@@ -795,8 +795,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Source_File_Hooks_Args) return Boolean
    is
@@ -834,8 +834,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access File_Line_Hooks_Args) return Boolean
    is
@@ -870,8 +870,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Location_Hooks_Args) return Boolean
    is
@@ -908,8 +908,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Html_Hooks_Args) return Boolean
    is
@@ -943,8 +943,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access File_Location_Hooks_Args) return Boolean
    is
@@ -978,8 +978,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Diff_Hooks_Args) return Boolean
    is
@@ -1017,8 +1017,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Compilation_Hooks_Args) return Boolean
    is
@@ -1050,8 +1050,8 @@ package body Glide_Kernel.Standard_Hooks is
    -------------------
 
    function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access Exit_Before_Action_Hooks_Args) return Boolean
    is
@@ -1070,7 +1070,7 @@ package body Glide_Kernel.Standard_Hooks is
    ---------------------------
 
    procedure Register_Action_Hooks
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Create_Hook_Type
         (Kernel, Open_File_Hook_Type,
@@ -1172,4 +1172,4 @@ package body Glide_Kernel.Standard_Hooks is
          Hook_With_Args, Location_Changed_Hook_Handler'Access);
    end Register_Action_Hooks;
 
-end Glide_Kernel.Standard_Hooks;
+end GPS.Kernel.Standard_Hooks;

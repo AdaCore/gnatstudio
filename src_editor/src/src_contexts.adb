@@ -38,11 +38,11 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
 with Osint;                     use Osint;
 with Projects;                  use Projects;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
 with File_Utils;                use File_Utils;
 with Traces;                    use Traces;
@@ -197,7 +197,7 @@ package body Src_Contexts is
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success
@@ -517,7 +517,7 @@ package body Src_Contexts is
    procedure Scan_File
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handlers.Language_Handler_Record'Class;
-      Kernel        : Glide_Kernel.Kernel_Handle := null;
+      Kernel        : GPS.Kernel.Kernel_Handle := null;
       Name          : VFS.Virtual_File;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
@@ -1019,7 +1019,7 @@ package body Src_Contexts is
    --------------------------
 
    function Current_File_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
@@ -1062,7 +1062,7 @@ package body Src_Contexts is
    --------------------------------
 
    function Files_From_Project_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
@@ -1099,7 +1099,7 @@ package body Src_Contexts is
    ------------------------
 
    function Open_Files_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
       Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
@@ -1108,7 +1108,7 @@ package body Src_Contexts is
       Open_File_List : VFS.File_Array_Access;
 
    begin
-      --  Glide_Kernel.Open_Files returns a File_Array, but Set_File_List
+      --  GPS.Kernel.Open_Files returns a File_Array, but Set_File_List
       --  takes a File_Array_Access. Memory will be properly freed in
       --  Set_File_List
 
@@ -1142,7 +1142,7 @@ package body Src_Contexts is
    -------------------
 
    function Files_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
       Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
@@ -1187,7 +1187,7 @@ package body Src_Contexts is
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
       Lang   : Language_Access;
@@ -1267,7 +1267,7 @@ package body Src_Contexts is
 
    function Search
      (Context         : access Current_File_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
@@ -1300,7 +1300,7 @@ package body Src_Contexts is
 
    function Replace
      (Context         : access Current_File_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
@@ -1519,7 +1519,7 @@ package body Src_Contexts is
 
    function Search
      (Context         : access Abstract_Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
@@ -1556,7 +1556,7 @@ package body Src_Contexts is
 
    function Replace
      (Context         : access Abstract_Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
@@ -1945,7 +1945,7 @@ package body Src_Contexts is
 
    procedure Gtk_New
      (Extra  : out Files_Extra_Scope;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Label : Gtk_Label;
    begin

@@ -88,7 +88,7 @@ with Config;                     use Config;
 
 with String_List_Utils;          use String_List_Utils;
 
-with Glide_Main_Window;          use Glide_Main_Window;
+with GPS.Main_Window;          use GPS.Main_Window;
 
 package body GVD.Process is
 
@@ -1265,7 +1265,7 @@ package body GVD.Process is
 
          if Executable /= "" then
             Output_Error
-              (Glide_Window (Process.Window).Kernel,
+              (GPS_Window (Process.Window).Kernel,
                (-" Could not find file: ") & Executable);
          end if;
       end if;
@@ -1623,7 +1623,7 @@ package body GVD.Process is
       when Constraint_Error =>
          --  Usually because Find_Item returned a null value.
          Output_Error
-           (Glide_Window (Process.Window).Kernel,
+           (GPS_Window (Process.Window).Kernel,
             (-" Invalid command: ") & Cmd);
    end Process_Graph_Cmd;
 
@@ -1652,7 +1652,7 @@ package body GVD.Process is
    exception
       when Constraint_Error =>
          Output_Error
-           (Glide_Window (Process.Window).Kernel,
+           (GPS_Window (Process.Window).Kernel,
             (-" Invalid command: ") & Cmd);
    end Process_View_Cmd;
 

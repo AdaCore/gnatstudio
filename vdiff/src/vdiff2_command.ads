@@ -20,7 +20,7 @@
 
 --  This Package provide the base structure for all command for Vdiff2
 
-with Glide_Kernel;         use Glide_Kernel;
+with GPS.Kernel;         use GPS.Kernel;
 with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
 with Diff_Utils2;          use Diff_Utils2;

@@ -21,8 +21,8 @@
 with Glib;                      use Glib;
 with Gtk.Main;                  use Gtk.Main;
 with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Traces;                    use Traces;
 with Custom_Module;             use Custom_Module;
 
@@ -41,7 +41,7 @@ package body Custom_Timeout is
    type Custom_Timeout is record
       Handler  : Timeout_Handler_Id;
       Instance : Class_Instance;
-      Action   : Glide_Kernel.Scripts.Subprogram_Type;
+      Action   : GPS.Kernel.Scripts.Subprogram_Type;
    end record;
 
    type Custom_Timeout_Access is access Custom_Timeout;

@@ -25,8 +25,8 @@ with Debugger;             use Debugger;
 with System;
 with Ada.Unchecked_Conversion;
 with Traces;               use Traces;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
 
 package body GVD.Trace is
 

@@ -33,12 +33,12 @@ with Glib.Xml_Int;             use Glib.Xml_Int;
 with XML_Parsers;
 with Glib;                     use Glib;
 with Glib.Unicode;             use Glib.Unicode;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
-with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel;             use Glide_Kernel;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel;             use GPS.Kernel;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -78,8 +78,8 @@ with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with System.Assertions;
 with Glib.Object;              use Glib.Object;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Actions;     use Glide_Kernel.Actions;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with Glide_Intl;               use Glide_Intl;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
@@ -2035,7 +2035,7 @@ package body Aliases_Module is
    -----------------------------------
 
    procedure Register_Special_Alias_Entity
-     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Description : String;
       Entity      : Character;
       Func        : Alias_Expansion_Function)
@@ -2208,7 +2208,7 @@ package body Aliases_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Edit : constant String := "/" & (-"Edit");
       Command : Interactive_Alias_Expansion_Command_Access;

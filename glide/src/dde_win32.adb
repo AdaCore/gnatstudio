@@ -25,7 +25,7 @@ with Interfaces.C;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Exceptions;    use Ada.Exceptions;
 
-with Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.Standard_Hooks;
 with Traces;            use Traces;
 with VFS;               use VFS;
 
@@ -109,7 +109,7 @@ package body DDE is
 
    --  End of DDEML section
 
-   Kernel_Local : Glide_Kernel.Kernel_Handle;
+   Kernel_Local : GPS.Kernel.Kernel_Handle;
    --  Receives the kernel handle passed to Register_DDE_Server
 
    idInst : aliased DWORD := 0; --  DDE Instance
@@ -177,7 +177,7 @@ package body DDE is
                      null;
                   when FileOpen =>
                      begin
-                        Glide_Kernel.Standard_Hooks.Open_File_Editor
+                        GPS.Kernel.Standard_Hooks.Open_File_Editor
                           (Kernel_Local, Create (Full_Filename => Argument));
                      exception
                         when Constraint_Error =>
@@ -209,7 +209,7 @@ package body DDE is
    -- Register_DDE_Server --
    -------------------------
 
-   procedure Register_DDE_Server (Kernel : Glide_Kernel.Kernel_Handle) is
+   procedure Register_DDE_Server (Kernel : GPS.Kernel.Kernel_Handle) is
       hszAppName : HSZ;
       szAppName  : aliased String := "GPS" & ASCII.NUL;
       Res1       : UINT;

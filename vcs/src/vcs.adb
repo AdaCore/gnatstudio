@@ -20,9 +20,9 @@
 
 with Unchecked_Deallocation;
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Generic_List;
 with Commands;                  use Commands;
 with Commands.VCS;              use Commands.VCS;

@@ -22,7 +22,7 @@
 --  number of check buttons, one per known language, which the user can select.
 
 with Gtk.Frame;
-with Glide_Kernel;
+with GPS.Kernel;
 with GNAT.OS_Lib;
 with Projects;
 with Gtk.Tree_Store;
@@ -34,7 +34,7 @@ package Languages_Lists is
 
    procedure Gtk_New
      (List           : out Languages_List;
-      Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project        : Projects.Project_Type);
    --  Create a new languages editor.
    --  If Edit_Compilers is true, List is setup to also edit the languages
@@ -68,7 +68,7 @@ package Languages_Lists is
 
 private
    type Languages_List_Record is new Gtk.Frame.Gtk_Frame_Record with record
-      Kernel    : Glide_Kernel.Kernel_Handle;
+      Kernel    : GPS.Kernel.Kernel_Handle;
       Languages : Gtk.Tree_Store.Gtk_Tree_Store;
    end record;
 

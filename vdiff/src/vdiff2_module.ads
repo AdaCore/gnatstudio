@@ -20,7 +20,7 @@
 
 --  New Visual Diff module.
 
-with Glide_Kernel;             use Glide_Kernel;
+with GPS.Kernel;             use GPS.Kernel;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Default_Preferences;      use Default_Preferences;
 with Diff_Utils2;              use Diff_Utils2;
@@ -31,7 +31,7 @@ package Vdiff2_Module is
 
    type VDiff2_Module is private;
 
-   Vdiff_Module_ID        : Glide_Kernel.Module_ID;
+   Vdiff_Module_ID        : GPS.Kernel.Module_ID;
    Vdiff_Module_Name      : constant String := "Visual_Diff2";
 
    Diff3_Cmd              : Param_Spec_String;
@@ -43,7 +43,7 @@ package Vdiff2_Module is
    Diff_Fine_Change_Color : Param_Spec_Color;
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
 private

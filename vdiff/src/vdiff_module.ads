@@ -20,15 +20,15 @@
 
 --  Visual Diff module.
 
-with Glide_Kernel;
+with GPS.Kernel;
 
 package Vdiff_Module is
 
-   Vdiff_Module_ID   : Glide_Kernel.Module_ID;
+   Vdiff_Module_ID   : GPS.Kernel.Module_ID;
    Vdiff_Module_Name : constant String := "Visual_Diff";
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
 end Vdiff_Module;

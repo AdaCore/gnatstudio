@@ -39,10 +39,10 @@ with Gtkada.Combo;    use Gtkada.Combo;
 with Gtkada.Dialogs;  use Gtkada.Dialogs;
 
 with Projects.Editor;      use Projects, Projects.Editor;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.MDI;     use Glide_Kernel.MDI;
-with Glide_Kernel.Hooks;   use Glide_Kernel.Hooks;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Variable_Editors;     use Variable_Editors;
 with Glide_Intl;           use Glide_Intl;
 

@@ -45,7 +45,7 @@ package body Make_Suite_Window_Pkg is
 
    procedure Gtk_New
      (Make_Suite_Window : out Make_Suite_Window_Access;
-      Handle            : Glide_Kernel.Kernel_Handle) is
+      Handle            : GPS.Kernel.Kernel_Handle) is
    begin
       Make_Suite_Window := new Make_Suite_Window_Record;
       Make_Suite_Window_Pkg.Initialize (Make_Suite_Window, Handle);
@@ -57,7 +57,7 @@ package body Make_Suite_Window_Pkg is
 
    procedure Initialize
      (Make_Suite_Window : access Make_Suite_Window_Record'Class;
-      Handle            : Glide_Kernel.Kernel_Handle)
+      Handle            : GPS.Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
 

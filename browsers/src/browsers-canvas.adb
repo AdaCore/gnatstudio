@@ -58,9 +58,9 @@ with GNAT.Strings;        use GNAT.Strings;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GVD.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Layouts;                   use Layouts;
@@ -284,7 +284,7 @@ package body Browsers.Canvas is
 
    procedure Initialize
      (Browser : access General_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Create_Toolbar  : Boolean;
       Parents_Pixmap  : String := Stock_Go_Back;
       Children_Pixmap : String := Stock_Go_Forward)
@@ -419,7 +419,7 @@ package body Browsers.Canvas is
 
          Set_Foreground
            (Hook.Browser.Selected_Item_GC,
-            Get_Pref (Kernel, Glide_Kernel.Preferences.Selected_Item_Color));
+            Get_Pref (Kernel, GPS.Kernel.Preferences.Selected_Item_Color));
          Set_Foreground
            (Hook.Browser.Parent_Linked_Item_GC,
             Get_Pref (Kernel, Parent_Linked_Item_Color));
@@ -543,7 +543,7 @@ package body Browsers.Canvas is
 
          Gdk_New (B.Selected_Item_GC, Get_Window (B.Canvas));
          Color := Get_Pref
-           (Kernel, Glide_Kernel.Preferences.Selected_Item_Color);
+           (Kernel, GPS.Kernel.Preferences.Selected_Item_Color);
          Set_Foreground (B.Selected_Item_GC, Color);
 
          Gdk_New (B.Default_Item_GC, Get_Window (B.Canvas));
@@ -591,7 +591,7 @@ package body Browsers.Canvas is
      (Item  : access Browser_Item_Record;
       Browser : access General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
+      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access
    is
       pragma Unreferenced (Item, Browser, Event, Menu);
    begin
@@ -608,7 +608,7 @@ package body Browsers.Canvas is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
-      return Glide_Kernel.Selection_Context_Access
+      return GPS.Kernel.Selection_Context_Access
    is
       pragma Unreferenced (Event_Widget);
       B          : constant General_Browser := General_Browser (Object);
@@ -967,7 +967,7 @@ package body Browsers.Canvas is
    ----------------
 
    function Get_Kernel (Browser : access General_Browser_Record)
-      return Glide_Kernel.Kernel_Handle is
+      return GPS.Kernel.Kernel_Handle is
    begin
       return Browser.Kernel;
    end Get_Kernel;

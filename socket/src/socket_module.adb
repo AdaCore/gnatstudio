@@ -25,9 +25,9 @@ with GNAT.Sockets;            use GNAT.Sockets;
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;    use Glide_Kernel.Scripts;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 
 with Basic_Types;             use Basic_Types;
 with Traces;                  use Traces;
@@ -412,13 +412,13 @@ package body Socket_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Module (Kernel, Default_GPS_Port);
    end Register_Module;
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Port   : Natural)
    is
       T : Timeout_Handler_Id;

@@ -28,7 +28,7 @@ package body Vdiff2_Module.Utils.Text is
    --------------
 
    procedure New_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural) is
    begin
@@ -40,7 +40,7 @@ package body Vdiff2_Module.Utils.Text is
    -----------------
 
    function Line_Length
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural) return Natural is
    begin
@@ -52,7 +52,7 @@ package body Vdiff2_Module.Utils.Text is
    ------------
 
    procedure Delete
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -66,7 +66,7 @@ package body Vdiff2_Module.Utils.Text is
    -----------------
 
    procedure Delete_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural) is
    begin
@@ -78,7 +78,7 @@ package body Vdiff2_Module.Utils.Text is
    ------------
 
    procedure Insert
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -92,7 +92,7 @@ package body Vdiff2_Module.Utils.Text is
    -----------------
 
    procedure Insert_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Text   : String) is
@@ -105,7 +105,7 @@ package body Vdiff2_Module.Utils.Text is
    ---------
 
    function Get
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -119,7 +119,7 @@ package body Vdiff2_Module.Utils.Text is
    --------------
 
    function Get_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural) return String is
    begin
@@ -236,7 +236,7 @@ package body Vdiff2_Module.Utils.Text is
    -------------
 
    procedure Replace
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
@@ -251,7 +251,7 @@ package body Vdiff2_Module.Utils.Text is
    ------------------
 
    procedure Replace_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
       Text   : String) is

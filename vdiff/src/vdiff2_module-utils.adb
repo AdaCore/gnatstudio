@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;                      use Glide_Kernel;
+with GPS.Kernel;                      use GPS.Kernel;
 with Glide_Intl;                        use Glide_Intl;
-with Glide_Kernel.MDI;                  use Glide_Kernel.MDI;
-with Glide_Kernel.Standard_Hooks;       use Glide_Kernel.Standard_Hooks;
+with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
+with GPS.Kernel.Standard_Hooks;       use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                 use GPS.Location_View;
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
@@ -52,7 +52,7 @@ package body Vdiff2_Module.Utils is
    type   T_VLine_Information is array (1 .. 3) of Line_Information_Data;
 
    procedure Append
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       VRange   : in out T_VRange;
       VFile    : T_VFile;
       VOffset  : T_VOffset;
@@ -83,7 +83,7 @@ package body Vdiff2_Module.Utils is
    --  Move Source mark on to Dest
 
    procedure Put_Button
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Info     : T_VLine_Information;
       Conflict : Boolean;
       Pos      : Natural;
@@ -94,12 +94,12 @@ package body Vdiff2_Module.Utils is
    --  Put an icon on the column information
 
    procedure Show_Differences
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head);
    --  Show a result of diff Item
 
    procedure Show_Diff_Chunk
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item    : Diff_Head; Curr_Chunk : Diff_Chunk_Access;
       Info    : T_VLine_Information);
    --  Hightlight the Current Chunk Curr_Chunk
@@ -109,7 +109,7 @@ package body Vdiff2_Module.Utils is
    -------------
 
    procedure Append
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       VRange   : in out T_VRange;
       VFile    : T_VFile;
       VOffset  : T_VOffset;
@@ -328,7 +328,7 @@ package body Vdiff2_Module.Utils is
    ----------------------
 
    procedure Hide_Differences
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_Head)
    is
       Curr_Node  : Diff_List_Node;
@@ -421,7 +421,7 @@ package body Vdiff2_Module.Utils is
    -------------------------
 
    procedure Modify_Differences
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item      : in out Diff_Head;
       Diff_List : Diff_Head_List_Access)
    is
@@ -441,7 +441,7 @@ package body Vdiff2_Module.Utils is
    -------------------------
 
    procedure Process_Differences
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item      : Diff_Head;
       Diff_List : Diff_Head_List_Access)
    is
@@ -480,7 +480,7 @@ package body Vdiff2_Module.Utils is
    ------------------
 
    procedure Put_Button
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Info     : T_VLine_Information;
       Conflict : Boolean;
       Pos      : Natural;
@@ -523,7 +523,7 @@ package body Vdiff2_Module.Utils is
    ----------------------
 
    procedure Show_Differences
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head)
    is
       List       : constant Diff_List := Item.List;
@@ -742,7 +742,7 @@ package body Vdiff2_Module.Utils is
    ------------------------
 
    procedure Show_Differences3
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head)
    is
       Res                 : Diff_List;
@@ -832,7 +832,7 @@ package body Vdiff2_Module.Utils is
    ---------------------
 
    procedure Show_Diff_Chunk
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item       : Diff_Head;
       Curr_Chunk : Diff_Chunk_Access;
       Info       : T_VLine_Information)
@@ -1025,7 +1025,7 @@ package body Vdiff2_Module.Utils is
    ----------------
 
    procedure Show_Merge
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Merge  : String;
       Item   : Diff_Head)
    is
@@ -1052,7 +1052,7 @@ package body Vdiff2_Module.Utils is
    -------------------------
 
    procedure Unhighlight_Block
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Range1 : in out Diff_Range;
       Style  : String := "") is

@@ -23,7 +23,7 @@
 
 with Commands; use Commands;
 
-package Glide_Kernel.Task_Manager is
+package GPS.Kernel.Task_Manager is
 
    use Commands.Command_Queues;
 
@@ -53,7 +53,7 @@ package Glide_Kernel.Task_Manager is
    --  Do nothing if there is no such queue.
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the task manager module graphical entry points.
 
-end Glide_Kernel.Task_Manager;
+end GPS.Kernel.Task_Manager;

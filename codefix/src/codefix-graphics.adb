@@ -29,7 +29,7 @@ with Gtk.Label;              use Gtk.Label;
 with Gtk.Clist;              use Gtk.Clist;
 with Gtkada.Dialogs;         use Gtkada.Dialogs;
 
-with Glide_Kernel.Console;   use Glide_Kernel.Console;
+with GPS.Kernel.Console;   use GPS.Kernel.Console;
 with Glide_Intl;             use Glide_Intl;
 
 with Diff_Utils;             use Diff_Utils;
@@ -57,7 +57,7 @@ package body Codefix.Graphics is
 
    procedure Gtk_New
      (Graphic_Codefix : out Graphic_Codefix_Access;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Session         : Codefix_Module.Codefix_Session;
       Fixed_Cb        : Status_Changed_Action := null;
       Unfixed_Cb      : Status_Changed_Action := null) is
@@ -77,7 +77,7 @@ package body Codefix.Graphics is
 
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Session         : Codefix_Module.Codefix_Session;
       Fixed_Cb        : Status_Changed_Action := null;
       Unfixed_Cb      : Status_Changed_Action := null) is
