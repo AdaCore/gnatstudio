@@ -26,6 +26,7 @@ with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Window;                use Gdk.Window;
+with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -123,6 +124,8 @@ package body GVD_Module is
    --  to have the same history for the run command in GPS.
 
    Debugger_Started : constant String := "debugger_started";
+
+   Debug_Menu_Prefix : constant String := "<gps>/Debug/Initialize/";
 
    Max_Tooltip_Width : constant := 400;
    --  Maximum size to use for the tooltip windows
@@ -3207,6 +3210,7 @@ package body GVD_Module is
       Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
       Iter  : Imported_Project_Iterator := Start (Get_Project (Kernel));
+      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Debuggable_Suffix : GNAT.OS_Lib.String_Access := Get_Debuggable_Suffix;
 
    begin
@@ -3238,6 +3242,7 @@ package body GVD_Module is
                        (Project => Current (Iter),
                         File    => Create
                           (Executables_Directory (Current (Iter)) & Exec)));
+                  Set_Accel_Path (Mitem, Debug_Menu_Prefix & Exec, Group);
                end;
             end loop;
 
@@ -3258,11 +3263,12 @@ package body GVD_Module is
          User_Data => File_Project_Record'
            (Project => Get_Project (Kernel),
             File    => VFS.No_File));
+      Set_Accel_Path (Mitem, Debug_Menu_Prefix & "<no main>", Group);
       Show_All (Menu);
 
    exception
       when E : others =>
-         Debug_Terminate (Get_Kernel (GVD_Module_ID.all));
+         Debug_Terminate (Kernel_Handle (Kernel));
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
