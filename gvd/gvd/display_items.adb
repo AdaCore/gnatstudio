@@ -657,7 +657,6 @@ package body Display_Items is
                                Win          : Gdk.Window.Gdk_Window;
                                Auto_Refresh : Boolean)
    is
-      Color : Gdk_Color;
       Width : Gint := Gint (Get_Coord (Item).Width);
    begin
       Item.Auto_Refresh := Auto_Refresh;
