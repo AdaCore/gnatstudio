@@ -284,7 +284,9 @@ package body Odd.Source_Editors is
       Result  : Boolean;
       Num     : Integer;
    begin
-      if Button = 1 then
+      if Editor.Current_File /= null
+        and then Button = 1
+      then
          Is_Breakpoint (Editor, Line, Result, Num);
 
          if Result then
