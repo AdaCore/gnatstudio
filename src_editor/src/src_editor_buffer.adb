@@ -64,6 +64,14 @@ package body Src_Editor_Buffer is
 
    package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
 
+   type Delimiter_Type is (Opening, Closing);
+
+   Delimiters : constant array (1 .. 3, Delimiter_Type'Range) of Character
+     := (('(', ')'),
+         ('[', ']'),
+         ('{', '}'));
+   --  ??? Should we get that from the language ?
+
    --------------------
    -- Signal Support --
    --------------------
@@ -280,6 +288,12 @@ package body Src_Editor_Buffer is
       --  Emit the new cursor position if it is the Insert_Mark that was
       --  changed.
 
+      if Buffer.Setting_Mark then
+         return;
+      end if;
+
+      Buffer.Setting_Mark := True;
+
       if Get_Object (Mark) /= Get_Object (Buffer.Insert_Mark) then
          --  If the mark corresponds to a cursor position, set the stored
          --  Insert_Mark accordingly.
@@ -297,6 +311,8 @@ package body Src_Editor_Buffer is
          Get_Screen_Position (Buffer, Line, Col);
          Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
       end if;
+
+      Buffer.Setting_Mark := False;
 
    exception
       when E : others =>
@@ -635,6 +651,233 @@ package body Src_Editor_Buffer is
       Emit_By_Name
         (Get_Object (Buffer), "cursor_position_changed" & ASCII.NUL,
          Line => Line, Column => Column);
+
+      if Buffer.Has_Delimiters_Highlight then
+         declare
+            From : Gtk_Text_Iter;
+            To   : Gtk_Text_Iter;
+         begin
+            Get_Iter_At_Mark
+              (Buffer, From, Buffer.Start_Delimiters_Highlight);
+            Get_Iter_At_Mark (Buffer, To, Buffer.End_Delimiters_Highlight);
+
+            Delete_Mark (Buffer, Buffer.Start_Delimiters_Highlight);
+            Delete_Mark (Buffer, Buffer.End_Delimiters_Highlight);
+
+            Remove_Tag (Buffer, Buffer.HL_Line_Tag, From, To);
+         end;
+
+         Buffer.Has_Delimiters_Highlight := False;
+      end if;
+
+      --  Highlight brackets if necessary.
+
+      declare
+         Current              : Gtk_Text_Iter;
+
+         On_Cursor_Iter       : Gtk_Text_Iter;
+
+
+         First_Highlight_Iter : Gtk_Text_Iter;
+         Last_Highlight_Iter  : Gtk_Text_Iter;
+         Highlight_Necessary  : Boolean := False;
+
+         Both_Highlights      : Boolean := False;
+         --  Indicate whether highlighting occurs before and after the cursor.
+
+         Success              : Boolean;
+         Counter              : Natural;
+         Counter_Max          : constant := 4096;
+         --  ??? Should that be a preference ?
+
+         Stack                : Natural;
+         C                    : Character;
+
+         Delimiter            : Integer;
+
+      begin
+         Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
+
+         --  Highlight previous parenthesis, if necessary.
+
+         --  Find a closing delimiter.
+
+         Delimiter := -1;
+         Copy (On_Cursor_Iter, Current);
+
+         Backward_Char (Current, Success);
+
+         if Success then
+            C := Get_Char (Current);
+
+            for J in Delimiters'Range loop
+               if Delimiters (J, Closing) = C then
+                  Delimiter := J;
+                  exit;
+               end if;
+            end loop;
+         end if;
+
+         if Delimiter in Delimiters'Range then
+            Counter := 0;
+            Stack := 1;
+            Backward_Char (Current, Success);
+
+            while Success and then Counter < Counter_Max loop
+               C := Get_Char (Current);
+
+               if C = Delimiters (Delimiter, Closing) then
+                     Stack := Stack + 1;
+
+               elsif C = Delimiters (Delimiter, Opening) then
+                  Stack := Stack - 1;
+
+               end if;
+
+               if Stack = 0 then
+                  Copy (Current, First_Highlight_Iter);
+                  Copy (On_Cursor_Iter, Last_Highlight_Iter);
+
+                  Highlight_Necessary := True;
+                  exit;
+               end if;
+
+               Counter := Counter + 1;
+               Backward_Char (Current, Success);
+            end loop;
+         end if;
+
+         --  Highlight next parenthesis, if necessary.
+
+         Delimiter := -1;
+         Copy (On_Cursor_Iter, Current);
+         C := Get_Char (On_Cursor_Iter);
+
+         for J in Delimiters'Range loop
+            if Delimiters (J, Opening) = C then
+               Delimiter := J;
+               exit;
+            end if;
+         end loop;
+
+         if Delimiter in Delimiters'Range then
+            Counter := 0;
+            Stack := 1;
+            Forward_Char (Current, Success);
+
+            while Success and then Counter < Counter_Max loop
+               C := Get_Char (Current);
+
+               if C = Delimiters (Delimiter, Opening) then
+                  Stack := Stack + 1;
+
+               elsif C = Delimiters (Delimiter, Closing) then
+                  Stack := Stack - 1;
+
+               end if;
+
+               if Stack = 0 then
+                  if not Highlight_Necessary then
+                     Copy (On_Cursor_Iter, First_Highlight_Iter);
+                  else
+                     Both_Highlights := True;
+                  end if;
+
+                  Forward_Char (Current, Success);
+                  Copy (Current, Last_Highlight_Iter);
+
+                  Highlight_Necessary := True;
+                  exit;
+               end if;
+
+               Counter := Counter + 1;
+               Forward_Char (Current, Success);
+            end loop;
+
+         end if;
+
+         --  Highlight next parenthesis, if necessary.
+
+         Delimiter := -1;
+         C := Get_Char (On_Cursor_Iter);
+
+         for J in Delimiters'Range loop
+            if Delimiters (J, Opening) = C then
+               Delimiter := J;
+               exit;
+            end if;
+         end loop;
+
+         if Delimiter in Delimiters'Range then
+            Counter := 0;
+            Stack := 1;
+            Copy (On_Cursor_Iter, Current);
+            Forward_Char (Current, Success);
+
+            while Success and then Counter < Counter_Max loop
+               C := Get_Char (Current);
+
+               if C = Delimiters (Delimiter, Opening) then
+                  Stack := Stack + 1;
+
+               elsif C = Delimiters (Delimiter, Closing) then
+                  Stack := Stack - 1;
+
+               end if;
+
+               if Stack = 0 then
+                  if not Highlight_Necessary then
+                     Copy (On_Cursor_Iter, First_Highlight_Iter);
+                  end if;
+
+                  Forward_Char (Current, Success);
+                  Copy (Current, Last_Highlight_Iter);
+
+                  Highlight_Necessary := True;
+                  exit;
+               end if;
+
+               Counter := Counter + 1;
+               Forward_Char (Current, Success);
+            end loop;
+         end if;
+
+         if Highlight_Necessary then
+            Copy (First_Highlight_Iter, Current);
+            Forward_Char (Current, Success);
+            Apply_Tag
+              (Buffer,
+               Buffer.HL_Line_Tag,
+               First_Highlight_Iter,
+               Current);
+
+            Copy (Last_Highlight_Iter, Current);
+            Backward_Char (Current, Success);
+            Apply_Tag
+              (Buffer,
+               Buffer.HL_Line_Tag,
+               Current,
+               Last_Highlight_Iter);
+
+            if Both_Highlights then
+               Copy (On_Cursor_Iter, Current);
+               Backward_Char (Current, Success);
+               Forward_Char (On_Cursor_Iter, Success);
+               Apply_Tag
+                 (Buffer,
+                  Buffer.HL_Line_Tag,
+                  Current,
+                  On_Cursor_Iter);
+            end if;
+
+            Buffer.Start_Delimiters_Highlight := Create_Mark
+              (Buffer, "", First_Highlight_Iter);
+            Buffer.End_Delimiters_Highlight := Create_Mark
+              (Buffer, "", Last_Highlight_Iter);
+
+            Buffer.Has_Delimiters_Highlight := True;
+         end if;
+      end;
    end Emit_New_Cursor_Position;
 
    ---------------------
