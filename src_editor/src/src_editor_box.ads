@@ -288,7 +288,7 @@ package Src_Editor_Box is
    --  Highlight_Line), then restores this line un-highlighted.
 
    procedure Highlight_Region
-     (Editor : access Source_Editor_Box_Record;
+     (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
       Start_Column : Positive;
       End_Line     : Positive;
@@ -301,7 +301,7 @@ package Src_Editor_Box is
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
    procedure Unhighlight_Region
-     (Editor : access Source_Editor_Box_Record;
+     (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
       Start_Column : Positive;
       End_Line     : Positive;
@@ -319,12 +319,14 @@ package Src_Editor_Box is
 
    procedure Goto_Declaration_Or_Body
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Editor : Source_Editor_Box := null;
       Line   : Natural := 0;
       Column : Natural := 0);
    --  Perform a Declaration-or-Body cross-reference for the entity
-   --  located at (Line, Column) in the current editor.
+   --  located at (Line, Column) in Editor, or in the current editor if
+   --  Editor is null.
    --  If either Line or Column is null, then the position of the insert cursor
-   --  is used instead.  Highlight the entity found, opening a new editor is
+   --  is used instead. Highlight the entity found, opening a new editor if
    --  needed (this may depend on the user preferences).
 
    ----------------------------------
@@ -368,12 +370,13 @@ private
       Never_Attached       : Boolean := True;
       Source_View          : Src_Editor_View.Source_View;
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
+
       --  The status bar
       Filename_Label       : Gtk.Label.Gtk_Label;
       Read_Only_Label      : Gtk.Label.Gtk_Label;
       Modified_Label       : Gtk.Label.Gtk_Label;
-      Cursor_Line_Label    : Gtk.Label.Gtk_Label;
-      Cursor_Column_Label  : Gtk.Label.Gtk_Label;
+      Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
+
       --  The non graphical attributes
       Filename             : String_Access;
 

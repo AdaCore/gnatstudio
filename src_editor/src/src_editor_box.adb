@@ -44,6 +44,7 @@ with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
@@ -61,15 +62,7 @@ package body Src_Editor_Box is
 
    Me : Debug_Handle := Create ("Source_Editor");
 
-   Min_Line_Number_Width : constant := 3;
-   --  The minimum number of digits that the Line Number Area should be
-   --  able to display.
-
-   Min_Column_Number_Width : constant := 3;
-   --  The minimum number of digits that the Column Number Area should be
-   --  able to display.
-
-   package Widget_Callback is new Gtk.Handlers.User_Callback
+   package Box_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Glib.Object.GObject_Record,
       User_Type   => Source_Editor_Box);
 
@@ -112,6 +105,12 @@ package body Src_Editor_Box is
    --  This handler is merely a proxy to Show_Cursor_Position. It just
    --  extracts the necessary values from Params, and pass them on to
    --  Show_Cursor_Position.
+
+   procedure On_Box_Destroy
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box);
+   --  Callback for the "destroy" signal.
 
    procedure Initialize_Box
      (Box    : access Source_Editor_Box_Record;
@@ -157,10 +156,12 @@ package body Src_Editor_Box is
    procedure Entity_At_Cursor
      (Editor                   : access Source_Editor_Box_Record;
       Line, Column             : Natural := 0;
-      Entity_Start, Entity_End : out Gtk_Text_Iter);
+      Entity_Start, Entity_End : out Gtk_Text_Iter;
+      Success                  : out Boolean);
    --  Return the beginning position of the entity at (Line, Column), or under
    --  the cursor if Line or Column is 0.
    --  The entity itself can be read through a call to Get_Text.
+   --  Set Success to False if Line/Column is an invalid position.
 
    ----------------------
    -- Entity_At_Cursor --
@@ -169,23 +170,37 @@ package body Src_Editor_Box is
    procedure Entity_At_Cursor
      (Editor                   : access Source_Editor_Box_Record;
       Line, Column             : Natural := 0;
-      Entity_Start, Entity_End : out Gtk_Text_Iter)
+      Entity_Start, Entity_End : out Gtk_Text_Iter;
+      Success                  : out Boolean)
    is
-      Tmp_Line   : Natural := Line;
-      Tmp_Col    : Natural := Column;
+      Tmp_Line : Natural := Line;
+      Tmp_Col  : Natural := Column;
 
    begin
       --  Get the cursor position if either Line or Column is equal to 0
+
       if Tmp_Line = 0 or else Tmp_Col = 0 then
          Get_Cursor_Location (Editor, Tmp_Line, Tmp_Col);
+
+      elsif not Is_Valid_Location (Editor, Line, Column) then
+         --  This should never happen at this point. It probably means that
+         --  Editor does not match the (Line, Column) location; exit before
+         --  confusing Gtk+
+
+         Trace (Me, "Invalid location: " & Get_Filename (Editor) & ':' &
+                Image (Line) & ':' & Image (Column));
+         Success := False;
+         return;
       end if;
 
       --  Transform this position into an iterator, and then locate the
       --  bounds of the entity...
+
       Get_Iter_At_Line_Offset
         (Editor.Source_Buffer, Entity_Start,
          To_Buffer_Line (Tmp_Line), To_Buffer_Column (Tmp_Col));
       Search_Entity_Bounds (Editor.Source_Buffer, Entity_Start, Entity_End);
+      Success := True;
    end Entity_At_Cursor;
 
    ------------------------------
@@ -194,25 +209,42 @@ package body Src_Editor_Box is
 
    procedure Goto_Declaration_Or_Body
      (Kernel : access Kernel_Handle_Record'Class;
+      Editor : Source_Editor_Box := null;
       Line   : Natural := 0;
       Column : Natural := 0)
    is
-      Source        : Source_Editor_Box := Find_Current_Editor (Kernel);
-      Source_Info   : LI_File_Ptr;
-      Entity_Start, Entity_End : Gtk_Text_Iter;
-      Status        : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
-      Decl          : E_Declaration_Info;
-      Location      : File_Location;
+      Source         : Source_Editor_Box := Editor;
+      Source_Info    : LI_File_Ptr;
+      Entity_Start   : Gtk_Text_Iter;
+      Entity_End     : Gtk_Text_Iter;
+      Status         : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Decl           : E_Declaration_Info;
+      Location       : File_Location;
+      Entity_Success : Boolean;
+      L, C           : Natural;
 
    begin
+      if Source = null then
+         Source := Find_Current_Editor (Kernel);
+      end if;
+
       if Source = null or else Get_Filename (Source) = "" then
          Console.Insert
-           (Kernel, "Cross-references not possible on unamed files!",
+           (Kernel, -"Cross-references not possible on unamed files!",
             Highlight_Sloc => False);
          return;
       end if;
 
-      Entity_At_Cursor (Source, Line, Column, Entity_Start, Entity_End);
+      Entity_At_Cursor
+        (Source, Line, Column, Entity_Start, Entity_End, Entity_Success);
+
+      if not Entity_Success then
+         Console.Insert
+           (Kernel,
+            -"Failed to find an entity for file " & Get_Filename (Source),
+            Highlight_Sloc => False);
+         return;
+      end if;
 
       Source_Info := Locate_From_Source_And_Complete
         (Kernel, Get_Filename (Source));
@@ -221,10 +253,11 @@ package body Src_Editor_Box is
       --  Probably means that we either could not locate the ALI file,
       --  or it could also be that we failed to parse it. Either way,
       --  a message should have already been printed. So, just abort.
+
       if Source_Info = No_LI_File then
          Console.Insert
            (Kernel,
-            "Failed to find or parse ALI file " & Get_Filename (Source),
+            -"Failed to find or parse ALI file " & Get_Filename (Source),
             Highlight_Sloc => False);
          return;
       end if;
@@ -237,7 +270,8 @@ package body Src_Editor_Box is
             File_Name          => Base_Name (Source.Filename.all),
             Entity_Name        => Entity_Name,
             Line               => To_Box_Line (Get_Line (Entity_Start)),
-            Column           => To_Box_Column (Get_Line_Offset (Entity_Start)),
+            Column             =>
+              To_Box_Column (Get_Line_Offset (Entity_Start)),
             Entity_Declaration => Decl,
             Location           => Location,
             Status             => Status);
@@ -245,18 +279,18 @@ package body Src_Editor_Box is
          case Status is
             when Entity_Not_Found =>
                Console.Insert
-                 (Kernel, "Cross-reference failed.", Highlight_Sloc => False);
+                 (Kernel, -"Cross-reference failed.", Highlight_Sloc => False);
                return;
             when Internal_Error =>
                Console.Insert
-                 (Kernel, "Cross-reference internal error detected.",
+                 (Kernel, -"Cross-reference internal error detected.",
                   Highlight_Sloc => False);
                return;
             when No_Body_Entity_Found =>
                Console.Insert
                  (Kernel,
-                  "This entity does not have an associated "
-                  & "declaration or body.",
+                  (-"This entity does not have an associated ")
+                  & (-"declaration or body."),
                   Highlight_Sloc => False);
                return;
             when Success =>
@@ -266,12 +300,15 @@ package body Src_Editor_Box is
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
 
+         L := Get_Line (Location);
+         C := Get_Column (Location);
+
          Open_File_Editor
            (Kernel,
             Find_Source_File
-            (Kernel, Get_File (Location),
-             Use_Predefined_Source_Path => True),
-            Get_Line (Location), Get_Column (Location), False);
+              (Kernel, Get_File (Location),
+               Use_Predefined_Source_Path => True),
+            L, C, False);
 
          Source := Find_Current_Editor (Kernel);
 
@@ -283,11 +320,22 @@ package body Src_Editor_Box is
             --  the target entity.
 
             Unhighlight_All (Source);
+
+            if not Is_Valid_Location (Source, L, C + Entity_Name'Length) then
+               --  This should never happen. If it does, Source probably does
+               --  not correspond to the right editor.
+
+               Console.Insert
+                 (Kernel,
+                  -"Internal error, invalid location: " &
+                  Get_Filename (Source) & ':' &
+                  Image (L) & ':' & Image (C + Entity_Name'Length),
+                  Highlight_Sloc => False);
+               return;
+            end if;
+
             Highlight_Region
-              (Source,
-               Get_Line (Location), Get_Column (Location),
-               Get_Line (Location),
-               Get_Column (Location) + Entity_Name'Length);
+              (Source, L, C, L, C + Entity_Name'Length);
          end if;
       end;
 
@@ -392,10 +440,6 @@ package body Src_Editor_Box is
       Line   : Gint;
       Column : Gint)
    is
-      Nb_Lines                  : constant Natural :=
-        Natural (Get_Line_Count (Box.Source_Buffer));
-      Nb_Digits_For_Line_Number : constant Positive :=
-        Positive'Max (Number_Of_Digits (Nb_Lines), Min_Line_Number_Width);
       Modified_Buffer           : constant Boolean :=
         Get_Modified (Box.Source_Buffer);
 
@@ -415,11 +459,8 @@ package body Src_Editor_Box is
       --  number displayed are incremented by 1 to start from 1.
 
       Set_Text
-        (Box.Cursor_Line_Label,
-         Image (To_Box_Line (Line), Nb_Digits_For_Line_Number));
-      Set_Text
-        (Box.Cursor_Column_Label,
-         Image (To_Box_Column (Column), Min_Column_Number_Width));
+        (Box.Cursor_Loc_Label,
+         Image (To_Box_Line (Line)) & ':' & Image (To_Box_Column (Column)));
    end Show_Cursor_Position;
 
    -------------------------------------
@@ -440,6 +481,39 @@ package body Src_Editor_Box is
    end Cursor_Position_Changed_Handler;
 
    --------------------
+   -- On_Box_Destroy --
+   --------------------
+
+   procedure On_Box_Destroy
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box)
+   is
+      pragma Unreferenced (Object, Params);
+
+      Success : Boolean;
+   begin
+      Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
+
+      if Box.Modified then
+         if Message_Dialog
+             (Msg            => (-"File ") & Get_Filename (Box) &
+                                (-" modified.") & ASCII.LF &
+                                (-"Do you want to save it ?"),
+              Dialog_Type    => Confirmation,
+              Buttons        => Button_Yes or Button_No,
+              Default_Button => Button_Yes) = Button_Yes
+         then
+            Save_To_File (Box, Success => Success);
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Box_Destroy;
+
+   --------------------
    -- Initialize_Box --
    --------------------
 
@@ -451,9 +525,7 @@ package body Src_Editor_Box is
    is
       Frame          : Gtk_Frame;
       Hbox           : Gtk_Box;
-      Frame_Hbox     : Gtk_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
-      Label          : Gtk_Label;
       Data           : Editor_Tooltip_Data;
 
    begin
@@ -514,36 +586,25 @@ package body Src_Editor_Box is
       Gtk_New (Box.Modified_Label);
       Add (Frame, Box.Modified_Label);
 
-      --  Line number area...
+      --  Line:Column number area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
       Pack_Start (Hbox, Frame, Expand => False, Fill => True);
-      Gtk_New_Hbox (Frame_Hbox, Homogeneous => False);
-      Add (Frame, Frame_Hbox);
-      Gtk_New (Label, -"Line:");
-      Pack_Start (Frame_Hbox, Label, Expand => False, Fill => True);
-      Gtk_New (Box.Cursor_Line_Label, "1");
-      Pack_End
-        (Frame_Hbox, Box.Cursor_Line_Label, Expand => False, Fill => True);
+      Gtk_New (Box.Cursor_Loc_Label, "1:1");
+      Add (Frame, Box.Cursor_Loc_Label);
 
-      --  Column number area...
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
-      Pack_Start (Hbox, Frame, Expand => False, Fill => True);
-      Gtk_New_Hbox (Frame_Hbox, Homogeneous => False);
-      Add (Frame, Frame_Hbox);
-      Gtk_New (Label, -"Col:");
-      Pack_Start (Frame_Hbox, Label, Expand => False, Fill => True);
-      Gtk_New (Box.Cursor_Column_Label, "1");
-      Pack_End
-        (Frame_Hbox, Box.Cursor_Column_Label, Expand => False, Fill => True);
-
-      Widget_Callback.Connect
-        (Widget    => Box.Source_Buffer,
-         Name      => "cursor_position_changed",
-         Cb        => Cursor_Position_Changed_Handler'Access,
+      Box_Callback.Connect
+        (Box.Source_Buffer,
+         "cursor_position_changed",
+         Cursor_Position_Changed_Handler'Access,
          User_Data => Source_Editor_Box (Box),
          After     => True);
+
+      Box_Callback.Connect
+        (Box.Source_View,
+         "destroy",
+         On_Box_Destroy'Access,
+         User_Data => Source_Editor_Box (Box));
 
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
@@ -703,14 +764,11 @@ package body Src_Editor_Box is
                User_Data   => Selection_Context_Access (Context),
                Slot_Object => Editor,
                After       => True);
+            Gtk_New (Item, -"Go to body of "
+                     & Entity_Name_Information (Context));
+            Add (Menu, Item);
          end if;
 
-         Gtk_New (Item, -"Go to body");
-         Add (Menu, Item);
-         Gtk_New (Item, -"List references");
-         Add (Menu, Item);
-         Gtk_New (Item);
-         Add (Menu, Item);
          Gtk_New (Item, -"Go to file spec/body");
          Add (Menu, Item);
          Gtk_New (Item, -"Go to parent unit");
@@ -728,8 +786,6 @@ package body Src_Editor_Box is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      pragma Unreferenced (Widget);
-
       C      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
@@ -738,7 +794,9 @@ package body Src_Editor_Box is
       Push_State (Kernel, Busy);
       Goto_Declaration_Or_Body
         (Get_Kernel (Context),
-         Line_Information (C), Column_Information (C));
+         Source_Editor_Box (Widget),
+         Line_Information (C),
+         Column_Information (C));
       Pop_State (Kernel);
 
    exception
