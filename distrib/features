@@ -28,6 +28,8 @@ New features in GPS 2.1.0
 
 - Ability to recompute the indentation for an alias after its expansion
 
+- DB18-006 Access to linker switches for C/C++ projects in switch editor
+
 - DA25-024 Columns can be sorted in the "Edit file switches" window
 
 - DA17-004 It is now possible to define an empty switch for <radio-entry>
