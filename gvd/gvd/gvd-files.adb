@@ -94,8 +94,10 @@ package body GVD.Files is
       F := Open_Read (Name'Address, Binary);
 
       --  If not found, and we are in remote mode, try to download the file
-      if F = Invalid_FD and then Remote_Host /= null then
-
+      if F = Invalid_FD
+        and then Remote_Host /= null
+        and then Remote_Host.all /= ""
+      then
          --  Create a temporary file and get its name
          Create_Temp_File (F, Tmp_File);
          Close (F);
@@ -148,7 +150,9 @@ package body GVD.Files is
             Contents := new String' (Strip_Control_M (S));
 
             --  Only save the contents in the cache for remote files
-            if Remote_Host /= null then
+            if Remote_Host /= null
+              and then Remote_Host.all /= ""
+            then
                Cache.File_Contents := new String' (Contents.all);
             end if;
          end;
