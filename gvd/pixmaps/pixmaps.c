@@ -4,6 +4,7 @@
 #include "cancel_xpm"
 #include "cont_xpm"
 #include "display_xpm"
+#include "display_small_xpm"
 #include "dot_xpm"
 #include "down_xpm"
 #include "findfwd_xpm"
