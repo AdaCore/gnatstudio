@@ -833,7 +833,10 @@ procedure GPS is
                      Load_Default_Desktop => True);
                end if;
 
-               Open_File_Editor (GPS.Kernel, Create (S, GPS.Kernel), 1, 1);
+               Open_File_Editor
+                 (GPS.Kernel,
+                  Create (S, GPS.Kernel, False, False),
+                  1, 1);
                File_Opened := True;
             end;
          end loop;
