@@ -5,6 +5,7 @@ with Convert.Adp;               use Convert.Adp;
 with Convert.Gpr;               use Convert.Gpr;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Traces;                    use Traces;
 
 procedure Convert_Prj is
 
@@ -29,6 +30,8 @@ procedure Convert_Prj is
    Project_Name : String_Access;
 
 begin
+   Traces.Parse_Config_File (".gnatdebug");
+
    loop
       case Getopt ("s: b:") is
          when 's' =>

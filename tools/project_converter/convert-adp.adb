@@ -1,13 +1,15 @@
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.HTable;               use GNAT.HTable;
+with HTables;
 with Ada.Unchecked_Deallocation;
 with Ada.Command_Line;          use Ada.Command_Line;
+with Traces;                    use Traces;
 
 package body Convert.Adp is
 
-   Spec_Extension, Body_Extension : String_Access;
+   Me : constant Debug_Handle := Create ("Convert");
+
    Gpr_Extension  : constant String := ".gpr";
 
    type File_Info is record
@@ -21,13 +23,18 @@ package body Convert.Adp is
    function Hash (F1 : String_Access) return Header_Num;
    --  Subprograms used for the hash table
 
-   package File_Htable is new Simple_HTable
+   procedure Do_Nothing (X : in out File_Info);
+   --  Does nothing
+
+   package File_Htables is new HTables.Simple_HTable
      (Header_Num => Header_Num,
       Element    => File_Info,
+      Free_Element => Do_Nothing,
       No_Element => No_File_Info,
       Key        => String_Access,
       Hash       => Hash,
       Equal      => Equal);
+   use File_Htables;
    --  Don't care about memory deallocation in this script.
 
    type Directory_Array is array (Natural range <>) of String_Access;
@@ -44,47 +51,39 @@ package body Convert.Adp is
       --  For a source directory, this is a list of object directories where
       --  the source files are put.
 
-      Project_Num  : Natural := 0;
+      Project_Num  : Integer := -1;
       --  The number of the project file associated with that object
       --  directory
    end record;
 
-   No_Directory_Info : constant Directory_Info := (null, null, 0);
+   No_Directory_Info : constant Directory_Info := (null, null, -1);
 
-   package Source_Dirs_Htable is new Simple_HTable
+   procedure Free (X : in out Directory_Info);
+   --  Free the information in X
+
+   package Directory_Htables is new HTables.Simple_HTable
      (Header_Num => Header_Num,
       Element    => Directory_Info,
+      Free_Element => Free,
       No_Element => No_Directory_Info,
       Key        => String_Access,
       Hash       => Hash,
       Equal      => Equal);
-   package Object_Dirs_Htable is new Simple_HTable
-     (Header_Num => Header_Num,
-      Element    => Directory_Info,
-      No_Element => No_Directory_Info,
-      Key        => String_Access,
-      Hash       => Hash,
-      Equal      => Equal);
+   use Directory_Htables;
 
    procedure Process_List
-     (Buffer, Adp_Prefix, Gpr_Variable : String;
-      Base_Directory : String := "");
+     (Gpr_Variable : String;
+      List         : String_List);
    --  Check in Buffer all the lines starting with Adp_Prefix, and concatenate
    --  them into the single list variable Gpr_Variable.
    --  If Base_Directory is not "", then the strings read will be converted to
    --  absolute path.
 
-   procedure Convert_Simple_Attribute
-     (Adp_Value, Gpr_Attribute : String;
-      Base_Directory : String := "");
-   --  Convert an attribute with a string value.
-   --  If Base_Directory is not "", then the strings read will be converted to
-   --  absolute path.
-   --  Adp_Value is the value of the attribute, not its name.
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (String_List, String_List_Access);
 
    procedure Process_Switches
-     (Buffer : String_Access;
-      Adp_Prefix, Gpr_Package, Gpr_Attribute : String);
+     (Gpr_Package, Gpr_Attribute : String; Value : String);
    --  Process a switches attribute, which needs to be splitted in the .gpr
    --  file
 
@@ -114,45 +113,85 @@ package body Convert.Adp is
    function Read_File (Filename : String) return String_Access;
    --  Return the contents of Filename
 
+   function Parse_Main_Units
+     (Buffer : String_Access) return String_List_Access;
+   --  Get the list of main units for the project
+
+   function Parse_Source_Dirs
+     (Buffer : String_Access; Build_Dir : String) return String_List_Access;
+   --  Get all the source directories in a .adp file
+
    procedure Parse_Source_Dirs
-     (Buffer : String_Access; Build_Dir : String);
-   --  Parse all source directories specified in Buffer, and store the
-   --  file information in the File_Htable
+     (Source_Dirs : GNAT.OS_Lib.String_List;
+      Directories : in out Directory_Htables.HTable;
+      Files       : in out File_Htables.HTable);
+   --  Process all source directories, and find the list of source files.
+   --  Result is stored in the Directories/Files parameters
+
+   function Parse_Object_Dirs
+     (Buffer    : String_Access;
+      Build_Dir : String) return String_List_Access;
+   --  Get all the object directories in a .adp file
 
    procedure Parse_Object_Dirs
-     (Buffer          : String_Access;
-      Build_Dir       : String;
-     Obj_Files_Count : out Integer);
-   --  Process all object directories, and return the number of object
-   --  files found.
-
-   function Count_Object_Directories (Build_Dir : String) return Integer;
-   --  return the number of non-empty object directories that are
-   --  different from Build_Dir
+     (Object_Dirs     : GNAT.OS_Lib.String_List;
+      Directories     : in out Directory_Htables.HTable;
+      Source_Dirs     : in out Directory_Htables.HTable;
+      Src_Files       : File_Htables.HTable;
+      Obj_Files_Count : out Natural;
+      Spec_Extension  : String;
+      Body_Extension  : String);
+   --  Process all the object directories, and compute the dependencies between
+   --  source dirs and object dirs.
 
    procedure Process_Obj_File
-     (Obj_Dir : String_Access; Obj_Filename : String);
+     (Obj_Dir        : String_Access;
+      Obj_Filename   : String;
+      Src_Files      : File_Htables.HTable;
+      Source_Dirs,
+      Object_Dirs    : in out Directory_Htables.HTable;
+      Spec_Extension : String;
+      Body_Extension : String);
    --  Process the object file, linking the object directory and source
    --  directories together
 
-   procedure Add_Dir_Link (Obj_Dir, Src_Dir : String_Access);
+   procedure Add_Dir_Link
+     (Object_Dirs, Source_Dirs : in out Directory_Htables.HTable;
+      Obj_Dir, Src_Dir : String_Access);
    --  Add a link between the two dependencies.
    --  This means that an object file from Obj_Dir has at least one of its
    --  sources in Src_Dir.
 
-   procedure Generate_Root_Project_Attributes (Buffer : String_Access);
+   procedure Generate_Root_Project_Attributes
+     (Main_Units        : String_List_Access := null;
+      Builder_Switches    : String;
+      Compiler_Switches : String;
+      Binder_Switches   : String;
+      Linker_Switches   : String;
+      Cross_Prefix      : String := "");
    --  Generate all attributes and packages for the root project
 
-   function Src_Dirs_Have_Unique_Obj_Dir return Boolean;
+   function Src_Dirs_Have_Unique_Obj_Dir
+     (Source_Dirs : Directory_Htables.HTable)
+      return Boolean;
    --  Return true if each source directory has object files in a single
    --  directory.
 
    procedure Generate_Withs
-     (Buffer            : String_Access;
+     (Source_Dirs       : String_List;
+      Src_Files         : File_Htables.HTable;
+      Object_Dirs       : in out Directory_Htables.HTable;
       Root_Project_Name : String;
-      Build_Dir         : String;
       Omit_Project      : Integer;
-      All_Source_Dirs   : Boolean := False);
+      All_Source_Dirs   : Boolean := False;
+      Main_Units        : GNAT.OS_Lib.String_List_Access := null;
+      Builder_Switches  : String;
+      Compiler_Switches : String;
+      Binder_Switches   : String;
+      Linker_Switches   : String;
+      Spec_Extension    : String;
+      Body_Extension    : String;
+      Cross_Prefix      : String := "");
    --  Generate all the withs statements.
    --  All projects import all other projects, since we do not know how
    --  to test the source dependencies.
@@ -162,11 +201,36 @@ package body Convert.Adp is
    --  all the projects, and a Source_Files attribute is generated
 
    procedure Generate_Source_Files_List
-     (Obj_Dir : String_Access);
+     (Src_Files      : File_Htables.HTable;
+      Obj_Dir        : String_Access;
+      Spec_Extension : String;
+      Body_Extension : String);
    --  Generate the list of source files for the given Obj_Dir
 
    function Image (Num : Integer) return String;
    --  Return the image of an integer, with no leading whitespace
+
+   ----------------
+   -- Do_Nothing --
+   ----------------
+
+   procedure Do_Nothing (X : in out File_Info) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Do_Nothing;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Directory_Info) is
+      pragma Unreferenced (X);
+   begin
+      --  Trace (Me, "MANU Free " & X.Name.all);
+      --  Free (X.Name);
+      null;
+   end Free;
 
    -----------
    -- Image --
@@ -196,7 +260,7 @@ package body Convert.Adp is
    ----------
 
    function Hash (F1 : String_Access) return Header_Num is
-      function Hash is new GNAT.HTable.Hash (Header_Num);
+      function Hash is new HTables.Hash (Header_Num);
    begin
       return Hash (F1.all);
    end Hash;
@@ -206,73 +270,82 @@ package body Convert.Adp is
    -----------------------
 
    procedure Parse_Source_Dirs
-     (Buffer : String_Access; Build_Dir : String)
+     (Source_Dirs : GNAT.OS_Lib.String_List;
+      Directories : in out Directory_Htables.HTable;
+      Files       : in out File_Htables.HTable)
    is
-      Adp_Prefix : constant String := "src_dir";
-      Line : Source_Line := First_Line_Of (Buffer.all);
       Dir  : Dir_Type;
       File : String (1 .. 1024);
       Last : Natural;
    begin
-      loop
-         Move_To_Next_Line (Buffer.all, Line, Adp_Prefix);
-         exit when At_End (Line);
-
+      for Src in Source_Dirs'Range loop
          declare
-            Dir_Name : constant String_Access := new String'
-              (Normalize_Pathname
-                 (Buffer (Line.First .. Line.Last), Build_Dir));
-            Info : constant File_Info := (Src_Dir => Dir_Name);
-            --  ??? Src_Dir is never freed, we don't really care
-
+            Info : constant File_Info :=
+              (Src_Dir => Source_Dirs (Src));
          begin
-            Open (Dir, Dir_Name.all);
-
-            Source_Dirs_Htable.Set (Dir_Name, (Dir_Name, null, 0));
+            Trace (Me, "Push source dir: " & Info.Src_Dir.all);
+            Open (Dir, Source_Dirs (Src).all);
+            Directory_Htables.Set
+              (Directories, Source_Dirs (Src), (Info.Src_Dir, null, -1));
 
             loop
                Read (Dir, File, Last);
                exit when Last = 0;
 
-               File_Htable.Set (new String'(File (1 .. Last)), Info);
+               Trace (Me, "   Push source file: " & File (1 .. Last));
+               File_Htables.Set
+                 (Files, new String'(File (1 .. Last)), Info);
             end loop;
 
             Close (Dir);
 
          exception
             when Directory_Error =>
-               --  Ignored, this was legal with .adp files
+               --  Ignored
                null;
          end;
       end loop;
    end Parse_Source_Dirs;
 
-   ------------------------------
-   -- Count_Object_Directories --
-   ------------------------------
+   -----------------------
+   -- Parse_Source_Dirs --
+   -----------------------
 
-   function Count_Object_Directories (Build_Dir : String) return Integer is
-      Count : Natural := 0;
-      Dir   : Directory_Info := Object_Dirs_Htable.Get_First;
+   function Parse_Source_Dirs
+     (Buffer : String_Access; Build_Dir : String) return String_List_Access
+   is
+      List, List2 : String_List_Access;
+      Adp_Prefix : constant String := "src_dir";
+      Line : Source_Line := First_Line_Of (Buffer.all);
    begin
-      while Dir /= No_Directory_Info loop
-         pragma Debug
-           (Put_Line ("Dir= " & Dir.Name.all & " Build=" & Build_Dir));
-         if Dir.Name.all /= Build_Dir then
-            Count := Count + 1;
+      loop
+         Move_To_Next_Line (Buffer.all, Line, Adp_Prefix);
+         exit when At_End (Line);
+
+         if List = null then
+            List := new String_List (1 .. 1);
+         else
+            List2 := List;
+            List := new String_List (List2'First .. List2'Last + 1);
+            List (List2'Range) := List2.all;
+            Unchecked_Free (List2);
          end if;
 
-         Dir := Object_Dirs_Htable.Get_Next;
+         List (List'Last) := new String'
+           (Normalize_Pathname
+              (Buffer (Line.First .. Line.Last), Build_Dir));
       end loop;
-
-      return Count;
-   end Count_Object_Directories;
+      return List;
+   end Parse_Source_Dirs;
 
    ------------------
    -- Add_Dir_Link --
    ------------------
 
-   procedure Add_Dir_Link (Obj_Dir, Src_Dir : String_Access) is
+   procedure Add_Dir_Link
+     (Object_Dirs, Source_Dirs : in out Directory_Htables.HTable;
+      Obj_Dir, Src_Dir : String_Access)
+   is
       procedure Add_Dependency
         (Dir1 : in out Directory_Info; Dir2 : String_Access);
       --  Add a dependency on Dir2 in Dir1
@@ -307,14 +380,17 @@ package body Convert.Adp is
          end if;
       end Add_Dependency;
 
-
-      Obj_Dir_Info : Directory_Info := Object_Dirs_Htable.Get (Obj_Dir);
-      Src_Dir_Info : Directory_Info := Source_Dirs_Htable.Get (Src_Dir);
+      Obj_Dir_Info : Directory_Info :=
+        Directory_Htables.Get (Object_Dirs, Obj_Dir);
+      Src_Dir_Info : Directory_Info :=
+        Directory_Htables.Get (Source_Dirs, Src_Dir);
    begin
+      Trace (Me, "Add directory dependency: " & Obj_Dir_Info.Name.all
+               & " and " & Src_Dir_Info.Name.all);
       Add_Dependency (Obj_Dir_Info, Src_Dir);
-      Object_Dirs_Htable.Set (Obj_Dir_Info.Name, Obj_Dir_Info);
+      Directory_Htables.Set (Object_Dirs, Obj_Dir_Info.Name, Obj_Dir_Info);
       Add_Dependency (Src_Dir_Info, Obj_Dir);
-      Source_Dirs_Htable.Set (Src_Dir_Info.Name, Src_Dir_Info);
+      Directory_Htables.Set (Source_Dirs, Src_Dir_Info.Name, Src_Dir_Info);
    end Add_Dir_Link;
 
    ----------------------
@@ -322,92 +398,174 @@ package body Convert.Adp is
    ----------------------
 
    procedure Process_Obj_File
-     (Obj_Dir : String_Access; Obj_Filename : String)
+     (Obj_Dir      : String_Access;
+      Obj_Filename : String;
+      Src_Files    : File_Htables.HTable;
+      Source_Dirs,
+      Object_Dirs  : in out Directory_Htables.HTable;
+      Spec_Extension : String;
+      Body_Extension : String)
    is
       Extension : constant String := File_Extension (Obj_Filename);
       Base      : constant String := Obj_Filename
         (Obj_Filename'First  .. Obj_Filename'Last - Extension'Length);
-      Spec_Name : String_Access := new String'(Base & Spec_Extension.all);
-      Body_Name : String_Access := new String'(Base & Body_Extension.all);
+      Spec_Name : aliased String := Base & Spec_Extension;
+      Body_Name : aliased String := Base & Body_Extension;
       File      : File_Info;
    begin
-      File := File_Htable.Get (Spec_Name);
+      Trace (Me, "  Process obj file: " & Obj_Filename);
+
+      File := File_Htables.Get (Src_Files, Spec_Name'Unchecked_Access);
       if File /= No_File_Info then
-         Add_Dir_Link (Obj_Dir, File.Src_Dir);
+         Trace (Me, "     Found spec in " & File.Src_Dir.all);
+         Add_Dir_Link (Source_Dirs => Source_Dirs,
+                       Object_Dirs => Object_Dirs,
+                       Obj_Dir     => Obj_Dir,
+                       Src_Dir     => File.Src_Dir);
       end if;
 
-      File := File_Htable.Get (Body_Name);
+      File := File_Htables.Get (Src_Files, Body_Name'Unchecked_Access);
       if File /= No_File_Info then
-         Add_Dir_Link (Obj_Dir, File.Src_Dir);
+         Trace (Me, "     Found body in " & File.Src_Dir.all);
+         Add_Dir_Link (Source_Dirs => Source_Dirs,
+                       Object_Dirs => Object_Dirs,
+                       Obj_Dir     => Obj_Dir,
+                       Src_Dir     => File.Src_Dir);
       end if;
-
-      Free (Spec_Name);
-      Free (Body_Name);
    end Process_Obj_File;
+
+   ----------------------
+   -- Parse_Main_Units --
+   ----------------------
+
+   function Parse_Main_Units
+     (Buffer : String_Access) return String_List_Access
+   is
+      List, List2 : String_List_Access;
+      Line : Source_Line := First_Line_Of (Buffer.all);
+   begin
+      loop
+         Move_To_Next_Line (Buffer.all, Line, "main_unit");
+         exit when At_End (Line);
+
+         if List = null then
+            List := new String_List (1 .. 1);
+         else
+            List2 := List;
+            List := new String_List (List2'First .. List2'Last + 1);
+            List (List2'Range) := List2.all;
+            Unchecked_Free (List2);
+         end if;
+
+         List (List'Last) := new String'(Buffer (Line.First .. Line.Last));
+      end loop;
+      return List;
+   end Parse_Main_Units;
+
+   -----------------------
+   -- Parse_Object_Dirs --
+   -----------------------
+
+   function Parse_Object_Dirs
+     (Buffer    : String_Access;
+      Build_Dir : String) return String_List_Access
+   is
+      List, List2 : String_List_Access;
+      Adp_Prefix : constant String := "obj_dir";
+      Line : Source_Line := First_Line_Of (Buffer.all);
+      Found : Boolean;
+   begin
+      List := new String_List (1 .. 1);
+      List (1) := new String'(Build_Dir);
+
+      loop
+         Move_To_Next_Line (Buffer.all, Line, Adp_Prefix);
+         exit when At_End (Line);
+
+         declare
+            Name : constant String := Normalize_Pathname
+              (Buffer (Line.First .. Line.Last), Build_Dir);
+         begin
+            Found := False;
+            for L in List'Range loop
+               if List (L).all = Name then
+                  Found := True;
+                  exit;
+               end if;
+            end loop;
+
+            if not Found then
+               List2 := List;
+               List := new String_List (List2'First .. List2'Last + 1);
+               List (List2'Range) := List2.all;
+               Unchecked_Free (List2);
+
+               List (List'Last) := new String'(Name);
+            end if;
+         end;
+      end loop;
+
+      return List;
+   end Parse_Object_Dirs;
 
    -----------------------
    -- Parse_Object_Dirs --
    -----------------------
 
    procedure Parse_Object_Dirs
-     (Buffer          : String_Access;
-      Build_Dir       : String;
-     Obj_Files_Count : out Integer)
-   is
-      procedure Process_Directory (Directory_Name : String);
-      --  Process a single directory
-
-      -----------------------
-      -- Process_Directory --
-      -----------------------
-
-      procedure Process_Directory (Directory_Name : String) is
-         Dir_Name : constant String := Normalize_Pathname
-           (Directory_Name, Build_Dir);
-         Obj_Dir : constant String_Access := new String'(Dir_Name);
-         --  Obj_Dir mustn't be freed since it is stored in a htable
-         Dir  : Dir_Type;
-         File : String (1 .. 1024);
-         Last : Natural;
-      begin
-         Open (Dir, Dir_Name);
-
-         --  Put this after the open, so that we only count directories
-         --  which actually exist
-         Object_Dirs_Htable.Set (Obj_Dir, (Obj_Dir, null, 0));
-
-         loop
-            Read (Dir, File, Last);
-            exit when Last = 0;
-
-            if (Last > 1 and then File (Last - 1 .. Last) = ".o")
-              or else (Last > 4 and then File (Last - 3 .. Last) = ".ali")
-            then
-               Obj_Files_Count := Obj_Files_Count + 1;
-               Process_Obj_File (Obj_Dir, File (1 .. Last));
-            end if;
-         end loop;
-
-         Close (Dir);
-
-      exception
-         when Directory_Error =>
-            --  Ignored, this was legal with .adp files
-            null;
-      end Process_Directory;
-
-      Adp_Prefix : constant String := "obj_dir";
-      Line : Source_Line := First_Line_Of (Buffer.all);
+     (Object_Dirs     : GNAT.OS_Lib.String_List;
+      Directories     : in out Directory_Htables.HTable;
+      Source_Dirs     : in out Directory_Htables.HTable;
+      Src_Files       : File_Htables.HTable;
+      Obj_Files_Count : out Natural;
+      Spec_Extension  : String;
+      Body_Extension  : String) is
    begin
       Obj_Files_Count := 0;
 
-      Process_Directory (Build_Dir);
+      for Obj in Object_Dirs'Range loop
+         declare
+            Obj_Dir : constant String_Access :=
+              new String'(Object_Dirs (Obj).all);
+            --  Obj_Dir mustn't be freed since it is stored in a htable
+            Dir  : Dir_Type;
+            File : String (1 .. 1024);
+            Last : Natural;
+         begin
+            Trace (Me, "Push object directory: " & Obj_Dir.all);
+            Open (Dir, Obj_Dir.all);
 
-      loop
-         Move_To_Next_Line (Buffer.all, Line, Adp_Prefix);
-         exit when At_End (Line);
+            --  Put this after the open, so that we only count directories
+            --  which actually exist
+            Directory_Htables.Set
+              (Directories, Obj_Dir, (Obj_Dir, null, Obj - Object_Dirs'First));
 
-         Process_Directory (Buffer (Line.First .. Line.Last));
+            loop
+               Read (Dir, File, Last);
+               exit when Last = 0;
+
+               if (Last > 1 and then File (Last - 1 .. Last) = ".o")
+                 or else (Last > 4 and then File (Last - 3 .. Last) = ".ali")
+               then
+                  Obj_Files_Count := Obj_Files_Count + 1;
+                  Process_Obj_File
+                    (Obj_Dir        => Obj_Dir,
+                     Obj_Filename   => File (1 .. Last),
+                     Src_Files      => Src_Files,
+                     Source_Dirs    => Source_Dirs,
+                     Object_Dirs    => Directories,
+                     Spec_Extension => Spec_Extension,
+                     Body_Extension => Body_Extension);
+               end if;
+            end loop;
+
+            Close (Dir);
+
+         exception
+            when Directory_Error =>
+               --  Ignored, this was legal with .adp files
+               null;
+         end;
       end loop;
    end Parse_Object_Dirs;
 
@@ -416,7 +574,10 @@ package body Convert.Adp is
    --------------------------------
 
    procedure Generate_Source_Files_List
-     (Obj_Dir : String_Access)
+     (Src_Files      : File_Htables.HTable;
+      Obj_Dir        : String_Access;
+      Spec_Extension : String;
+      Body_Extension : String)
    is
       Dir   : Dir_Type;
       File  : String (1 .. 1024);
@@ -425,6 +586,8 @@ package body Convert.Adp is
    begin
       Put ("   for Source_Files use (");
 
+      --  ??? Should avoid rereading the directory, and avoid duplicates when
+      --  both .o and .ali are found.
       Open (Dir, Obj_Dir.all);
 
       loop
@@ -439,12 +602,12 @@ package body Convert.Adp is
                  File_Extension (File (1 .. Last));
                Base      : constant String := File
                  (File'First  .. Last - Extension'Length);
-               Spec_Name : String_Access :=
-                 new String'(Base & Spec_Extension.all);
-               Body_Name : String_Access :=
-                 new String'(Base & Body_Extension.all);
+               Spec_Name : aliased String := Base & Spec_Extension;
+               Body_Name : aliased String := Base & Body_Extension;
             begin
-               if File_Htable.Get (Spec_Name) /= No_File_Info then
+               if File_Htables.Get
+                 (Src_Files, Spec_Name'Unchecked_Access) /= No_File_Info
+               then
                   if First then
                      First := False;
                   else
@@ -452,10 +615,12 @@ package body Convert.Adp is
                      Put ("      ");
                   end if;
 
-                  Put ('"' & Spec_Name.all & '"');
+                  Put ('"' & Spec_Name & '"');
                end if;
 
-               if File_Htable.Get (Body_Name) /= No_File_Info then
+               if File_Htables.Get
+                 (Src_Files, Body_Name'Unchecked_Access) /= No_File_Info
+               then
                   if First then
                      First := False;
                   else
@@ -463,11 +628,8 @@ package body Convert.Adp is
                      Put ("      ");
                   end if;
 
-                  Put ('"' & Body_Name.all & '"');
+                  Put ('"' & Body_Name & '"');
                end if;
-
-               Free (Spec_Name);
-               Free (Body_Name);
             end;
          end if;
       end loop;
@@ -593,36 +755,19 @@ package body Convert.Adp is
    ------------------
 
    procedure Process_List
-     (Buffer, Adp_Prefix, Gpr_Variable : String;
-      Base_Directory : String := "")
-   is
-      Line : Source_Line := First_Line_Of (Buffer);
-      Is_First : Boolean := True;
+     (Gpr_Variable : String;
+      List         : String_List) is
    begin
       Put ("   for " & Gpr_Variable & " use (");
-      loop
-         Move_To_Next_Line (Buffer, Line, Adp_Prefix);
-         exit when At_End (Line);
-
-         if not Is_First then
+      for L in List'Range loop
+         if L /= List'First then
             Put_Line (",");
             Put ("      """);
          else
-            Is_First := False;
             Put ("""");
          end if;
 
-         declare
-            Value : constant String := Buffer (Line.First .. Line.Last);
-         begin
-            if Base_Directory = "" then
-               Put (Value);
-            else
-               Put (Format_Pathname
-                      (Normalize_Pathname (Value, Base_Directory)));
-            end if;
-         end;
-         Put ("""");
+         Put (List (L).all & """");
       end loop;
 
       Put_Line (");");
@@ -633,10 +778,8 @@ package body Convert.Adp is
    ----------------------
 
    procedure Process_Switches
-     (Buffer : String_Access;
-      Adp_Prefix, Gpr_Package, Gpr_Attribute : String)
+     (Gpr_Package, Gpr_Attribute : String; Value : String)
    is
-      Value : constant String := Get_Attribute_Value (Buffer, Adp_Prefix);
       List  : Argument_List_Access;
    begin
       if Value /= "" then
@@ -664,45 +807,33 @@ package body Convert.Adp is
       end if;
    end Process_Switches;
 
-   ------------------------------
-   -- Convert_Simple_Attribute --
-   ------------------------------
-
-   procedure Convert_Simple_Attribute
-     (Adp_Value, Gpr_Attribute : String;
-      Base_Directory : String := "") is
-   begin
-      if Adp_Value /= "" then
-         Put ("   for " & Gpr_Attribute & " use """);
-
-         if Base_Directory = "" then
-            Put (Adp_Value);
-         else
-            Put (Format_Pathname
-                   (Normalize_Pathname (Adp_Value, Base_Directory)));
-         end if;
-
-         Put_Line (""";");
-      end if;
-   end Convert_Simple_Attribute;
-
    --------------------------------------
    -- Generate_Root_Project_Attributes --
    --------------------------------------
 
-   procedure Generate_Root_Project_Attributes (Buffer : String_Access) is
-      Cross_Prefix : constant String :=
-        Get_Attribute_Value (Buffer, "cross_prefix");
+   procedure Generate_Root_Project_Attributes
+     (Main_Units        : String_List_Access := null;
+      Builder_Switches   : String;
+      Compiler_Switches : String;
+      Binder_Switches   : String;
+      Linker_Switches   : String;
+      Cross_Prefix      : String := "")
+   is
    begin
-      Process_List (Buffer.all, "main_unit", "Main");
+      if Main_Units /= null
+        and then Main_Units'Length /= 0
+      then
+         Process_List ("Main", Main_Units.all);
+      end if;
+
       Process_Switches
-        (Buffer, "gnatmake_opt", "Builder", "Default_Switches (""Ada"")");
+        ("Builder", "Default_Switches (""Ada"")", Builder_Switches);
       Process_Switches
-        (Buffer, "comp_opt", "Compiler", "Default_Switches (""Ada"")");
+        ("Compiler", "Default_Switches (""Ada"")", Compiler_Switches);
       Process_Switches
-        (Buffer, "bind_opt", "Binder", "Default_Switches (""Ada"")");
+        ("Binder", "Default_Switches (""Ada"")", Binder_Switches);
       Process_Switches
-        (Buffer, "link_opt", "Linker", "Default_Switches (""Ada"")");
+        ("Linker", "Default_Switches (""Ada"")", Linker_Switches);
 
       if Cross_Prefix /= "" then
          New_Line;
@@ -719,17 +850,26 @@ package body Convert.Adp is
    -- Src_Dirs_Have_Unique_Obj_Dir --
    ----------------------------------
 
-   function Src_Dirs_Have_Unique_Obj_Dir return Boolean is
-      Dir : Directory_Info := Source_Dirs_Htable.Get_First;
+   function Src_Dirs_Have_Unique_Obj_Dir
+     (Source_Dirs : Directory_Htables.HTable)
+      return Boolean
+   is
+      Iter : Directory_Htables.Iterator;
+      Dir  : Directory_Info;
    begin
-      while Dir /= No_Directory_Info loop
+      Directory_Htables.Get_First (Source_Dirs, Iter);
+
+      loop
+         Dir := Get_Element (Iter);
+         exit when Dir = No_Directory_Info;
+
          if Dir.Related_Dirs /= null
            and then Dir.Related_Dirs'Length > 1
          then
             return False;
          end if;
 
-         Dir := Source_Dirs_Htable.Get_Next;
+         Directory_Htables.Get_Next (Source_Dirs, Iter);
       end loop;
 
       return True;
@@ -740,31 +880,39 @@ package body Convert.Adp is
    --------------------
 
    procedure Generate_Withs
-     (Buffer            : String_Access;
+     (Source_Dirs       : String_List;
+      Src_Files         : File_Htables.HTable;
+      Object_Dirs       : in out Directory_Htables.HTable;
       Root_Project_Name : String;
-      Build_Dir         : String;
       Omit_Project      : Integer;
-      All_Source_Dirs   : Boolean := False)
+      All_Source_Dirs   : Boolean := False;
+      Main_Units        : GNAT.OS_Lib.String_List_Access := null;
+      Builder_Switches  : String;
+      Compiler_Switches : String;
+      Binder_Switches   : String;
+      Linker_Switches   : String;
+      Spec_Extension    : String;
+      Body_Extension    : String;
+      Cross_Prefix      : String := "")
    is
-      Dir : Directory_Info := Object_Dirs_Htable.Get_First;
-      Current_Dir : Directory_Info;
-      Project_Num : Natural := 1;
+      Dir : Directory_Info;
+      Iter : Directory_Htables.Iterator;
+      Current_Dir : Directory_Info := No_Directory_Info;
    begin
-      while Dir /= No_Directory_Info loop
-         if Dir.Project_Num = 0
-           and then Dir.Name.all /= Build_Dir
-         then
-            Dir.Project_Num := Project_Num;
-            Project_Num := Project_Num + 1;
+      Get_First (Object_Dirs, Iter);
+      loop
+         Dir := Get_Element (Iter);
+         exit when Dir = No_Directory_Info;
 
-            Object_Dirs_Htable.Set (Dir.Name, Dir);
-         end if;
+         Trace (Me, "MANU Dir.Name=" & Dir.Name.all
+                & " Project_Num=" & Dir.Project_Num'Img
+                & " Omit_Project=" & Omit_Project'Img);
 
-         if Dir.Project_Num = Omit_Project then
+         --  Have we found the object directory matching our current project ?
+         if Dir.Project_Num = Omit_Project  then
             Current_Dir := Dir;
-         end if;
-
-         if Dir.Project_Num /= Omit_Project then
+         else
+            --  Are we generating a with for the root project or another one ?
             if Dir.Project_Num /= 0 then
                Put_Line
                  ("limited with ""project" & Image (Dir.Project_Num) & """;");
@@ -773,7 +921,7 @@ package body Convert.Adp is
             end if;
          end if;
 
-         Dir := Object_Dirs_Htable.Get_Next;
+         Get_Next (Object_Dirs, Iter);
       end loop;
 
       if Omit_Project = 0 then
@@ -784,6 +932,9 @@ package body Convert.Adp is
 
       if not All_Source_Dirs then
          Put ("   for Source_Dirs use (");
+
+         Trace (Me, "Directory has related dirs "
+                & Boolean'Image (Current_Dir.Related_Dirs /= null));
 
          if Current_Dir.Related_Dirs /= null then
             for S in Current_Dir.Related_Dirs'Range loop
@@ -799,29 +950,38 @@ package body Convert.Adp is
          Put_Line (");");
 
       else
-         Process_List (Buffer.all, "src_dir", "Source_Dirs", Build_Dir);
+         Process_List ("Source_Dirs", Source_Dirs);
       end if;
 
       Put_Line ("   for Object_Dir use """
                 & Current_Dir.Name.all & """;");
 
       if All_Source_Dirs then
-         Generate_Source_Files_List (Current_Dir.Name);
+         Generate_Source_Files_List
+           (Src_Files, Current_Dir.Name,
+            Spec_Extension => Spec_Extension,
+            Body_Extension => Body_Extension);
       end if;
 
       if Omit_Project = 0 then
-         Generate_Root_Project_Attributes (Buffer);
+         Generate_Root_Project_Attributes
+           (Main_Units        => Main_Units,
+            Builder_Switches  => Builder_Switches,
+            Compiler_Switches => Compiler_Switches,
+            Binder_Switches   => Binder_Switches,
+            Linker_Switches   => Linker_Switches,
+            Cross_Prefix      => Cross_Prefix);
       end if;
 
-      if Spec_Extension.all /= ".ads"
-        or else Body_Extension.all /= ".adb"
+      if Spec_Extension /= ".ads"
+        or else Body_Extension /= ".adb"
       then
          New_Line;
          Put_Line ("   package Naming is");
          Put_Line ("      for Specification_Suffix (""Ada"") use """
-                   & Spec_Extension.all & """;");
+                   & Spec_Extension & """;");
          Put_Line ("      for Implementation_Suffix (""Ada"") use """
-                   & Body_Extension.all & """;");
+                   & Body_Extension & """;");
          Put_Line ("   end Naming;");
       end if;
 
@@ -832,6 +992,168 @@ package body Convert.Adp is
       end if;
    end Generate_Withs;
 
+   ----------------------
+   -- Create_Gpr_Files --
+   ----------------------
+
+   function Create_Gpr_Files
+     (Root_Project_Name : String;
+      Output_Dir        : String;
+      Source_Dirs       : GNAT.OS_Lib.String_List;
+      Object_Dirs       : GNAT.OS_Lib.String_List;
+      Spec_Extension    : String;
+      Body_Extension    : String;
+      Main_Units        : GNAT.OS_Lib.String_List_Access := null;
+      Builder_Switches  : String;
+      Compiler_Switches : String;
+      Binder_Switches   : String;
+      Linker_Switches   : String;
+      Cross_Prefix      : String := "") return String
+   is
+      Src_Dirs, Obj_Dirs : Directory_Htables.HTable;
+      Src_Files          : File_Htables.HTable;
+      Obj_Files_Count    : Natural;
+      File               : File_Type;
+   begin
+      Parse_Source_Dirs (Source_Dirs, Src_Dirs, Src_Files);
+      Parse_Object_Dirs
+        (Object_Dirs,
+         Directories     => Obj_Dirs,
+         Source_Dirs     => Src_Dirs,
+         Src_Files       => Src_Files,
+         Obj_Files_Count => Obj_Files_Count,
+         Spec_Extension  => Spec_Extension,
+         Body_Extension  => Body_Extension);
+
+
+      if Obj_Files_Count = 0 then
+         Trace (Me, "Simple case: no object file found");
+         --  Ignore all other object directories but the first one.
+         --  The other directories do not contain any object file anyway
+
+         Trace
+           (Me, "Creating " & Output_Dir & Root_Project_Name & Gpr_Extension);
+         Create (File, Out_File,
+                 Output_Dir & Root_Project_Name & Gpr_Extension);
+         Set_Output (File);
+         Put_Line ("project " & Root_Project_Name & " is");
+         Process_List ("Source_Dirs", Source_Dirs);
+         Put_Line ("   for Object_Dir use """
+                   & Object_Dirs (Object_Dirs'First).all & """;");
+         Generate_Root_Project_Attributes
+           (Main_Units        => Main_Units,
+            Builder_Switches  => Builder_Switches,
+            Compiler_Switches => Compiler_Switches,
+            Binder_Switches   => Binder_Switches,
+            Linker_Switches   => Linker_Switches,
+            Cross_Prefix      => Cross_Prefix);
+         Put_Line ("end " & Root_Project_Name & ";");
+         Close (File);
+
+      elsif Object_Dirs'Length = 1 then
+         Trace (Me, "Simple case: A single object directory");
+         --  No other object directory other than Build_Dir
+
+         Trace
+           (Me, "Creating " & Output_Dir & Root_Project_Name & Gpr_Extension);
+         Create (File, Out_File,
+                 Output_Dir & Root_Project_Name & Gpr_Extension);
+         Set_Output (File);
+         Put_Line ("project " & Root_Project_Name & " is");
+         Process_List ("Source_Dirs", Source_Dirs);
+         Put_Line ("   for Object_Dir use """
+                   & Object_Dirs (Object_Dirs'First).all & """;");
+         Generate_Root_Project_Attributes
+           (Main_Units        => Main_Units,
+            Builder_Switches  => Builder_Switches,
+            Compiler_Switches => Compiler_Switches,
+            Binder_Switches   => Binder_Switches,
+            Linker_Switches   => Linker_Switches,
+            Cross_Prefix      => Cross_Prefix);
+         Put_Line ("end " & Root_Project_Name & ";");
+         Close (File);
+
+      elsif Src_Dirs_Have_Unique_Obj_Dir (Src_Dirs) then
+         Trace (Me, "Case: Source dirs associated with a single object dir");
+         --  Associations are unique. Thus, we can generate a set of
+         --  independent project files
+
+         for P in 0 .. Object_Dirs'Length - 1 loop
+            if P = 0 then
+               Trace
+                 (Me, "Creating " & Output_Dir & Root_Project_Name &
+                  Gpr_Extension);
+               Create (File, Out_File,
+                       Output_Dir & Root_Project_Name & Gpr_Extension);
+            else
+               Trace
+                 (Me, "Creating " & Output_Dir & "project" & Image (P) &
+                  Gpr_Extension);
+               Create (File, Out_File,
+                       Output_Dir & "project" & Image (P) & Gpr_Extension);
+            end if;
+            Set_Output (File);
+            Generate_Withs
+              (Source_Dirs       => Source_Dirs,
+               Src_Files         => Src_Files,
+               Object_Dirs       => Obj_Dirs,
+               Root_Project_Name => Root_Project_Name,
+               Omit_Project      => P,
+               All_Source_Dirs   => False,
+               Main_Units        => Main_Units,
+               Builder_Switches  => Builder_Switches,
+               Compiler_Switches => Compiler_Switches,
+               Binder_Switches   => Binder_Switches,
+               Linker_Switches   => Linker_Switches,
+               Spec_Extension    => Spec_Extension,
+               Body_Extension    => Body_Extension,
+               Cross_Prefix      => Cross_Prefix);
+            Close (File);
+         end loop;
+
+      else
+         Trace (Me, "Case: complex case");
+         for P in 0 .. Object_Dirs'Length - 1 loop
+            if P = 0 then
+               Trace
+                 (Me, "Creating " & Output_Dir & Root_Project_Name &
+                  Gpr_Extension);
+               Create (File, Out_File,
+                       Output_Dir & Root_Project_Name & Gpr_Extension);
+            else
+               Trace
+                 (Me, "Creating " & Output_Dir & "project" & Image (P) &
+                  Gpr_Extension);
+               Create (File, Out_File,
+                       Output_Dir & "project" & Image (P) & Gpr_Extension);
+            end if;
+            Set_Output (File);
+            Generate_Withs
+              (Source_Dirs       => Source_Dirs,
+               Src_Files         => Src_Files,
+               Object_Dirs       => Obj_Dirs,
+               Root_Project_Name => Root_Project_Name,
+
+               Omit_Project      => P,
+               All_Source_Dirs   => True,
+               Main_Units        => Main_Units,
+               Builder_Switches  => Builder_Switches,
+               Compiler_Switches => Compiler_Switches,
+               Binder_Switches   => Binder_Switches,
+               Linker_Switches   => Linker_Switches,
+               Spec_Extension    => Spec_Extension,
+               Body_Extension    => Body_Extension,
+               Cross_Prefix      => Cross_Prefix);
+            Close (File);
+         end loop;
+      end if;
+
+      Directory_Htables.Reset (Src_Dirs);
+      Directory_Htables.Reset (Obj_Dirs);
+      File_Htables.Reset (Src_Files);
+      return "";
+   end Create_Gpr_Files;
+
    -----------------------------
    -- Convert_From_Adp_To_Gpr --
    -----------------------------
@@ -841,18 +1163,13 @@ package body Convert.Adp is
       Spec_Extension, Body_Extension : GNAT.OS_Lib.String_Access)
    is
       Buffer : String_Access := Read_File (Adp_Filename);
-      Short_Name : constant String := Base_Name (Adp_Filename, ".adp");
       Build_Dir : constant String :=
         Normalize_Pathname
           (Get_Attribute_Value (Buffer, "build_dir"),
            Get_Current_Dir);
-      Object_Files_Count, Object_Dirs_Count : Integer;
-      File : File_Type;
+      Source_Dirs, Object_Dirs, Main_Units : String_List_Access;
 
    begin
-      Convert.Adp.Spec_Extension := Spec_Extension;
-      Convert.Adp.Body_Extension := Body_Extension;
-
       if Build_Dir = "" then
          Put_Line ("Cannot convert project: build_dir must be defined in");
          Put_Line ("the .adp file");
@@ -860,65 +1177,32 @@ package body Convert.Adp is
          return;
       end if;
 
-      Parse_Source_Dirs (Buffer, Build_Dir);
-      Parse_Object_Dirs (Buffer, Build_Dir, Object_Files_Count);
-      Object_Dirs_Count := Count_Object_Directories (Build_Dir);
+      Source_Dirs := Parse_Source_Dirs (Buffer, Build_Dir);
+      Object_Dirs := Parse_Object_Dirs (Buffer, Build_Dir);
+      Main_Units  := Parse_Main_Units  (Buffer);
 
-      if Object_Files_Count = 0 then
-         --  Ignore all other object directories but Build_Dir
-         --  The other directories do not contain any object file anyway
+      declare
+         Tmp : constant String := Create_Gpr_Files
+           (Root_Project_Name => Base_Name (Adp_Filename, ".adp"),
+            Output_Dir        => Dir_Name (Adp_Filename),
+            Source_Dirs       => Source_Dirs.all,
+            Object_Dirs       => Object_Dirs.all,
+            Spec_Extension    => Spec_Extension.all,
+            Body_Extension    => Body_Extension.all,
+            Main_Units        => Main_Units,
+            Builder_Switches  => Get_Attribute_Value (Buffer, "gnatmake_opt"),
+            Compiler_Switches => Get_Attribute_Value (Buffer, "comp_opt"),
+            Binder_Switches   => Get_Attribute_Value (Buffer, "bind_opt"),
+            Linker_Switches   => Get_Attribute_Value (Buffer, "link_opt"),
+            Cross_Prefix      => Get_Attribute_Value (Buffer, "cross_prefix"));
+         pragma Unreferenced (Tmp);
+      begin
+         null;
+      end;
 
-         Create (File, Out_File, Short_Name & Gpr_Extension);
-         Set_Output (File);
-         Put_Line ("project " & Short_Name & " is");
-         Process_List (Buffer.all, "src_dir", "Source_Dirs", Build_Dir);
-         Convert_Simple_Attribute (Build_Dir, "Object_Dir");
-         Generate_Root_Project_Attributes (Buffer);
-         Put_Line ("end " & Short_Name & ";");
-         Close (File);
-
-      elsif Object_Dirs_Count = 0 then
-         --  No other object directory other than Build_Dir
-
-         Create (File, Out_File, Short_Name & Gpr_Extension);
-         Set_Output (File);
-         Put_Line ("project " & Short_Name & " is");
-         Process_List (Buffer.all, "src_dir", "Source_Dirs", Build_Dir);
-         Convert_Simple_Attribute (Build_Dir, "Object_Dir");
-         Generate_Root_Project_Attributes (Buffer);
-         Put_Line ("end " & Short_Name & ";");
-         Close (File);
-
-      elsif Src_Dirs_Have_Unique_Obj_Dir then
-         --  Associations are unique. Thus, we can generate a set of
-         --  independent project files
-
-         for P in 0 .. Object_Dirs_Count loop
-            if P = 0 then
-               Create (File, Out_File, Short_Name & Gpr_Extension);
-            else
-               Create (File, Out_File, "project" & Image (P) & Gpr_Extension);
-            end if;
-            Set_Output (File);
-            Generate_Withs (Buffer, Short_Name, Build_Dir, Omit_Project => P);
-            Close (File);
-         end loop;
-
-      else
-         for P in 0 .. Object_Dirs_Count loop
-            if P = 0 then
-               Create (File, Out_File, Short_Name & Gpr_Extension);
-            else
-               Create (File, Out_File, "project" & Image (P) & Gpr_Extension);
-            end if;
-            Set_Output (File);
-            Generate_Withs
-              (Buffer, Short_Name, Build_Dir, Omit_Project => P,
-               All_Source_Dirs => True);
-            Close (File);
-         end loop;
-      end if;
-
+      Free (Main_Units);
+      Free (Source_Dirs);
+      Free (Object_Dirs);
       Free (Buffer);
    end Convert_From_Adp_To_Gpr;
 end Convert.Adp;
