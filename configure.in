@@ -4,7 +4,6 @@ AC_INIT(glide/src/gps.adb)
 AC_CANONICAL_SYSTEM
 
 GPS_VERSION=3.0.0w
-GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 CAN_OUTPUT=True
 TARGET_CFLAGS=""
@@ -225,7 +224,6 @@ AM_PATH_GTK(2.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' f
 
 # Set the version number of GPS/GVD
 AC_SUBST(GPS_VERSION)
-AC_SUBST(GVD_VERSION)
 
 AC_SUBST(opsysfile)
 
@@ -264,4 +262,4 @@ echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets gnat/sdefault/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/common/gvd.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr gvd/gvd_common.gpr:gvd/gvd_common_${XMLADA_GPR}.gpr.in)
+AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets gnat/sdefault/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/common/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr gvd/gvd_common.gpr:gvd/gvd_common_${XMLADA_GPR}.gpr.in)

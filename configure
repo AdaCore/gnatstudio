@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION GVD_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT HTML_BROWSER PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT HTML_BROWSER PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1373,7 +1373,6 @@ test -n "$target_alias" &&
   program_prefix=${target_alias}-
 
 GPS_VERSION=3.0.0w
-GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 CAN_OUTPUT=True
 TARGET_CFLAGS=""
@@ -4762,7 +4761,6 @@ echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >
 
 
 
-
 subdirs="$subdirs kernel/src_info/sn"
 
 
@@ -4778,7 +4776,7 @@ echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common widgets/Makefile.widgets gnat/sdefault/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/common/gvd.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr gvd/gvd_common.gpr:gvd/gvd_common_${XMLADA_GPR}.gpr.in"
+                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common widgets/Makefile.widgets gnat/sdefault/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/common/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr gvd/gvd_common.gpr:gvd/gvd_common_${XMLADA_GPR}.gpr.in"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5336,7 +5334,7 @@ do
   "docs/Makefile" ) CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
   "po/Makefile" ) CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
   "gvd/Makefile.gvd_common" ) CONFIG_FILES="$CONFIG_FILES gvd/Makefile.gvd_common" ;;
-  "gvd/common/gvd.ads" ) CONFIG_FILES="$CONFIG_FILES gvd/common/gvd.ads" ;;
+  "gvd/common/config.ads" ) CONFIG_FILES="$CONFIG_FILES gvd/common/config.ads" ;;
   "python/Makefile.python" ) CONFIG_FILES="$CONFIG_FILES python/Makefile.python" ;;
   "python/python.gpr" ) CONFIG_FILES="$CONFIG_FILES python/python.gpr" ;;
   "gtkada/gtkada.gpr" ) CONFIG_FILES="$CONFIG_FILES gtkada/gtkada.gpr" ;;
@@ -5468,7 +5466,6 @@ s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
 s,@GPS_VERSION@,$GPS_VERSION,;t t
-s,@GVD_VERSION@,$GVD_VERSION,;t t
 s,@opsysfile@,$opsysfile,;t t
 s,@ROOT@,$ROOT,;t t
 s,@TARGET@,$TARGET,;t t
