@@ -46,6 +46,8 @@ package body Codefix is
    begin
       if Value /= null then
          This := new String'(Value.all);
+      else
+         This := null;
       end if;
       Free (Garbage);
    end Assign;
