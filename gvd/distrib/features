@@ -5,6 +5,7 @@ New features in GVD 1.0.3
 - Start up of big programs have been significantly improved.
 - Menu "Print" in the code editor contextual menu now prints the
   variable inside the command window instead of the canvas.
+- Added support for preferences (menu Edit->Preferences)
 
 New features in GVD 1.0.2
 
