@@ -28,11 +28,13 @@ package body String_List_Utils is
      (S : in String_List.List) return String_List.List
    is
       use String_List;
+
       Result : String_List.List;
-      Temp   : String_List.List := S;
+      Temp   : List_Node := First (S);
+
    begin
-      while not Is_Empty (Temp) loop
-         Append (Result, Head (Temp));
+      while Temp /= Null_Node loop
+         Append (Result, Data (Temp));
          Temp := Next (Temp);
       end loop;
 
