@@ -3593,27 +3593,27 @@ package body Src_Info.Queries is
    begin
       if Iter.Current /= null then
          loop
-            if Iter.Current /= null
-              and then Iter.Current.Value.Declaration.Kind.Is_Type
-            then
-               --  Any parent matches ?
-               Parent := Iter.Current.Value.Declaration.Parent_Location;
-               while Parent /= null loop
-                  if Parent.Kind = Parent_Type
-                    and then Location_Matches
-                    (Parent.Value,
-                     Get_Declaration_File_Of (Iter.Entity),
-                     Get_Declaration_Line_Of (Iter.Entity),
-                     Get_Declaration_Column_Of (Iter.Entity)) = 0
-                  then
-                     return;
-                  end if;
+            if Iter.Current /= null then
+               if Iter.Current.Value.Declaration.Kind.Is_Type then
+                  --  Any parent matches ?
+                  Parent := Iter.Current.Value.Declaration.Parent_Location;
+                  while Parent /= null loop
+                     if Parent.Kind = Parent_Type
+                       and then Location_Matches
+                       (Parent.Value,
+                        Get_Declaration_File_Of (Iter.Entity),
+                        Get_Declaration_Line_Of (Iter.Entity),
+                        Get_Declaration_Column_Of (Iter.Entity)) = 0
+                     then
+                        return;
+                     end if;
 
-                  Parent := Parent.Next;
-               end loop;
+                     Parent := Parent.Next;
+                  end loop;
+               end if;
+
+               Iter.Current := Iter.Current.Next;
             end if;
-
-            Iter.Current := Iter.Current.Next;
 
             if Iter.Current = null then
                case Iter.Part is
