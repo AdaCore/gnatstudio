@@ -222,7 +222,7 @@ package body Language is
            and then Buffer (Next_Char + 1) /= ASCII.LF
          then
             loop
-               Next_Char := Next_Char + 1;
+               Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
                Column := Column + 1;
 
                exit when Next_Char >= Buffer'Last
@@ -236,12 +236,8 @@ package body Language is
             end loop;
          end if;
 
-         Next_Char := Next_Char + 1;
-
-         if Buffer (Next_Char) = ASCII.LF then
-            Line   := Line + 1;
-            Column := 1;
-         else
+         if Next_Char <= Buffer'Last then
+            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
             Column := Column + 1;
          end if;
 
@@ -514,12 +510,15 @@ package body Language is
       Buffer   : String;
       Callback : Entity_Callback)
    is
-      Index     : Natural := Buffer'First;
-      Next_Char : Natural;
-      End_Char  : Natural;
-      Entity    : Language_Entity;
-      Line, Line_Inc : Natural;
-      Column, Column_Inc : Natural;
+      Index      : Natural := Buffer'First;
+      Next_Char  : Natural;
+      End_Char   : Natural;
+      Entity     : Language_Entity;
+      Line       : Natural;
+      Line_Inc   : Natural;
+      Col        : Natural;
+      Column     : Natural;
+      Column_Inc : Natural;
 
    begin
       Line := 1;
@@ -544,10 +543,22 @@ package body Language is
             Column_Inc := Column + Column_Inc - 1;
          end if;
 
+         --  Looking_At goes always one character beyond characters and
+         --  strings, otherwise next call to Looking_At would start on
+         --  a string or character delimiter.
+
+         if Column_Inc > 1
+           and then (Entity = String_Text or else Entity = Character_Text)
+         then
+            Col := Column_Inc - 1;
+         else
+            Col := Column_Inc;
+         end if;
+
          exit when Callback
            (Entity,
             (Line, Column, Index),
-            (Line + Line_Inc - 1, Column_Inc, End_Char),
+            (Line + Line_Inc - 1, Col, End_Char),
             Entity = Comment_Text and then Next_Char > Buffer'Last);
 
          Line := Line + Line_Inc - 1;
