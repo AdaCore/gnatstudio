@@ -18,8 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;  use GNAT.Expect;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with GNAT.Expect;     use GNAT.Expect;
+with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with Process_Proxies; use Process_Proxies;
 
 package body Debugger is
 
@@ -53,30 +54,35 @@ package body Debugger is
    -----------------
 
    function Get_Process
-     (Debugger : Debugger_Root) return GNAT.Expect.Pipes_Id_Access is
+     (Debugger : Debugger_Root) return Process_Proxy'Class is
    begin
-      return Debugger.Process;
+      return Debugger.Process.all;
    end Get_Process;
 
    -------------------
    -- General_Spawn --
    -------------------
 
-   procedure General_Spawn (Debugger       : access Debugger_Root'Class;
-                            Arguments      : GNAT.OS_Lib.Argument_List;
-                            Debugger_Name  : String;
-                            Remote_Machine : String := "")
+   procedure General_Spawn
+     (Debugger       : in out Debugger_Root'Class;
+      Arguments      : GNAT.OS_Lib.Argument_List;
+      Debugger_Name  : String;
+      Proxy          : Process_Proxies.Process_Proxy_Access;
+      Remote_Machine : String := "")
    is
+      Id : Pipes_Id_Access;
    begin
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can
       --  not control the length of what gdb will return...
 
+      Debugger.Process := Proxy;
+
       if Remote_Machine = "" then
-         Debugger.Process := new Pipes_Id'(Non_Blocking_Spawn
-                                           (Debugger_Name, Arguments,
-                                            Buffer_Size => 0,
-                                            Err_To_Out => True));
+         Id := new Pipes_Id'(Non_Blocking_Spawn
+                             (Debugger_Name, Arguments,
+                              Buffer_Size => 0,
+                              Err_To_Out => True));
       else
          declare
             Real_Arguments : Argument_List (1 .. Arguments'Length + 2);
@@ -85,15 +91,17 @@ package body Debugger is
             Real_Arguments (2) := new String'(Debugger_Name);
             Real_Arguments (3 .. Real_Arguments'Last) := Arguments;
 
-            Debugger.Process := new Pipes_Id'(Non_Blocking_Spawn
-                                              (Remote_Protocol,
-                                               Real_Arguments,
-                                               Buffer_Size => 0,
-                                               Err_To_Out => True));
+            Id := new Pipes_Id'(Non_Blocking_Spawn
+                                (Remote_Protocol,
+                                 Real_Arguments,
+                                 Buffer_Size => 0,
+                                 Err_To_Out => True));
             Free (Real_Arguments (1));
             Free (Real_Arguments (2));
          end;
       end if;
+
+      Set_Pipes (Debugger.Process.all, Id);
    end General_Spawn;
 
 end Debugger;

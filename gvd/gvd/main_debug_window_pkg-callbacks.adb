@@ -27,6 +27,9 @@ with Odd.Process;         use Odd.Process;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
+with Process_Proxies;     use Process_Proxies;
+
+with Ada.Text_IO;  use Ada.Text_IO;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -418,6 +421,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+
+      if Command_In_Process (Get_Process (Tab.Debugger.all)) then
+         return;
+      end if;
+
+      Put_Line ("RUN");
       Run (Tab.Debugger.all);
    end On_Run1_Activate;
 

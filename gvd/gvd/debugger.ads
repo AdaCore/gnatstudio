@@ -20,9 +20,8 @@
 
 with Language;
 with Generic_Values;
-with GNAT.Expect;
-with Unchecked_Deallocation;
 with GNAT.OS_Lib;
+with Process_Proxies;
 
 package Debugger is
 
@@ -32,27 +31,34 @@ package Debugger is
 
    type Debugger_Access is access all Debugger_Root'Class;
 
-   procedure Spawn (Debugger       : access Debugger_Root;
-                    Arguments      : GNAT.OS_Lib.Argument_List;
-                    Remote_Machine : String := "") is abstract;
+   procedure Spawn
+     (Debugger       : in out Debugger_Root;
+      Arguments      : GNAT.OS_Lib.Argument_List;
+      Proxy          : Process_Proxies.Process_Proxy_Access;
+      Remote_Machine : String := "") is abstract;
    --  Spawn the external process.
    --  Initialize should be called afterwards, but this is done in two
    --  separate steps so that it is possible to set filters.
    --
    --  If Remote_Machine is different from the empty string, the debugger
    --  is spawned on the remote machine.
+   --
+   --  Proxy is assigned to the debugger, after its underlying process has
+   --  been created.
 
-   procedure General_Spawn (Debugger       : access Debugger_Root'Class;
-                            Arguments      : GNAT.OS_Lib.Argument_List;
-                            Debugger_Name  : String;
-                            Remote_Machine : String := "");
+   procedure General_Spawn
+     (Debugger       : in out Debugger_Root'Class;
+      Arguments      : GNAT.OS_Lib.Argument_List;
+      Debugger_Name  : String;
+      Proxy          : Process_Proxies.Process_Proxy_Access;
+      Remote_Machine : String := "");
    --  Convenience function to start a debugger.
    --  This command modifies the argument list so that the debugger can also
    --  be run on a remote machine.
    --  This is provided as a support for the implementation of the primitive
    --  subprogram Spawn, and should work with most debuggers.
 
-   procedure Initialize (Debugger : access Debugger_Root) is abstract;
+   procedure Initialize (Debugger : access  Debugger_Root) is abstract;
    --  Initialize the debugger.
    --  Spawn must have been called first.
 
@@ -60,7 +66,7 @@ package Debugger is
    --  Terminates the external process.
 
    function Get_Process
-     (Debugger : Debugger_Root) return GNAT.Expect.Pipes_Id_Access;
+     (Debugger : Debugger_Root) return Process_Proxies.Process_Proxy'Class;
    --  Return the process descriptor associated with Debugger.
 
    procedure Set_Language
@@ -180,11 +186,8 @@ package Debugger is
 
 private
 
-   procedure Free is new Unchecked_Deallocation
-     (GNAT.Expect.Pipes_Id, GNAT.Expect.Pipes_Id_Access);
-
    type Debugger_Root is abstract tagged record
-      Process      : GNAT.Expect.Pipes_Id_Access := null;
+      Process      : Process_Proxies.Process_Proxy_Access := null;
       The_Language : Language.Language_Access;
    end record;
 end Debugger;

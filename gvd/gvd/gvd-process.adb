@@ -43,6 +43,7 @@ with Display_Items;   use Display_Items;
 with Generic_Values;  use Generic_Values;
 with Debugger.Gdb;    use Debugger.Gdb;
 with Odd.Strings;     use Odd.Strings;
+with Process_Proxies; use Process_Proxies;
 
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
 
@@ -78,7 +79,6 @@ package body Odd.Process is
       Num_Pages : Gint := Gint (Page_List.Length (Get_Children
                                 (Main_Debug_Window.Process_Notebook)));
       Process     : Debugger_Process_Tab;
-      Process_Pid : Pipes_Id_Access;
    begin
       --  For all the process tabs in the application, check whether
       --  this is the one associated with Pid.
@@ -87,14 +87,11 @@ package body Odd.Process is
          Page := Get_Nth_Page (Main_Debug_Window.Process_Notebook, Page_Num);
          if Page /= null then
             Process := Process_User_Data.Get (Page);
-            Process_Pid := Get_Process (Process.Debugger.all);
 
             --  Note: The process might have been already killed when this
             --  function is called.
 
-            if Process_Pid /= null
-              and then Process_Pid.all = Pid
-            then
+            if Get_Pipes (Get_Process (Process.Debugger.all)).all = Pid then
                return Process;
             end if;
          end if;
@@ -135,7 +132,6 @@ package body Odd.Process is
       Source    : Gint;
       Condition : Gdk.Types.Gdk_Input_Condition)
    is
-      Pid    : Pipes_Id_Access := Get_Process (Debugger.Debugger.all);
       Result : Expect_Match;
    begin
       --  Get everything that is available (and transparently call the
@@ -143,9 +139,7 @@ package body Odd.Process is
       --  when the process is killed on exit, we have to test whether it is
       --  still valid.
 
-      if Pid /= null then
-         Expect (Pid.all, Result, ".+", Timeout => 0);
-      end if;
+      Wait (Get_Process (Debugger.Debugger.all), Result, ".+", Timeout => 0);
    end Output_Available;
 
    ---------------------
@@ -190,14 +184,16 @@ package body Odd.Process is
 
       Process.Debugger := new Gdb_Debugger;
 
-      Spawn (Process.Debugger, Params, Remote_Machine => "");
-      Add_Output_Filter (Get_Process (Process.Debugger.all).all,
-                         Text_Output_Handler'Access);
+      Spawn (Process.Debugger.all, Params, new Gui_Process_Proxy,
+             Remote_Machine => "");
+      Add_Output_Filter
+        (Get_Pipes (Get_Process (Process.Debugger.all)).all,
+         Text_Output_Handler'Access);
 --        Add_Input_Filter (Get_Process (Process.Debugger.all).all,
       --                          Text_Output_Handler'Access);
       Id := My_Input.Add
         (To_Gint (Get_Output_Fd
-                  (Get_Process (Process.Debugger.all).all)),
+                  (Get_Pipes (Get_Process (Process.Debugger.all)).all)),
          Gdk.Types.Input_Read,
          Output_Available'Access,
          My_Input.Data_Access (Process));
@@ -240,9 +236,9 @@ package body Odd.Process is
                                    Command  : String)
    is
       The_Type : Generic_Type_Access;
-      Item   : Display_Item;
+      Item     : Display_Item;
       Command2 : String := To_Lower (Command);
-      First  : Natural := Command2'First;
+      First    : Natural := Command2'First;
 
    begin
       --  Command has been converted to lower-cases, but the new version
@@ -293,7 +289,7 @@ package body Odd.Process is
 
       else
          --  Regular debugger command, send it.
-         Send (Get_Process (Debugger.Debugger.all).all, Command);
+         Send (Get_Process (Debugger.Debugger.all), Command);
       end if;
    end Process_User_Command;
 
