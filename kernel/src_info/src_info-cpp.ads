@@ -18,7 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;
+pragma Warnings (On);
 with GNAT.OS_Lib;
 with SN;
 with SN.Xref_Pools; use SN.Xref_Pools;
@@ -216,7 +218,7 @@ private
       Handler         : CPP_LI_Handler;
       Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
       List_Filename   : GNAT.OS_Lib.String_Access;
-      PD              : GNAT.Expect.Process_Descriptor;
+      PD              : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Prj_Iterator    : Imp_Prj_Iterator_Access;
    end record;
    --  State is an internal state of iterator, it can be inconsistant with

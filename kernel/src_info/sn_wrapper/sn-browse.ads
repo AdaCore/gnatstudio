@@ -18,7 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;
+pragma Warnings (On);
 
 package SN.Browse is
    Unlink_Failure    : exception;
@@ -39,7 +41,7 @@ package SN.Browse is
       DB_Directory  : String;
       DBIMP_Path    : String;
       Cbrowser_Path : String;
-      PD            : out GNAT.Expect.Process_Descriptor);
+      PD            : out GNAT.Expect.TTY.TTY_Process_Descriptor);
    --  Start the language browser on the files lists in File_Name (one file per
    --  line, and lines can start with @ to specify the name of the xref file to
    --  use from then on).
@@ -52,7 +54,7 @@ package SN.Browse is
      (DB_Directories : GNAT.OS_Lib.String_List_Access;
       DBIMP_Path     : String;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
-      PD             : out GNAT.Expect.Process_Descriptor);
+      PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor);
    --  Removes .by and .to tables in the DB_Directories (1) and
    --  spawns dbimp process with DB_Directories as input arguments
    --  specifying all loaded SN databases. The cross reference
@@ -65,10 +67,9 @@ package SN.Browse is
    --  Removes all files from SN DB directory except xref pool
 
    procedure Is_Alive
-     (PD     : in out GNAT.Expect.Process_Descriptor;
+     (PD     : in out GNAT.Expect.TTY.TTY_Process_Descriptor;
       Status : out Boolean);
    --  checks if the process is still running. If the process exited, its
    --  descriptor is closed and False returned in Status.
 
 end SN.Browse;
-

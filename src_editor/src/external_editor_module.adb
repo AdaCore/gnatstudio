@@ -21,6 +21,9 @@
 with Ada.Exceptions;           use Ada.Exceptions;
 with Basic_Types;              use Basic_Types;
 with GNAT.Expect;              use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
+pragma Warnings (On);
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
@@ -501,13 +504,13 @@ package body External_Editor_Module is
    -----------------------
 
    procedure Spawn_New_Process
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Command        : String;
-      Args           : GNAT.OS_Lib.Argument_List;
-      Result         : out Boolean)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List;
+      Result  : out Boolean)
    is
-      Old : Process_Descriptor_Array_Access;
-      Process : Process_Descriptor;
+      Old     : Process_Descriptor_Array_Access;
+      Process : TTY_Process_Descriptor;
    begin
       if Active (Me) then
          Trace (Me, "Spawning new process: " & Command);
@@ -536,7 +539,7 @@ package body External_Editor_Module is
 
       External_Editor_Module_Id.Processes
         (External_Editor_Module_Id.Processes'Last) :=
-        new Process_Descriptor'(Process);
+        new TTY_Process_Descriptor'(Process);
 
       if External_Editor_Module_Id.Timeout_Id = 0 then
          External_Editor_Module_Id.Timeout_Id := Process_Timeout.Add
@@ -615,7 +618,7 @@ package body External_Editor_Module is
    is
       Status : Integer;
       Result : Expect_Match;
-      Pd     : Process_Descriptor;
+      Pd     : TTY_Process_Descriptor;
    begin
       Non_Blocking_Spawn
         (Pd, Command, Args, Buffer_Size => 0, Err_To_Out => True);

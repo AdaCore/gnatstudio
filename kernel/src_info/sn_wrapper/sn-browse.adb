@@ -22,7 +22,6 @@ with GNAT.Directory_Operations,
      GNAT.IO_Aux,
      GNAT.Expect,
      OS_Utils,
-     System,
      Ada.Strings.Fixed;
 with Basic_Types;
 with SN.Xref_Pools; use SN.Xref_Pools;
@@ -39,29 +38,6 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body SN.Browse is
 
-   procedure Output_Filter
-     (PD        : in GNAT.Expect.Process_Descriptor'Class;
-      Str       : in String;
-      User_Data : in System.Address := System.Null_Address);
-   --  Output filter
-
-   -------------------
-   -- Output_Filter --
-   -------------------
-
-   procedure Output_Filter
-     (PD        : in GNAT.Expect.Process_Descriptor'Class;
-      Str       : in String;
-      User_Data : in System.Address := System.Null_Address)
-   is
-      pragma Unreferenced (PD);
-      pragma Unreferenced (Str);
-      pragma Unreferenced (User_Data);
-   begin
-      --  Put ("dbimp: " & Str);
-      null;
-   end Output_Filter;
-
    ------------
    -- Browse --
    ------------
@@ -71,7 +47,7 @@ package body SN.Browse is
       DB_Directory  : String;
       DBIMP_Path    : String;
       Cbrowser_Path : String;
-      PD            : out GNAT.Expect.Process_Descriptor)
+      PD            : out GNAT.Expect.TTY.TTY_Process_Descriptor)
    is
       Args : Argument_List (1 .. 6);
    begin
@@ -85,7 +61,6 @@ package body SN.Browse is
 
       GNAT.Expect.Non_Blocking_Spawn
         (PD, Cbrowser_Path, Args, Err_To_Out => True);
-      GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
       Basic_Types.Free (Args);
    end Browse;
 
@@ -97,7 +72,7 @@ package body SN.Browse is
      (DB_Directories : GNAT.OS_Lib.String_List_Access;
       DBIMP_Path     : String;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
-      PD             : out GNAT.Expect.Process_Descriptor)
+      PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor)
    is
       LV_File_Name : constant String
          := DB_Directories (1).all & DB_File_Name & ".lv";
@@ -187,9 +162,8 @@ package body SN.Browse is
            new String'(DB_Directories (J).all & DB_File_Name);
       end loop;
 
-      GNAT.Expect.Non_Blocking_Spawn
+      Non_Blocking_Spawn
         (PD, DBIMP_Path, Args.all, Err_To_Out => True);
-      GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
       GNAT.OS_Lib.Free (Args);
    end Generate_Xrefs;
 
@@ -198,24 +172,24 @@ package body SN.Browse is
    --------------
 
    procedure Is_Alive
-     (PD : in out GNAT.Expect.Process_Descriptor;
+     (PD     : in out GNAT.Expect.TTY.TTY_Process_Descriptor;
       Status : out Boolean)
    is
-      Result : GNAT.Expect.Expect_Match;
+      Result : Expect_Match;
    begin
       Status := False;
-      GNAT.Expect.Expect (PD, Result, "", 1);
+      Expect (Process_Descriptor (PD), Result, "", 1);
 
-      if Result = GNAT.Expect.Expect_Timeout then
+      if Result = Expect_Timeout then
          Status := True;
          return;
       end if;
 
-      GNAT.Expect.Close (PD);
+      Close (Process_Descriptor (PD));
 
    exception
-      when GNAT.Expect.Process_Died =>
-         GNAT.Expect.Close (PD);
+      when Process_Died =>
+         Close (Process_Descriptor (PD));
    end Is_Alive;
 
    ---------------------

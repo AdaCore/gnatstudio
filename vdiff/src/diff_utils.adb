@@ -21,6 +21,9 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with GNAT.Expect; use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY; use GNAT.Expect.TTY;
+pragma Warnings (On);
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -107,7 +110,7 @@ package body Diff_Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File1, File2 : String) return Diff_Occurrence_Link
    is
-      Descriptor : Process_Descriptor;
+      Descriptor : TTY_Process_Descriptor;
       Pattern    : constant Pattern_Matcher :=
         Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?$",
           Multiple_Lines);

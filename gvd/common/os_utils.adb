@@ -20,6 +20,9 @@
 
 with GNAT.Case_Util;       use GNAT.Case_Util;
 with GNAT.Expect;          use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
+pragma Warnings (On);
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 package body OS_Utils is
@@ -167,7 +170,7 @@ package body OS_Utils is
       Idle         : Idle_Callback;
       Success      : out Boolean)
    is
-      Fd     : Process_Descriptor;
+      Fd     : TTY_Process_Descriptor;
       Result : Expect_Match;
 
    begin
