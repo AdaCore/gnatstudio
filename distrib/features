@@ -1,5 +1,8 @@
 New features in GPS 1.2.0
 
+- BB13-008: There is now a confirmation dialog asking the user whether he
+  wants to wrap around the search.
+
 - B820-007: Executable names can be changed in the project properties editor
 
 - Errors highlighting in the source editor.
@@ -12,4 +15,3 @@ New features in GPS 1.2.0
 
 - New documentation can now be added through simple XML index files
   A new menu Help->Contents provides a list of all registered documentation.
-
