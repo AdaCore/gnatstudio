@@ -21,6 +21,7 @@ project Prj_Editor is
       for Switches ("new_variable_editor_pkg.adb") use ("-g", "-O2");
       for Switches ("switches_editor_pkg.adb") use ("-g", "-O2");
       for Switches ("wizard_window_pkg.adb") use ("-g", "-O2");
+      for Switches ("foreign_naming_scheme_editor_pkg.adb") use ("-g", "-O2");
    end Compiler;
 
 end Prj_Editor;
