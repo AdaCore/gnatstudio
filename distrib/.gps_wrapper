@@ -13,6 +13,8 @@ LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
 PANGO_RC_FILE=$root/etc/gps/pangorc
 GTK_IM_MODULE_FILE=$root/etc/gps/gtk.immodules
 GTK_DATA_PREFIX=$root
-export LD_LIBRARY_PATH PANGO_RC_FILE GTK_DATA_PREFIX GTK_IM_MODULE_FILE
+MAKE_ROOT=$root
+export LD_LIBRARY_PATH PANGO_RC_FILE GTK_DATA_PREFIX
+export GTK_IM_MODULE_FILE MAKE_ROOT
 GDK_USE_XFT=False
 exec $root/bin/${prog}_exe "$@"
