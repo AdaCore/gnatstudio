@@ -39,6 +39,7 @@
 with Gtk.Box;
 with Gtk.Container;
 with Gtk.Label;
+with Gtk.Menu;
 
 with Language;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -369,17 +370,20 @@ package Src_Editor_Box is
 private
 
    type Source_Editor_Box_Record is record
-      Root_Container      : Gtk.Box.Gtk_Box;
-      Never_Attached      : Boolean := True;
-      Kernel              : Glide_Kernel.Kernel_Handle;
-      Source_View         : Src_Editor_View.Source_View;
-      Source_Buffer       : Src_Editor_Buffer.Source_Buffer;
+      Root_Container       : Gtk.Box.Gtk_Box;
+      Never_Attached       : Boolean := True;
+      Kernel               : Glide_Kernel.Kernel_Handle;
+      Source_View          : Src_Editor_View.Source_View;
+      Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
+      --  Contextual menus
+      Contextual_Menu      : Gtk.Menu.Gtk_Menu;
+      Left_Contextual_Menu : Gtk.Menu.Gtk_Menu;
       --  The status bar
-      Filename_Label      : Gtk.Label.Gtk_Label;
-      Cursor_Line_Label   : Gtk.Label.Gtk_Label;
-      Cursor_Column_Label : Gtk.Label.Gtk_Label;
+      Filename_Label       : Gtk.Label.Gtk_Label;
+      Cursor_Line_Label    : Gtk.Label.Gtk_Label;
+      Cursor_Column_Label  : Gtk.Label.Gtk_Label;
       --  The non graphical attributes
-      Filename            : String_Access;
+      Filename             : String_Access;
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
