@@ -6138,7 +6138,7 @@ the system
 
 This environment variable can be set before launching GPS. It should contain
 a list of directories, separated by semicolons (';') on Windows systems and
-colors (':') on Unix systems. All the files found in these directories will
+colons (':') on Unix systems. All the files found in these directories will
 be searched for customization files.
 
 This is a convenient way to have project-specific customization files. You can
@@ -6155,7 +6155,6 @@ users to define their own customization, that they want to load no matter which
 project they are working on.
 @end itemize
 
-
 The format of these files have changed in GPS 1.3.0. A conversion program
 is provided that will automatically convert all files in the customization
 directory to the new format. This conversion tool is called
@@ -6168,17 +6167,17 @@ declaration, as in the following example:
 @smallexample
 <?xml version="1.0" encoding="iso-8859-1">
 <submenu>
-  <title>text/title>
+  <title>encoded text/title>
 </submenu>
 @end smallexample
 
 Any given XML file can contain customization for various aspects of GPS, mixing
-aliases, new languages or menus,@dots{} in a single file if you wishes. This is
+aliases, new languages or menus,@dots{} in a single file. This is
 a convenient way to distribute your customization to other users.
 
-These files must be valid XML files, ie must start with the @code{<?xml?>} tag,
-and contain a single root XML node, the name of which is left to your
-consideration. The general format is therefore
+These files must be valid XML files, i.e. must start with the
+@code{<?xml?>} tag, and contain a single root XML node, the name of which is
+left to your consideration. The general format is therefore
 
 @smallexample
 <?xml version="1.0" ?>
