@@ -1882,12 +1882,11 @@ package body Src_Info.ALI is
             end;
          end if;
 
-         --  Still not found, seach in the source path
+         --  Still not found, search in the source path
 
          Filename := Get_Body_Filename (Get_Unit_Name (Spec_Id), Naming);
-         Dir :=
-           Locate_Regular_File
-             (Get_Name_String (Filename), Predefined_Source_Path);
+         Dir := Locate_Regular_File
+           (Get_Name_String (Filename), Predefined_Source_Path);
 
          if Dir /= null then
             declare
