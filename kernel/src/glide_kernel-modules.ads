@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -135,7 +135,6 @@ with Gtkada.MDI;
 with Src_Info;
 with Language;
 with Basic_Types; use Basic_Types;
-with String_List_Utils;
 with Commands; use Commands;
 with Src_Info.Queries;  use Src_Info.Queries;
 
@@ -160,9 +159,6 @@ package Glide_Kernel.Modules is
 
    package Command_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Command_Access);
-
-   procedure Initialize (Kernel : access Kernel_Handle_Record'Class);
-   --  Initialize the internal data for this package.
 
    -------------------------
    -- Module manipulation --
@@ -223,6 +219,10 @@ package Glide_Kernel.Modules is
    --    (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --
    --  Success is set to True if the module could be successfully registered.
+
+   function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
+      return Glide_Kernel.Module_List.List;
+   --  Return the list of currently loaded modules.
 
    function Module_Name (ID : access Module_ID_Record'Class) return String;
    --  Return the name of the module registered as ID.
@@ -391,172 +391,6 @@ package Glide_Kernel.Modules is
       Image   : Gtk.Image.Gtk_Image := null);
    --  Add a button at the end of the toolbar.
 
-   ------------
-   -- Search --
-   ------------
-   --  See also find_utils.ads in the vsearch module for how to register your
-   --  own search contexts
-
-   procedure Register_Search_Pattern
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Name           : String;
-      Regexp         : String;
-      Case_Sensitive : Boolean := False;
-      Is_Regexp      : Boolean := True);
-   --  Register a new template regular expression in the search engine.
-   --  Name will appear in the popdown menu of the combo box, but this will be
-   --  associated with the regular expression Regexp.
-   --  This emits the "search_regexps_changed" signal on Kernel.
-
-   function Search_Regexps_Count
-     (Kernel : access Kernel_Handle_Record'Class) return Natural;
-   --  Return the number of registered predefined patterns
-
-   procedure Get_Nth_Search_Regexp_Options
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Num            : Natural;
-      Case_Sensitive : out Boolean;
-      Is_Regexp      : out Boolean);
-   --  Return the options for the Num-th predefined search regexp
-
-   function Get_Nth_Search_Regexp_Name
-     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
-      return String;
-   --  Return the name, as it appears in the combo box, for the Num-th regexp.
-   --  The first regexp is number 1.
-
-   function Get_Nth_Search_Regexp
-     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
-      return String;
-   --  Return the Num-th regular expression
-
-   ----------------------
-   -- Projects edition --
-   ----------------------
-
-   type Project_Editor_Page_Record is abstract tagged private;
-   type Project_Editor_Page is access all Project_Editor_Page_Record'Class;
-   --  A page that should be inserted in the project creation wizard and the
-   --  project properties editor.
-
-   procedure Destroy (Page : in out Project_Editor_Page_Record);
-   --  Free the memory allocated for the page. Inherited subprograms should
-   --  always call the parent's Destroy.
-
-   function Widget_Factory
-     (Page         : access Project_Editor_Page_Record;
-      Project      : Projects.Project_Type;
-      Full_Project : String;
-      Kernel       : access Kernel_Handle_Record'Class)
-      return Gtk.Widget.Gtk_Widget is abstract;
-   --  Return a new widget to display in the project properties editor or the
-   --  project creation wizard. This can be used to store extra information
-   --  closely associated with each projects (either in the project file itself
-   --  or in some external files).
-   --  This function should expect Project_View to be No_Project in some cases,
-   --  when called from the project wizard.
-   --  This subprogram should call Show_All on the returned widget. This allows
-   --  it to hide some of the components when necessary. The caller should not
-   --  force a Show_All on the widget.
-   --  Full_Project is the directory/name  the user has chosen for the project
-   --  file. It should be used for the pages that need initial values for the
-   --  directories.
-   --
-   --  Refresh is always called just after Widget_Factory.
-
-   function Project_Editor
-     (Page          : access Project_Editor_Page_Record;
-      Project       : Projects.Project_Type;
-      Kernel        : access Kernel_Handle_Record'Class;
-      Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Ref_Project   : Projects.Project_Type) return Boolean is abstract;
-   --  Modifies Project given the data in Widget. Widget is the same that was
-   --  created through a Project_Editor_Page_Factor.
-   --
-   --  Return True if at least one project was modified.
-   --
-   --  This subprogram should not recompute the project view itself,
-   --  since this is already done once after all the modifications have been
-   --  done.
-   --  This function should expect Project to be No_Project in some cases.
-   --
-   --  Ref_Project is the project whose properties the user decided to edit
-   --  initially (through the contextual menu). In some cases, an editor might
-   --  decide that is cannot modify projects other than this one (for instance,
-   --  the object directory editor only modifies ref_project). This function
-   --  will not be called with Project /= Ref_Project if the flags do not
-   --  include Multiple_Projects in Register_Project_Editor_Page.
-   --
-   --  This function might be called several times with the same project, but a
-   --  different scenario if the user has decided to modify several
-   --  scenarios.
-
-   procedure Refresh
-     (Page      : access Project_Editor_Page_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project   : Projects.Project_Type := Projects.No_Project;
-      Languages : GNAT.OS_Lib.Argument_List);
-   --  Refresh the contents of Widget, that was created by Widget_Factory.
-   --  Since Project_View is still the one when the project creation wizard or
-   --  the project properties editor were initially displayed, the list of
-   --  supported languages should be read from languages.
-   --  By default, it does nothing.
-
-   function Get_Label (Page : access Project_Editor_Page_Record'Class)
-      return String;
-   --  Return the label that should be used to identify the page in the project
-   --  properties editor.
-
-   function Get_Toc (Page : access Project_Editor_Page_Record'Class)
-      return String;
-   --  Return the table-of-contents label to be used in the project creation
-   --  wizard.
-
-   function Get_Title (Page : access Project_Editor_Page_Record'Class)
-      return String;
-   --  Return the title that should be used for this page in the project
-   --  creation wizard.
-
-   type Selector_Flags is mod 4;
-   Multiple_Projects  : constant Selector_Flags := 2 ** 0;
-   Multiple_Scenarios : constant Selector_Flags := 2 ** 1;
-   --  The projects or scenarios the project editor applies to.
-   --  Multiple_Project should be set if multiple projects can be modified by
-   --  the editor.
-   --  Multiple_Scenarios should be set if multiple scenarios can be modified
-   --  at the same time by the editor.
-   --  This flags is used to desactivate the selector widgets in the project
-   --  properties dialog.
-
-   function Get_Flags (Page : access Project_Editor_Page_Record'Class)
-      return Selector_Flags;
-   --  Return the list of selectors recognized by this editor
-
-   procedure Register_Project_Editor_Page
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Page      : Project_Editor_Page;
-      Label     : String;
-      Toc       : String;
-      Title     : String;
-      Flags     : Selector_Flags := Multiple_Projects or Multiple_Scenarios;
-      Ref_Page  : String := "";
-      Add_After : Boolean := True);
-   --  Register a page that should be displayed both in the project wizard and
-   --  the project properties editor.
-   --  The new page will be put after or before the page whose label is
-   --  Ref_Page, or after all the pages if Ref_Page is the empty string.
-
-   function Project_Editor_Pages_Count
-      (Kernel : access Kernel_Handle_Record'Class) return Natural;
-   --  Return the number of registered project editor pages
-
-   function Get_Nth_Project_Editor_Page
-     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
-      return Project_Editor_Page;
-   --  Return the Num-th registered project editor page.
-   --  First page is number 1.
-
    --------------------
    -- Mime callbacks --
    --------------------
@@ -603,6 +437,7 @@ package Glide_Kernel.Modules is
    --     fifth   : column (use Get_Int)
    --     sixth   : message (use Get_String)
    --     seventh : action item (use Get_Addess)
+   --  See also the procedure Add_Location_Action
 
    Mime_Html_File : constant String := "gps/html";
    --  Request to display a html file
@@ -633,16 +468,6 @@ package Glide_Kernel.Modules is
    --  If any of the module was able to, True is returned.
    --  Set_Busy tells whether the busy cursor should be set while processing
    --  the query.
-
-   function Create_Mark
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : String;
-      Line              : Natural := 1;
-      Column            : Natural := 1;
-      Length            : Natural := 0) return String;
-   --  Create a mark for Filename, at position given by Line, Column, with
-   --  length Length.
-   --  Return the identifier corresponding to the mark that has been created.
 
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
@@ -788,7 +613,8 @@ package Glide_Kernel.Modules is
       Column        : Integer;
       Message       : String;
       Action        : Action_Item);
-   --  Add an action to the location specified.
+   --  Add an action to the location specified. This will show up on the left
+   --  side of the result view.
 
    procedure Remove_Location_Action
      (Kernel        : access Kernel_Handle_Record'Class;
@@ -799,21 +625,6 @@ package Glide_Kernel.Modules is
       Column        : Integer;
       Message       : String);
    --  Remove action corresponding to Identifier at specified location.
-
-   ------------------
-   -- URL contexts --
-   ------------------
-
-   type URL_Context is new Selection_Context with private;
-   type URL_Context_Access is access all URL_Context'Class;
-
-   procedure Set_URL_Information
-     (Context : access URL_Context;
-      URL     : String := "");
-   --  Set the information in this context.
-
-   procedure Destroy (Context : in out URL_Context);
-   --  Free the memory associated with the context
 
    ------------------------
    -- File_Name contexts --
@@ -991,66 +802,7 @@ package Glide_Kernel.Modules is
    procedure Destroy (Context : in out Entity_Selection_Context);
    --  Destroy the memory associated with the entity
 
-   --------------------------
-   -- Interactive Commands --
-   --------------------------
-
-   procedure Register_Command
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Command      : String;
-      Usage        : String;
-      Description  : String;
-      Minimum_Args : Natural := 0;
-      Maximum_Args : Natural := 0;
-      Handler      : Module_Command_Function);
-   --  Register Command, with Help as its help/usage text, and Handler
-   --  as the default command handler.
-   --  Usage should only describe the command name and its arguments. Optional
-   --  arguments should be reported between [].
-   --  Description should describe the effects of the command. The description
-   --  should end with a '.'.
-   --  The number of parameters the command expects should be between
-   --  Minimum_Args and Maximum_Args.
-
-   function Interpret_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String) return String;
-   --  Command is a string followed by a list of arguments, for example
-   --     "edit gps.adb"
-   --  Commands are registered using Register_Command, see above.
-   --  The following commands are recognized by the kernel:
-   --    "help"   : brings up the list of currently recognized commands.
-   --    "help X" : brings up help concerning command X.
-
-   function Interpret_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
-   --  Same as above, the arguments not included in Command.
-
-   procedure Interpret_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String);
-   --  Same as above, but do not return any result, and display the output
-   --  on the console.
-
-   procedure Interpret_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List);
-   --  Same as above, the arguments not included in Command.
-
-   function Commands_As_List
-     (Prefix : String;
-      Kernel : access Glib.Object.GObject_Record'Class)
-      return String_List_Utils.String_List.List;
-   --  Return the list of commands. The list must be freed by the caller.
-
 private
-
-   type URL_Context is new Selection_Context with record
-      URL : GNAT.OS_Lib.String_Access := null;
-   end record;
 
    type File_Selection_Context is new Selection_Context with record
       Directory         : GNAT.OS_Lib.String_Access := null;
@@ -1081,39 +833,6 @@ private
       Entity        : Src_Info.Queries.Entity_Information :=
         Src_Info.Queries.No_Entity_Information;
    end record;
-
-   type Project_Editor_Page_Record is abstract tagged record
-      Label, Toc, Title : GNAT.OS_Lib.String_Access;
-      Flags : Selector_Flags;
-   end record;
-
-   type Project_Editor_Page_Array is array (Natural range <>)
-     of Project_Editor_Page;
-   type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
-
-   type Search_Regexp is record
-      Name           : String_Access;
-      Regexp         : String_Access;
-      Case_Sensitive : Boolean;
-      Is_Regexp      : Boolean;
-   end record;
-
-   type Search_Regexps_Array is array (Natural range <>) of Search_Regexp;
-   type Search_Regexps_Array_Access is access Search_Regexps_Array;
-
-   type Real_Kernel_Module_Data_Record is new Kernel_Module_Data_Record
-   with record
-      Project_Editor_Pages : Project_Editor_Page_Array_Access;
-      --  The pages to be added in the project properties editor and the
-      --  project creation wizard.
-
-      Search_Regexps : Search_Regexps_Array_Access;
-      --  The list of predefined regexps for the search module.
-   end record;
-   type Real_Module_Data is access all Real_Kernel_Module_Data_Record'Class;
-
-   procedure Destroy (Data : in out Real_Kernel_Module_Data_Record);
-   --  Free the memory associated with Data.
 
    pragma Inline (Has_Project_Information);
    pragma Inline (Has_Directory_Information);
