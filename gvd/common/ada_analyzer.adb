@@ -227,9 +227,13 @@ package body Ada_Analyzer is
       Declaration   : Boolean := False;
       --  Are we inside a declarative part ?
 
-      Record_Start_New_Line : Boolean := False;
+      Extra_Indent : Boolean := False;
+      --  Used for various kinds of constructs, when detecting different
+      --  ways of indenting code (only used internally).
       --  For a Tok_Record, set to True if the keyword "record" was found on
-      --  its own line (only used internally).
+      --  its own line.
+      --  For a Tok_Case, set to True if 'when' constructs should be indented
+      --  an extra level, as for the RM style.
 
       Type_Declaration : Boolean := False;
       --  Is it a type declaration ?
@@ -599,7 +603,8 @@ package body Ada_Analyzer is
       Indent_Use         : constant := 4;
       Indent_When        : constant := 5;
       Indent_Record      : Natural renames Indent_Params.Indent_Level;
-      Indent_Case_Extra  : Boolean renames Indent_Params.Indent_Case_Extra;
+      Indent_Case_Extra  : Indent_Style renames
+        Indent_Params.Indent_Case_Extra;
       Reserved_Casing    : Casing_Type renames Indent_Params.Reserved_Casing;
       Ident_Casing       : Casing_Type renames Indent_Params.Ident_Casing;
       Use_Tabs           : Boolean renames Indent_Params.Use_Tabs;
@@ -1468,11 +1473,13 @@ package body Ada_Analyzer is
             end if;
 
             Do_Indent (Prec, Num_Spaces);
-            Push (Tokens, Temp);
 
-            if Indent_Case_Extra then
+            if Indent_Case_Extra = RM_Style then
+               Temp.Extra_Indent := True;
                Num_Spaces := Num_Spaces + Indent_Level;
             end if;
+
+            Push (Tokens, Temp);
 
          elsif Prev_Token /= Tok_End and then
            (Reserved = Tok_If
@@ -1642,14 +1649,14 @@ package body Ada_Analyzer is
                      Pop (Tokens);
 
                   when Tok_Case =>
-                     if Indent_Case_Extra then
+                     if Top_Token.Extra_Indent then
                         Num_Spaces := Num_Spaces - Indent_Level;
                      end if;
 
                   when Tok_Record =>
                      --  If the "record" keyword was on its own line
 
-                     if Top_Token.Record_Start_New_Line then
+                     if Top_Token.Extra_Indent then
                         Do_Indent (Prec, Num_Spaces - Indent_Level);
                         Num_Spaces := Num_Spaces - Indent_Record;
                      end if;
@@ -1814,7 +1821,7 @@ package body Ada_Analyzer is
                --        end record;
 
                if not Indent_Done then
-                  Temp.Record_Start_New_Line := True;
+                  Temp.Extra_Indent := True;
                   Num_Spaces := Num_Spaces + Indent_Record;
                   Do_Indent (Prec, Num_Spaces);
                end if;
@@ -1852,6 +1859,15 @@ package body Ada_Analyzer is
                end if;
 
                if Reserved = Tok_When then
+                  if Top_Token.Token = Tok_Case then
+                     if Indent_Case_Extra = Automatic
+                       and then Prec - Start_Of_Line > Num_Spaces
+                     then
+                        Top_Token.Extra_Indent := True;
+                        Num_Spaces := Num_Spaces + Indent_Level;
+                     end if;
+                  end if;
+
                   Push (Tokens, Temp);
                end if;
             end if;
