@@ -6,6 +6,10 @@ package Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
+   function On_Breakpoints_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+
    procedure On_Location_Selected_Toggled
      (Object : access Gtk_Widget_Record'Class);
 

@@ -90,7 +90,7 @@ package Breakpoints_Pkg is
       Vbox16 : Gtk_Vbox;
       Label72 : Gtk_Label;
       Scrolledwindow2 : Gtk_Scrolled_Window;
-      Clist1 : Gtk_Clist;
+      Breakpoint_List : Gtk_Clist;
       Label15 : Gtk_Label;
       Label16 : Gtk_Label;
       Hbuttonbox8 : Gtk_Hbutton_Box;
