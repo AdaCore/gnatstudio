@@ -88,6 +88,21 @@ package Src_Editor_Box is
    -- Source_Buffer related services --
    ------------------------------------
 
+   function Get_Kernel
+     (Editor : access Source_Editor_Box_Record)
+      return Glide_Kernel.Kernel_Handle;
+   --  ??? Temporary function for testing purposes... Should be removed.
+
+   procedure Set_Filename
+     (Editor   : access Source_Editor_Box_Record;
+      Filename : String);
+   --  Change the filename of the given editor to be Filename.
+
+   function Get_Filename
+     (Editor : access Source_Editor_Box_Record) return String;
+   --  Return the filename associated the given Editor. Return the empty
+   --  string if Editor does not have any filename.
+
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
@@ -97,6 +112,7 @@ package Src_Editor_Box is
    --  the editor tries to automatically set the language based on the
    --  Filename. Otherwise, the language remains uchanged. After the file is
    --  loaded into the buffer, the buffer is syntax-highlighted if Lang is set.
+   --  Filename is also stored in the Editor.
    --
    --  Note that if Lang_Autodetect is True, and the editor could not guess
    --  the language from the filename, then Lang will be unset, and syntax
