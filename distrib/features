@@ -1,3 +1,7 @@
+New features in GPS 1.0.1
+
+- The font "tahoma" is used under Windows by default
+
 New features in GPS 1.0.0
 
 - The editor now detects when a file is unmodified after multiple undo
@@ -5,17 +9,4 @@ New features in GPS 1.0.0
 - The Emacs key bindings can now be set directly from the preferences dialog
 - Home button in file selector now takes into account the HOME environment
   variable
-
-New features in GPS 0.9.2
-
-- Shortcut provided to build the current file with the default project
-- Minor debugger bug fixes
-- It is now possible to copy text from the HTML window
-- The main files in the program wizard are now taken into account
-- Menu items File->Messages->Save As... & Load Contents... implemented
-- Menu Build->Run implemented
-- Automatic indentation now configurable through the preferences dialog
-- The search box now contains predefined regexps for the various languages
-- The buttons "Find" and "Next" have been merged in the search box
-- New contextual menu "find all local references" (9905-008)
 
