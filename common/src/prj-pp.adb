@@ -421,10 +421,6 @@ package body Prj.PP is
                   Write_Line (" =>");
                   Print (First_Declarative_Item_Of (Node), Indent + Increment);
             end case;
-
-         else
-            Start_Line (Indent);
-            Write_Line ("null;");
          end if;
       end Print;
 
