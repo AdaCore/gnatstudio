@@ -1941,6 +1941,7 @@ package body Project_Explorers is
             Module         => Explorer_Module_ID);
          Set_Title
            (Child, -"Project Explorer - Project View",  -"Project View");
+
          Set_Focus_Child (Child);
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
@@ -2566,10 +2567,10 @@ package body Project_Explorers is
             --  the same base name in an extending project...
             Set_Context
               (Context  => C,
-               Look_For => Base_Name (File_Information (File_C)),
+               Look_For => "^" & Base_Name (File_Information (File_C)) & "$",
                Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
                             Whole_Word     => True,
-                            Regexp         => False));
+                            Regexp         => True));
 
             if not Search (C, Kernel, Search_Backward => False) then
                Insert (Kernel,
