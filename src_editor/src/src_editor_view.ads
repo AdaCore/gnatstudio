@@ -196,6 +196,12 @@ private
       Speed_Column_Mode    : Speed_Column_Policies := Automatic;
       --  The display policy for the speed column.
 
+      Speed_Column_Hide_Timeout : Gtk.Main.Timeout_Handler_Id := 0;
+      --  The timeout to hide the speed column.
+
+      Speed_Column_Hide_Registered : Boolean := False;
+      --  Whether the timeout to hide the speed column has been registered.
+
       Scroll_Timeout       : Gtk.Main.Timeout_Handler_Id := 0;
       Scroll_To_Value      : Gdouble := 0.0;
       Scroll_Requested     : Boolean := False;
