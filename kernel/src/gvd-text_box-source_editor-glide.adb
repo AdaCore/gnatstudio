@@ -176,11 +176,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
             "Editor",
             --  ??? maybe we should get that from elsewhere.
             new Line_Information_Array'
-              (1 => Line_Information_Record'
-                      (Line  => Prev_Current_Line,
-                       Text  => null,
-                       Image => Gdk.Pixbuf.Null_Pixbuf,
-                       Associated_Command => null)));
+            (Prev_Current_Line => Line_Information_Record'
+               (Text  => null,
+                Image => Gdk.Pixbuf.Null_Pixbuf,
+                Associated_Command => null)));
       end if;
 
       Editor.Line := Line;
@@ -194,10 +193,9 @@ package body GVD.Text_Box.Source_Editor.Glide is
             "Editor",
             --  ??? maybe we should get that from elsewhere.
             new Line_Information_Array'
-            (1 => Line_Information_Record' (Line  => Line,
-                                            Text  => null,
-                                            Image => Current_Line_Pixbuf,
-                                            Associated_Command => null)));
+            (Line => Line_Information_Record' (Text  => null,
+                                               Image => Current_Line_Pixbuf,
+                                               Associated_Command => null)));
 
          Set_Current_Source_Location (Tab, Editor.Current_File.all, Line);
       end if;
