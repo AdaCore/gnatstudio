@@ -1,7 +1,7 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                        Copyright (C) 2002                         *
+ *                      Copyright (C) 2002-2003                      *
  *                            ACT-Europe                             *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
@@ -19,7 +19,12 @@
  *********************************************************************/
 
 
-/* Dummy version of update_path (needed by osint.adb) for GPS */
+/* Dummy versions of update_path and set_std_prefix (needed by osint.adb) */
+
+void
+set_std_prefix (char *path, int len)
+{
+}
 
 char *
 update_path (char *path, char *key)
