@@ -425,6 +425,11 @@ initially displayed on the left side of the GPS window. Their goal is to
 show a full view of the various components of your projects. These
 various components are presented below.
 
+@cindex drag-n-drop
+Under Windows, it is possible to drop files (coming e.g. from the Explorer)
+in any of these views with the following behavior: a project file dropped
+will be loaded; any other file will open a source editor on this file.
+
 The following screen-shot displays the two pages side-by-side: on the
 left, the @code{Project View}, and on the right the @code{File View}.
 
@@ -833,8 +838,8 @@ to copy the current selection to the clipboard.
 
 @node Adding New Help Files
 @section Adding New Help Files
+@cindex gps_index.xml
 @noindent
-
 GPS will search for the help files in the list of directories set in
 the environment variable @code{GPS_DOC_PATH} (a colon-separated list
 of directories on Unix systems, or semicolon-separated list of
@@ -1252,7 +1257,7 @@ In all cases, the changes are done either through the buttons in the
 title bar or through the menu @code{Window}.
 
 @cindex drag-n-drop
-On some systems, a more intuitive method is also provided, based on
+A more intuitive method is also provided, based on
 the drag-and-drop paradigm. The idea is simply to select a window,
 wherever it is, and then, by clicking on it and moving the mouse while
 keeping the left button pressed, drop it anywhere else inside GPS.
@@ -3605,11 +3610,12 @@ This option is currently only supported for Ada files.
    Similarly the @code{Build} contextual menu accessible from a project
    entity contains the same entries.
 
+   @item Project
+   Build all main files defined in your top level project, or all source
+   files if no main file are defined.
+
    @item <current file>
    Consider the currently selected file as a main file, and build it.
-
-   @item All main subprograms
-   Build all main files defined in your top level project.
 
    @item Custom...
    Display a text entry where you can enter any external command. This menu
