@@ -407,7 +407,7 @@ tmp()
 {
 	int fd=0;
 	char *envtmp;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	envtmp = getenv("TMPDIR");
 	(void)_snprintf(path,
