@@ -91,14 +91,14 @@ procedure Docgen.Main is
       end if;
       Quit := False;
 
+      --  if options for other output formats, define here!
+      Options.Doc_Subprogram := Doc_HTML_Create'Access;
+      Options.Doc_Suffix     := new String'(".htm");
+
       while J <= N loop
          declare
             S : constant String := Argument (J);
          begin
-
-            --  if options for other output formats, define here!
-            Options.Doc_Subprogram := Doc_HTML_Create'Access;
-            Options.Doc_Suffix     := new String'(".htm");
 
             if S = "-h"    or else S = "-?" or else
               S = "-help" or else S = "--help" then
@@ -106,10 +106,10 @@ procedure Docgen.Main is
 
                --  the project file must be the first argement
             elsif J = 1 then
-               if S (S'Last - 3 .. S'Last) = ".gpr" then
+               if File_Extension (S) = ".gpr" then
                   Prj_File_Name := new String'(S);
                   Options.Project_Name :=
-                    new String'(File_Name (S (S'First .. S'Last - 4)));
+                    new String'(File_Name_Without_Suffix (S));
                   Load_Project (S, Handler, Project_Tree, Project_View);
                else
                   raise Project_Not_First;
@@ -136,10 +136,8 @@ procedure Docgen.Main is
             elsif S = "-private" then
                Options.Show_Private := True;
             elsif S'Last > 9 and then S (1 .. 9) = "-docpath=" then
-               Options.Doc_Directory := new String '(S (10 .. S'Last));
-            elsif S'Length > 5 and then S (S'Last - 3 .. S'Last) = ".ads" then
-               --  ??? Should use Prj_API to check whether the file is a spec
-
+                  Options.Doc_Directory := new String '(S (10 .. S'Last));
+            elsif S'Length > 5 and then Is_Spec_File (S) then
                Load_LI_File
                     (Source_Info_List, Handler, Project_View,
                      S, LI_Unit);
@@ -196,23 +194,17 @@ procedure Docgen.Main is
       Source_File_Node : Type_Source_File_List.List_Node;
       New_Node         : Source_File_Information;
       New_Filename     : GNAT.OS_Lib.String_Access;
-      Old_Filename     : GNAT.OS_Lib.String_Access;
       LI_Unit          : LI_File_Ptr;
    begin
       Source_File_Node := TSFL.First (Source_File_List);
 
       for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
-         --  only if the .adb file really exists
+         --  ??? ADD: check if the body file really exists
 
          if TSFL.Data (Source_File_Node).Other_File_Found then
 
-            --  ??? The following code should use Glide_Kernel.Other_File_Name
-
-            Old_Filename := new String'
-              (TSFL.Data (Source_File_Node).File_Name.all);
             New_Filename := new String'
-              (Old_Filename.all (Old_Filename'First .. Old_Filename'Last - 4)
-               & ".adb");
+              (Other_File_Name (TSFL.Data (Source_File_Node).File_Name.all));
             if Options.Info_Output then
                Put_Line (-"Adding file: " & New_Filename.all);
             end if;
@@ -228,7 +220,6 @@ procedure Docgen.Main is
                             (LI_Unit, File_Name (New_Filename.all)));
             Type_Source_File_List.Append (Source_File_List, New_Node);
             Free (New_Filename);
-            Free (Old_Filename);
          end if;
 
          Source_File_Node := TSFL.Next (Source_File_Node);
@@ -290,7 +281,7 @@ begin --  DocGen
 
    if not TSFL.Is_Empty (Source_File_List) then
 
-      --  if Process_Body (-body) option was set, add all .adb
+      --  if Process_Body (-body) option was set, add all body
       --  files to the list
       if Options.Process_Body_Files then
          Add_Body_Files (Source_File_List);
@@ -333,8 +324,8 @@ exception
       Put_Line (Current_Error, -"SYNOPSIS");
       New_Line (Current_Error);
       Put_Line (Current_Error, -"   docgen (-h | -help | --help | -?)");
-      Put_Line (Current_Error, -("   docgen  .gpr-file  .ads-file " &
-                "{ .ads-files }"));
+      Put_Line (Current_Error, -("   docgen  .gpr-file  spec-file " &
+                "{ spec-files }"));
       Put_Line (Current_Error, -("   [ -info ] [ -ic ] [ -under]" &
                 "[ -private] [ -texi ] "));
       Put_Line (Current_Error, -"  [ -ref] [ -docpath=DIR ] [-linkall]");
