@@ -110,10 +110,6 @@ package body Gtkada.MDI is
    Handle_Size : constant Gint := 8;
    --  <preference> The default width or height of the handles.
 
-   Do_Grabs : constant Boolean := True;
-   --  Should be set to False when debugging, so that pointer grabs are not
-   --  done.
-
    Min_Width  : constant Gint := 40;
    Min_Height : constant Gint := 2 * Border_Thickness + Title_Bar_Height;
    --  Minimal size for all windows
