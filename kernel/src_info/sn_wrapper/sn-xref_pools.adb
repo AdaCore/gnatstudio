@@ -6,6 +6,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 package body SN.Xref_Pools is
 
    Max_Filename_Length : constant := 1024;
+   --  1024 is the value of FILENAME_MAX in stdio.h (see
+   --  GNAT.Directory_Operations)
 
    --------------
    -- Str_Hash --
@@ -129,7 +131,12 @@ package body SN.Xref_Pools is
          end if;
          Close (FD);
       exception
-         when others => null; -- ignore errors
+         when others => -- ignore errors
+            begin
+               Close (FD);
+            exception
+               when others => null;
+            end;
       end;
    end Load;
 
@@ -150,7 +157,13 @@ package body SN.Xref_Pools is
       end loop;
       Close (FD);
    exception
-      when others => raise Xref_File_Error;
+      when others =>
+         begin
+            Close (FD);
+         exception
+            when others => null;
+         end;
+         raise Xref_File_Error;
    end Save;
 
    ----------
