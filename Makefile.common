@@ -50,7 +50,7 @@ NO_STYLE_FILES+=${wildcard *_pkg.adb}
 CFLAGS+=-O2 -g
 GNATBIND_FLAGS+=-bargs -E
 GNATLINK_FLAGS+=
-GNATMAKE_FLAGS=-gnataQ -m ${CFLAGS} -j3
+GNATMAKE_FLAGS=-gnataQ -m ${CFLAGS}
 STYLE_FLAGS=-gnaty -gnatwuwe
 
 all: ${MAIN}
@@ -251,22 +251,22 @@ check_src_editor: force
 	   (echo "src editor sources not found in ${SRC_EDITOR_SRC}, see README"; false)
 
 ######################
-## hypergrep module ##
+## vsearch module ##
 ######################
 
-ifneq (,$(findstring hypergrep,$(MODULES)))
+ifneq (,$(findstring vsearch,$(MODULES)))
 
-# Location of hypergrep sources. See the README file at the top-level for
+# Location of vsearch sources. See the README file at the top-level for
 # information on how to setup the required links
-HYPERGREP_SRC=../../hypergrep
+VSEARCH_SRC=../../vsearch
 
-MODULE_INCLUDE+=-aI${HYPERGREP_SRC}/src -aO${HYPERGREP_SRC}/obj
+MODULE_INCLUDE+=-aI${VSEARCH_SRC}/src -aO${VSEARCH_SRC}/obj
 endif
 
-.PHONY: check_hypergrep
-check_hypergrep: force
-	@[ -f ${HYPERGREP_SRC}/src/hyper_grep_base_pkg.ads ] || \
-	   (echo "hypergrep sources not found in ${HYPERGREP_SRC}, see README"; false)
+.PHONY: check_vsearch
+check_vsearch: force
+	@[ -f ${VSEARCH_SRC}/src/vsearch_pkg.ads ] || \
+	   (echo "vsearch sources not found in ${VSEARCH_SRC}, see README"; false)
 
 ##################
 ## vdiff module ##
