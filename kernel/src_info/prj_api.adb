@@ -1039,6 +1039,29 @@ package body Prj_API is
         (Projects.Table (View).Name).Node;
    end Get_Project_From_View;
 
+   ----------------------
+   -- Is_Direct_Source --
+   ----------------------
+
+   function Is_Direct_Source
+     (Source_Filename : String; Of_Project : Prj.Project_Id) return Boolean
+   is
+      Sources : String_List_Id := Projects.Table (Of_Project).Sources;
+   begin
+      while Sources /= Nil_String loop
+         if Get_String (String_Elements.Table (Sources).Value) =
+           Source_Filename
+         then
+            --  Trace (Me, Source_Filename & " Found in project "
+            --         & Get_Name_String (Projects.Table (Of_Project).Name));
+            return True;
+         end if;
+
+         Sources := String_Elements.Table (Sources).Next;
+      end loop;
+      return False;
+   end Is_Direct_Source;
+
    ---------------------------
    -- Get_Project_From_File --
    ---------------------------
@@ -1047,8 +1070,6 @@ package body Prj_API is
      (Root_Project_View : Prj.Project_Id; Source_Filename : String)
       return Prj.Project_Id
    is
-      Result : Project_Id := No_Project;
-
       procedure Source_Belongs_To_Project
         (Project : Project_Id; With_State : in out Project_Id);
       --  Check if Source_Filename belongs to Project
@@ -1058,37 +1079,30 @@ package body Prj_API is
       -------------------------------
 
       procedure Source_Belongs_To_Project
-        (Project : Project_Id; With_State : in out Project_Id)
-      is
-         Sources : String_List_Id := Projects.Table (Project).Sources;
+        (Project : Project_Id; With_State : in out Project_Id) is
       begin
-         if With_State = No_Project then
-            while Sources /= Nil_String loop
-               if Get_String (String_Elements.Table (Sources).Value) =
-                 Source_Filename
-               then
-                  Trace (Me, Source_Filename & " Found in project "
-                         & Get_Name_String (Projects.Table (Project).Name));
-                  With_State := Project;
-                  return;
-               end if;
-
-               Sources := String_Elements.Table (Sources).Next;
-            end loop;
+         if With_State = No_Project
+           and then Is_Direct_Source (Source_Filename, Project)
+         then
+            With_State := Project;
          end if;
       end Source_Belongs_To_Project;
 
-      procedure For_All_Projects is new For_Every_Project_Imported
-        (Project_Id, Source_Belongs_To_Project);
+      --  procedure For_All_Projects is new For_Every_Project_Imported
+      --    (Project_Id, Source_Belongs_To_Project);
+
+      --  Result : Project_Id := No_Project;
+
    begin
-      For_All_Projects (Root_Project_View, Result);
+      return Root_Project_View;
+      --  For_All_Projects (Root_Project_View, Result);
 
-      if Result = No_Project then
-         Trace (Me, "Project not found for " & Source_Filename);
-         Result := Root_Project_View;
-      end if;
+      --  if Result = No_Project then
+      --     --  Trace (Me, "Project not found for " & Source_Filename);
+      --     Result := Root_Project_View;
+      --  end if;
 
-      return Result;
+      --  return Result;
    end Get_Project_From_File;
 
    -------------------------------

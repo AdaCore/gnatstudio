@@ -87,6 +87,10 @@ package Prj_API is
    --  ??? Should always create, since we can use a find_* function to get an
    --  existing one.
 
+   function Is_Direct_Source
+     (Source_Filename : String; Of_Project : Prj.Project_Id) return Boolean;
+   --  Return True if Source_Filename is a direct source of Of_Project.
+
    procedure Add_At_End
      (Parent                       : Project_Node_Id;
       Expr                         : Project_Node_Id;
