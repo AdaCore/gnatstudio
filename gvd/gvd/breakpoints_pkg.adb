@@ -582,9 +582,6 @@ is
 begin
    if Editor = null then
       Gtk_New (Editor);
-
-      --  ??? Else we should raise the window, in case it was hidden by some
-      --  other window.
    end if;
 
    Set_Page (Editor.Notebook1, 0);
