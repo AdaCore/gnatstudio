@@ -19,7 +19,7 @@ gtkada \
 gvd
 
 DEPENDENCIES= \
-kernel \
+kbody \
 common \
 syntax \
 src_editor \
