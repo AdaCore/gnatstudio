@@ -1,7 +1,6 @@
 with "../gtkada/gtkada";
 with "../kernel/kernel";
 with "../widgets/widgets";
-with "../navigation/navigation";
 with "../shared";
 
 project VCS is
@@ -11,7 +10,8 @@ project VCS is
    for Object_Dir use "obj";
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use
+        ("-g", "-O2", "-gnaty", "-gnatwue", "-fPIC");
    end Compiler;
 
    package IDE renames Shared.IDE;
