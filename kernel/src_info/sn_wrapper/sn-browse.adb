@@ -127,7 +127,7 @@ package body SN.Browse is
 
    procedure Generate_Xrefs
      (DB_Directory : in String;
-      Tmp_Filename : out GNAT.OS_Lib.Temp_File_Name;
+      Temp_Name    : out GNAT.OS_Lib.Temp_File_Name;
       PD           : out GNAT.Expect.Process_Descriptor)
    is
       BY_File_Name : String := DB_Directory & Directory_Separator
@@ -142,9 +142,7 @@ package body SN.Browse is
       Success      : Boolean;
       Args         : Argument_List_Access;
       Content      : String_Access;
-      PD           : GNAT.Expect.Process_Descriptor;
       Temp_File    : File_Descriptor;
-      Temp_Name    : Temp_File_Name;
    begin
 
       --  remove .to and .by tables
@@ -208,22 +206,25 @@ package body SN.Browse is
       Delete (Args);
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
 
-      return PD;
    end Generate_Xrefs;
 
-   function Is_Alive (PD : GNAT.Expect.Process_Descriptor) return Boolean is
+   procedure Is_Alive
+     (PD : in out GNAT.Expect.Process_Descriptor;
+      Status : out Boolean)
+   is
       Result       : GNAT.Expect.Expect_Match;
    begin
+      Status := False;
       GNAT.Expect.Expect (PD, Result, "", 1);
       if Result = GNAT.Expect.Expect_Timeout then
-         return True;
+         Status := True;
+         return;
       end if;
       GNAT.Expect.Close (PD);
-      return False;
+      return;
    exception
       when GNAT.Expect.Process_Died =>
          GNAT.Expect.Close (PD);
-         return False;
    end Is_Alive;
 
    ---------------------

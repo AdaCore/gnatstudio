@@ -238,6 +238,58 @@ package body Src_Info.CPP is
    function Get_SN_Dir (Project : Prj.Project_Id) return String;
    pragma Inline (Get_SN_Dir);
 
+   ----------------------------
+   -- Generate_LI_For_Source --
+   ----------------------------
+
+   function Generate_LI_For_Source
+     (Handler       : access CPP_LI_Handler_Record;
+      Root_Project  : Prj.Project_Id;
+      File_Project  : Prj.Project_Id;
+      Full_Filename : String) return LI_Handler_Iterator'Class
+   is
+      pragma Unreferenced (Handler);
+      pragma Unreferenced (Root_Project);
+      pragma Unreferenced (File_Project);
+      pragma Unreferenced (Full_Filename);
+      HI : CPP_LI_Handler_Iterator;
+   begin
+      return HI;
+   end Generate_LI_For_Source;
+
+   -----------------------------
+   -- Generate_LI_For_Project --
+   -----------------------------
+
+   function Generate_LI_For_Project
+     (Handler       : access CPP_LI_Handler_Record;
+      Root_Project  : Prj.Project_Id;
+      Project       : Prj.Project_Id;
+      Recursive     : Boolean := False)
+      return LI_Handler_Iterator'Class
+   is
+      pragma Unreferenced (Handler);
+      pragma Unreferenced (Project);
+      pragma Unreferenced (Recursive);
+      HI : CPP_LI_Handler_Iterator;
+   begin
+      HI.SN_Dir := new String' (Get_SN_Dir (Root_Project));
+
+      --  Delete old databse
+      Browse.Delete_Database (HI.SN_Dir.all);
+
+      return HI;
+   end Generate_LI_For_Project;
+
+   procedure Continue
+     (Iterator : in out CPP_LI_Handler_Iterator;
+      Finished : out Boolean)
+   is
+      pragma Unreferenced (Iterator);
+   begin
+      Finished := True;
+   end Continue;
+
    ----------------
    -- Get_SN_Dir --
    ----------------
@@ -363,68 +415,6 @@ package body Src_Info.CPP is
          --  exception
          raise;
    end Process_File;
-
-   ---------------------
-   -- Delete_Database --
-   ---------------------
-
-   procedure Delete_Database (Root_Project : Prj.Project_Id) is
-   begin
-      if Xrefs /= Empty_Xref_Pool  then
-         Free (Xrefs);
-      end if;
-      Browse.Delete_Database (Get_SN_Dir (Root_Project));
-   end Delete_Database;
-
-   -----------------
-   -- Browse_File --
-   -----------------
-
-   function Browse_File
-     (Source_File            : String;
-      Root_Project           : Prj.Project_Id) return Process_Descriptor
-   is
-      SN_Dir : constant String := Get_SN_Dir (Root_Project);
-      Full_Filename : SN.String_Access
-        := Get_Full_Filename_In_Project (Root_Project, Source_File);
-      PD : Process_Descriptor;
-   begin
-      if Full_Filename = null then
-         Fail ("File not found: " & Source_File);
-      end if;
-
-      if Xrefs = Empty_Xref_Pool then
-         --  try to load xref pool
-         Load (Xrefs,
-           SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
-      end if;
-
-      Browse.Browse
-        (Full_Filename.all,
-         SN_Dir,
-         "cbrowser",
-         Xrefs,
-         PD);
-
-      --  save xref pool to file
-      Save (Xrefs, SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
-      Free_String (Full_Filename);
-
-      return PD;
-
-   end Browse_File;
-
-   --------------------
-   -- Generate_Xrefs --
-   --------------------
-
-   function Generate_Xrefs
-     (Root_Project : Prj.Project_Id) return Process_Descriptor
-   is
-   begin
-      --  update .to and .by tables
-      return Browse.Generate_Xrefs (Get_SN_Dir (Root_Project));
-   end Generate_Xrefs;
 
    ---------------------------
    -- Create_Or_Complete_LI --

@@ -25,7 +25,7 @@ package SN.Browse is
 
    procedure Generate_Xrefs
      (DB_Directory : in String;
-      Tmp_Filename : out GNAT.OS_Lib.Temp_File_Name;
+      Temp_Name    : out GNAT.OS_Lib.Temp_File_Name;
       PD           : out GNAT.Expect.Process_Descriptor);
    --  Removes .by and .to tables in the DB_Directory and
    --  does the same as  "cat *.xref | dbimp" so that generated cross
@@ -35,9 +35,11 @@ package SN.Browse is
    procedure Delete_Database (DB_Directory : in String);
    --  Removes all files from SN DB directory except xref pool
 
-   function Is_Alive (PD : GNAT.Expect.Process_Descriptor) return Boolean;
+   procedure Is_Alive
+     (PD : in out GNAT.Expect.Process_Descriptor;
+      Status : out Boolean);
    --  checks if the process is still running. If the process exited, its
-   --  descriptor is closed and False returned.
+   --  descriptor is closed and False returned in Status.
 
 end SN.Browse;
 
