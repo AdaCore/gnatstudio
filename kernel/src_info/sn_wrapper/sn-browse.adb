@@ -156,7 +156,8 @@ package body SN.Browse is
       Temp_File    : File_Descriptor;
       Temp_Name    : Temp_File_Name;
       PD           : GNAT.Expect.Process_Descriptor;
-      Result       : GNAT.Expect.Expect_Match;
+--      Result       : GNAT.Expect.Expect_Match;
+      Pid          : GNAT.OS_Lib.Process_Id;
    begin
 
       --  remove .to and .by tables
@@ -220,13 +221,15 @@ package body SN.Browse is
          Err_To_Out => True);
       Delete (Args);
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
-      loop
-         begin
-            GNAT.Expect.Expect (PD, Result, "", 0);
-         exception
-            when GNAT.Expect.Process_Died => exit;
-         end;
-      end loop;
+      Wait_Process (Pid, Success);
+--      loop
+--         begin
+--            GNAT.Expect.Expect (PD, Result, "", 0);
+--            Put_Line ("DBimp returned");
+--         exception
+--            when GNAT.Expect.Process_Died => exit;
+--         end;
+--      end loop;
       GNAT.Expect.Close (PD);
 
       Delete_File (Temp_Name'Address, Success);
