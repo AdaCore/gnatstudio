@@ -1,9 +1,29 @@
-with Docgen.Html_Output;        use Docgen.Html_Output;
-with String_Utils;              use String_Utils;
-with Projects.Registry;         use Projects.Registry;
-with Projects;                  use Projects;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2003                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Docgen.Html_Output;   use Docgen.Html_Output;
+with String_Utils;         use String_Utils;
+with Projects.Registry;    use Projects.Registry;
+with Projects;             use Projects;
+with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 with File_Utils;
 
 package body Docgen_Backend_HTML is
@@ -31,7 +51,8 @@ package body Docgen_Backend_HTML is
       Doc_Suffix    : String) is
    begin
       --  We call the subprogram responsible for the documentation
-      --     process in html : see docgen_html_output.ads
+      --  process in html: see docgen_html_output.ads
+
       Doc_HTML_Create
         (B,
          Kernel,
@@ -174,14 +195,17 @@ package body Docgen_Backend_HTML is
       Source_File_List : Type_Source_File_List.List;
       Link_All         : Boolean;
       Is_Body          : Boolean;
-      Process_Body     : Boolean) is
+      Process_Body     : Boolean)
+   is
       pragma Unreferenced (End_Line);
    begin
       --  In html, each identifier may have a link,
       --  Each link is made by the subporgram Format_Link (see just below).
       --  But before this step, we must search for declaration: this is done
-      --     in Format_All_Link (whose body contains the call to Format_Link.
-      Format_All_Link (B,
+      --  in Format_All_Link (whose body contains the call to Format_Link.
+
+      Format_All_Link
+        (B,
          Start_Index,
          Start_Line,
          Start_Column,
@@ -199,13 +223,12 @@ package body Docgen_Backend_HTML is
          Process_Body);
    end  Format_Identifier;
 
-   -------------------
-   --  Format_Link  --
-   -------------------
+   -----------------
+   -- Format_Link --
+   -----------------
 
    procedure Format_Link
-     (
-      B                : access Backend_HTML;
+     (B                : access Backend_HTML;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
@@ -223,7 +246,8 @@ package body Docgen_Backend_HTML is
       Process_Body     : Boolean;
       Loc_End          : Natural;
       Loc_Start        : Natural;
-      Entity_Info      : Entity_Information) is
+      Entity_Info      : Entity_Information)
+   is
       pragma Unreferenced (Start_Index, Start_Column, End_Index, LI_Unit);
 
       procedure Create_Regular_Link;
@@ -312,9 +336,10 @@ package body Docgen_Backend_HTML is
       begin
          --  If no links should be set to entities declared in not
          --  processed source files => filter them out
+
          return
            (Link_All
-            or  else Source_File_In_List
+            or else Source_File_In_List
               (Source_File_List, Get_Declaration_File_Of (Entity_Info)))
 
          --  create no links if it is the declaration line itself;
@@ -406,7 +431,7 @@ package body Docgen_Backend_HTML is
    begin
       return File_Utils.Name_As_Directory
            (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
-                         False)) & "../html/";
+                         False)) & "html/";
    end Get_Doc_Directory;
 
 end Docgen_Backend_HTML;
