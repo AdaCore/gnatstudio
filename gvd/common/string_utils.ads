@@ -87,7 +87,8 @@ package String_Utils is
    procedure Parse_Cst_String
      (Type_Str : String;
       Index    : in out Natural;
-      Str      : out String);
+      Str      : out String;
+      Backslash_Special : Boolean := True);
    --  Parse the string pointed to by Index, and copy the result in Str.
    --  Index must point to the opening " character, and will be set to
    --  point after the closing " character.

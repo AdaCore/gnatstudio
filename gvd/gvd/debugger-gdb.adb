@@ -1867,7 +1867,10 @@ package body Debugger.Gdb is
                      Str    : String (1 .. 0);
                   begin
                      Index := Index + 1;
-                     Parse_Cst_String (Type_Str, Index, Str);
+                     Parse_Cst_String
+                       (Type_Str, Index, Str,
+                        Backslash_Special => Get_Language_Context
+                        (Lang).Quote_Character = '\');
                      Index := Index - 1;
                   end;
                end if;
@@ -1906,7 +1909,10 @@ package body Debugger.Gdb is
             Simple : Simple_Type_Access;
 
          begin
-            Parse_Cst_String (Type_Str, Index, S);
+            Parse_Cst_String
+              (Type_Str, Index, S,
+               Backslash_Special => Get_Language_Context
+               (Lang).Quote_Character = '\');
             Simple := Simple_Type_Access
               (Get_Value (Array_Type (Result.all), Dim.First));
             if Simple = null then
