@@ -151,6 +151,9 @@ package body GVD_Module is
       List_Modified    : Boolean := False;
       --  Set to True when the list has been modified by a callback.
 
+      Show_Lines_With_Code : Boolean;
+      --  Whether the lines with code should be explicitly queried.
+
       Initialize_Menu  : Gtk_Menu;
 
       Delete_Id         : Handler_Id := (Null_Signal_Id, null);
@@ -1596,7 +1599,7 @@ package body GVD_Module is
           (Get_Main_Window (GVD_Module (GVD_Module_ID).Kernel));
       Debugger   : constant Debugger_Access := Tab.Debugger;
       --  ??? Should attach the right debugger.
-
+      Id         : constant GVD_Module  := GVD_Module (GVD_Module_ID);
    begin
       if File_Line_List.Is_Empty
         (GVD_Module (GVD_Module_ID).Unexplored_Lines)
@@ -1620,8 +1623,12 @@ package body GVD_Module is
       File_Line := File_Line_List.Head
         (GVD_Module (GVD_Module_ID).Unexplored_Lines);
 
-      Kind := Line_Contains_Code
-        (Debugger, File_Line.File.all, File_Line.Line);
+      if Id.Show_Lines_With_Code then
+         Kind := Line_Contains_Code
+           (Debugger, File_Line.File.all, File_Line.Line);
+      else
+         Kind := Have_Code;
+      end if;
 
       if GVD_Module (GVD_Module_ID).List_Modified then
          GVD_Module (GVD_Module_ID).List_Modified := False;
@@ -1641,7 +1648,11 @@ package body GVD_Module is
 
       begin
          if Kind = Have_Code then
-            A (L).Image := Line_Has_Code_Pixbuf;
+            if Id.Show_Lines_With_Code then
+               A (L).Image := Line_Has_Code_Pixbuf;
+            else
+               A (L).Image := Line_Might_Have_Code_Pixbuf;
+            end if;
 
             --  Check whether a breakpoint is set at this location, if so,
             --  set the mode accordingly.
@@ -1917,8 +1928,11 @@ package body GVD_Module is
       pragma Unreferenced (User);
       Window : constant Gtk_Window := Get_Main_Window (Kernel_Handle (Kernel));
       Top    : constant Glide_Window := Glide_Window (Window);
+      Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
    begin
       GVD.Main_Window.Preferences_Changed (Top);
+      Id.Show_Lines_With_Code :=
+        Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
    end Preferences_Changed;
 
    ---------------------
@@ -1942,6 +1956,8 @@ package body GVD_Module is
    begin
       GVD_Module_ID := new GVD_Module_Record;
       GVD_Module (GVD_Module_ID).Kernel := Kernel_Handle (Kernel);
+      GVD_Module (GVD_Module_ID).Show_Lines_With_Code
+        := Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
 
       Register_Module
         (Module                  => GVD_Module_ID,
