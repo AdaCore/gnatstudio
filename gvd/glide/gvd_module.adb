@@ -22,6 +22,7 @@ with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with Glib.Values;             use Glib.Values;
 with Gdk.Color;               use Gdk.Color;
+with Gdk.Pixbuf;              use Gdk.Pixbuf;
 with Gdk.Pixmap;              use Gdk.Pixmap;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
@@ -32,10 +33,10 @@ with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Handlers;            use Gtk.Handlers;
+with Gtk.Image;               use Gtk.Image;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Pixmap;              use Gtk.Pixmap;
 with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Table;               use Gtk.Table;
@@ -2544,6 +2545,7 @@ package body GVD_Module is
       Data_Sub     : constant String := Debug & (-"Data") & '/';
       Mitem        : Gtk_Menu_Item;
       Menu         : Gtk_Menu;
+      Image        : Gtk_Image;
 
    begin
       GVD_Module_ID := new GVD_Module_Record;
@@ -2662,6 +2664,7 @@ package body GVD_Module is
 
       --  Add debugger buttons in the toolbar
 
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (run_xpm));
       Top.Toolbar_Space := Append_Element
         (Toolbar  => Toolbar,
          The_Type => Toolbar_Child_Space);
@@ -2670,58 +2673,63 @@ package body GVD_Module is
          The_Type     => Toolbar_Child_Button,
          Text         => -"Go",
          Tooltip_Text => -"Start/Continue the debugged program",
-         Icon         => Gtk_Widget (Create_Pixmap (run_xpm, Window)));
+         Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
         (Top.Cont_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Start_Continue'Access),
          Window);
 
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (step_xpm));
       Top.Step_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Step",
          Tooltip_Text => -"Step",
-         Icon         => Gtk_Widget (Create_Pixmap (step_xpm, Window)));
+         Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
         (Top.Step_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Step'Access), Window);
 
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (next_xpm));
       Top.Next_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Next",
          Tooltip_Text => -"Next",
-         Icon         => Gtk_Widget (Create_Pixmap (next_xpm, Window)));
+         Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
         (Top.Next_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Next'Access), Window);
 
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (finish_xpm));
       Top.Finish_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Finish",
          Tooltip_Text => -"Execute until selected stack frame returns",
-         Icon         => Gtk_Widget (Create_Pixmap (finish_xpm, Window)));
+         Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
         (Top.Finish_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Finish'Access), Window);
 
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (up_xpm));
       Top.Up_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Up",
          Tooltip_Text => -"Select and print stack frame that called this one",
-         Icon         => Gtk_Widget (Create_Pixmap (up_xpm, Window)));
+         Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
         (Top.Up_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Up'Access), Window);
 
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (down_xpm));
       Top.Down_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Down",
          Tooltip_Text => -"Select and print stack frame called by this one",
-         Icon         => Gtk_Widget (Create_Pixmap (down_xpm, Window)));
+         Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
         (Top.Down_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Down'Access), Window);
