@@ -483,7 +483,6 @@ package body Browsers.Call_Graph is
      (Kernel   : access Kernel_Handle_Record'Class;
       Entity   : Entity_Information)
    is
-      Iter          : Scope_Tree_Node_Iterator;
       Item, Child   : Entity_Item;
       Child_Browser : MDI_Child;
       Browser       : Call_Graph_Browser;
@@ -495,6 +494,44 @@ package body Browsers.Call_Graph is
       Is_Renaming   : Boolean;
       Location      : File_Location;
       Status        : Find_Decl_Or_Body_Query_Status;
+
+      procedure Process_Item (Node : Scope_Tree_Node);
+      --  Add the call graph for Node, linking the new items to Item.
+
+      ------------------
+      -- Process_Item --
+      ------------------
+
+      procedure Process_Item (Node : Scope_Tree_Node) is
+         Iter  : Scope_Tree_Node_Iterator := Start (Node);
+         Child : Entity_Item;
+         Link  : Glide_Browser_Link;
+      begin
+         while Get (Iter) /= Null_Scope_Tree_Node loop
+            if Is_Subprogram (Get (Iter)) then
+               Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
+               if not Has_Link (Get_Canvas (Browser), Item, Child) then
+                  Link := new Glide_Browser_Link_Record;
+                  Add_Link (Get_Canvas (Browser),
+                            Link => Link,
+                            Src  => Item,
+                            Dest => Child);
+               end if;
+               Refresh (Browser, Child);
+
+            --  For a label, do not insert it in the browser, but process
+            --  its children
+
+            elsif Get_Kind (Get (Iter)) = Label_On_Loop
+              or else Get_Kind (Get (Iter)) = Label_On_Block
+              or else Get_Kind (Get (Iter)) = Label_On_Statement
+            then
+               Process_Item (Get (Iter));
+            end if;
+
+            Next (Iter);
+         end loop;
+      end Process_Item;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -588,22 +625,7 @@ package body Browsers.Call_Graph is
                     Mode => Error);
 
          else
-            Iter := Start (Node);
-            while Get (Iter) /= Null_Scope_Tree_Node loop
-               if Is_Subprogram (Get (Iter)) then
-                  Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
-                  if not Has_Link (Get_Canvas (Browser), Item, Child) then
-                     Link := new Glide_Browser_Link_Record;
-                     Add_Link (Get_Canvas (Browser),
-                               Link => Link,
-                               Src => Item,
-                               Dest => Child);
-                  end if;
-                  Refresh (Browser, Child);
-               end if;
-
-               Next (Iter);
-            end loop;
+            Process_Item (Node);
          end if;
 
          Set_Auto_Layout (Get_Canvas (Browser), True);
