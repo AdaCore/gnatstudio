@@ -156,9 +156,14 @@ package body Items.Records is
       Contains : String) return Generic_Type_Access is
    begin
       for J in Item.Fields (Field).Variant_Part'Range loop
+         Item.Fields (Field).Variant_Part (J).Valid := False;
+      end loop;
+
+      for J in Item.Fields (Field).Variant_Part'Range loop
          if Item.Fields (Field).Variant_Part (J).Fields (1).Name.all =
            Contains
          then
+            Item.Fields (Field).Variant_Part (J).Valid := True;
             return Generic_Type_Access (Item.Fields (Field).Variant_Part (J));
          end if;
       end loop;
@@ -467,13 +472,15 @@ package body Items.Records is
 
          if Item.Fields (F).Variant_Part /= null then
             for V in Item.Fields (F).Variant_Part'Range loop
-               Paint
-                 (Item.Fields (F).Variant_Part (V).all, Context,
-                  X + Left_Border + Item.Border_Spacing
-                  + Item.Gui_Fields_Width,
-                  Current_Y);
-               Current_Y := Current_Y +
-                 Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
+               if Item.Fields (F).Variant_Part (V).Valid then
+                  Paint
+                    (Item.Fields (F).Variant_Part (V).all, Context,
+                     X + Left_Border + Item.Border_Spacing
+                     + Item.Gui_Fields_Width,
+                     Current_Y);
+                  Current_Y := Current_Y +
+                    Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
+               end if;
             end loop;
          end if;
       end loop;
@@ -566,18 +573,17 @@ package body Items.Records is
 
             if Item.Fields (F).Variant_Part /= null then
                for V in Item.Fields (F).Variant_Part'Range loop
-                  Size_Request
-                    (Item.Fields (F).Variant_Part (V).all, Context,
-                     Hide_Big_Items);
-                  Total_Width  := Gint'Max
-                    (Total_Width,
-                     Item.Fields (F).Variant_Part (V).Width);
-                  Total_Height := Total_Height +
-                    Item.Fields (F).Variant_Part (V).Height;
+                  if Item.Fields (F).Variant_Part (V).Valid then
+                     Size_Request
+                       (Item.Fields (F).Variant_Part (V).all, Context,
+                        Hide_Big_Items);
+                     Total_Width  := Gint'Max
+                       (Total_Width,
+                        Item.Fields (F).Variant_Part (V).Width);
+                     Total_Height := Total_Height +
+                       Item.Fields (F).Variant_Part (V).Height;
+                  end if;
                end loop;
-
-               Total_Height := Total_Height +
-                 (Item.Fields (F).Variant_Part'Length - 1) * Line_Spacing;
             end if;
          end loop;
 

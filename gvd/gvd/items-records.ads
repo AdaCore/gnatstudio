@@ -68,6 +68,7 @@ package Items.Records is
    --  Return the variant part of the field-th of Item, whose first field is
    --  Contains.
    --  null is returned if no such part is found.
+   --  All variant parts become invalid, except for the one that is returned.
 
    procedure Set_Variant_Field
      (Item          : in out Record_Type;
