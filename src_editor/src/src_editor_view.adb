@@ -73,12 +73,23 @@ package body Src_Editor_View is
    --------------------------
 
    procedure Realize_Cb (View : access Source_View_Record'Class);
+   --  This procedure is invoked when the Source_View widget is realized.
+   --  It performs various operations that can not be done before the widget
+   --  is realized, such as setting the default font or the left border window
+   --  size for instance.
 
    function Expose_Event_Cb
      (View  : access Source_View_Record'Class;
       Event : Gdk_Event) return Boolean;
+   --  This procedure handles all expose events happening on the left border
+   --  window. It will the redraw the exposed area (this window may contains
+   --  things such as line number, breakpoint icons, etc).
 
    procedure Map_Cb (View : access Source_View_Record'Class);
+   --  This procedure is invoked when the Source_View widget is mapped.
+   --  It performs various operations that can not be done before the widget
+   --  is mapped, such as creating GCs associated to the left border window
+   --  for instance.
 
    function Line_Numbers_Area_Width
      (View : access Source_View_Record'Class) return Gint;
