@@ -5998,8 +5998,8 @@ Control Contextual Menu}.
 Basic VCS operations can be accessed through the VCS menu. Most of
 these functions act on the current selection, i.e. on the selected items
 in the VCS Explorer if it is present, or on the currently selected
-file editor, or on the currently selected item in the Project/File
-View. In most cases, the VCS contextual menu offers more control on
+file editor, or on the currently selected item in the Tool/File View.
+In most cases, the VCS contextual menu offers more control on
 VCS operations. @xref{The Version Control Contextual Menu}.
 
 @table @b
