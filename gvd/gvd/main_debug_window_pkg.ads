@@ -74,6 +74,7 @@ package Main_Debug_Window_Pkg is
       Log_File            : File_Descriptor := Standerr;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
+      Log_Level           : Odd.Types.Command_Type := Odd.Types.Internal;
 
       File_Caches         : Cache_List;
       --  List of data cached for each of the file of the application
