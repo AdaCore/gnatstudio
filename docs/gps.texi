@@ -2851,8 +2851,7 @@ system, make sure that the system is properly set-up before launching
 GPS.
 
 Note: the set-up must make sure that the VCS commands can be launched without
-entering a password, and that the commands can be run without interference
-(for CVS users, it is recommended to remove the ~/.cvsrc file, if it exists).
+entering a password.
 
 @node The VCS Explorer
 @section The VCS Explorer
