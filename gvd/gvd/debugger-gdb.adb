@@ -2121,7 +2121,7 @@ package body Debugger.Gdb is
       Output_Text
         (Convert (Debugger.Window, Debugger),
          Send_Full (Debugger, "  ", Mode => Internal),
-         Is_Command => True,
+         Is_Command => False,
          Set_Position => True);
    end Display_Prompt;
 
