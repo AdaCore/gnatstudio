@@ -100,9 +100,18 @@ package Src_Editor_Box is
      (Box    : access Source_Editor_Box_Record);
    --  Detach Box of its Parent, if possible.
 
+   function Get_Kernel
+     (Box : access Source_Editor_Box_Record)
+     return Glide_Kernel.Kernel_Handle;
+   --  Accessor to the Kernel field.
+
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------
+
+   function Modified
+     (Editor   : access Source_Editor_Box_Record) return Boolean;
+   --  Tell if the file has been modified.
 
    procedure Set_Filename
      (Editor   : access Source_Editor_Box_Record;
