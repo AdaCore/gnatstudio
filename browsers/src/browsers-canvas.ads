@@ -36,6 +36,7 @@ with Gtk.Widget;
 with Pango.Layout;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
+with GNAT.OS_Lib;
 
 package Browsers.Canvas is
 
@@ -111,7 +112,7 @@ package Browsers.Canvas is
    --  the chain that lead to callback.
    --  This type provides an easy encapsulation for any user data you might
    --  need.
-   --  Should return True if the event was handler, False otherwise. In the
+   --  Should return True if the event was handled, False otherwise. In the
    --  latter case, the even is transmitted to the parent area
 
    procedure Destroy (Callback : in out Active_Area_Callback);
@@ -168,6 +169,13 @@ package Browsers.Canvas is
    --  Non dispatching variant of the Resize_And_Draw.
    --  You need to refresh the screen by calling either Item_Updated or
    --  Refresh_Canvas.
+
+   procedure Refresh_Linked_Items
+     (Item             : access Browser_Item_Record'Class;
+      Refresh_Parents  : Boolean := False;
+      Refresh_Children : Boolean := False);
+   --  Refresh either the parents or the children of Item. For each of these,
+   --  this calls Refresh above
 
    procedure Highlight (Item : access Browser_Item_Record);
    --  Highlight the item, based on its selection status. This method is
@@ -353,6 +361,18 @@ package Browsers.Canvas is
    --  split).
    --  Layout is used while computing the length, and has to be provided for
    --  efficiency issues, to avoid recreating it every time.
+
+   procedure Get_Line
+     (List     : Xref_List;
+      Num      : Positive;
+      Callback : out Active_Area_Cb;
+      Text     : out GNAT.OS_Lib.String_Access);
+   --  Return the contents of the Nth line in List. Text is set to null if
+   --  there is no such line.
+   --  Do not free Text
+
+   procedure Remove_Line (List : in out Xref_List; Num : Positive);
+   --  Remove the Nth line from List
 
    ---------------
    -- Item area --

@@ -1678,6 +1678,33 @@ package body Browsers.Canvas is
       Unref (Layout);
    end Refresh;
 
+   --------------------------
+   -- Refresh_Linked_Items --
+   --------------------------
+
+   procedure Refresh_Linked_Items
+     (Item             : access Browser_Item_Record'Class;
+      Refresh_Parents  : Boolean := False;
+      Refresh_Children : Boolean := False)
+   is
+      Iter : Item_Iterator :=
+        Start (Get_Canvas (Get_Browser (Item)), Canvas_Item (Item));
+      It   : Browser_Item;
+   begin
+      loop
+         It := Browser_Item (Get (Iter));
+         exit when It = null;
+
+         if (Refresh_Children and then not Is_Linked_From (Iter))
+           or else (Refresh_Parents and then Is_Linked_From (Iter))
+         then
+            Refresh (It);
+         end if;
+
+         Next (Iter);
+      end loop;
+   end Refresh_Linked_Items;
+
    ------------
    -- Layout --
    ------------
@@ -1751,6 +1778,49 @@ package body Browsers.Canvas is
          Unchecked_Free (List.Callbacks);
       end if;
    end Free;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   procedure Get_Line
+     (List     : Xref_List;
+      Num      : Positive;
+      Callback : out Active_Area_Cb;
+      Text     : out GNAT.OS_Lib.String_Access)
+   is
+   begin
+      if Num > List.Lines'Length then
+         Callback := null;
+         Text     := null;
+      else
+         Text     := List.Lines (List.Lines'First + Num - 1);
+         Callback := List.Callbacks (List.Lines'First + Num - 1);
+      end if;
+   end Get_Line;
+
+   -----------------
+   -- Remove_Line --
+   -----------------
+
+   procedure Remove_Line (List : in out Xref_List; Num : Positive) is
+      L : String_List_Access := List.Lines;
+      N : constant Natural := Num - 1 + L'First;
+      C : Active_Area_Cb_Array_Access := List.Callbacks;
+      E : Natural_Array_Access := List.Lengths;
+   begin
+      List.Lines := new GNAT.Strings.String_List (L'First .. L'Last - 1);
+      List.Lines.all := L (L'First .. N - 1) & L (N + 1 .. L'Last);
+      Unchecked_Free (L);
+
+      List.Callbacks := new Active_Area_Cb_Array (C'First .. C'Last - 1);
+      List.Callbacks.all := C (C'First .. N - 1) & C (N + 1 .. C'Last);
+      Unchecked_Free (C);
+
+      List.Lengths := new Natural_Array (E'First .. E'Last - 1);
+      List.Lengths.all := E (E'First .. N - 1) & E (N + 1 .. E'Last);
+      Unchecked_Free (E);
+   end Remove_Line;
 
    --------------
    -- Add_Line --
