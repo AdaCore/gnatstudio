@@ -24,14 +24,13 @@ with Src_Info.Queries;          use Src_Info.Queries;
 with Projects;                  use Projects;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
---  with Language_Handlers;         use Language_Handlers;
 with Docgen.Work_On_Source;     use Docgen.Work_On_Source;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with VFS;                       use VFS;
 with Projects.Registry;         use Projects.Registry;
+with File_Utils;               use File_Utils;
 
 package body Docgen.Work_On_File is
 
@@ -75,7 +74,6 @@ package body Docgen.Work_On_File is
      (Source_File_List : in out Docgen.Type_Source_File_List.List;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options;
-      Doc_Directory    : String;
       Doc_Suffix       : String;
       Converter        : Docgen.Doc_Subprogram_Type)
    is
@@ -166,8 +164,12 @@ package body Docgen.Work_On_File is
       Source_File_Node := TSFL.First (Source_File_List);
 
       for J in 1 .. TSFL.Length (Source_File_List) loop
-         --  Create the doc file from the package name for each package
          declare
+            Doc_Directory : constant String := File_Utils.Name_As_Directory
+              (Object_Path (Get_Project_From_File
+                              (Get_Registry (Kernel),
+                               TSFL.Data (Source_File_Node).File_Name),
+                            False));
             File_Name : constant String := Get_Doc_File_Name
               (TSFL.Data (Source_File_Node).File_Name,
                Doc_Directory, Doc_Suffix);
@@ -176,37 +178,36 @@ package body Docgen.Work_On_File is
                    Full_Name (TSFL.Data (Source_File_Node).File_Name).all
                    & " create documentation to: " & File_Name);
             Create (Doc_File, Out_File, File_Name);
-         end;
-
          --  Find the next and the previous package name (used for TexInfo)
 
-         Next_Package := new String'(Find_Next_Package (J));
-         Prev_Package := new String'(Find_Prev_Package (J));
+            Next_Package := new String'(Find_Next_Package (J));
+            Prev_Package := new String'(Find_Prev_Package (J));
 
-         Process_One_File
-           (Doc_File,
-            Kernel,
-            TSFL.Data (Source_File_Node).File_Name,
-            TSFL.Data (Source_File_Node).Package_Name.all,
-            Next_Package,
-            Prev_Package,
-            Source_File_List,
-            Options,
-            Options.Process_Body_Files and then
-            TSFL.Data (Source_File_Node).Other_File_Found,
-            Subprogram_Index_List,
-            Type_Index_List,
-            Converter,
-            Doc_Directory,
-            Doc_Suffix);
+            Process_One_File
+             (Doc_File,
+              Kernel,
+              TSFL.Data (Source_File_Node).File_Name,
+              TSFL.Data (Source_File_Node).Package_Name.all,
+              Next_Package,
+              Prev_Package,
+              Source_File_List,
+              Options,
+              Options.Process_Body_Files and then
+              TSFL.Data (Source_File_Node).Other_File_Found,
+              Subprogram_Index_List,
+              Type_Index_List,
+              Converter,
+              Doc_Directory,
+              Doc_Suffix);
 
-         Source_File_Node := TSFL.Next (Source_File_Node);
+            Source_File_Node := TSFL.Next (Source_File_Node);
 
-         --  close the doc file
-         Close (Doc_File);
+            --  close the doc file
+            Close (Doc_File);
 
-         Free (Next_Package);
-         Free (Prev_Package);
+            Free (Next_Package);
+            Free (Prev_Package);
+         end;
       end loop;
 
       --  sort the type index list and the subprogram index list first
@@ -214,16 +215,21 @@ package body Docgen.Work_On_File is
       Sort_List_Name (Type_Index_List);
 
       --  create the index doc files for the packages
-      Process_Unit_Index
-        (Kernel, Source_File_List, Options, Converter,
-         Doc_Directory, Doc_Suffix);
-      Process_Subprogram_Index
-        (Kernel, Subprogram_Index_List, Options, Converter,
-         Doc_Directory, Doc_Suffix);
-      Process_Type_Index
-        (Kernel, Type_Index_List, Options, Converter,
-         Doc_Directory, Doc_Suffix);
-
+      declare
+         Doc_Directory_Root : constant String := File_Utils.Name_As_Directory
+              (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
+                            False));
+      begin
+         Process_Unit_Index
+          (Kernel, Source_File_List, Options, Converter,
+           Doc_Directory_Root, Doc_Suffix);
+         Process_Subprogram_Index
+          (Kernel, Subprogram_Index_List, Options, Converter,
+           Doc_Directory_Root, Doc_Suffix);
+         Process_Type_Index
+          (Kernel, Type_Index_List, Options, Converter,
+          Doc_Directory_Root, Doc_Suffix);
+      end;
       TEL.Free (Subprogram_Index_List);
       TEL.Free (Type_Index_List);
    end Process_Files;
