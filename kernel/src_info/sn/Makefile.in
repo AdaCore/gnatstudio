@@ -1,25 +1,18 @@
-all : snsrc src
+all: snsrc src
 
-snsrc :
-	$(MAKE) -C snsrc all install
+snsrc:
+	$(MAKE) -C snsrc
 
-src :
+src:
 	$(MAKE) -C src
 
-clean :
+clean:
 	$(MAKE) -C src clean
 	$(MAKE) -C snsrc clean
 
-distclean : uninstall
+distclean:
 	$(RM) Makefile config.cache include/config.h config.log config.status
 	$(MAKE) -C src distclean
 	$(MAKE) -C snsrc distclean
 
-uninstall :
-	rm -f include/cdefs.h include/db.h include/mpool.h \
-		include/snptools.h include/sn.h \
-		bin/*browser bin/db* lib/lib*
-
-install :
-
-.PHONY: snsrc src
+.PHONY: snsrc src distclean
