@@ -28,7 +28,6 @@ with Gdk.Event;                   use Gdk.Event;
 with Gdk.GC;                      use Gdk.GC;
 with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Window;                  use Gdk.Window;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gdk.Pixmap;                  use Gdk.Pixmap;
 with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Types;                   use Gdk.Types;
@@ -44,18 +43,16 @@ with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 
 with GVD;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
-with Basic_Types;                 use Basic_Types;
-with Commands;                    use Commands;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
-
-with Basic_Types;    use Basic_Types;
 
 package body Src_Editor_View is
 
@@ -186,15 +183,6 @@ package body Src_Editor_View is
       Kernel  : Kernel_Handle);
    --  Callback for "File_Saved_Signal".
 
-   function Get_Side_Info
-     (View   : access Source_View_Record'Class;
-      Line   : Positive;
-      Column : Positive) return Line_Info_Width;
-   --  Return the side information corresponding to Line, Column in the
-   --  Side window.
-   --  Return (null, 0)  if the information was never set.
-   --  Return (null, -1) if the information was set to null.
-
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class);
    --  Called when a new size has been allocated
 
@@ -226,39 +214,6 @@ package body Src_Editor_View is
 
       return Rect.Y <= Y and then Y + Height <= Rect.Y + Rect.Height;
    end Cursor_Is_On_Screen;
-
-   -------------------
-   -- Get_Side_Info --
-   -------------------
-
-   function Get_Side_Info
-     (View   : access Source_View_Record'Class;
-      Line   : Positive;
-      Column : Positive) return Line_Info_Width
-   is
-      Line_Info  : constant Line_Info_Display_Array_Access :=
-        Get_Line_Info (Source_Buffer (Get_Buffer (View)));
-      Real_Lines : constant Natural_Array_Access :=
-        Get_Real_Lines (Source_Buffer (Get_Buffer (View)));
-   begin
-      if Line_Info (Column).Stick_To_Data then
-         if Line > Real_Lines'Last
-           or else Real_Lines (Line) not in
-             Line_Info (Column).Column_Info'Range
-         then
-            return (null, -1);
-         else
-            return Line_Info (Column).Column_Info
-              (Real_Lines (Line));
-         end if;
-      else
-         if Line > Line_Info (Column).Column_Info'Last then
-            return (null, 0);
-         else
-            return Line_Info (Column).Column_Info (Line);
-         end if;
-      end if;
-   end Get_Side_Info;
 
    -----------
    -- Setup --
@@ -458,7 +413,8 @@ package body Src_Editor_View is
       --  current block has changed.
 
       if User.Highlight_Blocks
-        and then User.Current_Block /= Get_Block (Buffer, Integer (Line) + 1)
+        and then User.Current_Block /=
+          Get_Block (Buffer, Buffer_Line_Type (Line) + 1)
       then
          Clear_Text_Window (User);
       end if;
@@ -509,8 +465,6 @@ package body Src_Editor_View is
 
       Window_Type : constant Gtk_Text_Window_Type :=
         Get_Window_Type (View, Window);
-      Line_Info   : constant Line_Info_Display_Array_Access :=
-        Get_Line_Info (Buffer);
       X, Y, Width, Height, Depth : Gint;
 
    begin
@@ -523,9 +477,9 @@ package body Src_Editor_View is
             Bottom_In_Buffer           : Gint;
             Dummy_Gint                 : Gint;
             Iter                       : Gtk_Text_Iter;
-            Top_Line                   : Natural;
-            Bottom_Line                : Natural;
-            Info                       : Line_Info_Width;
+            Top_Line                   : Buffer_Line_Type;
+            Bottom_Line                : Buffer_Line_Type;
+
          begin
             Get_Geometry (Window, X, Y, Width, Height, Depth);
 
@@ -538,10 +492,10 @@ package body Src_Editor_View is
                Window_X => 0, Window_Y => Y + Height,
                Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
             Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-            Top_Line := Natural (Get_Line (Iter) + 1);
+            Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
             Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
-            Bottom_Line := Natural (Get_Line (Iter) + 1);
+            Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
             --  If one of the values hadn't been initialized, display the
             --  whole range of lines.
@@ -553,30 +507,18 @@ package body Src_Editor_View is
 
             Find_Top_Line :
             while Top_Line <= Bottom_Line loop
-               for J in Line_Info'Range loop
-                  if Line_Info (J).Every_Line then
-                     Info := Get_Side_Info (View, Top_Line, J);
-
-                     if Info.Width = 0 then
-                        exit Find_Top_Line;
-                     end if;
-                  end if;
-               end loop;
+               if Line_Needs_Refresh (Buffer, Top_Line) then
+                  exit Find_Top_Line;
+               end if;
 
                Top_Line := Top_Line + 1;
             end loop Find_Top_Line;
 
             Find_Bottom_Line :
             while Bottom_Line >= Top_Line loop
-               for J in Line_Info'Range loop
-                  if Line_Info (J).Every_Line then
-                     Info := Get_Side_Info (View, Bottom_Line, J);
-
-                     if Info.Width = 0 then
-                        exit Find_Bottom_Line;
-                     end if;
-                  end if;
-               end loop;
+               if Line_Needs_Refresh (Buffer, Bottom_Line) then
+                  exit Find_Bottom_Line;
+               end if;
 
                Bottom_Line := Bottom_Line - 1;
             end loop Find_Bottom_Line;
@@ -604,8 +546,8 @@ package body Src_Editor_View is
             Dummy_Gint                 : Gint;
             Success : Boolean;
             Iter                       : Gtk_Text_Iter;
-            Top_Line                   : Natural;
-            Bottom_Line                : Natural;
+            Top_Line                   : Buffer_Line_Type;
+            Bottom_Line                : Buffer_Line_Type;
             Top_In_Buffer    : Gint;
             Bottom_In_Buffer : Gint;
             GC               : Gdk.GC.Gdk_GC;
@@ -685,10 +627,10 @@ package body Src_Editor_View is
                Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
 
             Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
-            Bottom_Line := Natural (Get_Line (Iter) + 1);
+            Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
             Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-            Top_Line := Natural (Get_Line (Iter) + 1);
+            Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
             for Line in Top_Line .. Bottom_Line loop
                GC := Get_Highlight_GC (Buffer, Line);
@@ -732,7 +674,7 @@ package body Src_Editor_View is
 
             if View.Highlight_Blocks then
                View.Current_Block := Get_Block
-                 (Buffer, Integer (Get_Line (Cursor_Iter)) + 1);
+                 (Buffer, Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1);
                Draw_Block (View.Current_Block);
             end if;
 
@@ -1233,8 +1175,6 @@ package body Src_Editor_View is
       Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
 
-      Line_Info  : constant Line_Info_Display_Array_Access :=
-        Get_Line_Info (Buffer);
    begin
       External_End_Action (Buffer);
 
@@ -1244,14 +1184,9 @@ package body Src_Editor_View is
          declare
             Dummy_Gint         : Gint;
             Iter               : Gtk_Text_Iter;
-            Line               : Natural;
-            Column_Index       : Integer := -1;
+            Line               : Buffer_Line_Type;
             Button_X, Button_Y : Gint;
             X, Y               : Gint;
-            Info               : Line_Info_Width;
-
-            Dummy              : Command_Return_Type;
-            pragma Unreferenced (Dummy);
 
          begin
             --  Get the coordinates of the click.
@@ -1266,29 +1201,9 @@ package body Src_Editor_View is
                Buffer_X => X, Buffer_Y => Y);
 
             Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
-            Line := Natural (Get_Line (Iter)) + 1;
+            Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-            --  Find the column number.
-            for J in Line_Info'Range loop
-               if Line_Info (J).Starting_X <= Natural (Button_X)
-                 and then Natural (Button_X)
-                 <= Line_Info (J).Starting_X + Line_Info (J).Width
-               then
-                  Column_Index := J;
-                  exit;
-               end if;
-            end loop;
-
-            --  If a command exists at the specified position, execute it.
-            if Line > 0 and then Column_Index > 0 then
-               Info := Get_Side_Info (View, Line, Column_Index);
-            end if;
-
-            if Info.Info /= null
-              and then Info.Info.Associated_Command /= null
-            then
-               Dummy := Execute (Info.Info.Associated_Command);
-            end if;
+            On_Click (Buffer, Line, Button_X);
          end;
       end if;
 
@@ -1355,26 +1270,29 @@ package body Src_Editor_View is
       Bottom_In_Buffer           : Gint;
       Dummy_Gint                 : Gint;
       Iter                       : Gtk_Text_Iter;
-      Y_In_Buffer                : Gint;
-      Y_Pix_In_Window            : Gint;
-      Line_Height                : Gint;
-      Current_Line               : Natural;
+
       X, Y, Width, Height, Depth : Gint;
-      Dummy_Boolean              : Boolean;
-      Data                       : Line_Info_Width;
+
       Buffer                     : Gdk.Pixmap.Gdk_Pixmap;
       Layout                     : Pango_Layout;
 
-
-      Line_Info  : constant Line_Info_Display_Array_Access :=
-        Get_Line_Info (Source_Buffer (Get_Buffer (View)));
+      Src_Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Columns_Config : constant Line_Info_Display_Array_Access :=
+        Get_Columns_Info (Src_Buffer);
 
       Total_Width : Gint;
+
    begin
       Total_Width := 2;
 
-      for J in Line_Info'Range loop
-         Total_Width := Total_Width + Gint (Line_Info (J).Width) + 2;
+      if Columns_Config = null then
+         Set_Border_Window_Size (View, Enums.Text_Window_Left, 0);
+         return;
+      end if;
+
+      --  ??? Should be optimized !
+      for J in Columns_Config'Range loop
+         Total_Width := Total_Width + Gint (Columns_Config (J).Width) + 2;
       end loop;
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
@@ -1400,63 +1318,11 @@ package body Src_Editor_View is
          Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
 
       Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-      Current_Line := View.Top_Line;
 
-      Drawing_Loop :
-      while Current_Line <= View.Bottom_Line loop
-         --  Get buffer coords and line height of current line
-
-         Get_Line_Yrange (View, Iter, Y_In_Buffer, Line_Height);
-
-         --  Convert the buffer coords back to window coords
-
-         Buffer_To_Window_Coords
-           (View, Text_Window_Left,
-            Buffer_X => 0, Buffer_Y => Y_In_Buffer,
-            Window_X => Dummy_Gint, Window_Y => Y_Pix_In_Window);
-
-         --  And finally add the font height (ascent + descent) to get
-         --  the Y coordinates of the line base
-
-         for J in Line_Info'Range loop
-            Data := Get_Side_Info (View, Current_Line, J);
-
-            if Data.Info /= null then
-               if Data.Info.Text /= null then
-                  Set_Text (Layout, Data.Info.Text.all);
-                  Draw_Layout
-                    (Drawable => Buffer,
-                     GC       => View.Side_Column_GC,
-                     X        =>  Gint (Line_Info (J).Starting_X
-                                 + Line_Info (J).Width
-                                 - Data.Width),
-                     Y        => Y_Pix_In_Window,
-                     Layout   => Layout);
-               end if;
-
-               if Data.Info.Image /= Null_Pixbuf then
-                  Render_To_Drawable
-                    (Pixbuf   => Data.Info.Image,
-                     Drawable => Buffer,
-                     Gc       => View.Side_Column_GC,
-                     Src_X    => 0,
-                     Src_Y    => 0,
-                     Dest_X   => Gint (Line_Info (J).Starting_X
-                                       + Line_Info (J).Width
-                                       - Data.Width),
-                     Dest_Y   => Y_Pix_In_Window,
-                     Width    => -1,
-                     Height   => -1);
-               end if;
-            end if;
-         end loop;
-
-         Forward_Line (Iter, Dummy_Boolean);
-
-         exit Drawing_Loop when Dummy_Boolean = False;
-
-         Current_Line := Natural (Get_Line (Iter)) + 1;
-      end loop Drawing_Loop;
+      Draw_Line_Info
+        (Src_Buffer, View.Top_Line, View.Bottom_Line,
+         Gtk_Text_View (View), View.Side_Column_GC,
+         Layout, Buffer);
 
       Unref (Layout);
 
