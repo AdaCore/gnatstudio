@@ -33,11 +33,9 @@ with Gdk.Rectangle;
 with Gdk.Event;
 
 with Gtk.Box;
-with Gtk.Button;
 with Gtk.Container;
 with Gtk.Label;
 with Gtk.Menu;
-with Gtk.Menu_Item;
 with Gtk.Text_Mark;
 
 with GVD.Tooltips;
@@ -49,18 +47,6 @@ with Src_Editor_Buffer;
 with Src_Editor_View;
 
 package Src_Editor_Box is
-
-   type Undo_Redo_Information is record
-      Undo_Button          : Gtk.Button.Gtk_Button;
-      Redo_Button          : Gtk.Button.Gtk_Button;
-
-      Undo_Menu_Item       : Gtk.Menu_Item.Gtk_Menu_Item;
-      Redo_Menu_Item       : Gtk.Menu_Item.Gtk_Menu_Item;
-   end record;
-
-   Undo_Redo_Id : constant String := "Source_Editor_Undo_Redo_Information";
-
-   package Undo_Redo_Data is new Glib.Object.User_Data (Undo_Redo_Information);
 
    type Source_Editor_Box_Record is new Glib.Object.GObject_Record
      with private;
