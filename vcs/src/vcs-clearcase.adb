@@ -761,43 +761,43 @@ package body VCS.ClearCase is
 
       File_Node : List_Node := First (Filenames);
       Logs_Node : List_Node := First (Logs);
+
    begin
       while File_Node /= Null_Node loop
          declare
-            Args     : List;
-            Head     : List;
-            File     : constant String := Data (File_Node);
-
+            Args                 : List;
+            Head                 : List;
+            File                 : constant String := Data (File_Node);
             Checkin_File_Command : External_Command_Access;
-
-            Fail_Message    : Console_Command_Access;
-            Success_Message : Console_Command_Access;
-
-            Log_File : constant String := Get_Tmp_Dir
-            & GNAT.OS_Lib.Directory_Separator
-            & "clearcase_log_" & Base_Name (File);
-            Ft : File_Type;
+            Fail_Message         : Console_Command_Access;
+            Success_Message      : Console_Command_Access;
+            Log_File             : constant String := Get_Tmp_Dir &
+              "clearcase_log_" & Base_Name (File);
+            Ft                   : File_Type;
 
          begin
-            Insert (Kernel,
-                    -"ClearCase: Checking-in element: "
-                      & File & " ...", Mode => Info);
+            Insert
+              (Kernel,
+               -"ClearCase: Checking-in element: "
+               & File & " ...", Mode => Info);
 
             --  Create the end of the message.
 
-            Create (Fail_Message,
-                    Kernel,
-                    -("ClearCase: check-in of ") & File & (-" failed."),
-                    False,
-                    True,
-                    Info);
+            Create
+              (Fail_Message,
+               Kernel,
+               -("ClearCase: check-in of ") & File & (-" failed."),
+               False,
+               True,
+               Info);
 
-            Create (Success_Message,
-                    Kernel,
-                    -("ClearCase: check-in of ") & File & (-" done."),
-                    False,
-                    True,
-                    Info);
+            Create
+              (Success_Message,
+               Kernel,
+               -("ClearCase: check-in of ") & File & (-" done."),
+               False,
+               True,
+               Info);
 
             Append (Args, "ci");
             Append (Args, "-cfile");
@@ -813,13 +813,14 @@ package body VCS.ClearCase is
             Append (Head, -"ClearCase error: could not check-in " & File);
             Append (Head, Log_File);
 
-            Create (Checkin_File_Command,
-                    Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
-                    "",
-                    Args,
-                    Head,
-                    Checkin_Handler'Access);
+            Create
+              (Checkin_File_Command,
+               Kernel,
+               Get_Pref (Rep.Kernel, ClearCase_Command),
+               "",
+               Args,
+               Head,
+               Checkin_Handler'Access);
 
             Free (Args);
             Free (Head);
