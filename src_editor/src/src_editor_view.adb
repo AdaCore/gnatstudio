@@ -668,7 +668,7 @@ package body Src_Editor_View is
 
       if User.Child = Get_Focus_Child (Get_MDI (User.Kernel)) then
          Save_Cursor_Position (User);
-         Scroll_To_Cursor_Location (User, Position_Set_Explicitely (Buffer));
+         Scroll_To_Cursor_Location (User, False);
       end if;
 
       --  If we are doing block highlighting, re-expose the entire view if the
@@ -2269,6 +2269,7 @@ package body Src_Editor_View is
       Src_View : constant Source_View := Source_View (View);
 
    begin
+      Invalidate_Window (Src_View);
       Redraw_Speed_Column (Src_View);
       Redraw_Columns (Src_View);
 
