@@ -2,4 +2,5 @@ pragma Restrictions (No_Tasking);
 pragma Restrictions (No_Asynchronous_Control);
 pragma Restrictions (Max_Asynchronous_Select_Nesting => 0);
 pragma Restrictions (No_Abort_Statements);
+pragma Initialize_Scalars;
 

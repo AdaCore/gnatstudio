@@ -34,12 +34,13 @@ project GPS is
            for Default_Switches ("Ada") use
              ("-m", "-a", "-g", "-gnata", "-gnatVa", "-gnatQ", 
               "-gnatwk", "-gnatwr", "-j2");
-           for Global_Configuration_Pragmas use "gnat.adc";
+           for Global_Configuration_Pragmas use "gnat_debug.adc";
 
          when others =>
            for Default_Switches ("Ada") use
              ("-m", "-a", "-g", "-gnatQ", 
               "-gnatwk", "-gnatwr", "-j2");
+           for Global_Configuration_Pragmas use "gnat.adc";
       end case;
    end Builder;
 
