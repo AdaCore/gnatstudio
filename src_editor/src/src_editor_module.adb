@@ -27,6 +27,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glide_Intl;                use Glide_Intl;
@@ -2863,7 +2864,8 @@ package body Src_Editor_Module is
          if Has_Directory_Information (File)
            and then Has_File_Information (File)
          then
-            Gtk_New (Mitem, -"Edit " & Base_Name (File_Information (File)));
+            Gtk_New (Mitem, -"Edit " &
+                     Locale_To_UTF8 (Base_Name (File_Information (File))));
             Append (Menu, Mitem);
             Context_Callback.Connect
               (Mitem, "activate",

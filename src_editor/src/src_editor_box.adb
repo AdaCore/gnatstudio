@@ -1577,27 +1577,30 @@ package body Src_Editor_Box is
 
          if Menu /= null then
             if Has_Entity_Name_Information (Context) then
-               Gtk_New (Item, -"Goto declaration of "
-                          & Entity_Name_Information (Context));
-               Add (Menu, Item);
-               Context_Callback.Object_Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (On_Goto_Declaration'Access),
-                  User_Data   => Selection_Context_Access (Context),
-                  Slot_Object => Editor,
-                  After       => True);
+               declare
+                  Name : constant String := Glib.Convert.Locale_To_UTF8
+                    (Entity_Name_Information (Context));
+               begin
+                  Gtk_New (Item, -"Goto declaration of " & Name);
+                  Add (Menu, Item);
+                  Context_Callback.Object_Connect
+                    (Item, "activate",
+                     Context_Callback.To_Marshaller
+                     (On_Goto_Declaration'Access),
+                     User_Data   => Selection_Context_Access (Context),
+                     Slot_Object => Editor,
+                     After       => True);
 
-               Gtk_New (Item, -"Goto body of "
-                          & Entity_Name_Information (Context));
-               Add (Menu, Item);
-               Context_Callback.Object_Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (On_Goto_Next_Body'Access),
-                  User_Data   => Selection_Context_Access (Context),
-                  Slot_Object => Editor,
-                  After       => True);
+                  Gtk_New (Item, -"Goto body of " & Name);
+                  Add (Menu, Item);
+                  Context_Callback.Object_Connect
+                    (Item, "activate",
+                     Context_Callback.To_Marshaller
+                     (On_Goto_Next_Body'Access),
+                     User_Data   => Selection_Context_Access (Context),
+                     Slot_Object => Editor,
+                     After       => True);
+               end;
             end if;
 
             Gtk_New (Item, -"Goto file spec/body");
