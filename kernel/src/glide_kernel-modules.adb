@@ -444,6 +444,7 @@ package body Glide_Kernel.Modules is
       Add_Before  : Boolean := True)
    is
       Parent, Pred    : Gtk_Menu_Item;
+      Parent_Menu     : Gtk_Menu;
       Index           : Gint;
 
    begin
@@ -456,16 +457,23 @@ package body Glide_Kernel.Modules is
          Ref_Item     => Ref_Item,
          Allow_Create => True);
 
-      if Parent /= null then
-         if Item /= null then
-            Find_Menu_Item_By_Name
-              (Glide_Window (Kernel.Main_Window).Menu_Bar,
-               Gtk_Menu (Get_Submenu (Parent)), Ref_Item, Pred, Index);
-            Add_Menu (Gtk_Menu (Get_Submenu (Parent)),
-                      Glide_Window (Kernel.Main_Window).Menu_Bar,
-                      Item, Index, Add_Before);
-            Show_All (Item);
-         end if;
+      if Parent = null then
+         Trace (Me, "Register_Menu: Parent menu not found for " & Parent_Path);
+         Parent_Menu := null;
+      else
+         Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
+      end if;
+
+      if Item /= null then
+         Find_Menu_Item_By_Name
+           (Glide_Window (Kernel.Main_Window).Menu_Bar,
+            Parent_Menu, Ref_Item, Pred, Index);
+         Add_Menu (Parent     => Parent_Menu,
+                   Menu_Bar   => Glide_Window (Kernel.Main_Window).Menu_Bar,
+                   Item       => Item,
+                   Index      => Index,
+                   Add_Before => Add_Before);
+         Show_All (Item);
       end if;
    end Register_Menu;
 
@@ -544,6 +552,7 @@ package body Glide_Kernel.Modules is
    is
       use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
       function Cleanup (Path : String) return String;
+      --  Remove duplicate // in Path
 
       -------------
       -- Cleanup --
