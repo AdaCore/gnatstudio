@@ -43,6 +43,9 @@ MODULE.SSH                = yes
 MODULE.PROJECT_PROPERTIES = yes
 MODULE.PROJECT_VIEWER     = yes
 MODULE.CPP                = yes
+
+--  Misc
+
 EXPLORERS.TOOLTIPS        = no
 
 --  Debug handles related to the cross-references database
