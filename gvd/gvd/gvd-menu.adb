@@ -43,6 +43,7 @@ with GVD.Types;           use GVD.Types;
 with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Basic_Types;         use Basic_Types;
+with Histories;           use Histories;
 with List_Select_Pkg;     use List_Select_Pkg;
 with Dock_Paned;          use Dock_Paned;
 with Debugger;            use Debugger;
@@ -55,6 +56,11 @@ with Interactive_Consoles; use Interactive_Consoles;
 package body GVD.Menu is
 
    use GVD;
+
+   Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
+   --  The key in the history for the arguments to the run command.
+   --  WARNING: this constant is shared with builder_module.adb, since we want
+   --  to have the same history for the run command in GPS.
 
    ---------------------
    -- On_Open_Program --
@@ -369,7 +375,7 @@ package body GVD.Menu is
            (Parent         => Tab.Window,
             Title          => -"Run/Start",
             Message        => -"Run arguments:",
-            Key            => "gvd_run_arguments",
+            Key            => Cst_Run_Arguments_History,
             History        => Tab.History,
             Check_Msg      => -"Stop at beginning of main subprogram",
             Check_Msg2     => Msg.all,
