@@ -217,12 +217,18 @@ package body Python.Ada is
      (Name : String;
       Func : C_Method_Keywords;
       Doc  : String := "")
-      return PyMethodDef is
+      return PyMethodDef
+   is
+      D : chars_ptr := Null_Ptr;
    begin
+      if Doc /= "" then
+         D := New_String (Doc);
+      end if;
+
       return (Name  => New_String (Name),
               Func  => To_Callback (Func),
               Flags => METH_KEYWORDS,
-              Doc   => New_String (Doc));
+              Doc   => D);
    end Create_Method_Def;
 
    -------------------------
