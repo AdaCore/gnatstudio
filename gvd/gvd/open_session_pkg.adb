@@ -274,7 +274,7 @@ begin
                Put_Line (File, Tab.Descriptor.Remote_Target.all);
                Put_Line (File, Tab.Descriptor.Protocol.all);
                Put_Line (File, Tab.Descriptor.Debugger_Name.all);
-               Put_Line (File, "------------------------");
+               Put_Line (File, "---------------------");
 
             else
                Conversion_Table (J) := -1;
