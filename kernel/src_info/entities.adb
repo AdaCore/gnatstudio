@@ -28,6 +28,12 @@ with Traces;       use Traces;
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
 
+   Manage_Global_Entities_Table : constant Boolean := True;
+   --  True if we should try and create a global table for all entities
+   --  defined in the project. The same information can be computed by
+   --  traversing all files and their .Entities tables, and this saves some
+   --  memory and time when creating the structure.
+
    use Entities_Tries;
    use Files_HTable;
    use LI_HTable;
@@ -41,16 +47,16 @@ package body Entities is
    procedure Add_Depended_On
      (File : Source_File; Depended_On  : Source_File);
    --  Add a new file that depends on File. We check first that Depended_On
-   --  is not in the list. File is not added to the list of dependencies for
-   --  Dependend_On, see Add_Depends_On instead.
-
-   procedure Add_Entity
-     (File : Source_File; Entity : Entity_Information);
-   --  Add a new entity to the list of entities for this file. No check is done
-   --  whether the entity is already there or not
+   --  is not in the list. This doesn't check whether the dependency has
+   --  already been registered.
 
    procedure Reset (Entity : Entity_Information; File : Source_File);
    --  Remove all references to File in Entity.
+
+   function Find
+     (E : Dependency_List; File : Source_File)
+      return Dependency_Arrays.Index_Type;
+   --  Find a specific file in the list of dependencies
 
    procedure Isolate (Entity : in out Entity_Information);
    --  Isolate the entity from the rest of the LI structure. This should be
@@ -170,6 +176,7 @@ package body Entities is
    begin
       for F in Source_File_Arrays.First .. Last (File.Depended_On) loop
          Iter := Start (File.Depended_On.Table (F).All_Entities, "");
+
          loop
             EL := Get (Iter);
             exit when EL = null;
@@ -233,13 +240,15 @@ package body Entities is
          exit when EL = null;
 
          for E in Entity_Information_Arrays.First .. Last (EL.all) loop
-            Remove (File.Db.Entities, EL.Table (E));
+            if Manage_Global_Entities_Table then
+               Remove (File.Db.Entities, EL.Table (E));
+            end if;
 
             if EL.Table (E).Ref_Count > 1 then
                Isolate (EL.Table (E));
             end if;
 
-            Unref (EL.Table (E));
+            Remove (File.Entities, EL.Table (E));
          end loop;
 
          Next (Iter);
@@ -263,14 +272,28 @@ package body Entities is
    ------------
 
    procedure Remove (E : in out Dependency_List; File : Source_File) is
+      Index : constant Dependency_Arrays.Index_Type := Find (E, File);
+   begin
+      if Index >= Dependency_Arrays.First then
+         Remove (E, Index);
+      end if;
+   end Remove;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find
+     (E : Dependency_List; File : Source_File)
+      return Dependency_Arrays.Index_Type is
    begin
       for L in Dependency_Arrays.First .. Last (E) loop
          if E.Table (L).File = File then
-            Remove (E, L);
-            exit;
+            return L;
          end if;
       end loop;
-   end Remove;
+      return Dependency_Arrays.First - 1;
+   end Find;
 
    -----------
    -- Reset --
@@ -289,13 +312,14 @@ package body Entities is
       end loop;
 
       Reset_All_Entities (File);
+      Clear (File.All_Entities);
+
       Free_All_Entities (File);
 
       Clear (File.Entities);
       Free (File.Depends_On);
       Free (File.Depended_On);
       Destroy (File.Scope);
-      Clear (File.All_Entities);
       File.Is_Valid := False;
    end Reset;
 
@@ -337,6 +361,10 @@ package body Entities is
       procedure Check_And_Remove (E : in out Entity_Information_List) is
       begin
          for J in reverse Entity_Information_Arrays.First .. Last (E) loop
+            Assert (Assert_Me, E.Table (J) /= null, "Invalid entity in list");
+            Assert
+              (Assert_Me, E.Table (J).Declaration.File /= null,
+               "Invalid declaration");
             if E.Table (J).Declaration.File = File then
                Remove (E, J);
             end if;
@@ -538,9 +566,12 @@ package body Entities is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Entities_Database_Record, Entities_Database);
    begin
-      Reset (Db.Files);
-      Clear (Db.Entities);
       Reset (Db.LIs);
+      Reset (Db.Files);
+
+      if Manage_Global_Entities_Table then
+         Clear (Db.Entities);
+      end if;
       Unchecked_Free (Db);
    end Destroy;
 
@@ -622,8 +653,12 @@ package body Entities is
       Depends_On          : Source_File;
       Explicit_Dependency : Boolean := False) is
    begin
-      Append (File.Depends_On, (Depends_On, Explicit_Dependency));
-      Add_Depended_On (Depends_On, File);
+      Assert (Assert_Me, Depends_On /= File, "File cannot depend on itself");
+
+      if Find (File.Depends_On, Depends_On) < Dependency_Arrays.First then
+         Append (File.Depends_On, (Depends_On, Explicit_Dependency));
+         Add_Depended_On (Depends_On, File);
+      end if;
    end Add_Depends_On;
 
    ---------------------
@@ -632,19 +667,8 @@ package body Entities is
 
    procedure Add_Depended_On (File : Source_File; Depended_On : Source_File) is
    begin
-      if Find (File.Depended_On, Depended_On) < Source_File_Arrays.First then
-         Append (File.Depended_On, Depended_On);
-      end if;
+      Append (File.Depended_On, Depended_On);
    end Add_Depended_On;
-
-   ----------------
-   -- Add_Entity --
-   ----------------
-
-   procedure Add_Entity (File : Source_File; Entity : Entity_Information) is
-   begin
-      Add (File.Entities, Entity, Check_Duplicates => False);
-   end Add_Entity;
 
    ---------
    -- Add --
@@ -659,7 +683,7 @@ package body Entities is
         Get (Entities, Get_Name (Entity).all);
       Is_Null : constant Boolean := (EL = null);
    begin
-      if EL = null then
+      if Is_Null then
          EL := new Entity_Information_List'(Null_Entity_Information_List);
       end if;
 
@@ -744,6 +768,7 @@ package body Entities is
       Kind     : Reference_Kind)
    is
    begin
+      Assert (Assert_Me, Location.File /= null, "Invalid End_Of_Scope");
       Entity.End_Of_Scope := (Location, Kind);
       Add_All_Entities (Location.File, Entity);
    end Set_End_Of_Scope;
@@ -768,6 +793,7 @@ package body Entities is
    procedure Set_Is_Renaming_Of
      (Entity : Entity_Information; Renaming_Of : Entity_Information) is
    begin
+      Assert (Assert_Me, Renaming_Of /= null, "Invalid renamed entity");
       Entity.Rename := Renaming_Of;
       Add_All_Entities (Renaming_Of.Declaration.File, Entity);
    end Set_Is_Renaming_Of;
@@ -781,6 +807,7 @@ package body Entities is
       Location : File_Location;
       Kind     : Reference_Kind) is
    begin
+      Assert (Assert_Me, Location.File /= null, "Invalid file in reference");
       Append (Entity.References, (Location, Kind));
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
@@ -793,6 +820,7 @@ package body Entities is
      (Entity : Entity_Information; Is_Of_Type : Entity_Information)
    is
    begin
+      Assert (Assert_Me, Is_Of_Type /= null, "Invalid type for entity");
       Append (Entity.Parent_Types, Is_Of_Type);
 
       if Entity.Kind.Is_Type then
@@ -809,6 +837,7 @@ package body Entities is
    procedure Add_Primitive_Subprogram
      (Entity : Entity_Information; Primitive : Entity_Information) is
    begin
+      Assert (Assert_Me, Primitive /= null, "Invalid primitive subprogram");
       Append (Entity.Primitive_Subprograms, Primitive);
       Primitive.Primitive_Op_Of := Entity;
       Add_All_Entities (Primitive.Declaration.File, Entity);
@@ -821,6 +850,7 @@ package body Entities is
    procedure Set_Pointed_Type
      (Entity : Entity_Information; Points_To : Entity_Information) is
    begin
+      Assert (Assert_Me, Points_To /= null, "Invalid pointed type");
       Entity.Pointed_Type := Points_To;
       Add_All_Entities (Points_To.Declaration.File, Entity);
    end Set_Pointed_Type;
@@ -832,6 +862,7 @@ package body Entities is
    procedure Set_Returned_Type
      (Entity : Entity_Information; Returns : Entity_Information) is
    begin
+      Assert (Assert_Me, Returns /= null, "Invalid returned type");
       Entity.Returned_Type := Returns;
       Add_All_Entities (Returns.Declaration.File, Entity);
    end Set_Returned_Type;
@@ -847,15 +878,18 @@ package body Entities is
       Line   : Natural;
       Column : Natural) return Entity_Information
    is
-      EL : Entity_Information_List_Access := Get (Db.Entities, Name);
-      E  : Entity_Information;
-      Is_Null : constant Boolean := (EL = null);
+      --  Speed up the search by checking in the file itself. However, we'll
+      --  have to add the new entity to the global entities table as well.
+      EL  : Entity_Information_List_Access := Get (File.Entities, Name);
+      EL2 : Entity_Information_List_Access;
+      E   : Entity_Information;
+      Is_Null : Boolean := (EL = null);
    begin
-      if EL = null then
+      if Is_Null then
          EL := new Entity_Information_List'(Null_Entity_Information_List);
+      else
+         E := Find (EL.all, (File, Line, Column));
       end if;
-
-      E := Find (EL.all, (File, Line, Column));
 
       if E = null then
          E := new Entity_Information_Record'
@@ -872,13 +906,28 @@ package body Entities is
             Child_Types           => Null_Entity_Information_List,
             References            => Null_Entity_Reference_List,
             Ref_Count             => 1);
+
          Append (EL.all, E);
 
-         Add_Entity (File, E);
-      end if;
+         if Is_Null then
+            Insert (File.Entities, EL);
+         end if;
 
-      if Is_Null then
-         Insert (Db.Entities, EL);
+         if Manage_Global_Entities_Table then
+            EL2     := Get (Db.Entities, Name);
+            Is_Null := (EL2 = null);
+
+            if EL2 = null then
+               EL2 := new Entity_Information_List'
+                 (Null_Entity_Information_List);
+            end if;
+
+            Append (EL2.all, E);
+
+            if Is_Null then
+               Insert (Db.Entities, EL2);
+            end if;
+         end if;
       end if;
 
       return E;
@@ -914,7 +963,8 @@ package body Entities is
    function Get_Predefined_File (Db : Entities_Database) return Source_File is
    begin
       if Db.Predefined_File = null then
-         Db.Predefined_File := Get_Or_Create (Db, VFS.No_File, null);
+         Db.Predefined_File := Get_Or_Create
+           (Db, Create_From_Base ("<predefined>"), null);
       end if;
       return Db.Predefined_File;
    end Get_Predefined_File;
