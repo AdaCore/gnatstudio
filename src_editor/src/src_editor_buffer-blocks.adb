@@ -48,9 +48,7 @@ package body Src_Editor_Buffer.Blocks is
       First_Buffer_Line : Buffer_Line_Type;
 
    begin
-      if not Buffer.Parse_Blocks then
-         return;
-      end if;
+      Buffer.Blocks_Need_Parsing := False;
 
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
