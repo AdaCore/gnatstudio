@@ -988,7 +988,7 @@ package body Docgen.Work_On_File is
                              Floating_Point | Modular_Integer |
                              Ordinary_Fixed_Point |
                              Private_Type | Protected_Kind |
-                             Signed_Integer
+                             Signed_Integer | Named_Number
                         =>
                            if Get_Kind (Info).Is_Type then
                               Process_Type
