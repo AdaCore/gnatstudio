@@ -20,6 +20,10 @@
 
 package body Debugger is
 
+   ------------------
+   -- Set_Language --
+   ------------------
+
    procedure Set_Language
      (Debugger     : out Debugger_Root;
       The_Language : Language.Language_Access) is
@@ -27,10 +31,24 @@ package body Debugger is
       Debugger.The_Language := The_Language;
    end Set_Language;
 
+   ------------------
+   -- Get_Language --
+   ------------------
+
    function Get_Language
      (Debugger : Debugger_Root) return Language.Language_Access is
    begin
       return Debugger.The_Language;
    end Get_Language;
+
+   -----------------
+   -- Get_Process --
+   -----------------
+
+   function Get_Process
+     (Debugger : Debugger_Root) return GNAT.Expect.Pipes_Id_Access is
+   begin
+      return Debugger.Process;
+   end Get_Process;
 
 end Debugger;

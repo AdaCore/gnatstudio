@@ -31,6 +31,10 @@ package Debugger is
 
    type Debugger_Access is access all Debugger_Root'Class;
 
+   function Get_Process
+     (Debugger : Debugger_Root) return GNAT.Expect.Pipes_Id_Access;
+   --  Return the process descriptor associated with Debugger.
+
    procedure Set_Language
      (Debugger     : out Debugger_Root;
       The_Language : Language.Language_Access);
@@ -129,12 +133,11 @@ package Debugger is
 
 private
 
-   type Pipes_Id_Access is access all GNAT.Expect.Pipes_Id;
    procedure Free is new Unchecked_Deallocation
-     (GNAT.Expect.Pipes_Id, Pipes_Id_Access);
+     (GNAT.Expect.Pipes_Id, GNAT.Expect.Pipes_Id_Access);
 
    type Debugger_Root is abstract tagged record
-      Process      : Pipes_Id_Access := null;
+      Process      : GNAT.Expect.Pipes_Id_Access := null;
       The_Language : Language.Language_Access;
    end record;
 end Debugger;
