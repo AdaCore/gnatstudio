@@ -571,6 +571,11 @@ package body Project_Explorers_Files is
          Sort_Case_Insensitive (D.Files);
       end if;
 
+      if Is_Empty (D.Dirs) and then Is_Empty (D.Files) then
+         Set (D.Explorer.File_Model, D.Base, Icon_Column,
+              C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
+      end if;
+
       while not Is_Empty (D.Dirs) loop
          declare
             Dir : constant String := Head (D.Dirs);
@@ -1019,9 +1024,9 @@ package body Project_Explorers_Files is
          Trace (Me, "Unexpected exception: " & Exception_Message (E));
    end File_Tree_Collapse_Row_Cb;
 
-   ----------------
+   ---------------------
    -- Expose_Event_Cb --
-   ----------------
+   ---------------------
 
    function Expose_Event_Cb
      (Explorer : access Glib.Object.GObject_Record'Class;
@@ -1082,9 +1087,9 @@ package body Project_Explorers_Files is
             case N_Type is
                when Directory_Node =>
                   Free_Children (T, Iter);
-                  File_Append_Directory (T, Iter_Name, Iter, 1);
                   Set (T.File_Model, Iter, Icon_Column,
                        C_Proxy (T.Open_Pixbufs (Directory_Node)));
+                  File_Append_Directory (T, Iter_Name, Iter, 1);
 
                when File_Node =>
                   Free_Children (T, Iter);
@@ -1202,6 +1207,26 @@ package body Project_Explorers_Files is
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column))) is
 
                when Directory_Node =>
+                  if Get_Event_Type (Event) = Gdk_2button_Press then
+                     declare
+                        Path    : Gtk_Tree_Path;
+                        Success : Boolean;
+                        pragma Unreferenced (Success);
+                     begin
+                        Path := Get_Path (T.File_Model, Iter);
+
+                        if Row_Expanded (T.File_Tree, Path) then
+                           Success := Collapse_Row (T.File_Tree, Path);
+                        else
+                           File_Append_Dummy_Iter (T, Iter);
+                           Success := Expand_Row
+                             (T.File_Tree, Path, False);
+                        end if;
+
+                        Path_Free (Path);
+                     end;
+                  end if;
+
                   return False;
 
                when File_Node =>
