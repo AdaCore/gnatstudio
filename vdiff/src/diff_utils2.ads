@@ -73,6 +73,15 @@ package Diff_Utils2 is
 
    procedure Free (Link : in out Diff_Head);
    --  Free the memory of this Link.
+
+   procedure Free_All (Link : in out Diff_Head);
+   --  Free all content of Head of the list.
+
+   procedure Diff3
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item   : in out Diff_Head);
+   --  Execute diff on Item
+
    procedure Free is
       new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
    --  Free the memory associated with the head of the list Link.
@@ -113,8 +122,10 @@ package Diff_Utils2 is
       return Diff_List;
    --  Just for Testing
 
-   procedure Simplify (Diff : Diff_List; Ref_File : T_Loc := 2);
+   function Simplify (Diff : Diff_List; Ref_File : T_Loc := 2)
+                      return Diff_List;
    --  calculate the displayable version of Diff with reference file Ref_File
+
 private
 
    function Diff3 (Diff3_Command  : String;

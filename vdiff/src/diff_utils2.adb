@@ -1,3 +1,26 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2003                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  This package provides low-level utilities to handle differences between
+--  files.
+
 with Ada.Text_IO;              use Ada.Text_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNAT.Expect;              use GNAT.Expect;
@@ -32,9 +55,6 @@ package body Diff_Utils2 is
 
    procedure Free (Vect : in out Diff3_Block);
    --  Free all content of Vect.
-
-   procedure Free_All (Link : in out Diff_Head);
-   --  Free all content of Head of the list.
 
    procedure Compute3_Occurrence
      (Ret        : in out Diff_List;
@@ -357,6 +377,26 @@ package body Diff_Utils2 is
    -- Diff3 --
    -----------
 
+   procedure Diff3
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item   : in out Diff_Head) is
+   begin
+      Free_List (Item.List);
+      if Item.File1 /= null and Item.File2 /= null then
+         if Item.File3 /= null then
+            Item.List := Diff3
+              (Kernel, Item.File1.all, Item.File2.all, Item.File3.all);
+         else
+            Item.List := Diff
+              (Kernel, Item.File1.all, Item.File2.all);
+         end if;
+      end if;
+   end Diff3;
+
+   -----------
+   -- Diff3 --
+   -----------
+
    function Diff3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       My_Change, Old_File, Your_Change : String)
@@ -471,21 +511,22 @@ package body Diff_Utils2 is
    -- Simplify --
    --------------
 
-   procedure Simplify
+   function Simplify
      (Diff : Diff_List;
-      Ref_File : T_Loc := 2)
+      Ref_File : T_Loc := 2) return Diff_List
    is
-      Ref : constant T_Loc := Ref_File;
-      Curr_Node : Diff_List_Node;
+      Ref        : constant T_Loc := Ref_File;
+      Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
-      VRange : array (1 .. 3) of Diff_Range;
+      VRange     : array (1 .. 3) of Diff_Range;
+      Res        : Diff_List;
 
    begin
       Curr_Node := First (Diff);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node
       loop
-         Curr_Chunk := Data (Curr_Node);
+         Curr_Chunk := new Diff_Chunk'(Data (Curr_Node).all);
          VRange     :=
            (Curr_Chunk.Range1,
             Curr_Chunk.Range2,
@@ -549,9 +590,10 @@ package body Diff_Utils2 is
          Curr_Chunk.Range1 := VRange (1);
          Curr_Chunk.Range2 := VRange (2);
          Curr_Chunk.Range3 := VRange (3);
+         Append (Res, Curr_Chunk);
          Curr_Node  := Next (Curr_Node);
       end loop;
-
+      return Res;
    end Simplify;
 
    ---------------
