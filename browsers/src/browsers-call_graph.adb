@@ -471,7 +471,7 @@ package body Browsers.Call_Graph is
       Child  : Entity_Item;
    begin
       Child := Add_Entity_If_Not_Present (Browser, Entity);
-      --  Destroy (Entity);
+      Destroy (Entity);
       return Child;
    end Add_Entity_If_Not_Present;
 
@@ -791,6 +791,7 @@ package body Browsers.Call_Graph is
                Src => Item, Dest => Child, Arrow => Both_Arrow);
          end if;
          Refresh (Browser, Child);
+         Destroy (Rename);
 
       elsif Is_Renaming then
          Insert (Kernel,
