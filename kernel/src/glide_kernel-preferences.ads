@@ -97,7 +97,38 @@ package Glide_Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Param_Spec_Int;
       Value  : Glib.Gint);
+   procedure Set_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : String;
+      Value  : String);
    --  See Default_Preferences.Set_Pref
+
+   --------------------------------
+   -- Specific preferences pages --
+   --------------------------------
+
+   procedure Register_Page
+     (Kernel : access Kernel_Handle_Record'Class;
+      Page   : access Default_Preferences.Preferences_Page_Record'Class);
+   --  Register a new pasge to display in the preferences dialog.
+   --  This page will be put first on the list of preference pages in the
+   --  dialog.
+
+   --------------------------
+   -- Saving and Restoring --
+   --------------------------
+
+   procedure Save_Preferences
+     (Kernel : access Kernel_Handle_Record'Class;
+      Saved  : out Default_Preferences.Saved_Prefs_Data);
+   --  Save the current value of the preferences.
+   --  Saved must be freed by the user
+
+   procedure Restore_Preferences
+     (Kernel : access Kernel_Handle_Record'Class;
+      Saved  : Default_Preferences.Saved_Prefs_Data);
+   --  Restore the previous value of the preferences.
+   --  Saved must not be destroyed afterwards
 
    ------------------
    -- Enumerations --

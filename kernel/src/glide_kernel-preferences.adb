@@ -36,6 +36,9 @@ package body Glide_Kernel.Preferences is
    package Key_Themes_Properties is new Generic_Enumeration_Property
      ("Key_Themes", Key_Themes);
 
+   Preferences_Pages : Preferences_Page_Array_Access;
+   --  ??? To be included in the kernel
+
    ---------------------------------
    -- Register_Global_Preferences --
    ---------------------------------
@@ -795,10 +798,15 @@ package body Glide_Kernel.Preferences is
       end On_Changed;
 
    begin
+      if Preferences_Pages = null then
+         Preferences_Pages := new Preferences_Page_Array (1 .. 0);
+      end if;
+
       Edit_Preferences
         (Manager           => Kernel.Preferences,
          Parent            => Get_Main_Window (Kernel),
-         On_Changed        => On_Changed'Unrestricted_Access);
+         On_Changed        => On_Changed'Unrestricted_Access,
+         Custom_Pages      => Preferences_Pages.all);
    end Edit_Preferences;
 
    ----------------------
@@ -911,6 +919,18 @@ package body Glide_Kernel.Preferences is
       Set_Pref (Kernel.Preferences, Pspec_Name (Param_Spec (Pref)), Value);
    end Set_Pref;
 
+   --------------
+   -- Set_Pref --
+   --------------
+
+   procedure Set_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : String;
+      Value  : String) is
+   begin
+      Set_Pref (Kernel.Preferences, Pref, Value);
+   end Set_Pref;
+
    -----------------------
    -- Register_Property --
    -----------------------
@@ -922,5 +942,49 @@ package body Glide_Kernel.Preferences is
    begin
       Register_Property (Kernel.Preferences, Param, Page);
    end Register_Property;
+
+   ----------------------
+   -- Save_Preferences --
+   ----------------------
+
+   procedure Save_Preferences
+     (Kernel : access Kernel_Handle_Record'Class;
+      Saved  : out Default_Preferences.Saved_Prefs_Data) is
+   begin
+      Save_Preferences (Kernel.Preferences, Saved);
+   end Save_Preferences;
+
+   -------------------------
+   -- Restore_Preferences --
+   -------------------------
+
+   procedure Restore_Preferences
+     (Kernel : access Kernel_Handle_Record'Class;
+      Saved  : Default_Preferences.Saved_Prefs_Data) is
+   begin
+      Restore_Preferences (Kernel.Preferences, Saved);
+   end Restore_Preferences;
+
+   -------------------
+   -- Register_Page --
+   -------------------
+
+   procedure Register_Page
+     (Kernel : access Kernel_Handle_Record'Class;
+      Page   : access Preferences_Page_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+      Tmp : Preferences_Page_Array_Access := Preferences_Pages;
+   begin
+      if Tmp = null then
+         Preferences_Pages := new Preferences_Page_Array (1 .. 1);
+      else
+         Preferences_Pages := new Preferences_Page_Array (1 .. Tmp'Last + 1);
+         Preferences_Pages (Tmp'Range) := Tmp.all;
+      end if;
+
+      Preferences_Pages (Preferences_Pages'Last) := Preferences_Page (Page);
+      Unchecked_Free (Tmp);
+   end Register_Page;
 
 end Glide_Kernel.Preferences;
