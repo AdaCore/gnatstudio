@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glide_Intl; use Glide_Intl;
+
 package body Commands.VCS is
 
    ----------
@@ -118,5 +120,27 @@ package body Commands.VCS is
       Command_Finished (Command, True);
       return Success;
    end Execute;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (X : access Commit_Command_Type) return String is
+      pragma Unreferenced (X);
+   begin
+      return -"Committing files";
+   end Name;
+
+   function Name (X : access Get_Status_Command_Type) return String is
+      pragma Unreferenced (X);
+   begin
+      return -"Getting status";
+   end Name;
+
+   function Name (X : access Update_Files_Command_Type) return String is
+      pragma Unreferenced (X);
+   begin
+      return -"Updating files";
+   end Name;
 
 end Commands.VCS;

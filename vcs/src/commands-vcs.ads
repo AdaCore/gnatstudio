@@ -65,6 +65,10 @@ package Commands.VCS is
    function Execute
      (Command : access Update_Files_Command_Type) return Command_Return_Type;
 
+   function Name (X : access Commit_Command_Type) return String;
+   function Name (X : access Get_Status_Command_Type) return String;
+   function Name (X : access Update_Files_Command_Type) return String;
+
    procedure Free (X : in out Commit_Command_Type);
    procedure Free (X : in out Get_Status_Command_Type);
    procedure Free (X : in out Update_Files_Command_Type);
