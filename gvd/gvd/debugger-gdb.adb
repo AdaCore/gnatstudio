@@ -281,7 +281,6 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Str, Matched);
    begin
-      Gdb_Debugger (Process.Debugger.all).Has_Terminated := True;
       Set_Is_Started (Process.Debugger, False);
    end Running_Filter;
 
@@ -1423,13 +1422,9 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean
    is
+      pragma Unreferenced (Debugger);
       Index : Natural := Command'First;
    begin
-      if Debugger.Has_Terminated then
-         Debugger.Has_Terminated := False;
-         return False;
-      end if;
-
       --  Note: some of commands below can have a numeric parameter, that needs
       --  to be ignored (e.g/ cont 99)
 
@@ -1447,6 +1442,8 @@ package body Debugger.Gdb is
         or else Command (Command'First .. Index - 1) = "cont"
         or else Command (Command'First .. Index - 1) = "c"
         or else Command = "finish"
+        or else (Command'Length >= 6
+          and then Command (Command'First .. Command'First + 5) = "target")
         or else (Command'Length >= 3
           and then Command (Command'First .. Command'First + 2) = "run")
         or else (Command'Length >= 5
