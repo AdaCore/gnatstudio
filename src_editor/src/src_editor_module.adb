@@ -1293,12 +1293,20 @@ package body Src_Editor_Module is
                  ((Src.Editor, Line, Column, 0, User));
 
                --  Add the location in the navigations button.
-               Interpret_Command
-                 (User,
-                  "add_location_command """ &
-                  "edit -l " & Image (Line) & " -c " & Image (Column) & " "
-                  & File.all
-                  & """");
+               declare
+                  Args   : Argument_List (1 .. 6);
+               begin
+                  Args (1 .. 6) :=
+                    (new String'("edit"),
+                     new String'("-l"),
+                     new String'(Image (Line)),
+                     new String'("-c"),
+                     new String'(Image (Column)),
+                     new String'(File.all));
+
+                  Interpret_Command (User, "add_location_command", Args);
+                  Free (Args);
+               end;
             end if;
          end if;
       end if;
