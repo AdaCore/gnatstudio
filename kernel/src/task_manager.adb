@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003 - 2005                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,11 +52,6 @@ package body Task_Manager is
       Active  : Boolean) return Boolean;
    --  Incremental function to execute the task manager.
 
-   procedure Run
-     (Manager : Task_Manager_Access;
-      Active  : Boolean);
-   --  Runs the task manager, if it is not already running.
-
    function Safe_Execute
      (Command : Command_Access) return Command_Return_Type;
    --  Executes command, and returns the result. If an exception occurs during
@@ -97,7 +92,17 @@ package body Task_Manager is
       if Manager.Queues /= null
         and then Manager.Passive_Index > Manager.Queues'First
       then
-         return True;
+         --  Run only if one queue is actually running; do not run if all
+         --  queues are paused, for instance.
+         for J in Manager.Queues'First .. Manager.Passive_Index - 1 loop
+            if Manager.Queues (J).Status = Running then
+               return True;
+            end if;
+         end loop;
+
+         Manager.Running_Active := False;
+         Return_Type := Execute (Manager.Pop_Command);
+         return False;
 
       else
          Manager.Running_Active := False;
