@@ -456,18 +456,11 @@ package body Src_Editor_Module is
                   Column);
             elsif Command = "create_mark" then
                declare
-                  MDI        : constant MDI_Window := Get_MDI (Kernel);
                   Box        : Source_Box;
                   Child      : MDI_Child;
-                  Iter       : Child_Iterator := First_Child (MDI);
                   Mark_Record : Mark_Identifier_Record;
                begin
-                  loop
-                     Child := Get (Iter);
-                     exit when Child = null
-                       or else Get_Title (Child) = Filename.all;
-                     Next (Iter);
-                  end loop;
+                  Child := Find_Editor (Kernel, Filename.all);
 
                   if Child /= null then
                      Box := Source_Box (Get_Widget (Child));
@@ -2354,7 +2347,7 @@ package body Src_Editor_Module is
                        Extra_Information => Gtk_Widget (Selector),
                        Id                => null,
                        Mask              => All_Options
-                         and not Search_Backward and not Supports_Replace));
+                         and not Search_Backward));
          Register_Search_Function
            (Kernel => Kernel,
             Data   => (Length            => Name3'Length,
@@ -2363,7 +2356,7 @@ package body Src_Editor_Module is
                        Extra_Information => Gtk_Widget (Extra),
                        Id                => null,
                        Mask              => All_Options
-                         and not Search_Backward and not Supports_Replace));
+                         and not Search_Backward));
       end;
    end Register_Module;
 
@@ -2470,5 +2463,25 @@ package body Src_Editor_Module is
          Destroy (Id.Open_File_Dialog);
       end if;
    end Destroy;
+
+   -----------------
+   -- Find_Editor --
+   -----------------
+
+   function Find_Editor
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : String) return Gtkada.MDI.MDI_Child
+   is
+      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child : MDI_Child;
+   begin
+      loop
+         Child := Get (Iter);
+         exit when Child = null or else Get_Title (Child) = File;
+         Next (Iter);
+      end loop;
+
+      return Child;
+   end Find_Editor;
 
 end Src_Editor_Module;

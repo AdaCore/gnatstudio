@@ -38,6 +38,12 @@ package Src_Editor_Module is
    --  If the focus in the MDI is not set on a source editor, then the top most
    --  editor is returned.
 
+   function Find_Editor
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : String) return Gtkada.MDI.MDI_Child;
+   --  Return the first child that contains an editor that edits file.
+   --  null is returned if there are no such editor
+
    function Get_Source_Box_From_MDI
      (Child : Gtkada.MDI.MDI_Child) return Src_Editor_Box.Source_Editor_Box;
    --  Return the source editor contained in a MDI_Child. Constraint_Error if
