@@ -796,7 +796,7 @@ package body Projects is
       Name, Lang : Name_Id;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (Base_Name (Filename), Project, Unit, Name, Lang);
+        (Base_Name (Filename).all, Project, Unit, Name, Lang);
       return Unit;
    end Get_Unit_Part_From_Filename;
 
@@ -843,14 +843,12 @@ package body Projects is
      (Project         : Project_Type;
       Unit_Name       : String;
       Part            : Unit_Part;
-      File_Must_Exist : Boolean := True;
-      Check_Predefined_Library : Boolean := False) return VFS.Virtual_File
+      Check_Predefined_Library : Boolean := False) return String
    is
       Arr  : Array_Element_Id := No_Array_Element;
       Unit : Name_Id;
       View : Project_Id;
       Value : Variable_Value;
-      N     : Virtual_File;
 
    begin
       --  Standard GNAT naming scheme
@@ -859,33 +857,14 @@ package body Projects is
 
       if Check_Predefined_Library then
          case Part is
-            when Unit_Body | Unit_Spec =>
-               declare
-                  Base : String := Substitute_Dot (Unit_Name, "-") & ".adb";
-                  Path : constant String :=
-                    Get_Predefined_Source_Path (Project.Data.Registry.all);
-                  Iter : Path_Iterator := Start (Path);
-               begin
-                  if Part = Unit_Spec then
-                     Base (Base'Last) := 's';
-                  end if;
-
-                  while not At_End (Path, Iter) loop
-                     N := Create
-                       (Name_As_Directory (Current (Path, Iter)) & Base);
-                     if not File_Must_Exist or else Is_Regular_File (N) then
-                        return N;
-                     end if;
-
-                     Iter := Next (Path, Iter);
-                  end loop;
-               end;
-
+            when Unit_Body =>
+               return Substitute_Dot (Unit_Name, "-") & ".adb";
+            when Unit_Spec =>
+               return Substitute_Dot (Unit_Name, "-") & ".ads";
             when others =>
                Assert (Me, False, "Unexpected Unit_Part");
+               return "";
          end case;
-
-         return VFS.No_File;
 
       --  The project naming scheme
       else
@@ -909,9 +888,7 @@ package body Projects is
          end case;
 
          if Value /= Nil_Variable_Value then
-            return Create
-              (Base_Name => Get_String (Value.Value),
-               Project   => Project);
+            return Get_String (Value.Value);
          end if;
 
          --  Otherwise test the standard naming scheme
@@ -921,19 +898,18 @@ package body Projects is
                Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
 
             when Unit_Separate =>
-               N := Create
-                 (Unit_Name & Get_String
-                    (Prj.Projects.Table (View).Naming.Separate_Suffix),
-                  Project);
+               declare
+                  N : constant String := Unit_Name & Get_String
+                    (Prj.Projects.Table (View).Naming.Separate_Suffix);
+               begin
+                  if Get_Project_From_File
+                    (Project.Data.Registry.all, N, False) = Project
+                  then
+                     return N;
+                  end if;
+               end;
 
-               if not File_Must_Exist
-                 or else Get_Project_From_File
-                   (Project.Data.Registry.all, N, False) = Project
-               then
-                  return N;
-               end if;
-
-               return VFS.No_File;
+               return "";
 
             when Unit_Spec =>
                Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
@@ -947,19 +923,16 @@ package body Projects is
          begin
             while Arr /= No_Array_Element loop
                if Array_Elements.Table (Arr).Index = Name_Ada then
-                  N := Create
-                    (Uname
-                     & Get_String (Array_Elements.Table (Arr).Value.Value),
-                     Project);
-
-                  if N /= VFS.No_File
-                    and then
-                      (not File_Must_Exist
-                       or else Get_Project_From_File
-                         (Project.Data.Registry.all, N, False) = Project)
-                  then
-                     return N;
-                  end if;
+                  declare
+                     N : constant String := Uname
+                       & Get_String (Array_Elements.Table (Arr).Value.Value);
+                  begin
+                     if Get_Project_From_File
+                       (Project.Data.Registry.all, N, False) = Project
+                     then
+                        return N;
+                     end if;
+                  end;
                end if;
 
                Arr := Array_Elements.Table (Arr).Next;
@@ -967,7 +940,7 @@ package body Projects is
          end;
       end if;
 
-      return VFS.No_File;
+      return "";
    end Get_Filename_From_Unit;
 
    ------------------------
@@ -1013,21 +986,19 @@ package body Projects is
       return Filename'Last;
    end Delete_File_Suffix;
 
-   ---------------------
-   -- Other_File_Name --
-   ---------------------
+   --------------------------
+   -- Other_File_Base_Name --
+   --------------------------
 
-   function Other_File_Name
+   function Other_File_Base_Name
      (Project : Project_Type; Source_Filename : Virtual_File)
-      return Virtual_File
+      return String
    is
       Unit, Part : Unit_Part;
       Name, Lang : Name_Id;
-      P          : Project_Type;
-      N          : Virtual_File;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (Base_Name (Source_Filename), Project, Unit, Name, Lang);
+        (Base_Name (Source_Filename).all, Project, Unit, Name, Lang);
 
       case Unit is
          when Unit_Spec                 => Part := Unit_Body;
@@ -1037,33 +1008,27 @@ package body Projects is
       Get_Name_String (Name);
       declare
          Unit : constant String := Name_Buffer (1 .. Name_Len);
+         N    : constant String :=
+           Get_Filename_From_Unit (Project, Unit, Part);
       begin
-         --  Search in all extended projects as well, since the other file
-         --  might not be redefined in Project itself. Start from the lowest
-         --  project.
-         P := Extending_Project (Project, Recurse => True);
-         while P /= No_Project loop
-            N := Get_Filename_From_Unit
-              (P, Unit, Part, File_Must_Exist => True);
-            if N /= VFS.No_File then
-               return N;
-            end if;
-
-            P := Parent_Project (P);
-         end loop;
-
-         --  Default to the GNAT naming scheme (for runtime files)
-
-         N := Get_Filename_From_Unit
-           (Project, Unit, Part, File_Must_Exist => True,
-            Check_Predefined_Library => True);
-         if N /= VFS.No_File then
+         if N /= "" then
             return N;
+
+         else
+            --  Default to the GNAT naming scheme (for runtime files)
+            declare
+               N2 : constant String := Get_Filename_From_Unit
+                 (Project, Unit, Part, Check_Predefined_Library => True);
+            begin
+               if N2 /= "" then
+                  return N2;
+               end if;
+            end;
          end if;
 
-         return Source_Filename;
+         return Base_Name (Source_Filename).all;
       end;
-   end Other_File_Name;
+   end Other_File_Base_Name;
 
    -------------------------
    -- Get_Attribute_Value --
@@ -2169,7 +2134,7 @@ package body Projects is
            (Project        => Project,
             Attribute      =>
               Attribute_Pkg (In_Pkg & '#' & Get_String (Name_Switches)),
-            Index          => Base_Name (File));
+            Index          => Base_Name (File).all);
 
          if Value /= Nil_Variable_Value then
             Is_Default_Value := False;

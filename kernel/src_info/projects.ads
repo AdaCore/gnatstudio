@@ -231,23 +231,20 @@ package Projects is
    --  If not matching suffix is found in project, the returned value will
    --  simply be Filename'Last.
 
-   function Other_File_Name
+   function Other_File_Base_Name
      (Project : Project_Type; Source_Filename : VFS.Virtual_File)
-      return VFS.Virtual_File;
-   --  Return the name of the spec or body for Source_Filename, depending on
-   --  what Source_Filename is. Source_Filename is returned if there is no
+      return String;
+   --  Return the base name of the spec or body for Source_Filename, depending
+   --  on what Source_Filename is. Source_Filename is returned if there is no
    --  other file.
    --  See also Src_Info.Queries.Get_Other_File_Of
-   --
-   --  The returned name is the base name
 
    function Get_Filename_From_Unit
      (Project         : Project_Type;   --  Mustn't be No_Project
       Unit_Name       : String;
       Part            : Unit_Part;
-      File_Must_Exist : Boolean := True;
-      Check_Predefined_Library : Boolean := False) return VFS.Virtual_File;
-   --  Return the source filename for the given unit. The empty string is
+      Check_Predefined_Library : Boolean := False) return String;
+   --  Return the base name for the given unit. The empty string is
    --  returned if this unit doesn't belong to the project, or if the concept
    --  of unit doesn't apply to the language. If File_Must_Exist is False, then
    --  the name of the file that would be used is returned, even if no such
