@@ -93,11 +93,7 @@ package body VCS.CVS is
 
    procedure Real_Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List;
-      Get_Status  : Boolean := True;
-      Get_Version : Boolean := True;
-      Get_Tags    : Boolean := False;
-      Get_Users   : Boolean := False);
+      Filenames   : String_List.List);
    --  Just like Get_Status, but assuming that Filenames is not empty
    --  and that all files in Filenames are from the same directory.
 
@@ -110,14 +106,12 @@ package body VCS.CVS is
    procedure Simple_Action
      (Rep               : access CVS_Record;
       Filenames         : String_List.List;
-      Arguments         : String_List.List;
-      Output_To_Message : Boolean := False);
+      Arguments         : String_List.List);
 
    procedure Real_Simple_Action
      (Rep               : access CVS_Record;
       Filenames         : String_List.List;
-      Arguments         : String_List.List;
-      Output_To_Message : Boolean := False);
+      Arguments         : String_List.List);
    --  Just like Simple_Action, but assuming that Filenames is not
    --  empty and that all files in Filenames are from the same directory.
 
@@ -182,7 +176,7 @@ package body VCS.CVS is
    is
       Match  : Expect_Match := 1;
    begin
-      Expect (D.Rep.Fd, Match, "\n",  200);
+      Expect (D.Rep.Fd, Match, "\n",  10);
 
       case Match is
          when Expect_Timeout =>
@@ -219,6 +213,7 @@ package body VCS.CVS is
 
          Pop_State (D.Rep.Kernel);
          Destroy (D);
+
          return False;
    end Atomic_Command;
 
@@ -369,10 +364,8 @@ package body VCS.CVS is
    procedure Real_Simple_Action
      (Rep               : access CVS_Record;
       Filenames         : String_List.List;
-      Arguments         : String_List.List;
-      Output_To_Message : Boolean := False)
+      Arguments         : String_List.List)
    is
-      pragma Unreferenced (Output_To_Message);
       C : Command_Record;
    begin
       String_List.Append (C.Dir, Get_Path (String_List.Head (Filenames)));
@@ -413,8 +406,7 @@ package body VCS.CVS is
    procedure Simple_Action
      (Rep               : access CVS_Record;
       Filenames         : String_List.List;
-      Arguments         : String_List.List;
-      Output_To_Message : Boolean := False)
+      Arguments         : String_List.List)
    is
       use String_List;
 
@@ -441,8 +433,7 @@ package body VCS.CVS is
 
             --  At this point, Current_List should not be empty and
             --  all its element are files from Current_Directory.
-            Real_Simple_Action (Rep, Current_List,
-                                Arguments, Output_To_Message);
+            Real_Simple_Action (Rep, Current_List, Arguments);
             Free (Current_List);
          end;
       end loop;
@@ -612,13 +603,8 @@ package body VCS.CVS is
 
    procedure Real_Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List;
-      Get_Status  : Boolean := True;
-      Get_Version : Boolean := True;
-      Get_Tags    : Boolean := False;
-      Get_Users   : Boolean := False)
+      Filenames   : String_List.List)
    is
-      pragma Unreferenced (Get_Users, Get_Tags, Get_Version, Get_Status);
       Files   : String_List.List := Filenames;
 
       C : Command_Record;
@@ -731,11 +717,7 @@ package body VCS.CVS is
 
    procedure Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List;
-      Get_Status  : Boolean := True;
-      Get_Version : Boolean := True;
-      Get_Tags    : Boolean := False;
-      Get_Users   : Boolean := False)
+      Filenames   : String_List.List)
    is
       Current_Filename : String_List.List := Filenames;
 
@@ -765,11 +747,7 @@ package body VCS.CVS is
 
             Real_Get_Status
               (Rep,
-               Current_List,
-               Get_Status,
-               Get_Version,
-               Get_Tags,
-               Get_Users);
+               Current_List);
 
             Free (Current_List);
          end;
@@ -888,7 +866,7 @@ package body VCS.CVS is
       String_List.Append (Arguments, "update");
       String_List.Append (Arguments, "-d");
 
-      Simple_Action (Rep, Filenames, Arguments, True);
+      Simple_Action (Rep, Filenames, Arguments);
    end Update;
 
    -----------
@@ -902,7 +880,7 @@ package body VCS.CVS is
       Arguments : String_List.List;
    begin
       String_List.Append (Arguments, "update");
-      Simple_Action (Rep, Filenames, Arguments, True);
+      Simple_Action (Rep, Filenames, Arguments);
    end Merge;
 
    ---------
@@ -928,7 +906,7 @@ package body VCS.CVS is
       String_List.Append (Arguments_2, -"Initial revision for this file.");
       --  ??? This should be customizable.
 
-      Simple_Action (Rep, Filenames, Arguments);
+      Simple_Action (Rep, Filenames, Arguments_2);
    end Add;
 
    ------------
@@ -940,13 +918,40 @@ package body VCS.CVS is
       Filenames : String_List.List)
    is
       Arguments : String_List.List;
+      Arguments_2 : String_List.List;
    begin
       String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "remove");
       String_List.Append (Arguments, "-f");
 
       Simple_Action (Rep, Filenames, Arguments);
+
+      String_List.Append (Arguments_2, "-Q");
+      String_List.Append (Arguments_2, "commit");
+      String_List.Append (Arguments_2, "-m");
+
+      String_List.Append (Arguments_2, -"Remove this file.");
+      --  ??? This should be customizable.
+
+      Simple_Action (Rep, Filenames, Arguments_2);
    end Remove;
+
+   ------------
+   -- Revert --
+   ------------
+
+   procedure Revert
+     (Rep       : access CVS_Record;
+      Filenames : String_List.List)
+   is
+      Arguments : String_List.List;
+   begin
+      String_List.Append (Arguments, "-Q");
+      String_List.Append (Arguments, "update");
+      String_List.Append (Arguments, "-C");
+
+      Simple_Action (Rep, Filenames, Arguments);
+   end Revert;
 
    ------------------
    -- Diff_Handler --
@@ -1123,7 +1128,6 @@ package body VCS.CVS is
 
          Temp_L := String_List.Next (Temp_L);
       end loop;
-
    end Handle_Error;
 
    ------------------
