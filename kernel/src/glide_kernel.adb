@@ -71,6 +71,7 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
 
+with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 
 package body Glide_Kernel is
@@ -345,6 +346,41 @@ package body Glide_Kernel is
       raise Program_Error;
       return False;
    end Save_All_Editors;
+
+   ------------------
+   -- Get_VCS_List --
+   ------------------
+
+   function Get_VCS_List
+     (Handle : access Kernel_Handle_Record)
+     return Basic_Types.String_Array_Access is
+   begin
+      return Handle.VCS_List;
+   end Get_VCS_List;
+
+   ------------------
+   -- Register_VCS --
+   ------------------
+
+   procedure Register_VCS
+     (Handle         : access Kernel_Handle_Record;
+      VCS_Identifier : String) is
+   begin
+      if Handle.VCS_List = null then
+         Handle.VCS_List := new String_Array'
+           (1 => new String' (VCS_Identifier));
+      else
+         declare
+            A : String_Array (1 .. Handle.VCS_List'Length + 1);
+         begin
+            A (1 .. Handle.VCS_List'Length) := Handle.VCS_List.all;
+            A (Handle.VCS_List'Length + 1) := new String' (VCS_Identifier);
+
+            Unchecked_Free (Handle.VCS_List);
+            Handle.VCS_List := new String_Array' (A);
+         end;
+      end if;
+   end Register_VCS;
 
    -------------------------------------
    -- Locate_From_Source_And_Complete --
