@@ -1,15 +1,19 @@
 with GNAT.Directory_Operations,
      GNAT.IO_Aux,
+     GNAT.Expect,
      OS_Utils,
+     System,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation,
      Ada.Exceptions,
      SN.Xref_Pools,
+--     Ada.Text_IO,
      GNAT.OS_Lib;
 
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
      Ada.Strings.Fixed,
+--     Ada.Text_IO,
      Ada.Exceptions,
      SN.Xref_Pools,
      GNAT.OS_Lib;
@@ -40,11 +44,33 @@ package body SN.Browse is
       Delete_Array (Args);
    end Delete;
 
+   procedure Output_Filter
+     (PD        : in GNAT.Expect.Process_Descriptor'Class;
+      Str       : in String;
+      User_Data : in System.Address := System.Null_Address);
+   --  Output filter
+
+   -------------------
+   -- Output_Filter --
+   -------------------
+   procedure Output_Filter
+     (PD        : in GNAT.Expect.Process_Descriptor'Class;
+      Str       : in String;
+      User_Data : in System.Address := System.Null_Address) is
+      pragma Unreferenced (PD);
+      pragma Unreferenced (Str);
+      pragma Unreferenced (User_Data);
+   begin
+      null;
+   end Output_Filter;
+
    procedure Browse (File_Name, DB_Directory, Browser_Name : in String) is
       Xref_File_Name      : String_Access;
       Success             : Boolean;
       Args                : Argument_List_Access;
       DBUtil_Path         : String_Access;
+      PD                  : GNAT.Expect.Process_Descriptor;
+      Result              : GNAT.Expect.Expect_Match;
    begin
       --  check DB_Directory exists
       if not Is_Directory (DB_Directory) then
@@ -96,12 +122,19 @@ package body SN.Browse is
            Browser_Name & ": not found in PATH");
       end if;
 
-      Spawn (DBUtil_Path.all, Args.all, Success);
+      GNAT.Expect.Non_Blocking_Spawn (PD, DBUtil_Path.all, Args.all,
+         Err_To_Out => True);
+      GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
+      loop
+         begin
+            GNAT.Expect.Expect (PD, Result, "", 0);
+         exception
+            when GNAT.Expect.Process_Died => exit;
+         end;
+      end loop;
+      GNAT.Expect.Close (PD);
       Delete (Args);
       Free (DBUtil_Path);
-      if not Success then
-         raise Spawn_Failure;
-      end if;
    end Browse;
 
    procedure Generate_Xrefs (DB_Directory : in String) is
@@ -119,6 +152,8 @@ package body SN.Browse is
       Content      : String_Access;
       Temp_File    : File_Descriptor;
       Temp_Name    : Temp_File_Name;
+      PD           : GNAT.Expect.Process_Descriptor;
+      Result       : GNAT.Expect.Expect_Match;
    begin
 
       --  remove .to and .by tables
@@ -178,8 +213,18 @@ package body SN.Browse is
          raise Spawn_Failure;
       end if;
 
-      Spawn (DBIMP_Path.all, Args.all, Success);
+      GNAT.Expect.Non_Blocking_Spawn (PD, DBIMP_Path.all, Args.all,
+         Err_To_Out => True);
       Delete (Args);
+      GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
+      loop
+         begin
+            GNAT.Expect.Expect (PD, Result, "", 0);
+         exception
+            when GNAT.Expect.Process_Died => exit;
+         end;
+      end loop;
+      GNAT.Expect.Close (PD);
 
       Delete_File (Temp_Name'Address, Success);
       if not Success then
