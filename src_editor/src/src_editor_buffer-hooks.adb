@@ -58,7 +58,7 @@ package body Src_Editor_Buffer.Hooks is
         (Hooks_Data with
          File => Buffer.Filename);
    begin
-      Run_Hook (Buffer.Kernel, Cursor_Stopped_Hook, Data);
+      Run_Hook (Buffer.Kernel, Cursor_Stopped_Hook, Data, False);
    end Cursor_Stopped;
 
    ---------------------------
