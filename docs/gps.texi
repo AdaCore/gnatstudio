@@ -131,6 +131,7 @@ Project Handling
 * Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
+* The Project Dependencies Editor::
 * The Project Properties Editor::
 * The Switches Editor::
 * The Project Browser::
@@ -2698,6 +2699,7 @@ how such projects can be created and maintained.
 * Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
+* The Project Dependencies Editor::
 * The Project Properties Editor::
 * The Switches Editor::
 * The Project Browser::
@@ -3154,50 +3156,7 @@ features of the project files that are not accessible graphically
 
 @item Edit Project/Dependencies...
 @cindex project dependency
-This menu gives access to a GPS wizard that allows you to edit dependencies
-between projects.
-
-This relationship between projects is extremely important, since it determines
-among other things, which source files are visible to the selected project.
-For instance, if you are writting an XML application based on XML/Ada, you
-will need to make your project depend on @file{xmlada.gpr}.
-
-The dependencies also determine in what order your application is built.
-When you compile a project, the builder will first make sure that the projects
-it depends on are up-to-date, and otherwise recompile them.
-
-You can add or remove dependencies for your project through this wizard. There
-are three pages:
-@itemize @bullet
-@cindex limited with
-@item The first page allows you to define dependencies among the projects
- currently loaded in GPS. Some special handling is made to avoid circular
- dependencies in the project tree, and a different form of dependency is used
- in such a case, a @code{limited with} clause. See the GNAT documentation for
- more information. Basically, this limited clause allows circular dependencies
- between projects (not between sources, this is dependent on your programming
- language). However, it means that a projects that imports another one through
- this limited clause cannot reference attributes in that other project (and
- thus for instance can not say "Reuse the same switches as that other project").
-
-@item The second page will look for all the project files it can find in the
- list of directories specified in your @code{ADA_PROJECT_PATH} environment
- variable, as well as in the predefined project path set by the compiler.
- All the projects it has found will be listed on that page, so that you can
- easily add dependencies to projects like @file{xmlada.gpr} for instance,
- provided you have installed that library on your system.
-
-@item The third page allows you to create a dependency with any project
- anywhere on your file system, or even projects that you create on the fly
- through the standard project wizard.
-@end itemize
-
-Removing a dependency is done by ensuring that the check box next to the
-project's name is unselected. GPS will automatically detect the change and
-remove the project dependency.
-
-If you want a more graphical view of the dependencies between your projects,
-you should check Project Browser (@pxref{The Project Browser});
+This opens the dependencies editor (@pxref{The Project Dependencies Editor}).
 
 @item Add Configuration Variable
 @cindex add configuration variable
@@ -3653,6 +3612,55 @@ button if there is one.
 Any switch can be added to the entry field, even if there is no
 corresponding button. In this case, GPS will simply forward it to the
 tool when it is called, without trying to represent it graphically.
+
+@c -------------------------------------------------------------------
+@node The Project Dependencies Editor
+@section The Project Dependencies Editor
+@cindex project dependencies
+@c -------------------------------------------------------------------
+
+@noindent
+You can edit the dependencies between projects through the contextual
+menu @code{Edit Project->Dependencies...} in the Project Explorer.
+
+This view make it easy to indicate that your project depends on external
+libraries, or other modules in your source code. For instance, you can
+give access to the graphical library GtkAda to the sources in your
+project simply by adding a project dependency to gtkada.gpr, which must
+of course have been installed first.
+
+The dependencies also determine in what order your application is built.
+When you compile a project, the builder will first make sure that the projects
+it depends on are up-to-date, and otherwise recompile them.
+
+When you select that contextual menu, GPS will open a dialog that allows
+you to add or remove dependencies to your project. New dependencies are
+added by selecting a project file name from one of several sources:
+
+@itemize @bullet
+@item One of the loaded project from the current project tree
+
+@item One of the predefined projects.
+
+   These are the projects that are found in one of the directories referenced
+   in the @code{ADA_PROJECT_PATH} environment variable. Typically, these
+   include the third party libraries, like GtkAda.
+
+@item A new project that you create through the usual project wizard
+
+@item Any project file anywhere on the disk
+
+@end itemize
+
+In all these cases, you will generally be able to choose whether this should
+be a simple dependency, or a limited dependency. The latter allows you to have
+mutually dependent projects (A depends on B, which in turns depends on A
+even indirectly), although you cannot reference the attribute of such a project
+in the current project (for instance to indicate that the compiler switches
+to use for A are the same as for B -- you need to duplicate that information).
+
+In some cases, GPS will force a limited dependency on you to avoid loops in
+the dependencies that would make the project tree illegal.
 
 @c -------------------------------------------------------------------
 @node The Project Properties Editor
