@@ -395,6 +395,10 @@ package body Src_Editor_View is
       pragma Unreferenced (Params, Buffer);
    begin
       Invalidate_Window (User);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Line_Highlight_Change_Handler;
 
    ---------------------------------------
@@ -409,6 +413,10 @@ package body Src_Editor_View is
       pragma Unreferenced (Params);
    begin
       User.Highlight_Blocks := Has_Block_Information (Buffer);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Buffer_Information_Change_Handler;
 
    ---------------------------------
@@ -438,6 +446,10 @@ package body Src_Editor_View is
          User.Idle_Redraw_Id := Source_View_Idle.Add
            (Idle_Column_Redraw'Access, User);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Side_Columns_Change_Handler;
 
    ----------------------------------------
@@ -465,6 +477,10 @@ package body Src_Editor_View is
          User.Idle_Redraw_Id := Source_View_Idle.Add
            (Idle_Column_Redraw'Access, User);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Side_Columns_Config_Change_Handler;
 
    ------------------------
@@ -484,6 +500,11 @@ package body Src_Editor_View is
 
       View.Idle_Redraw_Registered := False;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Idle_Column_Redraw;
 
    --------------------
@@ -528,6 +549,10 @@ package body Src_Editor_View is
       if not Cursor_Is_On_Screen (Source_View (View)) then
          Scroll_To_Cursor_Location (Source_View (View), Center => True);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Size_Allocated;
 
    ---------------------
