@@ -27,6 +27,7 @@ with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Process_Proxies;   use Process_Proxies;
+with Odd.Process;       use Odd.Process;
 
 package body Debugger.Gdb is
 
@@ -51,6 +52,55 @@ package body Debugger.Gdb is
      Compile ("^\(gdb\) ", Multiple_Lines);
    --  Matches everything that should be highlighted in the debugger window.
 
+   File_Name_Pattern : constant Pattern_Matcher :=
+     Compile (ASCII.SUB & ASCII.SUB
+              & "([^:]+):(\d+):\d+:beg:", Multiple_Lines);
+   --  Matches a file name/line indication in gdb's output.
+
+   Language_Pattern : constant Pattern_Matcher := Compile
+     ("^(The current source language is|Current language:) +" &
+      """?(auto; currently )?([^""\s]+)", Multiple_Lines);
+
+   procedure Language_Filter (Descriptor : GNAT.Expect.Process_Descriptor;
+                              Str        : String);
+   --  Filter used to detect a change in the current language.
+
+   ---------------------
+   -- Language_Filter --
+   ---------------------
+
+   procedure Language_Filter (Descriptor : GNAT.Expect.Process_Descriptor;
+                              Str        : String)
+   is
+      Matched    : GNAT.Regpat.Match_Array (0 .. 3);
+      Debugger   : Debugger_Access;
+      Language   : Language_Access;
+
+   begin
+      Match (Language_Pattern, Str, Matched);
+
+      if Matched (3) /= No_Match then
+         Debugger := Convert (Descriptor).Debugger;
+         declare
+            Lang     : String := Str (Matched (3).First .. Matched (3).Last);
+         begin
+            if Lang = "ada" then
+               Language := new Gdb_Ada_Language;
+            elsif Lang = "c" then
+               Language := new Gdb_Ada_Language;
+            else
+               pragma Assert (False, "Language not currently supported");
+               raise Program_Error;
+            end if;
+
+            --  ??? Should delete the old language...
+            Set_Language (Debugger, Language);
+            Set_Debugger (Language_Debugger_Access (Language),
+                          Debugger.all'Access);
+         end;
+      end if;
+   end Language_Filter;
+
    -------------
    -- Type_Of --
    -------------
@@ -69,6 +119,8 @@ package body Debugger.Gdb is
          if S'Length > Prompt_Length
            and then (S'Length <= 14
                      or else S (S'First .. S'First + 12) /= "No definition")
+           and  then (S'Length <= 9
+                      or else S (S'First .. S'First + 9) /= "No file or")
          then
             return S (S'First + 7 .. S'Last - Prompt_Length);
          else
@@ -143,6 +195,12 @@ package body Debugger.Gdb is
 
       General_Spawn
         (Debugger, Local_Arguments, Gdb_Command, Proxy, Remote_Machine);
+
+      --  Set up an output filter to detect changes of the current language
+
+      Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
+                         Language_Filter'Access);
+
 --        Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
 --                           Trace_Filter'Access);
 --        Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
@@ -154,10 +212,6 @@ package body Debugger.Gdb is
    ----------------
 
    procedure Initialize (Debugger : access Gdb_Debugger) is
-      Result     : Expect_Match;
-      Matched    : GNAT.Regpat.Match_Array (0 .. 2);
-      Descriptor : Process_Descriptor_Access := Get_Descriptor
-        (Get_Process (Debugger));
    begin
       --  Wait for initial prompt (and display it in the window)
       Set_Internal_Command (Get_Process (Debugger), False);
@@ -172,36 +226,18 @@ package body Debugger.Gdb is
       Wait_Prompt (Debugger);
       Send (Get_Process (Debugger), "set annotate 1");
       Wait_Prompt (Debugger);
+
+      --  Detect the current language. Note that most of the work is done in
+      --  fact directly by Language_Filter.
+
       Send (Get_Process (Debugger), "show lang");
-      Expect
-        (Descriptor.all, Result,
-         "The current source language is ""(auto; currently )?([^""]+)""",
-         Matched);
-
-      declare
-         S        : constant String := Expect_Out (Get_Process (Debugger));
-         Lang     : String := S (Matched (2).First .. Matched (2).Last);
-         Language : Language_Access;
-      begin
-         Wait_Prompt (Debugger);
-         if Lang = "ada" then
-            Language := new Gdb_Ada_Language;
-         elsif Lang = "c" then
-            Language := new Gdb_Ada_Language;
-         else
-            pragma Assert (False, "Language not currently supported");
-            raise Program_Error;
-         end if;
-
-         Set_Language (Debugger, Language);
-         Set_Debugger (Language_Debugger_Access (Language),
-                       Debugger.all'Access);
-      end;
+      Wait_Prompt (Debugger);
 
       --  Get the initial file name, so that we can display the appropriate
       --  file in the code editor.
       --  This should be done only after we have detected the current language,
       --  or no color highlighting will be provided.
+
       Send (Get_Process (Debugger), "list");
       Wait_Prompt (Debugger);
       Send (Get_Process (Debugger), "info line");
@@ -390,5 +426,40 @@ package body Debugger.Gdb is
    begin
       return Highlight_Pattern;
    end Highlighting_Pattern;
+
+   --------------------
+   -- Display_Prompt --
+   --------------------
+
+   procedure Display_Prompt (Debugger : access Gdb_Debugger) is
+   begin
+      Send (Get_Process (Debugger), "  ");
+      Wait_Prompt (Debugger);
+   end Display_Prompt;
+
+   ---------------------
+   -- Found_File_Name --
+   ---------------------
+
+   procedure Found_File_Name (Debugger   : access Gdb_Debugger;
+                              Str        : String;
+                              Name_First : out Natural;
+                              Name_Last  : out Positive;
+                              Line       : out Natural)
+   is
+      Matched : Match_Array (0 .. 2);
+   begin
+      Match (File_Name_Pattern, Str, Matched);
+      if Matched (0) = No_Match then
+         Name_First := 0;
+         Name_Last  := 1;
+         Line       := 0;
+      else
+         Name_First := Matched (1).First;
+         Name_Last  := Matched (1).Last;
+         Line       := Natural'Value
+           (Str (Matched (2).First .. Matched (2).Last));
+      end if;
+   end Found_File_Name;
 
 end Debugger.Gdb;
