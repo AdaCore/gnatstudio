@@ -1559,36 +1559,62 @@ Access the various suggested fixes through the methods of the Codefix class</des
     ###################################################################-->
 
   <shell_doc name="GPS.Toolbar">
-     <description>Interface to commands related to the toolbar.</description>
+     <description>Interface to commands related to the toolbar. This allows you to add new combo boxes to the GPS toolbars. Note that this can also be done through XML files, see the GPS documentation</description>
+     <example lang="python">
+         import GPS
+         def on_changed (id, choice):
+             print "changed " + choice + " in " + id
+         def on_selected (id, choice):
+             print "on_selected " + choice + " in " + id
+
+         t=GPS.Toolbar()   ## The default toolbar
+         t.entry_create (id="foo", label="Foo", on_changed=on_changed)
+         t.entry_add (id="foo", choice="Choice1", on_selected=on_selected)
+         t.entry_add (id="foo", choice="Choice2", on_selected=on_selected)
+         t.entry_add (id="foo", choice="Choice3", on_selected=on_selected)
+     </example>
   </shell_doc>
 
-  <shell_doc name="GPS.entry_add" real_name="GPS.Toolbar.entry_add">
-     <param name="entry_label">A string</param>
-     <param name="choice_label">A string</param>
-     <param name="action" default="">A string</param>
+  <shell_doc name="GPS.Toolbar.entry_create">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="id">A string, The unique id of the combo box to create</param>
+     <param name="label" default="">A string</param>
+     <param name="on_changed" default="None">A subprogram, see the GPS documentaion on Subprogram parameters</param>
+     <description>Create a new combo box in the selected toolbar. A text is displayed next to the combo box if the label parameter was specified. On_Changed will be called every time the user selects a new value for the combo box</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Toolbar.entry_add">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="id">A string, The unique id of the combo box to create</param>
+     <param name="choice">A string</param>
+     <param name="on_selected" default="">A subprogram, see the GPS documentation on Subprogram parameters</param>
      <description>Add a choice to specified entry, action will be executed whenever this choice is selected</description>
   </shell_doc>
 
-  <shell_doc name="GPS.entry_remove" real_name="GPS.Toolbar.entry_remove">
-     <param name="entry_label">A string</param>
-     <param name="choice_label">A string</param>
+  <shell_doc name="GPS.Toolbar.entry_remove">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="id">A string, The unique id of the combo box to create</param>
+     <param name="choice">A string</param>
      <description>Remove a choice from specified entry</description>
   </shell_doc>
 
-  <shell_doc name="GPS.entry_clear" real_name="GPS.Toolbar.entry_clear">
-     <param name="entry_label">A string</param>
+  <shell_doc name="GPS.Toolbar.entry_clear">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="id">A string, The unique id of the combo box to create</param>
      <description>Remove all choices from specified entry</description>
   </shell_doc>
 
-  <shell_doc name="GPS.entry_get_text" real_name="GPS.Toolbar.entry_get_text">
-     <param name="entry_label">A string</param>
+  <shell_doc name="GPS.Toolbar.entry_get_text">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="id">A string, The unique id of the combo box to create</param>
      <return>A string</return>
      <description>Return the current selection in specified entry</description>
   </shell_doc>
 
-  <shell_doc name="GPS.entry_set_text" real_name="GPS.Toolbar.entry_set_text">
-     <param name="entry_label">A string</param>
-     <param name="text">A string</param>
+  <shell_doc name="GPS.Toolbar.entry_set_text">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="id">A string, The unique id of the combo box to create</param>
+     <param name="choice">A string</param>
      <description>Set the current selection in specified entry</description>
   </shell_doc>
 
@@ -1909,8 +1935,12 @@ The regular expression specifies how locations are recognized. By default, it ma
 
   <shell_doc name="GPS.get" real_name="GPS.Preference.get">
      <param name="preference">A string</param>
-     <return>A string</return>
-     <description>Get value for the given preference</description>
+     <return>A string or an integer</return>
+     <description>Get value for the given preference. The exact returned type depends on the type of the preference. Note that boolean values are returned as integers, for compatibility with older versions of Pythons</description>
+     <example lang="python">
+         if GPS.Preference ("MDI-All-Floating"):
+            print "We are in all-floating mode"
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.set" real_name="GPS.Preference.set">
