@@ -1,12 +1,21 @@
 New features in GPS 1.1.0
 
+- Project explorer has new contextual menus: "show files from project only"
+  and "show absolute paths"
+
+- The preferences dialog was partially redesigned.
+
+- Exec directories are now visible in the project explorer
+
+- The type of data in an array type is now visible in the entities browser
+
 - Can now choose between no, simple or extended indentation for each language
   See documentation for more details.
 
 - Background colors in the text editor can be chosen
 
 - System files and implicit dependencies can be seen in the file dependency
-  browser
+  browser (see the contextual menu)
 
 - Enhanced support for extending projects: extended projects are now visible
   and browsable in the project explorer and the project browser, ALI files
