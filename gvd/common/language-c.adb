@@ -649,7 +649,7 @@ package body Language.C is
                First := Index;
 
                while Index <= Buffer'Last
-                 and then Is_Word_Char (Buffer (Index + 1))
+                 and then Is_Entity_Letter (Buffer (Index + 1))
                loop
                   Index := Index + 1;
                end loop;
