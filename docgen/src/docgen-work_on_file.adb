@@ -104,26 +104,30 @@ package body Docgen.Work_On_File is
       -- Find_Prev_Package --
       -----------------------
 
-      function Find_Prev_Package
-        (Package_Nr : Natural) return String is
+      function Find_Prev_Package (Package_Nr : Natural) return String is
          Local_Node : Type_Source_File_List.List_Node;
          use TSFL;
       begin
-         if Package_Nr = 1 or
-           (Package_Nr = 2 and not
-              Is_Spec_File (TSFL.Data (Source_File_Node).File_Name.all)) then
+         if Package_Nr = 1
+           or else (Package_Nr = 2
+                    and then not Is_Spec_File
+                      (TSFL.Data (Source_File_Node).File_Name.all))
+         then
             return "";
          else
-            Local_Node := Prev (Source_File_List,
-                                Source_File_Node);
-            if Is_Spec_File (Data (Local_Node).File_Name.all) and
-               Options.Process_Body_Files then
+            Local_Node := Prev (Source_File_List, Source_File_Node);
+
+            if Is_Spec_File (Data (Local_Node).File_Name.all)
+              and then Options.Process_Body_Files
+            then
                Local_Node := Prev (Source_File_List, Local_Node);
             end if;
+
             if Local_Node = Null_Node then
-               --  don't change this return, needed in Docgen-Texi_Output
+               --  Don't change this return, needed in Docgen-Texi_Output
                --  in Write_Not_Regular_Beginning!
                return "";
+
             else
                return Data (Local_Node).Package_Name.all;
             end if;
@@ -131,46 +135,47 @@ package body Docgen.Work_On_File is
       end Find_Prev_Package;
 
    begin
+      --  Sort the list of the files first
 
-      --  sort the list of the files first
       Sort_List_Name (Source_File_List);
-
       Source_File_Node := TSFL.First (Source_File_List);
 
       for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
+         --  Create the doc file from the package name for each package
 
-         --  create the doc file from the package name for each package
          Create (Doc_File,
                  Out_File,
-                 Get_Doc_File_Name (TSFL.Data
-                                      (Source_File_Node).File_Name.all,
-                                    Options.Doc_Directory.all,
-                                    Options.Doc_Suffix.all));
+                 Get_Doc_File_Name
+                   (TSFL.Data (Source_File_Node).File_Name.all,
+                    Options.Doc_Directory.all,
+                    Options.Doc_Suffix.all));
          Put_Line (-"from file: " &
                      TSFL.Data (Source_File_Node).File_Name.all);
          Put_Line (-"   create documentation to: " &
-                     Get_Doc_File_Name (TSFL.Data
-                                          (Source_File_Node).File_Name.all,
-                                        Options.Doc_Directory.all,
-                                        Options.Doc_Suffix.all));
+                   Get_Doc_File_Name
+                     (TSFL.Data (Source_File_Node).File_Name.all,
+                      Options.Doc_Directory.all,
+                      Options.Doc_Suffix.all));
 
-         --  find the next and the previous package name (used for TexInfo)
+         --  Find the next and the previous package name (used for TexInfo)
+
          Next_Package := new String'(Find_Next_Package (J));
          Prev_Package := new String'(Find_Prev_Package (J));
 
-         Process_One_File (Doc_File,
-                           TSFL.Data (Source_File_Node).File_Name.all,
-                           TSFL.Data (Source_File_Node).Package_Name.all,
-                           Next_Package,
-                           Prev_Package,
-                           Source_File_List,
-                           Source_Info_List,
-                           Handler,
-                           Project_Tree,
-                           Project_View,
-                           Options,
-                           Options.Process_Body_Files and
-                             TSFL.Data (Source_File_Node).Other_File_Found);
+         Process_One_File
+           (Doc_File,
+            TSFL.Data (Source_File_Node).File_Name.all,
+            TSFL.Data (Source_File_Node).Package_Name.all,
+            Next_Package,
+            Prev_Package,
+            Source_File_List,
+            Source_Info_List,
+            Handler,
+            Project_Tree,
+            Project_View,
+            Options,
+            Options.Process_Body_Files and then
+              TSFL.Data (Source_File_Node).Other_File_Found);
 
          Source_File_Node := TSFL.Next (Source_File_Node);
 
@@ -262,18 +267,22 @@ package body Docgen.Work_On_File is
       ------------------------------
 
       function Get_Full_Entity_Filename
-        (Filename         : String) return String
+        (Filename : String) return String
       is
          Source_File_Node : Type_Source_File_List.List_Node;
       begin
          Source_File_Node := TSFL.First (Source_File_List);
+
          for J in 1 .. TSFL.Length (Source_File_List) loop
             if File_Name (TSFL.Data (Source_File_Node).File_Name.all) =
-              Filename then
+              Filename
+            then
                return TSFL.Data (Source_File_Node).File_Name.all;
             end if;
+
             Source_File_Node := TSFL.Next (Source_File_Node);
          end loop;
+
          --  exception later!?
          Put_Line (-("!!!Error: File not found in List, cannot return" &
                    " the name with the path!"));
@@ -286,8 +295,8 @@ package body Docgen.Work_On_File is
 
       procedure Add_Entity_To_Index_List
         (Index_List  : in out Type_Entity_List.List;
-         Entity_Node : Entity_List_Information) is
-
+         Entity_Node : Entity_List_Information)
+      is
          Local_Node : Entity_List_Information;
       begin
          Local_Node.Kind := Entity_Node.Kind;
@@ -306,30 +315,35 @@ package body Docgen.Work_On_File is
       ---------------------------
 
       function Search_Line_In_Body
-        (Info : Entity_Information) return Natural is
-         Local_Location       : File_Location;
-         Local_Status         : Find_Decl_Or_Body_Query_Status;
+        (Info : Entity_Information) return Natural
+      is
+         Local_Location : File_Location;
+         Local_Status   : Find_Decl_Or_Body_Query_Status;
       begin
-         Find_Next_Body (LI_Unit,
-                         Get_Declaration_File_Of (Info),
-                         Get_Name (Info),
-                         Get_Declaration_Line_Of (Info),
-                         Get_Declaration_Column_Of (Info),
-                         Get_LI_Handler_From_File
-                           (Glide_Language_Handler (Handler),
-                            Source_Filename,
-                            Project_View),
-                         Source_Info_List,
-                         Project_View,
-                         "",
-                         "",
-                         Local_Location,
-                         Local_Status);
+         Find_Next_Body
+           (LI_Unit,
+            Get_Declaration_File_Of (Info),
+            Get_Name (Info),
+            Get_Declaration_Line_Of (Info),
+            Get_Declaration_Column_Of (Info),
+            Get_LI_Handler_From_File
+              (Glide_Language_Handler (Handler),
+               Source_Filename,
+               Project_View),
+            Source_Info_List,
+            Project_View,
+            "",
+            "",
+            Local_Location,
+            Local_Status);
+
          if Local_Status = Success then
             return Get_Line (Local_Location);
-            --  for example instantanations of generic entities don't
+
+            --  For example instantiations of generic entities don't
             --  need to have a declaration in the body
             --  => return No_Body_Line_Needed = constant 0
+
          else
             return No_Body_Line_Needed;
          end if;
@@ -342,8 +356,8 @@ package body Docgen.Work_On_File is
       procedure Process_Subprogram
         (Source_Filename : String;
          Entity_File     : String;
-         Info            : Entity_Information) is
-
+         Info            : Entity_Information)
+      is
          Decl_Found                : Boolean;
          Reference_Iter            : Entity_Reference_Iterator;
          Reference_Scope_Tree      : Scope_Tree;
@@ -413,6 +427,7 @@ package body Docgen.Work_On_File is
                                               Reference_Node);
 
                end if;
+
                Next (Child_Iterator);
                Child_Node := Get (Child_Iterator);
             end loop;
@@ -424,8 +439,8 @@ package body Docgen.Work_On_File is
 
          procedure Tree_Called_Callback
            (Node        : Scope_Tree_Node;
-            Is_Renaming : Boolean) is
-
+            Is_Renaming : Boolean)
+         is
             Local_Tree_Node : Scope_Tree_Node;
             Reference_Node  : Reference_List_Information;
          begin
@@ -440,6 +455,7 @@ package body Docgen.Work_On_File is
                while not Is_Subprogram (Local_Tree_Node) loop
                   Local_Tree_Node := Get_Parent (Local_Tree_Node);
                end loop;
+
                Reference_Node.File_Name  :=
                  new String'(Get_File
                                (Get_Location (Get_Reference (Node))));
@@ -462,7 +478,8 @@ package body Docgen.Work_On_File is
          ---------------------------
 
          procedure Remove_Double_Nodes
-           (List : in out TRL.List) is
+           (List : in out TRL.List)
+         is
             Ref_Node_1, Ref_Node_2 : TRL.List_Node;
             use TRL;
          begin
@@ -472,15 +489,15 @@ package body Docgen.Work_On_File is
                Ref_Node_1 := First (List);
                while Ref_Node_1 /= Last (List) loop
                   Ref_Node_2 := Next (Ref_Node_1);
+
                   if Data (Ref_Node_1).Subprogram_Name.all =
-                    Data (Ref_Node_2).Subprogram_Name.all and
+                    Data (Ref_Node_2).Subprogram_Name.all and then
                     Data (Ref_Node_1).File_Name.all =
-                    Data (Ref_Node_2).File_Name.all and
+                    Data (Ref_Node_2).File_Name.all and then
                     Data (Ref_Node_1).Line =
-                    Data (Ref_Node_2).Line then
-                     Remove_Nodes (List,
-                                   Ref_Node_1,
-                                   Ref_Node_2);
+                    Data (Ref_Node_2).Line
+                  then
+                     Remove_Nodes (List, Ref_Node_1, Ref_Node_2);
                   else
                      Ref_Node_1 := Ref_Node_2;
                   end if;
@@ -494,23 +511,24 @@ package body Docgen.Work_On_File is
          --  the references are wished:
          if File_Name (Entity_Node.File_Name.all) =
            File_Name (Source_Filename)
-           and Options.References then
-
+           and Options.References
+         then
             Entity_Node.Line_In_Body := Search_Line_In_Body (Info);
-
-            Find_All_References (Project_Tree,
-                                 Handler,
-                                 Info,
-                                 Source_Info_List,
-                                 Reference_Iter,
-                                 Project_View,
-                                 True);
+            Find_All_References
+              (Project_Tree,
+               Handler,
+               Info,
+               Source_Info_List,
+               Reference_Iter,
+               Project_View,
+               True);
 
             --  1. find all subprograms called in the subprogram processed
             Reference_Scope_Tree :=
               Create_Tree (LI_Unit);
             Entity_Tree_Node :=
               Find_Entity_Scope (Reference_Scope_Tree, Info);
+
             if Entity_Tree_Node /= Null_Scope_Tree_Node then
                Add_Calls_References (Entity_Tree_Node);
             end if;
@@ -522,12 +540,15 @@ package body Docgen.Work_On_File is
                --  declaration of the reference can be found?
                if Source_File_In_List
                  (Source_File_List,
-                  Get_File (Get_Location (Get (Reference_Iter)))) then
+                  Get_File (Get_Location (Get (Reference_Iter))))
+               then
                   Decl_Found := True;
                else
                   Decl_Found := False;
                end if;
+
                --  for the rest use the scope tree
+
                Reference_Scope_Tree :=
                  Create_Tree (Get_LI (Reference_Iter));
                Find_Entity_References
@@ -548,12 +569,12 @@ package body Docgen.Work_On_File is
          --  if defined in a spec file, add entity to the
          --  Subprogram_Index_List
          if Is_Spec_File (Source_Filename)
-           and Source_Filename = Entity_File then
+           and then Source_Filename = Entity_File
+         then
             Add_Entity_To_Index_List
               (Subprogram_Index_List,
                Give_Copy_Of_Element (Entity_Node));
          end if;
-
       end Process_Subprogram;
 
       ------------------
@@ -564,11 +585,12 @@ package body Docgen.Work_On_File is
         (Source_Filename : String;
          Entity_File     : String) is
       begin
-         Entity_Node.Kind   := Type_Entity;
+         Entity_Node.Kind := Type_Entity;
 
          --  if defined in a spec file => add to the Type_Index_List
          if Is_Spec_File (Source_Filename)
-           and Source_Filename = Entity_File then
+           and then Source_Filename = Entity_File
+         then
             Add_Entity_To_Index_List
               (Type_Index_List,
                Give_Copy_Of_Element (Entity_Node));
@@ -581,8 +603,8 @@ package body Docgen.Work_On_File is
 
       function Give_Copy_Of_Element
         (Old_Element : Entity_List_Information)
-         return Entity_List_Information is
-
+         return Entity_List_Information
+      is
          New_Entity : Entity_List_Information;
       begin
          New_Entity.Kind := Old_Element.Kind;
@@ -603,37 +625,38 @@ package body Docgen.Work_On_File is
       ----------------------
 
    begin
-
       Load_LI_File
         (Source_Info_List, Handler, Project_View,
          File_Name (Source_Filename),
          LI_Unit);
 
-      --  if body file, no need to start working on ALI, the lists of the
+      --  If body file, no need to start working on ALI, the lists of the
       --  spec file can be used.
+
       if not Is_Spec_File (Source_Filename) then
-         Process_Source (Doc_File,
-                         Next_Package,
-                         Prev_Package,
-                         Source_File_List,
-                         Source_Filename,
-                         Package_Name,
-                         Entity_List,
-                         Process_Body_File,
-                         LI_Unit,
-                         Options);
+         Process_Source
+           (Doc_File,
+            Next_Package,
+            Prev_Package,
+            Source_File_List,
+            Source_Filename,
+            Package_Name,
+            Entity_List,
+            Process_Body_File,
+            LI_Unit,
+            Options);
 
          --  now free the list
          TEL.Free (Entity_List);
 
          --  but if a spec file, you have to look in the ALI files
       else
-
          if Options.Info_Output then
             Put_Line (-"Find all possible declarations");
          end if;
 
          --  get all entities of the file
+
          if LI_Unit /= No_LI_File then
             Entity_Iter := Find_All_Possible_Declarations (LI_Unit, "");
          else
@@ -649,21 +672,24 @@ package body Docgen.Work_On_File is
             else
                Entity_Node.Is_Private := True;
             end if;
+
             --  check if the entity in defined within a subprogram.
             --  if true => ignore!
-            if not Is_Defined_In_Subprogram (Get_Full_Name
-                                               (Info, LI_Unit, "."),
-                                             Get_Name (Info),
-                                             Package_Name)
+
+            if not Is_Defined_In_Subprogram
+              (Get_Full_Name (Info, LI_Unit, "."),
+               Get_Name (Info),
+               Package_Name)
             --  AND check if the declaration of the entity
             --  is in one of the files
             --  which are in list, if false => no need for creating links
             --  => ignore!
-              and Source_File_In_List (Source_File_List,
-                                       Get_Declaration_File_Of (Info))
+              and then Source_File_In_List
+                (Source_File_List, Get_Declaration_File_Of (Info))
             --  AND check if it's a private entity and if they
             --  should be processed
-              and (Options.Show_Private or not Entity_Node.Is_Private)
+              and then (Options.Show_Private
+                        or else not Entity_Node.Is_Private)
             then
                --  Info_Output is set, if further information are wished
                if Options.Info_Output then
@@ -695,17 +721,19 @@ package body Docgen.Work_On_File is
 
                --  for all entities which are not subprograms the ref lists
                --  must be set null;
-               if Get_Kind (Info).Kind /= Function_Or_Operator and
-                 Get_Kind (Info).Kind /= Procedure_Kind then
+               if Get_Kind (Info).Kind /= Function_Or_Operator
+                 and then Get_Kind (Info).Kind /= Procedure_Kind
+               then
                   Entity_Node.Called_List := TRL.Null_List;
                   Entity_Node.Calls_List  := TRL.Null_List;
                end if;
 
-               --  get the entity specific parameters
+               --  Get the entity specific parameters
                --  these are the last parameters to gather, after the CASE no
                --  more changes are allowed, because the index lists are
                --  created in the subprograms used here, so all info must
                --  be avaiable.
+
                case Get_Kind (Info).Kind is
                   when Procedure_Kind | Function_Or_Operator =>
                      Entity_Node.Kind := Subprogram_Entity;
@@ -730,14 +758,15 @@ package body Docgen.Work_On_File is
                      else
                         Entity_Node.Kind := Var_Entity;
                      end if;
+
                   when Exception_Entity =>
                      Entity_Node.Kind := Exception_Entity;
                   when Task_Kind =>
                      Entity_Node.Kind := Entry_Entity;
                   when Package_Kind  =>
                      Entity_Node.Kind := Package_Entity;
-
-                  when others => Entity_Node.Kind := Other_Entity;
+                  when others =>
+                     Entity_Node.Kind := Other_Entity;
                end case;
 
                --  add to the entity list of this file
@@ -752,24 +781,24 @@ package body Docgen.Work_On_File is
          Destroy (Info);
 
          --  process the documentation of this file
-         Process_Source (Doc_File,
-                         Next_Package,
-                         Prev_Package,
-                         Source_File_List,
-                         Source_Filename,
-                         Package_Name,
-                         Entity_List,
-                         Process_Body_File,
-                         LI_Unit,
-                         Options);
+         Process_Source
+           (Doc_File,
+            Next_Package,
+            Prev_Package,
+            Source_File_List,
+            Source_Filename,
+            Package_Name,
+            Entity_List,
+            Process_Body_File,
+            LI_Unit,
+            Options);
 
          --  if body files are not being processed, free directly here
-         if not Options.Process_Body_Files   then
+
+         if not Options.Process_Body_Files then
             TEL.Free (Entity_List);
          end if;
-
       end if;
-
    end Process_One_File;
 
 end Docgen.Work_On_File;
