@@ -2644,7 +2644,8 @@ package body Project_Explorers is
    begin
       if Files = null then
          Files := Get_Source_Files
-           (Prj, Recursive => False, Full_Path => True, Normalized => False);
+           (Prj, Recursive => False, Full_Path => True,
+            Normalized => Get_Pref (Explorer.Kernel, Normalized_Directories));
       end if;
 
       --  If the information about the node hasn't been computed before,
