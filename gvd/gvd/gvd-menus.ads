@@ -61,4 +61,10 @@ package GVD.Menus is
    --  ??? Should we pass a Task_Dialog_Record as well, for the current
    --  thread/task ?
 
+   function Call_Stack_Contextual_Menu
+     (Process : access GVD.Process.Debugger_Process_Tab_Record'Class)
+      return Gtk.Menu.Gtk_Menu;
+   --  Create (if necessary) and reset the contextual menu used in the
+   --  debugger command window.
+
 end GVD.Menus;

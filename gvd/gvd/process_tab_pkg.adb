@@ -22,6 +22,7 @@ with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd;   use Callbacks_Odd;
+with Gdk.Types;       use Gdk.Types;
 
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
@@ -74,8 +75,13 @@ begin
    Set_Policy (Process_Tab.Scrolledwindow13, Policy_Automatic, Policy_Automatic);
 
    Gtk_New (Process_Tab.Stack_List, 1);
+   Set_Events (Process_Tab.Stack_List,
+     Button_Press_Mask or
+     Button_Release_Mask);
    C_List_Callback.Connect
      (Process_Tab.Stack_List, "select_row", On_Stack_List_Select_Row'Access);
+   Return_Callback.Object_Connect
+     (Process_Tab.Stack_List, "button_press_event", On_Stack_List_Button_Press_Event'Access, Process_Tab);
    Add (Process_Tab.Scrolledwindow13, Process_Tab.Stack_List);
    Set_Selection_Mode (Process_Tab.Stack_List, Selection_Single);
    Set_Shadow_Type (Process_Tab.Stack_List, Shadow_In);

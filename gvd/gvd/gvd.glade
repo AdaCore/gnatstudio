@@ -784,7 +784,7 @@
 	    </signal>
 	    <label>Call Stack</label>
 	    <active>True</active>
-            <always_show_toggle>True</always_show_toggle>
+	    <always_show_toggle>True</always_show_toggle>
 	  </widget>
 
 	  <widget>
@@ -3345,10 +3345,17 @@
 	    <class>GtkCList</class>
 	    <name>stack_list</name>
 	    <can_focus>True</can_focus>
+	    <events>GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</events>
 	    <signal>
 	      <name>select_row</name>
 	      <handler>on_stack_list_select_row</handler>
 	      <last_modification_time>Wed, 11 Oct 2000 10:48:46 GMT</last_modification_time>
+	    </signal>
+	    <signal>
+	      <name>button_press_event</name>
+	      <handler>on_stack_list_button_press_event</handler>
+	      <object>Process_Tab</object>
+	      <last_modification_time>Tue, 31 Oct 2000 22:18:19 GMT</last_modification_time>
 	    </signal>
 	    <columns>1</columns>
 	    <column_widths>80</column_widths>

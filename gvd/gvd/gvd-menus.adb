@@ -58,6 +58,9 @@ package body GVD.Menus is
    Debugger_Contextual_Menu_Name : constant String := "odd_debugger_context";
    --  String used to store the debugger command window contextual menu.
 
+   Call_Stack_Contextual_Menu_Name : constant String := "odd_call_stack";
+   --  String used to store the debugger command window contextual menu.
+
    -----------------
    -- local types --
    -----------------
@@ -525,6 +528,36 @@ package body GVD.Menus is
            (Process.Debugger_Text, Menu, Debugger_Contextual_Menu_Name);
          return Menu;
    end Debugger_Contextual_Menu;
+
+   --------------------------------
+   -- Call_Stack_Contextual_Menu --
+   --------------------------------
+
+   function Call_Stack_Contextual_Menu
+     (Process : access GVD.Process.Debugger_Process_Tab_Record'Class)
+      return Gtk.Menu.Gtk_Menu
+   is
+      Menu  : Gtk_Menu;
+      Mitem : Gtk_Menu_Item;
+   begin
+      Menu := Menu_User_Data.Get
+        (Process.Debugger_Text, Call_Stack_Contextual_Menu_Name);
+      return Menu;
+
+   exception
+      when Gtkada.Types.Data_Error =>
+         --  The menu has not been created yet
+
+         Gtk_New (Menu);
+         Gtk_New (Mitem, Label => -"Show file");
+         Set_State (Mitem, State_Insensitive);
+         Append (Menu, Mitem);
+
+         Show_All (Menu);
+         Menu_User_Data.Set
+           (Process.Debugger_Text, Menu, Call_Stack_Contextual_Menu_Name);
+         return Menu;
+   end Call_Stack_Contextual_Menu;
 
 end GVD.Menus;
 

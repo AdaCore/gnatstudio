@@ -23,18 +23,21 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Unchecked_Conversion;
 
 with Glib; use Glib;
+with Gdk.Types; use Gdk.Types;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Handlers; use Gtk.Handlers;
 with Gtk.Editable; use Gtk.Editable;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
 with Gdk.Event;   use Gdk.Event;
+with Gtk.Menu;    use Gtk.Menu;
 
 with GVD.Process; use GVD.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
 with Process_Proxies; use Process_Proxies;
 with GVD.Types; use GVD.Types;
+with GVD.Menus; use GVD.Menus;
 
 package body Process_Tab_Pkg.Callbacks is
 
@@ -76,6 +79,31 @@ package body Process_Tab_Pkg.Callbacks is
    begin
       Stack_Frame (Process.Debugger, Positive (Frame), GVD.Types.Visible);
    end On_Stack_List_Select_Row;
+
+   --------------------------------------
+   -- On_Stack_List_Button_Press_Event --
+   --------------------------------------
+
+   function On_Stack_List_Button_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Arg1    : Gdk_Event := To_Event (Params, 1);
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Object);
+
+   begin
+      if Get_Button (Arg1) = 3
+        and then Get_Event_Type (Arg1) = Button_Press
+      then
+         Popup (Call_Stack_Contextual_Menu (Process),
+                Button        => Gdk.Event.Get_Button (Arg1),
+                Activate_Time => Gdk.Event.Get_Time (Arg1));
+         Emit_Stop_By_Name (Process.Stack_List, "button_press_event");
+         return True;
+      end if;
+      return False;
+   end On_Stack_List_Button_Press_Event;
 
    ----------------------------------
    -- On_Debugger_Text_Insert_Text --
