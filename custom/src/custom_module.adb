@@ -217,7 +217,7 @@ package body Custom_Module is
         (Module                  => Custom_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Custom_Module_Name,
-         Priority                => Default_Priority,
+         Priority                => Low_Priority,
          Contextual_Menu_Handler => null);
 
       while Node /= null loop
