@@ -423,20 +423,22 @@ package body VCS_View_API is
                   Original : constant String :=
                     Get_File_From_Log (Kernel, File_S);
                begin
-                  Set_File_Information
-                    (File_Name,
-                     Dir_Name (Original),
-                     Base_Name (Original));
+                  if Original /= "" then
+                     Set_File_Information
+                       (File_Name,
+                        Dir_Name (Original),
+                        Base_Name (Original));
 
-                  Gtk_New (Item, Label => -"Commit file "
-                           & Base_Name (Original));
+                     Gtk_New (Item, Label => -"Commit file "
+                              & Base_Name (Original));
 
-                  Append (Menu, Item);
-                  Context_Callback.Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                     (On_Menu_Commit'Access),
-                     Selection_Context_Access (File_Name));
+                     Append (Menu, Item);
+                     Context_Callback.Connect
+                       (Item, "activate",
+                        Context_Callback.To_Marshaller
+                        (On_Menu_Commit'Access),
+                        Selection_Context_Access (File_Name));
+                  end if;
                end;
             else
                Gtk_New (Item, Label => -"Query Status");
@@ -1057,6 +1059,8 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
+
       File     : File_Selection_Context_Access;
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
@@ -1065,8 +1069,9 @@ package body VCS_View_API is
       Open_Explorer (Get_Kernel (Context));
 
       if Get_Creator (Context) = VCS_Module_ID then
-         Clear (Get_Explorer (Kernel));
-         Get_Status (Widget, Kernel);
+         Files := Get_Selected_Files (Kernel);
+         Get_Status (Get_Current_Ref (Kernel), Files);
+         String_List.Free (Files);
 
       elsif Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
