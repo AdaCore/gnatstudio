@@ -1300,8 +1300,7 @@ package body Builder_Module is
             Slot_Object => Kernel,
             User_Data => File_Project_Record'
               (Project => Project,
-               File    => Create
-                 (Executables_Directory (Project) & Mains (M).all)));
+               File    => Create (Mains (M).all, Project)));
 
          --  The first item in the make menu should have a key binding
          if Set_Shortcut
