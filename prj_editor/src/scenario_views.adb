@@ -230,6 +230,20 @@ package body Scenario_Views is
             Delete_Direct_References => False);
          Variable_Changed (Data.View.Kernel);
 
+         --  Mark all projects in the hierarchy as modified, since they are
+         --  potentially all impacted.
+
+         declare
+            Iterator : Imported_Project_Iterator := Start
+              (Get_Project (Data.View.Kernel), Recursive => True);
+         begin
+            while Current (Iterator) /= Empty_Node loop
+               Set_Project_Modified
+                 (Data.View.Kernel, Current (Iterator), True);
+               Next (Iterator);
+            end loop;
+         end;
+
          Trace (Me, "Delete_Variable: " & Ext_Variable);
       end if;
    end Delete_Variable;
