@@ -185,4 +185,43 @@ package body String_List_Utils is
       return Args;
    end List_To_Argument_List;
 
+   --------------------
+   -- Longest_Prefix --
+   --------------------
+
+   function Longest_Prefix (L : String_List.List) return String is
+   begin
+      if L = Null_List then
+         return "";
+      end if;
+
+      declare
+         Node    : List_Node       := First (L);
+         First_S : constant String := Data (Node);
+         Length  : Natural         := First_S'Length;
+      begin
+         Node := Next (Node);
+         while Node /= Null_Node loop
+            declare
+               Data_S  : constant String := Data (Node);
+            begin
+               Length := Natural'Min (Length, Data_S'Length);
+               while Length > 0
+                 and then First_S (First_S'First + Length - 1) /=
+                 Data_S (Data_S'First + Length - 1)
+               loop
+                  Length := Length - 1;
+               end loop;
+
+               --  No need to continue further if there is no prefix
+               exit when Length = 0;
+            end;
+
+            Node := Next (Node);
+         end loop;
+
+         return First_S (First_S'First .. First_S'First + Length - 1);
+      end;
+   end Longest_Prefix;
+
 end String_List_Utils;

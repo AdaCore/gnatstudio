@@ -55,6 +55,10 @@ package String_List_Utils is
      return Boolean;
    --  Return True if S is in L.
 
+   function Longest_Prefix (L : String_List.List) return String;
+   --  Return the longest prefix of all the strings in L. The empty string is
+   --  returned if there is no common suffix.
+
    procedure Add_Unique_Sorted
      (L : in out String_List.List;
       S : String);
