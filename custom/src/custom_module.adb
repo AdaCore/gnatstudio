@@ -57,6 +57,7 @@ with Commands.Custom;           use Commands.Custom;
 with VFS;                       use VFS;
 
 with Custom_Combos;             use Custom_Combos;
+with Custom_Timeout;            use Custom_Timeout;
 with Expect_Interface;          use Expect_Interface;
 
 with Traces;                    use Traces;
@@ -1035,6 +1036,7 @@ package body Custom_Module is
 
       Expect_Interface.Register_Commands (Kernel);
       Custom_Combos.Register_Commands (Kernel);
+      Custom_Timeout.Register_Commands (Kernel);
 
       Register_Command
         (Kernel, Constructor_Method,
