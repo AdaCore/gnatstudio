@@ -648,6 +648,9 @@ package body C_Analyzer is
 
       begin
          --  Never pop the initial value
+         --  ??? The above comment is now an orphan, it was referring
+         --  to a loop that has been replaced by Pop_To_Construct,
+         --  Update and check this when the ??? comment below is also addressed
 
          Pop_To_Construct (Stack, Item);
 
