@@ -389,32 +389,40 @@ package body Gtkada.Code_Editors is
             X := X - Gint (Line_Numbers_Width);
          end if;
 
+         --  Get the index of the item
+         if X < 0 then
+            Index := -1;
+         else
+            while Index <= Editor.Buffer'Last
+              and then Current_Line < Line
+            loop
+               if Editor.Buffer (Index) = ASCII.LF then
+                  Current_Line := Current_Line + 1;
+               end if;
+               Index := Index + 1;
+            end loop;
+            Index := Index + Integer (X) - Editor.Buffer'First;
+         end if;
 
+         Start_Index := Index;
+         if Editor.Show_Line_Nums then
+            Start_Index := Index + Integer (Line) * (Line_Numbers_Width + 1);
+         end if;
 
          --  Only take the selection into account if it is under the cursor.
          --  Otherwise, the behavior is somewhat unexpected.
 
          if Get_Has_Selection (Editor.Text)
-           and then Min <= X
-           and then X <= Max
+           and then Min <= Gint (Start_Index)
+           and then Gint (Start_Index) <= Max
          then
             --  Use the selection...
             Menu := Editor_Contextual_Menu
               (Editor, Line, Get_Chars (Editor.Text, Min, Max));
          else
-            if X < 0 then
+            if Index < 0 then
                Menu := Editor_Contextual_Menu (Editor, Line, "");
             else
-               while Index <= Editor.Buffer'Last
-                 and then Current_Line < Line
-               loop
-                  if Editor.Buffer (Index) = ASCII.LF then
-                     Current_Line := Current_Line + 1;
-                  end if;
-                  Index := Index + 1;
-               end loop;
-               Index := Index + Integer (X) - Editor.Buffer'First;
-
                --  Find the beginning of the entity
                Start_Index := Index;
                while Start_Index >= Editor.Buffer'First

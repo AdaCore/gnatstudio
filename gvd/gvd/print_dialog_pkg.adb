@@ -69,20 +69,19 @@ begin
 
    Gtk_New (Print_Dialog.Print_Button, "Print");
    Set_Flags (Print_Dialog.Print_Button, Can_Default);
+   Grab_Default (Print_Dialog.Print_Button);
    Widget_Callback.Object_Connect
      (Print_Dialog.Print_Button, "clicked",
       Widget_Callback.To_Marshaller (On_Print_Button_Clicked'Access), Print_Dialog);
    Add (Print_Dialog.Hbuttonbox1, Print_Dialog.Print_Button);
 
    Gtk_New (Print_Dialog.Cancel_Button, "Cancel");
-   Set_Flags (Print_Dialog.Cancel_Button, Can_Default);
    Button_Callback.Connect
      (Print_Dialog.Cancel_Button, "clicked",
       Button_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
    Add (Print_Dialog.Hbuttonbox1, Print_Dialog.Cancel_Button);
 
    Gtk_New (Print_Dialog.Help_Button, "Help");
-   Set_Flags (Print_Dialog.Help_Button, Can_Default);
    Add (Print_Dialog.Hbuttonbox1, Print_Dialog.Help_Button);
 
 end Initialize;
