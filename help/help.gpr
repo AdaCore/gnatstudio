@@ -7,6 +7,17 @@ project Help is
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
 
+   package Naming is
+      case Shared.OS is
+         when "Windows_NT" =>
+            for Implementation ("help_module.display_help")
+              use "help_module-display_help_win32.adb";
+         when "unix" =>
+            for Implementation ("help_module.display_help")
+              use "help_module-display_help_unix.adb";
+      end case;
+   end Naming;
+
    package Compiler renames Shared.Compiler;
    package IDE renames Shared.IDE;
 
