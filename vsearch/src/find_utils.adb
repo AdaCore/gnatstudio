@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -73,7 +73,9 @@ package body Find_Utils is
       J : Integer := Pos;
    begin
       while J < Buffer'Last loop
-         if Buffer (J) = ASCII.LF then
+         if Buffer (J) = ASCII.LF
+           or else Buffer (J) = ASCII.CR
+         then
             return J - 1;
          end if;
 
@@ -154,7 +156,10 @@ package body Find_Utils is
       procedure To_Line_Column (Pos : Natural) is
       begin
          for J in Ref_Index .. Pos - 1 loop
-            if Buffer (J) = ASCII.LF then
+            if Buffer (J) = ASCII.LF
+              or else (Buffer (J) = ASCII.CR
+                       and then Buffer (J + 1) /= ASCII.LF)
+            then
                Ref_Line        := Ref_Line + 1;
                Ref_Column      := 1;
                Last_Line_Start := J + 1;
