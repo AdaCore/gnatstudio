@@ -128,6 +128,25 @@ procedure GPS is
    procedure Ctrl_C_Handler;
    --  Handler for Ctrl-C events.
 
+   function Clean_Parameter return String;
+   --  Return a clean version of the parameter for command line switches, ie
+   --  return the same thing as GNAT.Command_Line.Parameter, but strips the
+   --  leading '=' if any, so that users can say '--log-level=4' for instance.
+
+   ---------------------
+   -- Clean_Parameter --
+   ---------------------
+
+   function Clean_Parameter return String is
+      P : constant String := Parameter;
+   begin
+      if P (P'First) = '=' then
+         return P (P'First + 1 .. P'Last);
+      else
+         return P;
+      end if;
+   end Clean_Parameter;
+
    ---------------------------
    -- Display_Splash_Screen --
    ---------------------------
@@ -235,6 +254,7 @@ procedure GPS is
            Is_Directory (String_Utils.Name_As_Directory (Dir.all) & "sessions")
          then
             Make_Dir (String_Utils.Name_As_Directory (Dir.all) & "sessions");
+
             if not Dir_Created then
                Button := Message_Dialog
                  ((-"Created config directory ")
@@ -340,9 +360,7 @@ procedure GPS is
 
       --  ??? Should have a cleaner way of initializing Log_File
 
-      GPS.Debug_Mode := True;
-      GPS.Log_Level  := GVD.Types.Hidden;
-      GPS.Log_File   := Create_File (Log, Fmode => Text);
+      GPS.Log_File := Create_File (Log, Fmode => Text);
 
       --  Register this module first, in case someone needs to print a message
       --  in the console right away
@@ -569,6 +587,9 @@ begin
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
    Set_Title (GPS, "GPS - the GNAT Programming System");
 
+   GPS.Debug_Mode := True;
+   GPS.Log_Level  := GVD.Types.Hidden;
+
    if Override_Gtk_Theme then
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" &
@@ -586,7 +607,7 @@ begin
    end if;
 
    loop
-      case Getopt ("-version -help P:") is
+      case Getopt ("-version -help P: -log-level:") is
          -- long option names --
          when '-' =>
             case Full_Switch (Full_Switch'First + 1) is
@@ -612,6 +633,24 @@ begin
                      Help;
                      OS_Exit (0);
                   end if;
+
+               -- --log-level --
+               when 'l' =>
+                  begin
+                     GPS.Log_Level := GVD.Types.Command_Type'Val
+                       (GVD.Types.Command_Type'Pos
+                          (GVD.Types.Command_Type'Last) + 1 -
+                          Integer'Value (Clean_Parameter));
+
+                  exception
+                     when Constraint_Error =>
+                        if GVD.Can_Output then
+                           Put_Line ("Invalid parameter to --log-level");
+                        end if;
+
+                        Help;
+                        OS_Exit (-1);
+                  end;
 
                when others =>
                   null;
