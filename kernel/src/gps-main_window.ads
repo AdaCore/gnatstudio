@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;
-with Glib.Object;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Dialog;       use Gtk.Dialog;
@@ -32,26 +31,10 @@ with Gtk.Toolbar;      use Gtk.Toolbar;
 with Gtk.Main;
 
 with Gtkada.MDI;       use Gtkada.MDI;
-with Ada.Unchecked_Deallocation;
 
 with GPS.Kernel;
 
 package GPS.Main_Window is
-
-   --  Debugger specific items that should be moved to gvd module
-
-   type Debugger_List_Node;
-   type Debugger_List_Link is access Debugger_List_Node;
-
-   type Debugger_List_Node is record
-      Debugger : Glib.Object.GObject;
-      Next     : Debugger_List_Link;
-   end record;
-
-   procedure Free is new
-     Ada.Unchecked_Deallocation (Debugger_List_Node, Debugger_List_Link);
-
-   --
 
    type GPS_Window_Record is new Gtk_Window_Record with record
       Kernel           : GPS.Kernel.Kernel_Handle;
@@ -79,12 +62,6 @@ package GPS.Main_Window is
       Public_Version   : Boolean := True;
 
       --  ??? The following fields should be moved to the gvd module
-
-      First_Debugger     : Debugger_List_Link;
-      --  Points to the list of debuggers.
-
-      Current_Debugger   : Glib.Object.GObject;
-      --  The current visual debugger.
 
       Memory_View        : Gtk.Window.Gtk_Window;
       History_Dialog     : Gtk.Dialog.Gtk_Dialog;
