@@ -964,15 +964,29 @@ package body Project_Properties is
 
       loop
          Response := Run (Editor);
-         exit when Response /= Gtk_Response_OK
-           or else Is_Directory (Name_As_Directory (Get_Text (Editor.Path)));
 
-         Response2 := Message_Dialog
-           (Msg     => Name_As_Directory (Get_Text (Editor.Path))
-            & (-" is not a valid directory"),
-            Buttons => Button_OK,
-            Title   => -"Error",
-            Parent  => Get_Main_Window (Kernel));
+         exit when Response /= Gtk_Response_OK;
+
+         if Is_Valid_Project_Name (Get_Text (Editor.Name)) then
+            exit when Is_Directory
+              (Name_As_Directory (Get_Text (Editor.Path)));
+
+            Response2 := Message_Dialog
+              (Msg     => Name_As_Directory (Get_Text (Editor.Path))
+               & (-" is not a valid directory"),
+               Buttons => Button_OK,
+               Dialog_Type => Error,
+               Title   => -"Error",
+               Parent  => Get_Main_Window (Kernel));
+         else
+            Response2 := Message_Dialog
+              (Msg     => -("Invalid name for the project (only lower"
+                            & " case letters, digits and underscores"),
+               Buttons => Button_OK,
+               Dialog_Type => Error,
+               Title   => -"Error",
+               Parent  => Get_Main_Window (Kernel));
+         end if;
       end loop;
 
       if Response = Gtk_Response_OK then

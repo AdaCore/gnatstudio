@@ -30,9 +30,11 @@ with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Frame;             use Gtk.Frame;
 with Gtk.GEntry;            use Gtk.GEntry;
+with Gtk.Handlers;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Widget;            use Gtk.Widget;
+with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.File_Selector;  use Gtkada.File_Selector;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 
@@ -61,9 +63,13 @@ package body Creation_Wizard is
      (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
    --  Return the widget to use for the "General" page in the wizard
 
-   procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class);
+   procedure Change_Forward_State (Wiz : access Gtk_Widget_Record'Class);
    --  Checks whether the contents of the first page has been fully answered,
    --  and activate (or not) the next button.
+
+   procedure Page_Checker (Wiz : access Gtk_Widget_Record'Class);
+   --  Check that the contents of the current page is valid. If not, prevent
+   --  the user from changing the page
 
    procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class);
    --  Open up a dialog to select the project location.
@@ -167,15 +173,37 @@ package body Creation_Wizard is
       end if;
    end Switch_Page;
 
-   ------------------------
-   -- First_Page_Checker --
-   ------------------------
+   --------------------------
+   -- Change_Forward_State --
+   --------------------------
 
-   procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
+   procedure Change_Forward_State (Wiz : access Gtk_Widget_Record'Class) is
       W : constant Prj_Wizard := Prj_Wizard (Wiz);
    begin
       Set_Sensitive (Next_Button (W), Get_Text (W.Project_Name)'Length /= 0);
-   end First_Page_Checker;
+   end Change_Forward_State;
+
+   ------------------
+   -- Page_Checker --
+   ------------------
+
+   procedure Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
+      W : constant Prj_Wizard := Prj_Wizard (Wiz);
+      Result : Message_Dialog_Buttons;
+   begin
+      if Get_Current_Page (W) = 1 then
+         if not Is_Valid_Project_Name (Get_Text (W.Project_Name)) then
+            Result := Message_Dialog
+              (Msg => -("Invalid name for the project (only lower case letters"
+                        & ", digits and underscores"),
+               Title => -"Invalid name",
+               Dialog_Type => Error,
+               Buttons => Button_OK);
+
+            Gtk.Handlers.Emit_Stop_By_Name (Next_Button (W), "clicked");
+         end if;
+      end if;
+   end Page_Checker;
 
    ----------------
    -- First_Page --
@@ -216,7 +244,7 @@ package body Creation_Wizard is
 
       Widget_Callback.Object_Connect
         (Wiz.Project_Name, "changed",
-         Widget_Callback.To_Marshaller (First_Page_Checker'Access), Wiz);
+         Widget_Callback.To_Marshaller (Change_Forward_State'Access), Wiz);
 
       Set_Row_Spacing (Table, 1, 20);
 
@@ -264,6 +292,10 @@ package body Creation_Wizard is
       Set_Active (Wiz.Relative_Paths,
                   Get_Pref (Wiz.Kernel, Generate_Relative_Paths));
       Pack_Start (Box, Wiz.Relative_Paths, Expand => False);
+
+      Widget_Callback.Object_Connect
+        (Next_Button (Wiz), "clicked",
+         Widget_Callback.To_Marshaller (Page_Checker'Access), Wiz);
 
       Show_All (Page);
 
