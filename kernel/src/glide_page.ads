@@ -19,21 +19,12 @@
 -----------------------------------------------------------------------
 
 with GVD.Process;
-with Glide_Consoles;
-with Glide_Interactive_Consoles;
 with Glide_Main_Window; use Glide_Main_Window;
-with Glide_Result_View; use Glide_Result_View;
 
 package Glide_Page is
 
    type Glide_Page_Record is new
-     GVD.Process.Debugger_Process_Tab_Record with
-   record
-      Console : Glide_Consoles.Glide_Console;
-      Interactive_Console :
-         Glide_Interactive_Consoles.Glide_Interactive_Console;
-      Results : Glide_Result_View.Result_View;
-   end record;
+     GVD.Process.Debugger_Process_Tab_Record with null record;
    type Glide_Page is access all Glide_Page_Record'Class;
 
    procedure Gtk_New

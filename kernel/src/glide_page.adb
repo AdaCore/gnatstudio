@@ -21,7 +21,6 @@
 with GVD.Process;
 with GVD.Text_Box.Source_Editor.Glide;
 with Glib.Object;              use Glib.Object;
-with Glide_Consoles;           use Glide_Consoles;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Main_Window;        use Glide_Main_Window;
