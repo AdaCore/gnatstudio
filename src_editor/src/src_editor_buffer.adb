@@ -1975,7 +1975,9 @@ package body Src_Editor_Buffer is
                Col := Gint (Sloc_End.Column) + Offset - 1;
 
                if not Is_Valid_Index (Source_Buffer (Buffer), Line, Col) then
-                  Trace (Me, "invalid position");
+                  Trace (Me, "invalid position """
+                         & Full_Name (Buffer.Filename).all & """"
+                         & Line'Img & Col'Img);
                   return False;
                end if;
 
@@ -1984,7 +1986,9 @@ package body Src_Editor_Buffer is
 
             else
                if not Is_Valid_Index (Source_Buffer (Buffer), Line, 0) then
-                  Trace (Me, "invalid position");
+                  Trace (Me, "invalid position """
+                         & Full_Name (Buffer.Filename).all & """"
+                         & Line'Img & " 0--");
                   return False;
                end if;
 
