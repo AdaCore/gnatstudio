@@ -86,6 +86,8 @@ with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
 with Projects.Registry;         use Projects.Registry;
 with Projects.Editor;           use Projects.Editor;
+with Src_Info;                  use Src_Info;
+with Src_Info.Queries;          use Src_Info.Queries;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
@@ -1112,6 +1114,46 @@ package body GVD_Module is
    -- GVD_Contextual --
    --------------------
 
+   Is_Printable_Entity : constant E_Kind_Set :=
+     (Overloaded_Entity     => True,
+      Unresolved_Entity     => True,
+      Access_Kind           => True,
+      Array_Kind            => True,
+      Boolean_Kind          => True,
+      Class_Wide            => True,
+      Class                 => True,
+      Decimal_Fixed_Point   => True,
+      Entry_Or_Entry_Family => False,
+      Enumeration_Literal   => True,
+      Enumeration_Kind      => True,
+      Exception_Entity      => True,
+      Floating_Point        => True,
+      Function_Or_Operator  => False,
+      Package_Kind          => False,
+      Procedure_Kind        => False,
+      Label_On_Block        => False,
+      Label_On_Loop         => False,
+      Label_On_Statement    => False,
+      Modular_Integer       => True,
+      Named_Number          => True,
+      Ordinary_Fixed_Point  => True,
+      Private_Type          => False,
+      Protected_Kind        => False,
+      Record_Kind           => True,
+      Signed_Integer        => True,
+      String_Kind           => True,
+      Task_Kind             => False);
+   --  Set of printable entities
+
+   Is_Access_Entity : constant E_Kind_Set :=
+     (Overloaded_Entity => True,
+      Unresolved_Entity => True,
+      Access_Kind       => True,
+      Array_Kind        => True,
+      String_Kind       => True,
+      others            => False);
+   --  Set of potentially dereferenceable entities
+
    procedure GVD_Contextual
      (Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -1144,75 +1186,94 @@ package body GVD_Module is
       Append (Menu, Mitem);
 
       if not Command_In_Process (Get_Process (Debugger)) then
-         declare
-            Ent       : constant String :=
-              Krunch (Get_Variable_Name
-                        (Selection_Context_Access (Context), False));
-            Ent_Deref : constant String :=
-              Krunch (Get_Variable_Name
-                        (Selection_Context_Access (Context), True));
-         begin
-            if Ent /= "" then
-               Gtk_New (Mitem, -"Print " & Ent);
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller (Print_Variable'Access),
-                  Selection_Context_Access (Context));
-               Gtk_New (Mitem, -"Display " & Ent);
-               Append (Submenu, Mitem);
+         if Has_Entity_Name_Information (Entity) then
+            declare
+               Ent       : constant String :=
+                 Krunch (Get_Variable_Name
+                           (Selection_Context_Access (Context), False));
+               Ent_Deref : constant String :=
+                 Krunch (Get_Variable_Name
+                           (Selection_Context_Access (Context), True));
+               Entity_Info : constant Src_Info.Queries.Entity_Information :=
+                 Get_Entity (Entity);
+               Kind        : constant E_Kind := Get_Kind (Entity_Info);
+
+            begin
+               if Entity_Info = No_Entity_Information
+                 or else (not Kind.Is_Type
+                          and then Is_Printable_Entity (Kind.Kind))
+               then
+                  Gtk_New (Mitem, -"Print " & Ent);
+                  Append (Submenu, Mitem);
                   Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller
-                    (Graph_Display_Variable'Access),
-                  Selection_Context_Access (Context));
-            end if;
+                    (Mitem, "activate",
+                     Context_Callback.To_Marshaller (Print_Variable'Access),
+                     Selection_Context_Access (Context));
+                  Gtk_New (Mitem, -"Display " & Ent);
+                  Append (Submenu, Mitem);
+                  Context_Callback.Connect
+                    (Mitem, "activate",
+                     Context_Callback.To_Marshaller
+                       (Graph_Display_Variable'Access),
+                     Selection_Context_Access (Context));
+               end if;
 
-            if Ent_Deref /= "" then
-               Gtk_New (Mitem, -"Print " & Ent_Deref);
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller
-                    (Print_Dereference_Variable'Access),
-                  Selection_Context_Access (Context));
-               Gtk_New (Mitem, -"Display " & Ent_Deref);
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller
-                    (Graph_Display_Dereference_Variable'Access),
-                  Selection_Context_Access (Context));
-            end if;
+               if Entity_Info = No_Entity_Information
+                 or else (not Kind.Is_Type
+                          and then Is_Access_Entity (Kind.Kind))
+               then
+                  Gtk_New (Mitem, -"Print " & Ent_Deref);
+                  Append (Submenu, Mitem);
+                  Context_Callback.Connect
+                    (Mitem, "activate",
+                     Context_Callback.To_Marshaller
+                       (Print_Dereference_Variable'Access),
+                     Selection_Context_Access (Context));
+                  Gtk_New (Mitem, -"Display " & Ent_Deref);
+                  Append (Submenu, Mitem);
+                  Context_Callback.Connect
+                    (Mitem, "activate",
+                     Context_Callback.To_Marshaller
+                       (Graph_Display_Dereference_Variable'Access),
+                     Selection_Context_Access (Context));
+               end if;
 
+               if Entity_Info = No_Entity_Information
+                 or else (not Kind.Is_Type
+                          and then Is_Printable_Entity (Kind.Kind))
+               then
+                  Gtk_New (Mitem, -"Set value of " & Ent);
+                  Append (Submenu, Mitem);
+                  Context_Callback.Connect
+                    (Mitem, "activate",
+                     Context_Callback.To_Marshaller
+                       (Set_Value'Access),
+                     Selection_Context_Access (Context));
 
-            if Ent /= "" then
-               Gtk_New (Mitem, -"Set value of " & Ent);
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller
-                    (Set_Value'Access),
-                  Selection_Context_Access (Context));
+                  Gtk_New (Mitem, -"View memory at address of " & Ent);
+                  Append (Submenu, Mitem);
+                  Context_Callback.Connect
+                    (Mitem, "activate",
+                     Context_Callback.To_Marshaller
+                       (View_Into_Memory'Access),
+                     Selection_Context_Access (Context));
+                  Gtk_New (Mitem);
+                  Append (Submenu, Mitem);
+               end if;
 
-               Gtk_New (Mitem, -"View memory at address of " & Ent);
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller
-                    (View_Into_Memory'Access),
-                  Selection_Context_Access (Context));
-               Gtk_New (Mitem);
-               Append (Submenu, Mitem);
-               Gtk_New (Mitem, -"Set breakpoint on " & Ent);
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller
-                    (Set_Subprogram_Breakpoint'Access),
-                  Selection_Context_Access (Context));
-            end if;
-         end;
+               if Entity_Info = No_Entity_Information
+                 or else Is_Subprogram (Entity_Info)
+               then
+                  Gtk_New (Mitem, -"Set breakpoint on " & Ent);
+                  Append (Submenu, Mitem);
+                  Context_Callback.Connect
+                    (Mitem, "activate",
+                     Context_Callback.To_Marshaller
+                       (Set_Subprogram_Breakpoint'Access),
+                     Selection_Context_Access (Context));
+               end if;
+            end;
+         end if;
 
          if Has_Line_Information (Entity) then
             Line := Line_Information (Entity);
@@ -1804,7 +1865,7 @@ package body GVD_Module is
       Lang   : Language_Access;
    begin
       if Context = null
-        or else not (Context.all in Entity_Selection_Context'Class)
+        or else Context.all not in Entity_Selection_Context'Class
       then
          return "";
       end if;
