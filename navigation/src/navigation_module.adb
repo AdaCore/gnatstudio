@@ -40,6 +40,7 @@ with Commands.Locations;        use Commands.Locations;
 with Traces;                    use Traces;
 with Basic_Types;               use Basic_Types;
 with VFS;                       use VFS;
+with Language;                  use Language;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -103,10 +104,176 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Navigate->Previous Result menu.
 
+   procedure On_Next_Subprogram
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Navigate->Next Subprogram menu.
+
+   procedure On_Previous_Subprogram
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Navigate->Previous Subprogram menu.
+
    procedure Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Interactive command handler for the navigation module.
+
+   --  Interfaces to GPS commands used by some navigation procedures.
+
+   function Get_Current_Line
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File) return Natural;
+   --  Returns current line in File.
+
+   procedure Set_Current_Line
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File;
+      Line   : Natural);
+   --  Set current File's line.
+
+   function Get_Last_Line
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File) return Natural;
+   --  Returns last line index.
+
+   function Get_Block_Start
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File;
+      Line   : Natural) return Natural;
+   --  Returns first line for block enclosing Line.
+
+   function Get_Block_End
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File;
+      Line   : Natural) return Natural;
+   --  Returns last line for block enclosing Line.
+
+   function Get_Block_Type
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File;
+      Line   : Natural) return Language_Category;
+   --  Returns type for block enclosing Line.
+
+   ----------------------
+   -- Get_Current_Line --
+   ----------------------
+
+   function Get_Current_Line
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File) return Natural
+   is
+      Args : Argument_List :=
+        (1 => new String'(Full_Name (File).all));
+      S_Line : constant String :=
+        Execute_GPS_Shell_Command (Kernel, "cursor_get_line", Args);
+   begin
+      Free (Args);
+      return Positive'Value (S_Line);
+   end Get_Current_Line;
+
+   ----------------------
+   -- Set_Current_Line --
+   ----------------------
+
+   procedure Set_Current_Line
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File;
+      Line   : Natural)
+   is
+      Args : Argument_List :=
+        (1 => new String'(Full_Name (File).all),
+         2 => new String'(Positive'Image (Line)));
+      S_Line : constant String :=
+        Execute_GPS_Shell_Command (Kernel, "cursor_set_line", Args);
+      pragma Unreferenced (S_Line);
+   begin
+      Free (Args);
+   end Set_Current_Line;
+
+   -------------------
+   -- Get_Last_Line --
+   -------------------
+
+   function Get_Last_Line
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File) return Natural
+   is
+      Args : Argument_List :=
+        (1 => new String'(Full_Name (File).all));
+      S_Line : constant String :=
+        Execute_GPS_Shell_Command (Kernel, "get_last_line", Args);
+   begin
+      Free (Args);
+      return Positive'Value (S_Line);
+   exception
+      when Constraint_Error =>
+         return 0;
+   end Get_Last_Line;
+
+   -------------------
+   -- Get_Block_End --
+   -------------------
+
+   function Get_Block_End
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File;
+      Line   : Natural) return Natural
+   is
+      Args : Argument_List :=
+        (1 => new String'(Full_Name (File).all),
+         2 => new String'(Positive'Image (Line)));
+      S_Line : constant String :=
+        Execute_GPS_Shell_Command (Kernel, "block_get_end", Args);
+   begin
+      Free (Args);
+      return Natural'Value (S_Line);
+   exception
+      when Constraint_Error =>
+         return 0;
+   end Get_Block_End;
+
+   ---------------------
+   -- Get_Block_Start --
+   ---------------------
+
+   function Get_Block_Start
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File;
+      Line   : Natural) return Natural
+   is
+      Args : Argument_List :=
+        (1 => new String'(Full_Name (File).all),
+         2 => new String'(Positive'Image (Line)));
+      S_Line : constant String :=
+        Execute_GPS_Shell_Command (Kernel, "block_get_start", Args);
+   begin
+      Free (Args);
+      return Natural'Value (S_Line);
+   exception
+      when Constraint_Error =>
+         return 0;
+   end Get_Block_Start;
+
+   --------------------
+   -- Get_Block_Type --
+   --------------------
+
+   function Get_Block_Type
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File;
+      Line   : Natural) return Language_Category
+   is
+      Args : Argument_List :=
+        (1 => new String'(Full_Name (File).all),
+         2 => new String'(Positive'Image (Line)));
+      B_Type : constant String :=
+        Execute_GPS_Shell_Command (Kernel, "block_get_type", Args);
+   begin
+      Free (Args);
+      return Language_Category'Value (B_Type);
+   exception
+      when Constraint_Error =>
+         return Cat_Unknown;
+   end Get_Block_Type;
 
    ---------------------
    -- Command_Handler --
@@ -201,6 +368,90 @@ package body Navigation_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Forward;
 
+   ------------------------
+   -- On_Next_Subprogram --
+   ------------------------
+
+   procedure On_Next_Subprogram
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+
+      File_Context : File_Selection_Context_Access;
+
+      File : Virtual_File;
+
+      Line      : Natural;           -- Current line being processed.
+      Last_Line : Natural;           -- Last line in the buffer.
+      B_Start   : Natural;           -- Block's first line.
+      B_End     : Natural;           -- Block's last line.
+      B_Type    : Language_Category; -- Block's category
+
+      function Get_Next_Block return Language_Category;
+      --  Get next block. Current block is the one enclosing Line. When this
+      --  routine exists, Line is pointing to the block just after the current
+      --  one or to the last line in the buffer if there is no such block.
+      --  Returns the category of block enclosing line.
+
+      --------------------
+      -- Get_Next_Block --
+      --------------------
+
+      function Get_Next_Block return Language_Category is
+      begin
+         while Line < Last_Line loop
+            B_Start := Get_Block_Start (Kernel, File, Line);
+            B_End   := Get_Block_End (Kernel, File, Line);
+            B_Type  := Get_Block_Type (Kernel, File, Line);
+
+            if B_Start = Line and then B_Type in Subprogram_Category then
+               --  We are already at the start of a subprogram, skip it.
+               Line := B_End;
+            end if;
+
+            Line := Line + 1;
+
+            B_Start := Get_Block_Start (Kernel, File, Line);
+            B_Type  := Get_Block_Type (Kernel, File, Line);
+            exit when B_Start = Line and then B_Type in Subprogram_Category;
+         end loop;
+
+         return B_Type;
+      end Get_Next_Block;
+
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+        and then Has_File_Information
+          (File_Selection_Context_Access (Context))
+        and then Has_Directory_Information
+          (File_Selection_Context_Access (Context))
+      then
+         File_Context := File_Selection_Context_Access (Context);
+         File := File_Information (File_Context);
+
+         Line      := Get_Current_Line (Kernel, File);
+         Last_Line := Get_Last_Line (Kernel, File);
+
+         loop
+            B_Type := Get_Next_Block;
+            exit when B_Type in Subprogram_Category or else Line = Last_Line;
+         end loop;
+
+         if Line < Last_Line then
+            --  A block has been found, set cursor to its first line.
+            Set_Current_Line (Kernel, File, Line);
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Next_Subprogram;
+
    --------------------
    -- On_Next_Result --
    --------------------
@@ -221,6 +472,80 @@ package body Navigation_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Next_Result;
+
+   ----------------------------
+   -- On_Previous_Subprogram --
+   ----------------------------
+
+   procedure On_Previous_Subprogram
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+
+      File_Context : File_Selection_Context_Access;
+
+      File : Virtual_File;
+
+      Line    : Natural;           -- Current line being processed.
+      B_Start : Natural;           -- Block's first line.
+      B_Type  : Language_Category; -- Block's category.
+
+      function Get_Previous_Block return Language_Category;
+      --  Get previous block. Current block is the one enclosing Line. When
+      --  this routine exists, Line is pointing to the block just before the
+      --  current one or to the first line in the buffer if there is no such
+      --  block. Returns the category of block enclosing line.
+
+      ------------------------
+      -- Get_Previous_Block --
+      ------------------------
+
+      function Get_Previous_Block return Language_Category is
+      begin
+         while Line > 1 loop
+            Line := Line - 1;
+            B_Type := Get_Block_Type (Kernel, File, Line);
+
+            if B_Type /= Cat_Unknown then
+               B_Start := Get_Block_Start (Kernel, File, Line);
+               exit when B_Start = Line and then B_Type in Subprogram_Category;
+            end if;
+         end loop;
+
+         return B_Type;
+      end Get_Previous_Block;
+
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+        and then Has_File_Information
+          (File_Selection_Context_Access (Context))
+        and then Has_Directory_Information
+          (File_Selection_Context_Access (Context))
+      then
+         File_Context := File_Selection_Context_Access (Context);
+         File := File_Information (File_Context);
+
+         Line := Get_Current_Line (Kernel, File);
+
+         loop
+            B_Type := Get_Previous_Block;
+            exit when B_Type in Subprogram_Category or else Line = 1;
+         end loop;
+
+         if Line > 1 then
+            --  A block has been found, set cursor to its first line.
+            Set_Current_Line (Kernel, File, Line);
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Previous_Subprogram;
 
    ------------------------
    -- On_Previous_Result --
@@ -331,8 +656,11 @@ package body Navigation_Module is
                      Stock_Go_Up, null);
       Register_Menu (Kernel, Navigate, -"_End Of Statement",
                      Stock_Go_Down, null);
-      Register_Menu (Kernel, Navigate, -"Next Procedure", "", null);
-      Register_Menu (Kernel, Navigate, -"Previous Procedure", "", null);
+      Register_Menu (Kernel, Navigate, -"Next Subprogram", "",
+                     On_Next_Subprogram'Access, null, GDK_Down, Control_Mask);
+      Register_Menu (Kernel, Navigate, -"Previous Subprogram", "",
+                     On_Previous_Subprogram'Access, null,
+                     GDK_Up, Control_Mask);
 
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
