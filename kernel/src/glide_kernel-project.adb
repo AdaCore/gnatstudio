@@ -195,13 +195,15 @@ package body Glide_Kernel.Project is
          Free (Tmp);
       end Add_Directory;
 
-      Fd     : TTY_Process_Descriptor;
-      Result : Expect_Match;
-      Args   : Argument_List (1 .. 1);
-      Gnatls : constant String := Get_Attribute_Value
+      Fd          : TTY_Process_Descriptor;
+      Result      : Expect_Match;
+      Gnatls      : constant String := Get_Attribute_Value
         (Get_Project_View (Handle), Gnatlist_Attribute,
          Ide_Package, Default => "gnatls");
-      Path   : String_Access;
+      Gnatls_Args : Argument_List_Access :=
+        Argument_String_To_List (Gnatls);
+      Path        : String_Access;
+      Verbose     : aliased String := "-v";
 
    begin
       --  If the gnatls commands hasn't changed, no need to recompute the
@@ -221,16 +223,15 @@ package body Glide_Kernel.Project is
       Handle.Predefined_Source_Path := new String'("");
       Handle.Predefined_Object_Path := new String'("");
 
-      --  ??? Need to handle arguments given to gnatls (e.g --RTS)
-
-      Path := Locate_Exec_On_Path (Gnatls);
+      Path := Locate_Exec_On_Path (Gnatls_Args (1).all);
 
       if Path /= null then
-         Args (1) := new String'("-v");
          Non_Blocking_Spawn
-           (Fd, Path.all, Args, Buffer_Size => 0, Err_To_Out => True);
+           (Fd, Path.all,
+            Gnatls_Args (2 .. Gnatls_Args'Last) & Verbose'Unchecked_Access,
+            Buffer_Size => 0, Err_To_Out => True);
          Free (Path);
-         Free (Args (1));
+         Free (Gnatls_Args);
          Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
 
          loop
@@ -247,6 +248,8 @@ package body Glide_Kernel.Project is
             end;
          end loop;
       end if;
+
+      Free (Gnatls_Args);
 
    exception
       when Process_Died =>
