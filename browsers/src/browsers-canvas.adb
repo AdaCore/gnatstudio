@@ -234,7 +234,8 @@ package body Browsers.Canvas is
 
          Desc := Get_Pref (B.Kernel, Browsers_Link_Font);
          B.Text_Font := From_Description (Desc);
-         Free (Desc);
+         --  Do not free Desc, since this is taken care of by the preferences
+         --  engine
       end if;
    end Realized;
 
