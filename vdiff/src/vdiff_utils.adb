@@ -35,10 +35,11 @@ package body Vdiff_Utils is
       Offset1      : Natural;
       Offset2      : Natural;
       Link         : Diff_Occurrence_Link;
-      Blank_Style  : Gtk_Style;
-      Blank_Color  : Gdk_Color;
+      Old_Style    : Gtk_Style;
+      Append_Style : Gtk_Style;
+      Remove_Style : Gtk_Style;
       Change_Style : Gtk_Style;
-      Change_Color : Gdk_Color;
+      Color        : Gdk_Color;
 
       procedure Add_Blank_Line
         (List  : access Gtk_Clist_Record'Class;
@@ -81,14 +82,18 @@ package body Vdiff_Utils is
       end Read_Line;
 
    begin
-      Blank_Style := Copy (Get_Style (List1));
+      Old_Style := Copy (Get_Style (List1));
+      Append_Style := Copy (Get_Style (List1));
+      Remove_Style := Copy (Get_Style (List1));
       Change_Style := Copy (Get_Style (List1));
-      Set_Rgb (Blank_Color, 0, 56000, 0);
-      Set_Rgb (Change_Color, 50000, 50000, 50000);
-      Set_Base (Blank_Style, State_Normal, Blank_Color);
-      Set_Base (Blank_Style, State_Selected, Blank_Color);
-      Set_Base (Change_Style, State_Normal, Change_Color);
-      Set_Base (Change_Style, State_Selected, Change_Color);
+      Set_Rgb (Color, 50000, 50000, 50000);
+      Set_Base (Old_Style, State_Normal, Color);
+      Set_Rgb (Color, 0, 56000, 0);
+      Set_Base (Append_Style, State_Normal, Color);
+      Set_Rgb (Color, 56000, 0, 0);
+      Set_Base (Remove_Style, State_Normal, Color);
+      Set_Rgb (Color, 0, 0, 56000);
+      Set_Base (Change_Style, State_Normal, Color);
 
       Open (Infile1, In_File, File1);
       Open (Infile2, In_File, File2);
@@ -99,7 +104,6 @@ package body Vdiff_Utils is
       Line2 := 1;
       Link := Diff;
 
-begin
       while Link /= null loop
          for J in Line1 .. Link.Range1.First - 1 loop
             Read_Line (Infile1, List1, J, Get_Style (List1));
@@ -112,11 +116,11 @@ begin
          case Link.Action is
             when Append =>
                for J in Link.Range2.First .. Link.Range2.Last - 1 loop
-                  Add_Blank_Line (List1, Blank_Style);
+                  Add_Blank_Line (List1, Old_Style);
                end loop;
 
                for J in Link.Range2.First .. Link.Range2.Last - 1 loop
-                  Read_Line (Infile2, List2, J, Change_Style);
+                  Read_Line (Infile2, List2, J, Append_Style);
                end loop;
 
                Line1 := Link.Range1.First;
@@ -127,7 +131,7 @@ begin
                Offset2 := Link.Range2.Last - Link.Range2.First;
 
                for J in Link.Range1.First .. Link.Range1.Last - 1 loop
-                  Read_Line (Infile1, List1, J, Change_Style);
+                  Read_Line (Infile1, List1, J, Old_Style);
                end loop;
 
                for J in Link.Range2.First .. Link.Range2.Last - 1 loop
@@ -136,11 +140,11 @@ begin
 
                if Offset1 < Offset2 then
                   for J in Offset1 .. Offset2 - 1 loop
-                     Add_Blank_Line (List1, Blank_Style);
+                     Add_Blank_Line (List1, Old_Style);
                   end loop;
                elsif Offset1 > Offset2 then
                   for J in Offset2 .. Offset1 - 1 loop
-                     Add_Blank_Line (List2, Blank_Style);
+                     Add_Blank_Line (List2, Change_Style);
                   end loop;
                end if;
 
@@ -149,11 +153,11 @@ begin
 
             when Delete =>
                for J in Link.Range1.First .. Link.Range1.Last - 1 loop
-                  Read_Line (Infile1, List1, J, Change_Style);
+                  Read_Line (Infile1, List1, J, Old_Style);
                end loop;
 
                for J in Link.Range1.First .. Link.Range1.Last - 1 loop
-                  Add_Blank_Line (List2, Blank_Style);
+                  Add_Blank_Line (List2, Remove_Style);
                end loop;
 
                Line1 := Link.Range1.Last;
@@ -162,10 +166,6 @@ begin
 
          Link := Link.Next;
       end loop;
-
-exception
-   when End_Error => null;
-end;
 
       --  Complete files with the remaining lines.
 
