@@ -994,15 +994,47 @@ package body Glide_Kernel.Modules is
       Column            : Natural := 0;
       Highlight_Line    : Boolean := True;
       Enable_Navigation : Boolean := True;
-      New_File          : Boolean := True)
+      New_File          : Boolean := True;
+      From_Path         : Boolean := False)
    is
       Value : GValue_Array (1 .. 6);
+      File_Found : Boolean := False;
+      Has_Dir : Boolean;
    begin
       Init (Value (1), Glib.GType_String);
 
       if Is_Absolute_Path (Filename) then
          Set_String (Value (1), Normalize_Pathname (Filename));
-      else
+         File_Found := True;
+
+      elsif From_Path then
+         Has_Dir := False;
+
+         for S in Filename'Range loop
+            if Filename (S) = '/'
+              or else Filename (S) = Directory_Separator
+            then
+               Has_Dir := True;
+               exit;
+            end if;
+         end loop;
+
+         if not Has_Dir then
+            declare
+               F : GNAT.OS_Lib.String_Access := Locate_Regular_File
+                 (Filename,
+                  Include_Path (Get_Project_View (Kernel), Recursive => True));
+            begin
+               if F /= null then
+                  Set_String (Value (1), Normalize_Pathname (F.all));
+                  File_Found := True;
+                  Free (F);
+               end if;
+            end;
+         end if;
+      end if;
+
+      if not File_Found then
          declare
             F : constant String := Find_Source_File
               (Kernel, Filename, True);

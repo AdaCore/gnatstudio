@@ -323,7 +323,8 @@ package Glide_Kernel.Modules is
       Column            : Natural := 0;
       Highlight_Line    : Boolean := True;
       Enable_Navigation : Boolean := True;
-      New_File          : Boolean := True);
+      New_File          : Boolean := True;
+      From_Path         : Boolean := False);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
@@ -334,6 +335,9 @@ package Glide_Kernel.Modules is
    --  if it doesn't directly belong to a project.
    --
    --  If not found and New_File is True, a new file is edited.
+   --
+   --  If From_Path is True and the file doesn't contain any directory, then it
+   --  is search on the source path for the current project.
 
    procedure Open_Html
      (Kernel         : access Kernel_Handle_Record'Class;
