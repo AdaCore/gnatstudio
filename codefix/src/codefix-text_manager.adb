@@ -2459,7 +2459,9 @@ package body Codefix.Text_Manager is
                Line_1 := Next (Line_1.all);
                Line_2 := Next (Line_2.all);
             when Line_Created =>
-               Loop_Add (2);
+               Add_Element (This, new Extract_Line'(Clone
+                                                      (Line_1.all, False)));
+               Line_1 := Next (Line_1.all);
          end case;
       end Line_1_Original;
 
@@ -2490,7 +2492,9 @@ package body Codefix.Text_Manager is
             when Line_Deleted =>
                Success := False;
             when Line_Created =>
-               Loop_Add (2);
+               Add_Element (This, new Extract_Line'(Clone
+                                                      (Line_1.all, False)));
+               Line_1 := Next (Line_1.all);
          end case;
       end Line_1_Modified;
 
@@ -2510,7 +2514,9 @@ package body Codefix.Text_Manager is
                Line_1 := Next (Line_1.all);
                Line_2 := Next (Line_2.all);
             when Line_Created =>
-               Loop_Add (2);
+               Add_Element (This, new Extract_Line'(Clone
+                                                      (Line_1.all, False)));
+               Line_1 := Next (Line_1.all);
          end case;
       end Line_1_Deleted;
 
@@ -2518,11 +2524,17 @@ package body Codefix.Text_Manager is
       begin
          case Line_2.Context is
             when Original_Line =>
-               Loop_Add (1);
+               Add_Element (This, new Extract_Line'(Clone
+                                                      (Line_2.all, False)));
+               Line_2 := Next (Line_2.all);
             when Line_Modified =>
-               Loop_Add (1);
+               Add_Element (This, new Extract_Line'(Clone
+                                                      (Line_2.all, False)));
+               Line_2 := Next (Line_2.all);
             when Line_Deleted =>
-               Loop_Add (1);
+               Add_Element (This, new Extract_Line'(Clone
+                                                      (Line_2.all, False)));
+               Line_2 := Next (Line_2.all);
             when Line_Created =>
                Loop_Add (1);
                Loop_Add (2);
