@@ -231,6 +231,8 @@ package Language is
    --  upward in the file till the end of the current block of comments.
    --  This block is defined as a group of commented out lines, until a
    --  non-comment line is seen.
+   --  If Index is not at the beginning or inside a comment line, Index is set
+   --  to 0.
 
    procedure Skip_To_Current_Comment_Block_End
      (Context            : Language_Context;
