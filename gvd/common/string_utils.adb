@@ -933,4 +933,59 @@ package body String_Utils is
       return True;
    end Case_Insensitive_Equal;
 
+   -----------------------------
+   -- Argument_List_To_String --
+   -----------------------------
+
+   function Argument_List_To_String
+     (List : GNAT.OS_Lib.Argument_List) return String
+   is
+      Length : Natural := 0;
+   begin
+      for L in List'Range loop
+         Length := Length + List (L)'Length + 1;
+         for S in List (L)'Range loop
+            if List (L)(S) = '"'
+              or else List (L)(S) = ' '
+            then
+               Length := Length + 1;
+            end if;
+         end loop;
+      end loop;
+
+      declare
+         S : String (1 .. Length);
+         Index : Positive := S'First;
+      begin
+         for L in List'Range loop
+            for J in List (L)'Range loop
+               if List (L)(J) = '"' or else List (L)(J) = ' ' then
+                  S (Index) := '\';
+                  Index := Index + 1;
+               end if;
+               S (Index) := List (L)(J);
+               Index := Index + 1;
+            end loop;
+            S (Index) := ' ';
+            Index := Index + 1;
+         end loop;
+         return S;
+      end;
+   end Argument_List_To_String;
+
+   -----------
+   -- Clone --
+   -----------
+
+   function Clone (List : GNAT.OS_Lib.Argument_List)
+      return GNAT.OS_Lib.Argument_List
+   is
+      L : Argument_List (List'Range);
+   begin
+      for J in List'Range loop
+         L (J) := new String'(List (J).all);
+      end loop;
+      return L;
+   end Clone;
+
 end String_Utils;

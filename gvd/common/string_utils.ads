@@ -22,6 +22,7 @@
 --  strings.
 
 with GNAT.Directory_Operations;
+with GNAT.OS_Lib;
 with Interfaces.C.Strings;
 
 package String_Utils is
@@ -163,6 +164,16 @@ package String_Utils is
 
    function Case_Insensitive_Equal (S1, S2 : String) return Boolean;
    --  Return True if S1 = S2 without taking into account case sensitivity.
+
+   function Argument_List_To_String
+     (List : GNAT.OS_Lib.Argument_List) return String;
+   --  Concatenate all the elements in List into a single string.
+   --    Argument_String_To_List (Argument_List_To_String (X)) = X
+
+   function Clone (List : GNAT.OS_Lib.Argument_List)
+      return GNAT.OS_Lib.Argument_List;
+   --  Return a deep-copy of List. The returned value must be freed by the
+   --  caller.
 
    ----------------------------
    -- File name manipulation --
