@@ -5,23 +5,16 @@ with GNAT.Directory_Operations,
      System,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation,
-     Ada.Exceptions,
-     SN.Xref_Pools,
---     Ada.Text_IO,
-     GNAT.OS_Lib;
+     Ada.Exceptions;
 
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
      Ada.Strings.Fixed,
---     Ada.Text_IO,
-     Ada.Exceptions,
-     SN.Xref_Pools,
-     GNAT.OS_Lib;
+     Ada.Exceptions;
+
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body SN.Browse is
-
-   Xrefs : Xref_Pool := Empty_Xref_Pool;
-   --  persistent pool (one per project) for xref ile names
 
    DBIMP : constant String := "dbimp";
    --  SN database engine
@@ -64,7 +57,14 @@ package body SN.Browse is
       null;
    end Output_Filter;
 
-   procedure Browse (File_Name, DB_Directory, Browser_Name : in String) is
+   ------------
+   -- Browse --
+   ------------
+
+   procedure Browse
+     (File_Name, DB_Directory, Browser_Name : in String;
+      Xrefs : in out Xref_Pool)
+   is
       Xref_File_Name      : String_Access;
       Success             : Boolean;
       Args                : Argument_List_Access;
@@ -139,6 +139,10 @@ package body SN.Browse is
       Delete (Args);
       Free (DBUtil_Path);
    end Browse;
+
+   --------------------
+   -- Generate_Xrefs --
+   --------------------
 
    procedure Generate_Xrefs (DB_Directory : in String) is
       BY_File_Name : String := DB_Directory & Directory_Separator
@@ -242,5 +246,3 @@ begin
    --  locate dbimp utility in PATH
    DBIMP_Path := Locate_Exec_On_Path (DBIMP);
 end SN.Browse;
-
-

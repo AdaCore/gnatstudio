@@ -34,6 +34,7 @@ with SN;                use SN;
 with SN.DB_Structures;  use SN.DB_Structures;
 with SN.Find_Fns;       use SN.Find_Fns;
 with SN.Browse;
+with SN.Xref_Pools;     use SN.Xref_Pools;
 
 with File_Buffer;
 with Traces; use Traces;
@@ -49,6 +50,7 @@ package body Src_Info.CPP is
       File              : LI_File_Ptr;
       List_Of_Files     : LI_File_List;
       Module_Typedefs   : Module_Typedefs_List;
+      Xrefs             : Xref_Pool;
    end record;
    --  This type is used in symbol handlers to access all necessary
    --  objects (replacement for global variables)
@@ -318,6 +320,30 @@ package body Src_Info.CPP is
          raise;
    end Process_File;
 
+   -----------------------
+   -- Generate_Database --
+   -----------------------
+
+   procedure Generate_Database
+     (File_List              : String_List_Access;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String)
+   is
+      pragma Unreferenced (Predefined_Source_Path);
+      pragma Unreferenced (Predefined_Object_Path);
+      pragma Unreferenced (File_List);
+      pragma Unreferenced (Project);
+
+      --  SN_Dir      : constant String :=
+      --  Prj_API.Object_Path (Project, Recursive => False)
+      --  & Browse.DB_Dir_Name;
+      --  SN project directory
+
+   begin
+      null;
+   end Generate_Database;
+
    ---------------------------
    -- Create_Or_Complete_LI --
    ---------------------------
@@ -343,15 +369,18 @@ package body Src_Info.CPP is
       Full_Filename : GNAT.OS_Lib.String_Access := Locate_Regular_File
         (Source_Filename, Include_Path (Project, Recursive => True));
 
-      Env         : Handler_Environment;
+      Env : Handler_Environment;
+
    begin
       if Full_Filename = null then
          Trace (Warn_Stream, "File not found: " & Source_Filename);
          return;
       end if;
 
+      Env.Xrefs := Empty_Xref_Pool;
+
       --  run cbrowser
-      Browse.Browse (Full_Filename.all, SN_Dir, "cbrowser");
+      Browse.Browse (Full_Filename.all, SN_Dir, "cbrowser", Env.Xrefs);
 
       --  update .to and .by tables
       Browse.Generate_Xrefs (SN_Dir);
@@ -373,6 +402,7 @@ package body Src_Info.CPP is
       Close_DB_Files (Env.SN_Table);
 
       Free (Full_Filename);
+      Free (Env.Xrefs);
 
    exception
       when E : others =>

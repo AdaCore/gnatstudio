@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Prj;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package Src_Info.CPP is
 
@@ -34,7 +35,7 @@ package Src_Info.CPP is
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
    --  Creates or completes Library Information for given source file name
-   --  and LI_File_Ptr. It seems to be the main routine for this package.
+   --  and LI_File_Ptr.
 
    function Case_Insensitive_Identifiers
      (Handler : access CPP_LI_Handler_Record) return Boolean;
@@ -63,6 +64,14 @@ package Src_Info.CPP is
    --  project naming scheme.
    --  ??? In current implementation for C/C++ this function always
    --  returns Source_Filename taken as input
+
+   procedure Generate_Database
+     (File_List              : String_List_Access;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String);
+   --  Regenerates SN database for given file list.
+   --  Predefined_Source_Path and Predefined_Object_Path are ignored.
 
    procedure Add
      (HT      : in out LI_File_List;
