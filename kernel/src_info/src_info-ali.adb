@@ -1863,6 +1863,7 @@ package body Src_Info.ALI is
       F : File_Info_Ptr_List;
       Base : constant String := Base_Name (Source_Filename);
    begin
+      File := Locate_From_Source (List, Base);
       Create_Or_Complete_LI
         (Handler                => Handler,
          File                   => File,
