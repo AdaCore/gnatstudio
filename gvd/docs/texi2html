@@ -877,6 +877,7 @@ $split_num = 0;				# split index
 $deferred_ref = '';			# deferred reference for indexes
 @html_stack = ();			# HTML elements stack
 $html_element = '';			# current HTML element
+$anchorid = 0;                          # Identifier of the current @anchor
 &html_reset;
 
 # init l2h
@@ -1114,6 +1115,20 @@ while ($_ = &next_line) {
 		$node2href{$setref} = "$docu_doc#$docid";
 	    } else {
 		warn "$ERROR Bad setref line: $_";
+	    }
+	    next;
+	} elsif ($tag eq 'anchor') {
+	    if (/\@$tag\s*{($NODERE)}/) {
+		$setref = $1;
+		$setref =~ s/\s+/ /g; # normalize
+		$setref =~ s/ $//;
+		$node2sec{$setref} = $setref;  # text to print in the .html
+		$node2href{$setref} = "$docu_doc#$docid" . "_$anchorid";
+		       # How to reference the anchor
+		push (@lines, &anchor("$docid" . "_$anchorid", '','', 0));
+		$anchorid ++;
+	    } else {
+		warn "$ERROR Bad anchor line: $_";
 	    }
 	    next;
 	} elsif ($tag eq 'defindex' || $tag eq 'defcodeindex') {
