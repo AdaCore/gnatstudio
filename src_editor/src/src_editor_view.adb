@@ -64,6 +64,10 @@ package body Src_Editor_View is
 
    Me : constant Debug_Handle := Create ("Source_View");
 
+   function Strlen
+     (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
+   pragma Import (C, Strlen);
+
    use type Pango.Font.Pango_Font_Description;
    procedure Setup (Data : Source_View; Id : Gtk.Handlers.Handler_Id);
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback_With_Setup
