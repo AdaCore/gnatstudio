@@ -1,56 +1,50 @@
-with Generic_List; use Generic_List;
+with Generic_List;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
+with Codefix.Formal_Errors; use Codefix.Formal_Errors;
+use Codefix.Formal_Errors.Extract_List;
 
 package Codefix.Errors_Manager is
-
-   ----------------------------------------------------------------------------
-   --  type Error_Message
-   ----------------------------------------------------------------------------
-
-   type Error_Message is new File_Cursor with private;
-
-   procedure Initialize (This : in out Error_Message; Message : String);
-   --  Parse the message headed in order to get the col number and the
-   --  line number.
-
-   procedure Initialize (This : in out Error_Message; Line, Col : Positive);
-
-   function Get_Message (This : Error_Message) return String;
-   --  Returns the message with the header.
-
-   procedure Free (This : in out Error_Message);
-   --  Frees the memory used by the object.
 
    ----------------------------------------------------------------------------
    --  type Errors_Interface
    ----------------------------------------------------------------------------
 
    type Errors_Interface is abstract tagged private;
+   --  Type used to manage error messages send by the compilator.
 
-   function Get_Message (This : in out Errors_Interface) return Error_Message
+   procedure Get_Message
+     (This    : in out Errors_Interface;
+      Current : out Error_Message)
       is abstract;
+   --  Returns the next message to be analyzed.
 
    function No_More_Messages (This : Errors_Interface) return Boolean
       is abstract;
+   --  Is true where all the messages are got fron Get_Message.
 
    ----------------------------------------------------------------------------
    --  type Correction_Manager
    ----------------------------------------------------------------------------
 
    type Correction_Manager is private;
+   --  This object
+
    type Error_Id is private;
 
+   --  Ce serait bien de donner + petit que le correction manager
    type Error_Callback is access procedure
-     (Message   : Error_Message;
-      Id        : Error_Id;
-      Solutions : Solutions_List);
+     (Message      : Error_Message;
+      Id           : Error_Id;
+      Solutions    : Solution_List;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Corrector    : in out Correction_Manager);
 
    procedure Analyze
      (This        : in out Correction_Manager;
-      Source_Text : Text_Interface'Class;
-      Errors_List : Errors_Interface'Class;
+      Source_Text : Text_Navigator_Abstr'Class;
+      Errors_List : in out Errors_Interface'Class;
       Callback    : Error_Callback := null);
 
    procedure Validate
@@ -64,13 +58,17 @@ package Codefix.Errors_Manager is
    type Ambiguous_Callback is access procedure
      (Alternative_1, Alternative_2 : Extract;
       Delete_Choice                : out Alternative_Choice);
+   --  Is called when ambiguities appears. If Delete_Choice is 0, no solution
+   --  are chosen and the ambiguity stay. Otherwise, the choice is deleted.
 
    procedure Update
-     (This     : in out Correction_Manager;
-      Success  : out Boolean;
-      Callback : Ambiguous_Callback := null);
-   --  Check a certain quantity of things...
-   --  (doubles modifs for example)
+     (This         : in out Correction_Manager;
+      Success      : out Boolean;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Callback     : Ambiguous_Callback := null);
+   --  Check amiguities and call the callback to solve them. If all
+   --  ambiguities are solved, then success is True and the modifications
+   --  made in the correction manager are updated in the real text.
 
    procedure Check_Ambiguities
      (Solutions        : in out Solution_List;
@@ -81,12 +79,7 @@ package Codefix.Errors_Manager is
 
 private
 
-   type Error_Message is new File_Cursor with record
-      Message : Dynamic_String;
-   end record;
-
-   procedure Parse_Head (Message : String; This : out Error_Message);
-   function Clone (This : Error_Message) return Error_Message;
+   type Errors_Interface is abstract tagged null record;
 
    package Memorized_Corrections is new Generic_List (Solution_List);
    use Memorized_Corrections;
@@ -96,9 +89,9 @@ private
          := Memorized_Corrections.Null_Node;
    end record;
 
-   type Correction_Manager (Current_Text : Ptr_Text) is record
-      Potential_Corrections : Memorized_Corrections;
-      Valid_Corrections  : Solution_List;
+   type Correction_Manager is record
+      Potential_Corrections : Memorized_Corrections.List;
+      Valid_Corrections     : Solution_List;
    end record;
 
    procedure Add_Error
