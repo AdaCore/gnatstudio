@@ -1527,12 +1527,6 @@ package body CPP_Parser is
                Kind     => Body_Entity);
          end if;
 
-         Set_End_Of_Scope
-           (Entity,
-            Location => (File   => Source,
-                         Line   => D.End_Position.Line,
-                         Column => Column_Type (D.End_Position.Column)),
-            Kind => End_Of_Spec);
       else
          if SuccessI then
             Parse_Method_Table_Internal
