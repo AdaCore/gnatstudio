@@ -93,6 +93,7 @@ package Glide_Kernel.Modules is
    Aunit_Module_Name              : constant String := "Unit_Testing";
    VCS_Module_Name                : constant String := "VCS_Interface";
    Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
+   Project_Browser_Module_Name    : constant String := "Project_Browser";
    --  Names for the internal modules
 
    -----------
