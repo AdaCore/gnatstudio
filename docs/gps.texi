@@ -200,6 +200,13 @@ Adding support for new tools
 * Executing external tools::
 * Full tool example::
 
+Executing external tools
+* Chaining commands::
+* Saving open windows::
+* Querying switches from the project::
+* Querying switches interactively::
+* Redirecting the output of the command::
+
 Environment
 * Command Line Options::
 * Environment Variables::
@@ -7452,6 +7459,14 @@ for "'gnaty3", one for "-gnatya",@dots{}.
 @subsection Executing external tools
 @c --------------------------------------------------------------------------
 
+@menu
+* Chaining commands::
+* Saving open windows::
+* Querying switches from the project::
+* Querying switches interactively::
+* Redirecting the output of the command::
+@end menu
+
 @noindent
 The user has now specified the default switches he wants to use for the
 external tool. Spawning the external tool can be done in two ways:
@@ -7465,7 +7480,10 @@ Both cases are described in an XML customization file, as described previously,
 and both are setup to execute what GPS calls an action, i.e. a set of commands
 defined by the @code{<action>} tag.
 
+@c --------------------------------------------------------------------------
+@node Chaining commands
 @subsubsection Chaining commands
+@c --------------------------------------------------------------------------
 
 This action tag, as described previously, executes one or more commands, which
 can either be internal GPS commands (written in any of the scripting language
@@ -7505,7 +7523,10 @@ If one of the commands in the action raises an error, the execution of the
 action is stopped immediately, and no further command is performed.
 
 
+@c --------------------------------------------------------------------------
+@node Saving open windows
 @subsubsection Saving open windows
+@c --------------------------------------------------------------------------
 
 @cindex save_all
 Before launching the external tool, you might want to force GPS to save all
@@ -7536,11 +7557,14 @@ simply put it in its own @code{<shell>} command, as in:
 @end ifclear
 
 
+@c --------------------------------------------------------------------------
+@node Querying switches from the project
 @subsubsection Querying switches from the project
 @cindex get_tool_switches_as_string
 @cindex get_tool_switches_as_list
 @cindex get_attribute_as_string
 @cindex get_attribute_as_list
+@c --------------------------------------------------------------------------
 
 Some GPS shell commands can be used to query the default switches set by the
 user in the project file. These are @code{get_tool_switches_as_string},
@@ -7587,9 +7611,12 @@ window. The
 @end ifset
 
 
+@c --------------------------------------------------------------------------
+@node Querying switches interactively
 @subsubsection Querying switches interactively
 @cindex input_dialog
 @cindex yes_no_dialog
+@c --------------------------------------------------------------------------
 
 Another solution to query the arguments for the tool is to ask the user
 interactively.
@@ -7636,6 +7663,40 @@ file name, and displays each in the Messages window.
 
 @end ifset
 
+@c --------------------------------------------------------------------------
+@node Redirecting the output of the command
+@subsubsection Redirecting the output of the command
+@cindex output
+@c --------------------------------------------------------------------------
+
+@noindent
+The output of external commands is send by default to the GPS console window.
+However, this is not always appropriate, and finer control can be exercised
+through the @code{output} attribute of the @code{<external>} tag.
+
+This attribute is a string. Two values have specific meanings, although any
+value can be specified.
+
+@table @code
+@item "none"
+The output of the command, as well as the text of the command itself, will not
+be shown to the user at all.
+
+@item ""
+The output of the command is sent to the GPS console window, entitled
+"Messages". This is the default value of this attribute
+
+@item other values
+A new window is created, the name of which is given by the attribute. If such
+a window already exists, it is cleared up. The output of the command, as well
+as the text of the command itself, are sent to this new window.
+@end table
+
+@smallexample
+<action name="ls current directory">
+   <external output="Current directory" >/bin/ls </external>
+</action>
+@end smallexample
 
 @c --------------------------------------------------------------------------
 @node Full tool example
@@ -8936,4 +8997,5 @@ python interpreter:
 @end ifinfo
 
 @bye
+
 
