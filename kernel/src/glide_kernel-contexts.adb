@@ -454,6 +454,8 @@ package body Glide_Kernel.Contexts is
          if Status /= Success and then Status /= Fuzzy_Match then
             Context.Entity := null;
          end if;
+
+         Ref (Context.Entity);
       end if;
 
       return Context.Entity;
@@ -465,6 +467,7 @@ package body Glide_Kernel.Contexts is
 
    procedure Destroy (Context : in out Entity_Selection_Context) is
    begin
+      Unref (Context.Entity);
       Destroy (File_Selection_Context (Context));
       Free (Context.Entity_Name);
    end Destroy;
