@@ -296,7 +296,9 @@ package body Directory_Tree is
    function Filter
      (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean is
    begin
-      return Dir_Name /= "CVS";
+      return Dir_Name /= "."
+        and then Dir_Name /= ".."
+        and then Dir_Name /= "CVS";
    end Filter;
 
    --------------------
