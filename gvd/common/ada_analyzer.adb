@@ -20,6 +20,7 @@
 
 with Generic_Stack;
 with String_Utils;            use String_Utils;
+with Case_Handling;           use Case_Handling;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Glib.Unicode;            use Glib.Unicode;
 with Indent_Stack;
@@ -560,7 +561,8 @@ package body Ada_Analyzer is
       From, To         : Natural               := 0;
       Replace          : Replace_Text_Callback := null;
       Constructs       : Construct_List_Access := null;
-      Callback         : Entity_Callback       := null)
+      Callback         : Entity_Callback       := null;
+      Case_Exceptions  : Casing_Exceptions     := No_Casing_Exception)
    is
       ---------------
       -- Constants --
@@ -2908,26 +2910,8 @@ package body Ada_Analyzer is
             when Unchanged =>
                null;
 
-            when Upper =>
-               for J in 1 .. Str_Len loop
-                  Str (J) := To_Upper (Str (J));
-               end loop;
-
-               Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
-
-            when Lower =>
-               for J in 1 .. Str_Len loop
-                  Str (J) := To_Lower (Str (J));
-               end loop;
-
-               Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
-
-            when Mixed =>
-               Mixed_Case (Str (1 .. Str_Len));
-               Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
-
-            when Smart_Mixed =>
-               Smart_Mixed_Case (Str (1 .. Str_Len));
+            when Upper | Lower | Mixed | Smart_Mixed  =>
+               Set_Case (Case_Exceptions, Str (1 .. Str_Len), Casing);
                Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
          end case;
 
