@@ -688,34 +688,14 @@ package body Glide_Kernel.Preferences is
 
       -- MDI --
 
-      MDI_Opaque_Resize := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-Opaque-Resize",
+      MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-Opaque",
          Default => False,
-         Blurb   => -("If True, items will be resized opaquely when not"
-                      & " maximized"),
-         Nick    => -"Opaque resizing"));
+         Blurb   => -("If True, items will be resized or moved opaquely when"
+                      & " not maximized"),
+         Nick    => -"Opaque"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Opaque_Resize), -"General:MDI");
-
-      MDI_Opaque_Move := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-Opaque-Move",
-         Default => False,
-         Blurb   => -("If True, items will be moved opaquely when not"
-                      & " maximized"),
-         Nick    => -"Opaque moving"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Opaque_Move), -"General:MDI");
-
-      MDI_Opaque_Docks := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-Opaque-Docks",
-         Default => False,
-         Blurb   => -("If False, a line is drawn on the screen to show the"
-                      & " future position of the docks when they are resized"
-                      & " interactively. If True, they are resized"
-                      & " dynamically as the mouse moves"),
-         Nick    => -"Opaque docks"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Opaque_Docks), -"General:MDI");
+        (Kernel.Preferences, Param_Spec (MDI_Opaque), -"General:MDI");
 
       MDI_Destroy_Floats := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-Destroy-Floats",
