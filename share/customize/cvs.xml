@@ -16,7 +16,7 @@
          <shell output="">echo "CVS error:"</shell>
          <shell output="">echo "%2"</shell>
       </on-failure>
-      <shell>VCS.status_parse "CVS" "%1" "$1" FALSE</shell>
+      <shell>VCS.status_parse "CVS" "%1" "$1" FALSE "%3"</shell>
    </action>
 
    <!-------------------->
@@ -31,7 +31,7 @@
          <shell output="">echo "CVS error:"</shell>
          <shell output="">echo "%2"</shell>
       </on-failure>
-      <shell>VCS.status_parse "CVS" "%1" "$1" FALSE</shell>
+      <shell>VCS.status_parse "CVS" "%1" "$1" FALSE "%3"</shell>
    </action>
 
    <!------------------>
@@ -53,8 +53,9 @@
    <!---------------------->
 
    <action name="generic_cvs_local_status" show-command="true" output="none">
+      <shell>pwd</shell>
       <shell>Editor.get_buffer "./CVS/Entries"</shell>
-      <shell>VCS.status_parse "CVS" "%1" FALSE TRUE</shell>
+      <shell>VCS.status_parse "CVS" "%1" FALSE TRUE "%2"</shell>
    </action>
 
    <!---------------->
