@@ -21,6 +21,8 @@
 with GNAT.Regpat;  use GNAT.Regpat;
 with Pixmaps_IDE;  use Pixmaps_IDE;
 with String_Utils; use String_Utils;
+with Ada_Analyzer; use Ada_Analyzer;
+with Basic_Types;  use Basic_Types;
 
 package body Language.Ada is
 
@@ -341,6 +343,88 @@ package body Language.Ada is
               Quote_Character               => ASCII.NUL,
               Constant_Character            => ''');
    end Get_Language_Context;
+
+   -------------------
+   -- Format_Source --
+   -------------------
+
+   procedure Format_Source
+     (Lang             : access Ada_Language;
+      Buffer           : String;
+      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
+      Reserved_Casing  : Casing_Type       := Lower;
+      Ident_Casing     : Casing_Type       := Mixed;
+      Format_Operators : Boolean           := True)
+   is
+      New_Buffer : Extended_Line_Buffer;
+      Ignore     : Natural;
+
+   begin
+      New_Buffer := To_Line_Buffer (Buffer);
+      Analyze_Ada_Source
+        (To_Unchecked_String (Buffer'Address), Buffer'Length,
+         New_Buffer, Indent_Params,
+         Reserved_Casing, Ident_Casing, Format_Operators,
+         Current_Indent => Ignore,
+         Prev_Indent   => Ignore);
+      Print (New_Buffer);
+      Free (New_Buffer);
+   end Format_Source;
+
+   ----------------------
+   -- Parse_Constructs --
+   ----------------------
+
+   procedure Parse_Constructs
+     (Lang            : access Ada_Language;
+      Buffer          : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length   : Natural;
+      Result          : out Construct_List;
+      Indent          : out Natural;
+      Next_Indent     : out Natural;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
+   is
+      New_Buffer : Extended_Line_Buffer;
+      Constructs : aliased Construct_List;
+
+   begin
+      Analyze_Ada_Source
+        (To_Unchecked_String (Buffer), Buffer_Length,
+         New_Buffer, Indent_Params,
+         Reserved_Casing  => Unchanged,
+         Ident_Casing     => Unchanged,
+         Format_Operators => False,
+         Indent           => False,
+         Constructs       => Constructs'Unchecked_Access,
+         Current_Indent   => Next_Indent,
+         Prev_Indent      => Indent);
+      Result := Constructs;
+   end Parse_Constructs;
+
+   ----------------------
+   -- Next_Indentation --
+   ----------------------
+
+   procedure Next_Indentation
+     (Lang          : access Ada_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+   is
+      New_Buffer : Extended_Line_Buffer;
+   begin
+      Analyze_Ada_Source
+        (To_Unchecked_String (Buffer), Buffer_Length,
+         New_Buffer, Indent_Params,
+         Reserved_Casing  => Unchanged,
+         Ident_Casing     => Unchanged,
+         Format_Operators => False,
+         Indent           => False,
+         Current_Indent   => Next_Indent,
+         Prev_Indent      => Indent);
+   end Next_Indentation;
 
 begin
    Compile (Keywords_List,
