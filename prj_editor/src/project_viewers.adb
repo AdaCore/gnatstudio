@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -991,9 +991,11 @@ package body Project_Viewers is
       Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-      Item : Gtk_Menu_Item;
-      Submenu : Gtk_Menu;
+
+      Item         : Gtk_Menu_Item;
+      Submenu      : Gtk_Menu;
       File_Context : File_Selection_Context_Access;
+
    begin
       --  We insert entries whatever the sender_id is, as long as the context
       --  knows something about project or files
@@ -1014,7 +1016,7 @@ package body Project_Viewers is
                (Save_Specific_Project'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => -"Project properties");
+            Gtk_New (Item, Label => -"Edit project properties");
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
