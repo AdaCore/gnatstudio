@@ -32,6 +32,7 @@ with Traces;               use Traces;
 with Glide_Intl;           use Glide_Intl;
 
 with Glib;          use Glib;
+with Glib.Convert;  use Glib.Convert;
 with Glib.Object;   use Glib.Object;
 with Glib.Xml_Int;  use Glib.Xml_Int;
 with Gdk.GC;        use Gdk.GC;
@@ -510,8 +511,8 @@ package body Browsers.Entities is
          Entity_Context := Entity_Selection_Context_Access (Context);
 
          if Has_Entity_Name_Information (Entity_Context) then
-            Gtk_New (Item, Label => (-"Examine entity ") &
-                     Entity_Name_Information (Entity_Context));
+            Gtk_New (Item, Label => (-"Examine entity ") & Locale_To_UTF8
+                     (Entity_Name_Information (Entity_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",

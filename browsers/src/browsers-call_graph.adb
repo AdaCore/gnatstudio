@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
+with Glib.Convert;     use Glib.Convert;
 with Glib.Xml_Int;     use Glib.Xml_Int;
 with Glib.Object;      use Glib.Object;
 with Gdk.GC;           use Gdk.GC;
@@ -1272,7 +1273,8 @@ package body Browsers.Call_Graph is
               or else Category_Information (Entity_Context) in
                 Subprogram_Category
             then
-               Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
+               Gtk_New (Item, Label => Locale_To_UTF8
+                          (Entity_Name_Information (Entity_Context))
                         & (-" calls"));
                Append (Submenu, Item);
                Context_Callback.Connect
@@ -1281,7 +1283,8 @@ package body Browsers.Call_Graph is
                   (Edit_Entity_Call_Graph_From_Contextual'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
+               Gtk_New (Item, Label => Locale_To_UTF8
+                        (Entity_Name_Information (Entity_Context))
                         & (-" is called by"));
                Append (Submenu, Item);
                Context_Callback.Connect
@@ -1291,41 +1294,43 @@ package body Browsers.Call_Graph is
                   Selection_Context_Access (Context));
             end if;
 
-            Gtk_New (Item, Label => (-"Find all references to ") &
-                     Entity_Name_Information (Entity_Context));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (Find_All_References_From_Contextual'Access),
-               Selection_Context_Access (Context));
+            declare
+               Name : constant String := Locale_To_UTF8
+                 (Entity_Name_Information (Entity_Context));
+            begin
+               Gtk_New (Item, Label => (-"Find all references to ") & Name);
+               Append (Submenu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Find_All_References_From_Contextual'Access),
+                  Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => (-"Find all local references to ") &
-                     Entity_Name_Information (Entity_Context));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (Find_All_Local_References_From_Contextual'Access),
-               Selection_Context_Access (Context));
+               Gtk_New
+                 (Item, Label => (-"Find all local references to ") & Name);
+               Append (Submenu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Find_All_Local_References_From_Contextual'Access),
+                  Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => (-"Find all writes to ") &
-                     Entity_Name_Information (Entity_Context));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (Find_All_Writes_From_Contextual'Access),
-               Selection_Context_Access (Context));
+               Gtk_New (Item, Label => (-"Find all writes to ") & Name);
+               Append (Submenu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Find_All_Writes_From_Contextual'Access),
+                  Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => (-"Find all reads of ") &
-                     Entity_Name_Information (Entity_Context));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (Find_All_Reads_From_Contextual'Access),
-               Selection_Context_Access (Context));
+               Gtk_New (Item, Label => (-"Find all reads of ") & Name);
+               Append (Submenu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Find_All_Reads_From_Contextual'Access),
+                  Selection_Context_Access (Context));
+            end;
          end if;
       end if;
    end Call_Graph_Contextual_Menu;
@@ -1369,43 +1374,47 @@ package body Browsers.Call_Graph is
          Category    => Language.Cat_Procedure);
 
       if Menu /= null then
-         Gtk_New (Mitem, Get_Name (Item.Entity) & (-" calls..."));
-         Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
-         Set_Image (Mitem, Pix);
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller
-              (Edit_Entity_Call_Graph_From_Contextual'Access),
-            Context);
-         Set_Sensitive (Mitem, not Children_Shown (Item));
+         declare
+            Name : constant String := Locale_To_UTF8 (Get_Name (Item.Entity));
+         begin
+            Gtk_New (Mitem, Name & (-" calls..."));
+            Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
+            Set_Image (Mitem, Pix);
+            Append (Menu, Mitem);
+            Context_Callback.Connect
+              (Mitem, "activate",
+               Context_Callback.To_Marshaller
+               (Edit_Entity_Call_Graph_From_Contextual'Access),
+               Context);
+            Set_Sensitive (Mitem, not Children_Shown (Item));
 
-         Gtk_New (Mitem, Get_Name (Item.Entity) & (-" is called by..."));
-         Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
-         Set_Image (Mitem, Pix);
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller
-              (Edit_Ancestors_Call_Graph_From_Contextual'Access),
-            Context);
-         Set_Sensitive (Mitem, not Parents_Shown (Item));
+            Gtk_New (Mitem, Name & (-" is called by..."));
+            Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
+            Set_Image (Mitem, Pix);
+            Append (Menu, Mitem);
+            Context_Callback.Connect
+              (Mitem, "activate",
+               Context_Callback.To_Marshaller
+               (Edit_Ancestors_Call_Graph_From_Contextual'Access),
+               Context);
+            Set_Sensitive (Mitem, not Parents_Shown (Item));
 
-         Gtk_New (Mitem, -"Go to spec");
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller
-              (Edit_Spec_From_Contextual'Access),
-            Context);
+            Gtk_New (Mitem, -"Go to spec");
+            Append (Menu, Mitem);
+            Context_Callback.Connect
+              (Mitem, "activate",
+               Context_Callback.To_Marshaller
+               (Edit_Spec_From_Contextual'Access),
+               Context);
 
-         Gtk_New (Mitem, -"Go to body");
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller
-              (Edit_Body_From_Contextual'Access),
-            Context);
+            Gtk_New (Mitem, -"Go to body");
+            Append (Menu, Mitem);
+            Context_Callback.Connect
+              (Mitem, "activate",
+               Context_Callback.To_Marshaller
+               (Edit_Body_From_Contextual'Access),
+               Context);
+         end;
       end if;
 
       return Context;

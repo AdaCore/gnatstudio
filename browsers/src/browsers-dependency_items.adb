@@ -21,6 +21,7 @@
 with Ada.Exceptions;       use Ada.Exceptions;
 
 with Glib;                 use Glib;
+with Glib.Convert;         use Glib.Convert;
 with Glib.Object;          use Glib.Object;
 with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gdk.Event;            use Gdk.Event;
@@ -852,23 +853,27 @@ package body Browsers.Dependency_Items is
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
          if Has_File_Information (File_Context) then
-            Gtk_New (Item, Label => (-"Examine dependencies for ") &
-                     File_Information (File_Context));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Dependencies_From_Contextual'Access),
-               Selection_Context_Access (Context));
+            declare
+               Name : constant String := Locale_To_UTF8
+                 (File_Information (File_Context));
+            begin
+               Gtk_New (Item, Label => (-"Examine dependencies for ") & Name);
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Edit_Dependencies_From_Contextual'Access),
+                  Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => (-"Examining files depending on ") &
-                     File_Information (File_Context));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Ancestor_Dependencies_From_Contextual'Access),
-               Selection_Context_Access (Context));
+               Gtk_New
+                 (Item, Label => (-"Examining files depending on ") & Name);
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Edit_Ancestor_Dependencies_From_Contextual'Access),
+                  Selection_Context_Access (Context));
+            end;
          end if;
       end if;
    end Browser_Contextual_Menu;
@@ -1148,6 +1153,7 @@ package body Browsers.Dependency_Items is
          Filename        => Filename,
          Use_Source_Path => True,
          Use_Object_Path => False);
+      Utf8_File : constant String := Locale_To_UTF8 (Filename);
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin
@@ -1166,7 +1172,7 @@ package body Browsers.Dependency_Items is
             User_Data   => Context,
             Slot_Object => Browser);
 
-         Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Filename);
+         Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Utf8_File);
          Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
@@ -1178,7 +1184,7 @@ package body Browsers.Dependency_Items is
          Set_Sensitive (Mitem, not Children_Shown (Item));
 
          Gtk_New
-           (Mitem, Label => (-"Examining files depending on ") & Filename);
+           (Mitem, Label => (-"Examining files depending on ") & Utf8_File);
          Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);

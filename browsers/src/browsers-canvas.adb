@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Glib.Convert;        use Glib.Convert;
 with Glib.Error;          use Glib.Error;
 with Glib.Graphs;         use Glib.Graphs;
 with Glib.Object;         use Glib.Object;
@@ -150,8 +151,7 @@ package body Browsers.Canvas is
 
    procedure Draw_Background
      (Canvas        : access Image_Canvas_Record;
-      Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle;
-      X_Left, Y_Top : Glib.Gint);
+      Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle);
 
    procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
    --  Called when the canvas has been zoomed
@@ -187,8 +187,10 @@ package body Browsers.Canvas is
 
    procedure Draw_Background
      (Canvas        : access Image_Canvas_Record;
-      Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle;
-      X_Left, Y_Top : Glib.Gint) is
+      Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle)
+   is
+      X_Left : constant Gint := Left_World_Coordinates (Canvas);
+      Y_Top  : constant Gint := Top_World_Coordinates (Canvas);
    begin
       if Canvas.Background /= null then
          declare
@@ -236,8 +238,7 @@ package body Browsers.Canvas is
 
       if Canvas.Draw_Grid then
          Draw_Grid (Interactive_Canvas (Canvas),
-                    Get_Black_GC (Get_Style (Canvas)),
-                    Screen_Rect, X_Left, Y_Top);
+                    Get_Black_GC (Get_Style (Canvas)), Screen_Rect);
       end if;
    end Draw_Background;
 
@@ -884,12 +885,13 @@ package body Browsers.Canvas is
          end if;
       else
          if Item.Title_Layout = null then
-            Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
+            Item.Title_Layout := Create_Pango_Layout
+              (Item.Browser, Locale_To_UTF8 (Title));
             Set_Font_Description
               (Item.Title_Layout,
                Get_Pref (Get_Kernel (Get_Browser (Item)), Default_Font));
          else
-            Set_Text (Item.Title_Layout, Title);
+            Set_Text (Item.Title_Layout, Locale_To_UTF8 (Title));
          end if;
       end if;
    end Set_Title;
@@ -1733,7 +1735,8 @@ package body Browsers.Canvas is
                         Index := Index + 1;
                      end if;
                   end loop;
-                  Set_Text (Layout, Str (Str'First .. Index - 1));
+                  Set_Text (Layout,
+                            Locale_To_UTF8 (Str (Str'First .. Index - 1)));
                   Get_Pixel_Size (Layout, W, H2);
                   H := H + H2;
                   Longest1 := Gint'Max (Longest1, W);
@@ -1752,7 +1755,8 @@ package body Browsers.Canvas is
                         end if;
                      end loop;
 
-                     Set_Text (Layout, Str (Str'First .. Index - 1));
+                     Set_Text (Layout,
+                               Locale_To_UTF8 (Str (Str'First .. Index - 1)));
                      Get_Pixel_Size (Layout, W, H2);
                      Longest2 := Gint'Max (Longest2, W);
                   end;
@@ -1793,7 +1797,8 @@ package body Browsers.Canvas is
       procedure Display (L : Natural) is
       begin
          if First <= Last - 1 then
-            Set_Text (Layout, List.Lines (L)(First .. Last - 1));
+            Set_Text (Layout,
+                      Locale_To_UTF8 (List.Lines (L)(First .. Last - 1)));
 
             if In_Xref then
                GC := Browser.Text_GC;
