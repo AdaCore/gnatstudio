@@ -265,7 +265,9 @@ package body VCS_View_Pkg is
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
       Strings  : in out String_List.List;
-      Title    : String := "") is
+      Title    : String := "")
+   is
+      pragma Unreferenced (Explorer, Title);
    begin
       while not String_List.Is_Empty (Strings) loop
          if Kernel = null then
@@ -288,6 +290,7 @@ package body VCS_View_Pkg is
       Kernel   : Kernel_Handle;
       Filename : String)
    is
+      pragma Unreferenced (Explorer);
    begin
       if Kernel = null then
          --  ??? Must deal with this case correctly.
@@ -475,7 +478,9 @@ package body VCS_View_Pkg is
       Iter          : Gtk_Tree_Iter;
       Status_Record : File_Status_Record;
       Selected      : Boolean := False;
-      Success       : out Boolean) is
+      Success       : out Boolean)
+   is
+      pragma Unreferenced (Selected);
    begin
       Success := True;
 
@@ -577,7 +582,9 @@ package body VCS_View_Pkg is
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access) is
+         Data  : Explorer_Selection_Foreach.Data_Type_Access)
+      is
+         pragma Unreferenced (Model, Path);
       begin
          Action (Data, Iter);
       end On_Selected_Item;
@@ -609,7 +616,9 @@ package body VCS_View_Pkg is
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access) is
+         Data  : Explorer_Selection_Foreach.Data_Type_Access)
+      is
+         pragma Unreferenced (Model, Path);
       begin
          String_List.Append
            (Result, Get_String (Data.Model, Iter, Name_Column));
@@ -648,6 +657,7 @@ package body VCS_View_Pkg is
      (Object      : access Gtk_Widget_Record'Class;
       Parameter   : Log_Parameter)
    is
+      pragma Unreferenced (Object);
       Temp_Path : String_List.List := Parameter.Log_Editor.Files;
       Iter      : Gtk_Tree_Iter;
 
@@ -672,7 +682,9 @@ package body VCS_View_Pkg is
 
    procedure Log_Editor_Ok_Clicked
      (Object    : access Gtk_Widget_Record'Class;
-      Parameter : Log_Parameter) is
+      Parameter : Log_Parameter)
+   is
+      pragma Unreferenced (Object);
    begin
       Commit (Parameter.Kernel,
               Parameter.Log_Editor.Files,
@@ -689,6 +701,7 @@ package body VCS_View_Pkg is
      (Object      : access Gtk_Widget_Record'Class;
       Parameter   : Log_Parameter)
    is
+      pragma Unreferenced (Object);
       Value      : GValue;
       Iter       : Gtk_Tree_Iter;
       Temp_Paths : String_List.List := Parameter.Log_Editor.Files;
@@ -836,6 +849,7 @@ package body VCS_View_Pkg is
       Files    : String_List.List;
       Ref      : VCS_Access)
    is
+      pragma Unreferenced (Explorer, Kernel);
       L_Temp  : String_List.List := Files;
 
    begin
@@ -1030,7 +1044,9 @@ package body VCS_View_Pkg is
 
    procedure Change_Hide_Up_To_Date
      (Item     : access Gtk_Check_Menu_Item_Record'Class;
-      Explorer : VCS_View_Access) is
+      Explorer : VCS_View_Access)
+   is
+      pragma Unreferenced (Item);
    begin
       Explorer.Hide_Up_To_Date := not Explorer.Hide_Up_To_Date;
       Clear (Explorer.Model);
@@ -1146,6 +1162,7 @@ package body VCS_View_Pkg is
      (Kernel : access Kernel_Handle_Record'Class)
      return VCS_Access
    is
+      pragma Unreferenced (Kernel);
    begin
       return Get_VCS_From_Id ("CVS");
       --  ??? should get this information from the project !!

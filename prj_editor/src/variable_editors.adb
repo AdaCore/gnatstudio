@@ -602,6 +602,7 @@ package body Variable_Editors is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       Edit : New_Var_Edit;
    begin
       Gtk_New (Edit, Get_Kernel (Context),

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -296,6 +296,7 @@ package body Vsearch_Ext is
    -----------------------
 
    procedure On_Search_Replace (Object : access Gtk_Widget_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       null;
    end On_Search_Replace;
@@ -305,6 +306,7 @@ package body Vsearch_Ext is
    ------------------------
 
    procedure On_Search_Previous (Object : access Gtk_Widget_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       null;
    end On_Search_Previous;

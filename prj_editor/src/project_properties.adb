@@ -200,6 +200,7 @@ package body Project_Properties is
      (Widget  : access Glib.Object.GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       C : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin

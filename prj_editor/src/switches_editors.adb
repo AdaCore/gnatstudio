@@ -1294,7 +1294,9 @@ package body Switches_Editors is
 
    procedure Edit_Switches
      (Item    : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Item);
    begin
       Edit_Switches_For_Context (Context, False);
    end Edit_Switches;
@@ -1305,7 +1307,9 @@ package body Switches_Editors is
 
    procedure Edit_Default_Switches
      (Item : access GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access) is
+      Context : Glide_Kernel.Selection_Context_Access)
+   is
+      pragma Unreferenced (Item);
    begin
       Edit_Switches_For_Context (Context, True);
    end Edit_Default_Switches;
