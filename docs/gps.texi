@@ -9278,7 +9278,7 @@ parse_xml ("""
 @cindex example
 @smallexample
 Usage:
-   gps [options] [-Pproject-file] [source1] [source2] ...
+   gps [options] [-P project-file] [source1] [source2] ...
 Options:
    --help              Show this help message and exit
    --version           Show the GPS version and exit
