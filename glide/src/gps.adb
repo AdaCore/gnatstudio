@@ -41,6 +41,7 @@ with File_Utils;
 with String_Utils;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Custom;       use Glide_Kernel.Custom;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -292,8 +293,6 @@ procedure GPS is
       Free (Charset);
       Startup_Dir := new String'(Get_Current_Dir);
 
-      Gtk.Main.Init;
-
       --  Set the TERM variable to a dummy value, since we only know how to
       --  handle simple terminals
 
@@ -328,6 +327,8 @@ procedure GPS is
          end if;
       end if;
 
+      Dir := new String'(File_Utils.Name_As_Directory (Home.all) & ".gps");
+
       Prefix := Getenv ("GPS_ROOT");
 
       if Prefix.all = "" then
@@ -339,6 +340,14 @@ procedure GPS is
             Prefix := new String'(GVD.Prefix);
          end if;
       end if;
+
+      --  Parse the config files
+      Gtk.Rc.Add_Default_File
+        (Format_Pathname (Prefix.all & "/etc/gps/gtkrc"));
+      Gtk.Rc.Add_Default_File
+        (File_Utils.Name_As_Directory (Dir.all) & "gtkrc");
+
+      Gtk.Main.Init;
 
       --  Define MAKE_ROOT if needed, so that the generated makefiles can find
       --  Makefile.prolog and Makefile.generic
@@ -371,8 +380,6 @@ procedure GPS is
         ("Gdk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
       Ignored := Log_Set_Handler
         ("Gtk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
-
-      Dir := new String'(File_Utils.Name_As_Directory (Home.all) & ".gps");
 
       begin
          User_Directory_Existed := Is_Directory (Dir.all);
@@ -780,10 +787,6 @@ procedure GPS is
    ------------------
 
    function Finish_Setup (Data : Process_Data) return Boolean is
-      System_Rc         : constant String :=
-        Format_Pathname (Prefix.all & "/etc/gps/gtkrc");
-      Rc                : constant String :=
-        File_Utils.Name_As_Directory (Dir.all) & "gtkrc";
       Log               : constant String :=
         Get_Home_Dir (GPS.Kernel) & "debugger.log";
       Key               : constant String :=
@@ -841,20 +844,6 @@ procedure GPS is
 
    begin
       Cleanup_Needed := True;
-
-      --  Parse the system's RC file
-
-      if Is_Regular_File (System_Rc) then
-         Trace (Me, "Parsing System RC file " & System_Rc);
-         Gtk.Rc.Parse (System_Rc);
-      end if;
-
-      --  Parse the user's RC file
-
-      if Is_Regular_File (Rc) then
-         Trace (Me, "Parsing RC file " & Rc);
-         Gtk.Rc.Parse (Rc);
-      end if;
 
       --  Load the custom key bindings, if any
 
@@ -922,6 +911,10 @@ procedure GPS is
 
       Ada_Module.Register_Module (GPS.Kernel);
       Cpp_Module.Register_Module (GPS.Kernel);
+
+      --  Load system files
+
+      Load_All_Custom_Files (GPS.Kernel);
 
       --  Temporarily disable unimplemented menu items
 
