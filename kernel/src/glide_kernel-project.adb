@@ -168,17 +168,24 @@ package body Glide_Kernel.Project is
    --------------------
 
    procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
-      procedure Report_Error (S : String);
+      procedure Report_Error
+        (S       : String;
+         Project : Project_Id);
       --  Handler called when the project parser finds an error.
 
       ------------------
       -- Report_Error --
       ------------------
 
-      procedure Report_Error (S : String) is
+      procedure Report_Error
+        (S       : String;
+         Project : Project_Id) is
       begin
          if not Handle.Project_Is_Default then
-            Console.Insert (Handle, S, Mode => Console.Error, Add_LF => True);
+            Console.Insert
+              (Handle,
+               Project_Name (Project) & ": " & S,
+               Mode => Console.Error, Add_LF => True);
          end if;
       end Report_Error;
 
@@ -190,7 +197,7 @@ package body Glide_Kernel.Project is
       --  To avoid any problem with invalid variable values, we need to provide
       --  a current value when no default value is provided by the user
       --  ??? Is this really needed, when Glide should always have a value for
-      --  ??? the variable, set through the combo boxes.
+      --  the variable, set through the combo boxes.
 
       for J in Scenario_Vars'Range loop
          if External_Default (Scenario_Vars (J)) = Empty_Node then
@@ -214,7 +221,6 @@ package body Glide_Kernel.Project is
             end;
          end if;
       end loop;
-
 
       --  Evaluate the current project
 
