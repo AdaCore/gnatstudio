@@ -84,12 +84,16 @@ package Glide_Kernel.Preferences is
    Default_Widget_Height : Param_Spec_Int;
    Animated_Image        : Param_Spec_String;
    Splash_Screen         : Param_Spec_Boolean;
+   Start_Maximized       : Param_Spec_Boolean;
    Tmp_Dir               : Param_Spec_String;
    Toolbar_Show_Text     : Param_Spec_Boolean;
 
-   -- Console --
-   Highlight_File  : Param_Spec_Color;
-   Highlight_Error : Param_Spec_Color;
+   -- Messages --
+   Message_Highlight    : Param_Spec_Color;
+   File_Pattern         : Param_Spec_String;
+   File_Pattern_Index   : Param_Spec_Int;
+   Line_Pattern_Index   : Param_Spec_Int;
+   Column_Pattern_Index : Param_Spec_Int;
 
    -- Diff_Utils --
    Diff_Context_Length : Param_Spec_Int;
@@ -101,27 +105,32 @@ package Glide_Kernel.Preferences is
    File_View_Shows_Only_Project : Param_Spec_Boolean;
 
    -- Source Editor --
-   Default_Keyword_Color   : Param_Spec_Color;
-   Default_Comment_Color   : Param_Spec_Color;
-   Default_String_Color    : Param_Spec_Color;
-   Default_Character_Color : Param_Spec_Color;
-   Default_HL_Line_Color   : Param_Spec_Color;
-   Default_HL_Region_Color : Param_Spec_Color;
-   Automatic_Indentation   : Param_Spec_Boolean;
-   Indentation_Level       : Param_Spec_Int;
-   Continuation_Level      : Param_Spec_Int;
-   Declaration_Level       : Param_Spec_Int;
-   Strip_Blanks            : Param_Spec_Boolean;
-   Display_Line_Numbers    : Param_Spec_Boolean;
-   Source_Editor_Font      : Param_Spec_Font;
-   Keyword_Font            : Param_Spec_Font;
-   Comment_Font            : Param_Spec_Font;
-   String_Font             : Param_Spec_Font;
-   Character_Font          : Param_Spec_Font;
-   Tooltip_Font            : Param_Spec_Font;
-   Display_Tooltip         : Param_Spec_Boolean;
-   Periodic_Save           : Param_Spec_Int;
-   Tab_Width               : Param_Spec_Int;
+   Default_Keyword_Color     : Param_Spec_Color;
+   Default_Comment_Color     : Param_Spec_Color;
+   Default_String_Color      : Param_Spec_Color;
+   Default_HL_Line_Color     : Param_Spec_Color;
+   Default_HL_Region_Color   : Param_Spec_Color;
+
+   Strip_Blanks              : Param_Spec_Boolean;
+   Display_Line_Numbers      : Param_Spec_Boolean;
+   Source_Editor_Font        : Param_Spec_Font;
+   Keyword_Font              : Param_Spec_Font;
+   Comment_Font              : Param_Spec_Font;
+   String_Font               : Param_Spec_Font;
+   Tooltip_Font              : Param_Spec_Font;
+   Display_Tooltip           : Param_Spec_Boolean;
+   Periodic_Save             : Param_Spec_Int;
+   Tab_Width                 : Param_Spec_Int;
+
+   -- Languages --
+   Ada_Automatic_Indentation : Param_Spec_Boolean;
+   Ada_Use_Tabs              : Param_Spec_Boolean;
+   Ada_Indentation_Level     : Param_Spec_Int;
+   Ada_Continuation_Level    : Param_Spec_Int;
+   Ada_Declaration_Level     : Param_Spec_Int;
+   C_Automatic_Indentation   : Param_Spec_Boolean;
+   C_Use_Tabs                : Param_Spec_Boolean;
+   C_Indentation_Level       : Param_Spec_Int;
 
    -- Project Editor --
    Default_Switches_Color          : Param_Spec_Color;

@@ -66,14 +66,23 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Animated_Image), -"General");
 
-      Splash_Screen := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Splash-Screen",
-         Nick    => -"Display splash screen",
-         Blurb   => -("True if a splash screen should be displayed when"
-                      & " starting GPS"),
+      Splash_Screen := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "General-Splash-Screen",
+            Nick    => -"Display splash screen",
+            Blurb   =>
+              -"True if a splash screen should be displayed when starting GPS",
          Default => True));
       Register_Property
         (Kernel.Preferences, Param_Spec (Splash_Screen), -"General");
+
+      Start_Maximized := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Start-Maximized",
+         Nick    => -"Start maximized",
+         Blurb   => -"True if GPS window should start in maximized state",
+         Default => True));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Start_Maximized), -"General");
 
       Toolbar_Show_Text := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Toolbar-Text",
@@ -92,23 +101,55 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Tmp_Dir), -"General");
 
-      -- Console --
+      -- Messages --
 
-      Highlight_File := Param_Spec_Color (Gnew_Color
-        (Name  => "Console-Highlight-File",
-         Nick  => -"Highlight color",
-         Blurb => -"Color used to highlight a file reference in the console",
+      Message_Highlight := Param_Spec_Color (Gnew_Color
+        (Name    => "Messages-Highlight-Color",
+         Nick    => -"Color highlighting",
+         Blurb   => -"Color used to highlight text in the messages window",
          Default => "#FF0000"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Highlight_File), -"Console");
+        (Kernel.Preferences, Param_Spec (Message_Highlight), -"Messages");
 
-      Highlight_Error := Param_Spec_Color (Gnew_Color
-        (Name    => "Console-Highlight-Error",
-         Nick    => -"Errors color",
-         Blurb   => -"Color used to highlight an error in the console",
-         Default => "#FF0000"));
+      File_Pattern := Param_Spec_String
+        (Gnew_String
+           (Name  => "Messages-File-Pattern",
+            Nick  => -"File pattern",
+            Blurb =>
+              -"Pattern used to detect file locations (e.g error messsages)",
+            Default => "^([^:]+):(\d+):(\d+)?"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Highlight_Error), -"Console");
+        (Kernel.Preferences, Param_Spec (File_Pattern), -"Messages");
+
+      File_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-File-Pattern-Index",
+         Minimum => 1,
+         Maximum => 9,
+         Default => 1,
+         Blurb   => -"Index of filename in the pattern",
+         Nick    => -"File index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (File_Pattern_Index), -"Messages");
+
+      Line_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Line-Pattern-Index",
+         Minimum => 1,
+         Maximum => 9,
+         Default => 2,
+         Blurb   => -"Index of line number in the pattern",
+         Nick    => -"Line index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Line_Pattern_Index), -"Messages");
+
+      Column_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Column-Pattern-Index",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 3,
+         Blurb   => -"Index of column number in the pattern, 0 if none",
+         Nick    => -"Column index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Column_Pattern_Index), -"Messages");
 
       -- Diff_Utils --
 
@@ -135,8 +176,8 @@ package body Glide_Kernel.Preferences is
       Patch_Cmd := Param_Spec_String (Gnew_String
         (Name    => "Diff-Utils-Patch",
          Nick    => -"Patch command",
-         Blurb   => -("Command used to apply a patch. Arguments can also be"
-                     & " specified"),
+         Blurb   =>
+           -"Command used to apply a patch. Arguments can also be specified",
          Default => "patch"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
@@ -217,7 +258,7 @@ package body Glide_Kernel.Preferences is
 
       Default_Keyword_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Keyword-Color",
-         Nick    => -"Keywords color",
+         Nick    => -"Keyword color",
          Blurb   => -"Color for highlighting keywords",
          Default => "black"));
       Register_Property
@@ -228,7 +269,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "Src-Editor-Comment-Color",
          Default => "blue",
          Blurb   => -"Color for highlighting comments",
-         Nick    => -"Comments color"));
+         Nick    => -"Comment color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Comment_Color),
          -"Editor:Fonts & Colors");
@@ -237,21 +278,12 @@ package body Glide_Kernel.Preferences is
         (Name    => "Src-Editor-String-Color",
          Default => "brown",
          Blurb   => -"Color for highlighting strings",
-         Nick    => -"Strings color"));
+         Nick    => -"String color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_String_Color),
          -"Editor:Fonts & Colors");
 
-      Default_Character_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Character-Color",
-         Default => "brown",
-         Blurb   => -"Color for highlighting character constants",
-         Nick    => -"Character constants color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Character_Color),
-         -"Editor:Fonts & Colors");
-
-      Default_HL_Line_Color   := Param_Spec_Color (Gnew_Color
+      Default_HL_Line_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Highlight-Line-Color",
          Default => "green",
          Blurb   => -"Color for highlighting lines",
@@ -264,6 +296,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "Src-Editor-Highlight-Region-Color",
          Default => "cyan",
          Blurb   => -"Color for highlighting regions",
+         Flags   => Param_Readable,
          Nick    => -"Region highlighting color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_HL_Region_Color),
@@ -305,15 +338,6 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (String_Font),
          -"Editor:Fonts & Colors");
 
-      Character_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Character-Font",
-         Default => "Courier 10",
-         Blurb   => -"The font used to display characters",
-         Nick    => -"Character font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Character_Font),
-         -"Editor:Fonts & Colors");
-
       Tooltip_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Tooltip-Font",
          Default => "Helvetica 10",
@@ -323,49 +347,102 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Tooltip_Font),
          -"Editor:Fonts & Colors");
 
-      Automatic_Indentation := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Automatic-Indentation",
-         Default => True,
-         Blurb   => -("Whether the editor should indent automatically"
-                      & " the source"),
-         Nick    => -"Auto indentation"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Automatic_Indentation),
-         -"Editor:Indentation");
+      -- Languages --
 
-      Indentation_Level := Param_Spec_Int (Gnew_Int
-        (Name    => "Src-Editor-Indent-Level",
-         Minimum => 1,
-         Maximum => 9,
-         Default => 3,
-         Blurb   => -"The number of spaces for the default indentation",
-         Nick    => -"Default indentation"));
+      Ada_Automatic_Indentation := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Automatic-Indentation",
+           Default => True,
+           Blurb   =>
+             -("Whether the editor should indent automatically Ada sources"),
+           Nick    => -"Auto indentation"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Indentation_Level),
-         -"Editor:Indentation");
+        (Kernel.Preferences, Param_Spec (Ada_Automatic_Indentation),
+         -"Languages:Ada");
 
-      Continuation_Level := Param_Spec_Int (Gnew_Int
-        (Name    => "Src-Editor-Continuation-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 2,
-         Blurb   => -"The number of extra spaces for continuation lines",
-         Nick    => -"Continuation lines"));
+      Ada_Use_Tabs := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Use-Tabs",
+           Default => False,
+           Blurb   =>
+             -("Whether the editor should use tabulations when indenting"),
+           Nick    => -"Use tabulations"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Continuation_Level),
-         -"Editor:Indentation");
+        (Kernel.Preferences, Param_Spec (Ada_Use_Tabs), -"Languages:Ada");
 
-      Declaration_Level := Param_Spec_Int (Gnew_Int
-        (Name    => "Src-Editor-Declaration-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 0,
-         Blurb   =>
-           -"The number of extra spaces for multiple line declarations",
-         Nick    => -"Declaration lines"));
+      Ada_Indentation_Level := Param_Spec_Int
+        (Gnew_Int
+          (Name    => "Ada-Indent-Level",
+           Minimum => 1,
+           Maximum => 9,
+           Default => 3,
+           Blurb   => -"The number of spaces for the default Ada indentation",
+           Nick    => -"Default indentation"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Declaration_Level),
-         -"Editor:Indentation");
+        (Kernel.Preferences,
+         Param_Spec (Ada_Indentation_Level),
+         -"Languages:Ada");
+
+      Ada_Continuation_Level := Param_Spec_Int
+        (Gnew_Int
+          (Name    => "Ada-Continuation-Level",
+           Minimum => 0,
+           Maximum => 9,
+           Default => 2,
+           Blurb   => -"The number of extra spaces for continuation lines",
+           Nick    => -"Continuation lines"));
+      Register_Property
+        (Kernel.Preferences,
+         Param_Spec (Ada_Continuation_Level),
+         -"Languages:Ada");
+
+      Ada_Declaration_Level := Param_Spec_Int
+        (Gnew_Int
+          (Name    => "Ada-Declaration-Level",
+           Minimum => 0,
+           Maximum => 9,
+           Default => 0,
+           Blurb   =>
+             -"The number of extra spaces for multiple line declarations",
+           Nick    => -"Declaration lines"));
+      Register_Property
+        (Kernel.Preferences,
+         Param_Spec (Ada_Declaration_Level),
+         -"Languages:Ada");
+
+      C_Automatic_Indentation := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "C-Automatic-Indentation",
+           Default => True,
+           Blurb   =>
+             -("Whether the editor should indent automatically C/C++ sources"),
+           Nick    => -"Auto indentation"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (C_Automatic_Indentation),
+         -"Languages:C/C++");
+
+      C_Use_Tabs := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "C-Use-Tabs",
+           Default => True,
+           Blurb   =>
+             -("Whether the editor should use tabulations when indenting"),
+           Nick    => -"Use tabulations"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (C_Use_Tabs), -"Languages:C/C++");
+
+      C_Indentation_Level := Param_Spec_Int
+        (Gnew_Int
+          (Name    => "C-Indent-Level",
+           Minimum => 1,
+           Maximum => 9,
+           Default => 2,
+           Blurb   => -"The number of spaces for the default indentation",
+           Nick    => -"Default indentation"));
+      Register_Property
+        (Kernel.Preferences,
+         Param_Spec (C_Indentation_Level),
+         -"Languages:C/C++");
 
       -- Project Editor --
 
@@ -548,6 +625,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "CVS-Command",
          Default => "cvs",
          Blurb   => -"General CVS command",
+         Flags   => Param_Readable,
          Nick    => -"CVS command"));
       Register_Property
         (Kernel.Preferences, Param_Spec (CVS_Command), -"VCS:CVS");
