@@ -189,10 +189,8 @@ procedure GVD_Main is
 
       --  Load the preferences, or set the default values
 
-      if Is_Regular_File (Dir.all & Directory_Separator & "preferences") then
-         Load_Preferences
-           (GVD_Prefs, Dir.all & Directory_Separator & "preferences");
-      end if;
+      Load_Preferences
+        (GVD_Prefs, Dir.all & Directory_Separator & "preferences");
    end Init;
 
    ----------------
@@ -278,7 +276,6 @@ begin
 
    GVD_Prefs := new GVD_Preferences_Manager;
    Register_Default_Preferences (GVD_Prefs, Page_Prefix => -"General:");
-
    Init;
 
    Gtk_New (Main_Debug_Window, "<gvd>", GVD_Menu_Items.all);
