@@ -87,6 +87,11 @@ package body Src_Menu is
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget);
 
+   procedure File_Num_Cb
+     (Box             : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget);
+
    -------------
    -- Quit_Cb --
    -------------
@@ -231,6 +236,18 @@ package body Src_Menu is
    end Unhighlight_Cb;
 
    -----------------
+   -- File_Num_Cb --
+   -----------------
+
+   procedure File_Num_Cb
+     (Box             : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget) is
+   begin
+      Set_Show_Line_Numbers (Box, not Get_Show_Line_Numbers (Box));
+   end File_Num_Cb;
+
+   -----------------
    -- Create_Menu --
    -----------------
 
@@ -252,7 +269,7 @@ package body Src_Menu is
          --  Preferences:
          Factory.Gtk_New (Prefs, Item_Type => Branch),
          Factory.Gtk_New (Prefs_Font, "", Menu_Cb'Access),
-         Factory.Gtk_New (Prefs_Line_Num, "", Menu_Cb'Access),
+         Factory.Gtk_New (Prefs_Line_Num, "", File_Num_Cb'Access),
          Factory.Gtk_New (Prefs_Debug_Mode, "", Menu_Cb'Access),
          --  Edit:
          Factory.Gtk_New (Edit, Item_Type => Branch),
