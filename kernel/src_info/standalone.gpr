@@ -1,0 +1,11 @@
+project Standalone is
+   for Source_Dirs use
+     ("common", "gtkada", "gvd", "gnat", ".", "tests_src_info");
+   for Object_Dir use "standalone_obj";
+
+   package Compiler is
+      for Switches ("sdefault.adb") use ("-g");
+      for Default_Switches ("ada") use ("-gnatwu", "-gnatwe", "-gnaty", "-g");
+   end Compiler;
+
+end Standalone;
