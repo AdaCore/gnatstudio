@@ -32,6 +32,7 @@ with Ada.Calendar;   use Ada.Calendar;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with GNAT.Case_Util;        use GNAT.Case_Util;
 with GNAT.OS_Lib;    use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -164,7 +165,6 @@ package body ALI_Parser is
 
    type Sdep_To_Sfile_Table is array (Sdep_Id range <>) of Source_Dependency;
    type Unit_To_Sfile_Table is array (Unit_Id range <>) of Source_File;
-   type Sdep_Boolean_Array is array (Sdep_Id range <>) of Boolean;
 
    procedure Create_New_ALI
      (Handler               : access ALI_Handler_Record'Class;
@@ -184,16 +184,14 @@ package body ALI_Parser is
      (LI      : LI_File;
       Dep_Id  : Sdep_Id;
       Sunits  : Unit_To_Sfile_Table;
-      Sfile   : in out Source_Dependency;
-      Is_Direct_Source : in out Sdep_Boolean_Array);
+      Sfile   : in out Source_Dependency);
    --  Return a handle to a specific file dependency (Dep).
 
    procedure Process_Sdeps
      (LI               : LI_File;
       New_ALI          : ALIs_Record;
       Sunits           : Unit_To_Sfile_Table;
-      Sfiles           : out Sdep_To_Sfile_Table;
-      Is_Direct_Source : out Sdep_Boolean_Array);
+      Sfiles           : out Sdep_To_Sfile_Table);
    --  Get a handle for all the units dependencies
 
    procedure Process_Withs_For_Unit
@@ -240,7 +238,6 @@ package body ALI_Parser is
       Xref_Sect   : Nat;
       Xref_Ent    : Nat;
       Sfiles      : Sdep_To_Sfile_Table;
-      Is_Direct_Source : Sdep_Boolean_Array;
       First_Sect, Last_Sect : Nat);
    --  Save the Xref Entity information in the New_LI_File structure.
 
@@ -249,7 +246,6 @@ package body ALI_Parser is
       LI          : LI_File;
       Xref_Sect   : Nat;
       Sfiles      : Sdep_To_Sfile_Table;
-      Is_Direct_Source : Sdep_Boolean_Array;
       First_Sect, Last_Sect : Nat);
    --  Save the Xref information associated to the given With_Record.
 
@@ -257,7 +253,6 @@ package body ALI_Parser is
      (Handler               : access ALI_Handler_Record'Class;
       LI                    : LI_File;
       Sfiles                : Sdep_To_Sfile_Table;
-      Is_Direct_Source : Sdep_Boolean_Array;
       First_Sect, Last_Sect : Nat);
    --  Save the Xref information in the New_LI_File structure.
 
@@ -437,8 +432,7 @@ package body ALI_Parser is
      (LI      : LI_File;
       Dep_Id  : Sdep_Id;
       Sunits  : Unit_To_Sfile_Table;
-      Sfile   : in out Source_Dependency;
-      Is_Direct_Source : in out Sdep_Boolean_Array)
+      Sfile   : in out Source_Dependency)
    is
       Dep         : Sdep_Record renames Sdep.Table (Dep_Id);
       File        : Virtual_File;
@@ -452,7 +446,6 @@ package body ALI_Parser is
          if Units.Table (Current_Unit).Sfile = Dep.Sfile then
             --  ??? Check the original file name for gnatchoped files:
             --  Dep.Rfile and Dep.Start_Line
-            Is_Direct_Source (Dep_Id) := True;
             Sfile := (Sunits (Current_Unit),
                       Is_Separate => False,
                       Is_Unit     => True);
@@ -476,11 +469,9 @@ package body ALI_Parser is
 
       if Is_Separate then
          Timestamp := File_Time_Stamp (File);
-         Is_Direct_Source (Dep_Id) := True;
       else
          --  We do not know its ALI file
          L := null;
-         Is_Direct_Source (Dep_Id) := False;
       end if;
 
       Sfile := (Get_Or_Create
@@ -500,12 +491,10 @@ package body ALI_Parser is
      (LI               : LI_File;
       New_ALI          : ALIs_Record;
       Sunits           : Unit_To_Sfile_Table;
-      Sfiles           : out Sdep_To_Sfile_Table;
-      Is_Direct_Source : out Sdep_Boolean_Array) is
+      Sfiles           : out Sdep_To_Sfile_Table) is
    begin
       for Dep_Id in New_ALI.First_Sdep .. New_ALI.Last_Sdep loop
-         Process_Sdep
-           (LI, Dep_Id, Sunits, Sfiles (Dep_Id), Is_Direct_Source);
+         Process_Sdep (LI, Dep_Id, Sunits, Sfiles (Dep_Id));
       end loop;
    end Process_Sdeps;
 
@@ -663,34 +652,33 @@ package body ALI_Parser is
       Xref_Sect   : Nat;
       Xref_Ent    : Nat;
       Sfiles      : Sdep_To_Sfile_Table;
-      Is_Direct_Source : Sdep_Boolean_Array;
       First_Sect, Last_Sect : Nat)
    is
-      Ent           : constant String := Locale_To_UTF8
-        (To_Lower (Get_String (Xref_Entity.Table (Xref_Ent).Entity)));
-      Is_Operator   : constant Boolean := Ent (Ent'First) = '"';
-
       Entity        : Entity_Information;
       Current_Sfile : Sdep_Id;
       File_Num      : constant Sdep_Id :=
         Xref_Section.Table (Xref_Sect).File_Num;
       Has_Completion : Boolean := False;
    begin
-      if Is_Operator then
+      Get_Name_String (Xref_Entity.Table (Xref_Ent).Entity);
+      if Name_Buffer (1) = '"' then
+         To_Lower (Name_Buffer (2 .. Name_Len - 1));
          Entity := Get_Or_Create
-           (Name   => Ent (Ent'First + 1 .. Ent'Last - 1),
+           (Name   => Locale_To_UTF8 (Name_Buffer (2 .. Name_Len - 1)),
             File   => Sfiles (File_Num).File,
             Line   => Integer (Xref_Entity.Table (Xref_Ent).Line),
             Column => Integer (Xref_Entity.Table (Xref_Ent).Col));
       else
+         To_Lower (Name_Buffer (1 .. Name_Len));
          Entity := Get_Or_Create
-           (Name   => Ent,
+           (Name   => Locale_To_UTF8 (Name_Buffer (1 .. Name_Len)),
             File   => Sfiles (File_Num).File,
             Line   => Integer (Xref_Entity.Table (Xref_Ent).Line),
             Column => Integer (Xref_Entity.Table (Xref_Ent).Col));
       end if;
 
-      Set_Kind (Entity, Char_To_E_Kind (Xref_Entity.Table (Xref_Ent).Etype));
+      Set_Kind
+        (Entity, Char_To_E_Kind (Xref_Entity.Table (Xref_Ent).Etype));
       Set_Attributes
         (Entity,
          Attributes => (Global      => Xref_Entity.Table (Xref_Ent).Lib,
@@ -700,7 +688,7 @@ package body ALI_Parser is
       --  since most of the time the closure will not be in the current ALI
       --  file, and this will require us to parse too many files immediately
 
-      if Is_Direct_Source (File_Num) then
+      if Get_LI (Sfiles (File_Num).File) = LI then
          if Xref_Entity.Table (Xref_Ent).Tref /= Tref_None then
             Process_Type_Ref
               (Handler, LI, Entity, Xref_Ent, Sfiles, First_Sect, Last_Sect);
@@ -858,7 +846,7 @@ package body ALI_Parser is
            Xref_Section.Table (Sect).Last_Entity
          loop
             for Ref in Xref_Entity.Table (Entity).First_Xref
-               .. Xref_Entity.Table (Entity).Last_Xref
+              .. Xref_Entity.Table (Entity).Last_Xref
             loop
                if Xref.Table (Ref).File_Num = File_Num
                  and then Xref.Table (Ref).Line = Line
@@ -877,7 +865,7 @@ package body ALI_Parser is
 
       Trace (Assert_Me, "Need to resolve closure: parsing "
              & Base_Name (Get_Filename (Sfiles (File_Num).File))
-               & " at " & Line'Img & Column'Img);
+             & " at " & Line'Img & Column'Img);
 
       S := Get_Source_Info_Internal
         (Handler               => Handler,
@@ -1003,15 +991,13 @@ package body ALI_Parser is
       LI          : LI_File;
       Xref_Sect   : Nat;
       Sfiles      : Sdep_To_Sfile_Table;
-      Is_Direct_Source      : Sdep_Boolean_Array;
       First_Sect, Last_Sect : Nat) is
    begin
       for E in Xref_Section.Table (Xref_Sect).First_Entity
          .. Xref_Section.Table (Xref_Sect).Last_Entity
       loop
          Process_Xref_Entity
-           (Handler, LI, Xref_Sect, E, Sfiles, Is_Direct_Source,
-            First_Sect, Last_Sect);
+           (Handler, LI, Xref_Sect, E, Sfiles, First_Sect, Last_Sect);
       end loop;
    end Process_Xref_Section;
 
@@ -1023,14 +1009,12 @@ package body ALI_Parser is
      (Handler               : access ALI_Handler_Record'Class;
       LI                    : LI_File;
       Sfiles                : Sdep_To_Sfile_Table;
-      Is_Direct_Source      : Sdep_Boolean_Array;
       First_Sect, Last_Sect : Nat) is
    begin
       for Xref_Sect in First_Sect .. Last_Sect loop
          if Xref_Section.Table (Xref_Sect).File_Num in Sfiles'Range then
             Process_Xref_Section
-              (Handler, LI, Xref_Sect, Sfiles, Is_Direct_Source,
-               First_Sect, Last_Sect);
+              (Handler, LI, Xref_Sect, Sfiles, First_Sect, Last_Sect);
          end if;
       end loop;
    end Process_Xrefs;
@@ -1049,16 +1033,13 @@ package body ALI_Parser is
       Sfiles : Sdep_To_Sfile_Table (New_ALI.First_Sdep .. New_ALI.Last_Sdep);
       Imported_Projects : Project_Type_Array
         (1 .. Imported_Projects_Count (Get_Project (LI)));
-      Is_Direct_Source :
-         Sdep_Boolean_Array (New_ALI.First_Sdep .. New_ALI.Last_Sdep);
    begin
       Get_Imported_Projects (Get_Project (LI), Imported_Projects);
 
       Process_Units (LI, New_ALI, Sunits);
-      Process_Sdeps (LI, New_ALI, Sunits, Sfiles, Is_Direct_Source);
+      Process_Sdeps (LI, New_ALI, Sunits, Sfiles);
       Process_Withs (Sunits, Sfiles, Imported_Projects);
-      Process_Xrefs
-        (Handler, LI, Sfiles, Is_Direct_Source, First_Sect, Last_Sect);
+      Process_Xrefs (Handler, LI, Sfiles, First_Sect, Last_Sect);
    end Create_New_ALI;
 
    -----------------------
