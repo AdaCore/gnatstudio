@@ -1100,7 +1100,11 @@ package body Browsers.Entities is
          exit when Node = Null_Scope_Tree_Node;
          Field := Get_Entity (Node);
 
-         if not Is_Discriminant (Field, Lib_Info, Item.Entity) then
+         --  Hide discriminants (already displayed) and subprograms (would
+         --  happen in C++, but these are primitive operations in this case)
+         if not Is_Discriminant (Field, Lib_Info, Item.Entity)
+           and then not Is_Subprogram (Field)
+         then
             if Is_Enum then
                Add_Line (List, Get_Name (Field));
             else
