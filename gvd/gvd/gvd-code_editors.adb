@@ -27,6 +27,7 @@ with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with GVD.Asm_Editors;     use GVD.Asm_Editors;
 with GVD.Explorer;        use GVD.Explorer;
@@ -65,9 +66,6 @@ package body GVD.Code_Editors is
    package Editor_Mode_Cb is new Gtk.Handlers.User_Callback
      (Gtk_Radio_Menu_Item_Record, Editor_Mode_Data);
 
-   package Editor_Cb is new Gtk.Handlers.Callback
-     (Code_Editor_Record);
-
    procedure Change_Mode
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
       Data : Editor_Mode_Data);
@@ -77,16 +75,17 @@ package body GVD.Code_Editors is
    -- Local subprograms --
    -----------------------
 
-   procedure Update_Editor_Frame (Editor : access Code_Editor_Record'Class);
+   procedure Update_Editor_Frame (Editor : access Gtk_Widget_Record'Class);
    --  Updates the label on top of the source editor.
 
    -------------------------
    -- Update_Editor_Frame --
    -------------------------
 
-   procedure Update_Editor_Frame (Editor : access Code_Editor_Record'Class) is
+   procedure Update_Editor_Frame (Editor : access Gtk_Widget_Record'Class) is
    begin
-      Update_Editor_Frame (Debugger_Process_Tab (Editor.Process));
+      Update_Editor_Frame
+        (Process => Debugger_Process_Tab (Code_Editor (Editor).Process));
    end Update_Editor_Frame;
 
    ------------------
@@ -140,14 +139,14 @@ package body GVD.Code_Editors is
       Ref (Editor.Asm);
       Ref (Editor.Pane);
 
-      Editor_Cb.Object_Connect
+      Widget_Callback.Object_Connect
         (Editor.Source, "size_allocate",
-         Editor_Cb.To_Marshaller (Update_Editor_Frame'Access),
+         Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
          Editor, After => True);
 
-      Editor_Cb.Object_Connect
+      Widget_Callback.Object_Connect
         (Editor.Asm, "size_allocate",
-         Editor_Cb.To_Marshaller (Update_Editor_Frame'Access),
+         Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
          Editor, After => True);
 
       Show_All (Editor);
@@ -244,7 +243,7 @@ package body GVD.Code_Editors is
       end if;
 
       --  Update the name of the source file in the frame.
-      Update_Editor_Frame (Debugger_Process_Tab (Editor.Process));
+      Update_Editor_Frame (Process => Debugger_Process_Tab (Editor.Process));
    end Load_File;
 
    ------------------------
