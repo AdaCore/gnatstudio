@@ -1043,8 +1043,8 @@ package body Odd.Process is
       elsif Command2 = "quit" then
          Close_Debugger (Debugger);
       else
-         --  Regular debugger command, send it.
 
+         --  Regular debugger command, send it.
          Send
            (Debugger.Debugger, Command,
             Wait_For_Prompt =>
@@ -1070,7 +1070,7 @@ package body Odd.Process is
       Tab       : Debugger_Process_Tab;
       Buffer    : String (1 .. 8192);
       Len       : Natural;
-
+      use String_History;
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Debugger.Process_Notebook)));
@@ -1079,7 +1079,17 @@ package body Odd.Process is
       --  the debugger is available
       if not Command_In_Process (Get_Process (Tab.Debugger)) then
          Get_Line (Buffer, Len);
-         Process_User_Command (Tab, Buffer (1 .. Len));
+         if Len = 0 then
+            Find_Match (Tab.Window.Command_History,
+                        Natural (Get_Num (Tab)),
+                        Backward);
+            Process_User_Command (Tab, Get_Current
+                                  (Tab.Window.Command_History).Command.all,
+                                  Output_Command => True,
+                                  Mode => User);
+         else
+            Process_User_Command (Tab, Buffer (1 .. Len));
+         end if;
       end if;
    end Input_Available;
 
