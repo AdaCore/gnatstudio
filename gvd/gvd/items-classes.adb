@@ -26,7 +26,6 @@ with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
 with Gdk.Types;    use Gdk.Types;
 
-with Items.Simples; use Items.Simples;
 with Items.Records; use Items.Records;
 
 package body Items.Classes is
@@ -145,7 +144,7 @@ package body Items.Classes is
          Free (Item.Ancestors (A), Only_Value);
       end loop;
       Free (Item.Child, Only_Value);
-      Free (Simple_Type (Item.all)'Access, Only_Value);
+      Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
    -----------------------
@@ -158,7 +157,7 @@ package body Items.Classes is
    is
       R : Class_Type_Access := Class_Type_Access (Clone);
    begin
-      Clone_Dispatching (Simple_Type (Item), Clone);
+      Clone_Dispatching (Generic_Type (Item), Clone);
       for A in Item.Ancestors'Range loop
          R.Ancestors (A) :=
            Class_Type_Access (Items.Clone (Item.Ancestors (A).all));
@@ -240,7 +239,6 @@ package body Items.Classes is
    is
       Total_Height, Total_Width : Gint := 0;
    begin
-
       if not Item.Valid then
          Item.Width := Unknown_Width;
          Item.Height := Unknown_Height;

@@ -21,7 +21,6 @@
 --  Items used for simple types, ie whose value is a simple string.
 --  See the package Items for more information on all the private subprograms.
 
-with Items.Simples;
 with Items.Records;
 
 package Items.Classes is
@@ -30,7 +29,7 @@ package Items.Classes is
    -- Classes --
    -------------
 
-   type Class_Type (<>) is new Items.Simples.Simple_Type with private;
+   type Class_Type (<>) is new Generic_Type with private;
    type Class_Type_Access is access all Class_Type'Class;
    --  This type represents a C++ class, or Ada tagged type.
    --  It can have one or more ancestors, whose contents is also displayed when
@@ -73,7 +72,7 @@ private
 
    type Class_Type_Array is array (Positive range <>) of Class_Type_Access;
 
-   type Class_Type (Num_Ancestors : Natural) is new Items.Simples.Simple_Type
+   type Class_Type (Num_Ancestors : Natural) is new Generic_Type
      with record
         Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
         Child     : Items.Records.Record_Type_Access;
