@@ -154,14 +154,15 @@ package body Browsers.Call_Graph is
    ----------
 
    type Entity_Idle_Data is record
-      Kernel : Kernel_Handle;
-      Iter   : Entity_Reference_Iterator_Access;
-      Entity : Entity_Information;
+      Kernel         : Kernel_Handle;
+      Iter           : Entity_Reference_Iterator_Access;
+      Entity         : Entity_Information;
       Include_Writes : Boolean;
       Include_Reads  : Boolean;
-      Category : String_Access;
+      Category       : String_Access;
    end record;
    package Entity_Iterator_Idle is new Gtk.Main.Idle (Entity_Idle_Data);
+   pragma Unreferenced (Entity_Iterator_Idle);
 
    type Examine_Callback is record
       --  The following three fields are only set for graphical callbacks
@@ -192,21 +193,21 @@ package body Browsers.Call_Graph is
    --  Add entries into contextual menus
 
    procedure Examine_Entity_Call_Graph
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information);
    --  Display the call graph for the node.
 
    procedure Examine_Entity_Call_Graph_Iterator
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information;
-      Callback      : Examine_Callback;
-      Execute       : Execute_Callback);
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Entity   : Entity_Information;
+      Callback : Examine_Callback;
+      Execute  : Execute_Callback);
    --  Same as Examine_Entity_Call_Graph, but calls Execute for each matching
    --  entity.
 
    procedure Examine_Ancestors_Call_Graph
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information);
    --  Display the list of subprograms that call Entity.
 
    procedure Examine_Ancestors_Call_Graph_Iterator
