@@ -1281,7 +1281,9 @@ package body Glide_Kernel is
       end if;
 
       --  Free the register search functions
-      Destroy (Handle.Search);
+      if Handle.Search /= null then
+         Destroy (Handle.Search);
+      end if;
 
       Destroy (Glide_Language_Handler (Handle.Lang_Handler));
       Reset (Handle.Source_Info_List);
