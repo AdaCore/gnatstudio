@@ -263,7 +263,7 @@ package body Src_Info.Queries is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
       Ref         : E_Reference_List;
-      E_Name      : String := Entity_Name;
+      E_Name      : String             := Entity_Name;
       Decl        : E_Declaration_Info;
 
    begin
