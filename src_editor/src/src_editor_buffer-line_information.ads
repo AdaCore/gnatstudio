@@ -111,10 +111,9 @@ package Src_Editor_Buffer.Line_Information is
 
    procedure Unhide_Lines
      (Buffer     : access Source_Buffer_Record'Class;
-      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
-      First_Line : Editable_Line_Type;
-      Last_Line  : Editable_Line_Type);
-   --  Unhide editable lines from First_Line to Last_Line.
+      Mark       : Gtk.Text_Mark.Gtk_Text_Mark);
+   --  Unhide editable lines that are hidden between the line that Mark is on
+   --  and the following line.
 
    procedure Add_Block_Command
      (Buffer      : access Source_Buffer_Record'Class;
@@ -141,7 +140,11 @@ package Src_Editor_Buffer.Line_Information is
    --  are editable lines.
 
    procedure Remove_Block_Folding_Commands
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Remove the commands corresponding to block folding from the side column.
+     (Buffer                 : access Source_Buffer_Record'Class;
+      Remove_Unfold_Commands : Boolean := True);
+   --  Remove the commands corresponding to block folding/unfolding from the
+   --  side column.
+   --  If Remove_Unfold_Commands is False, will only remove block folding
+   --  command.
 
 end Src_Editor_Buffer.Line_Information;
