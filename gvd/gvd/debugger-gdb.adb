@@ -91,7 +91,8 @@ package body Debugger.Gdb is
    File_Name_Pattern2 : constant Pattern_Matcher :=
      Compile ("^([^:]+):(\d+): No such file or directory.", Multiple_Lines);
    --  Second regexp used to detect when the current frame can not be displayed
-   --  ??? Note that this pattern won't work for locales other than english.
+   --  Note that this pattern should work even when LANG isn't english because
+   --  gdb does not seem to take into account this variable at all.
 
    Language_Pattern : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
@@ -516,11 +517,9 @@ package body Debugger.Gdb is
            (Get_Descriptor (Debugger.Process).all,
             Question_Filter'Access, Output,
             Window.all'Address);
-      end if;
 
-      --  ??? Should avoid the duplication of this code
+         --  ??? Should avoid the duplication of this code between debugger-*
 
-      if Window /= null then
          if Main_Debug_Window_Access (Window).Debug_Mode then
             Add_Filter
               (Get_Descriptor (Debugger.Process).all,
@@ -652,8 +651,9 @@ package body Debugger.Gdb is
       Mode       : Invisible_Command := Internal)
    is
       No_Such_File_Regexp : Pattern_Matcher :=
-        Compile ("No such file or directory");
-      --  ??? Note that this pattern won't work for locales other than english.
+        Compile ("No such file or directory.");
+      --  Note that this pattern should work even when LANG isn't english
+      --  because gdb does not seem to take into account this variable at all.
 
    begin
       Set_Is_Started (Debugger, False);
@@ -709,6 +709,9 @@ package body Debugger.Gdb is
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
       Set_Is_Started (Debugger, True);
+
+      --  Find the first frame containing source information to be as user
+      --  friendly as possible, and also check whether attach was successful
 
       loop
          Set_Parse_File_Name (Get_Process (Debugger), False);
@@ -861,10 +864,11 @@ package body Debugger.Gdb is
    ---------------
 
    procedure Interrupt
-     (Debugger : access Gdb_Debugger;
+     (Debugger        : access Gdb_Debugger;
       Wait_For_Prompt : Boolean := False) is
    begin
       Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
+
       if Wait_For_Prompt then
          Wait_Prompt (Debugger);
       end if;
