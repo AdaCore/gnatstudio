@@ -42,6 +42,8 @@ with Prj_Normalize;        use Prj_Normalize;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Intl;           use Glide_Intl;
+with Language_Handlers;    use Language_Handlers;
 with String_Utils;         use String_Utils;
 with Switches_Editor_Pkg;  use Switches_Editor_Pkg;
 with Basic_Types;          use Basic_Types;
@@ -876,11 +878,12 @@ package body Switches_Editors is
    procedure Update_Cmdline
      (Editor : access Switches_Edit_Record; Tool : Tool_Names)
    is
-      Cmd_Line           : Gtk_Entry;
+      Cmd_Line : Gtk_Entry;
    begin
       --  Don't do anything if the callbacks were blocked, to avoid infinite
       --  loops while we are updating the command line, and it is updating
       --  the buttons, that are updating the command line,...
+
       if Editor.Block_Refresh then
          return;
       end if;
@@ -1126,11 +1129,55 @@ package body Switches_Editors is
       Value      : Variable_Value;
       Is_Default : Boolean;
    begin
-      if File_Name /= "" then
-         --  ??? Need to decide depending on the langage
-         Destroy_Pages
-           (Switches, Gnatmake_Page or C_Page or Cpp_Page or
-            Binder_Page or Linker_Page);
+      --  ??? Would be nice to handle the language in a more generic and
+      --  flexible way.
+
+      if File_Name = "" then
+         declare
+            Langs : Argument_List :=
+              Get_Attribute_Value (Project, Languages_Attribute);
+            Pages : Page_Filter := Ada_Page or C_Page or Cpp_Page;
+
+         begin
+            for J in Langs'Range loop
+               declare
+                  Lang : String := Langs (J).all;
+               begin
+                  Lower_Case (Lang);
+
+                  if Lang = "ada" then
+                     Pages := Pages and not Ada_Page;
+                  elsif Lang = "c" then
+                     Pages := Pages and not C_Page;
+                  elsif Lang = "c++" then
+                     Pages := Pages and not Cpp_Page;
+                  end if;
+               end;
+
+               Free (Langs (J));
+            end loop;
+
+            Destroy_Pages (Switches, Pages);
+         end;
+
+      else
+         Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
+
+         declare
+            Lang : String := Get_Language_From_File
+              (Get_Language_Handler (Switches.Kernel), File_Name);
+
+         begin
+            Lower_Case (Lang);
+
+            if Lang = "ada" then
+               Destroy_Pages (Switches, C_Page or Cpp_Page);
+            elsif Lang = "c" then
+               Destroy_Pages (Switches, Ada_Page or Cpp_Page);
+            elsif Lang = "c++" then
+               Destroy_Pages (Switches, Ada_Page or C_Page);
+            end if;
+         end;
       end if;
 
       --  Set the switches for all the pages
@@ -1212,12 +1259,12 @@ package body Switches_Editors is
      (Context       : Selection_Context_Access;
       Force_Default : Boolean := False)
    is
-      File : File_Selection_Context_Access :=
+      File      : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Switches : Switches_Edit;
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Widget;
-      B      : Gtk_Button;
+      Switches  : Switches_Edit;
+      Dialog    : Gtk_Dialog;
+      Button    : Gtk_Widget;
+      B         : Gtk_Button;
       File_Name : GNAT.OS_Lib.String_Access;
 
    begin
@@ -1231,12 +1278,12 @@ package body Switches_Editors is
 
       if File_Name.all /= "" then
          Gtk_New (Dialog,
-                  Title  => "Editing switches for " & File_Name.all,
+                  Title  => (-"Editing switches for ") & File_Name.all,
                   Parent => Get_Main_Window (Get_Kernel (Context)),
                   Flags  => Modal or Destroy_With_Parent);
       else
          Gtk_New (Dialog,
-                  Title  => "Editing default switches for project "
+                  Title  => (-"Editing default switches for project ")
                     & Project_Name (Project_Information (File)),
                   Parent => Get_Main_Window (Get_Kernel (Context)),
                   Flags  => Modal or Destroy_With_Parent);
@@ -1249,6 +1296,8 @@ package body Switches_Editors is
 
       Fill_Editor (Switches, Project_Information (File), File_Name.all);
 
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+
       if File_Name.all /= "" then
          Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
          Pack_Start (Get_Action_Area (Dialog), B);
@@ -1258,7 +1307,6 @@ package body Switches_Editors is
             Slot_Object => Switches, User_Data => Context);
       end if;
 
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
@@ -1273,7 +1321,6 @@ package body Switches_Editors is
       end if;
 
       Free (File_Name);
-
       Destroy (Dialog);
    end Edit_Switches_For_Context;
 
