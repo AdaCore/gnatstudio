@@ -18,43 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Prj;      use Prj;
-with Prj.Com;
 with Types;    use Types;
 
 package Src_Info.Prj_Utils is
 
-   function Get_Spec_Filename (U : Prj.Com.Unit_Id) return File_Name_Type;
-   --  Return Units.Table (U).File_Names (Specification).Name, or No_Name if
-   --  U is equal to Prj_Unit /= Prj.Com.No_Unit.
-
-   function Get_Body_Filename (U : Prj.Com.Unit_Id) return File_Name_Type;
-   --  Return Units.Table (U).File_Names (Body_Part).Name, or No_Name if
-   --  U is equal to Prj_Unit /= Prj.Com.No_Unit.
-
-   function Get_Unit_Name (Id : Array_Element_Id) return Unit_Name_Type;
-   --  Return Prj.Array_Elements.Table (Id).Index
-
-   function Get_Filename (Id : Array_Element_Id) return File_Name_Type;
-   --  Return Prj.Array_Elements.Table (Id).Value.Value
-
-   function Search_Unit_Name
-     (Exception_List : Prj.Array_Element_Id;
-      Unit_Name      : Unit_Name_Type)
-      return Prj.Array_Element_Id;
-   --  Search the given Unit_Name in the exception list. return
-   --  No_Array_Element if not found.
-
-   function Search_Filename
-     (Exception_List : Prj.Array_Element_Id;
-      Filename       : File_Name_Type)
-      return Prj.Array_Element_Id;
-   --  Search the given Filename in the exception list. return
-   --  No_Array_Element if not found.
-
    function Get_Source_Filename
      (Unit_Name : Unit_Name_Type;
-      Project   : Prj.Project_Id)
+      Project   : Projects.Project_Type)
       return String;
    --  Return the source filename for the given Unit_Name.
    --  Project and all its imported projects are tested for possible naming
@@ -65,26 +35,12 @@ package Src_Info.Prj_Utils is
 
    function Get_Source_Filename
      (Unit_Name : String;
-      Project   : Prj.Project_Id) return String;
+      Project   : Projects.Project_Type) return String;
    --  Same as function above, on a string.
-
-   function Get_Spec_Filename
-     (Unit_Name : Unit_Name_Type;
-      Naming    : Prj.Naming_Data)
-      return File_Name_Type;
-   --  Compute the file name of the spec for the given Unit_Name using the
-   --  Naming_Data, without taking the exceptions into account.
-
-   function Get_Body_Filename
-     (Unit_Name : Unit_Name_Type;
-      Naming    : Prj.Naming_Data)
-      return File_Name_Type;
-   --  Compute the file name of the body for the given Unit_Name using the
-   --  Naming_Data, without taking the exceptions into account.
 
    function Get_Unit_Name
      (Filename : File_Name_Type;
-      Project  : Prj.Project_Id)
+      Project  : Projects.Project_Type)
       return Name_Id;
    --  Compute the Unit Name associated with the given Filename using the
    --  Naming information, whithout taking the exceptions into account.

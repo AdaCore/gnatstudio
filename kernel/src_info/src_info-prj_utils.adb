@@ -19,239 +19,41 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Casing;                  use Casing;
 with Namet;                   use Namet;
-with Prj.Com;                 use Prj.Com;
-with Stringt;                 use Stringt;
 with Types;                   use Types;
-with Snames;
-with Prj.Util;                use Prj.Util;
-with Prj_API;                 use Prj_API;
-with Prj;                     use Prj;
+with Projects;                use Projects;
 
 package body Src_Info.Prj_Utils is
-
-   function Get_Filename
-     (Unit_Name_Id    : Name_Id;
-      Dot_Replacement : String;
-      Casing          : Casing_Type;
-      Extension       : String)
-      return File_Name_Type;
-   --  Return the filename for the given Unit_Name using the Dot_Replacement,
-   --  Casing and Extension rules.
-
-   ------------------
-   -- Get_Filename --
-   ------------------
-
-   function Get_Filename
-     (Unit_Name_Id    : Name_Id;
-      Dot_Replacement : String;
-      Casing          : Casing_Type;
-      Extension       : String)
-      return File_Name_Type
-   is
-      Unit_Name : constant String := Get_String (Unit_Name_Id);
-      Dot       : constant Character := '.';
-
-      Index : Positive;
-   begin
-      --  Since we will need to use the Namet buffer to apply the casing,
-      --  we use it for the entire conversion. This avoids maintaining
-      --  a local string that we will copy into the Namet Name Buffer anyway.
-
-      --  Copy the Unit_Name, changing the Dot character into Dot_Repl...
-      Index := 1;
-      for C in Unit_Name'Range loop
-         if Unit_Name (C) = Dot then
-            Name_Buffer (Index .. Index + Dot_Replacement'Length - 1) :=
-              Dot_Replacement;
-            Index := Index + Dot_Replacement'Length;
-         else
-            Namet.Name_Buffer (Index) := Unit_Name (C);
-            Index := Index + 1;
-         end if;
-      end loop;
-
-      --  Add the extension
-      Namet.Name_Buffer (Index .. Index + Extension'Length - 1) := Extension;
-      Index := Index + Extension'Length;
-
-      --  Apply the casing
-      Namet.Name_Len := Index - 1;
-      Set_Casing (Casing);
-
-      return Namet.Name_Find;
-   end Get_Filename;
-
-   -----------------------
-   -- Get_Spec_Filename --
-   -----------------------
-
-   function Get_Spec_Filename (U : Prj.Com.Unit_Id) return File_Name_Type is
-   begin
-      if U = Prj.Com.No_Unit then
-         return No_File;
-      end if;
-      return Units.Table (U).File_Names (Specification).Name;
-   end Get_Spec_Filename;
-
-   -----------------------
-   -- Get_Body_Filename --
-   -----------------------
-
-   function Get_Body_Filename (U : Prj.Com.Unit_Id) return File_Name_Type is
-   begin
-      if U = Prj.Com.No_Unit then
-         return No_File;
-      end if;
-      return Units.Table (U).File_Names (Body_Part).Name;
-   end Get_Body_Filename;
-
-   -------------------
-   -- Get_Unit_Name --
-   -------------------
-
-   function Get_Unit_Name (Id : Array_Element_Id) return Unit_Name_Type is
-   begin
-      return Prj.Array_Elements.Table (Id).Index;
-   end Get_Unit_Name;
-
-   ------------------
-   -- Get_Filename --
-   ------------------
-
-   function Get_Filename (Id : Array_Element_Id) return File_Name_Type is
-   begin
-      String_To_Name_Buffer (Prj.Array_Elements.Table (Id).Value.Value);
-      return Namet.Name_Find;
-   end Get_Filename;
-
-   ----------------------
-   -- Search_Unit_Name --
-   ----------------------
-
-   function Search_Unit_Name
-     (Exception_List : Prj.Array_Element_Id;
-      Unit_Name      : Unit_Name_Type)
-      return Prj.Array_Element_Id
-   is
-      Id   : Array_Element_Id := Exception_List;
-      Elmt : Array_Element;
-   begin
-      while Id /= No_Array_Element loop
-         Elmt := Array_Elements.Table (Id);
-         exit when Elmt.Index = Unit_Name;
-         Id := Elmt.Next;
-      end loop;
-      return Id;
-   end Search_Unit_Name;
-
-   ---------------------
-   -- Search_Filename --
-   ---------------------
-
-   function Search_Filename
-     (Exception_List : Prj.Array_Element_Id;
-      Filename       : File_Name_Type)
-      return Prj.Array_Element_Id
-   is
-      Id   : Array_Element_Id := Exception_List;
-      Elmt : Array_Element;
-   begin
-      while Id /= No_Array_Element loop
-         Elmt := Array_Elements.Table (Id);
-         String_To_Name_Buffer (Elmt.Value.Value);
-         exit when Namet.Name_Find = Filename;
-         Id := Elmt.Next;
-      end loop;
-      return Id;
-   end Search_Filename;
 
    -------------------------
    -- Get_Source_Filename --
    -------------------------
 
    function Get_Source_Filename
-     (Unit_Name : Unit_Name_Type; Project : Prj.Project_Id)
+     (Unit_Name : Unit_Name_Type; Project : Project_Type)
       return String
    is
-      Part        : Unit_Part;
-      Short_Uname : Name_Id;
-
-      procedure Check_Project
-        (View : Project_Id; Result : in out Name_Id);
-      --  Check into the specific View
-
-      -------------------
-      -- Check_Project --
-      -------------------
-
-      procedure Check_Project
-        (View : Project_Id; Result : in out Name_Id)
-      is
-         Candidate : Name_Id;
-         Except_Id : Array_Element_Id;
-      begin
-         if Result /= No_Name then
-            return;
-         end if;
-
-         case Part is
-            when Unit_Body =>
-               Except_Id := Search_Unit_Name
-                 (Projects.Table (View).Naming.Bodies, Short_Uname);
-            when Unit_Spec =>
-               Except_Id := Search_Unit_Name
-                 (Projects.Table (View).Naming.Specifications, Short_Uname);
-            when others =>
-               null;
-         end case;
-
-         --  If found, then return the associated filename
-         if Except_Id /= No_Array_Element then
-            Candidate := Get_Filename (Except_Id);
-
-         else
-            --  If not found, then return the filename computed using the
-            --  regular naming scheme. As a safety precaution, put back the
-            --  stripped unit name in the name buffer, because we need it and
-            --  it might have been overwritten during previous calls.
-            case Part is
-               when Unit_Spec =>
-                  Candidate := Get_Spec_Filename
-                    (Short_Uname, Projects.Table (View).Naming);
-               when Unit_Body =>
-                  Candidate := Get_Body_Filename
-                    (Short_Uname, Projects.Table (View).Naming);
-               when others =>
-                  --  Impossible or would be an error.
-                  Candidate := No_Name;
-            end case;
-         end if;
-
-         if Candidate /= No_Name
-           and then Is_Direct_Source (Get_String (Candidate), View)
-         then
-            Result := Candidate;
-         end if;
-      end Check_Project;
-
-      procedure For_All_Projects is new For_Every_Project_Imported
-        (Name_Id, Check_Project);
-
-      Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
-      Result : Name_Id := No_Name;
-
+      N : constant String := Get_String (Unit_Name);
+      --  Need to do a copy, since Name_Buffer is modified afterward
    begin
-      --  ??? This should be implemented with mapping files instead. See
-      --  fname.ad[bs] in the GNAT sources
+      return Get_Source_Filename (N, Project);
+   end Get_Source_Filename;
 
-      Namet.Get_Name_String (Unit_Name);
+   -------------------------
+   -- Get_Source_Filename --
+   -------------------------
 
+   function Get_Source_Filename
+     (Unit_Name : String;
+      Project   : Project_Type) return String
+   is
+      Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
+      Part        : Unit_Part;
+      Iter : Imported_Project_Iterator := Start (Project, Recursive => True);
+   begin
       --  Check that the '%' marker is there
-      if Namet.Name_Len < Part_Marker_Len + 1
-        or else Namet.Name_Buffer (Namet.Name_Len - 1) /= '%'
+      if Unit_Name'Length < Part_Marker_Len + 1
+        or else Unit_Name (Unit_Name'Last - 1) /= '%'
       then
          return "";
       end if;
@@ -259,75 +61,33 @@ package body Src_Info.Prj_Utils is
       --  Compute the Unit_Part, strip the part marker from the Unit_Name
       --  in the Name_Buffer, and search the unit name in the associated
       --  exception list
-      case Namet.Name_Buffer (Namet.Name_Len) is
+      case Unit_Name (Unit_Name'Last) is
          when 'b'    => Part := Unit_Body;
          when 's'    => Part := Unit_Spec;
          when others => return "";  --  Incorrect unit name
       end case;
 
-      Namet.Name_Len := Namet.Name_Len - Part_Marker_Len;
-      Short_Uname := Namet.Name_Find;
+      while Current (Iter) /= No_Project loop
+         declare
+            N : constant String := Get_Filename_From_Unit
+              (Current (Iter),
+               Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len),
+               Part);
+         begin
+            if N /= "" then
+               return N;
+            end if;
+         end;
+         Next (Iter);
+      end loop;
 
-      For_All_Projects (Project, Result);
+      --  We end up here for the runtime files, so we just try to append the
+      --  standard GNAT extensions. The name will be krunched appropriately by
+      --  Process_With anyway
 
-      if Result = No_Name then
-         --  Special handling for the runtime files
-         --  ??? Could be simplified if we have direct access to the default
-         --  naming scheme.
-         if Part = Unit_Body then
-            return Get_String
-              (Get_Filename (Short_Uname, "-", All_Lower_Case, ".adb"));
-         else
-            return Get_String
-              (Get_Filename (Short_Uname, "-", All_Lower_Case, ".ads"));
-         end if;
-      else
-         return Get_String (Result);
-      end if;
+      return Get_Filename_From_Unit
+        (No_Project, Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len), Part);
    end Get_Source_Filename;
-
-   function Get_Source_Filename
-     (Unit_Name : String;
-      Project   : Prj.Project_Id) return String is
-   begin
-      Name_Len := Unit_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Unit_Name;
-      return Get_Source_Filename (Name_Find, Project);
-   end Get_Source_Filename;
-
-   -----------------------
-   -- Get_Spec_Filename --
-   -----------------------
-
-   function Get_Spec_Filename
-     (Unit_Name : Unit_Name_Type;
-      Naming    : Prj.Naming_Data)
-      return File_Name_Type is
-   begin
-      --  ??? This currently assumes we are using Ada
-      return Get_Filename
-        (Unit_Name, Get_String (Naming.Dot_Replacement),
-         Naming.Casing,
-         Get_String
-           (Value_Of (Snames.Name_Ada, Naming.Specification_Suffix)));
-   end Get_Spec_Filename;
-
-   -----------------------
-   -- Get_Body_Filename --
-   -----------------------
-
-   function Get_Body_Filename
-     (Unit_Name : Unit_Name_Type;
-      Naming    : Prj.Naming_Data)
-      return File_Name_Type is
-   begin
-      --  ??? This currently assumes we are using Ada
-      return Get_Filename
-        (Unit_Name, Get_String (Naming.Dot_Replacement),
-         Naming.Casing,
-         Get_String
-           (Value_Of (Snames.Name_Ada, Naming.Implementation_Suffix)));
-   end Get_Body_Filename;
 
    -------------------
    -- Get_Unit_Name --
@@ -335,12 +95,12 @@ package body Src_Info.Prj_Utils is
 
    function Get_Unit_Name
      (Filename : File_Name_Type;
-      Project  : Prj.Project_Id)
+      Project  : Project_Type)
       return Name_Id
    is
       Fname    : constant String := Get_String (Filename);
-      Dot_Repl : constant String := Get_String
-        (Projects.Table (Project).Naming.Dot_Replacement);
+      Dot_Repl : constant String := Get_Attribute_Value
+        (Project, Dot_Replacement_Attribute, Naming_Package, Default => "-");
       Dot      : constant Character := '.';
 
       Index       : Integer;
