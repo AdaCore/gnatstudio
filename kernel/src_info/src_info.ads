@@ -12,8 +12,9 @@ package Src_Info is
    --  A null LI_File_Ptr.
 
    function Is_Incomplete (Source_Info : LI_File_Ptr) return Boolean;
-   --  Return True if the given Source_Info has not be built from reading
-   --  the corresponding ALI file.
+   --  Return True if the given Source_Info has not been built using
+   --  the corresponding LI file and hence can not be used for performing
+   --  searches on this LI_File.
 
    type LI_File_List is private;
    --  A list of LI_File_Ptr.
@@ -80,11 +81,6 @@ private
       Ordinary_Fixed_Point_Object,
       Ordinary_Fixed_Point_Type,
       Private_Type,
-      --  ??? Not sure yet if this type will remain or not. Normally, the kind
-      --  ??? for private types is set to the type of the parent, but this
-      --  ??? is not transitive. There is an ongoing discussion on 9119-006
-      --  ??? where it is suggested to make this rule transitive, in which
-      --  ??? case this enum value should be removed.
       Protected_Object,
       Protected_Type,
       Record_Object,
