@@ -142,8 +142,8 @@ package Prj_API is
    --  Add Node at the begining of the list for Parent.
    --  Node can also be a N_Declarative_Item (or a list of them).
 
-   function Enclose_In_Expression (Node : Project_Node_Id)
-      return Project_Node_Id;
+   function Enclose_In_Expression
+     (Node : Project_Node_Id) return Project_Node_Id;
    --  Enclose the Node inside a N_Expression node, and return this expression.
 
    function Source_Dirs (Project : Prj.Project_Id) return String_Id_Array;

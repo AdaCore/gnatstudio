@@ -1106,10 +1106,12 @@ package body Src_Info.CPP is
       --  during general loop on TO table that has an entry corresponding
       --  to the type usage in declaration. So far we can't determine that
       --  an entry in TO table referes to the declaration and should be skipped
-      --  but it is a TODO: to add an attribute to the TO table
+      --  but it is a TODO: to add an attribute to the TO table ???
+
       if Type_Decl_Info /= null
-         and then null
-            = Find_Reference (Type_Decl_Info, File, Reference_Point, Kind) then
+        and then
+          Find_Reference (Type_Decl_Info, File, Reference_Point, Kind) = null
+      then
          Insert_Reference
            (Declaration_Info     => Type_Decl_Info,
             File                 => File,
