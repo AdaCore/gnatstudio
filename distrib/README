@@ -3,8 +3,8 @@ This directory contains the files needed for installing and running GPS.
 
 INSTALLING
 
-The quick way to install GPS is to run the script 'doinstall' contained
-in this directory and then follow the instructions.
+To install GPS, run the 'doinstall' script contained in this directory and
+then follow the instructions.
 
 USING
 
@@ -14,8 +14,6 @@ page displayed when launching GPS, or directly in the directory
 $base/doc/gps/html, where $base is the base directory chosen when installing
 GPS (using doinstall).
 
-Optionally, you might want to setup the documentation path GPS_DOC_PATH,
-as described in the GPS documentation, to point to new doc directories.
-Indexes need to be created in these directories (gps_index.xml files, as
-described in the documentation)
+Optionally, you might want to setup the environment variable GPS_DOC_PATH
+to point to new doc directories. See the GPS documentation for more details.
 
