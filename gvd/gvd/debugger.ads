@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Language;
 with Generic_Values;
 with GNAT.Expect;
 with Unchecked_Deallocation;
@@ -27,6 +28,17 @@ package Debugger is
    type Debugger_Root is abstract tagged private;
    --  The general base class for all debuggers.
    --  Each debugger should extend this base class.
+
+   type Debugger_Access is access all Debugger_Root'Class;
+
+   procedure Set_Language
+     (Debugger     : out Debugger_Root;
+      The_Language : Language.Language_Access);
+   --  Set the language associated with a debugger.
+
+   function Get_Language
+     (Debugger : Debugger_Root) return Language.Language_Access;
+   --  Return the current language associated with a debugger.
 
    function Parse_Type (Debugger : Debugger_Root;
                         Entity   : String)
@@ -123,5 +135,6 @@ private
 
    type Debugger_Root is abstract tagged record
       Process      : Pipes_Id_Access := null;
+      The_Language : Language.Language_Access;
    end record;
 end Debugger;
