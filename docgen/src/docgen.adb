@@ -22,15 +22,15 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Generic_List;
 with VFS;                       use VFS;
-with Src_Info.Queries;          use Src_Info.Queries;
 with Glide_Kernel.Project;      use Glide_Kernel, Glide_Kernel.Project;
 with Projects.Registry;         use Projects, Projects.Registry;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Basic_Types;
+with Language;                  use Language;
 
 package body Docgen is
 
@@ -83,16 +83,17 @@ package body Docgen is
       -----------------------
 
       procedure Launch_Doc_Create
-        (B             : Backend_Handle;
-         Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File          : in Ada.Text_IO.File_Type;
-         List_Ref_In_File   : in out List_Reference_In_File.List;
-         Info          : in out Docgen.Doc_Info;
-         Doc_Directory : String;
-         Doc_Suffix    : String) is
+        (B                : Backend_Handle;
+         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File             : in Ada.Text_IO.File_Type;
+         Entity_List      : in out Type_Entity_List.List;
+         List_Ref_In_File : in out List_Reference_In_File.List;
+         Info             : in out Docgen.Doc_Info;
+         Doc_Directory    : String;
+         Doc_Suffix       : String) is
       begin
          Doc_Create (B, Kernel, File,
-                     List_Ref_In_File,
+                     Entity_List, List_Ref_In_File,
                      Info, Doc_Directory, Doc_Suffix);
       end Launch_Doc_Create;
 
@@ -104,7 +105,8 @@ package body Docgen is
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : Ada.Text_IO.File_Type;
-         List_Ref_In_File   : in out List_Reference_In_File.List;
+         Entity_List      : in out Type_Entity_List.List;
+         List_Ref_In_File : in out List_Reference_In_File.List;
          LI_Unit          : LI_File_Ptr;
          Text             : String;
          File_Name        : VFS.Virtual_File;
@@ -113,7 +115,8 @@ package body Docgen is
          Source_File_List : Type_Source_File_List.List;
          Link_All         : Boolean;
          Is_Body          : Boolean;
-         Process_Body     : Boolean)
+         Process_Body     : Boolean;
+         Info             : Doc_Info)
       is
          function Callback
            (Entity         : Language_Entity;
@@ -182,6 +185,7 @@ package body Docgen is
                when Identifier_Text =>
                   Format_Identifier
                     (B,
+                     Entity_List,
                      List_Ref_In_File,
                      Sloc_Start.Index,
                      Sloc_Start.Line,
@@ -198,7 +202,8 @@ package body Docgen is
                      Source_File_List,
                      Link_All,
                      Is_Body,
-                     Process_Body);
+                     Process_Body,
+                     Info);
 
                when others =>
                   null;
@@ -228,7 +233,8 @@ package body Docgen is
 
    procedure Format_All_Link
      (B                : access Backend'Class;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
+      Entity_List      : in out Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
@@ -243,17 +249,24 @@ package body Docgen is
       Source_File_List : Type_Source_File_List.List;
       Link_All         : Boolean;
       Is_Body          : Boolean;
-      Process_Body     : Boolean)
+      Process_Body     : Boolean;
+      Info             : Doc_Info)
    is
 
+      use type Basic_Types.String_Access;
       use List_Reference_In_File;
-      Loc_End         : Natural;
-      Loc_Start       : Natural;
-      Point_In_Column : Natural := 0;
-      Entity_Info     : Entity_Information;
-      Ref_List_Info   : List_Reference_In_File.List_Node;
+      use Type_Entity_List;
+      Loc_End          : Natural;
+      Loc_Start        : Natural;
+      Point_In_Column  : Natural := 0;
+      Entity_Info      : Entity_Information;
+      Ref_List_Info    : List_Reference_In_File.List_Node;
       Ref_List_Info_Prec   : List_Reference_In_File.List_Node;
-      Result          : Boolean;
+      Result           : Boolean;
+
+      Entity_Node      : Type_Entity_List.List_Node;
+      Entity_Node_Succ : Type_Entity_List.List_Node;
+      Exist            : Boolean;
 
       procedure Get_Declaration
         (Text   : String;
@@ -305,6 +318,35 @@ package body Docgen is
          if LI_Unit /= No_LI_File then
             --  We search the declaration of the entity
             --  (which is an identifier)
+
+            if Is_Spec_File (Kernel, File_Name) and then
+              (Info.Info_Type = Package_Info) then
+
+               --  We are parsing a package
+               Entity_Node := Type_Entity_List.First (Entity_List);
+               Entity_Node_Succ := Type_Entity_List.Null_Node;
+               Exist := False;
+               while  Entity_Node /= Type_Entity_List.Null_Node loop
+                  if (Get_Name (Data (Entity_Node).Entity) =
+                        To_Lower (Text (Loc_Start .. Loc_End)))
+                    and then
+                      (Get_Declaration_Line_Of (Data (Entity_Node).Entity) =
+                         Start_Line + Entity_Line - 1)
+                  then
+                     Exist := True;
+                  end if;
+                  if Exist then
+                     Type_Entity_List.Remove_Nodes
+                       (Entity_List,
+                        Entity_Node_Succ,
+                        Entity_Node);
+                  end if;
+                  exit when Exist = True;
+                  Entity_Node_Succ := Entity_Node;
+                  Entity_Node := Type_Entity_List.Next (Entity_Node_Succ);
+               end loop;
+            end if;
+
             Result := False;
             Ref_List_Info
               := List_Reference_In_File.First (List_Ref_In_File);
@@ -343,6 +385,7 @@ package body Docgen is
                   Line_In_Body, Source_File_List, Link_All, Is_Body,
                   Process_Body, Loc_End, Loc_Start, Entity_Info);
             end if;
+
          end if;
 
          if Point_In_Column > 0 then
