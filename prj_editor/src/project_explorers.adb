@@ -59,7 +59,7 @@ with Namet;                    use Namet;
 
 with Types;                    use Types;
 
-with Projects.Registry;        use Projects, Projects.Registry;
+with Projects;                 use Projects;
 with Language;                 use Language;
 with Basic_Types;              use Basic_Types;
 with String_Utils;             use String_Utils;
@@ -306,13 +306,6 @@ package body Project_Explorers is
    -- Retrieving information --
    ----------------------------
 
-   function Get_Project_From_Node
-     (Explorer  : access Project_Explorer_Record'Class;
-      Node      : Gtk_Tree_Iter;
-      Importing : Boolean) return Project_Type;
-   --  Return the name of the project that Node belongs to. If Importing is
-   --  True, we return the importing project, not the one associated with Node.
-
    procedure Update_Node
      (Explorer         : access Project_Explorer_Record'Class;
       Node             : Gtk_Tree_Iter;
@@ -502,7 +495,8 @@ package body Project_Explorers is
          Directory    =>
            Normalize_Pathname (Get_Directory_From_Node (T.Tree.Model, Node)),
          File_Name    => Get_File_From_Node (T.Tree.Model, Node),
-         Project      => Get_Project_From_Node (T, Node, False));
+         Project      => Get_Project_From_Node
+           (T.Tree.Model, T.Kernel, Node, False));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Unref (Selection_Context_Access (Context));
 
@@ -755,20 +749,6 @@ package body Project_Explorers is
             T);
       end if;
 
-      if Node_Type = Project_Node
-        or else Node_Type = Modified_Project_Node
-        or else Node_Type = Extends_Project_Node
-      then
-         Set_File_Information
-           (Context   => File_Selection_Context_Access (Context),
-            Directory    =>
-              Normalize_Pathname
-                (Get_Directory_From_Node (T.Tree.Model, Iter)),
-            File_Name    => Get_File_From_Node (T.Tree.Model, Iter),
-            Project      => Get_Project_From_Node (T, Iter, False),
-            Importing_Project => Get_Project_From_Node (T, Iter, True));
-      end if;
-
       return Context;
    exception
       when E : others =>
@@ -908,7 +888,8 @@ package body Project_Explorers is
             case Get_Node_Type (Exp.Tree.Model, It) is
                when Project_Node | Extends_Project_Node =>
                   Process_Node
-                    (It, Get_Project_From_Node (Exp, It, False));
+                    (It, Get_Project_From_Node
+                     (Exp.Tree.Model, Exp.Kernel, It, False));
 
                when Directory_Node
                  | Obj_Directory_Node
@@ -1028,8 +1009,8 @@ package body Project_Explorers is
       Node                   : Gtk_Tree_Iter)
    is
       use String_List_Utils.String_List;
-      Project     : constant Project_Type :=
-        Get_Project_From_Node (Explorer, Node, False);
+      Project     : constant Project_Type := Get_Project_From_Node
+        (Explorer.Tree.Model, Explorer.Kernel, Node, False);
 
       procedure Add_Projects;
       --  Adds the subprojects.
@@ -1170,8 +1151,8 @@ package body Project_Explorers is
    is
       use String_List_Utils.String_List;
 
-      Project : constant Project_Type :=
-        Get_Project_From_Node (Explorer, Node, False);
+      Project : constant Project_Type := Get_Project_From_Node
+        (Explorer.Tree.Model, Explorer.Kernel, Node, False);
       Dir     : constant String :=
         Get_Directory_From_Node (Explorer.Tree.Model, Node);
       Files     : String_List_Utils.String_List.List;
@@ -1462,8 +1443,8 @@ package body Project_Explorers is
 
       N, N2 : Gtk_Tree_Iter;
 
-      Project : constant Project_Type :=
-        Get_Project_From_Node (Explorer, Node, False);
+      Project : constant Project_Type := Get_Project_From_Node
+        (Explorer.Tree.Model, Explorer.Kernel, Node, False);
       Sources : Name_Id_Array := Source_Dirs (Project);
       Imported : Project_Type_Array := Get_Imported_Projects (Project);
 
@@ -1601,7 +1582,8 @@ package body Project_Explorers is
                --  dependency was added, so we need to check for this case
                --  as well.
 
-               Prj := Get_Project_From_Node (Explorer, N, False);
+               Prj := Get_Project_From_Node
+                 (Explorer.Tree.Model, Explorer.Kernel, N, False);
                if Prj /= No_Project then
                   Index := Imported'First;
                   while Index <= Imported'Last loop
@@ -1738,8 +1720,8 @@ package body Project_Explorers is
       Node_Type : constant Node_Types
         := Get_Node_Type (Explorer.Tree.Model, Node);
       N_Type    : Node_Types;
-      Prj       : constant Project_Type
-        := Get_Project_From_Node (Explorer, Node, False);
+      Prj       : constant Project_Type := Get_Project_From_Node
+        (Explorer.Tree.Model, Explorer.Kernel, Node, False);
       Files     : String_Array_Access := Files_In_Project;
       Expanded  : Boolean := Get_Expanded (Explorer.Tree, Node);
    begin
@@ -1814,7 +1796,8 @@ package body Project_Explorers is
         or else Node_Type = Modified_Project_Node
       then
          if Project_Modified
-           (Get_Project_From_Node (Explorer, Node, False))
+           (Get_Project_From_Node
+              (Explorer.Tree.Model, Explorer.Kernel, Node, False))
          then
             N_Type := Modified_Project_Node;
          else
@@ -1930,61 +1913,6 @@ package body Project_Explorers is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Refresh;
-
-   ---------------------------
-   -- Get_Project_From_Node --
-   ---------------------------
-
-   function Get_Project_From_Node
-     (Explorer  : access Project_Explorer_Record'Class;
-      Node      : Gtk_Tree_Iter;
-      Importing : Boolean) return Project_Type
-   is
-      Parent_Iter : Gtk_Tree_Iter;
-      Node_Type   : Node_Types;
-      Project     : Project_Type;
-      N           : Name_Id;
-   begin
-      if Importing then
-         Parent_Iter := Parent (Explorer.Tree.Model, Node);
-
-         if Parent_Iter = Null_Iter then
-            return Get_Project (Explorer.Kernel);
-         end if;
-      else
-         Parent_Iter := Node;
-      end if;
-
-      while Parent_Iter /= Null_Iter loop
-         Node_Type := Get_Node_Type (Explorer.Tree.Model, Parent_Iter);
-
-         exit when Node_Type = Project_Node
-           or else Node_Type = Extends_Project_Node
-           or else Node_Type = Modified_Project_Node;
-
-         Parent_Iter := Parent (Explorer.Tree.Model, Parent_Iter);
-      end loop;
-
-      if Parent_Iter /= Null_Iter then
-         N := Name_Id
-           (Get_Int (Explorer.Tree.Model,
-                     Parent_Iter, Project_Column));
-         Assert (Me, N /= No_Name,
-                 "Get_Project_From_Node: no project found");
-         Project := Get_Project_From_Name
-           (Get_Registry (Explorer.Kernel), N);
-
-      else
-         Project := No_Project;
-      end if;
-
-      return Project;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return No_Project;
-   end Get_Project_From_Node;
 
    --------------------------------
    -- Get_Or_Create_Project_View --
@@ -2240,7 +2168,8 @@ package body Project_Explorers is
             elsif Status = Unknown then
                if Check_Entities
                  (Get_Directory_From_Node (Explorer.Tree.Model, Start) & N,
-                  Get_Project_From_Node (Explorer, Start, False))
+                  Get_Project_From_Node
+                     (Explorer.Tree.Model, Explorer.Kernel, Start, False))
                then
                   Set (C.Matches, N, Search_Match);
                   Compute_Children (Explorer, Start);
@@ -2258,7 +2187,7 @@ package body Project_Explorers is
                        (Explorer.Tree.Model, Start) & N,
                      Project_Marked => False,
                      Project        => Get_Project_From_Node
-                       (Explorer, Start, False),
+                       (Explorer.Tree.Model, Explorer.Kernel, Start, False),
                      Mark_File      => No_Match,
                      Increment      => -1);
                end if;
