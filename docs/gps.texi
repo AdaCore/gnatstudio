@@ -8507,8 +8507,38 @@ the right mouse button, and should only show actions relevant to the current
 context.
 
 Such contributions are done through the @code{<contextual>} tag, which takes
-one mandatory attribute @code{action}, which is the name of the action to
-execute, and must be defined elsewhere in one of the customization files.
+the following attributes:
+
+@table @code
+@item "action"  (mandatory)
+Name of the action to execute, and must be defined elsewhere in one of the
+customization files.
+
+If this attribute is set to an empty string, a separator will be inserted
+in the contextual menu instead. If you specify a reference item with one of
+the "before" or "after" attribute, the separator will be visible only when
+the reference item is visible.
+
+@item "before" (optional, default="")
+If it is specified, this attribute should be the name of another contextual,
+before which the new menu should appear. The name of predefined contextual
+menus can be found by looking at the output of "Contextual.list" in the shell
+console. The name of the contextual menus you define yourself is the value of
+the @code{<title>} child.
+
+There is no guarantee that the new menu will appear just before the referenced
+menu. In particular, it won't be the case if the new menu is created before
+the reference menu was created, or if another later contextual menu indicates
+that it must be displayed before the same reference item.
+
+@item "after" (optional, default="")
+Same as "before", except it indicates the new menu should appear after the
+reference item.
+
+If both "after" and "before" are specified, only the latter is taken into
+account.
+
+@end table
 
 It accepts one child tag, @code{<Title>} which specifies the name of the
 menu entry. If this child is not specified, the menu entry will use the name
@@ -8521,7 +8551,8 @@ action match the current context.
 
 For instance, the following example inserts a new contextual menu which prints
 the name of the current file in the GPS console. This contextual menu is only
-displayed in source editors.
+displayed in source editors. This contextual menu entry is followed by a
+separator line, visible when the menu is visible
 
 @smallexample
 <?xml version="1.0" ?>
@@ -8534,6 +8565,7 @@ displayed in source editors.
   <contextual action="print current file name" >
     <Title>Print Current File Name</Title>
   </contextual>
+  <contextual action="" after="Print Current File Name" />
 </print>
 @end smallexample
 
