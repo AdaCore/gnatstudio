@@ -7168,6 +7168,11 @@ the project explorer is selected, and a file node inside it is also selected.
 
 You do not have to specify anything else, this filtering is automatic
 
+Note however that the current context might contain more information than you
+expect. For instance, if you click on a file name in the Project View, then
+the current context contains a file (thus satisfies @code{%F}), but also
+contains a project (and thus satisfies @code{%p} and similar macros).
+
 @item Defining explicit filters
 Explicit restrictions can be specified in the customization files. These are
 specified through the @code{<filter>}, @code{<filter_and>}
