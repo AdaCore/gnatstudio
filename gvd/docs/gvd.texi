@@ -170,11 +170,6 @@ the debugger will run on the current machine (the machine on which GVD is
 running), so you only need to specify a value if you want to do remote debugging.
 For more information, see @ref{Debugging a program remotely}.
 
-@b{Limitation}: on Windows systems, you can only have one debugger window
-at a time, so you have to replace the current debugger with a new one,
-and launch several GVDs to debug multiple processes.
-See also the @ref{close menu}, to close a debugger window explicitly.
-
    @item Open Core Dump...
 @anchor{core files}
 This will open a file selection dialog that allows you to debug a core file
@@ -443,9 +438,8 @@ Try e.g using "xterm -e /bin/vi %f +%l" if you prefer vi.
 
 @item List Processes
 This command generates a list of processes
-suitable for process actions such as attach. This helper is ignored on
-Windows when using a local debugger, since the computation of the list of
-processes is built-in on this operating system.
+suitable for process actions such as attach. Under Windows, a stand alone
+executable called @code{winps} is provided to implement this capability.
 @item Remote Shell
 Command to be used to establish a remote connection
 (see @ref{Using GVD with a Remote Debugger}).
