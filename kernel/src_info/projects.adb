@@ -928,18 +928,33 @@ package body Projects is
       --  the default registered values for foreign languages
 
       if Attribute = Spec_Suffix_Attribute then
-         Name_Len := Index'Length;
-         Name_Buffer (1 .. Name_Len) := Index;
          Value := Value_Of
-           (Index    => Name_Find,
+           (Index    => Get_String (Index),
             In_Array => Prj.Projects.Table (View).Naming.Spec_Suffix);
 
       elsif Attribute = Impl_Suffix_Attribute then
-         Name_Len := Index'Length;
-         Name_Buffer (1 .. Name_Len) := Index;
          Value := Value_Of
-           (Index    => Name_Find,
+           (Index    => Get_String (Index),
             In_Array => Prj.Projects.Table (View).Naming.Body_Suffix);
+
+      elsif Attribute = Specification_Suffix_Attribute then
+         Value := Value_Of
+           (Index    => Get_String (Index),
+            In_Array => Prj.Projects.Table (View).Naming.Specs);
+
+      elsif Attribute = Implementation_Suffix_Attribute then
+         Value := Value_Of
+           (Index    => Get_String (Index),
+            In_Array => Prj.Projects.Table (View).Naming.Bodies);
+
+      elsif Attribute = Separate_Suffix_Attribute then
+         return Get_String (Prj.Projects.Table (View).Naming.Separate_Suffix);
+
+      elsif Attribute = Casing_Attribute then
+         return Prj.Image (Prj.Projects.Table (View).Naming.Casing);
+
+      elsif Attribute = Dot_Replacement_Attribute then
+         return Get_String (Prj.Projects.Table (View).Naming.Dot_Replacement);
 
       else
          Value := Get_Attribute_Value (Project, Attribute, Index);
