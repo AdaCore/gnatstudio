@@ -833,8 +833,8 @@ package body Vsearch_Ext is
                     Factory           => Help_Factory'Access,
                     Extra_Information => null,
                     Mask              => All_Options and not Supports_Replace
-                    and not Search_Backward
-                    and not Whole_Word and not All_Occurences));
+                      and not Search_Backward
+                      and not Whole_Word and not All_Occurences));
 
       Register_Search_Pattern
         (Kernel,
