@@ -1152,7 +1152,7 @@ again).
 @cindex menu
 The breakpoint editor can be accessed from the menu
 @i{Data->Edit Breakpoints}. It gives access to the different kind of
-breakpoints: on source location, subprogram, address, variables, exceptions.
+breakpoints: on source location, subprogram, address and Ada exceptions.
 
 The top area provides an interface to easily create the different kinds of
 breakpoints, while the bottom area lists the existing breakpoints and
