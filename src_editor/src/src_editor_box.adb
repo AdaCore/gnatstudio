@@ -472,6 +472,7 @@ package body Src_Editor_Box is
       Source : Source_Editor_Box;
       File_Up_To_Date : Boolean;
       L, C : Natural;
+      Is_Case_Sensitive : Boolean;
    begin
       if Dir_Name (Filename).all = "" then
          Insert (Kernel, -"File not found: "
@@ -501,12 +502,29 @@ package body Src_Editor_Box is
          File_Up_To_Date := Is_Valid_Position
              (Source.Source_Buffer, Editable_Line_Type (Line), Column)
            and then Is_Valid_Position
-             (Source.Source_Buffer, Editable_Line_Type (Line), Column + Length)
-           and then Get_Text
              (Source.Source_Buffer,
-              Editable_Line_Type (Line), Column,
-              Editable_Line_Type (Line), Column + Length) =
-                Get_Name (Entity).all;
+              Editable_Line_Type (Line), Column + Length);
+
+         Is_Case_Sensitive := Get_Language_Context
+           (Get_Language (Source.Source_Buffer)).Case_Sensitive;
+
+         if File_Up_To_Date then
+            declare
+               Entity_In_File : constant String :=
+                 Get_Text
+                   (Source.Source_Buffer,
+                    Editable_Line_Type (Line), Column,
+                    Editable_Line_Type (Line), Column + Length);
+            begin
+               File_Up_To_Date :=
+                 (Is_Case_Sensitive
+                  and then Entity_In_File = Get_Name (Entity).all)
+                 or else
+                   (not Is_Case_Sensitive
+                    and then Case_Insensitive_Equal
+                      (Entity_In_File, Get_Name (Entity).all));
+            end;
+         end if;
 
          --  Search for the closest reference to the entity if
          --  necessary. Otherwise, there's nothing to be done, since the region
