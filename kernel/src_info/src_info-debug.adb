@@ -311,6 +311,7 @@ package body Src_Info.Debug is
    begin
       Dump_E_Declaration (EDI.Declaration);
       Dump_E_Reference_List (EDI.References);
+      Dump_E_Reference_List (EDI.Declaration.Primitive_Subprograms);
    end Dump_E_Declaration_Info;
 
    ----------------------------------
