@@ -20,6 +20,7 @@ package body Src_Info.LI_Utils is
    function Find_Declaration_Internal
      (Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String := "";
+      Class_Name              : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
@@ -37,6 +38,14 @@ package body Src_Info.LI_Utils is
       Source_Filename : in String;
       Directory_Name  : in String);
    --  Creates an empty File_Info (without declarations)
+
+
+   function Belongs_To_Class
+     (D_Ptr           : in E_Declaration_Info_List;
+      Class_Name      : in String;
+      Position        : in Point) return Boolean;
+   --  Checks if given position belongs to class body (found in the given
+   --  list of declarations)
 
    -------------------------------------------------------------------------
 
@@ -480,18 +489,18 @@ package body Src_Info.LI_Utils is
       Class_Name              : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
-      pragma Unreferenced (Class_Name);
    begin
       if (File = No_LI_File)
             or else (File.LI.Body_Info = null)
             or else (File.LI.Body_Info.Declarations = null) then
          raise Declaration_Not_Found;
       end if;
-      return Find_Declaration_Internal (File.LI.Body_Info.Declarations,
-                                        Symbol_Name,
-                                        Location);
+      return Find_Declaration_Internal
+               (Declaration_Info_Ptr => File.LI.Body_Info.Declarations,
+                Symbol_Name          => Symbol_Name,
+                Class_Name           => Class_Name,
+                Location             => Location);
    end Find_Declaration;
-   --  ??? Class_Name parameter should not be skipped
 
    -----------------------------------
    --  Find_Dependency_Declaration  --
@@ -522,11 +531,13 @@ package body Src_Info.LI_Utils is
       if Dep_Ptr.Value.Declarations = null then
          raise Declaration_Not_Found;
       end if;
-      return Find_Declaration_Internal (Dep_Ptr.Value.Declarations,
-                                        Symbol_Name,
-                                        Location);
+      return Find_Declaration_Internal
+               (Declaration_Info_Ptr => Dep_Ptr.Value.Declarations,
+                Symbol_Name          => Symbol_Name,
+                Class_Name           => "",
+                Location             => Location);
    end Find_Dependency_Declaration;
-   --  ??? Class_Name parameter should not be skipped
+   --  ??? Class_Name parameter should be used properly
 
    -------------------------------------------------------------------------
 
@@ -627,6 +638,7 @@ package body Src_Info.LI_Utils is
    function Find_Declaration_Internal
      (Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String := "";
+      Class_Name              : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
       D_Ptr : E_Declaration_Info_List;
@@ -639,11 +651,18 @@ package body Src_Info.LI_Utils is
             or else (Symbol_Name'Length = 0))
            and then (
              (Location /= Invalid_Point
-                and then (D_Ptr.Value.Declaration.Location.Line
-                                                    = Location.Line)
-                and then (D_Ptr.Value.Declaration.Location.Column
-                                                    = Location.Column))
+                and then D_Ptr.Value.Declaration.Location.Line
+                                                   = Location.Line
+                and then D_Ptr.Value.Declaration.Location.Column
+                                                   = Location.Column)
              or else (Location = Invalid_Point)
+           ) and then (
+             (Class_Name /= ""
+                and then Belongs_To_Class
+                          (D_Ptr       => Declaration_Info_Ptr,
+                           Class_Name  => Class_Name,
+                           Position    => Location))
+             or else (Class_Name = "")
            )
          then
             return D_Ptr;
@@ -686,6 +705,10 @@ package body Src_Info.LI_Utils is
       end if;
    end Create_LI_File;
 
+   ------------------------
+   --  Create_File_Info  --
+   ------------------------
+
    procedure Create_File_Info
      (FI_Ptr   : in out File_Info_Ptr;
       Source_Filename : in String;
@@ -695,20 +718,43 @@ package body Src_Info.LI_Utils is
         (Unit_Name         => null,
          Source_Filename   => new String'(Source_Filename),
          Directory_Name    => new String'(Directory_Name),
-         File_Timestamp         => 0,
+         File_Timestamp    => 0,
          Original_Filename => null,
          Original_Line     => 1,
          Declarations      => null);
    end Create_File_Info;
 
---   procedure Create_Dependency_File_Info_Node
---     ()
---   is
---   begin
---   end Create_Dependency_File_Info_Node
 
---   procedure Create_File_Location_Node
+   ------------------------
+   --  Belongs_To_Class  --
+   ------------------------
 
+   function Belongs_To_Class
+     (D_Ptr           : in E_Declaration_Info_List;
+      Class_Name      : in String;
+      Position        : in Point) return Boolean is
+   begin
+      loop
+         exit when D_Ptr = null;
+         if D_Ptr.Value.Declaration.Kind = Record_Object
+           and then D_Ptr.Value.Declaration.Name.all = Class_Name
+           and then (
+             D_Ptr.Value.Declaration.Location.Line < Position.Line
+               or else (D_Ptr.Value.Declaration.Location.Line =
+                                                   Position.Line and
+                 D_Ptr.Value.Declaration.Location.Column < Position.Column))
+           and then (
+             D_Ptr.Value.Declaration.End_Of_Scope.Location.Line > Position.Line
+               or else (D_Ptr.Value.Declaration.End_Of_Scope.Location.Line =
+                                                   Position.Line and
+                 D_Ptr.Value.Declaration.End_Of_Scope.Location.Column >
+                                                   Position.Column))
+         then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Belongs_To_Class;
 
    -------------------------------------------------------------------------
 
