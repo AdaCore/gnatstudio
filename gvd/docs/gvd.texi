@@ -795,18 +795,19 @@ This should launch gdb on the remote machine.
 
 Note that on some systems, rsh is called differently, in particular under
 HPUX, the remote shell capability is called remsh. For those systems, and
-also in order to use other remote utilities such as ssh/scp, you can create
-simple shell scripts called @i{rsh} and @i{rcp} that will, in turn, call e.g
-remsh, or ssh. For example:
+also in order to use other remote utilities such as ssh/scp, you can change
+the default remote shell and copy by either using the @ref{preferences menu}
+or creating by hand (using any text editor) a file called
+$HOME/.gvd/preferences (%HOME%\.gvd\preferences under Windows) that will
+look like:
 
 @smallexample
-#!/bin/sh
-# Wrapper for rsh defaulting to ssh
-ssh $*
+<?xml version="1.0"?>
+<preferences>
+  <Remote_Protocol>ssh</Remote_Protocol>
+  <Remote_Copy>scp</Remote_Copy>
+</preferences>
 @end smallexample
-
-And make sure that these scripts can be found in your PATH before the system
-tools.
 
 After ensuring that you have the proper set up in place, to run the debugger on
 a remote host @i{remote}, either invoke GVD as
@@ -829,8 +830,8 @@ There are a few caveats in remote mode:
   location (using e.g nfs+symbolic links, or samba), and if it cannot find the
   files locally, it will then try to copy the file from the remote machine,
   using rcp. As for rsh, you need to make sure that rcp can be called without
-  having to enter a password, and you can also create wrappers that will
-  default to other remote copy utilities such as scp. Note that the file
+  having to enter a password, and you can also replace rcp by similar remote
+  copy utilities such as scp. Note that the file
   selection dialogs (change directory, open file,~@dots{}) will scan the local
   directory, so you will need to enter the paths blindly if your remote files
   are not mounted on your local host.
