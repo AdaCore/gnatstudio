@@ -126,10 +126,10 @@ package body Src_Info.ALI is
 
    type Tref_Kind_Array is array (Tref_Kind) of Parent_Kind;
    Tref_Kind_To_Parent_Kind : constant Tref_Kind_Array :=
-     (Tref_None    => Parent_Type,  --   unused
-      Tref_Access  => Pointed_Type,
-      Tref_Derived => Parent_Type,
-      Tref_Type    => Parent_Type);
+     (Tref_None    => Parent_Type,     --   unused
+      Tref_Access  => Pointed_Type,    --   () in ALI
+      Tref_Derived => Parent_Type,     --   <> in ALI
+      Tref_Type    => Container_Type); --   {} in ALI
 
    type Sdep_To_Sfile_Table is array (Sdep_Id range <>) of Source_File;
    --  An array used to store the Source_File data for each Sdep ID in
@@ -169,12 +169,11 @@ package body Src_Info.ALI is
 
    procedure Get_Source_File
      (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       New_ALI          : ALIs_Record;
       Source_Filename  : File_Name_Type;
       Subunit_Name     : Name_Id := No_Name;
       Project          : Project_Type;
-      Source_Path      : String;
       File             : out Source_File);
    --  Search the unit in LI_File_List which source file is equal to
    --  Source_Filename. If Subunit_Name is set, then only separates are
@@ -186,17 +185,16 @@ package body Src_Info.ALI is
 
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Source_Filename  : String;
       Project          : Project_Type;
-      Source_Path      : String;
       File             : out Source_File);
    --  Perform the job of Get_Source_File in the case where Subunit_Name is not
    --  set (case when it is not a separate).
 
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Source_Filename  : String;
       Sig_Filename     : String;
       Part             : Unit_Part;
@@ -206,7 +204,7 @@ package body Src_Info.ALI is
 
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Source_Filename  : String;
       Sig_Filename     : String;
       Subunit_Name     : Name_Id;
@@ -237,9 +235,8 @@ package body Src_Info.ALI is
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
-      Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List);
+      List        : LI_File_List);
    --  Save the information from the given dependency into the LI_File_Ptr.
 
    procedure Process_Sdep_As_Self
@@ -257,9 +254,8 @@ package body Src_Info.ALI is
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
-      Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List;
+      List        : LI_File_List;
       Is_Separate : Boolean := False);
    --  Save the information from the given dependency into the list of
    --  dependencies of the LI_File_Ptr. This procedure should be used
@@ -273,9 +269,8 @@ package body Src_Info.ALI is
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
       Project     : Project_Type;
-      Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List);
+      List        : LI_File_List);
    --  Call Process_Sdep for all Sdep entries in the given LI_File_Ptr.
 
    procedure Process_With
@@ -335,8 +330,7 @@ package body Src_Info.ALI is
       New_ALI           : ALIs_Record;
       Project           : Project_Type;
       Full_ALI_Filename : String;
-      Source_Path       : String;
-      List              : in out LI_File_List);
+      List              : LI_File_List);
    --  Create a new LI_File_Ptr from the given ALIs_Record. This LI_File_Ptr
    --  is left unconnected to the LI_File_List.
 
@@ -344,8 +338,7 @@ package body Src_Info.ALI is
      (Handler                : ALI_Handler;
       Full_ALI_Filename      : String;
       Project                : Project_Type;
-      Predefined_Source_Path : String;
-      List                   : in out LI_File_List;
+      List                   : LI_File_List;
       Unit                   : out LI_File_Ptr;
       Success                : out Boolean);
    --  Parse the given ALI file and update the Unit Info list. Also returns
@@ -356,15 +349,13 @@ package body Src_Info.ALI is
      (Handler                : access ALI_Handler_Record'Class;
       File                   : in out LI_File_Ptr;
       Full_Ali_File          : String;
-      List                   : in out LI_File_List;
-      Project                : Project_Type;
-      Predefined_Source_Path : String);
+      List                   : LI_File_List;
+      Project                : Project_Type);
    --  Internal version of Create_Or_Complete_LI
 
    function Locate_ALI
      (Short_ALI_Filename : String;
-      Project                : Project_Type;
-      Predefined_Object_Path : String) return String;
+      Project                : Project_Type) return String;
    --  Locate an ALI file on the object path. If not found, it will possibly
    --  search for the parent unit's ALI file (for proper handling of
    --  separates). There is no garantee that the returned file matches the
@@ -504,12 +495,11 @@ package body Src_Info.ALI is
 
    procedure Get_Source_File
      (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       New_ALI          : ALIs_Record;
       Source_Filename  : File_Name_Type;
       Subunit_Name     : Name_Id := No_Name;
       Project          : Project_Type;
-      Source_Path      : String;
       File             : out Source_File)
    is
       Source : constant String := Get_String (Source_Filename);
@@ -570,8 +560,7 @@ package body Src_Info.ALI is
             Prj := Project;
          end if;
 
-         Get_Unit_Source_File
-           (Handler, List, Source, Prj, Source_Path, File);
+         Get_Unit_Source_File (Handler, List, Source, Prj, File);
       else
          Get_Subunit_Source_File
            (Handler, List, Source, Get_String (New_ALI.Sfile),
@@ -585,13 +574,10 @@ package body Src_Info.ALI is
 
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Source_Filename  : String;
       Project          : Project_Type;
-      Source_Path      : String;
-      File             : out Source_File)
-   is
-      pragma Unreferenced (Source_Path);
+      File             : out Source_File) is
    begin
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body =>
@@ -619,7 +605,7 @@ package body Src_Info.ALI is
 
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Source_Filename  : String;
       Sig_Filename     : String;
       Part             : Unit_Part;
@@ -630,7 +616,7 @@ package body Src_Info.ALI is
 
    begin
       File :=
-        (LI              => Get (List.Table, ALI_Filename),
+        (LI              => Get (List.Table.all, ALI_Filename),
          Part            => Part,
          Source_Filename => null);
 
@@ -673,7 +659,7 @@ package body Src_Info.ALI is
 
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
+      List             : LI_File_List;
       Source_Filename  : String;
       Sig_Filename     : String;
       Subunit_Name     : Name_Id;
@@ -685,7 +671,7 @@ package body Src_Info.ALI is
 
    begin
       File :=
-         (LI              => Get (List.Table, ALI_Filename),
+         (LI              => Get (List.Table.all, ALI_Filename),
           Part            => Unit_Separate,
           Source_Filename => new String'(Source_Filename));
 
@@ -852,16 +838,15 @@ package body Src_Info.ALI is
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
-      Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List)
+      List        : LI_File_List)
    is
       Dep : Sdep_Record renames Sdep.Table (Id);
    begin
       if Dep.Subunit_Name /= No_Name then
          Process_Sdep_As_External
            (Handler, New_LI_File, New_ALI, Id, Project,
-            Source_Path, Sfiles, List, Is_Separate => True);
+            Sfiles, List, Is_Separate => True);
 
       elsif New_LI_File.LI.Spec_Info /= null
         and then New_LI_File.LI.Spec_Info.Source_Filename.all =
@@ -880,7 +865,7 @@ package body Src_Info.ALI is
       else
          Process_Sdep_As_External
            (Handler, New_LI_File, New_ALI, Id, Project,
-            Source_Path, Sfiles, List, Is_Separate => False);
+            Sfiles, List, Is_Separate => False);
       end if;
    end Process_Sdep;
 
@@ -930,9 +915,8 @@ package body Src_Info.ALI is
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
-      Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List;
+      List        : LI_File_List;
       Is_Separate : Boolean := False)
    is
       Dep     : Sdep_Record renames Sdep.Table (Id);
@@ -942,7 +926,7 @@ package body Src_Info.ALI is
    begin
       Get_Source_File
         (Handler, List, New_ALI, Dep.Sfile, Dep.Subunit_Name,
-         Project, Source_Path, Sfile);
+         Project, Sfile);
       Assert
         (Me, Get_Source_Filename (Sfile) = Get_String (Dep.Sfile),
          "Process_Sdep_As_External, invalid source file " &
@@ -974,14 +958,12 @@ package body Src_Info.ALI is
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
       Project     : Project_Type;
-      Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List) is
+      List        : LI_File_List) is
    begin
       for Dep_Id in New_ALI.First_Sdep .. New_ALI.Last_Sdep loop
          Process_Sdep
-           (Handler, New_LI_File, New_ALI, Dep_Id, Project,
-            Source_Path, Sfiles, List);
+           (Handler, New_LI_File, New_ALI, Dep_Id, Project, Sfiles, List);
       end loop;
    end Process_Sdeps;
 
@@ -1439,8 +1421,7 @@ package body Src_Info.ALI is
       New_ALI           : ALIs_Record;
       Project           : Project_Type;
       Full_ALI_Filename : String;
-      Source_Path       : String;
-      List              : in out LI_File_List)
+      List              : LI_File_List)
    is
       Sfiles         : Sdep_To_Sfile_Table
         (New_ALI.First_Sdep ..  New_ALI.Last_Sdep) :=
@@ -1491,7 +1472,7 @@ package body Src_Info.ALI is
 
       Process_Units (New_LI_File, New_ALI);
       Process_Sdeps
-        (Handler, New_LI_File, New_ALI, Project, Source_Path, Sfiles, List);
+        (Handler, New_LI_File, New_ALI, Project, Sfiles, List);
 
       Process_Withs (New_LI_File, New_ALI, Project);
       Process_Xrefs (New_LI_File, New_ALI, Sfiles);
@@ -1537,8 +1518,7 @@ package body Src_Info.ALI is
 
    function Locate_ALI
      (Short_ALI_Filename : String;
-      Project                : Project_Type;
-      Predefined_Object_Path : String) return String
+      Project                : Project_Type) return String
    is
       Current_Dir_Name   : constant Character := '.';
       Dir                : String_Access;
@@ -1546,6 +1526,8 @@ package body Src_Info.ALI is
       Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
       Dot_Replacement : constant String := Get_Attribute_Value
         (Project, Dot_Replacement_Attribute, Naming_Package, Default => "-");
+      Predefined_Object_Path : constant String :=
+        Get_Predefined_Object_Path (Project_Registry (Get_Registry (Project)));
 
    begin
       --  Compute the search path. If the objects path of the project is
@@ -1607,8 +1589,7 @@ package body Src_Info.ALI is
      (Handler                : ALI_Handler;
       Full_ALI_Filename      : String;
       Project                : Project_Type;
-      Predefined_Source_Path : String;
-      List                   : in out LI_File_List;
+      List                   : LI_File_List;
       Unit                   : out LI_File_Ptr;
       Success                : out Boolean)
    is
@@ -1627,7 +1608,7 @@ package body Src_Info.ALI is
 
       Create_New_ALI
         (Handler, Unit, ALIs.Table (New_ALI_Id), Project,
-         Full_ALI_Filename, Predefined_Source_Path, List);
+         Full_ALI_Filename, List);
       Success := True;
 
    exception
@@ -1654,10 +1635,9 @@ package body Src_Info.ALI is
    function LI_Filename_From_Source
      (Handler                : access ALI_Handler_Record;
       Source_Filename        : String;
-      Project                : Project_Type;
-      Predefined_Source_Path : String) return String
+      Project                : Project_Type) return String
    is
-      pragma Unreferenced (Handler, Predefined_Source_Path);
+      pragma Unreferenced (Handler);
    begin
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
@@ -1679,10 +1659,8 @@ package body Src_Info.ALI is
      (Handler                : access ALI_Handler_Record;
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
-      List                   : in out LI_File_List;
-      Project                : Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String)
+      List                   : LI_File_List;
+      Project                : Project_Type)
    is
       F : File_Info_Ptr_List;
       Base : constant String := Base_Name (Source_Filename);
@@ -1695,19 +1673,19 @@ package body Src_Info.ALI is
          Create_Or_Complete_LI
            (Handler                => Handler,
             File                   => File,
-            Full_Ali_File          => Find_File
-              (File.LI.LI_Filename.all,
-               Object_Path (Project, True), Predefined_Object_Path),
+            Full_Ali_File          => Get_Full_Path_From_File
+              (Registry        => Project_Registry (Get_Registry (Project)),
+               Filename        => File.LI.LI_Filename.all,
+               Use_Source_Path => False,
+               Use_Object_Path => True),
             List                   => List,
-            Project                => Project,
-            Predefined_Source_Path => Predefined_Source_Path);
+            Project                => Project);
 
       else
          declare
             LI_Name : constant String := LI_Filename_From_Source
-              (Handler, Base, Project, Predefined_Source_Path);
-            Full_LI_Name : constant String := Locate_ALI
-              (LI_Name, Project, Predefined_Object_Path);
+              (Handler, Base, Project);
+            Full_LI_Name : constant String := Locate_ALI (LI_Name, Project);
 
          begin
             --  Else we might already have an incomplete version of the LI
@@ -1719,8 +1697,7 @@ package body Src_Info.ALI is
                File                   => File,
                Full_Ali_File          => Full_LI_Name,
                List                   => List,
-               Project                => Project,
-               Predefined_Source_Path => Predefined_Source_Path);
+               Project                => Project);
 
             --  Make sure that the LI file we just parsed does contain the
             --  information for the initial source file name. Since for
@@ -1764,9 +1741,8 @@ package body Src_Info.ALI is
      (Handler                : access ALI_Handler_Record'Class;
       File                   : in out LI_File_Ptr;
       Full_Ali_File          : String;
-      List                   : in out LI_File_List;
-      Project                : Project_Type;
-      Predefined_Source_Path : String)
+      List                   : LI_File_List;
+      Project                : Project_Type)
    is
       Success : Boolean := True;
    begin
@@ -1781,7 +1757,7 @@ package body Src_Info.ALI is
 
             Parse_ALI_File
               (ALI_Handler (Handler), Full_Ali_File, Project,
-               Predefined_Source_Path, List, File, Success);
+               List, File, Success);
 
             if not Success then
                File := No_LI_File;
@@ -1814,11 +1790,9 @@ package body Src_Info.ALI is
 
    procedure Parse_All_LI_Information
      (Handler                : access ALI_Handler_Record;
-      List                   : in out LI_File_List;
+      List                   : LI_File_List;
       In_Directory           : String;
-      Project                : Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String)
+      Project                : Project_Type)
    is
       Dir : Dir_Type;
       File : String (1 .. 1024);
@@ -1836,12 +1810,13 @@ package body Src_Info.ALI is
             Create_Or_Complete_LI
               (Handler                => Handler,
                File                   => LI,
-               Full_Ali_File          => Find_File
-                 (File (File'First .. Last), Object_Path (Project, True),
-                  Predefined_Object_Path),
+               Full_Ali_File          => Get_Full_Path_From_File
+                 (Registry        => Project_Registry (Get_Registry (Project)),
+                  Filename        => File (File'First .. Last),
+                  Use_Source_Path => False,
+                  Use_Object_Path => True),
                List                   => List,
-               Project                => Project,
-               Predefined_Source_Path => Predefined_Source_Path);
+               Project                => Project);
          end if;
       end loop;
 
