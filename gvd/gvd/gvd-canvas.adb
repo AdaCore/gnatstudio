@@ -41,7 +41,6 @@ with Gtkada.Handlers;  use Gtkada.Handlers;
 
 with Debugger;         use Debugger;
 with Display_Items;    use Display_Items;
-with Factory_Data;
 with Items;            use Items;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 
@@ -233,8 +232,7 @@ package body GVD.Canvas is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Process (GVD_Canvas (Canvas)));
    begin
-      On_Display_Expression
-        (Process.Window.all'Access, 0, Factory_Data.Null_Widget);
+      Display_Expression (Process);
 
    exception
       when E : others =>
