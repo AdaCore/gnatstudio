@@ -151,10 +151,13 @@ package String_Utils is
    --  Returns a file name from an ada subprogram/package name.
 
    procedure Mixed_Case (S : in out String);
-   --  Returns S with a casing matching Ada style.
+   --  Return S with a casing matching Ada style.
+
+   procedure Lower_Case (S : in out String);
+   --  Return S with all characters lowered.
 
    function Strip_Quotes (S : in String) return String;
-   --  Removes the quotes and the spaces at the beginning and end of S.
+   --  Remove the quotes and the spaces at the beginning and end of S.
 
    function Image (N : Integer) return String;
    --  Create a string image of the given Integer.

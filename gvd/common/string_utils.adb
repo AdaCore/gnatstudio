@@ -644,6 +644,17 @@ package body String_Utils is
       end loop;
    end Mixed_Case;
 
+   ----------------
+   -- Lower_Case --
+   ----------------
+
+   procedure Lower_Case (S : in out String) is
+   begin
+      for J in S'Range loop
+         S (J) := To_Lower (S (J));
+      end loop;
+   end Lower_Case;
+
    ------------------
    -- Strip_Quotes --
    ------------------
