@@ -311,22 +311,25 @@ package body Codefix.Formal_Errors is
       Column_Expected : Natural := 0) return Extract
    is
       function Most_Close (Size_Red : Positive) return Positive;
-      --  ???
+      --  Return the most close identation modulo Indentation_Width.
 
       function Most_Close (Size_Red : Positive) return Positive is
       begin
          Put_Line (Integer'Image (Size_Red));
 
-         case Size_Red - 1 mod 3 is
+         case Size_Red - 1 mod Indentation_Width is
             when 0 =>
-               return Size_Red + 3;
-               --  not - 3 because of the case where Size_Red = 1
+               return Size_Red + Indentation_Width;
+               --  not - Identation_Width because of the case where
+               --  Size_Red = 1
             when 1 =>
                return Size_Red - 1;
             when 2 =>
                return Size_Red + 1;
             when others =>
-               return 1;
+               Raise_Exception
+                 (Codefix_Panic'Identity,
+                  "Indentation_With changed, please update Wrong_Column");
          end case;
       end Most_Close;
 
@@ -387,7 +390,7 @@ package body Codefix.Formal_Errors is
       Word_Case    : Case_Type := Mixed) return Extract
    is
       function To_Correct_Case (Str : String) return String;
-      --  Returns the string after having re-cased it (with Word_Case).
+      --  Return the string after having re-cased it (with Word_Case).
 
       function To_Correct_Case (Str : String) return String is
          New_String : String (Str'Range);
@@ -465,6 +468,8 @@ package body Codefix.Formal_Errors is
       function Add_Pragma return Extract;
       --  Add a pragma after the declaration or, if there is no declaration,
       --  after the body.
+
+      function Add_Parameter_Pragma return Extract;
 
       ----------------
       -- Delete_Var --
@@ -555,7 +560,7 @@ package body Codefix.Formal_Errors is
             then
                Delete_All_Lines (New_Extract);
             else
-               Replace_Word (New_Extract, Cursor, "", "([^,]+)");
+               Replace_Word (New_Extract, Cursor, "", "([\w]+[\s]*,?)");
             end if;
          end if;
 
@@ -592,6 +597,30 @@ package body Codefix.Formal_Errors is
          return New_Extract;
       end Add_Pragma;
 
+      --------------------------
+      -- Add_Parameter_Pragma --
+      --------------------------
+
+      function Add_Parameter_Pragma return Extract is
+         New_Extract  : Extract;
+         New_Position : File_Cursor;
+         Declaration  : Construct_Information;
+
+      begin
+         Declaration := Get_Unit
+           (Current_Text, Cursor, Before, Cat_Procedure, Cat_Function);
+         New_Position.Line := Declaration.Sloc_Entity.Line;
+         New_Position.Col  := Declaration.Sloc_Entity.Column;
+         Assign (New_Position.File_Name, Cursor.File_Name);
+         New_Position := File_Cursor
+           (Search_String (Current_Text, New_Position, ")"));
+         New_Position := File_Cursor
+           (Search_String (Current_Text, New_Position, "is"));
+         Add_Line (New_Extract, New_Position, "pragma Unreferenced (" &
+                                              Name & ");");
+         return New_Extract;
+      end Add_Parameter_Pragma;
+
       New_Solutions : Solution_List;
 
    --  begin of Not_Referenced
@@ -603,6 +632,8 @@ package body Codefix.Formal_Errors is
          when Cat_Function | Cat_Procedure | Cat_Type =>
             Append (New_Solutions, Delete_Entity);
             Append (New_Solutions, Add_Pragma);
+         when Cat_Local_Variable =>
+            Append (New_Solutions, Add_Parameter_Pragma);
          when others =>
             Raise_Exception
               (Codefix_Panic'Identity,
