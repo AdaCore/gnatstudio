@@ -1294,6 +1294,7 @@ package body Gtkada.MDI is
       return Boolean is
    begin
       Draw_Child (MDI_Child (Child), Get_Area (Event));
+
       Propagate_Expose_Event (MDI_Child (Child), Event);
       return False;
    end Draw_Child;
@@ -2188,14 +2189,20 @@ package body Gtkada.MDI is
       if Old /= null
         and then Realized_Is_Set (Old)
       then
-         Draw_Child (Old, Full_Area);
+         Queue_Draw_Area
+           (Old, Border_Thickness, Border_Thickness,
+            Gint (Get_Allocation_Width (Old)) - 2 * Border_Thickness,
+            Title_Bar_Height);
       end if;
 
       --  Make sure the page containing Child in a notebook is put on top.
       Raise_Child (Child);
 
       if Realized_Is_Set (C) then
-         Draw_Child (C, Full_Area);
+         Queue_Draw_Area
+           (C, Border_Thickness, Border_Thickness,
+            Gint (Get_Allocation_Width (C)) - 2 * Border_Thickness,
+            Title_Bar_Height);
       end if;
 
       Update_Dock_Menu (C);
