@@ -772,7 +772,7 @@ package body Src_Editor_Module is
                      Mark_Record.File := File;
                      Mark_Record.Id   := Id.Next_Mark_Id;
                      Mark_Record.Line := Line;
-                     Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
+                     Id.Next_Mark_Id  := Id.Next_Mark_Id + 1;
 
                      Mark_Record.Length := Length;
 
@@ -1191,9 +1191,8 @@ package body Src_Editor_Module is
                   end;
                end if;
 
-               Set_Cursor_Position
-                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
-                  Line, Column);
+               Set_Cursor_Location
+                 (Source_Box (Get_Widget (Child)).Editor, Line, Column);
             end if;
          end;
 
