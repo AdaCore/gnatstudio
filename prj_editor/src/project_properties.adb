@@ -610,11 +610,6 @@ package body Project_Properties is
       Append_Page
         (Main_Note, Create_General_Page (Editor, Project_View, Kernel), Label);
 
-      Editor.Project_View := Project_View;
-      Editor.Kernel       := Kernel_Handle (Kernel);
-      Editor.Pages        := new Widget_Array
-        (1 .. Project_Editor_Pages_Count (Kernel));
-
       Gtk_New_Vbox (Box, Homogeneous => False);
       Pack_Start (Main_Box, Box, Expand => True, Fill => True);
 
@@ -629,6 +624,13 @@ package body Project_Properties is
       Gtk_New (Editor.Selector, Kernel);
       Pack_Start (Box, Editor.Selector, Expand => True, Fill => True);
 
+      Editor.Project_View := Project_View;
+      Editor.Kernel       := Kernel_Handle (Kernel);
+      Editor.Pages        := new Widget_Array
+        (1 .. Project_Editor_Pages_Count (Kernel));
+
+      Show_All (Editor);
+
       --  We used to create the pages dynamically, in Switch_Page. However,
       --  this means that the pages that haven't been visited by the user will
       --  not generate a project on exit, which is a problem when copying a
@@ -642,8 +644,6 @@ package body Project_Properties is
          Append_Page (Main_Note, Editor.Pages (E), Label);
       end loop;
 
-      Set_Current_Page (Main_Note, 0);
-
       --  Connect this only once we have created the pages
       Gtk.Handlers.Add_Watch
         (Object_User_Callback.Connect
@@ -653,7 +653,9 @@ package body Project_Properties is
           After => True),
          Editor);
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
+      Show (Button);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
+      Show (Button);
    end Initialize;
 
    -----------------
@@ -959,7 +961,6 @@ package body Project_Properties is
 
    begin
       Gtk_New (Editor, Project_View, Kernel);
-      Show_All (Editor);
 
       loop
          Response := Run (Editor);
