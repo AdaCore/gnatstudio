@@ -601,8 +601,7 @@ package body Docgen.Work_On_File is
    begin
       LI_Unit := Locate_From_Source_And_Complete (Kernel, Source_Filename);
 
-      Trace (Me, "-- Name of file --" &
-             Base_Name (Source_Filename));
+      Trace (Me, "File name: " & Base_Name (Source_Filename));
       --  All references of the current file are put in a list.
       --  In the case of a spec file, we used references which are also
       --  declarations. Before those changes, declarations were found by
