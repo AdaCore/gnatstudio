@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,7 @@
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
+with Docgen.Backend;
 with Docgen.Work_On_Source;     use Docgen.Work_On_Source;
 with Traces;                    use Traces;
 with Glide_Kernel;              use Glide_Kernel;
@@ -105,7 +106,7 @@ package body Docgen.Work_On_File is
    --  Handle an entity referenced fir the first time.
 
    procedure Process_One_File
-     (B                             : access Docgen_Backend.Backend'Class;
+     (B                             : access Docgen.Backend.Backend'Class;
       Doc_File                      : File_Descriptor;
       Kernel                        : access
         Glide_Kernel.Kernel_Handle_Record'Class;
@@ -552,7 +553,7 @@ package body Docgen.Work_On_File is
    -------------------
 
    procedure Process_Files
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Source_File_List : in out Docgen.Type_Source_File_Table.HTable;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options)
@@ -608,7 +609,7 @@ package body Docgen.Work_On_File is
       Private_Tagged_Types_List     : List_Entity_Information.List;
       Level                         : Natural := 1;
       Doc_Directory                 : constant String :=
-         Docgen_Backend.Get_Doc_Directory (B, Kernel);
+        Docgen.Backend.Get_Doc_Directory (B, Kernel);
 
    begin
       Get_First (Source_File_List, Source_File_Node);
@@ -682,7 +683,7 @@ package body Docgen.Work_On_File is
    ----------------------
 
    procedure Process_One_File
-     (B                             : access Docgen_Backend.Backend'Class;
+     (B                             : access Docgen.Backend.Backend'Class;
       Doc_File                      : File_Descriptor;
       Kernel                        : access
         Glide_Kernel.Kernel_Handle_Record'Class;

@@ -33,16 +33,15 @@ with Ada.Strings.Unbounded;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
+with Docgen.Backend;            use Docgen.Backend;
 
 package body Docgen.Work_On_Source is
-
-   use Docgen_Backend;
 
    package TEL renames Type_Entity_List;
 
 
    procedure Process_Source_Spec
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
       Source_File_List          : in out Type_Source_File_Table.HTable;
@@ -79,7 +78,7 @@ package body Docgen.Work_On_Source is
    --  each inner package
 
    procedure Process_One_Body_File
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
@@ -93,7 +92,7 @@ package body Docgen.Work_On_Source is
    --  of the body source files.
 
    procedure Process_Open_File
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Package_Name     : String);
@@ -102,7 +101,7 @@ package body Docgen.Work_On_Source is
    --  subprogram
 
    procedure Process_Package_Description
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Text             : String;
@@ -114,7 +113,7 @@ package body Docgen.Work_On_Source is
    --  output subprogram
 
    procedure Process_With_Clause
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Parsed_List      : in out Construct_List;
@@ -128,7 +127,7 @@ package body Docgen.Work_On_Source is
    --  starting with "with" and pass them to the output subprogram
 
    procedure Process_Description
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural;
@@ -137,7 +136,7 @@ package body Docgen.Work_On_Source is
    --  preferences)
 
    procedure Process_Packages
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
       Parsed_List               : in out Construct_List;
@@ -161,7 +160,7 @@ package body Docgen.Work_On_Source is
    --  contained in Entity_List.
 
    procedure Process_Vars
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Parsed_List      : in out Construct_List;
@@ -182,7 +181,7 @@ package body Docgen.Work_On_Source is
    --  contained in Entity_List.
 
    procedure Process_Exceptions
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Parsed_List      : in out Construct_List;
@@ -203,7 +202,7 @@ package body Docgen.Work_On_Source is
    --  contained in Entity_List.
 
    procedure Process_Entries
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Parsed_List       : in out Construct_List;
@@ -224,7 +223,7 @@ package body Docgen.Work_On_Source is
    --  contained in Entity_List.
 
    procedure Process_Calls_References
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Options           : All_Options;
       Doc_File          : File_Descriptor;
@@ -232,7 +231,7 @@ package body Docgen.Work_On_Source is
       Source_File_List  : Type_Source_File_Table.HTable;
       Level             : in out Natural);
    procedure Process_Caller_References
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Options           : All_Options;
       Doc_File          : File_Descriptor;
@@ -243,7 +242,7 @@ package body Docgen.Work_On_Source is
    --  option is choosen.
 
    procedure Process_Subprograms
-     (B                  : access Docgen_Backend.Backend'Class;
+     (B                  : access Docgen.Backend.Backend'Class;
       Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Descriptor;
       Parsed_List        : in out Construct_List;
@@ -264,7 +263,7 @@ package body Docgen.Work_On_Source is
    --  "Private" header
 
    procedure Process_One_Family
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Family           : List_Entity_Information.List;
@@ -274,7 +273,7 @@ package body Docgen.Work_On_Source is
    --  For one tagged type: indicates its parents and children.
 
    procedure Process_Types
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
       Parsed_List               : in out Construct_List;
@@ -297,7 +296,7 @@ package body Docgen.Work_On_Source is
    --  contained in Entity_List.
 
    procedure Process_Header
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Entity_List       : in out Type_Entity_List.List;
@@ -311,56 +310,56 @@ package body Docgen.Work_On_Source is
    --  but the Header has to be set in front of each package.
 
    procedure Process_Header_Private
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural);
    --  Adds title "Private: " when private entities are required.
 
    procedure Process_Header_Packages
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural);
    --  Adds title "Packages".
 
    procedure Process_Header_Vars
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural);
    --  Adds title "Constants and Named Numbers"
 
    procedure Process_Header_Types
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural);
    --  Adds title "Types"
 
    procedure Process_Header_Entries
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural);
    --  Adds title "Entries"
 
    procedure Process_Header_Subprograms
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural);
    --  Adds title "Subprograms"
 
    procedure Process_Header_Exceptions
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural);
    --  Adds title "Exceptions"
 
    procedure Process_Footer
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor);
    --  Will call the output subprogram to create the footer of
@@ -377,9 +376,10 @@ package body Docgen.Work_On_Source is
    --  Begin: if Comments_Before is True.
    --  End: if Comments_Before is False.
 
-   function Get_Next_Location (Text            : in String;
-                               Old_Location    : in Natural;
-                               Comments_Before : in Boolean) return Natural;
+   function Get_Next_Location
+     (Text            : in String;
+      Old_Location    : in Natural;
+      Comments_Before : in Boolean) return Natural;
    --  Return the index in Text which correspond to the previous or the next
    --  new line. The search begin to the old location of new line.
    --  Previous: if Comments_Before is True.
@@ -389,7 +389,7 @@ package body Docgen.Work_On_Source is
      (Text            : in String;
       Location        : in Natural;
       Comments_Before : in Boolean) return String;
-   --  Return the line of Test which starts (if Comments_Before is False) or
+   --  Return the line of Text which starts (if Comments_Before is False) or
    --  ends (if Comments_Before is True) at Location.
 
    function Extract_Comment
@@ -462,7 +462,7 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Source
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
@@ -601,7 +601,7 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Source_Spec
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
       Source_File_List          : in out Type_Source_File_Table.HTable;
@@ -813,7 +813,7 @@ package body Docgen.Work_On_Source is
    -----------------------
 
    procedure Process_Open_File
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Package_Name     : String) is
@@ -826,7 +826,7 @@ package body Docgen.Work_On_Source is
    ---------------------------
 
    procedure Process_One_Body_File
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       List_Ref_In_File : in out List_Reference_In_File.List;
@@ -847,7 +847,7 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Unit_Index
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options;
@@ -906,7 +906,7 @@ package body Docgen.Work_On_Source is
    ------------------------------
 
    procedure Process_Subprogram_Index
-     (B                             : access Docgen_Backend.Backend'Class;
+     (B                             : access Docgen.Backend.Backend'Class;
       Kernel                        : access Kernel_Handle_Record'Class;
       Subprogram_Index_List         : Type_Entity_List.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
@@ -983,7 +983,7 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Type_Index
-     (B                       : access Docgen_Backend.Backend'Class;
+     (B                       : access Docgen.Backend.Backend'Class;
       Kernel                  : access Kernel_Handle_Record'Class;
       Type_Index_List         : Docgen.Type_Entity_List.List;
       Private_Type_Index_List : in out Type_Entity_List.List;
@@ -1057,7 +1057,7 @@ package body Docgen.Work_On_Source is
    -------------------------------
 
    procedure Process_Tagged_Type_Index
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Tagged_Type_Index_List    : Docgen.List_Entity_Information.List;
       Private_Tagged_Types_List : in out List_Entity_Information.List;
@@ -1209,7 +1209,7 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Header
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Entity_List       : in out Type_Entity_List.List;
@@ -1267,7 +1267,7 @@ package body Docgen.Work_On_Source is
    ------------------------------
 
    procedure Process_Header_Private
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural) is
@@ -1283,7 +1283,7 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Footer
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor) is
    begin
@@ -1295,7 +1295,7 @@ package body Docgen.Work_On_Source is
    ---------------------------------
 
    procedure Process_Package_Description
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Text             : String;
@@ -1344,7 +1344,7 @@ package body Docgen.Work_On_Source is
    --------------------------
 
    procedure Process_With_Clause
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Parsed_List      : in out Construct_List;
@@ -1412,7 +1412,7 @@ package body Docgen.Work_On_Source is
    -----------------------------
 
    procedure Process_Header_Packages
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural) is
@@ -1425,7 +1425,7 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Description
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural;
@@ -1439,7 +1439,7 @@ package body Docgen.Work_On_Source is
    ----------------------
 
    procedure Process_Packages
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
       Parsed_List               : in out Construct_List;
@@ -1672,7 +1672,7 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Header_Vars
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural) is
@@ -1685,7 +1685,7 @@ package body Docgen.Work_On_Source is
    ------------------
 
    procedure Process_Vars
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Parsed_List      : in out Construct_List;
@@ -1807,7 +1807,7 @@ package body Docgen.Work_On_Source is
    -------------------------------
 
    procedure Process_Header_Exceptions
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural) is
@@ -1820,7 +1820,7 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Exceptions
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Parsed_List      : in out Construct_List;
@@ -1936,7 +1936,7 @@ package body Docgen.Work_On_Source is
    --------------------------
 
    procedure Process_Header_Types
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural) is
@@ -1949,7 +1949,7 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_One_Family
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
       Family           : List_Entity_Information.List;
@@ -1986,7 +1986,7 @@ package body Docgen.Work_On_Source is
    -------------------
 
    procedure Process_Types
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
       Parsed_List               : in out Construct_List;
@@ -2165,7 +2165,7 @@ package body Docgen.Work_On_Source is
    ----------------------------
 
    procedure Process_Header_Entries
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural) is
@@ -2179,7 +2179,7 @@ package body Docgen.Work_On_Source is
    ---------------------
 
    procedure Process_Entries
-     (B                  : access Docgen_Backend.Backend'Class;
+     (B                  : access Docgen.Backend.Backend'Class;
       Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Descriptor;
       Parsed_List        : in out Construct_List;
@@ -2296,7 +2296,7 @@ package body Docgen.Work_On_Source is
    --------------------------------
 
    procedure Process_Header_Subprograms
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Descriptor;
       Level             : in out Natural) is
@@ -2309,7 +2309,7 @@ package body Docgen.Work_On_Source is
    -------------------------------
 
    procedure Process_Caller_References
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Options           : All_Options;
       Doc_File          : File_Descriptor;
@@ -2349,7 +2349,7 @@ package body Docgen.Work_On_Source is
    ------------------------------
 
    procedure Process_Calls_References
-     (B                 : access Docgen_Backend.Backend'Class;
+     (B                 : access Docgen.Backend.Backend'Class;
       Kernel            : access Kernel_Handle_Record'Class;
       Options           : All_Options;
       Doc_File          : File_Descriptor;
@@ -2386,7 +2386,7 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Subprograms
-     (B                  : access Docgen_Backend.Backend'Class;
+     (B                  : access Docgen.Backend.Backend'Class;
       Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Descriptor;
       Parsed_List        : in out Construct_List;
@@ -2626,7 +2626,8 @@ package body Docgen.Work_On_Source is
       Line                : Natural;
       Header_Lines        : Natural;
       Package_Description : Boolean;
-      Options             : All_Options) return GNAT.OS_Lib.String_Access
+      Options             : All_Options)
+      return GNAT.OS_Lib.String_Access
    is
       use type Ada.Strings.Unbounded.Unbounded_String;
       Location : Natural;
@@ -2634,9 +2635,9 @@ package body Docgen.Work_On_Source is
       New_Line            : GNAT.OS_Lib.String_Access;
       Temp                : Natural;
    begin
-      --  Search of the index of the text which correspond to the comments
+      --  Search the index of the text which correspond to the comments
       --  that we must extract.
-      --  The search is done from the begin of the string Text.
+      --  The search is done from the beginning of the string Text.
       --  If the option Comments Above is false or if it's a package
       --  description, this index is the "new line" which ends the source code.
       --  Otherwise, this index is the begin of source code.
@@ -2656,16 +2657,15 @@ package body Docgen.Work_On_Source is
         (Get_Line_From_Location_And_String
            (File_Text,
             Location,
-            Options.Comments_Above
-            and not Package_Description));
+            Options.Comments_Above and not Package_Description));
 
       while Line_Is_Comment (New_Line.all) loop
          --  ??? if there's an empty line the search stop.
          --  It's necessary to write at least "--"
-         Location := Get_Next_Location (File_Text,
-                                        Location,
-                                        Options.Comments_Above
-                                        and not Package_Description);
+         Location := Get_Next_Location
+           (File_Text,
+            Location,
+            Options.Comments_Above and not Package_Description);
 
          if (not Options.Comments_Above) or Package_Description then
             if not (Options.Ignorable_Comments and then
@@ -2699,14 +2699,16 @@ package body Docgen.Work_On_Source is
          --  For memory: before, at each loop, Get_Line_From_String was
          --  called. This subprogram made a search from the begining of
          --  File_Text.
-         New_Line := new String'(Get_Line_From_Location_And_String
-                                   (File_Text,
-                                    Location,
-                                    Options.Comments_Above
-                                    and not Package_Description));
+         New_Line := new String'
+           (Get_Line_From_Location_And_String
+              (File_Text,
+               Location,
+               Options.Comments_Above
+               and not Package_Description));
       end loop;
 
       Free (New_Line);
+
       return new String'(Ada.Strings.Unbounded.To_String (Result_Line));
    end Extract_Comment;
 
@@ -2714,17 +2716,20 @@ package body Docgen.Work_On_Source is
    -- Get_Location_Start --
    ------------------------
 
-   function Get_Location_Start (Text            : in String;
-                                Line            : in Natural;
-                                Comments_Before : in Boolean) return Natural is
-      Lines     : Natural;
-      Index     : Natural;
-      Index_Line      : Natural;
+   function Get_Location_Start
+     (Text            : in String;
+      Line            : in Natural;
+      Comments_Before : in Boolean)
+      return Natural
+   is
+      Lines          : Natural;
+      Index          : Natural;
+      Index_Line     : Natural;
       Old_Index_Line : Natural;
    begin
-      Lines      := 1;
-      Index      := Text'First;
-      Index_Line := Index;
+      Lines          := 1;
+      Index          := Text'First;
+      Index_Line     := Index;
       Old_Index_Line := Index_Line;
 
       if Line > 1 then
@@ -2737,6 +2742,7 @@ package body Docgen.Work_On_Source is
             Index := Index + 1;
          end loop;
       end if;
+
       if Comments_Before then
          return Old_Index_Line;
       else
@@ -2751,8 +2757,9 @@ package body Docgen.Work_On_Source is
    function Get_Line_From_Location_And_String
      (Text            : in String;
       Location        : in Natural;
-      Comments_Before : in Boolean) return String is
-
+      Comments_Before : in Boolean)
+      return String
+   is
       Index_Start : Natural;
       Index_End   : Natural;
    begin
@@ -2760,11 +2767,13 @@ package body Docgen.Work_On_Source is
          if Location - 1 >= Text'First then
             Index_Start := Location - 1;
             Index_End   := Index_Start;
+
             while Index_End > Text'First
               and then Text (Index_End) /=  ASCII.LF
             loop
                Index_End := Index_End - 1;
             end loop;
+
             return Text (Index_End .. Index_Start + 1);
          else
             return "";
@@ -2790,9 +2799,12 @@ package body Docgen.Work_On_Source is
    -- Get_Next_Location --
    -----------------------
 
-   function Get_Next_Location (Text            : in String;
-                               Old_Location    : in Natural;
-                               Comments_Before : in Boolean) return Natural is
+   function Get_Next_Location
+     (Text            : in String;
+      Old_Location    : in Natural;
+      Comments_Before : in Boolean)
+      return Natural
+   is
       Index : Natural;
    begin
       if Comments_Before then

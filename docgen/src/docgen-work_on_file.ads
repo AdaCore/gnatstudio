@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,11 +23,12 @@
 --  list passed by the procedure Docgen.
 
 with Glide_Kernel;
+with Docgen.Backend;
 
 package Docgen.Work_On_File is
 
    procedure Process_Files
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options);

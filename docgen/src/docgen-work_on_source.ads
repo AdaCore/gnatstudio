@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -40,11 +40,12 @@
 
 with VFS;
 with Glide_Kernel;
+with Docgen.Backend;
 
 package Docgen.Work_On_Source is
 
    procedure Process_Source
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Doc_File                  : File_Descriptor;
@@ -79,7 +80,7 @@ package Docgen.Work_On_Source is
    --  each inner package
 
    procedure Process_Unit_Index
-     (B                : access Docgen_Backend.Backend'Class;
+     (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options;
@@ -87,7 +88,7 @@ package Docgen.Work_On_Source is
    --  Create the index file for the packages
 
    procedure Process_Subprogram_Index
-     (B                             : access Docgen_Backend.Backend'Class;
+     (B                             : access Docgen.Backend.Backend'Class;
       Kernel                        : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Subprogram_Index_List         : Docgen.Type_Entity_List.List;
@@ -99,7 +100,7 @@ package Docgen.Work_On_Source is
    --  Private_Subprogram_Index_List : list of private subprograms.
 
    procedure Process_Type_Index
-     (B                       : access Docgen_Backend.Backend'Class;
+     (B                       : access Docgen.Backend.Backend'Class;
       Kernel                  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Type_Index_List         : Docgen.Type_Entity_List.List;
       Private_Type_Index_List : in out Type_Entity_List.List;
@@ -110,7 +111,7 @@ package Docgen.Work_On_Source is
    --  Private_Type_Index_List : list of private types.
 
    procedure Process_Tagged_Type_Index
-     (B                         : access Docgen_Backend.Backend'Class;
+     (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Tagged_Type_Index_List    : List_Entity_Information.List;
