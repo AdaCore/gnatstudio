@@ -317,7 +317,7 @@ package body Help_Module is
    procedure Command_Handler
      (Data    : in out Callback_Data'Class; Command : String) is
    begin
-      if Command = "html_browse" then
+      if Command = "browse" then
          Name_Parameters (Data, Help_Cmd_Parameters);
          Open_HTML_File
            (Get_Kernel (Data),
@@ -1021,7 +1021,7 @@ package body Help_Module is
       end if;
 
       if D.Enable_Navigation then
-         Args (1) := new String'("html_browse");
+         Args (1) := new String'("HTML.browse");
          Args (2) := new String'(Full_Name (D.File).all);
          Args (3) := new String'(D.Anchor);
 
@@ -1279,6 +1279,8 @@ package body Help_Module is
       Mitem : Gtk_Menu_Item;
       Recent_Menu_Item : Gtk_Menu_Item;
       Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
+      Html_Class : constant Class_Type := New_Class
+        (Kernel, "HTML", -"Interface to the help system and html browser");
 
    begin
       Help_Module_ID := new Help_Module_ID_Record;
@@ -1340,11 +1342,13 @@ package body Help_Module is
 
       Register_Command
         (Kernel,
-         Command      => "html_browse",
+         Command      => "browse",
          Params       => Parameter_Names_To_Usage (Help_Cmd_Parameters, 1),
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Class        => Html_Class,
+         Static_Method => True,
          Handler      => Command_Handler'Access);
       Register_Command
         (Kernel,
@@ -1353,6 +1357,8 @@ package body Help_Module is
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => Add_Doc_Cmd_Parameters'Length,
          Maximum_Args => Add_Doc_Cmd_Parameters'Length,
+         Class        => Html_Class,
+         Static_Method => True,
          Handler      => Command_Handler'Access);
 
       declare
