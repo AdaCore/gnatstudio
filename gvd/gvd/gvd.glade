@@ -4887,6 +4887,7 @@ read or written
 	<widget>
 	  <class>GtkRadioButton</class>
 	  <name>jdb_button</name>
+	  <sensitive>False</sensitive>
 	  <can_focus>True</can_focus>
 	  <signal>
 	    <name>toggled</name>

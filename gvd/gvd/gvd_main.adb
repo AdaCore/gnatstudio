@@ -198,7 +198,6 @@ procedure GVD_Main is
       Put_Line ("   gvd [options...] executable-file");
       Put_Line ("Options:");
       Put_Line ("   --log-level [0-4] Set level of logging (Default is 3).");
-      Put_Line ("   --jdb             Invoke JDB as inferior debugger.");
       Put_Line ("   --host HOST       Run inferior debugger on HOST.");
       Put_Line ("   --tty             Use controlling tty as additional " &
                 "debugger console.");
@@ -239,7 +238,7 @@ begin
    end;
 
    loop
-      case Getopt ("-tty fullname -jdb -version -help -host: -log-level:") is
+      case Getopt ("-tty fullname -version -help -host: -log-level:") is
          -- long option names --
          when '-' =>
 

@@ -1078,7 +1078,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Button := Message_Dialog
         ("GVD " & Version &
          (-(": The GNU Visual Debugger" & ASCII.LF & ASCII.LF &
-            "by Emmanuel Briot & Arnaud Charlet")),
+            "by Emmanuel Briot & Arnaud Charlet" & ASCII.LF & ASCII.LF &
+            "(c) 2000 ACT-Europe")),
          Help_Msg =>
            -("This is the About information box." & ASCII.LF & ASCII.LF &
              "Click on the OK button to close this window."),
