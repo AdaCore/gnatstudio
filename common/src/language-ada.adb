@@ -460,13 +460,7 @@ package body Language.Ada is
                return Line (Line'First .. Index - 1) &
                  Line (Index + 3 .. Line'Last);
             else
-               if Clean then
-                  Local_Index := Index + 2;
-                  Skip_Blanks (Line, Local_Index);
-                  return Line (Local_Index .. Line'Last);
-               end if;
-               return Line (Line'First .. Index - 1) &
-                 Line (Index + 2 .. Line'Last);
+               return Line (Index + 2 .. Line'Last);
             end if;
          end if;
 
