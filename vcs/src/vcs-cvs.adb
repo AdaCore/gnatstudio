@@ -268,7 +268,7 @@ package body VCS.CVS is
          end loop;
 
          Temp_Args := New_Command.Args;
-         Free (Temp_Args);
+         String_List.Free (Temp_Args);
 
          Change_Dir (Old_Dir);
 
