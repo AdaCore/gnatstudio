@@ -27,7 +27,6 @@
 --     ".by" : Same information as the ".to" table
 --     ".com": Used for Fortran common blocks only
 --     ".cov": Used for Fortran common variables only
---     ".f"  : Used to describe source navigator's project files
 --     ".rem": Used for comments/remarks
 --     ".su" : Used for Fortran subroutines
 
