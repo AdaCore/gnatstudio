@@ -1436,7 +1436,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
                Set_Valid (Entity);
                Size_Request
                  (Entity.all,
-                  Create_Drawing_Context (Debugger.Data_Canvas, Pixmap));
+                  Create_Tooltip_Drawing_Context
+                  (Debugger.Data_Canvas, Pixmap));
 
                Width := Gint'Min
                  (Max_Tooltip_Width, Get_Width (Entity.all) + 4);
@@ -1461,7 +1462,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
                return;
             end if;
 
-            Context := Create_Drawing_Context
+            Context := Create_Tooltip_Drawing_Context
               (Debugger.Data_Canvas, Null_Pixmap);
             Chars_Per_Line :=
               Max_Tooltip_Width / Char_Width (Context.Font, Character'('m'));
@@ -1488,7 +1489,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       if Width /= 0 and then Height /= 0 then
          Gdk.Pixmap.Gdk_New
            (Pixmap, Get_Window (Debugger.Window), Width, Height);
-         Context := Create_Drawing_Context (Debugger.Data_Canvas, Pixmap);
+         Context := Create_Tooltip_Drawing_Context
+           (Debugger.Data_Canvas, Pixmap);
 
          Draw_Rectangle
            (Pixmap,
