@@ -40,9 +40,9 @@ New features in GPS 2.0.0
 
 - CB13-017 Improved handling of C++ classes in the Entity Browser
 
-- CB14-004 New menu Make->All mains
-  GPS now provides via the menus 'Make->Project' and 'Make->All mains' the
-  ability to either compile all files from the project, or to compile
+- CB14-004 New menu Make->All
+  GPS now provides via the menus 'Make->Compile all sources' and 'Make->All'
+  the ability to either compile all files from the project, or to compile
   and link all main units in a given project.
 
 - Python interpreter
