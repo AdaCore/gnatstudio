@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 1.2.0
 
+- Switching files sometimes generates a Constraint_Error
+  Problem:    From time to time, when you switch to a file whose number of
+              lines is smaller than the line currently highlighted in the
+              source editor, a Constraint_Error was raised
+  Workaround: In the preferences, deactive the "Highlight current line" button.
+
 - Selecting a non-existent file in Open Source generates a bug box
   Problem:    When entering a non-existent file in the File->Open Source
               dialog, GVD generates a bug box.
