@@ -2812,6 +2812,15 @@ package body Prj_API is
             Delete_Direct_References => False);
    end Remove_Value;
 
+   ------------------
+   -- Project_Name --
+   ------------------
+
+   function Project_Name (Project_View : Project_Id) return String is
+   begin
+      return Get_Name_String (Projects.Table (Project_View).Name);
+   end Project_Name;
+
 begin
    Namet.Initialize;
    Csets.Initialize;

@@ -118,6 +118,9 @@ package Prj_API is
    --  The project is also registered, so that it can be retrieved from one of
    --  its view.
 
+   function Project_Name (Project_View : Project_Id) return String;
+   --  Return the name of the project.
+
    procedure Rename
      (Root_Project : Project_Node_Id;
       Project      : Project_Node_Id;
