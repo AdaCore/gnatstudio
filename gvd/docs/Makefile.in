@@ -9,13 +9,20 @@ MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 IMAGES = assembly.gif canvas.gif explorer.gif memory-view.gif tasks.gif \
-breakpoints.gif colors.gif main-window.gif process.gif tooltips.gif
+	breakpoints.gif colors.gif main-window.gif process.gif tooltips.gif \
+	call-stack.gif
 
-all: doc clean-temp-files
+all: stamp-eps doc clean-temp-files
 non-ps: common clean-temp-files
 static:
 
 doc: gvd.txt gvd.html gvd.info gvd.ps
+
+stamp-eps: $(IMAGES)
+	@-for img in $(IMAGES); do \
+	  convert -compress rle $${img} `basename $${img} .gif`.eps; \
+	done
+	touch stamp-eps
 
 gvd.html: gvd.texi
 ifneq (${TEXI2HTML},)
@@ -88,7 +95,7 @@ clean-temp-files:
 
 clean: clean-temp-files
 	-$(RM) gvd.info*
-	-$(RM) gvd.html gvd.ps gvd.txt
+	-$(RM) gvd.html gvd.ps gvd.txt *.eps stamp-*
 
 mostlyclean: clean
 
