@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,9 +38,6 @@ with Ada.Unchecked_Deallocation;
 package body Socket_Module is
 
    Me : constant Debug_Handle := Create ("Socket_Module");
-
-   GPS_Port : constant := 50000;
-   --  <preferences>
 
    Max_Number_Of_Reads : constant := 128;
 
@@ -308,7 +305,14 @@ package body Socket_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Register_Module (Kernel, Default_GPS_Port);
+   end Register_Module;
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Port   : Natural)
    is
       T : Timeout_Handler_Id;
       pragma Unreferenced (T);
@@ -324,7 +328,7 @@ package body Socket_Module is
 
       --  Get a socket address that is an Internet address and a port
 
-      Socket_Module (Socket_Module_ID).Address.Port := GPS_Port;
+      Socket_Module (Socket_Module_ID).Address.Port := Port_Type (Port);
 
       --  Create the server socket.
       Create_Socket (Socket_Module (Socket_Module_ID).Server);

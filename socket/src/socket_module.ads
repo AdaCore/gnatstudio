@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -26,9 +26,17 @@ package Socket_Module is
 
    Socket_Module_ID   : Glide_Kernel.Module_ID;
    Socket_Module_Name : constant String := "Socket";
+   Default_GPS_Port   : constant := 50000;
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
+   --  This will open a socket on port Default_GPS_Port for external
+   --  interaction with the GPS shell.
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Port   : Natural);
+   --  Same as above, but specify an alternate port number.
 
 end Socket_Module;
