@@ -29,7 +29,6 @@ with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
@@ -138,10 +137,8 @@ package body VCS_View_Pkg is
    -- Local subprograms --
    -----------------------
 
-   procedure Get_Status
-     (Explorer : VCS_View_Access;
-      Files    : String_List.List);
-   --  Updates the status for Files.
+   procedure Refresh (Explorer : VCS_View_Access);
+   --  ???
 
    procedure Open_Files
      (Explorer : VCS_View_Access;
@@ -280,22 +277,105 @@ package body VCS_View_Pkg is
       end if;
    end Launch_Editor;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Explorer : VCS_View_Access) is
+   begin
+      if Explorer /= null then
+         Clear (Explorer.Model);
+         File_Status_List.Free (Explorer.Stored_Status);
+      end if;
+   end Clear;
+
+   --------------
+   --  Refresh --
+   --------------
+
+   procedure Refresh (Explorer : VCS_View_Access) is
+      use File_Status_List;
+      L        : File_Status_List.List := Explorer.Stored_Status;
+      Iter     : Gtk_Tree_Iter;
+      Success  : Boolean;
+   begin
+      while not Is_Empty (L) loop
+         Append (Explorer.Model, Iter, Null_Iter);
+
+         if not Explorer.Show_All
+           and then (Head (L).Status /= Unknown
+                     or else Head (L).Status /= Up_To_Date)
+         then
+            Fill_Info (Explorer, Iter, Head (L), False, Success);
+
+            if not Success then
+               Remove (Explorer.Model, Iter);
+            end if;
+         end if;
+
+         L := Next (L);
+      end loop;
+
+      Columns_Autosize (Explorer.Tree);
+   end Refresh;
+
    -------------------------
    -- Display_File_Status --
    -------------------------
 
    procedure Display_File_Status
-     (Kernel : Kernel_Handle;
-      Status : File_Status_List.List)
+     (Kernel         : Kernel_Handle;
+      Status         : File_Status_List.List;
+      Override_Cache : Boolean)
    is
       use File_Status_List;
 
       Child    : MDI_Child
         := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
       Explorer : VCS_View_Access;
-      L        : File_Status_List.List := Status;
-      Iter     : Gtk_Tree_Iter;
-      Success  : Boolean;
+
+      Cache_Temp    : File_Status_List.List;
+      Status_Temp   : File_Status_List.List := Status;
+
+      Found         : Boolean := False;
+
+      function Copy_File_Status
+        (F : in File_Status_Record) return File_Status_Record;
+
+      function Copy_String_List
+        (S : in String_List.List) return String_List.List;
+
+      function Copy_String_List
+        (S : in String_List.List) return String_List.List
+      is
+         use String_List;
+         Result : String_List.List;
+         Temp   : String_List.List := S;
+      begin
+         while not Is_Empty (Temp) loop
+            Prepend (Result, Head (Temp));
+            Temp := Next (Temp);
+         end loop;
+
+         Rev (Result);
+         return Result;
+      end Copy_String_List;
+
+      function Copy_File_Status
+        (F : in File_Status_Record) return File_Status_Record
+      is
+         Result : File_Status_Record;
+      begin
+         Result.File_Name := Copy_String_List (F.File_Name);
+         Result.Working_Revision := Copy_String_List (F.Working_Revision);
+         Result.Repository_Revision
+           := Copy_String_List (F.Repository_Revision);
+         Result.Tags := Copy_String_List (F.Tags);
+         Result.Users := Copy_String_List (F.Users);
+         Result.Status := F.Status;
+         return Result;
+      end Copy_File_Status;
+
    begin
       if Child = null then
          return;
@@ -303,20 +383,52 @@ package body VCS_View_Pkg is
          Explorer := VCS_View_Access (Get_Widget (Child));
       end if;
 
-      Clear (Explorer.Model);
+      while not Is_Empty (Status_Temp) loop
+         Cache_Temp := Explorer.Cached_Status;
+         Found      := False;
 
-      while not Is_Empty (L) loop
-         Append (Explorer.Model, Iter, Null_Iter);
-         Fill_Info (Explorer, Iter, Head (L), False, Success);
+         while not Found
+           and then not Is_Empty (Cache_Temp)
+         loop
+            if String_List.Head (Head (Status_Temp).File_Name)
+              = String_List.Head (Head (Cache_Temp).File_Name)
+            then
+               --  We have found an entry in the cache with the corresponding
+               --  information.
 
-         if not Success then
-            Remove (Explorer.Model, Iter);
+               if Override_Cache then
+                  --  Enter the new file information into the cache.
+
+                  if String_List.Is_Empty (Head (Status_Temp).File_Name) then
+                     Put_Line ("neuneu eh !!");
+                  end if;
+
+                  Replace_Head (Cache_Temp,
+                                Copy_File_Status (Head (Status_Temp)));
+               end if;
+
+               Prepend (Explorer.Stored_Status,
+                        Copy_File_Status (Head (Cache_Temp)));
+
+               Found := True;
+            end if;
+
+            Cache_Temp := Next (Cache_Temp);
+         end loop;
+
+         --  If the status for this file was not found in the cache,
+         --  add the information to the cache.
+         if not Found then
+            Prepend (Explorer.Cached_Status,
+                     Copy_File_Status (Head (Status_Temp)));
+            Prepend (Explorer.Stored_Status,
+                     Copy_File_Status (Head (Status_Temp)));
          end if;
 
-         L := Next (L);
+         Status_Temp := Next (Status_Temp);
       end loop;
 
-      Columns_Autosize (Explorer.Tree);
+      Refresh (Explorer);
    end Display_File_Status;
 
    -------------------------
@@ -727,40 +839,6 @@ package body VCS_View_Pkg is
    end Diff_Files;
 
    ----------------
-   -- Get_Status --
-   ----------------
-
-   procedure Get_Status
-     (Explorer : VCS_View_Access;
-      Files    : String_List.List) is
-   begin
-      Get_Status (Explorer.VCS_Ref, Files);
-   end Get_Status;
-
-   ----------------------
-   -- Update_File_List --
-   ----------------------
-
-   procedure Update_File_List
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access) is
-   begin
-      pragma Assert (Ref /= null);
-
-      Push_Message (Kernel, Verbose, -"Updating files:");
-      Display_String_List (Kernel, Files, Verbose);
-      Update (Ref, Files);
-
-      --  If the dialog exists, then update the status for the files.
-
-      if Explorer /= null then
-         Get_Status (Explorer, Files);
-      end if;
-   end Update_File_List;
-
-   ----------------
    -- Open_Files --
    ----------------
 
@@ -862,23 +940,29 @@ package body VCS_View_Pkg is
       Text_Rend     : Gtk_Cell_Renderer_Text;
       Editable_Rend : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
-      Toggle_Rend   : Gtk_Cell_Renderer_Toggle;
       Dummy         : Gint;
 
    begin
       Gtk_New (Text_Rend);
       Gtk_New (Editable_Rend);
-      Gtk_New (Toggle_Rend);
       Gtk_New (Pixbuf_Rend);
 
       Set_Rules_Hint (Explorer.Tree, True);
 
       Gtk_New (Col);
-      Set_Title (Col, -"Local file name");
+      Set_Title (Col, -"Status");
       Pack_Start (Col, Pixbuf_Rend, False);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Status_Pixbuf_Column);
+      Set_Clickable (Col, True);
+      Set_Sort_Column_Id (Col, Status_Description_Column);
+      Dummy := Append_Column (Explorer.Tree, Col);
+
+      Gtk_New (Col);
+      Set_Title (Col, -"Local file name");
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
+      Set_Clickable (Col, True);
+      Set_Sort_Column_Id (Col, Base_Name_Column);
       Dummy := Append_Column (Explorer.Tree, Col);
 
       Gtk_New (Col);
@@ -929,12 +1013,9 @@ package body VCS_View_Pkg is
       Init_Graphics;
 
       VCS_View := new VCS_View_Record;
-      VCS_View.VCS_Ref := Ref;
       VCS_View.Kernel := Kernel;
 
       VCS_View_Pkg.Initialize (VCS_View);
-
-      --  Show_Files (VCS_View, "", Ref);
    end Gtk_New;
 
    ------------------
