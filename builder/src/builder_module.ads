@@ -24,6 +24,7 @@ with Glide_Kernel;
 with Gtk.Menu;
 with Gtk.Menu_Item;
 with String_List_Utils;
+with Projects;
 
 package Builder_Module is
 
@@ -37,12 +38,16 @@ package Builder_Module is
       --  The build menu, updated automatically every time the list of main
       --  units changes.
 
+      Last_Project_For_Menu : Projects.Project_Type;
+      --  Project used to fill the Run_Menu and Make_Menu
+
       Output     : String_List_Utils.String_List.List;
       --  The last build output.
    end record;
    --  Data stored with the module id.
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
+
 
    Builder_Module_Name : constant String := "Builder";
 

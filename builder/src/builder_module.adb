@@ -28,6 +28,7 @@ with Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Accel_Map;             use Gtk.Accel_Map;
 
 with Glide_Intl;                use Glide_Intl;
 
@@ -57,6 +58,7 @@ with GVD.Dialogs;               use GVD.Dialogs;
 with String_Utils;              use String_Utils;
 with String_List_Utils;
 with GUI_Utils;                 use GUI_Utils;
+with System;
 
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
@@ -86,6 +88,18 @@ package body Builder_Module is
    --  The key in the history for the check button "run in external terminal"
 
    Builder_Category : constant String := "Builder Results";
+
+   Make_Menu_Prefix : constant String := "<gps>/Build/Make/";
+   Run_Menu_Prefix : constant String := "<gps>/Build_Run/";
+   --  Prefixes used in the accel path for the various menus
+
+   Custom_Make_Suffix : constant String := "Custom...";
+   Current_Make_Suffix : constant String := "<current file>";
+   Project_Make_Suffix : constant String := "Project";
+   --  Name for various menus (need to be translated through)
+   --      -"Custom..."
+   --      -"<current file>"
+   --      -"Project"
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
@@ -177,6 +191,9 @@ package body Builder_Module is
    procedure Preferences_Changed
      (K : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the preferences have changed.
+
+   procedure Cleanup_Accel_Map (Kernel : access Kernel_Handle_Record'Class);
+   --  Remove from the accel_map the key bindings set for previous projects
 
    --------------------
    -- Menu Callbacks --
@@ -1285,7 +1302,6 @@ package body Builder_Module is
       Mains : Argument_List := Get_Attribute_Value
         (Project, Attribute => Main_Attribute);
       Mitem        : Gtk_Menu_Item;
-      Has_Child    : Boolean := False;
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
@@ -1310,32 +1326,42 @@ package body Builder_Module is
               (Project => Project,
                File    => Create (Mains (M).all, Project)));
 
-         --  The first item in the make menu should have a key binding
-         if Set_Shortcut
-           and then not Has_Child
-         then
-            Add_Accelerator
-              (Mitem, "activate", Get_Default_Accelerators (Kernel),
-               GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
-            Builder_Module.Build_Item := Mitem;
-            Has_Child := True;
+         declare
+            Accel_Path : constant String := Make_Menu_Prefix
+              & Executables_Directory (Project) & Mains (M).all;
+            Key : Gtk_Accel_Key;
+            Found : Boolean;
+         begin
+            Set_Accel_Path (Mitem, Accel_Path, Group);
 
-         else
-            --  ??? F4 key binding is no longer taken into account if the
-            --  following line is called systematically:
-            Set_Accel_Path (Mitem, "<gps>/Build/Make/" & Mains (M).all, Group);
-         end if;
+            --  The first item in the make menu should have a key binding
+            if Set_Shortcut
+              and then M = Mains'First
+            then
+               Lookup_Entry
+                 (Accel_Path => Accel_Path,
+                  Key        => Key,
+                  Found      => Found);
+
+               if not Found or else Key.Accel_Key = 0 then
+                  Change_Entry
+                    (Accel_Path => Accel_Path,
+                     Accel_Key  => GDK_F4,
+                     Accel_Mods => 0,
+                     Replace    => False);
+               end if;
+
+               Builder_Module.Build_Item := Mitem;
+            end if;
+         end;
       end loop;
 
-      --  ??? gtk+ bug: mitem is created with a refcount of 2, and therefore
-      --  never destroyed later on. As a result, the keybinding will remaining
-      --  active for the whole life of GPS.
-
-      Gtk_New (Mitem, -"Project");
+      Gtk_New (Mitem, -Project_Make_Suffix);
       Append (Menu, Mitem);
 
       if Set_Shortcut then
-         Set_Accel_Path (Mitem, "<gps>/Build/Make/Project", Group);
+         Set_Accel_Path
+           (Mitem, -Make_Menu_Prefix & (-Project_Make_Suffix), Group);
       end if;
 
       File_Project_Cb.Object_Connect
@@ -1379,7 +1405,7 @@ package body Builder_Module is
          begin
             Gtk_New (Mitem, Exec);
             Append (Menu, Mitem);
-            Set_Accel_Path (Mitem, "<gps>/Build/Run/" & Exec, Group);
+            Set_Accel_Path (Mitem, -Run_Menu_Prefix & Exec, Group);
             File_Project_Cb.Object_Connect
               (Mitem, "activate",
                File_Project_Cb.To_Marshaller (On_Run'Access),
@@ -1391,6 +1417,59 @@ package body Builder_Module is
          end;
       end loop;
    end Add_Run_Menu;
+
+   -----------------------
+   -- Cleanup_Accel_Map --
+   -----------------------
+
+   procedure Cleanup_Accel_Map (Kernel : access Kernel_Handle_Record'Class) is
+      pragma Unreferenced (Kernel);
+
+      procedure Cleanup_Binding
+        (Data       : System.Address;
+         Accel_Path : String;
+         Accel_Key  : Gdk.Types.Gdk_Key_Type;
+         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
+         Changed    : Boolean);
+      --  Remove one specific binding if necessary
+
+      procedure Cleanup_Binding
+        (Data       : System.Address;
+         Accel_Path : String;
+         Accel_Key  : Gdk.Types.Gdk_Key_Type;
+         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
+         Changed    : Boolean)
+      is
+         pragma Unreferenced (Data, Accel_Key, Accel_Mods, Changed);
+      begin
+         --  We reset the entries to "" so that two keybindings with the same
+         --  name don't appear in the list.
+         if Accel_Path'Length > Make_Menu_Prefix'Length
+           and then Accel_Path
+             (Accel_Path'First ..
+                  Accel_Path'First + Make_Menu_Prefix'Length - 1) =
+               Make_Menu_Prefix
+           and then Accel_Path /= Make_Menu_Prefix & Custom_Make_Suffix
+           and then Accel_Path /= Make_Menu_Prefix & Current_Make_Suffix
+           and then Accel_Path /= Make_Menu_Prefix & Project_Make_Suffix
+         then
+            Change_Entry (Accel_Path, 0, 0, True);
+
+         elsif Accel_Path'Length > Run_Menu_Prefix'Length
+           and then Accel_Path
+             (Accel_Path'First ..
+                  Accel_Path'First + Run_Menu_Prefix'Length - 1) =
+               Run_Menu_Prefix
+           and then Accel_Path /= Run_Menu_Prefix & Custom_Make_Suffix
+         then
+            Change_Entry (Accel_Path, 0, 0, True);
+         end if;
+      end Cleanup_Binding;
+
+   begin
+      Gtk.Accel_Map.Foreach
+        (System.Null_Address, Cleanup_Binding'Unrestricted_Access);
+   end Cleanup_Accel_Map;
 
    ---------------------
    -- On_View_Changed --
@@ -1408,6 +1487,14 @@ package body Builder_Module is
       Menu2 : Gtk_Menu renames Builder_Module.Run_Menu;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
    begin
+      --  Free the previous shortcuts if needed. We only keep the ones from
+      --  the current project, to avoid an ever expending custom_keys file,
+      --  and to limit the change of a duplicate key binding appearing in the
+      --  menu.
+      if Builder_Module.Last_Project_For_Menu /= Get_Project (Kernel) then
+         Cleanup_Accel_Map (Kernel);
+      end if;
+
       --  Only add the shortcuts for the root project
       --  Special case: if the root project is an extending project (which is
       --  the case as soon as one of the other projects in the hierarchy is
@@ -1443,9 +1530,10 @@ package body Builder_Module is
 
       --  No main program ?
 
-      Gtk_New (Mitem, -"<current file>");
+      Gtk_New (Mitem, -Current_Make_Suffix);
       Append (Menu1, Mitem);
-      Set_Accel_Path (Mitem, "<gps>/Build/Make/<current file>", Group);
+      Set_Accel_Path
+        (Mitem, -Make_Menu_Prefix & (-Current_Make_Suffix), Group);
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
          File_Project_Cb.To_Marshaller (On_Build'Access),
@@ -1461,7 +1549,7 @@ package body Builder_Module is
          Builder_Module.Build_Item := Mitem;
       end if;
 
-      Gtk_New (Mitem, -"Custom...");
+      Gtk_New (Mitem, -Custom_Make_Suffix);
       Append (Menu1, Mitem);
       --  ??? F9 key binding is no longer taken into account if the following
       --  line is commented out:
@@ -1475,9 +1563,10 @@ package body Builder_Module is
 
       --  Should be able to run any program
 
-      Gtk_New (Mitem, -"Custom...");
+      Gtk_New (Mitem, -Custom_Make_Suffix);
       Append (Menu2, Mitem);
-      Set_Accel_Path (Mitem, "<gps>/Build/Run/Custom...", Group);
+               Set_Accel_Path
+                 (Mitem, -(Run_Menu_Prefix) & (-Custom_Make_Suffix), Group);
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
          File_Project_Cb.To_Marshaller (On_Run'Access),
