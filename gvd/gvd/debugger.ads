@@ -182,10 +182,13 @@ package Debugger is
    --  Parse the type definition for Entity, and return a
    --  tree as explained in Generic_Values.
 
+   type Value_Format is (Default_Format, Decimal, Binary, Hexadecimal, Octal);
+
    procedure Parse_Value
      (Debugger    : access Debugger_Root'Class;
       Entity      : String;
       Value       : in out Items.Generic_Type_Access;
+      Format      : Value_Format := Default_Format;
       Value_Found : out Boolean);
    --  Parse the value of Entity.
    --  Value should contain the result of Parse_Type when this procedure is
@@ -251,12 +254,10 @@ package Debugger is
      (Debugger : access Debugger_Root) return String is abstract;
    --  Return the command to be used to display the value of registers
 
-   type Value_Format is (Decimal, Binary, Hexadecimal, Octal);
-
    function Value_Of
      (Debugger : access Debugger_Root;
       Entity   : String;
-      Format   : Value_Format := Decimal) return String is abstract;
+      Format   : Value_Format := Default_Format) return String is abstract;
    --  Return the value of the entity.
    --  GDB_COMMAND: "print"
    --  JDB_COMMAND: "dump"
