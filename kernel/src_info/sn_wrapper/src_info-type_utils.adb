@@ -269,8 +269,8 @@ package body Src_Info.Type_Utils is
       HTTypedef : Typedef_Entry;
       Key       : SN.String_Access;
       Seek_Key  : SN.String_Access;
-   begin
 
+   begin
       Success := False;
 
       if not Is_Open (SN_Table (T)) then
@@ -341,7 +341,7 @@ package body Src_Info.Type_Utils is
    exception
       when  DB_Error |   -- non-existent table
             Not_Found => -- missed, fall thru'
-         null;
+         Success := False;
    end Find_Original_Type;
 
    ----------------
@@ -379,10 +379,11 @@ package body Src_Info.Type_Utils is
 
       Desc.Kind := Record_Type;
       Success := True;
+
    exception
       when  DB_Error |   -- non-existent table
             Not_Found => -- missed, fall thru'
-         null;
+         Success := False;
    end Find_Class;
 
    ----------------
@@ -423,7 +424,7 @@ package body Src_Info.Type_Utils is
    exception
       when  DB_Error |   -- non-existent table
             Not_Found => -- missed, fall thru'
-         null;
+         Success := False;
    end Find_Union;
 
    ---------------
@@ -466,7 +467,7 @@ package body Src_Info.Type_Utils is
    exception
       when  DB_Error |   -- non-existent table
             Not_Found => -- missed, fall thru'
-         null;
+         Success := False;
    end Find_Enum;
 
    -------------------
