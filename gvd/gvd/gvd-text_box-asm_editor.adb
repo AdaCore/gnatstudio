@@ -169,9 +169,16 @@ package body Odd.Asm_Editors is
       Low_Range, High_Range : String_Access;
 
    begin
+      Set_Busy_Cursor (Process, True);
+
       Editor.Current_Range := Find_In_Cache (Editor, Pc);
 
       if Editor.Current_Range = null then
+         Set_Buffer (Editor, new String'(-"Getting assembly code..."),
+                     Clear_Previous => False);
+         Editor.Highlight_Start := 0;
+         Update_Child (Editor);
+
          Get_Machine_Code
            (Process.Debugger,
             Range_Start     => Start,
@@ -199,6 +206,7 @@ package body Odd.Asm_Editors is
       Set_Buffer (Editor, Editor.Current_Range.Data, Clear_Previous => False);
       Editor.Highlight_Start := 0;
       Update_Child (Editor);
+      Set_Busy_Cursor (Process, False);
    end On_Frame_Changed;
 
    -----------------------
