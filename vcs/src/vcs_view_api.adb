@@ -153,6 +153,7 @@ package body VCS_View_API is
 
    procedure Commit_Files
      (Kernel : Kernel_Handle;
+      Ref    : VCS_Access;
       Files  : String_List.List);
    --  ???
 
@@ -166,6 +167,22 @@ package body VCS_View_API is
    function String_Array_To_String_List
      (S : String_Id_Array) return String_List.List;
    --  Convenience function to make a string_list out of a String_Id_Array.
+
+   function Get_Current_Ref
+     (Kernel : Kernel_Handle)
+     return VCS_Access;
+   --  Return the VCS reference corresponding to the current context in Kernel.
+
+   ---------------------
+   -- Get_Current_Ref --
+   ---------------------
+
+   function Get_Current_Ref
+     (Kernel : Kernel_Handle)
+     return VCS_Access is
+   begin
+      return Get_Current_Ref (Get_Current_Context (Kernel));
+   end Get_Current_Ref;
 
    -------------------
    -- Check_Handler --
@@ -260,7 +277,7 @@ package body VCS_View_API is
       Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
 
    begin
-      Open_Explorer (Kernel);
+      Open_Explorer (Kernel, null);
       Get_Status (Ref, Files);
       String_List.Free (Files);
    end Get_Status;
@@ -449,7 +466,10 @@ package body VCS_View_API is
                      Set_File_Information
                        (File_Name,
                         Dir_Name (Original),
-                        Base_Name (Original));
+                        Base_Name (Original),
+                        Get_Project_From_File
+                          (Get_Project_View (Kernel),
+                           Base_Name (Original)));
 
                      Gtk_New (Item, Label => -"Commit file "
                               & Base_Name (Original));
@@ -626,8 +646,7 @@ package body VCS_View_API is
       File         : File_Selection_Context_Access;
       Status       : File_Status_List.List;
       Dirs         : String_List.List;
-      Ref          : constant VCS_Access :=
-        Get_Current_Ref (Get_Kernel (Context));
+      Ref          : VCS_Access;
 
       use String_List;
    begin
@@ -636,6 +655,9 @@ package body VCS_View_API is
       then
          return;
       end if;
+
+      Ref := Get_Current_Ref (Context);
+      Set_Current_Context (Explorer, Context);
 
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -690,7 +712,8 @@ package body VCS_View_API is
    -------------------
 
    procedure Open_Explorer
-     (Kernel : Kernel_Handle)
+     (Kernel  : Kernel_Handle;
+      Context : Selection_Context_Access)
    is
       MDI      : constant MDI_Window := Get_MDI (Kernel);
       Explorer : VCS_View_Access := Get_Explorer (Kernel);
@@ -714,8 +737,8 @@ package body VCS_View_API is
             On_Context_Changed'Access,
             Explorer);
 
-         if Get_Current_Context (Kernel) /= null then
-            Change_Context (Explorer, Get_Current_Context (Kernel));
+         if Context /= null then
+            Change_Context (Explorer, Context);
          end if;
       end if;
    end Open_Explorer;
@@ -767,18 +790,17 @@ package body VCS_View_API is
 
    procedure Commit_Files
      (Kernel : Kernel_Handle;
+      Ref    : VCS_Access;
       Files  : String_List.List)
    is
       use String_List;
 
+      List_Length        : Integer := Length (Files);
       Logs               : String_List.List;
       Files_Temp         : List_Node := First (Files);
 
       Commit_Command     : Commit_Command_Access;
       Get_Status_Command : Get_Status_Command_Access;
-
-      Check_File         : External_Command_Access;
-      Check_Log          : External_Command_Access;
 
       Command            : String_List.List;
       Args               : String_List.List;
@@ -789,10 +811,14 @@ package body VCS_View_API is
       Log_Check_Script   : constant String :=
         Get_Pref (Kernel, VCS_Commit_Log_Check);
 
-      Ref                : constant VCS_Access := Get_Current_Ref (Kernel);
-
       Child              : MDI_Child;
       Success            : Boolean;
+
+      Log_Checks         : array (1 .. List_Length) of External_Command_Access;
+      File_Checks        : array (1 .. List_Length) of External_Command_Access;
+
+      First_Check        : Command_Access := null;
+      Counter            : Integer;
 
    begin
       while Files_Temp /= Null_Node loop
@@ -810,85 +836,109 @@ package body VCS_View_API is
          Files_Temp := Next (Files_Temp);
       end loop;
 
+
+      --  Create the Commit command.
       Create (Commit_Command, Ref, Files, Logs);
 
+      --  Create the Get_Status command.
       Create (Get_Status_Command, Ref, Files);
 
+      Add_Consequence_Action
+        (Command_Access (Commit_Command),
+         Command_Access (Get_Status_Command));
+
+      --  Create the file checks.
       if File_Check_Script /= "" then
-         Append (Command, File_Check_Script);
-         Append (Args, Head (Files));
+         Files_Temp := First (Files);
+         Counter := 1;
 
-         Create (Check_File,
-                 Kernel,
-                 Command,
-                 Null_List,
-                 Args,
-                 Null_List,
-                 Check_Handler'Access);
+         while Files_Temp /= Null_Node loop
+            Append (Command, File_Check_Script);
+            Append (Args, Data (Files_Temp));
+
+            Create (File_Checks (Counter),
+                    Kernel,
+                    Command,
+                    Null_List,
+                    Args,
+                    Null_List,
+                    Check_Handler'Access);
+
+            Files_Temp := Next (Files_Temp);
+            Counter := Counter + 1;
+         end loop;
+
+         --  If file checks exist, enqueue each check as a consequence of the
+         --  previous.
+
+         for J in 2 .. List_Length loop
+            Add_Consequence_Action
+              (Command_Access (File_Checks (J - 1)),
+               Command_Access (File_Checks (J)));
+         end loop;
+
+         --  Keep track of the first command
+         First_Check := Command_Access (File_Checks (1));
       end if;
 
-      Files_Temp := First (Files);
-      --  ??? Right now, we only commit the first file in the list.
-
+      --  Create the logs checks.
       if Log_Check_Script /= "" then
-         declare
-            Log_File  : constant String
-              := Get_Log_From_File (Kernel, Data (Files_Temp));
-            Head_List : String_List.List;
-         begin
-            Free (Command);
-            Append (Command, Log_Check_Script);
+         Files_Temp := First (Files);
+         Counter := 1;
 
-            Free (Args);
-            Append (Args, Log_File);
+         while Files_Temp /= Null_Node loop
+            declare
+               Log_File  : constant String
+                 := Get_Log_From_File (Kernel, Data (Files_Temp));
+               Head_List : String_List.List;
+            begin
+               Free (Command);
+               Append (Command, Log_Check_Script);
 
-            Append (Head_List, -"File: " & Head (Files));
-            Append (Head_List,
-                    -"The changelog provided does not pass the checks.");
+               Free (Args);
+               Append (Args, Log_File);
 
-            Create
-              (Check_Log,
-               Kernel,
-               Command,
-               Null_List,
-               Args,
-               Head_List,
-               Check_Handler'Access);
-         end;
-      end if;
+               Append (Head_List, -"File: " & Head (Files));
+               Append (Head_List,
+                       -"The changelog provided does not pass the checks.");
 
-      if File_Check_Script = ""
-        and then Log_Check_Script = ""
-      then
-         --  No log check, no file check.
+               Create
+                 (Log_Checks (Counter),
+                  Kernel,
+                  Command,
+                  Null_List,
+                  Args,
+                  Head_List,
+                  Check_Handler'Access);
+            end;
 
-         Enqueue (Get_Queue (Ref), Commit_Command);
-      else
-         if Log_Check_Script /= "" then
+            Files_Temp := Next (Files_Temp);
+            Counter := Counter + 1;
+         end loop;
+
+         --  Enqueue each check as a consequence of the
+         --  previous.
+         for J in 2 .. List_Length loop
             Add_Consequence_Action
-              (Command_Access (Check_Log), Command_Access (Commit_Command));
-            if File_Check_Script /= "" then
-               --  Log check and file check.
+              (Command_Access (Log_Checks (J - 1)),
+               Command_Access (Log_Checks (J)));
+         end loop;
 
-               Add_Consequence_Action
-                 (Command_Access (Check_File), Command_Access (Check_Log));
-               Enqueue (Get_Queue (Ref), Check_File);
-            else
-               --  Log check, no file check.
-
-               Enqueue (Get_Queue (Ref), Check_Log);
-            end if;
+         --  Keep track of the first command
+         if First_Check = null then
+            First_Check := Command_Access (Log_Checks (1));
          else
-            --  No log check, file check.
-
             Add_Consequence_Action
-              (Command_Access (Check_File), Command_Access (Commit_Command));
-
-            Enqueue (Get_Queue (Ref), Check_File);
+              (Command_Access (File_Checks (List_Length)),
+               Command_Access (Log_Checks (1)));
          end if;
       end if;
 
-      Enqueue (Get_Queue (Ref), Get_Status_Command);
+      if First_Check = null then
+         First_Check := Command_Access (Commit_Command);
+      end if;
+
+      Enqueue (Get_Queue (Ref), First_Check);
 
       Free (Logs);
       Free (Command);
@@ -900,36 +950,35 @@ package body VCS_View_API is
    ---------------------
 
    function Get_Current_Ref
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Context : Selection_Context_Access)
      return VCS_Access
    is
-      Context  : constant Selection_Context_Access
-        := Get_Current_Context (Kernel);
       File     : File_Selection_Context_Access;
       Explorer : VCS_View_Access;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
 
    begin
       if Context /= null
         and then Get_Creator (Context) = VCS_Module_ID
       then
-         Explorer := Get_Explorer (Kernel_Handle (Kernel));
-
+         Explorer := Get_Explorer (Kernel);
          return Get_Current_Ref (Explorer);
-      else
-         if Context /= null
-           and then Context.all in File_Selection_Context
-         then
-            File := File_Selection_Context_Access (Context);
 
-            if Has_Project_Information (File) then
-               return Get_VCS_From_Id
-                 (Get_Vcs_Kind (Project_Information (File)));
-            end if;
+      elsif Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File) then
+            return Get_VCS_From_Id
+              (Get_Vcs_Kind (Project_Information (File)));
+         else
+            return Get_VCS_From_Id
+              (Get_Vcs_Kind (Get_Project_View (Kernel)));
          end if;
       end if;
 
-      return Get_VCS_From_Id ("cvs");
-      --   ??? this should be "" and not "cvs".
+      return Get_VCS_From_Id ("");
    end Get_Current_Ref;
 
    --------------------
@@ -955,7 +1004,7 @@ package body VCS_View_API is
                                 Directory_Information (File)
                                 & File_Information (File));
 
-            Commit_Files (Kernel, Files);
+            Commit_Files (Kernel, Get_Current_Ref (Context), Files);
          end if;
       end if;
 
@@ -994,7 +1043,7 @@ package body VCS_View_API is
             end if;
          end if;
 
-         Open (Get_Current_Ref (Kernel), List);
+         Open (Get_Current_Ref (Context), List);
 
          declare
             use String_List;
@@ -1038,7 +1087,7 @@ package body VCS_View_API is
                                 Directory_Information (File)
                                 & File_Information (File));
 
-            Add (Get_Current_Ref (Kernel), Files);
+            Add (Get_Current_Ref (Context), Files);
             String_List.Free (Files);
          end if;
       end if;
@@ -1071,7 +1120,7 @@ package body VCS_View_API is
                                 Directory_Information (File)
                                 & File_Information (File));
 
-            Remove (Get_Current_Ref (Kernel), Files);
+            Remove (Get_Current_Ref (Context), Files);
             String_List.Free (Files);
          end if;
       end if;
@@ -1099,7 +1148,7 @@ package body VCS_View_API is
          File := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File) then
-            Annotate (Get_Current_Ref (Kernel),
+            Annotate (Get_Current_Ref (Context),
                       Directory_Information (File)
                       & File_Information (File));
          end if;
@@ -1133,7 +1182,7 @@ package body VCS_View_API is
                                 Directory_Information (File)
                                 & File_Information (File));
 
-            Update (Get_Current_Ref (Kernel), Files);
+            Update (Get_Current_Ref (Context), Files);
             String_List.Free (Files);
          end if;
       end if;
@@ -1156,13 +1205,15 @@ package body VCS_View_API is
       File     : File_Selection_Context_Access;
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
+      Explorer : VCS_View_Access;
 
    begin
-      Open_Explorer (Get_Kernel (Context));
+      Open_Explorer (Kernel, Context);
+      Explorer := Get_Explorer (Kernel);
 
       if Get_Creator (Context) = VCS_Module_ID then
          Files := Get_Selected_Files (Kernel);
-         Get_Status (Get_Current_Ref (Kernel), Files);
+         Get_Status (Get_Current_Ref (Context), Files);
          String_List.Free (Files);
 
       elsif Context.all in File_Selection_Context'Class then
@@ -1173,7 +1224,7 @@ package body VCS_View_API is
                                 Directory_Information (File)
                                 & File_Information (File));
 
-            Get_Status (Get_Current_Ref (Kernel), Files);
+            Get_Status (Get_Current_Ref (Context), Files);
             String_List.Free (Files);
          end if;
       end if;
@@ -1195,17 +1246,18 @@ package body VCS_View_API is
 
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
+      Ref          : VCS_Access := Get_Current_Ref (Context);
 
    begin
-      Open_Explorer (Get_Kernel (Context));
+      Open_Explorer (Get_Kernel (Context), Context);
 
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File_Context) then
             String_List.Append (Files, Directory_Information (File_Context));
-            Update (Get_Current_Ref (Get_Kernel (Context)), Files);
-            Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+            Update (Ref, Files);
+            Get_Status (Ref, Files);
          end if;
       end if;
 
@@ -1227,14 +1279,14 @@ package body VCS_View_API is
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
    begin
-      Open_Explorer (Get_Kernel (Context));
+      Open_Explorer (Get_Kernel (Context), Context);
 
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File_Context) then
             String_List.Append (Files, Directory_Information (File_Context));
-            Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+            Get_Status (Get_Current_Ref (Context), Files);
          end if;
       end if;
 
@@ -1255,17 +1307,18 @@ package body VCS_View_API is
 
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
+      Ref          : VCS_Access := Get_Current_Ref (Context);
 
    begin
-      Open_Explorer (Get_Kernel (Context));
+      Open_Explorer (Get_Kernel (Context), Context);
 
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
 
          if Has_Project_Information (File_Context) then
             Files := Get_Files_In_Project (Project_Information (File_Context));
-            Update (Get_Current_Ref (Get_Kernel (Context)), Files);
-            Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+            Update (Ref, Files);
+            Get_Status (Ref, Files);
 
             String_List.Free (Files);
          end if;
@@ -1292,7 +1345,8 @@ package body VCS_View_API is
       Status         : File_Status_List.List;
       Files          : String_List.List;
       Files_Temp     : String_List.List_Node;
-      Ref            : VCS_Access := Get_Current_Ref (Kernel);
+      Ref            : VCS_Access
+        := Get_VCS_From_Id (Get_Vcs_Kind (Project));
 
       use String_List;
    begin
@@ -1330,7 +1384,7 @@ package body VCS_View_API is
       File_Context : File_Selection_Context_Access;
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      Open_Explorer (Get_Kernel (Context));
+      Open_Explorer (Get_Kernel (Context), Context);
       Clear (Get_Explorer (Get_Kernel (Context)));
 
       if Context.all in File_Selection_Context'Class then
@@ -1361,9 +1415,10 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
       File_Context : File_Selection_Context_Access;
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
+
    begin
-      Open_Explorer (Get_Kernel (Context));
-      Clear (Get_Explorer (Get_Kernel (Context)));
+      Open_Explorer (Kernel, Context);
+      Clear (Get_Explorer (Kernel));
 
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
@@ -1401,7 +1456,7 @@ package body VCS_View_API is
          File := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File) then
-            Diff (Get_Current_Ref (Kernel),
+            Diff (Get_Current_Ref (Context),
                   Directory_Information (File)
                   & File_Information (File));
          end if;
@@ -1425,7 +1480,7 @@ package body VCS_View_API is
 
       Files  : String_List.List;
       File   : File_Selection_Context_Access;
-      Ref    : constant VCS_Access := Get_Current_Ref (Get_Kernel (Context));
+      Ref    : constant VCS_Access := Get_Current_Ref (Context);
       Status : File_Status_List.List;
       Status_Temp : List_Node;
 
@@ -1521,13 +1576,14 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Ref      : constant VCS_Access := Get_Current_Ref (Kernel);
+      Ref      : constant VCS_Access
+        := Get_Current_Ref (Kernel);
       Explorer : VCS_View_Access;
    begin
-      Open_Explorer (Kernel);
+      Open_Explorer (Kernel, null);
       Explorer := Get_Explorer (Kernel);
-
       Clear (Explorer);
+
       Get_Status (Ref, Get_Files_In_Project (Get_Project_View (Kernel)));
 
    exception
@@ -1570,5 +1626,25 @@ package body VCS_View_API is
 
       return Result;
    end String_Array_To_String_List;
+
+   ---------------------
+   -- Context_Factory --
+   ---------------------
+
+   function Context_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      pragma Unreferenced (Child);
+      Explorer : VCS_View_Access;
+   begin
+      Explorer := Get_Explorer (Kernel_Handle (Kernel));
+
+      if Explorer /= null then
+         return Get_Current_Context (Explorer);
+      else
+         return null;
+      end if;
+   end Context_Factory;
 
 end VCS_View_API;
