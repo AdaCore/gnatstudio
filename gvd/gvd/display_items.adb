@@ -98,6 +98,7 @@ package body Display_Items is
    Xref_GC    : Gdk.GC.Gdk_GC;
    Change_GC  : Gdk.GC.Gdk_GC;
    Font       : Gdk.Font.Gdk_Font;
+   Command_Font : Gdk.Font.Gdk_Font;
    Type_Font  : Gdk.Font.Gdk_Font;
    Title_Font : Gdk.Font.Gdk_Font;
    Refresh_Button_GC : Gdk.GC.Gdk_GC;
@@ -432,6 +433,7 @@ package body Display_Items is
          Gdk_New (Refresh_Button_GC, Win);
 
          Font := Get_Gdkfont (Value_Font_Name, Value_Font_Size);
+         Command_Font := Get_Gdkfont (Command_Font_Name, Value_Font_Size);
          Type_Font := Get_Gdkfont (Type_Font_Name, Type_Font_Size);
          Title_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Size);
 
@@ -1790,11 +1792,16 @@ package body Display_Items is
      (Item : access Display_Item_Record'Class)
      return Drawing_Context
    is
-   begin
-      return Create_Drawing_Context
+      D : Drawing_Context :=
+        Create_Drawing_Context
         (Pixmap => Pixmap (Item),
          Mode   => Item.Mode,
          Lang   => Get_Language (Item.Debugger.Debugger));
+   begin
+      if not Item.Is_A_Variable then
+         D.Font := Command_Font;
+      end if;
+      return D;
    end Create_Drawing_Context;
 
    ----------------------------

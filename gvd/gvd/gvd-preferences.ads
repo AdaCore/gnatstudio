@@ -137,6 +137,10 @@ package Odd.Preferences is
    Value_Font_Name : constant String := "Helvetica";
    --  Font used to display the value of the item.
 
+   Command_Font_Name : constant String := "Courier";
+   --  Font used to display the value for the commands
+   --    graph print `...`  or graph display `...`
+
    Type_Font_Name : constant String := "Helvetica-Oblique";
    --  Font used to display the type of the item.
 
