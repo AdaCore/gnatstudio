@@ -3,11 +3,14 @@ package SN.Browse is
    Spawn_Failure     : exception;
    Temp_File_Failure : exception;
 
-   DB_Dir_Name      : constant String := ".gpssnprj";
+   DB_Dir_Name          : constant String := ".gpssnprj";
    --  Name of directory where all SN files reside
 
-   DB_File_Name     : constant String := "data";
+   DB_File_Name         : constant String := "data";
    --  Name of the SN database files
+
+   Xref_Pool_Filename   : constant String := "xrefs";
+   --  Name of file for persistent xref pool
 
    procedure Browse (File_Name, DB_Directory, Browser_Name : in String);
    --  Executes given browser on the file so that all database files

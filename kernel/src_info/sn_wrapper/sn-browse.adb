@@ -16,7 +16,7 @@ use  GNAT.Directory_Operations,
 
 package body SN.Browse is
 
-   Xrefs : Xref_Pool;
+   Xrefs : Xref_Pool := Empty_Xref_Pool;
 
    procedure Free is new Ada.Unchecked_Deallocation
                               (String, String_Access);
@@ -40,35 +40,38 @@ package body SN.Browse is
       DBUtil_Path         : String_Access;
    begin
       --  check DB_Directory exists
-      declare
-         Dir_Handle : Dir_Type;
-      begin
-         Open (Dir_Handle, DB_Directory);
-         --  exists!
-         Close (Dir_Handle);
-      exception
+      if not Is_Directory (DB_Directory) then
          --  the target directory does not exists, create it
-         when Directory_Error =>
-            Make_Dir (DB_Directory);
-      end;
+         Make_Dir (DB_Directory);
+      end if;
+
+      --  check if xref pool is already initialized (otherwise initialize
+      --  it right now)
+      if Xrefs = Empty_Xref_Pool then -- not initialized
+         Load (Xrefs,
+           DB_Directory & Directory_Separator & Xref_Pool_Filename);
+      end if;
 
       Xref_File_Name := Xref_Filename_For (File_Name, DB_Directory, Xrefs);
+
+      --  save xref pool to file
+      Save (Xrefs,
+        DB_Directory & Directory_Separator & Xref_Pool_Filename);
+
       --  unlink cross reference file, if any
       if File_Exists (Xref_File_Name.all) then
          declare
-            Xref_File_Name_Nul  : String := Xref_File_Name.all & ASCII.Nul;
+            Xref_File_Name_Nul  : String := Xref_File_Name.all & ASCII.NUL;
          begin
             Delete_File (Xref_File_Name_Nul'Address, Success);
          end;
          if not Success then
-            Free (Xref_File_Name);
             raise Unlink_Failure;
          end if;
       end if;
 
       DBUtil_Path := Locate_Exec_On_Path ("dbimp");
       if null = DBUtil_Path then
-         Free (Xref_File_Name);
          raise Spawn_Failure;
       end if;
       --  Execute browser
@@ -80,14 +83,12 @@ package body SN.Browse is
 
       DBUtil_Path := Locate_Exec_On_Path (Browser_Name);
       if null = DBUtil_Path then
-         Free (Xref_File_Name);
          Delete (Args);
          raise Spawn_Failure;
       end if;
 
       Spawn (DBUtil_Path.all, Args.all, Success);
       Delete (Args);
-      Free (Xref_File_Name);
       Free (DBUtil_Path);
       if not Success then
          raise Spawn_Failure;
@@ -155,7 +156,7 @@ package body SN.Browse is
                Free (Content);
             end if;
          end if;
-         Read (Dir, Dir_Entry, Last); -- read nexy directory entry
+         Read (Dir, Dir_Entry, Last); -- read next directory entry
       end loop;
       Close (Dir);
 
@@ -179,8 +180,6 @@ package body SN.Browse is
          raise Unlink_Failure;
       end if;
    end Generate_Xrefs;
-begin
-   Init (Xrefs);
 end SN.Browse;
 
 
