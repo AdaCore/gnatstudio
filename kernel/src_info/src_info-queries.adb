@@ -831,6 +831,18 @@ package body Src_Info.Queries is
    end Is_Subprogram;
 
    --------------
+   -- Is_Label --
+   --------------
+
+   function Is_Label (Node : Scope_Tree_Node) return Boolean is
+      K : constant E_Kind := Node.Decl.Kind;
+   begin
+      return K = Label_On_Loop
+        or else K = Label_On_Block
+        or else K = Label_On_Statement;
+   end Is_Label;
+
+   --------------
    -- Get_Kind --
    --------------
 
@@ -1608,7 +1620,9 @@ package body Src_Info.Queries is
 
       Tmp := Node;
       while Tmp /= Null_Scope_Tree_Node loop
-         Depth := Depth + 1;
+         if not Is_Label (Tmp) then
+            Depth := Depth + 1;
+         end if;
          Tmp := Get_Parent (Tmp);
       end loop;
 
@@ -1620,11 +1634,13 @@ package body Src_Info.Queries is
          Tmp   := Node;
 
          while Tmp /= Null_Scope_Tree_Node loop
-            Entities (Depth) := Get_Entity (Tmp);
-            Length := Length + Get_Name (Entities (Depth))'Length
-              + Separator'Length;
+            if not Is_Label (Tmp) then
+               Entities (Depth) := Get_Entity (Tmp);
+               Length := Length + Get_Name (Entities (Depth))'Length
+                 + Separator'Length;
+               Depth := Depth + 1;
+            end if;
             Tmp := Get_Parent (Tmp);
-            Depth := Depth + 1;
          end loop;
 
          Free (Tree);

@@ -468,6 +468,15 @@ package Src_Info.Queries is
    --  Return True if Node is associated with a subprogram (either its
    --  declaration or a call to it).
 
+   function Is_Label (Node : Scope_Tree_Node) return Boolean;
+   --  Return True if Node is a label, ie is not part of a scope (for instance,
+   --  in Ada:
+   --      loop
+   --         declare
+   --            A : Integer;
+   --  A would be inside a Scope_Tree_Node for "loop", which we don't want to
+   --  show in full names).
+
    function Get_Entity (Node : Scope_Tree_Node) return Entity_Information;
    --  Return the information for the entity defined in Node.
    --  You must call Destroy on the returned information.
