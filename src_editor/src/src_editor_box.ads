@@ -46,7 +46,6 @@ with Language_Handlers;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Glide_Kernel;
 with Glide_Kernel.Modules;
-with Src_Info;
 with Src_Editor_Buffer;
 with Src_Editor_View;
 
@@ -440,10 +439,6 @@ private
       Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 
       --  The non graphical attributes
-
-      Timestamp            : Src_Info.Timestamp := 0;
-      --  Timestamp of the file the last time it was checked. It it used to
-      --  detect cases where the file was edited by an external editor.
 
       Tooltip              : Editor_Tooltips.Tooltips;
       --  Those tooltips display the value of variables pointed to by the

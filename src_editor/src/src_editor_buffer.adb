@@ -27,6 +27,7 @@ with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Text_Iter;          use Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtk.Text_Tag_Table;     use Gtk.Text_Tag_Table;
+with Gtkada.Dialogs;         use Gtkada.Dialogs;
 with Gtkada.Types;           use Gtkada.Types;
 with Pango.Enums;
 
@@ -40,9 +41,12 @@ with System;
 with String_Utils;           use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with OS_Utils;               use OS_Utils;
+with Src_Info;               use Src_Info;
+with Glide_Intl;             use Glide_Intl;
 
 with Commands.Editor;        use Commands.Editor;
 with Src_Editor_Module;      use Src_Editor_Module;
+with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
 
 package body Src_Editor_Buffer is
@@ -981,6 +985,8 @@ package body Src_Editor_Buffer is
       Strip_Ending_Line_Terminator (Buffer);
       Set_Modified (Buffer, False);
       Buffer.Inserting := False;
+
+      Buffer.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
    end Load_File;
 
    ------------------
@@ -1064,6 +1070,9 @@ package body Src_Editor_Buffer is
 
       Set_Modified (Buffer, False);
       Close (FD);
+
+      Buffer.Timestamp := To_Timestamp
+        (File_Time_Stamp (Get_Filename (Buffer)));
 
    exception
       when others =>
@@ -1704,5 +1713,40 @@ package body Src_Editor_Buffer is
       Glide_Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
       --  ??? When is this context destroyed ?
    end Source_Lines_Revealed;
+
+   ---------------------
+   -- Check_Timestamp --
+   ---------------------
+
+   function Check_Timestamp
+     (Buffer : access Source_Buffer_Record;
+      Ask_User : Boolean := False) return Boolean
+   is
+      New_Timestamp : Timestamp;
+   begin
+      if Buffer.Filename /= null
+        and then Buffer.Filename.all /= ""
+      then
+         New_Timestamp := To_Timestamp (File_Time_Stamp (Buffer.Filename.all));
+
+         if New_Timestamp > Buffer.Timestamp then
+            if not Ask_User
+              or else Message_Dialog
+              (Msg         => Base_Name (Buffer.Filename.all)
+                 & (-" changed on disk. Really edit ?"),
+               Dialog_Type => Confirmation,
+               Buttons     => Button_Yes or Button_No,
+               Title       => -"File changed on disk",
+               Parent      => Get_Main_Window (Buffer.Kernel)) /= Button_Yes
+            then
+               return False;
+            end if;
+
+            Buffer.Timestamp := New_Timestamp;
+         end if;
+      end if;
+
+      return True;
+   end Check_Timestamp;
 
 end Src_Editor_Buffer;

@@ -833,29 +833,12 @@ package body Src_Editor_Box is
    --------------
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean is
-      B             : Source_Editor_Box := Source_Editor_Box (Box);
-      New_Timestamp : Timestamp;
-      Undo_Redo     : Undo_Redo_Information;
-      Filename      : String := Get_Filename (B.Source_Buffer);
+      B         : Source_Editor_Box := Source_Editor_Box (Box);
+      Undo_Redo : Undo_Redo_Information;
    begin
-      if Filename /= "" then
-         New_Timestamp := To_Timestamp (File_Time_Stamp (Filename));
-
-         if New_Timestamp > B.Timestamp then
-            if Message_Dialog
-              (Msg         => Base_Name (Filename)
-               & (-" changed on disk. Really edit ?"),
-               Dialog_Type => Confirmation,
-               Buttons     => Button_Yes or Button_No,
-               Title       => -"File changed on disk",
-               Parent      => Get_Main_Window (B.Kernel)) /= Button_Yes
-            then
-               --  ??? Should move focus in some other widget, to prevent
-               --  edition.
-               return False;
-            end if;
-            B.Timestamp := New_Timestamp;
-         end if;
+      if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
+         --  ??? Should move focus in some other widget, to prevent edition.
+         return False;
       end if;
 
       Undo_Redo := Undo_Redo_Data.Get (B.Kernel, Undo_Redo_Id);
@@ -1366,7 +1349,6 @@ package body Src_Editor_Box is
 
       if Success then
          Set_Filename (Editor.Source_Buffer, Filename);
-         Editor.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
          Set_Text (Editor.Modified_Label, -"Unmodified");
          Editor.Modified := False;
          Editor.Writable := Is_Writable_File (Filename);
@@ -1426,8 +1408,7 @@ package body Src_Editor_Box is
          if File = "" then
             Success := False;
          else
-            if To_Timestamp (File_Time_Stamp (File)) >
-              Editor.Timestamp
+            if not Check_Timestamp (Editor.Source_Buffer, Ask_User => False)
               and then Message_Dialog
                 (Msg => Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
@@ -1466,8 +1447,6 @@ package body Src_Editor_Box is
       if Success then
          Set_Text (Editor.Modified_Label, -"Saved");
          Editor.Modified := False;
-         Editor.Timestamp := To_Timestamp
-           (File_Time_Stamp (Get_Filename (Editor.Source_Buffer)));
       end if;
    end Save_To_File;
 

@@ -41,6 +41,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Commands;         use Commands;
 with Glide_Kernel;
+with Src_Info;
 
 package Src_Editor_Buffer is
 
@@ -339,6 +340,14 @@ package Src_Editor_Buffer is
    --  Emit the signal to the kernel saying that an area in the source
    --  has been revealed.
 
+   function Check_Timestamp
+     (Buffer : access Source_Buffer_Record;
+      Ask_User : Boolean := False) return Boolean;
+   --  Check whether the timestamp changed on the disk. If yes, ask the user
+   --  whether he really wants to edit (unless Ask_User is False). False is
+   --  returned if the timestamp is more recent, and the user doesn't want to
+   --  force the edition.
+
 private
 
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
@@ -367,6 +376,10 @@ private
 
       Current_Command : Command_Access;
       --  The current editor command.
+
+      Timestamp      : Src_Info.Timestamp := 0;
+      --  Timestamp of the file the last time it was checked. It it used to
+      --  detect cases where the file was edited by an external editor.
    end record;
 
 end Src_Editor_Buffer;
