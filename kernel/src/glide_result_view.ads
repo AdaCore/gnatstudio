@@ -21,6 +21,7 @@
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Box;                  use Gtk.Box;
 
@@ -95,6 +96,8 @@ private
 
       Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
+
+      Action_Column   : Gtk_Tree_View_Column;
    end record;
 
 end Glide_Result_View;
