@@ -165,6 +165,11 @@ package body GUI_Utils is
 
    package body User_Contextual_Menus is
 
+      function Button_Press_For_Contextual_Menu
+        (Widget : access Gtk_Widget_Record'Class;
+         Event  : Gdk.Event.Gdk_Event;
+         User   : Callback_User_Data) return Boolean;
+
       --------------------------------------
       -- Button_Press_For_Contextual_Menu --
       --------------------------------------
