@@ -360,6 +360,9 @@ package Codefix.Text_Manager is
    --  code, modified or not. The modifications made in an extract do not have
    --  any influence in the source code before the call of Update function.
 
+   procedure Remove
+     (This, Prev : Ptr_Extract_Line; Container : in out Extract);
+
    type String_Mode is (Text_Ascii, Regular_Expression);
 
    function Clone (This : Extract) return Extract;
@@ -429,6 +432,8 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Extract);
    --  Free the memory associated to an Extract.
+
+   procedure Free_Data (This : in out Extract'Class);
 
    function Get_Line
      (This : Extract; Position : File_Cursor'Class) return Ptr_Extract_Line;
@@ -522,6 +527,11 @@ package Codefix.Text_Manager is
       Size         : Natural);
    --  Add to the extract size lines after each beginning of paragraph
    --  recorded.
+
+   procedure Reduce
+     (This                    : in out Extract;
+      Size_Before, Size_After : Natural);
+   --  Reduce the number of non-modified lines before and after each paragraph.
 
    procedure Merge
      (This                 : out Extract;

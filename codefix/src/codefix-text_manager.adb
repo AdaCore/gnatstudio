@@ -683,21 +683,25 @@ package body Codefix.Text_Manager is
                                    Jump_String));
 
          if Result /= Null_File_Cursor then
-            return Clone (Result);
+            Result := Clone (Result);
+            Free (Ext_Red);
+            return Result;
          end if;
 
          exit when New_Cursor.Line = Last;
 
          New_Cursor.Col := 1;
          New_Cursor.Line := New_Cursor.Line + Increment;
+         Free (Ext_Red);
          Get_Line (This, New_Cursor, Ext_Red);
+
          if Step = Reverse_Step then
             New_Cursor.Col := 0;
          end if;
 
       end loop;
 
-
+      Free (Ext_Red);
       return Null_File_Cursor;
    end Search_String;
 
@@ -771,9 +775,8 @@ package body Codefix.Text_Manager is
 
    procedure Assign (This : in out Extract_Line; Value : Extract_Line) is
    begin
-      Free (This.Cursor);
-      Free (This.Content);
       This.Context := Value.Context;
+      Free (This.Cursor);
       This.Cursor := Clone (Value.Cursor);
       Assign (This.Content, Value.Content);
    end Assign;
@@ -981,7 +984,7 @@ package body Codefix.Text_Manager is
    begin
       Destination :=
         (Context         => Original_Line,
-         Cursor          => File_Cursor (Cursor),
+         Cursor          => Clone (Cursor),
          Original_Length => Len,
          Content         => new String'(Get (This, Cursor, Len)),
          Next            => null,
@@ -1025,7 +1028,7 @@ package body Codefix.Text_Manager is
       Str := new String'(Get_Line (This, Cursor));
       Destination :=
         (Context         => Original_Line,
-         Cursor          => File_Cursor (Cursor),
+         Cursor          => Clone (Cursor),
          Original_Length => Str'Last,
          Content         => Str,
          Next            => null,
@@ -1300,6 +1303,21 @@ package body Codefix.Text_Manager is
       return This.Coloration;
    end Get_Coloration;
 
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove
+     (This, Prev : Ptr_Extract_Line; Container : in out Extract) is
+   begin
+      if Prev = null then
+         Container.First := This.Next;
+      else
+         Prev.Next := This;
+      end if;
+      This.Next := null;
+   end Remove;
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
@@ -1429,6 +1447,15 @@ package body Codefix.Text_Manager is
 
       Free (This.Caption);
    end Free;
+
+   ---------------
+   -- Free_Data --
+   ---------------
+
+   procedure Free_Data (This : in out Extract'Class) is
+   begin
+      Free (This);
+   end Free_Data;
 
    ------------------
    -- Get_New_Text --
@@ -1949,6 +1976,74 @@ package body Codefix.Text_Manager is
    begin
       Extend_After (This.First, Current_Text, Size);
    end Extend_After;
+
+   ------------
+   -- Reduce --
+   ------------
+
+   procedure Reduce
+     (This                    : in out Extract;
+      Size_Before, Size_After : Natural) is
+
+      type Lines_Array is array (Natural range <>) of Ptr_Extract_Line;
+
+      procedure Delete_First;
+      procedure Add_Last;
+
+      Current_Line : Ptr_Extract_Line;
+      Lines        : Lines_Array (1 .. Size_Before);
+      Left_After   : Natural := 0;
+
+      procedure Delete_First is
+      begin
+         Remove (Lines (1), Previous (This, Lines (1)), This);
+         Free (Lines (1));
+         Lines (1 .. Lines'Last - 1) := Lines (2 .. Lines'Last);
+         Lines (Lines'Last) := null;
+      end Delete_First;
+
+      procedure Add_Last is
+      begin
+         for J in Lines'Range loop
+            if Lines (J) = null then
+               Lines (J) := Current_Line;
+               return;
+            end if;
+         end loop;
+
+         Delete_First;
+         Lines (Lines'Last) := Current_Line;
+      end Add_Last;
+
+   begin
+
+      Current_Line := Get_First_Line (This);
+
+      while Current_Line /= null loop
+         if Current_Line.Coloration = False
+           or else Current_Line.Context = Original_Line
+         then
+            if Left_After = 0 then
+               Add_Last;
+            else
+               Left_After := Left_After + 1;
+            end if;
+         else
+            Left_After := Size_After;
+            Lines := (others => null);
+         end if;
+
+         Current_Line := Next (Current_Line.all);
+      end loop;
+
+      if Left_After = 0 then
+         for J in Lines'Range loop
+            Remove (Lines (J), Previous (This, Lines (J)), This);
+            Free (Lines (J));
+         end loop;
+      end if;
+
+   end Reduce;
 
    ----------------------------------------------------------------------------
    --  Merge functions and uilities
