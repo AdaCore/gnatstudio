@@ -8483,7 +8483,7 @@ you need to provide several things:
 @end itemize
 
 Alternatively, your python script can call the command
-@code{GPS.add_xml_customization} to specify some inline XML tags to
+@code{GPS.parse_xml} to specify some inline XML tags to
 interpret. These tag can directly the new menus or key bindings associated
 with your command.
 
@@ -8501,7 +8501,7 @@ def add_dashes_line():
                  current_context().location().line(),
                  current_context().location().column(),
                  "--------------------------------", 0, 0)
-add_xml_customization ("""
+parse_xml ("""
    <action name="dashes line">
       <shell lang="python">test.add_dashes_line()</shell>
       <context>Source editor</context>
