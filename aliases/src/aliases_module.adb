@@ -614,25 +614,27 @@ package body Aliases_Module is
       Last     : Natural;
       Dir      : Dir_Type;
    begin
-      begin
-         Open (Dir, Sys_Dir);
-         loop
-            Read (Dir, File, Last);
-            exit when Last = 0;
+      if Is_Directory (Sys_Dir) then
+         begin
+            Open (Dir, Sys_Dir);
+            loop
+               Read (Dir, File, Last);
+               exit when Last = 0;
 
-            if Is_Regular_File (Sys_Dir & File (File'First .. Last)) then
-               Parse_File (Kernel,
-                           Sys_Dir & File (File'First .. Last),
-                           Read_Only => True);
-            end if;
-         end loop;
+               if Is_Regular_File (Sys_Dir & File (File'First .. Last)) then
+                  Parse_File (Kernel,
+                              Sys_Dir & File (File'First .. Last),
+                              Read_Only => True);
+               end if;
+            end loop;
 
-         Close (Dir);
+            Close (Dir);
 
-      exception
-         when Directory_Error =>
-            null;
-      end;
+         exception
+            when Directory_Error =>
+               null;
+         end;
+      end if;
 
       Parse_File (Kernel, Filename, Read_Only => False);
    end Load_Aliases;
