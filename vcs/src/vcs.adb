@@ -199,14 +199,29 @@ package body VCS is
    ------------------
 
    function Parse_Status
-     (Rep  : access VCS_Record;
-      Text : String) return File_Status_List.List
+     (Rep   : access VCS_Record;
+      Text  : String;
+      Local : Boolean) return File_Status_List.List
    is
-      pragma Unreferenced (Rep, Text);
+      pragma Unreferenced (Rep, Text, Local);
       Result : File_Status_List.List;
    begin
       return Result;
    end Parse_Status;
+
+   -----------------------
+   -- Parse_Annotations --
+   -----------------------
+
+   procedure Parse_Annotations
+     (Rep   : access VCS_Record;
+      File  : VFS.Virtual_File;
+      Text  : String)
+   is
+      pragma Unreferenced (Rep, File, Text);
+   begin
+      null;
+   end Parse_Annotations;
 
    ----------------------------
    -- Get_Identified_Actions --
