@@ -48,13 +48,21 @@ package Diff_Utils is
       Prev   : Diff_Occurrence_Link;
    end record;
 
+   type Diff_Pair is record
+      List21 : Diff_Occurrence_Link;
+      List23 : Diff_Occurrence_Link;
+   end record;
+   --  structure for the diff3
+
    type Diff_List_Head is record
       List         : Diff_Occurrence_Link;
+      List2        : Diff_Occurrence_Link := null;
       File1        : String_Access;
       File2        : String_Access;
-      File3        : String_Access := null;
+      File3        : String_Access        := null;
       Current_Diff : Diff_Occurrence_Link := null;
    end record;
+
    type Diff_Head_Access is access all Diff_List_Head;
 
    function Diff
@@ -71,7 +79,13 @@ package Diff_Utils is
    --  Compute the differences from Diff_File.
    --  If Revert is False, create New_File from Orig_File and Diff_File.
    --  If Revert is True, create Orig_File from New_File and Diff_File.
+
+   function Diff3 (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+                   File1, File2, File3 : String) return Diff_Pair;
+   --  Execute diff on File1,File2 and File3 and return a list of differences.
+
    procedure Free (Link : in out Diff_Occurrence_Link);
+
    --  Free the memory associated with each node of the list Link.
    procedure Free (Link : in out Diff_List_Head);
    --  Free the memory of this Link. just for use generic_list
@@ -89,8 +103,5 @@ package Diff_Utils is
    --  Do a fine diff between two lines.
    --  The only fields set in the resulting list is Range1 and Next, other
    --  fields should be ignored.
-   function Diff3 (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-                   File1, File2, File3 : String) return Diff_Occurrence_Link;
-   --  Execute diff on File1,File2 and File3 and return a list of differences.
 
 end Diff_Utils;
