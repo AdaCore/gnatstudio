@@ -137,7 +137,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>open_source1</name>
-	    <sensitive>True</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_open_source1_activate</handler>
@@ -3455,17 +3454,23 @@
       </widget>
 
       <widget>
-	<class>GtkHBox</class>
-	<name>editor_text</name>
-	<homogeneous>False</homogeneous>
-	<spacing>0</spacing>
+	<class>GtkFrame</class>
+	<name>editor_frame</name>
+	<shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
 	<child>
 	  <shrink>True</shrink>
 	  <resize>True</resize>
 	</child>
 
 	<widget>
-	  <class>Placeholder</class>
+	  <class>GtkHBox</class>
+	  <name>editor_text</name>
+	  <homogeneous>False</homogeneous>
+	  <spacing>0</spacing>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
 	</widget>
       </widget>
     </widget>
