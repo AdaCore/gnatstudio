@@ -81,6 +81,11 @@ package body Gtkada.File_Selector is
    Text_Color_Column : constant := 2;
    Icon_Column       : constant := 3;
 
+   Last_Directory : String_Access := new String'("");
+   --  It would be nice to use a user data instead of this global variable,
+   --  but this is in any case better than changing the current directory
+   --  as we did before.
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -388,32 +393,53 @@ package body Gtkada.File_Selector is
 
    begin
       if Use_Native_Dialog and then NativeFileSelectionSupported /= 0 then
-         S := NativeFileSelection
-           (Title & ASCII.NUL,
-            Base_Directory & ASCII.NUL,
-            File_Pattern & ASCII.NUL,
-            Pattern_Name & ASCII.NUL,
-            Default_Name & ASCII.NUL,
-            Pos_Mouse,
-            File_Selector_Kind'Pos (Kind));
+         if Base_Directory = "" then
+            S := NativeFileSelection
+              (Title & ASCII.NUL,
+               Last_Directory.all & ASCII.NUL,
+               File_Pattern & ASCII.NUL,
+               Pattern_Name & ASCII.NUL,
+               Default_Name & ASCII.NUL,
+               Pos_Mouse,
+               File_Selector_Kind'Pos (Kind));
+         else
+            S := NativeFileSelection
+              (Title & ASCII.NUL,
+               Base_Directory & ASCII.NUL,
+               File_Pattern & ASCII.NUL,
+               Pattern_Name & ASCII.NUL,
+               Default_Name & ASCII.NUL,
+               Pos_Mouse,
+               File_Selector_Kind'Pos (Kind));
+         end if;
 
          declare
             Val : constant String := Interfaces.C.Strings.Value (S);
          begin
             c_free (S);
+
             if Val = "" then
                return VFS.No_File;
             else
+               Free (Last_Directory);
+               Last_Directory := new String'(Dir_Name (Val));
+
                return Create (Full_Filename => Val);
             end if;
          end;
       end if;
 
-      Gtk_New
-        (File_Selector, (1 => Directory_Separator), Base_Directory, Title,
-         History => History);
-      Set_Position (File_Selector, Win_Pos_Mouse);
+      if Base_Directory = "" then
+         Gtk_New
+           (File_Selector, (1 => Directory_Separator), Last_Directory.all,
+            Title, History => History);
+      else
+         Gtk_New
+           (File_Selector, (1 => Directory_Separator), Base_Directory, Title,
+            History => History);
+      end if;
 
+      Set_Position (File_Selector, Win_Pos_Mouse);
       Set_Text
         (File_Selector.Selection_Entry, Locale_To_UTF8 (Default_Name));
 
@@ -459,10 +485,14 @@ package body Gtkada.File_Selector is
       if File_Selector.Current_Directory = null then
          return VFS.No_File;
       else
+
          declare
             File : constant Virtual_File := Get_Selection (File_Selector);
          begin
             Destroy (File_Selector);
+            Free (Last_Directory);
+            Last_Directory := new String'(Dir_Name (File));
+
             return File;
          end;
       end if;
@@ -483,9 +513,17 @@ package body Gtkada.File_Selector is
 
       File_Selector_Window : File_Selector_Window_Access;
    begin
-      Gtk_New
-        (File_Selector_Window,
-         (1 => Directory_Separator), Base_Directory, Title, False, History);
+      if Base_Directory = "" then
+         Gtk_New
+           (File_Selector_Window,
+            (1 => Directory_Separator), Last_Directory.all,
+            Title, False, History);
+      else
+         Gtk_New
+           (File_Selector_Window,
+            (1 => Directory_Separator), Base_Directory, Title, False, History);
+      end if;
+
       Set_Position (File_Selector_Window, Win_Pos_Mouse);
 
       return Select_Directory (File_Selector_Window, Parent);
@@ -523,11 +561,13 @@ package body Gtkada.File_Selector is
          return "";
       else
          declare
-            File : constant String := Normalize_Pathname
+            Dir : constant String := Normalize_Pathname
               (Locale_From_UTF8 (Get_Text (File_Selector.Selection_Entry)));
          begin
             Destroy (File_Selector);
-            return File;
+            Free (Last_Directory);
+            Last_Directory := new String'(Dir);
+            return Dir;
          end;
       end if;
    end Select_Directory;
