@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
+--                      Copyright (C) 2001-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,40 +18,40 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;             use Glib;
-with Glib.Xml_Int;     use Glib.Xml_Int;
-with Glib.Object;      use Glib.Object;
-with Gdk.GC;           use Gdk.GC;
-with Gdk.Event;        use Gdk.Event;
+with Glib;                 use Glib;
+with Glib.Xml_Int;         use Glib.Xml_Int;
+with Glib.Object;          use Glib.Object;
+with Gdk.GC;               use Gdk.GC;
+with Gdk.Event;            use Gdk.Event;
 with Gtk.Image;            use Gtk.Image;
 with Gtk.Image_Menu_Item;  use Gtk.Image_Menu_Item;
-with Gtk.Main;         use Gtk.Main;
-with Gtk.Menu;         use Gtk.Menu;
-with Gtk.Menu_Item;    use Gtk.Menu_Item;
-with Gtk.Object;       use Gtk.Object;
-with Gtk.Widget;       use Gtk.Widget;
-with Pango.Layout;     use Pango.Layout;
-with Gtkada.Canvas;    use Gtkada.Canvas;
-with Gtkada.Handlers;  use Gtkada.Handlers;
-with Gtkada.MDI;       use Gtkada.MDI;
+with Gtk.Main;             use Gtk.Main;
+with Gtk.Menu;             use Gtk.Menu;
+with Gtk.Menu_Item;        use Gtk.Menu_Item;
+with Gtk.Object;           use Gtk.Object;
+with Gtk.Widget;           use Gtk.Widget;
+with Pango.Layout;         use Pango.Layout;
+with Gtkada.Canvas;        use Gtkada.Canvas;
+with Gtkada.Handlers;      use Gtkada.Handlers;
+with Gtkada.MDI;           use Gtkada.MDI;
 
-with Src_Info;                 use Src_Info;
-with Src_Info.Queries;         use Src_Info.Queries;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-with Glide_Result_View;        use Glide_Result_View;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Language_Handlers.Glide;  use Language_Handlers.Glide;
+with Src_Info;                      use Src_Info;
+with Src_Info.Queries;              use Src_Info.Queries;
+with Glide_Kernel;                  use Glide_Kernel;
+with Glide_Kernel.Modules;          use Glide_Kernel.Modules;
+with Glide_Kernel.Console;          use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;         use Glide_Kernel.Contexts;
+with Glide_Kernel.Preferences;      use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;          use Glide_Kernel.Project;
+with Glide_Kernel.Task_Manager;     use Glide_Kernel.Task_Manager;
+with Glide_Result_View;             use Glide_Result_View;
+with Glide_Kernel.Standard_Hooks;   use Glide_Kernel.Standard_Hooks;
+with Language_Handlers.Glide;       use Language_Handlers.Glide;
 with Commands.Generic_Asynchronous; use Commands;
-with String_Utils;             use String_Utils;
-with Browsers.Canvas;          use Browsers.Canvas;
-with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
-with VFS;                      use VFS;
+with String_Utils;                  use String_Utils;
+with Browsers.Canvas;               use Browsers.Canvas;
+with Glide_Kernel.Scripts;          use Glide_Kernel.Scripts;
+with VFS;                           use VFS;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
