@@ -783,7 +783,7 @@ You can also specify the unit size (@i{Byte}, @i{Halfword} or @i{Word}),
 the format (@i{Hexadecimal}, @i{Decimal}, @i{Octal} or @i{ASCII}), and you
 can display the corresponding ASCII value at the same time.
 
-The @i{up} and @i{down} arrows as well as the @i{Page Up} and @i{Page Down}
+The @i{up} and @i{down} arrows as well as the @key{Page up} and @key{Page down}
 keys in the memory text area allows you to walk through the memory.
 
 Finally, you can modify a memory area by simply clicking on the location
@@ -918,16 +918,7 @@ Show only the source code.
 
      @item Show Asm Code.
 Show only the assembly code around the current execution point.
-You can specify in the @ref{preferences menu} how many instructions
-are displayed by default. To go past the default number of instructions,
-you can either use the contextual menu of the assembly editor
-(@i{Show previous page}, @i{Show next page}), or click on the up and down
-arrows of the editor's scrollbar, or use the @i{Page Up} and @i{Page Down}
-keys.
-
-Note that the first scrolling to the previous page requires computing the
-assembly code for the complete function currently displayed, so this can
-take a significant time for big functions on slow machines.
+See @ref{The Assembly Window} for more details.
 
      @item Show Asm and Source.
 Show both the source code and the assembly window at the same time.
@@ -964,7 +955,9 @@ instead (step instruction), this will also jump to the subprogram
 being called.
 
 For efficiency reasons, GVD will only display a small part of the
-assembly code around the current instruction. However, you can easily
+assembly code around the current instruction.
+You can specify in the @ref{preferences menu} how many instructions
+are displayed by default. Also, you can easily
 display the instructions immediately preceding or following the
 currently displayed instructions by pressing one of the @key{Page up} or
 @key{Page down} keys, or by using the contextual menu in the assembly
