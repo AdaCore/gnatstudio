@@ -119,6 +119,11 @@ package body Glide_Result_View is
    Msg_Index_Cst     : aliased constant String := "msg_index";
    Style_Index_Cst   : aliased constant String := "style_index";
    Warning_Index_Cst : aliased constant String := "warning_index";
+   File_Cst          : aliased constant String := "file";
+   Line_Cst          : aliased constant String := "line";
+   Column_Cst        : aliased constant String := "column";
+   Message_Cst       : aliased constant String := "message";
+   Highlight_Cat_Cst : aliased constant String := "highlight";
 
    Parse_Location_Parameters : constant Cst_Argument_List :=
      (1 => Output_Cst'Access,
@@ -132,6 +137,13 @@ package body Glide_Result_View is
       9 => Warning_Index_Cst'Access);
    Remove_Category_Parameters : constant Cst_Argument_List :=
      (1 => Category_Cst'Access);
+   Locations_Add_Parameters : constant Cst_Argument_List :=
+     (1 => Category_Cst'Access,
+      2 => File_Cst'Access,
+      3 => Line_Cst'Access,
+      4 => Column_Cst'Access,
+      5 => Message_Cst'Access,
+      6 => Highlight_Cat_Cst'Access);
 
    -----------------------
    -- Local subprograms --
@@ -1529,6 +1541,20 @@ package body Glide_Result_View is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
+         Command      => "locations_add",
+         Params       =>
+           Parameter_Names_To_Usage (Locations_Add_Parameters, 1),
+         Description  =>
+         -("Add a new entry in the location window. Nodes are created as"
+           & " needed for the category or file. If Highlight is specified to"
+           & " a non-empty string, the whole line is highlighted in the file,"
+           & " with a color given by that highlight category (see "
+           & " register_highlighting for more information)"),
+         Minimum_Args => Locations_Add_Parameters'Length - 1,
+         Maximum_Args => Locations_Add_Parameters'Length,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
          Command      => "locations_remove_category",
          Params       => Parameter_Names_To_Usage (Remove_Category_Parameters),
          Description  =>
@@ -1564,6 +1590,24 @@ package body Glide_Result_View is
          Remove_Result_Category
            (Get_Kernel (Data),
             Category => Nth_Arg (Data, 1));
+
+      elsif Command = "locations_add" then
+         Name_Parameters (Data, Locations_Add_Parameters);
+         declare
+            Highlight : constant String := Nth_Arg (Data, 6, "");
+         begin
+            Insert_Result
+              (Get_Kernel (Data),
+               Category           => Nth_Arg (Data, 1),
+               File               => Get_File (Get_Data
+                 (Nth_Arg (Data, 2, (Get_File_Class (Get_Kernel (Data)))))),
+               Line               => Nth_Arg (Data, 3),
+               Column             => Nth_Arg (Data, 4),
+               Text               => Nth_Arg (Data, 5),
+               Highlight          => Highlight /= "",
+               Highlight_Category => Highlight,
+               Quiet              => True);
+         end;
       end if;
    end Default_Command_Handler;
 
