@@ -1,4 +1,5 @@
 with "../kernel/kernel";
+with "../vsearch/vsearch";
 with "../shared";
 
 project Browsers is
