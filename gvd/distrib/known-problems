@@ -1,6 +1,13 @@
 
 Known Problems fixed in GVD 2.0.0
 
+- [9325-007] Incorrect refresh of variables when typing commands in the console
+  Problem:    When commands are typed in the debugger console with arguments,
+              for instance "cont 99", gvd doesn't properly refresh the variables
+              in the display.
+  Workaround: In the case of the cont command, you should issue a specific
+              "ignore" command instead.
+
 - [9130-004] Explorer doesn't display complete profile for Ada subprograms
   Problem:   The source explorer displays the parameters of the subprograms,
              but doesn't display the returned type.
