@@ -261,11 +261,13 @@ package body CPP_Parser is
    procedure Parse_FU_Table
      (Handler : access CPP_Handler_Record'Class;
       Source  : Source_File;
-      Sym     : FIL_Table);
-   procedure Parse_FD_Table
+      Sym     : FIL_Table;
+      Forward_Decl : Entity_Information);
+   --  Forward_Decl is the forward declaration for the subprogram if it is
+   --  already known
+   function Parse_FD_Table
      (Handler : access CPP_Handler_Record'Class;
-      Source  : Source_File;
-      Sym     : FIL_Table);
+      Sym     : FIL_Table) return Entity_Information;
    procedure Parse_TA_Table
      (Handler : access CPP_Handler_Record'Class;
       Entity  : Entity_Information;
@@ -385,8 +387,7 @@ package body CPP_Parser is
      (Handler  : access CPP_Handler_Record'Class;
       Name     : String;
       Filename : String;
-      Args     : String;
-      Source   : Source_File) return Entity_Information;
+      Args     : String) return Entity_Information;
    --  Return the first possible forward declaration for the subprogram Name.
    --  Returns null if there is no matching forward declaration.
 
@@ -808,7 +809,7 @@ package body CPP_Parser is
                Column => F.Start_Position.Column);
             Set_Kind_From_Table_If_Not_Set (Entity, Table_Type);
             Set_Attributes
-              (Entity, (Global => (F_Tab.Attributes and SN_STATIC) = 0,
+              (Entity, (Global => (F.Attributes and SN_STATIC) = 0,
                       others => False));
          end if;
       end Handle_FU_Table;
@@ -1725,13 +1726,13 @@ package body CPP_Parser is
      (Handler  : access CPP_Handler_Record'Class;
       Name     : String;
       Filename : String;
-      Args     : String;
-      Source   : Source_File) return Entity_Information
+      Args     : String) return Entity_Information
    is
       pragma Unreferenced (Args);
       P      : Pair;
       FD_Tab : FD_Table;
       Decl   : Entity_Information;
+      S      : Source_File;
    begin
       if Is_Open (Handler.SN_Table (FD)) then
          Set_Cursor (Handler.SN_Table (FD), By_Key, Name & Field_Sep, False);
@@ -1741,7 +1742,9 @@ package body CPP_Parser is
             exit when P = No_Pair;
 
             Parse_Pair (P, FD_Tab);
-            exit when Filename =
+
+            exit when Filename = ""
+              or else Filename =
               FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last);
 
 --                and then Args =
@@ -1753,9 +1756,14 @@ package body CPP_Parser is
          Release_Cursor (Handler.SN_Table (FD));
 
          if P /= No_Pair then
+            S := Get_Or_Create
+              (Handler,
+               FD_Tab.Key
+                 (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last));
+
             Decl := Get_Or_Create
               (Name   => Name,
-               File   => Source,
+               File   => S,
                Line   => FD_Tab.Start_Position.Line,
                Column => FD_Tab.Start_Position.Column);
             Set_Kind (Decl, Function_Entity);
@@ -1811,21 +1819,16 @@ package body CPP_Parser is
    -- Parse_FD_Table --
    --------------------
 
-   procedure Parse_FD_Table
+   function Parse_FD_Table
      (Handler : access CPP_Handler_Record'Class;
-      Source  : Source_File;
-      Sym     : FIL_Table)
-   is
-      Entity : Entity_Information;
-      pragma Unreferenced (Entity);
+      Sym     : FIL_Table) return Entity_Information is
    begin
-      Entity := Find_Forward_Declaration
+      return Find_Forward_Declaration
         (Handler,
          Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
          Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
          Args     => Sym.Data (Sym.Types_Of_Arguments.First ..
-                                 Sym.Types_Of_Arguments.Last),
-         Source   => Source);
+                                 Sym.Types_Of_Arguments.Last));
    end Parse_FD_Table;
 
    --------------------
@@ -1837,10 +1840,12 @@ package body CPP_Parser is
    procedure Parse_FU_Table
      (Handler : access CPP_Handler_Record'Class;
       Source  : Source_File;
-      Sym     : FIL_Table)
+      Sym     : FIL_Table;
+      Forward_Decl : Entity_Information)
    is
       C       : FU_Table;
       Success : Boolean;
+      S       : Source_File := Source;
       Entity  : Entity_Information;
       End_Of_Scope_Kind : Reference_Kind;
    begin
@@ -1852,26 +1857,37 @@ package body CPP_Parser is
             Success  => Success);
 
       if Success then
-         --  Find forward declaration if any
-         Entity := Find_Forward_Declaration
-           (Handler,
-            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Args     => C.Data  (C.Arg_Types.First .. C.Arg_Types.Last),
-            Source   => Source);
+         if Forward_Decl = null then
+            --  Find forward declaration if any, possibly in another file
+            Entity := Find_Forward_Declaration
+              (Handler,
+               Name     =>
+                 Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+               Filename => "",
+               Args     => C.Data  (C.Arg_Types.First .. C.Arg_Types.Last));
+         else
+            Entity := Forward_Decl;
+         end if;
+      end if;
+
+      if Full_Name (Get_Filename (Source)).all /=
+        C.Key (C.File_Name.First  .. C.File_Name.Last)
+      then
+         S := Get_Or_Create
+           (Handler, C.Key (C.File_Name.First  .. C.File_Name.Last));
       end if;
 
       if Entity = null then
-         Entity := Entity_From_FIL (Sym, Source);
+         Entity := Entity_From_FIL (Sym, S);
          End_Of_Scope_Kind := End_Of_Spec;
       else
          --  Sym is the body in this case
          Add_Reference
            (Entity   => Entity,
             Location =>
-              (File   => Source,
-               Line   => Sym.Start_Position.Line,
-               Column => Column_Type (Sym.Start_Position.Column)),
+              (File   => S,
+               Line   => C.Start_Position.Line,
+               Column => Column_Type (C.Start_Position.Column)),
             Kind     => Body_Entity);
          End_Of_Scope_Kind := End_Of_Body;
       end if;
@@ -1879,7 +1895,7 @@ package body CPP_Parser is
       if Success then
          Set_End_Of_Scope
            (Entity   => Entity,
-            Location => (File   => Get_File (Get_Declaration_Of (Entity)),
+            Location => (File   => S,
                          Line   => C.End_Position.Line,
                          Column => Column_Type (C.End_Position.Column)),
             Kind     => End_Of_Scope_Kind);
@@ -1896,7 +1912,7 @@ package body CPP_Parser is
             Entity_Class => Sym.Key (Sym.Class.First .. Sym.Class.Last),
             Entity_Arg_Types => C.Data (C.Arg_Types.First .. C.Arg_Types.Last),
             Params => C.Data (C.Arg_Names.First .. C.Arg_Names.Last),
-            Source => Source);
+            Source => S);
 
          Parse_TO_Table
            (Handler     => Handler,
@@ -2311,7 +2327,8 @@ package body CPP_Parser is
                   Set_Kind (Entity, Macro_Entity);
 
                when FU =>
-                  Parse_FU_Table (Handler, Source, Sym);
+                  Parse_FU_Table (Handler, Source, Sym,
+                                  Forward_Decl => null);
 
                when IV =>
                   Entity := Entity_From_FIL (Sym, Source);
@@ -2328,9 +2345,18 @@ package body CPP_Parser is
                   Parse_TA_Table (Handler, Entity, Sym);
 
                when FD    =>
-                  Parse_FD_Table (Handler, Source, Sym);
+                  Entity := Parse_FD_Table (Handler, Sym);
                   --  Do something for cpp_ellipsis1 (we have one warning
                   --  in FD)
+
+                  --  Also search in the FU table for a candidate body. The
+                  --  body could be in another file, so we juste search for
+                  --  any matching function, whatever its file
+                  Sym.File_Name := Empty_Segment;
+                  Sym.Start_Position := Invalid_Point;
+                  Parse_FU_Table
+                    (Handler, Source, Sym, Forward_Decl => Entity);
+
 
                when SN_IN => null; --  Parsed when handling CL
 
