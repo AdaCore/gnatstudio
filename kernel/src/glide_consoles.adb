@@ -30,6 +30,7 @@ with Gint_Xml;             use Gint_Xml;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Traces;               use Traces;
 
 with GNAT.Regpat;          use GNAT.Regpat;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -41,6 +42,8 @@ package body Glide_Consoles is
 
    Highlight_Error : constant String := "#FF0000000000";
    --  <preference>
+
+   Me : Debug_Handle := Create ("Glide_Consoles");
 
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
@@ -170,6 +173,8 @@ package body Glide_Consoles is
 
       Insert (Console.Text, Fore  => Color, Chars => New_Text.all);
       Free (New_Text);
+
+      Trace (Me, Text);
    end Insert;
 
    -----------------------
