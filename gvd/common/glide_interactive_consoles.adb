@@ -69,11 +69,6 @@ package body Glide_Interactive_Consoles is
       Console : Glide_Interactive_Console);
    --  Called before inserting text;
 
-   procedure Changed_Handler
-     (Buffer  : access Gtk_Text_Buffer_Record'Class;
-      Console : Glide_Interactive_Console);
-   --  Prevent cursor movements before the prompt.
-
    procedure Mark_Set_Handler
      (Buffer  : access Gtk_Text_Buffer_Record'Class;
       Params  : Glib.Values.GValues;
@@ -161,7 +156,6 @@ package body Glide_Interactive_Consoles is
       Get_End_Iter (Console.Buffer, First_Iter);
       Offset := Get_Offset (First_Iter);
 
-      --  Console.Uneditable_Length := Prompt'Length;
       Insert (Console.Buffer, First_Iter, Prompt);
       --  ??? Must add flexibility to the prompt.
 
@@ -209,13 +203,18 @@ package body Glide_Interactive_Consoles is
             Text    : constant String :=
               Get_Slice (Console.Buffer, Prompt, Pos);
             Command : constant String := Text (Text'First .. Text'Last - 1);
+            Output  : constant String :=
+              Interpret_Command (Console.Kernel, Command);
          begin
-            Insert
-              (Console.Buffer,
-               Pos,
-               Interpret_Command (Console.Kernel, Command));
+            Insert (Console.Buffer, Pos, Output);
 
             --  ??? Must add Command to the history.
+
+            Get_Iter_At_Mark (Console.Buffer, Prompt, Console.Prompt_Mark);
+            Get_End_Iter (Console.Buffer, Pos);
+
+            Apply_Tag
+              (Console.Buffer, Console.Uneditable_Tag, Prompt, Pos);
 
             Display_Prompt (Console);
          end;
@@ -263,29 +262,6 @@ package body Glide_Interactive_Consoles is
       Id := Console_Idle.Add (Place_Cursor_At_Prompt'Access, Console);
    end Replace_Cursor;
 
-   ---------------------
-   -- Changed_Handler --
-   ---------------------
-
-   procedure Changed_Handler
-     (Buffer  : access Gtk_Text_Buffer_Record'Class;
-      Console : Glide_Interactive_Console)
-   is
-      pragma Unreferenced (Buffer);
-
-   begin
-      if Console.Internal_Insert then
-         return;
-      end if;
-
-      Console.Internal_Insert := True;
-      Replace_Cursor (Console);
-      Console.Internal_Insert := False;
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Changed_Handler;
-
    ----------------------
    -- Mark_Set_Handler --
    ----------------------
@@ -320,6 +296,10 @@ package body Glide_Interactive_Consoles is
          then
             Console.Insert_Mark := Mark;
          end if;
+      end if;
+
+      if not Console.Button_Press then
+         Replace_Cursor (Console);
       end if;
 
       Console.Internal_Insert := False;
@@ -383,20 +363,11 @@ package body Glide_Interactive_Consoles is
          After     => True,
          User_Data => Glide_Interactive_Console (Console));
 
-      if 1 = 2 then
-         Buffer_Console_Callback.Connect
-           (Console.Buffer, "changed",
-            Buffer_Console_Callback.To_Marshaller (Changed_Handler'Access),
-            User_Data => Glide_Interactive_Console (Console),
-            After => True);
-
-      end if;
-
       Buffer_Console_Callback.Connect
         (Console.Buffer, "mark_set",
          Cb => Mark_Set_Handler'Access,
          User_Data => Glide_Interactive_Console (Console),
-         After => False);
+         After => True);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Console.View, "button_release_event",
