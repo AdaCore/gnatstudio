@@ -99,9 +99,6 @@ with Glide_Kernel;
 
 package Custom_Module is
 
-   Custom_Module_ID   : Glide_Kernel.Module_ID;
-   Custom_Module_Name : constant String := "Custom";
-
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list

@@ -20,15 +20,11 @@
 
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gtk.Enums;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with System.Assertions;         use System.Assertions;
 
@@ -44,34 +40,31 @@ with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Src_Info.Dummy;            use Src_Info.Dummy;
 
-with Traces;                    use Traces;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands.Custom;           use Commands.Custom;
 
-
 package body Custom_Module is
 
-   Me : constant Debug_Handle := Create ("Custom_Module");
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  Called when a new customization in parsed
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
+   ---------------
+   -- Customize --
+   ---------------
 
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level)
    is
-      Custom_File  : constant String := Get_Home_Dir (Kernel) & "custom";
-      Local_Custom : constant String :=
-        Normalize_Pathname (Get_Home_Dir (Kernel) & "customize/");
-      Sys_Custom   : constant String :=
-        Normalize_Pathname (Get_System_Dir (Kernel) & "share/gps/customize/");
+      pragma Unreferenced (Level);
+
       Handler      : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
-      Button         : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-      Custom_Parsed : Boolean := False;
-      Success       : Boolean;
 
       procedure Add_Child
         (Parent_Path  : String;
@@ -84,13 +77,9 @@ package body Custom_Module is
         (Node : Node_Ptr) return Custom_Command_Access;
       function Parse_External_Node
         (Node : Node_Ptr) return Custom_Command_Access;
-      procedure Parse_Key_Node (Node : Node_Ptr);
       procedure Parse_Button_Node (Node : Node_Ptr);
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
       --  Parse the various nodes: <action>, <shell>, ...
-
-      procedure Parse_Custom_Dir (Directory : String);
-      --  Parse all custom files located in Directory
 
       ----------------------
       -- Parse_Shell_Node --
@@ -214,38 +203,6 @@ package body Custom_Module is
          Free (Description);
          Free (Context);
       end Parse_Action_Node;
-
-      --------------------
-      -- Parse_Key_Node --
-      --------------------
-
-      procedure Parse_Key_Node (Node : Node_Ptr) is
-         Action : constant String := Get_Attribute (Node, "action");
-      begin
-         if Action = "" then
-            Insert (Kernel, -"<key> nodes must have an action attribute",
-                    Mode => Error);
-            raise Assert_Failure;
-         end if;
-
-         if Node.Value = null then
-            Insert (Kernel,
-                    -"Invalid key binding for action " & Action,
-                    Mode => Error);
-            raise Assert_Failure;
-         end if;
-
-         if Node.Child /= null then
-            Insert
-              (Kernel, -"Invalid child node for <key> tag", Mode => Error);
-            raise Assert_Failure;
-         end if;
-
-         Bind_Default_Key
-           (Get_Key_Handler (Kernel),
-            Action      => Action,
-            Default_Key => Node.Value.all);
-      end Parse_Key_Node;
 
       -----------------------
       -- Parse_Button_Node --
@@ -423,102 +380,34 @@ package body Custom_Module is
          elsif To_Lower (Current_Node.Tag.all) = "action" then
             Parse_Action_Node (Current_Node);
 
-         elsif To_Lower (Current_Node.Tag.all) = "key" then
-            Parse_Key_Node (Current_Node);
-
          elsif To_Lower (Current_Node.Tag.all) = "button" then
             Parse_Button_Node (Current_Node);
          end if;
       end Add_Child;
 
-      ----------------------
-      -- Parse_Custom_Dir --
-      ----------------------
-
-      procedure Parse_Custom_Dir (Directory : String) is
-         File      : String (1 .. 1024);
-         Last      : Natural;
-         Dir       : Dir_Type;
-         Node      : Node_Ptr;
-         File_Node : Node_Ptr;
-
-      begin
-         if Is_Directory (Directory) then
-            Open (Dir, Directory);
-            loop
-               Read (Dir, File, Last);
-               exit when Last = 0;
-
-               declare
-                  F : constant String := Directory & File (1 .. Last);
-               begin
-                  if Is_Regular_File (F) then
-                     Trace (Me, "Loading " & F);
-                     File_Node := Parse (F);
-
-                     if File_Node = null then
-                        Console.Insert
-                          (Kernel, -"Syntax error in custom file " & F,
-                           Mode => Error);
-                     else
-                        Node := File_Node.Child;
-                        Custom_Parsed := True;
-
-                        while Node /= null loop
-                           Add_Child ("", Node);
-                           Node := Node.Next;
-                        end loop;
-
-                        Free (File_Node);
-                     end if;
-                  end if;
-
-               exception
-                  when Assert_Failure =>
-                     Console.Insert
-                       (Kernel, -"Could not parse custom file " & F,
-                        Mode => Error);
-               end;
-            end loop;
-
-            Close (Dir);
-         end if;
-
-      exception
-         when Directory_Error =>
-            null;
-      end Parse_Custom_Dir;
-
+      N : Node_Ptr := Node;
    begin
-      if Is_Regular_File (Custom_File) then
-         Rename_File (Custom_File, Local_Custom & "custom", Success);
+      while N /= null loop
+         Add_Child ("", N);
+         N := N.Next;
+      end loop;
+   end Customize;
 
-         if Success then
-            Button := Message_Dialog
-              ((-"Moved file ") & Custom_File & ASCII.LF &
-               (-"to directory ") & Local_Custom,
-               Information, Button_OK,
-               Justification => Gtk.Enums.Justify_Left);
-         end if;
-      end if;
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-      --  Load the system custom directory first, so that its contents can
-      --  be overriden locally by the user
-      Parse_Custom_Dir (Sys_Custom);
-      Parse_Custom_Dir (Local_Custom);
-
-      if Custom_Parsed then
-         Register_Module
-           (Module                  => Custom_Module_ID,
-            Kernel                  => Kernel,
-            Module_Name             => Custom_Module_Name,
-            Priority                => Low_Priority,
-            Contextual_Menu_Handler => null);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Custom_Module_ID   : Glide_Kernel.Module_ID;
+   begin
+      Register_Module
+        (Module                  => Custom_Module_ID,
+         Kernel                  => Kernel,
+         Module_Name             => "Custom",
+         Priority                => Low_Priority,
+         Customization_Handler   => Customize'Access);
    end Register_Module;
 
 end Custom_Module;
