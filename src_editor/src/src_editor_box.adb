@@ -507,6 +507,11 @@ package body Src_Editor_Box is
       File             : String_Access;
       Filename         : constant String := Get_Filename (Data.Box);
       Out_Of_Bounds    : Boolean;
+      Window           : Gdk.Gdk_Window;
+      Window_Width     : Gint;
+      Window_Height    : Gint;
+      Window_Depth     : Gint;
+
 
    begin
       Width  := 0;
@@ -518,24 +523,32 @@ package body Src_Editor_Box is
          return;
       end if;
 
-      Get_Pointer
-        (Get_Window (Widget, Text_Window_Text), Mouse_X, Mouse_Y, Mask, Win);
-      Window_To_Buffer_Coords
-        (Widget, Mouse_X, Mouse_Y, Line, Col, Out_Of_Bounds);
+      Window := Get_Window (Widget, Text_Window_Text);
 
-      if Out_Of_Bounds then
+      Get_Geometry
+        (Window, Win_X, Win_Y, Window_Width, Window_Height, Window_Depth);
+      Get_Pointer
+        (Window, Mouse_X, Mouse_Y, Mask, Win);
+
+      if Mouse_X < Win_X
+        or else Mouse_Y < Win_Y
+        or else Win_X + Window_Width < Mouse_X
+        or else Win_Y + Window_Height < Mouse_Y
+      then
          --  Invalid position: the cursor is outside the text, do not
          --  display a tooltip.
 
          return;
-
-      else
-         Get_Iter_At_Line_Offset
-           (Data.Box.Source_Buffer, Start_Iter, Line, Col);
-         Search_Entity_Bounds
-           (Data.Box.Source_Buffer, Start_Iter, End_Iter);
-         Get_Screen_Position (Data.Box.Source_Buffer, Start_Iter, Line, Col);
       end if;
+
+      Window_To_Buffer_Coords
+        (Widget, Mouse_X, Mouse_Y, Line, Col, Out_Of_Bounds);
+
+      Get_Iter_At_Line_Offset
+        (Data.Box.Source_Buffer, Start_Iter, Line, Col);
+      Search_Entity_Bounds
+        (Data.Box.Source_Buffer, Start_Iter, End_Iter);
+      Get_Screen_Position (Data.Box.Source_Buffer, Start_Iter, Line, Col);
 
       --  Compute the area surrounding the entity, relative to the pointer
       --  coordinates
