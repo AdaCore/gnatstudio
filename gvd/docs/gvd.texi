@@ -1453,6 +1453,20 @@ gvd --host 'remote' remote-program
 
 or use the @i{File->New Debugger...} menu in GVD.
 
+If you need to use a different username on the remote host, you can 
+replace @i{remote} by @i{user@@remote} where @i{user} is the username on the
+remote machine, and @i{remote} is the remote machine, as previousely explained.
+To verify that this is supported by your version of @i{rsh}, try the
+following:
+
+@smallexample
+$ rsh user@@remote gdb
+@end smallexample
+
+If this does not work, you can create a simple script that transforms
+@i{user@@remote} into the proper syntax, e.g. @i{remote -l user} and
+specify this script as the default remote shell and copy programs.
+
 There are a few caveats to be aware of in remote mode:
 
   The remote debugger is started in your remote home directory. Hence, you must
