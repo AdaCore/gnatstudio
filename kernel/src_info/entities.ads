@@ -266,6 +266,9 @@ package Entities is
    --  It is possible that none of the two return True for some special
    --  entities.
 
+   function Show_In_Call_Graph (Kind : Reference_Kind) return Boolean;
+   --  Whether a reference of this kind should be shown in the call graph
+
    -------------
    -- LI_File --
    -------------

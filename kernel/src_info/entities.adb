@@ -131,6 +131,20 @@ package body Entities is
      (Modification                             => True,
       others                                   => False);
 
+   Show_In_Call_Graph_Array : constant Reference_Kind_Filter :=
+     (Reference                                => True,
+      Modification                             => True,
+      others                                   => False);
+
+   ------------------------
+   -- Show_In_Call_Graph --
+   ------------------------
+
+   function Show_In_Call_Graph (Kind : Reference_Kind) return Boolean is
+   begin
+      return Show_In_Call_Graph_Array (Kind);
+   end Show_In_Call_Graph;
+
    -----------------------
    -- Is_Read_Reference --
    -----------------------
@@ -1836,5 +1850,4 @@ package body Entities is
    begin
       Sort.Sort (Integer (Last (Sources)) - First);
    end Sort;
-
 end Entities;
