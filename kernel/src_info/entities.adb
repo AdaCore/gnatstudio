@@ -36,6 +36,14 @@ package body Entities is
    --  If True, no memory is freed, this makes the structure more robust and
    --  easier to debug, but will of course use more memory.
 
+   Add_Reference_Force_Unique : constant Debug_Handle :=
+     Create ("Entities.Force_Unique_Ref", Off);
+   --  Activate this to force a check that all references are unique. This
+   --  will slow down the parsing a little, but might help customers work
+   --  around bugs in GPS. This should never be needed however, and is just
+   --  provided as a backdoor.
+
+
    use Entities_Tries;
    use Files_HTable;
    use LI_HTable;
@@ -1328,6 +1336,17 @@ package body Entities is
       Kind     : Reference_Kind) is
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid file in reference");
+
+      if Active (Add_Reference_Force_Unique) then
+         for R in
+           Entity_Reference_Arrays.First .. Last (Entity.References)
+         loop
+            if Entity.References.Table (R).Location = Location then
+               return;
+            end if;
+         end loop;
+      end if;
+
       Append (Entity.References, (Location, null, Kind));
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
