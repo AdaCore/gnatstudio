@@ -25,6 +25,8 @@ package Codefix.Text_Manager is
    --  Frees the memory used by fields of File_Cursor.
 
    function Clone (This : File_Cursor) return File_Cursor;
+   --  Duplicate all informations of a File_Cursor, specially informations
+   --  memorized in dynamic memory.
 
    ----------------------------------------------------------------------------
    --  type Text_Interface
@@ -37,23 +39,24 @@ package Codefix.Text_Manager is
    procedure Initialize
      (This      : in out Text_Interface;
       File_Name : String) is abstract;
+   --  Initialize the structure of the Text_Interface.
 
-   procedure Free (This : in out Text_Interface) is abstract;
+   procedure Free (This : in out Text_Interface);
+   --  Free the memory associated to the Text_Interface.
 
    function Get
      (This   : Text_Interface;
       Cursor : Text_Cursor'Class;
       Len    : Natural)
      return String is abstract;
-   --  Get Len characters from the file and the position specified by the
-   --  cursor.
+   --  Get Len characters from the the position specified by the cursor.
 
    function Get_Line
      (This   : Text_Interface;
       Cursor : Text_Cursor'Class)
      return String is abstract;
-   --  Get all character from the file and the column specified by the cursor
-   --  to the end of the line.
+   --  Get all character from the column specified by the cursor to the end of
+   --  the line.
 
    procedure Replace
      (This      : in out Text_Interface;
@@ -84,10 +87,13 @@ package Codefix.Text_Manager is
    function Read_File
      (This : Text_Interface)
    return Dynamic_String is abstract;
+   --  Get the entire file in a Dynamic_String.
 
    function Get_File_Name (This : Text_Interface) return String;
+   --  Returns the name of the file.
 
    procedure Update (This : Text_Interface) is abstract;
+   --  Update the changes previously made in the real text.
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -100,50 +106,65 @@ package Codefix.Text_Manager is
    function Get_Unit
      (Current_Text : Text_Navigator_Abstr;
       Cursor       : File_Cursor'Class)
-   return Construct_Information;
+     return Construct_Information;
+   --  Get the Construct_Information found at the specified position.
 
    function Search_Body
      (Current_Text : Text_Navigator_Abstr;
       File_Name    : String;
       Spec         : Construct_Information)
      return Construct_Information;
+   --  Returns the body of a subprogramm, only if this body is in the same
+   --  file.
 
    function Get
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class;
       Len    : Natural)
      return String;
+   --  Get Len characters from the file and the position specified by the
+   --  cursor.
 
    function Get_Line
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class)
      return String;
+   --  Get all character from the file and the column specified by the cursor
+   --  to the end of the line.
 
    function Read_File
      (This      : Text_Navigator_Abstr;
       File_Name : String) return Dynamic_String;
+   --  Get the entire file File_Name in a Dynamic_String.
 
    procedure Replace
      (This      : in out Text_Navigator_Abstr;
       Cursor    : File_Cursor'Class;
       Len       : Natural;
       New_Value : String);
+   --  Replace the Len characters, from the position designed by the cursor, by
+   --  New_Value.
 
    procedure Add_Line
      (This        : in out Text_Navigator_Abstr;
       Cursor      : File_Cursor'Class;
       New_Line    : String);
+   --  Add a line at the cursor specified. To add a line at the
+   --  begining of the text, set cursor line = 0.
 
    procedure Delete_Line
      (This : in out Text_Navigator_Abstr;
       Cursor : File_Cursor'Class);
+   --  Delete the line where the cursor is.
 
    function Line_Length
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class)
      return Natural;
+   --  Returns le length of a line from the position of the cursor.
 
    procedure Update (This : Text_Navigator_Abstr);
+   --  Update the changes previously made in the real text.
 
    function New_Text_Interface (This : Text_Navigator_Abstr)
       return Ptr_Text is abstract;
@@ -156,25 +177,34 @@ package Codefix.Text_Manager is
    type Ptr_Extract_Line is access Extract_Line;
 
    function Get_String (This : Extract_Line) return String;
-   function Get_Cursor (This : Extract_Line) return File_Cursor'Class;
+   --  Returns the string memorized in an Extract_Line.
 
-   --  PAS FINIE !!!
+   function Get_Cursor (This : Extract_Line) return File_Cursor'Class;
+   --  Return the cursor memorized in an Extract_Line.
+
    procedure Update (This         : Extract_Line;
                      Current_Text : in out Text_Navigator_Abstr'Class;
                      Offset_Line  : in out Integer);
+   --  Upate changes of the Extract_Line in the representation of the text,
 
    procedure Free (This : in out Extract_Line);
+   --  Free the memory associated to an Extract_Line.
 
    function Clone
      (This      : Extract_Line;
       Recursive : Boolean := True)
-   return Extract_Line;
+     return Extract_Line;
+   --  Clone an Extract_Line. Recursive True means that all the lines of the
+   --  extract that record this line are cloned.
 
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
 
    type Extract is private;
+   --  An extract is a temporary object that contains a part of the source
+   --  code, modified or not. The modifications made in an extract do not have
+   --  any influence in the source code before the call of Update function.
 
    type String_Mode is (Text_Ascii, Regular_Expression);
 
@@ -185,11 +215,15 @@ package Codefix.Text_Manager is
       Cursor      : File_Cursor'Class;
       Len         : Natural;
       Destination : in out Extract);
+   --  Put un Destination Len characterts got from the position and the file
+   --  specified by the cursor.
 
    procedure Get_Line
      (This        : Text_Navigator_Abstr'Class;
       Cursor      : File_Cursor'Class;
       Destination : in out Extract);
+   --  Put in Destination a line from the position specified by the cursor to
+   --  the end of the line.
 
    function Get_String (This : Extract; Position : Natural := 1) return String;
    --  Get the string of the line of an extract. Strings are ordonned in the
@@ -199,36 +233,48 @@ package Codefix.Text_Manager is
      (This     : Extract;
       Value    : String;
       Position : Natural := 1);
+   --  Set a string recorded in the Extract. Position in the position of the
+   --  record, and not the number of the line.
 
-   --  PAS FINIE !!!
    procedure Update
      (This         : Extract;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Natural);
+   --  Upate changes of the Extract_Line in the representation of the text.
 
    procedure Put_Line (This : Extract);
+   --  Put on the screen the current version of the Extract.
+
    procedure Put_Line_Original
      (This         : Extract;
       Current_Text : Text_Navigator_Abstr'Class);
+   --  Put on the screen the original version of the Extrat.
 
    procedure Replace_Word
      (This         : in out Extract;
       Cursor       : File_Cursor'Class;
       New_String   : String;
       Format       : String := "(^[\w]*)");
+   --  Replace a word by another in the extract. Format is a regular expression
+   --  matching the word.
 
    procedure Add_Word
      (This   : in out Extract;
       Cursor : File_Cursor'Class;
       Word   : String);
+   --  Add a word at the position specified by the cursor. Check if it needs
+   --  a space before or after, and add it.
 
    function Get_Word_Length
      (This   : Extract;
       Cursor : File_Cursor'Class;
       Format : String)
      return Natural;
+   --  Get the length of a word what begins at the position specified by the
+   --  cursor.
 
    procedure Free (This : in out Extract);
+   --  Free the memory associated to an Extract.
 
    function Get_Line (This : Extract; Position : File_Cursor)
      return Ptr_Extract_Line;
@@ -261,6 +307,8 @@ package Codefix.Text_Manager is
      (This : in out Extract;
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor : File_Cursor);
+   --  Add in the Extract lines of the Entity witch begins at the position
+   --  specified by the cursor (if it is a spec, the body is also got).
 
 private
 
@@ -272,6 +320,8 @@ private
    use Text_List;
 
    type Ptr_List_Text is access Text_List.List;
+   procedure Free
+     is new Ada.Unchecked_Deallocation (Text_List.List, Ptr_List_Text);
 
    type Text_Navigator_Abstr is abstract tagged record
       Files : Ptr_List_Text := new Text_List.List;
