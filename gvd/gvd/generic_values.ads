@@ -21,6 +21,7 @@
 with Unchecked_Deallocation;
 with Glib;
 with Gdk.Pixmap;
+with Gdk.Bitmap;
 with Gdk.GC;
 with Gdk.Font;
 with Language;
@@ -43,6 +44,11 @@ package Generic_Values is
    --  the description of the type and its current value. Whereas the type
    --  itself is never freed, the values are delete every time we need to
    --  parse a new value.
+
+   procedure Set_Hidden_Pixmap (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                                Mask   : Gdk.Bitmap.Gdk_Bitmap);
+   --  Set the pixmap used for hidden items.
+   --  This must be called, or hidden items will not be displayed at all.
 
    ------------------
    -- Generic_Type --

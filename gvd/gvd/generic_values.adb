@@ -24,7 +24,10 @@ with Ada.Tags; use Ada.Tags;
 with Glib;         use Glib;
 with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
+with Gdk.Pixmap;   use Gdk.Pixmap;
+with Gdk.Bitmap;   use Gdk.Bitmap;
 with Gdk.GC;       use Gdk.GC;
+with Gdk.Window;   use Gdk.Window;
 with Gdk.Types;    use Gdk.Types;
 with Language;     use Language;
 with Unchecked_Deallocation;
@@ -44,8 +47,12 @@ package body Generic_Values is
    --  Space of the column on the left of records and arrays, where the user
    --  can click to select the whole array or record.
 
-   Hidden_Text : constant String := "<Hidden>";
-   --  Text displayed when an item is hidden.
+   Hidden_Pixmap : Gdk_Pixmap;
+   Hidden_Mask   : Gdk_Bitmap;
+   Hidden_Height : Gint;
+   Hidden_Width  : Gint;
+   --  pixmap used when items are hidden
+
 
    function Index_String (Item    : Array_Type;
                           Index   : Long_Integer;
@@ -56,6 +63,19 @@ package body Generic_Values is
 
    procedure Free_Internal is new Unchecked_Deallocation
      (Generic_Type'Class, Generic_Type_Access);
+
+   -----------------------
+   -- Set_Hidden_Pixmap --
+   -----------------------
+
+   procedure Set_Hidden_Pixmap (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                                Mask   : Gdk.Bitmap.Gdk_Bitmap)
+   is
+   begin
+      Hidden_Pixmap := Pixmap;
+      Hidden_Mask   := Mask;
+      Get_Size (Hidden_Pixmap, Hidden_Width, Hidden_Height);
+   end Set_Hidden_Pixmap;
 
    ------------------
    -- Index_String --
@@ -1150,12 +1170,13 @@ package body Generic_Values is
         +Left_Border - Text_Width (Font, String'(" => "));
    begin
       if not Item.Visible then
-         Draw_Text (Pixmap,
-                    Font => Font,
-                    GC   => GC,
-                    X    => X + Left_Border,
-                    Y    => Current_Y + Get_Ascent (Font),
-                    Text => Hidden_Text);
+         Set_Clip_Mask (GC, Hidden_Mask);
+         Set_Clip_Origin (GC, X + Left_Border, Current_Y);
+         Draw_Pixmap (Pixmap, GC, Hidden_Pixmap, 0, 0,
+                      Xdest => X + Left_Border,
+                      Ydest => Current_Y);
+         Set_Clip_Mask (GC, Null_Pixmap);
+         Set_Clip_Origin (GC, 0, 0);
          return;
       end if;
 
@@ -1232,12 +1253,12 @@ package body Generic_Values is
       end if;
 
       if not Item.Visible then
-         Draw_Text (Pixmap,
-                    Font => Font,
-                    GC   => GC,
-                    X    => X + Left_Border,
-                    Y    => Current_Y + Get_Ascent (Font),
-                    Text => Hidden_Text);
+         Set_Clip_Mask (GC, Hidden_Mask);
+         Set_Clip_Origin (GC, X + Left_Border, Current_Y);
+         Draw_Pixmap (Pixmap, GC, Hidden_Pixmap, 0, 0,
+                      Xdest => X + Left_Border, Ydest => Current_Y);
+         Set_Clip_Mask (GC, Null_Pixmap);
+         Set_Clip_Origin (GC, 0, 0);
          return;
       end if;
 
@@ -1367,12 +1388,12 @@ package body Generic_Values is
       Current_Y : Gint := Y;
    begin
       if not Item.Visible then
-         Draw_Text (Pixmap,
-                    Font => Font,
-                    GC   => GC,
-                    X    => X,
-                    Y    => Current_Y + Get_Ascent (Font),
-                    Text => Hidden_Text);
+         Set_Clip_Mask (GC, Hidden_Mask);
+         Set_Clip_Origin (GC, X, Current_Y);
+         Draw_Pixmap (Pixmap, GC, Hidden_Pixmap, 0, 0,
+                      Xdest => X, Ydest => Current_Y);
+         Set_Clip_Mask (GC, Null_Pixmap);
+         Set_Clip_Origin (GC, 0, 0);
          return;
       end if;
 
@@ -1438,10 +1459,8 @@ package body Generic_Values is
       Total_Height, Total_Width : Gint := 0;
    begin
       if not Item.Visible then
-         Item.Width := Left_Border + 2 * Border_Spacing +
-           Text_Width (Font, Hidden_Text);
-         Item.Height := 2 * Border_Spacing
-           + Get_Ascent (Font) + Get_Descent (Font);
+         Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
+         Item.Height := 2 * Border_Spacing + Hidden_Height;
          return;
       end if;
 
@@ -1491,10 +1510,8 @@ package body Generic_Values is
       end if;
 
       if not Item.Visible then
-         Item.Width := Left_Border + 2 * Border_Spacing +
-           Text_Width (Font, Hidden_Text);
-         Item.Height := 2 * Border_Spacing
-           + Get_Ascent (Font) + Get_Descent (Font);
+         Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
+         Item.Height := 2 * Border_Spacing + Hidden_Height;
          return;
       end if;
 
@@ -1532,6 +1549,9 @@ package body Generic_Values is
               (Item.Fields (F).Variant_Part'Length - 1) * Line_Spacing;
          end if;
       end loop;
+
+      Total_Height := Total_Height
+        + (Item.Fields'Length - 1) * Line_Spacing;
 
       if Largest_Name = null then
          Item.Gui_Fields_Width := Text_Width (Font, String' (" => "));
@@ -1572,10 +1592,8 @@ package body Generic_Values is
       Total_Height, Total_Width : Gint := 0;
    begin
       if not Item.Visible then
-         Item.Width := Left_Border + 2 * Border_Spacing +
-           Text_Width (Font, Hidden_Text);
-         Item.Height := 2 * Border_Spacing
-           + Get_Ascent (Font) + Get_Descent (Font);
+         Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
+         Item.Height := 2 * Border_Spacing + Hidden_Height;
          return;
       end if;
 
