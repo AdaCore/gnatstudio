@@ -447,9 +447,7 @@ package body Process_Proxies is
         (Proxy     : access Process_Proxy'Class;
          W         : access Widget'Class;
          Cmd       : Callback;
-         User_Data : Data)
-        return Boolean
-      is
+         User_Data : Data) return Boolean is
       begin
          if Command_In_Process (Proxy) then
             Register_Post_Cmd
@@ -458,6 +456,7 @@ package body Process_Proxies is
                         (new Data'(User_Data), Cmd, Widget_Access (W))));
             return True;
          end if;
+
          return False;
       end Register_Post_Cmd_If_Needed;
 
