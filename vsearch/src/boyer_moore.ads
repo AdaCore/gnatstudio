@@ -28,7 +28,7 @@
 --    (1)  Trivial inlined loop (test string equality for each position)
 --    (2)  Ada.Strings.Fixed.Index
 --    (3)  GNAT.Regpat.Match
---    (4)  String_Search2.Search
+--    (4)  Boyer_Moore.Search
 --  These algorithms have been tests on a series of strings. They
 --  always matched on the last line of the string.
 --  The compilations were done with "-O2 -gnatN -gnatnp"

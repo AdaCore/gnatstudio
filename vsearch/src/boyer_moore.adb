@@ -105,8 +105,8 @@ package body Boyer_Moore is
       pragma Assert (From_String'Length <= Max_Pattern_Length);
 
       Motif.Case_Sensitive := Case_Sensitive;
-      Motif.Last_Occurence := (others => 0);
-      Motif.Last_Occurence (From_String (From_String'First)) := 1;
+      Motif.Last_Occurence := (others => 1);
+      Motif.Last_Occurence (From_String (From_String'First)) := 2;
       Motif.Motif := new String (Motif_First .. From_String'Length);
       if Case_Sensitive then
          Motif.Motif.all := From_String;
@@ -123,7 +123,7 @@ package body Boyer_Moore is
 
          --  The last occurence function
 
-         Motif.Last_Occurence (Motif.Motif (Q)) := Q - Motif_First + 1;
+         Motif.Last_Occurence (Motif.Motif (Q)) := Q - Motif_First + 2;
 
          --  The prefix function
 
