@@ -117,6 +117,14 @@ package body Glide_Kernel is
       Initialize_Class_Record
         (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
 
+      --  Create the language handler. It is also set for the gvd main window,
+      --  so that the embedded gvd uses the same mechanism as the rest of glide
+      --  to guess the language for a file name.
+      Gtk_New (Handler);
+      Handle.Lang_Handler := Language_Handler (Handler);
+      Glide_Window (Handle.Main_Window).Lang_Handler :=
+        Handle.Lang_Handler;
+
       Handle.Project := Create_Default_Project ("default", Get_Current_Dir);
       Handle.Project_Is_Default := True;
       Handle.Predefined_Source_Path := null;
@@ -128,14 +136,6 @@ package body Glide_Kernel is
       Gtk_New (Handle.Tooltips);
       Load_Preferences
         (Handle, String_Utils.Name_As_Directory (Home_Dir) & "preferences");
-
-      --  Create the language handler. It is also set for the gvd main window,
-      --  so that the embedded gvd uses the same mechanism as the rest of glide
-      --  to guess the language for a file name.
-      Gtk_New (Handler, Handle);
-      Handle.Lang_Handler := Language_Handler (Handler);
-      Glide_Window (Handle.Main_Window).Lang_Handler :=
-        Handle.Lang_Handler;
 
       Handle.Explorer_Context := new File_Selection_Context;
       Set_Context_Information (Handle.Explorer_Context, Handle, null);
