@@ -414,6 +414,7 @@ package body Glide_Kernel is
    ----------
 
    procedure Free (Module : in out Module_ID) is
+      pragma Unreferenced (Module);
    begin
       null;
    end Free;
@@ -493,6 +494,7 @@ package body Glide_Kernel is
    -------------
 
    procedure Destroy (Context : in out Selection_Context) is
+      pragma Unreferenced (Context);
    begin
       null;
    end Destroy;
